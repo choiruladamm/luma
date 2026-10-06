@@ -15,7 +15,7 @@ Urutan issue (alur utuh dulu, fitur inti sebelum pemanis, backup sebelum dogfood
 1. Fondasi UI: #1 → #2 → #3
 2. Fondasi data: #4 → #5 → #6 → #7
 3. Import: #8 → #9 → #10
-4. Rak: #30 → #12 → #11
+4. Rak: #30 → #12 → #11 → #31
 5. Baca: #13 → #14 → #17 → #19 → #18
 6. Fitur inti: #20 → #21 → #22 → #23
 7. Pengaman data: #24 → #25 → #26
