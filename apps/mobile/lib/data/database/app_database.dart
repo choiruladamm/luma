@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -130,6 +132,14 @@ class AppDatabase extends _$AppDatabase {
 }
 
 final appDatabaseProvider = Provider<AppDatabase>((ref) {
+  // Test yang lupa override bakal buka DB beneran: koneksinya nahan proses
+  // `flutter test` sampe nyangkut. Gagal cepat dengan pesan jelas aja.
+  if (Platform.environment.containsKey('FLUTTER_TEST')) {
+    throw StateError(
+      'Tests must override appDatabaseProvider (in-memory DB) or the '
+      'providers that read from it.',
+    );
+  }
   final db = AppDatabase();
   ref.onDispose(db.close);
   return db;

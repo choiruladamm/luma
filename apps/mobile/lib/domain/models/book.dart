@@ -31,3 +31,50 @@ class ShelfBook {
   /// Kapan diimport.
   final DateTime createdAt;
 }
+
+class ChapterInfo {
+  const ChapterInfo({
+    required this.id,
+    required this.title,
+    required this.charOffset,
+    required this.chars,
+  });
+
+  final int id;
+  final String title;
+
+  /// Karakter sebelum chapter ini & panjang chapter ini, buat persentase.
+  final int charOffset;
+  final int chars;
+}
+
+/// Buku yang lagi dibaca: judul + daftar chapter urut `sortOrder`.
+class ReaderBook {
+  const ReaderBook({
+    required this.id,
+    required this.title,
+    required this.totalChars,
+    required this.chapters,
+  });
+
+  final int id;
+  final String title;
+  final int totalChars;
+  final List<ChapterInfo> chapters;
+}
+
+class ReaderParagraph {
+  const ReaderParagraph({
+    required this.index,
+    required this.groupIndex,
+    required this.type,
+    required this.text,
+  });
+
+  final int index;
+
+  /// Null buat heading & scene break.
+  final int? groupIndex;
+  final ParagraphType type;
+  final String text;
+}

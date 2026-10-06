@@ -15,11 +15,11 @@ Urutan issue (alur utuh dulu, fitur inti sebelum pemanis, backup sebelum dogfood
 1. Fondasi UI: #1 → #2 → #3
 2. Fondasi data: #4 → #5 → #6 → #7
 3. Import: #8 → #9 → #10
-4. Rak: #30 → #12 → #11 → #31
+4. Rak: #30 → #12 → #11
 5. Baca: #13 → #14 → #17 → #19 → #18
 6. Fitur inti: #20 → #21 → #22 → #23
 7. Pengaman data: #24 → #25 → #26
-8. Pemanis: #15 → #16 → #27
+8. Pemanis: #15 → #16 → #31 → #27
 9. Validasi: #28 (boleh kapan aja setelah #21) → #29
 
 Issue baru disisipin di fase yang cocok di daftar ini.
@@ -83,6 +83,10 @@ Struktur folder ikut Mibu (`choiruladamm/mibu`, `apps/mobile/test/`), tapi **wid
 Jebakan widget test:
 - `testWidgets` jalan di jam palsu: stream Drift, file IO, dan decode gambar butuh event loop asli. Stream Drift → override provider-nya. File/gambar → bungkus `pumpWidget` + tunggu di `tester.runAsync`, baru `pump()`.
 - `make test` pake `--timeout 30s`: test yang nyangkut gagal, gak macet. Jangan naikin timeout buat nutupin hang; cari yang nunggu event loop asli.
+- `--timeout` cuma motong **test**, bukan tearDown / proses yang gak mau keluar. Dua penyebab nyangkut yang udah kejadian:
+  - `tearDown(() => controller.close())` pada `StreamController` yang didengerin app: kalau test gagal di tengah, `close()` nunggu selamanya. Tulis `tearDown(() => unawaited(controller.close()))`.
+  - Provider yang baca DB lupa di-override: `appDatabaseProvider` sengaja `throw` di `flutter test` (cek `FLUTTER_TEST`) biar gagal cepat, bukan buka DB beneran yang nahan proses. Buka layar baru di test → override provider layar itu juga.
+- Jalanin suite penuh di background + pantau log; kalau log diam > 20 detik, itu nyangkut, bukan lambat.
 - Font test = Ahem (1em per glyph): set `tester.view.physicalSize = Size(900, 1400)`, `devicePixelRatio = 1`, `addTearDown(tester.view.reset)` supaya gak overflow palsu. Butuh ukuran teks asli (layout cover)? Load font-nya pake `FontLoader` di `setUpAll`.
 - `test/flutter_test_config.dart` set `driftRuntimeOptions.dontWarnAboutMultipleDatabases = true` (tiap test buka DB sendiri).
 

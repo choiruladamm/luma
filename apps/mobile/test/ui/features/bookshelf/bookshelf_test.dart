@@ -7,6 +7,7 @@ import 'package:luma/domain/models/book.dart';
 import 'package:luma/main.dart';
 import 'package:luma/ui/core/widgets/book_card.dart';
 import 'package:luma/ui/features/bookshelf/view_models/bookshelf_view_model.dart';
+import 'package:luma/ui/features/reader/view_models/reader_view_model.dart';
 import 'package:luma/ui/features/reader/views/reader_view.dart';
 import 'package:luma/ui/features/settings/views/settings_view.dart';
 
@@ -25,7 +26,10 @@ void main() {
   // covered in test/data/book_repository_test.dart.
   late StreamController<List<ShelfBook>> shelf;
   setUp(() => shelf = StreamController());
-  tearDown(() => shelf.close());
+  // Fire-and-forget: close() waits for the listener (the app's provider)
+  // to go away, which never happens if a test fails mid-way, and an awaited
+  // tearDown then hangs the whole run past --timeout.
+  tearDown(() => unawaited(shelf.close()));
 
   Future<void> pump(
     WidgetTester tester,
@@ -39,7 +43,11 @@ void main() {
     addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [booksStreamProvider.overrideWith((ref) => shelf.stream)],
+        overrides: [
+          booksStreamProvider.overrideWith((ref) => shelf.stream),
+          // Opening a book shows the reader: feed it too, never the real DB.
+          readerBookProvider.overrideWith((ref, id) async => null),
+        ],
         child: const LumaApp(),
       ),
     );
@@ -89,7 +97,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(ReaderView), findsOneWidget);
 
-    await tester.pageBack();
+    await tester.tap(find.bySemanticsLabel('Balik ke rak'));
     await tester.pumpAndSettle();
     await tester.tap(find.bySemanticsLabel('Pengaturan app'));
     await tester.pumpAndSettle();

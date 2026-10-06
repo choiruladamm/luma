@@ -221,4 +221,6 @@ abstract final class AppIcons {
   static const loading = HugeIcons.strokeRoundedLoading03;
   static const add = HugeIcons.strokeRoundedAdd01;
   static const settings = HugeIcons.strokeRoundedSettings01;
+  static const next = HugeIcons.strokeRoundedArrowRight02;
+  static const toc = HugeIcons.strokeRoundedLeftToRightListBullet;
 }

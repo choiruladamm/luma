@@ -64,4 +64,66 @@ void main() {
     await (db.delete(db.books)..where((b) => b.id.equals(id))).go();
     await expectation;
   });
+
+  test('readerBook: chapters in order with their lengths', () async {
+    final id = await add('Meditations');
+    // Inserted out of order on purpose.
+    for (final (order, offset) in [(1, 40), (0, 0), (2, 100)]) {
+      await db
+          .into(db.chapters)
+          .insert(
+            ChaptersCompanion.insert(
+              bookId: id,
+              sortOrder: order,
+              title: 'Book $order',
+              charOffset: offset,
+            ),
+          );
+    }
+    await (db.update(db.books)..where((b) => b.id.equals(id))).write(
+      const BooksCompanion(totalChars: Value(160)),
+    );
+
+    final book = (await BookRepository(db).readerBook(id))!;
+    expect(book.title, 'Meditations');
+    expect(book.chapters.map((c) => (c.title, c.charOffset, c.chars)), [
+      ('Book 0', 0, 40),
+      ('Book 1', 40, 60),
+      ('Book 2', 100, 60),
+    ]);
+    expect(await BookRepository(db).readerBook(999), isNull);
+  });
+
+  test('paragraphs come back in reading order', () async {
+    final id = await add('Meditations');
+    final chapterId = await db
+        .into(db.chapters)
+        .insert(
+          ChaptersCompanion.insert(
+            bookId: id,
+            sortOrder: 0,
+            title: 'I',
+            charOffset: 0,
+          ),
+        );
+    for (final i in [2, 0, 1]) {
+      await db
+          .into(db.paragraphs)
+          .insert(
+            ParagraphsCompanion.insert(
+              chapterId: chapterId,
+              paragraphIndex: i,
+              groupIndex: Value(i == 0 ? null : 0),
+              type: i == 0 ? ParagraphType.heading : ParagraphType.paragraph,
+              content: 'p$i',
+            ),
+          );
+    }
+    final paras = await BookRepository(db).paragraphs(chapterId);
+    expect(paras.map((p) => (p.index, p.text, p.groupIndex)), [
+      (0, 'p0', null),
+      (1, 'p1', 0),
+      (2, 'p2', 0),
+    ]);
+  });
 }
