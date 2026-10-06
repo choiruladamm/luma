@@ -109,7 +109,7 @@ void main() {
     );
   });
 
-  test('deleting a book cascades to its chapters and paragraphs', () async {
+  test('deleting a book cascades to everything that hangs off it', () async {
     final keep = await insertBook(hash: 'keep');
     final gone = await insertBook(hash: 'gone');
     for (final bookId in [keep, gone]) {
@@ -120,8 +120,29 @@ void main() {
             ParagraphsCompanion.insert(
               chapterId: chapterId,
               paragraphIndex: 0,
+              groupIndex: const Value(0),
               type: ParagraphType.paragraph,
               content: 'x',
+            ),
+          );
+      await db
+          .into(db.readingProgress)
+          .insert(
+            ReadingProgressCompanion.insert(
+              bookId: Value(bookId),
+              chapterId: chapterId,
+              paragraphIndex: 0,
+            ),
+          );
+      await db
+          .into(db.aiResults)
+          .insert(
+            AiResultsCompanion.insert(
+              chapterId: chapterId,
+              groupIndex: 0,
+              translations: '["x"]',
+              meaning: 'y',
+              model: 'z-ai/glm-5.3-flash',
             ),
           );
     }
@@ -130,7 +151,45 @@ void main() {
 
     final chapters = await db.select(db.chapters).get();
     expect(chapters.map((c) => c.bookId), [keep]);
-    final paras = await db.select(db.paragraphs).get();
-    expect(paras.map((p) => p.chapterId), [chapters.single.id]);
+    final kept = chapters.single.id;
+    expect((await db.select(db.paragraphs).get()).map((p) => p.chapterId), [
+      kept,
+    ]);
+    expect((await db.select(db.readingProgress).get()).map((p) => p.bookId), [
+      keep,
+    ]);
+    expect((await db.select(db.aiResults).get()).map((r) => r.chapterId), [
+      kept,
+    ]);
+  });
+
+  test('one cached AI result per group', () async {
+    final chapterId = await insertChapter(await insertBook(), 0);
+    final r = AiResultsCompanion.insert(
+      chapterId: chapterId,
+      groupIndex: 3,
+      translations: '["a","b"]',
+      meaning: 'm',
+      model: 'z-ai/glm-5.3-flash',
+    );
+    await db.into(db.aiResults).insert(r);
+    await expectLater(
+      db.into(db.aiResults).insert(r),
+      throwsA(isA<SqliteException>()),
+    );
+  });
+
+  test('settings are key-value and upsert by key', () async {
+    Future<void> put(String v) => db
+        .into(db.settings)
+        .insertOnConflictUpdate(
+          SettingsCompanion.insert(key: 'modelId', value: v),
+        );
+    await put('z-ai/glm-5.3-flash');
+    await put('qwen/qwen3.8-flash');
+    final rows = await db.select(db.settings).get();
+    expect(rows.map((r) => (r.key, r.value)), [
+      ('modelId', 'qwen/qwen3.8-flash'),
+    ]);
   });
 }

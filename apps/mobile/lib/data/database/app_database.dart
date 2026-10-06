@@ -69,11 +69,56 @@ class Paragraphs extends Table {
   Set<Column> get primaryKey => {chapterId, paragraphIndex};
 }
 
-@DriftDatabase(tables: [Books, Chapters, Paragraphs])
+/// Posisi baca terakhir, satu baris per buku.
+class ReadingProgress extends Table {
+  IntColumn get bookId =>
+      integer().references(Books, #id, onDelete: KeyAction.cascade)();
+  IntColumn get chapterId =>
+      integer().references(Chapters, #id, onDelete: KeyAction.cascade)();
+  IntColumn get paragraphIndex => integer()();
+  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
+
+  @override
+  Set<Column> get primaryKey => {bookId};
+}
+
+/// Cache hasil LLM per grup. Grup yang udah ada di sini gak manggil LLM lagi.
+class AiResults extends Table {
+  IntColumn get chapterId =>
+      integer().references(Chapters, #id, onDelete: KeyAction.cascade)();
+  IntColumn get groupIndex => integer()();
+
+  /// JSON array string, satu item per paragraf di grup (urut).
+  TextColumn get translations => text()();
+
+  /// Satu penjelasan buat seluruh grup.
+  TextColumn get meaning => text()();
+  TextColumn get model => text()();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+
+  @override
+  Set<Column> get primaryKey => {chapterId, groupIndex};
+}
+
+/// Pengaturan yang ikut backup (model ID, preferensi Aa, lastBackupAt).
+/// API key gak di sini: di flutter_secure_storage.
+class Settings extends Table {
+  TextColumn get key => text()();
+  TextColumn get value => text()();
+
+  @override
+  Set<Column> get primaryKey => {key};
+}
+
+@DriftDatabase(
+  tables: [Books, Chapters, Paragraphs, ReadingProgress, AiResults, Settings],
+)
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor])
     : super(executor ?? driftDatabase(name: 'luma'));
 
+  // Sebelum dogfooding: schema diedit langsung di versi 1 (hapus app di
+  // iPhone). Setelah ada data asli: naikin versi + tulis migrasi.
   @override
   int get schemaVersion => 1;
 
