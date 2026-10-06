@@ -49,7 +49,10 @@ class FileStorage {
   // Nama dari DB (atau dari backup yang di-restore) gak boleh nyasar keluar
   // folder lewat "../" atau path absolut.
   static String _name(String name) {
-    if (name == '.' || name == '..' || p.basename(name) != name) {
+    if (name.isEmpty ||
+        name == '.' ||
+        name == '..' ||
+        p.basename(name) != name) {
       throw ArgumentError.value(name, 'name', 'must be a bare file name');
     }
     return name;
