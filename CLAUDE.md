@@ -8,6 +8,27 @@ EPUB reader iOS (dipakai sendiri, dogfooding): tap paragraf → terjemahan Indon
 - **Desain UI:** Stabilo di Claude Design, https://claude.ai/artifact/EBwv9zJBLZQJa5WWYiaJ7F. Baca board layar yang dikerjakan (nama board tercantum di issue) lewat Artifact tool, bukan WebFetch. Tiap layar punya versi terang + gelap.
 - **Task:** GitHub issues milestone `MVP`, label `area:*`. Satu issue = satu unit kerja. Cek baris **Tergantung** di issue dan pastikan dependensinya sudah selesai. Centang checklist scope saat selesai.
 
+## Urutan kerja
+
+Urutan issue (alur utuh dulu, fitur inti sebelum pemanis, backup sebelum dogfooding karena app di-install ulang tiap 7 hari):
+
+1. Fondasi UI: #1 → #2 → #3
+2. Fondasi data: #4 → #5 → #6 → #7
+3. Import: #8 → #9 → #10
+4. Rak: #30 → #12 → #11
+5. Baca: #13 → #14 → #17 → #19 → #18
+6. Fitur inti: #20 → #21 → #22 → #23
+7. Pengaman data: #24 → #25 → #26
+8. Pemanis: #15 → #16 → #27
+9. Validasi: #28 (boleh kapan aja setelah #21) → #29
+
+Issue baru disisipin di fase yang cocok di daftar ini.
+
+Kalau user bilang "next task" / "lanjut":
+1. `gh issue list --milestone MVP --state open` → ambil issue open pertama di urutan di atas yang semua **Tergantung**-nya udah closed.
+2. Sebutin nomor, judul, dan ringkasan scope-nya, terus tunggu user confirm. Jangan langsung ngoding.
+3. Setelah confirm: baca docs + board yang disebut issue, kerjain, `make check`, commit `Closes #N`, centang checklist, push.
+
 ## Project
 
 App Flutter di `apps/mobile`, Flutter dikunci lewat `.fvmrc`. Jalankan perintah lewat `Makefile` di root (`make help` untuk daftar); di luar itu pakai `fvm flutter` / `fvm dart` dari `apps/mobile`.
