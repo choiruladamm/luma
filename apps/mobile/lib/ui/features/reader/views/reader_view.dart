@@ -155,8 +155,10 @@ class _TopBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       height: Layout.topBar,
+      // Sama kayak header rak (board Baca pake 16; disamain biar tombolnya
+      // sejajar sama rak & tepi teks bacaan).
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: Space.s4),
+        padding: const EdgeInsets.symmetric(horizontal: Layout.margin),
         child: Row(
           spacing: 10,
           children: [
