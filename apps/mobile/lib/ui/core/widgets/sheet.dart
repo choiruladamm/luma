@@ -68,7 +68,6 @@ class SheetFrame extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.stabilo;
     return Padding(
       padding: Layout.sheetPadding,
       child: Column(
@@ -76,16 +75,7 @@ class SheetFrame extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         spacing: Space.s4,
         children: [
-          Center(
-            child: Container(
-              width: 40,
-              height: 5,
-              decoration: BoxDecoration(
-                color: c.grabber,
-                borderRadius: BorderRadius.circular(Radii.full),
-              ),
-            ),
-          ),
+          const SheetGrabber(),
           if (title != null)
             Row(
               spacing: Space.s3,
@@ -122,4 +112,21 @@ class SheetFrame extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Gagang sheet 40 × 5.
+class SheetGrabber extends StatelessWidget {
+  const SheetGrabber({super.key});
+
+  @override
+  Widget build(BuildContext context) => Center(
+    child: Container(
+      width: 40,
+      height: 5,
+      decoration: BoxDecoration(
+        color: context.stabilo.grabber,
+        borderRadius: BorderRadius.circular(Radii.full),
+      ),
+    ),
+  );
 }

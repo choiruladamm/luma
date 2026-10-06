@@ -10,6 +10,7 @@ import '../../../core/theme/stabilo_tokens.dart';
 import '../../../core/theme/stabilo_type.dart';
 import '../../../core/widgets/buttons.dart';
 import '../view_models/reader_view_model.dart';
+import 'toc_sheet.dart';
 
 /// Halaman baca (board 03 Baca, 11 Akhir bab). Satu chapter per layar; ujung
 /// chapter ada kartu lanjut ke chapter berikutnya.
@@ -79,6 +80,27 @@ class _ReaderViewState extends ConsumerState<ReaderView>
     _save();
   });
 
+  Future<void> _openToc(ReaderBook book) async {
+    final i = _chapter!;
+    final ch = book.chapters[i];
+    final percent =
+        (bookProgress(
+                  charOffset: ch.charOffset,
+                  chapterChars: ch.chars,
+                  fraction: _fraction.value,
+                  totalChars: book.totalChars,
+                ) *
+                100)
+            .floor();
+    final picked = await showTocSheet(
+      context,
+      book: book,
+      current: i,
+      percent: percent,
+    );
+    if (picked != null && picked != _chapter && mounted) _goTo(book, picked);
+  }
+
   /// Sekali aja: buka di chapter & paragraf tersimpan (atau bab 1).
   void _start(ReaderBook book, ReadingPosition? saved) {
     final i = saved == null
@@ -106,7 +128,7 @@ class _ReaderViewState extends ConsumerState<ReaderView>
               final i = _chapter!;
               return Column(
                 children: [
-                  _TopBar(title: b.title),
+                  _TopBar(title: b.title, onToc: () => _openToc(b)),
                   Expanded(
                     child: _ChapterText(
                       key: ValueKey(b.chapters[i].id),
@@ -147,9 +169,12 @@ class _ReaderViewState extends ConsumerState<ReaderView>
 }
 
 class _TopBar extends StatelessWidget {
-  const _TopBar({required this.title});
+  const _TopBar({required this.title, this.onToc});
 
   final String title;
+
+  /// Null = daftar isi belum bisa dibuka (buku belum kebaca).
+  final VoidCallback? onToc;
 
   @override
   Widget build(BuildContext context) {
@@ -176,16 +201,16 @@ class _TopBar extends StatelessWidget {
                 style: StabiloType.label,
               ),
             ),
-            // Daftar isi (#17) & Aa (#18) nyusul; sementara mati.
-            const Row(
+            Row(
               spacing: Space.s2,
               children: [
                 CircleButton(
                   semanticLabel: 'Daftar isi',
                   icon: AppIcons.toc,
-                  onPressed: null,
+                  onPressed: onToc,
                 ),
-                CircleButton(
+                // Aa nyusul di #18; sementara mati.
+                const CircleButton(
                   semanticLabel: 'Atur tampilan teks',
                   text: 'Aa',
                   onPressed: null,

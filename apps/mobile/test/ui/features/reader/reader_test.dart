@@ -165,16 +165,77 @@ void main() {
     expect(find.byType(ReaderView), findsNothing);
   });
 
-  testWidgets('contents & Aa stay off until their issues land', (tester) async {
+  testWidgets('Aa stays off until #18 lands', (tester) async {
     await openBook(tester);
-    for (final label in ['Daftar isi', 'Atur tampilan teks']) {
-      final button = tester.widget<CircleButton>(
-        find.byWidgetPredicate(
-          (w) => w is CircleButton && w.semanticLabel == label,
-        ),
-      );
-      expect(button.onPressed, isNull, reason: label);
-    }
+    final button = tester.widget<CircleButton>(
+      find.byWidgetPredicate(
+        (w) => w is CircleButton && w.semanticLabel == 'Atur tampilan teks',
+      ),
+    );
+    expect(button.onPressed, isNull);
+  });
+
+  Future<void> openToc(WidgetTester tester) async {
+    await tester.tap(find.bySemanticsLabel('Daftar isi'));
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('contents sheet: header, current chapter, jump to another', (
+    tester,
+  ) async {
+    await openBook(tester);
+    await openToc(tester);
+    expect(find.text('Daftar isi'), findsOneWidget);
+    expect(find.textContaining('The Enchiridion · 2 bab · '), findsOneWidget);
+    expect(find.text('01'), findsOneWidget);
+    expect(find.text('Lagi dibaca'), findsOneWidget);
+
+    await tester.tap(find.text('II').last);
+    await tester.pumpAndSettle();
+    expect(find.text('Daftar isi'), findsNothing);
+    expect(find.text('Bab 2'), findsOneWidget);
+    expect(progress.saves.last, (chapterId: 11, paragraphIndex: 0));
+  });
+
+  testWidgets('closing the contents keeps the chapter', (tester) async {
+    await openBook(tester);
+    await openToc(tester);
+    progress.saves.clear();
+    await tester.tap(find.bySemanticsLabel('Tutup'));
+    await tester.pumpAndSettle();
+    expect(find.text('Bab 1'), findsOneWidget);
+    expect(progress.saves, isEmpty);
+  });
+
+  testWidgets('a long contents list scrolls to the current chapter', (
+    tester,
+  ) async {
+    final many = ReaderBook(
+      id: 1,
+      title: 'Big Book',
+      totalChars: 6000,
+      chapters: [
+        for (var i = 0; i < 60; i++)
+          ChapterInfo(
+            id: 100 + i,
+            title: 'Chapter ${i + 1}',
+            charOffset: i * 100,
+            chars: 100,
+          ),
+      ],
+    );
+    paragraphs[140] = [p(0, ParagraphType.paragraph, 'Deep in the book.', 0)];
+    await openBook(
+      tester,
+      readerBook: many,
+      saved: (chapterId: 140, paragraphIndex: 0),
+    );
+    await openToc(tester);
+    final badge = find.text('Lagi dibaca');
+    expect(badge, findsOneWidget);
+    final sheet = tester.getRect(find.byType(BottomSheet));
+    final row = tester.getRect(badge);
+    expect(sheet.contains(row.center), isTrue); // scrolled into view
   });
 
   testWidgets('while the text loads, only the heading shows (no end card)', (
