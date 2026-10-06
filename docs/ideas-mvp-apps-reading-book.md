@@ -67,7 +67,7 @@ Mengikuti stack Mibu supaya pola dan boilerplate bisa dipakai ulang.
 | State management | `flutter_riverpod` |
 | Database lokal | `drift` |
 | Routing | `go_router` |
-| Parsing EPUB | `epubx` |
+| Parsing EPUB | parser sendiri (`archive` + `xml`), lihat catatan di bawah |
 | Parsing HTML chapter | `html` (DOM parser) |
 | Pilih file | `file_picker` |
 | Path penyimpanan | `path_provider`, `path` |
@@ -79,6 +79,8 @@ Mengikuti stack Mibu supaya pola dan boilerplate bisa dipakai ulang.
 | Bagikan/simpan file backup | `share_plus` |
 
 > Cek tanggal update terakhir dan issue tiap package di pub.dev sebelum dipakai, terutama package EPUB.
+>
+> **Parser EPUB ditulis sendiri** (Okt 2026): `epubx` terakhir rilis Juni 2023, gagal total kalau TOC gak standar, dan nahan `archive` di 3.x. Parser sendiri cuma butuh container → OPF → spine → TOC (nav EPUB3 / NCX EPUB2) → cover, dan entri TOC yang rusak dilewatin, bukan bikin import gagal.
 >
 > Teks bacaan dirender dari tabel `paragraphs` (teks polos), bukan dari HTML mentah EPUB, jadi package render HTML tidak dibutuhkan untuk MVP.
 
@@ -334,7 +336,7 @@ Fungsi ini **pure** (tanpa I/O), jadi wajib dibuat unit test: dialog pendek beru
 1. Pilih file EPUB via `file_picker`
 2. Baca bytes, hitung SHA-256 → kalau hash sudah ada → state **duplikat**
 3. Copy ke `Documents/books/{hash}.epub`
-4. Parse via `epubx`: judul, penulis, cover → simpan cover ke `Documents/covers/{hash}.png`
+4. Parse EPUB (parser sendiri): judul, penulis, cover → simpan cover ke `Documents/covers/{hash}.{ext}`
 5. Tentukan chapter dari TOC/nav EPUB (bukan dari jumlah file HTML), `sortOrder` = urutan TOC
 6. Per chapter: parse HTML (package `html`), ambil blok teks (`p`, `div` berisi teks, heading, `hr`), normalisasi whitespace, buang paragraf kosong, lewati bagian non-isi (cover, copyright, daftar isi)
 7. Jalankan `assignGroups` per chapter
