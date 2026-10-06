@@ -141,6 +141,47 @@ void main() {
     ]);
   });
 
+  test('The Enchiridion (Gutenberg): chapters in reading order', () {
+    final book = parseEpub(
+      File('test/fixtures/enchiridion.epub').readAsBytesSync(),
+    );
+    expect(book.title, 'The Enchiridion');
+    expect(book.author, 'Epictetus');
+    final titles = book.chapters.map((c) => c.title).toList();
+    final start = titles.indexOf('THE ENCHIRIDION');
+    expect(titles.sublist(start, start + 4), [
+      'THE ENCHIRIDION',
+      'I',
+      'II',
+      'III',
+    ]);
+    expect(titles.indexOf('LI'), titles.indexOf('L') + 1);
+  });
+
+  // List.sort isn't stable past 32 items: many chapters in one file used to
+  // come out shuffled (The Enchiridion, 63 entries in one file).
+  test('many anchors in one file keep their TOC order', () {
+    final ids = List.generate(40, (i) => 'c$i');
+    final book = parseEpub(
+      buildEpub({
+        'OEBPS/content.opf': opf(
+          manifest:
+              '<item id="nav" href="nav.xhtml" properties="nav" '
+              'media-type="application/xhtml+xml"/>'
+              '<item id="t" href="t.xhtml" media-type="application/xhtml+xml"/>',
+          spine: '<itemref idref="t"/>',
+        ),
+        'OEBPS/nav.xhtml': xhtml(
+          '<nav><ol>'
+          '${ids.map((id) => '<li><a href="t.xhtml#$id">$id</a></li>').join()}'
+          '</ol></nav>',
+        ),
+        'OEBPS/t.xhtml': xhtml(ids.map((id) => '<p id="$id">$id</p>').join()),
+      }),
+    );
+    expect(book.chapters.map((c) => c.title), ids);
+  });
+
   test('no TOC: one chapter per spine file, titled "Bab N"', () {
     final book = parseEpub(
       buildEpub({

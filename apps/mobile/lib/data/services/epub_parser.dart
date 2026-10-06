@@ -239,14 +239,20 @@ EpubOutline _parse(
   var toc = navToc();
   if (toc.isEmpty) toc = ncxToc();
 
-  // Entri yang nunjuk ke file di luar spine dibuang; urut ikut spine (stabil,
-  // jadi entri di file yang sama tetep urut TOC).
+  // Entri yang nunjuk ke file di luar spine dibuang; urut ikut spine, entri di
+  // file yang sama tetep urut TOC. List.sort gak stabil, jadi urutan TOC
+  // dijadiin pembanding kedua.
   final seen = <String>{};
-  final starts = [
-    for (final e in toc)
+  final ordered = [
+    for (final (i, e) in toc.indexed)
       if (spineIndex.containsKey(e.file) && seen.add('${e.file}#${e.anchor}'))
-        e,
-  ]..sort((a, b) => spineIndex[a.file]!.compareTo(spineIndex[b.file]!));
+        (i, e),
+  ];
+  ordered.sort((a, b) {
+    final bySpine = spineIndex[a.$2.file]!.compareTo(spineIndex[b.$2.file]!);
+    return bySpine != 0 ? bySpine : a.$1.compareTo(b.$1);
+  });
+  final starts = [for (final (_, e) in ordered) e];
 
   final chapters = <ChapterSource>[];
   if (starts.isEmpty) {
