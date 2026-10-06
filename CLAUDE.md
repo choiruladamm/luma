@@ -12,7 +12,7 @@ EPUB reader iOS (dipakai sendiri, dogfooding): tap paragraf → terjemahan Indon
 
 App Flutter di `apps/mobile`, Flutter dikunci lewat `.fvmrc`. Jalankan perintah lewat `Makefile` di root (`make help` untuk daftar); di luar itu pakai `fvm flutter` / `fvm dart` dari `apps/mobile`.
 
-- Setelah ubah tabel Drift, provider `@riverpod`, atau model freezed: `make gen`. File `*.g.dart` / `*.freezed.dart` ikut di-commit.
+- Setelah ubah tabel Drift atau model freezed: `make gen`. File `*.g.dart` / `*.freezed.dart` ikut di-commit.
 - `make check` (format, analyze, test) harus bersih sebelum commit.
 - `make run` / `make release` ke device hanya kalau user minta.
 
@@ -22,17 +22,19 @@ Layered (UI → data), struktur hybrid:
 
 ```
 lib/
-├── data/services/      # wrapper Drift, file storage, OpenRouter, secure storage
+├── data/database/      # Drift AppDatabase + appDatabaseProvider
+├── data/services/      # file storage, OpenRouter, secure storage
 ├── data/repositories/  # sumber kebenaran, ubah data mentah → domain model
-├── domain/models/      # model immutable (freezed)
+├── domain/             # logika pure (grouping, parser); models/ = model immutable (freezed)
+├── routing/router.dart # routerProvider + Routes
 └── ui/
-    ├── core/           # router, theme Stabilo, widget shared
-    └── features/<fitur>/{views,view_models}/
+    ├── core/           # theme Stabilo, widget shared
+    └── features/<fitur>/{views,view_models}/   # layar = <Nama>View di <nama>_view.dart
 ```
 
-- State: Riverpod 3 dengan codegen (`@riverpod`). `Notifier` berperan sebagai ViewModel. Provider codegen otomatis autoDispose; pakai `@Riverpod(keepAlive: true)` untuk service/DB.
+- State: Riverpod 3, provider ditulis manual (tanpa `riverpod_generator`, sama seperti Mibu), dideklarasikan di sebelah class yang diekspos. `Notifier` berperan sebagai ViewModel. Pakai `.autoDispose` untuk state per layar; service/DB tanpa autoDispose.
 - Nama provider utama sudah ditetapkan di docs bagian 8 (`booksStreamProvider`, `groupAiProvider`, dll): pakai nama itu.
-- Routing: go_router, hanya `/`, `/reader/:bookId`, `/settings`. Sheet artinya, Aa, daftar isi = `showModalBottomSheet`.
+- Routing: go_router, hanya `/`, `/reader/:bookId`, `/settings`; navigasi pakai konstanta `Routes`, bukan string. Sheet artinya, Aa, daftar isi = `showModalBottomSheet`.
 - Warna/ukuran dari theme (`context.stabilo`), tanpa hex hardcode di widget.
 
 ## Skill Flutter

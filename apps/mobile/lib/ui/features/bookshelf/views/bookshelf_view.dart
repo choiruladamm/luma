@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class BookshelfScreen extends StatelessWidget {
-  const BookshelfScreen({super.key});
+class BookshelfView extends StatelessWidget {
+  const BookshelfView({super.key});
 
   @override
   Widget build(BuildContext context) {

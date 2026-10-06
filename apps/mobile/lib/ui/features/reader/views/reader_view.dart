@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class ReaderScreen extends StatelessWidget {
-  const ReaderScreen({super.key, required this.bookId});
+class ReaderView extends StatelessWidget {
+  const ReaderView({super.key, required this.bookId});
 
   final int bookId;
 
