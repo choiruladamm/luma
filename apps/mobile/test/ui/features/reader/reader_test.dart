@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:luma/domain/models/book.dart';
 import 'package:luma/main.dart';
+import 'package:luma/ui/core/theme/stabilo_theme.dart';
 import 'package:luma/ui/core/widgets/book_card.dart';
 import 'package:luma/ui/core/widgets/buttons.dart';
 import 'package:luma/ui/features/bookshelf/view_models/bookshelf_view_model.dart';
@@ -156,5 +159,30 @@ void main() {
       );
       expect(button.onPressed, isNull, reason: label);
     }
+  });
+
+  testWidgets('while the text loads, only the heading shows (no end card)', (
+    tester,
+  ) async {
+    final pending = Completer<List<ReaderParagraph>>();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          readerBookProvider.overrideWith((ref, id) async => book),
+          chapterParagraphsProvider.overrideWith((ref, id) => pending.future),
+        ],
+        child: MaterialApp(
+          theme: stabiloTheme(Brightness.light),
+          home: const ReaderView(bookId: 1),
+        ),
+      ),
+    );
+    await tester.pump();
+    expect(find.text('Bab 1'), findsOneWidget);
+    expect(find.text('Lanjut, gas'), findsNothing);
+
+    pending.complete(paragraphs[10]!);
+    await tester.pump();
+    expect(find.text('Lanjut, gas'), findsOneWidget);
   });
 }

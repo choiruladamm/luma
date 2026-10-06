@@ -206,7 +206,9 @@ class _ChapterTextState extends ConsumerState<_ChapterText> {
         Layout.margin,
         Space.s2,
       ),
-      itemCount: paras.length + 2,
+      // Belum kebaca: cuma heading. Kartu akhir bab baru muncul bareng teks,
+      // biar gak nongol di atas terus kedorong ke bawah.
+      itemCount: paragraphs is AsyncData ? paras.length + 2 : 1,
       itemBuilder: (context, i) {
         if (i == 0) {
           return Padding(
