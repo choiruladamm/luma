@@ -92,6 +92,13 @@ abstract final class StabiloType {
     height: 1.5,
   );
 
+  /// Kode error, API key, model ID.
+  static const mono = TextStyle(
+    fontFamily: 'Menlo',
+    fontFamilyFallback: ['Courier', 'monospace'],
+    fontSize: 15,
+  );
+
   /// Mode gelap: jarak baris bacaan +0,05 (teks terang di latar gelap
   /// keliatan lebih tebel).
   static TextStyle forBrightness(TextStyle s, Brightness b) =>

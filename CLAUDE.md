@@ -36,6 +36,7 @@ lib/
 - Nama provider utama sudah ditetapkan di docs bagian 8 (`booksStreamProvider`, `groupAiProvider`, dll): pakai nama itu.
 - Routing: go_router, hanya `/`, `/reader/:bookId`, `/settings`; navigasi pakai konstanta `Routes`, bukan string. Sheet artinya, Aa, daftar isi = `showModalBottomSheet`.
 - Warna dari `context.stabilo`, teks dari `StabiloType`, ukuran/radius/gerak/bayangan dari `stabilo_tokens.dart` (`Space`, `Radii`, `Layout`, `Motion`, `Elevation`). Tanpa hex atau angka ajaib di widget; token baru ditambah di sana dulu.
+- Komponen shared di `ui/core/widgets/`, pakai ulang (ukuran khusus komponen boleh ditulis di sana): `AppButton.primary/secondary/danger`, `CircleButton`, `AppIcon` + `AppIcons` (Hugeicons Stroke Rounded), `Tag.section/status`, `showAppSheet` + `SheetFrame`, `showToast`, `showConfirmDialog`, `showAppMenu`, `AppField`. Komponen khusus satu fitur tinggal di folder fiturnya.
 
 ## Skill Flutter
 

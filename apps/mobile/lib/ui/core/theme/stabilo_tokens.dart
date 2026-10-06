@@ -21,6 +21,10 @@ abstract final class Radii {
   static const lg = 20.0; // kartu, CTA besar
   static const xl = 28.0; // sudut atas sheet
   static const full = 999.0; // icon button, pill, segmented
+  // Di luar skala Ruang, dipake board Komponen 04.
+  static const field = 16.0; // field input
+  static const menu = 18.0; // menu, list pengaturan
+  static const dialog = 24.0;
 }
 
 /// Layout acuan iPhone 390 × 844.
@@ -52,6 +56,7 @@ abstract final class Motion {
   static const cursorBlink = Duration(milliseconds: 1000); // steps(1)
   static const thinkingDots = Duration(milliseconds: 1200); // easeInOut, loop
   static const reducedFade = Duration(milliseconds: 150);
+  static const toast = Duration(milliseconds: 2500); // ilang sendiri
 }
 
 /// Bayangan. Default flat (tanpa bayangan).
@@ -61,6 +66,10 @@ abstract final class Elevation {
       b == Brightness.light
       ? [BoxShadow(color: c.outline, offset: const Offset(0, 2))]
       : const [];
+
+  static const toast = [
+    BoxShadow(color: Color(0x2E000000), offset: Offset(0, 8), blurRadius: 24),
+  ];
 
   static const cover = [
     BoxShadow(color: Color(0x14000000), offset: Offset(0, 4), blurRadius: 12),

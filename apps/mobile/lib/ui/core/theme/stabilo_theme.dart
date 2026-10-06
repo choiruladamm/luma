@@ -17,6 +17,8 @@ class StabiloColors extends ThemeExtension<StabiloColors> {
     required this.ink3,
     required this.accent,
     required this.onAccent,
+    required this.accentBorder,
+    required this.onPink,
     required this.pink,
     required this.highlight,
     required this.onHighlight,
@@ -29,6 +31,8 @@ class StabiloColors extends ThemeExtension<StabiloColors> {
     required this.mark,
     required this.scrim,
     required this.grabber,
+    required this.menuLine,
+    required this.fieldLine,
   });
 
   // Permukaan
@@ -36,11 +40,15 @@ class StabiloColors extends ThemeExtension<StabiloColors> {
   // Teks. ink3 khusus disabled.
   final Color ink, ink2, ink3;
   // Aksen. highlight cuma buat grup paragraf yang lagi dibuka di sheet.
-  final Color accent, onAccent, pink, highlight, onHighlight;
+  // accentBorder: outline tombol/opsi accent (gelap: sewarna accent).
+  final Color accent, onAccent, accentBorder, pink, onPink;
+  final Color highlight, onHighlight;
   // Status & feedback. mark = penanda grup yang udah diterjemahin.
   final Color danger, onDanger, dangerSoft, dangerInk, toastBg, toastInk, mark;
   // Overlay
   final Color scrim, grabber;
+  // Garis pemisah di menu/list, garis field input.
+  final Color menuLine, fieldLine;
 
   static const light = StabiloColors(
     canvas: Color(0xFFFFFBEF),
@@ -53,7 +61,9 @@ class StabiloColors extends ThemeExtension<StabiloColors> {
     ink3: Color(0xFF8A8576),
     accent: Color(0xFFFFD84D),
     onAccent: Color(0xFF1A1A1A),
+    accentBorder: Color(0xFF1A1A1A),
     pink: Color(0xFFFFC2D3),
+    onPink: Color(0xFF1A1A1A),
     highlight: Color(0xFFFFD84D),
     onHighlight: Color(0xFF1A1A1A),
     danger: Color(0xFFB4361F),
@@ -65,6 +75,8 @@ class StabiloColors extends ThemeExtension<StabiloColors> {
     mark: Color(0xFFE6B800),
     scrim: Color(0x611A1A1A), // 38%
     grabber: Color(0xFFE2DBC6),
+    menuLine: Color(0xFFECE5D2),
+    fieldLine: Color(0xFFCFC7B1),
   );
 
   static const dark = StabiloColors(
@@ -78,7 +90,9 @@ class StabiloColors extends ThemeExtension<StabiloColors> {
     ink3: Color(0xFF6E695E),
     accent: Color(0xFFE9C75A),
     onAccent: Color(0xFF22201C),
+    accentBorder: Color(0xFFE9C75A),
     pink: Color(0xFFD99BAE),
+    onPink: Color(0xFF22201C),
     highlight: Color(0x42E9C75A), // 26%
     onHighlight: Color(0xFFF3EBD3),
     danger: Color(0xFFE8836F),
@@ -90,6 +104,8 @@ class StabiloColors extends ThemeExtension<StabiloColors> {
     mark: Color(0xFFB39845),
     scrim: Color(0x6B000000), // 42%
     grabber: Color(0xFF4A463E),
+    menuLine: Color(0xFF3A3732),
+    fieldLine: Color(0xFF5A554B),
   );
 
   // Token gak pernah diubah per widget; set baru = konstanta baru.
@@ -119,6 +135,18 @@ ThemeData stabiloTheme(Brightness brightness) {
       displayColor: c.ink,
     ),
     scaffoldBackgroundColor: c.canvas,
+    splashFactory: NoSplash.splashFactory,
+    popupMenuTheme: PopupMenuThemeData(
+      color: c.sheet,
+      surfaceTintColor: Colors.transparent,
+      elevation: 0,
+      menuPadding: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(Radii.menu),
+        side: BorderSide(color: c.menuLine),
+      ),
+    ),
+    dividerTheme: DividerThemeData(color: c.menuLine, space: 1, thickness: 1),
     colorScheme: ColorScheme.fromSeed(
       seedColor: c.accent,
       brightness: brightness,
@@ -150,17 +178,10 @@ ThemeData stabiloTheme(Brightness brightness) {
       barrierColor: c.scrim,
       surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(Radii.lg),
+        borderRadius: BorderRadius.circular(Radii.dialog),
       ),
       titleTextStyle: StabiloType.titleMd.copyWith(color: c.ink),
       contentTextStyle: StabiloType.body.copyWith(color: c.ink2),
-    ),
-    snackBarTheme: SnackBarThemeData(
-      backgroundColor: c.toastBg,
-      contentTextStyle: StabiloType.label.copyWith(color: c.toastInk),
-      behavior: SnackBarBehavior.floating,
-      elevation: 0,
-      shape: const StadiumBorder(),
     ),
     extensions: [c],
   );
