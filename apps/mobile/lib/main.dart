@@ -1,11 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'data/services/file_storage.dart';
 import 'routing/router.dart';
 import 'ui/core/theme/stabilo_theme.dart';
 
-void main() {
-  runApp(const ProviderScope(child: LumaApp()));
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final storage = await FileStorage.open();
+  runApp(
+    ProviderScope(
+      overrides: [fileStorageProvider.overrideWithValue(storage)],
+      child: const LumaApp(),
+    ),
+  );
 }
 
 class LumaApp extends ConsumerWidget {
