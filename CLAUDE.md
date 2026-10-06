@@ -1,0 +1,82 @@
+# Luma
+
+EPUB reader iOS (dipakai sendiri, dogfooding): tap paragraf → terjemahan Indonesia + makna dari LLM, tanpa keluar halaman baca.
+
+## Sumber kebenaran
+
+- **Produk, data model, alur:** [docs/ideas-mvp-apps-reading-book.md](docs/ideas-mvp-apps-reading-book.md). Baca bagian yang relevan sebelum mengerjakan fitur apa pun. Bagian 12 ke bawah (Recap, Markdown, PDF) di luar scope: kerjakan hanya kalau diminta.
+- **Desain UI:** Stabilo di Claude Design, https://claude.ai/artifact/EBwv9zJBLZQJa5WWYiaJ7F. Baca board layar yang dikerjakan (nama board tercantum di issue) lewat Artifact tool, bukan WebFetch. Tiap layar punya versi terang + gelap.
+- **Task:** GitHub issues milestone `MVP` (#1–#29), label `area:*`. Satu issue = satu unit kerja. Cek baris **Tergantung** di issue dan pastikan dependensinya sudah selesai. Centang checklist scope saat selesai.
+
+## Project
+
+App Flutter di `apps/mobile`, Flutter dikunci lewat `.fvmrc`. Jalankan perintah lewat `Makefile` di root (`make help` untuk daftar); di luar itu pakai `fvm flutter` / `fvm dart` dari `apps/mobile`.
+
+- Setelah ubah tabel Drift, provider `@riverpod`, atau model freezed: `make gen`. File `*.g.dart` / `*.freezed.dart` ikut di-commit.
+- `make check` (format, analyze, test) harus bersih sebelum commit.
+- `make run` / `make release` ke device hanya kalau user minta.
+
+## Arsitektur
+
+Layered (UI → data), struktur hybrid:
+
+```
+lib/
+├── data/services/      # wrapper Drift, file storage, OpenRouter, secure storage
+├── data/repositories/  # sumber kebenaran, ubah data mentah → domain model
+├── domain/models/      # model immutable (freezed)
+└── ui/
+    ├── core/           # router, theme Stabilo, widget shared
+    └── features/<fitur>/{views,view_models}/
+```
+
+- State: Riverpod 3 dengan codegen (`@riverpod`). `Notifier` berperan sebagai ViewModel. Provider codegen otomatis autoDispose; pakai `@Riverpod(keepAlive: true)` untuk service/DB.
+- Nama provider utama sudah ditetapkan di docs bagian 8 (`booksStreamProvider`, `groupAiProvider`, dll): pakai nama itu.
+- Routing: go_router, hanya `/`, `/reader/:bookId`, `/settings`. Sheet artinya, Aa, daftar isi = `showModalBottomSheet`.
+- Warna/ukuran dari theme (`context.stabilo`), tanpa hex hardcode di widget.
+
+## Skill Flutter
+
+Load hanya skill yang dibutuhkan kerjaan saat itu:
+
+- `flutter-apply-architecture-best-practices`: fitur baru yang menyentuh data/repository/ViewModel, atau refactor struktur.
+- `flutter-setup-declarative-routing`: ubah route/navigasi.
+- `flutter-build-responsive-layout`: layout yang rusak di ukuran layar tertentu.
+- `flutter-add-widget-test`: nulis widget test layar/komponen.
+
+Kalau skill bentrok dengan file ini, ikuti file ini (architecture skill mencontohkan `ChangeNotifier` + `provider`/`get_it`, di sini pakai Riverpod).
+
+## Test
+
+Ikut pola repo Mibu (`choiruladamm/mibu`, `apps/mobile/test/`). Tiap issue selesai bawa test-nya di folder yang sesuai:
+
+- `test/domain/`: logika pure (grouping, parser EPUB/HTML, parsing JSON LLM, persentase baca).
+- `test/data/`: repository & schema dengan Drift in-memory: `AppDatabase(DatabaseConnection(NativeDatabase.memory(), closeStreamsSynchronously: true))`. Round-trip backup/restore masuk sini.
+- `test/ui/core/`: widget shared (tombol, sheet, toast).
+- `test/ui/features/<fitur>/<layar>_test.dart`: widget test per layar. `ProviderScope` override `appDatabaseProvider` dengan DB in-memory, `MaterialApp` pakai theme Stabilo, `home:` layar yang dites. Service luar (OpenRouter, file picker, secure storage) di-override dengan fake.
+
+Jebakan widget test:
+- Font test = Ahem (1em per glyph): set `tester.view.physicalSize = Size(900, 1400)`, `devicePixelRatio = 1`, `addTearDown(tester.view.reset)` supaya tidak overflow palsu.
+- Query Drift di dalam `testWidgets` pakai `get()` / `tester.runAsync`, bukan `watch().first`, karena stream Drift butuh timer yang tidak jalan di fake clock.
+- `test/flutter_test_config.dart` set `driftRuntimeOptions.dontWarnAboutMultipleDatabases = true` (tiap test buka DB sendiri).
+
+Integration test di luar scope MVP.
+
+## Aturan data yang gampang terlewat
+
+- DB hanya menyimpan **nama file**; path absolut di-resolve saat runtime (container iOS berubah tiap reinstall).
+- Tabel lain menunjuk `chapters.id`, bukan urutan chapter.
+- `paragraphIndex` & `groupIndex` harus stabil. Ubah logika parsing/grouping → naikkan `parserVersion`, re-import, hapus `ai_results` buku itu.
+- Data yang ikut backup disimpan di Drift (tabel `settings`). API key hanya di `flutter_secure_storage` dan tidak ikut backup.
+- Parsing EPUB dan zip backup jalan di isolate.
+- Model LLM dibaca dari Pengaturan, reasoning dimatikan, output JSON divalidasi (bagian 9).
+
+## Copy
+
+UI berbahasa Indonesia gaya Gen Z santai ("Rak buku lo", "Bentar, lagi mikir..."). Ambil teks persis dari board desain kalau ada.
+
+## Git
+
+- Conventional Commits (`feat(reader): ...`, `fix(import): ...`), scope = area. Tutup issue lewat `Closes #N` di commit/PR.
+- Tanpa `Co-Authored-By` atau tanda AI apa pun di commit, PR, dan issue.
+- Repo public: link desain selalu tanpa parameter `?sk=`.
