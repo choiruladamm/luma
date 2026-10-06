@@ -198,9 +198,14 @@ void main() {
     expect(find.text('Bab 1'), findsOneWidget);
     expect(find.text('Lanjut, gas'), findsNothing);
 
+    double opacity() =>
+        tester.widget<AnimatedOpacity>(find.byType(AnimatedOpacity)).opacity;
+    expect(opacity(), 0); // hidden until loaded and in place
+
     pending.complete(paragraphs[10]!);
-    await tester.pump();
+    await tester.pumpAndSettle();
     expect(find.text('Lanjut, gas'), findsOneWidget);
+    expect(opacity(), 1);
   });
 
   const longBook = ReaderBook(

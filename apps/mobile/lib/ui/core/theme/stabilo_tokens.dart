@@ -56,6 +56,7 @@ abstract final class Motion {
   static const cursorBlink = Duration(milliseconds: 1000); // steps(1)
   static const thinkingDots = Duration(milliseconds: 1200); // easeInOut, loop
   static const reducedFade = Duration(milliseconds: 150);
+  static const contentFade = Duration(milliseconds: 200); // isi bab muncul
   static const toast = Duration(milliseconds: 2500); // ilang sendiri
 }
 

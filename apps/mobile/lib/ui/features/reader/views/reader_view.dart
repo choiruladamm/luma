@@ -263,10 +263,11 @@ class _ChapterTextState extends ConsumerState<_ChapterText> {
   }
 
   void _restore() {
-    _restored = true;
     final target = _keys[widget.restoreTo]?.currentContext;
     if (target != null) Scrollable.ensureVisible(target);
     if (_scroll.hasClients) _track();
+    // Baru keliatan setelah di posisi yang bener (lihat AnimatedOpacity).
+    setState(() => _restored = true);
   }
 
   @override
@@ -303,66 +304,77 @@ class _ChapterTextState extends ConsumerState<_ChapterText> {
       });
     }
 
-    return NotificationListener<ScrollEndNotification>(
-      onNotification: (_) {
-        final p = _firstVisible(paras);
-        if (p != null) widget.onPosition(p);
-        return false;
-      },
-      child: SingleChildScrollView(
-        controller: _scroll,
-        padding: const EdgeInsets.fromLTRB(
-          Layout.margin,
-          Space.s6,
-          Layout.margin,
-          Space.s2,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: EdgeInsets.only(bottom: gap),
-              child: _ChapterHeading(
-                number: widget.index + 1,
-                title: chapter.title,
-              ),
-            ),
-            for (final p in paras)
+    // Isi disembunyiin sampe teksnya kebaca & udah lompat ke posisi
+    // tersimpan, terus fade in. Tanpa ini keliatan kedip: mulai dari atas,
+    // lompat ke tengah, kartu akhir bab nongol duluan.
+    final fade = MediaQuery.disableAnimationsOf(context)
+        ? Duration.zero
+        : Motion.contentFade;
+    return AnimatedOpacity(
+      opacity: _restored ? 1 : 0,
+      duration: fade,
+      curve: Curves.easeOut,
+      child: NotificationListener<ScrollEndNotification>(
+        onNotification: (_) {
+          final p = _firstVisible(paras);
+          if (p != null) widget.onPosition(p);
+          return false;
+        },
+        child: SingleChildScrollView(
+          controller: _scroll,
+          padding: const EdgeInsets.fromLTRB(
+            Layout.margin,
+            Space.s6,
+            Layout.margin,
+            Space.s2,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
               Padding(
-                key: _keys.putIfAbsent(p.index, GlobalKey.new),
                 padding: EdgeInsets.only(bottom: gap),
-                child: switch (p.type) {
-                  ParagraphType.paragraph => Text(p.text, style: reading),
-                  ParagraphType.heading => Semantics(
-                    header: true,
-                    child: Text(
-                      p.text,
-                      style: StabiloType.titleSm.copyWith(color: c.ink),
-                    ),
-                  ),
-                  ParagraphType.sceneBreak => Center(
-                    child: Text(
-                      '* * *',
-                      semanticsLabel: 'Pemisah adegan',
-                      style: StabiloType.label.copyWith(color: c.ink2),
-                    ),
-                  ),
-                },
-              ),
-            // Kartu akhir bab baru muncul bareng teks, biar gak nongol di atas
-            // terus kedorong ke bawah.
-            if (loaded && next != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 14),
-                child: _ChapterEnd(
+                child: _ChapterHeading(
                   number: widget.index + 1,
-                  next: next,
-                  nextNumber: widget.index + 2,
-                  total: widget.book.chapters.length,
-                  onNext: widget.onNext,
+                  title: chapter.title,
                 ),
               ),
-          ],
+              for (final p in paras)
+                Padding(
+                  key: _keys.putIfAbsent(p.index, GlobalKey.new),
+                  padding: EdgeInsets.only(bottom: gap),
+                  child: switch (p.type) {
+                    ParagraphType.paragraph => Text(p.text, style: reading),
+                    ParagraphType.heading => Semantics(
+                      header: true,
+                      child: Text(
+                        p.text,
+                        style: StabiloType.titleSm.copyWith(color: c.ink),
+                      ),
+                    ),
+                    ParagraphType.sceneBreak => Center(
+                      child: Text(
+                        '* * *',
+                        semanticsLabel: 'Pemisah adegan',
+                        style: StabiloType.label.copyWith(color: c.ink2),
+                      ),
+                    ),
+                  },
+                ),
+              // Kartu akhir bab baru muncul bareng teks, biar gak nongol di atas
+              // terus kedorong ke bawah.
+              if (loaded && next != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 14),
+                  child: _ChapterEnd(
+                    number: widget.index + 1,
+                    next: next,
+                    nextNumber: widget.index + 2,
+                    total: widget.book.chapters.length,
+                    onNext: widget.onNext,
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
