@@ -1,0 +1,90 @@
+import 'package:flutter/material.dart';
+
+import 'stabilo_theme.dart';
+
+/// Spacing, grid 4pt (board Foundations · 03 Ruang, bentuk & gerak).
+abstract final class Space {
+  static const s1 = 4.0; // ikon & teks kecil
+  static const s2 = 8.0; // tag ke isi, antar chip
+  static const s3 = 12.0; // dalam kartu
+  static const s4 = 16.0; // antar section di sheet
+  static const s5 = 20.0; // padding kartu
+  static const s6 = 24.0; // margin layar, antar blok
+  static const s8 = 32.0; // jarak besar empty state
+  static const s10 = 40.0;
+}
+
+abstract final class Radii {
+  static const xs = 5.0; // highlight inline
+  static const sm = 12.0; // tag, chip, tile ikon
+  static const md = 14.0; // cover buku, highlight grup
+  static const lg = 20.0; // kartu, CTA besar
+  static const xl = 28.0; // sudut atas sheet
+  static const full = 999.0; // icon button, pill, segmented
+}
+
+/// Layout acuan iPhone 390 × 844.
+abstract final class Layout {
+  static const margin = Space.s6;
+  static const topBar = 60.0;
+  static const touch = 44.0; // target sentuh minimal
+  static const icon = 20.0; // ikon di tombol (18–20)
+  static const iconStroke = 1.8; // 2.2 kalau ikon ≤14
+  static const outline = 1.5; // cuma di objek yang bisa dipegang
+  static const shelfColumns = 3;
+  static const shelfGapX = 14.0;
+  static const shelfGapY = 18.0;
+  static const coverAspect = 2 / 3;
+  static const sheetPadding = EdgeInsets.fromLTRB(24, 10, 24, 34);
+}
+
+/// Durasi & curve. Kalau iOS "Kurangi gerakan" nyala
+/// (`MediaQuery.disableAnimationsOf`): shimmer, titik, kursor berhenti; sheet
+/// jadi fade [reducedFade].
+abstract final class Motion {
+  static const sheetOpen = Duration(milliseconds: 280);
+  static const sheetOpenCurve = Curves.easeOutCubic;
+  static const sheetClose = Duration(milliseconds: 200);
+  static const sheetCloseCurve = Curves.easeInCubic;
+  static const highlight = Duration(milliseconds: 150);
+  static const highlightCurve = Curves.easeOut;
+  static const shimmer = Duration(milliseconds: 1400); // linear, loop
+  static const cursorBlink = Duration(milliseconds: 1000); // steps(1)
+  static const thinkingDots = Duration(milliseconds: 1200); // easeInOut, loop
+  static const reducedFade = Duration(milliseconds: 150);
+}
+
+/// Bayangan. Default flat (tanpa bayangan).
+abstract final class Elevation {
+  /// CTA utama, cuma di mode terang.
+  static List<BoxShadow> press(StabiloColors c, Brightness b) =>
+      b == Brightness.light
+      ? [BoxShadow(color: c.outline, offset: const Offset(0, 2))]
+      : const [];
+
+  static const cover = [
+    BoxShadow(color: Color(0x14000000), offset: Offset(0, 4), blurRadius: 12),
+  ];
+
+  static List<BoxShadow> sheet(Brightness b) => [
+    BoxShadow(
+      color: b == Brightness.light
+          ? const Color(0x1F000000) // 12%
+          : const Color(0x4D000000), // 30%
+      offset: const Offset(0, -8),
+      blurRadius: 30,
+    ),
+  ];
+}
+
+/// Cover default buat EPUB tanpa cover: warna dari hash judul (judul sama =
+/// warna sama), teks selalu [coverInk]. Mode gelap: brightness 0.85.
+const coverPalette = [
+  Color(0xFFFFE38A), // kuning
+  Color(0xFFFFC2D3), // pink
+  Color(0xFFFFB27D), // oranye
+  Color(0xFFA6E6C6), // mint
+  Color(0xFFA3B5FF), // biru
+  Color(0xFFD4C2FF), // lilac
+];
+const coverInk = Color(0xFF1A1A1A);

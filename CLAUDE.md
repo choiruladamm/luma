@@ -35,7 +35,7 @@ lib/
 - State: Riverpod 3, provider ditulis manual (tanpa `riverpod_generator`, sama seperti Mibu), dideklarasikan di sebelah class yang diekspos. `Notifier` berperan sebagai ViewModel. Pakai `.autoDispose` untuk state per layar; service/DB tanpa autoDispose.
 - Nama provider utama sudah ditetapkan di docs bagian 8 (`booksStreamProvider`, `groupAiProvider`, dll): pakai nama itu.
 - Routing: go_router, hanya `/`, `/reader/:bookId`, `/settings`; navigasi pakai konstanta `Routes`, bukan string. Sheet artinya, Aa, daftar isi = `showModalBottomSheet`.
-- Warna/ukuran dari theme (`context.stabilo`), tanpa hex hardcode di widget.
+- Warna dari `context.stabilo`, teks dari `StabiloType`, ukuran/radius/gerak/bayangan dari `stabilo_tokens.dart` (`Space`, `Radii`, `Layout`, `Motion`, `Elevation`). Tanpa hex atau angka ajaib di widget; token baru ditambah di sana dulu.
 
 ## Skill Flutter
 
