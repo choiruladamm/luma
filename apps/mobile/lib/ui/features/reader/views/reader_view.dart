@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../data/repositories/reading_progress_repository.dart';
 import '../../../../domain/models/book.dart';
 import '../../../../domain/reading.dart';
 import '../../../core/theme/stabilo_theme.dart';
@@ -21,48 +22,111 @@ class ReaderView extends ConsumerStatefulWidget {
   ConsumerState<ReaderView> createState() => _ReaderViewState();
 }
 
-class _ReaderViewState extends ConsumerState<ReaderView> {
-  // Posisi awal & simpan posisi nyusul di #14.
-  int _chapter = 0;
+class _ReaderViewState extends ConsumerState<ReaderView>
+    with WidgetsBindingObserver {
+  late final ReadingProgressRepository _progress;
+
+  /// Null sampai posisi tersimpan kebaca.
+  int? _chapter;
+  int? _chapterId;
+
+  /// Paragraf paling atas yang keliatan; ini yang disimpen.
+  int _paragraph = 0;
+
+  /// Paragraf yang dituju pas buku dibuka lagi.
+  int? _restoreTo;
 
   /// Seberapa jauh chapter ini udah di-scroll, 0..1.
   final _fraction = ValueNotifier<double>(0);
 
   @override
+  void initState() {
+    super.initState();
+    _progress = ref.read(readingProgressRepositoryProvider);
+    WidgetsBinding.instance.addObserver(this);
+    _progress.markOpened(widget.bookId).ignore();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // iOS bisa matiin app kapan aja pas di background.
+    if (state != AppLifecycleState.resumed) _save();
+  }
+
+  @override
   void dispose() {
+    _save();
+    WidgetsBinding.instance.removeObserver(this);
     _fraction.dispose();
     super.dispose();
   }
 
-  void _goTo(int chapter) => setState(() {
+  void _save() {
+    final chapterId = _chapterId;
+    if (chapterId == null) return;
+    _progress.save(widget.bookId, (
+      chapterId: chapterId,
+      paragraphIndex: _paragraph,
+    )).ignore();
+  }
+
+  void _goTo(ReaderBook book, int chapter) => setState(() {
     _chapter = chapter;
+    _chapterId = book.chapters[chapter].id;
+    _paragraph = 0;
+    _restoreTo = null;
     _fraction.value = 0;
+    _save();
   });
+
+  /// Sekali aja: buka di chapter & paragraf tersimpan (atau bab 1).
+  void _start(ReaderBook book, ReadingPosition? saved) {
+    final i = saved == null
+        ? -1
+        : book.chapters.indexWhere((c) => c.id == saved.chapterId);
+    _chapter = i < 0 ? 0 : i;
+    _chapterId = book.chapters[_chapter!].id;
+    _paragraph = i < 0 ? 0 : saved!.paragraphIndex;
+    _restoreTo = i < 0 ? null : saved!.paragraphIndex;
+  }
 
   @override
   Widget build(BuildContext context) {
     final book = ref.watch(readerBookProvider(widget.bookId));
+    final saved = ref.watch(readingPositionProvider(widget.bookId));
     final c = context.stabilo;
     return Scaffold(
       body: SafeArea(
         bottom: false,
-        child: switch (book) {
-          AsyncData(value: final b?) when b.chapters.isNotEmpty => Column(
-            children: [
-              _TopBar(title: b.title),
-              Expanded(
-                child: _ChapterText(
-                  key: ValueKey(b.chapters[_chapter].id),
-                  book: b,
-                  index: _chapter,
-                  fraction: _fraction,
-                  onNext: () => _goTo(_chapter + 1),
-                ),
-              ),
-              _ProgressBar(book: b, index: _chapter, fraction: _fraction),
-            ],
-          ),
-          AsyncLoading() => const _TopBar(title: ''),
+        child: switch ((book, saved)) {
+          (AsyncData(value: final b?), AsyncData(value: final pos))
+              when b.chapters.isNotEmpty =>
+            () {
+              if (_chapter == null) _start(b, pos);
+              final i = _chapter!;
+              return Column(
+                children: [
+                  _TopBar(title: b.title),
+                  Expanded(
+                    child: _ChapterText(
+                      key: ValueKey(b.chapters[i].id),
+                      book: b,
+                      index: i,
+                      fraction: _fraction,
+                      restoreTo: _restoreTo,
+                      onPosition: (p) {
+                        _paragraph = p;
+                        _save();
+                      },
+                      onNext: () => _goTo(b, i + 1),
+                    ),
+                  ),
+                  _ProgressBar(book: b, index: i, fraction: _fraction),
+                ],
+              );
+            }(),
+          (AsyncLoading(), _) ||
+          (_, AsyncLoading()) => const _TopBar(title: ''),
           _ => Column(
             children: [
               const _TopBar(title: ''),
@@ -139,12 +203,20 @@ class _ChapterText extends ConsumerStatefulWidget {
     required this.book,
     required this.index,
     required this.fraction,
+    required this.restoreTo,
+    required this.onPosition,
     required this.onNext,
   });
 
   final ReaderBook book;
   final int index;
   final ValueNotifier<double> fraction;
+
+  /// Indeks paragraf yang langsung dituju pas kebuka (posisi tersimpan).
+  final int? restoreTo;
+
+  /// Paragraf paling atas yang keliatan, tiap scroll berhenti.
+  final ValueChanged<int> onPosition;
   final VoidCallback onNext;
 
   @override
@@ -153,6 +225,13 @@ class _ChapterText extends ConsumerStatefulWidget {
 
 class _ChapterTextState extends ConsumerState<_ChapterText> {
   final _scroll = ScrollController();
+
+  /// Satu key per paragraf (indeks paragraf di DB) buat ngukur & lompat.
+  // ponytail: satu chapter dirender utuh (Column), bukan lazy. Aman buat
+  // chapter ratusan paragraf; ganti ke list yang bisa lompat ke item kalau
+  // ada buku dengan chapter raksasa yang kerasa berat.
+  final _keys = <int, GlobalKey>{};
+  bool _restored = false;
 
   @override
   void initState() {
@@ -165,6 +244,29 @@ class _ChapterTextState extends ConsumerState<_ChapterText> {
     widget.fraction.value = p.maxScrollExtent <= 0
         ? 1
         : (p.pixels / p.maxScrollExtent).clamp(0, 1).toDouble();
+  }
+
+  /// Paragraf pertama yang bawahnya masih di bawah tepi atas area baca.
+  int? _firstVisible(List<ReaderParagraph> paras) {
+    final area = context.findRenderObject() as RenderBox?;
+    if (area == null || !area.hasSize) return null;
+    final top = area.localToGlobal(Offset.zero).dy;
+    for (final p in paras) {
+      final box =
+          _keys[p.index]?.currentContext?.findRenderObject() as RenderBox?;
+      if (box == null || !box.hasSize) continue;
+      if (box.localToGlobal(Offset.zero).dy + box.size.height > top + 1) {
+        return p.index;
+      }
+    }
+    return null;
+  }
+
+  void _restore() {
+    _restored = true;
+    final target = _keys[widget.restoreTo]?.currentContext;
+    if (target != null) Scrollable.ensureVisible(target);
+    if (_scroll.hasClients) _track();
   }
 
   @override
@@ -186,75 +288,83 @@ class _ChapterTextState extends ConsumerState<_ChapterText> {
       Theme.of(context).brightness,
     ).copyWith(color: c.ink);
     final gap = reading.fontSize!; // 1em antar paragraf
-
+    final loaded = paragraphs is AsyncData;
     final paras = switch (paragraphs) {
       AsyncData(:final value) => _withoutTitleHeading(value, chapter.title),
       _ => const <ReaderParagraph>[],
     };
-    // Chapter pendek yang gak perlu di-scroll langsung dianggap kebaca.
-    if (paragraphs is AsyncData) {
+
+    if (loaded) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && _scroll.hasClients) _track();
+        if (!mounted || !_scroll.hasClients) return;
+        // Lompat ke posisi tersimpan sekali; chapter pendek yang gak perlu
+        // di-scroll langsung dianggap kebaca.
+        _restored ? _track() : _restore();
       });
     }
 
-    return ListView.builder(
-      controller: _scroll,
-      padding: const EdgeInsets.fromLTRB(
-        Layout.margin,
-        Space.s6,
-        Layout.margin,
-        Space.s2,
-      ),
-      // Belum kebaca: cuma heading. Kartu akhir bab baru muncul bareng teks,
-      // biar gak nongol di atas terus kedorong ke bawah.
-      itemCount: paragraphs is AsyncData ? paras.length + 2 : 1,
-      itemBuilder: (context, i) {
-        if (i == 0) {
-          return Padding(
-            padding: EdgeInsets.only(bottom: gap),
-            child: _ChapterHeading(
-              number: widget.index + 1,
-              title: chapter.title,
-            ),
-          );
-        }
-        if (i == paras.length + 1) {
-          return next == null
-              ? const SizedBox.shrink()
-              : Padding(
-                  padding: const EdgeInsets.only(top: 14),
-                  child: _ChapterEnd(
-                    number: widget.index + 1,
-                    next: next,
-                    nextNumber: widget.index + 2,
-                    total: widget.book.chapters.length,
-                    onNext: widget.onNext,
-                  ),
-                );
-        }
-        final p = paras[i - 1];
-        return Padding(
-          padding: EdgeInsets.only(bottom: gap),
-          child: switch (p.type) {
-            ParagraphType.paragraph => Text(p.text, style: reading),
-            ParagraphType.heading => Semantics(
-              header: true,
-              child: Text(
-                p.text,
-                style: StabiloType.titleSm.copyWith(color: c.ink),
-              ),
-            ),
-            ParagraphType.sceneBreak => Center(
-              child: Text(
-                '* * *',
-                semanticsLabel: 'Pemisah adegan',
-                style: StabiloType.label.copyWith(color: c.ink2),
-              ),
-            ),
-          },
-        );
+    return NotificationListener<ScrollEndNotification>(
+      onNotification: (_) {
+        final p = _firstVisible(paras);
+        if (p != null) widget.onPosition(p);
+        return false;
       },
+      child: SingleChildScrollView(
+        controller: _scroll,
+        padding: const EdgeInsets.fromLTRB(
+          Layout.margin,
+          Space.s6,
+          Layout.margin,
+          Space.s2,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: EdgeInsets.only(bottom: gap),
+              child: _ChapterHeading(
+                number: widget.index + 1,
+                title: chapter.title,
+              ),
+            ),
+            for (final p in paras)
+              Padding(
+                key: _keys.putIfAbsent(p.index, GlobalKey.new),
+                padding: EdgeInsets.only(bottom: gap),
+                child: switch (p.type) {
+                  ParagraphType.paragraph => Text(p.text, style: reading),
+                  ParagraphType.heading => Semantics(
+                    header: true,
+                    child: Text(
+                      p.text,
+                      style: StabiloType.titleSm.copyWith(color: c.ink),
+                    ),
+                  ),
+                  ParagraphType.sceneBreak => Center(
+                    child: Text(
+                      '* * *',
+                      semanticsLabel: 'Pemisah adegan',
+                      style: StabiloType.label.copyWith(color: c.ink2),
+                    ),
+                  ),
+                },
+              ),
+            // Kartu akhir bab baru muncul bareng teks, biar gak nongol di atas
+            // terus kedorong ke bawah.
+            if (loaded && next != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 14),
+                child: _ChapterEnd(
+                  number: widget.index + 1,
+                  next: next,
+                  nextNumber: widget.index + 2,
+                  total: widget.book.chapters.length,
+                  onNext: widget.onNext,
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 

@@ -4,12 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:luma/domain/models/book.dart';
+import 'package:luma/data/repositories/reading_progress_repository.dart';
 import 'package:luma/main.dart';
 import 'package:luma/ui/core/widgets/book_card.dart';
 import 'package:luma/ui/features/bookshelf/view_models/bookshelf_view_model.dart';
 import 'package:luma/ui/features/reader/view_models/reader_view_model.dart';
 import 'package:luma/ui/features/reader/views/reader_view.dart';
 import 'package:luma/ui/features/settings/views/settings_view.dart';
+
+import '../../../fakes.dart';
 
 ShelfBook book(int id, String title, {bool opened = false}) => ShelfBook(
   id: id,
@@ -47,6 +50,7 @@ void main() {
           booksStreamProvider.overrideWith((ref) => shelf.stream),
           // Opening a book shows the reader: feed it too, never the real DB.
           readerBookProvider.overrideWith((ref, id) async => null),
+          readingProgressRepositoryProvider.overrideWithValue(FakeProgress()),
         ],
         child: const LumaApp(),
       ),

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:luma/data/repositories/reading_progress_repository.dart';
 import 'package:luma/domain/models/book.dart';
 import 'package:luma/main.dart';
 import 'package:luma/ui/core/theme/stabilo_theme.dart';
@@ -12,6 +13,8 @@ import 'package:luma/ui/features/bookshelf/view_models/bookshelf_view_model.dart
 import 'package:luma/ui/features/bookshelf/views/bookshelf_view.dart';
 import 'package:luma/ui/features/reader/view_models/reader_view_model.dart';
 import 'package:luma/ui/features/reader/views/reader_view.dart';
+
+import '../../../fakes.dart';
 
 const book = ReaderBook(
   id: 1,
@@ -26,7 +29,14 @@ const book = ReaderBook(
 ReaderParagraph p(int i, ParagraphType type, String text, [int? group]) =>
     ReaderParagraph(index: i, groupIndex: group, type: type, text: text);
 
+/// A long chapter to scroll through: paragraph i reads "Line i ...".
+final long = [
+  for (var i = 0; i < 60; i++)
+    p(i, ParagraphType.paragraph, 'Line $i of a long chapter.', i),
+];
+
 final paragraphs = {
+  12: long,
   10: [
     p(0, ParagraphType.heading, 'I'), // same as the chapter title: hidden
     p(
@@ -54,11 +64,16 @@ final paragraphs = {
 };
 
 void main() {
+  late FakeProgress progress;
+
   // Feeds the reader through its providers; no Drift in widget tests.
   Future<void> openBook(
     WidgetTester tester, {
     Brightness b = Brightness.light,
+    ReaderBook readerBook = book,
+    ReadingPosition? saved,
   }) async {
+    progress = FakeProgress(saved);
     tester.view.physicalSize = const Size(900, 1600);
     tester.view.devicePixelRatio = 1;
     tester.platformDispatcher.platformBrightnessTestValue = b;
@@ -79,7 +94,8 @@ void main() {
               ),
             ]),
           ),
-          readerBookProvider.overrideWith((ref, id) async => book),
+          readerBookProvider.overrideWith((ref, id) async => readerBook),
+          readingProgressRepositoryProvider.overrideWithValue(progress),
           chapterParagraphsProvider.overrideWith(
             (ref, chapterId) async => paragraphs[chapterId]!,
           ),
@@ -169,6 +185,7 @@ void main() {
       ProviderScope(
         overrides: [
           readerBookProvider.overrideWith((ref, id) async => book),
+          readingProgressRepositoryProvider.overrideWithValue(FakeProgress()),
           chapterParagraphsProvider.overrideWith((ref, id) => pending.future),
         ],
         child: MaterialApp(
@@ -184,5 +201,81 @@ void main() {
     pending.complete(paragraphs[10]!);
     await tester.pump();
     expect(find.text('Lanjut, gas'), findsOneWidget);
+  });
+
+  const longBook = ReaderBook(
+    id: 1,
+    title: 'The Enchiridion',
+    totalChars: 3000,
+    chapters: [
+      ChapterInfo(id: 10, title: 'I', charOffset: 0, chars: 100),
+      ChapterInfo(id: 12, title: 'XXXIII', charOffset: 100, chars: 2900),
+    ],
+  );
+
+  testWidgets('opening marks the book opened and starts at chapter 1', (
+    tester,
+  ) async {
+    await openBook(tester);
+    expect(progress.opened, [1]);
+    expect(find.text('Bab 1'), findsOneWidget);
+  });
+
+  testWidgets('reopens at the saved chapter and paragraph', (tester) async {
+    await openBook(
+      tester,
+      readerBook: longBook,
+      saved: (chapterId: 12, paragraphIndex: 20),
+    );
+    expect(find.text('Bab 2'), findsOneWidget);
+    final top = tester.getTopLeft(find.byType(SingleChildScrollView)).dy;
+    final line = tester.getTopLeft(find.text('Line 20 of a long chapter.')).dy;
+    expect(line - top, lessThan(80)); // at the top of the reading area
+  });
+
+  testWidgets('a saved chapter that no longer exists falls back to chapter 1', (
+    tester,
+  ) async {
+    await openBook(tester, saved: (chapterId: 999, paragraphIndex: 3));
+    expect(find.text('Bab 1'), findsOneWidget);
+  });
+
+  testWidgets('scrolling saves the top paragraph once it stops', (
+    tester,
+  ) async {
+    await openBook(
+      tester,
+      readerBook: longBook,
+      saved: (chapterId: 12, paragraphIndex: 0),
+    );
+    progress.saves.clear();
+    await tester.drag(
+      find.byType(SingleChildScrollView),
+      const Offset(0, -900),
+    );
+    await tester.pumpAndSettle();
+    final last = progress.saves.last;
+    expect(last.chapterId, 12);
+    expect(last.paragraphIndex, greaterThan(5));
+    // The saved paragraph is the one at the top of the reading area.
+    final top = tester.getTopLeft(find.byType(SingleChildScrollView)).dy;
+    final rect = tester.getRect(
+      find.text('Line ${last.paragraphIndex} of a long chapter.'),
+    );
+    expect(rect.bottom, greaterThan(top));
+  });
+
+  testWidgets('moving to the next chapter and leaving both save', (
+    tester,
+  ) async {
+    await openBook(tester);
+    await tester.tap(find.text('Lanjut, gas'));
+    await tester.pumpAndSettle();
+    expect(progress.saves.last, (chapterId: 11, paragraphIndex: 0));
+
+    progress.saves.clear();
+    await tester.tap(find.bySemanticsLabel('Balik ke rak'));
+    await tester.pumpAndSettle();
+    expect(progress.saves.last.chapterId, 11);
   });
 }
