@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'stabilo_type.dart';
+
 /// Token warna Stabilo (docs bagian 5).
 @immutable
 class StabiloColors extends ThemeExtension<StabiloColors> {
@@ -79,6 +81,11 @@ ThemeData stabiloTheme(Brightness brightness) {
       : StabiloColors.dark;
   return ThemeData(
     brightness: brightness,
+    fontFamily: StabiloType.ui,
+    textTheme: StabiloType.textTheme.apply(
+      bodyColor: c.ink,
+      displayColor: c.ink,
+    ),
     scaffoldBackgroundColor: c.canvas,
     colorScheme: ColorScheme.fromSeed(
       seedColor: c.accent,
