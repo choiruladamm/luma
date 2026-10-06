@@ -86,14 +86,19 @@ abstract final class Elevation {
   ];
 }
 
-/// Cover default buat EPUB tanpa cover: warna dari hash judul (judul sama =
-/// warna sama), teks selalu [coverInk]. Mode gelap: brightness 0.85.
+/// Cover default (board "Cover default · aturan generate"): warna dari
+/// `coverIndex(judul)`. Gelap = terang dicampur 28% `#22201C`. Teks cover
+/// selalu [coverInk]; coretan stabilo pake accent, kecuali di cover kuning
+/// (indeks 0) pake pink.
 const coverPalette = [
-  Color(0xFFFFE38A), // kuning
-  Color(0xFFFFC2D3), // pink
-  Color(0xFFFFB27D), // oranye
-  Color(0xFFA6E6C6), // mint
-  Color(0xFFA3B5FF), // biru
-  Color(0xFFD4C2FF), // lilac
+  (light: Color(0xFFFFE38A), dark: Color(0xFFC1AC6B)), // kuning
+  (light: Color(0xFFFFC2D3), dark: Color(0xFFC195A0)), // pink
+  (light: Color(0xFFFFB27D), dark: Color(0xFFC18962)), // peach
+  (light: Color(0xFFA6E6C6), dark: Color(0xFF81AF96)), // mint
+  (light: Color(0xFFA3B5FF), dark: Color(0xFF7F8BBF)), // periwinkle
+  (light: Color(0xFFD4B8FF), dark: Color(0xFFA28DBF)), // lilac
+  (light: Color(0xFF9FDCF2), dark: Color(0xFF7CA7B6)), // langit
+  (light: Color(0xFFC9DB9A), dark: Color(0xFF9AA777)), // sage
 ];
 const coverInk = Color(0xFF1A1A1A);
+const coverInk2 = Color(0xC71A1A1A); // penulis, 78%

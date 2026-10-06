@@ -49,6 +49,10 @@ flutter:
           weight: 600
         - asset: assets/fonts/BricolageGrotesque-700.ttf
           weight: 700
+    # Variable (opsz, wdth, wght) khusus cover default: butuh 800 + lebar 75%.
+    - family: Bricolage Cover
+      fonts:
+        - asset: assets/fonts/BricolageGrotesque-Variable.ttf
     - family: Atkinson Hyperlegible
       fonts:
         - asset: assets/fonts/AtkinsonHyperlegible-400.ttf

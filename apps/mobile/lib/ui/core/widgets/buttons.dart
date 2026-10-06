@@ -204,4 +204,5 @@ abstract final class AppIcons {
   static const check = HugeIcons.strokeRoundedTick02;
   static const show = HugeIcons.strokeRoundedView;
   static const hide = HugeIcons.strokeRoundedViewOff;
+  static const loading = HugeIcons.strokeRoundedLoading03;
 }
