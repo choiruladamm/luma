@@ -816,4 +816,4 @@ Setelah importer Luma Markdown ada, jalur 1 jadi jalur default untuk PDF: PDF â†
 
 _Tempat dump ide selama dogfooding. Triage seminggu sekali._
 
--
+- **Bagian non-isi buku (Okt 2026, belum final).** Import cuma buang yang pasti bukan isi, dikenali dari struktur (bukan judul): lisensi Gutenberg, halaman daftar isi / indeks (kebanyakan isinya link), dan chapter kosong / cuma judul. Introduction, Notes, Appendix, Glossary, dan iklan penerbit tetep disimpen: salah buang = isi hilang + cache terjemahan ikut kehapus pas re-import, sedangkan kelebihan satu bab cuma nambah satu entri. Pantau pas dogfooding: kalau Introduction ganggu, opsinya buku dibuka langsung di bab isi pertama, bukan dibuang.
