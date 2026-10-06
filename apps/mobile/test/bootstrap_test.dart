@@ -1,23 +1,16 @@
-import 'package:drift/drift.dart';
-import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:luma/data/database/app_database.dart';
 import 'package:luma/main.dart';
+import 'package:luma/ui/features/bookshelf/view_models/bookshelf_view_model.dart';
 
 void main() {
   testWidgets('app boots into the bookshelf', (tester) async {
-    final db = AppDatabase(
-      DatabaseConnection(
-        NativeDatabase.memory(),
-        closeStreamsSynchronously: true,
-      ),
-    );
-    addTearDown(db.close);
-
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [appDatabaseProvider.overrideWithValue(db)],
+        // Widget tests never touch Drift streams (fake clock → hang).
+        overrides: [
+          booksStreamProvider.overrideWith((ref) => Stream.value([])),
+        ],
         child: const LumaApp(),
       ),
     );

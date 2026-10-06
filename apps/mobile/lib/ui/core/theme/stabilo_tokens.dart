@@ -37,7 +37,7 @@ abstract final class Layout {
   static const outline = 1.5; // cuma di objek yang bisa dipegang
   static const shelfColumns = 3;
   static const shelfGapX = 14.0;
-  static const shelfGapY = 18.0;
+  static const shelfGapY = 24.0; // board Rak: stiker nongol 11 di bawah cover
   static const coverAspect = 2 / 3;
   static const sheetPadding = EdgeInsets.fromLTRB(24, 10, 24, 34);
 }

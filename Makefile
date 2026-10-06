@@ -25,8 +25,8 @@ release: ## install release build on iPhone, redo every 7 days, data kept (d=<id
 profile: ## run app in profile mode, real perf (d=<id>)
 	$(FLUTTER) run --profile $(if $(d),-d $(d))
 
-test: ## run tests (one file/folder: make test t=test/domain)
-	$(FLUTTER) test $(t)
+test: ## run tests, 30s cap per test so a hang fails fast (one file/folder: make test t=test/domain)
+	$(FLUTTER) test --timeout 30s $(t)
 
 analyze: ## static analysis
 	$(FLUTTER) analyze

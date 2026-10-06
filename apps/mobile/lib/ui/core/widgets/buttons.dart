@@ -144,7 +144,8 @@ class AppButton extends StatelessWidget {
 }
 
 /// Tombol bulet 44 (target sentuh minimal). [active] = accent, mis. Aa pas
-/// sheet-nya kebuka. Isi: [icon] atau [text] ("Aa", "A").
+/// sheet-nya kebuka. [primary] = aksi utama layar (accent + outline + press
+/// shadow, mis. Import di rak). Isi: [icon] atau [text] ("Aa", "A").
 class CircleButton extends StatelessWidget {
   const CircleButton({
     super.key,
@@ -153,6 +154,7 @@ class CircleButton extends StatelessWidget {
     this.icon,
     this.text,
     this.active = false,
+    this.primary = false,
     this.size = Layout.touch,
   }) : assert((icon == null) != (text == null));
 
@@ -161,38 +163,50 @@ class CircleButton extends StatelessWidget {
   final List<List<dynamic>>? icon;
   final String? text;
   final bool active;
+  final bool primary;
   final double size;
 
   @override
   Widget build(BuildContext context) {
     final c = context.stabilo;
-    final fg = onPressed == null ? c.ink3 : (active ? c.onAccent : c.ink);
+    final accent = active || primary;
+    final fg = onPressed == null ? c.ink3 : (accent ? c.onAccent : c.ink);
+    final button = Material(
+      color: accent ? c.accent : c.muted,
+      shape: primary
+          ? CircleBorder(
+              side: BorderSide(color: c.accentBorder, width: Layout.outline),
+            )
+          : const CircleBorder(),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onPressed,
+        child: SizedBox.square(
+          dimension: size,
+          child: Center(
+            child: icon != null
+                ? AppIcon(icon!, color: fg)
+                : Text(
+                    text!,
+                    style: StabiloType.label.copyWith(fontSize: 16, color: fg),
+                  ),
+          ),
+        ),
+      ),
+    );
     return Semantics(
       button: true,
       label: semanticLabel,
       excludeSemantics: true,
-      child: Material(
-        color: active ? c.accent : c.muted,
-        shape: const CircleBorder(),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onPressed,
-          child: SizedBox.square(
-            dimension: size,
-            child: Center(
-              child: icon != null
-                  ? AppIcon(icon!, color: fg)
-                  : Text(
-                      text!,
-                      style: StabiloType.label.copyWith(
-                        fontSize: 16,
-                        color: fg,
-                      ),
-                    ),
-            ),
-          ),
-        ),
-      ),
+      child: primary
+          ? DecoratedBox(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                boxShadow: Elevation.press(c, Theme.of(context).brightness),
+              ),
+              child: button,
+            )
+          : button,
     );
   }
 }
@@ -205,4 +219,6 @@ abstract final class AppIcons {
   static const show = HugeIcons.strokeRoundedView;
   static const hide = HugeIcons.strokeRoundedViewOff;
   static const loading = HugeIcons.strokeRoundedLoading03;
+  static const add = HugeIcons.strokeRoundedAdd01;
+  static const settings = HugeIcons.strokeRoundedSettings01;
 }

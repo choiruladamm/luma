@@ -73,16 +73,17 @@ Kalau skill bentrok dengan file ini, ikuti file ini (architecture skill menconto
 
 ## Test
 
-Ikut pola repo Mibu (`choiruladamm/mibu`, `apps/mobile/test/`). Tiap issue selesai bawa test-nya di folder yang sesuai:
+Struktur folder ikut Mibu (`choiruladamm/mibu`, `apps/mobile/test/`), tapi **widget test gak pernah nyentuh Drift** (di Mibu itu bikin test nyangkut). Tiap issue selesai bawa test-nya:
 
-- `test/domain/`: logika pure (grouping, parser EPUB/HTML, parsing JSON LLM, persentase baca).
-- `test/data/`: repository & schema dengan Drift in-memory: `AppDatabase(DatabaseConnection(NativeDatabase.memory(), closeStreamsSynchronously: true))`. Round-trip backup/restore masuk sini.
-- `test/ui/core/`: widget shared (tombol, sheet, toast).
-- `test/ui/features/<fitur>/<layar>_test.dart`: widget test per layar. `ProviderScope` override `appDatabaseProvider` dengan DB in-memory, `MaterialApp` pakai theme Stabilo, `home:` layar yang dites. Service luar (OpenRouter, file picker, secure storage) di-override dengan fake.
+- `test/domain/`: logika pure (grouping, parser, cover, parsing JSON LLM, persentase baca).
+- `test/data/`: repository, schema, dan **stream Drift** pake `test()` biasa (event loop asli), DB in-memory `AppDatabase(DatabaseConnection(NativeDatabase.memory(), closeStreamsSynchronously: true))`. Round-trip backup/restore masuk sini.
+- `test/ui/core/`: widget shared.
+- `test/ui/features/<fitur>/<layar>_test.dart`: widget test per layar. Override **provider view-model** (mis. `booksStreamProvider.overrideWith((ref) => controller.stream)`) pake data palsu, bukan DB. Service luar (OpenRouter, file picker, secure storage) juga fake.
 
 Jebakan widget test:
-- Font test = Ahem (1em per glyph): set `tester.view.physicalSize = Size(900, 1400)`, `devicePixelRatio = 1`, `addTearDown(tester.view.reset)` supaya tidak overflow palsu.
-- Query Drift di dalam `testWidgets` pakai `get()` / `tester.runAsync`, bukan `watch().first`, karena stream Drift butuh timer yang tidak jalan di fake clock.
+- `testWidgets` jalan di jam palsu: stream Drift, file IO, dan decode gambar butuh event loop asli. Stream Drift → override provider-nya. File/gambar → bungkus `pumpWidget` + tunggu di `tester.runAsync`, baru `pump()`.
+- `make test` pake `--timeout 30s`: test yang nyangkut gagal, gak macet. Jangan naikin timeout buat nutupin hang; cari yang nunggu event loop asli.
+- Font test = Ahem (1em per glyph): set `tester.view.physicalSize = Size(900, 1400)`, `devicePixelRatio = 1`, `addTearDown(tester.view.reset)` supaya gak overflow palsu. Butuh ukuran teks asli (layout cover)? Load font-nya pake `FontLoader` di `setUpAll`.
 - `test/flutter_test_config.dart` set `driftRuntimeOptions.dontWarnAboutMultipleDatabases = true` (tiap test buka DB sendiri).
 
 Integration test di luar scope MVP.
