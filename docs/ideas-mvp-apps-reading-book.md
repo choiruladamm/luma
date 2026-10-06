@@ -335,13 +335,12 @@ Fungsi ini **pure** (tanpa I/O), jadi wajib dibuat unit test: dialog pendek beru
 
 1. Pilih file EPUB via `file_picker`
 2. Baca bytes, hitung SHA-256 → kalau hash sudah ada → state **duplikat**
-3. Copy ke `Documents/books/{hash}.epub`
-4. Parse EPUB (parser sendiri): judul, penulis, cover → simpan cover ke `Documents/covers/{hash}.{ext}`
-5. Tentukan chapter dari TOC/nav EPUB (bukan dari jumlah file HTML), `sortOrder` = urutan TOC
-6. Per chapter: parse HTML (package `html`), ambil blok teks (`p`, `div` berisi teks, heading, `hr`), normalisasi whitespace, buang paragraf kosong, lewati bagian non-isi (cover, copyright, daftar isi)
-7. Jalankan `assignGroups` per chapter
-8. Insert `books` + `chapters` + `paragraphs` dalam **satu transaksi** Drift
-9. Gagal di langkah mana pun → hapus file yang sudah di-copy, state **error**
+3. Parse EPUB di isolate (parser sendiri): judul, penulis, cover, chapter dari TOC/nav (bukan dari jumlah file HTML), `sortOrder` = urutan TOC. **Parse dulu sebelum nyalin file**, jadi EPUB jelek gak ninggalin apa-apa
+4. Per chapter: parse HTML (package `html`), ambil blok teks (`p`, `div` berisi teks, heading, `hr`), normalisasi whitespace, buang paragraf kosong, lewati bagian non-isi (lihat bagian 14)
+5. Jalankan `assignGroups` per chapter
+6. Copy ke `Documents/books/{hash}.epub`, cover ke `Documents/covers/{hash}.{ext}`
+7. Insert `books` + `chapters` + `paragraphs` dalam **satu transaksi** Drift
+8. Gagal setelah nyalin → hapus file yang sudah di-copy (transaksi di-rollback), state **error**
 
 Parsing buku besar bisa berat: jalankan di isolate (`compute` / `Isolate.run`) supaya UI tidak freeze.
 

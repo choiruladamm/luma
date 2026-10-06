@@ -5,6 +5,10 @@ import '../../domain/grouping.dart';
 import '../../domain/models/book.dart';
 import 'epub_parser.dart';
 
+/// Versi logika parse + grouping. Naik = re-import buku lama + hapus
+/// `ai_results`-nya, soalnya indeks paragraf/grup bisa geser (docs bagian 6).
+const parserVersion = 1;
+
 class ParsedChapter {
   const ParsedChapter({
     required this.title,
