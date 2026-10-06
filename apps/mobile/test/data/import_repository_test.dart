@@ -125,4 +125,35 @@ void main() {
     expect(await count(db.chapters), 0);
     expect(await storedFiles(), isEmpty);
   });
+
+  test('reports stages in order', () async {
+    final stages = <ImportStage>[];
+    await repo.importEpub(epub, fileName: 'a.epub', onStage: stages.add);
+    expect(stages, ImportStage.values);
+  });
+
+  test('a duplicate stops after reading', () async {
+    await repo.importEpub(epub, fileName: 'a.epub');
+    final stages = <ImportStage>[];
+    await repo.importEpub(epub, fileName: 'a.epub', onStage: stages.add);
+    expect(stages, [ImportStage.reading]);
+  });
+
+  test('cancelling before saving writes nothing', () async {
+    for (final cancelAt in [ImportStage.outline, ImportStage.chapters]) {
+      var cancelled = false;
+      await expectLater(
+        repo.importEpub(
+          epub,
+          fileName: 'a.epub',
+          onStage: (s) => cancelled = cancelled || s == cancelAt,
+          isCancelled: () => cancelled,
+        ),
+        throwsA(isA<ImportCancelled>()),
+        reason: '$cancelAt',
+      );
+    }
+    expect(await count(db.books), 0);
+    expect(await storedFiles(), isEmpty);
+  });
 }

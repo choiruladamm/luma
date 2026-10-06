@@ -23,9 +23,35 @@ typedef ParsedBook = ({
 /// [duplicate] = file yang sama udah ada di rak; [bookId] nunjuk ke yang lama.
 typedef ImportResult = ({int bookId, bool duplicate});
 
-Future<ParsedBook> parseInIsolate(Uint8List bytes) => Isolate.run(() {
-  final outline = parseEpub(bytes);
-  final book = extractChapters(outline);
+/// Tahap import, buat checklist & progres di sheet "Lagi ngebongkar EPUB".
+enum ImportStage {
+  /// Hash + cek dobel.
+  reading,
+
+  /// Judul, penulis, cover, daftar bab.
+  outline,
+
+  /// Bab → paragraf → grup.
+  chapters,
+
+  /// Nyalin file + nulis ke DB.
+  saving,
+}
+
+/// Dilempar kalau [ImportRepository.importEpub] dibatalin sebelum nulis apa-apa.
+class ImportCancelled implements Exception {
+  const ImportCancelled();
+}
+
+/// Dua isolate biar tahap [ImportStage.outline] → [ImportStage.chapters]
+/// keliatan di UI.
+Future<ParsedBook> parseInIsolate(
+  Uint8List bytes, {
+  void Function()? onOutline,
+}) async {
+  final outline = await Isolate.run(() => parseEpub(bytes));
+  onOutline?.call();
+  final book = await Isolate.run(() => extractChapters(outline));
   return (
     title: outline.title,
     author: outline.author,
@@ -33,7 +59,7 @@ Future<ParsedBook> parseInIsolate(Uint8List bytes) => Isolate.run(() {
     chapters: book.chapters,
     totalChars: book.totalChars,
   );
-});
+}
 
 /// Import EPUB (docs bagian 8, Alur import). Parse dulu sebelum nyalin file,
 /// jadi EPUB jelek gak ninggalin apa-apa; gagal setelah nyalin = file dihapus
@@ -43,13 +69,25 @@ class ImportRepository {
 
   final AppDatabase _db;
   final FileStorage _storage;
-  final Future<ParsedBook> Function(Uint8List bytes) parse;
+  final Future<ParsedBook> Function(
+    Uint8List bytes, {
+    void Function()? onOutline,
+  })
+  parse;
 
-  /// Lempar [EpubException] kalau file bukan EPUB, rusak, atau ada DRM.
+  /// Lempar [EpubException] kalau file bukan EPUB, rusak, atau ada DRM, dan
+  /// [ImportCancelled] kalau [isCancelled] nyala sebelum tahap nyimpen.
   Future<ImportResult> importEpub(
     Uint8List bytes, {
     required String fileName,
+    void Function(ImportStage stage)? onStage,
+    bool Function()? isCancelled,
   }) async {
+    void checkpoint() {
+      if (isCancelled?.call() ?? false) throw const ImportCancelled();
+    }
+
+    onStage?.call(ImportStage.reading);
     if (p.extension(fileName).toLowerCase() != '.epub') {
       throw EpubException(EpubError.notEpub, fileName);
     }
@@ -60,10 +98,20 @@ class ImportRepository {
     )..where((b) => b.hash.equals(hash))).getSingleOrNull();
     if (existing != null) return (bookId: existing.id, duplicate: true);
 
-    final book = await parse(bytes);
+    checkpoint();
+    onStage?.call(ImportStage.outline);
+    final book = await parse(
+      bytes,
+      onOutline: () {
+        checkpoint();
+        onStage?.call(ImportStage.chapters);
+      },
+    );
     if (book.chapters.isEmpty) {
       throw const EpubException(EpubError.corrupt, 'no readable chapters');
     }
+    checkpoint();
+    onStage?.call(ImportStage.saving);
 
     final bookFile = '$hash.epub';
     final coverFile = book.cover == null

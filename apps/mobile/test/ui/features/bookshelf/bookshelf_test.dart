@@ -16,6 +16,7 @@ ShelfBook book(int id, String title, {bool opened = false}) => ShelfBook(
   author: 'Somebody',
   coverName: null,
   opened: opened,
+  createdAt: DateTime(2026, 10, 1),
 );
 
 void main() {

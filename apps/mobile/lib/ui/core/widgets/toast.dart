@@ -8,11 +8,13 @@ import 'buttons.dart';
 /// Toast (board Komponen 04), ilang sendiri 2,5 detik.
 ///
 /// Tanpa [actionLabel]: pill di tengah + centang ("Udah disalin, tinggal
-/// paste"). Dengan action: bar lebar + tombol kecil ("Sip! ... udah masuk
-/// rak" · Baca).
+/// paste"). Dengan action: bar lebar + tombol kecil ("Sip, udah masuk rak!"
+/// · Baca), boleh ada [leading] (mis. cover mini) & [subtitle].
 void showToast(
   BuildContext context,
   String message, {
+  String? subtitle,
+  Widget? leading,
   String? actionLabel,
   VoidCallback? onAction,
 }) {
@@ -25,6 +27,8 @@ void showToast(
             ? Center(child: _Toast.pill(message))
             : _Toast.bar(
                 message,
+                subtitle: subtitle,
+                leading: leading,
                 actionLabel: actionLabel,
                 onAction: () {
                   messenger.hideCurrentSnackBar();
@@ -47,10 +51,22 @@ void showToast(
 }
 
 class _Toast extends StatelessWidget {
-  const _Toast.pill(this.message) : actionLabel = null, onAction = null;
-  const _Toast.bar(this.message, {required this.actionLabel, this.onAction});
+  const _Toast.pill(this.message)
+    : subtitle = null,
+      leading = null,
+      actionLabel = null,
+      onAction = null;
+  const _Toast.bar(
+    this.message, {
+    required this.actionLabel,
+    this.subtitle,
+    this.leading,
+    this.onAction,
+  });
 
   final String message;
+  final String? subtitle;
+  final Widget? leading;
   final String? actionLabel;
   final VoidCallback? onAction;
 
@@ -62,10 +78,14 @@ class _Toast extends StatelessWidget {
       color: c.toastInk,
     );
     final pill = actionLabel == null;
+    final rich = leading != null || subtitle != null;
     return Container(
-      height: pill ? 48 : 56,
+      height: pill ? 48 : (rich ? null : 56),
+      constraints: rich ? const BoxConstraints(minHeight: 60) : null,
       padding: pill
           ? const EdgeInsets.fromLTRB(Space.s3, 0, Space.s4, 0)
+          : rich
+          ? const EdgeInsets.fromLTRB(Space.s3, Space.s2, Space.s2, Space.s2)
           : const EdgeInsets.fromLTRB(Space.s4, 0, Space.s2, 0),
       decoration: BoxDecoration(
         color: c.toastBg,
@@ -86,9 +106,29 @@ class _Toast extends StatelessWidget {
               ),
               child: AppIcon(AppIcons.check, size: 14, color: c.onAccent),
             ),
+          ?leading,
           Flexible(
             fit: pill ? FlexFit.loose : FlexFit.tight,
-            child: Text(message, style: style),
+            child: subtitle == null
+                ? Text(message, style: style)
+                : Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        message,
+                        style: style.copyWith(fontWeight: FontWeight.w700),
+                      ),
+                      Text(
+                        subtitle!,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: StabiloType.caption.copyWith(
+                          color: c.toastInk.withValues(alpha: 0.8),
+                        ),
+                      ),
+                    ],
+                  ),
           ),
           if (!pill)
             Material(
@@ -98,7 +138,7 @@ class _Toast extends StatelessWidget {
               child: InkWell(
                 onTap: onAction,
                 child: Container(
-                  height: 40,
+                  height: rich ? Layout.touch : 40,
                   padding: const EdgeInsets.symmetric(horizontal: Space.s4),
                   alignment: Alignment.center,
                   child: Text(

@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -12,29 +13,116 @@ import '../../../core/theme/stabilo_tokens.dart';
 import '../../../core/theme/stabilo_type.dart';
 import '../../../core/widgets/book_card.dart';
 import '../../../core/widgets/buttons.dart';
+import '../../../core/widgets/book_cover.dart';
 import '../../../core/widgets/luma_logo.dart';
+import '../../../core/widgets/sheet.dart';
+import '../../../core/widgets/toast.dart';
+import '../../import_book/view_models/import_view_model.dart';
+import '../../import_book/views/import_sheets.dart';
 import '../view_models/bookshelf_view_model.dart';
 
-/// Rak buku (board 01 Rak kosong, 02 Rak).
-class BookshelfView extends ConsumerWidget {
+/// Rak buku (board 01 Rak kosong, 02 Rak) + alur import (board 13–18).
+class BookshelfView extends ConsumerStatefulWidget {
   const BookshelfView({super.key});
 
-  // Disambung ke alur import di #11.
-  void _import() {}
+  @override
+  ConsumerState<BookshelfView> createState() => _BookshelfViewState();
+}
+
+class _BookshelfViewState extends ConsumerState<BookshelfView> {
+  /// Sheet proses import lagi kebuka; ditutup dari sini (bukan dari sheet-nya
+  /// sendiri) biar gak nutup sheet hasil yang baru dibuka.
+  bool _progressOpen = false;
+
+  ImportController get _import => ref.read(importControllerProvider.notifier);
+
+  void _onImport(ImportState? prev, ImportState next) {
+    if (next is! ImportProcessing && _progressOpen) {
+      _progressOpen = false;
+      Navigator.of(context).pop();
+    }
+    switch (next) {
+      case ImportProcessing() when !_progressOpen:
+        _progressOpen = true;
+        showAppSheet<void>(
+          context,
+          dismissible: false,
+          builder: (_) => const ImportProgressSheet(),
+        );
+      case ImportSuccess(:final book):
+        _import.dismiss();
+        showToast(
+          context,
+          'Sip, udah masuk rak!',
+          subtitle: [book.title, ?book.author].join(' · '),
+          leading: BookCover(
+            title: book.title,
+            width: 30,
+            file: _cover(book.coverName),
+          ),
+          actionLabel: 'Baca',
+          onAction: () => context.push(Routes.reader(book.id)),
+        );
+      case ImportDuplicate(:final book):
+        showAppSheet<void>(
+          context,
+          builder: (sheet) => ImportDuplicateSheet(
+            book: book,
+            onOpen: () {
+              Navigator.of(sheet).pop();
+              context.push(Routes.reader(book.id));
+            },
+            onPickAnother: () {
+              Navigator.of(sheet).pop();
+              _import.pick();
+            },
+          ),
+        ).whenComplete(_dismissIf(next));
+      case ImportFailed(:final fileName, :final error):
+        showAppSheet<void>(
+          context,
+          builder: (sheet) => ImportFailedSheet(
+            fileName: fileName,
+            error: error,
+            onPickAnother: () {
+              Navigator.of(sheet).pop();
+              _import.pick();
+            },
+          ),
+        ).whenComplete(_dismissIf(next));
+      default:
+    }
+  }
+
+  /// Sheet hasil ketutup → balik idle, kecuali udah ada import baru jalan.
+  VoidCallback _dismissIf(ImportState shown) => () {
+    if (identical(ref.read(importControllerProvider), shown)) _import.dismiss();
+  };
+
+  File? _cover(String? name) =>
+      name == null ? null : ref.read(fileStorageProvider).cover(name);
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
+    ref.listen(importControllerProvider, _onImport);
     final books = ref.watch(booksStreamProvider);
-    final header = _Header(onImport: _import);
+    final importing = switch (ref.watch(importControllerProvider)) {
+      ImportProcessing(:final fileName) => fileName,
+      _ => null,
+    };
+    void onImport() => _import.pick();
+    final header = _Header(onImport: onImport);
     return Scaffold(
       body: SafeArea(
         bottom: false,
         child: switch (books) {
-          AsyncData(value: final list) when list.isEmpty => _Empty(
+          AsyncData(value: final list) when list.isEmpty && importing == null =>
+            _Empty(header: header, onImport: onImport),
+          AsyncData(value: final list) => _Shelf(
             header: header,
-            onImport: _import,
+            books: list,
+            importing: importing,
           ),
-          AsyncData(value: final list) => _Shelf(header: header, books: list),
           AsyncError() => Column(
             children: [
               _pad(header),
@@ -108,10 +196,13 @@ class _Header extends StatelessWidget {
 }
 
 class _Shelf extends ConsumerWidget {
-  const _Shelf({required this.header, required this.books});
+  const _Shelf({required this.header, required this.books, this.importing});
 
   final Widget header;
   final List<ShelfBook> books;
+
+  /// Nama file yang lagi diimport: kartu "Lagi diproses" di depan.
+  final String? importing;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -159,8 +250,12 @@ class _Shelf extends ConsumerWidget {
                   mainAxisSpacing: Layout.shelfGapY,
                   mainAxisExtent: BookCard.heightFor(colW),
                 ),
-                itemCount: books.length,
+                itemCount: books.length + (importing == null ? 0 : 1),
                 itemBuilder: (context, i) {
+                  if (importing != null) {
+                    if (i == 0) return BookCard.importing(fileName: importing!);
+                    i--;
+                  }
                   final book = books[i];
                   return BookCard(
                     key: ValueKey(book.id),

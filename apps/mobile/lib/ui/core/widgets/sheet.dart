@@ -11,6 +11,9 @@ Future<T?> showAppSheet<T>(
   BuildContext context, {
   required WidgetBuilder builder,
   double maxHeight = 0.7,
+
+  /// false = cuma bisa ditutup lewat tombol di sheet (mis. proses import).
+  bool dismissible = true,
 }) {
   // ponytail: "Kurangi gerakan" cuma motong durasi, belum ganti slide → fade
   // kayak board. Ganti ke route fade sendiri kalau slide-nya masih ganggu.
@@ -18,6 +21,8 @@ Future<T?> showAppSheet<T>(
   return showModalBottomSheet<T>(
     context: context,
     isScrollControlled: true,
+    isDismissible: dismissible,
+    enableDrag: dismissible,
     constraints: BoxConstraints(
       maxHeight: MediaQuery.sizeOf(context).height * maxHeight,
     ),

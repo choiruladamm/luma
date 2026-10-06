@@ -33,6 +33,7 @@ class StabiloColors extends ThemeExtension<StabiloColors> {
     required this.grabber,
     required this.menuLine,
     required this.fieldLine,
+    required this.progressFill,
   });
 
   // Permukaan
@@ -49,6 +50,8 @@ class StabiloColors extends ThemeExtension<StabiloColors> {
   final Color scrim, grabber;
   // Garis pemisah di menu/list, garis field input.
   final Color menuLine, fieldLine;
+  // Isi progress bar (terang: tinta, gelap: accent).
+  final Color progressFill;
 
   static const light = StabiloColors(
     canvas: Color(0xFFFFFBEF),
@@ -77,6 +80,7 @@ class StabiloColors extends ThemeExtension<StabiloColors> {
     grabber: Color(0xFFE2DBC6),
     menuLine: Color(0xFFECE5D2),
     fieldLine: Color(0xFFCFC7B1),
+    progressFill: Color(0xFF1A1A1A),
   );
 
   static const dark = StabiloColors(
@@ -106,6 +110,7 @@ class StabiloColors extends ThemeExtension<StabiloColors> {
     grabber: Color(0xFF4A463E),
     menuLine: Color(0xFF3A3732),
     fieldLine: Color(0xFF5A554B),
+    progressFill: Color(0xFFE9C75A),
   );
 
   // Token gak pernah diubah per widget; set baru = konstanta baru.

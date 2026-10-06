@@ -21,19 +21,24 @@ class BookRepository {
         (b) => OrderingTerm.desc(b.createdAt),
         (b) => OrderingTerm.desc(b.id),
       ]);
-    return q.watch().map(
-      (rows) => [
-        for (final b in rows)
-          ShelfBook(
-            id: b.id,
-            title: b.title,
-            author: b.author,
-            coverName: b.coverName,
-            opened: b.lastOpenedAt != null,
-          ),
-      ],
-    );
+    return q.watch().map((rows) => rows.map(_shelfBook).toList());
   }
+
+  Future<ShelfBook?> book(int id) async {
+    final row = await (_db.select(
+      _db.books,
+    )..where((b) => b.id.equals(id))).getSingleOrNull();
+    return row == null ? null : _shelfBook(row);
+  }
+
+  static ShelfBook _shelfBook(Book b) => ShelfBook(
+    id: b.id,
+    title: b.title,
+    author: b.author,
+    coverName: b.coverName,
+    opened: b.lastOpenedAt != null,
+    createdAt: b.createdAt,
+  );
 }
 
 final bookRepositoryProvider = Provider<BookRepository>(

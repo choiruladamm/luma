@@ -15,6 +15,7 @@ class ShelfBook {
     required this.author,
     required this.coverName,
     required this.opened,
+    required this.createdAt,
   });
 
   final int id;
@@ -26,4 +27,7 @@ class ShelfBook {
 
   /// Udah pernah dibuka (stiker "Baru" ilang).
   final bool opened;
+
+  /// Kapan diimport.
+  final DateTime createdAt;
 }
