@@ -586,6 +586,15 @@ luma-backup-20261006-2130.zip
 7. Invalidate provider Riverpod (atau restart ke Rak)
 8. Gagal di langkah mana pun → hapus folder sementara, data lama tetap utuh
 
+**Implementasi** (`RestoreService`, alurnya di Pengaturan):
+
+- Pilih `.zip` (path lokal, dibaca streaming). Ekstrak di isolate ke `Directory.systemTemp`, **cuma file yang dikenal**: `manifest.json`, `luma.sqlite`, `books/<nama>`, `covers/<nama>`; path aneh (`../`, absolut, subfolder) dilewatin.
+- Cek: bukan zip / manifest gak ada / `format` salah → "Ini bukan backup Luma"; `schemaVersion` > app → "Backup-nya dari Luma yang lebih baru" (nyebut dua versinya); `luma.sqlite` gak bisa dibuka → "File backup-nya rusak". Salinan sementara dibuka beneran (migrasi jalan di salinan), jadi database rusak ketauan sebelum apa pun diganti. Semua sheet gagal punya "Pilih file lain".
+- Ringkasan (board 28): nama file, kapan & pake Luma versi berapa, jumlah buku & terjemahan, WarningBox (nyebut jumlah buku sekarang), ConfirmCheck; "Ganti & pulihin" baru aktif kalau dicentang. "Batal" = folder sementara dibuang.
+- Ganti: tutup Drift → `books/`, `covers/`, `luma.sqlite(-wal/-shm)` dipindah ke `*.old` → isi backup dipindah masuk → `*.old` dihapus. Gagal di tengah → semua yang udah dipindah dibalikin urutan kebalik (ada test-nya). Abis itu `appDatabaseProvider` di-invalidate (database lama/baru dibuka lagi, provider data ikut dibangun ulang).
+- Berhasil → balik ke Rak + toast "Sip, data lo udah balik!" · "N buku · N terjemahan"; kalau API key kosong, toast-nya punya baris kedua "API key gak ikut backup, isi ulang dulu biar bisa nerjemahin." + "Isi key" (6 detik). Gagal ganti → "Yah, gagal mulihin", data lama utuh.
+- Teks board "File backup Luma itu yang akhirannya .luma" disesuaiin jadi nama `luma-backup-…zip`. Tile ringkasan dilabelin "terjemahan" (manifest ngitung baris `ai_results` = grup, bukan paragraf).
+
 ### Pengingat backup
 
 - Pengaturan menampilkan "Backup terakhir: 3 hari lalu" (atau "Belum pernah backup").

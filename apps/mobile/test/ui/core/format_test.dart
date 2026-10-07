@@ -24,4 +24,9 @@ void main() {
     expect(ago(DateTime(2026, 5, 1), now), '5 bulan lalu');
     expect(ago(DateTime(2024, 10, 1), now), '2 tahun lalu');
   });
+
+  test('dateTime', () {
+    expect(dateTime(DateTime(2026, 10, 3, 21, 40)), '3 Okt 2026, 21.40');
+    expect(dateTime(DateTime(2026, 1, 9, 7, 5)), '9 Jan 2026, 07.05');
+  });
 }

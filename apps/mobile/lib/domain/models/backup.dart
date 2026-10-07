@@ -21,6 +21,26 @@ class BackupManifest {
   final int books;
   final int aiResults;
 
+  /// Dari `manifest.json`. Bentuknya salah → [FormatException].
+  factory BackupManifest.fromJson(Object? json) {
+    if (json is! Map ||
+        json['format'] != format ||
+        json['counts'] is! Map ||
+        json['schemaVersion'] is! int) {
+      throw const FormatException('not a Luma backup manifest');
+    }
+    final counts = json['counts'] as Map;
+    final created = DateTime.tryParse('${json['createdAt']}');
+    if (created == null) throw const FormatException('bad createdAt');
+    return BackupManifest(
+      appVersion: '${json['appVersion'] ?? '?'}',
+      schemaVersion: json['schemaVersion'] as int,
+      createdAt: created.toLocal(),
+      books: (counts['books'] as num?)?.toInt() ?? 0,
+      aiResults: (counts['aiResults'] as num?)?.toInt() ?? 0,
+    );
+  }
+
   Map<String, Object?> toJson() => {
     'format': format,
     'formatVersion': formatVersion,

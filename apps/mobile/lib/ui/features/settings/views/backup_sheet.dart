@@ -102,7 +102,7 @@ class BackupProgressSheet extends ConsumerWidget {
               spacing: 10,
               children: [
                 for (final (i, label) in items.indexed)
-                  _Step(
+                  SheetStep(
                     label: label,
                     done: m != null && run.stage.index > i,
                     current: m != null && run.stage.index == i,
@@ -129,8 +129,15 @@ class BackupProgressSheet extends ConsumerWidget {
   }
 }
 
-class _Step extends StatelessWidget {
-  const _Step({required this.label, required this.done, required this.current});
+/// Satu baris centang di sheet proses (backup & pulihin): beres = centang,
+/// lagi jalan = titik kuning, belum = titik pasir.
+class SheetStep extends StatelessWidget {
+  const SheetStep({
+    super.key,
+    required this.label,
+    required this.done,
+    required this.current,
+  });
 
   final String label;
   final bool done;

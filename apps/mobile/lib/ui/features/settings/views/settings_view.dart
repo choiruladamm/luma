@@ -3,12 +3,17 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:path/path.dart' as p;
 
+import '../../../../data/database/app_database.dart';
 import '../../../../data/repositories/ai_results_repository.dart';
 import '../../../../data/repositories/settings_repository.dart';
 import '../../../../data/services/api_key_store.dart';
+import '../../../../data/services/file_picker_service.dart';
+import '../../../../data/services/restore_service.dart';
 import '../../../../domain/models/ai_model.dart';
 import '../../../../domain/models/backup.dart';
+import '../../../../routing/router.dart';
 import '../../../core/format.dart';
 import '../../../core/theme/stabilo_theme.dart';
 import '../../../core/theme/stabilo_tokens.dart';
@@ -22,6 +27,7 @@ import '../../../core/widgets/toast.dart';
 import '../view_models/backup_view_model.dart';
 import '../view_models/settings_view_model.dart';
 import 'backup_sheet.dart';
+import 'restore_sheets.dart';
 
 /// Pengaturan app (board 23 Pengaturan app): API key, model AI, cache
 /// terjemahan. Bagian Backup & pulihin nyusul di #24–#26.
@@ -42,6 +48,106 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
   bool _backupOpen = false;
 
   BackupController get _backup => ref.read(backupControllerProvider.notifier);
+
+  bool _restoring = false;
+
+  /// Pulihin (board 28–32): pilih zip → cek di folder sementara → ringkasan
+  /// & konfirmasi → ganti data → database dibuka lagi → balik ke Rak.
+  Future<void> _restore() async {
+    if (_restoring) return;
+    _restoring = true;
+    try {
+      while (mounted) {
+        final zip = await ref.read(filePickerServiceProvider).pickBackup();
+        if (zip == null || !mounted) return;
+        final service = ref.read(restoreServiceProvider);
+        final name = p.basename(zip.path);
+        final RestorePreview preview;
+        try {
+          preview = await service.inspect(zip);
+        } on RestoreException catch (e) {
+          if (!mounted) return;
+          if (await showRestoreFailed(context, fileName: name, error: e)) {
+            continue; // pilih file lain
+          }
+          return;
+        }
+        final current = await service.currentBooks();
+        if (!mounted) {
+          await preview.discard();
+          return;
+        }
+        final ok = await showRestoreSummary(
+          context,
+          preview: preview,
+          currentBooks: current,
+        );
+        if (!ok || !mounted) {
+          await preview.discard();
+          return;
+        }
+        await _apply(service, preview);
+        return;
+      }
+    } finally {
+      _restoring = false;
+    }
+  }
+
+  Future<void> _apply(RestoreService service, RestorePreview preview) async {
+    final stage = ValueNotifier(1);
+    final nav = Navigator.of(context);
+    final router = GoRouter.of(context);
+    // Pengaturan ilang pas balik ke Rak; toast-nya lewat navigator root yang
+    // tetep ada (masih di bawah ScaffoldMessenger & Theme).
+    final app = Navigator.of(context, rootNavigator: true).context;
+    showAppSheet<void>(
+      context,
+      dismissible: false,
+      builder: (_) => RestoreProgressSheet(
+        name: preview.fileName,
+        books: preview.manifest.books,
+        stage: stage,
+      ),
+    );
+    var failed = false;
+    try {
+      await service.apply(preview, onStage: (s) => stage.value = s);
+      stage.value = 3;
+    } catch (_) {
+      failed = true;
+      await preview.discard();
+    } finally {
+      // Database ditutup pas apply: buka lagi (data baru, atau yang lama kalau
+      // gagal). Semua provider data ikut dibangun ulang.
+      ref.invalidate(appDatabaseProvider);
+    }
+    nav.pop();
+    stage.dispose();
+    if (failed) {
+      if (mounted) {
+        await showRestoreFailed(context, fileName: preview.fileName);
+      }
+      return;
+    }
+    final noKey = await ref.read(apiKeyStoreProvider).read() == null;
+    final m = preview.manifest;
+    router.go(Routes.home);
+    if (!app.mounted) return;
+    final c = app.stabilo;
+    showToast(
+      app,
+      'Sip, data lo udah balik!',
+      subtitle:
+          '${thousands(m.books)} buku · ${thousands(m.aiResults)} terjemahan',
+      leading: _ToastTile(icon: AppIcons.check, bg: c.accent, fg: c.onAccent),
+      note: noKey
+          ? 'API key gak ikut backup, isi ulang dulu biar bisa nerjemahin.'
+          : null,
+      actionLabel: noKey ? 'Isi key' : null,
+      onAction: () => router.push(Routes.settings),
+    );
+  }
 
   void _onBackup(BackupState? prev, BackupState next) {
     if (next is! BackupRunning && _backupOpen) {
@@ -186,6 +292,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                         last: ref.watch(lastBackupProvider).value,
                         loaded: ref.watch(lastBackupProvider).hasValue,
                         onBackup: _backup.start,
+                        onRestore: _restore,
                       ),
                     ),
                     const SizedBox(height: 22),
@@ -338,6 +445,7 @@ class _BackupCard extends StatelessWidget {
     required this.last,
     required this.loaded,
     required this.onBackup,
+    required this.onRestore,
   });
 
   final LastBackup? last;
@@ -345,6 +453,7 @@ class _BackupCard extends StatelessWidget {
   /// Status backup udah kebaca (biar gak sempet nongol "belum pernah").
   final bool loaded;
   final VoidCallback onBackup;
+  final VoidCallback onRestore;
 
   /// "Barusan" (< 1 jam), "Hari ini", "Kemarin", "3 hari lalu", ...
   static String when(DateTime at, DateTime now) {
@@ -427,6 +536,12 @@ class _BackupCard extends StatelessWidget {
             label: 'Backup sekarang',
             icon: AppIcons.backup,
             onPressed: onBackup,
+          ),
+          AppButton.secondary(
+            label: 'Pulihin dari backup',
+            icon: AppIcons.restore,
+            height: 48,
+            onPressed: onRestore,
           ),
         ],
       ),

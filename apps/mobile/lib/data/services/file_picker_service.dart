@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
@@ -18,6 +19,16 @@ class PickedFile {
 
 class FilePickerService {
   const FilePickerService();
+
+  /// File backup `.zip` (path lokal, dibaca streaming). Null = batal.
+  Future<File?> pickBackup() async {
+    final file = await FilePicker.pickFile(
+      type: FileType.custom,
+      allowedExtensions: const ['zip'],
+    );
+    final path = file?.path;
+    return path == null ? null : File(path);
+  }
 
   /// Null = user batal milih.
   Future<PickedFile?> pickEpub() async {

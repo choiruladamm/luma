@@ -24,3 +24,15 @@ String ago(DateTime then, DateTime now) {
   if (days < 365) return '${days ~/ 30} bulan lalu';
   return '${days ~/ 365} tahun lalu';
 }
+
+const _months = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', //
+  'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des',
+];
+
+/// "3 Okt 2026, 21.40".
+String dateTime(DateTime t) {
+  String two(int n) => n.toString().padLeft(2, '0');
+  return '${t.day} ${_months[t.month - 1]} ${t.year}, '
+      '${two(t.hour)}.${two(t.minute)}';
+}

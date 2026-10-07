@@ -239,4 +239,7 @@ abstract final class AppIcons {
   static const key = HugeIcons.strokeRoundedKey01;
   static const backup = HugeIcons.strokeRoundedDatabaseExport;
   static const alert = HugeIcons.strokeRoundedAlert02;
+  static const restore = HugeIcons.strokeRoundedDatabaseRestore;
+  static const fileRemove = HugeIcons.strokeRoundedFileRemove;
+  static const alertCircle = HugeIcons.strokeRoundedAlertCircle;
 }

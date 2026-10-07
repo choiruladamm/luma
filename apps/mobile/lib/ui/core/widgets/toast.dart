@@ -18,6 +18,10 @@ void showToast(
   Widget? leading,
   String? actionLabel,
   VoidCallback? onAction,
+
+  /// Baris kedua di bawah garis, tombol aksinya pindah ke sini ("API key gak
+  /// ikut backup..." · Isi key).
+  String? note,
 }) {
   final messenger = ScaffoldMessenger.of(context);
   messenger
@@ -31,12 +35,13 @@ void showToast(
                 subtitle: subtitle,
                 leading: leading,
                 actionLabel: actionLabel,
+                note: note,
                 onAction: () {
                   messenger.hideCurrentSnackBar();
                   onAction?.call();
                 },
               ),
-        duration: Motion.toast,
+        duration: note == null ? Motion.toast : Motion.toastLong,
         behavior: SnackBarBehavior.floating,
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -84,6 +89,7 @@ class _Toast extends StatelessWidget {
       leading = null,
       actionLabel = null,
       onAction = null,
+      note = null,
       pill = true;
   const _Toast.bar(
     this.message, {
@@ -91,6 +97,7 @@ class _Toast extends StatelessWidget {
     this.subtitle,
     this.leading,
     this.onAction,
+    this.note,
   }) : pill = false;
 
   final String message;
@@ -99,6 +106,7 @@ class _Toast extends StatelessWidget {
   final String? actionLabel;
   final bool pill;
   final VoidCallback? onAction;
+  final String? note;
 
   @override
   Widget build(BuildContext context) {
@@ -121,67 +129,104 @@ class _Toast extends StatelessWidget {
         borderRadius: BorderRadius.circular(pill ? Radii.full : Radii.lg),
         boxShadow: Elevation.toast,
       ),
-      child: Row(
-        mainAxisSize: pill ? MainAxisSize.min : MainAxisSize.max,
-        spacing: Space.s3,
-        children: [
-          if (pill)
-            Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                color: c.accent,
-                shape: BoxShape.circle,
-              ),
-              child: AppIcon(AppIcons.check, size: 14, color: c.onAccent),
-            ),
-          ?leading,
-          Flexible(
-            fit: pill ? FlexFit.loose : FlexFit.tight,
-            child: subtitle == null
-                ? Text(message, style: style)
-                : Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        message,
-                        style: style.copyWith(fontWeight: FontWeight.w700),
-                      ),
-                      Text(
-                        subtitle!,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: StabiloType.caption.copyWith(
-                          color: c.toastInk.withValues(alpha: 0.8),
-                        ),
-                      ),
-                    ],
-                  ),
-          ),
-          if (actionLabel != null)
-            Material(
-              color: c.accent,
-              shape: const StadiumBorder(),
-              clipBehavior: Clip.antiAlias,
-              child: InkWell(
-                onTap: onAction,
-                child: Container(
-                  height: rich ? Layout.touch : 40,
-                  padding: const EdgeInsets.symmetric(horizontal: Space.s4),
-                  alignment: Alignment.center,
-                  child: Text(
-                    actionLabel!,
-                    style: StabiloType.label.copyWith(
-                      fontSize: 14,
-                      color: c.onAccent,
-                    ),
-                  ),
+      child: _withNote(
+        context,
+        Row(
+          mainAxisSize: pill ? MainAxisSize.min : MainAxisSize.max,
+          spacing: Space.s3,
+          children: [
+            if (pill)
+              Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  color: c.accent,
+                  shape: BoxShape.circle,
                 ),
+                child: AppIcon(AppIcons.check, size: 14, color: c.onAccent),
               ),
+            ?leading,
+            Flexible(
+              fit: pill ? FlexFit.loose : FlexFit.tight,
+              child: subtitle == null
+                  ? Text(message, style: style)
+                  : Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          message,
+                          style: style.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                        Text(
+                          subtitle!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: StabiloType.caption.copyWith(
+                            color: c.toastInk.withValues(alpha: 0.8),
+                          ),
+                        ),
+                      ],
+                    ),
             ),
-        ],
+            if (actionLabel != null && note == null) _action(c, rich),
+          ],
+        ),
       ),
     );
   }
+
+  /// Ada [note]: baris utama, garis tipis, terus catatan + tombol aksi.
+  Widget _withNote(BuildContext context, Widget main) {
+    if (note == null) return main;
+    final c = context.stabilo;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      spacing: 10,
+      children: [
+        main,
+        Container(
+          padding: const EdgeInsets.fromLTRB(Space.s1, Space.s2, 6, 0),
+          decoration: BoxDecoration(
+            border: Border(
+              top: BorderSide(color: c.toastInk.withValues(alpha: 0.16)),
+            ),
+          ),
+          child: Row(
+            spacing: 10,
+            children: [
+              Expanded(
+                child: Text(
+                  note!,
+                  style: StabiloType.caption.copyWith(
+                    height: 1.35,
+                    color: c.toastInk,
+                  ),
+                ),
+              ),
+              if (actionLabel != null) _action(c, false),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _action(StabiloColors c, bool rich) => Material(
+    color: c.accent,
+    shape: const StadiumBorder(),
+    clipBehavior: Clip.antiAlias,
+    child: InkWell(
+      onTap: onAction,
+      child: Container(
+        height: rich ? Layout.touch : 40,
+        padding: const EdgeInsets.symmetric(horizontal: Space.s4),
+        alignment: Alignment.center,
+        child: Text(
+          actionLabel!,
+          style: StabiloType.label.copyWith(fontSize: 14, color: c.onAccent),
+        ),
+      ),
+    ),
+  );
 }
