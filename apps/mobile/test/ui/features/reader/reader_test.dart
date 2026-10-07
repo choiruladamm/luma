@@ -1395,26 +1395,176 @@ void main() {
       );
     });
 
-    testWidgets('grabber and buttons stay put while the content scrolls', (
-      tester,
-    ) async {
+    double lanjutTop(WidgetTester tester) =>
+        tester.getTopLeft(find.text('Lanjut')).dy;
+    double titleBottom(WidgetTester tester) =>
+        tester.getBottomLeft(find.text('Artinya gini nih')).dy;
+    double sheetBottom(WidgetTester tester) =>
+        tester.getBottomLeft(sheetBox).dy;
+    bool buttonsShown(WidgetTester tester) =>
+        lanjutTop(tester) < sheetBottom(tester);
+    bool headerShown(WidgetTester tester) =>
+        titleBottom(tester) > tester.getTopLeft(sheetBox).dy;
+
+    Future<void> openLong(WidgetTester tester) async {
       answer = (g) async => longReply(g);
       await openTall(tester);
       await tapGroup(tester, 13);
-      final sheet = tester.getRect(sheetBox);
-      final grabber = tester.getTopLeft(find.byType(SheetGrabber)).dy;
-      final lanjut = tester.getBottomLeft(find.text('Lanjut')).dy;
-      expect(grabber, sheet.top + 10);
+    }
 
+    testWidgets(
+      'scrolling down hides the header and the buttons, grabber stays',
+      (tester) async {
+        await openLong(tester);
+        final grabber = tester.getTopLeft(find.byType(SheetGrabber)).dy;
+        expect(grabber, tester.getTopLeft(sheetBox).dy + 10);
+        expect(headerShown(tester) && buttonsShown(tester), isTrue);
+
+        await tester.drag(sheetScroll(), const Offset(0, -300));
+        await tester.pumpAndSettle();
+        expect(headerShown(tester), isFalse);
+        expect(buttonsShown(tester), isFalse);
+        expect(tester.getTopLeft(find.byType(SheetGrabber)).dy, grabber);
+      },
+    );
+
+    testWidgets(
+      'the buttons need 24pt down to hide, the header leaves with the text',
+      (tester) async {
+        await openLong(tester);
+        await tester.drag(sheetScroll(), const Offset(0, -20));
+        await tester.pumpAndSettle();
+        expect(buttonsShown(tester), isTrue); // under 24
+        await tester.drag(sheetScroll(), const Offset(0, -30));
+        await tester.pumpAndSettle();
+        expect(buttonsShown(tester), isFalse);
+      },
+    );
+
+    testWidgets('scrolling up 12pt or more brings both back', (tester) async {
+      await openLong(tester);
+      await tester.drag(sheetScroll(), const Offset(0, -400));
+      await tester.pumpAndSettle();
+      expect(buttonsShown(tester) || headerShown(tester), isFalse);
+
+      await tester.drag(sheetScroll(), const Offset(0, 80));
+      await tester.pumpAndSettle();
+      expect(buttonsShown(tester), isTrue);
+      expect(headerShown(tester), isTrue);
+    });
+
+    testWidgets('a half-way header snaps to the nearest end on release', (
+      tester,
+    ) async {
+      await openLong(tester);
+      await tester.drag(sheetScroll(), const Offset(0, -400));
+      await tester.pumpAndSettle();
+      // Up 30: the header follows the finger a third of the way: snaps hidden.
+      await tester.drag(sheetScroll(), const Offset(0, 30));
+      await tester.pumpAndSettle();
+      expect(headerShown(tester), isFalse);
+      expect(buttonsShown(tester), isTrue);
+    });
+
+    testWidgets('hitting the bottom shows the buttons, the header stays away', (
+      tester,
+    ) async {
+      await openLong(tester);
       await tester.drag(sheetScroll(), const Offset(0, -300));
       await tester.pumpAndSettle();
-      expect(tester.getTopLeft(find.byType(SheetGrabber)).dy, grabber);
-      expect(tester.getBottomLeft(find.text('Lanjut')).dy, lanjut);
-      // The title scrolled out with the content.
+      await tester.fling(sheetScroll(), const Offset(0, -3000), 8000);
+      await tester.pumpAndSettle();
+      expect(buttonsShown(tester), isTrue);
+      expect(headerShown(tester), isFalse);
+    });
+
+    testWidgets('back at the very top, everything is there again', (
+      tester,
+    ) async {
+      await openLong(tester);
+      await tester.drag(sheetScroll(), const Offset(0, -400));
+      await tester.pumpAndSettle();
+      await tester.drag(sheetScroll(), const Offset(0, 400)); // back to 0
+      await tester.pumpAndSettle();
+      expect(headerShown(tester), isTrue);
+      expect(buttonsShown(tester), isTrue);
+    });
+
+    testWidgets('programmatic scroll never hides the chrome', (tester) async {
+      await openLong(tester);
+      tester
+          .state<ScrollableState>(
+            find.descendant(of: sheetBox, matching: find.byType(Scrollable)),
+          )
+          .position
+          .jumpTo(400);
+      await tester.pumpAndSettle();
+      expect(buttonsShown(tester), isTrue);
+      expect(headerShown(tester), isTrue);
+    });
+
+    testWidgets('content that fits never hides anything', (tester) async {
+      await openTall(tester);
+      await tapGroup(tester, 13);
+      await tester.drag(sheetScroll(), const Offset(0, -300));
+      await tester.pumpAndSettle();
+      expect(buttonsShown(tester), isTrue);
+      expect(headerShown(tester), isTrue);
+    });
+
+    testWidgets('error and loading states never hide', (tester) async {
+      final pending = Completer<AiReply>();
+      answer = (_) => pending.future;
+      await openTall(tester);
+      await tester.tap(find.textContaining('Tall 13:'));
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.drag(sheetScroll(), const Offset(0, -300));
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(find.text('Salin'), findsOneWidget);
       expect(
-        tester.getBottomLeft(find.text('Artinya gini nih')).dy,
-        lessThan(sheet.top),
+        tester.getTopLeft(find.text('Lanjut')).dy,
+        lessThan(sheetBottom(tester)),
       );
+    });
+
+    testWidgets('VoiceOver on: the chrome never hides', (tester) async {
+      tester.platformDispatcher.accessibilityFeaturesTestValue =
+          const FakeAccessibilityFeatures(accessibleNavigation: true);
+      addTearDown(
+        tester.platformDispatcher.clearAccessibilityFeaturesTestValue,
+      );
+      await openLong(tester);
+      await tester.drag(sheetScroll(), const Offset(0, -400));
+      await tester.pumpAndSettle();
+      expect(buttonsShown(tester), isTrue);
+      expect(find.bySemanticsLabel('Tutup'), findsOneWidget);
+    });
+
+    testWidgets('reduce motion: no slide, just a fade', (tester) async {
+      tester.platformDispatcher.accessibilityFeaturesTestValue =
+          const FakeAccessibilityFeatures(disableAnimations: true);
+      addTearDown(
+        tester.platformDispatcher.clearAccessibilityFeaturesTestValue,
+      );
+      await openLong(tester);
+      final top = lanjutTop(tester);
+      double opacityOf(Finder f) => tester
+          .widget<Opacity>(
+            find.ancestor(of: f, matching: find.byType(Opacity)).first,
+          )
+          .opacity;
+      expect(opacityOf(find.text('Lanjut')), 1);
+
+      await tester.drag(sheetScroll(), const Offset(0, -400));
+      await tester.pumpAndSettle();
+      expect(lanjutTop(tester), top); // did not move
+      expect(opacityOf(find.text('Lanjut')), 0);
+      expect(opacityOf(find.text('Artinya gini nih')), 0);
+
+      await tester.drag(sheetScroll(), const Offset(0, 80));
+      await tester.pumpAndSettle();
+      expect(opacityOf(find.text('Lanjut')), 1);
+      expect(opacityOf(find.text('Artinya gini nih')), 1);
     });
 
     testWidgets('swipe down on the content at offset 0 closes the sheet', (

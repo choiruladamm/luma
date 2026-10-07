@@ -3,6 +3,7 @@ import 'dart:ui' show lerpDouble;
 
 import 'package:flutter/material.dart';
 
+import '../../../core/scroll_run.dart';
 import '../../../core/theme/stabilo_theme.dart';
 import '../../../core/theme/stabilo_tokens.dart';
 import '../../../core/theme/stabilo_type.dart';
@@ -52,15 +53,12 @@ const readerTextBottom = 66.0;
   );
 }
 
-/// Ngumpet/munculin kapsul ngikutin scroll: turun ≥ [hideAfter] ngumpet,
-/// naik ≥ [showAfter] muncul. Selama jari nge-drag, kapsul ngikutin 1:1 terus
+/// Ngumpet/munculin kapsul ngikutin scroll (ambang di [ScrollRun]): turun
+/// ngumpet, naik muncul. Selama jari nge-drag, kapsul ngikutin 1:1 terus
 /// snap pas dilepas.
 class ReaderChrome {
   ReaderChrome({required TickerProvider vsync})
     : hidden = AnimationController(vsync: vsync, duration: Motion.capsule);
-
-  static const hideAfter = 24.0;
-  static const showAfter = 12.0;
 
   /// Jarak geser buat ngikutin jari: kapsul atas sampe lewat tepi layar.
   static const _travel = 120.0;
@@ -73,21 +71,20 @@ class ReaderChrome {
 
   bool reduceMotion = false;
 
-  /// Scroll searah yang belum nyampe ambang (+ turun, − naik).
-  double _run = 0;
+  final _run = ScrollRun();
 
   /// [delta] > 0 = scroll turun (teks naik).
   void scrolled(double delta, {required bool dragging}) {
     if (delta == 0) return;
-    if ((delta > 0) != (_run > 0)) _run = 0;
-    _run += delta;
     if (dragging) {
       hidden.value = (hidden.value + delta / _travel).clamp(0.0, 1.0);
     }
-    if (_run >= hideAfter) {
-      _set(false, snap: !dragging);
-    } else if (_run <= -showAfter) {
-      _set(true, snap: !dragging);
+    switch (_run.add(delta)) {
+      case ChromeIntent.hide:
+        _set(false, snap: !dragging);
+      case ChromeIntent.show:
+        _set(true, snap: !dragging);
+      case null:
     }
   }
 
@@ -100,7 +97,7 @@ class ReaderChrome {
 
   void _set(bool show, {bool snap = true}) {
     visible.value = show;
-    _run = 0;
+    _run.reset();
     if (snap) _snap();
   }
 

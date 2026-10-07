@@ -86,6 +86,9 @@ abstract final class Motion {
     seconds: 6,
   ); // toast yang ada catatan + aksi
   static const capsule = Duration(milliseconds: 200); // easeOut, kapsul baca
+  static const sheetChrome = Duration(
+    milliseconds: 200,
+  ); // easeOut, tombol sheet
   static const edgeFade = Duration(milliseconds: 150); // fade tepi scroll
   static const capsuleIntro = Duration(milliseconds: 2500); // abis lanjut baca
   static const flash = Duration(milliseconds: 1200); // stabilo 0 → 60% → 0

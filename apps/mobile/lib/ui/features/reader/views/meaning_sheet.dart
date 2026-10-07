@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart' show ScrollDirection;
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -18,6 +19,7 @@ import '../../../core/widgets/sheet.dart';
 import '../../../core/widgets/tag.dart';
 import '../../../core/widgets/toast.dart';
 import '../view_models/reader_view_model.dart';
+import 'meaning_chrome.dart';
 
 /// Sheet Artinya (board 04 loading, 05 hasil, 06 error, 09 udah disalin,
 /// 10 API key kosong). [group] = grup yang lagi dibuka; "Lanjut" manggil
@@ -152,17 +154,19 @@ class _MeaningSheetState extends ConsumerState<MeaningSheet> {
   };
 }
 
-/// Rangka semua state: isi scroll setinggi sheet (528), header jadi bagian
-/// isi, grabber dan tombol lapisan di atasnya (board Ngumpet · Opsi A).
-/// Scroll view-nya pakai controller dari DraggableScrollableSheet
+/// Rangka semua state: isi scroll setinggi sheet (528) dengan padding atas 91
+/// / bawah 102, header + grabber + tombol lapisan di atasnya (board Ngumpet ·
+/// Opsi A). Scroll view-nya pakai controller dari DraggableScrollableSheet
 /// (`PrimaryScrollController`), jadi tarik turun di offset 0 nutup sheet.
-class _ScrollFrame extends StatelessWidget {
+/// [hideable]: header dan tombol ngumpet ngikutin scroll jari ([MeaningChrome]).
+class _ScrollFrame extends StatefulWidget {
   const _ScrollFrame({
     required this.header,
     required this.content,
     required this.actions,
     this.margin = 0,
     this.gap = Space.s4,
+    this.hideable = false,
   });
 
   final Widget header;
@@ -173,44 +177,111 @@ class _ScrollFrame extends StatelessWidget {
   /// dilebarin kalau margin-nya lebih besar (Lega 32).
   final double margin;
   final double gap;
+  final bool hideable;
+
+  @override
+  State<_ScrollFrame> createState() => _ScrollFrameState();
+}
+
+class _ScrollFrameState extends State<_ScrollFrame>
+    with TickerProviderStateMixin {
+  late final _chrome = MeaningChrome(vsync: this);
+
+  /// Scroll-nya dari jari (bukan scroll programatik).
+  bool _user = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _chrome.reduceMotion = MediaQuery.disableAnimationsOf(context);
+    _syncEnabled();
+  }
+
+  @override
+  void didUpdateWidget(_ScrollFrame old) {
+    super.didUpdateWidget(old);
+    _syncEnabled();
+  }
+
+  /// Gak pernah ngumpet kalau VoiceOver nyala atau bukan state hasil.
+  void _syncEnabled() {
+    _chrome.enabled =
+        widget.hideable && !MediaQuery.accessibleNavigationOf(context);
+    if (!_chrome.enabled) _chrome.show();
+  }
+
+  @override
+  void dispose() {
+    _chrome.dispose();
+    super.dispose();
+  }
+
+  bool _onScroll(ScrollNotification n) {
+    if (n.depth != 0) return false;
+    switch (n) {
+      case UserScrollNotification():
+        _user = n.direction != ScrollDirection.idle;
+      case ScrollUpdateNotification() when _user || n.dragDetails != null:
+        _chrome.scrolled(
+          pixels: n.metrics.pixels,
+          max: n.metrics.maxScrollExtent,
+          delta: n.scrollDelta ?? 0,
+        );
+      case ScrollEndNotification():
+        if (_user) _chrome.release(n.metrics.pixels);
+        _user = false;
+      default:
+    }
+    return false;
+  }
 
   @override
   Widget build(BuildContext context) {
     final pad = Layout.sheetPadding;
-    final inset = math.max(0.0, margin - pad.left);
+    final inset = math.max(0.0, widget.margin - pad.left);
+    final reduced = _chrome.reduceMotion;
+    // Titik tempel header: di bawah grabber (padding atas 10 + 5 + 16).
+    final headerTop = Layout.artinyaHeader - Space.s4 - Layout.touch;
     return Stack(
       children: [
-        EdgeFadeScroll(
-          top: const EdgeFadeSide(20, clear: Layout.artinyaGrabberZone),
-          // Tombol + safe area (86) bening, fade 20pt tepat di atasnya.
-          bottom: const EdgeFadeSide(
-            20,
-            clear: Layout.artinyaActions - Space.s4,
-          ),
-          child: SingleChildScrollView(
-            primary: true,
-            physics: const ClampingScrollPhysics(),
-            padding: EdgeInsets.fromLTRB(
-              pad.left,
-              Layout.artinyaHeader - Space.s4 - Layout.touch, // grabber
-              pad.right,
-              Layout.artinyaActions,
+        NotificationListener<ScrollNotification>(
+          onNotification: _onScroll,
+          child: EdgeFadeScroll(
+            top: const EdgeFadeSide(20, clear: Layout.artinyaGrabberZone),
+            // Tombol + safe area (86) bening, fade 20pt tepat di atasnya.
+            bottom: const EdgeFadeSide(
+              20,
+              clear: Layout.artinyaActions - Space.s4,
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              spacing: gap,
-              children: [
-                header,
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: inset),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    spacing: gap,
-                    children: content,
-                  ),
+            child: SingleChildScrollView(
+              primary: true,
+              physics: const ClampingScrollPhysics(),
+              padding: EdgeInsets.fromLTRB(
+                pad.left,
+                Layout.artinyaHeader,
+                pad.right,
+                Layout.artinyaActions,
+              ),
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: inset),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  spacing: widget.gap,
+                  children: widget.content,
                 ),
-              ],
+              ),
             ),
+          ),
+        ),
+        Positioned(
+          top: headerTop,
+          left: pad.left,
+          right: pad.right,
+          child: _Chrome(
+            animation: _chrome.header,
+            travel: -Layout.artinyaHeader,
+            reduced: reduced,
+            child: widget.header,
           ),
         ),
         Positioned(
@@ -223,11 +294,55 @@ class _ScrollFrame extends StatelessWidget {
           left: pad.left,
           right: pad.right,
           bottom: pad.bottom,
-          child: Row(spacing: 10, children: actions),
+          child: _Chrome(
+            animation: _chrome.actions,
+            travel: Layout.artinyaActions,
+            reduced: reduced,
+            child: Row(spacing: 10, children: widget.actions),
+          ),
         ),
       ],
     );
   }
+}
+
+/// Geser [child] sejauh [travel] ngikutin [animation] (0 keliatan, 1
+/// ngumpet). Kurangi gerakan: gak geser, cuma fade. Yang ngumpet gak bisa
+/// di-tap dan gak kebaca VoiceOver.
+class _Chrome extends StatelessWidget {
+  const _Chrome({
+    required this.animation,
+    required this.travel,
+    required this.reduced,
+    required this.child,
+  });
+
+  final Animation<double> animation;
+  final double travel;
+  final bool reduced;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => AnimatedBuilder(
+    animation: animation,
+    child: child,
+    builder: (context, child) {
+      final v = animation.value;
+      final hidden = v >= 1;
+      return ExcludeSemantics(
+        excluding: hidden,
+        child: IgnorePointer(
+          ignoring: v > 0.5,
+          child: reduced
+              ? Opacity(opacity: 1 - v, child: child)
+              : Transform.translate(
+                  offset: Offset(0, travel * v),
+                  child: child,
+                ),
+        ),
+      );
+    },
+  );
 }
 
 class _Title extends StatelessWidget {
@@ -300,6 +415,7 @@ class _Result extends StatelessWidget {
     final text = typo.style.copyWith(color: c.ink);
     return _ScrollFrame(
       margin: typo.margin,
+      hideable: true,
       header: _Title('Artinya gini nih', closeLabel: 'Tutup', onClose: onClose),
       content: [
         _Section(
