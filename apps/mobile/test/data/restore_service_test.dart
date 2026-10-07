@@ -9,7 +9,10 @@ import 'package:luma/data/database/app_database.dart';
 import 'package:luma/data/services/backup_service.dart';
 import 'package:luma/data/services/file_storage.dart';
 import 'package:luma/data/services/restore_service.dart';
+import 'package:luma/domain/models/ai_reply.dart';
 import 'package:luma/domain/models/book.dart';
+
+import 'migration_test.dart' show v4;
 
 /// One "phone": a real database file in Documents plus books/ and covers/.
 class Phone {
@@ -46,6 +49,7 @@ class Phone {
             parserVersion: 1,
             totalChars: 100,
             readingSeconds: const Value(42),
+            finishedAt: Value(DateTime(2026, 10, 7, 21)),
           ),
         );
     final ch = await db
@@ -79,6 +83,33 @@ class Phone {
             paragraphOffset: const Value(0.4),
           ),
         );
+    // Stats (#42): only kept on the phone, so the backup must carry them.
+    await db
+        .into(db.readingSessions)
+        .insert(
+          ReadingSessionsCompanion.insert(
+            bookId: book,
+            chapterId: ch,
+            startedAt: DateTime(2026, 10, 7, 20),
+            seconds: 300,
+            startChar: 0,
+            endChar: 40,
+          ),
+        );
+    await db
+        .into(db.aiCalls)
+        .insert(
+          AiCallsCompanion.insert(
+            bookId: Value(book),
+            chapterId: Value(ch),
+            groupIndex: const Value(0),
+            kind: AiCallKind.group,
+            model: 'm',
+            promptVersion: 4,
+            chars: 11,
+            costUsd: const Value(0.0002),
+          ),
+        );
     if (translated) {
       await db
           .into(db.aiResults)
@@ -89,6 +120,8 @@ class Phone {
               translations: '["Halo"]',
               meaning: 'Sapaan.',
               model: 'm',
+              openCount: const Value(3),
+              lastOpenedAt: Value(DateTime(2026, 10, 7, 21)),
             ),
           );
     }
@@ -103,6 +136,8 @@ class Phone {
     await db.select(db.paragraphs).get(),
     await db.select(db.readingProgress).get(),
     await db.select(db.aiResults).get(),
+    await db.select(db.readingSessions).get(),
+    await db.select(db.aiCalls).get(),
     await db.select(db.settings).get(),
   ];
 
@@ -158,6 +193,14 @@ void main() {
 
     b.reopen();
     expect(await b.dump(), await a.dump());
+    // Not empty == empty: the stats really came across.
+    expect(await b.db.select(b.db.readingSessions).get(), hasLength(2));
+    expect(await b.db.select(b.db.aiCalls).get(), hasLength(2));
+    final walden = await (b.db.select(
+      b.db.books,
+    )..where((x) => x.title.equals('Walden'))).getSingle();
+    expect(walden.finishedAt, DateTime(2026, 10, 7, 21));
+    expect((await b.db.select(b.db.aiResults).getSingle()).openCount, 3);
     expect(b.files('books'), a.files('books'));
     expect(b.files('covers'), a.files('covers'));
     // Nothing of the old data or the swap left behind.
@@ -287,4 +330,66 @@ void main() {
     expect(await b.dump(), before);
     expect(b.files('books'), booksBefore);
   });
+
+  test(
+    'a backup from schema 4 restores: old data kept, stats start empty',
+    () async {
+      final dir = await Directory.systemTemp.createTemp('luma-v4-');
+      addTearDown(() => dir.delete(recursive: true));
+      final file = File('${dir.path}/luma.sqlite');
+      final old = NativeDatabase(
+        file,
+        setup: (raw) {
+          for (final sql in v4) {
+            raw.execute(sql);
+          }
+          raw.execute(
+            "INSERT INTO books (source_type, title, hash, parser_version, "
+            "total_chars, reading_seconds) "
+            "VALUES ('epub', 'Meditations', 'm', 1, 100, 600)",
+          );
+          raw.execute(
+            "INSERT INTO chapters (book_id, sort_order, title, char_offset) "
+            "VALUES (1, 0, 'I', 0)",
+          );
+          raw.execute(
+            'INSERT INTO ai_results (chapter_id, group_index, translations, '
+            "meaning, model, prompt_version) VALUES (1, 0, '[\"a\"]', 'm', 'x', 4)",
+          );
+        },
+      );
+      await old.ensureOpen(_Schema4());
+      await old.close();
+      final zip = await zipOf({
+        'manifest.json': utf8.encode(jsonEncode(manifest(schema: 4))),
+        'luma.sqlite': file.readAsBytesSync(),
+      });
+
+      final service = RestoreService(b.db, b.storage);
+      await service.apply(await service.inspect(zip));
+      b.reopen();
+
+      final book = await b.db.select(b.db.books).getSingle();
+      expect(book.title, 'Meditations');
+      expect(book.readingSeconds, 600);
+      expect(book.finishedAt, isNull);
+      final cached = await b.db.select(b.db.aiResults).getSingle();
+      expect(cached.promptVersion, 4);
+      expect(cached.openCount, 0);
+      expect(await b.db.select(b.db.readingSessions).get(), isEmpty);
+      expect(await b.db.select(b.db.aiCalls).get(), isEmpty);
+    },
+  );
+}
+
+/// Opens a raw database at user_version 4 without any migration.
+class _Schema4 implements QueryExecutorUser {
+  @override
+  int get schemaVersion => 4;
+
+  @override
+  Future<void> beforeOpen(
+    QueryExecutor executor,
+    OpeningDetails details,
+  ) async {}
 }
