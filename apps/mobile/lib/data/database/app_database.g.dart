@@ -161,6 +161,17 @@ class $BooksTable extends Books with TableInfo<$BooksTable, Book> {
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
+  static const VerificationMeta _finishedAtMeta = const VerificationMeta(
+    'finishedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> finishedAt = GeneratedColumn<DateTime>(
+    'finished_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -177,6 +188,7 @@ class $BooksTable extends Books with TableInfo<$BooksTable, Book> {
     lastOpenedAt,
     firstOpenedAt,
     readingSeconds,
+    finishedAt,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -283,6 +295,12 @@ class $BooksTable extends Books with TableInfo<$BooksTable, Book> {
         ),
       );
     }
+    if (data.containsKey('finished_at')) {
+      context.handle(
+        _finishedAtMeta,
+        finishedAt.isAcceptableOrUnknown(data['finished_at']!, _finishedAtMeta),
+      );
+    }
     return context;
   }
 
@@ -350,6 +368,10 @@ class $BooksTable extends Books with TableInfo<$BooksTable, Book> {
         DriftSqlType.int,
         data['${effectivePrefix}reading_seconds'],
       )!,
+      finishedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}finished_at'],
+      ),
     );
   }
 
@@ -387,6 +409,10 @@ class Book extends DataClass implements Insertable<Book> {
 
   /// Total waktu baca aktif (halaman baca kebuka, app di depan, belum idle).
   final int readingSeconds;
+
+  /// Pertama kali layar akhir buku kebuka. Diisi sekali, gak ditimpa. Gak
+  /// disimpulin dari sesi: lompat ke bab terakhir bisa ngelabuin.
+  final DateTime? finishedAt;
   const Book({
     required this.id,
     required this.sourceType,
@@ -402,6 +428,7 @@ class Book extends DataClass implements Insertable<Book> {
     this.lastOpenedAt,
     this.firstOpenedAt,
     required this.readingSeconds,
+    this.finishedAt,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -438,6 +465,9 @@ class Book extends DataClass implements Insertable<Book> {
       map['first_opened_at'] = Variable<DateTime>(firstOpenedAt);
     }
     map['reading_seconds'] = Variable<int>(readingSeconds);
+    if (!nullToAbsent || finishedAt != null) {
+      map['finished_at'] = Variable<DateTime>(finishedAt);
+    }
     return map;
   }
 
@@ -469,6 +499,9 @@ class Book extends DataClass implements Insertable<Book> {
           ? const Value.absent()
           : Value(firstOpenedAt),
       readingSeconds: Value(readingSeconds),
+      finishedAt: finishedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(finishedAt),
     );
   }
 
@@ -494,6 +527,7 @@ class Book extends DataClass implements Insertable<Book> {
       lastOpenedAt: serializer.fromJson<DateTime?>(json['lastOpenedAt']),
       firstOpenedAt: serializer.fromJson<DateTime?>(json['firstOpenedAt']),
       readingSeconds: serializer.fromJson<int>(json['readingSeconds']),
+      finishedAt: serializer.fromJson<DateTime?>(json['finishedAt']),
     );
   }
   @override
@@ -516,6 +550,7 @@ class Book extends DataClass implements Insertable<Book> {
       'lastOpenedAt': serializer.toJson<DateTime?>(lastOpenedAt),
       'firstOpenedAt': serializer.toJson<DateTime?>(firstOpenedAt),
       'readingSeconds': serializer.toJson<int>(readingSeconds),
+      'finishedAt': serializer.toJson<DateTime?>(finishedAt),
     };
   }
 
@@ -534,6 +569,7 @@ class Book extends DataClass implements Insertable<Book> {
     Value<DateTime?> lastOpenedAt = const Value.absent(),
     Value<DateTime?> firstOpenedAt = const Value.absent(),
     int? readingSeconds,
+    Value<DateTime?> finishedAt = const Value.absent(),
   }) => Book(
     id: id ?? this.id,
     sourceType: sourceType ?? this.sourceType,
@@ -551,6 +587,7 @@ class Book extends DataClass implements Insertable<Book> {
         ? firstOpenedAt.value
         : this.firstOpenedAt,
     readingSeconds: readingSeconds ?? this.readingSeconds,
+    finishedAt: finishedAt.present ? finishedAt.value : this.finishedAt,
   );
   Book copyWithCompanion(BooksCompanion data) {
     return Book(
@@ -580,6 +617,9 @@ class Book extends DataClass implements Insertable<Book> {
       readingSeconds: data.readingSeconds.present
           ? data.readingSeconds.value
           : this.readingSeconds,
+      finishedAt: data.finishedAt.present
+          ? data.finishedAt.value
+          : this.finishedAt,
     );
   }
 
@@ -599,7 +639,8 @@ class Book extends DataClass implements Insertable<Book> {
           ..write('createdAt: $createdAt, ')
           ..write('lastOpenedAt: $lastOpenedAt, ')
           ..write('firstOpenedAt: $firstOpenedAt, ')
-          ..write('readingSeconds: $readingSeconds')
+          ..write('readingSeconds: $readingSeconds, ')
+          ..write('finishedAt: $finishedAt')
           ..write(')'))
         .toString();
   }
@@ -620,6 +661,7 @@ class Book extends DataClass implements Insertable<Book> {
     lastOpenedAt,
     firstOpenedAt,
     readingSeconds,
+    finishedAt,
   );
   @override
   bool operator ==(Object other) =>
@@ -638,7 +680,8 @@ class Book extends DataClass implements Insertable<Book> {
           other.createdAt == this.createdAt &&
           other.lastOpenedAt == this.lastOpenedAt &&
           other.firstOpenedAt == this.firstOpenedAt &&
-          other.readingSeconds == this.readingSeconds);
+          other.readingSeconds == this.readingSeconds &&
+          other.finishedAt == this.finishedAt);
 }
 
 class BooksCompanion extends UpdateCompanion<Book> {
@@ -656,6 +699,7 @@ class BooksCompanion extends UpdateCompanion<Book> {
   final Value<DateTime?> lastOpenedAt;
   final Value<DateTime?> firstOpenedAt;
   final Value<int> readingSeconds;
+  final Value<DateTime?> finishedAt;
   const BooksCompanion({
     this.id = const Value.absent(),
     this.sourceType = const Value.absent(),
@@ -671,6 +715,7 @@ class BooksCompanion extends UpdateCompanion<Book> {
     this.lastOpenedAt = const Value.absent(),
     this.firstOpenedAt = const Value.absent(),
     this.readingSeconds = const Value.absent(),
+    this.finishedAt = const Value.absent(),
   });
   BooksCompanion.insert({
     this.id = const Value.absent(),
@@ -687,6 +732,7 @@ class BooksCompanion extends UpdateCompanion<Book> {
     this.lastOpenedAt = const Value.absent(),
     this.firstOpenedAt = const Value.absent(),
     this.readingSeconds = const Value.absent(),
+    this.finishedAt = const Value.absent(),
   }) : sourceType = Value(sourceType),
        title = Value(title),
        parserVersion = Value(parserVersion),
@@ -706,6 +752,7 @@ class BooksCompanion extends UpdateCompanion<Book> {
     Expression<DateTime>? lastOpenedAt,
     Expression<DateTime>? firstOpenedAt,
     Expression<int>? readingSeconds,
+    Expression<DateTime>? finishedAt,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -722,6 +769,7 @@ class BooksCompanion extends UpdateCompanion<Book> {
       if (lastOpenedAt != null) 'last_opened_at': lastOpenedAt,
       if (firstOpenedAt != null) 'first_opened_at': firstOpenedAt,
       if (readingSeconds != null) 'reading_seconds': readingSeconds,
+      if (finishedAt != null) 'finished_at': finishedAt,
     });
   }
 
@@ -740,6 +788,7 @@ class BooksCompanion extends UpdateCompanion<Book> {
     Value<DateTime?>? lastOpenedAt,
     Value<DateTime?>? firstOpenedAt,
     Value<int>? readingSeconds,
+    Value<DateTime?>? finishedAt,
   }) {
     return BooksCompanion(
       id: id ?? this.id,
@@ -756,6 +805,7 @@ class BooksCompanion extends UpdateCompanion<Book> {
       lastOpenedAt: lastOpenedAt ?? this.lastOpenedAt,
       firstOpenedAt: firstOpenedAt ?? this.firstOpenedAt,
       readingSeconds: readingSeconds ?? this.readingSeconds,
+      finishedAt: finishedAt ?? this.finishedAt,
     );
   }
 
@@ -806,6 +856,9 @@ class BooksCompanion extends UpdateCompanion<Book> {
     if (readingSeconds.present) {
       map['reading_seconds'] = Variable<int>(readingSeconds.value);
     }
+    if (finishedAt.present) {
+      map['finished_at'] = Variable<DateTime>(finishedAt.value);
+    }
     return map;
   }
 
@@ -825,7 +878,8 @@ class BooksCompanion extends UpdateCompanion<Book> {
           ..write('createdAt: $createdAt, ')
           ..write('lastOpenedAt: $lastOpenedAt, ')
           ..write('firstOpenedAt: $firstOpenedAt, ')
-          ..write('readingSeconds: $readingSeconds')
+          ..write('readingSeconds: $readingSeconds, ')
+          ..write('finishedAt: $finishedAt')
           ..write(')'))
         .toString();
   }
@@ -2090,6 +2144,29 @@ class $AiResultsTable extends AiResults
     requiredDuringInsert: false,
     defaultValue: currentDateAndTime,
   );
+  static const VerificationMeta _openCountMeta = const VerificationMeta(
+    'openCount',
+  );
+  @override
+  late final GeneratedColumn<int> openCount = GeneratedColumn<int>(
+    'open_count',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _lastOpenedAtMeta = const VerificationMeta(
+    'lastOpenedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> lastOpenedAt = GeneratedColumn<DateTime>(
+    'last_opened_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     chapterId,
@@ -2099,6 +2176,8 @@ class $AiResultsTable extends AiResults
     model,
     promptVersion,
     createdAt,
+    openCount,
+    lastOpenedAt,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -2170,6 +2249,21 @@ class $AiResultsTable extends AiResults
         createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
       );
     }
+    if (data.containsKey('open_count')) {
+      context.handle(
+        _openCountMeta,
+        openCount.isAcceptableOrUnknown(data['open_count']!, _openCountMeta),
+      );
+    }
+    if (data.containsKey('last_opened_at')) {
+      context.handle(
+        _lastOpenedAtMeta,
+        lastOpenedAt.isAcceptableOrUnknown(
+          data['last_opened_at']!,
+          _lastOpenedAtMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -2207,6 +2301,14 @@ class $AiResultsTable extends AiResults
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
       )!,
+      openCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}open_count'],
+      )!,
+      lastOpenedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}last_opened_at'],
+      ),
     );
   }
 
@@ -2231,6 +2333,10 @@ class AiResult extends DataClass implements Insertable<AiResult> {
   /// belum ada, diterjemahin ulang pas grupnya dibuka.
   final int promptVersion;
   final DateTime createdAt;
+
+  /// Berapa kali hasil ini dibuka. Penanda grup yang sering dibaca ulang.
+  final int openCount;
+  final DateTime? lastOpenedAt;
   const AiResult({
     required this.chapterId,
     required this.groupIndex,
@@ -2239,6 +2345,8 @@ class AiResult extends DataClass implements Insertable<AiResult> {
     required this.model,
     required this.promptVersion,
     required this.createdAt,
+    required this.openCount,
+    this.lastOpenedAt,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -2250,6 +2358,10 @@ class AiResult extends DataClass implements Insertable<AiResult> {
     map['model'] = Variable<String>(model);
     map['prompt_version'] = Variable<int>(promptVersion);
     map['created_at'] = Variable<DateTime>(createdAt);
+    map['open_count'] = Variable<int>(openCount);
+    if (!nullToAbsent || lastOpenedAt != null) {
+      map['last_opened_at'] = Variable<DateTime>(lastOpenedAt);
+    }
     return map;
   }
 
@@ -2262,6 +2374,10 @@ class AiResult extends DataClass implements Insertable<AiResult> {
       model: Value(model),
       promptVersion: Value(promptVersion),
       createdAt: Value(createdAt),
+      openCount: Value(openCount),
+      lastOpenedAt: lastOpenedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastOpenedAt),
     );
   }
 
@@ -2278,6 +2394,8 @@ class AiResult extends DataClass implements Insertable<AiResult> {
       model: serializer.fromJson<String>(json['model']),
       promptVersion: serializer.fromJson<int>(json['promptVersion']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      openCount: serializer.fromJson<int>(json['openCount']),
+      lastOpenedAt: serializer.fromJson<DateTime?>(json['lastOpenedAt']),
     );
   }
   @override
@@ -2291,6 +2409,8 @@ class AiResult extends DataClass implements Insertable<AiResult> {
       'model': serializer.toJson<String>(model),
       'promptVersion': serializer.toJson<int>(promptVersion),
       'createdAt': serializer.toJson<DateTime>(createdAt),
+      'openCount': serializer.toJson<int>(openCount),
+      'lastOpenedAt': serializer.toJson<DateTime?>(lastOpenedAt),
     };
   }
 
@@ -2302,6 +2422,8 @@ class AiResult extends DataClass implements Insertable<AiResult> {
     String? model,
     int? promptVersion,
     DateTime? createdAt,
+    int? openCount,
+    Value<DateTime?> lastOpenedAt = const Value.absent(),
   }) => AiResult(
     chapterId: chapterId ?? this.chapterId,
     groupIndex: groupIndex ?? this.groupIndex,
@@ -2310,6 +2432,8 @@ class AiResult extends DataClass implements Insertable<AiResult> {
     model: model ?? this.model,
     promptVersion: promptVersion ?? this.promptVersion,
     createdAt: createdAt ?? this.createdAt,
+    openCount: openCount ?? this.openCount,
+    lastOpenedAt: lastOpenedAt.present ? lastOpenedAt.value : this.lastOpenedAt,
   );
   AiResult copyWithCompanion(AiResultsCompanion data) {
     return AiResult(
@@ -2326,6 +2450,10 @@ class AiResult extends DataClass implements Insertable<AiResult> {
           ? data.promptVersion.value
           : this.promptVersion,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      openCount: data.openCount.present ? data.openCount.value : this.openCount,
+      lastOpenedAt: data.lastOpenedAt.present
+          ? data.lastOpenedAt.value
+          : this.lastOpenedAt,
     );
   }
 
@@ -2338,7 +2466,9 @@ class AiResult extends DataClass implements Insertable<AiResult> {
           ..write('meaning: $meaning, ')
           ..write('model: $model, ')
           ..write('promptVersion: $promptVersion, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('openCount: $openCount, ')
+          ..write('lastOpenedAt: $lastOpenedAt')
           ..write(')'))
         .toString();
   }
@@ -2352,6 +2482,8 @@ class AiResult extends DataClass implements Insertable<AiResult> {
     model,
     promptVersion,
     createdAt,
+    openCount,
+    lastOpenedAt,
   );
   @override
   bool operator ==(Object other) =>
@@ -2363,7 +2495,9 @@ class AiResult extends DataClass implements Insertable<AiResult> {
           other.meaning == this.meaning &&
           other.model == this.model &&
           other.promptVersion == this.promptVersion &&
-          other.createdAt == this.createdAt);
+          other.createdAt == this.createdAt &&
+          other.openCount == this.openCount &&
+          other.lastOpenedAt == this.lastOpenedAt);
 }
 
 class AiResultsCompanion extends UpdateCompanion<AiResult> {
@@ -2374,6 +2508,8 @@ class AiResultsCompanion extends UpdateCompanion<AiResult> {
   final Value<String> model;
   final Value<int> promptVersion;
   final Value<DateTime> createdAt;
+  final Value<int> openCount;
+  final Value<DateTime?> lastOpenedAt;
   final Value<int> rowid;
   const AiResultsCompanion({
     this.chapterId = const Value.absent(),
@@ -2383,6 +2519,8 @@ class AiResultsCompanion extends UpdateCompanion<AiResult> {
     this.model = const Value.absent(),
     this.promptVersion = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.openCount = const Value.absent(),
+    this.lastOpenedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   AiResultsCompanion.insert({
@@ -2393,6 +2531,8 @@ class AiResultsCompanion extends UpdateCompanion<AiResult> {
     required String model,
     this.promptVersion = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.openCount = const Value.absent(),
+    this.lastOpenedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : chapterId = Value(chapterId),
        groupIndex = Value(groupIndex),
@@ -2407,6 +2547,8 @@ class AiResultsCompanion extends UpdateCompanion<AiResult> {
     Expression<String>? model,
     Expression<int>? promptVersion,
     Expression<DateTime>? createdAt,
+    Expression<int>? openCount,
+    Expression<DateTime>? lastOpenedAt,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -2417,6 +2559,8 @@ class AiResultsCompanion extends UpdateCompanion<AiResult> {
       if (model != null) 'model': model,
       if (promptVersion != null) 'prompt_version': promptVersion,
       if (createdAt != null) 'created_at': createdAt,
+      if (openCount != null) 'open_count': openCount,
+      if (lastOpenedAt != null) 'last_opened_at': lastOpenedAt,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -2429,6 +2573,8 @@ class AiResultsCompanion extends UpdateCompanion<AiResult> {
     Value<String>? model,
     Value<int>? promptVersion,
     Value<DateTime>? createdAt,
+    Value<int>? openCount,
+    Value<DateTime?>? lastOpenedAt,
     Value<int>? rowid,
   }) {
     return AiResultsCompanion(
@@ -2439,6 +2585,8 @@ class AiResultsCompanion extends UpdateCompanion<AiResult> {
       model: model ?? this.model,
       promptVersion: promptVersion ?? this.promptVersion,
       createdAt: createdAt ?? this.createdAt,
+      openCount: openCount ?? this.openCount,
+      lastOpenedAt: lastOpenedAt ?? this.lastOpenedAt,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -2467,6 +2615,12 @@ class AiResultsCompanion extends UpdateCompanion<AiResult> {
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
+    if (openCount.present) {
+      map['open_count'] = Variable<int>(openCount.value);
+    }
+    if (lastOpenedAt.present) {
+      map['last_opened_at'] = Variable<DateTime>(lastOpenedAt.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -2483,7 +2637,1348 @@ class AiResultsCompanion extends UpdateCompanion<AiResult> {
           ..write('model: $model, ')
           ..write('promptVersion: $promptVersion, ')
           ..write('createdAt: $createdAt, ')
+          ..write('openCount: $openCount, ')
+          ..write('lastOpenedAt: $lastOpenedAt, ')
           ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ReadingSessionsTable extends ReadingSessions
+    with TableInfo<$ReadingSessionsTable, ReadingSession> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ReadingSessionsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _bookIdMeta = const VerificationMeta('bookId');
+  @override
+  late final GeneratedColumn<int> bookId = GeneratedColumn<int>(
+    'book_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES books (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _chapterIdMeta = const VerificationMeta(
+    'chapterId',
+  );
+  @override
+  late final GeneratedColumn<int> chapterId = GeneratedColumn<int>(
+    'chapter_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES chapters (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _startedAtMeta = const VerificationMeta(
+    'startedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> startedAt = GeneratedColumn<DateTime>(
+    'started_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _secondsMeta = const VerificationMeta(
+    'seconds',
+  );
+  @override
+  late final GeneratedColumn<int> seconds = GeneratedColumn<int>(
+    'seconds',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _startCharMeta = const VerificationMeta(
+    'startChar',
+  );
+  @override
+  late final GeneratedColumn<int> startChar = GeneratedColumn<int>(
+    'start_char',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _endCharMeta = const VerificationMeta(
+    'endChar',
+  );
+  @override
+  late final GeneratedColumn<int> endChar = GeneratedColumn<int>(
+    'end_char',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    bookId,
+    chapterId,
+    startedAt,
+    seconds,
+    startChar,
+    endChar,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'reading_sessions';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ReadingSession> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('book_id')) {
+      context.handle(
+        _bookIdMeta,
+        bookId.isAcceptableOrUnknown(data['book_id']!, _bookIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_bookIdMeta);
+    }
+    if (data.containsKey('chapter_id')) {
+      context.handle(
+        _chapterIdMeta,
+        chapterId.isAcceptableOrUnknown(data['chapter_id']!, _chapterIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_chapterIdMeta);
+    }
+    if (data.containsKey('started_at')) {
+      context.handle(
+        _startedAtMeta,
+        startedAt.isAcceptableOrUnknown(data['started_at']!, _startedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_startedAtMeta);
+    }
+    if (data.containsKey('seconds')) {
+      context.handle(
+        _secondsMeta,
+        seconds.isAcceptableOrUnknown(data['seconds']!, _secondsMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_secondsMeta);
+    }
+    if (data.containsKey('start_char')) {
+      context.handle(
+        _startCharMeta,
+        startChar.isAcceptableOrUnknown(data['start_char']!, _startCharMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_startCharMeta);
+    }
+    if (data.containsKey('end_char')) {
+      context.handle(
+        _endCharMeta,
+        endChar.isAcceptableOrUnknown(data['end_char']!, _endCharMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_endCharMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ReadingSession map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ReadingSession(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      bookId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}book_id'],
+      )!,
+      chapterId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}chapter_id'],
+      )!,
+      startedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}started_at'],
+      )!,
+      seconds: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}seconds'],
+      )!,
+      startChar: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}start_char'],
+      )!,
+      endChar: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}end_char'],
+      )!,
+    );
+  }
+
+  @override
+  $ReadingSessionsTable createAlias(String alias) {
+    return $ReadingSessionsTable(attachedDatabase, alias);
+  }
+}
+
+class ReadingSession extends DataClass implements Insertable<ReadingSession> {
+  final int id;
+  final int bookId;
+  final int chapterId;
+  final DateTime startedAt;
+
+  /// Waktu aktif ([ReadingClock] di domain/reading.dart).
+  final int seconds;
+
+  /// Posisi absolut di buku (karakter) di awal dan akhir potongan. Dua ujung,
+  /// bukan satu angka: aturan "berapa yang dianggap beneran dibaca" ada di
+  /// query, jadi bisa diganti tanpa ngubah data.
+  final int startChar;
+  final int endChar;
+  const ReadingSession({
+    required this.id,
+    required this.bookId,
+    required this.chapterId,
+    required this.startedAt,
+    required this.seconds,
+    required this.startChar,
+    required this.endChar,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['book_id'] = Variable<int>(bookId);
+    map['chapter_id'] = Variable<int>(chapterId);
+    map['started_at'] = Variable<DateTime>(startedAt);
+    map['seconds'] = Variable<int>(seconds);
+    map['start_char'] = Variable<int>(startChar);
+    map['end_char'] = Variable<int>(endChar);
+    return map;
+  }
+
+  ReadingSessionsCompanion toCompanion(bool nullToAbsent) {
+    return ReadingSessionsCompanion(
+      id: Value(id),
+      bookId: Value(bookId),
+      chapterId: Value(chapterId),
+      startedAt: Value(startedAt),
+      seconds: Value(seconds),
+      startChar: Value(startChar),
+      endChar: Value(endChar),
+    );
+  }
+
+  factory ReadingSession.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ReadingSession(
+      id: serializer.fromJson<int>(json['id']),
+      bookId: serializer.fromJson<int>(json['bookId']),
+      chapterId: serializer.fromJson<int>(json['chapterId']),
+      startedAt: serializer.fromJson<DateTime>(json['startedAt']),
+      seconds: serializer.fromJson<int>(json['seconds']),
+      startChar: serializer.fromJson<int>(json['startChar']),
+      endChar: serializer.fromJson<int>(json['endChar']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'bookId': serializer.toJson<int>(bookId),
+      'chapterId': serializer.toJson<int>(chapterId),
+      'startedAt': serializer.toJson<DateTime>(startedAt),
+      'seconds': serializer.toJson<int>(seconds),
+      'startChar': serializer.toJson<int>(startChar),
+      'endChar': serializer.toJson<int>(endChar),
+    };
+  }
+
+  ReadingSession copyWith({
+    int? id,
+    int? bookId,
+    int? chapterId,
+    DateTime? startedAt,
+    int? seconds,
+    int? startChar,
+    int? endChar,
+  }) => ReadingSession(
+    id: id ?? this.id,
+    bookId: bookId ?? this.bookId,
+    chapterId: chapterId ?? this.chapterId,
+    startedAt: startedAt ?? this.startedAt,
+    seconds: seconds ?? this.seconds,
+    startChar: startChar ?? this.startChar,
+    endChar: endChar ?? this.endChar,
+  );
+  ReadingSession copyWithCompanion(ReadingSessionsCompanion data) {
+    return ReadingSession(
+      id: data.id.present ? data.id.value : this.id,
+      bookId: data.bookId.present ? data.bookId.value : this.bookId,
+      chapterId: data.chapterId.present ? data.chapterId.value : this.chapterId,
+      startedAt: data.startedAt.present ? data.startedAt.value : this.startedAt,
+      seconds: data.seconds.present ? data.seconds.value : this.seconds,
+      startChar: data.startChar.present ? data.startChar.value : this.startChar,
+      endChar: data.endChar.present ? data.endChar.value : this.endChar,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ReadingSession(')
+          ..write('id: $id, ')
+          ..write('bookId: $bookId, ')
+          ..write('chapterId: $chapterId, ')
+          ..write('startedAt: $startedAt, ')
+          ..write('seconds: $seconds, ')
+          ..write('startChar: $startChar, ')
+          ..write('endChar: $endChar')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    bookId,
+    chapterId,
+    startedAt,
+    seconds,
+    startChar,
+    endChar,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ReadingSession &&
+          other.id == this.id &&
+          other.bookId == this.bookId &&
+          other.chapterId == this.chapterId &&
+          other.startedAt == this.startedAt &&
+          other.seconds == this.seconds &&
+          other.startChar == this.startChar &&
+          other.endChar == this.endChar);
+}
+
+class ReadingSessionsCompanion extends UpdateCompanion<ReadingSession> {
+  final Value<int> id;
+  final Value<int> bookId;
+  final Value<int> chapterId;
+  final Value<DateTime> startedAt;
+  final Value<int> seconds;
+  final Value<int> startChar;
+  final Value<int> endChar;
+  const ReadingSessionsCompanion({
+    this.id = const Value.absent(),
+    this.bookId = const Value.absent(),
+    this.chapterId = const Value.absent(),
+    this.startedAt = const Value.absent(),
+    this.seconds = const Value.absent(),
+    this.startChar = const Value.absent(),
+    this.endChar = const Value.absent(),
+  });
+  ReadingSessionsCompanion.insert({
+    this.id = const Value.absent(),
+    required int bookId,
+    required int chapterId,
+    required DateTime startedAt,
+    required int seconds,
+    required int startChar,
+    required int endChar,
+  }) : bookId = Value(bookId),
+       chapterId = Value(chapterId),
+       startedAt = Value(startedAt),
+       seconds = Value(seconds),
+       startChar = Value(startChar),
+       endChar = Value(endChar);
+  static Insertable<ReadingSession> custom({
+    Expression<int>? id,
+    Expression<int>? bookId,
+    Expression<int>? chapterId,
+    Expression<DateTime>? startedAt,
+    Expression<int>? seconds,
+    Expression<int>? startChar,
+    Expression<int>? endChar,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (bookId != null) 'book_id': bookId,
+      if (chapterId != null) 'chapter_id': chapterId,
+      if (startedAt != null) 'started_at': startedAt,
+      if (seconds != null) 'seconds': seconds,
+      if (startChar != null) 'start_char': startChar,
+      if (endChar != null) 'end_char': endChar,
+    });
+  }
+
+  ReadingSessionsCompanion copyWith({
+    Value<int>? id,
+    Value<int>? bookId,
+    Value<int>? chapterId,
+    Value<DateTime>? startedAt,
+    Value<int>? seconds,
+    Value<int>? startChar,
+    Value<int>? endChar,
+  }) {
+    return ReadingSessionsCompanion(
+      id: id ?? this.id,
+      bookId: bookId ?? this.bookId,
+      chapterId: chapterId ?? this.chapterId,
+      startedAt: startedAt ?? this.startedAt,
+      seconds: seconds ?? this.seconds,
+      startChar: startChar ?? this.startChar,
+      endChar: endChar ?? this.endChar,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (bookId.present) {
+      map['book_id'] = Variable<int>(bookId.value);
+    }
+    if (chapterId.present) {
+      map['chapter_id'] = Variable<int>(chapterId.value);
+    }
+    if (startedAt.present) {
+      map['started_at'] = Variable<DateTime>(startedAt.value);
+    }
+    if (seconds.present) {
+      map['seconds'] = Variable<int>(seconds.value);
+    }
+    if (startChar.present) {
+      map['start_char'] = Variable<int>(startChar.value);
+    }
+    if (endChar.present) {
+      map['end_char'] = Variable<int>(endChar.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ReadingSessionsCompanion(')
+          ..write('id: $id, ')
+          ..write('bookId: $bookId, ')
+          ..write('chapterId: $chapterId, ')
+          ..write('startedAt: $startedAt, ')
+          ..write('seconds: $seconds, ')
+          ..write('startChar: $startChar, ')
+          ..write('endChar: $endChar')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $AiCallsTable extends AiCalls with TableInfo<$AiCallsTable, AiCall> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $AiCallsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _bookIdMeta = const VerificationMeta('bookId');
+  @override
+  late final GeneratedColumn<int> bookId = GeneratedColumn<int>(
+    'book_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES books (id) ON DELETE SET NULL',
+    ),
+  );
+  static const VerificationMeta _chapterIdMeta = const VerificationMeta(
+    'chapterId',
+  );
+  @override
+  late final GeneratedColumn<int> chapterId = GeneratedColumn<int>(
+    'chapter_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES chapters (id) ON DELETE SET NULL',
+    ),
+  );
+  static const VerificationMeta _groupIndexMeta = const VerificationMeta(
+    'groupIndex',
+  );
+  @override
+  late final GeneratedColumn<int> groupIndex = GeneratedColumn<int>(
+    'group_index',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<AiCallKind, String> kind =
+      GeneratedColumn<String>(
+        'kind',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<AiCallKind>($AiCallsTable.$converterkind);
+  static const VerificationMeta _modelMeta = const VerificationMeta('model');
+  @override
+  late final GeneratedColumn<String> model = GeneratedColumn<String>(
+    'model',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _promptVersionMeta = const VerificationMeta(
+    'promptVersion',
+  );
+  @override
+  late final GeneratedColumn<int> promptVersion = GeneratedColumn<int>(
+    'prompt_version',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _charsMeta = const VerificationMeta('chars');
+  @override
+  late final GeneratedColumn<int> chars = GeneratedColumn<int>(
+    'chars',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _promptTokensMeta = const VerificationMeta(
+    'promptTokens',
+  );
+  @override
+  late final GeneratedColumn<int> promptTokens = GeneratedColumn<int>(
+    'prompt_tokens',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _completionTokensMeta = const VerificationMeta(
+    'completionTokens',
+  );
+  @override
+  late final GeneratedColumn<int> completionTokens = GeneratedColumn<int>(
+    'completion_tokens',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _costUsdMeta = const VerificationMeta(
+    'costUsd',
+  );
+  @override
+  late final GeneratedColumn<double> costUsd = GeneratedColumn<double>(
+    'cost_usd',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _firstTokenMsMeta = const VerificationMeta(
+    'firstTokenMs',
+  );
+  @override
+  late final GeneratedColumn<int> firstTokenMs = GeneratedColumn<int>(
+    'first_token_ms',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _totalMsMeta = const VerificationMeta(
+    'totalMs',
+  );
+  @override
+  late final GeneratedColumn<int> totalMs = GeneratedColumn<int>(
+    'total_ms',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _errorMeta = const VerificationMeta('error');
+  @override
+  late final GeneratedColumn<String> error = GeneratedColumn<String>(
+    'error',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    bookId,
+    chapterId,
+    groupIndex,
+    kind,
+    model,
+    promptVersion,
+    chars,
+    promptTokens,
+    completionTokens,
+    costUsd,
+    firstTokenMs,
+    totalMs,
+    error,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'ai_calls';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<AiCall> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('book_id')) {
+      context.handle(
+        _bookIdMeta,
+        bookId.isAcceptableOrUnknown(data['book_id']!, _bookIdMeta),
+      );
+    }
+    if (data.containsKey('chapter_id')) {
+      context.handle(
+        _chapterIdMeta,
+        chapterId.isAcceptableOrUnknown(data['chapter_id']!, _chapterIdMeta),
+      );
+    }
+    if (data.containsKey('group_index')) {
+      context.handle(
+        _groupIndexMeta,
+        groupIndex.isAcceptableOrUnknown(data['group_index']!, _groupIndexMeta),
+      );
+    }
+    if (data.containsKey('model')) {
+      context.handle(
+        _modelMeta,
+        model.isAcceptableOrUnknown(data['model']!, _modelMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_modelMeta);
+    }
+    if (data.containsKey('prompt_version')) {
+      context.handle(
+        _promptVersionMeta,
+        promptVersion.isAcceptableOrUnknown(
+          data['prompt_version']!,
+          _promptVersionMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_promptVersionMeta);
+    }
+    if (data.containsKey('chars')) {
+      context.handle(
+        _charsMeta,
+        chars.isAcceptableOrUnknown(data['chars']!, _charsMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_charsMeta);
+    }
+    if (data.containsKey('prompt_tokens')) {
+      context.handle(
+        _promptTokensMeta,
+        promptTokens.isAcceptableOrUnknown(
+          data['prompt_tokens']!,
+          _promptTokensMeta,
+        ),
+      );
+    }
+    if (data.containsKey('completion_tokens')) {
+      context.handle(
+        _completionTokensMeta,
+        completionTokens.isAcceptableOrUnknown(
+          data['completion_tokens']!,
+          _completionTokensMeta,
+        ),
+      );
+    }
+    if (data.containsKey('cost_usd')) {
+      context.handle(
+        _costUsdMeta,
+        costUsd.isAcceptableOrUnknown(data['cost_usd']!, _costUsdMeta),
+      );
+    }
+    if (data.containsKey('first_token_ms')) {
+      context.handle(
+        _firstTokenMsMeta,
+        firstTokenMs.isAcceptableOrUnknown(
+          data['first_token_ms']!,
+          _firstTokenMsMeta,
+        ),
+      );
+    }
+    if (data.containsKey('total_ms')) {
+      context.handle(
+        _totalMsMeta,
+        totalMs.isAcceptableOrUnknown(data['total_ms']!, _totalMsMeta),
+      );
+    }
+    if (data.containsKey('error')) {
+      context.handle(
+        _errorMeta,
+        error.isAcceptableOrUnknown(data['error']!, _errorMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  AiCall map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return AiCall(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      bookId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}book_id'],
+      ),
+      chapterId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}chapter_id'],
+      ),
+      groupIndex: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}group_index'],
+      ),
+      kind: $AiCallsTable.$converterkind.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}kind'],
+        )!,
+      ),
+      model: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}model'],
+      )!,
+      promptVersion: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}prompt_version'],
+      )!,
+      chars: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}chars'],
+      )!,
+      promptTokens: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}prompt_tokens'],
+      ),
+      completionTokens: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}completion_tokens'],
+      ),
+      costUsd: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}cost_usd'],
+      ),
+      firstTokenMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}first_token_ms'],
+      ),
+      totalMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}total_ms'],
+      ),
+      error: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}error'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $AiCallsTable createAlias(String alias) {
+    return $AiCallsTable(attachedDatabase, alias);
+  }
+
+  static JsonTypeConverter2<AiCallKind, String, String> $converterkind =
+      const EnumNameConverter<AiCallKind>(AiCallKind.values);
+}
+
+class AiCall extends DataClass implements Insertable<AiCall> {
+  final int id;
+  final int? bookId;
+  final int? chapterId;
+  final int? groupIndex;
+  final AiCallKind kind;
+  final String model;
+  final int promptVersion;
+
+  /// Panjang teks target, buat "per 1.000 karakter".
+  final int chars;
+
+  /// Null = model gak ngirim usage.
+  final int? promptTokens;
+  final int? completionTokens;
+  final double? costUsd;
+  final int? firstTokenMs;
+  final int? totalMs;
+
+  /// `AiError.name`. Null = sukses.
+  final String? error;
+  final DateTime createdAt;
+  const AiCall({
+    required this.id,
+    this.bookId,
+    this.chapterId,
+    this.groupIndex,
+    required this.kind,
+    required this.model,
+    required this.promptVersion,
+    required this.chars,
+    this.promptTokens,
+    this.completionTokens,
+    this.costUsd,
+    this.firstTokenMs,
+    this.totalMs,
+    this.error,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    if (!nullToAbsent || bookId != null) {
+      map['book_id'] = Variable<int>(bookId);
+    }
+    if (!nullToAbsent || chapterId != null) {
+      map['chapter_id'] = Variable<int>(chapterId);
+    }
+    if (!nullToAbsent || groupIndex != null) {
+      map['group_index'] = Variable<int>(groupIndex);
+    }
+    {
+      map['kind'] = Variable<String>($AiCallsTable.$converterkind.toSql(kind));
+    }
+    map['model'] = Variable<String>(model);
+    map['prompt_version'] = Variable<int>(promptVersion);
+    map['chars'] = Variable<int>(chars);
+    if (!nullToAbsent || promptTokens != null) {
+      map['prompt_tokens'] = Variable<int>(promptTokens);
+    }
+    if (!nullToAbsent || completionTokens != null) {
+      map['completion_tokens'] = Variable<int>(completionTokens);
+    }
+    if (!nullToAbsent || costUsd != null) {
+      map['cost_usd'] = Variable<double>(costUsd);
+    }
+    if (!nullToAbsent || firstTokenMs != null) {
+      map['first_token_ms'] = Variable<int>(firstTokenMs);
+    }
+    if (!nullToAbsent || totalMs != null) {
+      map['total_ms'] = Variable<int>(totalMs);
+    }
+    if (!nullToAbsent || error != null) {
+      map['error'] = Variable<String>(error);
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  AiCallsCompanion toCompanion(bool nullToAbsent) {
+    return AiCallsCompanion(
+      id: Value(id),
+      bookId: bookId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(bookId),
+      chapterId: chapterId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(chapterId),
+      groupIndex: groupIndex == null && nullToAbsent
+          ? const Value.absent()
+          : Value(groupIndex),
+      kind: Value(kind),
+      model: Value(model),
+      promptVersion: Value(promptVersion),
+      chars: Value(chars),
+      promptTokens: promptTokens == null && nullToAbsent
+          ? const Value.absent()
+          : Value(promptTokens),
+      completionTokens: completionTokens == null && nullToAbsent
+          ? const Value.absent()
+          : Value(completionTokens),
+      costUsd: costUsd == null && nullToAbsent
+          ? const Value.absent()
+          : Value(costUsd),
+      firstTokenMs: firstTokenMs == null && nullToAbsent
+          ? const Value.absent()
+          : Value(firstTokenMs),
+      totalMs: totalMs == null && nullToAbsent
+          ? const Value.absent()
+          : Value(totalMs),
+      error: error == null && nullToAbsent
+          ? const Value.absent()
+          : Value(error),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory AiCall.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return AiCall(
+      id: serializer.fromJson<int>(json['id']),
+      bookId: serializer.fromJson<int?>(json['bookId']),
+      chapterId: serializer.fromJson<int?>(json['chapterId']),
+      groupIndex: serializer.fromJson<int?>(json['groupIndex']),
+      kind: $AiCallsTable.$converterkind.fromJson(
+        serializer.fromJson<String>(json['kind']),
+      ),
+      model: serializer.fromJson<String>(json['model']),
+      promptVersion: serializer.fromJson<int>(json['promptVersion']),
+      chars: serializer.fromJson<int>(json['chars']),
+      promptTokens: serializer.fromJson<int?>(json['promptTokens']),
+      completionTokens: serializer.fromJson<int?>(json['completionTokens']),
+      costUsd: serializer.fromJson<double?>(json['costUsd']),
+      firstTokenMs: serializer.fromJson<int?>(json['firstTokenMs']),
+      totalMs: serializer.fromJson<int?>(json['totalMs']),
+      error: serializer.fromJson<String?>(json['error']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'bookId': serializer.toJson<int?>(bookId),
+      'chapterId': serializer.toJson<int?>(chapterId),
+      'groupIndex': serializer.toJson<int?>(groupIndex),
+      'kind': serializer.toJson<String>(
+        $AiCallsTable.$converterkind.toJson(kind),
+      ),
+      'model': serializer.toJson<String>(model),
+      'promptVersion': serializer.toJson<int>(promptVersion),
+      'chars': serializer.toJson<int>(chars),
+      'promptTokens': serializer.toJson<int?>(promptTokens),
+      'completionTokens': serializer.toJson<int?>(completionTokens),
+      'costUsd': serializer.toJson<double?>(costUsd),
+      'firstTokenMs': serializer.toJson<int?>(firstTokenMs),
+      'totalMs': serializer.toJson<int?>(totalMs),
+      'error': serializer.toJson<String?>(error),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  AiCall copyWith({
+    int? id,
+    Value<int?> bookId = const Value.absent(),
+    Value<int?> chapterId = const Value.absent(),
+    Value<int?> groupIndex = const Value.absent(),
+    AiCallKind? kind,
+    String? model,
+    int? promptVersion,
+    int? chars,
+    Value<int?> promptTokens = const Value.absent(),
+    Value<int?> completionTokens = const Value.absent(),
+    Value<double?> costUsd = const Value.absent(),
+    Value<int?> firstTokenMs = const Value.absent(),
+    Value<int?> totalMs = const Value.absent(),
+    Value<String?> error = const Value.absent(),
+    DateTime? createdAt,
+  }) => AiCall(
+    id: id ?? this.id,
+    bookId: bookId.present ? bookId.value : this.bookId,
+    chapterId: chapterId.present ? chapterId.value : this.chapterId,
+    groupIndex: groupIndex.present ? groupIndex.value : this.groupIndex,
+    kind: kind ?? this.kind,
+    model: model ?? this.model,
+    promptVersion: promptVersion ?? this.promptVersion,
+    chars: chars ?? this.chars,
+    promptTokens: promptTokens.present ? promptTokens.value : this.promptTokens,
+    completionTokens: completionTokens.present
+        ? completionTokens.value
+        : this.completionTokens,
+    costUsd: costUsd.present ? costUsd.value : this.costUsd,
+    firstTokenMs: firstTokenMs.present ? firstTokenMs.value : this.firstTokenMs,
+    totalMs: totalMs.present ? totalMs.value : this.totalMs,
+    error: error.present ? error.value : this.error,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  AiCall copyWithCompanion(AiCallsCompanion data) {
+    return AiCall(
+      id: data.id.present ? data.id.value : this.id,
+      bookId: data.bookId.present ? data.bookId.value : this.bookId,
+      chapterId: data.chapterId.present ? data.chapterId.value : this.chapterId,
+      groupIndex: data.groupIndex.present
+          ? data.groupIndex.value
+          : this.groupIndex,
+      kind: data.kind.present ? data.kind.value : this.kind,
+      model: data.model.present ? data.model.value : this.model,
+      promptVersion: data.promptVersion.present
+          ? data.promptVersion.value
+          : this.promptVersion,
+      chars: data.chars.present ? data.chars.value : this.chars,
+      promptTokens: data.promptTokens.present
+          ? data.promptTokens.value
+          : this.promptTokens,
+      completionTokens: data.completionTokens.present
+          ? data.completionTokens.value
+          : this.completionTokens,
+      costUsd: data.costUsd.present ? data.costUsd.value : this.costUsd,
+      firstTokenMs: data.firstTokenMs.present
+          ? data.firstTokenMs.value
+          : this.firstTokenMs,
+      totalMs: data.totalMs.present ? data.totalMs.value : this.totalMs,
+      error: data.error.present ? data.error.value : this.error,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AiCall(')
+          ..write('id: $id, ')
+          ..write('bookId: $bookId, ')
+          ..write('chapterId: $chapterId, ')
+          ..write('groupIndex: $groupIndex, ')
+          ..write('kind: $kind, ')
+          ..write('model: $model, ')
+          ..write('promptVersion: $promptVersion, ')
+          ..write('chars: $chars, ')
+          ..write('promptTokens: $promptTokens, ')
+          ..write('completionTokens: $completionTokens, ')
+          ..write('costUsd: $costUsd, ')
+          ..write('firstTokenMs: $firstTokenMs, ')
+          ..write('totalMs: $totalMs, ')
+          ..write('error: $error, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    bookId,
+    chapterId,
+    groupIndex,
+    kind,
+    model,
+    promptVersion,
+    chars,
+    promptTokens,
+    completionTokens,
+    costUsd,
+    firstTokenMs,
+    totalMs,
+    error,
+    createdAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is AiCall &&
+          other.id == this.id &&
+          other.bookId == this.bookId &&
+          other.chapterId == this.chapterId &&
+          other.groupIndex == this.groupIndex &&
+          other.kind == this.kind &&
+          other.model == this.model &&
+          other.promptVersion == this.promptVersion &&
+          other.chars == this.chars &&
+          other.promptTokens == this.promptTokens &&
+          other.completionTokens == this.completionTokens &&
+          other.costUsd == this.costUsd &&
+          other.firstTokenMs == this.firstTokenMs &&
+          other.totalMs == this.totalMs &&
+          other.error == this.error &&
+          other.createdAt == this.createdAt);
+}
+
+class AiCallsCompanion extends UpdateCompanion<AiCall> {
+  final Value<int> id;
+  final Value<int?> bookId;
+  final Value<int?> chapterId;
+  final Value<int?> groupIndex;
+  final Value<AiCallKind> kind;
+  final Value<String> model;
+  final Value<int> promptVersion;
+  final Value<int> chars;
+  final Value<int?> promptTokens;
+  final Value<int?> completionTokens;
+  final Value<double?> costUsd;
+  final Value<int?> firstTokenMs;
+  final Value<int?> totalMs;
+  final Value<String?> error;
+  final Value<DateTime> createdAt;
+  const AiCallsCompanion({
+    this.id = const Value.absent(),
+    this.bookId = const Value.absent(),
+    this.chapterId = const Value.absent(),
+    this.groupIndex = const Value.absent(),
+    this.kind = const Value.absent(),
+    this.model = const Value.absent(),
+    this.promptVersion = const Value.absent(),
+    this.chars = const Value.absent(),
+    this.promptTokens = const Value.absent(),
+    this.completionTokens = const Value.absent(),
+    this.costUsd = const Value.absent(),
+    this.firstTokenMs = const Value.absent(),
+    this.totalMs = const Value.absent(),
+    this.error = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  });
+  AiCallsCompanion.insert({
+    this.id = const Value.absent(),
+    this.bookId = const Value.absent(),
+    this.chapterId = const Value.absent(),
+    this.groupIndex = const Value.absent(),
+    required AiCallKind kind,
+    required String model,
+    required int promptVersion,
+    required int chars,
+    this.promptTokens = const Value.absent(),
+    this.completionTokens = const Value.absent(),
+    this.costUsd = const Value.absent(),
+    this.firstTokenMs = const Value.absent(),
+    this.totalMs = const Value.absent(),
+    this.error = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  }) : kind = Value(kind),
+       model = Value(model),
+       promptVersion = Value(promptVersion),
+       chars = Value(chars);
+  static Insertable<AiCall> custom({
+    Expression<int>? id,
+    Expression<int>? bookId,
+    Expression<int>? chapterId,
+    Expression<int>? groupIndex,
+    Expression<String>? kind,
+    Expression<String>? model,
+    Expression<int>? promptVersion,
+    Expression<int>? chars,
+    Expression<int>? promptTokens,
+    Expression<int>? completionTokens,
+    Expression<double>? costUsd,
+    Expression<int>? firstTokenMs,
+    Expression<int>? totalMs,
+    Expression<String>? error,
+    Expression<DateTime>? createdAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (bookId != null) 'book_id': bookId,
+      if (chapterId != null) 'chapter_id': chapterId,
+      if (groupIndex != null) 'group_index': groupIndex,
+      if (kind != null) 'kind': kind,
+      if (model != null) 'model': model,
+      if (promptVersion != null) 'prompt_version': promptVersion,
+      if (chars != null) 'chars': chars,
+      if (promptTokens != null) 'prompt_tokens': promptTokens,
+      if (completionTokens != null) 'completion_tokens': completionTokens,
+      if (costUsd != null) 'cost_usd': costUsd,
+      if (firstTokenMs != null) 'first_token_ms': firstTokenMs,
+      if (totalMs != null) 'total_ms': totalMs,
+      if (error != null) 'error': error,
+      if (createdAt != null) 'created_at': createdAt,
+    });
+  }
+
+  AiCallsCompanion copyWith({
+    Value<int>? id,
+    Value<int?>? bookId,
+    Value<int?>? chapterId,
+    Value<int?>? groupIndex,
+    Value<AiCallKind>? kind,
+    Value<String>? model,
+    Value<int>? promptVersion,
+    Value<int>? chars,
+    Value<int?>? promptTokens,
+    Value<int?>? completionTokens,
+    Value<double?>? costUsd,
+    Value<int?>? firstTokenMs,
+    Value<int?>? totalMs,
+    Value<String?>? error,
+    Value<DateTime>? createdAt,
+  }) {
+    return AiCallsCompanion(
+      id: id ?? this.id,
+      bookId: bookId ?? this.bookId,
+      chapterId: chapterId ?? this.chapterId,
+      groupIndex: groupIndex ?? this.groupIndex,
+      kind: kind ?? this.kind,
+      model: model ?? this.model,
+      promptVersion: promptVersion ?? this.promptVersion,
+      chars: chars ?? this.chars,
+      promptTokens: promptTokens ?? this.promptTokens,
+      completionTokens: completionTokens ?? this.completionTokens,
+      costUsd: costUsd ?? this.costUsd,
+      firstTokenMs: firstTokenMs ?? this.firstTokenMs,
+      totalMs: totalMs ?? this.totalMs,
+      error: error ?? this.error,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (bookId.present) {
+      map['book_id'] = Variable<int>(bookId.value);
+    }
+    if (chapterId.present) {
+      map['chapter_id'] = Variable<int>(chapterId.value);
+    }
+    if (groupIndex.present) {
+      map['group_index'] = Variable<int>(groupIndex.value);
+    }
+    if (kind.present) {
+      map['kind'] = Variable<String>(
+        $AiCallsTable.$converterkind.toSql(kind.value),
+      );
+    }
+    if (model.present) {
+      map['model'] = Variable<String>(model.value);
+    }
+    if (promptVersion.present) {
+      map['prompt_version'] = Variable<int>(promptVersion.value);
+    }
+    if (chars.present) {
+      map['chars'] = Variable<int>(chars.value);
+    }
+    if (promptTokens.present) {
+      map['prompt_tokens'] = Variable<int>(promptTokens.value);
+    }
+    if (completionTokens.present) {
+      map['completion_tokens'] = Variable<int>(completionTokens.value);
+    }
+    if (costUsd.present) {
+      map['cost_usd'] = Variable<double>(costUsd.value);
+    }
+    if (firstTokenMs.present) {
+      map['first_token_ms'] = Variable<int>(firstTokenMs.value);
+    }
+    if (totalMs.present) {
+      map['total_ms'] = Variable<int>(totalMs.value);
+    }
+    if (error.present) {
+      map['error'] = Variable<String>(error.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AiCallsCompanion(')
+          ..write('id: $id, ')
+          ..write('bookId: $bookId, ')
+          ..write('chapterId: $chapterId, ')
+          ..write('groupIndex: $groupIndex, ')
+          ..write('kind: $kind, ')
+          ..write('model: $model, ')
+          ..write('promptVersion: $promptVersion, ')
+          ..write('chars: $chars, ')
+          ..write('promptTokens: $promptTokens, ')
+          ..write('completionTokens: $completionTokens, ')
+          ..write('costUsd: $costUsd, ')
+          ..write('firstTokenMs: $firstTokenMs, ')
+          ..write('totalMs: $totalMs, ')
+          ..write('error: $error, ')
+          ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
   }
@@ -2704,6 +4199,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     this,
   );
   late final $AiResultsTable aiResults = $AiResultsTable(this);
+  late final $ReadingSessionsTable readingSessions = $ReadingSessionsTable(
+    this,
+  );
+  late final $AiCallsTable aiCalls = $AiCallsTable(this);
   late final $SettingsTable settings = $SettingsTable(this);
   late final Index chaptersBookOrder = Index(
     'chapters_book_order',
@@ -2712,6 +4211,14 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final Index paragraphsChapterGroup = Index(
     'paragraphs_chapter_group',
     'CREATE INDEX paragraphs_chapter_group ON paragraphs (chapter_id, group_index)',
+  );
+  late final Index readingSessionsBookTime = Index(
+    'reading_sessions_book_time',
+    'CREATE INDEX reading_sessions_book_time ON reading_sessions (book_id, started_at)',
+  );
+  late final Index readingSessionsTime = Index(
+    'reading_sessions_time',
+    'CREATE INDEX reading_sessions_time ON reading_sessions (started_at)',
   );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
@@ -2723,9 +4230,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     paragraphs,
     readingProgress,
     aiResults,
+    readingSessions,
+    aiCalls,
     settings,
     chaptersBookOrder,
     paragraphsChapterGroup,
+    readingSessionsBookTime,
+    readingSessionsTime,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -2764,6 +4275,34 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       ),
       result: [TableUpdate('ai_results', kind: UpdateKind.delete)],
     ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'books',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('reading_sessions', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'chapters',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('reading_sessions', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'books',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('ai_calls', kind: UpdateKind.update)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'chapters',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('ai_calls', kind: UpdateKind.update)],
+    ),
   ]);
 }
 
@@ -2782,6 +4321,7 @@ typedef $$BooksTableCreateCompanionBuilder = BooksCompanion Function({
   Value<DateTime?> lastOpenedAt,
   Value<DateTime?> firstOpenedAt,
   Value<int> readingSeconds,
+  Value<DateTime?> finishedAt,
 });
 typedef $$BooksTableUpdateCompanionBuilder = BooksCompanion Function({
   Value<int> id,
@@ -2798,6 +4338,7 @@ typedef $$BooksTableUpdateCompanionBuilder = BooksCompanion Function({
   Value<DateTime?> lastOpenedAt,
   Value<DateTime?> firstOpenedAt,
   Value<int> readingSeconds,
+  Value<DateTime?> finishedAt,
 });
 
 final class $$BooksTableReferences
@@ -2838,6 +4379,45 @@ final class $$BooksTableReferences
     final cache = $_typedResult.readTableOrNull(
       _readingProgressRefsTable($_db),
     );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$ReadingSessionsTable, List<ReadingSession>>
+  _readingSessionsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.readingSessions,
+    aliasName: 'books__id__reading_sessions__book_id',
+  );
+
+  $$ReadingSessionsTableProcessedTableManager get readingSessionsRefs {
+    final manager = $$ReadingSessionsTableTableManager(
+      $_db,
+      $_db.readingSessions,
+    ).filter((f) => f.bookId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _readingSessionsRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$AiCallsTable, List<AiCall>> _aiCallsRefsTable(
+    _$AppDatabase db,
+  ) => MultiTypedResultKey.fromTable(
+    db.aiCalls,
+    aliasName: 'books__id__ai_calls__book_id',
+  );
+
+  $$AiCallsTableProcessedTableManager get aiCallsRefs {
+    final manager = $$AiCallsTableTableManager(
+      $_db,
+      $_db.aiCalls,
+    ).filter((f) => f.bookId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_aiCallsRefsTable($_db));
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -2923,6 +4503,11 @@ class $$BooksTableFilterComposer extends Composer<_$AppDatabase, $BooksTable> {
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<DateTime> get finishedAt => $composableBuilder(
+    column: $table.finishedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
   Expression<bool> chaptersRefs(
     Expression<bool> Function($$ChaptersTableFilterComposer f) f,
   ) {
@@ -2964,6 +4549,56 @@ class $$BooksTableFilterComposer extends Composer<_$AppDatabase, $BooksTable> {
           }) => $$ReadingProgressTableFilterComposer(
             $db: $db,
             $table: $db.readingProgress,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> readingSessionsRefs(
+    Expression<bool> Function($$ReadingSessionsTableFilterComposer f) f,
+  ) {
+    final $$ReadingSessionsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.readingSessions,
+      getReferencedColumn: (t) => t.bookId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ReadingSessionsTableFilterComposer(
+            $db: $db,
+            $table: $db.readingSessions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> aiCallsRefs(
+    Expression<bool> Function($$AiCallsTableFilterComposer f) f,
+  ) {
+    final $$AiCallsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.aiCalls,
+      getReferencedColumn: (t) => t.bookId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AiCallsTableFilterComposer(
+            $db: $db,
+            $table: $db.aiCalls,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -3052,6 +4687,11 @@ class $$BooksTableOrderingComposer
     column: $table.readingSeconds,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<DateTime> get finishedAt => $composableBuilder(
+    column: $table.finishedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$BooksTableAnnotationComposer
@@ -3118,6 +4758,11 @@ class $$BooksTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<DateTime> get finishedAt => $composableBuilder(
+    column: $table.finishedAt,
+    builder: (column) => column,
+  );
+
   Expression<T> chaptersRefs<T extends Object>(
     Expression<T> Function($$ChaptersTableAnnotationComposer a) f,
   ) {
@@ -3167,6 +4812,56 @@ class $$BooksTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> readingSessionsRefs<T extends Object>(
+    Expression<T> Function($$ReadingSessionsTableAnnotationComposer a) f,
+  ) {
+    final $$ReadingSessionsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.readingSessions,
+      getReferencedColumn: (t) => t.bookId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ReadingSessionsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.readingSessions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<T> aiCallsRefs<T extends Object>(
+    Expression<T> Function($$AiCallsTableAnnotationComposer a) f,
+  ) {
+    final $$AiCallsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.aiCalls,
+      getReferencedColumn: (t) => t.bookId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AiCallsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.aiCalls,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$BooksTableTableManager
@@ -3182,7 +4877,12 @@ class $$BooksTableTableManager
           $$BooksTableUpdateCompanionBuilder,
           (Book, $$BooksTableReferences),
           Book,
-          PrefetchHooks Function({bool chaptersRefs, bool readingProgressRefs})
+          PrefetchHooks Function({
+            bool chaptersRefs,
+            bool readingProgressRefs,
+            bool readingSessionsRefs,
+            bool aiCallsRefs,
+          })
         > {
   $$BooksTableTableManager(_$AppDatabase db, $BooksTable table)
     : super(
@@ -3211,6 +4911,7 @@ class $$BooksTableTableManager
                 Value<DateTime?> lastOpenedAt = const Value.absent(),
                 Value<DateTime?> firstOpenedAt = const Value.absent(),
                 Value<int> readingSeconds = const Value.absent(),
+                Value<DateTime?> finishedAt = const Value.absent(),
               }) => BooksCompanion(
                 id: id,
                 sourceType: sourceType,
@@ -3226,6 +4927,7 @@ class $$BooksTableTableManager
                 lastOpenedAt: lastOpenedAt,
                 firstOpenedAt: firstOpenedAt,
                 readingSeconds: readingSeconds,
+                finishedAt: finishedAt,
               ),
           createCompanionCallback:
               ({
@@ -3243,6 +4945,7 @@ class $$BooksTableTableManager
                 Value<DateTime?> lastOpenedAt = const Value.absent(),
                 Value<DateTime?> firstOpenedAt = const Value.absent(),
                 Value<int> readingSeconds = const Value.absent(),
+                Value<DateTime?> finishedAt = const Value.absent(),
               }) => BooksCompanion.insert(
                 id: id,
                 sourceType: sourceType,
@@ -3258,6 +4961,7 @@ class $$BooksTableTableManager
                 lastOpenedAt: lastOpenedAt,
                 firstOpenedAt: firstOpenedAt,
                 readingSeconds: readingSeconds,
+                finishedAt: finishedAt,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -3268,12 +4972,19 @@ class $$BooksTableTableManager
               )
               .toList(),
           prefetchHooksCallback:
-              ({chaptersRefs = false, readingProgressRefs = false}) {
+              ({
+                chaptersRefs = false,
+                readingProgressRefs = false,
+                readingSessionsRefs = false,
+                aiCallsRefs = false,
+              }) {
                 return PrefetchHooks(
                   db: db,
                   explicitlyWatchedTables: [
                     if (chaptersRefs) db.chapters,
                     if (readingProgressRefs) db.readingProgress,
+                    if (readingSessionsRefs) db.readingSessions,
+                    if (aiCallsRefs) db.aiCalls,
                   ],
                   addJoins: null,
                   getPrefetchedDataCallback: (items) async {
@@ -3316,6 +5027,40 @@ class $$BooksTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (readingSessionsRefs)
+                        await $_getPrefetchedData<
+                          Book,
+                          $BooksTable,
+                          ReadingSession
+                        >(
+                          currentTable: table,
+                          referencedTable: $$BooksTableReferences
+                              ._readingSessionsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$BooksTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).readingSessionsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.bookId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (aiCallsRefs)
+                        await $_getPrefetchedData<Book, $BooksTable, AiCall>(
+                          currentTable: table,
+                          referencedTable: $$BooksTableReferences
+                              ._aiCallsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$BooksTableReferences(db, table, p0).aiCallsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.bookId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -3336,7 +5081,12 @@ typedef $$BooksTableProcessedTableManager =
       $$BooksTableUpdateCompanionBuilder,
       (Book, $$BooksTableReferences),
       Book,
-      PrefetchHooks Function({bool chaptersRefs, bool readingProgressRefs})
+      PrefetchHooks Function({
+        bool chaptersRefs,
+        bool readingProgressRefs,
+        bool readingSessionsRefs,
+        bool aiCallsRefs,
+      })
     >;
 typedef $$ChaptersTableCreateCompanionBuilder = ChaptersCompanion Function({
   Value<int> id,
@@ -3427,6 +5177,45 @@ final class $$ChaptersTableReferences
     ).filter((f) => f.chapterId.id.sqlEquals($_itemColumn<int>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_aiResultsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$ReadingSessionsTable, List<ReadingSession>>
+  _readingSessionsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.readingSessions,
+    aliasName: 'chapters__id__reading_sessions__chapter_id',
+  );
+
+  $$ReadingSessionsTableProcessedTableManager get readingSessionsRefs {
+    final manager = $$ReadingSessionsTableTableManager(
+      $_db,
+      $_db.readingSessions,
+    ).filter((f) => f.chapterId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _readingSessionsRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$AiCallsTable, List<AiCall>> _aiCallsRefsTable(
+    _$AppDatabase db,
+  ) => MultiTypedResultKey.fromTable(
+    db.aiCalls,
+    aliasName: 'chapters__id__ai_calls__chapter_id',
+  );
+
+  $$AiCallsTableProcessedTableManager get aiCallsRefs {
+    final manager = $$AiCallsTableTableManager(
+      $_db,
+      $_db.aiCalls,
+    ).filter((f) => f.chapterId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_aiCallsRefsTable($_db));
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -3556,6 +5345,56 @@ class $$ChaptersTableFilterComposer
           }) => $$AiResultsTableFilterComposer(
             $db: $db,
             $table: $db.aiResults,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> readingSessionsRefs(
+    Expression<bool> Function($$ReadingSessionsTableFilterComposer f) f,
+  ) {
+    final $$ReadingSessionsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.readingSessions,
+      getReferencedColumn: (t) => t.chapterId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ReadingSessionsTableFilterComposer(
+            $db: $db,
+            $table: $db.readingSessions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> aiCallsRefs(
+    Expression<bool> Function($$AiCallsTableFilterComposer f) f,
+  ) {
+    final $$AiCallsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.aiCalls,
+      getReferencedColumn: (t) => t.chapterId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AiCallsTableFilterComposer(
+            $db: $db,
+            $table: $db.aiCalls,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -3749,6 +5588,56 @@ class $$ChaptersTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> readingSessionsRefs<T extends Object>(
+    Expression<T> Function($$ReadingSessionsTableAnnotationComposer a) f,
+  ) {
+    final $$ReadingSessionsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.readingSessions,
+      getReferencedColumn: (t) => t.chapterId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ReadingSessionsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.readingSessions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<T> aiCallsRefs<T extends Object>(
+    Expression<T> Function($$AiCallsTableAnnotationComposer a) f,
+  ) {
+    final $$AiCallsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.aiCalls,
+      getReferencedColumn: (t) => t.chapterId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AiCallsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.aiCalls,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$ChaptersTableTableManager
@@ -3769,6 +5658,8 @@ class $$ChaptersTableTableManager
             bool paragraphsRefs,
             bool readingProgressRefs,
             bool aiResultsRefs,
+            bool readingSessionsRefs,
+            bool aiCallsRefs,
           })
         > {
   $$ChaptersTableTableManager(_$AppDatabase db, $ChaptersTable table)
@@ -3828,6 +5719,8 @@ class $$ChaptersTableTableManager
                 paragraphsRefs = false,
                 readingProgressRefs = false,
                 aiResultsRefs = false,
+                readingSessionsRefs = false,
+                aiCallsRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
@@ -3835,6 +5728,8 @@ class $$ChaptersTableTableManager
                     if (paragraphsRefs) db.paragraphs,
                     if (readingProgressRefs) db.readingProgress,
                     if (aiResultsRefs) db.aiResults,
+                    if (readingSessionsRefs) db.readingSessions,
+                    if (aiCallsRefs) db.aiCalls,
                   ],
                   addJoins:
                       <
@@ -3931,6 +5826,48 @@ class $$ChaptersTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (readingSessionsRefs)
+                        await $_getPrefetchedData<
+                          Chapter,
+                          $ChaptersTable,
+                          ReadingSession
+                        >(
+                          currentTable: table,
+                          referencedTable: $$ChaptersTableReferences
+                              ._readingSessionsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$ChaptersTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).readingSessionsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.chapterId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (aiCallsRefs)
+                        await $_getPrefetchedData<
+                          Chapter,
+                          $ChaptersTable,
+                          AiCall
+                        >(
+                          currentTable: table,
+                          referencedTable: $$ChaptersTableReferences
+                              ._aiCallsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$ChaptersTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).aiCallsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.chapterId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -3956,6 +5893,8 @@ typedef $$ChaptersTableProcessedTableManager =
         bool paragraphsRefs,
         bool readingProgressRefs,
         bool aiResultsRefs,
+        bool readingSessionsRefs,
+        bool aiCallsRefs,
       })
     >;
 typedef $$ParagraphsTableCreateCompanionBuilder = ParagraphsCompanion Function({
@@ -4694,6 +6633,8 @@ typedef $$AiResultsTableCreateCompanionBuilder = AiResultsCompanion Function({
   required String model,
   Value<int> promptVersion,
   Value<DateTime> createdAt,
+  Value<int> openCount,
+  Value<DateTime?> lastOpenedAt,
   Value<int> rowid,
 });
 typedef $$AiResultsTableUpdateCompanionBuilder = AiResultsCompanion Function({
@@ -4704,6 +6645,8 @@ typedef $$AiResultsTableUpdateCompanionBuilder = AiResultsCompanion Function({
   Value<String> model,
   Value<int> promptVersion,
   Value<DateTime> createdAt,
+  Value<int> openCount,
+  Value<DateTime?> lastOpenedAt,
   Value<int> rowid,
 });
 
@@ -4765,6 +6708,16 @@ class $$AiResultsTableFilterComposer
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get openCount => $composableBuilder(
+    column: $table.openCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get lastOpenedAt => $composableBuilder(
+    column: $table.lastOpenedAt,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4831,6 +6784,16 @@ class $$AiResultsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get openCount => $composableBuilder(
+    column: $table.openCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get lastOpenedAt => $composableBuilder(
+    column: $table.lastOpenedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$ChaptersTableOrderingComposer get chapterId {
     final $$ChaptersTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -4887,6 +6850,14 @@ class $$AiResultsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<int> get openCount =>
+      $composableBuilder(column: $table.openCount, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get lastOpenedAt => $composableBuilder(
+    column: $table.lastOpenedAt,
+    builder: (column) => column,
+  );
 
   $$ChaptersTableAnnotationComposer get chapterId {
     final $$ChaptersTableAnnotationComposer composer = $composerBuilder(
@@ -4947,6 +6918,8 @@ class $$AiResultsTableTableManager
                 Value<String> model = const Value.absent(),
                 Value<int> promptVersion = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
+                Value<int> openCount = const Value.absent(),
+                Value<DateTime?> lastOpenedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => AiResultsCompanion(
                 chapterId: chapterId,
@@ -4956,6 +6929,8 @@ class $$AiResultsTableTableManager
                 model: model,
                 promptVersion: promptVersion,
                 createdAt: createdAt,
+                openCount: openCount,
+                lastOpenedAt: lastOpenedAt,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -4967,6 +6942,8 @@ class $$AiResultsTableTableManager
                 required String model,
                 Value<int> promptVersion = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
+                Value<int> openCount = const Value.absent(),
+                Value<DateTime?> lastOpenedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => AiResultsCompanion.insert(
                 chapterId: chapterId,
@@ -4976,6 +6953,8 @@ class $$AiResultsTableTableManager
                 model: model,
                 promptVersion: promptVersion,
                 createdAt: createdAt,
+                openCount: openCount,
+                lastOpenedAt: lastOpenedAt,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -5042,6 +7021,1037 @@ typedef $$AiResultsTableProcessedTableManager =
       (AiResult, $$AiResultsTableReferences),
       AiResult,
       PrefetchHooks Function({bool chapterId})
+    >;
+typedef $$ReadingSessionsTableCreateCompanionBuilder =
+    ReadingSessionsCompanion Function({
+      Value<int> id,
+      required int bookId,
+      required int chapterId,
+      required DateTime startedAt,
+      required int seconds,
+      required int startChar,
+      required int endChar,
+    });
+typedef $$ReadingSessionsTableUpdateCompanionBuilder =
+    ReadingSessionsCompanion Function({
+      Value<int> id,
+      Value<int> bookId,
+      Value<int> chapterId,
+      Value<DateTime> startedAt,
+      Value<int> seconds,
+      Value<int> startChar,
+      Value<int> endChar,
+    });
+
+final class $$ReadingSessionsTableReferences
+    extends
+        BaseReferences<_$AppDatabase, $ReadingSessionsTable, ReadingSession> {
+  $$ReadingSessionsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $BooksTable _bookIdTable(_$AppDatabase db) =>
+      db.books.createAlias('reading_sessions__book_id__books__id');
+
+  $$BooksTableProcessedTableManager get bookId {
+    final $_column = $_itemColumn<int>('book_id')!;
+
+    final manager = $$BooksTableTableManager(
+      $_db,
+      $_db.books,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_bookIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $ChaptersTable _chapterIdTable(_$AppDatabase db) =>
+      db.chapters.createAlias('reading_sessions__chapter_id__chapters__id');
+
+  $$ChaptersTableProcessedTableManager get chapterId {
+    final $_column = $_itemColumn<int>('chapter_id')!;
+
+    final manager = $$ChaptersTableTableManager(
+      $_db,
+      $_db.chapters,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_chapterIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$ReadingSessionsTableFilterComposer
+    extends Composer<_$AppDatabase, $ReadingSessionsTable> {
+  $$ReadingSessionsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get startedAt => $composableBuilder(
+    column: $table.startedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get seconds => $composableBuilder(
+    column: $table.seconds,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get startChar => $composableBuilder(
+    column: $table.startChar,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get endChar => $composableBuilder(
+    column: $table.endChar,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$BooksTableFilterComposer get bookId {
+    final $$BooksTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.bookId,
+      referencedTable: $db.books,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BooksTableFilterComposer(
+            $db: $db,
+            $table: $db.books,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$ChaptersTableFilterComposer get chapterId {
+    final $$ChaptersTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.chapterId,
+      referencedTable: $db.chapters,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ChaptersTableFilterComposer(
+            $db: $db,
+            $table: $db.chapters,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ReadingSessionsTableOrderingComposer
+    extends Composer<_$AppDatabase, $ReadingSessionsTable> {
+  $$ReadingSessionsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get startedAt => $composableBuilder(
+    column: $table.startedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get seconds => $composableBuilder(
+    column: $table.seconds,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get startChar => $composableBuilder(
+    column: $table.startChar,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get endChar => $composableBuilder(
+    column: $table.endChar,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$BooksTableOrderingComposer get bookId {
+    final $$BooksTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.bookId,
+      referencedTable: $db.books,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BooksTableOrderingComposer(
+            $db: $db,
+            $table: $db.books,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$ChaptersTableOrderingComposer get chapterId {
+    final $$ChaptersTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.chapterId,
+      referencedTable: $db.chapters,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ChaptersTableOrderingComposer(
+            $db: $db,
+            $table: $db.chapters,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ReadingSessionsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ReadingSessionsTable> {
+  $$ReadingSessionsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get startedAt =>
+      $composableBuilder(column: $table.startedAt, builder: (column) => column);
+
+  GeneratedColumn<int> get seconds =>
+      $composableBuilder(column: $table.seconds, builder: (column) => column);
+
+  GeneratedColumn<int> get startChar =>
+      $composableBuilder(column: $table.startChar, builder: (column) => column);
+
+  GeneratedColumn<int> get endChar =>
+      $composableBuilder(column: $table.endChar, builder: (column) => column);
+
+  $$BooksTableAnnotationComposer get bookId {
+    final $$BooksTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.bookId,
+      referencedTable: $db.books,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BooksTableAnnotationComposer(
+            $db: $db,
+            $table: $db.books,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$ChaptersTableAnnotationComposer get chapterId {
+    final $$ChaptersTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.chapterId,
+      referencedTable: $db.chapters,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ChaptersTableAnnotationComposer(
+            $db: $db,
+            $table: $db.chapters,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ReadingSessionsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ReadingSessionsTable,
+          ReadingSession,
+          $$ReadingSessionsTableFilterComposer,
+          $$ReadingSessionsTableOrderingComposer,
+          $$ReadingSessionsTableAnnotationComposer,
+          $$ReadingSessionsTableCreateCompanionBuilder,
+          $$ReadingSessionsTableUpdateCompanionBuilder,
+          (ReadingSession, $$ReadingSessionsTableReferences),
+          ReadingSession,
+          PrefetchHooks Function({bool bookId, bool chapterId})
+        > {
+  $$ReadingSessionsTableTableManager(
+    _$AppDatabase db,
+    $ReadingSessionsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ReadingSessionsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ReadingSessionsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ReadingSessionsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> bookId = const Value.absent(),
+                Value<int> chapterId = const Value.absent(),
+                Value<DateTime> startedAt = const Value.absent(),
+                Value<int> seconds = const Value.absent(),
+                Value<int> startChar = const Value.absent(),
+                Value<int> endChar = const Value.absent(),
+              }) => ReadingSessionsCompanion(
+                id: id,
+                bookId: bookId,
+                chapterId: chapterId,
+                startedAt: startedAt,
+                seconds: seconds,
+                startChar: startChar,
+                endChar: endChar,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int bookId,
+                required int chapterId,
+                required DateTime startedAt,
+                required int seconds,
+                required int startChar,
+                required int endChar,
+              }) => ReadingSessionsCompanion.insert(
+                id: id,
+                bookId: bookId,
+                chapterId: chapterId,
+                startedAt: startedAt,
+                seconds: seconds,
+                startChar: startChar,
+                endChar: endChar,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$ReadingSessionsTable, ReadingSession>(table),
+                  $$ReadingSessionsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({bookId = false, chapterId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (bookId) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.bookId,
+                        referencedTable: $$ReadingSessionsTableReferences
+                            ._bookIdTable(db),
+                        referencedColumn: $$ReadingSessionsTableReferences
+                            ._bookIdTable(db)
+                            .id,
+                      ) as T;
+                    }
+                    if (chapterId) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.chapterId,
+                        referencedTable: $$ReadingSessionsTableReferences
+                            ._chapterIdTable(db),
+                        referencedColumn: $$ReadingSessionsTableReferences
+                            ._chapterIdTable(db)
+                            .id,
+                      ) as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$ReadingSessionsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ReadingSessionsTable,
+      ReadingSession,
+      $$ReadingSessionsTableFilterComposer,
+      $$ReadingSessionsTableOrderingComposer,
+      $$ReadingSessionsTableAnnotationComposer,
+      $$ReadingSessionsTableCreateCompanionBuilder,
+      $$ReadingSessionsTableUpdateCompanionBuilder,
+      (ReadingSession, $$ReadingSessionsTableReferences),
+      ReadingSession,
+      PrefetchHooks Function({bool bookId, bool chapterId})
+    >;
+typedef $$AiCallsTableCreateCompanionBuilder = AiCallsCompanion Function({
+  Value<int> id,
+  Value<int?> bookId,
+  Value<int?> chapterId,
+  Value<int?> groupIndex,
+  required AiCallKind kind,
+  required String model,
+  required int promptVersion,
+  required int chars,
+  Value<int?> promptTokens,
+  Value<int?> completionTokens,
+  Value<double?> costUsd,
+  Value<int?> firstTokenMs,
+  Value<int?> totalMs,
+  Value<String?> error,
+  Value<DateTime> createdAt,
+});
+typedef $$AiCallsTableUpdateCompanionBuilder = AiCallsCompanion Function({
+  Value<int> id,
+  Value<int?> bookId,
+  Value<int?> chapterId,
+  Value<int?> groupIndex,
+  Value<AiCallKind> kind,
+  Value<String> model,
+  Value<int> promptVersion,
+  Value<int> chars,
+  Value<int?> promptTokens,
+  Value<int?> completionTokens,
+  Value<double?> costUsd,
+  Value<int?> firstTokenMs,
+  Value<int?> totalMs,
+  Value<String?> error,
+  Value<DateTime> createdAt,
+});
+
+final class $$AiCallsTableReferences
+    extends BaseReferences<_$AppDatabase, $AiCallsTable, AiCall> {
+  $$AiCallsTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $BooksTable _bookIdTable(_$AppDatabase db) =>
+      db.books.createAlias('ai_calls__book_id__books__id');
+
+  $$BooksTableProcessedTableManager? get bookId {
+    final $_column = $_itemColumn<int>('book_id');
+    if ($_column == null) return null;
+    final manager = $$BooksTableTableManager(
+      $_db,
+      $_db.books,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_bookIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $ChaptersTable _chapterIdTable(_$AppDatabase db) =>
+      db.chapters.createAlias('ai_calls__chapter_id__chapters__id');
+
+  $$ChaptersTableProcessedTableManager? get chapterId {
+    final $_column = $_itemColumn<int>('chapter_id');
+    if ($_column == null) return null;
+    final manager = $$ChaptersTableTableManager(
+      $_db,
+      $_db.chapters,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_chapterIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$AiCallsTableFilterComposer
+    extends Composer<_$AppDatabase, $AiCallsTable> {
+  $$AiCallsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get groupIndex => $composableBuilder(
+    column: $table.groupIndex,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<AiCallKind, AiCallKind, String> get kind =>
+      $composableBuilder(
+        column: $table.kind,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<String> get model => $composableBuilder(
+    column: $table.model,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get promptVersion => $composableBuilder(
+    column: $table.promptVersion,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get chars => $composableBuilder(
+    column: $table.chars,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get promptTokens => $composableBuilder(
+    column: $table.promptTokens,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get completionTokens => $composableBuilder(
+    column: $table.completionTokens,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get costUsd => $composableBuilder(
+    column: $table.costUsd,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get firstTokenMs => $composableBuilder(
+    column: $table.firstTokenMs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get totalMs => $composableBuilder(
+    column: $table.totalMs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get error => $composableBuilder(
+    column: $table.error,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$BooksTableFilterComposer get bookId {
+    final $$BooksTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.bookId,
+      referencedTable: $db.books,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BooksTableFilterComposer(
+            $db: $db,
+            $table: $db.books,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$ChaptersTableFilterComposer get chapterId {
+    final $$ChaptersTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.chapterId,
+      referencedTable: $db.chapters,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ChaptersTableFilterComposer(
+            $db: $db,
+            $table: $db.chapters,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$AiCallsTableOrderingComposer
+    extends Composer<_$AppDatabase, $AiCallsTable> {
+  $$AiCallsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get groupIndex => $composableBuilder(
+    column: $table.groupIndex,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get model => $composableBuilder(
+    column: $table.model,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get promptVersion => $composableBuilder(
+    column: $table.promptVersion,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get chars => $composableBuilder(
+    column: $table.chars,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get promptTokens => $composableBuilder(
+    column: $table.promptTokens,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get completionTokens => $composableBuilder(
+    column: $table.completionTokens,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get costUsd => $composableBuilder(
+    column: $table.costUsd,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get firstTokenMs => $composableBuilder(
+    column: $table.firstTokenMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get totalMs => $composableBuilder(
+    column: $table.totalMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get error => $composableBuilder(
+    column: $table.error,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$BooksTableOrderingComposer get bookId {
+    final $$BooksTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.bookId,
+      referencedTable: $db.books,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BooksTableOrderingComposer(
+            $db: $db,
+            $table: $db.books,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$ChaptersTableOrderingComposer get chapterId {
+    final $$ChaptersTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.chapterId,
+      referencedTable: $db.chapters,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ChaptersTableOrderingComposer(
+            $db: $db,
+            $table: $db.chapters,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$AiCallsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $AiCallsTable> {
+  $$AiCallsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get groupIndex => $composableBuilder(
+    column: $table.groupIndex,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<AiCallKind, String> get kind =>
+      $composableBuilder(column: $table.kind, builder: (column) => column);
+
+  GeneratedColumn<String> get model =>
+      $composableBuilder(column: $table.model, builder: (column) => column);
+
+  GeneratedColumn<int> get promptVersion => $composableBuilder(
+    column: $table.promptVersion,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get chars =>
+      $composableBuilder(column: $table.chars, builder: (column) => column);
+
+  GeneratedColumn<int> get promptTokens => $composableBuilder(
+    column: $table.promptTokens,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get completionTokens => $composableBuilder(
+    column: $table.completionTokens,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get costUsd =>
+      $composableBuilder(column: $table.costUsd, builder: (column) => column);
+
+  GeneratedColumn<int> get firstTokenMs => $composableBuilder(
+    column: $table.firstTokenMs,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get totalMs =>
+      $composableBuilder(column: $table.totalMs, builder: (column) => column);
+
+  GeneratedColumn<String> get error =>
+      $composableBuilder(column: $table.error, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  $$BooksTableAnnotationComposer get bookId {
+    final $$BooksTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.bookId,
+      referencedTable: $db.books,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BooksTableAnnotationComposer(
+            $db: $db,
+            $table: $db.books,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$ChaptersTableAnnotationComposer get chapterId {
+    final $$ChaptersTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.chapterId,
+      referencedTable: $db.chapters,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ChaptersTableAnnotationComposer(
+            $db: $db,
+            $table: $db.chapters,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$AiCallsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $AiCallsTable,
+          AiCall,
+          $$AiCallsTableFilterComposer,
+          $$AiCallsTableOrderingComposer,
+          $$AiCallsTableAnnotationComposer,
+          $$AiCallsTableCreateCompanionBuilder,
+          $$AiCallsTableUpdateCompanionBuilder,
+          (AiCall, $$AiCallsTableReferences),
+          AiCall,
+          PrefetchHooks Function({bool bookId, bool chapterId})
+        > {
+  $$AiCallsTableTableManager(_$AppDatabase db, $AiCallsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$AiCallsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$AiCallsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$AiCallsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int?> bookId = const Value.absent(),
+                Value<int?> chapterId = const Value.absent(),
+                Value<int?> groupIndex = const Value.absent(),
+                Value<AiCallKind> kind = const Value.absent(),
+                Value<String> model = const Value.absent(),
+                Value<int> promptVersion = const Value.absent(),
+                Value<int> chars = const Value.absent(),
+                Value<int?> promptTokens = const Value.absent(),
+                Value<int?> completionTokens = const Value.absent(),
+                Value<double?> costUsd = const Value.absent(),
+                Value<int?> firstTokenMs = const Value.absent(),
+                Value<int?> totalMs = const Value.absent(),
+                Value<String?> error = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => AiCallsCompanion(
+                id: id,
+                bookId: bookId,
+                chapterId: chapterId,
+                groupIndex: groupIndex,
+                kind: kind,
+                model: model,
+                promptVersion: promptVersion,
+                chars: chars,
+                promptTokens: promptTokens,
+                completionTokens: completionTokens,
+                costUsd: costUsd,
+                firstTokenMs: firstTokenMs,
+                totalMs: totalMs,
+                error: error,
+                createdAt: createdAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int?> bookId = const Value.absent(),
+                Value<int?> chapterId = const Value.absent(),
+                Value<int?> groupIndex = const Value.absent(),
+                required AiCallKind kind,
+                required String model,
+                required int promptVersion,
+                required int chars,
+                Value<int?> promptTokens = const Value.absent(),
+                Value<int?> completionTokens = const Value.absent(),
+                Value<double?> costUsd = const Value.absent(),
+                Value<int?> firstTokenMs = const Value.absent(),
+                Value<int?> totalMs = const Value.absent(),
+                Value<String?> error = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => AiCallsCompanion.insert(
+                id: id,
+                bookId: bookId,
+                chapterId: chapterId,
+                groupIndex: groupIndex,
+                kind: kind,
+                model: model,
+                promptVersion: promptVersion,
+                chars: chars,
+                promptTokens: promptTokens,
+                completionTokens: completionTokens,
+                costUsd: costUsd,
+                firstTokenMs: firstTokenMs,
+                totalMs: totalMs,
+                error: error,
+                createdAt: createdAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$AiCallsTable, AiCall>(table),
+                  $$AiCallsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({bookId = false, chapterId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (bookId) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.bookId,
+                        referencedTable: $$AiCallsTableReferences._bookIdTable(
+                          db,
+                        ),
+                        referencedColumn: $$AiCallsTableReferences
+                            ._bookIdTable(db)
+                            .id,
+                      ) as T;
+                    }
+                    if (chapterId) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.chapterId,
+                        referencedTable: $$AiCallsTableReferences
+                            ._chapterIdTable(db),
+                        referencedColumn: $$AiCallsTableReferences
+                            ._chapterIdTable(db)
+                            .id,
+                      ) as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$AiCallsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $AiCallsTable,
+      AiCall,
+      $$AiCallsTableFilterComposer,
+      $$AiCallsTableOrderingComposer,
+      $$AiCallsTableAnnotationComposer,
+      $$AiCallsTableCreateCompanionBuilder,
+      $$AiCallsTableUpdateCompanionBuilder,
+      (AiCall, $$AiCallsTableReferences),
+      AiCall,
+      PrefetchHooks Function({bool bookId, bool chapterId})
     >;
 typedef $$SettingsTableCreateCompanionBuilder = SettingsCompanion Function({
   required String key,
@@ -5191,6 +8201,10 @@ class $AppDatabaseManager {
       $$ReadingProgressTableTableManager(_db, _db.readingProgress);
   $$AiResultsTableTableManager get aiResults =>
       $$AiResultsTableTableManager(_db, _db.aiResults);
+  $$ReadingSessionsTableTableManager get readingSessions =>
+      $$ReadingSessionsTableTableManager(_db, _db.readingSessions);
+  $$AiCallsTableTableManager get aiCalls =>
+      $$AiCallsTableTableManager(_db, _db.aiCalls);
   $$SettingsTableTableManager get settings =>
       $$SettingsTableTableManager(_db, _db.settings);
 }

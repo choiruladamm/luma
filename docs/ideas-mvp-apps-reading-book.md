@@ -224,7 +224,8 @@ Prinsip: **file diparse sekali saat import** ke format internal. Reader, AI, dan
 | createdAt | datetime | |
 | lastOpenedAt | datetime? | Untuk urutan rak |
 | firstOpenedAt | datetime? | Pertama kali dibuka. Diisi sekali, gak berubah lagi |
-| readingSeconds | int (default 0) | Total waktu baca aktif, ditampilkan di layar akhir buku ("6 jam 20 mnt", atau "45 mnt" di bawah 1 jam) |
+| readingSeconds | int (default 0) | Total waktu baca aktif, ditampilkan di layar akhir buku ("6 jam 20 mnt", atau "45 mnt" di bawah 1 jam). Tetap dipertahankan walau ada `reading_sessions` (ditulis satu transaksi sama sesinya) |
+| finishedAt | datetime? | Pertama kali layar akhir buku kebuka. Diisi sekali, gak ditimpa. Sengaja gak disimpulin dari sesi: lompat ke bab terakhir bisa ngelabuin |
 
 **Waktu baca aktif** dihitung selama halaman baca kebuka dan app di foreground. Berhenti kalau 2 menit gak ada scroll/tap (2 menit itu ikut dihitung), lanjut lagi pas ada interaksi. Disimpan bertahap (tiap scroll berhenti, pindah bab, app ke background, keluar halaman baca), jadi app yang dimatiin iOS cuma kehilangan beberapa detik terakhir.
 
@@ -274,8 +275,46 @@ Unique key: `(chapterId, paragraphIndex)`. Index tambahan: `(chapterId, groupInd
 | model | text | Model yang dipakai |
 | promptVersion | int (default 1) | `aiPromptVersion` waktu dibikin. Lebih lama dari yang sekarang = dianggap belum ada (`find` balikin null), grupnya diterjemahin ulang pas dibuka dan barisnya ditimpa. Penanda di margin & hitungan di Pengaturan tetap ngitung semua baris |
 | createdAt | datetime | |
+| openCount | int (default 0) | Berapa kali hasil ini dibuka (penanda grup yang sering dibaca ulang). Diisi di #48; baris lama mulai dari 0 |
+| lastOpenedAt | datetime? | Terakhir dibuka |
 
 Unique key: `(chapterId, groupIndex)`.
+
+### `reading_sessions`
+
+Log append-only potongan waktu baca aktif. Statistik (streak, heatmap, kecepatan baca) dihitung lewat query dari sini; gak ada tabel rollup. Gak ada backfill: waktu baca sebelum tabel ini cuma ada sebagai total `books.readingSeconds`.
+
+| Kolom | Tipe | Catatan |
+|-------|------|---------|
+| id | int (PK, autoincrement) | |
+| bookId | int (FK → books.id, cascade) | |
+| chapterId | int (FK → chapters.id, cascade) | Satu potongan gak pernah lintas bab: pindah bab selalu nyimpen dulu, jadi lompat lewat daftar isi gak ikut keitung sebagai karakter terbaca |
+| startedAt | datetime | Hari dihitung lokal (`localtime`) di query |
+| seconds | int | Waktu aktif (`ReadingClock`, idle 2 menit) |
+| startChar | int | Posisi absolut di buku (karakter) di awal potongan |
+| endChar | int | Di akhir potongan. Dua ujung disimpen, bukan satu angka `charsRead`: aturan "berapa yang dianggap beneran dibaca" (batas kecepatan wajar) ada di query, bisa diganti tanpa ngubah data |
+
+Index: `(bookId, startedAt)`, `(startedAt)`. Pengisiannya di #44.
+
+### `ai_calls`
+
+Log append-only request LLM, terpisah dari cache `ai_results` (`createdAt`-nya ke-reset tiap retranslate, barisnya ikut kehapus pas re-import). Dasar statistik biaya, bantuan AI per 1.000 karakter, dan bab tersulit. Cache hit gak nulis baris. Pengisiannya di #47.
+
+| Kolom | Tipe | Catatan |
+|-------|------|---------|
+| id | int (PK, autoincrement) | |
+| bookId | int? (FK → books.id, set null) | `set null` supaya biaya bulanan gak berubah waktu buku dihapus |
+| chapterId | int? (FK → chapters.id, set null) | |
+| groupIndex | int? | |
+| kind | text | `group` (terjemahan + makna). Recap (bagian 12) nanti nambah nilai |
+| model | text | |
+| promptVersion | int | |
+| chars | int | Panjang teks target, penyebut "per 1.000 karakter" |
+| promptTokens, completionTokens | int? | Null = model gak ngirim `usage` |
+| costUsd | real? | Dari `usage` OpenRouter. Null = gak tercatat (tampilin "gak tercatat", bukan 0) |
+| firstTokenMs, totalMs | int? | Latensi |
+| error | text? | `AiError.name`. Null = sukses |
+| createdAt | datetime | |
 
 > ⚠️ **Indeks paragraf dan grup harus stabil.** Logika parsing dan grouping jangan diubah sembarangan setelah ada data. Kalau harus berubah, naikkan `parserVersion`, re-import buku, dan hapus `ai_results` buku tersebut.
 
@@ -287,6 +326,7 @@ Unique key: `(chapterId, groupIndex)`.
 | 2 | `books.firstOpenedAt`, `books.readingSeconds` |
 | 3 | `reading_progress.paragraphOffset` |
 | 4 | `ai_results.promptVersion` (baris lama = 1, prompt sebelum #40) |
+| 5 | Pencatatan statistik (#42): tabel `reading_sessions` + `ai_calls`, `books.finishedAt`, `ai_results.openCount` + `lastOpenedAt`. Tabel baru kosong, baris lama `openCount` = 0 |
 
 Tiap ubah tabel: naikkan `schemaVersion`, tambah langkah di `onUpgrade`, dan test migrasi dari versi sebelumnya (data tetap utuh, schema hasil migrasi sama dengan install baru). Restore backup dari schema lama ikut dimigrasi saat database dibuka (bagian 10).
 

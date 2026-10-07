@@ -4,6 +4,7 @@ import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../domain/models/ai_reply.dart';
 import '../../domain/models/book.dart';
 
 part 'app_database.g.dart';
@@ -36,6 +37,10 @@ class Books extends Table {
 
   /// Total waktu baca aktif (halaman baca kebuka, app di depan, belum idle).
   IntColumn get readingSeconds => integer().withDefault(const Constant(0))();
+
+  /// Pertama kali layar akhir buku kebuka. Diisi sekali, gak ditimpa. Gak
+  /// disimpulin dari sesi: lompat ke bab terakhir bisa ngelabuin.
+  DateTimeColumn get finishedAt => dateTime().nullable()();
 }
 
 /// `id` = kunci stabil yang dirujuk tabel lain; urutan tampil dari
@@ -110,8 +115,71 @@ class AiResults extends Table {
   IntColumn get promptVersion => integer().withDefault(const Constant(1))();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 
+  /// Berapa kali hasil ini dibuka. Penanda grup yang sering dibaca ulang.
+  IntColumn get openCount => integer().withDefault(const Constant(0))();
+  DateTimeColumn get lastOpenedAt => dateTime().nullable()();
+
   @override
   Set<Column> get primaryKey => {chapterId, groupIndex};
+}
+
+/// Potongan waktu baca aktif. Log append-only: streak, heatmap, kecepatan
+/// baca dihitung lewat query. Satu potongan gak pernah lintas bab (pindah bab
+/// selalu nyimpen dulu), jadi lompat lewat daftar isi gak ikut keitung.
+@TableIndex(name: 'reading_sessions_book_time', columns: {#bookId, #startedAt})
+@TableIndex(name: 'reading_sessions_time', columns: {#startedAt})
+class ReadingSessions extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get bookId =>
+      integer().references(Books, #id, onDelete: KeyAction.cascade)();
+  IntColumn get chapterId =>
+      integer().references(Chapters, #id, onDelete: KeyAction.cascade)();
+  DateTimeColumn get startedAt => dateTime()();
+
+  /// Waktu aktif ([ReadingClock] di domain/reading.dart).
+  IntColumn get seconds => integer()();
+
+  /// Posisi absolut di buku (karakter) di awal dan akhir potongan. Dua ujung,
+  /// bukan satu angka: aturan "berapa yang dianggap beneran dibaca" ada di
+  /// query, jadi bisa diganti tanpa ngubah data.
+  IntColumn get startChar => integer()();
+  IntColumn get endChar => integer()();
+}
+
+/// Log request LLM, terpisah dari cache `ai_results` (yang `createdAt`-nya
+/// ke-reset tiap retranslate dan barisnya ikut kehapus pas re-import). Dasar
+/// statistik biaya dan bantuan AI. FK `setNull`: biaya bulanan gak berubah
+/// waktu buku dihapus.
+class AiCalls extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get bookId => integer().nullable().references(
+    Books,
+    #id,
+    onDelete: KeyAction.setNull,
+  )();
+  IntColumn get chapterId => integer().nullable().references(
+    Chapters,
+    #id,
+    onDelete: KeyAction.setNull,
+  )();
+  IntColumn get groupIndex => integer().nullable()();
+  TextColumn get kind => textEnum<AiCallKind>()();
+  TextColumn get model => text()();
+  IntColumn get promptVersion => integer()();
+
+  /// Panjang teks target, buat "per 1.000 karakter".
+  IntColumn get chars => integer()();
+
+  /// Null = model gak ngirim usage.
+  IntColumn get promptTokens => integer().nullable()();
+  IntColumn get completionTokens => integer().nullable()();
+  RealColumn get costUsd => real().nullable()();
+  IntColumn get firstTokenMs => integer().nullable()();
+  IntColumn get totalMs => integer().nullable()();
+
+  /// `AiError.name`. Null = sukses.
+  TextColumn get error => text().nullable()();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 }
 
 /// Pengaturan yang ikut backup (model ID, preferensi Aa, lastBackupAt).
@@ -125,7 +193,16 @@ class Settings extends Table {
 }
 
 @DriftDatabase(
-  tables: [Books, Chapters, Paragraphs, ReadingProgress, AiResults, Settings],
+  tables: [
+    Books,
+    Chapters,
+    Paragraphs,
+    ReadingProgress,
+    AiResults,
+    ReadingSessions,
+    AiCalls,
+    Settings,
+  ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor])
@@ -135,7 +212,7 @@ class AppDatabase extends _$AppDatabase {
   // test/data/migration_test.dart. Backup dari versi lama ikut dimigrasi pas
   // di-restore.
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -149,6 +226,15 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 4) {
         await m.addColumn(aiResults, aiResults.promptVersion);
+      }
+      if (from < 5) {
+        await m.addColumn(books, books.finishedAt);
+        await m.addColumn(aiResults, aiResults.openCount);
+        await m.addColumn(aiResults, aiResults.lastOpenedAt);
+        await m.createTable(readingSessions);
+        await m.createIndex(readingSessionsBookTime);
+        await m.createIndex(readingSessionsTime);
+        await m.createTable(aiCalls);
       }
     },
     // SQLite matiin foreign key secara default; cascade butuh ini.

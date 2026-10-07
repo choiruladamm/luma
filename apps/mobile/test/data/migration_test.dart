@@ -2,6 +2,8 @@ import 'package:drift/drift.dart' hide isNull, isNotNull;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:luma/data/database/app_database.dart';
+import 'package:luma/domain/models/ai_reply.dart';
+import 'package:luma/domain/models/book.dart';
 
 /// Schema lama persis kayak yang kebuat di iPhone (dan di backup lama).
 const v1 = [
@@ -28,6 +30,17 @@ final v3 = [
         ? sql.replaceFirst(
             '"paragraph_index" INTEGER NOT NULL,',
             '"paragraph_index" INTEGER NOT NULL, "paragraph_offset" REAL NOT NULL DEFAULT 0.0,',
+          )
+        : sql,
+];
+
+/// v4: ai_results dapet prompt_version.
+final v4 = [
+  for (final sql in v3)
+    sql.startsWith('CREATE TABLE "ai_results"')
+        ? sql.replaceFirst(
+            '"model" TEXT NOT NULL,',
+            '"model" TEXT NOT NULL, "prompt_version" INTEGER NOT NULL DEFAULT 1,',
           )
         : sql,
 ];
@@ -100,7 +113,7 @@ AppDatabase _old(List<String> schema, int version) => _open((raw) {
 });
 
 void main() {
-  for (final (version, schema) in [(1, v1), (2, v2), (3, v3)]) {
+  for (final (version, schema) in [(1, v1), (2, v2), (3, v3), (4, v4)]) {
     test(
       'v$version → now: same schema as a fresh install, data kept',
       () async {
@@ -114,6 +127,7 @@ void main() {
         expect(book.lastOpenedAt, isNotNull);
         expect(book.firstOpenedAt, isNull);
         expect(book.readingSeconds, 0);
+        expect(book.finishedAt, isNull);
         final progress = await migrated
             .select(migrated.readingProgress)
             .getSingle();
@@ -122,8 +136,75 @@ void main() {
         // Translations from before #40 count as the old prompt.
         final cached = await migrated.select(migrated.aiResults).getSingle();
         expect(cached.promptVersion, 1);
+        // Statistik baru mulai dari nol: gak ada riwayat buat di-backfill.
+        expect(cached.openCount, 0);
+        expect(cached.lastOpenedAt, isNull);
+        expect(await migrated.select(migrated.readingSessions).get(), isEmpty);
+        expect(await migrated.select(migrated.aiCalls).get(), isEmpty);
         expect(await _shape(migrated), await _shape(fresh));
       },
     );
   }
+
+  test(
+    'delete book: sessions go with it, ai_calls stay (cost history)',
+    () async {
+      final db = _open();
+      addTearDown(db.close);
+      final bookId = await db
+          .into(db.books)
+          .insert(
+            BooksCompanion.insert(
+              sourceType: SourceType.epub,
+              title: 'Meditations',
+              parserVersion: 1,
+              totalChars: 100,
+            ),
+          );
+      final chapterId = await db
+          .into(db.chapters)
+          .insert(
+            ChaptersCompanion.insert(
+              bookId: bookId,
+              sortOrder: 0,
+              title: 'I',
+              charOffset: 0,
+            ),
+          );
+      await db
+          .into(db.readingSessions)
+          .insert(
+            ReadingSessionsCompanion.insert(
+              bookId: bookId,
+              chapterId: chapterId,
+              startedAt: DateTime(2026, 10, 7, 20),
+              seconds: 60,
+              startChar: 0,
+              endChar: 500,
+            ),
+          );
+      await db
+          .into(db.aiCalls)
+          .insert(
+            AiCallsCompanion.insert(
+              bookId: Value(bookId),
+              chapterId: Value(chapterId),
+              groupIndex: const Value(0),
+              kind: AiCallKind.group,
+              model: 'x',
+              promptVersion: 4,
+              chars: 300,
+              costUsd: const Value(0.0002),
+            ),
+          );
+
+      await db.delete(db.books).go();
+
+      expect(await db.select(db.readingSessions).get(), isEmpty);
+      final call = await db.select(db.aiCalls).getSingle();
+      expect(call.bookId, isNull);
+      expect(call.chapterId, isNull);
+      expect(call.costUsd, 0.0002);
+    },
+  );
 }

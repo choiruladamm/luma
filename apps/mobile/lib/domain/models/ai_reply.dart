@@ -13,6 +13,9 @@ class AiReply {
   final String meaning;
 }
 
+/// Jenis request LLM di `ai_calls`. Recap (docs bagian 12) tinggal nambah nilai.
+enum AiCallKind { group }
+
 enum AiError {
   /// API key belum diisi: API gak dipanggil.
   noApiKey,
