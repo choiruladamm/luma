@@ -32,6 +32,10 @@ class Books extends Table {
   IntColumn get totalChars => integer()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
   DateTimeColumn get lastOpenedAt => dateTime().nullable()();
+  DateTimeColumn get firstOpenedAt => dateTime().nullable()();
+
+  /// Total waktu baca aktif (halaman baca kebuka, app di depan, belum idle).
+  IntColumn get readingSeconds => integer().withDefault(const Constant(0))();
 }
 
 /// `id` = kunci stabil yang dirujuk tabel lain; urutan tampil dari
@@ -119,13 +123,20 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor])
     : super(executor ?? driftDatabase(name: 'luma'));
 
-  // Sebelum dogfooding: schema diedit langsung di versi 1 (hapus app di
-  // iPhone). Setelah ada data asli: naikin versi + tulis migrasi.
+  // Ubah tabel: naikin versi, tambah langkah di onUpgrade, tambah test di
+  // test/data/migration_test.dart. Backup dari versi lama ikut dimigrasi pas
+  // di-restore.
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
+    onUpgrade: (m, from, to) async {
+      if (from < 2) {
+        await m.addColumn(books, books.firstOpenedAt);
+        await m.addColumn(books, books.readingSeconds);
+      }
+    },
     // SQLite matiin foreign key secara default; cascade butuh ini.
     beforeOpen: (_) => customStatement('PRAGMA foreign_keys = ON'),
   );

@@ -7,6 +7,7 @@ class FakeProgress implements ReadingProgressRepository {
   ReadingPosition? saved;
   final saves = <ReadingPosition>[];
   final opened = <int>[];
+  int readingSeconds = 0;
 
   @override
   Future<ReadingPosition?> load(int bookId) async => saved;
@@ -17,4 +18,8 @@ class FakeProgress implements ReadingProgressRepository {
 
   @override
   Future<void> markOpened(int bookId) async => opened.add(bookId);
+
+  @override
+  Future<void> addReadingTime(int bookId, int seconds) async =>
+      readingSeconds += seconds;
 }

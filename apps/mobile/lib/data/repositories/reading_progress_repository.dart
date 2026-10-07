@@ -31,10 +31,24 @@ class ReadingProgressRepository {
         ),
       );
 
-  /// Buku dibuka: naik ke depan rak, stiker "Baru" ilang.
-  Future<void> markOpened(int bookId) =>
+  /// Buku dibuka: naik ke depan rak, stiker "Baru" ilang. Pertama kali
+  /// dibuka dicatet sekali.
+  Future<void> markOpened(int bookId) {
+    final now = Variable(DateTime.now());
+    return (_db.update(_db.books)..where((b) => b.id.equals(bookId))).write(
+      BooksCompanion.custom(
+        lastOpenedAt: now,
+        firstOpenedAt: coalesce([_db.books.firstOpenedAt, now]),
+      ),
+    );
+  }
+
+  /// Nambahin waktu baca aktif ke total buku.
+  Future<void> addReadingTime(int bookId, int seconds) =>
       (_db.update(_db.books)..where((b) => b.id.equals(bookId))).write(
-        BooksCompanion(lastOpenedAt: Value(DateTime.now())),
+        BooksCompanion.custom(
+          readingSeconds: _db.books.readingSeconds + Variable(seconds),
+        ),
       );
 }
 

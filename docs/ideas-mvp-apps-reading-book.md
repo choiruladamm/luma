@@ -164,6 +164,10 @@ Prinsip: **file diparse sekali saat import** ke format internal. Reader, AI, dan
 | totalChars | int | Untuk hitung persentase baca (hanya bermakna untuk buku lengkap) |
 | createdAt | datetime | |
 | lastOpenedAt | datetime? | Untuk urutan rak |
+| firstOpenedAt | datetime? | Pertama kali dibuka. Diisi sekali, gak berubah lagi |
+| readingSeconds | int (default 0) | Total waktu baca aktif, ditampilkan di layar akhir buku ("6 jam 20 mnt", atau "45 mnt" di bawah 1 jam) |
+
+**Waktu baca aktif** dihitung selama halaman baca kebuka dan app di foreground. Berhenti kalau 2 menit gak ada scroll/tap (2 menit itu ikut dihitung), lanjut lagi pas ada interaksi. Disimpan bertahap (tiap scroll berhenti, pindah bab, app ke background, keluar halaman baca), jadi app yang dimatiin iOS cuma kehilangan beberapa detik terakhir.
 
 ### `chapters`
 
@@ -213,6 +217,15 @@ Unique key: `(chapterId, paragraphIndex)`. Index tambahan: `(chapterId, groupInd
 Unique key: `(chapterId, groupIndex)`.
 
 > ⚠️ **Indeks paragraf dan grup harus stabil.** Logika parsing dan grouping jangan diubah sembarangan setelah ada data. Kalau harus berubah, naikkan `parserVersion`, re-import buku, dan hapus `ai_results` buku tersebut.
+
+### Versi schema & migrasi
+
+| Versi | Perubahan |
+|-------|-----------|
+| 1 | Awal |
+| 2 | `books.firstOpenedAt`, `books.readingSeconds` |
+
+Tiap ubah tabel: naikkan `schemaVersion`, tambah langkah di `onUpgrade`, dan test migrasi dari versi sebelumnya (data tetap utuh, schema hasil migrasi sama dengan install baru). Restore backup dari schema lama ikut dimigrasi saat database dibuka (bagian 10).
 
 ### Pengaturan
 

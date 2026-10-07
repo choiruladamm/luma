@@ -110,8 +110,7 @@ class BookEndView extends ConsumerWidget {
                         spacing: 10,
                         children: [
                           _Stat(
-                            value:
-                                '${readingDays(end.startedAt, DateTime.now())} hari',
+                            value: formatReadingTime(end.readingSeconds),
                             label: 'waktu baca',
                           ),
                           _Stat(
@@ -246,12 +245,17 @@ class _Stat extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         spacing: 2,
         children: [
-          Text(
-            value,
-            style: StabiloType.titleMd.copyWith(
-              fontSize: 26,
-              letterSpacing: -0.02 * 26,
-              color: c.ink,
+          // "6 jam 20 mnt" gak muat di 26: dikecilin, bukan turun baris.
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value,
+              style: StabiloType.titleMd.copyWith(
+                fontSize: 26,
+                letterSpacing: -0.02 * 26,
+                color: c.ink,
+              ),
             ),
           ),
           Text(label, style: StabiloType.caption.copyWith(color: c.ink2)),

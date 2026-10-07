@@ -137,6 +137,30 @@ class $BooksTable extends Books with TableInfo<$BooksTable, Book> {
     type: DriftSqlType.dateTime,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _firstOpenedAtMeta = const VerificationMeta(
+    'firstOpenedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> firstOpenedAt =
+      GeneratedColumn<DateTime>(
+        'first_opened_at',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _readingSecondsMeta = const VerificationMeta(
+    'readingSeconds',
+  );
+  @override
+  late final GeneratedColumn<int> readingSeconds = GeneratedColumn<int>(
+    'reading_seconds',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -151,6 +175,8 @@ class $BooksTable extends Books with TableInfo<$BooksTable, Book> {
     totalChars,
     createdAt,
     lastOpenedAt,
+    firstOpenedAt,
+    readingSeconds,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -239,6 +265,24 @@ class $BooksTable extends Books with TableInfo<$BooksTable, Book> {
         ),
       );
     }
+    if (data.containsKey('first_opened_at')) {
+      context.handle(
+        _firstOpenedAtMeta,
+        firstOpenedAt.isAcceptableOrUnknown(
+          data['first_opened_at']!,
+          _firstOpenedAtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('reading_seconds')) {
+      context.handle(
+        _readingSecondsMeta,
+        readingSeconds.isAcceptableOrUnknown(
+          data['reading_seconds']!,
+          _readingSecondsMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -298,6 +342,14 @@ class $BooksTable extends Books with TableInfo<$BooksTable, Book> {
         DriftSqlType.dateTime,
         data['${effectivePrefix}last_opened_at'],
       ),
+      firstOpenedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}first_opened_at'],
+      ),
+      readingSeconds: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}reading_seconds'],
+      )!,
     );
   }
 
@@ -331,6 +383,10 @@ class Book extends DataClass implements Insertable<Book> {
   final int totalChars;
   final DateTime createdAt;
   final DateTime? lastOpenedAt;
+  final DateTime? firstOpenedAt;
+
+  /// Total waktu baca aktif (halaman baca kebuka, app di depan, belum idle).
+  final int readingSeconds;
   const Book({
     required this.id,
     required this.sourceType,
@@ -344,6 +400,8 @@ class Book extends DataClass implements Insertable<Book> {
     required this.totalChars,
     required this.createdAt,
     this.lastOpenedAt,
+    this.firstOpenedAt,
+    required this.readingSeconds,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -376,6 +434,10 @@ class Book extends DataClass implements Insertable<Book> {
     if (!nullToAbsent || lastOpenedAt != null) {
       map['last_opened_at'] = Variable<DateTime>(lastOpenedAt);
     }
+    if (!nullToAbsent || firstOpenedAt != null) {
+      map['first_opened_at'] = Variable<DateTime>(firstOpenedAt);
+    }
+    map['reading_seconds'] = Variable<int>(readingSeconds);
     return map;
   }
 
@@ -403,6 +465,10 @@ class Book extends DataClass implements Insertable<Book> {
       lastOpenedAt: lastOpenedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(lastOpenedAt),
+      firstOpenedAt: firstOpenedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(firstOpenedAt),
+      readingSeconds: Value(readingSeconds),
     );
   }
 
@@ -426,6 +492,8 @@ class Book extends DataClass implements Insertable<Book> {
       totalChars: serializer.fromJson<int>(json['totalChars']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       lastOpenedAt: serializer.fromJson<DateTime?>(json['lastOpenedAt']),
+      firstOpenedAt: serializer.fromJson<DateTime?>(json['firstOpenedAt']),
+      readingSeconds: serializer.fromJson<int>(json['readingSeconds']),
     );
   }
   @override
@@ -446,6 +514,8 @@ class Book extends DataClass implements Insertable<Book> {
       'totalChars': serializer.toJson<int>(totalChars),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'lastOpenedAt': serializer.toJson<DateTime?>(lastOpenedAt),
+      'firstOpenedAt': serializer.toJson<DateTime?>(firstOpenedAt),
+      'readingSeconds': serializer.toJson<int>(readingSeconds),
     };
   }
 
@@ -462,6 +532,8 @@ class Book extends DataClass implements Insertable<Book> {
     int? totalChars,
     DateTime? createdAt,
     Value<DateTime?> lastOpenedAt = const Value.absent(),
+    Value<DateTime?> firstOpenedAt = const Value.absent(),
+    int? readingSeconds,
   }) => Book(
     id: id ?? this.id,
     sourceType: sourceType ?? this.sourceType,
@@ -475,6 +547,10 @@ class Book extends DataClass implements Insertable<Book> {
     totalChars: totalChars ?? this.totalChars,
     createdAt: createdAt ?? this.createdAt,
     lastOpenedAt: lastOpenedAt.present ? lastOpenedAt.value : this.lastOpenedAt,
+    firstOpenedAt: firstOpenedAt.present
+        ? firstOpenedAt.value
+        : this.firstOpenedAt,
+    readingSeconds: readingSeconds ?? this.readingSeconds,
   );
   Book copyWithCompanion(BooksCompanion data) {
     return Book(
@@ -498,6 +574,12 @@ class Book extends DataClass implements Insertable<Book> {
       lastOpenedAt: data.lastOpenedAt.present
           ? data.lastOpenedAt.value
           : this.lastOpenedAt,
+      firstOpenedAt: data.firstOpenedAt.present
+          ? data.firstOpenedAt.value
+          : this.firstOpenedAt,
+      readingSeconds: data.readingSeconds.present
+          ? data.readingSeconds.value
+          : this.readingSeconds,
     );
   }
 
@@ -515,7 +597,9 @@ class Book extends DataClass implements Insertable<Book> {
           ..write('parserVersion: $parserVersion, ')
           ..write('totalChars: $totalChars, ')
           ..write('createdAt: $createdAt, ')
-          ..write('lastOpenedAt: $lastOpenedAt')
+          ..write('lastOpenedAt: $lastOpenedAt, ')
+          ..write('firstOpenedAt: $firstOpenedAt, ')
+          ..write('readingSeconds: $readingSeconds')
           ..write(')'))
         .toString();
   }
@@ -534,6 +618,8 @@ class Book extends DataClass implements Insertable<Book> {
     totalChars,
     createdAt,
     lastOpenedAt,
+    firstOpenedAt,
+    readingSeconds,
   );
   @override
   bool operator ==(Object other) =>
@@ -550,7 +636,9 @@ class Book extends DataClass implements Insertable<Book> {
           other.parserVersion == this.parserVersion &&
           other.totalChars == this.totalChars &&
           other.createdAt == this.createdAt &&
-          other.lastOpenedAt == this.lastOpenedAt);
+          other.lastOpenedAt == this.lastOpenedAt &&
+          other.firstOpenedAt == this.firstOpenedAt &&
+          other.readingSeconds == this.readingSeconds);
 }
 
 class BooksCompanion extends UpdateCompanion<Book> {
@@ -566,6 +654,8 @@ class BooksCompanion extends UpdateCompanion<Book> {
   final Value<int> totalChars;
   final Value<DateTime> createdAt;
   final Value<DateTime?> lastOpenedAt;
+  final Value<DateTime?> firstOpenedAt;
+  final Value<int> readingSeconds;
   const BooksCompanion({
     this.id = const Value.absent(),
     this.sourceType = const Value.absent(),
@@ -579,6 +669,8 @@ class BooksCompanion extends UpdateCompanion<Book> {
     this.totalChars = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.lastOpenedAt = const Value.absent(),
+    this.firstOpenedAt = const Value.absent(),
+    this.readingSeconds = const Value.absent(),
   });
   BooksCompanion.insert({
     this.id = const Value.absent(),
@@ -593,6 +685,8 @@ class BooksCompanion extends UpdateCompanion<Book> {
     required int totalChars,
     this.createdAt = const Value.absent(),
     this.lastOpenedAt = const Value.absent(),
+    this.firstOpenedAt = const Value.absent(),
+    this.readingSeconds = const Value.absent(),
   }) : sourceType = Value(sourceType),
        title = Value(title),
        parserVersion = Value(parserVersion),
@@ -610,6 +704,8 @@ class BooksCompanion extends UpdateCompanion<Book> {
     Expression<int>? totalChars,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? lastOpenedAt,
+    Expression<DateTime>? firstOpenedAt,
+    Expression<int>? readingSeconds,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -624,6 +720,8 @@ class BooksCompanion extends UpdateCompanion<Book> {
       if (totalChars != null) 'total_chars': totalChars,
       if (createdAt != null) 'created_at': createdAt,
       if (lastOpenedAt != null) 'last_opened_at': lastOpenedAt,
+      if (firstOpenedAt != null) 'first_opened_at': firstOpenedAt,
+      if (readingSeconds != null) 'reading_seconds': readingSeconds,
     });
   }
 
@@ -640,6 +738,8 @@ class BooksCompanion extends UpdateCompanion<Book> {
     Value<int>? totalChars,
     Value<DateTime>? createdAt,
     Value<DateTime?>? lastOpenedAt,
+    Value<DateTime?>? firstOpenedAt,
+    Value<int>? readingSeconds,
   }) {
     return BooksCompanion(
       id: id ?? this.id,
@@ -654,6 +754,8 @@ class BooksCompanion extends UpdateCompanion<Book> {
       totalChars: totalChars ?? this.totalChars,
       createdAt: createdAt ?? this.createdAt,
       lastOpenedAt: lastOpenedAt ?? this.lastOpenedAt,
+      firstOpenedAt: firstOpenedAt ?? this.firstOpenedAt,
+      readingSeconds: readingSeconds ?? this.readingSeconds,
     );
   }
 
@@ -698,6 +800,12 @@ class BooksCompanion extends UpdateCompanion<Book> {
     if (lastOpenedAt.present) {
       map['last_opened_at'] = Variable<DateTime>(lastOpenedAt.value);
     }
+    if (firstOpenedAt.present) {
+      map['first_opened_at'] = Variable<DateTime>(firstOpenedAt.value);
+    }
+    if (readingSeconds.present) {
+      map['reading_seconds'] = Variable<int>(readingSeconds.value);
+    }
     return map;
   }
 
@@ -715,7 +823,9 @@ class BooksCompanion extends UpdateCompanion<Book> {
           ..write('parserVersion: $parserVersion, ')
           ..write('totalChars: $totalChars, ')
           ..write('createdAt: $createdAt, ')
-          ..write('lastOpenedAt: $lastOpenedAt')
+          ..write('lastOpenedAt: $lastOpenedAt, ')
+          ..write('firstOpenedAt: $firstOpenedAt, ')
+          ..write('readingSeconds: $readingSeconds')
           ..write(')'))
         .toString();
   }
@@ -2557,6 +2667,8 @@ typedef $$BooksTableCreateCompanionBuilder = BooksCompanion Function({
   required int totalChars,
   Value<DateTime> createdAt,
   Value<DateTime?> lastOpenedAt,
+  Value<DateTime?> firstOpenedAt,
+  Value<int> readingSeconds,
 });
 typedef $$BooksTableUpdateCompanionBuilder = BooksCompanion Function({
   Value<int> id,
@@ -2571,6 +2683,8 @@ typedef $$BooksTableUpdateCompanionBuilder = BooksCompanion Function({
   Value<int> totalChars,
   Value<DateTime> createdAt,
   Value<DateTime?> lastOpenedAt,
+  Value<DateTime?> firstOpenedAt,
+  Value<int> readingSeconds,
 });
 
 final class $$BooksTableReferences
@@ -2683,6 +2797,16 @@ class $$BooksTableFilterComposer extends Composer<_$AppDatabase, $BooksTable> {
 
   ColumnFilters<DateTime> get lastOpenedAt => $composableBuilder(
     column: $table.lastOpenedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get firstOpenedAt => $composableBuilder(
+    column: $table.firstOpenedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get readingSeconds => $composableBuilder(
+    column: $table.readingSeconds,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -2805,6 +2929,16 @@ class $$BooksTableOrderingComposer
     column: $table.lastOpenedAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<DateTime> get firstOpenedAt => $composableBuilder(
+    column: $table.firstOpenedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get readingSeconds => $composableBuilder(
+    column: $table.readingSeconds,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$BooksTableAnnotationComposer
@@ -2858,6 +2992,16 @@ class $$BooksTableAnnotationComposer
 
   GeneratedColumn<DateTime> get lastOpenedAt => $composableBuilder(
     column: $table.lastOpenedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get firstOpenedAt => $composableBuilder(
+    column: $table.firstOpenedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get readingSeconds => $composableBuilder(
+    column: $table.readingSeconds,
     builder: (column) => column,
   );
 
@@ -2952,6 +3096,8 @@ class $$BooksTableTableManager
                 Value<int> totalChars = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime?> lastOpenedAt = const Value.absent(),
+                Value<DateTime?> firstOpenedAt = const Value.absent(),
+                Value<int> readingSeconds = const Value.absent(),
               }) => BooksCompanion(
                 id: id,
                 sourceType: sourceType,
@@ -2965,6 +3111,8 @@ class $$BooksTableTableManager
                 totalChars: totalChars,
                 createdAt: createdAt,
                 lastOpenedAt: lastOpenedAt,
+                firstOpenedAt: firstOpenedAt,
+                readingSeconds: readingSeconds,
               ),
           createCompanionCallback:
               ({
@@ -2980,6 +3128,8 @@ class $$BooksTableTableManager
                 required int totalChars,
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime?> lastOpenedAt = const Value.absent(),
+                Value<DateTime?> firstOpenedAt = const Value.absent(),
+                Value<int> readingSeconds = const Value.absent(),
               }) => BooksCompanion.insert(
                 id: id,
                 sourceType: sourceType,
@@ -2993,6 +3143,8 @@ class $$BooksTableTableManager
                 totalChars: totalChars,
                 createdAt: createdAt,
                 lastOpenedAt: lastOpenedAt,
+                firstOpenedAt: firstOpenedAt,
+                readingSeconds: readingSeconds,
               ),
           withReferenceMapper: (p0) => p0
               .map(

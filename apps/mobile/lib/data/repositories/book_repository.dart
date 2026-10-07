@@ -91,7 +91,7 @@ class BookRepository {
     return BookEnd(
       author: book.author,
       coverName: book.coverName,
-      startedAt: book.createdAt,
+      readingSeconds: book.readingSeconds,
       translated: await _translated('c.book_id = ?', bookId),
     );
   }

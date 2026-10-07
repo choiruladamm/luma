@@ -28,6 +28,7 @@ class ReaderView extends ConsumerStatefulWidget {
 class _ReaderViewState extends ConsumerState<ReaderView>
     with WidgetsBindingObserver {
   late final ReadingProgressRepository _progress;
+  final _clock = ReadingClock(DateTime.now());
 
   /// Null sampai posisi tersimpan kebaca.
   int? _chapter;
@@ -55,8 +56,13 @@ class _ReaderViewState extends ConsumerState<ReaderView>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _clock.resume(DateTime.now());
+      return;
+    }
+    _clock.pause(DateTime.now());
     // iOS bisa matiin app kapan aja pas di background.
-    if (state != AppLifecycleState.resumed) _save();
+    _save();
   }
 
   @override
@@ -68,6 +74,10 @@ class _ReaderViewState extends ConsumerState<ReaderView>
   }
 
   void _save() {
+    final seconds = _clock.take(DateTime.now());
+    if (seconds > 0) {
+      _progress.addReadingTime(widget.bookId, seconds).ignore();
+    }
     final chapterId = _chapterId;
     if (chapterId == null) return;
     _progress.save(widget.bookId, (
@@ -124,60 +134,67 @@ class _ReaderViewState extends ConsumerState<ReaderView>
     final saved = ref.watch(readingPositionProvider(widget.bookId));
     final c = context.stabilo;
     return Scaffold(
-      body: SafeArea(
-        bottom: false,
-        child: switch ((book, saved)) {
-          (AsyncData(value: final b?), AsyncData(value: final pos))
-              when b.chapters.isNotEmpty =>
-            () {
-              if (_chapter == null) _start(b, pos);
-              final i = _chapter!;
-              if (_finished) {
-                return BookEndView(
-                  book: b,
-                  onClose: () => context.pop(),
-                  onRestart: () => _goTo(b, 0),
+      body: Listener(
+        // Scroll & tap sama-sama mulai dari sini.
+        onPointerDown: (_) => _clock.interact(DateTime.now()),
+        child: SafeArea(
+          bottom: false,
+          child: switch ((book, saved)) {
+            (AsyncData(value: final b?), AsyncData(value: final pos))
+                when b.chapters.isNotEmpty =>
+              () {
+                if (_chapter == null) _start(b, pos);
+                final i = _chapter!;
+                if (_finished) {
+                  return BookEndView(
+                    book: b,
+                    onClose: () => context.pop(),
+                    onRestart: () => _goTo(b, 0),
+                  );
+                }
+                return Column(
+                  children: [
+                    _TopBar(title: b.title, onToc: () => _openToc(b)),
+                    Expanded(
+                      child: _ChapterText(
+                        key: ValueKey(b.chapters[i].id),
+                        book: b,
+                        index: i,
+                        fraction: _fraction,
+                        restoreTo: _restoreTo,
+                        onPosition: (p) {
+                          _paragraph = p;
+                          _save();
+                        },
+                        onNext: i + 1 < b.chapters.length
+                            ? () => _goTo(b, i + 1)
+                            : () {
+                                _save(); // waktu baca terbaru buat rekapnya
+                                setState(() => _finished = true);
+                              },
+                      ),
+                    ),
+                    _ProgressBar(book: b, index: i, fraction: _fraction),
+                  ],
                 );
-              }
-              return Column(
-                children: [
-                  _TopBar(title: b.title, onToc: () => _openToc(b)),
-                  Expanded(
-                    child: _ChapterText(
-                      key: ValueKey(b.chapters[i].id),
-                      book: b,
-                      index: i,
-                      fraction: _fraction,
-                      restoreTo: _restoreTo,
-                      onPosition: (p) {
-                        _paragraph = p;
-                        _save();
-                      },
-                      onNext: i + 1 < b.chapters.length
-                          ? () => _goTo(b, i + 1)
-                          : () => setState(() => _finished = true),
+              }(),
+            (AsyncLoading(), _) ||
+            (_, AsyncLoading()) => const _TopBar(title: ''),
+            _ => Column(
+              children: [
+                const _TopBar(title: ''),
+                Expanded(
+                  child: Center(
+                    child: Text(
+                      'Yah, bukunya gagal kebuka',
+                      style: StabiloType.body.copyWith(color: c.ink2),
                     ),
                   ),
-                  _ProgressBar(book: b, index: i, fraction: _fraction),
-                ],
-              );
-            }(),
-          (AsyncLoading(), _) ||
-          (_, AsyncLoading()) => const _TopBar(title: ''),
-          _ => Column(
-            children: [
-              const _TopBar(title: ''),
-              Expanded(
-                child: Center(
-                  child: Text(
-                    'Yah, bukunya gagal kebuka',
-                    style: StabiloType.body.copyWith(color: c.ink2),
-                  ),
                 ),
-              ),
-            ],
-          ),
-        },
+              ],
+            ),
+          },
+        ),
       ),
     );
   }

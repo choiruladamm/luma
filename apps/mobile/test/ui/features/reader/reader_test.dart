@@ -106,7 +106,7 @@ void main() {
             (ref, id) async => BookEnd(
               author: 'Epictetus',
               coverName: null,
-              startedAt: DateTime.now().subtract(const Duration(days: 2)),
+              readingSeconds: 6 * 3600 + 20 * 60,
               translated: 86,
             ),
           ),
@@ -179,7 +179,7 @@ void main() {
         ),
         findsOneWidget,
       );
-      expect(find.text('3 hari'), findsOneWidget);
+      expect(find.text('6 jam 20 mnt'), findsOneWidget);
       expect(find.text('86'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });

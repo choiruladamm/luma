@@ -54,10 +54,26 @@ void main() {
     expect(await db.select(db.readingProgress).get(), hasLength(1));
   });
 
-  test('markOpened stamps lastOpenedAt', () async {
+  test('markOpened stamps lastOpenedAt; firstOpenedAt only once', () async {
     final before = DateTime.now().subtract(const Duration(seconds: 1));
     await repo.markOpened(bookId);
+    final first = await db.select(db.books).getSingle();
+    expect(first.lastOpenedAt!.isAfter(before), isTrue);
+    expect(first.firstOpenedAt, first.lastOpenedAt);
+
+    final earlier = DateTime(2026, 1, 1);
+    await db
+        .update(db.books)
+        .write(BooksCompanion(firstOpenedAt: Value(earlier)));
+    await repo.markOpened(bookId);
+    final again = await db.select(db.books).getSingle();
+    expect(again.firstOpenedAt, earlier);
+  });
+
+  test('addReadingTime adds up', () async {
+    await repo.addReadingTime(bookId, 90);
+    await repo.addReadingTime(bookId, 30);
     final book = await db.select(db.books).getSingle();
-    expect(book.lastOpenedAt!.isAfter(before), isTrue);
+    expect(book.readingSeconds, 120);
   });
 }

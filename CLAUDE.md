@@ -34,7 +34,7 @@ Kalau user bilang "next task" / "lanjut":
 App Flutter di `apps/mobile`, Flutter dikunci lewat `.fvmrc`. Jalankan perintah lewat `Makefile` di root (`make help` untuk daftar); di luar itu pakai `fvm flutter` / `fvm dart` dari `apps/mobile`.
 
 - Setelah ubah tabel Drift atau model freezed: `make gen`. File `*.g.dart` / `*.freezed.dart` ikut di-commit.
-- Schema Drift: sebelum dogfooding (belum ada data asli), edit langsung di `schemaVersion` 1 dan ingetin user hapus app di iPhone sebelum run. Setelah ada data asli: naikin `schemaVersion` + migrasi + test migrasi.
+- Schema Drift: udah ada data di iPhone, jadi tiap ubah tabel wajib naikin `schemaVersion` + langkah di `onUpgrade` + test di `test/data/migration_test.dart` (fixture SQL versi lama, bandingin schema hasil migrasi sama install baru). Jangan minta user hapus app. `drift_dev make-migrations` gak bisa dipakai: kolom `paragraphs.text` bikin kode snapshot-nya gagal compile.
 - `make check` (format, analyze, test) harus bersih sebelum commit.
 - `make run` / `make release` ke device hanya kalau user minta.
 
