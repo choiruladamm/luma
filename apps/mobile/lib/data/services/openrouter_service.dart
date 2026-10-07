@@ -60,8 +60,9 @@ class OpenRouterService {
     String apiKey,
     String model,
     List<String> context,
-    List<String> target,
-  ) async {
+    List<String> target, {
+    bool reasoningOff = true,
+  }) async {
     final Response<Object?> res;
     try {
       res = await _dio.post<Object?>(
@@ -76,12 +77,18 @@ class OpenRouterService {
               'content': aiUserPrompt(context: context, target: target),
             },
           ],
-          // Token reasoning dihitung output dan bikin lambat.
-          'reasoning': {'enabled': false},
+          // Token reasoning dihitung output dan bikin lambat: matiin. Model
+          // yang gak bisa dimatiin dapet yang paling minim, gak ikut dibalikin.
+          'reasoning': reasoningOff
+              ? {'enabled': false}
+              : {'effort': 'minimal', 'exclude': true},
           'response_format': {'type': 'json_object'},
         },
       );
     } on DioException catch (e) {
+      if (reasoningOff && _reasoningMandatory(e)) {
+        return _complete(apiKey, model, context, target, reasoningOff: false);
+      }
       throw _failure(e);
     }
     final content = switch (res.data) {
@@ -94,6 +101,12 @@ class OpenRouterService {
     return content;
   }
 
+  /// Sebagian model (mis. GLM 5.3 Flash) nolak reasoning dimatiin: 400
+  /// "Reasoning is mandatory for this endpoint and cannot be disabled."
+  static bool _reasoningMandatory(DioException e) =>
+      e.response?.statusCode == 400 &&
+      '${e.response?.data}'.toLowerCase().contains('reasoning is mandatory');
+
   static Options _auth(String apiKey) =>
       Options(headers: {'Authorization': 'Bearer $apiKey'});
 
@@ -104,6 +117,7 @@ class OpenRouterService {
     DioExceptionType.badResponse => AiException(
       AiError.http,
       status: e.response?.statusCode,
+      detail: '${e.response?.data}',
     ),
     _ => AiException(AiError.network, detail: e.message),
   };

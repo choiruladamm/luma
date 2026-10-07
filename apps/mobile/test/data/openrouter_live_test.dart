@@ -6,11 +6,12 @@ import 'package:luma/domain/models/ai_model.dart';
 
 /// Talks to the real OpenRouter (costs a fraction of a cent). Skipped unless
 /// a key is given:
-///   OPENROUTER_API_KEY=sk-or-... make test t=test/data/openrouter_live_test.dart
-/// Optional OPENROUTER_MODEL picks another model.
+///   make live            (key from .env at the repo root, gitignored)
+///   make live m=qwen/qwen3.8-flash
 void main() {
   final key = Platform.environment['OPENROUTER_API_KEY'];
-  final model = Platform.environment['OPENROUTER_MODEL'] ?? defaultAiModel;
+  final picked = Platform.environment['OPENROUTER_MODEL'] ?? '';
+  final model = picked.isEmpty ? defaultAiModel : picked;
 
   test(
     'a sample group comes back translated and explained ($model)',

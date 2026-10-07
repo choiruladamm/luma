@@ -2,7 +2,7 @@ APP := apps/mobile
 FLUTTER := cd $(APP) && fvm flutter
 DART := cd $(APP) && fvm dart
 
-.PHONY: help get gen watch run release profile test analyze format check clean
+.PHONY: help get gen live watch run release profile test analyze format check clean
 
 help: ## list commands
 	@grep -E '^[a-z0-9-]+:.*## ' $(MAKEFILE_LIST) | awk -F ':.*## ' '{printf "  %-8s %s\n", $$1, $$2}'
@@ -27,6 +27,9 @@ profile: ## run app in profile mode, real perf (d=<id>)
 
 test: ## run tests, 30s cap per test so a hang fails fast (one file/folder: make test t=test/domain)
 	$(FLUTTER) test --timeout 30s $(t)
+
+live: ## real OpenRouter call, key from .env (gitignored; m=<model id> optional)
+	@set -a; . ./.env; set +a; cd $(APP) && OPENROUTER_MODEL=$(m) fvm flutter test test/data/openrouter_live_test.dart
 
 analyze: ## static analysis
 	$(FLUTTER) analyze

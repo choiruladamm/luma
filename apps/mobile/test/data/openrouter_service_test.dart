@@ -94,6 +94,35 @@ void main() {
     );
   });
 
+  test('a model that cannot turn reasoning off gets the minimum', () async {
+    adapter.replies
+      ..add(
+        json({
+          'error': {
+            'message':
+                'Reasoning is mandatory for this endpoint and cannot be '
+                'disabled.',
+            'code': 400,
+          },
+        }, 400),
+      )
+      ..add(answer('{"translations": ["Satu.", "Dua."], "meaning": "M."}'));
+    expect((await explain()).translations, hasLength(2));
+    final sent = [
+      for (final r in adapter.requests) (r.data as Map)['reasoning'],
+    ];
+    expect(sent, [
+      {'enabled': false},
+      {'effort': 'minimal', 'exclude': true},
+    ]);
+  });
+
+  test('other 400s are not retried', () async {
+    adapter.replies.add(json({'error': 'bad model'}, 400));
+    await expectLater(explain(), fails(AiError.http, status: 400));
+    expect(adapter.requests, hasLength(1));
+  });
+
   test('no API key: nothing is sent', () async {
     await expectLater(explain(key: null), fails(AiError.noApiKey));
     await expectLater(explain(key: ''), fails(AiError.noApiKey));
