@@ -11,7 +11,9 @@ import 'package:luma/domain/models/reader_prefs.dart';
 import 'package:luma/domain/models/ai_reply.dart';
 import 'package:luma/domain/models/book.dart';
 import 'package:luma/main.dart';
+import 'package:luma/ui/core/theme/reader_typography.dart';
 import 'package:luma/ui/core/theme/stabilo_theme.dart';
+import 'package:luma/ui/core/theme/stabilo_type.dart';
 import 'package:luma/ui/core/widgets/book_card.dart';
 import 'package:luma/ui/core/widgets/buttons.dart';
 import 'package:luma/ui/core/widgets/edge_fade.dart';
@@ -1263,6 +1265,101 @@ void main() {
         find.widgetWithText(AppButton, 'Lanjut'),
       );
       expect(lanjut.onPressed, isNull);
+    });
+
+    Text sheetText(WidgetTester tester, String s) => tester.widget<Text>(
+      find.descendant(
+        of: find.byType(BottomSheet),
+        matching: find.textContaining(s),
+      ),
+    );
+
+    testWidgets('the sheet text follows the Aa prefs, UI text does not', (
+      tester,
+    ) async {
+      const prefs = ReaderPrefs(
+        font: ReadingFont.book,
+        sizeStep: 6,
+        spacing: LineSpacing.loose,
+        margin: TextMargin.wide,
+      );
+      await openBook(
+        tester,
+        readerBook: tallBook,
+        saved: (chapterId: 13, paragraphIndex: 12, paragraphOffset: 0.0),
+        prefs: prefs,
+      );
+      final page = tester.getTopLeft(find.textContaining('Tall 12:')).dx;
+      await tapGroup(tester, 13);
+
+      final want = ReaderTypography(prefs, Brightness.light).style;
+      for (final s in ['ID Tall 13:', 'Makna grup 13.']) {
+        final style = sheetText(tester, s).style!;
+        expect(style.fontFamily, want.fontFamily);
+        expect(style.fontSize, 24);
+        expect(style.height, want.height);
+        // Same left edge as the page text (margin Lega 32).
+        expect(tester.getTopLeft(find.textContaining(s)).dx, page);
+      }
+      expect(page, 32);
+      // Title and chips stay UI-sized.
+      expect(
+        sheetText(tester, 'Artinya gini nih').style!.fontSize,
+        StabiloType.titleMd.fontSize,
+      );
+      expect(tester.getTopLeft(find.text('Artinya gini nih')).dx, 24);
+    });
+
+    testWidgets('a narrow margin stays at the sheet padding (24)', (
+      tester,
+    ) async {
+      await openBook(
+        tester,
+        readerBook: tallBook,
+        saved: (chapterId: 13, paragraphIndex: 12, paragraphOffset: 0.0),
+        prefs: const ReaderPrefs(margin: TextMargin.narrow),
+      );
+      await tapGroup(tester, 13);
+      expect(tester.getTopLeft(find.textContaining('ID Tall 13:')).dx, 24);
+    });
+
+    testWidgets('changing Aa while the sheet is open updates the text', (
+      tester,
+    ) async {
+      await openTall(tester);
+      await tapGroup(tester, 13);
+      expect(sheetText(tester, 'ID Tall 13:').style!.fontSize, 18.5);
+
+      await settings.saveReaderPrefs(settings.prefs.copyWith(sizeStep: 6));
+      await tester.pumpAndSettle();
+      expect(find.text('Artinya gini nih'), findsOneWidget);
+      expect(sheetText(tester, 'ID Tall 13:').style!.fontSize, 24);
+    });
+
+    testWidgets('loading placeholder rows use the Aa line height', (
+      tester,
+    ) async {
+      const prefs = ReaderPrefs(sizeStep: 6, spacing: LineSpacing.loose);
+      answer = (_) => Completer<AiReply>().future;
+      await openBook(
+        tester,
+        readerBook: tallBook,
+        saved: (chapterId: 13, paragraphIndex: 12, paragraphOffset: 0.0),
+        prefs: prefs,
+      );
+      await tester.tap(find.textContaining('Tall 13:'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      final row = find
+          .ancestor(
+            of: find.byType(FractionallySizedBox).first,
+            matching: find.byType(SizedBox),
+          )
+          .first;
+      expect(
+        tester.getSize(row).height,
+        closeTo(ReaderTypography(prefs, Brightness.light).lineExtent, 1e-6),
+      );
     });
 
     testWidgets('error: code, then "Coba lagi" asks again', (tester) async {

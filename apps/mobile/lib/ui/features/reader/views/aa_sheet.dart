@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../data/repositories/settings_repository.dart';
 import '../../../../domain/models/reader_prefs.dart';
+import '../../../core/theme/reader_typography.dart';
 import '../../../core/theme/stabilo_theme.dart';
 import '../../../core/theme/stabilo_tokens.dart';
 import '../../../core/theme/stabilo_type.dart';
@@ -184,13 +185,6 @@ class _AaSheet extends ConsumerWidget {
       ? '${v.round()}'
       : v.toString().replaceAll('.', ',');
 }
-
-/// Font bacaan buat [ReadingFont]. Bawaan iOS = font sistem (SF).
-String readingFamily(ReadingFont font) => switch (font) {
-  ReadingFont.clear => StabiloType.readingFont,
-  ReadingFont.book => StabiloType.bookFont,
-  ReadingFont.system => 'CupertinoSystemText',
-};
 
 class _Section extends StatelessWidget {
   const _Section({required this.label, this.value, required this.child});

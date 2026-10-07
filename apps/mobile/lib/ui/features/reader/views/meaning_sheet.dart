@@ -1,10 +1,15 @@
+import 'dart:math' as math;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../data/repositories/settings_repository.dart';
 import '../../../../domain/models/ai_reply.dart';
+import '../../../../domain/models/reader_prefs.dart';
+import '../../../core/theme/reader_typography.dart';
 import '../../../core/theme/stabilo_theme.dart';
 import '../../../core/theme/stabilo_tokens.dart';
 import '../../../core/theme/stabilo_type.dart';
@@ -83,10 +88,14 @@ class _MeaningSheetState extends ConsumerState<MeaningSheet> {
   @override
   Widget build(BuildContext context) {
     final ai = ref.watch(groupAiProvider(widget.group));
+    // Teks isi ikut Aa; ganti pengaturan langsung kebawa tanpa nutup sheet.
+    final prefs = ref.watch(readerPrefsProvider).value ?? const ReaderPrefs();
+    final typo = ReaderTypography(prefs, Theme.of(context).brightness);
     // Lagi (ulang) loading → loading, walaupun ada error lama.
-    if (ai.isLoading) return _Loading(onClose: _close);
+    if (ai.isLoading) return _Loading(typo: typo, onClose: _close);
     return switch (ai) {
       AsyncData(:final value) => _Result(
+        typo: typo,
         reply: value,
         copied: _copied,
         onCopy: () => _copy(value),
@@ -102,7 +111,7 @@ class _MeaningSheetState extends ConsumerState<MeaningSheet> {
         onClose: _close,
         onRetry: () => ref.invalidate(groupAiProvider(widget.group)),
       ),
-      _ => _Loading(onClose: _close),
+      _ => _Loading(typo: typo, onClose: _close),
     };
   }
 
@@ -128,12 +137,17 @@ class _Frame extends StatelessWidget {
     required this.content,
     required this.actions,
     this.gap = Space.s4,
+    this.margin = 0,
   });
 
   final Widget header;
   final List<Widget> content;
   final List<Widget> actions;
   final double gap;
+
+  /// Margin teks Aa. Padding dasar sheet (24) jadi batas bawahnya; isi cuma
+  /// dilebarin kalau margin-nya lebih besar (Lega 32).
+  final double margin;
 
   @override
   Widget build(BuildContext context) {
@@ -149,6 +163,9 @@ class _Frame extends StatelessWidget {
           Flexible(
             child: EdgeFadeScroll(
               child: SingleChildScrollView(
+                padding: EdgeInsets.symmetric(
+                  horizontal: math.max(0, margin - Layout.sheetPadding.left),
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   spacing: gap,
@@ -213,6 +230,7 @@ class _Section extends StatelessWidget {
 
 class _Result extends StatelessWidget {
   const _Result({
+    required this.typo,
     required this.reply,
     required this.copied,
     required this.onCopy,
@@ -220,6 +238,7 @@ class _Result extends StatelessWidget {
     required this.onClose,
   });
 
+  final ReaderTypography typo;
   final AiReply reply;
   final bool copied;
   final VoidCallback onCopy;
@@ -229,7 +248,9 @@ class _Result extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.stabilo;
+    final text = typo.style.copyWith(color: c.ink);
     return _Frame(
+      margin: typo.margin,
       header: _Title('Artinya gini nih', closeLabel: 'Tutup', onClose: onClose),
       content: [
         _Section(
@@ -239,8 +260,7 @@ class _Result extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             spacing: Space.s2,
             children: [
-              for (final t in reply.translations)
-                Text(t, style: StabiloType.readingSheet.copyWith(color: c.ink)),
+              for (final t in reply.translations) Text(t, style: text),
             ],
           ),
         ),
@@ -249,10 +269,7 @@ class _Result extends StatelessWidget {
             'Maksud penulisnya tuh...',
             tone: TagTone.pink,
           ),
-          child: Text(
-            reply.meaning,
-            style: StabiloType.body.copyWith(fontSize: 15, height: 1.5),
-          ),
+          child: Text(reply.meaning, style: text),
         ),
       ],
       actions: [
@@ -275,8 +292,9 @@ class _Result extends StatelessWidget {
 }
 
 class _Loading extends StatelessWidget {
-  const _Loading({required this.onClose});
+  const _Loading({required this.typo, required this.onClose});
 
+  final ReaderTypography typo;
   final VoidCallback onClose;
 
   @override
@@ -284,20 +302,30 @@ class _Loading extends StatelessWidget {
     return Semantics(
       label: 'Artinya, lagi dimuat',
       child: _Frame(
+        margin: typo.margin,
         header: _Title(
           'Bentar, lagi mikir...',
           leading: const _PulseDot(),
           closeLabel: 'Batalin',
           onClose: onClose,
         ),
-        content: const [
+        content: [
           _Section(
-            tag: Tag.section('Terjemahan'),
-            child: _Skeleton(widths: [1, 0.93, 0.58]),
+            tag: const Tag.section('Terjemahan'),
+            child: _Skeleton(
+              widths: const [1, 0.93, 0.58],
+              lineExtent: typo.lineExtent,
+            ),
           ),
           _Section(
-            tag: Tag.section('Maksud penulisnya tuh...', tone: TagTone.pink),
-            child: _Skeleton(widths: [1, 0.93, 0.97, 0.58]),
+            tag: const Tag.section(
+              'Maksud penulisnya tuh...',
+              tone: TagTone.pink,
+            ),
+            child: _Skeleton(
+              widths: const [1, 0.93, 0.97, 0.58],
+              lineExtent: typo.lineExtent,
+            ),
           ),
         ],
         // Tetep ada tapi mati, biar layout gak loncat pas hasilnya dateng.
@@ -547,12 +575,15 @@ class _PulseDotState extends State<_PulseDot>
   }
 }
 
-/// Baris skeleton 12pt, shimmer 1,4 detik. Kurangi gerakan: diem.
+/// Baris skeleton 12pt di tengah baris teks setinggi [lineExtent] (ikut Aa,
+/// biar gak loncat pas hasilnya muncul), shimmer 1,4 detik. Kurangi gerakan:
+/// diem.
 class _Skeleton extends StatefulWidget {
-  const _Skeleton({required this.widths});
+  const _Skeleton({required this.widths, required this.lineExtent});
 
   /// Lebar tiap baris, fraksi lebar kolom.
   final List<double> widths;
+  final double lineExtent;
 
   @override
   State<_Skeleton> createState() => _SkeletonState();
@@ -582,37 +613,38 @@ class _SkeletonState extends State<_Skeleton>
   @override
   Widget build(BuildContext context) {
     final c = context.stabilo;
-    return Padding(
-      padding: const EdgeInsets.only(top: Space.s1),
-      child: AnimatedBuilder(
-        animation: _shimmer,
-        builder: (context, _) {
-          // Sorot geser dari kanan ke kiri.
-          final x = 1 - 2 * _shimmer.value;
-          final gradient = LinearGradient(
-            begin: Alignment(x - 1, 0),
-            end: Alignment(x + 1, 0),
-            colors: [c.track, c.muted, c.track],
-          );
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            spacing: 11,
-            children: [
-              for (final w in widget.widths)
-                FractionallySizedBox(
-                  widthFactor: w,
-                  child: Container(
-                    height: 12,
-                    decoration: BoxDecoration(
-                      gradient: gradient,
-                      borderRadius: BorderRadius.circular(Radii.full),
+    return AnimatedBuilder(
+      animation: _shimmer,
+      builder: (context, _) {
+        // Sorot geser dari kanan ke kiri.
+        final x = 1 - 2 * _shimmer.value;
+        final gradient = LinearGradient(
+          begin: Alignment(x - 1, 0),
+          end: Alignment(x + 1, 0),
+          colors: [c.track, c.muted, c.track],
+        );
+        return Column(
+          children: [
+            for (final w in widget.widths)
+              SizedBox(
+                height: widget.lineExtent,
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: FractionallySizedBox(
+                    widthFactor: w,
+                    child: Container(
+                      height: 12,
+                      decoration: BoxDecoration(
+                        gradient: gradient,
+                        borderRadius: BorderRadius.circular(Radii.full),
+                      ),
                     ),
                   ),
                 ),
-            ],
-          );
-        },
-      ),
+              ),
+          ],
+        );
+      },
     );
   }
 }

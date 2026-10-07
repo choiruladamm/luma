@@ -15,6 +15,7 @@ import '../../../../domain/models/ai_reply.dart';
 import '../../../../domain/models/book.dart';
 import '../../../../domain/models/reader_prefs.dart';
 import '../../../../domain/reading.dart';
+import '../../../core/theme/reader_typography.dart';
 import '../../../core/theme/stabilo_theme.dart';
 import '../../../core/theme/stabilo_tokens.dart';
 import '../../../core/theme/stabilo_type.dart';
@@ -754,14 +755,10 @@ class _ChapterTextState extends ConsumerState<_ChapterText>
         ? widget.book.chapters[widget.index + 1]
         : null;
     final paragraphs = ref.watch(chapterParagraphsProvider(chapter.id));
-    final reading = StabiloType.forBrightness(
-      StabiloType.reading.copyWith(
-        fontFamily: readingFamily(widget.prefs.font),
-        fontSize: widget.prefs.fontSize,
-        height: widget.prefs.lineHeight,
-      ),
+    final reading = ReaderTypography(
+      widget.prefs,
       Theme.of(context).brightness,
-    ).copyWith(color: c.ink);
+    ).style.copyWith(color: c.ink);
     final gap = reading.fontSize!; // 1em antar paragraf
     final pad = MediaQuery.paddingOf(context);
     final loaded = paragraphs is AsyncData;
