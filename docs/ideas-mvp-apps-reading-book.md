@@ -172,6 +172,20 @@ Board "Spek · Artinya ngumpet pas scroll" dan "Terpilih · Artinya ngumpet pas 
 - **Nutup:** swipe turun di grabber (ngikutin jari, nutup kalau di-fling atau ditarik jauh, pas offset berapa pun), swipe turun di isi pas offset 0, atau tap area kosong di atas sheet (bukan munculin kapsul baca).
 - **Tinggi area baca yang keliatan** (`MeaningChrome.readHeight`): tinggi sheet dikurangi chrome yang keliatan, buat highlight sinkron (#35).
 
+### Sheet Artinya: streaming
+
+Board "Terpilih · Artinya streaming · Opsi B · muncul halus (diperbaiki)" dan "Artinya streaming · perilaku". Sumbernya `groupAiStreamProvider` (bagian 8). Grup yang udah ke-cache langsung tampil jadi, tanpa ritme dan tanpa ikut turun. Satu widget buat semua tahap (`_Answer`), jadi pas selesai gak ada loncatan layout dan posisi scroll gak di-reset. Tinggi sheet tetap 528 di semua tahap.
+
+- **Tahap:** nunggu (header "Bentar, lagi mikir...", placeholder per paragraf + makna) → nulis terjemahan (paragraf masuk berurutan, sisanya placeholder) → nulis makna → selesai (header "Artinya gini nih", Salin aktif). Header cuma judul + X, tanpa chip.
+- **Kelamaan** (15 detik tanpa token): kartu "Agak lama nih..." di atas isi (Batal / Coba lagi). Token masuk → kartunya ilang sendiri. **Kepotong**: teks yang udah masuk tetep, placeholder dibuang, banner pink "Yah, kepotong di tengah" + Coba lagi (mulai dari awal).
+- **Ritme:** huruf keluar per frame ngikutin `Pacer` (bagian 9). **Deviasi dari board (2):** aturan adaptif, bukan maks 2× baseline (data spike #34).
+- **Ujung teks:** gak ada kursor, kedip, atau kuning di teks. 4 kata terakhir bagian yang lagi ditulis opasitas 80 · 60 · 42 · 26%, diem (`Text.rich`); selesai → solid dalam 300 ms. **Deviasi dari board (1):** tanpa fade-in 150 ms per potongan, karena teks keluar per huruf dan dua efek itu numpuk.
+- **Tombol:** Salin / Lanjut dikunci keliatan selama belum selesai. Salin nonaktif; statusnya di tombol itu: tiga titik 4pt berdenyut (opasitas 30 ↔ 85%, 1,6 detik) + "Lagi mikir" / "Lagi nulis", ink2 di atas muted. Selesai → crossfade 150 ms ke "Salin". Kelamaan / kepotong: "Salin" abu, statusnya di kartu / banner. Lanjut selalu aktif: batalin request, pindah grup. VoiceOver: X = "Batalin", Lanjut = "Batalin, lanjut ke berikutnya" selama belum selesai.
+- **Ikut turun:** isi scroll ngikutin teks (lerp 25% per frame), ujung teks dijaga 24pt di atas tombol; ketinggalan lebih dari satu layar → langsung pindah. Scroll programatik: tombol gak ngumpet, header ikut isi 1:1 (kayak bagian dari isi). Scroll manual ke atas → berhenti, muncul "Ke bawah" (pill 36, 96 dari tepi bawah sheet); tap atau scroll sendiri sampai mentok bawah → ikut turun lagi. Abis selesai, aturan ngumpet biasa nerusin dari posisi header terakhir.
+- **Placeholder ikut Aa:** baris = ⌈huruf × lebar huruf rata-rata ÷ lebar kolom⌉, huruf = panjang paragraf asli × 1,05 (makna 130). Lebar huruf rata-rata diukur pakai `TextPainter` dari font + ukuran Aa yang aktif (bukan konstanta per font). Tinggi baris = baris teks. Isi tumbuh ke bawah.
+- **Kurangi gerakan:** teks muncul per bagian utuh (satu paragraf, lalu makna), tanpa pudar, titik diem, placeholder tanpa shimmer, ikut turun langsung pindah.
+- **VoiceOver:** sheet berlabel "Artinya, lagi ditulis"; bagian yang lagi ditulis gak dibacain sampai utuh; selesai → diumumin "Artinya udah lengkap".
+
 ### Copy
 
 Bahasa Indonesia gaya Gen Z, santai. Contoh: "Rak buku lo", "Lanjut baca yuk", "Artinya gini nih", "Maksud penulisnya tuh...", "Bentar, lagi mikir...", "Yah, gagal nih".

@@ -20,6 +20,7 @@ class StabiloColors extends ThemeExtension<StabiloColors> {
     required this.accentBorder,
     required this.onPink,
     required this.pink,
+    required this.pinkSoft,
     required this.highlight,
     required this.onHighlight,
     required this.danger,
@@ -54,6 +55,8 @@ class StabiloColors extends ThemeExtension<StabiloColors> {
   // Aksen. highlight cuma buat grup paragraf yang lagi dibuka di sheet.
   // accentBorder: outline tombol/opsi accent (gelap: sewarna accent).
   final Color accent, onAccent, accentBorder, pink, onPink;
+  // Latar banner pink lembut (Artinya kepotong), garisnya [pink].
+  final Color pinkSoft;
   final Color highlight, onHighlight;
   // Status & feedback. mark = penanda grup yang udah diterjemahin.
   final Color danger, onDanger, dangerSoft, dangerInk, toastBg, toastInk, mark;
@@ -88,6 +91,7 @@ class StabiloColors extends ThemeExtension<StabiloColors> {
     onAccent: Color(0xFF1A1A1A),
     accentBorder: Color(0xFF1A1A1A),
     pink: Color(0xFFFFC2D3),
+    pinkSoft: Color(0xFFFFE3EB),
     onPink: Color(0xFF1A1A1A),
     highlight: Color(0xFFFFD84D),
     onHighlight: Color(0xFF1A1A1A),
@@ -129,6 +133,7 @@ class StabiloColors extends ThemeExtension<StabiloColors> {
     onAccent: Color(0xFF22201C),
     accentBorder: Color(0xFFE9C75A),
     pink: Color(0xFFD99BAE),
+    pinkSoft: Color(0xFF4B3E3D), // pink 18% di atas sheet
     onPink: Color(0xFF22201C),
     highlight: Color(0x42E9C75A), // 26%
     onHighlight: Color(0xFFF3EBD3),

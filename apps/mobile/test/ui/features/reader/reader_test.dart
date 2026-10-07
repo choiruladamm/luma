@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:luma/data/repositories/reading_progress_repository.dart';
 import 'package:luma/data/repositories/settings_repository.dart';
+import 'package:luma/domain/ai_prompt.dart';
 import 'package:luma/domain/models/reader_prefs.dart';
 import 'package:luma/domain/models/ai_reply.dart';
 import 'package:luma/domain/models/book.dart';
@@ -70,6 +71,46 @@ var translated = <int, Set<int>>{};
 /// What the AI says for a group; tests swap it.
 late Future<AiReply> Function(GroupRef) answer;
 
+/// The sheet's source, like `groupAiStreamProvider`: waiting (placeholders
+/// sized from the group's paragraphs), then [answer] as a cached result or a
+/// failure. Streaming tests leave [answer] pending and [FakeAiStream.push]
+/// states through [streams].
+final streams = <GroupRef, FakeAiStream>{};
+
+class FakeAiStream extends GroupAiStream {
+  FakeAiStream(super.group);
+
+  @override
+  AiStream build() {
+    // `this.`: flutter_test's top-level group() shadows the inherited field.
+    streams[this.group] = this;
+    answer(this.group).then(
+      (r) {
+        if (ref.mounted) {
+          state = AiStream(
+            phase: AiPhase.done,
+            draft: AiDraft(translations: r.translations, meaning: r.meaning),
+            cached: true,
+          );
+        }
+      },
+      onError: (Object e) {
+        if (ref.mounted) {
+          state = AiStream(phase: AiPhase.failed, error: e as AiException);
+        }
+      },
+    );
+    return AiStream(sources: sourcesFor(this.group));
+  }
+
+  void push(AiStream next) => state = next;
+}
+
+List<int> sourcesFor(GroupRef g) => [
+  for (final p in paragraphs[g.chapterId]!)
+    if (p.groupIndex == g.groupIndex) p.text.length,
+];
+
 AiReply replyFor(GroupRef g) => AiReply(
   translations: [
     for (final p in paragraphs[g.chapterId]!)
@@ -114,6 +155,7 @@ void main() {
 
   setUp(() {
     translated = {};
+    streams.clear();
     answer = (g) async => replyFor(g);
   });
   late FakeSettings settings;
@@ -136,7 +178,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          groupAiProvider.overrideWith((ref, g) => answer(g)),
+          groupAiStreamProvider.overrideWith2(FakeAiStream.new),
           settingsRepositoryProvider.overrideWithValue(settings),
           booksStreamProvider.overrideWith(
             (ref) => Stream.value([
@@ -1351,14 +1393,15 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
       final extent = ReaderTypography(prefs, Brightness.light).lineExtent;
-      // 3 + 4 skeleton rows, each as tall as one text line.
+      // Skeleton rows for both paragraphs and the meaning, each as tall as
+      // one text line.
       final rows = find.byWidgetPredicate(
         (w) =>
             w is SizedBox &&
             (w.height ?? 0) - extent < 1e-6 &&
             (w.height ?? 0) - extent > -1e-6,
       );
-      expect(rows, findsNWidgets(7));
+      expect(rows, findsAtLeastNWidgets(4));
     });
 
     AiReply longReply(GroupRef g) => AiReply(
@@ -1566,7 +1609,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 400));
       await tester.drag(sheetScroll(), const Offset(0, -300));
       await tester.pump(const Duration(milliseconds: 400));
-      expect(find.text('Salin'), findsOneWidget);
+      expect(find.text('Lagi mikir'), findsOneWidget);
       expect(
         tester.getTopLeft(find.text('Lanjut')).dy,
         lessThan(sheetBottom(tester)),
@@ -1787,6 +1830,277 @@ void main() {
       expect(rect.left, 10); // centred on 12pt into the 24pt margin
       final para = tester.getRect(find.textContaining('Tall 12:'));
       expect(rect.top, closeTo(para.top + 5, 1));
+    });
+
+    group('streaming', () {
+      const g = (chapterId: 13, groupIndex: 13);
+
+      /// Opens group 13 with the answer pending; the test pushes states.
+      Future<FakeAiStream> openStreaming(
+        WidgetTester tester, {
+        ReaderPrefs prefs = const ReaderPrefs(),
+      }) async {
+        answer = (_) => Completer<AiReply>().future;
+        await openBook(
+          tester,
+          readerBook: tallBook,
+          saved: (chapterId: 13, paragraphIndex: 12, paragraphOffset: 0.0),
+          prefs: prefs,
+        );
+        await tester.tap(find.textContaining('Tall 13:'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 400));
+        return streams[g]!;
+      }
+
+      AiStream state(
+        AiPhase phase, {
+        List<String> translations = const [],
+        String? meaning,
+      }) => AiStream(
+        phase: phase,
+        draft: AiDraft(translations: translations, meaning: meaning),
+        sources: sourcesFor(g),
+      );
+
+      Future<void> frames(WidgetTester tester, [int n = 60]) async {
+        for (var i = 0; i < n; i++) {
+          await tester.pump(const Duration(milliseconds: 16));
+        }
+      }
+
+      /// The translation text widget (plain or with a faded tail).
+      Text translation(WidgetTester tester, String start) =>
+          tester.widget<Text>(
+            find.byWidgetPredicate(
+              (w) =>
+                  w is Text &&
+                  (w.data ?? w.textSpan?.toPlainText() ?? '').startsWith(start),
+            ),
+          );
+      String plain(Text t) => t.data ?? t.textSpan!.toPlainText();
+
+      double sheetPixels(WidgetTester tester) => tester
+          .state<ScrollableState>(
+            find.descendant(of: sheetBox, matching: find.byType(Scrollable)),
+          )
+          .position
+          .pixels;
+
+      AppButton button(WidgetTester tester, String label) =>
+          tester.widget<AppButton>(find.widgetWithText(AppButton, label));
+
+      final long = 'Kata ${'panjang sekali ' * 300}akhir.';
+
+      testWidgets('waiting: placeholders, status on Salin, Lanjut stays on', (
+        tester,
+      ) async {
+        await openStreaming(tester);
+        expect(find.text('Bentar, lagi mikir...'), findsOneWidget);
+        expect(find.text('Lagi mikir'), findsOneWidget);
+        expect(find.text('Salin'), findsNothing);
+        expect(
+          find.bySemanticsLabel('Salin, belum bisa: lagi mikir'),
+          findsOne,
+        );
+        expect(find.bySemanticsLabel('Batalin'), findsOneWidget); // the X
+        expect(
+          find.bySemanticsLabel('Batalin, lanjut ke berikutnya'),
+          findsOneWidget,
+        );
+        expect(button(tester, 'Lanjut').onPressed, isNotNull);
+      });
+
+      testWidgets('text comes out paced, the tail fades, then goes solid', (
+        tester,
+      ) async {
+        final s = await openStreaming(tester);
+        const full =
+            'Halo semua, ini terjemahan yang lumayan panjang buat ngetes ritme.';
+        s.push(state(AiPhase.translating, translations: [full]));
+        await tester.pump();
+        await frames(tester, 30);
+        expect(find.text('Artinya gini nih'), findsOneWidget);
+        expect(find.text('Lagi nulis'), findsOneWidget);
+        final partial = translation(tester, 'Halo');
+        expect(plain(partial).length, inInclusiveRange(4, full.length - 1));
+        // The last 4 words fade 80 · 60 · 42 · 26%.
+        final spans = (partial.textSpan! as TextSpan).children!
+            .cast<TextSpan>();
+        expect(spans, hasLength(5));
+        expect(spans.last.style!.color!.a, closeTo(0.26, 0.01));
+        expect(spans[1].style!.color!.a, closeTo(0.8, 0.01));
+
+        s.push(
+          state(AiPhase.done, translations: [full], meaning: 'Gitu maknanya.'),
+        );
+        await frames(tester, 40); // drain ≤ 600 ms
+        await tester.pump(Motion.tailFade);
+        await tester.pump(Motion.statusSwap);
+        final done = translation(tester, 'Halo');
+        expect(done.data, full); // solid, no faded spans
+        expect(find.text('Gitu maknanya.'), findsOneWidget);
+        expect(button(tester, 'Salin').onPressed, isNotNull);
+        expect(find.bySemanticsLabel('Tutup'), findsOneWidget);
+      });
+
+      testWidgets('the content follows the text; buttons never hide', (
+        tester,
+      ) async {
+        final s = await openStreaming(tester);
+        s.push(state(AiPhase.translating, translations: [long]));
+        await frames(tester, 120);
+        expect(sheetPixels(tester), greaterThan(0)); // followed down
+        await tester.drag(sheetScroll(), const Offset(0, -200));
+        await frames(tester, 20);
+        expect(buttonsShown(tester), isTrue);
+      });
+
+      testWidgets('scrolling up stops following, "Ke bawah" brings it back', (
+        tester,
+      ) async {
+        final s = await openStreaming(tester);
+        s.push(state(AiPhase.translating, translations: [long]));
+        await frames(tester, 120);
+        expect(find.text('Ke bawah'), findsNothing);
+        await tester.drag(sheetScroll(), const Offset(0, 150));
+        await frames(tester, 5);
+        expect(find.text('Ke bawah'), findsOneWidget);
+        final parked = sheetPixels(tester);
+        await frames(tester, 60);
+        expect(sheetPixels(tester), parked); // stays where you put it
+
+        await tester.tap(find.text('Ke bawah'));
+        await frames(tester, 5);
+        expect(sheetPixels(tester), greaterThan(parked));
+        expect(find.text('Ke bawah'), findsNothing);
+      });
+
+      testWidgets('slow: a card on top, gone once tokens come', (tester) async {
+        final s = await openStreaming(tester);
+        s.push(state(AiPhase.slow));
+        await tester.pump();
+        expect(find.text('Agak lama nih...'), findsOneWidget);
+        expect(find.text('Bentar, lagi mikir...'), findsOneWidget);
+        // Status leaves the button; the card explains.
+        expect(find.text('Salin'), findsOneWidget);
+        expect(button(tester, 'Salin').onPressed, isNull);
+
+        s.push(state(AiPhase.translating, translations: ['Akhirnya.']));
+        await tester.pump();
+        expect(find.text('Agak lama nih...'), findsNothing);
+      });
+
+      testWidgets('slow: "Coba lagi" starts over', (tester) async {
+        final s = await openStreaming(tester);
+        s.push(state(AiPhase.slow));
+        await tester.pump();
+        await tester.tap(find.text('Coba lagi'));
+        await tester.pump();
+        expect(find.text('Agak lama nih...'), findsNothing);
+        expect(find.text('Lagi mikir'), findsOneWidget);
+      });
+
+      testWidgets('cut: text kept, placeholders dropped, banner retries', (
+        tester,
+      ) async {
+        final s = await openStreaming(tester);
+        s.push(state(AiPhase.translating, translations: ['Halo, ini baru']));
+        await frames(tester, 5);
+        s.push(state(AiPhase.cut, translations: ['Halo, ini baru setengah']));
+        await tester.pump();
+        await tester.pump();
+        expect(find.text('Yah, kepotong di tengah'), findsOneWidget);
+        expect(translation(tester, 'Halo').data, 'Halo, ini baru setengah');
+        expect(find.text('Maksud penulisnya tuh...'), findsNothing);
+        expect(button(tester, 'Salin').onPressed, isNull);
+
+        await tester.tap(find.text('Coba lagi'));
+        await tester.pump();
+        expect(find.text('Yah, kepotong di tengah'), findsNothing);
+        expect(find.text('Bentar, lagi mikir...'), findsOneWidget);
+      });
+
+      testWidgets('"Lanjut" mid-stream moves on; the X closes', (tester) async {
+        final s = await openStreaming(tester);
+        s.push(state(AiPhase.translating, translations: ['Halo']));
+        await frames(tester, 5);
+        await tester.tap(find.text('Lanjut'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 400));
+        expect(streams.keys, contains((chapterId: 13, groupIndex: 14)));
+        expect(find.text('Bentar, lagi mikir...'), findsOneWidget);
+
+        await tester.tap(find.bySemanticsLabel('Batalin'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 400));
+        expect(sheetBox, findsNothing);
+      });
+
+      testWidgets('placeholders follow Aa: bigger text, more rows', (
+        tester,
+      ) async {
+        int rows(ReaderPrefs prefs) {
+          final extent = ReaderTypography(prefs, Brightness.light).lineExtent;
+          return find
+              .byWidgetPredicate(
+                (w) =>
+                    w is SizedBox &&
+                    ((w.height ?? 0) - extent).abs() < 1e-6 &&
+                    w.child is Align,
+              )
+              .evaluate()
+              .length;
+        }
+
+        await openStreaming(tester);
+        final small = rows(const ReaderPrefs());
+        const big = ReaderPrefs(
+          sizeStep: 6,
+          font: ReadingFont.book,
+          margin: TextMargin.wide,
+        );
+        await settings.saveReaderPrefs(big);
+        await tester.pump();
+        await tester.pump();
+        expect(rows(big), greaterThan(small));
+      });
+
+      testWidgets('reduce motion: whole parts only, no fading tail', (
+        tester,
+      ) async {
+        tester.platformDispatcher.accessibilityFeaturesTestValue =
+            const FakeAccessibilityFeatures(disableAnimations: true);
+        addTearDown(
+          tester.platformDispatcher.clearAccessibilityFeaturesTestValue,
+        );
+        final s = await openStreaming(tester);
+        s.push(state(AiPhase.translating, translations: ['Halo semua di']));
+        await frames(tester, 5);
+        expect(find.textContaining('Halo semua'), findsNothing); // not whole
+
+        s.push(
+          state(
+            AiPhase.meaning,
+            translations: ['Halo semua di sini.'],
+            meaning: 'Mak',
+          ),
+        );
+        await frames(tester, 5);
+        expect(translation(tester, 'Halo').data, 'Halo semua di sini.');
+        expect(find.textContaining('Mak'), findsNothing);
+      });
+
+      testWidgets('finishing keeps the scroll position', (tester) async {
+        final s = await openStreaming(tester);
+        s.push(state(AiPhase.translating, translations: [long]));
+        await frames(tester, 120);
+        final before = sheetPixels(tester);
+        s.push(state(AiPhase.done, translations: [long], meaning: 'Makna.'));
+        await frames(tester, 60);
+        expect(sheetPixels(tester), greaterThanOrEqualTo(before));
+        expect(button(tester, 'Salin').onPressed, isNotNull);
+      });
     });
   });
 }

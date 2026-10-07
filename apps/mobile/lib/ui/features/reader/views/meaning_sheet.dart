@@ -3,12 +3,16 @@ import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart' show ScrollDirection;
+import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../data/repositories/settings_repository.dart';
+import '../../../../domain/ai_prompt.dart';
 import '../../../../domain/models/ai_reply.dart';
 import '../../../../domain/models/reader_prefs.dart';
+import '../../../../domain/pacing.dart';
+import '../../../../domain/stream_text.dart';
 import '../../../core/theme/reader_typography.dart';
 import '../../../core/theme/stabilo_theme.dart';
 import '../../../core/theme/stabilo_tokens.dart';
@@ -21,8 +25,8 @@ import '../../../core/widgets/toast.dart';
 import '../view_models/reader_view_model.dart';
 import 'meaning_chrome.dart';
 
-/// Sheet Artinya (board 04 loading, 05 hasil, 06 error, 09 udah disalin,
-/// 10 API key kosong). [group] = grup yang lagi dibuka; "Lanjut" manggil
+/// Sheet Artinya (board 05 hasil, 06 error, 09 udah disalin, 10 API key
+/// kosong, "Artinya streaming · Opsi B" + "· perilaku"). [group] = grup yang lagi dibuka; "Lanjut" manggil
 /// [onNext] yang mindahin [group] ke grup berikutnya. [onHeight] dipanggil
 /// sekali dengan tinggi sheet (tetap 528 di 844, semua state), biar halaman
 /// di belakang bisa nyesuain. Barrier transparan: scrim (yang bolongin grup)
@@ -174,31 +178,36 @@ class _MeaningSheetState extends ConsumerState<MeaningSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final ai = ref.watch(groupAiProvider(widget.group));
+    final ai = ref.watch(groupAiStreamProvider(widget.group));
     // Teks isi ikut Aa; ganti pengaturan langsung kebawa tanpa nutup sheet.
     final prefs = ref.watch(readerPrefsProvider).value ?? const ReaderPrefs();
     final typo = ReaderTypography(prefs, Theme.of(context).brightness);
-    // Lagi (ulang) loading → loading, walaupun ada error lama.
-    if (ai.isLoading) return _Loading(typo: typo, onClose: _close);
+    void retry() => ref.invalidate(groupAiStreamProvider(widget.group));
     return switch (ai) {
-      AsyncData(:final value) => _Result(
+      AiStream(
+        phase: AiPhase.failed,
+        error: AiException(error: AiError.noApiKey),
+      ) =>
+        _NoKey(onClose: _close, onSettings: widget.onSettings),
+      AiStream(phase: AiPhase.failed, :final error) => _Failed(
+        code: _errorCode(error ?? 'error'),
+        onClose: _close,
+        onRetry: retry,
+      ),
+      _ => _Answer(
         typo: typo,
-        reply: value,
+        ai: ai,
         copied: _copied,
-        onCopy: () => _copy(value),
+        onCopy: () => _copy(
+          AiReply(
+            translations: ai.draft.translations,
+            meaning: ai.draft.meaning ?? '',
+          ),
+        ),
         onNext: widget.onNext,
         onClose: _close,
+        onRetry: retry,
       ),
-      AsyncError(error: AiException(error: AiError.noApiKey)) => _NoKey(
-        onClose: _close,
-        onSettings: widget.onSettings,
-      ),
-      AsyncError(:final error) => _Failed(
-        code: _errorCode(error),
-        onClose: _close,
-        onRetry: () => ref.invalidate(groupAiProvider(widget.group)),
-      ),
-      _ => _Loading(typo: typo, onClose: _close),
     };
   }
 
@@ -229,6 +238,8 @@ class _ScrollFrame extends StatefulWidget {
     this.margin = 0,
     this.gap = Space.s4,
     this.hideable = false,
+    this.locked = false,
+    this.overlay,
     this.topInset = Layout.artinyaHeader,
   });
 
@@ -241,6 +252,13 @@ class _ScrollFrame extends StatefulWidget {
   final double margin;
   final double gap;
   final bool hideable;
+
+  /// Lagi streaming: tombol dikunci keliatan, header ikut isi 1:1 (termasuk
+  /// scroll programatik ikut-turun), kayak bagian dari isi scroll.
+  final bool locked;
+
+  /// Tombol kecil "Ke bawah", [Layout.artinyaDownButton] dari tepi bawah.
+  final Widget? overlay;
 
   /// Jarak isi dari atas sheet (ruang buat header yang jadi lapisan).
   final double topInset;
@@ -269,11 +287,16 @@ class _ScrollFrameState extends State<_ScrollFrame>
     _syncEnabled();
   }
 
-  /// Gak pernah ngumpet kalau VoiceOver nyala atau bukan state hasil.
+  /// Gak pernah ngumpet kalau VoiceOver nyala, bukan state hasil, atau lagi
+  /// streaming. Abis streaming, header yang udah ke-scroll keluar tetep di
+  /// luar (aturan ngumpet biasa nerusin).
   void _syncEnabled() {
     _chrome.enabled =
-        widget.hideable && !MediaQuery.accessibleNavigationOf(context);
-    if (!_chrome.enabled) _chrome.show();
+        widget.hideable &&
+        !widget.locked &&
+        !MediaQuery.accessibleNavigationOf(context);
+    if (!_chrome.enabled && !widget.locked) _chrome.show();
+    if (widget.locked) _chrome.actions.value = 0;
   }
 
   @override
@@ -284,6 +307,15 @@ class _ScrollFrameState extends State<_ScrollFrame>
 
   bool _onScroll(ScrollNotification n) {
     if (n.depth != 0) return false;
+    if (widget.locked) {
+      if (n is ScrollUpdateNotification) {
+        _chrome.header.value = (n.metrics.pixels / Layout.artinyaHeader).clamp(
+          0.0,
+          1.0,
+        );
+      }
+      return false;
+    }
     switch (n) {
       case UserScrollNotification():
         _user = n.direction != ScrollDirection.idle;
@@ -398,6 +430,13 @@ class _ScrollFrameState extends State<_ScrollFrame>
             child: Row(spacing: 10, children: widget.actions),
           ),
         ),
+        if (widget.overlay case final overlay?)
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: Layout.artinyaDownButton,
+            child: Center(child: overlay),
+          ),
       ],
     );
   }
@@ -443,15 +482,9 @@ class _Chrome extends StatelessWidget {
 }
 
 class _Title extends StatelessWidget {
-  const _Title(
-    this.text, {
-    this.leading,
-    required this.closeLabel,
-    required this.onClose,
-  });
+  const _Title(this.text, {required this.closeLabel, required this.onClose});
 
   final String text;
-  final Widget? leading;
   final String closeLabel;
   final VoidCallback onClose;
 
@@ -459,7 +492,6 @@ class _Title extends StatelessWidget {
   Widget build(BuildContext context) => Row(
     spacing: Space.s3,
     children: [
-      ?leading,
       Expanded(
         child: Semantics(
           header: true,
@@ -489,123 +521,682 @@ class _Section extends StatelessWidget {
   );
 }
 
-class _Result extends StatelessWidget {
-  const _Result({
+/// Terjemahan + makna, dari nunggu token sampai selesai (board "Artinya
+/// streaming · Opsi B" + "· perilaku"), atau langsung jadi kalau dari cache.
+/// Satu widget buat semua tahap, jadi pas selesai gak ada loncatan layout dan
+/// posisi scroll gak di-reset.
+///
+/// - Teks keluar ngikutin [Pacer], per frame. Kurangi gerakan: per bagian
+///   utuh (satu paragraf, lalu makna), tanpa pudar.
+/// - Ujung teks yang lagi ditulis: 4 kata terakhir makin transparan, diem.
+///   Selesai → jadi solid pelan. (Deviasi dari board: tanpa fade-in per
+///   potongan, satu mekanisme aja.)
+/// - Selama belum selesai: tombol dikunci keliatan, isi ikut turun (ujung
+///   teks [Layout.artinyaFollowGap] di atas tombol). Scroll manual ke atas →
+///   berhenti, muncul "Ke bawah".
+/// - Kelamaan: kartu di atas isi. Kepotong: teks yang udah masuk + banner,
+///   placeholder dibuang.
+class _Answer extends StatefulWidget {
+  const _Answer({
     required this.typo,
-    required this.reply,
+    required this.ai,
     required this.copied,
     required this.onCopy,
     required this.onNext,
     required this.onClose,
+    required this.onRetry,
   });
 
   final ReaderTypography typo;
-  final AiReply reply;
+  final AiStream ai;
   final bool copied;
   final VoidCallback onCopy;
   final VoidCallback? onNext;
   final VoidCallback onClose;
+  final VoidCallback onRetry;
+
+  @override
+  State<_Answer> createState() => _AnswerState();
+}
+
+class _AnswerState extends State<_Answer> with TickerProviderStateMixin {
+  final _pacer = Pacer();
+  late final _ticker = createTicker(_tick);
+  Duration _last = Duration.zero;
+  int _shown = 0;
+
+  /// Ujung teks: 0 = pudar, 1 = solid.
+  late final _solid = AnimationController(
+    vsync: this,
+    duration: Motion.tailFade,
+  );
+
+  /// Jawaban lengkap dan semua hurufnya udah tampil.
+  bool _finished = false;
+  bool _following = true;
+  bool _userScrolling = false;
+  final _tail = GlobalKey();
+
+  AiStream get _ai => widget.ai;
+  bool get _cut => _ai.phase == AiPhase.cut;
+  bool get _writing => !_finished && !_cut;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _sync();
+  }
+
+  @override
+  void didUpdateWidget(_Answer old) {
+    super.didUpdateWidget(old);
+    _sync();
+  }
+
+  /// Nyalain ticker begitu ada huruf; kepotong = tampilin semua yang masuk.
+  /// Dari cache = langsung jadi, tanpa ritme dan tanpa ikut turun.
+  void _sync() {
+    if (_finished) return;
+    final available = _ai.draft.length;
+    if (_ai.cached) {
+      _finished = true;
+      _shown = available;
+      _solid.value = 1;
+      _ticker.stop();
+      return;
+    }
+    if (_cut) {
+      _pacer.finish(available);
+      _shown = available;
+      _ticker.stop();
+      WidgetsBinding.instance.addPostFrameCallback((_) => _follow(jump: true));
+      return;
+    }
+    if (available > 0 && !_ticker.isActive) {
+      _last = Duration.zero;
+      _ticker.start();
+    }
+  }
+
+  void _tick(Duration elapsed) {
+    final dt =
+        (elapsed - _last).inMicroseconds / Duration.microsecondsPerSecond;
+    _last = elapsed;
+    _follow();
+    final available = _ai.draft.length;
+    final done = _ai.phase == AiPhase.done;
+    final shown = MediaQuery.disableAnimationsOf(context)
+        ? available
+        : _pacer.step(dt, available, done: done);
+    final finished = done && shown >= available;
+    if (shown == _shown && !finished) return;
+    setState(() {
+      _shown = shown;
+      _finished = finished;
+    });
+    if (finished) {
+      _ticker.stop();
+      _solid.animateTo(
+        1,
+        duration: MediaQuery.disableAnimationsOf(context)
+            ? Duration.zero
+            : Motion.tailFade,
+      );
+      if (MediaQuery.accessibleNavigationOf(context)) {
+        SemanticsService.sendAnnouncement(
+          View.of(context),
+          'Artinya udah lengkap',
+          TextDirection.ltr,
+        );
+      }
+    }
+  }
+
+  /// Ikut turun: ujung teks dijaga di atas tombol, mulus per frame (lerp).
+  /// Ketinggalan lebih dari satu layar (atau [jump]): langsung pindah.
+  void _follow({bool jump = false}) {
+    if (!mounted || !_following) return;
+    final scroll = PrimaryScrollController.maybeOf(context);
+    final tail = _tail.currentContext?.findRenderObject() as RenderBox?;
+    final sheet = context.findRenderObject() as RenderBox?;
+    if (scroll == null || !scroll.hasClients) return;
+    if (tail == null || !tail.attached || sheet == null) return;
+    final pos = scroll.position;
+    final tailBottom = tail.localToGlobal(Offset(0, tail.size.height)).dy;
+    final limit =
+        sheet.localToGlobal(Offset(0, sheet.size.height)).dy -
+        (Layout.artinyaActions - Space.s4) -
+        Layout.artinyaFollowGap;
+    final over = tailBottom - limit;
+    if (over < 0.5) return;
+    final target = math.min(pos.pixels + over, pos.maxScrollExtent);
+    final instant =
+        jump ||
+        over > pos.viewportDimension ||
+        MediaQuery.disableAnimationsOf(context);
+    pos.jumpTo(instant ? target : pos.pixels + (target - pos.pixels) * 0.25);
+  }
+
+  bool _onScroll(ScrollNotification n) {
+    if (n.depth != 0 || !_writing) return false;
+    switch (n) {
+      case UserScrollNotification():
+        _userScrolling = n.direction != ScrollDirection.idle;
+        // forward = isi turun = jari narik ke atas teks.
+        if (n.direction == ScrollDirection.forward && _following) {
+          setState(() => _following = false);
+        }
+      case ScrollUpdateNotification()
+          when (_userScrolling || n.dragDetails != null) &&
+              !_following &&
+              n.metrics.extentAfter < 1:
+        setState(() => _following = true);
+      default:
+    }
+    return false;
+  }
+
+  void _toBottom() {
+    setState(() => _following = true);
+    _follow(jump: true);
+  }
+
+  @override
+  void dispose() {
+    _ticker.dispose();
+    _solid.dispose();
+    super.dispose();
+  }
+
+  /// Yang boleh tampil sekarang.
+  AiDraft _visible() {
+    final draft = _ai.draft;
+    if (_finished || _cut) return draft;
+    if (!MediaQuery.disableAnimationsOf(context)) return draft.take(_shown);
+    // Kurangi gerakan: cuma bagian yang udah utuh.
+    if (draft.meaning != null) return AiDraft(translations: draft.translations);
+    final whole = math.max(0, draft.translations.length - 1);
+    return AiDraft(translations: draft.translations.take(whole).toList());
+  }
 
   @override
   Widget build(BuildContext context) {
     final c = context.stabilo;
-    final text = typo.style.copyWith(color: c.ink);
-    return _ScrollFrame(
-      margin: typo.margin,
-      hideable: true,
-      header: _Title('Artinya gini nih', closeLabel: 'Tutup', onClose: onClose),
-      content: [
-        _Section(
-          tag: const Tag.section('Terjemahan'),
-          // Satu blok per paragraf, biar jeda dialognya sama kayak aslinya.
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            spacing: Space.s2,
-            children: [
-              for (final t in reply.translations) Text(t, style: text),
-            ],
+    final typo = widget.typo;
+    final style = typo.style.copyWith(color: c.ink);
+    final reduced = MediaQuery.disableAnimationsOf(context);
+    final writing = _writing;
+    final draft = _visible();
+    final count = math.max(_ai.sources.length, _ai.draft.translations.length);
+    final thinking =
+        writing &&
+        _ai.draft.length == 0 &&
+        (_ai.phase == AiPhase.waiting || _ai.phase == AiPhase.slow);
+    // Bagian terakhir yang keliatan = yang lagi ditulis (ujungnya pudar).
+    final lastMeaning = draft.meaning != null;
+    final last = lastMeaning ? -1 : draft.translations.length - 1;
+
+    Widget text(String t, {required bool isLast}) {
+      if (!isLast) return Text(t, style: style);
+      final faded = !_cut && !reduced;
+      return ExcludeSemantics(
+        // VoiceOver baca per bagian yang udah utuh, bukan per huruf.
+        excluding: writing,
+        child: AnimatedBuilder(
+          key: _tail,
+          animation: _solid,
+          builder: (context, _) {
+            if (!faded || _solid.value >= 1) return Text(t, style: style);
+            final split = splitTail(t);
+            final alphas = tailAlphas.sublist(
+              tailAlphas.length - split.tail.length,
+            );
+            return Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(text: split.head),
+                  for (final (i, w) in split.tail.indexed)
+                    TextSpan(
+                      text: w,
+                      style: TextStyle(
+                        color: c.ink.withValues(
+                          alpha: alphas[i] + (1 - alphas[i]) * _solid.value,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              style: style,
+            );
+          },
+        ),
+      );
+    }
+
+    return NotificationListener<ScrollNotification>(
+      onNotification: _onScroll,
+      child: Semantics(
+        label: writing ? 'Artinya, lagi ditulis' : null,
+        child: _ScrollFrame(
+          margin: typo.margin,
+          hideable: true,
+          locked: writing,
+          overlay: writing && !_following && !_cut
+              ? _DownButton(onPressed: _toBottom)
+              : null,
+          header: _Title(
+            thinking ? 'Bentar, lagi mikir...' : 'Artinya gini nih',
+            closeLabel: writing ? 'Batalin' : 'Tutup',
+            onClose: widget.onClose,
           ),
+          content: [
+            if (_ai.phase == AiPhase.slow)
+              _SlowCard(onCancel: widget.onClose, onRetry: widget.onRetry),
+            _Section(
+              tag: const Tag.section('Terjemahan'),
+              // Satu blok per paragraf, biar jeda dialognya sama kayak aslinya.
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                spacing: Space.s2,
+                children: [
+                  for (var i = 0; i < count; i++)
+                    if (i < draft.translations.length)
+                      text(draft.translations[i], isLast: i == last)
+                    else if (!_cut && i < _ai.sources.length)
+                      _Placeholder(
+                        chars: estimateTranslation(_ai.sources[i]),
+                        style: style,
+                      ),
+                ],
+              ),
+            ),
+            if (!_cut || lastMeaning)
+              _Section(
+                tag: const Tag.section(
+                  'Maksud penulisnya tuh...',
+                  tone: TagTone.pink,
+                ),
+                child: lastMeaning
+                    ? text(draft.meaning!, isLast: true)
+                    : _Placeholder(chars: estimatedMeaning, style: style),
+              ),
+            if (_cut) _CutBanner(onRetry: widget.onRetry),
+          ],
+          actions: [
+            AnimatedSwitcher(
+              duration: reduced ? Duration.zero : Motion.statusSwap,
+              child: writing && !_cut && _ai.phase != AiPhase.slow
+                  ? _StatusButton(
+                      key: ValueKey(thinking),
+                      label: thinking ? 'Lagi mikir' : 'Lagi nulis',
+                    )
+                  : AppButton.secondary(
+                      key: const ValueKey('copy'),
+                      label: widget.copied ? 'Disalin' : 'Salin',
+                      icon: widget.copied ? AppIcons.check : AppIcons.copy,
+                      onPressed: _finished ? widget.onCopy : null,
+                    ),
+            ),
+            Expanded(
+              child: Semantics(
+                // Lanjut di tengah streaming = batalin yang ini dulu.
+                label: writing ? 'Batalin, lanjut ke berikutnya' : null,
+                button: writing,
+                enabled: writing ? widget.onNext != null : null,
+                onTap: writing ? widget.onNext : null,
+                excludeSemantics: writing,
+                child: AppButton.primary(
+                  label: 'Lanjut',
+                  icon: AppIcons.down,
+                  iconAfter: true,
+                  onPressed: widget.onNext,
+                ),
+              ),
+            ),
+          ],
         ),
-        _Section(
-          tag: const Tag.section(
-            'Maksud penulisnya tuh...',
-            tone: TagTone.pink,
-          ),
-          child: Text(reply.meaning, style: text),
-        ),
-      ],
-      actions: [
-        AppButton.secondary(
-          label: copied ? 'Disalin' : 'Salin',
-          icon: copied ? AppIcons.check : AppIcons.copy,
-          onPressed: onCopy,
-        ),
-        Expanded(
-          child: AppButton.primary(
-            label: 'Lanjut',
-            icon: AppIcons.down,
-            iconAfter: true,
-            onPressed: onNext,
-          ),
-        ),
-      ],
+      ),
     );
   }
 }
 
-class _Loading extends StatelessWidget {
-  const _Loading({required this.typo, required this.onClose});
+/// Placeholder satu bagian yang belum ditulis, kira-kira setinggi teksnya
+/// nanti (ikut Aa): baris dari [placeholderRows], tinggi baris = baris teks.
+class _Placeholder extends StatelessWidget {
+  const _Placeholder({required this.chars, required this.style});
 
-  final ReaderTypography typo;
-  final VoidCallback onClose;
+  final double chars;
+  final TextStyle style;
+
+  /// Lebar huruf rata-rata per font + ukuran, diukur sekali.
+  static final _widths = <(String?, double?), double>{};
+  static const _sample =
+      'Sayangku Mr. Bennet, kata istrinya suatu hari, sudah dengar belum '
+      'kalau Netherfield Park akhirnya disewa orang?';
+
+  double _charWidth() => _widths[(style.fontFamily, style.fontSize)] ??= () {
+    final painter = TextPainter(
+      text: TextSpan(text: _sample, style: style),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    final width = painter.width / _sample.length;
+    painter.dispose();
+    return width;
+  }();
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, box) => _Skeleton(
+      widths: placeholderRows(chars, _charWidth(), box.maxWidth),
+      lineExtent: style.fontSize! * style.height!,
+    ),
+  );
+}
+
+/// Salin yang lagi nunggu jawaban: tiga titik berdenyut + "Lagi mikir" /
+/// "Lagi nulis". Nonaktif, warna ink2 di atas muted.
+class _StatusButton extends StatelessWidget {
+  const _StatusButton({super.key, required this.label});
+
+  final String label;
 
   @override
   Widget build(BuildContext context) {
+    final c = context.stabilo;
     return Semantics(
-      label: 'Artinya, lagi dimuat',
-      child: _ScrollFrame(
-        margin: typo.margin,
-        header: _Title(
-          'Bentar, lagi mikir...',
-          leading: const _PulseDot(),
-          closeLabel: 'Batalin',
-          onClose: onClose,
+      button: true,
+      enabled: false,
+      label: 'Salin, belum bisa: ${label.toLowerCase()}',
+      excludeSemantics: true,
+      child: Container(
+        height: 52,
+        padding: const EdgeInsets.symmetric(horizontal: 18),
+        decoration: BoxDecoration(
+          color: c.muted,
+          borderRadius: BorderRadius.circular(Radii.full),
         ),
-        content: [
-          _Section(
-            tag: const Tag.section('Terjemahan'),
-            child: _Skeleton(
-              widths: const [1, 0.93, 0.58],
-              lineExtent: typo.lineExtent,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          spacing: 9,
+          children: [
+            _WritingDots(color: c.ink2),
+            Text(
+              label,
+              style: StabiloType.label.copyWith(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: c.ink2,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Tiga titik 4pt, opasitas 30 ↔ 85% tiap [Motion.writingDots], bergiliran.
+/// Kurangi gerakan: diem.
+class _WritingDots extends StatefulWidget {
+  const _WritingDots({required this.color});
+
+  final Color color;
+
+  @override
+  State<_WritingDots> createState() => _WritingDotsState();
+}
+
+class _WritingDotsState extends State<_WritingDots>
+    with SingleTickerProviderStateMixin {
+  late final _pulse = AnimationController(
+    vsync: this,
+    duration: Motion.writingDots,
+  );
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    MediaQuery.disableAnimationsOf(context) ? _pulse.stop() : _pulse.repeat();
+  }
+
+  @override
+  void dispose() {
+    _pulse.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AnimatedBuilder(
+    animation: _pulse,
+    builder: (context, _) => Row(
+      mainAxisSize: MainAxisSize.min,
+      spacing: 3,
+      children: [
+        for (var i = 0; i < 3; i++)
+          Opacity(
+            opacity: _pulse.isAnimating
+                ? 0.3 +
+                      0.55 *
+                          (0.5 -
+                              0.5 *
+                                  math.cos(
+                                    2 * math.pi * (_pulse.value - i * 0.16),
+                                  ))
+                : 0.6,
+            child: Container(
+              width: 4,
+              height: 4,
+              decoration: BoxDecoration(
+                color: widget.color,
+                shape: BoxShape.circle,
+              ),
             ),
           ),
-          _Section(
-            tag: const Tag.section(
-              'Maksud penulisnya tuh...',
-              tone: TagTone.pink,
+      ],
+    ),
+  );
+}
+
+/// 15 detik belum ada token. Request tetep jalan; token masuk = kartunya
+/// ilang sendiri.
+class _SlowCard extends StatelessWidget {
+  const _SlowCard({required this.onCancel, required this.onRetry});
+
+  final VoidCallback onCancel;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.stabilo;
+    return Semantics(
+      liveRegion: true,
+      child: _Card(
+        color: c.muted,
+        line: c.track,
+        tile: c.accent,
+        icon: AppIcons.clock,
+        iconColor: c.onAccent,
+        title: 'Agak lama nih...',
+        body: 'AI-nya masih mikir. Tungguin bentar lagi, atau coba ulang.',
+        actions: [
+          Expanded(
+            child: AppButton.secondary(
+              label: 'Batal',
+              height: 40,
+              onPressed: onCancel,
             ),
-            child: _Skeleton(
-              widths: const [1, 0.93, 0.97, 0.58],
-              lineExtent: typo.lineExtent,
-            ),
-          ),
-        ],
-        // Tetep ada tapi mati, biar layout gak loncat pas hasilnya dateng.
-        actions: const [
-          AppButton.secondary(
-            label: 'Salin',
-            icon: AppIcons.copy,
-            onPressed: null,
           ),
           Expanded(
             child: AppButton.primary(
-              label: 'Lanjut',
-              icon: AppIcons.down,
-              iconAfter: true,
-              onPressed: null,
+              label: 'Coba lagi',
+              icon: AppIcons.retry,
+              height: 40,
+              onPressed: onRetry,
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Koneksi putus / mandek di tengah: yang udah masuk tetep di atasnya.
+class _CutBanner extends StatelessWidget {
+  const _CutBanner({required this.onRetry});
+
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.stabilo;
+    return Semantics(
+      liveRegion: true,
+      child: _Card(
+        color: c.pinkSoft,
+        line: c.pink,
+        tile: c.pink,
+        icon: AppIcons.offline,
+        iconColor: c.onPink,
+        title: 'Yah, kepotong di tengah',
+        body: 'Koneksinya putus pas lagi nulis. Yang udah masuk tetep di sini.',
+        actions: [
+          Expanded(
+            child: AppButton.primary(
+              label: 'Coba lagi',
+              icon: AppIcons.retry,
+              height: 40,
+              onPressed: onRetry,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Kartu status di dalam isi scroll (board perilaku): kotak ikon 36, judul,
+/// keterangan, tombol 40.
+class _Card extends StatelessWidget {
+  const _Card({
+    required this.color,
+    required this.line,
+    required this.tile,
+    required this.icon,
+    required this.iconColor,
+    required this.title,
+    required this.body,
+    required this.actions,
+  });
+
+  final Color color, line, tile, iconColor;
+  final List<List<dynamic>> icon;
+  final String title, body;
+  final List<Widget> actions;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.stabilo;
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(Radii.menu),
+        border: Border.all(color: line, width: Layout.outline),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: Space.s3,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            spacing: Space.s3,
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: tile,
+                  borderRadius: BorderRadius.circular(Radii.sm),
+                ),
+                child: Center(child: AppIcon(icon, color: iconColor)),
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  spacing: 2,
+                  children: [
+                    Text(
+                      title,
+                      style: StabiloType.label.copyWith(
+                        fontSize: 16,
+                        color: c.ink,
+                      ),
+                    ),
+                    Text(
+                      body,
+                      style: StabiloType.caption.copyWith(
+                        fontSize: 13.5,
+                        height: 1.4,
+                        fontWeight: FontWeight.w400,
+                        color: c.ink2,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          Row(spacing: 10, children: actions),
+        ],
+      ),
+    );
+  }
+}
+
+/// Muncul pas scroll manual ke atas selama streaming; tap = balik ke ujung
+/// teks dan ikut turun lagi.
+class _DownButton extends StatelessWidget {
+  const _DownButton({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.stabilo;
+    return Semantics(
+      button: true,
+      label: 'Ke bawah',
+      excludeSemantics: true,
+      child: Material(
+        color: c.sheet,
+        shape: StadiumBorder(
+          side: BorderSide(color: c.menuLine, width: Layout.outline),
+        ),
+        elevation: 0,
+        shadowColor: Colors.transparent,
+        child: InkWell(
+          customBorder: const StadiumBorder(),
+          onTap: onPressed,
+          child: Container(
+            height: 36,
+            padding: const EdgeInsets.fromLTRB(10, 0, 14, 0),
+            decoration: const ShapeDecoration(
+              shape: StadiumBorder(),
+              shadows: Elevation.toast,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              spacing: 6,
+              children: [
+                AppIcon(AppIcons.down, size: 16, color: c.ink),
+                Text(
+                  'Ke bawah',
+                  style: StabiloType.label.copyWith(fontSize: 13, color: c.ink),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -789,58 +1380,6 @@ class _NoKey extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-/// Titik kuning berdenyut di judul loading. Kurangi gerakan: diem.
-class _PulseDot extends StatefulWidget {
-  const _PulseDot();
-
-  @override
-  State<_PulseDot> createState() => _PulseDotState();
-}
-
-class _PulseDotState extends State<_PulseDot>
-    with SingleTickerProviderStateMixin {
-  late final _pulse = AnimationController(
-    vsync: this,
-    duration: Motion.thinkingDots,
-  );
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    MediaQuery.disableAnimationsOf(context)
-        ? _pulse.stop()
-        : _pulse.repeat(reverse: true);
-  }
-
-  @override
-  void dispose() {
-    _pulse.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.stabilo;
-    final t = CurvedAnimation(parent: _pulse, curve: Curves.easeInOut);
-    return AnimatedBuilder(
-      animation: t,
-      builder: (context, child) => Opacity(
-        opacity: 1 - 0.5 * t.value,
-        child: Transform.scale(scale: 1 - 0.4 * t.value, child: child),
-      ),
-      child: Container(
-        width: 10,
-        height: 10,
-        decoration: BoxDecoration(
-          color: c.accent,
-          shape: BoxShape.circle,
-          border: Border.all(color: c.accentBorder, width: Layout.outline),
-        ),
-      ),
     );
   }
 }

@@ -61,6 +61,8 @@ abstract final class Layout {
   static const artinyaHeader = 91.0; // grabber + judul + X + jarak
   static const artinyaActions = 102.0; // tombol 52 + jarak 16 + safe area 34
   static const artinyaGrabberZone = 12.0; // isi pudar mulai dari sini
+  static const artinyaFollowGap = 24.0; // streaming: ujung teks di atas tombol
+  static const artinyaDownButton = 96.0; // "Ke bawah": bawahnya dari tepi sheet
   static const sheetDismissFling = 700.0; // fling turun segini (pt/dtk) nutup
   static const sheetDismissRatio = 0.75; // atau ditarik sampe tinggal segini
 }
@@ -95,6 +97,9 @@ abstract final class Motion {
   static const capsuleIntro = Duration(milliseconds: 2500); // abis lanjut baca
   static const flash = Duration(milliseconds: 1200); // stabilo 0 → 60% → 0
   static const flashReduced = Duration(seconds: 3); // garis kiri 4pt
+  static const writingDots = Duration(milliseconds: 1600); // titik "Lagi nulis"
+  static const tailFade = Duration(milliseconds: 300); // ujung teks jadi solid
+  static const statusSwap = Duration(milliseconds: 150); // status → "Salin"
 }
 
 /// Bayangan. Default flat (tanpa bayangan).
