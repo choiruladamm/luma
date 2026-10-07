@@ -30,6 +30,16 @@ class AiResultsRepository {
       .watchSingle()
       .map((r) => (paragraphs: r.read<int>('n'), bytes: r.read<int>('bytes')));
 
+  /// Grup di chapter ini yang udah punya terjemahan (penanda di margin).
+  Stream<Set<int>> watchGroups(int chapterId) =>
+      (_db.selectOnly(_db.aiResults)
+            ..addColumns([_db.aiResults.groupIndex])
+            ..where(_db.aiResults.chapterId.equals(chapterId)))
+          .watch()
+          .map(
+            (rows) => {for (final r in rows) r.read(_db.aiResults.groupIndex)!},
+          );
+
   /// Hasil yang udah ke-cache, atau null.
   Future<AiReply?> find(GroupRef group) async {
     final row =

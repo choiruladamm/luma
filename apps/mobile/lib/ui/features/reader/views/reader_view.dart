@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -8,7 +9,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../data/repositories/reading_progress_repository.dart';
+import '../../../../routing/router.dart';
 import '../../../../data/repositories/settings_repository.dart';
+import '../../../../domain/models/ai_reply.dart';
 import '../../../../domain/models/book.dart';
 import '../../../../domain/models/reader_prefs.dart';
 import '../../../../domain/reading.dart';
@@ -20,6 +23,7 @@ import '../../../core/widgets/edge_fade.dart';
 import '../view_models/reader_view_model.dart';
 import 'aa_sheet.dart';
 import 'book_end_view.dart';
+import 'meaning_sheet.dart';
 import 'reader_capsule.dart';
 import 'toc_sheet.dart';
 
@@ -70,6 +74,12 @@ class _ReaderViewState extends ConsumerState<ReaderView>
   /// scrim, termasuk pas lagi fade out.
   bool _sheetOpen = false;
   _Sheet _lastSheet = _Sheet.toc;
+
+  /// Teks bab yang lagi tampil; diganti tiap pindah bab.
+  var _text = GlobalKey<_ChapterTextState>();
+
+  /// Grup yang lagi dibuka di sheet Artinya.
+  int? _openGroup;
 
   @override
   void initState() {
@@ -129,6 +139,7 @@ class _ReaderViewState extends ConsumerState<ReaderView>
   }
 
   void _goTo(ReaderBook book, int chapter) => setState(() {
+    _text = GlobalKey();
     _chrome.show(); // awal bab
     _finished = false;
     _chapter = chapter;
@@ -157,6 +168,59 @@ class _ReaderViewState extends ConsumerState<ReaderView>
       () => showTocSheet(context, book: book, current: i, percent: percent),
     );
     if (picked != null && picked != _chapter && mounted) _goTo(book, picked);
+  }
+
+  /// Tap paragraf → sheet Artinya buat grupnya. Kapsul ngumpet, halaman naik
+  /// barengan sheet. Ditutup: kalau udah pake "Lanjut", halaman diem di grup
+  /// terakhir; kalau cuma satu grup, balik ke posisi sebelum sheet dibuka.
+  Future<void> _openMeaning(ReaderParagraph p) async {
+    final g = p.groupIndex;
+    final text = _text.currentState;
+    final chapterId = _chapterId;
+    if (g == null || text == null || chapterId == null) return;
+    _chrome.hide();
+    final before = text.pixels;
+    final screen = MediaQuery.sizeOf(context).height;
+    var sheetTop = screen;
+    var opened = 1;
+    final group = ValueNotifier<GroupRef>((
+      chapterId: chapterId,
+      groupIndex: g,
+    ));
+    setState(() => _openGroup = g);
+
+    await showMeaningSheet(
+      context,
+      group: group,
+      hasNext: (r) => text.groupAfter(r.groupIndex) != null,
+      onNext: () {
+        final next = text.groupAfter(group.value.groupIndex);
+        if (next == null) return;
+        opened++;
+        group.value = (chapterId: chapterId, groupIndex: next);
+        setState(() => _openGroup = next);
+        // Abis highlight pindah & keukur, grup berikutnya naik ke atas sheet.
+        WidgetsBinding.instance.addPostFrameCallback(
+          (_) => text.showGroupAbove(next, sheetTop),
+        );
+      },
+      onHeight: (h) {
+        sheetTop = screen - h;
+        text.showGroupAbove(group.value.groupIndex, sheetTop);
+      },
+      onSettings: () {
+        Navigator.of(context).pop();
+        context.push(Routes.settings);
+      },
+    );
+    group.dispose();
+    if (!mounted) return;
+    setState(() => _openGroup = null);
+    if (opened == 1) {
+      await text.scrollBack(before);
+    } else {
+      text.reportPosition();
+    }
   }
 
   /// Buka sheet dari kapsul: kapsul dimunculin & tombolnya kuning selama
@@ -224,7 +288,7 @@ class _ReaderViewState extends ConsumerState<ReaderView>
                 children: [
                   Positioned.fill(
                     child: _ChapterText(
-                      key: ValueKey(ch.id),
+                      key: _text,
                       book: b,
                       index: i,
                       fraction: _fraction,
@@ -236,8 +300,8 @@ class _ReaderViewState extends ConsumerState<ReaderView>
                         _saveLater?.cancel();
                         _saveLater = Timer(_saveDelay, _save);
                       },
-                      // Sheet Artinya nyusul di #23.
-                      onParagraphTap: (_) {},
+                      onParagraphTap: _openMeaning,
+                      openGroup: _openGroup,
                       onNext: i + 1 < b.chapters.length
                           ? () => _goTo(b, i + 1)
                           : () {
@@ -350,6 +414,7 @@ class _ChapterText extends ConsumerStatefulWidget {
     required this.onPosition,
     required this.onParagraphTap,
     required this.onNext,
+    this.openGroup,
   });
 
   final ReaderBook book;
@@ -366,6 +431,10 @@ class _ChapterText extends ConsumerStatefulWidget {
 
   /// Tap paragraf → sheet Artinya.
   final ValueChanged<ReaderParagraph> onParagraphTap;
+
+  /// Grup yang lagi dibuka di sheet Artinya: distabilo, scrim dibolongin di
+  /// situ.
+  final int? openGroup;
   final VoidCallback onNext;
 
   @override
@@ -481,6 +550,7 @@ class _ChapterTextState extends ConsumerState<_ChapterText>
   /// tapi area tap margin minimal [_minTapMargin]: di margin Sempit (16),
   /// 8pt pinggir kolom ikut diitung kosong.
   void _onTap(Offset point, List<ReaderParagraph> paras) {
+    _introTimer?.cancel(); // udah pegang kendali sendiri
     final edge = math.max(0.0, _minTapMargin - widget.prefs.marginWidth);
     for (final p in paras) {
       if (p.type != ParagraphType.paragraph) continue;
@@ -550,6 +620,88 @@ class _ChapterTextState extends ConsumerState<_ChapterText>
     setState(() => _restored = true);
   }
 
+  /// Kotak paragraf-paragraf satu grup, di koordinat [ancestor] (null =
+  /// global).
+  Rect? _groupRect(int group, [RenderObject? ancestor]) {
+    Rect? rect;
+    for (final p in _paras.where((p) => p.groupIndex == group)) {
+      final box = _box(p.index);
+      if (box == null) continue;
+      final r = box.localToGlobal(Offset.zero, ancestor: ancestor) & box.size;
+      rect = rect?.expandToInclude(r) ?? r;
+    }
+    return rect;
+  }
+
+  /// Blok stabilo grup: melebar setengah margin ke samping, 8pt atas-bawah.
+  Rect _highlight(Rect group) {
+    final side = widget.prefs.marginWidth / 2;
+    return Rect.fromLTRB(
+      group.left - side,
+      group.top - Space.s2,
+      group.right + side,
+      group.bottom + Space.s2,
+    );
+  }
+
+  /// Grup sesudah [group] di bab ini, null kalau udah yang terakhir.
+  int? groupAfter(int group) => _paras
+      .map((p) => p.groupIndex)
+      .whereType<int>()
+      .where((g) => g > group)
+      .firstOrNull;
+
+  double get pixels => _scroll.hasClients ? _scroll.offset : 0;
+
+  /// Sheet Artinya: halaman ikut naik barengan sheet sampe bawah blok grup =
+  /// atas sheet − 16. Grup kepanjangan: atas bloknya = safe area + 16.
+  Future<void> showGroupAbove(int group, double sheetTop) async {
+    final r = _groupRect(group);
+    if (r == null || !_scroll.hasClients) return;
+    final block = _highlight(r);
+    final top = MediaQuery.paddingOf(context).top + Space.s4;
+    final bottom = sheetTop - Space.s4;
+    final delta = block.height <= bottom - top
+        ? block.bottom - bottom
+        : block.top - top;
+    await _animateTo(pixels + delta, Motion.sheetOpen, Motion.sheetOpenCurve);
+  }
+
+  /// Balik ke posisi sebelum sheet dibuka.
+  Future<void> scrollBack(double to) =>
+      _animateTo(to, Motion.sheetClose, Motion.sheetCloseCurve);
+
+  Future<void> _animateTo(double to, Duration d, Curve curve) {
+    final p = _scroll.position;
+    final target = to.clamp(p.minScrollExtent, p.maxScrollExtent);
+    if ((target - p.pixels).abs() < 0.5) return Future.value();
+    return _scroll.animateTo(
+      target,
+      duration: MediaQuery.disableAnimationsOf(context) ? Duration.zero : d,
+      curve: curve,
+    );
+  }
+
+  /// Simpen titik yang sekarang di atas (abis halaman digeser sheet).
+  void reportPosition() {
+    final spot = _topSpot(_paras);
+    if (spot != null) widget.onPosition(spot);
+  }
+
+  /// Blok grup yang perlu digambar (dibuka + penanda udah diterjemahin), di
+  /// koordinat isi bab. Diukur abis layout.
+  Map<int, Rect> _groupRects = const {};
+
+  /// Grup yang dibolongin di scrim Artinya.
+  int? _scrimGroup;
+
+  void _measureGroups(Set<int> groups) {
+    final content = _contentKey.currentContext?.findRenderObject();
+    if (content is! RenderBox) return;
+    final rects = {for (final g in groups) g: ?_groupRect(g, content)};
+    if (!mapEquals(rects, _groupRects)) setState(() => _groupRects = rects);
+  }
+
   /// Abis lanjut baca: kapsul muncul bentar buat orientasi terus ngumpet,
   /// grup tersimpan dikasih kilatan sekali (Kurangi gerakan: garis kiri 4pt).
   void _greet(List<ReaderParagraph> paras, _Spot spot) {
@@ -562,13 +714,7 @@ class _ChapterTextState extends ConsumerState<_ChapterText>
         ?.groupIndex;
     final content = _contentKey.currentContext?.findRenderObject();
     if (group == null || content is! RenderBox) return;
-    Rect? rect;
-    for (final p in paras.where((p) => p.groupIndex == group)) {
-      final box = _box(p.index);
-      if (box == null) continue;
-      final r = box.localToGlobal(Offset.zero, ancestor: content) & box.size;
-      rect = rect?.expandToInclude(r) ?? r;
-    }
+    final rect = _groupRect(group, content);
     if (rect == null) return;
     _mark = Rect.fromLTRB(
       rect.left - Space.s3,
@@ -618,6 +764,18 @@ class _ChapterTextState extends ConsumerState<_ChapterText>
       _ => const <ReaderParagraph>[],
     };
     _paras = paras;
+    final translated =
+        ref.watch(translatedGroupsProvider(chapter.id)).value ?? const {};
+    final open = widget.openGroup;
+    final drawn = {...translated, ?open};
+    if (loaded) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _measureGroups(drawn);
+      });
+    }
+    final onOpen = reading.copyWith(color: c.onHighlight);
+    // Inget grup terakhir biar bolongnya gak ilang pas scrim lagi fade out.
+    if (open != null) _scrimGroup = open;
 
     if (loaded) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -634,123 +792,195 @@ class _ChapterTextState extends ConsumerState<_ChapterText>
     final fade = MediaQuery.disableAnimationsOf(context)
         ? Duration.zero
         : Motion.contentFade;
-    return AnimatedOpacity(
-      opacity: _restored ? 1 : 0,
-      duration: fade,
-      curve: Curves.easeOut,
-      child: AnimatedBuilder(
-        animation: widget.chrome.hidden,
-        // Tepi teks ikut varian kapsul ↔ imersif sepanjang animasi kapsul.
-        builder: (context, child) {
-          final edges = readerEdgeFade(pad, widget.chrome.hidden.value);
-          return EdgeFadeScroll(
-            top: edges.top,
-            bottom: edges.bottom,
-            child: child!,
-          );
-        },
-        child: NotificationListener<ScrollNotification>(
-          onNotification: (n) {
-            if (n is UserScrollNotification &&
-                n.direction != ScrollDirection.idle) {
-              _userScrolled = true;
-              _introTimer?.cancel(); // udah pegang kendali sendiri
-            } else if (n is ScrollUpdateNotification &&
-                (_userScrolled || n.dragDetails != null)) {
-              _moveChrome(n, paras);
-            } else if (n is ScrollEndNotification && _userScrolled) {
-              _userScrolled = false;
-              widget.chrome.release();
-              final spot = _topSpot(paras);
-              if (spot != null) widget.onPosition(spot);
-            }
-            return false;
-          },
-          // Tap area kosong (margin, sela, bawah teks terakhir) = munculin /
-          // ngumpetin kapsul. Paragraf nangkep tap-nya sendiri.
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTapUp: (d) => _onTap(d.globalPosition, paras),
-            child: SingleChildScrollView(
-              controller: _scroll,
-              padding: EdgeInsets.fromLTRB(
-                widget.prefs.marginWidth,
-                pad.top + readerTextTop,
-                widget.prefs.marginWidth,
-                pad.bottom + readerTextBottom,
-              ),
-              child: Stack(
-                key: _contentKey,
-                children: [
-                  if (_mark != null)
-                    Positioned.fromRect(rect: _mark!, child: _markWidget(c)),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Padding(
-                        padding: EdgeInsets.only(bottom: gap),
-                        child: _ChapterHeading(
-                          number: widget.index + 1,
-                          title: chapter.title,
-                        ),
-                      ),
-                      for (final p in paras)
-                        Padding(
-                          padding: EdgeInsets.only(bottom: gap),
-                          // Key di isinya, bukan di sela bawah: offset = fraksi tinggi
-                          // paragraf doang.
-                          child: KeyedSubtree(
-                            key: _keys.putIfAbsent(p.index, GlobalKey.new),
-                            child: switch (p.type) {
-                              // Kotak paragraf selebar kolom, termasuk sisa baris
-                              // pendek. Sela antar paragraf & margin = area kosong.
-                              ParagraphType.paragraph => Text(
-                                p.text,
-                                style: reading,
-                              ),
-                              ParagraphType.heading => Semantics(
-                                header: true,
-                                child: Text(
-                                  p.text,
-                                  style: StabiloType.titleSm.copyWith(
-                                    color: c.ink,
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: AnimatedOpacity(
+            opacity: _restored ? 1 : 0,
+            duration: fade,
+            curve: Curves.easeOut,
+            child: AnimatedBuilder(
+              animation: widget.chrome.hidden,
+              // Tepi teks ikut varian kapsul ↔ imersif sepanjang animasi kapsul.
+              builder: (context, child) {
+                final edges = readerEdgeFade(pad, widget.chrome.hidden.value);
+                return EdgeFadeScroll(
+                  top: edges.top,
+                  bottom: edges.bottom,
+                  child: child!,
+                );
+              },
+              child: NotificationListener<ScrollNotification>(
+                onNotification: (n) {
+                  if (n is UserScrollNotification &&
+                      n.direction != ScrollDirection.idle) {
+                    _userScrolled = true;
+                    _introTimer?.cancel(); // udah pegang kendali sendiri
+                  } else if (n is ScrollUpdateNotification &&
+                      (_userScrolled || n.dragDetails != null)) {
+                    _moveChrome(n, paras);
+                  } else if (n is ScrollEndNotification && _userScrolled) {
+                    _userScrolled = false;
+                    widget.chrome.release();
+                    final spot = _topSpot(paras);
+                    if (spot != null) widget.onPosition(spot);
+                  }
+                  return false;
+                },
+                // Tap area kosong (margin, sela, bawah teks terakhir) = munculin /
+                // ngumpetin kapsul. Paragraf nangkep tap-nya sendiri.
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTapUp: (d) => _onTap(d.globalPosition, paras),
+                  child: SingleChildScrollView(
+                    controller: _scroll,
+                    padding: EdgeInsets.fromLTRB(
+                      widget.prefs.marginWidth,
+                      pad.top + readerTextTop,
+                      widget.prefs.marginWidth,
+                      pad.bottom + readerTextBottom,
+                    ),
+                    child: Stack(
+                      key: _contentKey,
+                      // Penanda grup nongol di margin kiri, di luar kolom teks.
+                      clipBehavior: Clip.none,
+                      children: [
+                        // Penanda grup yang udah diterjemahin: garis 4pt warna mark
+                        // di tengah margin kiri, sepanjang grupnya.
+                        for (final g in translated)
+                          if (g != open && _groupRects[g] != null)
+                            Positioned(
+                              key: ValueKey('mark-$g'),
+                              left: -widget.prefs.marginWidth / 2 - 2,
+                              top: _groupRects[g]!.top + 5,
+                              height: math.max(0, _groupRects[g]!.height - 10),
+                              width: 4,
+                              child: DecoratedBox(
+                                decoration: BoxDecoration(
+                                  color: c.mark,
+                                  borderRadius: BorderRadius.circular(
+                                    Radii.full,
                                   ),
                                 ),
                               ),
-                              ParagraphType.sceneBreak => Center(
-                                child: Text(
-                                  '* * *',
-                                  semanticsLabel: 'Pemisah adegan',
-                                  style: StabiloType.label.copyWith(
-                                    color: c.ink2,
-                                  ),
+                            ),
+                        if (open != null && _groupRects[open] != null)
+                          Positioned.fromRect(
+                            rect: _highlight(_groupRects[open]!),
+                            child: Semantics(
+                              label: 'Grup paragraf yang lagi dibuka',
+                              child: DecoratedBox(
+                                key: const ValueKey('open-group'),
+                                decoration: BoxDecoration(
+                                  color: c.highlight,
+                                  borderRadius: BorderRadius.circular(Radii.md),
                                 ),
                               ),
-                            },
+                            ),
                           ),
-                        ),
-                      // Kartu akhir bab baru muncul bareng teks, biar gak nongol di atas
-                      // terus kedorong ke bawah.
-                      if (loaded)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 14),
-                          child: _ChapterEnd(
-                            chapterId: chapter.id,
-                            number: widget.index + 1,
-                            next: next,
-                            nextNumber: widget.index + 2,
-                            total: widget.book.chapters.length,
-                            onNext: widget.onNext,
+                        if (_mark != null)
+                          Positioned.fromRect(
+                            rect: _mark!,
+                            child: _markWidget(c),
                           ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Padding(
+                              padding: EdgeInsets.only(bottom: gap),
+                              child: _ChapterHeading(
+                                number: widget.index + 1,
+                                title: chapter.title,
+                              ),
+                            ),
+                            for (final p in paras)
+                              Padding(
+                                padding: EdgeInsets.only(bottom: gap),
+                                // Key di isinya, bukan di sela bawah: offset = fraksi tinggi
+                                // paragraf doang.
+                                child: KeyedSubtree(
+                                  key: _keys.putIfAbsent(
+                                    p.index,
+                                    GlobalKey.new,
+                                  ),
+                                  child: switch (p.type) {
+                                    // Kotak paragraf selebar kolom, termasuk sisa baris
+                                    // pendek. Sela antar paragraf & margin = area kosong.
+                                    ParagraphType.paragraph => Text(
+                                      p.text,
+                                      style:
+                                          p.groupIndex == open && open != null
+                                          ? onOpen
+                                          : reading,
+                                    ),
+                                    ParagraphType.heading => Semantics(
+                                      header: true,
+                                      child: Text(
+                                        p.text,
+                                        style: StabiloType.titleSm.copyWith(
+                                          color: c.ink,
+                                        ),
+                                      ),
+                                    ),
+                                    ParagraphType.sceneBreak => Center(
+                                      child: Text(
+                                        '* * *',
+                                        semanticsLabel: 'Pemisah adegan',
+                                        style: StabiloType.label.copyWith(
+                                          color: c.ink2,
+                                        ),
+                                      ),
+                                    ),
+                                  },
+                                ),
+                              ),
+                            // Kartu akhir bab baru muncul bareng teks, biar gak nongol di atas
+                            // terus kedorong ke bawah.
+                            if (loaded)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 14),
+                                child: _ChapterEnd(
+                                  chapterId: chapter.id,
+                                  number: widget.index + 1,
+                                  next: next,
+                                  nextNumber: widget.index + 2,
+                                  total: widget.book.chapters.length,
+                                  onNext: widget.onNext,
+                                ),
+                              ),
+                          ],
                         ),
-                    ],
+                      ],
+                    ),
                   ),
-                ],
+                ),
               ),
             ),
           ),
         ),
-      ),
+        // Sheet Artinya: scrim nutup halaman kecuali blok grup yang dibuka
+        // (grupnya kebaca di atas scrim). Ikut gerak pas halaman di-scroll.
+        Positioned.fill(
+          child: IgnorePointer(
+            child: AnimatedOpacity(
+              opacity: open == null ? 0 : 1,
+              duration: open == null ? Motion.sheetClose : Motion.sheetOpen,
+              child: CustomPaint(
+                painter: _ScrimHole(
+                  color: c.scrim,
+                  repaint: _scroll,
+                  hole: () {
+                    final g = _scrimGroup;
+                    if (g == null) return null;
+                    final r = _groupRect(g, context.findRenderObject());
+                    return r == null ? null : _highlight(r);
+                  },
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -800,6 +1030,32 @@ class _ChapterTextState extends ConsumerState<_ChapterText>
 }
 
 enum _Sheet { toc, aa }
+
+/// Scrim sheet Artinya yang bolong di blok grup.
+class _ScrimHole extends CustomPainter {
+  _ScrimHole({required this.color, required this.hole, super.repaint});
+
+  final Color color;
+  final Rect? Function() hole;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final path = Path()
+      ..fillType = PathFillType.evenOdd
+      ..addRect(Offset.zero & size);
+    final h = hole();
+    if (h != null) {
+      path.addRRect(
+        RRect.fromRectAndRadius(h, const Radius.circular(Radii.md)),
+      );
+    }
+    canvas.drawPath(path, Paint()..color = color);
+  }
+
+  // Bolongnya diukur ulang tiap paint (scroll / highlight pindah).
+  @override
+  bool shouldRepaint(_ScrimHole old) => true;
+}
 
 /// Titik di chapter: indeks paragraf + bagiannya yang udah lewat garis atas.
 typedef _Spot = ({int index, double offset});
@@ -943,6 +1199,7 @@ class _ChapterEnd extends ConsumerWidget {
             AppButton.primary(
               label: 'Lanjut, gas',
               icon: AppIcons.next,
+              iconAfter: true,
               onPressed: onNext,
             ),
             Center(

@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:luma/data/repositories/reading_progress_repository.dart';
 import 'package:luma/data/repositories/settings_repository.dart';
 import 'package:luma/domain/models/reader_prefs.dart';
+import 'package:luma/domain/models/ai_reply.dart';
 import 'package:luma/domain/models/book.dart';
 import 'package:luma/main.dart';
 import 'package:luma/ui/core/theme/stabilo_theme.dart';
@@ -58,9 +59,25 @@ final tall = [
     p(i, ParagraphType.paragraph, 'Tall $i: ${'word ' * 30}'.trim(), i),
 ];
 
+/// Groups already translated, per chapter (margin marks).
+var translated = <int, Set<int>>{};
+
+/// What the AI says for a group; tests swap it.
+late Future<AiReply> Function(GroupRef) answer;
+
+AiReply replyFor(GroupRef g) => AiReply(
+  translations: [
+    for (final p in paragraphs[g.chapterId]!)
+      if (p.groupIndex == g.groupIndex) 'ID ${p.text}',
+  ],
+  meaning: 'Makna grup ${g.groupIndex}.',
+);
+
 final paragraphs = {
   12: long,
   13: tall,
+  // One paragraph taller than the space above the sheet.
+  14: [p(0, ParagraphType.paragraph, 'Huge: ${'word ' * 400}'.trim(), 0)],
   10: [
     p(0, ParagraphType.heading, 'I'), // same as the chapter title: hidden
     p(
@@ -89,6 +106,11 @@ final paragraphs = {
 
 void main() {
   late FakeProgress progress;
+
+  setUp(() {
+    translated = {};
+    answer = (g) async => replyFor(g);
+  });
   late FakeSettings settings;
 
   // Feeds the reader through its providers; no Drift in widget tests.
@@ -109,6 +131,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          groupAiProvider.overrideWith((ref, g) => answer(g)),
           settingsRepositoryProvider.overrideWithValue(settings),
           booksStreamProvider.overrideWith(
             (ref) => Stream.value([
@@ -126,6 +149,9 @@ void main() {
           readingProgressRepositoryProvider.overrideWithValue(progress),
           chapterParagraphsProvider.overrideWith(
             (ref, chapterId) async => paragraphs[chapterId]!,
+          ),
+          translatedGroupsProvider.overrideWith(
+            (ref, id) => Stream.value(translated[id] ?? const {}),
           ),
           chapterTranslatedProvider.overrideWith(
             (ref, chapterId) async => chapterId == 10 ? 3 : 0,
@@ -464,10 +490,16 @@ void main() {
 
       await tester.tapAt(Offset(para.left + 12, para.center.dy)); // text
       await tester.pumpAndSettle();
-      expect(showing(), isTrue);
-      await tester.tapAt(Offset(para.left + 4, para.center.dy)); // edge
+      expect(find.text('Artinya gini nih'), findsOneWidget);
+      await tester.tap(find.bySemanticsLabel('Tutup'));
       await tester.pumpAndSettle();
       expect(showing(), isFalse);
+
+      final at = tester.getRect(find.textContaining('Tall 13:'));
+      await tester.tapAt(Offset(at.left + 4, at.center.dy)); // edge
+      await tester.pumpAndSettle();
+      expect(showing(), isTrue);
+      expect(find.byType(BottomSheet), findsNothing);
     });
   });
 
@@ -573,6 +605,9 @@ void main() {
           readerBookProvider.overrideWith((ref, id) async => book),
           readingProgressRepositoryProvider.overrideWithValue(FakeProgress()),
           chapterParagraphsProvider.overrideWith((ref, id) => pending.future),
+          translatedGroupsProvider.overrideWith(
+            (ref, id) => Stream.value(translated[id] ?? const {}),
+          ),
           chapterTranslatedProvider.overrideWith((ref, id) async => 0),
         ],
         child: MaterialApp(
@@ -688,6 +723,9 @@ void main() {
             ),
             chapterParagraphsProvider.overrideWith(
               (ref, id) async => paragraphs[id]!,
+            ),
+            translatedGroupsProvider.overrideWith(
+              (ref, id) => Stream.value(translated[id] ?? const {}),
             ),
             chapterTranslatedProvider.overrideWith((ref, id) async => 0),
           ],
@@ -888,22 +926,28 @@ void main() {
       );
       expect(capsulesShowing(tester), isTrue);
 
-      // Anywhere on a paragraph, even past the end of a short last line.
+      // Anywhere on a paragraph, even past the end of a short last line,
+      // opens Artinya (and the capsules step aside).
       final para = tester.getRect(find.textContaining('Tall 13:'));
       await tester.tapAt(para.bottomRight - const Offset(4, 4));
       await tester.pumpAndSettle();
-      expect(capsulesShowing(tester), isTrue);
+      expect(find.text('Artinya gini nih'), findsOneWidget);
+      expect(capsulesShowing(tester), isFalse);
+      await tester.tap(find.bySemanticsLabel('Tutup'));
+      await tester.pumpAndSettle();
 
-      // Left margin, next to the same paragraph.
-      await tester.tapAt(Offset(10, para.center.dy));
+      // Left margin, next to the same paragraph: capsules back.
+      final at = tester.getRect(find.textContaining('Tall 13:'));
+      await tester.tapAt(Offset(10, at.center.dy));
+      await tester.pumpAndSettle();
+      expect(capsulesShowing(tester), isTrue);
+      expect(find.byType(BottomSheet), findsNothing);
+
+      // The gap between two paragraphs hides them again.
+      final next = tester.getRect(find.textContaining('Tall 14:'));
+      await tester.tapAt(Offset(450, (at.bottom + next.top) / 2));
       await tester.pumpAndSettle();
       expect(capsulesShowing(tester), isFalse);
-
-      // The gap between two paragraphs brings them back.
-      final next = tester.getRect(find.textContaining('Tall 14:'));
-      await tester.tapAt(Offset(450, (para.bottom + next.top) / 2));
-      await tester.pumpAndSettle();
-      expect(capsulesShowing(tester), isTrue);
     });
 
     testWidgets('below the last text is empty space too', (tester) async {
@@ -943,6 +987,9 @@ void main() {
             ),
             chapterParagraphsProvider.overrideWith(
               (ref, id) async => paragraphs[id]!,
+            ),
+            translatedGroupsProvider.overrideWith(
+              (ref, id) => Stream.value(translated[id] ?? const {}),
             ),
             chapterTranslatedProvider.overrideWith((ref, id) async => 0),
           ],
@@ -1061,6 +1108,211 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100)); // mid-animation
       final mid = fade(tester).bottom.fade;
       expect(mid, inExclusiveRange(24, 48));
+    });
+  });
+
+  group('Artinya', () {
+    Future<void> openTall(WidgetTester tester) => openBook(
+      tester,
+      readerBook: tallBook,
+      saved: (chapterId: 13, paragraphIndex: 12, paragraphOffset: 0.0),
+    );
+
+    Future<void> tapGroup(WidgetTester tester, int i) async {
+      await tester.tap(find.textContaining('Tall $i:'));
+      await tester.pumpAndSettle();
+    }
+
+    final block = find.byKey(const ValueKey('open-group'));
+    double pixels(WidgetTester tester) => tester
+        .state<ScrollableState>(find.byType(Scrollable).first)
+        .position
+        .pixels;
+
+    testWidgets('loading, then the translation and meaning', (tester) async {
+      final pending = Completer<AiReply>();
+      answer = (_) => pending.future;
+      await openTall(tester);
+      await tester.tap(find.textContaining('Tall 13:'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(find.text('Bentar, lagi mikir...'), findsOneWidget);
+      expect(
+        tester.getTopLeft(find.byType(ReaderTopCapsule)).dy,
+        lessThan(0),
+      ); // capsules hide
+
+      pending.complete(replyFor((chapterId: 13, groupIndex: 13)));
+      await tester.pumpAndSettle();
+      expect(find.text('Artinya gini nih'), findsOneWidget);
+      expect(find.text('TERJEMAHAN'), findsOneWidget);
+      expect(find.textContaining('ID Tall 13:'), findsOneWidget);
+      expect(find.text('Makna grup 13.'), findsOneWidget);
+    });
+
+    testWidgets('the group sits 16pt above the sheet, highlighted', (
+      tester,
+    ) async {
+      await openTall(tester);
+      await tapGroup(tester, 13);
+      expect(block, findsOneWidget);
+      final sheetTop = tester.getTopLeft(find.byType(BottomSheet)).dy;
+      expect(tester.getRect(block).bottom, closeTo(sheetTop - 16, 1));
+      // Highlight reaches half the margin out: 24 / 2.
+      expect(tester.getRect(block).left, 12);
+    });
+
+    testWidgets('a group too tall to fit: its top goes under the safe area', (
+      tester,
+    ) async {
+      const hugeBook = ReaderBook(
+        id: 1,
+        title: 'The Enchiridion',
+        totalChars: 3000,
+        chapters: [
+          ChapterInfo(id: 10, title: 'I', charOffset: 0, chars: 100),
+          ChapterInfo(id: 14, title: 'Huge', charOffset: 100, chars: 2900),
+        ],
+      );
+      await openBook(
+        tester,
+        readerBook: hugeBook,
+        saved: (chapterId: 14, paragraphIndex: 0, paragraphOffset: 0.0),
+      );
+      await tester.tap(find.textContaining('Huge:'));
+      await tester.pumpAndSettle();
+      expect(tester.getRect(block).top, closeTo(0 + 16, 1)); // safe area 0
+    });
+
+    testWidgets('one group: closing goes back to where you were', (
+      tester,
+    ) async {
+      await openTall(tester);
+      final before = pixels(tester);
+      await tapGroup(tester, 13);
+      expect(pixels(tester), isNot(closeTo(before, 1)));
+      await tester.tap(find.bySemanticsLabel('Tutup'));
+      await tester.pumpAndSettle();
+      expect(find.byType(BottomSheet), findsNothing);
+      expect(pixels(tester), closeTo(before, 1));
+      expect(block, findsNothing);
+    });
+
+    testWidgets('after "Lanjut": the next group, and the page stays', (
+      tester,
+    ) async {
+      await openTall(tester);
+      await tapGroup(tester, 13);
+      await tester.tap(find.text('Lanjut'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('ID Tall 14:'), findsOneWidget);
+      final sheetTop = tester.getTopLeft(find.byType(BottomSheet)).dy;
+      expect(tester.getRect(block).bottom, closeTo(sheetTop - 16, 1));
+      final at = pixels(tester);
+      progress.saves.clear();
+
+      await tester.tap(find.bySemanticsLabel('Tutup'));
+      await tester.pumpAndSettle();
+      expect(pixels(tester), closeTo(at, 1));
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(progress.saves, isNotEmpty); // new spot remembered
+    });
+
+    testWidgets('the last group of a chapter has no "Lanjut"', (tester) async {
+      await openTall(tester);
+      await tester.fling(
+        find.byType(SingleChildScrollView),
+        const Offset(0, -6000),
+        3000,
+      );
+      await tester.pumpAndSettle();
+      await tapGroup(tester, 29);
+      final lanjut = tester.widget<AppButton>(
+        find.widgetWithText(AppButton, 'Lanjut'),
+      );
+      expect(lanjut.onPressed, isNull);
+    });
+
+    testWidgets('error: code, then "Coba lagi" asks again', (tester) async {
+      var calls = 0;
+      answer = (g) async {
+        calls++;
+        if (calls == 1) throw const AiException(AiError.timeout);
+        return replyFor(g);
+      };
+      await openTall(tester);
+      await tapGroup(tester, 13);
+      expect(find.text('Yah, gagal nih'), findsOneWidget);
+      expect(find.text('timeout · 30 detik'), findsOneWidget);
+      await tester.tap(find.text('Coba lagi'));
+      await tester.pumpAndSettle();
+      expect(find.text('Artinya gini nih'), findsOneWidget);
+      expect(calls, 2);
+    });
+
+    testWidgets('out of credits says so', (tester) async {
+      answer = (_) async => throw const AiException(AiError.http, status: 402);
+      await openTall(tester);
+      await tapGroup(tester, 13);
+      expect(find.text('HTTP 402 · saldo abis'), findsOneWidget);
+    });
+
+    testWidgets('no API key: asks for one, "Nanti aja" closes', (tester) async {
+      answer = (_) async => throw const AiException(AiError.noApiKey);
+      await openTall(tester);
+      await tapGroup(tester, 13);
+      expect(find.text('Isi API key dulu yuk'), findsOneWidget);
+      expect(find.text('openrouter.ai/keys'), findsNothing); // inside a span
+      expect(find.textContaining('openrouter.ai/keys'), findsOneWidget);
+      await tester.tap(find.text('Nanti aja'));
+      await tester.pumpAndSettle();
+      expect(find.byType(BottomSheet), findsNothing);
+    });
+
+    testWidgets('copy puts the whole translation on the clipboard', (
+      tester,
+    ) async {
+      String? copied;
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (call) async {
+          if (call.method == 'Clipboard.setData') {
+            copied = (call.arguments as Map)['text'] as String;
+          }
+          return null;
+        },
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          null,
+        ),
+      );
+      await openTall(tester);
+      await tapGroup(tester, 13);
+      await tester.tap(find.text('Salin'));
+      await tester.pump();
+      await tester.pump();
+      expect(copied, startsWith('ID Tall 13:'));
+      expect(find.text('Disalin'), findsOneWidget);
+      expect(find.text('Udah disalin, tinggal paste'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 3));
+      expect(find.text('Udah disalin, tinggal paste'), findsNothing);
+    });
+
+    testWidgets('translated groups get a mark in the margin', (tester) async {
+      translated = {
+        13: {12, 14},
+      };
+      await openTall(tester);
+      final mark = find.byKey(const ValueKey('mark-12'));
+      expect(mark, findsOneWidget);
+      expect(find.byKey(const ValueKey('mark-13')), findsNothing);
+      final rect = tester.getRect(mark);
+      expect(rect.width, 4);
+      expect(rect.left, 10); // centred on 12pt into the 24pt margin
+      final para = tester.getRect(find.textContaining('Tall 12:'));
+      expect(rect.top, closeTo(para.top + 5, 1));
     });
   });
 }

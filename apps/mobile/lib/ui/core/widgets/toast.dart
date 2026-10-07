@@ -50,6 +50,33 @@ void showToast(
     );
 }
 
+/// Toast pill di atas semua route, buat dari dalem sheet (snackbar-nya
+/// ketutup sheet). [bottom] diukur dari tepi bawah layar.
+void showOverlayToast(
+  BuildContext context,
+  String message, {
+  double bottom = 102,
+}) {
+  final overlay = Overlay.of(context, rootOverlay: true);
+  final entry = OverlayEntry(
+    builder: (_) => Positioned(
+      left: Layout.margin,
+      right: Layout.margin,
+      bottom: bottom,
+      child: IgnorePointer(
+        child: Semantics(
+          liveRegion: true,
+          child: Center(child: _Toast.pill(message)),
+        ),
+      ),
+    ),
+  );
+  overlay.insert(entry);
+  Future.delayed(Motion.toast, () {
+    if (entry.mounted) entry.remove();
+  });
+}
+
 class _Toast extends StatelessWidget {
   const _Toast.pill(this.message)
     : subtitle = null,

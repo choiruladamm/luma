@@ -41,6 +41,7 @@ class AppButton extends StatelessWidget {
     required this.label,
     required this.onPressed,
     this.icon,
+    this.iconAfter = false,
     this.height = 52,
   }) : _tone = _Tone.primary,
        destructive = false;
@@ -50,6 +51,7 @@ class AppButton extends StatelessWidget {
     required this.label,
     required this.onPressed,
     this.icon,
+    this.iconAfter = false,
     this.height = 52,
     this.destructive = false,
   }) : _tone = _Tone.secondary;
@@ -59,6 +61,7 @@ class AppButton extends StatelessWidget {
     required this.label,
     required this.onPressed,
     this.icon,
+    this.iconAfter = false,
     this.height = 48,
   }) : _tone = _Tone.danger,
        destructive = true;
@@ -66,6 +69,9 @@ class AppButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
   final List<List<dynamic>>? icon;
+
+  /// Ikon di belakang teks ("Lanjut ↓", "Buka Pengaturan →").
+  final bool iconAfter;
   final double height;
   final bool destructive;
   final _Tone _tone;
@@ -119,7 +125,8 @@ class AppButton extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     spacing: Space.s2,
                     children: [
-                      if (icon != null) AppIcon(icon!, size: fontSize + 4),
+                      if (icon != null && !iconAfter)
+                        AppIcon(icon!, size: fontSize + 4),
                       Flexible(
                         child: Text(
                           label,
@@ -131,6 +138,8 @@ class AppButton extends StatelessWidget {
                           ),
                         ),
                       ),
+                      if (icon != null && iconAfter)
+                        AppIcon(icon!, size: fontSize + 4),
                     ],
                   ),
                 ),
@@ -223,4 +232,9 @@ abstract final class AppIcons {
   static const settings = HugeIcons.strokeRoundedSettings01;
   static const next = HugeIcons.strokeRoundedArrowRight02;
   static const toc = HugeIcons.strokeRoundedLeftToRightListBullet;
+  static const copy = HugeIcons.strokeRoundedCopy01;
+  static const down = HugeIcons.strokeRoundedArrowDown02;
+  static const retry = HugeIcons.strokeRoundedRefresh;
+  static const offline = HugeIcons.strokeRoundedCloudOff;
+  static const key = HugeIcons.strokeRoundedKey01;
 }

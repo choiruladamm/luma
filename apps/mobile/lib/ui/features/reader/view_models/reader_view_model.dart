@@ -63,6 +63,14 @@ final groupAiProvider = FutureProvider.autoDispose.family<AiReply, GroupRef>((
   return reply;
 }, retry: (_, _) => null);
 
+/// Grup yang udah diterjemahin di satu chapter: garis `mark` di margin, tap
+/// grup itu sheet-nya langsung keisi.
+final translatedGroupsProvider = StreamProvider.autoDispose
+    .family<Set<int>, int>(
+      (ref, chapterId) =>
+          ref.watch(aiResultsRepositoryProvider).watchGroups(chapterId),
+    );
+
 /// Rekap layar akhir buku.
 final bookEndProvider = FutureProvider.autoDispose.family<BookEnd?, int>(
   (ref, bookId) => ref.watch(bookRepositoryProvider).bookEnd(bookId),
