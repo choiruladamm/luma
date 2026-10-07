@@ -515,7 +515,7 @@ Estimasi: ~800 token input + ~400 token output per tap → dengan GLM 5.3 Flash 
 
 ### Draft prompt
 
-Versi prompt: `aiPromptVersion` (sekarang **2**: kenal buku + aturan gaya, #40). Tiap isi prompt berubah, naikin angka ini: terjemahan yang dibikin pakai prompt lama diterjemahin ulang pas grupnya dibuka (`ai_results.promptVersion`).
+Versi prompt: `aiPromptVersion` (sekarang **3**: kenal buku + aturan gaya #40, aturan bahasa & makna #41). Tiap isi prompt berubah, naikin angka ini: terjemahan yang dibikin pakai prompt lama diterjemahin ulang pas grupnya dibuka (`ai_results.promptVersion`).
 
 **System** (bagian tugas sama buat dua format; penutupnya beda):
 
@@ -543,6 +543,24 @@ Cara menerjemahkan:
   perlu, jelaskan singkat di bagian makna.
 - Makna menjelaskan maksud penulis dan kaitannya dengan gagasan besar buku
   atau penulisnya, bukan mengulang terjemahan.
+
+Bahasa:
+- Ejaan Bahasa Indonesia yang benar. Periksa tiap kata: jangan ada kata
+  rusak, salah ketik, atau kata bahasa Inggris yang nyelip (kecuali istilah
+  kunci yang memang dipertahankan).
+- Kata ganti konsisten: "you/thou/thee" = "kamu", "I/me" = "aku", "we" =
+  "kita". Jangan pakai "engkau", "Anda", atau "saya".
+- Terjemahan setia ke teks: jangan menambah keterangan dalam kurung,
+  jangan menebak siapa tokoh yang disebut, jangan menambah kalimat yang
+  tidak ada di teks. Penomoran (I., IX.) tetap ditulis.
+
+Makna:
+- Maksimal 4 kalimat. Fokus ke gagasan utama potongan ini dan istilah
+  sulitnya.
+- Kaitkan ke gagasan besar buku hanya kalau benar-benar membantu; jangan
+  ditutup kalimat umum seperti "ini inti Stoisisme".
+- Jangan mengaku nyambung dengan paragraf lain yang tidak ada di KONTEKS.
+  Kalau tidak yakin soal fakta (siapa tokohnya, kapan), jangan ditulis.
 
 KONTEKS hanya untuk membantu pemahaman, jangan diterjemahkan.
 ```
@@ -586,7 +604,23 @@ Penulis kosong → `BUKU: {judul}` aja; judul bab kosong → baris BAB gak ada; 
 
 Contoh (`make live`, GLM 5.3 Flash, The Enchiridion bab I): makna langsung nyambung ke Stoisisme Epictetus ("pisahkan mana yang bisa kamu kendalikan...") dan istilah kunci dipertahankan.
 
-Belum dikerjain (diputusin dari #28): brief + glosarium otomatis per buku, catatan manual per buku.
+**Evaluasi prompt (#41, Okt 2026).** 50 potong asli (25 The Enchiridion bab I–LI, 25 Meditations buku I–XII, Gutenberg #45109 dan #2680; panjang 101–4175 huruf, 4 grup multi-paragraf), GLM 5.3 Flash, jalur streaming:
+
+| | v2 (#40) | v3 (sekarang) | v3 + brief/glosarium otomatis |
+|---|---|---|---|
+| Valid | 49/50 | 50/50 | 48/50 (`[MAKNA]` dobel) |
+| Keterangan dalam kurung yang ditambah | 6 | 0 | 0 |
+| Makna > 4 kalimat | 3 | 0 | 0 |
+| Penutup generik ("inti Stoisisme"…) | 22 | 11 | 17 |
+| engkau / Anda / saya | 5 | 7 (1 potong) | 6 |
+| Kata rusak (perkiraan) | ±13 | ±11 | ±13 |
+
+Temuan dari v1/v2 yang jadi dasar aturan v3: nebak tokoh ("Caius" jadi "Caligula"), keterangan dalam kurung di terjemahan, kata ganti campur (engkau/kamu/saya), makna kepanjangan dan ditutup basa-basi, ngaku nyambung ke paragraf yang gak ada.
+
+- **v3 dikunci.** Aturan bahasa & makna ngilangin kurung, makna kepanjangan, dan setengah basa-basinya.
+- **Brief + glosarium otomatis per buku: ditunda.** Brief dari GLM ngarang (nebak penerjemah, istilah Yunani karangan), dan versi yang udah dibenerin pun gak nangkep istilah yang penting ("opinion" di Epictetus tetap "pendapat", bukan "penilaian"). Dua jawaban jadi gak valid. Coba lagi kalau model brief-nya lebih kuat, atau lewat catatan manual per buku.
+- **Kata rusak bukan urusan prompt.** Jumlahnya sama di semua versi ("menjadiapiclient", "kutyesali", "ketidakbehagian", "mementumori"…), ±1 tiap 4–5 potong. Ini kelemahan GLM: dibandingin di #28.
+- Set 50 potong yang sama dipakai di #28.
 
 ### Evaluasi model
 

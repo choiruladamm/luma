@@ -4,8 +4,9 @@ import 'models/ai_reply.dart';
 
 /// Naik tiap prompt berubah: cache `ai_results` dari versi lebih lama
 /// dianggap belum ada, jadi grupnya diterjemahin ulang pas dibuka.
-/// 1 = prompt awal, 2 = kenal buku + aturan gaya (#40).
-const aiPromptVersion = 2;
+/// 1 = prompt awal, 2 = kenal buku + aturan gaya (#40), 3 = aturan bahasa &
+/// makna dari evaluasi 50 potong (#41).
+const aiPromptVersion = 3;
 
 /// Tugas yang sama buat dua format jawaban (docs bagian 9, draft prompt).
 const _aiTask = '''
@@ -32,6 +33,24 @@ Cara menerjemahkan:
   perlu, jelaskan singkat di bagian makna.
 - Makna menjelaskan maksud penulis dan kaitannya dengan gagasan besar buku
   atau penulisnya, bukan mengulang terjemahan.
+
+Bahasa:
+- Ejaan Bahasa Indonesia yang benar. Periksa tiap kata: jangan ada kata
+  rusak, salah ketik, atau kata bahasa Inggris yang nyelip (kecuali istilah
+  kunci yang memang dipertahankan).
+- Kata ganti konsisten: "you/thou/thee" = "kamu", "I/me" = "aku", "we" =
+  "kita". Jangan pakai "engkau", "Anda", atau "saya".
+- Terjemahan setia ke teks: jangan menambah keterangan dalam kurung,
+  jangan menebak siapa tokoh yang disebut, jangan menambah kalimat yang
+  tidak ada di teks. Penomoran (I., IX.) tetap ditulis.
+
+Makna:
+- Maksimal 4 kalimat. Fokus ke gagasan utama potongan ini dan istilah
+  sulitnya.
+- Kaitkan ke gagasan besar buku hanya kalau benar-benar membantu; jangan
+  ditutup kalimat umum seperti "ini inti Stoisisme".
+- Jangan mengaku nyambung dengan paragraf lain yang tidak ada di KONTEKS.
+  Kalau tidak yakin soal fakta (siapa tokohnya, kapan), jangan ditulis.
 
 KONTEKS hanya untuk membantu pemahaman, jangan diterjemahkan.''';
 

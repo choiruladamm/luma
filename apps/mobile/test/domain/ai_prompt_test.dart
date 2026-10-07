@@ -80,6 +80,8 @@ void main() {
     for (final p in [aiSystemPrompt, aiStreamSystemPrompt]) {
       expect(p, contains('BUKU dan BAB'));
       expect(p, contains('bahasanya kuno'));
+      expect(p, contains('Jangan pakai "engkau"'));
+      expect(p, contains('Maksimal 4 kalimat'));
     }
   });
 
