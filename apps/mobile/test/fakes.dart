@@ -1,7 +1,9 @@
 import 'dart:async';
 
 import 'package:luma/data/repositories/settings_repository.dart';
+import 'package:luma/data/services/openrouter_service.dart';
 import 'package:luma/domain/models/ai_model.dart';
+import 'package:luma/domain/models/ai_reply.dart';
 import 'package:luma/domain/models/reader_prefs.dart';
 import 'package:luma/data/repositories/reading_progress_repository.dart';
 
@@ -62,4 +64,25 @@ class FakeSettings implements SettingsRepository {
     model = id;
     _models.add(id);
   }
+}
+
+/// OpenRouter without the network. [keyOk] null = can't reach it.
+class FakeOpenRouter implements OpenRouterService {
+  bool? keyOk = true;
+  final checked = <String>[];
+
+  @override
+  Future<bool> checkKey(String apiKey) async {
+    checked.add(apiKey);
+    if (keyOk == null) throw const AiException(AiError.network);
+    return keyOk!;
+  }
+
+  @override
+  Future<AiReply> explain({
+    required String? apiKey,
+    required String model,
+    required List<String> context,
+    required List<String> target,
+  }) => throw UnimplementedError();
 }

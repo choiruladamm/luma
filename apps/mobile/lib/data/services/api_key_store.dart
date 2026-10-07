@@ -26,7 +26,9 @@ class ApiKeyStore {
 
 final apiKeyStoreProvider = Provider<ApiKeyStore>((ref) => ApiKeyStore());
 
-/// API key sekarang; di-invalidate abis diganti di Pengaturan.
-final apiKeyProvider = FutureProvider<String?>(
+/// API key buat dicek di Pengaturan; dibaca ulang tiap Pengaturan dibuka.
+/// Yang manggil LLM baca langsung dari [ApiKeyStore] tiap request, biar
+/// gak pernah pake key basi.
+final apiKeyProvider = FutureProvider.autoDispose<String?>(
   (ref) => ref.watch(apiKeyStoreProvider).read(),
 );

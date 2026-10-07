@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:luma/data/repositories/ai_results_repository.dart';
 import 'package:luma/data/repositories/settings_repository.dart';
 import 'package:luma/data/services/api_key_store.dart';
+import 'package:luma/data/services/openrouter_service.dart';
 import 'package:luma/domain/models/ai_model.dart';
 import 'package:luma/ui/core/theme/stabilo_theme.dart';
 import 'package:luma/ui/features/settings/views/settings_view.dart';
@@ -30,12 +31,15 @@ class FakeAiResults implements AiResultsRepository {
 void main() {
   late FakeSettings settings;
   late FakeAiResults cache;
+  late FakeOpenRouter openRouter;
 
   Future<void> open(
     WidgetTester tester, {
     Brightness b = Brightness.light,
     AiCacheStats stats = (paragraphs: 1240, bytes: 3355443),
+    bool? keyOk = true,
   }) async {
+    openRouter = FakeOpenRouter()..keyOk = keyOk;
     tester.view.physicalSize = const Size(900, 1600);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -48,6 +52,7 @@ void main() {
           aiResultsRepositoryProvider.overrideWithValue(cache),
           // Secure storage goes in-memory via setMockInitialValues.
           apiKeyStoreProvider.overrideWithValue(ApiKeyStore()),
+          openRouterServiceProvider.overrideWithValue(openRouter),
         ],
         child: MaterialApp(theme: stabiloTheme(b), home: const SettingsView()),
       ),
@@ -119,5 +124,47 @@ void main() {
       find.widgetWithText(TextButton, 'Hapus cache'),
     );
     expect(button.onPressed, isNull);
+  });
+
+  group('key status', () {
+    const keychain =
+        'Disimpen di Keychain iPhone, gak dikirim ke mana-mana selain '
+        'OpenRouter.';
+
+    testWidgets('a key OpenRouter accepts: "Key-nya jalan"', (tester) async {
+      await open(tester);
+      expect(find.text('Key-nya jalan'), findsOneWidget);
+      expect(find.text('Disimpen di Keychain'), findsOneWidget);
+      expect(openRouter.checked, ['sk-or-v1-saved']);
+    });
+
+    testWidgets('a rejected key says so', (tester) async {
+      await open(tester, keyOk: false);
+      expect(find.text('Key-nya ditolak OpenRouter'), findsOneWidget);
+    });
+
+    testWidgets('offline: just where it is kept', (tester) async {
+      await open(tester, keyOk: null);
+      expect(find.text(keychain), findsOneWidget);
+      expect(find.text('Key-nya jalan'), findsNothing);
+    });
+
+    testWidgets('typing checks once, after a pause', (tester) async {
+      await open(tester);
+      openRouter.checked.clear();
+      for (final k in ['sk-1', 'sk-12', 'sk-123']) {
+        await tester.enterText(find.byType(TextField), k);
+        await tester.pump(const Duration(milliseconds: 200));
+      }
+      expect(openRouter.checked, isEmpty);
+      await tester.pump(const Duration(milliseconds: 600));
+      await tester.pumpAndSettle();
+      expect(openRouter.checked, ['sk-123']);
+
+      await tester.enterText(find.byType(TextField), '');
+      await tester.pump(const Duration(milliseconds: 700));
+      await tester.pumpAndSettle();
+      expect(find.text(keychain), findsOneWidget); // no key, no check
+    });
   });
 }

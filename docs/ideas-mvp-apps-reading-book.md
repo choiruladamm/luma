@@ -435,6 +435,15 @@ Estimasi: ~800 token input + ~400 token output per tap → dengan GLM 5.3 Flash 
 - Untuk MVP pribadi, API key disimpan lokal di `flutter_secure_storage`. Kalau mau rilis, wajib lewat backend proxy.
 - Atur preferensi provider di OpenRouter kalau ingin menghindari provider yang memakai data untuk training.
 
+**Implementasi** (`OpenRouterService`):
+
+- `POST /chat/completions` dengan `reasoning: {"enabled": false}` dan `response_format: {"type": "json_object"}`. Timeout connect/send/receive 30 detik.
+- Jawaban: ambil objek JSON dari `{` pertama sampe `}` terakhir (buang code fence / basa-basi), cek `translations` = list string sejumlah paragraf TARGET dan `meaning` gak kosong. Gak valid → coba ulang sekali, masih gagal → `invalidResponse`.
+- Error bertipe (`AiError`): `noApiKey` (API gak dipanggil), `timeout`, `network`, `http` (bawa status: 401 key ditolak, 402 saldo abis), `invalidResponse`. Error HTTP gak di-retry.
+- API key dibaca langsung dari Keychain tiap request (bukan di-cache), model dari `ai.model`.
+- Cek key di Pengaturan: `GET /key` (debounce 600 ms abis ngetik). 2xx → "Key-nya jalan", 401/403 → "Key-nya ditolak OpenRouter", offline/gagal → cuma keterangan Keychain.
+- Coba ke OpenRouter beneran: `OPENROUTER_API_KEY=sk-or-... make test t=test/data/openrouter_live_test.dart` (opsional `OPENROUTER_MODEL`). Tanpa key, test itu di-skip.
+
 ### Draft prompt
 
 **System:**

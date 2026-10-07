@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -13,6 +15,7 @@ import '../../../core/theme/stabilo_type.dart';
 import '../../../core/widgets/buttons.dart';
 import '../../../core/widgets/dialog.dart';
 import '../../../core/widgets/field.dart';
+import '../view_models/settings_view_model.dart';
 
 /// Pengaturan app (board 23 Pengaturan app): API key, model AI, cache
 /// terjemahan. Bagian Backup & pulihin nyusul di #24–#26.
@@ -26,6 +29,9 @@ class SettingsView extends ConsumerStatefulWidget {
 class _SettingsViewState extends ConsumerState<SettingsView> {
   final _key = TextEditingController();
 
+  /// Ngecek key ke OpenRouter nunggu ngetiknya berhenti bentar.
+  Timer? _checkLater;
+
   @override
   void initState() {
     super.initState();
@@ -36,6 +42,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
 
   @override
   void dispose() {
+    _checkLater?.cancel();
     _key.dispose();
     super.dispose();
   }
@@ -43,7 +50,10 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
   /// Disimpen tiap diubah (biasanya sekali paste); kosong = dihapus.
   Future<void> _saveKey(String key) async {
     await ref.read(apiKeyStoreProvider).write(key);
-    ref.invalidate(apiKeyProvider);
+    _checkLater?.cancel();
+    _checkLater = Timer(const Duration(milliseconds: 600), () {
+      if (mounted) ref.invalidate(apiKeyProvider);
+    });
   }
 
   Future<void> _clearCache() async {
@@ -95,11 +105,10 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
               label: 'API key OpenRouter',
               controller: _key,
               secret: true,
-              helper:
-                  'Disimpen di Keychain iPhone, gak dikirim ke mana-mana '
-                  'selain OpenRouter.',
               onChanged: _saveKey,
             ),
+            const SizedBox(height: Space.s2),
+            _KeyStatus(ok: ref.watch(apiKeyCheckProvider).value),
             const SizedBox(height: 22),
             _Section(
               label: 'Model AI',
@@ -118,6 +127,65 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Di bawah field key: "Key-nya jalan" kalau OpenRouter nerima, "ditolak"
+/// kalau 401/403, selain itu (belum ada / lagi ngecek / offline) penjelasan
+/// tempat nyimpennya.
+class _KeyStatus extends StatelessWidget {
+  const _KeyStatus({required this.ok});
+
+  final bool? ok;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.stabilo;
+    final small = StabiloType.caption.copyWith(
+      fontSize: 12.5,
+      fontWeight: FontWeight.w400,
+      color: c.ink2,
+    );
+    if (ok == null) {
+      return Text(
+        'Disimpen di Keychain iPhone, gak dikirim ke mana-mana selain '
+        'OpenRouter.',
+        style: small,
+      );
+    }
+    final label = StabiloType.caption.copyWith(fontWeight: FontWeight.w600);
+    return Row(
+      children: [
+        Expanded(
+          child: ok!
+              ? Row(
+                  spacing: 6,
+                  children: [
+                    Container(
+                      width: 18,
+                      height: 18,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: c.accent,
+                        shape: BoxShape.circle,
+                      ),
+                      child: AppIcon(
+                        AppIcons.check,
+                        size: 11,
+                        color: c.onAccent,
+                      ),
+                    ),
+                    Text('Key-nya jalan', style: label.copyWith(color: c.ink)),
+                  ],
+                )
+              : Text(
+                  'Key-nya ditolak OpenRouter',
+                  style: label.copyWith(color: c.danger),
+                ),
+        ),
+        Text('Disimpen di Keychain', style: small),
+      ],
     );
   }
 }
