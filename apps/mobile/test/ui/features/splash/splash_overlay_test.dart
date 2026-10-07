@@ -27,6 +27,12 @@ void main() {
   LumaLogo logo(WidgetTester tester) =>
       tester.widget<LumaLogo>(find.byType(LumaLogo));
 
+  double wordmarkOpacity(WidgetTester tester) => tester
+      .widget<Opacity>(
+        find.ancestor(of: find.byType(Image), matching: find.byType(Opacity)),
+      )
+      .opacity;
+
   testWidgets('disabled: no overlay at all', (tester) async {
     await pumpGate(tester, enabled: false);
     expect(find.byType(SplashOverlay), findsNothing);
@@ -38,7 +44,8 @@ void main() {
   ) async {
     await pumpGate(tester);
     expect(find.byType(SplashOverlay), findsOneWidget);
-    expect(find.text('See beyond the words.'), findsOneWidget);
+    // Wordmark and tagline come after the symbol is drawn, not before.
+    expect(wordmarkOpacity(tester), 0);
 
     // 0 ms: nothing drawn yet, big (128), shadow on (light).
     expect(
@@ -48,25 +55,29 @@ void main() {
     expect(logo(tester).shadow, 1);
     expect(
       tester.getCenter(find.byType(LumaLogo)),
-      const Offset(195, 844 / 2 - 30 - 183 / 2 + 64),
+      const Offset(195, 844 / 2 - 15 - 183 / 2 + 64),
     );
 
     await tester.pump(const Duration(milliseconds: 225));
     expect(logo(tester).draw, inExclusiveRange(0, 1));
     expect(logo(tester).dot, 0);
+    expect(wordmarkOpacity(tester), 0);
 
     await tester.pump(const Duration(milliseconds: 225)); // 450
     expect(logo(tester).draw, 1);
 
     await tester.pump(const Duration(milliseconds: 150)); // 600: popping
     expect(logo(tester).dot, greaterThan(1)); // overshoots to 1.25 first
+    expect(wordmarkOpacity(tester), inExclusiveRange(0, 1)); // rising in
 
     await tester.pump(const Duration(milliseconds: 100)); // 700
     expect(logo(tester).dot, closeTo(1, 0.01));
     expect(logo(tester).size, 128);
+    expect(wordmarkOpacity(tester), closeTo(1, 0.01)); // fully in
 
     await tester.pump(const Duration(milliseconds: 150)); // 850: flying
     expect(logo(tester).size, inExclusiveRange(28, 128));
+    expect(wordmarkOpacity(tester), inExclusiveRange(0, 1)); // fading out
 
     await tester.pump(const Duration(milliseconds: 150)); // 1000: landed
     // Header slot: 24 margin - 3, in the 60pt bar, 28 wide.

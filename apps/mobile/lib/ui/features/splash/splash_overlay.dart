@@ -89,8 +89,9 @@ class _SplashOverlayState extends State<SplashOverlay>
     final screen = MediaQuery.sizeOf(context);
     final top = MediaQuery.paddingOf(context).top;
 
-    // Grup logo (simbol 128 + 18 + wordmark 37) geser 30 ke atas dari tengah.
-    final symbolTop = screen.height / 2 - 30 - 183 / 2;
+    // Grup logo (simbol 128 + 18 + wordmark 37 = 183) di tengah layar, tapi
+    // margin-top −30 di board Splash bikin pusatnya naik 15.
+    final symbolTop = screen.height / 2 - 15 - 183 / 2;
     final start = Offset(screen.width / 2, symbolTop + 64);
     // Mendarat di slot simbol header rak.
     final end = Offset(
@@ -102,9 +103,10 @@ class _SplashOverlayState extends State<SplashOverlay>
       animation: _ctrl,
       builder: (context, _) {
         final ms = _ctrl.value * (_reduced ? 200 : 1000);
+        // Kurva coretan dari board Splash: cubic-bezier(.3, .7, .2, 1).
         final draw = _reduced
             ? 1.0
-            : Curves.easeOut.transform(_span(ms, 0, 450));
+            : const Cubic(.3, .7, .2, 1).transform(_span(ms, 0, 450));
         final pop = _span(ms, 450, 700);
         final dot = _reduced
             ? 1.0
@@ -116,8 +118,11 @@ class _SplashOverlayState extends State<SplashOverlay>
         final leave = _reduced ? 0.0 : _span(ms, 700, 1000);
         final fly = Curves.easeInOut.transform(leave);
         final fade = _reduced ? _span(ms, 0, 200) : leave;
-        final word = _reduced ? 1.0 : 1 - _span(ms, 700, 900);
-        final tagline = _reduced ? 1.0 : pop * word;
+        // Wordmark + tagline naik pelan bareng titik (450–700), terus mudar
+        // pas simbol meluncur. Sebelum simbolnya jadi, belum ada.
+        final word = _reduced
+            ? 1.0
+            : Curves.easeOut.transform(pop) * (1 - leave);
         final size = 128 + (28 - 128) * fly;
         final center = Offset.lerp(start, end, fly)!;
 
@@ -133,7 +138,8 @@ class _SplashOverlayState extends State<SplashOverlay>
               ),
               Positioned(
                 left: start.dx - 103.6 / 2,
-                top: symbolTop + 146,
+                // Naik 8 → 0 pelan bareng fade in.
+                top: symbolTop + 146 + (_reduced ? 0 : 8 * (1 - pop)),
                 width: 103.6,
                 child: Opacity(
                   opacity: word * (1 - (_reduced ? fade : 0)),
@@ -150,7 +156,7 @@ class _SplashOverlayState extends State<SplashOverlay>
                 right: 0,
                 bottom: 58,
                 child: Opacity(
-                  opacity: tagline * (1 - (_reduced ? fade : 0)),
+                  opacity: word * (1 - (_reduced ? fade : 0)),
                   child: Text(
                     'See beyond the words.',
                     textAlign: TextAlign.center,
