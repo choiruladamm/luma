@@ -46,7 +46,7 @@ void main() {
   );
 
   test(
-    'the same group streams in sections ($model)',
+    'The Enchiridion streams in sections, knowing the book ($model)',
     () async {
       final watch = Stopwatch()..start();
       int? first;
@@ -54,11 +54,19 @@ void main() {
           .explainStream(
             apiKey: key,
             model: model,
+            book: (title: 'The Enchiridion', author: 'Epictetus', chapter: 'I'),
             context: const [],
             target: const [
-              'Mr. Bennet replied that he had not.',
-              '"But it is," returned she; "for Mrs. Long has just been here, '
-                  'and she told me all about it."',
+              'Of things some are in our power, and others are not. In our '
+                  'power are opinion, movement towards a thing, desire, '
+                  'aversion (turning from a thing); and in a word, whatever '
+                  'are our own acts: not in our power are the body, property, '
+                  'reputation, offices (magisterial power), and in a word, '
+                  'whatever are not our own acts.',
+              'And the things in our power are by nature free, not subject '
+                  'to restraint nor hindrance: but the things not in our power '
+                  'are weak, slavish, subject to restraint, in the power of '
+                  'others.',
             ],
           )
           .map((p) {
@@ -71,7 +79,7 @@ void main() {
       // ignore: avoid_print
       print(
         '${parts.length} parts, first after ${first}ms, '
-        'all after ${watch.elapsedMilliseconds}ms\n${reply.meaning}',
+        'all after ${watch.elapsedMilliseconds}ms\n${reply.translations.join('\n')}\n— ${reply.meaning}',
       );
     },
     skip: key == null ? 'set OPENROUTER_API_KEY to run' : false,

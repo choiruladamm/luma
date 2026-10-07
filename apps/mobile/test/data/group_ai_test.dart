@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:luma/data/database/app_database.dart';
 import 'package:luma/data/repositories/ai_results_repository.dart';
 import 'package:luma/data/services/openrouter_service.dart';
+import 'package:luma/domain/ai_prompt.dart';
 import 'package:luma/domain/models/ai_model.dart';
 import 'package:luma/domain/models/ai_reply.dart';
 import 'package:luma/domain/models/book.dart';
@@ -144,5 +145,36 @@ void main() {
       ),
     );
     expect(await db.select(db.aiResults).get(), isEmpty);
+  });
+
+  test('the prompt knows the book and chapter', () async {
+    await container.read(groupAiProvider(group(5)).future);
+    expect(ai.calls.single.book, (title: 'Walden', author: null, chapter: 'I'));
+  });
+
+  test('a cached answer from an older prompt is asked again', () async {
+    await db
+        .into(db.aiResults)
+        .insert(
+          AiResultsCompanion.insert(
+            chapterId: chapter,
+            groupIndex: 5,
+            translations: '["lama 6", "lama 7"]',
+            meaning: 'Makna lama.',
+            model: 'm',
+            // promptVersion left out: 1, like rows from before #40
+          ),
+        );
+    final repo = AiResultsRepository(db);
+    expect(await repo.find(group(5)), isNull);
+    // Still a translated group for the margin marks.
+    expect(await repo.watchGroups(chapter).first, {5});
+
+    final fresh = await container.read(groupAiProvider(group(5)).future);
+    expect(fresh.translations, ['id: p6', 'id: p7']);
+    expect(ai.calls, hasLength(1));
+    final row = await db.select(db.aiResults).getSingle(); // overwritten
+    expect(row.promptVersion, aiPromptVersion);
+    expect((await repo.find(group(5)))!.meaning, fresh.meaning);
   });
 }

@@ -29,6 +29,7 @@ class OpenRouterService {
   Future<AiReply> explain({
     required String? apiKey,
     required String model,
+    AiBook? book,
     required List<String> context,
     required List<String> target,
     int attempts = 2,
@@ -37,7 +38,7 @@ class OpenRouterService {
       throw const AiException(AiError.noApiKey);
     }
     for (var attempt = 1; ; attempt++) {
-      final content = await _complete(apiKey, model, context, target);
+      final content = await _complete(apiKey, model, book, context, target);
       try {
         return parseAiReply(content, target.length);
       } on AiException {
@@ -53,6 +54,7 @@ class OpenRouterService {
   Stream<String> explainStream({
     required String? apiKey,
     required String model,
+    AiBook? book,
     required List<String> context,
     required List<String> target,
     CancelToken? cancel,
@@ -63,6 +65,7 @@ class OpenRouterService {
     final res = await _post<ResponseBody>(
       apiKey,
       model,
+      book,
       context,
       target,
       stream: true,
@@ -104,10 +107,11 @@ class OpenRouterService {
   Future<String> _complete(
     String apiKey,
     String model,
+    AiBook? book,
     List<String> context,
     List<String> target,
   ) async {
-    final res = await _post<Object?>(apiKey, model, context, target);
+    final res = await _post<Object?>(apiKey, model, book, context, target);
     final content = switch (res.data) {
       {'choices': [{'message': {'content': final String c}}, ...]} => c,
       _ => null,
@@ -121,6 +125,7 @@ class OpenRouterService {
   Future<Response<T>> _post<T>(
     String apiKey,
     String model,
+    AiBook? book,
     List<String> context,
     List<String> target, {
     bool stream = false,
@@ -142,7 +147,11 @@ class OpenRouterService {
             },
             {
               'role': 'user',
-              'content': aiUserPrompt(context: context, target: target),
+              'content': aiUserPrompt(
+                book: book,
+                context: context,
+                target: target,
+              ),
             },
           ],
           // Token reasoning dihitung output dan bikin lambat: matiin. Model
@@ -160,6 +169,7 @@ class OpenRouterService {
         return _post<T>(
           apiKey,
           model,
+          book,
           context,
           target,
           stream: stream,

@@ -21,6 +21,17 @@ final v2 = [
   ...v1.skip(1),
 ];
 
+/// v3: reading_progress dapet paragraph_offset.
+final v3 = [
+  for (final sql in v2)
+    sql.startsWith('CREATE TABLE "reading_progress"')
+        ? sql.replaceFirst(
+            '"paragraph_index" INTEGER NOT NULL,',
+            '"paragraph_index" INTEGER NOT NULL, "paragraph_offset" REAL NOT NULL DEFAULT 0.0,',
+          )
+        : sql,
+];
+
 AppDatabase _open([void Function(dynamic raw)? setup]) => AppDatabase(
   DatabaseConnection(
     NativeDatabase.memory(setup: setup),
@@ -81,11 +92,15 @@ AppDatabase _old(List<String> schema, int version) => _open((raw) {
     'INSERT INTO reading_progress (book_id, chapter_id, paragraph_index) '
     'VALUES (1, 1, 3)',
   );
+  raw.execute(
+    'INSERT INTO ai_results (chapter_id, group_index, translations, meaning, '
+    "model) VALUES (1, 0, '[\"a\"]', 'm', 'x')",
+  );
   raw.execute('PRAGMA user_version = $version');
 });
 
 void main() {
-  for (final (version, schema) in [(1, v1), (2, v2)]) {
+  for (final (version, schema) in [(1, v1), (2, v2), (3, v3)]) {
     test(
       'v$version → now: same schema as a fresh install, data kept',
       () async {
@@ -104,6 +119,9 @@ void main() {
             .getSingle();
         expect(progress.paragraphIndex, 3);
         expect(progress.paragraphOffset, 0.0);
+        // Translations from before #40 count as the old prompt.
+        final cached = await migrated.select(migrated.aiResults).getSingle();
+        expect(cached.promptVersion, 1);
         expect(await _shape(migrated), await _shape(fresh));
       },
     );

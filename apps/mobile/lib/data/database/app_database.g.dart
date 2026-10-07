@@ -2066,6 +2066,18 @@ class $AiResultsTable extends AiResults
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _promptVersionMeta = const VerificationMeta(
+    'promptVersion',
+  );
+  @override
+  late final GeneratedColumn<int> promptVersion = GeneratedColumn<int>(
+    'prompt_version',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -2085,6 +2097,7 @@ class $AiResultsTable extends AiResults
     translations,
     meaning,
     model,
+    promptVersion,
     createdAt,
   ];
   @override
@@ -2142,6 +2155,15 @@ class $AiResultsTable extends AiResults
     } else if (isInserting) {
       context.missing(_modelMeta);
     }
+    if (data.containsKey('prompt_version')) {
+      context.handle(
+        _promptVersionMeta,
+        promptVersion.isAcceptableOrUnknown(
+          data['prompt_version']!,
+          _promptVersionMeta,
+        ),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -2177,6 +2199,10 @@ class $AiResultsTable extends AiResults
         DriftSqlType.string,
         data['${effectivePrefix}model'],
       )!,
+      promptVersion: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}prompt_version'],
+      )!,
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -2200,6 +2226,10 @@ class AiResult extends DataClass implements Insertable<AiResult> {
   /// Satu penjelasan buat seluruh grup.
   final String meaning;
   final String model;
+
+  /// `aiPromptVersion` waktu dibikin. Lebih lama dari yang sekarang = dianggap
+  /// belum ada, diterjemahin ulang pas grupnya dibuka.
+  final int promptVersion;
   final DateTime createdAt;
   const AiResult({
     required this.chapterId,
@@ -2207,6 +2237,7 @@ class AiResult extends DataClass implements Insertable<AiResult> {
     required this.translations,
     required this.meaning,
     required this.model,
+    required this.promptVersion,
     required this.createdAt,
   });
   @override
@@ -2217,6 +2248,7 @@ class AiResult extends DataClass implements Insertable<AiResult> {
     map['translations'] = Variable<String>(translations);
     map['meaning'] = Variable<String>(meaning);
     map['model'] = Variable<String>(model);
+    map['prompt_version'] = Variable<int>(promptVersion);
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
   }
@@ -2228,6 +2260,7 @@ class AiResult extends DataClass implements Insertable<AiResult> {
       translations: Value(translations),
       meaning: Value(meaning),
       model: Value(model),
+      promptVersion: Value(promptVersion),
       createdAt: Value(createdAt),
     );
   }
@@ -2243,6 +2276,7 @@ class AiResult extends DataClass implements Insertable<AiResult> {
       translations: serializer.fromJson<String>(json['translations']),
       meaning: serializer.fromJson<String>(json['meaning']),
       model: serializer.fromJson<String>(json['model']),
+      promptVersion: serializer.fromJson<int>(json['promptVersion']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
   }
@@ -2255,6 +2289,7 @@ class AiResult extends DataClass implements Insertable<AiResult> {
       'translations': serializer.toJson<String>(translations),
       'meaning': serializer.toJson<String>(meaning),
       'model': serializer.toJson<String>(model),
+      'promptVersion': serializer.toJson<int>(promptVersion),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
   }
@@ -2265,6 +2300,7 @@ class AiResult extends DataClass implements Insertable<AiResult> {
     String? translations,
     String? meaning,
     String? model,
+    int? promptVersion,
     DateTime? createdAt,
   }) => AiResult(
     chapterId: chapterId ?? this.chapterId,
@@ -2272,6 +2308,7 @@ class AiResult extends DataClass implements Insertable<AiResult> {
     translations: translations ?? this.translations,
     meaning: meaning ?? this.meaning,
     model: model ?? this.model,
+    promptVersion: promptVersion ?? this.promptVersion,
     createdAt: createdAt ?? this.createdAt,
   );
   AiResult copyWithCompanion(AiResultsCompanion data) {
@@ -2285,6 +2322,9 @@ class AiResult extends DataClass implements Insertable<AiResult> {
           : this.translations,
       meaning: data.meaning.present ? data.meaning.value : this.meaning,
       model: data.model.present ? data.model.value : this.model,
+      promptVersion: data.promptVersion.present
+          ? data.promptVersion.value
+          : this.promptVersion,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
   }
@@ -2297,6 +2337,7 @@ class AiResult extends DataClass implements Insertable<AiResult> {
           ..write('translations: $translations, ')
           ..write('meaning: $meaning, ')
           ..write('model: $model, ')
+          ..write('promptVersion: $promptVersion, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
@@ -2309,6 +2350,7 @@ class AiResult extends DataClass implements Insertable<AiResult> {
     translations,
     meaning,
     model,
+    promptVersion,
     createdAt,
   );
   @override
@@ -2320,6 +2362,7 @@ class AiResult extends DataClass implements Insertable<AiResult> {
           other.translations == this.translations &&
           other.meaning == this.meaning &&
           other.model == this.model &&
+          other.promptVersion == this.promptVersion &&
           other.createdAt == this.createdAt);
 }
 
@@ -2329,6 +2372,7 @@ class AiResultsCompanion extends UpdateCompanion<AiResult> {
   final Value<String> translations;
   final Value<String> meaning;
   final Value<String> model;
+  final Value<int> promptVersion;
   final Value<DateTime> createdAt;
   final Value<int> rowid;
   const AiResultsCompanion({
@@ -2337,6 +2381,7 @@ class AiResultsCompanion extends UpdateCompanion<AiResult> {
     this.translations = const Value.absent(),
     this.meaning = const Value.absent(),
     this.model = const Value.absent(),
+    this.promptVersion = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -2346,6 +2391,7 @@ class AiResultsCompanion extends UpdateCompanion<AiResult> {
     required String translations,
     required String meaning,
     required String model,
+    this.promptVersion = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : chapterId = Value(chapterId),
@@ -2359,6 +2405,7 @@ class AiResultsCompanion extends UpdateCompanion<AiResult> {
     Expression<String>? translations,
     Expression<String>? meaning,
     Expression<String>? model,
+    Expression<int>? promptVersion,
     Expression<DateTime>? createdAt,
     Expression<int>? rowid,
   }) {
@@ -2368,6 +2415,7 @@ class AiResultsCompanion extends UpdateCompanion<AiResult> {
       if (translations != null) 'translations': translations,
       if (meaning != null) 'meaning': meaning,
       if (model != null) 'model': model,
+      if (promptVersion != null) 'prompt_version': promptVersion,
       if (createdAt != null) 'created_at': createdAt,
       if (rowid != null) 'rowid': rowid,
     });
@@ -2379,6 +2427,7 @@ class AiResultsCompanion extends UpdateCompanion<AiResult> {
     Value<String>? translations,
     Value<String>? meaning,
     Value<String>? model,
+    Value<int>? promptVersion,
     Value<DateTime>? createdAt,
     Value<int>? rowid,
   }) {
@@ -2388,6 +2437,7 @@ class AiResultsCompanion extends UpdateCompanion<AiResult> {
       translations: translations ?? this.translations,
       meaning: meaning ?? this.meaning,
       model: model ?? this.model,
+      promptVersion: promptVersion ?? this.promptVersion,
       createdAt: createdAt ?? this.createdAt,
       rowid: rowid ?? this.rowid,
     );
@@ -2411,6 +2461,9 @@ class AiResultsCompanion extends UpdateCompanion<AiResult> {
     if (model.present) {
       map['model'] = Variable<String>(model.value);
     }
+    if (promptVersion.present) {
+      map['prompt_version'] = Variable<int>(promptVersion.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -2428,6 +2481,7 @@ class AiResultsCompanion extends UpdateCompanion<AiResult> {
           ..write('translations: $translations, ')
           ..write('meaning: $meaning, ')
           ..write('model: $model, ')
+          ..write('promptVersion: $promptVersion, ')
           ..write('createdAt: $createdAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -4638,6 +4692,7 @@ typedef $$AiResultsTableCreateCompanionBuilder = AiResultsCompanion Function({
   required String translations,
   required String meaning,
   required String model,
+  Value<int> promptVersion,
   Value<DateTime> createdAt,
   Value<int> rowid,
 });
@@ -4647,6 +4702,7 @@ typedef $$AiResultsTableUpdateCompanionBuilder = AiResultsCompanion Function({
   Value<String> translations,
   Value<String> meaning,
   Value<String> model,
+  Value<int> promptVersion,
   Value<DateTime> createdAt,
   Value<int> rowid,
 });
@@ -4699,6 +4755,11 @@ class $$AiResultsTableFilterComposer
 
   ColumnFilters<String> get model => $composableBuilder(
     column: $table.model,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get promptVersion => $composableBuilder(
+    column: $table.promptVersion,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4760,6 +4821,11 @@ class $$AiResultsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get promptVersion => $composableBuilder(
+    column: $table.promptVersion,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -4813,6 +4879,11 @@ class $$AiResultsTableAnnotationComposer
 
   GeneratedColumn<String> get model =>
       $composableBuilder(column: $table.model, builder: (column) => column);
+
+  GeneratedColumn<int> get promptVersion => $composableBuilder(
+    column: $table.promptVersion,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
@@ -4874,6 +4945,7 @@ class $$AiResultsTableTableManager
                 Value<String> translations = const Value.absent(),
                 Value<String> meaning = const Value.absent(),
                 Value<String> model = const Value.absent(),
+                Value<int> promptVersion = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => AiResultsCompanion(
@@ -4882,6 +4954,7 @@ class $$AiResultsTableTableManager
                 translations: translations,
                 meaning: meaning,
                 model: model,
+                promptVersion: promptVersion,
                 createdAt: createdAt,
                 rowid: rowid,
               ),
@@ -4892,6 +4965,7 @@ class $$AiResultsTableTableManager
                 required String translations,
                 required String meaning,
                 required String model,
+                Value<int> promptVersion = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => AiResultsCompanion.insert(
@@ -4900,6 +4974,7 @@ class $$AiResultsTableTableManager
                 translations: translations,
                 meaning: meaning,
                 model: model,
+                promptVersion: promptVersion,
                 createdAt: createdAt,
                 rowid: rowid,
               ),

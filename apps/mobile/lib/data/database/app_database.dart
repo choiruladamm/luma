@@ -104,6 +104,10 @@ class AiResults extends Table {
   /// Satu penjelasan buat seluruh grup.
   TextColumn get meaning => text()();
   TextColumn get model => text()();
+
+  /// `aiPromptVersion` waktu dibikin. Lebih lama dari yang sekarang = dianggap
+  /// belum ada, diterjemahin ulang pas grupnya dibuka.
+  IntColumn get promptVersion => integer().withDefault(const Constant(1))();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 
   @override
@@ -131,7 +135,7 @@ class AppDatabase extends _$AppDatabase {
   // test/data/migration_test.dart. Backup dari versi lama ikut dimigrasi pas
   // di-restore.
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -142,6 +146,9 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 3) {
         await m.addColumn(readingProgress, readingProgress.paragraphOffset);
+      }
+      if (from < 4) {
+        await m.addColumn(aiResults, aiResults.promptVersion);
       }
     },
     // SQLite matiin foreign key secara default; cascade butuh ini.

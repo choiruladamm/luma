@@ -60,6 +60,7 @@ final groupAiProvider = FutureProvider.autoDispose.family<AiReply, GroupRef>((
   final reply = await ai.explain(
     apiKey: await keys.read(),
     model: model,
+    book: text.book,
     context: text.context,
     target: text.target,
   );
@@ -177,6 +178,7 @@ class GroupAiStream extends Notifier<AiStream> {
       await for (final delta in ai.explainStream(
         apiKey: apiKey,
         model: model,
+        book: text.book,
         context: text.context,
         target: text.target,
         cancel: run.cancel,
@@ -210,6 +212,7 @@ class GroupAiStream extends Notifier<AiStream> {
         reply = await ai.explain(
           apiKey: apiKey,
           model: model,
+          book: text.book,
           context: text.context,
           target: text.target,
           attempts: 1,

@@ -218,6 +218,11 @@ void main() {
         service.explainStream(
           apiKey: key,
           model: 'z-ai/glm-5.3-flash',
+          book: (
+            title: 'Meditations',
+            author: 'Marcus Aurelius',
+            chapter: 'II',
+          ),
           context: ['Before.'],
           target: ['One.', 'Two.'],
         );
@@ -249,6 +254,8 @@ void main() {
       expect(body['reasoning'], {'enabled': false});
       final system = ((body['messages'] as List)[0] as Map)['content'];
       expect(system, contains('[MAKNA]'));
+      final user = ((body['messages'] as List)[1] as Map)['content'] as String;
+      expect(user, startsWith('BUKU: Meditations, Marcus Aurelius\nBAB: II\n'));
     });
 
     test('non-ASCII split across chunks survives', () async {

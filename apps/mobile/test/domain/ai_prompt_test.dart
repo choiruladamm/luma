@@ -57,6 +57,32 @@ void main() {
     expect(aiUserPrompt(context: [], target: ['T1']), 'TARGET:\n[1] T1');
   });
 
+  test('user prompt: the book and chapter come first; no author, no line', () {
+    expect(
+      aiUserPrompt(
+        book: (title: 'The Enchiridion', author: 'Epictetus', chapter: 'I'),
+        context: [],
+        target: ['T1'],
+      ),
+      'BUKU: The Enchiridion, Epictetus\nBAB: I\n\nTARGET:\n[1] T1',
+    );
+    expect(
+      aiUserPrompt(
+        book: (title: 'Walden', author: '  ', chapter: ''),
+        context: ['C'],
+        target: ['T1'],
+      ),
+      'BUKU: Walden\n\nKONTEKS (paragraf sebelumnya):\nC\n\nTARGET:\n[1] T1',
+    );
+  });
+
+  test('both system prompts carry the style rules', () {
+    for (final p in [aiSystemPrompt, aiStreamSystemPrompt]) {
+      expect(p, contains('BUKU dan BAB'));
+      expect(p, contains('bahasanya kuno'));
+    }
+  });
+
   group('parseAiDraft (streaming)', () {
     const full = '[T1]\nSatu dua.\n[T2]\nTiga.\n[MAKNA]\nGitu deh.';
 

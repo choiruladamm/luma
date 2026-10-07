@@ -2,11 +2,16 @@ import 'dart:convert';
 
 import 'models/ai_reply.dart';
 
+/// Naik tiap prompt berubah: cache `ai_results` dari versi lebih lama
+/// dianggap belum ada, jadi grupnya diterjemahin ulang pas dibuka.
+/// 1 = prompt awal, 2 = kenal buku + aturan gaya (#40).
+const aiPromptVersion = 2;
+
 /// Tugas yang sama buat dua format jawaban (docs bagian 9, draft prompt).
 const _aiTask = '''
 Kamu adalah asisten membaca. Pengguna sedang membaca buku berbahasa Inggris
 dan ingin memahami bagian TARGET, yang terdiri dari satu atau beberapa
-paragraf bernomor.
+paragraf bernomor. BUKU dan BAB memberi tahu buku apa yang sedang dibaca.
 
 Tugas:
 1. Terjemahkan SETIAP paragraf TARGET ke Bahasa Indonesia yang natural,
@@ -16,7 +21,22 @@ Tugas:
    Indonesia yang santai, kayak jelasin ke temen: apa maksud penulis,
    kaitannya dengan konteks sebelumnya, dan istilah sulit kalau ada.
 
+Cara menerjemahkan:
+- Pakai BUKU dan BAB untuk memahami konteks: siapa penulisnya, zamannya,
+  dan aliran pemikirannya.
+- Teks sumber sering terjemahan Inggris lama yang bahasanya kuno. Pahami
+  maksudnya, lalu tulis ulang dalam Bahasa Indonesia modern yang enak
+  dibaca. Jangan kaku dan jangan kata per kata, tapi maksudnya jangan
+  bergeser.
+- Istilah kunci (konsep filsafat, nama tokoh, tempat) tetap dipakai; kalau
+  perlu, jelaskan singkat di bagian makna.
+- Makna menjelaskan maksud penulis dan kaitannya dengan gagasan besar buku
+  atau penulisnya, bukan mengulang terjemahan.
+
 KONTEKS hanya untuk membantu pemahaman, jangan diterjemahkan.''';
+
+/// Buku yang lagi dibaca, buat prompt: judul, penulis (bisa kosong), bab.
+typedef AiBook = ({String title, String? author, String chapter});
 
 /// Prompt sistem, jawaban JSON (jalur tanpa streaming).
 const aiSystemPrompt =
@@ -41,16 +61,25 @@ terjemahan paragraf 2
 [MAKNA]
 penjelasan makna''';
 
-/// Pesan user: paragraf konteks (kalau ada) + TARGET bernomor.
+/// Pesan user: buku + bab (kalau ada), paragraf konteks (kalau ada), terus
+/// TARGET bernomor.
 String aiUserPrompt({
+  AiBook? book,
   required List<String> context,
   required List<String> target,
 }) => [
+  if (book != null) ...[
+    'BUKU: ${book.title}${_filled(book.author) ? ', ${book.author!.trim()}' : ''}',
+    if (_filled(book.chapter)) 'BAB: ${book.chapter.trim()}',
+    '',
+  ],
   if (context.isNotEmpty)
     'KONTEKS (paragraf sebelumnya):\n${context.join('\n\n')}\n',
   'TARGET:',
   for (final (i, p) in target.indexed) '[${i + 1}] $p',
 ].join('\n');
+
+bool _filled(String? s) => s != null && s.trim().isNotEmpty;
 
 /// Baca jawaban LLM: buang code fence / teks di luar objek JSON, terus cek
 /// jumlah terjemahan = [expected]. Gagal → [AiError.invalidResponse].

@@ -272,6 +272,7 @@ Unique key: `(chapterId, paragraphIndex)`. Index tambahan: `(chapterId, groupInd
 | translations | text | JSON array string, satu item per paragraf di grup (urut) |
 | meaning | text | Satu penjelasan untuk seluruh grup |
 | model | text | Model yang dipakai |
+| promptVersion | int (default 1) | `aiPromptVersion` waktu dibikin. Lebih lama dari yang sekarang = dianggap belum ada (`find` balikin null), grupnya diterjemahin ulang pas dibuka dan barisnya ditimpa. Penanda di margin & hitungan di Pengaturan tetap ngitung semua baris |
 | createdAt | datetime | |
 
 Unique key: `(chapterId, groupIndex)`.
@@ -285,6 +286,7 @@ Unique key: `(chapterId, groupIndex)`.
 | 1 | Awal |
 | 2 | `books.firstOpenedAt`, `books.readingSeconds` |
 | 3 | `reading_progress.paragraphOffset` |
+| 4 | `ai_results.promptVersion` (baris lama = 1, prompt sebelum #40) |
 
 Tiap ubah tabel: naikkan `schemaVersion`, tambah langkah di `onUpgrade`, dan test migrasi dari versi sebelumnya (data tetap utuh, schema hasil migrasi sama dengan install baru). Restore backup dari schema lama ikut dimigrasi saat database dibuka (bagian 10).
 
@@ -513,12 +515,14 @@ Estimasi: ~800 token input + ~400 token output per tap → dengan GLM 5.3 Flash 
 
 ### Draft prompt
 
-**System:**
+Versi prompt: `aiPromptVersion` (sekarang **2**: kenal buku + aturan gaya, #40). Tiap isi prompt berubah, naikin angka ini: terjemahan yang dibikin pakai prompt lama diterjemahin ulang pas grupnya dibuka (`ai_results.promptVersion`).
+
+**System** (bagian tugas sama buat dua format; penutupnya beda):
 
 ```
 Kamu adalah asisten membaca. Pengguna sedang membaca buku berbahasa Inggris
 dan ingin memahami bagian TARGET, yang terdiri dari satu atau beberapa
-paragraf bernomor.
+paragraf bernomor. BUKU dan BAB memberi tahu buku apa yang sedang dibaca.
 
 Tugas:
 1. Terjemahkan SETIAP paragraf TARGET ke Bahasa Indonesia yang natural,
@@ -528,15 +532,47 @@ Tugas:
    Indonesia yang santai, kayak jelasin ke temen: apa maksud penulis,
    kaitannya dengan konteks sebelumnya, dan istilah sulit kalau ada.
 
-KONTEKS hanya untuk membantu pemahaman, jangan diterjemahkan.
+Cara menerjemahkan:
+- Pakai BUKU dan BAB untuk memahami konteks: siapa penulisnya, zamannya,
+  dan aliran pemikirannya.
+- Teks sumber sering terjemahan Inggris lama yang bahasanya kuno. Pahami
+  maksudnya, lalu tulis ulang dalam Bahasa Indonesia modern yang enak
+  dibaca. Jangan kaku dan jangan kata per kata, tapi maksudnya jangan
+  bergeser.
+- Istilah kunci (konsep filsafat, nama tokoh, tempat) tetap dipakai; kalau
+  perlu, jelaskan singkat di bagian makna.
+- Makna menjelaskan maksud penulis dan kaitannya dengan gagasan besar buku
+  atau penulisnya, bukan mengulang terjemahan.
 
+KONTEKS hanya untuk membantu pemahaman, jangan diterjemahkan.
+```
+
+Penutup JSON (`aiSystemPrompt`, jalur tanpa streaming / retry):
+
+```
 Balas HANYA dengan JSON, tanpa teks lain:
 {"translations": ["...", "..."], "meaning": "..."}
+```
+
+Penutup bersection (`aiStreamSystemPrompt`, streaming):
+
+```
+Balas HANYA dengan format ini, tanpa teks lain, tanpa markdown. Tiap
+penanda di baris sendiri:
+[T1]
+terjemahan paragraf 1
+[T2]
+terjemahan paragraf 2
+[MAKNA]
+penjelasan makna
 ```
 
 **User:**
 
 ```
+BUKU: {judul}, {penulis}
+BAB: {judul_bab}
+
 KONTEKS (paragraf sebelumnya):
 {paragraf_konteks}
 
@@ -546,7 +582,11 @@ TARGET:
 ...
 ```
 
-> Sesuaikan prompt dengan cara bertanya ke Gemini yang selama ini sudah terbukti cocok.
+Penulis kosong → `BUKU: {judul}` aja; judul bab kosong → baris BAB gak ada; grup pertama bab → gak ada KONTEKS. Data dari `books.title`, `books.author`, `chapters.title` (gak perlu re-import).
+
+Contoh (`make live`, GLM 5.3 Flash, The Enchiridion bab I): makna langsung nyambung ke Stoisisme Epictetus ("pisahkan mana yang bisa kamu kendalikan...") dan istilah kunci dipertahankan.
+
+Belum dikerjain (diputusin dari #28): brief + glosarium otomatis per buku, catatan manual per buku.
 
 ### Evaluasi model
 
@@ -625,7 +665,7 @@ luma-backup-20261006-2130.zip
    - `luma.sqlite` bisa dibuka
 4. Tampilkan ringkasan: jumlah buku, jumlah terjemahan, tanggal backup
 5. Konfirmasi: "Semua data di Luma sekarang bakal diganti. Lanjut?"
-6. Tutup koneksi Drift → ganti file database + folder `books/` & `covers/` → buka lagi database (migrasi Drift otomatis jalan kalau backup dari schema lama)
+6. Tutup koneksi Drift → ganti file database + folder `books/` & `covers/` → buka lagi database (migrasi Drift otomatis jalan kalau backup dari schema lama). Backup dari sebelum schema 4: terjemahannya jadi `promptVersion` 1, diterjemahin ulang pas grupnya dibuka
 7. Invalidate provider Riverpod (atau restart ke Rak)
 8. Gagal di langkah mana pun → hapus folder sementara, data lama tetap utuh
 

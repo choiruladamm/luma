@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 
 import 'package:luma/data/repositories/settings_repository.dart';
 import 'package:luma/data/services/openrouter_service.dart';
+import 'package:luma/domain/ai_prompt.dart';
 import 'package:luma/domain/models/ai_model.dart';
 import 'package:luma/domain/models/ai_reply.dart';
 import 'package:luma/domain/models/backup.dart';
@@ -143,6 +144,7 @@ class FakeOpenRouter implements OpenRouterService {
         ({
           String? apiKey,
           String model,
+          AiBook? book,
           List<String> context,
           List<String> target,
         })
@@ -161,11 +163,18 @@ class FakeOpenRouter implements OpenRouterService {
   Future<AiReply> explain({
     required String? apiKey,
     required String model,
+    AiBook? book,
     required List<String> context,
     required List<String> target,
     int attempts = 2,
   }) async {
-    calls.add((apiKey: apiKey, model: model, context: context, target: target));
+    calls.add((
+      apiKey: apiKey,
+      model: model,
+      book: book,
+      context: context,
+      target: target,
+    ));
     if (apiKey == null) throw const AiException(AiError.noApiKey);
     if (failure != null) throw failure!;
     return AiReply(
@@ -180,17 +189,20 @@ class FakeOpenRouter implements OpenRouterService {
   /// lewat `yield*` gak pernah nyampe di bawah `fakeAsync`.
   StreamController<String>? stream;
   final streamCalls = <List<String>>[];
+  final streamBooks = <AiBook?>[];
   CancelToken? lastCancel;
 
   @override
   Stream<String> explainStream({
     required String? apiKey,
     required String model,
+    AiBook? book,
     required List<String> context,
     required List<String> target,
     CancelToken? cancel,
   }) {
     streamCalls.add(target);
+    streamBooks.add(book);
     lastCancel = cancel;
     if (apiKey == null) {
       return Stream.error(const AiException(AiError.noApiKey));

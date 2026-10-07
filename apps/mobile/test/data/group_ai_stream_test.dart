@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:luma/data/repositories/ai_results_repository.dart';
 import 'package:luma/data/repositories/settings_repository.dart';
 import 'package:luma/data/services/openrouter_service.dart';
+import 'package:luma/domain/ai_prompt.dart';
 import 'package:luma/domain/models/ai_reply.dart';
 import 'package:luma/ui/features/reader/view_models/reader_view_model.dart';
 
@@ -27,10 +28,12 @@ class FakeCache implements AiResultsRepository {
   }) async => saved[group] = reply;
 
   @override
-  Future<({List<String> target, List<String> context})> promptText(
-    GroupRef group, {
-    int contextCount = 3,
-  }) async => (target: ['Hello there.', 'Bye.'], context: ['Before.']);
+  Future<({AiBook? book, List<String> target, List<String> context})>
+  promptText(GroupRef group, {int contextCount = 3}) async => (
+    book: (title: 'Meditations', author: 'Marcus Aurelius', chapter: 'II'),
+    target: ['Hello there.', 'Bye.'],
+    context: ['Before.'],
+  );
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
@@ -93,6 +96,10 @@ void main() {
       open(async);
       expect(now().phase, AiPhase.waiting);
       expect(now().sources, [12, 4]); // placeholder sizes from the original
+      expect(
+        ai.streamBooks.single?.title,
+        'Meditations',
+      ); // the book rides along
 
       c.add('[T1]\nHalo ');
       async.flushMicrotasks();
