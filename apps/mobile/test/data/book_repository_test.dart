@@ -183,4 +183,106 @@ void main() {
     expect(end.translated, 3);
     expect(await repo.bookEnd(999), isNull);
   });
+
+  group('shelf progress', () {
+    // Two chapters: 20 chars (10 + 10) then 80 chars (30 + 50), 100 total.
+    late int bookId, first, second;
+    setUp(() async {
+      bookId = await add('Walden');
+      await (db.update(db.books)..where((b) => b.id.equals(bookId))).write(
+        const BooksCompanion(totalChars: Value(100)),
+      );
+      Future<int> chapter(int order, int offset, List<int> lengths) async {
+        final id = await db
+            .into(db.chapters)
+            .insert(
+              ChaptersCompanion.insert(
+                bookId: bookId,
+                sortOrder: order,
+                title: 'C$order',
+                charOffset: offset,
+              ),
+            );
+        for (final (i, n) in lengths.indexed) {
+          await db
+              .into(db.paragraphs)
+              .insert(
+                ParagraphsCompanion.insert(
+                  chapterId: id,
+                  paragraphIndex: i,
+                  groupIndex: Value(i),
+                  type: ParagraphType.paragraph,
+                  content: 'x' * n,
+                ),
+              );
+        }
+        return id;
+      }
+
+      first = await chapter(0, 0, [10, 10]);
+      second = await chapter(1, 20, [30, 50]);
+    });
+
+    Future<ShelfBook> shelfBook() async =>
+        (await BookRepository(db).watchShelf().first).single;
+
+    Future<void> readAt(int chapterId, int index, double offset) => db
+        .into(db.readingProgress)
+        .insertOnConflictUpdate(
+          ReadingProgressCompanion.insert(
+            bookId: Value(bookId),
+            chapterId: chapterId,
+            paragraphIndex: index,
+            paragraphOffset: Value(offset),
+          ),
+        );
+
+    test('no saved position: 0%, chapter 1', () async {
+      final b = await shelfBook();
+      expect(
+        (b.progress, b.finished, b.chapter, b.chapterCount),
+        (0, false, 1, 2),
+      );
+    });
+
+    test(
+      'chars before the chapter + before the paragraph + the part read',
+      () async {
+        await readAt(second, 1, 0.5); // 20 + 30 + 25
+        final b = await shelfBook();
+        expect(b.progress, 0.75);
+        expect((b.finished, b.chapter, b.chapterCount), (false, 2, 2));
+
+        await readAt(first, 1, 0); // 10 of 100
+        final c = await shelfBook();
+        expect(c.progress, 0.1);
+        expect(c.chapter, 1);
+      },
+    );
+
+    test(
+      'the end of the last paragraph of the last chapter is finished',
+      () async {
+        await readAt(second, 1, 1);
+        final b = await shelfBook();
+        expect((b.progress, b.finished), (1, true));
+
+        // End of an earlier chapter, or a paragraph that is not the last: no.
+        await readAt(first, 1, 1);
+        expect((await shelfBook()).finished, isFalse);
+        await readAt(second, 0, 1);
+        expect((await shelfBook()).finished, isFalse);
+      },
+    );
+
+    test('saving a position re-emits the shelf', () async {
+      final emissions = BookRepository(db)
+          .watchShelf()
+          .map((s) => s.single.progress);
+      final expectation = expectLater(emissions, emitsInOrder([0, 0.75]));
+      await pumpEventQueue();
+      await readAt(second, 1, 0.5);
+      await expectation;
+    });
+  });
 }

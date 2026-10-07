@@ -43,6 +43,8 @@ class StabiloColors extends ThemeExtension<StabiloColors> {
     required this.bannerTile,
     required this.bannerButton,
     required this.onBannerButton,
+    required this.continueInk2,
+    required this.continueTrack,
   });
 
   // Permukaan
@@ -69,6 +71,9 @@ class StabiloColors extends ThemeExtension<StabiloColors> {
   final Color scrimSoft, segment;
   // ReminderBanner (pink): kotak ikon & tombol di atas pink.
   final Color bannerTile, bannerButton, onBannerButton;
+  // ContinueCard: teks kedua (bab) & alur progres. Terang di atas accent,
+  // gelap di atas muted.
+  final Color continueInk2, continueTrack;
 
   static const light = StabiloColors(
     canvas: Color(0xFFFFFBEF),
@@ -107,6 +112,8 @@ class StabiloColors extends ThemeExtension<StabiloColors> {
     bannerTile: Color(0xB3FFFDF6), // 70%
     bannerButton: Color(0xFFFFFDF6),
     onBannerButton: Color(0xFF1A1A1A),
+    continueInk2: Color(0xFF3D3A2A),
+    continueTrack: Color(0x241A1A1A), // 14%
   );
 
   static const dark = StabiloColors(
@@ -146,6 +153,8 @@ class StabiloColors extends ThemeExtension<StabiloColors> {
     bannerTile: Color(0x2E22201C), // 18%
     bannerButton: Color(0xFF22201C),
     onBannerButton: Color(0xFFF3EBD3),
+    continueInk2: Color(0xFFA19B8E),
+    continueTrack: Color(0xFF46423A),
   );
 
   // Token gak pernah diubah per widget; set baru = konstanta baru.

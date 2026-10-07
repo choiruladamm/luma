@@ -26,6 +26,7 @@ import '../../settings/view_models/backup_view_model.dart';
 import '../../settings/views/backup_listener.dart';
 import '../view_models/bookshelf_view_model.dart';
 import 'backup_reminder.dart';
+import 'continue_card.dart';
 
 /// Rak buku (board 01 Rak kosong, 02 Rak) + alur import (board 13–18).
 class BookshelfView extends ConsumerStatefulWidget {
@@ -246,6 +247,12 @@ class _Shelf extends ConsumerWidget {
   final Widget header;
   final List<ShelfBook> books;
 
+  /// Buku terakhir dibuka yang belum kelar, buat kartu "Lanjut baca yuk".
+  ShelfBook? get resume {
+    final first = books.firstOrNull;
+    return first != null && first.opened && !first.finished ? first : null;
+  }
+
   /// Nama file yang lagi diimport: kartu "Lagi diproses" di depan.
   final String? importing;
 
@@ -264,7 +271,18 @@ class _Shelf extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               header,
-              const SizedBox(height: Space.s4 + Space.s1),
+              if (resume != null) ...[
+                const SizedBox(height: Space.s4),
+                ContinueCard(
+                  book: resume!,
+                  coverFile: resume!.coverName == null
+                      ? null
+                      : ref.read(fileStorageProvider).cover(resume!.coverName!),
+                  onTap: () => context.push(Routes.reader(resume!.id)),
+                ),
+                const SizedBox(height: Space.s2),
+              ] else
+                const SizedBox(height: Space.s4 + Space.s1),
               SizedBox(
                 height: Layout.touch,
                 child: Align(
@@ -336,10 +354,9 @@ class _Shelf extends ConsumerWidget {
                                 : ref
                                       .read(fileStorageProvider)
                                       .cover(book.coverName!),
-                            // Progres & "Kelar!" nyusul di #15.
-                            progress: 0,
+                            progress: book.progress,
                             opened: book.opened,
-                            finished: false,
+                            finished: book.finished,
                             onTap: () => context.push(Routes.reader(book.id)),
                           );
                         },

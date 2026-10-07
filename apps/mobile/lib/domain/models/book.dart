@@ -16,6 +16,10 @@ class ShelfBook {
     required this.coverName,
     required this.opened,
     required this.createdAt,
+    this.progress = 0,
+    this.finished = false,
+    this.chapter = 1,
+    this.chapterCount = 1,
   });
 
   final int id;
@@ -30,6 +34,16 @@ class ShelfBook {
 
   /// Kapan diimport.
   final DateTime createdAt;
+
+  /// Persentase baca 0..1 dari posisi tersimpan (docs bagian 8).
+  final double progress;
+
+  /// Posisi tersimpan di ujung paragraf terakhir bab terakhir: layar akhir
+  /// buku udah kebuka.
+  final bool finished;
+
+  /// Bab posisi tersimpan (urutan 1-based) dari [chapterCount] bab.
+  final int chapter, chapterCount;
 }
 
 class ChapterInfo {

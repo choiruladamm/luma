@@ -22,6 +22,10 @@ ShelfBook book(
   String title, {
   bool opened = false,
   DateTime? created,
+  double progress = 0,
+  bool finished = false,
+  int chapter = 1,
+  int chapterCount = 1,
 }) => ShelfBook(
   id: id,
   title: title,
@@ -29,6 +33,10 @@ ShelfBook book(
   coverName: null,
   opened: opened,
   createdAt: created ?? DateTime(2026, 10, 1),
+  progress: progress,
+  finished: finished,
+  chapter: chapter,
+  chapterCount: chapterCount,
 );
 
 /// Backup that never finishes: keeps the progress sheet up.
@@ -142,6 +150,52 @@ void main() {
     await tester.tap(find.bySemanticsLabel('Pengaturan app'));
     await tester.pumpAndSettle();
     expect(find.byType(SettingsView), findsOneWidget);
+  });
+
+  group('continue card', () {
+    for (final b in Brightness.values) {
+      testWidgets('last opened book: chapter and percent ($b)', (tester) async {
+        await pump(tester, [
+          book(
+            2,
+            'Walden',
+            opened: true,
+            progress: 0.489,
+            chapter: 3,
+            chapterCount: 12,
+          ),
+          book(1, 'Meditations'),
+        ], brightness: b);
+        expect(find.text('Lanjut baca yuk →'), findsOneWidget);
+        expect(find.text('Bab 3 dari 12'), findsOneWidget);
+        // Card + tile: same rounding as the sticker.
+        expect(find.text('48%'), findsNWidgets(2));
+        expect(find.text('Walden'), findsNWidgets(2));
+        expect(tester.takeException(), isNull);
+      });
+    }
+
+    testWidgets('tapping it opens the reader', (tester) async {
+      await pump(tester, [book(2, 'Walden', opened: true, progress: 0.2)]);
+      await tester.tap(find.text('Lanjut baca yuk →'));
+      await tester.pumpAndSettle();
+      expect(find.byType(ReaderView), findsOneWidget);
+    });
+
+    testWidgets('no card when the first book was never opened', (tester) async {
+      await pump(tester, [book(1, 'Meditations')]);
+      expect(find.text('Lanjut baca yuk →'), findsNothing);
+    });
+
+    testWidgets('no card for a finished book; its tile says Kelar!', (
+      tester,
+    ) async {
+      await pump(tester, [
+        book(1, 'Walden', opened: true, progress: 1, finished: true),
+      ]);
+      expect(find.text('Lanjut baca yuk →'), findsNothing);
+      expect(find.text('Kelar!'), findsOneWidget);
+    });
   });
 
   group('backup reminder', () {

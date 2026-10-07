@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -10,25 +12,56 @@ class BookRepository {
   final AppDatabase _db;
 
   /// Rak: terakhir dibuka dulu, yang belum pernah dibuka urut baru ditambah.
-  Stream<List<ShelfBook>> watchShelf() {
-    final q = _db.select(_db.books)
-      ..orderBy([
-        (b) => OrderingTerm(
-          expression: b.lastOpenedAt,
-          mode: OrderingMode.desc,
-          nulls: NullsOrder.last,
-        ),
-        (b) => OrderingTerm.desc(b.createdAt),
-        (b) => OrderingTerm.desc(b.id),
-      ]);
-    return q.watch().map((rows) => rows.map(_shelfBook).toList());
-  }
+  /// Progres dihitung dari posisi tersimpan: karakter sebelum bab + karakter
+  /// paragraf sebelum posisi + bagian paragraf yang udah lewat.
+  Stream<List<ShelfBook>> watchShelf() => _db
+      .customSelect(
+        'SELECT b.id, b.title, b.author, b.cover_name, b.last_opened_at, '
+        'b.created_at, b.total_chars, rp.paragraph_offset AS off, '
+        'c.char_offset AS ch_off, '
+        '(SELECT COUNT(*) FROM chapters WHERE book_id = b.id) AS ch_count, '
+        '(SELECT COUNT(*) FROM chapters '
+        'WHERE book_id = b.id AND sort_order <= c.sort_order) AS ch_n, '
+        '(SELECT COALESCE(SUM(LENGTH(text)), 0) FROM paragraphs '
+        'WHERE chapter_id = rp.chapter_id '
+        'AND paragraph_index < rp.paragraph_index) AS before, '
+        'COALESCE((SELECT LENGTH(text) FROM paragraphs '
+        'WHERE chapter_id = rp.chapter_id '
+        'AND paragraph_index = rp.paragraph_index), 0) AS cur, '
+        '(rp.paragraph_offset >= 1 AND NOT EXISTS (SELECT 1 FROM paragraphs '
+        'WHERE chapter_id = rp.chapter_id '
+        'AND paragraph_index > rp.paragraph_index) AND NOT EXISTS '
+        '(SELECT 1 FROM chapters '
+        'WHERE book_id = b.id AND sort_order > c.sort_order)) AS done '
+        'FROM books b '
+        'LEFT JOIN reading_progress rp ON rp.book_id = b.id '
+        'LEFT JOIN chapters c ON c.id = rp.chapter_id '
+        'ORDER BY b.last_opened_at IS NULL, b.last_opened_at DESC, '
+        'b.created_at DESC, b.id DESC',
+        readsFrom: {
+          _db.books,
+          _db.readingProgress,
+          _db.chapters,
+          _db.paragraphs,
+        },
+      )
+      .watch()
+      .map((rows) => rows.map(_shelfBook).toList());
 
   Future<ShelfBook?> book(int id) async {
     final row = await (_db.select(
       _db.books,
     )..where((b) => b.id.equals(id))).getSingleOrNull();
-    return row == null ? null : _shelfBook(row);
+    return row == null
+        ? null
+        : ShelfBook(
+            id: row.id,
+            title: row.title,
+            author: row.author,
+            coverName: row.coverName,
+            opened: row.lastOpenedAt != null,
+            createdAt: row.createdAt,
+          );
   }
 
   /// Buku + chapter-nya buat halaman baca. Null kalau bukunya udah dihapus.
@@ -111,14 +144,31 @@ class BookRepository {
     return row.read<int>('n');
   }
 
-  static ShelfBook _shelfBook(Book b) => ShelfBook(
-    id: b.id,
-    title: b.title,
-    author: b.author,
-    coverName: b.coverName,
-    opened: b.lastOpenedAt != null,
-    createdAt: b.createdAt,
-  );
+  static ShelfBook _shelfBook(QueryRow r) {
+    final total = r.read<int>('total_chars');
+    // Belum ada posisi tersimpan: semua kolom rp/c kosong, progres 0.
+    final spot =
+        (r.readNullable<int>('ch_off') ?? 0) +
+        r.read<int>('before') +
+        (r.readNullable<double>('off') ?? 0) * r.read<int>('cur');
+    final done = r.readNullable<int>('done') == 1;
+    return ShelfBook(
+      id: r.read<int>('id'),
+      title: r.read<String>('title'),
+      author: r.readNullable<String>('author'),
+      coverName: r.readNullable<String>('cover_name'),
+      opened: r.readNullable<DateTime>('last_opened_at') != null,
+      createdAt: r.read<DateTime>('created_at'),
+      progress: done
+          ? 1
+          : total <= 0
+          ? 0
+          : (spot / total).clamp(0, 1).toDouble(),
+      finished: done,
+      chapter: math.max(1, r.read<int>('ch_n')),
+      chapterCount: math.max(1, r.read<int>('ch_count')),
+    );
+  }
 }
 
 final bookRepositoryProvider = Provider<BookRepository>(

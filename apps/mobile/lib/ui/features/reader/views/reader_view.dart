@@ -305,6 +305,12 @@ class _ReaderViewState extends ConsumerState<ReaderView>
                       onNext: i + 1 < b.chapters.length
                           ? () => _goTo(b, i + 1)
                           : () {
+                              // Posisi tersimpan = ujung buku, rak: "Kelar!".
+                              final last =
+                                  _text.currentState?._paras.lastOrNull;
+                              if (last != null) {
+                                _spot = (index: last.index, offset: 1);
+                              }
                               _save(); // waktu baca terbaru buat rekapnya
                               _chrome.show(); // status bar balik
                               setState(() => _finished = true);
