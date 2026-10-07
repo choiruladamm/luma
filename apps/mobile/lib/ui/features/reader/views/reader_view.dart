@@ -63,6 +63,10 @@ class _ReaderViewState extends ConsumerState<ReaderView>
   /// Lagi nampilin layar akhir buku.
   bool _finished = false;
 
+  /// Sheet daftar isi lagi kebuka: kapsul atas tetep keliatan di atas scrim,
+  /// tombolnya kuning.
+  bool _tocOpen = false;
+
   @override
   void initState() {
     super.initState();
@@ -149,13 +153,17 @@ class _ReaderViewState extends ConsumerState<ReaderView>
                 ) *
                 100)
             .floor();
+    _chrome.show();
+    setState(() => _tocOpen = true);
     final picked = await showTocSheet(
       context,
       book: book,
       current: i,
       percent: percent,
     );
-    if (picked != null && picked != _chapter && mounted) _goTo(book, picked);
+    if (!mounted) return;
+    setState(() => _tocOpen = false);
+    if (picked != null && picked != _chapter) _goTo(book, picked);
   }
 
   /// Sekali aja: buka di chapter & paragraf tersimpan (atau bab 1).
@@ -235,6 +243,19 @@ class _ReaderViewState extends ConsumerState<ReaderView>
                         return Stack(
                           children: [
                             Positioned.fill(
+                              child: IgnorePointer(
+                                child: AnimatedOpacity(
+                                  opacity: _tocOpen ? 1 : 0,
+                                  duration: _tocOpen
+                                      ? Motion.sheetOpen
+                                      : Motion.sheetClose,
+                                  child: ColoredBox(
+                                    color: context.stabilo.scrim,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Positioned.fill(
                               child: ReaderCapsules(
                                 chrome: _chrome,
                                 top: ReaderTopCapsule(
@@ -242,6 +263,7 @@ class _ReaderViewState extends ConsumerState<ReaderView>
                                   subtitle: 'Bab ${i + 1} · ${ch.title}',
                                   onBack: () => context.pop(),
                                   onToc: () => _openToc(b),
+                                  tocOpen: _tocOpen,
                                 ),
                                 bottom: ReaderBottomCapsule(
                                   progress: progress,

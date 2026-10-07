@@ -299,6 +299,30 @@ void main() {
     expect(progress.saves, isEmpty);
   });
 
+  testWidgets('contents: capsule stays above the sheet, its button toggles', (
+    tester,
+  ) async {
+    await openBook(tester);
+    final button = find.byWidgetPredicate(
+      (w) => w is CircleButton && w.semanticLabel == 'Daftar isi',
+    );
+    expect(tester.widget<CircleButton>(button).active, isFalse);
+    final buttonCenter = tester.getCenter(button);
+
+    await openToc(tester);
+    expect(tester.widget<CircleButton>(button).active, isTrue); // yellow
+    final capsule = tester.getRect(find.byType(ReaderTopCapsule));
+    final sheet = tester.getRect(find.byType(BottomSheet));
+    expect(capsule.top, greaterThanOrEqualTo(0)); // still showing
+    expect(sheet.top, greaterThan(capsule.bottom)); // no overlap
+
+    await tester.tapAt(buttonCenter);
+    await tester.pumpAndSettle();
+    expect(find.byType(BottomSheet), findsNothing);
+    expect(tester.widget<CircleButton>(button).active, isFalse);
+    expect(find.text('Bab 1'), findsOneWidget);
+  });
+
   testWidgets('a long contents list scrolls to the current chapter', (
     tester,
   ) async {
@@ -352,8 +376,14 @@ void main() {
     expect(find.text('Bab 1'), findsOneWidget);
     expect(find.text('Lanjut, gas'), findsNothing);
 
-    double opacity() =>
-        tester.widget<AnimatedOpacity>(find.byType(AnimatedOpacity)).opacity;
+    double opacity() => tester
+        .widget<AnimatedOpacity>(
+          find.ancestor(
+            of: find.byType(SingleChildScrollView),
+            matching: find.byType(AnimatedOpacity),
+          ),
+        )
+        .opacity;
     expect(opacity(), 0); // hidden until loaded and in place
 
     pending.complete(paragraphs[10]!);

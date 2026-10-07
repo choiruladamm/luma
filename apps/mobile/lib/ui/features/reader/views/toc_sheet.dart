@@ -6,19 +6,31 @@ import '../../../core/theme/stabilo_tokens.dart';
 import '../../../core/theme/stabilo_type.dart';
 import '../../../core/widgets/buttons.dart';
 import '../../../core/widgets/sheet.dart';
+import 'reader_capsule.dart';
 
 /// Daftar isi (board 08). Balikin indeks chapter yang dipilih, null kalau
-/// ditutup.
+/// ditutup. Sheet-nya mulai di bawah kapsul atas; scrim digambar halaman baca
+/// di bawah kapsul, jadi barrier sheet transparan. Tap kapsul (termasuk
+/// tombol daftar isi) kena barrier = nutup sheet.
 Future<int?> showTocSheet(
   BuildContext context, {
   required ReaderBook book,
   required int current,
   required int percent,
-}) => showAppSheet<int>(
-  context,
-  maxHeight: 0.87,
-  builder: (_) => _TocSheet(book: book, current: current, percent: percent),
-);
+}) {
+  final height = MediaQuery.sizeOf(context).height;
+  final top =
+      MediaQuery.paddingOf(context).top +
+      capsuleTopGap +
+      capsuleHeight +
+      Space.s3;
+  return showAppSheet<int>(
+    context,
+    maxHeight: (height - top) / height,
+    barrierColor: Colors.transparent,
+    builder: (_) => _TocSheet(book: book, current: current, percent: percent),
+  );
+}
 
 class _TocSheet extends StatefulWidget {
   const _TocSheet({
