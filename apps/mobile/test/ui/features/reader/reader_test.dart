@@ -13,7 +13,9 @@ import 'package:luma/domain/models/book.dart';
 import 'package:luma/main.dart';
 import 'package:luma/ui/core/theme/reader_typography.dart';
 import 'package:luma/ui/core/theme/stabilo_theme.dart';
+import 'package:luma/ui/core/theme/stabilo_tokens.dart';
 import 'package:luma/ui/core/theme/stabilo_type.dart';
+import 'package:luma/ui/core/widgets/sheet.dart';
 import 'package:luma/ui/core/widgets/book_card.dart';
 import 'package:luma/ui/core/widgets/buttons.dart';
 import 'package:luma/ui/core/widgets/edge_fade.dart';
@@ -1360,6 +1362,92 @@ void main() {
         tester.getSize(row).height,
         closeTo(ReaderTypography(prefs, Brightness.light).lineExtent, 1e-6),
       );
+    });
+
+    AiReply longReply(GroupRef g) => AiReply(
+      translations: [for (var i = 0; i < 40; i++) 'ID line $i ${'word ' * 20}'],
+      meaning: 'Makna panjang.',
+    );
+
+    Finder sheetScroll() => find.descendant(
+      of: find.byType(BottomSheet),
+      matching: find.byType(SingleChildScrollView),
+    );
+
+    testWidgets('height follows the content, capped at 528 of 844', (
+      tester,
+    ) async {
+      await openTall(tester);
+      final screen = tester.view.physicalSize.height;
+      await tapGroup(tester, 13);
+      final short = tester.getSize(find.byType(BottomSheet)).height;
+      expect(short, lessThan(screen * Layout.artinyaMaxHeight));
+      await tester.tap(find.bySemanticsLabel('Tutup'));
+      await tester.pumpAndSettle();
+
+      answer = (g) async => longReply(g);
+      await tapGroup(tester, 13);
+      expect(
+        tester.getSize(find.byType(BottomSheet)).height,
+        closeTo(screen * Layout.artinyaMaxHeight, 1),
+      );
+    });
+
+    testWidgets('grabber and buttons stay put while the content scrolls', (
+      tester,
+    ) async {
+      answer = (g) async => longReply(g);
+      await openTall(tester);
+      await tapGroup(tester, 13);
+      final sheet = tester.getRect(find.byType(BottomSheet));
+      final grabber = tester.getTopLeft(find.byType(SheetGrabber)).dy;
+      final lanjut = tester.getBottomLeft(find.text('Lanjut')).dy;
+      expect(grabber, sheet.top + 10);
+      expect(find.text('Salin'), findsOneWidget);
+
+      await tester.drag(sheetScroll(), const Offset(0, -300));
+      await tester.pumpAndSettle();
+      expect(tester.getTopLeft(find.byType(SheetGrabber)).dy, grabber);
+      expect(tester.getBottomLeft(find.text('Lanjut')).dy, lanjut);
+      // The title scrolled out with the content.
+      expect(
+        tester.getBottomLeft(find.text('Artinya gini nih')).dy,
+        lessThan(sheet.top),
+      );
+    });
+
+    testWidgets('swipe down on the content at offset 0 closes the sheet', (
+      tester,
+    ) async {
+      answer = (g) async => longReply(g);
+      await openTall(tester);
+      await tapGroup(tester, 13);
+      await tester.drag(sheetScroll(), const Offset(0, 200));
+      await tester.pumpAndSettle();
+      expect(find.text('Artinya gini nih'), findsNothing);
+    });
+
+    testWidgets('a small pull at offset 0 does not close it', (tester) async {
+      answer = (g) async => longReply(g);
+      await openTall(tester);
+      await tapGroup(tester, 13);
+      await tester.drag(sheetScroll(), const Offset(0, 40));
+      await tester.pumpAndSettle();
+      expect(find.text('Artinya gini nih'), findsOneWidget);
+    });
+
+    testWidgets('swipe down below offset 0 scrolls back, never closes', (
+      tester,
+    ) async {
+      answer = (g) async => longReply(g);
+      await openTall(tester);
+      await tapGroup(tester, 13);
+      await tester.drag(sheetScroll(), const Offset(0, -300));
+      await tester.pumpAndSettle();
+      // Down past the top in one drag: it started below 0, so it stays open.
+      await tester.drag(sheetScroll(), const Offset(0, 500));
+      await tester.pumpAndSettle();
+      expect(find.text('Artinya gini nih'), findsOneWidget);
     });
 
     testWidgets('error: code, then "Coba lagi" asks again', (tester) async {

@@ -55,6 +55,16 @@ abstract final class Layout {
     ((width + shelfGapX) / (shelfMinCard + shelfGapX)).floor(),
   );
   static const sheetPadding = EdgeInsets.fromLTRB(24, 10, 24, 34);
+
+  // Sheet Artinya (board Ngumpet pas scroll, layar 844).
+  static const artinyaMaxHeight =
+      528 / 844; // fraksi layar: ngikutin isi, maks segini
+  static const artinyaHeader = 91.0; // grabber + judul + X + jarak
+  static const artinyaActions = 102.0; // tombol 52 + jarak 16 + safe area 34
+  static const artinyaGrabberZone =
+      12.0; // isi pudar mulai dari sini kalau header ngumpet
+  static const sheetDismissPull = 72.0; // tarik turun di offset 0 buat nutup
+  static const sheetDismissFling = 700.0; // atau fling segini (pt/detik)
 }
 
 /// Durasi & curve. Kalau iOS "Kurangi gerakan" nyala

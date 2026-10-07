@@ -34,6 +34,7 @@ Future<void> showMeaningSheet(
   required VoidCallback onSettings,
 }) => showAppSheet<void>(
   context,
+  maxHeight: Layout.artinyaMaxHeight,
   barrierColor: Colors.transparent,
   builder: (_) => _ReportHeight(
     onHeight: onHeight,
@@ -129,25 +130,20 @@ class _MeaningSheetState extends ConsumerState<MeaningSheet> {
   };
 }
 
-/// Rangka sheet: grabber, header, isi yang bisa scroll (tepinya mudar),
-/// tombol nempel di bawah.
+/// Rangka state pendek (error, API key kosong): grabber, header, isi yang
+/// bisa scroll (tepinya mudar), tombol nempel di bawah. Gak pernah ngumpet.
 class _Frame extends StatelessWidget {
   const _Frame({
     required this.header,
     required this.content,
     required this.actions,
     this.gap = Space.s4,
-    this.margin = 0,
   });
 
   final Widget header;
   final List<Widget> content;
   final List<Widget> actions;
   final double gap;
-
-  /// Margin teks Aa. Padding dasar sheet (24) jadi batas bawahnya; isi cuma
-  /// dilebarin kalau margin-nya lebih besar (Lega 32).
-  final double margin;
 
   @override
   Widget build(BuildContext context) {
@@ -163,9 +159,6 @@ class _Frame extends StatelessWidget {
           Flexible(
             child: EdgeFadeScroll(
               child: SingleChildScrollView(
-                padding: EdgeInsets.symmetric(
-                  horizontal: math.max(0, margin - Layout.sheetPadding.left),
-                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   spacing: gap,
@@ -177,6 +170,120 @@ class _Frame extends StatelessWidget {
           Row(spacing: 10, children: actions),
         ],
       ),
+    );
+  }
+}
+
+/// Rangka loading + hasil: isi scroll setinggi sheet (ngikutin isi, maks
+/// [Layout.artinyaMaxHeight]), header jadi bagian isi, grabber dan tombol
+/// Salin / Lanjut lapisan di atasnya (board Ngumpet · Opsi A). Tarik turun di
+/// isi pas offset 0 nutup sheet.
+class _ScrollFrame extends StatefulWidget {
+  const _ScrollFrame({
+    required this.header,
+    required this.content,
+    required this.actions,
+    required this.margin,
+    required this.onClose,
+  });
+
+  final Widget header;
+  final List<Widget> content;
+  final List<Widget> actions;
+
+  /// Margin teks Aa. Padding dasar sheet (24) jadi batas bawahnya; isi cuma
+  /// dilebarin kalau margin-nya lebih besar (Lega 32).
+  final double margin;
+  final VoidCallback onClose;
+
+  @override
+  State<_ScrollFrame> createState() => _ScrollFrameState();
+}
+
+class _ScrollFrameState extends State<_ScrollFrame> {
+  /// Drag-nya mulai di offset 0 dan udah ditarik segini ke bawah.
+  bool _fromTop = false;
+  double _pulled = 0;
+
+  bool _onScroll(ScrollNotification n) {
+    if (n.depth != 0) return false;
+    switch (n) {
+      case ScrollStartNotification():
+        _fromTop = n.metrics.pixels <= 0;
+        _pulled = 0;
+      case OverscrollNotification(:final overscroll)
+          when _fromTop && n.dragDetails != null && overscroll < 0:
+        _pulled -= overscroll;
+      case ScrollEndNotification(:final dragDetails):
+        final fling = dragDetails?.velocity.pixelsPerSecond.dy ?? 0;
+        if (_fromTop &&
+            _pulled > 0 &&
+            (_pulled >= Layout.sheetDismissPull ||
+                fling >= Layout.sheetDismissFling)) {
+          widget.onClose();
+        }
+        _fromTop = false;
+      default:
+    }
+    return false;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final pad = Layout.sheetPadding;
+    final inset = math.max(0.0, widget.margin - pad.left);
+    return Stack(
+      children: [
+        NotificationListener<ScrollNotification>(
+          onNotification: _onScroll,
+          child: EdgeFadeScroll(
+            top: const EdgeFadeSide(20, clear: Layout.artinyaGrabberZone),
+            // Tombol + safe area (86) bening, fade 20pt tepat di atasnya.
+            bottom: const EdgeFadeSide(
+              20,
+              clear: Layout.artinyaActions - Space.s4,
+            ),
+            child: SingleChildScrollView(
+              physics: const ClampingScrollPhysics(),
+              padding: EdgeInsets.fromLTRB(
+                pad.left,
+                Layout.artinyaHeader -
+                    Space.s4 -
+                    Layout.touch, // grabber, lalu header ngikut isi
+                pad.right,
+                Layout.artinyaActions,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                spacing: Space.s4,
+                children: [
+                  widget.header,
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: inset),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      spacing: Space.s4,
+                      children: widget.content,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        Positioned(
+          top: pad.top,
+          left: 0,
+          right: 0,
+          child: const SheetGrabber(),
+        ),
+        Positioned(
+          left: pad.left,
+          right: pad.right,
+          bottom: pad.bottom,
+          child: Row(spacing: 10, children: widget.actions),
+        ),
+      ],
     );
   }
 }
@@ -249,8 +356,9 @@ class _Result extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.stabilo;
     final text = typo.style.copyWith(color: c.ink);
-    return _Frame(
+    return _ScrollFrame(
       margin: typo.margin,
+      onClose: onClose,
       header: _Title('Artinya gini nih', closeLabel: 'Tutup', onClose: onClose),
       content: [
         _Section(
@@ -301,8 +409,9 @@ class _Loading extends StatelessWidget {
   Widget build(BuildContext context) {
     return Semantics(
       label: 'Artinya, lagi dimuat',
-      child: _Frame(
+      child: _ScrollFrame(
         margin: typo.margin,
+        onClose: onClose,
         header: _Title(
           'Bentar, lagi mikir...',
           leading: const _PulseDot(),
