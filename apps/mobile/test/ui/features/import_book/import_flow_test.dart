@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:luma/data/repositories/settings_repository.dart';
 import 'package:luma/data/repositories/import_repository.dart';
 import 'package:luma/data/services/epub_parser.dart';
 import 'package:luma/domain/models/book.dart';
@@ -9,6 +10,8 @@ import 'package:luma/ui/core/widgets/book_card.dart';
 import 'package:luma/ui/core/widgets/buttons.dart';
 import 'package:luma/ui/features/bookshelf/view_models/bookshelf_view_model.dart';
 import 'package:luma/ui/features/import_book/view_models/import_view_model.dart';
+
+import '../../../fakes.dart';
 
 /// Drives the flow by hand: no picker, no Drift, no isolates.
 class FakeImport extends ImportController {
@@ -53,6 +56,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          settingsRepositoryProvider.overrideWithValue(FakeSettings()),
           booksStreamProvider.overrideWith((ref) => Stream.value([])),
           importControllerProvider.overrideWith(() => import),
         ],

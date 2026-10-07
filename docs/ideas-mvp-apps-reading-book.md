@@ -134,10 +134,15 @@ Pas baca, layar isinya cuma teks + garis progres tipis. Menu nongol sebagai dua 
 
 ### Pengaturan Aa
 
-- Ukuran huruf: default 18,5
-- Font: Jelas / Kayak buku / Bawaan iOS
-- Jarak baris: Rapat / Pas / Lega (default line-height ±1.65 terang, ±1.7 gelap)
-- Tema: Terang / Gelap / Ikut iOS
+Sheet "Atur bacaan lo" (board 07), dibuka dari tombol Aa di kapsul. Tiap pilihan langsung disimpen dan langsung keliatan di teks; scrim-nya tipis (8% terang, 18% gelap) biar teks di belakang jadi preview. Posisi baca nempel: titik yang lagi di garis atas tetep di situ pas ukuran/font/jarak/margin diganti.
+
+- Ukuran huruf: 7 step 16 · 17 · 18 · **18,5** · 20 · 22 · 24 (tombol A kecil / A gede)
+- Font: **Jelas** (Atkinson Hyperlegible) / Kayak buku (Literata, jarak baris +0,05) / Bawaan iOS (SF)
+- Jarak baris: Rapat 1,5 / **Pas 1,65** / Lega 1,85; mode gelap +0,05
+- Margin teks: Sempit 16 / **Pas 24** / Lega 32. Area tap margin minimal 24pt: di Sempit, 8pt pinggir kolom ikut diitung area kosong
+- Tema: Terang / Gelap / **Ikut iOS** → `themeMode` app
+- Tampilan layar: "Sembunyiin jam & baterai" (**nyala**) dan "Tampilin garis progres" (**nyala**), pake Switch dari board Komponen dasar (51 × 31)
+- Disimpen per perangkat (bukan per buku) di tabel `settings`, ikut backup. Nilai yang gak dikenal (backup rusak) balik ke default
 
 ### Copy
 
@@ -242,7 +247,7 @@ Tiap ubah tabel: naikkan `schemaVersion`, tambah langkah di `onUpgrade`, dan tes
 
 ### Pengaturan
 
-API key di `flutter_secure_storage`. Model ID, preferensi Aa, dan `lastBackupAt` di tabel `settings` sederhana (key-value) di Drift, supaya ikut ter-backup. Hindari `shared_preferences` untuk data yang perlu ikut backup.
+API key di `flutter_secure_storage`. Model ID, preferensi Aa, dan `lastBackupAt` di tabel `settings` sederhana (key-value) di Drift, supaya ikut ter-backup. Kunci Aa: `reader.size` (indeks step 0–6), `reader.font`, `reader.spacing`, `reader.margin`, `theme` (nama enum), `reader.hideStatusBar`, `reader.showProgressLine` (`true`/`false`). Hindari `shared_preferences` untuk data yang perlu ikut backup.
 
 ---
 

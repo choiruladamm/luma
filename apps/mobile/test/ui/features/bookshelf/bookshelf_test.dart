@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:luma/data/repositories/settings_repository.dart';
 import 'package:luma/domain/models/book.dart';
 import 'package:luma/data/repositories/reading_progress_repository.dart';
 import 'package:luma/main.dart';
@@ -47,6 +48,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          settingsRepositoryProvider.overrideWithValue(FakeSettings()),
           booksStreamProvider.overrideWith((ref) => shelf.stream),
           // Opening a book shows the reader: feed it too, never the real DB.
           readerBookProvider.overrideWith((ref, id) async => null),

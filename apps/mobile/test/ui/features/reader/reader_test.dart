@@ -2,14 +2,18 @@ import 'dart:async';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:luma/data/repositories/reading_progress_repository.dart';
+import 'package:luma/data/repositories/settings_repository.dart';
+import 'package:luma/domain/models/reader_prefs.dart';
 import 'package:luma/domain/models/book.dart';
 import 'package:luma/main.dart';
 import 'package:luma/ui/core/theme/stabilo_theme.dart';
 import 'package:luma/ui/core/widgets/book_card.dart';
 import 'package:luma/ui/core/widgets/buttons.dart';
+import 'package:luma/ui/core/widgets/switch.dart';
 import 'package:luma/ui/features/bookshelf/view_models/bookshelf_view_model.dart';
 import 'package:luma/ui/features/bookshelf/views/bookshelf_view.dart';
 import 'package:luma/ui/features/reader/view_models/reader_view_model.dart';
@@ -25,6 +29,16 @@ const book = ReaderBook(
   chapters: [
     ChapterInfo(id: 10, title: 'I', charOffset: 0, chars: 100),
     ChapterInfo(id: 11, title: 'II', charOffset: 100, chars: 200),
+  ],
+);
+
+const tallBook = ReaderBook(
+  id: 1,
+  title: 'The Enchiridion',
+  totalChars: 3000,
+  chapters: [
+    ChapterInfo(id: 10, title: 'I', charOffset: 0, chars: 100),
+    ChapterInfo(id: 13, title: 'Tall', charOffset: 100, chars: 2900),
   ],
 );
 
@@ -74,6 +88,7 @@ final paragraphs = {
 
 void main() {
   late FakeProgress progress;
+  late FakeSettings settings;
 
   // Feeds the reader through its providers; no Drift in widget tests.
   Future<void> openBook(
@@ -81,8 +96,10 @@ void main() {
     Brightness b = Brightness.light,
     ReaderBook readerBook = book,
     ReadingPosition? saved,
+    ReaderPrefs prefs = const ReaderPrefs(),
   }) async {
     progress = FakeProgress(saved);
+    settings = FakeSettings(prefs);
     tester.view.physicalSize = const Size(900, 1600);
     tester.view.devicePixelRatio = 1;
     tester.platformDispatcher.platformBrightnessTestValue = b;
@@ -91,6 +108,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          settingsRepositoryProvider.overrideWithValue(settings),
           booksStreamProvider.overrideWith(
             (ref) => Stream.value([
               ShelfBook(
@@ -259,14 +277,197 @@ void main() {
     expect(find.byType(ReaderView), findsNothing);
   });
 
-  testWidgets('Aa stays off until #18 lands', (tester) async {
-    await openBook(tester);
-    final button = tester.widget<CircleButton>(
-      find.byWidgetPredicate(
-        (w) => w is CircleButton && w.semanticLabel == 'Atur tampilan teks',
-      ),
+  group('Aa', () {
+    final aaButton = find.byWidgetPredicate(
+      (w) => w is CircleButton && w.semanticLabel == 'Atur tampilan teks',
     );
-    expect(button.onPressed, isNull);
+
+    Future<void> openAa(WidgetTester tester) async {
+      await tester.tap(aaButton);
+      await tester.pumpAndSettle();
+    }
+
+    TextStyle styleOf(WidgetTester tester, String text) =>
+        tester.widget<Text>(find.textContaining(text)).style!;
+
+    testWidgets('capsule stays above, Aa turns yellow, tap again closes', (
+      tester,
+    ) async {
+      await openBook(tester);
+      final center = tester.getCenter(aaButton);
+      await openAa(tester);
+      expect(find.text('Atur bacaan lo'), findsOneWidget);
+      expect(tester.widget<CircleButton>(aaButton).active, isTrue);
+      final capsule = tester.getRect(find.byType(ReaderTopCapsule));
+      expect(
+        tester.getRect(find.byType(BottomSheet)).top,
+        greaterThan(capsule.bottom),
+      );
+      // The text behind stays visible for a live preview: light scrim.
+      await tester.tapAt(center);
+      await tester.pumpAndSettle();
+      expect(find.text('Atur bacaan lo'), findsNothing);
+      expect(tester.widget<CircleButton>(aaButton).active, isFalse);
+    });
+
+    testWidgets('size steps apply live and are saved', (tester) async {
+      await openBook(tester);
+      final para = 'There are things which are within our power.';
+      expect(styleOf(tester, para).fontSize, 18.5);
+      await openAa(tester);
+      expect(find.text('18,5'), findsOneWidget);
+      await tester.tap(find.bySemanticsLabel('Gedein huruf'));
+      await tester.pumpAndSettle();
+      expect(find.text('20'), findsOneWidget);
+      expect(styleOf(tester, para).fontSize, 20);
+      expect(settings.prefs.sizeStep, 4);
+
+      for (var i = 0; i < 6; i++) {
+        await tester.tap(find.bySemanticsLabel('Kecilin huruf'));
+        await tester.pumpAndSettle();
+      }
+      expect(settings.prefs.fontSize, 16); // stops at the smallest
+    });
+
+    testWidgets('font, line spacing and margin apply to the text', (
+      tester,
+    ) async {
+      await openBook(tester);
+      final para = 'There are things which are within our power.';
+      await openAa(tester);
+      await tester.tap(find.bySemanticsLabel('Font Kayak buku'));
+      await tester.pumpAndSettle();
+      expect(styleOf(tester, para).fontFamily, 'Literata');
+
+      await tester.tap(find.text('Lega').first); // Jarak baris
+      await tester.pumpAndSettle();
+      expect(styleOf(tester, para).height, closeTo(1.9, 1e-9));
+
+      await tester.tap(find.text('Sempit')); // Margin
+      await tester.pumpAndSettle();
+      expect(tester.getTopLeft(find.text(para)).dx, 16);
+    });
+
+    testWidgets('theme follows the choice', (tester) async {
+      await openBook(tester);
+      MaterialApp app() => tester.widget<MaterialApp>(find.byType(MaterialApp));
+      expect(app().themeMode, ThemeMode.system);
+      await openAa(tester);
+      await tester.tap(find.bySemanticsLabel('Tema Gelap'));
+      await tester.pumpAndSettle();
+      expect(app().themeMode, ThemeMode.dark);
+      await tester.tap(find.bySemanticsLabel('Tema Terang'));
+      await tester.pumpAndSettle();
+      expect(app().themeMode, ThemeMode.light);
+    });
+
+    testWidgets('progress line toggle', (tester) async {
+      await openBook(tester);
+      expect(find.byType(ReaderProgressLine), findsOneWidget);
+      await openAa(tester);
+      await tester.tap(
+        find.byWidgetPredicate(
+          (w) => w is AppSwitch && w.semanticLabel == 'Tampilin garis progres',
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(settings.prefs.showProgressLine, isFalse);
+      expect(find.byType(ReaderProgressLine), findsNothing);
+    });
+
+    testWidgets('status bar hides with the capsules unless turned off', (
+      tester,
+    ) async {
+      final overlays = <List<Object?>>[];
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (call) async {
+          if (call.method == 'SystemChrome.setEnabledSystemUIOverlays') {
+            overlays.add(call.arguments as List<Object?>);
+          }
+          return null;
+        },
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          null,
+        ),
+      );
+      bool statusBar() => overlays.last.contains('SystemUiOverlay.top');
+
+      await openBook(
+        tester,
+        readerBook: tallBook,
+        saved: (chapterId: 13, paragraphIndex: 12, paragraphOffset: 0.0),
+      );
+      await tester.tapAt(const Offset(10, 800)); // margin: hide
+      await tester.pumpAndSettle();
+      expect(statusBar(), isFalse);
+      await tester.tapAt(const Offset(10, 800)); // show
+      await tester.pumpAndSettle();
+      expect(statusBar(), isTrue);
+
+      await settings.saveReaderPrefs(
+        settings.prefs.copyWith(hideStatusBar: false),
+      );
+      await tester.pumpAndSettle();
+      await tester.tapAt(const Offset(10, 800)); // hide capsules only
+      await tester.pumpAndSettle();
+      expect(statusBar(), isTrue);
+    });
+
+    testWidgets('changing the size keeps the top line in place', (
+      tester,
+    ) async {
+      await openBook(
+        tester,
+        readerBook: tallBook,
+        saved: (chapterId: 13, paragraphIndex: 12, paragraphOffset: 0.4),
+      );
+
+      /// The paragraph crossing the top edge and how far into it the edge is.
+      (int, double) topSpot() {
+        for (var i = 0; i < 30; i++) {
+          final f = find.textContaining('Tall $i:');
+          if (f.evaluate().isEmpty) continue;
+          final r = tester.getRect(f);
+          if (r.top <= 0 && r.bottom > 0) return (i, -r.top / r.height);
+        }
+        fail('no paragraph at the top');
+      }
+
+      final before = topSpot();
+      await openAa(tester);
+      await tester.tap(find.bySemanticsLabel('Gedein huruf'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.bySemanticsLabel('Gedein huruf'));
+      await tester.pumpAndSettle();
+      final after = topSpot();
+      expect(after.$1, before.$1);
+      expect(after.$2, closeTo(before.$2, 0.02));
+    });
+
+    testWidgets('narrow margin: the outer 8pt of the column is empty space', (
+      tester,
+    ) async {
+      await openBook(
+        tester,
+        readerBook: tallBook,
+        saved: (chapterId: 13, paragraphIndex: 12, paragraphOffset: 0.0),
+        prefs: const ReaderPrefs(margin: TextMargin.narrow),
+      );
+      bool showing() => tester.getTopLeft(find.byType(ReaderTopCapsule)).dy > 0;
+      final para = tester.getRect(find.textContaining('Tall 13:'));
+      expect(para.left, 16);
+
+      await tester.tapAt(Offset(para.left + 12, para.center.dy)); // text
+      await tester.pumpAndSettle();
+      expect(showing(), isTrue);
+      await tester.tapAt(Offset(para.left + 4, para.center.dy)); // edge
+      await tester.pumpAndSettle();
+      expect(showing(), isFalse);
+    });
   });
 
   Future<void> openToc(WidgetTester tester) async {
@@ -367,6 +568,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          settingsRepositoryProvider.overrideWithValue(FakeSettings()),
           readerBookProvider.overrideWith((ref, id) async => book),
           readingProgressRepositoryProvider.overrideWithValue(FakeProgress()),
           chapterParagraphsProvider.overrideWith((ref, id) => pending.future),
@@ -428,16 +630,6 @@ void main() {
     expect(line, closeTo(1600 / 3, 1));
   });
 
-  const tallBook = ReaderBook(
-    id: 1,
-    title: 'The Enchiridion',
-    totalChars: 3000,
-    chapters: [
-      ChapterInfo(id: 10, title: 'I', charOffset: 0, chars: 100),
-      ChapterInfo(id: 13, title: 'Tall', charOffset: 100, chars: 2900),
-    ],
-  );
-
   /// Where [spot] sits on screen: paragraph top + offset × its height.
   double spotY(WidgetTester tester, ReadingPosition spot) {
     final rect = tester.getRect(
@@ -488,6 +680,7 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            settingsRepositoryProvider.overrideWithValue(FakeSettings()),
             readerBookProvider.overrideWith((ref, id) async => tallBook),
             readingProgressRepositoryProvider.overrideWithValue(
               FakeProgress(saved),
@@ -742,6 +935,7 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            settingsRepositoryProvider.overrideWithValue(FakeSettings()),
             readerBookProvider.overrideWith((ref, id) async => tallBook),
             readingProgressRepositoryProvider.overrideWithValue(
               FakeProgress(saved),

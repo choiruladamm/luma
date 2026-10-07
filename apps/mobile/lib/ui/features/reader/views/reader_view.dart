@@ -8,13 +8,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../data/repositories/reading_progress_repository.dart';
+import '../../../../data/repositories/settings_repository.dart';
 import '../../../../domain/models/book.dart';
+import '../../../../domain/models/reader_prefs.dart';
 import '../../../../domain/reading.dart';
 import '../../../core/theme/stabilo_theme.dart';
 import '../../../core/theme/stabilo_tokens.dart';
 import '../../../core/theme/stabilo_type.dart';
 import '../../../core/widgets/buttons.dart';
 import '../view_models/reader_view_model.dart';
+import 'aa_sheet.dart';
 import 'book_end_view.dart';
 import 'reader_capsule.dart';
 import 'toc_sheet.dart';
@@ -37,10 +40,8 @@ class _ReaderViewState extends ConsumerState<ReaderView>
   final _clock = ReadingClock(DateTime.now());
   late final _chrome = ReaderChrome(vsync: this);
 
-  /// Toggle "Sembunyiin jam & baterai" & "Tampilin garis progres" di Aa
-  /// (#18); sementara pake default-nya.
-  static const _hideStatusBar = true;
-  static const _showProgressLine = true;
+  /// Setelan Aa terakhir (status bar, garis progres, gaya teks).
+  ReaderPrefs _prefs = const ReaderPrefs();
 
   /// Null sampai posisi tersimpan kebaca.
   int? _chapter;
@@ -63,9 +64,11 @@ class _ReaderViewState extends ConsumerState<ReaderView>
   /// Lagi nampilin layar akhir buku.
   bool _finished = false;
 
-  /// Sheet daftar isi lagi kebuka: kapsul atas tetep keliatan di atas scrim,
-  /// tombolnya kuning.
-  bool _tocOpen = false;
+  /// Sheet dari kapsul (daftar isi / Aa) lagi kebuka: kapsul atas tetep
+  /// keliatan di atas scrim, tombolnya kuning. [_lastSheet] nentuin warna
+  /// scrim, termasuk pas lagi fade out.
+  bool _sheetOpen = false;
+  _Sheet _lastSheet = _Sheet.toc;
 
   @override
   void initState() {
@@ -77,15 +80,12 @@ class _ReaderViewState extends ConsumerState<ReaderView>
   }
 
   /// Status bar ngumpet bareng kapsul.
-  void _syncStatusBar() {
-    if (!_hideStatusBar) return;
-    SystemChrome.setEnabledSystemUIMode(
-      SystemUiMode.manual,
-      overlays: _chrome.visible.value
-          ? SystemUiOverlay.values
-          : const [SystemUiOverlay.bottom],
-    );
-  }
+  void _syncStatusBar() => SystemChrome.setEnabledSystemUIMode(
+    SystemUiMode.manual,
+    overlays: _chrome.visible.value || !_prefs.hideStatusBar
+        ? SystemUiOverlay.values
+        : const [SystemUiOverlay.bottom],
+  );
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
@@ -104,12 +104,10 @@ class _ReaderViewState extends ConsumerState<ReaderView>
     _saveLater?.cancel();
     _save();
     WidgetsBinding.instance.removeObserver(this);
-    if (_hideStatusBar) {
-      SystemChrome.setEnabledSystemUIMode(
-        SystemUiMode.manual,
-        overlays: SystemUiOverlay.values,
-      );
-    }
+    SystemChrome.setEnabledSystemUIMode(
+      SystemUiMode.manual,
+      overlays: SystemUiOverlay.values,
+    );
     _chrome.dispose();
     _fraction.dispose();
     super.dispose();
@@ -153,17 +151,24 @@ class _ReaderViewState extends ConsumerState<ReaderView>
                 ) *
                 100)
             .floor();
-    _chrome.show();
-    setState(() => _tocOpen = true);
-    final picked = await showTocSheet(
-      context,
-      book: book,
-      current: i,
-      percent: percent,
+    final picked = await _withSheet(
+      _Sheet.toc,
+      () => showTocSheet(context, book: book, current: i, percent: percent),
     );
-    if (!mounted) return;
-    setState(() => _tocOpen = false);
-    if (picked != null && picked != _chapter) _goTo(book, picked);
+    if (picked != null && picked != _chapter && mounted) _goTo(book, picked);
+  }
+
+  /// Buka sheet dari kapsul: kapsul dimunculin & tombolnya kuning selama
+  /// sheet kebuka.
+  Future<T?> _withSheet<T>(_Sheet sheet, Future<T?> Function() open) async {
+    _chrome.show();
+    setState(() {
+      _sheetOpen = true;
+      _lastSheet = sheet;
+    });
+    final result = await open();
+    if (mounted) setState(() => _sheetOpen = false);
+    return result;
   }
 
   /// Sekali aja: buka di chapter & paragraf tersimpan (atau bab 1).
@@ -183,6 +188,8 @@ class _ReaderViewState extends ConsumerState<ReaderView>
     final book = ref.watch(readerBookProvider(widget.bookId));
     final saved = ref.watch(readingPositionProvider(widget.bookId));
     _chrome.reduceMotion = MediaQuery.disableAnimationsOf(context);
+    _prefs = ref.watch(readerPrefsProvider).value ?? const ReaderPrefs();
+    ref.listen(readerPrefsProvider, (_, _) => _syncStatusBar());
     return Scaffold(
       body: Listener(
         // Scroll & tap sama-sama mulai dari sini.
@@ -206,7 +213,7 @@ class _ReaderViewState extends ConsumerState<ReaderView>
                         ),
                       ),
                     ),
-                    if (_showProgressLine)
+                    if (_prefs.showProgressLine)
                       const ReaderProgressLine(progress: 1),
                   ],
                 );
@@ -221,6 +228,7 @@ class _ReaderViewState extends ConsumerState<ReaderView>
                       index: i,
                       fraction: _fraction,
                       chrome: _chrome,
+                      prefs: _prefs,
                       restoreTo: _restoreTo,
                       onPosition: (spot) {
                         _spot = spot;
@@ -254,12 +262,16 @@ class _ReaderViewState extends ConsumerState<ReaderView>
                             Positioned.fill(
                               child: IgnorePointer(
                                 child: AnimatedOpacity(
-                                  opacity: _tocOpen ? 1 : 0,
-                                  duration: _tocOpen
+                                  opacity: _sheetOpen ? 1 : 0,
+                                  duration: _sheetOpen
                                       ? Motion.sheetOpen
                                       : Motion.sheetClose,
                                   child: ColoredBox(
-                                    color: context.stabilo.scrim,
+                                    // Aa: tipis, teks tetep keliatan buat
+                                    // preview setelan.
+                                    color: _lastSheet == _Sheet.aa
+                                        ? context.stabilo.scrimSoft
+                                        : context.stabilo.scrim,
                                   ),
                                 ),
                               ),
@@ -272,7 +284,13 @@ class _ReaderViewState extends ConsumerState<ReaderView>
                                   subtitle: 'Bab ${i + 1} · ${ch.title}',
                                   onBack: () => context.pop(),
                                   onToc: () => _openToc(b),
-                                  tocOpen: _tocOpen,
+                                  onAa: () => _withSheet(
+                                    _Sheet.aa,
+                                    () => showAaSheet(context),
+                                  ),
+                                  tocOpen:
+                                      _sheetOpen && _lastSheet == _Sheet.toc,
+                                  aaOpen: _sheetOpen && _lastSheet == _Sheet.aa,
                                 ),
                                 bottom: ReaderBottomCapsule(
                                   progress: progress,
@@ -282,7 +300,7 @@ class _ReaderViewState extends ConsumerState<ReaderView>
                                 ),
                               ),
                             ),
-                            if (_showProgressLine)
+                            if (_prefs.showProgressLine)
                               ReaderProgressLine(progress: progress),
                           ],
                         );
@@ -326,6 +344,7 @@ class _ChapterText extends ConsumerStatefulWidget {
     required this.index,
     required this.fraction,
     required this.chrome,
+    required this.prefs,
     required this.restoreTo,
     required this.onPosition,
     required this.onParagraphTap,
@@ -336,6 +355,7 @@ class _ChapterText extends ConsumerStatefulWidget {
   final int index;
   final ValueNotifier<double> fraction;
   final ReaderChrome chrome;
+  final ReaderPrefs prefs;
 
   /// Titik yang langsung dituju pas kebuka (posisi tersimpan).
   final _Spot? restoreTo;
@@ -455,16 +475,73 @@ class _ChapterTextState extends ConsumerState<_ChapterText>
 
   static const _chapterStart = 80.0;
 
+  /// Tap paragraf → Artinya; selain itu (margin, sela, bawah teks terakhir,
+  /// heading) → munculin/ngumpetin kapsul. Kotak paragraf selebar kolom,
+  /// tapi area tap margin minimal [_minTapMargin]: di margin Sempit (16),
+  /// 8pt pinggir kolom ikut diitung kosong.
+  void _onTap(Offset point, List<ReaderParagraph> paras) {
+    final edge = math.max(0.0, _minTapMargin - widget.prefs.marginWidth);
+    for (final p in paras) {
+      if (p.type != ParagraphType.paragraph) continue;
+      final box = _box(p.index);
+      if (box == null) continue;
+      final r = box.localToGlobal(Offset.zero) & box.size;
+      if (Rect.fromLTRB(
+        r.left + edge,
+        r.top,
+        r.right - edge,
+        r.bottom,
+      ).contains(point)) {
+        widget.onParagraphTap(p);
+        return;
+      }
+    }
+    widget.chrome.toggle();
+  }
+
+  static const _minTapMargin = 24.0;
+
+  /// Paragraf terakhir yang dirender, buat ngukur posisi pas setelan Aa
+  /// diganti (layout lama masih ada di [didUpdateWidget]).
+  List<ReaderParagraph> _paras = const [];
+
+  @override
+  void didUpdateWidget(_ChapterText old) {
+    super.didUpdateWidget(old);
+    final p = widget.prefs;
+    final changed =
+        p.fontSize != old.prefs.fontSize ||
+        p.font != old.prefs.font ||
+        p.lineHeight != old.prefs.lineHeight ||
+        p.marginWidth != old.prefs.marginWidth;
+    if (!changed || !_restored) return;
+    // Tinggi paragraf berubah: titik yang lagi di garis atas tetep di situ.
+    final spot = _topSpot(_paras);
+    if (spot == null) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _place(spot, MediaQuery.paddingOf(context).top);
+      _track();
+    });
+  }
+
+  /// Geser scroll sampe [spot] ada di [y] (global). Mentok di ujung scroll.
+  bool _place(_Spot spot, double y) {
+    final box = _box(spot.index);
+    if (box == null || !_scroll.hasClients) return false;
+    final p = _scroll.position;
+    final point =
+        box.localToGlobal(Offset.zero).dy + spot.offset * box.size.height;
+    _scroll.jumpTo(
+      (p.pixels + point - y).clamp(p.minScrollExtent, p.maxScrollExtent),
+    );
+    return true;
+  }
+
   /// Taruh titik tersimpan di ±⅓ tinggi layar, biar ada konteks di atasnya.
   void _restore(List<ReaderParagraph> paras) {
     final spot = widget.restoreTo;
-    final box = spot == null ? null : _box(spot.index);
-    if (box != null && _scroll.hasClients) {
-      final p = _scroll.position;
-      final point =
-          box.localToGlobal(Offset.zero).dy + spot!.offset * box.size.height;
-      final target = p.pixels + point - MediaQuery.sizeOf(context).height / 3;
-      _scroll.jumpTo(target.clamp(p.minScrollExtent, p.maxScrollExtent));
+    if (spot != null && _place(spot, MediaQuery.sizeOf(context).height / 3)) {
       _greet(paras, spot);
     }
     if (_scroll.hasClients) _track();
@@ -525,7 +602,11 @@ class _ChapterTextState extends ConsumerState<_ChapterText>
         : null;
     final paragraphs = ref.watch(chapterParagraphsProvider(chapter.id));
     final reading = StabiloType.forBrightness(
-      StabiloType.reading,
+      StabiloType.reading.copyWith(
+        fontFamily: readingFamily(widget.prefs.font),
+        fontSize: widget.prefs.fontSize,
+        height: widget.prefs.lineHeight,
+      ),
       Theme.of(context).brightness,
     ).copyWith(color: c.ink);
     final gap = reading.fontSize!; // 1em antar paragraf
@@ -535,6 +616,7 @@ class _ChapterTextState extends ConsumerState<_ChapterText>
       AsyncData(:final value) => _withoutTitleHeading(value, chapter.title),
       _ => const <ReaderParagraph>[],
     };
+    _paras = paras;
 
     if (loaded) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -576,13 +658,13 @@ class _ChapterTextState extends ConsumerState<_ChapterText>
         // ngumpetin kapsul. Paragraf nangkep tap-nya sendiri.
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
-          onTap: widget.chrome.toggle,
+          onTapUp: (d) => _onTap(d.globalPosition, paras),
           child: SingleChildScrollView(
             controller: _scroll,
             padding: EdgeInsets.fromLTRB(
-              Layout.margin,
+              widget.prefs.marginWidth,
               pad.top + readerTextTop,
-              Layout.margin,
+              widget.prefs.marginWidth,
               pad.bottom + readerTextBottom,
             ),
             child: Stack(
@@ -610,10 +692,9 @@ class _ChapterTextState extends ConsumerState<_ChapterText>
                           child: switch (p.type) {
                             // Kotak paragraf selebar kolom, termasuk sisa baris
                             // pendek. Sela antar paragraf & margin = area kosong.
-                            ParagraphType.paragraph => GestureDetector(
-                              behavior: HitTestBehavior.opaque,
-                              onTap: () => widget.onParagraphTap(p),
-                              child: Text(p.text, style: reading),
+                            ParagraphType.paragraph => Text(
+                              p.text,
+                              style: reading,
                             ),
                             ParagraphType.heading => Semantics(
                               header: true,
@@ -704,6 +785,8 @@ class _ChapterTextState extends ConsumerState<_ChapterText>
         : paras;
   }
 }
+
+enum _Sheet { toc, aa }
 
 /// Titik di chapter: indeks paragraf + bagiannya yang udah lewat garis atas.
 typedef _Spot = ({int index, double offset});

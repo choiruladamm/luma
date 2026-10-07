@@ -231,7 +231,9 @@ class ReaderTopCapsule extends StatelessWidget {
     this.subtitle,
     required this.onBack,
     this.onToc,
+    this.onAa,
     this.tocOpen = false,
+    this.aaOpen = false,
   });
 
   final String title;
@@ -241,8 +243,12 @@ class ReaderTopCapsule extends StatelessWidget {
   /// Null = daftar isi belum bisa dibuka (buku belum kebaca).
   final VoidCallback? onToc;
 
-  /// Sheet daftar isi lagi kebuka: tombolnya kuning.
+  /// Null = buku belum kebaca.
+  final VoidCallback? onAa;
+
+  /// Sheet daftar isi / Aa lagi kebuka: tombolnya kuning.
   final bool tocOpen;
+  final bool aaOpen;
 
   @override
   Widget build(BuildContext context) {
@@ -298,11 +304,11 @@ class ReaderTopCapsule extends StatelessWidget {
               active: tocOpen,
               onPressed: onToc,
             ),
-            // Aa nyusul di #18; sementara mati.
-            const CircleButton(
+            CircleButton(
               semanticLabel: 'Atur tampilan teks',
               text: 'Aa',
-              onPressed: null,
+              active: aaOpen,
+              onPressed: onAa,
             ),
           ],
         ),

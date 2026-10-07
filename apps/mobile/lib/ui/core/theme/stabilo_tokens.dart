@@ -92,6 +92,17 @@ abstract final class Elevation {
           ),
         ];
 
+  /// Pilihan terpilih di segmented control, cuma di mode terang.
+  static List<BoxShadow> segment(Brightness b) => b == Brightness.light
+      ? const [
+          BoxShadow(
+            color: Color(0x261A1A1A), // 15%
+            offset: Offset(0, 1),
+            blurRadius: 3,
+          ),
+        ]
+      : const [];
+
   static const toast = [
     BoxShadow(color: Color(0x2E000000), offset: Offset(0, 8), blurRadius: 24),
   ];

@@ -38,6 +38,8 @@ class StabiloColors extends ThemeExtension<StabiloColors> {
     required this.progressLineTrack,
     required this.capsuleLine,
     required this.flash,
+    required this.scrimSoft,
+    required this.segment,
   });
 
   // Permukaan
@@ -59,6 +61,9 @@ class StabiloColors extends ThemeExtension<StabiloColors> {
   // Halaman baca imersif (board Baca imersif · ReaderCapsule): garis progres
   // 2pt, garis kapsul, kilatan stabilo di grup tersimpan (puncak 60%).
   final Color progressLine, progressLineTrack, capsuleLine, flash;
+  // Scrim tipis di belakang sheet Aa (teks tetep keliatan buat preview),
+  // pilihan terpilih di segmented control.
+  final Color scrimSoft, segment;
 
   static const light = StabiloColors(
     canvas: Color(0xFFFFFBEF),
@@ -92,6 +97,8 @@ class StabiloColors extends ThemeExtension<StabiloColors> {
     progressLineTrack: Color(0x141A1A1A), // 8%
     capsuleLine: Color(0xFF1A1A1A),
     flash: Color(0x9EFFD84D), // 62%
+    scrimSoft: Color(0x141A1A1A), // 8%
+    segment: Color(0xFFFFFFFF),
   );
 
   static const dark = StabiloColors(
@@ -126,6 +133,8 @@ class StabiloColors extends ThemeExtension<StabiloColors> {
     progressLineTrack: Color(0x1ADDD7C8), // 10%
     capsuleLine: Color(0xFF46423A),
     flash: Color(0x57E9C75A), // 34%
+    scrimSoft: Color(0x2E000000), // 18%
+    segment: Color(0xFF4A463E),
   );
 
   // Token gak pernah diubah per widget; set baru = konstanta baru.
