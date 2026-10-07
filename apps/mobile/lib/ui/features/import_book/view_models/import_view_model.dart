@@ -5,6 +5,7 @@ import '../../../../data/repositories/import_repository.dart';
 import '../../../../data/services/epub_parser.dart';
 import '../../../../data/services/file_picker_service.dart';
 import '../../../../domain/models/book.dart';
+import '../../../core/theme/stabilo_tokens.dart';
 
 /// State alur import (board 13–18).
 sealed class ImportState {
@@ -20,11 +21,21 @@ class ImportProcessing extends ImportState {
     required this.fileName,
     required this.size,
     required this.stage,
+    this.progress = 0,
+    this.glide = Motion.progressStep,
   });
 
   final String fileName;
   final int size;
   final ImportStage stage;
+
+  /// 0–1, asli dari tahapnya, cuma naik. 1 = beres, tinggal nahan sampe batas
+  /// minimum loading.
+  final double progress;
+
+  /// Lama angka + bar nyusul ke [progress]. Panjang kalau import kecepetan,
+  /// biar naiknya halus sampe 100% pas batas minimum.
+  final Duration glide;
 }
 
 class ImportSuccess extends ImportState {
@@ -48,7 +59,8 @@ class ImportFailed extends ImportState {
 }
 
 class ImportController extends Notifier<ImportState> {
-  bool _cancelled = false;
+  /// Naik tiap import baru / dibatalin; run yang nomornya ketinggalan = batal.
+  int _run = 0;
 
   @override
   ImportState build() => const ImportIdle();
@@ -61,13 +73,20 @@ class ImportController extends Notifier<ImportState> {
   }
 
   Future<void> importFile(PickedFile file) async {
-    _cancelled = false;
-    void stage(ImportStage s) => state = ImportProcessing(
-      fileName: file.name,
-      size: file.size,
-      stage: s,
-    );
-    stage(ImportStage.reading);
+    final run = ++_run;
+    bool cancelled() => run != _run;
+    final clock = Stopwatch()..start();
+    var stage = ImportStage.reading;
+    var progress = 0.0;
+    void show({Duration glide = Motion.progressStep}) =>
+        state = ImportProcessing(
+          fileName: file.name,
+          size: file.size,
+          stage: stage,
+          progress: progress,
+          glide: glide,
+        );
+    show();
     try {
       final result = await ref
           .read(importRepositoryProvider)
@@ -75,30 +94,58 @@ class ImportController extends Notifier<ImportState> {
             await file.read(),
             fileName: file.name,
             onStage: (s) {
-              if (!_cancelled) stage(s);
+              if (cancelled()) return;
+              stage = s;
+              show();
             },
-            isCancelled: () => _cancelled,
+            onProgress: (p) {
+              // Cuma naik, dan cuma update tiap ganti persen bulat.
+              if (cancelled() || p <= progress) return;
+              final wholePercent = (p * 100).floor() > (progress * 100).floor();
+              progress = p;
+              if (wholePercent) show();
+            },
+            isCancelled: cancelled,
           );
       // Batal pas lagi nyimpen: bukunya tetep masuk rak, sheet-nya udah tutup.
-      if (_cancelled) return;
+      if (cancelled()) return;
       final book = await ref.read(bookRepositoryProvider).book(result.bookId);
-      state = book == null
-          ? ImportFailed(fileName: file.name, error: EpubError.corrupt)
-          : result.duplicate
-          ? ImportDuplicate(book)
-          : ImportSuccess(book);
+      if (cancelled()) return;
+      if (book == null) {
+        state = ImportFailed(fileName: file.name, error: EpubError.corrupt);
+        return;
+      }
+      // Duplikat gak ditahan.
+      if (result.duplicate) {
+        state = ImportDuplicate(book);
+        return;
+      }
+      // Import kecepetan: angka nyusul halus ke 100% sampe (batas minimum −
+      // jeda), terus jeda, baru "berhasil". Import lambat: cuma nyusul
+      // sebentar + jeda, gak ada tambahan nahan.
+      final left = Motion.importMin - Motion.importSettle - clock.elapsed;
+      final glide = left > Motion.progressStep ? left : Motion.progressStep;
+      progress = 1;
+      show(glide: glide);
+      await Future<void>.delayed(glide + Motion.importSettle);
+      if (cancelled()) return;
+      state = ImportSuccess(book);
     } on ImportCancelled {
-      state = const ImportIdle();
+      // cancel() udah ngembaliin ke idle.
     } on EpubException catch (e) {
-      state = ImportFailed(fileName: file.name, error: e.error);
+      if (!cancelled()) {
+        state = ImportFailed(fileName: file.name, error: e.error);
+      }
     } catch (_) {
-      state = ImportFailed(fileName: file.name, error: EpubError.corrupt);
+      if (!cancelled()) {
+        state = ImportFailed(fileName: file.name, error: EpubError.corrupt);
+      }
     }
   }
 
   /// "Batalin" di sheet proses.
   void cancel() {
-    _cancelled = true;
+    _run++;
     state = const ImportIdle();
   }
 

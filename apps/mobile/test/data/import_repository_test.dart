@@ -132,6 +132,16 @@ void main() {
     expect(stages, ImportStage.values);
   });
 
+  test('progress only goes up, per chapter, and stays under 100%', () async {
+    final seen = <double>[];
+    await repo.importEpub(epub, fileName: 'a.epub', onProgress: seen.add);
+    expect(seen, isNotEmpty);
+    expect(seen.reduce((a, b) => a > b ? a : b), lessThan(1));
+    for (var i = 1; i < seen.length; i++) {
+      expect(seen[i], greaterThanOrEqualTo(seen[i - 1]));
+    }
+  });
+
   test('a duplicate stops after reading', () async {
     await repo.importEpub(epub, fileName: 'a.epub');
     final stages = <ImportStage>[];

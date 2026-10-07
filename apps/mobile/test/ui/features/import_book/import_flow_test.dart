@@ -37,8 +37,18 @@ final walden = ShelfBook(
   createdAt: DateTime(2026, 9, 20),
 );
 
-ImportProcessing processing(ImportStage stage) =>
-    ImportProcessing(fileName: 'walden.epub', size: 1258291, stage: stage);
+ImportProcessing processing(ImportStage stage, [double progress = 0]) =>
+    ImportProcessing(
+      fileName: 'walden.epub',
+      size: 1258291,
+      stage: stage,
+      progress: progress,
+    );
+
+String _percentText(WidgetTester tester) => tester
+    .widgetList<Text>(find.byType(Text))
+    .map((t) => t.data ?? '')
+    .firstWhere((t) => t.endsWith('%'));
 
 void main() {
   late FakeImport import;
@@ -93,19 +103,56 @@ void main() {
       tester,
     ) async {
       await pump(tester, b: b);
-      await emit(tester, processing(ImportStage.reading));
+      await emit(tester, processing(ImportStage.reading, 0.1));
       expect(find.text('Lagi ngebongkar EPUB...'), findsOneWidget);
       expect(find.text('walden.epub · 1,2 MB'), findsOneWidget);
       expect(find.text('10%'), findsOneWidget);
       expect(find.byType(BookCard), findsOneWidget); // importing card
       expect(find.text('Lagi diproses'), findsOneWidget);
 
-      await emit(tester, processing(ImportStage.chapters));
+      await emit(tester, processing(ImportStage.chapters, 0.7));
       expect(find.text('70%'), findsOneWidget);
       expect(find.text('Lagi ngebongkar EPUB...'), findsOneWidget); // one sheet
       expect(tester.takeException(), isNull);
     });
   }
+
+  testWidgets('percent + bar glide to the new value, never jump', (
+    tester,
+  ) async {
+    await pump(tester);
+    await emit(tester, processing(ImportStage.chapters, 0.2));
+    expect(find.text('20%'), findsOneWidget);
+
+    import.emit(processing(ImportStage.chapters, 0.8));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 75)); // halfway
+    final mid = int.parse(
+      RegExp(r'(\d+)%').firstMatch(_percentText(tester))!.group(1)!,
+    );
+    expect(mid, inExclusiveRange(20, 80));
+    final bar = tester.widget<LinearProgressIndicator>(
+      find.byType(LinearProgressIndicator),
+    );
+    expect(bar.value, inExclusiveRange(0.2, 0.8));
+
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.text('80%'), findsOneWidget);
+  });
+
+  testWidgets('reduce motion: percent shows, value jumps without gliding', (
+    tester,
+  ) async {
+    tester.platformDispatcher.accessibilityFeaturesTestValue =
+        const FakeAccessibilityFeatures(disableAnimations: true);
+    addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
+    await pump(tester);
+    await emit(tester, processing(ImportStage.chapters, 0.2));
+    import.emit(processing(ImportStage.chapters, 0.8));
+    await tester.pump();
+    await tester.pump();
+    expect(find.text('80%'), findsOneWidget);
+  });
 
   testWidgets('Batalin cancels and closes the sheet', (tester) async {
     await pump(tester);

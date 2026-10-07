@@ -44,14 +44,23 @@ class ImportCancelled implements Exception {
 }
 
 /// Dua isolate biar tahap [ImportStage.outline] → [ImportStage.chapters]
-/// keliatan di UI.
+/// keliatan di UI. [onChapters] = progres per chapter dari isolate ke-2.
 Future<ParsedBook> parseInIsolate(
   Uint8List bytes, {
   void Function()? onOutline,
+  void Function(int done, int total)? onChapters,
 }) async {
-  final outline = await Isolate.run(() => parseEpub(bytes));
+  final outline = await _parseInIsolate(bytes);
   onOutline?.call();
-  final book = await Isolate.run(() => extractChapters(outline));
+  final port = ReceivePort();
+  final sub = port.listen((m) => onChapters?.call((m as List)[0], m[1]));
+  final ParsedChapters book;
+  try {
+    book = await _extractInIsolate(outline, port.sendPort);
+  } finally {
+    await sub.cancel();
+    port.close();
+  }
   return (
     title: outline.title,
     author: outline.author,
@@ -60,6 +69,27 @@ Future<ParsedBook> parseInIsolate(
     totalChars: book.totalChars,
   );
 }
+
+typedef ParsedChapters = ({List<ParsedChapter> chapters, int totalChars});
+
+// Dua fungsi ini sengaja terpisah: closure isolate nangkep seluruh scope
+// tempat dia dibuat, jadi di `parseInIsolate` (yang megang callback UI) bakal
+// ikut ngirim callback itu ke isolate dan gagal.
+Future<EpubOutline> _parseInIsolate(Uint8List bytes) =>
+    Isolate.run(() => parseEpub(bytes));
+
+Future<ParsedChapters> _extractInIsolate(EpubOutline outline, SendPort send) =>
+    Isolate.run(
+      () => extractChapters(outline, onChapter: (d, t) => send.send([d, t])),
+    );
+
+/// Bobot progres 0–1 per tahap: baca file → hash → outline → chapter → simpan.
+const _afterRead = 0.05;
+const _afterHash = 0.10;
+const _afterOutline = 0.30;
+const _afterChapters = 0.85;
+const _afterFiles = 0.90;
+const _beforeDone = 0.99; // 100% dikasih controller, setelah transaksi commit
 
 /// Import EPUB (docs bagian 8, Alur import). Parse dulu sebelum nyalin file,
 /// jadi EPUB jelek gak ninggalin apa-apa; gagal setelah nyalin = file dihapus
@@ -72,15 +102,18 @@ class ImportRepository {
   final Future<ParsedBook> Function(
     Uint8List bytes, {
     void Function()? onOutline,
+    void Function(int done, int total)? onChapters,
   })
   parse;
 
   /// Lempar [EpubException] kalau file bukan EPUB, rusak, atau ada DRM, dan
   /// [ImportCancelled] kalau [isCancelled] nyala sebelum tahap nyimpen.
+  /// [onProgress] = 0–1 asli dari tahapnya, cuma naik, gak pernah sampe 1.
   Future<ImportResult> importEpub(
     Uint8List bytes, {
     required String fileName,
     void Function(ImportStage stage)? onStage,
+    void Function(double progress)? onProgress,
     bool Function()? isCancelled,
   }) async {
     void checkpoint() {
@@ -92,7 +125,9 @@ class ImportRepository {
       throw EpubException(EpubError.notEpub, fileName);
     }
 
+    onProgress?.call(_afterRead);
     final hash = sha256.convert(bytes).toString();
+    onProgress?.call(_afterHash);
     final existing = await (_db.select(
       _db.books,
     )..where((b) => b.hash.equals(hash))).getSingleOrNull();
@@ -105,7 +140,12 @@ class ImportRepository {
       onOutline: () {
         checkpoint();
         onStage?.call(ImportStage.chapters);
+        onProgress?.call(_afterOutline);
       },
+      onChapters: (done, total) => onProgress?.call(
+        _afterOutline +
+            (_afterChapters - _afterOutline) * (total == 0 ? 1 : done / total),
+      ),
     );
     if (book.chapters.isEmpty) {
       throw const EpubException(EpubError.corrupt, 'no readable chapters');
@@ -122,8 +162,10 @@ class ImportRepository {
       if (coverFile != null) {
         await _storage.writeCover(coverFile, book.cover!.bytes);
       }
+      onProgress?.call(_afterFiles);
       final id = await _insert(
         book,
+        onProgress: onProgress,
         hash: hash,
         fileName: fileName,
         bookFile: bookFile,
@@ -138,6 +180,7 @@ class ImportRepository {
 
   Future<int> _insert(
     ParsedBook book, {
+    void Function(double progress)? onProgress,
     required String hash,
     required String fileName,
     required String bookFile,
@@ -179,6 +222,10 @@ class ImportRepository {
               content: para.text,
             ),
         ]),
+      );
+      onProgress?.call(
+        _afterFiles +
+            (_beforeDone - _afterFiles) * (order + 1) / book.chapters.length,
       );
     }
     return bookId;

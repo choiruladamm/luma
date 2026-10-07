@@ -34,9 +34,13 @@ class ParsedChapter {
 /// Chapter non-isi dibuang, dikenali dari struktur, bukan judul (docs
 /// bagian 14): yang isinya kebanyakan link (daftar isi, indeks) dan yang gak
 /// punya paragraf (halaman judul kepecah, lisensi Gutenberg yang dilewatin).
+///
+/// [onChapter] dipanggil tiap mulai satu chapter sumber (`done` dari `total`),
+/// dan sekali lagi di akhir; cuma buat progres, hasilnya gak berubah.
 ({List<ParsedChapter> chapters, int totalChars}) extractChapters(
-  EpubOutline outline,
-) {
+  EpubOutline outline, {
+  void Function(int done, int total)? onChapter,
+}) {
   final docs = <String, Element>{};
   Element body(String file) => docs[file] ??=
       html.parse(_openSelfClosing(outline.html[file] ?? '')).body ??
@@ -44,7 +48,9 @@ class ParsedChapter {
 
   final chapters = <ParsedChapter>[];
   var offset = 0;
-  for (final source in outline.chapters) {
+  final total = outline.chapters.length;
+  for (final (n, source) in outline.chapters.indexed) {
+    onChapter?.call(n, total);
     final x = _Extractor(source.startAnchor, source.endAnchor);
     for (final (i, file) in source.files.indexed) {
       x.file(body(file), first: i == 0, last: i == source.files.length - 1);
@@ -64,6 +70,7 @@ class ParsedChapter {
     chapters.add(chapter);
     offset += chapter.charCount;
   }
+  onChapter?.call(total, total);
   return (chapters: chapters, totalChars: offset);
 }
 

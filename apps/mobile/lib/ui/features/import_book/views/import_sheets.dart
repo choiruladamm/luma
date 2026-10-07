@@ -20,25 +20,15 @@ import '../view_models/import_view_model.dart';
 class ImportProgressSheet extends ConsumerWidget {
   const ImportProgressSheet({super.key});
 
-  // Persen kasar per tahap; parse gak ngasih progres yang lebih halus.
-  static const _percent = {
-    ImportStage.reading: 10,
-    ImportStage.outline: 35,
-    ImportStage.chapters: 70,
-    ImportStage.saving: 90,
-  };
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final c = context.stabilo;
     final state = ref.watch(importControllerProvider);
     if (state is! ImportProcessing) return const SizedBox.shrink();
-    final percent = _percent[state.stage]!;
     final outlineDone = state.stage.index > ImportStage.outline.index;
 
     return Semantics(
       label: 'Lagi import',
-      liveRegion: true,
       child: SheetFrame(
         children: [
           Row(
@@ -73,27 +63,41 @@ class ImportProgressSheet extends ConsumerWidget {
               ),
             ],
           ),
-          Row(
-            spacing: Space.s3,
-            children: [
-              Expanded(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(Radii.full),
-                  child: LinearProgressIndicator(
-                    value: percent / 100,
-                    minHeight: 8,
-                    backgroundColor: c.track,
-                    color: c.progressFill,
-                  ),
+          // Angka + bar nyusul dari nilai sebelumnya; "Kurangi gerakan" nyala =
+          // loncat langsung, persen tetep muncul.
+          Semantics(
+            value: '${(state.progress * 100).round()}%',
+            child: ExcludeSemantics(
+              child: TweenAnimationBuilder<double>(
+                tween: Tween(end: state.progress),
+                duration: MediaQuery.disableAnimationsOf(context)
+                    ? Duration.zero
+                    : state.glide,
+                curve: Curves.easeOut,
+                builder: (_, value, _) => Row(
+                  spacing: Space.s3,
+                  children: [
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(Radii.full),
+                        child: LinearProgressIndicator(
+                          value: value,
+                          minHeight: 8,
+                          backgroundColor: c.track,
+                          color: c.progressFill,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      '${(value * 100).round()}%',
+                      style: StabiloType.caption.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              Text(
-                '$percent%',
-                style: StabiloType.caption.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
+            ),
           ),
           Column(
             spacing: 10,

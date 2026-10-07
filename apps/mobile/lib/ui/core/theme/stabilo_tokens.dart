@@ -71,6 +71,9 @@ abstract final class Motion {
   static const cursorBlink = Duration(milliseconds: 1000); // steps(1)
   static const thinkingDots = Duration(milliseconds: 1200); // easeInOut, loop
   static const reducedFade = Duration(milliseconds: 150);
+  static const progressStep = Duration(milliseconds: 150); // angka + bar import
+  static const importMin = Duration(milliseconds: 1200); // loading import min.
+  static const importSettle = Duration(milliseconds: 300); // jeda di 100%
   static const contentFade = Duration(milliseconds: 200); // isi bab muncul
   static const toast = Duration(milliseconds: 2500); // ilang sendiri
   static const toastLong = Duration(

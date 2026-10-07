@@ -221,10 +221,12 @@ class _BookshelfViewState extends ConsumerState<BookshelfView> {
     final books = ref.watch(booksStreamProvider);
     final sort = ref.watch(shelfSortProvider).value;
     final view = ref.watch(shelfViewProvider).value;
-    final importing = switch (ref.watch(importControllerProvider)) {
-      ImportProcessing(:final fileName) => fileName,
-      _ => null,
-    };
+    // select: persen naik terus, rak gak perlu rebuild tiap kali.
+    final importing = ref.watch(
+      importControllerProvider.select(
+        (s) => s is ImportProcessing ? s.fileName : null,
+      ),
+    );
     void onImport() => _import.pick();
     final header = ShelfHeader(onImport: onImport);
     final reminder = _reminder(switch (books) {
