@@ -1707,6 +1707,23 @@ void main() {
       expect(calls, 2);
     });
 
+    // Tile: 52 tall, top at 31. Text starts at 31 + 52 + 24 = 107.
+    for (final (name, error, title) in [
+      ('error', const AiException(AiError.timeout), 'Yah, gagal nih'),
+      ('no-key', const AiException(AiError.noApiKey), 'Isi API key dulu yuk'),
+    ]) {
+      testWidgets('$name text sits 24pt below the icon tile', (tester) async {
+        answer = (_) async => throw error;
+        await openTall(tester);
+        await tapGroup(tester, 13);
+        expect(
+          tester.getTopLeft(find.text(title)).dy -
+              tester.getTopLeft(sheetBox).dy,
+          107,
+        );
+      });
+    }
+
     testWidgets('out of credits says so', (tester) async {
       answer = (_) async => throw const AiException(AiError.http, status: 402);
       await openTall(tester);

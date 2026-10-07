@@ -229,6 +229,7 @@ class _ScrollFrame extends StatefulWidget {
     this.margin = 0,
     this.gap = Space.s4,
     this.hideable = false,
+    this.topInset = Layout.artinyaHeader,
   });
 
   final Widget header;
@@ -240,6 +241,9 @@ class _ScrollFrame extends StatefulWidget {
   final double margin;
   final double gap;
   final bool hideable;
+
+  /// Jarak isi dari atas sheet (ruang buat header yang jadi lapisan).
+  final double topInset;
 
   @override
   State<_ScrollFrame> createState() => _ScrollFrameState();
@@ -338,7 +342,7 @@ class _ScrollFrameState extends State<_ScrollFrame>
               physics: const ClampingScrollPhysics(),
               padding: EdgeInsets.fromLTRB(
                 pad.left,
-                Layout.artinyaHeader,
+                widget.topInset,
                 pad.right,
                 Layout.artinyaActions,
               ),
@@ -607,7 +611,13 @@ class _Loading extends StatelessWidget {
   }
 }
 
-/// Kotak ikon 52 di pojok state error / API key kosong.
+/// Kotak ikon di pojok state error / API key kosong, dan jarak isi di
+/// bawahnya: isi mulai [_tileInset] dari atas sheet (di bawah kotak, lega).
+const _tile = 52.0;
+const _tileInset =
+    Layout.artinyaHeader - Space.s4 - Layout.touch + _tile + Space.s6;
+
+/// Kotak ikon di pojok state error / API key kosong.
 class _IconTile extends StatelessWidget {
   const _IconTile({required this.icon, required this.bg, required this.fg});
 
@@ -617,8 +627,8 @@ class _IconTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    width: 52,
-    height: 52,
+    width: _tile,
+    height: _tile,
     decoration: BoxDecoration(
       color: bg,
       borderRadius: BorderRadius.circular(Radii.menu),
@@ -685,6 +695,7 @@ class _Failed extends StatelessWidget {
       label: 'Gagal ngambil artinya',
       child: _ScrollFrame(
         gap: 14,
+        topInset: _tileInset,
         header: _TileHeader(
           tile: _IconTile(icon: AppIcons.offline, bg: c.pink, fg: c.onPink),
           onClose: onClose,
@@ -739,6 +750,7 @@ class _NoKey extends StatelessWidget {
     final c = context.stabilo;
     return _ScrollFrame(
       gap: 14,
+      topInset: _tileInset,
       header: _TileHeader(
         tile: _IconTile(icon: AppIcons.key, bg: c.accent, fg: c.onAccent),
         onClose: onClose,
