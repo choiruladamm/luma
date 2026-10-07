@@ -29,21 +29,27 @@ class Tag extends StatelessWidget {
       TagTone.pink => (c.pink, c.onPink),
       TagTone.muted => (c.muted, c.ink),
     };
-    return Container(
-      height: _section ? 24 : 22,
-      padding: EdgeInsets.symmetric(horizontal: _section ? 10 : Space.s2),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(Radii.full),
-      ),
-      // Selebar teksnya aja. (`alignment` di Container bikin dia melebar
-      // ngisi semua lebar yang dikasih parent.)
-      child: Align(
-        widthFactor: 1,
-        child: Text(
-          _section ? label.toUpperCase() : label,
-          style: (_section ? StabiloType.tag : StabiloType.micro).copyWith(
-            color: fg,
+    // Selebar teksnya aja, di parent mana pun. Container & Align `widthFactor`
+    // gak cukup di Column(stretch): constraint ketat dari parent menang. Align
+    // terluar ngelonggarin constraint-nya dulu.
+    return Align(
+      alignment: Alignment.centerLeft,
+      widthFactor: 1,
+      heightFactor: 1,
+      child: Container(
+        height: _section ? 24 : 22,
+        padding: EdgeInsets.symmetric(horizontal: _section ? 10 : Space.s2),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(Radii.full),
+        ),
+        child: Align(
+          widthFactor: 1,
+          child: Text(
+            _section ? label.toUpperCase() : label,
+            style: (_section ? StabiloType.tag : StabiloType.micro).copyWith(
+              color: fg,
+            ),
           ),
         ),
       ),

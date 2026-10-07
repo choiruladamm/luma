@@ -64,6 +64,41 @@ void main() {
     expect(results, [true, false]);
   });
 
+  testWidgets('dialog with an icon: 48 tile at the left, not full width', (
+    tester,
+  ) async {
+    await pumpApp(
+      tester,
+      opener(
+        (context) => showConfirmDialog(
+          context,
+          icon: AppIcons.delete,
+          title: 'Hapus "Dracula" dari rak?',
+          message: 'File aslinya di Files tetep aman kok.',
+          cancelLabel: 'Gak jadi',
+          confirmLabel: 'Hapus',
+        ),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    // The panel itself (the Dialog widget spans the screen).
+    final dialog = tester.getRect(
+      find
+          .descendant(of: find.byType(Dialog), matching: find.byType(Material))
+          .first,
+    );
+    final tile = tester.getRect(
+      find.ancestor(of: find.byType(AppIcon), matching: find.byType(Container)),
+    );
+    expect(tile.size, const Size(48, 48));
+    expect(tile.left, dialog.left + 20); // padding, not stretched
+    // Board 22: 32 off each screen edge, 50pt buttons.
+    expect(dialog.width, 900 - 64);
+    expect(tester.getSize(find.byType(AppButton).first).height, 50);
+  });
+
   testWidgets('toast disappears by itself; its action runs once', (
     tester,
   ) async {

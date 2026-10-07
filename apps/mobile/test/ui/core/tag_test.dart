@@ -37,4 +37,35 @@ void main() {
       );
     }
   });
+
+  testWidgets('also when the parent forces full width (Column stretch)', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: stabiloTheme(Brightness.light),
+        home: const Scaffold(
+          body: SizedBox(
+            width: 600,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Tag.section('Terjemahan'),
+                Tag.section('Maksud penulisnya tuh...', tone: TagTone.pink),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    // The pill (the Tag's own box stays as wide as the parent forces).
+    final pills = find.descendant(
+      of: find.byType(Tag),
+      matching: find.byType(Container),
+    );
+    expect(pills, findsNWidgets(2));
+    for (final pill in pills.evaluate()) {
+      expect(tester.getSize(find.byWidget(pill.widget)).width, lessThan(400));
+    }
+  });
 }

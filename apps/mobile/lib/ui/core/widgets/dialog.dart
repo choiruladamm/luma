@@ -7,6 +7,9 @@ import 'buttons.dart';
 
 /// Dialog konfirmasi buat aksi yang gak bisa dibalikin (board Komponen 04).
 /// `true` = dikonfirmasi; ditutup / Batal = `false`.
+///
+/// Dengan [icon] ukurannya ngikut board 22 Konfirmasi hapus: selebar layar
+/// dikurangi margin 32, sudut 26, judul 22, tombol 50.
 Future<bool> showConfirmDialog(
   BuildContext context, {
   required String title,
@@ -23,37 +26,78 @@ Future<bool> showConfirmDialog(
     builder: (context) {
       final c = context.stabilo;
       void close(bool v) => Navigator.of(context).pop(v);
+      final tall = icon != null;
+      final buttonHeight = tall ? 50.0 : 48.0;
       return Dialog(
+        insetPadding: EdgeInsets.symmetric(
+          horizontal: tall ? Space.s8 : Space.s10,
+          vertical: Space.s6,
+        ),
+        shape: tall
+            ? RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(Radii.dialogIcon),
+              )
+            : null,
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 300),
+          constraints: BoxConstraints(maxWidth: tall ? double.infinity : 300),
           child: Padding(
-            padding: const EdgeInsets.all(Space.s5),
+            padding: tall
+                ? const EdgeInsets.fromLTRB(
+                    Space.s5,
+                    Space.s6,
+                    Space.s5,
+                    Space.s4 + Space.s1 / 2,
+                  )
+                : const EdgeInsets.all(Space.s5),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
-              spacing: Space.s2,
+              spacing: tall ? 10 : Space.s2,
               children: [
                 if (icon != null)
-                  Container(
-                    width: 48,
-                    height: 48,
-                    margin: const EdgeInsets.only(bottom: Space.s1),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: destructive ? c.dangerSoft : c.muted,
-                      borderRadius: BorderRadius.circular(Radii.sm + Space.s1),
-                    ),
-                    child: AppIcon(
-                      icon,
-                      size: 24,
-                      color: destructive ? c.danger : c.ink,
+                  // Ukuran sendiri, nempel kiri: di Column(stretch) Container
+                  // tanpa Align ikut melebar ke lebar dialog.
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: Space.s1),
+                      child: Container(
+                        width: 48,
+                        height: 48,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: destructive ? c.dangerSoft : c.muted,
+                          borderRadius: BorderRadius.circular(Radii.field),
+                        ),
+                        child: AppIcon(
+                          icon,
+                          size: 24,
+                          color: destructive ? c.danger : c.ink,
+                        ),
+                      ),
                     ),
                   ),
                 Semantics(
                   header: true,
-                  child: Text(title, style: StabiloType.titleSm),
+                  child: Text(
+                    title,
+                    style: tall
+                        ? StabiloType.titleSm.copyWith(
+                            fontSize: 22,
+                            height: 1.2,
+                            letterSpacing: -0.02 * 22,
+                          )
+                        : StabiloType.titleSm,
+                  ),
                 ),
-                Text(message, style: StabiloType.body.copyWith(color: c.ink2)),
+                Text(
+                  message,
+                  style: StabiloType.body.copyWith(
+                    fontSize: tall ? 15 : null,
+                    height: tall ? 1.5 : null,
+                    color: c.ink2,
+                  ),
+                ),
                 const SizedBox(height: Space.s1),
                 Row(
                   spacing: Space.s2,
@@ -61,7 +105,7 @@ Future<bool> showConfirmDialog(
                     Expanded(
                       child: AppButton.secondary(
                         label: cancelLabel,
-                        height: 48,
+                        height: buttonHeight,
                         onPressed: () => close(false),
                       ),
                     ),
@@ -69,11 +113,12 @@ Future<bool> showConfirmDialog(
                       child: destructive
                           ? AppButton.danger(
                               label: confirmLabel,
+                              height: buttonHeight,
                               onPressed: () => close(true),
                             )
                           : AppButton.primary(
                               label: confirmLabel,
-                              height: 48,
+                              height: buttonHeight,
                               onPressed: () => close(true),
                             ),
                     ),

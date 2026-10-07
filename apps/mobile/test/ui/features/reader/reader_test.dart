@@ -18,6 +18,7 @@ import 'package:luma/ui/core/widgets/edge_fade.dart';
 import 'package:luma/ui/core/widgets/switch.dart';
 import 'package:luma/ui/features/bookshelf/view_models/bookshelf_view_model.dart';
 import 'package:luma/ui/features/bookshelf/views/bookshelf_view.dart';
+import 'package:luma/ui/core/widgets/tag.dart';
 import 'package:luma/ui/features/reader/view_models/reader_view_model.dart';
 import 'package:luma/ui/features/reader/views/reader_capsule.dart';
 import 'package:luma/ui/features/reader/views/reader_view.dart';
@@ -1166,6 +1167,19 @@ void main() {
       expect(find.text('TERJEMAHAN'), findsOneWidget);
       expect(find.textContaining('ID Tall 13:'), findsOneWidget);
       expect(find.text('Makna grup 13.'), findsOneWidget);
+      // The section chips wrap their text, they do not span the sheet.
+      final sheetWidth = tester.getSize(find.byType(BottomSheet)).width;
+      final pills = find.descendant(
+        of: find.byType(Tag),
+        matching: find.byType(Container),
+      );
+      expect(pills, findsNWidgets(2));
+      for (final pill in pills.evaluate()) {
+        expect(
+          tester.getSize(find.byWidget(pill.widget)).width,
+          lessThan(sheetWidth / 2),
+        );
+      }
     });
 
     testWidgets('the group sits 16pt above the sheet, highlighted', (

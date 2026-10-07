@@ -25,6 +25,7 @@ abstract final class Radii {
   static const field = 16.0; // field input
   static const menu = 18.0; // menu, list pengaturan
   static const dialog = 24.0;
+  static const dialogIcon = 26.0; // board 22 Konfirmasi hapus (dialog + ikon)
 }
 
 /// Layout acuan iPhone 390 × 844.
