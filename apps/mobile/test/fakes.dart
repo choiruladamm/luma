@@ -19,6 +19,7 @@ class FakeProgress implements ReadingProgressRepository {
   ReadingPosition? saved;
   final saves = <ReadingPosition>[];
   final opened = <int>[];
+  final finished = <int>[];
   int readingSeconds = 0;
 
   /// One entry per `addReadingTime` call that carried a span.
@@ -33,6 +34,9 @@ class FakeProgress implements ReadingProgressRepository {
 
   @override
   Future<void> markOpened(int bookId) async => opened.add(bookId);
+
+  @override
+  Future<void> markFinished(int bookId) async => finished.add(bookId);
 
   @override
   Future<void> addReadingTime(

@@ -357,6 +357,7 @@ class _ReaderViewState extends ConsumerState<ReaderView>
                                 _spot = (index: last.index, offset: 1);
                               }
                               _save(); // waktu baca terbaru buat rekapnya
+                              _progress.markFinished(widget.bookId).ignore();
                               _chrome.show(); // status bar balik
                               setState(() => _finished = true);
                             },

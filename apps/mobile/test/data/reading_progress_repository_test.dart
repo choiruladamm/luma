@@ -107,6 +107,26 @@ void main() {
     },
   );
 
+  test(
+    'markFinished stamps finishedAt once, re-reading does not overwrite',
+    () async {
+      expect((await db.select(db.books).getSingle()).finishedAt, isNull);
+      final before = DateTime.now().subtract(const Duration(seconds: 1));
+      await repo.markFinished(bookId);
+      expect(
+        (await db.select(db.books).getSingle()).finishedAt!.isAfter(before),
+        isTrue,
+      );
+
+      final earlier = DateTime(2026, 1, 1);
+      await db
+          .update(db.books)
+          .write(BooksCompanion(finishedAt: Value(earlier)));
+      await repo.markFinished(bookId);
+      expect((await db.select(db.books).getSingle()).finishedAt, earlier);
+    },
+  );
+
   final t0 = DateTime(2026, 10, 7, 9);
   DateTime at(int seconds) => t0.add(Duration(seconds: seconds));
   ReadingSpan span(int chapterId, int from, int to) =>

@@ -288,6 +288,21 @@ void main() {
     expect(progress.spans.single.endChar, 100);
   });
 
+  testWidgets('only the book end screen marks the book finished', (
+    tester,
+  ) async {
+    await openBook(tester);
+    await tester.tap(find.text('Lanjut, gas'));
+    await tester.pumpAndSettle();
+    expect(find.text('Itu tadi bab terakhir!'), findsOneWidget);
+    expect(progress.finished, isEmpty); // last chapter, not past it yet
+
+    await tester.tap(find.text('Lanjut, gas'));
+    await tester.pumpAndSettle();
+    expect(find.text('kelar!'), findsOneWidget);
+    expect(progress.finished, [1]);
+  });
+
   for (final b in Brightness.values) {
     testWidgets('the last chapter leads to the book end screen ($b)', (
       tester,

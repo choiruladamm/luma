@@ -60,6 +60,12 @@ class ReadingProgressRepository {
     );
   }
 
+  /// Layar akhir buku kebuka: dicatet sekali, baca ulang gak nimpa.
+  Future<void> markFinished(int bookId) =>
+      (_db.update(_db.books)
+            ..where((b) => b.id.equals(bookId) & b.finishedAt.isNull()))
+          .write(BooksCompanion(finishedAt: Value(DateTime.now())));
+
   /// Potongan sesi yang digabung paling lama segini, biar jam di heatmap dan
   /// "jam favorit" tetep kehitung per jam (bukan semua ke jam mulai baca).
   static const _maxMerged = Duration(minutes: 5);
