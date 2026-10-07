@@ -107,10 +107,71 @@ void main() {
     },
   );
 
+  final t0 = DateTime(2026, 10, 7, 9);
+  DateTime at(int seconds) => t0.add(Duration(seconds: seconds));
+  ReadingSpan span(int chapterId, int from, int to) =>
+      (chapterId: chapterId, startChar: from, endChar: to);
+  Future<List<ReadingSession>> sessions() => (db.select(
+    db.readingSessions,
+  )..orderBy([(s) => OrderingTerm.asc(s.id)])).get();
+
   test('addReadingTime adds up', () async {
-    await repo.addReadingTime(bookId, 90);
-    await repo.addReadingTime(bookId, 30);
+    await repo.addReadingTime(bookId, 90, at: at(90));
+    await repo.addReadingTime(bookId, 30, at: at(200));
     final book = await db.select(db.books).getSingle();
     expect(book.readingSeconds, 120);
+    expect(await sessions(), isEmpty); // no span, no session
+  });
+
+  test('a span becomes a session that ends at `at`', () async {
+    await repo.addReadingTime(bookId, 60, at: at(60), span: span(ch1, 10, 40));
+    final s = (await sessions()).single;
+    expect(s.bookId, bookId);
+    expect(s.chapterId, ch1);
+    expect(s.startedAt, at(0));
+    expect(s.seconds, 60);
+    expect([s.startChar, s.endChar], [10, 40]);
+  });
+
+  test('a chunk that continues the last one merges into it', () async {
+    await repo.addReadingTime(bookId, 60, at: at(60), span: span(ch1, 10, 40));
+    await repo.addReadingTime(bookId, 30, at: at(100), span: span(ch1, 40, 55));
+    final s = (await sessions()).single;
+    expect(s.startedAt, at(0));
+    expect(s.seconds, 90);
+    expect([s.startChar, s.endChar], [10, 55]);
+    // Total and sessions never disagree.
+    final book = await db.select(db.books).getSingle();
+    expect(book.readingSeconds, 90);
+  });
+
+  test('a new row when the chunk does not continue the last one', () async {
+    Future<void> second(int seconds, int atSec, ReadingSpan sp) async {
+      await repo.addReadingTime(
+        bookId,
+        60,
+        at: at(60),
+        span: span(ch1, 10, 40),
+      );
+      await repo.addReadingTime(bookId, seconds, at: at(atSec), span: sp);
+      expect(await sessions(), hasLength(2));
+      await db.delete(db.readingSessions).go();
+    }
+
+    await second(30, 100, span(ch2, 40, 55)); // other chapter
+    await second(30, 100, span(ch1, 200, 210)); // jumped
+    await second(30, 210, span(ch1, 40, 55)); // 2 min idle gap in between
+  });
+
+  test('a session stops growing at 5 minutes', () async {
+    await repo.addReadingTime(bookId, 300, at: at(300), span: span(ch1, 0, 90));
+    await repo.addReadingTime(bookId, 30, at: at(330), span: span(ch1, 90, 99));
+    expect(await sessions(), hasLength(2));
+  });
+
+  test('deleting a book takes its sessions along', () async {
+    await repo.addReadingTime(bookId, 60, at: at(60), span: span(ch1, 10, 40));
+    await db.delete(db.books).go();
+    expect(await sessions(), isEmpty);
   });
 }

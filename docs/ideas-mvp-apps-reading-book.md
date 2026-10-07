@@ -294,7 +294,9 @@ Log append-only potongan waktu baca aktif. Statistik (streak, heatmap, kecepatan
 | startChar | int | Posisi absolut di buku (karakter) di awal potongan |
 | endChar | int | Di akhir potongan. Dua ujung disimpen, bukan satu angka `charsRead`: aturan "berapa yang dianggap beneran dibaca" (batas kecepatan wajar) ada di query, bisa diganti tanpa ngubah data |
 
-Index: `(bookId, startedAt)`, `(startedAt)`. Pengisiannya di #44.
+Index: `(bookId, startedAt)`, `(startedAt)`.
+
+**Pengisian (#44).** Titik tulisnya sama kayak total waktu baca (pindah bab, app ke background, keluar halaman baca, scroll berhenti), satu transaksi sama `books.readingSeconds`. `startedAt` = waktu simpan dikurangi `seconds`. Posisi karakter dari `charPosition` (`charOffset` bab + fraksi scroll × panjang bab, sumber yang sama dengan garis progres). Pindah bab nyimpen potongan bab lama **sebelum** state diganti, jadi potongan gak pernah lintas bab. Potongan yang nyambung digabung ke baris terakhir (bab sama, `startChar` = `endChar` baris itu, jeda < 2 menit), maksimal sampai 5 menit per baris biar jam favorit tetep ke-resolve per jam, bukan semuanya ke jam mulai baca.
 
 ### `ai_calls`
 

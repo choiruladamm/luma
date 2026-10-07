@@ -8,6 +8,14 @@ const charsPerMinute = 1000;
 /// Menit buat baca [chars] karakter, minimal 1.
 int readingMinutes(int chars) => math.max(1, (chars / charsPerMinute).ceil());
 
+/// Posisi absolut di buku (karakter) dari posisi di chapter ([fraction] 0..1).
+/// Sumber `startChar` / `endChar` di `reading_sessions`.
+int charPosition({
+  required int charOffset,
+  required int chapterChars,
+  required double fraction,
+}) => charOffset + (fraction.clamp(0, 1) * chapterChars).round();
+
 /// Posisi baca di buku 0..1 dari posisi di chapter ([fraction] 0..1).
 double bookProgress({
   required int charOffset,

@@ -67,6 +67,13 @@ class _ReaderViewState extends ConsumerState<ReaderView>
   /// Seberapa jauh chapter ini udah di-scroll, 0..1.
   final _fraction = ValueNotifier<double>(0);
 
+  /// Buku yang lagi dibaca, buat ngubah [_fraction] jadi posisi karakter.
+  ReaderBook? _book;
+
+  /// Posisi karakter (absolut di buku) waktu terakhir waktu baca disimpen:
+  /// awal potongan sesi berikutnya. Null sampai posisi pertama kebaca.
+  int? _lastChar;
+
   /// Lagi nampilin layar akhir buku.
   bool _finished = false;
 
@@ -89,6 +96,23 @@ class _ReaderViewState extends ConsumerState<ReaderView>
     WidgetsBinding.instance.addObserver(this);
     _progress.markOpened(widget.bookId).ignore();
     _chrome.visible.addListener(_syncStatusBar);
+    _fraction.addListener(_anchor);
+  }
+
+  /// Posisi pertama yang kebaca (buku kebuka di titik tersimpan) = awal
+  /// potongan sesi pertama.
+  void _anchor() => _lastChar ??= _charNow();
+
+  /// Posisi karakter sekarang; null sebelum bukunya kebaca.
+  int? _charNow() {
+    final book = _book, i = _chapter;
+    if (book == null || i == null) return null;
+    final ch = book.chapters[i];
+    return charPosition(
+      charOffset: ch.charOffset,
+      chapterChars: ch.chars,
+      fraction: _fraction.value,
+    );
   }
 
   /// Status bar ngumpet bareng kapsul.
@@ -125,11 +149,26 @@ class _ReaderViewState extends ConsumerState<ReaderView>
     super.dispose();
   }
 
+  /// Waktu baca aktif sejak simpan terakhir → total buku + satu potongan sesi
+  /// di bab dan posisi sekarang. Pindah bab harus manggil ini SEBELUM state
+  /// bab diganti, biar potongannya masuk ke bab yang bener dan lompatan lewat
+  /// daftar isi gak ikut keitung sebagai karakter terbaca.
+  void _flushReading() {
+    final now = DateTime.now();
+    final seconds = _clock.take(now);
+    if (seconds <= 0) return;
+    final chapterId = _chapterId, end = _charNow();
+    final span = chapterId == null || end == null
+        ? null
+        : (chapterId: chapterId, startChar: _lastChar ?? end, endChar: end);
+    if (end != null) _lastChar = end;
+    _progress
+        .addReadingTime(widget.bookId, seconds, at: now, span: span)
+        .ignore();
+  }
+
   void _save() {
-    final seconds = _clock.take(DateTime.now());
-    if (seconds > 0) {
-      _progress.addReadingTime(widget.bookId, seconds).ignore();
-    }
+    _flushReading();
     final chapterId = _chapterId;
     if (chapterId == null) return;
     _progress.save(widget.bookId, (
@@ -139,18 +178,22 @@ class _ReaderViewState extends ConsumerState<ReaderView>
     )).ignore();
   }
 
-  void _goTo(ReaderBook book, int chapter) => setState(() {
-    _text = GlobalKey();
-    _chrome.show(); // awal bab
-    _finished = false;
-    _chapter = chapter;
-    _chapterId = book.chapters[chapter].id;
-    _spot = (index: 0, offset: 0);
-    _restoreTo = null;
-    _fraction.value = 0;
-    _saveLater?.cancel();
-    _save();
-  });
+  void _goTo(ReaderBook book, int chapter) {
+    _flushReading(); // masih di bab lama
+    setState(() {
+      _text = GlobalKey();
+      _chrome.show(); // awal bab
+      _finished = false;
+      _chapter = chapter;
+      _chapterId = book.chapters[chapter].id;
+      _lastChar = book.chapters[chapter].charOffset;
+      _spot = (index: 0, offset: 0);
+      _restoreTo = null;
+      _fraction.value = 0;
+      _saveLater?.cancel();
+      _save();
+    });
+  }
 
   Future<void> _openToc(ReaderBook book) async {
     final i = _chapter!;
@@ -264,6 +307,7 @@ class _ReaderViewState extends ConsumerState<ReaderView>
           (AsyncData(value: final b?), AsyncData(value: final pos))
               when b.chapters.isNotEmpty =>
             () {
+              _book = b;
               if (_chapter == null) _start(b, pos);
               final i = _chapter!;
               if (_finished) {

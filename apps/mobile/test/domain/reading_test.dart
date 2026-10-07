@@ -26,6 +26,16 @@ void main() {
     );
   });
 
+  test('charPosition: chapter offset plus the fraction of the chapter', () {
+    int c(double f) =>
+        charPosition(charOffset: 200, chapterChars: 100, fraction: f);
+    expect(c(0), 200);
+    expect(c(0.5), 250);
+    expect(c(1), 300);
+    expect(c(2), 300); // clamped
+    expect(c(-1), 200);
+  });
+
   test('formatReadingTime: hours and minutes, minutes only under an hour', () {
     expect(formatReadingTime(0), '0 mnt');
     expect(formatReadingTime(45 * 60 + 59), '45 mnt');

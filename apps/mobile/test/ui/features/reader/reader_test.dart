@@ -269,6 +269,25 @@ void main() {
     expect(find.text('Itu tadi bab terakhir!'), findsOneWidget);
   });
 
+  testWidgets('time read before moving on goes to the chapter just left', (
+    tester,
+  ) async {
+    await openBook(tester);
+    // ReadingClock reads the real clock; testWidgets' clock is fake.
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 1100)),
+    );
+    await tester.tap(find.text('Lanjut, gas'));
+    await tester.pumpAndSettle();
+
+    expect(progress.readingSeconds, greaterThanOrEqualTo(1));
+    // The short chapter 1 is fully on screen: chapter 1, ending at its end
+    // (offset 0 + 100 chars), not chapter 2 (starts at 100).
+    expect(progress.spans, hasLength(1));
+    expect(progress.spans.single.chapterId, 10);
+    expect(progress.spans.single.endChar, 100);
+  });
+
   for (final b in Brightness.values) {
     testWidgets('the last chapter leads to the book end screen ($b)', (
       tester,
