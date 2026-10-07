@@ -229,6 +229,24 @@ void main() {
     });
   });
 
+  test(
+    'closing the sheet mid-answer: the cancel error is not read as state',
+    () {
+      fakeAsync((async) {
+        final c = ai.stream = StreamController<String>();
+        open(async);
+        c.add('[T1]\nHalo');
+        async.flushMicrotasks();
+        sub.close();
+        async.elapse(Duration.zero);
+        // What the cancelled request throws once the provider is gone.
+        c.addError(const AiException(AiError.network));
+        async.flushMicrotasks(); // would throw "Ref ... after it has been disposed"
+        expect(cache.saved, isEmpty);
+      });
+    },
+  );
+
   test('no API key: fails without streaming anything', () {
     fakeAsync((async) {
       FlutterSecureStorage.setMockInitialValues({});

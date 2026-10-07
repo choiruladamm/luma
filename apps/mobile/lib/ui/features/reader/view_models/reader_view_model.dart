@@ -229,6 +229,9 @@ class GroupAiStream extends Notifier<AiStream> {
         AiStream(phase: AiPhase.done, draft: _draft(reply), sources: sources),
       );
     } on AiException catch (e) {
+      // Sheet ditutup: request yang dibatalin ngelempar error, dan `state`
+      // udah gak boleh dibaca.
+      if (!run.live) return;
       if (streaming &&
           state.phase != AiPhase.waiting &&
           state.phase != AiPhase.slow) {
