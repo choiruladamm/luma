@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:luma/data/repositories/settings_repository.dart';
+import 'package:luma/data/services/backup_service.dart';
+import 'package:luma/domain/models/backup.dart';
 import 'package:luma/domain/models/book.dart';
 import 'package:luma/data/repositories/reading_progress_repository.dart';
 import 'package:luma/main.dart';
@@ -15,20 +17,43 @@ import 'package:luma/ui/features/settings/views/settings_view.dart';
 
 import '../../../fakes.dart';
 
-ShelfBook book(int id, String title, {bool opened = false}) => ShelfBook(
+ShelfBook book(
+  int id,
+  String title, {
+  bool opened = false,
+  DateTime? created,
+}) => ShelfBook(
   id: id,
   title: title,
   author: 'Somebody',
   coverName: null,
   opened: opened,
-  createdAt: DateTime(2026, 10, 1),
+  createdAt: created ?? DateTime(2026, 10, 1),
 );
+
+/// Backup that never finishes: keeps the progress sheet up.
+class StuckBackup extends Fake implements BackupService {
+  bool started = false;
+
+  @override
+  Future<BackupFile?> export({
+    DateTime? now,
+    void Function(String name, BackupManifest manifest)? onStart,
+    void Function(BackupStage stage, double fraction)? onProgress,
+    Future<void>? cancel,
+  }) {
+    started = true;
+    return Completer<BackupFile?>().future;
+  }
+}
 
 void main() {
   // The shelf is fed by a controller, not Drift: widget tests run on a fake
   // clock and Drift streams need the real one (they hang). The Drift side is
   // covered in test/data/book_repository_test.dart.
   late StreamController<List<ShelfBook>> shelf;
+  late FakeSettings settings;
+  late StuckBackup backup;
   setUp(() => shelf = StreamController());
   // Fire-and-forget: close() waits for the listener (the app's provider)
   // to go away, which never happens if a test fails mid-way, and an awaited
@@ -39,7 +64,15 @@ void main() {
     WidgetTester tester,
     List<ShelfBook> books, {
     Brightness brightness = Brightness.light,
+    // Fresh backup by default: no reminder unless a test wants one.
+    LastBackup? lastBackup,
+    bool neverBackedUp = false,
   }) async {
+    settings = FakeSettings()
+      ..lastBackup = neverBackedUp
+          ? null
+          : lastBackup ?? (at: DateTime.now(), name: 'x.zip', size: 1);
+    backup = StuckBackup();
     tester.view.physicalSize = const Size(900, 1600);
     tester.view.devicePixelRatio = 1;
     tester.platformDispatcher.platformBrightnessTestValue = brightness;
@@ -48,7 +81,8 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          settingsRepositoryProvider.overrideWithValue(FakeSettings()),
+          settingsRepositoryProvider.overrideWithValue(settings),
+          backupServiceProvider.overrideWithValue(backup),
           booksStreamProvider.overrideWith((ref) => shelf.stream),
           // Opening a book shows the reader: feed it too, never the real DB.
           readerBookProvider.overrideWith((ref, id) async => null),
@@ -108,5 +142,67 @@ void main() {
     await tester.tap(find.bySemanticsLabel('Pengaturan app'));
     await tester.pumpAndSettle();
     expect(find.byType(SettingsView), findsOneWidget);
+  });
+
+  group('backup reminder', () {
+    DateTime daysAgo(int n) => DateTime.now().subtract(Duration(days: n));
+
+    testWidgets('6 days since the last backup: the banner', (tester) async {
+      await pump(
+        tester,
+        [book(1, 'Walden')],
+        lastBackup: (at: daysAgo(6), name: 'x.zip', size: 1),
+      );
+      expect(find.text('Udah 6 hari belum backup nih'), findsOneWidget);
+      expect(
+        find.text('Besok jatah install ulang. Amanin data lo dulu yuk.'),
+        findsOneWidget,
+      );
+      expect(find.text('Backup sekarang'), findsOneWidget);
+    });
+
+    testWidgets('a recent backup: no banner', (tester) async {
+      await pump(
+        tester,
+        [book(1, 'Walden')],
+        lastBackup: (at: daysAgo(2), name: 'x.zip', size: 1),
+      );
+      expect(find.bySemanticsLabel('Pengingat backup'), findsNothing);
+      expect(find.textContaining('belum backup'), findsNothing);
+    });
+
+    testWidgets('never backed up: counts from the first book', (tester) async {
+      await pump(tester, [
+        book(1, 'Walden', created: daysAgo(10)),
+      ], neverBackedUp: true);
+      expect(find.text('Belum pernah backup nih'), findsOneWidget);
+    });
+
+    testWidgets('closing it hides it and remembers today', (tester) async {
+      await pump(
+        tester,
+        [book(1, 'Walden')],
+        lastBackup: (at: daysAgo(8), name: 'x.zip', size: 1),
+      );
+      expect(find.text('Udah 8 hari belum backup nih'), findsOneWidget);
+      await tester.tap(find.bySemanticsLabel('Tutup pengingat'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('belum backup'), findsNothing);
+      expect(settings.dismissed, isNotNull);
+    });
+
+    testWidgets('"Backup sekarang" starts it right on the shelf', (
+      tester,
+    ) async {
+      await pump(
+        tester,
+        [book(1, 'Walden')],
+        lastBackup: (at: daysAgo(9), name: 'x.zip', size: 1),
+      );
+      await tester.tap(find.text('Backup sekarang'));
+      await tester.pumpAndSettle();
+      expect(backup.started, isTrue);
+      expect(find.text('Lagi ngebungkus backup...'), findsOneWidget);
+    });
   });
 }

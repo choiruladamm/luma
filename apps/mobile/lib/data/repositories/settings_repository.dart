@@ -57,6 +57,19 @@ class SettingsRepository {
     ]),
   );
 
+  /// Kapan banner pengingat backup terakhir ditutup.
+  Stream<DateTime?> watchReminderDismissed() =>
+      (_db.select(_db.settings)..where((s) => s.key.equals(_dismissed)))
+          .watchSingleOrNull()
+          .map((row) => DateTime.tryParse(row?.value ?? ''));
+
+  Future<void> dismissReminder(DateTime at) => _db
+      .into(_db.settings)
+      .insertOnConflictUpdate(
+        SettingsCompanion.insert(key: _dismissed, value: at.toIso8601String()),
+      );
+
+  static const _dismissed = 'backup.reminderDismissedAt';
   static const _backupAt = 'backup.lastAt';
   static const _backupName = 'backup.lastName';
   static const _backupSize = 'backup.lastSize';
@@ -86,4 +99,8 @@ final aiModelProvider = StreamProvider<String>(
 /// Backup terakhir (Pengaturan, pengingat backup).
 final lastBackupProvider = StreamProvider<LastBackup?>(
   (ref) => ref.watch(settingsRepositoryProvider).watchLastBackup(),
+);
+
+final reminderDismissedProvider = StreamProvider<DateTime?>(
+  (ref) => ref.watch(settingsRepositoryProvider).watchReminderDismissed(),
 );

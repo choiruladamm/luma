@@ -66,6 +66,21 @@ class FakeSettings implements SettingsRepository {
     _backups.add(b);
   }
 
+  DateTime? dismissed;
+  final _dismissals = StreamController<DateTime?>.broadcast();
+
+  @override
+  Stream<DateTime?> watchReminderDismissed() async* {
+    yield dismissed;
+    yield* _dismissals.stream;
+  }
+
+  @override
+  Future<void> dismissReminder(DateTime at) async {
+    dismissed = at;
+    _dismissals.add(at);
+  }
+
   String model = defaultAiModel;
   final _models = StreamController<String>.broadcast();
 

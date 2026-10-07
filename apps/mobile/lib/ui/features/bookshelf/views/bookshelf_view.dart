@@ -5,7 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../data/repositories/settings_repository.dart';
 import '../../../../data/services/file_storage.dart';
+import '../../../../domain/models/backup.dart';
 import '../../../../domain/models/book.dart';
 import '../../../../routing/router.dart';
 import '../../../core/theme/stabilo_theme.dart';
@@ -20,7 +22,10 @@ import '../../../core/widgets/sheet.dart';
 import '../../../core/widgets/toast.dart';
 import '../../import_book/view_models/import_view_model.dart';
 import '../../import_book/views/import_sheets.dart';
+import '../../settings/view_models/backup_view_model.dart';
+import '../../settings/views/backup_listener.dart';
 import '../view_models/bookshelf_view_model.dart';
+import 'backup_reminder.dart';
 
 /// Rak buku (board 01 Rak kosong, 02 Rak) + alur import (board 13–18).
 class BookshelfView extends ConsumerStatefulWidget {
@@ -100,6 +105,32 @@ class _BookshelfViewState extends ConsumerState<BookshelfView> {
     if (identical(ref.read(importControllerProvider), shown)) _import.dismiss();
   };
 
+  /// Banner pengingat backup (docs bagian 10), atau null.
+  Widget? _reminder(List<ShelfBook> books) {
+    final last = ref.watch(lastBackupProvider);
+    final dismissed = ref.watch(reminderDismissedProvider);
+    // Belum kebaca: jangan sempet nongol terus ilang.
+    if (!last.hasValue || !dismissed.hasValue || books.isEmpty) return null;
+    final days = backupReminderDays(
+      now: DateTime.now(),
+      lastBackup: last.value?.at,
+      firstBook: books
+          .map((b) => b.createdAt)
+          .reduce((a, b) => a.isBefore(b) ? a : b),
+      dismissed: dismissed.value,
+    );
+    if (days == null) return null;
+    return BackupReminder(
+      days: days,
+      neverBackedUp: last.value == null,
+      onBackup: ref.read(backupControllerProvider.notifier).start,
+      onClose: () => ref
+          .read(settingsRepositoryProvider)
+          .dismissReminder(DateTime.now())
+          .ignore(),
+    );
+  }
+
   File? _cover(String? name) =>
       name == null ? null : ref.read(fileStorageProvider).cover(name);
 
@@ -113,34 +144,42 @@ class _BookshelfViewState extends ConsumerState<BookshelfView> {
     };
     void onImport() => _import.pick();
     final header = _Header(onImport: onImport);
-    return Scaffold(
-      body: SafeArea(
-        bottom: false,
-        child: switch (books) {
-          AsyncData(value: final list) when list.isEmpty && importing == null =>
-            _Empty(header: header, onImport: onImport),
-          AsyncData(value: final list) => _Shelf(
-            header: header,
-            books: list,
-            importing: importing,
-          ),
-          AsyncError() => Column(
-            children: [
-              _pad(header),
-              Expanded(
-                child: Center(
-                  child: Text(
-                    'Yah, rak-nya gagal kebuka',
-                    style: StabiloType.body.copyWith(
-                      color: context.stabilo.ink2,
+    final reminder = _reminder(switch (books) {
+      AsyncData(value: final list) => list,
+      _ => const <ShelfBook>[],
+    });
+    return BackupListener(
+      child: Scaffold(
+        body: SafeArea(
+          bottom: false,
+          child: switch (books) {
+            AsyncData(value: final list)
+                when list.isEmpty && importing == null =>
+              _Empty(header: header, onImport: onImport),
+            AsyncData(value: final list) => _Shelf(
+              header: header,
+              books: list,
+              importing: importing,
+              reminder: reminder,
+            ),
+            AsyncError() => Column(
+              children: [
+                _pad(header),
+                Expanded(
+                  child: Center(
+                    child: Text(
+                      'Yah, rak-nya gagal kebuka',
+                      style: StabiloType.body.copyWith(
+                        color: context.stabilo.ink2,
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
-          ),
-          _ => _pad(header),
-        },
+              ],
+            ),
+            _ => _pad(header),
+          },
+        ),
       ),
     );
   }
@@ -197,13 +236,21 @@ class _Header extends StatelessWidget {
 }
 
 class _Shelf extends ConsumerWidget {
-  const _Shelf({required this.header, required this.books, this.importing});
+  const _Shelf({
+    required this.header,
+    required this.books,
+    this.importing,
+    this.reminder,
+  });
 
   final Widget header;
   final List<ShelfBook> books;
 
   /// Nama file yang lagi diimport: kartu "Lagi diproses" di depan.
   final String? importing;
+
+  /// Pengingat backup, paling atas di area scroll.
+  final Widget? reminder;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -238,6 +285,16 @@ class _Shelf extends ConsumerWidget {
             bottom: EdgeFadeSide.none,
             child: CustomScrollView(
               slivers: [
+                if (reminder != null)
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(
+                      Layout.margin,
+                      Space.s2,
+                      Layout.margin,
+                      Space.s2,
+                    ),
+                    sliver: SliverToBoxAdapter(child: reminder),
+                  ),
                 SliverPadding(
                   padding: EdgeInsets.fromLTRB(
                     Layout.margin,

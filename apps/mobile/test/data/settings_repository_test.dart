@@ -58,4 +58,14 @@ void main() {
     await repo.saveLastBackup(b);
     expect(await repo.watchLastBackup().first, b);
   });
+
+  test('reminder dismissal is remembered', () async {
+    final repo = SettingsRepository(db);
+    expect(await repo.watchReminderDismissed().first, isNull);
+    await repo.dismissReminder(DateTime(2026, 10, 12, 8));
+    expect(
+      await repo.watchReminderDismissed().first,
+      DateTime(2026, 10, 12, 8),
+    );
+  });
 }

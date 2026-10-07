@@ -600,6 +600,7 @@ luma-backup-20261006-2130.zip
 - Pengaturan menampilkan "Backup terakhir: 3 hari lalu" (atau "Belum pernah backup").
 - Kalau `lastBackupAt` lebih dari **6 hari** (sebelum siklus install ulang 7 hari), tampilkan banner kecil di Rak: "Udah 6 hari belum backup nih" dengan tombol "Backup".
 - Banner bisa ditutup, muncul lagi besoknya.
+- **Implementasi:** hitungan per tanggal kalender dari backup terakhir; kalau belum pernah backup, dari buku pertama yang diimport (rak kosong = gak ada banner). Muncul mulai hari ke-6. Ditutup → tanggalnya disimpen di `settings` (`backup.reminderDismissedAt`), nongol lagi besok. Banner pink (board 24) ada di paling atas area scroll Rak; teksnya: hari ke-6 "Udah 6 hari belum backup nih" · "Besok jatah install ulang. Amanin data lo dulu yuk.", lebih dari itu "Udah N hari belum backup nih" · "Amanin data lo dulu yuk, sebelum keburu install ulang.", belum pernah "Belum pernah backup nih" · "Data lo cuma ada di HP ini doang. Amanin dulu yuk.". "Backup sekarang" langsung jalanin backup di Rak (sheet progres & toast-nya sama kayak di Pengaturan).
 
 ### Catatan
 

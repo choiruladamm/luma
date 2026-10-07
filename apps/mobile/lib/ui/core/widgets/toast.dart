@@ -230,3 +230,28 @@ class _Toast extends StatelessWidget {
     ),
   );
 }
+
+/// Kotak ikon 36 di kiri toast (hasil backup / pulihin).
+class ToastTile extends StatelessWidget {
+  const ToastTile({
+    super.key,
+    required this.icon,
+    required this.bg,
+    required this.fg,
+  });
+
+  final List<List<dynamic>> icon;
+  final Color bg;
+  final Color fg;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: 36,
+    height: 36,
+    decoration: BoxDecoration(
+      color: bg,
+      borderRadius: BorderRadius.circular(Radii.sm),
+    ),
+    child: Center(child: AppIcon(icon, size: 18, color: fg)),
+  );
+}

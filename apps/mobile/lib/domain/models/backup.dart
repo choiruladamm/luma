@@ -71,3 +71,25 @@ String isoWithOffset(DateTime t) {
       'T${two(t.hour)}:${two(t.minute)}:${two(t.second)}'
       '$sign${two(o.inHours)}:${two(o.inMinutes % 60)}';
 }
+
+/// Berapa hari belum backup kalau banner pengingat perlu nongol di Rak, null
+/// kalau gak perlu (docs bagian 10). Hitungan per tanggal kalender dari
+/// backup terakhir, atau dari buku pertama kalau belum pernah backup (rak
+/// kosong = gak ada yang perlu diamanin). Muncul mulai hari ke-6 (sebelum
+/// siklus install ulang 7 hari); ditutup hari ini → nongol lagi besok.
+int? backupReminderDays({
+  required DateTime now,
+  DateTime? lastBackup,
+  DateTime? firstBook,
+  DateTime? dismissed,
+}) {
+  final since = lastBackup ?? firstBook;
+  if (since == null) return null;
+  DateTime day(DateTime t) => DateTime.utc(t.year, t.month, t.day);
+  final days = day(now).difference(day(since)).inDays;
+  if (days < backupReminderAfter) return null;
+  if (dismissed != null && day(dismissed) == day(now)) return null;
+  return days;
+}
+
+const backupReminderAfter = 6;

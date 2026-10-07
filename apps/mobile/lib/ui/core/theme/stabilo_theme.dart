@@ -40,6 +40,9 @@ class StabiloColors extends ThemeExtension<StabiloColors> {
     required this.flash,
     required this.scrimSoft,
     required this.segment,
+    required this.bannerTile,
+    required this.bannerButton,
+    required this.onBannerButton,
   });
 
   // Permukaan
@@ -64,6 +67,8 @@ class StabiloColors extends ThemeExtension<StabiloColors> {
   // Scrim tipis di belakang sheet Aa (teks tetep keliatan buat preview),
   // pilihan terpilih di segmented control.
   final Color scrimSoft, segment;
+  // ReminderBanner (pink): kotak ikon & tombol di atas pink.
+  final Color bannerTile, bannerButton, onBannerButton;
 
   static const light = StabiloColors(
     canvas: Color(0xFFFFFBEF),
@@ -99,6 +104,9 @@ class StabiloColors extends ThemeExtension<StabiloColors> {
     flash: Color(0x9EFFD84D), // 62%
     scrimSoft: Color(0x141A1A1A), // 8%
     segment: Color(0xFFFFFFFF),
+    bannerTile: Color(0xB3FFFDF6), // 70%
+    bannerButton: Color(0xFFFFFDF6),
+    onBannerButton: Color(0xFF1A1A1A),
   );
 
   static const dark = StabiloColors(
@@ -135,6 +143,9 @@ class StabiloColors extends ThemeExtension<StabiloColors> {
     flash: Color(0x57E9C75A), // 34%
     scrimSoft: Color(0x2E000000), // 18%
     segment: Color(0xFF4A463E),
+    bannerTile: Color(0x2E22201C), // 18%
+    bannerButton: Color(0xFF22201C),
+    onBannerButton: Color(0xFFF3EBD3),
   );
 
   // Token gak pernah diubah per widget; set baru = konstanta baru.

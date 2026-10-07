@@ -26,7 +26,7 @@ import '../../../core/widgets/sheet.dart';
 import '../../../core/widgets/toast.dart';
 import '../view_models/backup_view_model.dart';
 import '../view_models/settings_view_model.dart';
-import 'backup_sheet.dart';
+import 'backup_listener.dart';
 import 'restore_sheets.dart';
 
 /// Pengaturan app (board 23 Pengaturan app): API key, model AI, cache
@@ -43,9 +43,6 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
 
   /// Ngecek key ke OpenRouter nunggu ngetiknya berhenti bentar.
   Timer? _checkLater;
-
-  /// Sheet "Lagi ngebungkus backup" lagi kebuka; ditutup dari sini.
-  bool _backupOpen = false;
 
   BackupController get _backup => ref.read(backupControllerProvider.notifier);
 
@@ -140,51 +137,13 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
       'Sip, data lo udah balik!',
       subtitle:
           '${thousands(m.books)} buku · ${thousands(m.aiResults)} terjemahan',
-      leading: _ToastTile(icon: AppIcons.check, bg: c.accent, fg: c.onAccent),
+      leading: ToastTile(icon: AppIcons.check, bg: c.accent, fg: c.onAccent),
       note: noKey
           ? 'API key gak ikut backup, isi ulang dulu biar bisa nerjemahin.'
           : null,
       actionLabel: noKey ? 'Isi key' : null,
       onAction: () => router.push(Routes.settings),
     );
-  }
-
-  void _onBackup(BackupState? prev, BackupState next) {
-    if (next is! BackupRunning && _backupOpen) {
-      _backupOpen = false;
-      Navigator.of(context).pop();
-    }
-    final c = context.stabilo;
-    switch (next) {
-      case BackupRunning() when !_backupOpen:
-        _backupOpen = true;
-        showAppSheet<void>(
-          context,
-          dismissible: false,
-          builder: (_) => const BackupProgressSheet(),
-        );
-      case BackupDone(:final backup):
-        _backup.dismiss();
-        showToast(
-          context,
-          'Backup kelar, aman!',
-          subtitle: '${fileSize(backup.size)} · ${backup.name}',
-          leading: _ToastTile(
-            icon: AppIcons.check,
-            bg: c.accent,
-            fg: c.onAccent,
-          ),
-        );
-      case BackupFailed():
-        _backup.dismiss();
-        showToast(
-          context,
-          'Yah, backup gagal',
-          subtitle: 'Coba lagi bentar ya',
-          leading: _ToastTile(icon: AppIcons.alert, bg: c.pink, fg: c.onPink),
-        );
-      default:
-    }
   }
 
   @override
@@ -225,86 +184,89 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
 
   @override
   Widget build(BuildContext context) {
-    ref.listen(backupControllerProvider, _onBackup);
     final model = ref.watch(aiModelProvider).value ?? defaultAiModel;
     final cache = ref.watch(aiCacheStatsProvider).value;
-    return Scaffold(
-      body: SafeArea(
-        bottom: false,
-        child: Column(
-          children: [
-            // Header nempel; isi di bawahnya mudar pas lewat (board EdgeFade).
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: Layout.margin),
-              child: SizedBox(
-                height: Layout.topBar,
-                child: Row(
-                  spacing: Space.s3,
-                  children: [
-                    CircleButton(
-                      semanticLabel: 'Balik ke rak',
-                      icon: AppIcons.back,
-                      onPressed: () => context.pop(),
-                    ),
-                    Semantics(
-                      header: true,
-                      child: Text('Pengaturan', style: StabiloType.titleLg),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            Expanded(
-              child: EdgeFadeScroll(
-                // Bawah edge-to-edge, padding akhir = safe area.
-                bottom: EdgeFadeSide.none,
-                child: ListView(
-                  padding: EdgeInsets.fromLTRB(
-                    Layout.margin,
-                    22,
-                    Layout.margin,
-                    MediaQuery.paddingOf(context).bottom,
+    return BackupListener(
+      child: Scaffold(
+        body: SafeArea(
+          bottom: false,
+          child: Column(
+            children: [
+              // Header nempel; isi di bawahnya mudar pas lewat (board EdgeFade).
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: Layout.margin),
+                child: SizedBox(
+                  height: Layout.topBar,
+                  child: Row(
+                    spacing: Space.s3,
+                    children: [
+                      CircleButton(
+                        semanticLabel: 'Balik ke rak',
+                        icon: AppIcons.back,
+                        onPressed: () => context.pop(),
+                      ),
+                      Semantics(
+                        header: true,
+                        child: Text('Pengaturan', style: StabiloType.titleLg),
+                      ),
+                    ],
                   ),
-                  children: [
-                    AppField(
-                      label: 'API key OpenRouter',
-                      controller: _key,
-                      secret: true,
-                      onChanged: _saveKey,
-                    ),
-                    const SizedBox(height: Space.s2),
-                    _KeyStatus(ok: ref.watch(apiKeyCheckProvider).value),
-                    const SizedBox(height: 22),
-                    _Section(
-                      label: 'Model AI',
-                      note: 'Biayanya kepotong dari saldo akun OpenRouter lo.',
-                      child: _ModelPicker(
-                        selected: model,
-                        onSelect: (id) =>
-                            ref.read(settingsRepositoryProvider).saveModel(id),
-                      ),
-                    ),
-                    const SizedBox(height: 22),
-                    _Section(
-                      label: 'Backup & pulihin',
-                      note: const _BackupNote(),
-                      child: _BackupCard(
-                        last: ref.watch(lastBackupProvider).value,
-                        loaded: ref.watch(lastBackupProvider).hasValue,
-                        onBackup: _backup.start,
-                        onRestore: _restore,
-                      ),
-                    ),
-                    const SizedBox(height: 22),
-                    _Section(
-                      label: 'Penyimpanan',
-                      child: _CacheRow(stats: cache, onClear: _clearCache),
-                    ),
-                  ],
                 ),
               ),
-            ),
-          ],
+              Expanded(
+                child: EdgeFadeScroll(
+                  // Bawah edge-to-edge, padding akhir = safe area.
+                  bottom: EdgeFadeSide.none,
+                  child: ListView(
+                    padding: EdgeInsets.fromLTRB(
+                      Layout.margin,
+                      22,
+                      Layout.margin,
+                      MediaQuery.paddingOf(context).bottom,
+                    ),
+                    children: [
+                      AppField(
+                        label: 'API key OpenRouter',
+                        controller: _key,
+                        secret: true,
+                        onChanged: _saveKey,
+                      ),
+                      const SizedBox(height: Space.s2),
+                      _KeyStatus(ok: ref.watch(apiKeyCheckProvider).value),
+                      const SizedBox(height: 22),
+                      _Section(
+                        label: 'Model AI',
+                        note:
+                            'Biayanya kepotong dari saldo akun OpenRouter lo.',
+                        child: _ModelPicker(
+                          selected: model,
+                          onSelect: (id) => ref
+                              .read(settingsRepositoryProvider)
+                              .saveModel(id),
+                        ),
+                      ),
+                      const SizedBox(height: 22),
+                      _Section(
+                        label: 'Backup & pulihin',
+                        note: const _BackupNote(),
+                        child: _BackupCard(
+                          last: ref.watch(lastBackupProvider).value,
+                          loaded: ref.watch(lastBackupProvider).hasValue,
+                          onBackup: _backup.start,
+                          onRestore: _restore,
+                        ),
+                      ),
+                      const SizedBox(height: 22),
+                      _Section(
+                        label: 'Penyimpanan',
+                        child: _CacheRow(stats: cache, onClear: _clearCache),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -547,26 +509,6 @@ class _BackupCard extends StatelessWidget {
       ),
     );
   }
-}
-
-/// Kotak ikon di kiri toast hasil backup.
-class _ToastTile extends StatelessWidget {
-  const _ToastTile({required this.icon, required this.bg, required this.fg});
-
-  final List<List<dynamic>> icon;
-  final Color bg;
-  final Color fg;
-
-  @override
-  Widget build(BuildContext context) => Container(
-    width: 36,
-    height: 36,
-    decoration: BoxDecoration(
-      color: bg,
-      borderRadius: BorderRadius.circular(Radii.sm),
-    ),
-    child: Center(child: AppIcon(icon, size: 18, color: fg)),
-  );
 }
 
 /// RadioRow (board Komponen 04): titik kuning + nama + model ID mono.

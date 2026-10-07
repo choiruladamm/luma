@@ -240,6 +240,7 @@ abstract final class AppIcons {
   static const backup = HugeIcons.strokeRoundedDatabaseExport;
   static const alert = HugeIcons.strokeRoundedAlert02;
   static const restore = HugeIcons.strokeRoundedDatabaseRestore;
+  static const clock = HugeIcons.strokeRoundedClock01;
   static const fileRemove = HugeIcons.strokeRoundedFileRemove;
   static const alertCircle = HugeIcons.strokeRoundedAlertCircle;
 }
