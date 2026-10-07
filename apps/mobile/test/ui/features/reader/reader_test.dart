@@ -1944,36 +1944,17 @@ void main() {
         expect(find.bySemanticsLabel('Tutup'), findsOneWidget);
       });
 
-      testWidgets('the content follows the text; buttons never hide', (
+      testWidgets('stays at the start while writing; buttons never hide', (
         tester,
       ) async {
         final s = await openStreaming(tester);
         s.push(state(AiPhase.translating, translations: [long]));
         await frames(tester, 120);
-        expect(sheetPixels(tester), greaterThan(0)); // followed down
+        expect(sheetPixels(tester), 0); // no auto-scroll: read from the top
+        expect(find.text('Ke bawah'), findsNothing);
         await tester.drag(sheetScroll(), const Offset(0, -200));
         await frames(tester, 20);
         expect(buttonsShown(tester), isTrue);
-      });
-
-      testWidgets('scrolling up stops following, "Ke bawah" brings it back', (
-        tester,
-      ) async {
-        final s = await openStreaming(tester);
-        s.push(state(AiPhase.translating, translations: [long]));
-        await frames(tester, 120);
-        expect(find.text('Ke bawah'), findsNothing);
-        await tester.drag(sheetScroll(), const Offset(0, 150));
-        await frames(tester, 5);
-        expect(find.text('Ke bawah'), findsOneWidget);
-        final parked = sheetPixels(tester);
-        await frames(tester, 60);
-        expect(sheetPixels(tester), parked); // stays where you put it
-
-        await tester.tap(find.text('Ke bawah'));
-        await frames(tester, 5);
-        expect(sheetPixels(tester), greaterThan(parked));
-        expect(find.text('Ke bawah'), findsNothing);
       });
 
       testWidgets('slow: a card on top, gone once tokens come', (tester) async {
@@ -2095,10 +2076,13 @@ void main() {
         final s = await openStreaming(tester);
         s.push(state(AiPhase.translating, translations: [long]));
         await frames(tester, 120);
+        await tester.drag(sheetScroll(), const Offset(0, -200));
+        await frames(tester, 20);
         final before = sheetPixels(tester);
+        expect(before, greaterThan(0));
         s.push(state(AiPhase.done, translations: [long], meaning: 'Makna.'));
         await frames(tester, 60);
-        expect(sheetPixels(tester), greaterThanOrEqualTo(before));
+        expect(sheetPixels(tester), before);
         expect(button(tester, 'Salin').onPressed, isNotNull);
       });
     });
