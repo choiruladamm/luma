@@ -6,6 +6,7 @@ import 'data/services/file_storage.dart';
 import 'domain/models/reader_prefs.dart';
 import 'routing/router.dart';
 import 'ui/core/theme/stabilo_theme.dart';
+import 'ui/features/splash/splash_overlay.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -13,13 +14,17 @@ Future<void> main() async {
   runApp(
     ProviderScope(
       overrides: [fileStorageProvider.overrideWithValue(storage)],
-      child: const LumaApp(),
+      child: const LumaApp(splash: true),
     ),
   );
 }
 
 class LumaApp extends ConsumerWidget {
-  const LumaApp({super.key});
+  /// [splash] = animasi splash → rak di atas app (cuma dari `main`, test
+  /// gak mau ketutup lapisannya).
+  const LumaApp({super.key, this.splash = false});
+
+  final bool splash;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -34,6 +39,8 @@ class LumaApp extends ConsumerWidget {
         AppTheme.dark => ThemeMode.dark,
         AppTheme.system || null => ThemeMode.system,
       },
+      builder: (context, child) =>
+          SplashGate(enabled: splash, child: child ?? const SizedBox.shrink()),
       routerConfig: ref.watch(routerProvider),
     );
   }

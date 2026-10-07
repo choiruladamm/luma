@@ -2,7 +2,7 @@ APP := apps/mobile
 FLUTTER := cd $(APP) && fvm flutter
 DART := cd $(APP) && fvm dart
 
-.PHONY: help get gen live watch run release profile test analyze format check clean
+.PHONY: help get gen brand live watch run release profile test analyze format check clean
 
 help: ## list commands
 	@grep -E '^[a-z0-9-]+:.*## ' $(MAKEFILE_LIST) | awk -F ':.*## ' '{printf "  %-8s %s\n", $$1, $$2}'
@@ -12,6 +12,9 @@ get: ## pub get
 
 gen: ## codegen: drift, riverpod, freezed (build_runner)
 	$(DART) run build_runner build
+
+brand: ## re-render app icon, launch logo, wordmark from assets/brand/*.svg (Chrome + ImageMagick)
+	cd $(APP) && sh tool/brand.sh
 
 watch: ## codegen in watch mode
 	$(DART) run build_runner watch
