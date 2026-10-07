@@ -141,7 +141,8 @@ Board "EdgeFade · tepi area scroll". Tepi area scroll mudar halus pake **mask**
 | Tempat | Fade atas | Fade bawah | Catatan |
 |--------|-----------|------------|---------|
 | Sheet tanpa tombol aksi (Aa, Daftar isi, `SheetFrame` tanpa tombol) | 20pt di bawah judul | – (mentok ke tepi) | Padding bawah sheet 0, item terakhir padding = safe area |
-| Sheet + tombol aksi (Artinya, `SheetFrame` bertombol, Ringkasan pulihin) | 20pt di bawah judul | 20pt di atas tombol | Tombol di atas safe area 34 |
+| Sheet + tombol aksi (`SheetFrame` bertombol, Ringkasan pulihin) | 20pt di bawah judul | 20pt di atas tombol | Tombol di atas safe area 34 |
+| Sheet Artinya | 20pt di bawah header; header ngumpet = 20pt di bawah grabber (dari y 12) | 20pt di atas tombol, cuma selama tombol keliatan; tombol ngumpet = edge-to-edge, tanpa fade | Fade ikut animasi header & tombol (200ms) |
 | Layar penuh (Rak, Pengaturan) | 20pt di bawah header yang nempel | – (mentok ke tepi) | Rak: header + "Semua buku" nempel, tanpa garis pemisah. Pengaturan: balik + judul nempel |
 | Baca · kapsul keliatan | 48pt dari tepi kapsul | 48pt ke tepi kapsul, sisa ±18% terus sampe tepi layar | Status bar kosong; gak ada pita kosong di bawah garis progres. Awal bab gak ada fade atas |
 | Baca · imersif | – | – (mentok ke tepi) | Teks lewat di bawah garis progres sampe tepi |
@@ -159,6 +160,17 @@ Sheet "Atur bacaan lo" (board 07), dibuka dari tombol Aa di kapsul. Tiap pilihan
 - Tema: Terang / Gelap / **Ikut iOS** → `themeMode` app
 - Tampilan layar: "Sembunyiin jam & baterai" (**nyala**) dan "Tampilin garis progres" (**nyala**), pake Switch dari board Komponen dasar (51 × 31)
 - Disimpen per perangkat (bukan per buku) di tabel `settings`, ikut backup. Nilai yang gak dikenal (backup rusak) balik ke default
+
+### Sheet Artinya: ikut Aa, header & tombol ngumpet pas scroll
+
+Board "Spek · Artinya ngumpet pas scroll" dan "Terpilih · Artinya ngumpet pas scroll · Opsi A (geser ngikut)": area baca nambah 54% (335 → 516pt di sheet 528).
+
+- **Teks ikut Aa:** terjemahan dan blok makna pakai font, ukuran, jarak baris, dan margin yang sama dengan halaman baca (`ReaderTypography`, satu sumber buat dua-duanya). Padding dasar sheet (24) jadi batas bawah margin: Sempit (16) sama kayak Pas, Lega (32) nambah 8 di kiri-kanan isi. Judul, chip, tombol, toast, dan teks pesan error / API key kosong tetap ukuran UI. Placeholder loading pakai tinggi baris yang sama. Ganti Aa langsung kebawa (provider yang sama).
+- **Struktur:** sheet 528 (62,5% layar, `DraggableScrollableSheet`, semua state). Isi scroll setinggi sheet, padding atas 91 / bawah 102 (tombol 52 + jarak 16 + safe area 34). Header (judul + X), grabber, dan Salin / Lanjut lapisan di atas isi, jadi ngilangnya header gak geser teks.
+- **Ngumpet (cuma scroll dari jari; scroll programatik gak ngitung):** header ikut isi 1:1 pas turun dan ilang setelah 91pt; naik ≥ 12pt → turun lagi ngikutin jari dari atas, dilepas di tengah snap ke yang terdekat. Salin / Lanjut geser keluar setelah turun ≥ 24pt (200ms, ease-out), balik pas naik ≥ 12pt atau mentok bawah. Header tetap ngumpet sampai scroll naik; balik ke paling atas = semua lengkap. Ambang (24 / 12) dari `ScrollRun`, dipakai bareng kapsul baca.
+- **Gak pernah ngumpet:** isi muat semua, state loading / error / API key kosong, VoiceOver nyala. Kurangi gerakan: gak geser, gak ngikutin jari, fade 150ms.
+- **Nutup:** swipe turun di grabber (ngikutin jari, nutup kalau di-fling atau ditarik jauh, pas offset berapa pun), swipe turun di isi pas offset 0, atau tap area kosong di atas sheet (bukan munculin kapsul baca).
+- **Tinggi area baca yang keliatan** (`MeaningChrome.readHeight`): tinggi sheet dikurangi chrome yang keliatan, buat highlight sinkron (#35).
 
 ### Copy
 
