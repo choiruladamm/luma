@@ -14,6 +14,9 @@ Future<bool> showConfirmDialog(
   required String confirmLabel,
   String cancelLabel = 'Batal',
   bool destructive = true,
+
+  /// Tile ikon di atas judul (board Konfirmasi hapus).
+  List<List<dynamic>>? icon,
 }) async {
   final ok = await showDialog<bool>(
     context: context,
@@ -30,6 +33,22 @@ Future<bool> showConfirmDialog(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               spacing: Space.s2,
               children: [
+                if (icon != null)
+                  Container(
+                    width: 48,
+                    height: 48,
+                    margin: const EdgeInsets.only(bottom: Space.s1),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: destructive ? c.dangerSoft : c.muted,
+                      borderRadius: BorderRadius.circular(Radii.sm + Space.s1),
+                    ),
+                    child: AppIcon(
+                      icon,
+                      size: 24,
+                      color: destructive ? c.danger : c.ink,
+                    ),
+                  ),
                 Semantics(
                   header: true,
                   child: Text(title, style: StabiloType.titleSm),

@@ -36,3 +36,14 @@ String dateTime(DateTime t) {
   return '${t.day} ${_months[t.month - 1]} ${t.year}, '
       '${two(t.hour)}.${two(t.minute)}';
 }
+
+/// "3 Okt 2026".
+String date(DateTime t) => '${t.day} ${_months[t.month - 1]} ${t.year}';
+
+/// "Kemarin, 22.14" / "Hari ini, 08.05" / "3 hari lalu, 21.40".
+String lastSeen(DateTime then, DateTime now) {
+  final day = ago(then, now);
+  String two(int n) => n.toString().padLeft(2, '0');
+  return '${day[0].toUpperCase()}${day.substring(1)}, '
+      '${two(then.hour)}.${two(then.minute)}';
+}

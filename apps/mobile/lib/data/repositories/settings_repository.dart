@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/models/ai_model.dart';
+import '../../domain/models/book.dart';
 import '../../domain/models/backup.dart';
 import '../../domain/models/reader_prefs.dart';
 import '../database/app_database.dart';
@@ -32,6 +33,26 @@ class SettingsRepository {
       .insertOnConflictUpdate(SettingsCompanion.insert(key: _model, value: id));
 
   static const _model = 'ai.model';
+
+  /// Urutan rak; default terakhir dibuka.
+  Stream<ShelfSort> watchShelfSort() =>
+      (_db.select(_db.settings)..where((s) => s.key.equals(_shelfSort)))
+          .watchSingleOrNull()
+          .map(
+            (row) => ShelfSort.values.firstWhere(
+              (s) => s.name == row?.value,
+              orElse: () => ShelfSort.lastOpened,
+            ),
+          )
+          .distinct();
+
+  Future<void> saveShelfSort(ShelfSort sort) => _db
+      .into(_db.settings)
+      .insertOnConflictUpdate(
+        SettingsCompanion.insert(key: _shelfSort, value: sort.name),
+      );
+
+  static const _shelfSort = 'shelf.sort';
 
   /// Backup terakhir yang berhasil disimpen user; null = belum pernah.
   Stream<LastBackup?> watchLastBackup() =>
@@ -94,6 +115,11 @@ final readerPrefsProvider = StreamProvider<ReaderPrefs>(
 /// Model LLM yang dipake (dibaca tiap manggil OpenRouter, bukan di-hardcode).
 final aiModelProvider = StreamProvider<String>(
   (ref) => ref.watch(settingsRepositoryProvider).watchModel(),
+);
+
+/// Urutan rak yang dipilih.
+final shelfSortProvider = StreamProvider<ShelfSort>(
+  (ref) => ref.watch(settingsRepositoryProvider).watchShelfSort(),
 );
 
 /// Backup terakhir (Pengaturan, pengingat backup).

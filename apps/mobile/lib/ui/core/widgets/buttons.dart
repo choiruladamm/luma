@@ -241,6 +241,8 @@ abstract final class AppIcons {
   static const alert = HugeIcons.strokeRoundedAlert02;
   static const restore = HugeIcons.strokeRoundedDatabaseRestore;
   static const clock = HugeIcons.strokeRoundedClock01;
+  static const info = HugeIcons.strokeRoundedInformationCircle;
+  static const delete = HugeIcons.strokeRoundedDelete02;
   static const fileRemove = HugeIcons.strokeRoundedFileRemove;
   static const alertCircle = HugeIcons.strokeRoundedAlertCircle;
 }

@@ -5,6 +5,7 @@ import 'package:luma/data/services/openrouter_service.dart';
 import 'package:luma/domain/models/ai_model.dart';
 import 'package:luma/domain/models/ai_reply.dart';
 import 'package:luma/domain/models/backup.dart';
+import 'package:luma/domain/models/book.dart';
 import 'package:luma/domain/models/reader_prefs.dart';
 import 'package:luma/data/repositories/reading_progress_repository.dart';
 
@@ -49,6 +50,21 @@ class FakeSettings implements SettingsRepository {
   Future<void> saveReaderPrefs(ReaderPrefs p) async {
     prefs = p;
     _saves.add(p);
+  }
+
+  ShelfSort shelfSort = ShelfSort.lastOpened;
+  final _sorts = StreamController<ShelfSort>.broadcast();
+
+  @override
+  Stream<ShelfSort> watchShelfSort() async* {
+    yield shelfSort;
+    yield* _sorts.stream;
+  }
+
+  @override
+  Future<void> saveShelfSort(ShelfSort sort) async {
+    shelfSort = sort;
+    _sorts.add(sort);
   }
 
   LastBackup? lastBackup;

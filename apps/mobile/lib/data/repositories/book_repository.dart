@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/models/book.dart';
 import '../database/app_database.dart';
+import '../services/file_storage.dart';
 
 class BookRepository {
   BookRepository(this._db);
@@ -126,6 +127,40 @@ class BookRepository {
       coverName: book.coverName,
       readingSeconds: book.readingSeconds,
       translated: await _translated('c.book_id = ?', bookId),
+    );
+  }
+
+  /// Sheet Info buku. Null kalau bukunya udah dihapus.
+  Future<BookInfo?> bookInfo(int id, FileStorage files) async {
+    final book = await (_db.select(
+      _db.books,
+    )..where((b) => b.id.equals(id))).getSingleOrNull();
+    if (book == null) return null;
+    final name = book.fileName;
+    final file = name == null ? null : files.book(name);
+    return BookInfo(
+      lastOpenedAt: book.lastOpenedAt,
+      createdAt: book.createdAt,
+      fileName: name,
+      fileBytes: file != null && await file.exists()
+          ? await file.length()
+          : null,
+      translated: await _translated('c.book_id = ?', id),
+    );
+  }
+
+  /// Hapus buku: row (chapter, paragraf, posisi baca, hasil AI ikut lewat
+  /// cascade) dulu, baru EPUB & cover-nya. Gagal hapus file = file yatim,
+  /// bukan row yatim.
+  Future<void> delete(int id, FileStorage files) async {
+    final book = await (_db.select(
+      _db.books,
+    )..where((b) => b.id.equals(id))).getSingleOrNull();
+    if (book == null) return;
+    await (_db.delete(_db.books)..where((b) => b.id.equals(id))).go();
+    await files.deleteBookFiles(
+      fileName: book.fileName,
+      coverName: book.coverName,
     );
   }
 

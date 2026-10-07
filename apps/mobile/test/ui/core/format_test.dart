@@ -29,4 +29,16 @@ void main() {
     expect(dateTime(DateTime(2026, 10, 3, 21, 40)), '3 Okt 2026, 21.40');
     expect(dateTime(DateTime(2026, 1, 9, 7, 5)), '9 Jan 2026, 07.05');
   });
+
+  test('date', () {
+    expect(date(DateTime(2026, 9, 12, 23, 59)), '12 Sep 2026');
+    expect(date(DateTime(2026, 1, 9)), '9 Jan 2026');
+  });
+
+  test('lastSeen: capitalised day + time', () {
+    final now = DateTime(2026, 10, 7, 9);
+    expect(lastSeen(DateTime(2026, 10, 6, 22, 14), now), 'Kemarin, 22.14');
+    expect(lastSeen(DateTime(2026, 10, 7, 8, 5), now), 'Hari ini, 08.05');
+    expect(lastSeen(DateTime(2026, 10, 2, 21, 40), now), '5 hari lalu, 21.40');
+  });
 }

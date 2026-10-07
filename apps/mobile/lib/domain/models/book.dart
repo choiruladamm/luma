@@ -46,6 +46,38 @@ class ShelfBook {
   final int chapter, chapterCount;
 }
 
+/// Urutan rak (menu "Urutin pake"). Default [lastOpened].
+enum ShelfSort {
+  lastOpened('Terakhir dibuka'),
+  title('Judul (A–Z)'),
+  added('Baru ditambah');
+
+  const ShelfSort(this.label);
+
+  final String label;
+}
+
+/// Isi sheet Info buku yang gak dibawa tiap baris rak.
+class BookInfo {
+  const BookInfo({
+    required this.lastOpenedAt,
+    required this.createdAt,
+    required this.fileName,
+    required this.fileBytes,
+    required this.translated,
+  });
+
+  final DateTime? lastOpenedAt;
+  final DateTime createdAt;
+  final String? fileName;
+
+  /// Ukuran EPUB di Documents; null kalau file-nya gak ada.
+  final int? fileBytes;
+
+  /// Paragraf yang udah diartiin di seluruh buku.
+  final int translated;
+}
+
 class ChapterInfo {
   const ChapterInfo({
     required this.id,

@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:luma/data/database/app_database.dart';
 import 'package:luma/data/repositories/settings_repository.dart';
 import 'package:luma/domain/models/ai_model.dart';
+import 'package:luma/domain/models/book.dart';
 import 'package:luma/domain/models/reader_prefs.dart';
 
 void main() {
@@ -49,6 +50,15 @@ void main() {
     expect(await repo.watchModel().first, defaultAiModel);
     await repo.saveModel('qwen/qwen3.8-flash');
     expect(await repo.watchModel().first, 'qwen/qwen3.8-flash');
+  });
+
+  test('shelf sort: last opened until picked, then the pick', () async {
+    final repo = SettingsRepository(db);
+    expect(await repo.watchShelfSort().first, ShelfSort.lastOpened);
+    await repo.saveShelfSort(ShelfSort.title);
+    expect(await repo.watchShelfSort().first, ShelfSort.title);
+    await repo.saveShelfSort(ShelfSort.added);
+    expect(await repo.watchShelfSort().first, ShelfSort.added);
   });
 
   test('last backup: none until saved, then what was saved', () async {

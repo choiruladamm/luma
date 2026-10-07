@@ -1,9 +1,12 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:luma/data/repositories/book_repository.dart';
 import 'package:luma/data/repositories/settings_repository.dart';
+import 'package:luma/data/services/file_storage.dart';
 import 'package:luma/data/services/backup_service.dart';
 import 'package:luma/domain/models/backup.dart';
 import 'package:luma/domain/models/book.dart';
@@ -11,6 +14,7 @@ import 'package:luma/data/repositories/reading_progress_repository.dart';
 import 'package:luma/main.dart';
 import 'package:luma/ui/core/widgets/book_card.dart';
 import 'package:luma/ui/features/bookshelf/view_models/bookshelf_view_model.dart';
+import 'package:luma/ui/features/bookshelf/views/book_info_sheet.dart';
 import 'package:luma/ui/features/reader/view_models/reader_view_model.dart';
 import 'package:luma/ui/features/reader/views/reader_view.dart';
 import 'package:luma/ui/features/settings/views/settings_view.dart';
@@ -39,6 +43,18 @@ ShelfBook book(
   chapterCount: chapterCount,
 );
 
+/// Info + delete without a database or files.
+class FakeBooks extends Fake implements BookRepository {
+  BookInfo? info;
+  final deleted = <int>[];
+
+  @override
+  Future<BookInfo?> bookInfo(int id, FileStorage files) async => info;
+
+  @override
+  Future<void> delete(int id, FileStorage files) async => deleted.add(id);
+}
+
 /// Backup that never finishes: keeps the progress sheet up.
 class StuckBackup extends Fake implements BackupService {
   bool started = false;
@@ -62,6 +78,7 @@ void main() {
   late StreamController<List<ShelfBook>> shelf;
   late FakeSettings settings;
   late StuckBackup backup;
+  late FakeBooks repo;
   setUp(() => shelf = StreamController());
   // Fire-and-forget: close() waits for the listener (the app's provider)
   // to go away, which never happens if a test fails mid-way, and an awaited
@@ -81,6 +98,7 @@ void main() {
           ? null
           : lastBackup ?? (at: DateTime.now(), name: 'x.zip', size: 1);
     backup = StuckBackup();
+    repo = FakeBooks();
     tester.view.physicalSize = const Size(900, 1600);
     tester.view.devicePixelRatio = 1;
     tester.platformDispatcher.platformBrightnessTestValue = brightness;
@@ -91,6 +109,10 @@ void main() {
         overrides: [
           settingsRepositoryProvider.overrideWithValue(settings),
           backupServiceProvider.overrideWithValue(backup),
+          bookRepositoryProvider.overrideWithValue(repo),
+          fileStorageProvider.overrideWithValue(
+            FileStorage(Directory.systemTemp),
+          ),
           booksStreamProvider.overrideWith((ref) => shelf.stream),
           // Opening a book shows the reader: feed it too, never the real DB.
           readerBookProvider.overrideWith((ref, id) async => null),
@@ -195,6 +217,180 @@ void main() {
       ]);
       expect(find.text('Lanjut baca yuk →'), findsNothing);
       expect(find.text('Kelar!'), findsOneWidget);
+    });
+  });
+
+  group('sort', () {
+    final books = [
+      book(1, 'Zeta', opened: true, created: DateTime(2026, 10, 1)),
+      book(2, 'alpha', opened: true, created: DateTime(2026, 10, 3)),
+      book(3, 'Mid', created: DateTime(2026, 10, 2)),
+    ];
+    List<String> tiles(WidgetTester tester) => tester
+        .widgetList<BookCard>(find.byType(BookCard))
+        .map((c) => c.title)
+        .toList();
+
+    testWidgets('default is last opened; the menu re-sorts and remembers', (
+      tester,
+    ) async {
+      await pump(tester, books);
+      expect(tiles(tester), ['Zeta', 'alpha', 'Mid']);
+
+      await tester.tap(find.text('Terakhir dibuka'));
+      await tester.pumpAndSettle();
+      expect(find.text('Urutin pake'), findsOneWidget);
+      await tester.tap(find.text('Judul (A–Z)'));
+      await tester.pumpAndSettle();
+      expect(tiles(tester), ['alpha', 'Mid', 'Zeta']);
+      expect(settings.shelfSort, ShelfSort.title);
+
+      await tester.tap(find.text('Judul (A–Z)'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Baru ditambah'));
+      await tester.pumpAndSettle();
+      expect(tiles(tester), ['alpha', 'Mid', 'Zeta']); // 3rd, 2nd, 1st Oct
+      expect(find.text('Baru ditambah'), findsOneWidget);
+    });
+
+    testWidgets('the continue card ignores the sort', (tester) async {
+      await pump(tester, books);
+      await tester.tap(find.text('Terakhir dibuka'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Judul (A–Z)'));
+      await tester.pumpAndSettle();
+      // Zeta was opened last: still the card, though it sorts to the end.
+      final card = find.ancestor(
+        of: find.text('Lanjut baca yuk →'),
+        matching: find.byType(Semantics),
+      );
+      expect(
+        find.descendant(of: card.first, matching: find.text('Zeta')),
+        findsOneWidget,
+      );
+    });
+  });
+
+  group('book menu, info and delete', () {
+    final walden = book(
+      1,
+      'Walden',
+      opened: true,
+      progress: 0.5,
+      chapter: 2,
+      chapterCount: 5,
+    );
+    final info = BookInfo(
+      lastOpenedAt: DateTime.now().subtract(const Duration(days: 1)),
+      createdAt: DateTime(2026, 9, 12),
+      fileName: 'walden.epub',
+      fileBytes: 884 * 1024,
+      translated: 37,
+    );
+
+    Future<void> openMenu(WidgetTester tester) async {
+      await tester.longPress(find.byType(BookCard));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('long press: Info buku and Hapus dari rak', (tester) async {
+      await pump(tester, [walden]);
+      await openMenu(tester);
+      expect(find.text('Info buku'), findsOneWidget);
+      expect(find.text('Hapus dari rak'), findsOneWidget);
+    });
+
+    testWidgets('info sheet lists the details', (tester) async {
+      await pump(tester, [walden]);
+      repo.info = info;
+      await openMenu(tester);
+      await tester.tap(find.text('Info buku'));
+      await tester.pumpAndSettle();
+      for (final text in [
+        'Bab 2 dari 5',
+        'Kemarin, ${info.lastOpenedAt!.hour.toString().padLeft(2, '0')}'
+            '.${info.lastOpenedAt!.minute.toString().padLeft(2, '0')}',
+        '12 Sep 2026',
+        '37',
+        '884 KB',
+        'walden.epub',
+        'Lanjut baca',
+      ]) {
+        // The continue card behind the sheet repeats some of it.
+        expect(
+          find.descendant(
+            of: find.byType(BookInfoSheet),
+            matching: find.text(text),
+          ),
+          findsOneWidget,
+          reason: text,
+        );
+      }
+    });
+
+    testWidgets('info sheet: Lanjut baca opens the reader', (tester) async {
+      await pump(tester, [walden]);
+      await openMenu(tester);
+      await tester.tap(find.text('Info buku'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Lanjut baca'));
+      await tester.pumpAndSettle();
+      expect(find.byType(ReaderView), findsOneWidget);
+    });
+
+    testWidgets('delete: confirm says what goes, then deletes', (tester) async {
+      await pump(tester, [walden]);
+      repo.info = info;
+      await openMenu(tester);
+      await tester.tap(find.text('Hapus dari rak'));
+      await tester.pumpAndSettle();
+      expect(find.text('Hapus "Walden" dari rak?'), findsOneWidget);
+      expect(
+        find.text(
+          'Progres 50% sama 37 paragraf yang udah diartiin ikut kehapus. '
+          'File aslinya di Files tetep aman kok.',
+        ),
+        findsOneWidget,
+      );
+      expect(repo.deleted, isEmpty);
+      await tester.tap(find.text('Hapus'));
+      await tester.pumpAndSettle();
+      expect(repo.deleted, [1]);
+    });
+
+    testWidgets('delete from the info sheet; Gak jadi keeps the book', (
+      tester,
+    ) async {
+      await pump(tester, [walden]);
+      await openMenu(tester);
+      await tester.tap(find.text('Info buku'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Hapus dari rak'));
+      await tester.pumpAndSettle();
+      expect(find.text('Hapus "Walden" dari rak?'), findsOneWidget);
+      await tester.tap(find.text('Gak jadi'));
+      await tester.pumpAndSettle();
+      expect(repo.deleted, isEmpty);
+    });
+
+    testWidgets('a never-opened book has nothing to lose but the file', (
+      tester,
+    ) async {
+      await pump(tester, [book(2, 'Emma')]);
+      repo.info = BookInfo(
+        lastOpenedAt: null,
+        createdAt: DateTime(2026, 9, 12),
+        fileName: 'emma.epub',
+        fileBytes: 1,
+        translated: 0,
+      );
+      await openMenu(tester);
+      await tester.tap(find.text('Hapus dari rak'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text('File aslinya di Files tetep aman kok.'),
+        findsOneWidget,
+      );
     });
   });
 

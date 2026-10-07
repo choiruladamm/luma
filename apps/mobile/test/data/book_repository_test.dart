@@ -1,8 +1,11 @@
+import 'dart:io';
+
 import 'package:drift/drift.dart' hide isNull;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:luma/data/database/app_database.dart';
 import 'package:luma/data/repositories/book_repository.dart';
+import 'package:luma/data/services/file_storage.dart';
 import 'package:luma/domain/models/book.dart';
 
 void main() {
@@ -283,6 +286,122 @@ void main() {
       await pumpEventQueue();
       await readAt(second, 1, 0.5);
       await expectation;
+    });
+  });
+
+  group('info and delete', () {
+    late Directory root;
+    late FileStorage files;
+    setUp(() async {
+      root = await Directory.systemTemp.createTemp('luma_books_');
+      files = FileStorage(root);
+      await files.ensureDirs();
+    });
+    tearDown(() => root.delete(recursive: true));
+
+    /// A book with a file, a cover and one of everything that points at it.
+    Future<int> full(String name) async {
+      final id = await db
+          .into(db.books)
+          .insert(
+            BooksCompanion.insert(
+              sourceType: SourceType.epub,
+              title: name,
+              hash: Value(name),
+              fileName: Value('$name.epub'),
+              coverName: Value('$name.png'),
+              parserVersion: 1,
+              totalChars: 10,
+              lastOpenedAt: Value(DateTime(2026, 10, 6, 22, 14)),
+            ),
+          );
+      final chapter = await db
+          .into(db.chapters)
+          .insert(
+            ChaptersCompanion.insert(
+              bookId: id,
+              sortOrder: 0,
+              title: 'I',
+              charOffset: 0,
+            ),
+          );
+      await db
+          .into(db.paragraphs)
+          .insert(
+            ParagraphsCompanion.insert(
+              chapterId: chapter,
+              paragraphIndex: 0,
+              groupIndex: const Value(0),
+              type: ParagraphType.paragraph,
+              content: 'hello',
+            ),
+          );
+      await db
+          .into(db.readingProgress)
+          .insert(
+            ReadingProgressCompanion.insert(
+              bookId: Value(id),
+              chapterId: chapter,
+              paragraphIndex: 0,
+            ),
+          );
+      await db
+          .into(db.aiResults)
+          .insert(
+            AiResultsCompanion.insert(
+              chapterId: chapter,
+              groupIndex: 0,
+              translations: '[]',
+              meaning: '',
+              model: 'm',
+            ),
+          );
+      await files.writeBook('$name.epub', List.filled(2048, 1));
+      await files.writeCover('$name.png', [1]);
+      return id;
+    }
+
+    test('bookInfo: dates, file size, translated paragraphs', () async {
+      final id = await full('Walden');
+      final info = (await BookRepository(db).bookInfo(id, files))!;
+      expect(info.lastOpenedAt, DateTime(2026, 10, 6, 22, 14));
+      expect(
+        (info.fileName, info.fileBytes, info.translated),
+        ('Walden.epub', 2048, 1),
+      );
+      expect(await BookRepository(db).bookInfo(999, files), isNull);
+
+      await files.deleteBookFiles(fileName: 'Walden.epub');
+      expect((await BookRepository(db).bookInfo(id, files))!.fileBytes, isNull);
+    });
+
+    test('delete leaves no row and no file behind', () async {
+      final gone = await full('Walden');
+      final kept = await full('Emma');
+      await BookRepository(db).delete(gone, files);
+
+      expect((await db.select(db.books).get()).map((b) => b.id), [kept]);
+      for (final left in [
+        (await db.select(db.chapters).get()).length,
+        (await db.select(db.paragraphs).get()).length,
+        (await db.select(db.readingProgress).get()).length,
+        (await db.select(db.aiResults).get()).length,
+      ]) {
+        expect(left, 1); // only Emma's
+      }
+      expect(await files.book('Walden.epub').exists(), isFalse);
+      expect(await files.cover('Walden.png').exists(), isFalse);
+      expect(await files.book('Emma.epub').exists(), isTrue);
+      expect(await files.cover('Emma.png').exists(), isTrue);
+
+      // A second delete (or a stale id) is a no-op.
+      await BookRepository(db).delete(gone, files);
+    });
+
+    test('deleting frees the file hash for a re-import', () async {
+      final id = await full('Walden');
+      await BookRepository(db).delete(id, files);
+      expect(await full('Walden'), isNot(id));
     });
   });
 }

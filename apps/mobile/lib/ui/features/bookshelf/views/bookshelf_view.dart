@@ -5,10 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../data/repositories/book_repository.dart';
 import '../../../../data/repositories/settings_repository.dart';
 import '../../../../data/services/file_storage.dart';
 import '../../../../domain/models/backup.dart';
 import '../../../../domain/models/book.dart';
+import '../../../../domain/shelf_sort.dart';
 import '../../../../routing/router.dart';
 import '../../../core/theme/stabilo_theme.dart';
 import '../../../core/theme/stabilo_tokens.dart';
@@ -18,6 +20,8 @@ import '../../../core/widgets/edge_fade.dart';
 import '../../../core/widgets/buttons.dart';
 import '../../../core/widgets/book_cover.dart';
 import '../../../core/widgets/luma_logo.dart';
+import '../../../core/widgets/dialog.dart';
+import '../../../core/widgets/menu.dart';
 import '../../../core/widgets/sheet.dart';
 import '../../../core/widgets/toast.dart';
 import '../../import_book/view_models/import_view_model.dart';
@@ -26,6 +30,7 @@ import '../../settings/view_models/backup_view_model.dart';
 import '../../settings/views/backup_listener.dart';
 import '../view_models/bookshelf_view_model.dart';
 import 'backup_reminder.dart';
+import 'book_info_sheet.dart';
 import 'continue_card.dart';
 
 /// Rak buku (board 01 Rak kosong, 02 Rak) + alur import (board 13–18).
@@ -135,6 +140,80 @@ class _BookshelfViewState extends ConsumerState<BookshelfView> {
   File? _cover(String? name) =>
       name == null ? null : ref.read(fileStorageProvider).cover(name);
 
+  /// Menu tekan lama, nempel ke kartu ([anchor]).
+  Future<void> _bookMenu(BuildContext anchor, ShelfBook book) async {
+    final pick = await showAppMenu<String>(anchor, const [
+      AppMenuItem('info', 'Info buku', icon: AppIcons.info),
+      AppMenuItem(
+        'delete',
+        'Hapus dari rak',
+        icon: AppIcons.delete,
+        destructive: true,
+      ),
+    ]);
+    if (!mounted) return;
+    switch (pick) {
+      case 'info':
+        await _openInfo(book);
+      case 'delete':
+        await _confirmDelete(book);
+    }
+  }
+
+  Future<void> _openInfo(ShelfBook book) => showAppSheet<void>(
+    context,
+    builder: (sheet) => BookInfoSheet(
+      book: book,
+      coverFile: _cover(book.coverName),
+      onRead: () {
+        Navigator.of(sheet).pop();
+        context.push(Routes.reader(book.id));
+      },
+      onDelete: () {
+        Navigator.of(sheet).pop();
+        _confirmDelete(book);
+      },
+    ),
+  );
+
+  Future<void> _confirmDelete(ShelfBook book) async {
+    final info = await ref.read(bookInfoProvider(book.id).future);
+    if (!mounted) return;
+    final lost = [
+      if (book.opened) 'Progres ${(book.progress * 100).floor()}%',
+      if (info != null && info.translated > 0)
+        '${info.translated} paragraf yang udah diartiin',
+    ].join(' sama ');
+    final ok = await showConfirmDialog(
+      context,
+      icon: AppIcons.delete,
+      title: 'Hapus "${book.title}" dari rak?',
+      message:
+          '${lost.isEmpty ? '' : '$lost ikut kehapus. '}'
+          'File aslinya di Files tetep aman kok.',
+      cancelLabel: 'Gak jadi',
+      confirmLabel: 'Hapus',
+    );
+    if (!ok || !mounted) return;
+    try {
+      await ref
+          .read(bookRepositoryProvider)
+          .delete(book.id, ref.read(fileStorageProvider));
+    } on Object {
+      if (mounted) showToast(context, 'Yah, gagal ngehapus bukunya');
+    }
+  }
+
+  Future<void> _pickSort(BuildContext anchor, ShelfSort current) async {
+    final pick = await showAppMenu<ShelfSort>(anchor, [
+      for (final s in ShelfSort.values)
+        AppMenuItem(s, s.label, selected: s == current),
+    ], title: 'Urutin pake');
+    if (pick != null && pick != current) {
+      ref.read(settingsRepositoryProvider).saveShelfSort(pick).ignore();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     ref.listen(importControllerProvider, _onImport);
@@ -160,6 +239,9 @@ class _BookshelfViewState extends ConsumerState<BookshelfView> {
             AsyncData(value: final list) => _Shelf(
               header: header,
               books: list,
+              sort: ref.watch(shelfSortProvider).value ?? ShelfSort.lastOpened,
+              onSort: _pickSort,
+              onBookMenu: _bookMenu,
               importing: importing,
               reminder: reminder,
             ),
@@ -240,12 +322,20 @@ class _Shelf extends ConsumerWidget {
   const _Shelf({
     required this.header,
     required this.books,
+    required this.sort,
+    required this.onSort,
+    required this.onBookMenu,
     this.importing,
     this.reminder,
   });
 
   final Widget header;
+
+  /// Urut terakhir dibuka (urutan stream); [sort] diterapin buat grid.
   final List<ShelfBook> books;
+  final ShelfSort sort;
+  final void Function(BuildContext anchor, ShelfSort current) onSort;
+  final void Function(BuildContext anchor, ShelfBook book) onBookMenu;
 
   /// Buku terakhir dibuka yang belum kelar, buat kartu "Lanjut baca yuk".
   ShelfBook? get resume {
@@ -261,6 +351,7 @@ class _Shelf extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final sorted = sortShelf(books, sort);
     // Header + "Semua buku" nempel; grid di bawahnya mudar pas lewat (board
     // EdgeFade), gak pake garis pemisah.
     return Column(
@@ -285,12 +376,45 @@ class _Shelf extends ConsumerWidget {
                 const SizedBox(height: Space.s4 + Space.s1),
               SizedBox(
                 height: Layout.touch,
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Semantics(
-                    header: true,
-                    child: Text('Semua buku', style: StabiloType.titleSm),
-                  ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Semantics(
+                        header: true,
+                        child: Text('Semua buku', style: StabiloType.titleSm),
+                      ),
+                    ),
+                    Builder(
+                      builder: (anchor) => Semantics(
+                        button: true,
+                        label: 'Urutan rak: ${sort.label}',
+                        excludeSemantics: true,
+                        child: InkWell(
+                          onTap: () => onSort(anchor, sort),
+                          child: SizedBox(
+                            height: Layout.touch,
+                            child: Row(
+                              spacing: 5,
+                              children: [
+                                Text(
+                                  sort.label,
+                                  style: StabiloType.caption.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                    color: context.stabilo.ink2,
+                                  ),
+                                ),
+                                AppIcon(
+                                  AppIcons.down,
+                                  size: 13,
+                                  color: context.stabilo.ink2,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -336,7 +460,7 @@ class _Shelf extends ConsumerWidget {
                           mainAxisSpacing: Layout.shelfGapY,
                           mainAxisExtent: BookCard.heightFor(colW),
                         ),
-                        itemCount: books.length + (importing == null ? 0 : 1),
+                        itemCount: sorted.length + (importing == null ? 0 : 1),
                         itemBuilder: (context, i) {
                           if (importing != null) {
                             if (i == 0) {
@@ -344,20 +468,23 @@ class _Shelf extends ConsumerWidget {
                             }
                             i--;
                           }
-                          final book = books[i];
-                          return BookCard(
+                          final book = sorted[i];
+                          return Builder(
                             key: ValueKey(book.id),
-                            title: book.title,
-                            author: book.author,
-                            coverFile: book.coverName == null
-                                ? null
-                                : ref
-                                      .read(fileStorageProvider)
-                                      .cover(book.coverName!),
-                            progress: book.progress,
-                            opened: book.opened,
-                            finished: book.finished,
-                            onTap: () => context.push(Routes.reader(book.id)),
+                            builder: (anchor) => BookCard(
+                              title: book.title,
+                              author: book.author,
+                              coverFile: book.coverName == null
+                                  ? null
+                                  : ref
+                                        .read(fileStorageProvider)
+                                        .cover(book.coverName!),
+                              progress: book.progress,
+                              opened: book.opened,
+                              finished: book.finished,
+                              onTap: () => context.push(Routes.reader(book.id)),
+                              onLongPress: () => onBookMenu(anchor, book),
+                            ),
                           );
                         },
                       );
