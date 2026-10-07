@@ -16,6 +16,7 @@ import '../../../core/theme/stabilo_theme.dart';
 import '../../../core/theme/stabilo_tokens.dart';
 import '../../../core/theme/stabilo_type.dart';
 import '../../../core/widgets/buttons.dart';
+import '../../../core/widgets/edge_fade.dart';
 import '../view_models/reader_view_model.dart';
 import 'aa_sheet.dart';
 import 'book_end_view.dart';
@@ -637,103 +638,115 @@ class _ChapterTextState extends ConsumerState<_ChapterText>
       opacity: _restored ? 1 : 0,
       duration: fade,
       curve: Curves.easeOut,
-      child: NotificationListener<ScrollNotification>(
-        onNotification: (n) {
-          if (n is UserScrollNotification &&
-              n.direction != ScrollDirection.idle) {
-            _userScrolled = true;
-            _introTimer?.cancel(); // udah pegang kendali sendiri
-          } else if (n is ScrollUpdateNotification &&
-              (_userScrolled || n.dragDetails != null)) {
-            _moveChrome(n, paras);
-          } else if (n is ScrollEndNotification && _userScrolled) {
-            _userScrolled = false;
-            widget.chrome.release();
-            final spot = _topSpot(paras);
-            if (spot != null) widget.onPosition(spot);
-          }
-          return false;
+      child: AnimatedBuilder(
+        animation: widget.chrome.hidden,
+        // Tepi teks ikut varian kapsul ↔ imersif sepanjang animasi kapsul.
+        builder: (context, child) {
+          final edges = readerEdgeFade(pad, widget.chrome.hidden.value);
+          return EdgeFadeScroll(
+            top: edges.top,
+            bottom: edges.bottom,
+            child: child!,
+          );
         },
-        // Tap area kosong (margin, sela, bawah teks terakhir) = munculin /
-        // ngumpetin kapsul. Paragraf nangkep tap-nya sendiri.
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTapUp: (d) => _onTap(d.globalPosition, paras),
-          child: SingleChildScrollView(
-            controller: _scroll,
-            padding: EdgeInsets.fromLTRB(
-              widget.prefs.marginWidth,
-              pad.top + readerTextTop,
-              widget.prefs.marginWidth,
-              pad.bottom + readerTextBottom,
-            ),
-            child: Stack(
-              key: _contentKey,
-              children: [
-                if (_mark != null)
-                  Positioned.fromRect(rect: _mark!, child: _markWidget(c)),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Padding(
-                      padding: EdgeInsets.only(bottom: gap),
-                      child: _ChapterHeading(
-                        number: widget.index + 1,
-                        title: chapter.title,
-                      ),
-                    ),
-                    for (final p in paras)
+        child: NotificationListener<ScrollNotification>(
+          onNotification: (n) {
+            if (n is UserScrollNotification &&
+                n.direction != ScrollDirection.idle) {
+              _userScrolled = true;
+              _introTimer?.cancel(); // udah pegang kendali sendiri
+            } else if (n is ScrollUpdateNotification &&
+                (_userScrolled || n.dragDetails != null)) {
+              _moveChrome(n, paras);
+            } else if (n is ScrollEndNotification && _userScrolled) {
+              _userScrolled = false;
+              widget.chrome.release();
+              final spot = _topSpot(paras);
+              if (spot != null) widget.onPosition(spot);
+            }
+            return false;
+          },
+          // Tap area kosong (margin, sela, bawah teks terakhir) = munculin /
+          // ngumpetin kapsul. Paragraf nangkep tap-nya sendiri.
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTapUp: (d) => _onTap(d.globalPosition, paras),
+            child: SingleChildScrollView(
+              controller: _scroll,
+              padding: EdgeInsets.fromLTRB(
+                widget.prefs.marginWidth,
+                pad.top + readerTextTop,
+                widget.prefs.marginWidth,
+                pad.bottom + readerTextBottom,
+              ),
+              child: Stack(
+                key: _contentKey,
+                children: [
+                  if (_mark != null)
+                    Positioned.fromRect(rect: _mark!, child: _markWidget(c)),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
                       Padding(
                         padding: EdgeInsets.only(bottom: gap),
-                        // Key di isinya, bukan di sela bawah: offset = fraksi tinggi
-                        // paragraf doang.
-                        child: KeyedSubtree(
-                          key: _keys.putIfAbsent(p.index, GlobalKey.new),
-                          child: switch (p.type) {
-                            // Kotak paragraf selebar kolom, termasuk sisa baris
-                            // pendek. Sela antar paragraf & margin = area kosong.
-                            ParagraphType.paragraph => Text(
-                              p.text,
-                              style: reading,
-                            ),
-                            ParagraphType.heading => Semantics(
-                              header: true,
-                              child: Text(
-                                p.text,
-                                style: StabiloType.titleSm.copyWith(
-                                  color: c.ink,
-                                ),
-                              ),
-                            ),
-                            ParagraphType.sceneBreak => Center(
-                              child: Text(
-                                '* * *',
-                                semanticsLabel: 'Pemisah adegan',
-                                style: StabiloType.label.copyWith(
-                                  color: c.ink2,
-                                ),
-                              ),
-                            ),
-                          },
-                        ),
-                      ),
-                    // Kartu akhir bab baru muncul bareng teks, biar gak nongol di atas
-                    // terus kedorong ke bawah.
-                    if (loaded)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 14),
-                        child: _ChapterEnd(
-                          chapterId: chapter.id,
+                        child: _ChapterHeading(
                           number: widget.index + 1,
-                          next: next,
-                          nextNumber: widget.index + 2,
-                          total: widget.book.chapters.length,
-                          onNext: widget.onNext,
+                          title: chapter.title,
                         ),
                       ),
-                  ],
-                ),
-              ],
+                      for (final p in paras)
+                        Padding(
+                          padding: EdgeInsets.only(bottom: gap),
+                          // Key di isinya, bukan di sela bawah: offset = fraksi tinggi
+                          // paragraf doang.
+                          child: KeyedSubtree(
+                            key: _keys.putIfAbsent(p.index, GlobalKey.new),
+                            child: switch (p.type) {
+                              // Kotak paragraf selebar kolom, termasuk sisa baris
+                              // pendek. Sela antar paragraf & margin = area kosong.
+                              ParagraphType.paragraph => Text(
+                                p.text,
+                                style: reading,
+                              ),
+                              ParagraphType.heading => Semantics(
+                                header: true,
+                                child: Text(
+                                  p.text,
+                                  style: StabiloType.titleSm.copyWith(
+                                    color: c.ink,
+                                  ),
+                                ),
+                              ),
+                              ParagraphType.sceneBreak => Center(
+                                child: Text(
+                                  '* * *',
+                                  semanticsLabel: 'Pemisah adegan',
+                                  style: StabiloType.label.copyWith(
+                                    color: c.ink2,
+                                  ),
+                                ),
+                              ),
+                            },
+                          ),
+                        ),
+                      // Kartu akhir bab baru muncul bareng teks, biar gak nongol di atas
+                      // terus kedorong ke bawah.
+                      if (loaded)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 14),
+                          child: _ChapterEnd(
+                            chapterId: chapter.id,
+                            number: widget.index + 1,
+                            next: next,
+                            nextNumber: widget.index + 2,
+                            total: widget.book.chapters.length,
+                            onNext: widget.onNext,
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),

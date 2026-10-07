@@ -6,6 +6,7 @@ import '../../../core/theme/stabilo_theme.dart';
 import '../../../core/theme/stabilo_tokens.dart';
 import '../../../core/theme/stabilo_type.dart';
 import '../../../core/widgets/buttons.dart';
+import '../../../core/widgets/edge_fade.dart';
 
 // Halaman baca imersif (board Baca imersif · ReaderCapsule). Ukuran di sini
 // diukur dari safe area (board: atas 54, bawah 34).
@@ -24,9 +25,32 @@ const readerTextTop = 86.0;
 /// Ruang kosong di bawah teks terakhir (board: 100 dari tepi layar).
 const readerTextBottom = 66.0;
 
-/// Gradien di belakang kapsul (board: 132 atas, 130 bawah).
-const _fadeTop = 78.0;
-const _fadeBottom = 96.0;
+/// Tepi teks baca (board EdgeFade · varian Baca). Kapsul keliatan: status bar
+/// & di bawah garis progres kosong, teks di belakang kapsul ±18%, terus naik
+/// penuh dalam 48pt. Imersif: cuma fade bawah 24pt yang selesai di garis
+/// progres. [t] = `ReaderChrome.hidden` (0 kapsul, 1 imersif).
+({EdgeFadeSide top, EdgeFadeSide bottom}) readerEdgeFade(
+  EdgeInsets pad,
+  double t,
+) {
+  const behind = 0.18;
+  final top = EdgeFadeSide(
+    48,
+    clear: pad.top,
+    hold: capsuleTopGap + capsuleHeight,
+    floor: behind,
+  );
+  final bottom = EdgeFadeSide(
+    48,
+    clear: pad.bottom,
+    hold: capsuleBottomGap + capsuleBottomHeight,
+    floor: behind,
+  );
+  return (
+    top: EdgeFadeSide.lerp(top, EdgeFadeSide.none, t),
+    bottom: EdgeFadeSide.lerp(bottom, EdgeFadeSide(24, clear: pad.bottom), t),
+  );
+}
 
 /// Ngumpet/munculin kapsul ngikutin scroll: turun ≥ [hideAfter] ngumpet,
 /// naik ≥ [showAfter] muncul. Selama jari nge-drag, kapsul ngikutin 1:1 terus
@@ -96,8 +120,8 @@ class ReaderChrome {
   }
 }
 
-/// Dua kapsul + gradien di belakangnya, geser keluar layar ngikutin
-/// [ReaderChrome.hidden]. Overlay: teks di bawahnya gak loncat.
+/// Dua kapsul, geser keluar layar ngikutin [ReaderChrome.hidden]. Overlay:
+/// teks di bawahnya gak loncat; tepinya dimudarin [readerEdgeFade].
 class ReaderCapsules extends StatelessWidget {
   const ReaderCapsules({
     super.key,
@@ -112,7 +136,6 @@ class ReaderCapsules extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.stabilo;
     final pad = MediaQuery.paddingOf(context);
     final topTravel = pad.top + capsuleTopGap + capsuleHeight + Space.s6;
     final bottomTravel =
@@ -125,49 +148,6 @@ class ReaderCapsules extends StatelessWidget {
           ignoring: t > 0.5,
           child: Stack(
             children: [
-              Positioned(
-                left: 0,
-                right: 0,
-                top: 0,
-                height: pad.top + _fadeTop,
-                child: IgnorePointer(
-                  child: Opacity(
-                    opacity: 1 - t,
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          stops: const [0.58, 1],
-                          colors: [c.canvas, c.canvas.withValues(alpha: 0)],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              if (bottom != null)
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  height: pad.bottom + _fadeBottom,
-                  child: IgnorePointer(
-                    child: Opacity(
-                      opacity: 1 - t,
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            stops: const [0, 0.52],
-                            colors: [c.canvas.withValues(alpha: 0), c.canvas],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
               Positioned(
                 left: Layout.margin,
                 right: Layout.margin,

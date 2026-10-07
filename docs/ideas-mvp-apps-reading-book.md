@@ -128,9 +128,22 @@ Pas baca, layar isinya cuma teks + garis progres tipis. Menu nongol sebagai dua 
 - **Kapsul atas**: tinggi 58, radius penuh, 6pt di bawah safe area atas, kiri-kanan 24. Isi: balik · judul + "Bab N · judul bab" · daftar isi · Aa. Tombol 44 bulet muted; tombol yang sheet-nya lagi kebuka (Daftar isi / Aa) jadi kuning.
 - **Kapsul bawah**: tinggi 40, 14pt di atas safe area bawah, di tengah. Persen + bar 88 + "±N mnt lagi" (atau "Bab N beres"). Cuma info.
 - **Gaya kapsul**: latar sheet. Terang: garis 1,5 ink + bayangan tekan 2 + bayangan lembut. Gelap: garis `#46423A` + bayangan lembut.
-- **Gradien** latar di belakang kapsul (132 atas, 130 bawah) biar teks gak tabrakan pas lewat, ikut ngumpet bareng kapsul.
+- Teks yang lewat di belakang kapsul dimudarin pake **EdgeFade** (lihat di bawah), bukan gradien warna latar.
 - **Garis progres** 2pt selebar layar, tepat di atas safe area bawah (gak kepotong sudut layar, gak numpuk home indicator). Terang `#E6B800`, gelap `#E9C75A`, track ink 8–10%. Progres per buku; 100% di layar akhir buku.
 - Kapsul itu **overlay**: teks gak loncat pas kapsul muncul/ngumpet. Teks awal bab mulai 86pt di bawah safe area atas (board: 140) biar judul bab gak ketutup.
+
+### EdgeFade (tepi area scroll)
+
+Board "EdgeFade · tepi area scroll". Tepi area scroll mudar halus pake **mask** (`ShaderMask` + `BlendMode.dstIn`, widget `EdgeFadeScroll`): isinya yang transparan, bukan gradien warna latar, jadi aman di terang & gelap. Fade atas cuma muncul kalau udah di-scroll, fade bawah cuma kalau masih ada isi di bawah, isi muat = gak ada fade. Muncul/ilang 150 ms. Gak dipasang di elemen yang gak ikut ke-scroll (judul, tombol aksi, kapsul).
+
+| Tempat | Fade atas | Fade bawah | Catatan |
+|--------|-----------|------------|---------|
+| Sheet (Aa, Daftar isi, Artinya, `SheetFrame`, Ringkasan pulihin) | 20pt | 20pt | Standar |
+| Layar penuh (Rak, Pengaturan) | 20pt di bawah header yang nempel | 34pt (= safe area) | Rak: header + "Semua buku" nempel, tanpa garis pemisah. Pengaturan: balik + judul nempel |
+| Baca · kapsul keliatan | 48pt dari tepi kapsul | 48pt ke tepi kapsul | Teks di belakang kapsul ±18%. Status bar & di bawah garis progres kosong. Awal bab gak ada fade atas |
+| Baca · imersif | – | 24pt, selesai pas di garis progres | Di bawah garis progres kosong |
+
+Varian kapsul ↔ imersif di-interpolasi sepanjang animasi kapsul ngumpet/muncul, gak loncat. Menu tekan lama & urutkan cuma 2–3 item, gak pernah scroll, jadi belum dipasang.
 
 ### Pengaturan Aa
 

@@ -9,6 +9,7 @@ import '../../../core/theme/stabilo_type.dart';
 import '../../../core/widgets/buttons.dart';
 import '../../../core/widgets/sheet.dart';
 import '../../../core/widgets/switch.dart';
+import '../../../core/widgets/edge_fade.dart';
 
 /// Atur bacaan (board 07 Atur bacaan). Tiap pilihan langsung disimpen dan
 /// langsung keliatan di teks di belakang sheet (scrim-nya tipis). Kayak
@@ -60,110 +61,111 @@ class _AaSheet extends ConsumerWidget {
             ],
           ),
           Flexible(
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                spacing: Space.s4,
-                children: [
-                  _Section(
-                    label: 'Ukuran huruf',
-                    value: _decimal(prefs.fontSize),
-                    child: _SizeStepper(
-                      step: prefs.sizeStep,
-                      onChanged: (s) => set(prefs.copyWith(sizeStep: s)),
-                    ),
-                  ),
-                  _Section(
-                    label: 'Font',
-                    child: Row(
-                      spacing: Space.s2,
-                      children: [
-                        for (final (font, label) in const [
-                          (ReadingFont.clear, 'Jelas'),
-                          (ReadingFont.book, 'Kayak buku'),
-                          (ReadingFont.system, 'Bawaan iOS'),
-                        ])
-                          Expanded(
-                            child: _FontTile(
-                              label: label,
-                              family: readingFamily(font),
-                              selected: prefs.font == font,
-                              onTap: () => set(prefs.copyWith(font: font)),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                  _Section(
-                    label: 'Jarak baris',
-                    child: _Segmented(
-                      options: const ['Rapat', 'Pas', 'Lega'],
-                      selected: prefs.spacing.index,
-                      onChanged: (i) =>
-                          set(prefs.copyWith(spacing: LineSpacing.values[i])),
-                    ),
-                  ),
-                  _Section(
-                    label: 'Margin',
-                    child: _Segmented(
-                      options: const ['Sempit', 'Pas', 'Lega'],
-                      selected: prefs.margin.index,
-                      onChanged: (i) =>
-                          set(prefs.copyWith(margin: TextMargin.values[i])),
-                    ),
-                  ),
-                  _Section(
-                    label: 'Tema',
-                    child: Row(
-                      spacing: Space.s2,
-                      children: [
-                        for (final (theme, label) in const [
-                          (AppTheme.light, 'Terang'),
-                          (AppTheme.dark, 'Gelap'),
-                          (AppTheme.system, 'Ikut iOS'),
-                        ])
-                          Expanded(
-                            child: _ThemePill(
-                              theme: theme,
-                              label: label,
-                              selected: prefs.theme == theme,
-                              onTap: () => set(prefs.copyWith(theme: theme)),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                  _Section(
-                    label: 'Tampilan layar',
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: c.muted,
-                        borderRadius: BorderRadius.circular(Radii.menu),
+            child: EdgeFadeScroll(
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  spacing: Space.s4,
+                  children: [
+                    _Section(
+                      label: 'Ukuran huruf',
+                      value: _decimal(prefs.fontSize),
+                      child: _SizeStepper(
+                        step: prefs.sizeStep,
+                        onChanged: (s) => set(prefs.copyWith(sizeStep: s)),
                       ),
-                      child: Column(
+                    ),
+                    _Section(
+                      label: 'Font',
+                      child: Row(
+                        spacing: Space.s2,
                         children: [
-                          _ToggleRow(
-                            title: 'Sembunyiin jam & baterai',
-                            subtitle:
-                                'Status bar ngumpet bareng menu pas lagi baca',
-                            value: prefs.hideStatusBar,
-                            onChanged: (v) =>
-                                set(prefs.copyWith(hideStatusBar: v)),
-                          ),
-                          Divider(height: 1, thickness: 1, color: c.track),
-                          _ToggleRow(
-                            title: 'Tampilin garis progres',
-                            subtitle:
-                                'Garis tipis di bawah layar pas menu ngumpet',
-                            value: prefs.showProgressLine,
-                            onChanged: (v) =>
-                                set(prefs.copyWith(showProgressLine: v)),
-                          ),
+                          for (final (font, label) in const [
+                            (ReadingFont.clear, 'Jelas'),
+                            (ReadingFont.book, 'Kayak buku'),
+                            (ReadingFont.system, 'Bawaan iOS'),
+                          ])
+                            Expanded(
+                              child: _FontTile(
+                                label: label,
+                                family: readingFamily(font),
+                                selected: prefs.font == font,
+                                onTap: () => set(prefs.copyWith(font: font)),
+                              ),
+                            ),
                         ],
                       ),
                     ),
-                  ),
-                ],
+                    _Section(
+                      label: 'Jarak baris',
+                      child: _Segmented(
+                        options: const ['Rapat', 'Pas', 'Lega'],
+                        selected: prefs.spacing.index,
+                        onChanged: (i) =>
+                            set(prefs.copyWith(spacing: LineSpacing.values[i])),
+                      ),
+                    ),
+                    _Section(
+                      label: 'Margin',
+                      child: _Segmented(
+                        options: const ['Sempit', 'Pas', 'Lega'],
+                        selected: prefs.margin.index,
+                        onChanged: (i) =>
+                            set(prefs.copyWith(margin: TextMargin.values[i])),
+                      ),
+                    ),
+                    _Section(
+                      label: 'Tema',
+                      child: Row(
+                        spacing: Space.s2,
+                        children: [
+                          for (final (theme, label) in const [
+                            (AppTheme.light, 'Terang'),
+                            (AppTheme.dark, 'Gelap'),
+                            (AppTheme.system, 'Ikut iOS'),
+                          ])
+                            Expanded(
+                              child: _ThemePill(
+                                theme: theme,
+                                label: label,
+                                selected: prefs.theme == theme,
+                                onTap: () => set(prefs.copyWith(theme: theme)),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    _Section(
+                      label: 'Tampilan layar',
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: c.muted,
+                          borderRadius: BorderRadius.circular(Radii.menu),
+                        ),
+                        child: Column(
+                          children: [
+                            _ToggleRow(
+                              title: 'Sembunyiin jam & baterai',
+                              subtitle: 'Status bar ngumpet bareng menu pas lagi baca',
+                              value: prefs.hideStatusBar,
+                              onChanged: (v) =>
+                                  set(prefs.copyWith(hideStatusBar: v)),
+                            ),
+                            Divider(height: 1, thickness: 1, color: c.track),
+                            _ToggleRow(
+                              title: 'Tampilin garis progres',
+                              subtitle:
+                                  'Garis tipis di bawah layar pas menu ngumpet',
+                              value: prefs.showProgressLine,
+                              onChanged: (v) =>
+                                  set(prefs.copyWith(showProgressLine: v)),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

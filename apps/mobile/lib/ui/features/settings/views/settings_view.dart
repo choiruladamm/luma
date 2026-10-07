@@ -14,6 +14,7 @@ import '../../../core/theme/stabilo_tokens.dart';
 import '../../../core/theme/stabilo_type.dart';
 import '../../../core/widgets/buttons.dart';
 import '../../../core/widgets/dialog.dart';
+import '../../../core/widgets/edge_fade.dart';
 import '../../../core/widgets/field.dart';
 import '../view_models/settings_view_model.dart';
 
@@ -75,54 +76,66 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
     return Scaffold(
       body: SafeArea(
         bottom: false,
-        child: ListView(
-          padding: EdgeInsets.fromLTRB(
-            Layout.margin,
-            0,
-            Layout.margin,
-            Space.s6 + MediaQuery.paddingOf(context).bottom,
-          ),
+        child: Column(
           children: [
-            SizedBox(
-              height: Layout.topBar,
-              child: Row(
-                spacing: Space.s3,
-                children: [
-                  CircleButton(
-                    semanticLabel: 'Balik ke rak',
-                    icon: AppIcons.back,
-                    onPressed: () => context.pop(),
-                  ),
-                  Semantics(
-                    header: true,
-                    child: Text('Pengaturan', style: StabiloType.titleLg),
-                  ),
-                ],
+            // Header nempel; isi di bawahnya mudar pas lewat (board EdgeFade).
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: Layout.margin),
+              child: SizedBox(
+                height: Layout.topBar,
+                child: Row(
+                  spacing: Space.s3,
+                  children: [
+                    CircleButton(
+                      semanticLabel: 'Balik ke rak',
+                      icon: AppIcons.back,
+                      onPressed: () => context.pop(),
+                    ),
+                    Semantics(
+                      header: true,
+                      child: Text('Pengaturan', style: StabiloType.titleLg),
+                    ),
+                  ],
+                ),
               ),
             ),
-            const SizedBox(height: 22),
-            AppField(
-              label: 'API key OpenRouter',
-              controller: _key,
-              secret: true,
-              onChanged: _saveKey,
-            ),
-            const SizedBox(height: Space.s2),
-            _KeyStatus(ok: ref.watch(apiKeyCheckProvider).value),
-            const SizedBox(height: 22),
-            _Section(
-              label: 'Model AI',
-              note: 'Biayanya kepotong dari saldo akun OpenRouter lo.',
-              child: _ModelPicker(
-                selected: model,
-                onSelect: (id) =>
-                    ref.read(settingsRepositoryProvider).saveModel(id),
+            Expanded(
+              child: EdgeFadeScroll(
+                bottom: EdgeFadeSide.screenBottom,
+                child: ListView(
+                  padding: EdgeInsets.fromLTRB(
+                    Layout.margin,
+                    22,
+                    Layout.margin,
+                    Space.s6 + MediaQuery.paddingOf(context).bottom,
+                  ),
+                  children: [
+                    AppField(
+                      label: 'API key OpenRouter',
+                      controller: _key,
+                      secret: true,
+                      onChanged: _saveKey,
+                    ),
+                    const SizedBox(height: Space.s2),
+                    _KeyStatus(ok: ref.watch(apiKeyCheckProvider).value),
+                    const SizedBox(height: 22),
+                    _Section(
+                      label: 'Model AI',
+                      note: 'Biayanya kepotong dari saldo akun OpenRouter lo.',
+                      child: _ModelPicker(
+                        selected: model,
+                        onSelect: (id) =>
+                            ref.read(settingsRepositoryProvider).saveModel(id),
+                      ),
+                    ),
+                    const SizedBox(height: 22),
+                    _Section(
+                      label: 'Penyimpanan',
+                      child: _CacheRow(stats: cache, onClear: _clearCache),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 22),
-            _Section(
-              label: 'Penyimpanan',
-              child: _CacheRow(stats: cache, onClear: _clearCache),
             ),
           ],
         ),

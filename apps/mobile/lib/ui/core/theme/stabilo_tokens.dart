@@ -59,6 +59,7 @@ abstract final class Motion {
   static const contentFade = Duration(milliseconds: 200); // isi bab muncul
   static const toast = Duration(milliseconds: 2500); // ilang sendiri
   static const capsule = Duration(milliseconds: 200); // easeOut, kapsul baca
+  static const edgeFade = Duration(milliseconds: 150); // fade tepi scroll
   static const capsuleIntro = Duration(milliseconds: 2500); // abis lanjut baca
   static const flash = Duration(milliseconds: 1200); // stabilo 0 → 60% → 0
   static const flashReduced = Duration(seconds: 3); // garis kiri 4pt

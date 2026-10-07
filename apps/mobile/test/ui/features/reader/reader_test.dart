@@ -13,6 +13,7 @@ import 'package:luma/main.dart';
 import 'package:luma/ui/core/theme/stabilo_theme.dart';
 import 'package:luma/ui/core/widgets/book_card.dart';
 import 'package:luma/ui/core/widgets/buttons.dart';
+import 'package:luma/ui/core/widgets/edge_fade.dart';
 import 'package:luma/ui/core/widgets/switch.dart';
 import 'package:luma/ui/features/bookshelf/view_models/bookshelf_view_model.dart';
 import 'package:luma/ui/features/bookshelf/views/bookshelf_view.dart';
@@ -1018,6 +1019,48 @@ void main() {
     testWidgets('a fresh book gets no greeting', (tester) async {
       await openBook(tester, readerBook: tallBook);
       expect(mark(), findsNothing);
+    });
+  });
+
+  group('edge fade', () {
+    EdgeFadeScroll fade(WidgetTester tester) => tester.widget<EdgeFadeScroll>(
+      find.descendant(
+        of: find.byType(ReaderView),
+        matching: find.byType(EdgeFadeScroll),
+      ),
+    );
+
+    testWidgets('capsules showing vs immersive', (tester) async {
+      await openBook(
+        tester,
+        readerBook: tallBook,
+        saved: (chapterId: 13, paragraphIndex: 12, paragraphOffset: 0.0),
+      );
+      // Capsules: 48pt off their edges, text behind them at 18%.
+      expect(fade(tester).top, const EdgeFadeSide(48, hold: 64, floor: 0.18));
+      expect(
+        fade(tester).bottom,
+        const EdgeFadeSide(48, hold: 54, floor: 0.18),
+      );
+
+      await tester.tapAt(const Offset(10, 800)); // margin: hide
+      await tester.pumpAndSettle();
+      // Immersive: no top fade, 24pt down to the progress line.
+      expect(fade(tester).top, EdgeFadeSide.none);
+      expect(fade(tester).bottom, const EdgeFadeSide(24));
+    });
+
+    testWidgets('the switch follows the capsule animation', (tester) async {
+      await openBook(
+        tester,
+        readerBook: tallBook,
+        saved: (chapterId: 13, paragraphIndex: 12, paragraphOffset: 0.0),
+      );
+      await tester.tapAt(const Offset(10, 800));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100)); // mid-animation
+      final mid = fade(tester).bottom.fade;
+      expect(mid, inExclusiveRange(24, 48));
     });
   });
 }

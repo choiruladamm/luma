@@ -12,6 +12,7 @@ import '../../../core/theme/stabilo_theme.dart';
 import '../../../core/theme/stabilo_tokens.dart';
 import '../../../core/theme/stabilo_type.dart';
 import '../../../core/widgets/book_card.dart';
+import '../../../core/widgets/edge_fade.dart';
 import '../../../core/widgets/buttons.dart';
 import '../../../core/widgets/book_cover.dart';
 import '../../../core/widgets/luma_logo.dart';
@@ -206,11 +207,14 @@ class _Shelf extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return CustomScrollView(
-      slivers: [
-        SliverPadding(
+    // Header + "Semua buku" nempel; grid di bawahnya mudar pas lewat (board
+    // EdgeFade), gak pake garis pemisah.
+    return Column(
+      children: [
+        Padding(
           padding: const EdgeInsets.symmetric(horizontal: Layout.margin),
-          sliver: SliverList.list(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               header,
               const SizedBox(height: Space.s4 + Space.s1),
@@ -224,55 +228,68 @@ class _Shelf extends ConsumerWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: Space.s2),
             ],
           ),
         ),
-        SliverPadding(
-          padding: EdgeInsets.fromLTRB(
-            Layout.margin,
-            0,
-            Layout.margin,
-            Space.s8 + MediaQuery.paddingOf(context).bottom,
-          ),
-          sliver: SliverLayoutBuilder(
-            builder: (context, constraints) {
-              const cols = Layout.shelfColumns;
-              final colW = math.max(
-                0.0,
-                (constraints.crossAxisExtent - (cols - 1) * Layout.shelfGapX) /
-                    cols,
-              );
-              return SliverGrid.builder(
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: cols,
-                  crossAxisSpacing: Layout.shelfGapX,
-                  mainAxisSpacing: Layout.shelfGapY,
-                  mainAxisExtent: BookCard.heightFor(colW),
+        Expanded(
+          child: EdgeFadeScroll(
+            bottom: EdgeFadeSide.screenBottom,
+            child: CustomScrollView(
+              slivers: [
+                SliverPadding(
+                  padding: EdgeInsets.fromLTRB(
+                    Layout.margin,
+                    Space.s2,
+                    Layout.margin,
+                    Space.s8 + MediaQuery.paddingOf(context).bottom,
+                  ),
+                  sliver: SliverLayoutBuilder(
+                    builder: (context, constraints) {
+                      const cols = Layout.shelfColumns;
+                      final colW = math.max(
+                        0.0,
+                        (constraints.crossAxisExtent -
+                                (cols - 1) * Layout.shelfGapX) /
+                            cols,
+                      );
+                      return SliverGrid.builder(
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: cols,
+                          crossAxisSpacing: Layout.shelfGapX,
+                          mainAxisSpacing: Layout.shelfGapY,
+                          mainAxisExtent: BookCard.heightFor(colW),
+                        ),
+                        itemCount: books.length + (importing == null ? 0 : 1),
+                        itemBuilder: (context, i) {
+                          if (importing != null) {
+                            if (i == 0) {
+                              return BookCard.importing(fileName: importing!);
+                            }
+                            i--;
+                          }
+                          final book = books[i];
+                          return BookCard(
+                            key: ValueKey(book.id),
+                            title: book.title,
+                            author: book.author,
+                            coverFile: book.coverName == null
+                                ? null
+                                : ref
+                                      .read(fileStorageProvider)
+                                      .cover(book.coverName!),
+                            // Progres & "Kelar!" nyusul di #15.
+                            progress: 0,
+                            opened: book.opened,
+                            finished: false,
+                            onTap: () => context.push(Routes.reader(book.id)),
+                          );
+                        },
+                      );
+                    },
+                  ),
                 ),
-                itemCount: books.length + (importing == null ? 0 : 1),
-                itemBuilder: (context, i) {
-                  if (importing != null) {
-                    if (i == 0) return BookCard.importing(fileName: importing!);
-                    i--;
-                  }
-                  final book = books[i];
-                  return BookCard(
-                    key: ValueKey(book.id),
-                    title: book.title,
-                    author: book.author,
-                    coverFile: book.coverName == null
-                        ? null
-                        : ref.read(fileStorageProvider).cover(book.coverName!),
-                    // Progres & "Kelar!" nyusul di #15.
-                    progress: 0,
-                    opened: book.opened,
-                    finished: false,
-                    onTap: () => context.push(Routes.reader(book.id)),
-                  );
-                },
-              );
-            },
+              ],
+            ),
           ),
         ),
       ],

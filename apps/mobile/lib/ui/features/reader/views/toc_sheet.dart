@@ -7,6 +7,7 @@ import '../../../core/theme/stabilo_type.dart';
 import '../../../core/widgets/buttons.dart';
 import '../../../core/widgets/sheet.dart';
 import 'reader_capsule.dart';
+import '../../../core/widgets/edge_fade.dart';
 
 /// Daftar isi (board 08). Balikin indeks chapter yang dipilih, null kalau
 /// ditutup. Sheet-nya mulai di bawah kapsul atas; scrim digambar halaman baca
@@ -107,23 +108,25 @@ class _TocSheetState extends State<_TocSheet> {
             ),
           ),
           Flexible(
-            child: SingleChildScrollView(
-              padding: EdgeInsets.only(
-                bottom: Space.s4 + MediaQuery.paddingOf(context).bottom,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                spacing: Space.s1,
-                children: [
-                  for (final (i, ch) in chapters.indexed)
-                    _TocRow(
-                      key: i == widget.current ? _currentKey : null,
-                      number: (i + 1).toString().padLeft(digits, '0'),
-                      title: ch.title,
-                      current: i == widget.current,
-                      onTap: () => Navigator.of(context).pop(i),
-                    ),
-                ],
+            child: EdgeFadeScroll(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.only(
+                  bottom: Space.s4 + MediaQuery.paddingOf(context).bottom,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  spacing: Space.s1,
+                  children: [
+                    for (final (i, ch) in chapters.indexed)
+                      _TocRow(
+                        key: i == widget.current ? _currentKey : null,
+                        number: (i + 1).toString().padLeft(digits, '0'),
+                        title: ch.title,
+                        current: i == widget.current,
+                        onTap: () => Navigator.of(context).pop(i),
+                      ),
+                  ],
+                ),
               ),
             ),
           ),

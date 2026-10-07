@@ -4,6 +4,7 @@ import '../theme/stabilo_theme.dart';
 import '../theme/stabilo_tokens.dart';
 import '../theme/stabilo_type.dart';
 import 'buttons.dart';
+import 'edge_fade.dart';
 
 /// Bottom sheet Stabilo. Tinggi ngikutin isi, maks [maxHeight] × layar.
 /// Isinya biasanya [SheetFrame].
@@ -100,11 +101,13 @@ class SheetFrame extends StatelessWidget {
               ],
             ),
           Flexible(
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                spacing: Space.s4,
-                children: children,
+            child: EdgeFadeScroll(
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  spacing: Space.s4,
+                  children: children,
+                ),
               ),
             ),
           ),
