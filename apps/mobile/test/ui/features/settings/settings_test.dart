@@ -203,6 +203,32 @@ void main() {
     });
   }
 
+  testWidgets('the default chip sits beside the model name, hugging its text', (
+    tester,
+  ) async {
+    await open(tester);
+    final label = tester.getRect(find.text('GLM 5.3 Flash'));
+    final chip = tester.getRect(
+      find
+          .ancestor(
+            of: find.text('Default · paling hemat'),
+            matching: find.byType(Container),
+          )
+          .first,
+    );
+    expect(chip.height, 20);
+    expect((chip.center.dy - label.center.dy).abs(), lessThan(4)); // same line
+    expect(chip.left, greaterThan(label.right)); // after the name
+    // Hugs its text (8 + 8 padding), not the whole row.
+    final text = tester.getSize(find.text('Default · paling hemat')).width;
+    expect(chip.width, closeTo(text + 16, 0.5));
+    // The model ID stays under both.
+    expect(
+      tester.getTopLeft(find.text('z-ai/glm-5.3-flash')).dy,
+      greaterThan(label.bottom),
+    );
+  });
+
   testWidgets('header stays put; the list runs to the bottom edge', (
     tester,
   ) async {
@@ -219,14 +245,96 @@ void main() {
     );
   });
 
-  testWidgets('typing a key saves it to the Keychain', (tester) async {
-    await open(tester);
-    await tester.enterText(find.byType(TextField), 'sk-or-v1-new');
-    await tester.pump();
-    expect(await ApiKeyStore().read(), 'sk-or-v1-new');
-    await tester.enterText(find.byType(TextField), '');
-    await tester.pump();
-    expect(await ApiKeyStore().read(), isNull);
+  group('key input', () {
+    const good = 'sk-or-v1-0123456789abcdef';
+    const old = 'sk-or-v1-saved';
+    final field = find.byType(TextField);
+
+    Future<void> type(WidgetTester tester, String text) async {
+      await tester.enterText(field, text);
+      await tester.pump(const Duration(milliseconds: 700)); // debounce
+      await tester.pumpAndSettle();
+    }
+
+    String shown(WidgetTester tester) =>
+        tester.widget<TextField>(field).controller!.text;
+
+    testWidgets('a good key is checked, then saved', (tester) async {
+      await open(tester);
+      openRouter.checked.clear();
+      await type(tester, good);
+      expect(openRouter.checked, [good]);
+      expect(await ApiKeyStore().read(), good);
+      expect(find.text('Key-nya jalan'), findsOneWidget);
+    });
+
+    testWidgets('text that is not a key is never saved or sent', (
+      tester,
+    ) async {
+      await open(tester);
+      openRouter.checked.clear();
+      await type(tester, 'halo dunia');
+      expect(find.textContaining('bukan API key OpenRouter'), findsOneWidget);
+      expect(openRouter.checked, isEmpty);
+      expect(await ApiKeyStore().read(), old); // the saved key stays
+      expect(find.text('Key-nya jalan'), findsNothing);
+    });
+
+    testWidgets('a key OpenRouter refuses is not saved', (tester) async {
+      await open(tester);
+      openRouter.keyOk = false;
+      await type(tester, good);
+      expect(find.textContaining('gak disimpen'), findsOneWidget);
+      expect(await ApiKeyStore().read(), old);
+    });
+
+    testWidgets('offline: a well-formed key is saved anyway', (tester) async {
+      await open(tester);
+      openRouter.keyOk = null;
+      await type(tester, good);
+      expect(await ApiKeyStore().read(), good);
+      expect(find.text('Key-nya jalan'), findsNothing);
+      expect(find.textContaining('gak disimpen'), findsNothing);
+    });
+
+    testWidgets('pasted spaces and new lines never reach the field', (
+      tester,
+    ) async {
+      await open(tester);
+      await type(tester, '  $good \n');
+      expect(shown(tester), good);
+      expect(await ApiKeyStore().read(), good);
+    });
+
+    testWidgets('the clear button wipes the field and the Keychain', (
+      tester,
+    ) async {
+      await open(tester);
+      await tester.tap(find.bySemanticsLabel('Hapus API key OpenRouter'));
+      await tester.pumpAndSettle();
+      expect(shown(tester), isEmpty);
+      expect(await ApiKeyStore().read(), isNull);
+      expect(find.bySemanticsLabel('Hapus API key OpenRouter'), findsNothing);
+      expect(find.text('Key-nya jalan'), findsNothing);
+    });
+
+    testWidgets('no clear button while the field is empty', (tester) async {
+      FlutterSecureStorage.setMockInitialValues({});
+      await open(tester);
+      expect(find.bySemanticsLabel('Hapus API key OpenRouter'), findsNothing);
+      await tester.enterText(field, good);
+      await tester.pump();
+      expect(find.bySemanticsLabel('Hapus API key OpenRouter'), findsOneWidget);
+    });
+
+    testWidgets('emptying the field by hand deletes the key too', (
+      tester,
+    ) async {
+      await open(tester);
+      await tester.enterText(field, '');
+      await tester.pump();
+      expect(await ApiKeyStore().read(), isNull);
+    });
   });
 
   testWidgets('picking a model saves it', (tester) async {
@@ -286,14 +394,18 @@ void main() {
     testWidgets('typing checks once, after a pause', (tester) async {
       await open(tester);
       openRouter.checked.clear();
-      for (final k in ['sk-1', 'sk-12', 'sk-123']) {
+      for (final k in [
+        'sk-or-v1-aaaaaaa1',
+        'sk-or-v1-aaaaaa12',
+        'sk-or-v1-aaaaa123',
+      ]) {
         await tester.enterText(find.byType(TextField), k);
         await tester.pump(const Duration(milliseconds: 200));
       }
       expect(openRouter.checked, isEmpty);
       await tester.pump(const Duration(milliseconds: 600));
       await tester.pumpAndSettle();
-      expect(openRouter.checked, ['sk-123']);
+      expect(openRouter.checked, ['sk-or-v1-aaaaa123']);
 
       await tester.enterText(find.byType(TextField), '');
       await tester.pump(const Duration(milliseconds: 700));

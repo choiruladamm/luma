@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:path/path.dart' as p;
@@ -40,9 +41,6 @@ class SettingsView extends ConsumerStatefulWidget {
 
 class _SettingsViewState extends ConsumerState<SettingsView> {
   final _key = TextEditingController();
-
-  /// Ngecek key ke OpenRouter nunggu ngetiknya berhenti bentar.
-  Timer? _checkLater;
 
   BackupController get _backup => ref.read(backupControllerProvider.notifier);
 
@@ -156,19 +154,11 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
 
   @override
   void dispose() {
-    _checkLater?.cancel();
     _key.dispose();
     super.dispose();
   }
 
-  /// Disimpen tiap diubah (biasanya sekali paste); kosong = dihapus.
-  Future<void> _saveKey(String key) async {
-    await ref.read(apiKeyStoreProvider).write(key);
-    _checkLater?.cancel();
-    _checkLater = Timer(const Duration(milliseconds: 600), () {
-      if (mounted) ref.invalidate(apiKeyProvider);
-    });
-  }
+  ApiKeyEntry get _entry => ref.read(apiKeyEntryProvider.notifier);
 
   Future<void> _clearCache() async {
     final ok = await showConfirmDialog(
@@ -229,10 +219,19 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                         label: 'API key OpenRouter',
                         controller: _key,
                         secret: true,
-                        onChanged: _saveKey,
+                        // Spasi / baris baru ikut ke-paste dari mana-mana:
+                        // dibuang di sini, key gak pernah mengandungnya.
+                        inputFormatters: [
+                          FilteringTextInputFormatter.deny(RegExp(r'\s')),
+                        ],
+                        onChanged: _entry.edit,
+                        onClear: () {
+                          _key.clear();
+                          _entry.clear();
+                        },
                       ),
                       const SizedBox(height: Space.s2),
-                      _KeyStatus(ok: ref.watch(apiKeyCheckProvider).value),
+                      _KeyStatus(status: ref.watch(apiKeyEntryProvider)),
                       const SizedBox(height: 22),
                       _Section(
                         label: 'Model AI',
@@ -273,13 +272,13 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
   }
 }
 
-/// Di bawah field key: "Key-nya jalan" kalau OpenRouter nerima, "ditolak"
-/// kalau 401/403, selain itu (belum ada / lagi ngecek / offline) penjelasan
-/// tempat nyimpennya.
+/// Di bawah field key. Key diterima OpenRouter: "Key-nya jalan". Bukan bentuk
+/// key, atau ditolak: pesan merah dan keynya gak disimpen. Selain itu (belum
+/// ada / lagi ngecek / offline) cuma penjelasan tempat nyimpennya.
 class _KeyStatus extends StatelessWidget {
-  const _KeyStatus({required this.ok});
+  const _KeyStatus({required this.status});
 
-  final bool? ok;
+  final KeyStatus status;
 
   @override
   Widget build(BuildContext context) {
@@ -289,46 +288,55 @@ class _KeyStatus extends StatelessWidget {
       fontWeight: FontWeight.w400,
       color: c.ink2,
     );
-    if (ok == null) {
-      return Text(
+    final label = StabiloType.caption.copyWith(fontWeight: FontWeight.w600);
+    Widget error(String text) =>
+        Text(text, style: label.copyWith(color: c.danger));
+    return switch (status) {
+      KeyStatus.idle => Text(
         'Disimpen di Keychain iPhone, gak dikirim ke mana-mana selain '
         'OpenRouter.',
         style: small,
-      );
-    }
-    final label = StabiloType.caption.copyWith(fontWeight: FontWeight.w600);
-    return Row(
-      children: [
-        Expanded(
-          child: ok!
-              ? Row(
-                  spacing: 6,
-                  children: [
-                    Container(
-                      width: 18,
-                      height: 18,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: c.accent,
-                        shape: BoxShape.circle,
+      ),
+      KeyStatus.badFormat => error(
+        'Itu bukan API key OpenRouter. Key-nya mulai dari sk-or-... '
+        'dan gak disimpen.',
+      ),
+      KeyStatus.refused => error(
+        'Key-nya ditolak OpenRouter, jadi gak disimpen. Cek lagi ya.',
+      ),
+      KeyStatus.rejected || KeyStatus.valid => Row(
+        children: [
+          Expanded(
+            child: status == KeyStatus.valid
+                ? Row(
+                    spacing: 6,
+                    children: [
+                      Container(
+                        width: 18,
+                        height: 18,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: c.accent,
+                          shape: BoxShape.circle,
+                        ),
+                        child: AppIcon(
+                          AppIcons.check,
+                          size: 11,
+                          color: c.onAccent,
+                        ),
                       ),
-                      child: AppIcon(
-                        AppIcons.check,
-                        size: 11,
-                        color: c.onAccent,
+                      Text(
+                        'Key-nya jalan',
+                        style: label.copyWith(color: c.ink),
                       ),
-                    ),
-                    Text('Key-nya jalan', style: label.copyWith(color: c.ink)),
-                  ],
-                )
-              : Text(
-                  'Key-nya ditolak OpenRouter',
-                  style: label.copyWith(color: c.danger),
-                ),
-        ),
-        Text('Disimpen di Keychain', style: small),
-      ],
-    );
+                    ],
+                  )
+                : error('Key-nya ditolak OpenRouter'),
+          ),
+          Text('Disimpen di Keychain', style: small),
+        ],
+      ),
+    };
   }
 }
 
@@ -618,21 +626,26 @@ class _ModelRow extends StatelessWidget {
                             ),
                           ),
                           if (model.id == defaultAiModel)
+                            // Selebar teksnya, sebaris sama nama (board 23). Pake
+                            // `alignment` di Container bakal bikin dia melebar
+                            // sepenuh baris dan turun ke bawah nama.
                             Container(
                               height: 20,
                               padding: const EdgeInsets.symmetric(
                                 horizontal: Space.s2,
                               ),
-                              alignment: Alignment.center,
                               decoration: BoxDecoration(
                                 color: c.muted,
                                 borderRadius: BorderRadius.circular(Radii.full),
                               ),
-                              child: Text(
-                                'Default · paling hemat',
-                                style: StabiloType.micro.copyWith(
-                                  height: 1,
-                                  color: c.ink,
+                              child: Align(
+                                widthFactor: 1,
+                                child: Text(
+                                  'Default · paling hemat',
+                                  style: StabiloType.micro.copyWith(
+                                    height: 1,
+                                    color: c.ink,
+                                  ),
                                 ),
                               ),
                             ),

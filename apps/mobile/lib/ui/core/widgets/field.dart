@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../theme/stabilo_theme.dart';
 import '../theme/stabilo_tokens.dart';
@@ -16,6 +17,8 @@ class AppField extends StatefulWidget {
     this.secret = false,
     this.onChanged,
     this.onSubmitted,
+    this.inputFormatters,
+    this.onClear,
   });
 
   final String label;
@@ -24,6 +27,10 @@ class AppField extends StatefulWidget {
   final bool secret;
   final ValueChanged<String>? onChanged;
   final ValueChanged<String>? onSubmitted;
+  final List<TextInputFormatter>? inputFormatters;
+
+  /// Ada = tombol hapus nongol selama field ada isinya.
+  final VoidCallback? onClear;
 
   @override
   State<AppField> createState() => _AppFieldState();
@@ -65,6 +72,7 @@ class _AppFieldState extends State<AppField> {
                     obscureText: _hidden,
                     autocorrect: !widget.secret,
                     enableSuggestions: !widget.secret,
+                    inputFormatters: widget.inputFormatters,
                     onChanged: widget.onChanged,
                     onSubmitted: widget.onSubmitted,
                     cursorColor: c.ink,
@@ -73,6 +81,18 @@ class _AppFieldState extends State<AppField> {
                   ),
                 ),
               ),
+              if (widget.onClear != null)
+                ValueListenableBuilder(
+                  valueListenable: widget.controller,
+                  builder: (context, value, _) => value.text.isEmpty
+                      ? const SizedBox.shrink()
+                      : CircleButton(
+                          size: 40,
+                          semanticLabel: 'Hapus ${widget.label}',
+                          icon: AppIcons.close,
+                          onPressed: widget.onClear,
+                        ),
+                ),
               if (widget.secret)
                 CircleButton(
                   size: 40,
