@@ -9,7 +9,7 @@ import '../../domain/models/book.dart';
 
 part 'app_database.g.dart';
 
-// Docs bagian 6. Path file disimpen sebagai nama file aja; path absolut
+// docs/data-model.md. Path file disimpen sebagai nama file aja; path absolut
 // di-resolve saat runtime (container iOS berubah tiap install ulang).
 
 class Books extends Table {

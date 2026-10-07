@@ -37,8 +37,8 @@ final chapterTranslatedProvider = FutureProvider.autoDispose.family<int, int>(
       ref.watch(bookRepositoryProvider).translatedInChapter(chapterId),
 );
 
-/// Terjemahan + makna satu grup (docs bagian 8): cache `ai_results` dulu,
-/// kalau belum ada baru manggil LLM terus disimpen. Grup yang sama gak
+/// Terjemahan + makna satu grup (docs/architecture.md): cache `ai_results`
+/// dulu, kalau belum ada baru manggil LLM terus disimpen. Grup yang sama gak
 /// pernah manggil LLM dua kali. Gagal (gak ada key, timeout, dll) jadi
 /// `AsyncError` berisi `AiException`; gak di-retry otomatis (tiap coba =
 /// saldo), ulang lewat `ref.invalidate`.
@@ -105,7 +105,8 @@ class AiStream {
   );
 }
 
-/// Sumber sheet Artinya: [groupAiProvider] versi streaming (docs bagian 8–9).
+/// Sumber sheet Artinya: [groupAiProvider] versi streaming
+/// (docs/architecture.md, docs/llm.md).
 /// Cache dulu; kalau belum ada, jawaban bersection di-stream dengan state
 /// [AiPhase]. Timeout: 15 detik tanpa token = [AiPhase.slow] (request tetep
 /// jalan), 30 detik = gagal `timeout`; token berhenti 20 detik di tengah =

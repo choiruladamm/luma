@@ -112,7 +112,7 @@ class _BookshelfViewState extends ConsumerState<BookshelfView> {
     if (identical(ref.read(importControllerProvider), shown)) _import.dismiss();
   };
 
-  /// Banner pengingat backup (docs bagian 10), atau null.
+  /// Banner pengingat backup (docs/backup.md), atau null.
   Widget? _reminder(List<ShelfBook> books) {
     final last = ref.watch(lastBackupProvider);
     final dismissed = ref.watch(reminderDismissedProvider);

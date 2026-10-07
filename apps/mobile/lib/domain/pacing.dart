@@ -1,6 +1,6 @@
 import 'dart:math' as math;
 
-/// Ritme teks streaming (docs bagian 9): huruf dari jaringan ditampung,
+/// Ritme teks streaming (docs/llm.md): huruf dari jaringan ditampung,
 /// dikeluarin rata, bukan per potongan. Aturan adaptif dari spike #34:
 /// model ngalir 90–1000 huruf/detik (median 220–430), jadi batas 2× baseline
 /// dari board bikin ketinggalan sampe 5 detik. Di sini kecepatan ngikutin

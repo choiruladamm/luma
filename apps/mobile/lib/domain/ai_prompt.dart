@@ -9,7 +9,7 @@ import 'models/ai_reply.dart';
 /// (#28).
 const aiPromptVersion = 4;
 
-/// Tugas yang sama buat dua format jawaban (docs bagian 9, draft prompt).
+/// Tugas yang sama buat dua format jawaban (docs/llm.md, draft prompt).
 const _aiTask = '''
 Kamu adalah asisten membaca. Pengguna sedang membaca buku berbahasa Inggris
 dan ingin memahami bagian TARGET, yang terdiri dari satu atau beberapa

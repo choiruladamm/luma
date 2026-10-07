@@ -2,7 +2,7 @@
 /// `==`/`hashCode` per nilai, aman jadi kunci family provider.
 typedef GroupRef = ({int chapterId, int groupIndex});
 
-/// Jawaban LLM buat satu grup (docs bagian 9).
+/// Jawaban LLM buat satu grup (docs/llm.md).
 class AiReply {
   const AiReply({required this.translations, required this.meaning});
 
@@ -13,7 +13,8 @@ class AiReply {
   final String meaning;
 }
 
-/// Jenis request LLM di `ai_calls`. Recap (docs bagian 12) tinggal nambah nilai.
+/// Jenis request LLM di `ai_calls`. Recap (docs/ideas/recap.md) tinggal
+/// nambah nilai.
 enum AiCallKind { group }
 
 enum AiError {

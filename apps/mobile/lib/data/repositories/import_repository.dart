@@ -91,9 +91,9 @@ const _afterChapters = 0.85;
 const _afterFiles = 0.90;
 const _beforeDone = 0.99; // 100% dikasih controller, setelah transaksi commit
 
-/// Import EPUB (docs bagian 8, Alur import). Parse dulu sebelum nyalin file,
-/// jadi EPUB jelek gak ninggalin apa-apa; gagal setelah nyalin = file dihapus
-/// lagi, transaksi DB di-rollback.
+/// Import EPUB (docs/architecture.md, Alur import). Parse dulu sebelum nyalin
+/// file, jadi EPUB jelek gak ninggalin apa-apa; gagal setelah nyalin = file
+/// dihapus lagi, transaksi DB di-rollback.
 class ImportRepository {
   ImportRepository(this._db, this._storage, {this.parse = parseInIsolate});
 

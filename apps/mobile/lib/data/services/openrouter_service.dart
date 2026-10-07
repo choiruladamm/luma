@@ -6,7 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/ai_prompt.dart';
 import '../../domain/models/ai_reply.dart';
 
-/// OpenRouter (API OpenAI-compatible, docs bagian 9).
+/// OpenRouter (API OpenAI-compatible, docs/llm.md).
 class OpenRouterService {
   OpenRouterService([Dio? dio])
     : _dio =

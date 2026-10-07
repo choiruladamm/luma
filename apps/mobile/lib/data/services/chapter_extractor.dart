@@ -6,7 +6,8 @@ import '../../domain/models/book.dart';
 import 'epub_parser.dart';
 
 /// Versi logika parse + grouping. Naik = re-import buku lama + hapus
-/// `ai_results`-nya, soalnya indeks paragraf/grup bisa geser (docs bagian 6).
+/// `ai_results`-nya, soalnya indeks paragraf/grup bisa geser
+/// (docs/data-model.md).
 const parserVersion = 1;
 
 class ParsedChapter {
@@ -29,11 +30,13 @@ class ParsedChapter {
   int get charCount => paragraphs.fold(0, (n, p) => n + p.text.length);
 }
 
-/// Chapter dari [outline] jadi paragraf + grup (docs bagian 7–8).
+/// Chapter dari [outline] jadi paragraf + grup (docs/grouping.md,
+/// docs/architecture.md).
 ///
-/// Chapter non-isi dibuang, dikenali dari struktur, bukan judul (docs
-/// bagian 14): yang isinya kebanyakan link (daftar isi, indeks) dan yang gak
-/// punya paragraf (halaman judul kepecah, lisensi Gutenberg yang dilewatin).
+/// Chapter non-isi dibuang, dikenali dari struktur, bukan judul
+/// (docs/ideas/raw.md): yang isinya kebanyakan link (daftar isi, indeks) dan
+/// yang gak punya paragraf (halaman judul kepecah, lisensi Gutenberg yang
+/// dilewatin).
 ///
 /// [onChapter] dipanggil tiap mulai satu chapter sumber (`done` dari `total`),
 /// dan sekali lagi di akhir; cuma buat progres, hasilnya gak berubah.

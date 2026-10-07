@@ -1,6 +1,6 @@
 import 'models/book.dart';
 
-/// Aturan grouping (docs bagian 7). Nilai awal, di-tuning pas dogfooding.
+/// Aturan grouping (docs/grouping.md). Nilai awal, di-tuning pas dogfooding.
 /// Ubah = naikin `parserVersion`: indeks grup lama jadi gak valid.
 abstract final class GroupRules {
   /// Paragraf ≥ ini berdiri sendiri sebagai satu grup.

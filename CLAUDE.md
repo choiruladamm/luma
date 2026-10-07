@@ -4,7 +4,7 @@ EPUB reader iOS (dipakai sendiri, dogfooding): tap paragraf → terjemahan Indon
 
 ## Sumber kebenaran
 
-- **Produk, data model, alur:** [docs/ideas-mvp-apps-reading-book.md](docs/ideas-mvp-apps-reading-book.md). Baca bagian yang relevan sebelum mengerjakan fitur apa pun. Bagian 12 ke bawah (Recap, Markdown, PDF) di luar scope: kerjakan hanya kalau diminta.
+- **Produk, data model, alur:** [docs/](docs/README.md), satu file per topik (indeks di `docs/README.md`: design, data-model, grouping, architecture, llm, llm-evals, backup). Baca file yang relevan sebelum mengerjakan fitur apa pun. `docs/ideas/` (Recap, Markdown, PDF, ide raw) di luar scope: kerjakan hanya kalau diminta. Rujuk docs pakai path file (`docs/llm.md`), bukan nomor bagian. `docs/ideas-mvp-apps-reading-book.md` cuma stub penunjuk buat link lama.
 - **Desain UI:** Stabilo di Claude Design, https://claude.ai/artifact/EBwv9zJBLZQJa5WWYiaJ7F. Baca board layar yang dikerjakan (nama board tercantum di issue) lewat Artifact tool, bukan WebFetch. Tiap layar punya versi terang + gelap.
 - **Task:** GitHub issues milestone `MVP`, label `area:*`. Satu issue = satu unit kerja. Cek baris **Tergantung** di issue dan pastikan dependensinya sudah selesai. Centang checklist scope saat selesai.
 
@@ -57,7 +57,7 @@ lib/
 ```
 
 - State: Riverpod 3, provider ditulis manual (tanpa `riverpod_generator`, sama seperti Mibu), dideklarasikan di sebelah class yang diekspos. `Notifier` berperan sebagai ViewModel. Pakai `.autoDispose` untuk state per layar; service/DB tanpa autoDispose.
-- Nama provider utama sudah ditetapkan di docs bagian 8 (`booksStreamProvider`, `groupAiProvider`, dll): pakai nama itu.
+- Nama provider utama sudah ditetapkan di `docs/architecture.md` (`booksStreamProvider`, `groupAiProvider`, dll): pakai nama itu.
 - Routing: go_router, hanya `/`, `/reader/:bookId`, `/settings`; navigasi pakai konstanta `Routes`, bukan string. Sheet artinya, Aa, daftar isi = `showModalBottomSheet`.
 - Warna dari `context.stabilo`, teks dari `StabiloType`, ukuran/radius/gerak/bayangan dari `stabilo_tokens.dart` (`Space`, `Radii`, `Layout`, `Motion`, `Elevation`). Tanpa hex atau angka ajaib di widget; token baru ditambah di sana dulu.
 - Komponen shared di `ui/core/widgets/`, pakai ulang (ukuran khusus komponen boleh ditulis di sana): `AppButton.primary/secondary/danger`, `CircleButton`, `AppIcon` + `AppIcons` (Hugeicons Stroke Rounded), `Tag.section/status`, `showAppSheet` + `SheetFrame`, `showToast`, `showConfirmDialog`, `showAppMenu`, `AppField`, `BookCover` (cover asli / default dari judul), `BookCard`. Komponen khusus satu fitur tinggal di folder fiturnya.
@@ -101,7 +101,7 @@ Integration test di luar scope MVP.
 - `paragraphIndex` & `groupIndex` harus stabil. Ubah logika parsing/grouping → naikkan `parserVersion`, re-import, hapus `ai_results` buku itu.
 - Data yang ikut backup disimpan di Drift (tabel `settings`). API key hanya di `flutter_secure_storage` dan tidak ikut backup.
 - Parsing EPUB dan zip backup jalan di isolate.
-- Model LLM dibaca dari Pengaturan, reasoning dimatikan, output JSON divalidasi (bagian 9).
+- Model LLM dibaca dari Pengaturan, reasoning dimatikan, output JSON divalidasi (`docs/llm.md`).
 
 ## Copy
 

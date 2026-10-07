@@ -1,4 +1,4 @@
-/// Model LLM yang bisa dipilih di Pengaturan (docs bagian 9).
+/// Model LLM yang bisa dipilih di Pengaturan (docs/llm.md).
 typedef AiModel = ({String label, String id});
 
 const aiModels = <AiModel>[

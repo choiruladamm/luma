@@ -2,7 +2,7 @@
 /// (ada test yang ngecek).
 const appVersion = '0.1.0';
 
-/// Isi `manifest.json` di file backup (docs bagian 10).
+/// Isi `manifest.json` di file backup (docs/backup.md).
 class BackupManifest {
   const BackupManifest({
     required this.appVersion,
@@ -73,7 +73,7 @@ String isoWithOffset(DateTime t) {
 }
 
 /// Berapa hari belum backup kalau banner pengingat perlu nongol di Rak, null
-/// kalau gak perlu (docs bagian 10). Hitungan per tanggal kalender dari
+/// kalau gak perlu (docs/backup.md). Hitungan per tanggal kalender dari
 /// backup terakhir, atau dari buku pertama kalau belum pernah backup (rak
 /// kosong = gak ada yang perlu diamanin). Muncul mulai hari ke-6 (sebelum
 /// siklus install ulang 7 hari); ditutup hari ini → nongol lagi besok.

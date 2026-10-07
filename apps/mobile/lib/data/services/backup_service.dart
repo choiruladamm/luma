@@ -32,7 +32,7 @@ class BackupFile {
   }
 }
 
-/// Export semua data ke satu zip (docs bagian 10): snapshot DB + manifest +
+/// Export semua data ke satu zip (docs/backup.md): snapshot DB + manifest +
 /// EPUB & cover. API key gak ikut (di Keychain, bukan di DB).
 class BackupService {
   BackupService(this._db, this._storage);

@@ -1,4 +1,4 @@
-/// Asal buku. EPUB di MVP; Markdown nanti (docs bagian 13).
+/// Asal buku. EPUB di MVP; Markdown nanti (docs/ideas/import-formats.md).
 enum SourceType { epub, markdown }
 
 /// Jenis blok di chapter. Heading & sceneBreak gak punya grup, gak bisa di-tap.
@@ -35,7 +35,7 @@ class ShelfBook {
   /// Kapan diimport.
   final DateTime createdAt;
 
-  /// Persentase baca 0..1 dari posisi tersimpan (docs bagian 8).
+  /// Persentase baca 0..1 dari posisi tersimpan (docs/architecture.md).
   final double progress;
 
   /// Posisi tersimpan di ujung paragraf terakhir bab terakhir: layar akhir

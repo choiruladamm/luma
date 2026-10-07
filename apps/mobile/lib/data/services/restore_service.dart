@@ -47,7 +47,7 @@ class RestorePreview {
   }
 }
 
-/// Pulihin dari backup (docs bagian 10): ekstrak & cek dulu di folder
+/// Pulihin dari backup (docs/backup.md): ekstrak & cek dulu di folder
 /// sementara, data lama baru diganti kalau semuanya beres. Gagal di tengah
 /// jalan → semua yang udah dipindah dibalikin.
 class RestoreService {
