@@ -196,12 +196,13 @@ Unique key: `(chapterId, paragraphIndex)`. Index tambahan: `(chapterId, groupInd
 
 ### `reading_progress`
 
-| Kolom | Tipe |
-|-------|------|
-| bookId | int (PK) |
-| chapterId | int (FK) |
-| paragraphIndex | int |
-| updatedAt | datetime |
+| Kolom | Tipe | Catatan |
+|-------|------|---------|
+| bookId | int (PK) | |
+| chapterId | int (FK) | |
+| paragraphIndex | int | Paragraf paling atas yang keliatan di bawah safe area atas |
+| paragraphOffset | real (default 0.0) | Bagian paragraf itu yang udah lewat garis atas, **fraksi tinggi paragraf** 0.0–1.0 (bukan piksel, biar tetep pas kalau font/ukuran/jarak baris diganti di Aa). Di-clamp 0–1 pas nyimpen dan pas baca |
+| updatedAt | datetime | |
 
 ### `ai_results`
 
@@ -224,6 +225,7 @@ Unique key: `(chapterId, groupIndex)`.
 |-------|-----------|
 | 1 | Awal |
 | 2 | `books.firstOpenedAt`, `books.readingSeconds` |
+| 3 | `reading_progress.paragraphOffset` |
 
 Tiap ubah tabel: naikkan `schemaVersion`, tambah langkah di `onUpgrade`, dan test migrasi dari versi sebelumnya (data tetap utuh, schema hasil migrasi sama dengan install baru). Restore backup dari schema lama ikut dimigrasi saat database dibuka (bagian 10).
 
@@ -356,6 +358,13 @@ Fungsi ini **pure** (tanpa I/O), jadi wajib dibuat unit test: dialog pendek beru
 8. Gagal setelah nyalin → hapus file yang sudah di-copy (transaksi di-rollback), state **error**
 
 Parsing buku besar bisa berat: jalankan di isolate (`compute` / `Isolate.run`) supaya UI tidak freeze.
+
+### Posisi baca
+
+- **Titik acuan** = paragraf paling atas yang keliatan di bawah safe area atas + `paragraphOffset` (bagian paragraf itu yang udah lewat garis tersebut, fraksi 0–1).
+- **Nyimpen**: cuma setelah scroll dari jari (lompatan restore gak dihitung), debounce ±500 ms setelah scroll berhenti. Langsung disimpen pas app ke background (`AppLifecycleState` selain `resumed`), pindah bab, dan keluar halaman baca. Gak pernah nulis ke DB tiap frame.
+- **Restore** (buka buku): lompat ke paragraf tersimpan, terus geser sesuai offset supaya titiknya ada di ±⅓ tinggi layar (ada konteks di atasnya). Tinggi paragraf baru ketahuan setelah layout, jadi dihitung di post-frame callback; isi bab disembunyiin sampe udah di posisi, terus fade in. Kepotong di ujung scroll kalau titiknya deket akhir chapter.
+- Satu chapter dirender utuh (bukan list lazy), jadi posisi semua paragraf ketahuan tanpa package tambahan.
 
 ### Persentase baca
 

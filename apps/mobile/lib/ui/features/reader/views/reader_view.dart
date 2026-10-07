@@ -1,4 +1,8 @@
+import 'dart:async';
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -34,11 +38,16 @@ class _ReaderViewState extends ConsumerState<ReaderView>
   int? _chapter;
   int? _chapterId;
 
-  /// Paragraf paling atas yang keliatan; ini yang disimpen.
-  int _paragraph = 0;
+  /// Paragraf paling atas yang keliatan + bagiannya yang udah lewat garis
+  /// atas; ini yang disimpen.
+  _Spot _spot = (index: 0, offset: 0);
 
-  /// Paragraf yang dituju pas buku dibuka lagi.
-  int? _restoreTo;
+  /// Titik yang dituju pas buku dibuka lagi.
+  _Spot? _restoreTo;
+
+  /// Nulis posisi ke DB nunggu scroll diem bentar, bukan tiap scroll.
+  Timer? _saveLater;
+  static const _saveDelay = Duration(milliseconds: 500);
 
   /// Seberapa jauh chapter ini udah di-scroll, 0..1.
   final _fraction = ValueNotifier<double>(0);
@@ -61,12 +70,14 @@ class _ReaderViewState extends ConsumerState<ReaderView>
       return;
     }
     _clock.pause(DateTime.now());
-    // iOS bisa matiin app kapan aja pas di background.
+    // iOS bisa matiin app kapan aja pas di background: simpen sekarang.
+    _saveLater?.cancel();
     _save();
   }
 
   @override
   void dispose() {
+    _saveLater?.cancel();
     _save();
     WidgetsBinding.instance.removeObserver(this);
     _fraction.dispose();
@@ -82,7 +93,8 @@ class _ReaderViewState extends ConsumerState<ReaderView>
     if (chapterId == null) return;
     _progress.save(widget.bookId, (
       chapterId: chapterId,
-      paragraphIndex: _paragraph,
+      paragraphIndex: _spot.index,
+      paragraphOffset: _spot.offset,
     )).ignore();
   }
 
@@ -90,9 +102,10 @@ class _ReaderViewState extends ConsumerState<ReaderView>
     _finished = false;
     _chapter = chapter;
     _chapterId = book.chapters[chapter].id;
-    _paragraph = 0;
+    _spot = (index: 0, offset: 0);
     _restoreTo = null;
     _fraction.value = 0;
+    _saveLater?.cancel();
     _save();
   });
 
@@ -124,8 +137,9 @@ class _ReaderViewState extends ConsumerState<ReaderView>
         : book.chapters.indexWhere((c) => c.id == saved.chapterId);
     _chapter = i < 0 ? 0 : i;
     _chapterId = book.chapters[_chapter!].id;
-    _paragraph = i < 0 ? 0 : saved!.paragraphIndex;
-    _restoreTo = i < 0 ? null : saved!.paragraphIndex;
+    if (i < 0) return;
+    _spot = (index: saved!.paragraphIndex, offset: saved.paragraphOffset);
+    _restoreTo = _spot;
   }
 
   @override
@@ -162,9 +176,10 @@ class _ReaderViewState extends ConsumerState<ReaderView>
                         index: i,
                         fraction: _fraction,
                         restoreTo: _restoreTo,
-                        onPosition: (p) {
-                          _paragraph = p;
-                          _save();
+                        onPosition: (spot) {
+                          _spot = spot;
+                          _saveLater?.cancel();
+                          _saveLater = Timer(_saveDelay, _save);
                         },
                         onNext: i + 1 < b.chapters.length
                             ? () => _goTo(b, i + 1)
@@ -271,11 +286,11 @@ class _ChapterText extends ConsumerStatefulWidget {
   final int index;
   final ValueNotifier<double> fraction;
 
-  /// Indeks paragraf yang langsung dituju pas kebuka (posisi tersimpan).
-  final int? restoreTo;
+  /// Titik yang langsung dituju pas kebuka (posisi tersimpan).
+  final _Spot? restoreTo;
 
-  /// Paragraf paling atas yang keliatan, tiap scroll berhenti.
-  final ValueChanged<int> onPosition;
+  /// Titik paling atas yang keliatan, tiap user selesai scroll.
+  final ValueChanged<_Spot> onPosition;
   final VoidCallback onNext;
 
   @override
@@ -292,6 +307,9 @@ class _ChapterTextState extends ConsumerState<_ChapterText> {
   final _keys = <int, GlobalKey>{};
   bool _restored = false;
 
+  /// Scroll dari jari (bukan lompatan restore) yang belum dilaporin.
+  bool _userScrolled = false;
+
   @override
   void initState() {
     super.initState();
@@ -305,25 +323,44 @@ class _ChapterTextState extends ConsumerState<_ChapterText> {
         : (p.pixels / p.maxScrollExtent).clamp(0, 1).toDouble();
   }
 
-  /// Paragraf pertama yang bawahnya masih di bawah tepi atas area baca.
-  int? _firstVisible(List<ReaderParagraph> paras) {
-    final area = context.findRenderObject() as RenderBox?;
-    if (area == null || !area.hasSize) return null;
-    final top = area.localToGlobal(Offset.zero).dy;
-    for (final p in paras) {
-      final box =
-          _keys[p.index]?.currentContext?.findRenderObject() as RenderBox?;
-      if (box == null || !box.hasSize) continue;
-      if (box.localToGlobal(Offset.zero).dy + box.size.height > top + 1) {
-        return p.index;
-      }
-    }
-    return null;
+  RenderBox? _box(int index) {
+    final box = _keys[index]?.currentContext?.findRenderObject() as RenderBox?;
+    return box != null && box.hasSize ? box : null;
   }
 
+  /// Paragraf paling atas yang keliatan di bawah safe area atas, plus bagian
+  /// paragraf itu yang udah lewat garis tersebut.
+  _Spot? _topSpot(List<ReaderParagraph> paras) {
+    final area = context.findRenderObject() as RenderBox?;
+    if (area == null || !area.hasSize || paras.isEmpty) return null;
+    final line = math.max(
+      area.localToGlobal(Offset.zero).dy,
+      MediaQuery.paddingOf(context).top,
+    );
+    for (final p in paras) {
+      final box = _box(p.index);
+      if (box == null) continue;
+      final top = box.localToGlobal(Offset.zero).dy;
+      final h = box.size.height;
+      if (top + h > line + 0.5) {
+        return (index: p.index, offset: ((line - top) / h).clamp(0.0, 1.0));
+      }
+    }
+    // Udah lewat semua paragraf (kartu akhir bab): akhir paragraf terakhir.
+    return (index: paras.last.index, offset: 1);
+  }
+
+  /// Taruh titik tersimpan di ±⅓ tinggi layar, biar ada konteks di atasnya.
   void _restore() {
-    final target = _keys[widget.restoreTo]?.currentContext;
-    if (target != null) Scrollable.ensureVisible(target);
+    final spot = widget.restoreTo;
+    final box = spot == null ? null : _box(spot.index);
+    if (box != null && _scroll.hasClients) {
+      final p = _scroll.position;
+      final point =
+          box.localToGlobal(Offset.zero).dy + spot!.offset * box.size.height;
+      final target = p.pixels + point - MediaQuery.sizeOf(context).height / 3;
+      _scroll.jumpTo(target.clamp(p.minScrollExtent, p.maxScrollExtent));
+    }
     if (_scroll.hasClients) _track();
     // Baru keliatan setelah di posisi yang bener (lihat AnimatedOpacity).
     setState(() => _restored = true);
@@ -373,10 +410,16 @@ class _ChapterTextState extends ConsumerState<_ChapterText> {
       opacity: _restored ? 1 : 0,
       duration: fade,
       curve: Curves.easeOut,
-      child: NotificationListener<ScrollEndNotification>(
-        onNotification: (_) {
-          final p = _firstVisible(paras);
-          if (p != null) widget.onPosition(p);
+      child: NotificationListener<ScrollNotification>(
+        onNotification: (n) {
+          if (n is UserScrollNotification &&
+              n.direction != ScrollDirection.idle) {
+            _userScrolled = true;
+          } else if (n is ScrollEndNotification && _userScrolled) {
+            _userScrolled = false;
+            final spot = _topSpot(paras);
+            if (spot != null) widget.onPosition(spot);
+          }
           return false;
         },
         child: SingleChildScrollView(
@@ -399,25 +442,29 @@ class _ChapterTextState extends ConsumerState<_ChapterText> {
               ),
               for (final p in paras)
                 Padding(
-                  key: _keys.putIfAbsent(p.index, GlobalKey.new),
                   padding: EdgeInsets.only(bottom: gap),
-                  child: switch (p.type) {
-                    ParagraphType.paragraph => Text(p.text, style: reading),
-                    ParagraphType.heading => Semantics(
-                      header: true,
-                      child: Text(
-                        p.text,
-                        style: StabiloType.titleSm.copyWith(color: c.ink),
+                  // Key di isinya, bukan di sela bawah: offset = fraksi tinggi
+                  // paragraf doang.
+                  child: KeyedSubtree(
+                    key: _keys.putIfAbsent(p.index, GlobalKey.new),
+                    child: switch (p.type) {
+                      ParagraphType.paragraph => Text(p.text, style: reading),
+                      ParagraphType.heading => Semantics(
+                        header: true,
+                        child: Text(
+                          p.text,
+                          style: StabiloType.titleSm.copyWith(color: c.ink),
+                        ),
                       ),
-                    ),
-                    ParagraphType.sceneBreak => Center(
-                      child: Text(
-                        '* * *',
-                        semanticsLabel: 'Pemisah adegan',
-                        style: StabiloType.label.copyWith(color: c.ink2),
+                      ParagraphType.sceneBreak => Center(
+                        child: Text(
+                          '* * *',
+                          semanticsLabel: 'Pemisah adegan',
+                          style: StabiloType.label.copyWith(color: c.ink2),
+                        ),
                       ),
-                    ),
-                  },
+                    },
+                  ),
                 ),
               // Kartu akhir bab baru muncul bareng teks, biar gak nongol di atas
               // terus kedorong ke bawah.
@@ -456,6 +503,9 @@ class _ChapterTextState extends ConsumerState<_ChapterText> {
         : paras;
   }
 }
+
+/// Titik di chapter: indeks paragraf + bagiannya yang udah lewat garis atas.
+typedef _Spot = ({int index, double offset});
 
 class _ChapterHeading extends StatelessWidget {
   const _ChapterHeading({required this.number, required this.title});

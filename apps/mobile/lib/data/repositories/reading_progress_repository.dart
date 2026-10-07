@@ -3,8 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../database/app_database.dart';
 
-/// Posisi baca: chapter (id stabil) + indeks paragraf di chapter itu.
-typedef ReadingPosition = ({int chapterId, int paragraphIndex});
+/// Posisi baca: chapter (id stabil) + indeks paragraf di chapter itu + bagian
+/// paragraf itu yang udah lewat garis atas (0..1).
+typedef ReadingPosition = ({
+  int chapterId,
+  int paragraphIndex,
+  double paragraphOffset,
+});
+
+double _clampOffset(double offset) => offset.isNaN ? 0 : offset.clamp(0.0, 1.0);
 
 class ReadingProgressRepository {
   ReadingProgressRepository(this._db);
@@ -17,7 +24,11 @@ class ReadingProgressRepository {
     )..where((p) => p.bookId.equals(bookId))).getSingleOrNull();
     return row == null
         ? null
-        : (chapterId: row.chapterId, paragraphIndex: row.paragraphIndex);
+        : (
+            chapterId: row.chapterId,
+            paragraphIndex: row.paragraphIndex,
+            paragraphOffset: _clampOffset(row.paragraphOffset),
+          );
   }
 
   Future<void> save(int bookId, ReadingPosition position) => _db
@@ -27,6 +38,7 @@ class ReadingProgressRepository {
           bookId: Value(bookId),
           chapterId: position.chapterId,
           paragraphIndex: position.paragraphIndex,
+          paragraphOffset: Value(_clampOffset(position.paragraphOffset)),
           updatedAt: Value(DateTime.now()),
         ),
       );

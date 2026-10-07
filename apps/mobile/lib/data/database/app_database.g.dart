@@ -1674,6 +1674,18 @@ class $ReadingProgressTable extends ReadingProgress
     type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _paragraphOffsetMeta = const VerificationMeta(
+    'paragraphOffset',
+  );
+  @override
+  late final GeneratedColumn<double> paragraphOffset = GeneratedColumn<double>(
+    'paragraph_offset',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0.0),
+  );
   static const VerificationMeta _updatedAtMeta = const VerificationMeta(
     'updatedAt',
   );
@@ -1691,6 +1703,7 @@ class $ReadingProgressTable extends ReadingProgress
     bookId,
     chapterId,
     paragraphIndex,
+    paragraphOffset,
     updatedAt,
   ];
   @override
@@ -1730,6 +1743,15 @@ class $ReadingProgressTable extends ReadingProgress
     } else if (isInserting) {
       context.missing(_paragraphIndexMeta);
     }
+    if (data.containsKey('paragraph_offset')) {
+      context.handle(
+        _paragraphOffsetMeta,
+        paragraphOffset.isAcceptableOrUnknown(
+          data['paragraph_offset']!,
+          _paragraphOffsetMeta,
+        ),
+      );
+    }
     if (data.containsKey('updated_at')) {
       context.handle(
         _updatedAtMeta,
@@ -1757,6 +1779,10 @@ class $ReadingProgressTable extends ReadingProgress
         DriftSqlType.int,
         data['${effectivePrefix}paragraph_index'],
       )!,
+      paragraphOffset: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}paragraph_offset'],
+      )!,
       updatedAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}updated_at'],
@@ -1775,11 +1801,16 @@ class ReadingProgressData extends DataClass
   final int bookId;
   final int chapterId;
   final int paragraphIndex;
+
+  /// Bagian paragraf yang udah lewat garis atas, 0..1 dari tingginya. Fraksi,
+  /// bukan piksel: tinggi paragraf berubah kalau font/ukuran diganti di Aa.
+  final double paragraphOffset;
   final DateTime updatedAt;
   const ReadingProgressData({
     required this.bookId,
     required this.chapterId,
     required this.paragraphIndex,
+    required this.paragraphOffset,
     required this.updatedAt,
   });
   @override
@@ -1788,6 +1819,7 @@ class ReadingProgressData extends DataClass
     map['book_id'] = Variable<int>(bookId);
     map['chapter_id'] = Variable<int>(chapterId);
     map['paragraph_index'] = Variable<int>(paragraphIndex);
+    map['paragraph_offset'] = Variable<double>(paragraphOffset);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     return map;
   }
@@ -1797,6 +1829,7 @@ class ReadingProgressData extends DataClass
       bookId: Value(bookId),
       chapterId: Value(chapterId),
       paragraphIndex: Value(paragraphIndex),
+      paragraphOffset: Value(paragraphOffset),
       updatedAt: Value(updatedAt),
     );
   }
@@ -1810,6 +1843,7 @@ class ReadingProgressData extends DataClass
       bookId: serializer.fromJson<int>(json['bookId']),
       chapterId: serializer.fromJson<int>(json['chapterId']),
       paragraphIndex: serializer.fromJson<int>(json['paragraphIndex']),
+      paragraphOffset: serializer.fromJson<double>(json['paragraphOffset']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
   }
@@ -1820,6 +1854,7 @@ class ReadingProgressData extends DataClass
       'bookId': serializer.toJson<int>(bookId),
       'chapterId': serializer.toJson<int>(chapterId),
       'paragraphIndex': serializer.toJson<int>(paragraphIndex),
+      'paragraphOffset': serializer.toJson<double>(paragraphOffset),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
   }
@@ -1828,11 +1863,13 @@ class ReadingProgressData extends DataClass
     int? bookId,
     int? chapterId,
     int? paragraphIndex,
+    double? paragraphOffset,
     DateTime? updatedAt,
   }) => ReadingProgressData(
     bookId: bookId ?? this.bookId,
     chapterId: chapterId ?? this.chapterId,
     paragraphIndex: paragraphIndex ?? this.paragraphIndex,
+    paragraphOffset: paragraphOffset ?? this.paragraphOffset,
     updatedAt: updatedAt ?? this.updatedAt,
   );
   ReadingProgressData copyWithCompanion(ReadingProgressCompanion data) {
@@ -1842,6 +1879,9 @@ class ReadingProgressData extends DataClass
       paragraphIndex: data.paragraphIndex.present
           ? data.paragraphIndex.value
           : this.paragraphIndex,
+      paragraphOffset: data.paragraphOffset.present
+          ? data.paragraphOffset.value
+          : this.paragraphOffset,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
   }
@@ -1852,13 +1892,20 @@ class ReadingProgressData extends DataClass
           ..write('bookId: $bookId, ')
           ..write('chapterId: $chapterId, ')
           ..write('paragraphIndex: $paragraphIndex, ')
+          ..write('paragraphOffset: $paragraphOffset, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(bookId, chapterId, paragraphIndex, updatedAt);
+  int get hashCode => Object.hash(
+    bookId,
+    chapterId,
+    paragraphIndex,
+    paragraphOffset,
+    updatedAt,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1866,6 +1913,7 @@ class ReadingProgressData extends DataClass
           other.bookId == this.bookId &&
           other.chapterId == this.chapterId &&
           other.paragraphIndex == this.paragraphIndex &&
+          other.paragraphOffset == this.paragraphOffset &&
           other.updatedAt == this.updatedAt);
 }
 
@@ -1873,17 +1921,20 @@ class ReadingProgressCompanion extends UpdateCompanion<ReadingProgressData> {
   final Value<int> bookId;
   final Value<int> chapterId;
   final Value<int> paragraphIndex;
+  final Value<double> paragraphOffset;
   final Value<DateTime> updatedAt;
   const ReadingProgressCompanion({
     this.bookId = const Value.absent(),
     this.chapterId = const Value.absent(),
     this.paragraphIndex = const Value.absent(),
+    this.paragraphOffset = const Value.absent(),
     this.updatedAt = const Value.absent(),
   });
   ReadingProgressCompanion.insert({
     this.bookId = const Value.absent(),
     required int chapterId,
     required int paragraphIndex,
+    this.paragraphOffset = const Value.absent(),
     this.updatedAt = const Value.absent(),
   }) : chapterId = Value(chapterId),
        paragraphIndex = Value(paragraphIndex);
@@ -1891,12 +1942,14 @@ class ReadingProgressCompanion extends UpdateCompanion<ReadingProgressData> {
     Expression<int>? bookId,
     Expression<int>? chapterId,
     Expression<int>? paragraphIndex,
+    Expression<double>? paragraphOffset,
     Expression<DateTime>? updatedAt,
   }) {
     return RawValuesInsertable({
       if (bookId != null) 'book_id': bookId,
       if (chapterId != null) 'chapter_id': chapterId,
       if (paragraphIndex != null) 'paragraph_index': paragraphIndex,
+      if (paragraphOffset != null) 'paragraph_offset': paragraphOffset,
       if (updatedAt != null) 'updated_at': updatedAt,
     });
   }
@@ -1905,12 +1958,14 @@ class ReadingProgressCompanion extends UpdateCompanion<ReadingProgressData> {
     Value<int>? bookId,
     Value<int>? chapterId,
     Value<int>? paragraphIndex,
+    Value<double>? paragraphOffset,
     Value<DateTime>? updatedAt,
   }) {
     return ReadingProgressCompanion(
       bookId: bookId ?? this.bookId,
       chapterId: chapterId ?? this.chapterId,
       paragraphIndex: paragraphIndex ?? this.paragraphIndex,
+      paragraphOffset: paragraphOffset ?? this.paragraphOffset,
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }
@@ -1927,6 +1982,9 @@ class ReadingProgressCompanion extends UpdateCompanion<ReadingProgressData> {
     if (paragraphIndex.present) {
       map['paragraph_index'] = Variable<int>(paragraphIndex.value);
     }
+    if (paragraphOffset.present) {
+      map['paragraph_offset'] = Variable<double>(paragraphOffset.value);
+    }
     if (updatedAt.present) {
       map['updated_at'] = Variable<DateTime>(updatedAt.value);
     }
@@ -1939,6 +1997,7 @@ class ReadingProgressCompanion extends UpdateCompanion<ReadingProgressData> {
           ..write('bookId: $bookId, ')
           ..write('chapterId: $chapterId, ')
           ..write('paragraphIndex: $paragraphIndex, ')
+          ..write('paragraphOffset: $paragraphOffset, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
         .toString();
@@ -4168,6 +4227,7 @@ typedef $$ReadingProgressTableCreateCompanionBuilder =
       Value<int> bookId,
       required int chapterId,
       required int paragraphIndex,
+      Value<double> paragraphOffset,
       Value<DateTime> updatedAt,
     });
 typedef $$ReadingProgressTableUpdateCompanionBuilder =
@@ -4175,6 +4235,7 @@ typedef $$ReadingProgressTableUpdateCompanionBuilder =
       Value<int> bookId,
       Value<int> chapterId,
       Value<int> paragraphIndex,
+      Value<double> paragraphOffset,
       Value<DateTime> updatedAt,
     });
 
@@ -4237,6 +4298,11 @@ class $$ReadingProgressTableFilterComposer
   });
   ColumnFilters<int> get paragraphIndex => $composableBuilder(
     column: $table.paragraphIndex,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get paragraphOffset => $composableBuilder(
+    column: $table.paragraphOffset,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4306,6 +4372,11 @@ class $$ReadingProgressTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<double> get paragraphOffset => $composableBuilder(
+    column: $table.paragraphOffset,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
     column: $table.updatedAt,
     builder: (column) => ColumnOrderings(column),
@@ -4369,6 +4440,11 @@ class $$ReadingProgressTableAnnotationComposer
   });
   GeneratedColumn<int> get paragraphIndex => $composableBuilder(
     column: $table.paragraphIndex,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get paragraphOffset => $composableBuilder(
+    column: $table.paragraphOffset,
     builder: (column) => column,
   );
 
@@ -4455,11 +4531,13 @@ class $$ReadingProgressTableTableManager
                 Value<int> bookId = const Value.absent(),
                 Value<int> chapterId = const Value.absent(),
                 Value<int> paragraphIndex = const Value.absent(),
+                Value<double> paragraphOffset = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
               }) => ReadingProgressCompanion(
                 bookId: bookId,
                 chapterId: chapterId,
                 paragraphIndex: paragraphIndex,
+                paragraphOffset: paragraphOffset,
                 updatedAt: updatedAt,
               ),
           createCompanionCallback:
@@ -4467,11 +4545,13 @@ class $$ReadingProgressTableTableManager
                 Value<int> bookId = const Value.absent(),
                 required int chapterId,
                 required int paragraphIndex,
+                Value<double> paragraphOffset = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
               }) => ReadingProgressCompanion.insert(
                 bookId: bookId,
                 chapterId: chapterId,
                 paragraphIndex: paragraphIndex,
+                paragraphOffset: paragraphOffset,
                 updatedAt: updatedAt,
               ),
           withReferenceMapper: (p0) => p0

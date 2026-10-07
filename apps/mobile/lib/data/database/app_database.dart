@@ -82,6 +82,10 @@ class ReadingProgress extends Table {
   IntColumn get chapterId =>
       integer().references(Chapters, #id, onDelete: KeyAction.cascade)();
   IntColumn get paragraphIndex => integer()();
+
+  /// Bagian paragraf yang udah lewat garis atas, 0..1 dari tingginya. Fraksi,
+  /// bukan piksel: tinggi paragraf berubah kalau font/ukuran diganti di Aa.
+  RealColumn get paragraphOffset => real().withDefault(const Constant(0.0))();
   DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
 
   @override
@@ -127,7 +131,7 @@ class AppDatabase extends _$AppDatabase {
   // test/data/migration_test.dart. Backup dari versi lama ikut dimigrasi pas
   // di-restore.
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -135,6 +139,9 @@ class AppDatabase extends _$AppDatabase {
       if (from < 2) {
         await m.addColumn(books, books.firstOpenedAt);
         await m.addColumn(books, books.readingSeconds);
+      }
+      if (from < 3) {
+        await m.addColumn(readingProgress, readingProgress.paragraphOffset);
       }
     },
     // SQLite matiin foreign key secara default; cascade butuh ini.

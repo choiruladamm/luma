@@ -35,8 +35,15 @@ final long = [
     p(i, ParagraphType.paragraph, 'Line $i of a long chapter.', i),
 ];
 
+/// Multi-line paragraphs, so an offset inside one means something.
+final tall = [
+  for (var i = 0; i < 30; i++)
+    p(i, ParagraphType.paragraph, 'Tall $i: ${'word ' * 30}'.trim(), i),
+];
+
 final paragraphs = {
   12: long,
+  13: tall,
   10: [
     p(0, ParagraphType.heading, 'I'), // same as the chapter title: hidden
     p(
@@ -197,7 +204,11 @@ void main() {
     await tester.tap(find.text('Baca ulang dari awal'));
     await tester.pumpAndSettle();
     expect(find.text('Bab 1'), findsOneWidget);
-    expect(progress.saves.last, (chapterId: 10, paragraphIndex: 0));
+    expect(progress.saves.last, (
+      chapterId: 10,
+      paragraphIndex: 0,
+      paragraphOffset: 0.0,
+    ));
 
     await tester.tap(find.text('Lanjut, gas'));
     await tester.pumpAndSettle();
@@ -263,7 +274,11 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Daftar isi'), findsNothing);
     expect(find.text('Bab 2'), findsOneWidget);
-    expect(progress.saves.last, (chapterId: 11, paragraphIndex: 0));
+    expect(progress.saves.last, (
+      chapterId: 11,
+      paragraphIndex: 0,
+      paragraphOffset: 0.0,
+    ));
   });
 
   testWidgets('closing the contents keeps the chapter', (tester) async {
@@ -297,7 +312,7 @@ void main() {
     await openBook(
       tester,
       readerBook: many,
-      saved: (chapterId: 140, paragraphIndex: 0),
+      saved: (chapterId: 140, paragraphIndex: 0, paragraphOffset: 0.0),
     );
     await openToc(tester);
     final badge = find.text('Lagi dibaca');
@@ -361,18 +376,131 @@ void main() {
     await openBook(
       tester,
       readerBook: longBook,
-      saved: (chapterId: 12, paragraphIndex: 20),
+      saved: (chapterId: 12, paragraphIndex: 20, paragraphOffset: 0.0),
     );
     expect(find.text('Bab 2'), findsOneWidget);
-    final top = tester.getTopLeft(find.byType(SingleChildScrollView)).dy;
+    // A third down the screen, so there's context above it.
     final line = tester.getTopLeft(find.text('Line 20 of a long chapter.')).dy;
-    expect(line - top, lessThan(80)); // at the top of the reading area
+    expect(line, closeTo(1600 / 3, 1));
+  });
+
+  const tallBook = ReaderBook(
+    id: 1,
+    title: 'The Enchiridion',
+    totalChars: 3000,
+    chapters: [
+      ChapterInfo(id: 10, title: 'I', charOffset: 0, chars: 100),
+      ChapterInfo(id: 13, title: 'Tall', charOffset: 100, chars: 2900),
+    ],
+  );
+
+  /// Where [spot] sits on screen: paragraph top + offset × its height.
+  double spotY(WidgetTester tester, ReadingPosition spot) {
+    final rect = tester.getRect(
+      find.textContaining('Tall ${spot.paragraphIndex}:'),
+    );
+    return rect.top + spot.paragraphOffset * rect.height;
+  }
+
+  testWidgets('save → close → reopen lands on the same point', (tester) async {
+    await openBook(
+      tester,
+      readerBook: tallBook,
+      saved: (chapterId: 13, paragraphIndex: 0, paragraphOffset: 0.0),
+    );
+    progress.saves.clear();
+    await tester.drag(
+      find.byType(SingleChildScrollView),
+      const Offset(0, -1234),
+    );
+    await tester.pumpAndSettle();
+    expect(progress.saves, isEmpty); // not on every frame, not right away
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(progress.saves, hasLength(1));
+    final saved = progress.saves.single;
+    expect(saved.paragraphOffset, inExclusiveRange(0, 1));
+    // The saved point is where the reading area starts.
+    final top = tester.getTopLeft(find.byType(SingleChildScrollView)).dy;
+    expect(spotY(tester, saved), closeTo(top, 1));
+
+    await tester.tap(find.bySemanticsLabel('Balik ke rak'));
+    await tester.pumpAndSettle();
+    await openBook(tester, readerBook: tallBook, saved: saved);
+    expect(spotY(tester, saved), closeTo(1600 / 3, 1));
+
+    // Leaving without scrolling keeps the same spot.
+    await tester.tap(find.bySemanticsLabel('Balik ke rak'));
+    await tester.pumpAndSettle();
+    expect(progress.saves.last, saved);
+  });
+
+  for (final scale in [1.0, 1.6]) {
+    testWidgets('a bigger font keeps the paragraph and fraction (x$scale)', (
+      tester,
+    ) async {
+      // Straight into the reader: the shelf isn't part of this.
+      tester.view.physicalSize = const Size(900, 1600);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      const saved = (chapterId: 13, paragraphIndex: 12, paragraphOffset: 0.4);
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            readerBookProvider.overrideWith((ref, id) async => tallBook),
+            readingProgressRepositoryProvider.overrideWithValue(
+              FakeProgress(saved),
+            ),
+            chapterParagraphsProvider.overrideWith(
+              (ref, id) async => paragraphs[id]!,
+            ),
+            chapterTranslatedProvider.overrideWith((ref, id) async => 0),
+          ],
+          child: MaterialApp(
+            theme: stabiloTheme(Brightness.light),
+            builder: (context, child) => MediaQuery(
+              data: MediaQuery.of(context)
+                  .copyWith(textScaler: TextScaler.linear(scale)),
+              child: child!,
+            ),
+            home: const ReaderView(bookId: 1),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(spotY(tester, saved), closeTo(1600 / 3, 1));
+    });
+  }
+
+  testWidgets('the last paragraph of a chapter restores without overshoot', (
+    tester,
+  ) async {
+    const saved = (chapterId: 13, paragraphIndex: 29, paragraphOffset: 0.9);
+    await openBook(tester, readerBook: tallBook, saved: saved);
+    expect(find.textContaining('Tall 29:'), findsOneWidget);
+    final rect = tester.getRect(find.textContaining('Tall 29:'));
+    expect(rect.top, inInclusiveRange(0, 1600));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('a one-paragraph chapter restores in place', (tester) async {
+    const saved = (chapterId: 11, paragraphIndex: 0, paragraphOffset: 0.5);
+    await openBook(tester, saved: saved);
+    expect(
+      find.text('Never say of anything, "I have lost it."'),
+      findsOneWidget,
+    );
+    await tester.tap(find.bySemanticsLabel('Balik ke rak'));
+    await tester.pumpAndSettle();
+    expect(progress.saves.last, saved);
   });
 
   testWidgets('a saved chapter that no longer exists falls back to chapter 1', (
     tester,
   ) async {
-    await openBook(tester, saved: (chapterId: 999, paragraphIndex: 3));
+    await openBook(
+      tester,
+      saved: (chapterId: 999, paragraphIndex: 3, paragraphOffset: 0.0),
+    );
     expect(find.text('Bab 1'), findsOneWidget);
   });
 
@@ -382,7 +510,7 @@ void main() {
     await openBook(
       tester,
       readerBook: longBook,
-      saved: (chapterId: 12, paragraphIndex: 0),
+      saved: (chapterId: 12, paragraphIndex: 0, paragraphOffset: 0.0),
     );
     progress.saves.clear();
     await tester.drag(
@@ -390,6 +518,7 @@ void main() {
       const Offset(0, -900),
     );
     await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 500));
     final last = progress.saves.last;
     expect(last.chapterId, 12);
     expect(last.paragraphIndex, greaterThan(5));
@@ -407,7 +536,11 @@ void main() {
     await openBook(tester);
     await tester.tap(find.text('Lanjut, gas'));
     await tester.pumpAndSettle();
-    expect(progress.saves.last, (chapterId: 11, paragraphIndex: 0));
+    expect(progress.saves.last, (
+      chapterId: 11,
+      paragraphIndex: 0,
+      paragraphOffset: 0.0,
+    ));
 
     progress.saves.clear();
     await tester.tap(find.bySemanticsLabel('Balik ke rak'));
