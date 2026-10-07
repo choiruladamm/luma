@@ -20,7 +20,7 @@ Urutan issue (alur utuh dulu, fitur inti sebelum pemanis, backup sebelum dogfood
 6. Fitur inti: #20 → #21 → #22 → #23
 7. Pengaman data: #24 → #25 → #26
 8. Pemanis: #15 → #16 → #31 → #27
-9. Validasi: #40 → #28 (boleh kapan aja setelah #21; abis #40 biar dievaluasi pakai prompt baru) → #29
+9. Validasi: #40 → #41 → #28 (prompt dikunci dulu di #41, baru model dipilih) → #29
 
 Issue baru disisipin di fase yang cocok di daftar ini.
 
