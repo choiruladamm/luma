@@ -643,4 +643,47 @@ void main() {
       expect(tester.getTopLeft(find.textContaining('Tall 14:')).dy, y);
     });
   });
+
+  group('tap zones', () {
+    bool capsulesShowing(WidgetTester tester) =>
+        tester.getTopLeft(find.byType(ReaderTopCapsule)).dy > 0;
+
+    testWidgets('a paragraph is not empty space; the margin is', (
+      tester,
+    ) async {
+      await openBook(
+        tester,
+        readerBook: tallBook,
+        saved: (chapterId: 13, paragraphIndex: 12, paragraphOffset: 0.0),
+      );
+      expect(capsulesShowing(tester), isTrue);
+
+      // Anywhere on a paragraph, even past the end of a short last line.
+      final para = tester.getRect(find.textContaining('Tall 13:'));
+      await tester.tapAt(para.bottomRight - const Offset(4, 4));
+      await tester.pumpAndSettle();
+      expect(capsulesShowing(tester), isTrue);
+
+      // Left margin, next to the same paragraph.
+      await tester.tapAt(Offset(10, para.center.dy));
+      await tester.pumpAndSettle();
+      expect(capsulesShowing(tester), isFalse);
+
+      // The gap between two paragraphs brings them back.
+      final next = tester.getRect(find.textContaining('Tall 14:'));
+      await tester.tapAt(Offset(450, (para.bottom + next.top) / 2));
+      await tester.pumpAndSettle();
+      expect(capsulesShowing(tester), isTrue);
+    });
+
+    testWidgets('below the last text is empty space too', (tester) async {
+      await openBook(tester);
+      await tester.tap(find.text('Lanjut, gas'));
+      await tester.pumpAndSettle();
+      // Chapter II is one paragraph and its end card; the rest is empty.
+      await tester.tapAt(const Offset(450, 1500));
+      await tester.pumpAndSettle();
+      expect(capsulesShowing(tester), isFalse);
+    });
+  });
 }

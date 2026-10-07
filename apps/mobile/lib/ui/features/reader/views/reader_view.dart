@@ -211,6 +211,8 @@ class _ReaderViewState extends ConsumerState<ReaderView>
                         _saveLater?.cancel();
                         _saveLater = Timer(_saveDelay, _save);
                       },
+                      // Sheet Artinya nyusul di #23.
+                      onParagraphTap: (_) {},
                       onNext: i + 1 < b.chapters.length
                           ? () => _goTo(b, i + 1)
                           : () {
@@ -295,6 +297,7 @@ class _ChapterText extends ConsumerStatefulWidget {
     required this.chrome,
     required this.restoreTo,
     required this.onPosition,
+    required this.onParagraphTap,
     required this.onNext,
   });
 
@@ -308,6 +311,9 @@ class _ChapterText extends ConsumerStatefulWidget {
 
   /// Titik paling atas yang keliatan, tiap user selesai scroll.
   final ValueChanged<_Spot> onPosition;
+
+  /// Tap paragraf → sheet Artinya.
+  final ValueChanged<ReaderParagraph> onParagraphTap;
   final VoidCallback onNext;
 
   @override
@@ -463,65 +469,77 @@ class _ChapterTextState extends ConsumerState<_ChapterText> {
           }
           return false;
         },
-        child: SingleChildScrollView(
-          controller: _scroll,
-          padding: EdgeInsets.fromLTRB(
-            Layout.margin,
-            pad.top + readerTextTop,
-            Layout.margin,
-            pad.bottom + readerTextBottom,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Padding(
-                padding: EdgeInsets.only(bottom: gap),
-                child: _ChapterHeading(
-                  number: widget.index + 1,
-                  title: chapter.title,
-                ),
-              ),
-              for (final p in paras)
+        // Tap area kosong (margin, sela, bawah teks terakhir) = munculin /
+        // ngumpetin kapsul. Paragraf nangkep tap-nya sendiri.
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: widget.chrome.toggle,
+          child: SingleChildScrollView(
+            controller: _scroll,
+            padding: EdgeInsets.fromLTRB(
+              Layout.margin,
+              pad.top + readerTextTop,
+              Layout.margin,
+              pad.bottom + readerTextBottom,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
                 Padding(
                   padding: EdgeInsets.only(bottom: gap),
-                  // Key di isinya, bukan di sela bawah: offset = fraksi tinggi
-                  // paragraf doang.
-                  child: KeyedSubtree(
-                    key: _keys.putIfAbsent(p.index, GlobalKey.new),
-                    child: switch (p.type) {
-                      ParagraphType.paragraph => Text(p.text, style: reading),
-                      ParagraphType.heading => Semantics(
-                        header: true,
-                        child: Text(
-                          p.text,
-                          style: StabiloType.titleSm.copyWith(color: c.ink),
-                        ),
-                      ),
-                      ParagraphType.sceneBreak => Center(
-                        child: Text(
-                          '* * *',
-                          semanticsLabel: 'Pemisah adegan',
-                          style: StabiloType.label.copyWith(color: c.ink2),
-                        ),
-                      ),
-                    },
-                  ),
-                ),
-              // Kartu akhir bab baru muncul bareng teks, biar gak nongol di atas
-              // terus kedorong ke bawah.
-              if (loaded)
-                Padding(
-                  padding: const EdgeInsets.only(top: 14),
-                  child: _ChapterEnd(
-                    chapterId: chapter.id,
+                  child: _ChapterHeading(
                     number: widget.index + 1,
-                    next: next,
-                    nextNumber: widget.index + 2,
-                    total: widget.book.chapters.length,
-                    onNext: widget.onNext,
+                    title: chapter.title,
                   ),
                 ),
-            ],
+                for (final p in paras)
+                  Padding(
+                    padding: EdgeInsets.only(bottom: gap),
+                    // Key di isinya, bukan di sela bawah: offset = fraksi tinggi
+                    // paragraf doang.
+                    child: KeyedSubtree(
+                      key: _keys.putIfAbsent(p.index, GlobalKey.new),
+                      child: switch (p.type) {
+                        // Kotak paragraf selebar kolom, termasuk sisa baris
+                        // pendek. Sela antar paragraf & margin = area kosong.
+                        ParagraphType.paragraph => GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: () => widget.onParagraphTap(p),
+                          child: Text(p.text, style: reading),
+                        ),
+                        ParagraphType.heading => Semantics(
+                          header: true,
+                          child: Text(
+                            p.text,
+                            style: StabiloType.titleSm.copyWith(color: c.ink),
+                          ),
+                        ),
+                        ParagraphType.sceneBreak => Center(
+                          child: Text(
+                            '* * *',
+                            semanticsLabel: 'Pemisah adegan',
+                            style: StabiloType.label.copyWith(color: c.ink2),
+                          ),
+                        ),
+                      },
+                    ),
+                  ),
+                // Kartu akhir bab baru muncul bareng teks, biar gak nongol di atas
+                // terus kedorong ke bawah.
+                if (loaded)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 14),
+                    child: _ChapterEnd(
+                      chapterId: chapter.id,
+                      number: widget.index + 1,
+                      next: next,
+                      nextNumber: widget.index + 2,
+                      total: widget.book.chapters.length,
+                      onNext: widget.onNext,
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
       ),

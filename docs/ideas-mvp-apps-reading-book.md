@@ -382,6 +382,7 @@ Parsing buku besar bisa berat: jalankan di isolate (`compute` / `Isolate.run`) s
 - Scroll turun ≥ 24pt → dua kapsul geser keluar (200 ms, ease-out). Naik ≥ 12pt atau flick ke atas → muncul. Selama jari masih nge-drag, kapsul ngikutin 1:1, terus snap pas dilepas. Ambang dihitung per arah (ganti arah = mulai dari 0).
 - Awal bab (80pt pertama) dan akhir bab (paragraf terakhir keliatan) → kapsul muncul sendiri. Pindah bab → muncul.
 - Cuma scroll dari jari yang dihitung; lompatan restore posisi gak ngumpetin kapsul.
+- **Zona tap**: paragraf → sheet Artinya (kotak paragraf selebar kolom teks, termasuk sisa kosong di baris pendek). Area kosong (margin kiri-kanan, sela antar paragraf, di bawah teks terakhir, heading/pemisah adegan) → munculin/ngumpetin kapsul. Tengah layar gak punya fungsi khusus. Tap kosong pas sheet kebuka → nutup sheet (barrier sheet).
 - Status bar iOS ngumpet bareng kapsul kalau toggle "Sembunyiin jam & baterai" nyala (default nyala; togglenya di Aa, #18). Keluar halaman baca → status bar balik.
 
 ### Persentase baca
