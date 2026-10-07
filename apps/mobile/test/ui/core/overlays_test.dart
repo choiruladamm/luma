@@ -100,6 +100,48 @@ void main() {
     expect(find.text('Baca'), findsNothing);
   });
 
+  for (final overlay in [false, true]) {
+    testWidgets('copy toast pill matches the board (overlay: $overlay)', (
+      tester,
+    ) async {
+      const msg = 'Udah disalin, tinggal paste';
+      await pumpApp(
+        tester,
+        opener(
+          (context) => overlay
+              ? showOverlayToast(context, msg)
+              : showToast(context, msg),
+        ),
+        brightness: Brightness.dark,
+      );
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+
+      final text = tester.getRect(find.text(msg));
+      final pill = tester.getRect(
+        find
+            .ancestor(of: find.text(msg), matching: find.byType(Container))
+            .last,
+      );
+      final tick = tester.getRect(
+        find
+            .descendant(
+              of: find.ancestor(of: find.text(msg), matching: find.byType(Row)),
+              matching: find.byType(Container),
+            )
+            .first,
+      );
+      expect(pill.height, 48);
+      expect(tick.size, const Size(24, 24));
+      expect(tick.left - pill.left, 14);
+      expect(text.left - tick.right, 10);
+      expect(pill.right - text.right, 18);
+      expect(tick.center.dy, closeTo(pill.center.dy, 0.5));
+      await tester.pump(Motion.toast); // gone by itself, either way
+      await tester.pumpAndSettle();
+    });
+  }
+
   testWidgets('menu returns the picked value', (tester) async {
     String? picked;
     await pumpApp(

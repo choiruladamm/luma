@@ -36,11 +36,15 @@ class Tag extends StatelessWidget {
         color: bg,
         borderRadius: BorderRadius.circular(Radii.full),
       ),
-      alignment: Alignment.center,
-      child: Text(
-        _section ? label.toUpperCase() : label,
-        style: (_section ? StabiloType.tag : StabiloType.micro).copyWith(
-          color: fg,
+      // Selebar teksnya aja. (`alignment` di Container bikin dia melebar
+      // ngisi semua lebar yang dikasih parent.)
+      child: Align(
+        widthFactor: 1,
+        child: Text(
+          _section ? label.toUpperCase() : label,
+          style: (_section ? StabiloType.tag : StabiloType.micro).copyWith(
+            color: fg,
+          ),
         ),
       ),
     );

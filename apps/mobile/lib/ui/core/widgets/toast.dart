@@ -119,8 +119,9 @@ class _Toast extends StatelessWidget {
     return Container(
       height: pill ? 48 : (rich ? null : 56),
       constraints: rich ? const BoxConstraints(minHeight: 60) : null,
+      // Pill (board Komponen 04): 14 kiri, 18 kanan, jarak ikon–teks 10.
       padding: pill
-          ? const EdgeInsets.fromLTRB(Space.s3, 0, Space.s4, 0)
+          ? const EdgeInsets.fromLTRB(14, 0, 18, 0)
           : rich
           ? const EdgeInsets.fromLTRB(Space.s3, Space.s2, Space.s2, Space.s2)
           : const EdgeInsets.fromLTRB(Space.s4, 0, Space.s2, 0),
@@ -133,7 +134,7 @@ class _Toast extends StatelessWidget {
         context,
         Row(
           mainAxisSize: pill ? MainAxisSize.min : MainAxisSize.max,
-          spacing: Space.s3,
+          spacing: pill ? 10 : Space.s3,
           children: [
             if (pill)
               Container(
@@ -143,7 +144,9 @@ class _Toast extends StatelessWidget {
                   color: c.accent,
                   shape: BoxShape.circle,
                 ),
-                child: AppIcon(AppIcons.check, size: 14, color: c.onAccent),
+                child: Center(
+                  child: AppIcon(AppIcons.check, size: 14, color: c.onAccent),
+                ),
               ),
             ?leading,
             Flexible(
