@@ -479,6 +479,30 @@ void main() {
       expect(find.text('Lagi diproses'), findsWidgets);
     });
 
+    testWidgets('the new book stays hidden until the import is done', (
+      tester,
+    ) async {
+      await pump(tester, books, view: ShelfView.list);
+      final context = tester.element(find.byType(BookshelfView));
+      final container = ProviderScope.containerOf(context);
+      final import = container.read(importControllerProvider.notifier);
+      import.state = const ImportProcessing(
+        fileName: 'new.epub',
+        size: 1,
+        stage: ImportStage.reading,
+      );
+      await tester.pump();
+      // DB commit: buku baru masuk stream sebelum import dinyatakan beres.
+      shelf.add([...books, book(99, 'Brand New')]);
+      await tester.pump();
+      expect(find.text('Brand New'), findsNothing);
+      expect(find.byType(BookRow), findsNWidgets(books.length + 1));
+
+      import.state = const ImportIdle();
+      await tester.pump();
+      expect(find.text('Brand New'), findsOneWidget);
+    });
+
     testWidgets('the shelf ends with a count', (tester) async {
       await pump(tester, books);
       await tester.scrollUntilVisible(

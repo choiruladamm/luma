@@ -47,6 +47,11 @@ class _BookshelfViewState extends ConsumerState<BookshelfView> {
   /// sendiri) biar gak nutup sheet hasil yang baru dibuka.
   bool _progressOpen = false;
 
+  /// Id buku terbesar di rak pas import mulai. Buku baru (id lebih besar) udah
+  /// masuk DB sebelum import "berhasil", tapi disembunyiin dulu: yang tampil
+  /// cuma kartu proses.
+  int? _importBaseline;
+
   ImportController get _import => ref.read(importControllerProvider.notifier);
 
   void _onImport(ImportState? prev, ImportState next) {
@@ -57,6 +62,10 @@ class _BookshelfViewState extends ConsumerState<BookshelfView> {
     switch (next) {
       case ImportProcessing() when !_progressOpen:
         _progressOpen = true;
+        _importBaseline = ref
+            .read(booksStreamProvider)
+            .value
+            ?.fold<int>(0, (m, b) => b.id > m ? b.id : m);
         showAppSheet<void>(
           context,
           dismissible: false,
@@ -229,6 +238,7 @@ class _BookshelfViewState extends ConsumerState<BookshelfView> {
     );
     void onImport() => _import.pick();
     final header = ShelfHeader(onImport: onImport);
+    final baseline = importing == null ? null : _importBaseline;
     final reminder = _reminder(switch (books) {
       AsyncData(value: final list) => list,
       _ => const <ShelfBook>[],
@@ -245,7 +255,12 @@ class _BookshelfViewState extends ConsumerState<BookshelfView> {
                 when list.isEmpty && importing == null =>
               _Empty(header: header, onImport: onImport),
             AsyncData(value: final list) => _Shelf(
-              books: list,
+              books: baseline == null
+                  ? list
+                  : [
+                      for (final b in list)
+                        if (b.id <= baseline) b,
+                    ],
               sort: sort!,
               view: view!,
               onImport: onImport,

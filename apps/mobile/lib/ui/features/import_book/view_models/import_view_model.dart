@@ -78,15 +78,21 @@ class ImportController extends Notifier<ImportState> {
     final clock = Stopwatch()..start();
     var stage = ImportStage.reading;
     var progress = 0.0;
-    void show({Duration glide = Motion.progressStep}) =>
-        state = ImportProcessing(
-          fileName: file.name,
-          size: file.size,
-          stage: stage,
-          progress: progress,
-          glide: glide,
-        );
-    show();
+    // Tahap baca + hash sekejap; duplikat / bukan EPUB selesai di situ. Proses
+    // baru ditampilin pas lewat tahap itu, biar sheet proses gak kedip dulu
+    // sebelum sheet duplikat / gagal.
+    var revealed = false;
+    void show({Duration glide = Motion.progressStep}) {
+      if (!revealed) return;
+      state = ImportProcessing(
+        fileName: file.name,
+        size: file.size,
+        stage: stage,
+        progress: progress,
+        glide: glide,
+      );
+    }
+
     try {
       final result = await ref
           .read(importRepositoryProvider)
@@ -96,6 +102,7 @@ class ImportController extends Notifier<ImportState> {
             onStage: (s) {
               if (cancelled()) return;
               stage = s;
+              if (s != ImportStage.reading) revealed = true;
               show();
             },
             onProgress: (p) {

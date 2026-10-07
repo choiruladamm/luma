@@ -67,7 +67,11 @@ void main() {
     picker.next = picked('pg45109-images-3.epub', epub);
     await controller().pick();
 
-    expect(seen.toSet(), ImportStage.values.toSet());
+    // "Baca file" sekejap, gak ditampilin (biar duplikat gak kedip).
+    expect(
+      seen.toSet(),
+      ImportStage.values.toSet()..remove(ImportStage.reading),
+    );
     final s = state();
     expect(s, isA<ImportSuccess>());
     expect((s as ImportSuccess).book.title, 'The Enchiridion');
@@ -170,7 +174,7 @@ void main() {
       for (final (_, s) in seen)
         if (s is ImportProcessing) s.progress,
     ];
-    expect(progress.first, 0);
+    expect(progress.first, lessThan(0.3)); // nongol setelah baca + hash
     expect(progress.last, 1);
     expect(progress.toSet().length, greaterThan(4)); // stages + per chapter
     for (var i = 1; i < progress.length; i++) {
@@ -188,7 +192,12 @@ void main() {
     await controller().pick();
     final first = (state() as ImportSuccess).book.id;
     final clock = Stopwatch()..start();
+    var flashed = false;
+    container.listen(importControllerProvider, (_, s) {
+      if (s is ImportProcessing) flashed = true;
+    });
     await controller().pick();
+    expect(flashed, isFalse); // gak ada sheet proses sebelum sheet duplikat
     expect((state() as ImportDuplicate).book.id, first);
     expect(clock.elapsed, lessThan(Motion.importMin)); // not held
   });
