@@ -201,7 +201,7 @@ void main() {
         expect(find.text(m.label), findsOneWidget);
         expect(find.text(m.id), findsOneWidget);
       }
-      expect(find.text('Default · paling hemat'), findsOneWidget);
+      expect(find.text('Default · paling akurat'), findsOneWidget);
       expect(find.text('1.240 paragraf · 3,2 MB'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
@@ -211,11 +211,11 @@ void main() {
     tester,
   ) async {
     await open(tester);
-    final label = tester.getRect(find.text('GLM 5.3 Flash'));
+    final label = tester.getRect(find.text('DeepSeek V4.1 Flash'));
     final chip = tester.getRect(
       find
           .ancestor(
-            of: find.text('Default · paling hemat'),
+            of: find.text('Default · paling akurat'),
             matching: find.byType(Container),
           )
           .first,
@@ -224,11 +224,11 @@ void main() {
     expect((chip.center.dy - label.center.dy).abs(), lessThan(4)); // same line
     expect(chip.left, greaterThan(label.right)); // after the name
     // Hugs its text (8 + 8 padding), not the whole row.
-    final text = tester.getSize(find.text('Default · paling hemat')).width;
+    final text = tester.getSize(find.text('Default · paling akurat')).width;
     expect(chip.width, closeTo(text + 16, 0.5));
     // The model ID stays under both.
     expect(
-      tester.getTopLeft(find.text('z-ai/glm-5.3-flash')).dy,
+      tester.getTopLeft(find.text('deepseek/deepseek-v4.1-flash')).dy,
       greaterThan(label.bottom),
     );
   });

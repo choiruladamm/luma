@@ -7,5 +7,6 @@ const aiModels = <AiModel>[
   (label: 'Qwen 3.8 Flash', id: 'qwen/qwen3.8-flash'),
 ];
 
-/// Paling hemat; dipake sebelum user milih.
-const defaultAiModel = 'z-ai/glm-5.3-flash';
+/// Dipake sebelum user milih. Menang evaluasi buta 50 potong (#28): paling
+/// setia ke teks & hati-hati soal fakta, kata rusak sedikit.
+const defaultAiModel = 'deepseek/deepseek-v4.1-flash';

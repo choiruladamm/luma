@@ -82,6 +82,7 @@ void main() {
       expect(p, contains('bahasanya kuno'));
       expect(p, contains('Jangan pakai "engkau"'));
       expect(p, contains('Maksimal 4 kalimat'));
+      expect(p, contains('dalam kendali kita'));
     }
   });
 

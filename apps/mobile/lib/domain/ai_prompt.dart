@@ -5,8 +5,9 @@ import 'models/ai_reply.dart';
 /// Naik tiap prompt berubah: cache `ai_results` dari versi lebih lama
 /// dianggap belum ada, jadi grupnya diterjemahin ulang pas dibuka.
 /// 1 = prompt awal, 2 = kenal buku + aturan gaya (#40), 3 = aturan bahasa &
-/// makna dari evaluasi 50 potong (#41).
-const aiPromptVersion = 3;
+/// makna dari evaluasi 50 potong (#41), 4 = gaya luwes + istilah populer
+/// (#28).
+const aiPromptVersion = 4;
 
 /// Tugas yang sama buat dua format jawaban (docs bagian 9, draft prompt).
 const _aiTask = '''
@@ -51,6 +52,24 @@ Makna:
   ditutup kalimat umum seperti "ini inti Stoisisme".
 - Jangan mengaku nyambung dengan paragraf lain yang tidak ada di KONTEKS.
   Kalau tidak yakin soal fakta (siapa tokohnya, kapan), jangan ditulis.
+
+Gaya dan istilah:
+- Kalimat terjemahan harus luwes seperti tulisan orang Indonesia sekarang:
+  pilih kata sehari-hari yang paling umum, jangan meniru urutan kalimat
+  bahasa Inggris.
+- Untuk konsep kunci, pakai padanan yang paling dikenal pembaca Indonesia
+  sekarang (mis. "within our power" = "dalam kendali kita", bukan "dalam
+  kuasa kita").
+- Di bagian makna, kalau relevan, sebut istilah populer yang dikenal
+  pembaca untuk gagasan itu (mis. dikotomi kendali, amor fati, memento
+  mori) beserta penjelasan singkat. Kalau istilah itu bukan dari penulisnya
+  sendiri, tulis jujur, mis. "sikap yang belakangan dikenal sebagai amor
+  fati".
+
+Contoh gaya terjemahan yang diinginkan:
+"There are things which are within our power, and there are things which
+are beyond our power." → "Ada hal-hal yang berada dalam kendali kita, dan
+ada pula hal-hal yang di luar kendali kita."
 
 KONTEKS hanya untuk membantu pemahaman, jangan diterjemahkan.''';
 

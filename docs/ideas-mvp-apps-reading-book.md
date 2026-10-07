@@ -475,8 +475,8 @@ OpenRouter (API OpenAI-compatible, base URL `https://openrouter.ai/api/v1`).
 
 | Model | Model ID | Input | Output | Catatan |
 |-------|----------|-------|--------|---------|
-| GLM 5.3 Flash | `z-ai/glm-5.3-flash` | $0.075 | $0.25 | Termurah, banyak provider. **Default awal.** |
-| DeepSeek V4.1 Flash | `deepseek/deepseek-v4.1-flash` | $0.15–0.30 | $0.60–1.20 | Harga beda jam sibuk / tidak sibuk |
+| GLM 5.3 Flash | `z-ai/glm-5.3-flash` | $0.075 | $0.25 | Termurah di tabel, tapi reasoning gak bisa dimatiin (token output lebih banyak) dan paling sering salah ketik |
+| DeepSeek V4.1 Flash | `deepseek/deepseek-v4.1-flash` | $0.15–0.30 | $0.60–1.20 | Harga beda jam sibuk / tidak sibuk. **Default** (evaluasi #28) |
 | Qwen 3.8 Flash | `qwen/qwen3.8-flash` | $0.15 | $0.47 | Keluarga Qwen kuat di multibahasa |
 
 Estimasi: ~800 token input + ~400 token output per tap → dengan GLM 5.3 Flash sekitar **$0.16 per 1.000 tap**.
@@ -515,7 +515,7 @@ Estimasi: ~800 token input + ~400 token output per tap → dengan GLM 5.3 Flash 
 
 ### Draft prompt
 
-Versi prompt: `aiPromptVersion` (sekarang **3**: kenal buku + aturan gaya #40, aturan bahasa & makna #41). Tiap isi prompt berubah, naikin angka ini: terjemahan yang dibikin pakai prompt lama diterjemahin ulang pas grupnya dibuka (`ai_results.promptVersion`).
+Versi prompt: `aiPromptVersion` (sekarang **4**: kenal buku + aturan gaya #40, aturan bahasa & makna #41, gaya luwes + istilah populer #28). Tiap isi prompt berubah, naikin angka ini: terjemahan yang dibikin pakai prompt lama diterjemahin ulang pas grupnya dibuka (`ai_results.promptVersion`).
 
 **System** (bagian tugas sama buat dua format; penutupnya beda):
 
@@ -561,6 +561,24 @@ Makna:
   ditutup kalimat umum seperti "ini inti Stoisisme".
 - Jangan mengaku nyambung dengan paragraf lain yang tidak ada di KONTEKS.
   Kalau tidak yakin soal fakta (siapa tokohnya, kapan), jangan ditulis.
+
+Gaya dan istilah:
+- Kalimat terjemahan harus luwes seperti tulisan orang Indonesia sekarang:
+  pilih kata sehari-hari yang paling umum, jangan meniru urutan kalimat
+  bahasa Inggris.
+- Untuk konsep kunci, pakai padanan yang paling dikenal pembaca Indonesia
+  sekarang (mis. "within our power" = "dalam kendali kita", bukan "dalam
+  kuasa kita").
+- Di bagian makna, kalau relevan, sebut istilah populer yang dikenal
+  pembaca untuk gagasan itu (mis. dikotomi kendali, amor fati, memento
+  mori) beserta penjelasan singkat. Kalau istilah itu bukan dari penulisnya
+  sendiri, tulis jujur, mis. "sikap yang belakangan dikenal sebagai amor
+  fati".
+
+Contoh gaya terjemahan yang diinginkan:
+"There are things which are within our power, and there are things which
+are beyond our power." → "Ada hal-hal yang berada dalam kendali kita, dan
+ada pula hal-hal yang di luar kendali kita."
 
 KONTEKS hanya untuk membantu pemahaman, jangan diterjemahkan.
 ```
@@ -624,7 +642,22 @@ Temuan dari v1/v2 yang jadi dasar aturan v3: nebak tokoh ("Caius" jadi "Caligula
 
 ### Evaluasi model
 
-Ambil 10–20 grup dari buku yang sedang dibaca (campur dialog pendek dan paragraf panjang), jalankan ke ketiga model dengan prompt yang sama, bandingkan kualitas terjemahan dan penjelasan secara langsung.
+**Hasil (#28, Okt 2026).** Set 50 potong #41, prompt v3, jalur streaming, penilaian buta (A/B/C diacak per potong):
+
+| | DeepSeek V4.1 Flash | Qwen 3.8 Flash | GLM 5.3 Flash |
+|---|---|---|---|
+| Valid | 49/50 | 50/50 | 49/50 |
+| Terbaik (penilai Claude, 50 potong) | **29** | 11 | 10 |
+| Terbaik (user, 6 potong) | 1 | **5** | 0 |
+| Kata rusak (perkiraan) | ±2–3 | ±1–3 | ±13 |
+| Biaya / 1000 tap (OpenRouter `usage`) | $0,36 | **$0,20** | $0,35 |
+| Token pertama (spike #34) | 1,36 dtk | **0,82 dtk** | 0,96 dtk |
+
+- **GLM dicoret dari default**: salah ketik paling banyak, ada arti yang kebalik.
+- **Qwen** paling luwes, cepat, murah, dan disukai di bab awal Enchiridion (mis. "dalam kendali kita"), tapi beberapa kali salah fakta dengan yakin (Caius = Caligula, Antoninus "guru" Marcus), parafrase bebas, kata Inggris nyelip.
+- **DeepSeek jadi default**: paling setia ke teks dan paling hati-hati soal fakta (Caius: "kemungkinan Julius Caesar atau Caligula"), makna paling kaya. Kelemahannya sedikit kaku: ditambal di prompt v4 (gaya luwes, padanan istilah yang dikenal pembaca, istilah populer seperti dikotomi kendali / amor fati dengan label jujur, satu contoh gaya). v4 dipasang tanpa evaluasi ulang atas keputusan user; dinilai lewat dogfooding (#29), ganti model tetap bisa dari Pengaturan.
+- Biaya per tap sebenarnya beda dari tabel harga: GLM bukan yang termurah karena reasoning wajib.
+- Glosarium per buku (mis. "power" → "kendali", "opinion" → "penilaian") masih ditunda; aturan v4 nanggung sebagian.
 
 ---
 

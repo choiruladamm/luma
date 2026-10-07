@@ -639,7 +639,7 @@ class _ModelRow extends StatelessWidget {
                               child: Align(
                                 widthFactor: 1,
                                 child: Text(
-                                  'Default · paling hemat',
+                                  'Default · paling akurat',
                                   style: StabiloType.micro.copyWith(
                                     height: 1,
                                     color: c.ink,
