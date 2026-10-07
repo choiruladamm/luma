@@ -113,6 +113,20 @@ void main() {
       await emit(tester, processing(ImportStage.chapters, 0.7));
       expect(find.text('70%'), findsOneWidget);
       expect(find.text('Lagi ngebongkar EPUB...'), findsOneWidget); // one sheet
+      // Board 13: dua langkah selesai = lingkaran 22 berisi centang 12, di tengah.
+      final checks = find.byWidgetPredicate(
+        (w) => w is AppIcon && w.icon == AppIcons.check,
+      );
+      expect(checks, findsNWidgets(2));
+      for (final i in [0, 1]) {
+        final icon = checks.at(i);
+        final circle = find
+            .ancestor(of: icon, matching: find.byType(DecoratedBox))
+            .first;
+        expect(tester.getSize(icon), const Size.square(12));
+        expect(tester.getSize(circle), const Size.square(22));
+        expect(tester.getCenter(icon), tester.getCenter(circle));
+      }
       expect(tester.takeException(), isNull);
     });
   }

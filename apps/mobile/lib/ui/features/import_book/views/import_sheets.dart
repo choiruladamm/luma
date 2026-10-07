@@ -148,7 +148,10 @@ class _Step extends StatelessWidget {
                     color: c.muted,
                     shape: BoxShape.circle,
                   ),
-                  child: AppIcon(AppIcons.check, size: 12, color: c.ink),
+                  // Center: tanpa ini ikon dipaksa tight 22×22 sama SizedBox.
+                  child: Center(
+                    child: AppIcon(AppIcons.check, size: 12, color: c.ink),
+                  ),
                 )
               : active
               ? const Center(child: _PulseDot())
