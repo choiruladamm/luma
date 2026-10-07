@@ -10,10 +10,12 @@ import '../../../core/theme/stabilo_tokens.dart';
 import '../../../core/theme/stabilo_type.dart';
 import '../../../core/widgets/buttons.dart';
 import '../view_models/reader_view_model.dart';
+import 'book_end_view.dart';
 import 'toc_sheet.dart';
 
-/// Halaman baca (board 03 Baca, 11 Akhir bab). Satu chapter per layar; ujung
-/// chapter ada kartu lanjut ke chapter berikutnya.
+/// Halaman baca (board 03 Baca, 11 Akhir bab, 12 Akhir buku). Satu chapter per
+/// layar; ujung chapter ada kartu lanjut ke chapter berikutnya, ujung bab
+/// terakhir ke layar akhir buku.
 class ReaderView extends ConsumerStatefulWidget {
   const ReaderView({super.key, required this.bookId});
 
@@ -39,6 +41,9 @@ class _ReaderViewState extends ConsumerState<ReaderView>
 
   /// Seberapa jauh chapter ini udah di-scroll, 0..1.
   final _fraction = ValueNotifier<double>(0);
+
+  /// Lagi nampilin layar akhir buku.
+  bool _finished = false;
 
   @override
   void initState() {
@@ -72,6 +77,7 @@ class _ReaderViewState extends ConsumerState<ReaderView>
   }
 
   void _goTo(ReaderBook book, int chapter) => setState(() {
+    _finished = false;
     _chapter = chapter;
     _chapterId = book.chapters[chapter].id;
     _paragraph = 0;
@@ -126,6 +132,13 @@ class _ReaderViewState extends ConsumerState<ReaderView>
             () {
               if (_chapter == null) _start(b, pos);
               final i = _chapter!;
+              if (_finished) {
+                return BookEndView(
+                  book: b,
+                  onClose: () => context.pop(),
+                  onRestart: () => _goTo(b, 0),
+                );
+              }
               return Column(
                 children: [
                   _TopBar(title: b.title, onToc: () => _openToc(b)),
@@ -140,7 +153,9 @@ class _ReaderViewState extends ConsumerState<ReaderView>
                         _paragraph = p;
                         _save();
                       },
-                      onNext: () => _goTo(b, i + 1),
+                      onNext: i + 1 < b.chapters.length
+                          ? () => _goTo(b, i + 1)
+                          : () => setState(() => _finished = true),
                     ),
                   ),
                   _ProgressBar(book: b, index: i, fraction: _fraction),
@@ -389,10 +404,11 @@ class _ChapterTextState extends ConsumerState<_ChapterText> {
                 ),
               // Kartu akhir bab baru muncul bareng teks, biar gak nongol di atas
               // terus kedorong ke bawah.
-              if (loaded && next != null)
+              if (loaded)
                 Padding(
                   padding: const EdgeInsets.only(top: 14),
                   child: _ChapterEnd(
+                    chapterId: chapter.id,
                     number: widget.index + 1,
                     next: next,
                     nextNumber: widget.index + 2,
@@ -468,8 +484,9 @@ class _ChapterHeading extends StatelessWidget {
   }
 }
 
-class _ChapterEnd extends StatelessWidget {
+class _ChapterEnd extends ConsumerWidget {
   const _ChapterEnd({
+    required this.chapterId,
     required this.number,
     required this.next,
     required this.nextNumber,
@@ -477,16 +494,21 @@ class _ChapterEnd extends StatelessWidget {
     required this.onNext,
   });
 
+  final int chapterId;
   final int number;
-  final ChapterInfo next;
+
+  /// Null = ini bab terakhir; tombolnya ke layar akhir buku.
+  final ChapterInfo? next;
   final int nextNumber;
   final int total;
   final VoidCallback onNext;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final c = context.stabilo;
     final light = Theme.of(context).brightness == Brightness.light;
+    final translated = ref.watch(chapterTranslatedProvider(chapterId)).value;
+    final next = this.next;
     return Semantics(
       container: true,
       label: 'Bab selesai',
@@ -501,38 +523,52 @@ class _ChapterEnd extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           spacing: Space.s3,
           children: [
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Container(
-                height: 24,
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                decoration: BoxDecoration(
-                  color: c.muted,
-                  borderRadius: BorderRadius.circular(Radii.full),
+            Row(
+              spacing: Space.s2,
+              children: [
+                Container(
+                  height: 24,
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  decoration: BoxDecoration(
+                    color: c.muted,
+                    borderRadius: BorderRadius.circular(Radii.full),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    spacing: 6,
+                    children: [
+                      AppIcon(AppIcons.check, size: 12, color: c.ink),
+                      Text(
+                        'Bab $number kelar',
+                        style: StabiloType.tag.copyWith(
+                          color: c.ink,
+                          height: 1,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  spacing: 6,
-                  children: [
-                    AppIcon(AppIcons.check, size: 12, color: c.ink),
-                    Text(
-                      'Bab $number kelar',
-                      style: StabiloType.tag.copyWith(color: c.ink, height: 1),
-                    ),
-                  ],
-                ),
-              ),
+                if (translated != null && translated > 0)
+                  Text(
+                    '$translated paragraf diterjemahin',
+                    style: StabiloType.caption.copyWith(color: c.ink2),
+                  ),
+              ],
             ),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               spacing: Space.s1,
               children: [
                 Text(
-                  'Lanjut ke ${next.title}?',
+                  next == null
+                      ? 'Itu tadi bab terakhir!'
+                      : 'Lanjut ke ${next.title}?',
                   style: StabiloType.titleMd.copyWith(color: c.ink),
                 ),
                 Text(
-                  'Bab $nextNumber dari $total · ±${readingMinutes(next.chars)} menit',
+                  next == null
+                      ? 'Bukunya kelar, tinggal satu tap lagi'
+                      : 'Bab $nextNumber dari $total · ±${readingMinutes(next.chars)} menit',
                   style: StabiloType.caption.copyWith(
                     fontSize: 14,
                     color: c.ink2,

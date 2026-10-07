@@ -21,3 +21,14 @@ final readingPositionProvider = FutureProvider.autoDispose
       (ref, bookId) =>
           ref.watch(readingProgressRepositoryProvider).load(bookId),
     );
+
+/// Jumlah paragraf yang udah diartiin di satu chapter (kartu akhir bab).
+final chapterTranslatedProvider = FutureProvider.autoDispose.family<int, int>(
+  (ref, chapterId) =>
+      ref.watch(bookRepositoryProvider).translatedInChapter(chapterId),
+);
+
+/// Rekap layar akhir buku.
+final bookEndProvider = FutureProvider.autoDispose.family<BookEnd?, int>(
+  (ref, bookId) => ref.watch(bookRepositoryProvider).bookEnd(bookId),
+);

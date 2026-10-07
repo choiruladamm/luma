@@ -99,6 +99,17 @@ void main() {
           chapterParagraphsProvider.overrideWith(
             (ref, chapterId) async => paragraphs[chapterId]!,
           ),
+          chapterTranslatedProvider.overrideWith(
+            (ref, chapterId) async => chapterId == 10 ? 3 : 0,
+          ),
+          bookEndProvider.overrideWith(
+            (ref, id) async => BookEnd(
+              author: 'Epictetus',
+              coverName: null,
+              startedAt: DateTime.now().subtract(const Duration(days: 2)),
+              translated: 86,
+            ),
+          ),
         ],
         child: const LumaApp(),
       ),
@@ -132,10 +143,10 @@ void main() {
     );
   }
 
-  testWidgets('chapter end card moves on; the last chapter has none', (
-    tester,
-  ) async {
+  testWidgets('chapter end card moves on to the next chapter', (tester) async {
     await openBook(tester);
+    expect(find.text('Bab 1 kelar'), findsOneWidget);
+    expect(find.text('3 paragraf diterjemahin'), findsOneWidget);
     expect(find.text('Lanjut ke II?'), findsOneWidget);
     expect(find.text('Bab 2 dari 2 · ±1 menit'), findsOneWidget);
 
@@ -146,7 +157,65 @@ void main() {
       find.text('Never say of anything, "I have lost it."'),
       findsOneWidget,
     );
-    expect(find.text('Lanjut, gas'), findsNothing);
+    // Nothing translated here yet: no count.
+    expect(find.textContaining('diterjemahin'), findsNothing);
+    expect(find.text('Itu tadi bab terakhir!'), findsOneWidget);
+  });
+
+  for (final b in Brightness.values) {
+    testWidgets('the last chapter leads to the book end screen ($b)', (
+      tester,
+    ) async {
+      await openBook(tester, b: b);
+      await tester.tap(find.text('Lanjut, gas'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Lanjut, gas'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('kelar!'), findsOneWidget);
+      expect(
+        find.text(
+          'The Enchiridion udah lo libas sampe kalimat terakhir. Keren sih.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('3 hari'), findsOneWidget);
+      expect(find.text('86'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  }
+
+  testWidgets('book end: read again from the start, or back to the shelf', (
+    tester,
+  ) async {
+    await openBook(tester);
+    await tester.tap(find.text('Lanjut, gas'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Lanjut, gas'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Baca ulang dari awal'));
+    await tester.pumpAndSettle();
+    expect(find.text('Bab 1'), findsOneWidget);
+    expect(progress.saves.last, (chapterId: 10, paragraphIndex: 0));
+
+    await tester.tap(find.text('Lanjut, gas'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Lanjut, gas'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Balik ke rak, cari buku lain'));
+    await tester.pumpAndSettle();
+    expect(find.byType(BookshelfView), findsOneWidget);
+
+    await tester.tap(find.byType(BookCard));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Lanjut, gas'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Lanjut, gas'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.bySemanticsLabel('Tutup'));
+    await tester.pumpAndSettle();
+    expect(find.byType(ReaderView), findsNothing);
   });
 
   testWidgets('back button and "Udahan dulu" return to the shelf', (
@@ -248,6 +317,7 @@ void main() {
           readerBookProvider.overrideWith((ref, id) async => book),
           readingProgressRepositoryProvider.overrideWithValue(FakeProgress()),
           chapterParagraphsProvider.overrideWith((ref, id) => pending.future),
+          chapterTranslatedProvider.overrideWith((ref, id) async => 0),
         ],
         child: MaterialApp(
           theme: stabiloTheme(Brightness.light),

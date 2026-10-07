@@ -79,6 +79,38 @@ class BookRepository {
     ];
   }
 
+  /// Paragraf di chapter ini yang udah diartiin (grupnya ada di ai_results).
+  Future<int> translatedInChapter(int chapterId) =>
+      _translated('p.chapter_id = ?', chapterId);
+
+  Future<BookEnd?> bookEnd(int bookId) async {
+    final book = await (_db.select(
+      _db.books,
+    )..where((b) => b.id.equals(bookId))).getSingleOrNull();
+    if (book == null) return null;
+    return BookEnd(
+      author: book.author,
+      coverName: book.coverName,
+      startedAt: book.createdAt,
+      translated: await _translated('c.book_id = ?', bookId),
+    );
+  }
+
+  Future<int> _translated(String where, int id) async {
+    final row = await _db
+        .customSelect(
+          'SELECT COUNT(*) AS n FROM paragraphs p '
+          'JOIN ai_results a ON a.chapter_id = p.chapter_id '
+          'AND a.group_index = p.group_index '
+          'JOIN chapters c ON c.id = p.chapter_id '
+          'WHERE $where',
+          variables: [Variable.withInt(id)],
+          readsFrom: {_db.paragraphs, _db.aiResults, _db.chapters},
+        )
+        .getSingle();
+    return row.read<int>('n');
+  }
+
   static ShelfBook _shelfBook(Book b) => ShelfBook(
     id: b.id,
     title: b.title,

@@ -25,4 +25,13 @@ void main() {
       0,
     );
   });
+
+  test('readingDays counts calendar days, same day = 1', () {
+    expect(readingDays(DateTime(2026, 10, 7, 9), DateTime(2026, 10, 7, 23)), 1);
+    expect(readingDays(DateTime(2026, 10, 1, 23), DateTime(2026, 10, 2, 1)), 2);
+    // Across a DST switch and a month end.
+    expect(readingDays(DateTime(2026, 3, 20), DateTime(2026, 4, 1)), 13);
+    // Clock went backwards: still 1.
+    expect(readingDays(DateTime(2026, 10, 8), DateTime(2026, 10, 7)), 1);
+  });
 }

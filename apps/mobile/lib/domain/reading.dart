@@ -19,3 +19,14 @@ double bookProgress({
     : ((charOffset + fraction.clamp(0, 1) * chapterChars) / totalChars)
           .clamp(0, 1)
           .toDouble();
+
+/// Hari kalender dari [from] sampe [to], inklusif: hari yang sama = 1.
+int readingDays(DateTime from, DateTime to) => math.max(
+  1,
+  DateTime.utc(
+        to.year,
+        to.month,
+        to.day,
+      ).difference(DateTime.utc(from.year, from.month, from.day)).inDays +
+      1,
+);

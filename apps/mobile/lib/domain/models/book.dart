@@ -78,3 +78,24 @@ class ReaderParagraph {
   final ParagraphType type;
   final String text;
 }
+
+/// Rekap buat layar akhir buku (board 12 Akhir buku).
+class BookEnd {
+  const BookEnd({
+    required this.author,
+    required this.coverName,
+    required this.startedAt,
+    required this.translated,
+  });
+
+  final String? author;
+  final String? coverName;
+
+  /// Awal hitungan "waktu baca".
+  // ponytail: pake waktu import, belum ada kolom "pertama dibuka". Tambah
+  // kolomnya kalau buku yang lama nganggur di rak bikin angkanya ngaco.
+  final DateTime startedAt;
+
+  /// Paragraf yang udah diartiin di seluruh buku.
+  final int translated;
+}

@@ -126,4 +126,61 @@ void main() {
       (2, 'p2', 0),
     ]);
   });
+
+  test('translated paragraphs: per chapter and for the whole book', () async {
+    final id = await add('Meditations');
+    final other = await add('Enchiridion');
+    Future<int> chapter(int bookId, int order) => db
+        .into(db.chapters)
+        .insert(
+          ChaptersCompanion.insert(
+            bookId: bookId,
+            sortOrder: order,
+            title: 'C$order',
+            charOffset: 0,
+          ),
+        );
+    final one = await chapter(id, 0);
+    final two = await chapter(id, 1);
+    final elsewhere = await chapter(other, 0);
+    // Group 0 = paragraphs 0, 1; group 1 = paragraph 3; 2 is a heading.
+    for (final ch in [one, two, elsewhere]) {
+      for (final (i, g) in [(0, 0), (1, 0), (2, null), (3, 1)]) {
+        await db
+            .into(db.paragraphs)
+            .insert(
+              ParagraphsCompanion.insert(
+                chapterId: ch,
+                paragraphIndex: i,
+                groupIndex: Value(g),
+                type: g == null
+                    ? ParagraphType.heading
+                    : ParagraphType.paragraph,
+                content: 'p$i',
+              ),
+            );
+      }
+    }
+    Future<void> translate(int ch, int group) => db
+        .into(db.aiResults)
+        .insert(
+          AiResultsCompanion.insert(
+            chapterId: ch,
+            groupIndex: group,
+            translations: '[]',
+            meaning: '',
+            model: 'm',
+          ),
+        );
+    await translate(one, 0); // 2 paragraphs
+    await translate(two, 1); // 1 paragraph
+    await translate(elsewhere, 0); // another book
+
+    final repo = BookRepository(db);
+    expect(await repo.translatedInChapter(one), 2);
+    expect(await repo.translatedInChapter(two), 1);
+    final end = (await repo.bookEnd(id))!;
+    expect(end.translated, 3);
+    expect(await repo.bookEnd(999), isNull);
+  });
 }
