@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -23,12 +25,13 @@ class OpenRouterService {
 
   /// Terjemahan per paragraf [target] + maknanya. [context] = 2–3 paragraf
   /// sebelumnya, cuma buat bantu paham. Jawaban yang gak valid (bukan JSON,
-  /// jumlah terjemahan gak cocok) dicoba ulang sekali.
+  /// jumlah terjemahan gak cocok) dicoba ulang sampe total [attempts] kali.
   Future<AiReply> explain({
     required String? apiKey,
     required String model,
     required List<String> context,
     required List<String> target,
+    int attempts = 2,
   }) async {
     if (apiKey == null || apiKey.isEmpty) {
       throw const AiException(AiError.noApiKey);
@@ -38,9 +41,51 @@ class OpenRouterService {
       try {
         return parseAiReply(content, target.length);
       } on AiException {
-        if (attempt == 2) rethrow;
+        if (attempt >= attempts) rethrow;
       }
     }
+  }
+
+  /// Jawaban format bersection ([aiStreamSystemPrompt]) potongan demi
+  /// potongan, sampe `data: [DONE]`. Koneksi putus / ditutup sebelum itu →
+  /// [AiError.network]; error di tengah stream → [AiError.http]. Validasi di
+  /// pemanggil. [cancel] = tutup sheet / Lanjut.
+  Stream<String> explainStream({
+    required String? apiKey,
+    required String model,
+    required List<String> context,
+    required List<String> target,
+    CancelToken? cancel,
+  }) async* {
+    if (apiKey == null || apiKey.isEmpty) {
+      throw const AiException(AiError.noApiKey);
+    }
+    final res = await _post<ResponseBody>(
+      apiKey,
+      model,
+      context,
+      target,
+      stream: true,
+      cancel: cancel,
+    );
+    final sse = SseDecoder();
+    try {
+      await for (final chunk in utf8.decoder.bind(res.data!.stream)) {
+        for (final data in sse.add(chunk)) {
+          if (data == '[DONE]') return;
+          final delta = _delta(data);
+          if (delta.isNotEmpty) yield delta;
+        }
+      }
+    } on DioException catch (e) {
+      throw await _failure(e);
+    } on AiException {
+      rethrow;
+    } catch (e) {
+      // Socket ditutup di tengah jalan.
+      throw AiException(AiError.network, detail: '$e');
+    }
+    throw const AiException(AiError.network, detail: 'stream ended early');
   }
 
   /// true = key diterima OpenRouter, false = ditolak (401/403). Masalah lain
@@ -52,7 +97,7 @@ class OpenRouterService {
     } on DioException catch (e) {
       final status = e.response?.statusCode;
       if (status == 401 || status == 403) return false;
-      throw _failure(e);
+      throw await _failure(e);
     }
   }
 
@@ -60,37 +105,9 @@ class OpenRouterService {
     String apiKey,
     String model,
     List<String> context,
-    List<String> target, {
-    bool reasoningOff = true,
-  }) async {
-    final Response<Object?> res;
-    try {
-      res = await _dio.post<Object?>(
-        '/chat/completions',
-        options: _auth(apiKey),
-        data: {
-          'model': model,
-          'messages': [
-            {'role': 'system', 'content': aiSystemPrompt},
-            {
-              'role': 'user',
-              'content': aiUserPrompt(context: context, target: target),
-            },
-          ],
-          // Token reasoning dihitung output dan bikin lambat: matiin. Model
-          // yang gak bisa dimatiin dapet yang paling minim, gak ikut dibalikin.
-          'reasoning': reasoningOff
-              ? {'enabled': false}
-              : {'effort': 'minimal', 'exclude': true},
-          'response_format': {'type': 'json_object'},
-        },
-      );
-    } on DioException catch (e) {
-      if (reasoningOff && _reasoningMandatory(e)) {
-        return _complete(apiKey, model, context, target, reasoningOff: false);
-      }
-      throw _failure(e);
-    }
+    List<String> target,
+  ) async {
+    final res = await _post<Object?>(apiKey, model, context, target);
     final content = switch (res.data) {
       {'choices': [{'message': {'content': final String c}}, ...]} => c,
       _ => null,
@@ -101,26 +118,122 @@ class OpenRouterService {
     return content;
   }
 
+  Future<Response<T>> _post<T>(
+    String apiKey,
+    String model,
+    List<String> context,
+    List<String> target, {
+    bool stream = false,
+    CancelToken? cancel,
+    bool reasoningOff = true,
+  }) async {
+    try {
+      return await _dio.post<T>(
+        '/chat/completions',
+        cancelToken: cancel,
+        options: _auth(apiKey)
+            .copyWith(responseType: stream ? ResponseType.stream : null),
+        data: {
+          'model': model,
+          'messages': [
+            {
+              'role': 'system',
+              'content': stream ? aiStreamSystemPrompt : aiSystemPrompt,
+            },
+            {
+              'role': 'user',
+              'content': aiUserPrompt(context: context, target: target),
+            },
+          ],
+          // Token reasoning dihitung output dan bikin lambat: matiin. Model
+          // yang gak bisa dimatiin dapet yang paling minim, gak ikut dibalikin.
+          'reasoning': reasoningOff
+              ? {'enabled': false}
+              : {'effort': 'minimal', 'exclude': true},
+          if (stream) 'stream': true,
+          if (!stream) 'response_format': {'type': 'json_object'},
+        },
+      );
+    } on DioException catch (e) {
+      final failure = await _failure(e);
+      if (reasoningOff && _reasoningMandatory(failure)) {
+        return _post<T>(
+          apiKey,
+          model,
+          context,
+          target,
+          stream: stream,
+          cancel: cancel,
+          reasoningOff: false,
+        );
+      }
+      throw failure;
+    }
+  }
+
+  /// Isi `delta.content` satu event SSE; event error → [AiError.http].
+  static String _delta(String data) {
+    final Object? json;
+    try {
+      json = jsonDecode(data);
+    } on FormatException {
+      return '';
+    }
+    return switch (json) {
+      {'error': final Object error} => throw AiException(
+        AiError.http,
+        status: switch (error) {
+          {'code': final int code} => code,
+          _ => null,
+        },
+        detail: '$error',
+      ),
+      {'choices': [{'delta': {'content': final String c}}, ...]} => c,
+      _ => '',
+    };
+  }
+
   /// Sebagian model (mis. GLM 5.3 Flash) nolak reasoning dimatiin: 400
   /// "Reasoning is mandatory for this endpoint and cannot be disabled."
-  static bool _reasoningMandatory(DioException e) =>
-      e.response?.statusCode == 400 &&
-      '${e.response?.data}'.toLowerCase().contains('reasoning is mandatory');
+  static bool _reasoningMandatory(AiException e) =>
+      e.status == 400 &&
+      '${e.detail}'.toLowerCase().contains('reasoning is mandatory');
 
   static Options _auth(String apiKey) =>
       Options(headers: {'Authorization': 'Bearer $apiKey'});
 
-  static AiException _failure(DioException e) => switch (e.type) {
+  static Future<AiException> _failure(DioException e) async => switch (e.type) {
     DioExceptionType.connectionTimeout ||
     DioExceptionType.sendTimeout ||
     DioExceptionType.receiveTimeout => const AiException(AiError.timeout),
     DioExceptionType.badResponse => AiException(
       AiError.http,
       status: e.response?.statusCode,
-      detail: '${e.response?.data}',
+      detail: await _body(e.response?.data),
     ),
     _ => AiException(AiError.network, detail: e.message),
   };
+
+  /// Body error; request streaming dapetnya [ResponseBody] yang belum dibaca.
+  static Future<String> _body(Object? data) async =>
+      data is ResponseBody ? await utf8.decodeStream(data.stream) : '$data';
+}
+
+/// Pemotong Server-Sent Events: potongan teks masuk, isi baris `data:` yang
+/// udah utuh keluar. Baris yang kepotong di batas chunk ditahan; baris
+/// komentar (`: OPENROUTER PROCESSING`) dan field lain dibuang.
+class SseDecoder {
+  String _buffer = '';
+
+  List<String> add(String chunk) {
+    _buffer += chunk;
+    final lines = _buffer.split('\n');
+    _buffer = lines.removeLast();
+    return [
+      for (final line in lines)
+        if (line.startsWith('data:')) line.substring(5).trim(),
+    ];
+  }
 }
 
 final openRouterServiceProvider = Provider<OpenRouterService>(

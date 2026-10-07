@@ -37,6 +37,24 @@ ResponseBody json(Object body, [int status = 200]) => ResponseBody.fromString(
   },
 );
 
+/// SSE body delivered in [chunks] (cut anywhere, even mid-line).
+ResponseBody sse(List<String> chunks, [int status = 200]) => ResponseBody(
+  Stream.fromIterable([for (final c in chunks) utf8.encode(c)]),
+  status,
+  headers: {
+    Headers.contentTypeHeader: ['text/event-stream'],
+  },
+);
+
+String event(String content) =>
+    'data: ${jsonEncode({
+      'choices': [
+        {
+          'delta': {'content': content},
+        },
+      ],
+    })}\n\n';
+
 ResponseBody answer(String content) => json({
   'choices': [
     {
@@ -179,5 +197,129 @@ void main() {
 
     adapter.replies.add(DioExceptionType.connectionError);
     await expectLater(service.checkKey('sk'), fails(AiError.network));
+  });
+
+  group('SseDecoder', () {
+    test('lines cut at chunk boundaries come out whole', () {
+      final d = SseDecoder();
+      expect(d.add('data: {"a"'), isEmpty);
+      expect(d.add(':1}\n\ndata: [DO'), ['{"a":1}']);
+      expect(d.add('NE]\n'), ['[DONE]']);
+    });
+
+    test('comments and other fields are skipped', () {
+      final d = SseDecoder();
+      expect(d.add(': OPENROUTER PROCESSING\n\nevent: x\ndata: 1\n'), ['1']);
+    });
+  });
+
+  group('explainStream', () {
+    Stream<String> stream({String? key = 'sk-or-v1-x'}) =>
+        service.explainStream(
+          apiKey: key,
+          model: 'z-ai/glm-5.3-flash',
+          context: ['Before.'],
+          target: ['One.', 'Two.'],
+        );
+
+    test('yields the deltas until [DONE], asks for sections', () async {
+      final whole =
+          '${event('[T1]\nSa')}: OPENROUTER PROCESSING\n\n'
+          '${event('tu.\n[T2]\nDua.')}${event('\n[MAKNA]\nM.')}'
+          'data: [DONE]\n\n';
+      // Split into awkward pieces, including inside a UTF-8 sequence.
+      final bytes = utf8.encode(whole);
+      adapter.replies.add(
+        ResponseBody(
+          Stream.fromIterable([
+            for (var i = 0; i < bytes.length; i += 7)
+              Uint8List.fromList(
+                bytes.sublist(i, (i + 7).clamp(0, bytes.length)),
+              ),
+          ]),
+          200,
+        ),
+      );
+      final parts = await stream().toList();
+      expect(parts.join(), '[T1]\nSatu.\n[T2]\nDua.\n[MAKNA]\nM.');
+
+      final body = adapter.requests.single.data as Map<String, Object?>;
+      expect(body['stream'], isTrue);
+      expect(body.containsKey('response_format'), isFalse);
+      expect(body['reasoning'], {'enabled': false});
+      final system = ((body['messages'] as List)[0] as Map)['content'];
+      expect(system, contains('[MAKNA]'));
+    });
+
+    test('non-ASCII split across chunks survives', () async {
+      final bytes = utf8.encode('${event('“Halo”')}data: [DONE]\n');
+      final cut = bytes.indexOf(0xE2) + 1; // inside the 3-byte quote
+      adapter.replies.add(
+        ResponseBody(
+          Stream.fromIterable([
+            Uint8List.fromList(bytes.sublist(0, cut)),
+            Uint8List.fromList(bytes.sublist(cut)),
+          ]),
+          200,
+        ),
+      );
+      expect((await stream().toList()).join(), '“Halo”');
+    });
+
+    test('closed before [DONE] is a network failure', () async {
+      adapter.replies.add(sse([event('[T1]\nSa')]));
+      final got = <String>[];
+      await expectLater(stream().forEach(got.add), fails(AiError.network));
+      expect(got, ['[T1]\nSa']);
+    });
+
+    test('an error event mid-stream keeps its code', () async {
+      adapter.replies.add(
+        sse([
+          event('[T1]'),
+          'data: {"error": {"code": 502, "message": "provider died"}}\n\n',
+        ]),
+      );
+      await expectLater(
+        stream().drain<void>(),
+        fails(AiError.http, status: 502),
+      );
+    });
+
+    test('mandatory reasoning is retried with the minimum', () async {
+      adapter.replies
+        ..add(
+          sse([
+            '{"error": {"message": "Reasoning is mandatory for this '
+                'endpoint and cannot be disabled.", "code": 400}}',
+          ], 400),
+        )
+        ..add(sse([event('[T1]\nA\n[T2]\nB\n[MAKNA]\nM'), 'data: [DONE]\n']));
+      expect(await stream().toList(), hasLength(1));
+      expect(
+        [for (final r in adapter.requests) (r.data as Map)['reasoning']],
+        [
+          {'enabled': false},
+          {'effort': 'minimal', 'exclude': true},
+        ],
+      );
+    });
+
+    test('HTTP errors read the streamed body; no key sends nothing', () async {
+      adapter.replies.add(sse(['{"error": "no credits"}'], 402));
+      await expectLater(
+        stream().drain<void>(),
+        throwsA(
+          isA<AiException>()
+              .having((e) => e.status, 'status', 402)
+              .having((e) => e.detail, 'detail', contains('no credits')),
+        ),
+      );
+      await expectLater(
+        stream(key: null).drain<void>(),
+        fails(AiError.noApiKey),
+      );
+      expect(adapter.requests, hasLength(1));
+    });
   });
 }

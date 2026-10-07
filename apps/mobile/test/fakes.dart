@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:dio/dio.dart';
+
 import 'package:luma/data/repositories/settings_repository.dart';
 import 'package:luma/data/services/openrouter_service.dart';
 import 'package:luma/domain/models/ai_model.dart';
@@ -161,6 +163,7 @@ class FakeOpenRouter implements OpenRouterService {
     required String model,
     required List<String> context,
     required List<String> target,
+    int attempts = 2,
   }) async {
     calls.add((apiKey: apiKey, model: model, context: context, target: target));
     if (apiKey == null) throw const AiException(AiError.noApiKey);
@@ -169,5 +172,36 @@ class FakeOpenRouter implements OpenRouterService {
       translations: [for (final t in target) 'id: $t'],
       meaning: 'Maknanya: ${target.length} paragraf.',
     );
+  }
+
+  /// Kalau diisi, explainStream ngalirin potongan dari sini (test yang
+  /// ngatur jalannya stream). Kalau nggak, jawaban bersection lengkap
+  /// sekaligus, isinya sama kayak [explain]. Sengaja bukan `async*`: error
+  /// lewat `yield*` gak pernah nyampe di bawah `fakeAsync`.
+  StreamController<String>? stream;
+  final streamCalls = <List<String>>[];
+  CancelToken? lastCancel;
+
+  @override
+  Stream<String> explainStream({
+    required String? apiKey,
+    required String model,
+    required List<String> context,
+    required List<String> target,
+    CancelToken? cancel,
+  }) {
+    streamCalls.add(target);
+    lastCancel = cancel;
+    if (apiKey == null) {
+      return Stream.error(const AiException(AiError.noApiKey));
+    }
+    if (failure != null) return Stream.error(failure!);
+    return stream?.stream ??
+        Stream.value(
+          [
+            for (final (i, t) in target.indexed) '[T${i + 1}]\nid: $t',
+            '[MAKNA]\nMaknanya: ${target.length} paragraf.',
+          ].join('\n'),
+        );
   }
 }

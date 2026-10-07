@@ -44,3 +44,27 @@ class AiException implements Exception {
       'AiException(${error.name}${status == null ? '' : ' $status'}'
       '${detail == null ? '' : ': $detail'})';
 }
+
+/// Tahap jawaban streaming satu grup (board "Artinya streaming · perilaku").
+enum AiPhase {
+  /// 1 · Nunggu token pertama.
+  waiting,
+
+  /// 2 · Nulis terjemahan, paragraf masuk berurutan.
+  translating,
+
+  /// 3 · Terjemahan lengkap, lagi nulis makna.
+  meaning,
+
+  /// 4 · Lengkap, valid, udah di-cache.
+  done,
+
+  /// 5 · 15 detik tanpa token. Request tetep jalan.
+  slow,
+
+  /// 6 · Putus / mandek di tengah; yang udah masuk tetep ada.
+  cut,
+
+  /// Gagal sebelum ada token (gak ada key, timeout 30 detik, HTTP, dll).
+  failed,
+}

@@ -56,4 +56,73 @@ void main() {
     );
     expect(aiUserPrompt(context: [], target: ['T1']), 'TARGET:\n[1] T1');
   });
+
+  group('parseAiDraft (streaming)', () {
+    const full = '[T1]\nSatu dua.\n[T2]\nTiga.\n[MAKNA]\nGitu deh.';
+
+    test('grows section by section', () {
+      expect(parseAiDraft('').translations, isEmpty);
+      expect(parseAiDraft('[T1]\nSat').translations, ['Sat']);
+      final mid = parseAiDraft('[T1]\nSatu dua.\n[T2]\nTi');
+      expect(mid.translations, ['Satu dua.', 'Ti']);
+      expect(mid.meaning, isNull);
+      final last = parseAiDraft(full);
+      expect(last.translations, ['Satu dua.', 'Tiga.']);
+      expect(last.meaning, 'Gitu deh.');
+    });
+
+    test('a marker cut at a chunk boundary is held back', () {
+      for (final cut in ['[', '[T', '[T2', '[MAK', '[MAKNA']) {
+        final d = parseAiDraft('[T1]\nSatu.\n$cut');
+        expect(d.translations, ['Satu.'], reason: cut);
+        expect(d.meaning, isNull, reason: cut);
+      }
+      expect(parseAiDraft('[T').translations, isEmpty);
+    });
+
+    test('text before the first marker is dropped', () {
+      expect(parseAiDraft('Oke, ini dia:\n[T1]\nSatu.').translations, [
+        'Satu.',
+      ]);
+    });
+
+    test('take reveals letters in reading order', () {
+      final d = parseAiDraft(full); // 9 + 5 + 9 letters
+      expect(d.length, 23);
+      expect(d.take(4).translations, ['Satu']);
+      expect(d.take(11).translations, ['Satu dua.', 'Ti']);
+      expect(d.take(11).meaning, isNull);
+      expect(d.take(16).meaning, 'Gi');
+      expect(d.take(99).meaning, 'Gitu deh.');
+      expect(d.take(0).translations, isEmpty);
+    });
+  });
+
+  group('parseAiSections', () {
+    Matcher invalid = throwsA(
+      isA<AiException>().having(
+        (e) => e.error,
+        'error',
+        AiError.invalidResponse,
+      ),
+    );
+
+    test('a complete answer', () {
+      final r = parseAiSections('[T1]\nSatu.\n[T2]\nDua.\n[MAKNA]\nM.\n', 2);
+      expect(r.translations, ['Satu.', 'Dua.']);
+      expect(r.meaning, 'M.');
+    });
+
+    test('marker on the same line as its text still counts', () {
+      expect(parseAiSections('[T1] Satu.\n[MAKNA] M.', 1).meaning, 'M.');
+    });
+
+    test('wrong count, order, missing meaning or empty part is invalid', () {
+      expect(() => parseAiSections('[T1]\nA\n[MAKNA]\nM', 2), invalid);
+      expect(() => parseAiSections('[T2]\nA\n[T1]\nB\n[MAKNA]\nM', 2), invalid);
+      expect(() => parseAiSections('[T1]\nA', 1), invalid);
+      expect(() => parseAiSections('[T1]\n\n[MAKNA]\nM', 1), invalid);
+      expect(() => parseAiSections('{"translations": []}', 1), invalid);
+    });
+  });
 }

@@ -388,6 +388,11 @@ Fungsi ini **pure** (tanpa I/O), jadi wajib dibuat unit test: dialog pendek beru
   5. Simpan ke Drift, return hasil
 
   **Auto-retry Riverpod 3 dimatiin** (`retry: (_, _) => null`): tiap percobaan motong saldo. Gagal → `AsyncError` berisi `AiException`, dicoba ulang cuma lewat `ref.invalidate` (tombol "Coba lagi"). Hasil tetep disimpen walaupun sheet keburu ditutup. Dua tap ke grup yang sama pas lagi loading = satu request.
+- `groupAiStreamProvider(GroupRef)` → `NotifierProvider.autoDispose.family` (`GroupAiStream`), versi streaming yang dipakai sheet Artinya. State `AiStream`: `phase` (`AiPhase`), `draft` (teks yang udah dateng, belum di-pacing), `sources` (panjang paragraf asli buat placeholder), `error`, `cached`.
+  1. Cache dulu → langsung `done` (`cached`), gak manggil LLM.
+  2. Belum ada → stream jawaban bersection (bagian 9), state `waiting` → `translating` → `meaning` → `done`; cabang `slow` (15 detik tanpa token, request tetep jalan; token masuk → `translating`), `failed` (30 detik tanpa token = `timeout`, gak ada key, HTTP, dll), `cut` (putus, atau token berhenti 20 detik di tengah; teks yang udah masuk tetep di `draft`).
+  3. Lengkap → validasi; gak valid → sekali lagi lewat jalur JSON tanpa streaming (`explain(attempts: 1)`). Disimpen cuma kalau lengkap dan valid.
+  4. **Beda sama `groupAiProvider`:** ke-dispose (tutup sheet, Lanjut ke grup lain) = request dibatalin (`CancelToken`) dan gak ada yang disimpen; ngulang satu grup cuma pecahan sen. Dua tap ke grup yang sama tetep satu request (family). Coba lagi = `ref.invalidate`, mulai lagi dari `waiting`. Kalau pas dogfooding sering kebuka-tutup gak sengaja: tambah masa tenggang (request jalan 2–3 detik abis sheet ditutup).
 - `importControllerProvider` → `Notifier` untuk state import (idle / processing / success / error / duplicate).
 
 `GroupRef` = record `({int chapterId, int groupIndex})`: `==`/`hashCode` per nilai udah bawaan Dart, gak perlu `freezed`.
@@ -465,7 +470,7 @@ Estimasi: ~800 token input + ~400 token output per tap → dengan GLM 5.3 Flash 
 - **Matikan reasoning** lewat parameter `reasoning` di request (token reasoning dihitung sebagai output dan bikin lambat).
 - Minta output **JSON**; strip code fence sebelum `jsonDecode`.
 - **Validasi** `translations.length` = jumlah paragraf grup. Kalau tidak cocok, retry sekali; kalau masih gagal, tampilkan state error.
-- Timeout request ±30 detik → state error ("Yah, gagal nih").
+- Timeout request ±30 detik → state error ("Yah, gagal nih"). Jalur streaming: dua tingkat, 15 detik tanpa token = "Agak lama nih..." (request tetep jalan), 30 detik = error; token berhenti 20 detik di tengah = kepotong.
 - API key belum diisi → jangan panggil API, tampilkan state "API key belum diisi" dengan tombol ke Pengaturan.
 - Untuk MVP pribadi, API key disimpan lokal di `flutter_secure_storage`. Kalau mau rilis, wajib lewat backend proxy.
 - Atur preferensi provider di OpenRouter kalau ingin menghindari provider yang memakai data untuk training.
@@ -478,6 +483,17 @@ Estimasi: ~800 token input + ~400 token output per tap → dengan GLM 5.3 Flash 
 - Error bertipe (`AiError`): `noApiKey` (API gak dipanggil), `timeout`, `network`, `http` (bawa status: 401 key ditolak, 402 saldo abis), `invalidResponse`. Error HTTP gak di-retry.
 - API key dibaca langsung dari Keychain tiap request (bukan di-cache), model dari `ai.model`.
 - Key di Pengaturan (`ApiKeyEntry`): spasi / baris baru dibuang pas paste. Bentuk harus `sk-or-` + huruf/angka/`-`/`_` (min 8), kalau nggak pesan merah dan gak disimpen. Bentuk bener → `GET /key` (debounce 600 ms abis ngetik): 2xx → disimpen + "Key-nya jalan"; 401/403 → gak disimpen, "ditolak OpenRouter, jadi gak disimpen"; offline/gagal → disimpen aja, cuma keterangan Keychain. Teks ngawur atau key yang ditolak gak pernah nimpa key yang udah kesimpen. Key yang udah kesimpen dicek ulang tiap Pengaturan dibuka (401/403 → "Key-nya ditolak OpenRouter"). Tombol X di field ngosongin field dan ngehapus key dari Keychain (tanpa konfirmasi, sama kayak ngosongin field).
+- **Streaming** (`explainStream`, dipakai sheet Artinya): `stream: true`, tanpa `response_format`, prompt sistem `aiStreamSystemPrompt` yang minta teks bersection, tiap penanda di baris sendiri: `[T1]` … `[Tn]`, terus `[MAKNA]`. SSE: baris `data:` dipotong per baris (baris yang kepotong di batas chunk ditahan, komentar `: OPENROUTER PROCESSING` dibuang), selesai di `data: [DONE]`. Ditutup sebelum `[DONE]` = `network`; event `{"error": ...}` di tengah = `http` dengan kodenya. Retry reasoning wajib sama kayak jalur biasa. `parseAiDraft` baca teks sebagian (teks sebelum penanda pertama dibuang, penanda kepotong di ujung ditahan); `parseAiSections` validasi akhir (penanda persis `T1..Tn, MAKNA`, gak ada yang kosong).
+- **Ritme teks** (`Pacer`, pure): huruf ditampung lalu dikeluarin rata. Kecepatan = max(45 huruf/detik, buffer ÷ 1 detik), jadi ketinggalan maks ±1 detik; server selesai → sisa abis ≤ 600 ms; jawaban yang lengkap ≤ 1,5 detik sejak huruf pertama tampil langsung. Ini ganti aturan board (maks 2× baseline), lihat spike di bawah.
+- **Spike streaming (#34, Okt 2026)**, 10 grup Pride and Prejudice (5 dialog 3–6 paragraf, 5 paragraf panjang 660–1080 huruf) × 3 model:
+
+  | Model | Bersection valid | JSON valid | Token pertama (median / maks) | Total (median) | Alir huruf/detik (median, min–maks) |
+  |-------|-----|-----|-----|-----|-----|
+  | GLM 5.3 Flash | 10/10 | 9/10 | 0,96 / 2,7 dtk | 7,0 dtk | 219 (142–487) |
+  | DeepSeek V4.1 Flash | 10/10 | 10/10 | 1,36 / 2,2 dtk | 4,7 dtk | 428 (90–1030) |
+  | Qwen 3.8 Flash | 10/10 | 10/10 | 0,82 / 2,0 dtk | 6,7 dtk | 230 (199–263) |
+
+  Token pertama 4–7× lebih cepat dari jawaban lengkap: streaming kerasa. Format bersection dipilih (lebih stabil, teks sebagian gampang diambil; penanda bisa diperluas buat nomor kalimat #36, mis. `[T1 K3-4]`). Simulasi ritme dari jadwal token asli: aturan board ketinggalan median 2,2–3,8 dtk (maks 5,4) lalu loncat pas selesai; aturan adaptif maks 1,8 dtk. Adaptif dipakai.
 - Coba ke OpenRouter beneran: `make live` (key dari `.env` di root repo, `OPENROUTER_API_KEY=...`, di-gitignore), model lain `make live m=<model id>`. Tanpa key, test itu di-skip. Ketiga kandidat lulus (Okt 2026).
 
 ### Draft prompt
@@ -934,3 +950,4 @@ _Tempat dump ide selama dogfooding. Triage seminggu sekali._
 - **Highlight sinkron per paragraf (Okt 2026, ide).** Scroll terjemahan di sheet Artinya → paragraf asli pasangannya disorot dan halaman ikut scroll (satu arah). Pakai array `translations` yang udah ada, gak ubah prompt/cache. Detail: [#35](https://github.com/choiruladamm/luma/issues/35).
 - **Highlight sinkron per kalimat (Okt 2026, ide, tunggu data dogfooding).** Level 2 dari #35 buat paragraf tunggal yang lebih tinggi dari ruang di atas sheet. Butuh pemecah kalimat berversi + format `ai_results` baru (migrasi). Tutup kalau kasusnya jarang. Detail: [#36](https://github.com/choiruladamm/luma/issues/36).
 - **Sheet Artinya ikut Aa + header/tombol ngumpet pas scroll (Okt 2026).** Teks isi sheet ikut font/ukuran/jarak/margin Aa, header + Salin/Lanjut geser keluar pas scroll (board Opsi A · geser ngikut, area baca 335 → 516pt). Ada beberapa hal yang perlu diputusin dulu (tinggi sheet 528 vs "ngikutin isi maks 70%", swipe turun nutup). Detail: [#37](https://github.com/choiruladamm/luma/issues/37).
+- **Lanjut lintas bab di sheet Artinya (Okt 2026, ide, nunggu desain).** Sekarang Lanjut mati di grup terakhir bab. Usulan: tetap aktif dan pindah ke grup pertama bab berikutnya (halaman ikut pindah, bab tanpa grup dilewati). Desainnya dibikin user dulu, belum dikerjain. Detail: [#39](https://github.com/choiruladamm/luma/issues/39).

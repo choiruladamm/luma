@@ -2,8 +2,8 @@ import 'dart:convert';
 
 import 'models/ai_reply.dart';
 
-/// Prompt sistem (docs bagian 9, draft prompt).
-const aiSystemPrompt = '''
+/// Tugas yang sama buat dua format jawaban (docs bagian 9, draft prompt).
+const _aiTask = '''
 Kamu adalah asisten membaca. Pengguna sedang membaca buku berbahasa Inggris
 dan ingin memahami bagian TARGET, yang terdiri dari satu atau beberapa
 paragraf bernomor.
@@ -16,10 +16,30 @@ Tugas:
    Indonesia yang santai, kayak jelasin ke temen: apa maksud penulis,
    kaitannya dengan konteks sebelumnya, dan istilah sulit kalau ada.
 
-KONTEKS hanya untuk membantu pemahaman, jangan diterjemahkan.
+KONTEKS hanya untuk membantu pemahaman, jangan diterjemahkan.''';
+
+/// Prompt sistem, jawaban JSON (jalur tanpa streaming).
+const aiSystemPrompt =
+    '''
+$_aiTask
 
 Balas HANYA dengan JSON, tanpa teks lain:
 {"translations": ["...", "..."], "meaning": "..."}''';
+
+/// Prompt sistem buat streaming: teks bersection, jadi tiap paragraf bisa
+/// tampil sebelum jawabannya lengkap (spike #34: 30/30 valid).
+const aiStreamSystemPrompt =
+    '''
+$_aiTask
+
+Balas HANYA dengan format ini, tanpa teks lain, tanpa markdown. Tiap
+penanda di baris sendiri:
+[T1]
+terjemahan paragraf 1
+[T2]
+terjemahan paragraf 2
+[MAKNA]
+penjelasan makna''';
 
 /// Pesan user: paragraf konteks (kalau ada) + TARGET bernomor.
 String aiUserPrompt({
@@ -62,5 +82,90 @@ AiReply parseAiReply(String content, int expected) {
   return AiReply(
     translations: [for (final t in translations) (t as String).trim()],
     meaning: meaning.trim(),
+  );
+}
+
+/// Jawaban bersection yang lagi ditulis: terjemahan per paragraf (yang
+/// terakhir bisa belum utuh), terus makna. Isinya udah tanpa penanda.
+class AiDraft {
+  const AiDraft({this.translations = const [], this.meaning});
+
+  final List<String> translations;
+
+  /// Null = bagian makna belum mulai.
+  final String? meaning;
+
+  /// Jumlah huruf yang bisa ditampilin.
+  int get length =>
+      translations.fold(0, (n, t) => n + t.length) + (meaning?.length ?? 0);
+
+  /// [n] huruf pertama, urut terjemahan lalu makna.
+  AiDraft take(int n) {
+    final out = <String>[];
+    for (final t in translations) {
+      if (n <= 0) return AiDraft(translations: out);
+      out.add(n >= t.length ? t : t.substring(0, n));
+      n -= t.length;
+    }
+    final m = meaning;
+    if (m == null || n <= 0) return AiDraft(translations: out);
+    return AiDraft(
+      translations: out,
+      meaning: n >= m.length ? m : m.substring(0, n),
+    );
+  }
+}
+
+final _marker = RegExp(r'^[ \t]*\[(T(\d+)|MAKNA)\][ \t]*', multiLine: true);
+
+/// Baris terakhir yang kayak penanda kepotong di batas chunk ("[T", "[MAK").
+final _partialMarker = RegExp(r'(^|\n)[ \t]*\[[A-Z0-9]*$');
+
+List<({String label, String text})> _sections(String content) {
+  final ms = _marker.allMatches(content).toList();
+  return [
+    for (final (i, m) in ms.indexed)
+      (
+        label: m.group(1)!,
+        text: content
+            .substring(m.end, i + 1 < ms.length ? ms[i + 1].start : null)
+            .trim(),
+      ),
+  ];
+}
+
+/// Baca jawaban streaming sejauh yang udah dateng. Teks sebelum penanda
+/// pertama dibuang; penanda yang kepotong di ujung ditahan dulu.
+AiDraft parseAiDraft(String content) {
+  final cut = _partialMarker.firstMatch(content);
+  if (cut != null) content = content.substring(0, cut.start);
+  final translations = <String>[];
+  String? meaning;
+  for (final s in _sections(content)) {
+    if (s.label == 'MAKNA') {
+      meaning = s.text;
+    } else if (meaning == null) {
+      translations.add(s.text);
+    }
+  }
+  return AiDraft(translations: translations, meaning: meaning);
+}
+
+/// Validasi jawaban streaming yang udah lengkap: penanda persis `[T1]` …
+/// `[T<expected>]`, `[MAKNA]`, gak ada yang kosong. Gagal →
+/// [AiError.invalidResponse].
+AiReply parseAiSections(String content, int expected) {
+  final sections = _sections(content);
+  final labels = [for (final s in sections) s.label];
+  final want = [for (var i = 1; i <= expected; i++) 'T$i', 'MAKNA'];
+  if (labels.join(',') != want.join(',')) {
+    throw AiException(AiError.invalidResponse, detail: 'sections $labels');
+  }
+  if (sections.any((s) => s.text.isEmpty)) {
+    throw const AiException(AiError.invalidResponse, detail: 'empty section');
+  }
+  return AiReply(
+    translations: [for (final s in sections.take(expected)) s.text],
+    meaning: sections.last.text,
   );
 }
