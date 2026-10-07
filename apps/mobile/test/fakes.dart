@@ -67,9 +67,20 @@ class FakeSettings implements SettingsRepository {
 }
 
 /// OpenRouter without the network. [keyOk] null = can't reach it.
+/// [explain] answers "id: " + each target paragraph, or throws [failure].
 class FakeOpenRouter implements OpenRouterService {
   bool? keyOk = true;
   final checked = <String>[];
+  final calls =
+      <
+        ({
+          String? apiKey,
+          String model,
+          List<String> context,
+          List<String> target,
+        })
+      >[];
+  AiException? failure;
 
   @override
   Future<bool> checkKey(String apiKey) async {
@@ -84,5 +95,13 @@ class FakeOpenRouter implements OpenRouterService {
     required String model,
     required List<String> context,
     required List<String> target,
-  }) => throw UnimplementedError();
+  }) async {
+    calls.add((apiKey: apiKey, model: model, context: context, target: target));
+    if (apiKey == null) throw const AiException(AiError.noApiKey);
+    if (failure != null) throw failure!;
+    return AiReply(
+      translations: [for (final t in target) 'id: $t'],
+      meaning: 'Maknanya: ${target.length} paragraf.',
+    );
+  }
 }

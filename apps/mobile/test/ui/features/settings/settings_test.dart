@@ -14,7 +14,7 @@ import 'package:luma/ui/features/settings/views/settings_view.dart';
 
 import '../../../fakes.dart';
 
-class FakeAiResults implements AiResultsRepository {
+class FakeAiResults extends Fake implements AiResultsRepository {
   final stats = StreamController<AiCacheStats>.broadcast();
   int clears = 0;
 

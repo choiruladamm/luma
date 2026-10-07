@@ -354,13 +354,15 @@ Fungsi ini **pure** (tanpa I/O), jadi wajib dibuat unit test: dialog pendek beru
 - `bookChaptersProvider(bookId)` → daftar chapter terurut `sortOrder` (untuk Daftar isi).
 - `groupAiProvider(GroupRef)` → `FutureProvider.autoDispose.family`:
   1. Cek `ai_results`
-  2. Kalau belum ada: ambil paragraf grup + 2–3 paragraf sebelum paragraf pertama grup sebagai konteks
-  3. Panggil LLM
+  2. Kalau belum ada: ambil paragraf grup + sampe 3 paragraf (bukan heading/pemisah) sebelum paragraf pertama grup di chapter yang sama sebagai konteks
+  3. Panggil LLM (API key dibaca dari Keychain, model dari `ai.model`)
   4. Validasi jumlah `translations` = jumlah paragraf grup
   5. Simpan ke Drift, return hasil
+
+  **Auto-retry Riverpod 3 dimatiin** (`retry: (_, _) => null`): tiap percobaan motong saldo. Gagal → `AsyncError` berisi `AiException`, dicoba ulang cuma lewat `ref.invalidate` (tombol "Coba lagi"). Hasil tetep disimpen walaupun sheet keburu ditutup. Dua tap ke grup yang sama pas lagi loading = satu request.
 - `importControllerProvider` → `Notifier` untuk state import (idle / processing / success / error / duplicate).
 
-`GroupRef` = value object (`chapterId`, `groupIndex`) dengan `==`/`hashCode` yang benar (pakai `freezed`).
+`GroupRef` = record `({int chapterId, int groupIndex})`: `==`/`hashCode` per nilai udah bawaan Dart, gak perlu `freezed`.
 
 ### Alur import
 

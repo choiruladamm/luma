@@ -1,3 +1,7 @@
+/// Satu grup paragraf: chapter (id stabil) + `groupIndex`. Record, jadi
+/// `==`/`hashCode` per nilai, aman jadi kunci family provider.
+typedef GroupRef = ({int chapterId, int groupIndex});
+
 /// Jawaban LLM buat satu grup (docs bagian 9).
 class AiReply {
   const AiReply({required this.translations, required this.meaning});

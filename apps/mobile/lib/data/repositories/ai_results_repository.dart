@@ -1,5 +1,10 @@
+import 'dart:convert';
+
+import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../domain/models/ai_reply.dart';
+import '../../domain/models/book.dart';
 import '../database/app_database.dart';
 
 /// Isi cache terjemahan buat Pengaturan.
@@ -24,6 +29,70 @@ class AiResultsRepository {
       )
       .watchSingle()
       .map((r) => (paragraphs: r.read<int>('n'), bytes: r.read<int>('bytes')));
+
+  /// Hasil yang udah ke-cache, atau null.
+  Future<AiReply?> find(GroupRef group) async {
+    final row =
+        await (_db.select(_db.aiResults)..where(
+              (a) =>
+                  a.chapterId.equals(group.chapterId) &
+                  a.groupIndex.equals(group.groupIndex),
+            ))
+            .getSingleOrNull();
+    if (row == null) return null;
+    return AiReply(
+      translations: (jsonDecode(row.translations) as List).cast<String>(),
+      meaning: row.meaning,
+    );
+  }
+
+  Future<void> save(GroupRef group, AiReply reply, {required String model}) =>
+      _db
+          .into(_db.aiResults)
+          .insertOnConflictUpdate(
+            AiResultsCompanion.insert(
+              chapterId: group.chapterId,
+              groupIndex: group.groupIndex,
+              translations: jsonEncode(reply.translations),
+              meaning: reply.meaning,
+              model: model,
+            ),
+          );
+
+  /// Teks yang dikirim ke LLM: paragraf grup (urut) + sampe [contextCount]
+  /// paragraf sebelum paragraf pertama grup, di chapter yang sama.
+  Future<({List<String> target, List<String> context})> promptText(
+    GroupRef group, {
+    int contextCount = 3,
+  }) async {
+    final target =
+        await (_db.select(_db.paragraphs)
+              ..where(
+                (p) =>
+                    p.chapterId.equals(group.chapterId) &
+                    p.groupIndex.equals(group.groupIndex),
+              )
+              ..orderBy([(p) => OrderingTerm.asc(p.paragraphIndex)]))
+            .get();
+    if (target.isEmpty) return (target: <String>[], context: <String>[]);
+    final before =
+        await (_db.select(_db.paragraphs)
+              ..where(
+                (p) =>
+                    p.chapterId.equals(group.chapterId) &
+                    p.paragraphIndex.isSmallerThanValue(
+                      target.first.paragraphIndex,
+                    ) &
+                    p.type.equalsValue(ParagraphType.paragraph),
+              )
+              ..orderBy([(p) => OrderingTerm.desc(p.paragraphIndex)])
+              ..limit(contextCount))
+            .get();
+    return (
+      target: [for (final p in target) p.content],
+      context: [for (final p in before.reversed) p.content],
+    );
+  }
 
   /// Hapus semua terjemahan; grup yang dibuka lagi bakal manggil LLM ulang.
   Future<void> clear() => _db.delete(_db.aiResults).go();
