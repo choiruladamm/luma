@@ -304,17 +304,35 @@ class _ScrollFrameState extends State<_ScrollFrame>
     final reduced = _chrome.reduceMotion;
     // Titik tempel header: di bawah grabber (padding atas 10 + 5 + 16).
     final headerTop = Layout.artinyaHeader - Space.s4 - Layout.touch;
+    final headerBottom = Layout.artinyaHeader - Space.s4; // header 44 tinggi
     return Stack(
       children: [
         NotificationListener<ScrollNotification>(
           onNotification: _onScroll,
-          child: EdgeFadeScroll(
-            top: const EdgeFadeSide(20, clear: Layout.artinyaGrabberZone),
-            // Tombol + safe area (86) bening, fade 20pt tepat di atasnya.
-            bottom: const EdgeFadeSide(
-              20,
-              clear: Layout.artinyaActions - Space.s4,
-            ),
+          // Tepi isi ikut animasi chrome: fade atas mulai di bawah header
+          // (atau di bawah grabber kalau header ngumpet), fade bawah cuma ada
+          // selama tombol keliatan; tombol ngumpet = edge-to-edge.
+          child: AnimatedBuilder(
+            animation: Listenable.merge([_chrome.header, _chrome.actions]),
+            builder: (context, scroll) {
+              final hidden = _chrome.header.value;
+              final away = _chrome.actions.value;
+              return EdgeFadeScroll(
+                top: EdgeFadeSide(
+                  20,
+                  clear: math.max(
+                    Layout.artinyaGrabberZone,
+                    headerBottom - Layout.artinyaHeader * hidden,
+                  ),
+                ),
+                // Tombol + safe area (86) bening, fade 20pt tepat di atasnya.
+                bottom: EdgeFadeSide(
+                  20 * (1 - away),
+                  clear: (Layout.artinyaActions - Space.s4) * (1 - away),
+                ),
+                child: scroll!,
+              );
+            },
             child: SingleChildScrollView(
               primary: true,
               physics: const ClampingScrollPhysics(),

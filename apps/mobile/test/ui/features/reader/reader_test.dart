@@ -1490,6 +1490,52 @@ void main() {
       expect(buttonsShown(tester), isTrue);
     });
 
+    EdgeFadeScroll sheetFade(WidgetTester tester) => tester.widget(
+      find.descendant(of: sheetBox, matching: find.byType(EdgeFadeScroll)),
+    );
+
+    testWidgets('the fades follow the chrome: header, grabber, buttons', (
+      tester,
+    ) async {
+      await openLong(tester);
+      var f = sheetFade(tester);
+      // Everything visible: top fade under the header (y 75), bottom fade
+      // right above the buttons (86 of buttons + safe area).
+      expect(f.top, const EdgeFadeSide(20, clear: 75));
+      expect(f.bottom, const EdgeFadeSide(20, clear: 86));
+
+      await tester.drag(sheetScroll(), const Offset(0, -400));
+      await tester.pumpAndSettle();
+      f = sheetFade(tester);
+      // Header away: fade under the grabber (from y 12). Buttons away:
+      // edge-to-edge, no bottom fade at all.
+      expect(f.top, const EdgeFadeSide(20, clear: 12));
+      expect(f.bottom, const EdgeFadeSide(0));
+
+      await tester.drag(sheetScroll(), const Offset(0, 80));
+      await tester.pumpAndSettle();
+      f = sheetFade(tester);
+      expect(f.top, const EdgeFadeSide(20, clear: 75));
+      expect(f.bottom, const EdgeFadeSide(20, clear: 86));
+    });
+
+    testWidgets(
+      'fade edges: none at the top, both mid-way, bottom gone at the end',
+      (tester) async {
+        await openLong(tester);
+        EdgeFadeScrollState edges() => tester.state(
+          find.descendant(of: sheetBox, matching: find.byType(EdgeFadeScroll)),
+        );
+        expect(edges().debugEdges, (top: false, bottom: true));
+        await tester.drag(sheetScroll(), const Offset(0, -400));
+        await tester.pumpAndSettle();
+        expect(edges().debugEdges, (top: true, bottom: true));
+        await tester.fling(sheetScroll(), const Offset(0, -3000), 8000);
+        await tester.pumpAndSettle();
+        expect(edges().debugEdges, (top: true, bottom: false));
+      },
+    );
+
     testWidgets('programmatic scroll never hides the chrome', (tester) async {
       await openLong(tester);
       tester
