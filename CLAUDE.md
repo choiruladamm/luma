@@ -20,7 +20,9 @@ Urutan issue (alur utuh dulu, fitur inti sebelum pemanis, backup sebelum dogfood
 6. Fitur inti: #20 → #21 → #22 → #23
 7. Pengaman data: #24 → #25 → #26
 8. Pemanis: #15 → #16 → #31 → #27
-9. Validasi: #40 → #41 → #28 (prompt dikunci dulu di #41, baru model dipilih) → #29
+9. Validasi: #40 → #41 → #28 (prompt dikunci dulu di #41, baru model dipilih) → pencatatan statistik #43 → (#44, #45, #48) · #46 → #47 → #49 (induk #42, harus nyala sebelum dogfooding karena datanya gak bisa di-backfill) → #29
+
+Tampilan statistik (#50–#58) cuma ide, tanpa milestone: dikerjain setelah datanya ngumpul dan desainnya ada.
 
 Issue baru disisipin di fase yang cocok di daftar ini.
 
