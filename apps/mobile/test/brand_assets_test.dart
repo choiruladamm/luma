@@ -13,7 +13,6 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   const icons = 'ios/Runner/Assets.xcassets/AppIcon.appiconset';
-  const launch = 'ios/Runner/Assets.xcassets/LaunchLogo.imageset';
 
   test('app icon: light, dark and tinted 1024 files all exist', () {
     final images =
@@ -38,17 +37,12 @@ void main() {
     expect(png(File('$icons/AppIcon-1024-tinted.png')).$3, isNot(6));
   });
 
-  test('launch logo: light + dark at 1x, 2x, 3x', () {
-    final images =
-        (jsonDecode(File('$launch/Contents.json').readAsStringSync())
-                as Map)['images']
-            as List;
-    expect(images, hasLength(6));
-    for (final i in images.cast<Map>()) {
-      final scale = int.parse((i['scale'] as String).replaceAll('x', ''));
-      final (w, h, _) = png(File('$launch/${i['filename']}'));
-      expect((w, h), (128 * scale, 183 * scale), reason: '${i['filename']}');
-    }
+  test('launch screen is the plain canvas colour, no static logo', () {
+    // The animation in Flutter starts empty; a static logo would flash.
+    final board = File('ios/Runner/Base.lproj/LaunchScreen.storyboard')
+        .readAsStringSync();
+    expect(board, contains('name="LaunchBackground"'));
+    expect(board, isNot(contains('<imageView')));
   });
 
   test('display name is Luma on both platforms', () {

@@ -1,6 +1,6 @@
 #!/bin/sh
 # Render the brand SVGs in assets/brand/ to the PNGs the app ships with:
-# iOS app icon (light / dark / tinted), iOS launch logo, Android icons, and the
+# iOS app icon (light / dark / tinted), Android icons, and the
 # wordmark the Flutter splash animates. Needs Google Chrome + ImageMagick.
 # Run from apps/mobile: sh tool/brand.sh
 set -e
@@ -29,14 +29,6 @@ magick "$TMP/light.png" -background '#FFD84D' -alpha remove -alpha off "$ICON/Ap
 render icon-dark.svg 1024 1024 "$ICON/AppIcon-1024-dark.png"
 render icon-tinted.svg 1024 1024 "$TMP/tinted.png"
 magick "$TMP/tinted.png" -background black -alpha remove -alpha off "$ICON/AppIcon-1024-tinted.png"
-
-# iOS launch logo (static; the animation runs in Flutter).
-LAUNCH="$IOS/LaunchLogo.imageset"
-mkdir -p "$LAUNCH"
-for s in 1 2 3; do
-  render launch-light.svg $((128 * s)) $((183 * s)) "$LAUNCH/LaunchLogo@${s}x.png"
-  render launch-dark.svg $((128 * s)) $((183 * s)) "$LAUNCH/LaunchLogo-dark@${s}x.png"
-done
 
 # Android: legacy square icons + the adaptive foreground (432 = 108dp @4x).
 for d in mdpi:48 hdpi:72 xhdpi:96 xxhdpi:144 xxxhdpi:192; do
