@@ -59,6 +59,8 @@ class AiResultsRepository {
     );
   }
 
+  /// Simpan = kebuka pertama (`openCount` 1). Nimpa hasil prompt versi lama
+  /// ngulang hitungannya dari 1.
   Future<void> save(GroupRef group, AiReply reply, {required String model}) =>
       _db
           .into(_db.aiResults)
@@ -70,6 +72,22 @@ class AiResultsRepository {
               meaning: reply.meaning,
               model: model,
               promptVersion: const Value(aiPromptVersion),
+              openCount: const Value(1),
+              lastOpenedAt: Value(DateTime.now()),
+            ),
+          );
+
+  /// Sheet Artinya kebuka dari cache: grup ini dibaca ulang sekali lagi.
+  Future<void> markOpened(GroupRef group) =>
+      (_db.update(_db.aiResults)..where(
+            (a) =>
+                a.chapterId.equals(group.chapterId) &
+                a.groupIndex.equals(group.groupIndex),
+          ))
+          .write(
+            AiResultsCompanion.custom(
+              openCount: _db.aiResults.openCount + const Constant(1),
+              lastOpenedAt: Variable(DateTime.now()),
             ),
           );
 

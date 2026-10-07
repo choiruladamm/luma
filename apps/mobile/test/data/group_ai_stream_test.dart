@@ -16,9 +16,13 @@ import '../fakes.dart';
 /// `ai_results` without a database: [saved] is the cache.
 class FakeCache implements AiResultsRepository {
   final saved = <GroupRef, AiReply>{};
+  final opened = <GroupRef>[];
 
   @override
   Future<AiReply?> find(GroupRef group) async => saved[group];
+
+  @override
+  Future<void> markOpened(GroupRef group) async => opened.add(group);
 
   @override
   Future<void> save(
@@ -87,6 +91,7 @@ void main() {
       expect(now().cached, isTrue);
       expect(now().draft.translations, ['A', 'B']);
       expect(ai.streamCalls, isEmpty);
+      expect(cache.opened, [group]); // re-read counts
     });
   });
 
@@ -119,6 +124,7 @@ void main() {
       unawaited(c.close());
       async.flushMicrotasks();
       expect(now().phase, AiPhase.done);
+      expect(cache.opened, isEmpty); // saving is the first open, not another
       expect(now().draft.meaning, 'Gitu.');
       expect(cache.saved[group]!.translations, ['Halo juga.', 'Dah.']);
       expect(phases().first, AiPhase.waiting);

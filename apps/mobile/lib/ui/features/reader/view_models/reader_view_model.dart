@@ -54,7 +54,10 @@ final groupAiProvider = FutureProvider.autoDispose.family<AiReply, GroupRef>((
   final settings = ref.watch(settingsRepositoryProvider);
 
   final cached = await cache.find(group);
-  if (cached != null) return cached;
+  if (cached != null) {
+    cache.markOpened(group).ignore();
+    return cached;
+  }
   final text = await cache.promptText(group);
   final model = await settings.watchModel().first;
   final reply = await ai.explain(
@@ -148,6 +151,7 @@ class GroupAiStream extends Notifier<AiStream> {
     try {
       final cached = await cache.find(group);
       if (cached != null) {
+        cache.markOpened(group).ignore();
         return finish(
           AiStream(phase: AiPhase.done, draft: _draft(cached), cached: true),
         );

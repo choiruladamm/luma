@@ -275,7 +275,7 @@ Unique key: `(chapterId, paragraphIndex)`. Index tambahan: `(chapterId, groupInd
 | model | text | Model yang dipakai |
 | promptVersion | int (default 1) | `aiPromptVersion` waktu dibikin. Lebih lama dari yang sekarang = dianggap belum ada (`find` balikin null), grupnya diterjemahin ulang pas dibuka dan barisnya ditimpa. Penanda di margin & hitungan di Pengaturan tetap ngitung semua baris |
 | createdAt | datetime | |
-| openCount | int (default 0) | Berapa kali hasil ini dibuka (penanda grup yang sering dibaca ulang). Diisi di #48; baris lama mulai dari 0 |
+| openCount | int (default 0) | Berapa kali hasil ini dibuka (penanda grup yang sering dibaca ulang). Disimpan = 1; tiap sheet Artinya kebuka dari cache +1; nimpa hasil prompt versi lama ngulang dari 1. Baris sebelum schema 5 mulai dari 0 |
 | lastOpenedAt | datetime? | Terakhir dibuka |
 
 Unique key: `(chapterId, groupIndex)`.
