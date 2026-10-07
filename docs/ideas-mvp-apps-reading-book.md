@@ -300,7 +300,7 @@ Index: `(bookId, startedAt)`, `(startedAt)`.
 
 ### `ai_calls`
 
-Log append-only request LLM, terpisah dari cache `ai_results` (`createdAt`-nya ke-reset tiap retranslate, barisnya ikut kehapus pas re-import). Dasar statistik biaya, bantuan AI per 1.000 karakter, dan bab tersulit. Cache hit gak nulis baris. Pengisiannya di #47.
+Log append-only request LLM, terpisah dari cache `ai_results` (`createdAt`-nya ke-reset tiap retranslate, barisnya ikut kehapus pas re-import). Dasar statistik biaya, bantuan AI per 1.000 karakter, dan bab tersulit. Cache hit gak nulis baris. Pengisiannya di #47 (ditunda, Okt 2026: statistik AI jadi raw idea, tabelnya kosong dulu).
 
 | Kolom | Tipe | Catatan |
 |-------|------|---------|
@@ -1116,3 +1116,4 @@ _Tempat dump ide selama dogfooding. Triage seminggu sekali._
 - **Sheet Artinya ikut Aa + header/tombol ngumpet pas scroll (Okt 2026).** Teks isi sheet ikut font/ukuran/jarak/margin Aa, header + Salin/Lanjut geser keluar pas scroll (board Opsi A · geser ngikut, area baca 335 → 516pt). Ada beberapa hal yang perlu diputusin dulu (tinggi sheet 528 vs "ngikutin isi maks 70%", swipe turun nutup). Detail: [#37](https://github.com/choiruladamm/luma/issues/37).
 - **Lanjut lintas bab di sheet Artinya (Okt 2026, ide, nunggu desain).** Sekarang Lanjut mati di grup terakhir bab. Usulan: tetap aktif dan pindah ke grup pertama bab berikutnya (halaman ikut pindah, bab tanpa grup dilewati). Desainnya dibikin user dulu, belum dikerjain. Detail: [#39](https://github.com/choiruladamm/luma/issues/39).
 - **Statistik baca (Okt 2026).** Pencatatan dulu, layar belakangan, karena datanya gak bisa di-backfill. Dua log append-only (`reading_sessions` buat potongan waktu baca + posisi karakter, `ai_calls` buat token/biaya/latensi tiap request LLM) plus `books.finishedAt` dan `ai_results.openCount`; semua statistik dihitung lewat query, tanpa tabel rollup. Schema v5 + pencatatan di milestone MVP sebelum dogfooding; tampilan (streak, heatmap, kecepatan, tren AI per 1.000 karakter, bab tersulit, biaya) ide tanpa milestone. Induk: [#42](https://github.com/choiruladamm/luma/issues/42), rincian di sub-issue #43–#58. Skema final ditulis ke bagian 6 di #43.
+- **Pilih gateway AI (Okt 2026, raw idea).** Kayak opencode: pilih gateway → paste key gateway itu → pilih model sesuai aturan ID gateway itu. Dua gateway dulu, tanpa endpoint custom: OpenRouter dan CheaperInference (versi hosted OmniRoute, saldo top-up). Mulai dari eval pakai korpus #41 (kualitas, biaya, kemungkinan kompresi di sisi mereka, versi model); hasil jelek = ditutup. Gak nyambung ke statistik; `ai_calls.provider` baru ditambah pas fitur ini jadi. Detail + temuan API: [#59](https://github.com/choiruladamm/luma/issues/59).
