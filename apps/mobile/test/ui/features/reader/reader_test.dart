@@ -195,6 +195,12 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('6 jam 20 mnt'), findsOneWidget);
+      expect(
+        tester
+            .widget<ReaderProgressLine>(find.byType(ReaderProgressLine))
+            .progress,
+        1,
+      );
       expect(find.text('86'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });

@@ -194,13 +194,21 @@ class _ReaderViewState extends ConsumerState<ReaderView>
               if (_chapter == null) _start(b, pos);
               final i = _chapter!;
               if (_finished) {
-                return SafeArea(
-                  bottom: false,
-                  child: BookEndView(
-                    book: b,
-                    onClose: () => context.pop(),
-                    onRestart: () => _goTo(b, 0),
-                  ),
+                return Stack(
+                  children: [
+                    Positioned.fill(
+                      child: SafeArea(
+                        bottom: false,
+                        child: BookEndView(
+                          book: b,
+                          onClose: () => context.pop(),
+                          onRestart: () => _goTo(b, 0),
+                        ),
+                      ),
+                    ),
+                    if (_showProgressLine)
+                      const ReaderProgressLine(progress: 1),
+                  ],
                 );
               }
               final ch = b.chapters[i];
@@ -225,6 +233,7 @@ class _ReaderViewState extends ConsumerState<ReaderView>
                           ? () => _goTo(b, i + 1)
                           : () {
                               _save(); // waktu baca terbaru buat rekapnya
+                              _chrome.show(); // status bar balik
                               setState(() => _finished = true);
                             },
                     ),
