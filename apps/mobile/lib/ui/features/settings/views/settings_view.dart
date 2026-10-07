@@ -8,6 +8,7 @@ import '../../../../data/repositories/ai_results_repository.dart';
 import '../../../../data/repositories/settings_repository.dart';
 import '../../../../data/services/api_key_store.dart';
 import '../../../../domain/models/ai_model.dart';
+import '../../../../domain/models/backup.dart';
 import '../../../core/format.dart';
 import '../../../core/theme/stabilo_theme.dart';
 import '../../../core/theme/stabilo_tokens.dart';
@@ -16,7 +17,11 @@ import '../../../core/widgets/buttons.dart';
 import '../../../core/widgets/dialog.dart';
 import '../../../core/widgets/edge_fade.dart';
 import '../../../core/widgets/field.dart';
+import '../../../core/widgets/sheet.dart';
+import '../../../core/widgets/toast.dart';
+import '../view_models/backup_view_model.dart';
 import '../view_models/settings_view_model.dart';
+import 'backup_sheet.dart';
 
 /// Pengaturan app (board 23 Pengaturan app): API key, model AI, cache
 /// terjemahan. Bagian Backup & pulihin nyusul di #24–#26.
@@ -32,6 +37,49 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
 
   /// Ngecek key ke OpenRouter nunggu ngetiknya berhenti bentar.
   Timer? _checkLater;
+
+  /// Sheet "Lagi ngebungkus backup" lagi kebuka; ditutup dari sini.
+  bool _backupOpen = false;
+
+  BackupController get _backup => ref.read(backupControllerProvider.notifier);
+
+  void _onBackup(BackupState? prev, BackupState next) {
+    if (next is! BackupRunning && _backupOpen) {
+      _backupOpen = false;
+      Navigator.of(context).pop();
+    }
+    final c = context.stabilo;
+    switch (next) {
+      case BackupRunning() when !_backupOpen:
+        _backupOpen = true;
+        showAppSheet<void>(
+          context,
+          dismissible: false,
+          builder: (_) => const BackupProgressSheet(),
+        );
+      case BackupDone(:final backup):
+        _backup.dismiss();
+        showToast(
+          context,
+          'Backup kelar, aman!',
+          subtitle: '${fileSize(backup.size)} · ${backup.name}',
+          leading: _ToastTile(
+            icon: AppIcons.check,
+            bg: c.accent,
+            fg: c.onAccent,
+          ),
+        );
+      case BackupFailed():
+        _backup.dismiss();
+        showToast(
+          context,
+          'Yah, backup gagal',
+          subtitle: 'Coba lagi bentar ya',
+          leading: _ToastTile(icon: AppIcons.alert, bg: c.pink, fg: c.onPink),
+        );
+      default:
+    }
+  }
 
   @override
   void initState() {
@@ -71,6 +119,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(backupControllerProvider, _onBackup);
     final model = ref.watch(aiModelProvider).value ?? defaultAiModel;
     final cache = ref.watch(aiCacheStatsProvider).value;
     return Scaffold(
@@ -127,6 +176,16 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                         selected: model,
                         onSelect: (id) =>
                             ref.read(settingsRepositoryProvider).saveModel(id),
+                      ),
+                    ),
+                    const SizedBox(height: 22),
+                    _Section(
+                      label: 'Backup & pulihin',
+                      note: const _BackupNote(),
+                      child: _BackupCard(
+                        last: ref.watch(lastBackupProvider).value,
+                        loaded: ref.watch(lastBackupProvider).hasValue,
+                        onBackup: _backup.start,
                       ),
                     ),
                     const SizedBox(height: 22),
@@ -208,7 +267,9 @@ class _Section extends StatelessWidget {
   const _Section({required this.label, this.note, required this.child});
 
   final String label;
-  final String? note;
+
+  /// String atau widget (teks ber-bold) di bawah isi.
+  final Object? note;
   final Widget child;
 
   @override
@@ -226,19 +287,171 @@ class _Section extends StatelessWidget {
           ),
         ),
         child,
-        if (note != null)
-          Text(
-            note!,
-            style: StabiloType.caption.copyWith(
-              fontSize: 12.5,
-              height: 1.45,
-              fontWeight: FontWeight.w400,
-              color: c.ink2,
-            ),
-          ),
+        if (note case final Widget w)
+          w
+        else if (note case final String text)
+          Text(text, style: _noteStyle(c)),
       ],
     );
   }
+}
+
+TextStyle _noteStyle(StabiloColors c) => StabiloType.caption.copyWith(
+  fontSize: 12.5,
+  height: 1.45,
+  fontWeight: FontWeight.w400,
+  color: c.ink2,
+);
+
+class _BackupNote extends StatelessWidget {
+  const _BackupNote();
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.stabilo;
+    return Text.rich(
+      TextSpan(
+        children: [
+          const TextSpan(
+            text: 'Isinya buku, progres baca, terjemahan, sama pengaturan. ',
+          ),
+          TextSpan(
+            text: 'API key gak ikut',
+            style: TextStyle(color: c.ink, fontWeight: FontWeight.w700),
+          ),
+          const TextSpan(
+            text:
+                ', jadi abis pulihin isi ulang ya. Simpen file-nya di iCloud '
+                'Drive biar gak ikut kehapus pas install ulang.',
+          ),
+        ],
+      ),
+      style: _noteStyle(c),
+    );
+  }
+}
+
+/// BackupCard (board 23 Pengaturan, Komponen 04): kapan terakhir backup +
+/// tombol "Backup sekarang".
+class _BackupCard extends StatelessWidget {
+  const _BackupCard({
+    required this.last,
+    required this.loaded,
+    required this.onBackup,
+  });
+
+  final LastBackup? last;
+
+  /// Status backup udah kebaca (biar gak sempet nongol "belum pernah").
+  final bool loaded;
+  final VoidCallback onBackup;
+
+  /// "Barusan" (< 1 jam), "Hari ini", "Kemarin", "3 hari lalu", ...
+  static String when(DateTime at, DateTime now) {
+    if (now.difference(at) < const Duration(hours: 1)) return 'Barusan';
+    final s = ago(at, now);
+    return s[0].toUpperCase() + s.substring(1);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.stabilo;
+    final b = last;
+    final never = loaded && b == null;
+    final small = _noteStyle(c).copyWith(height: null);
+    return Container(
+      padding: const EdgeInsets.all(Space.s4),
+      decoration: BoxDecoration(
+        color: c.sheet,
+        borderRadius: BorderRadius.circular(Radii.menu),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: 14,
+        children: [
+          Row(
+            spacing: Space.s3,
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: never ? c.pink : c.muted,
+                  borderRadius: BorderRadius.circular(Radii.md),
+                ),
+                child: Center(
+                  child: AppIcon(
+                    never ? AppIcons.alert : AppIcons.backup,
+                    size: 22,
+                    color: never ? c.onPink : c.ink,
+                  ),
+                ),
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  spacing: 2,
+                  children: [
+                    Text(
+                      b == null ? 'Status backup' : 'Backup terakhir',
+                      style: small,
+                    ),
+                    Text(
+                      b != null
+                          ? when(b.at, DateTime.now())
+                          : never
+                          ? 'Belum pernah backup'
+                          : ' ',
+                      style: StabiloType.titleSm.copyWith(
+                        fontSize: 18,
+                        letterSpacing: -0.18,
+                        color: c.ink,
+                      ),
+                    ),
+                    Text(
+                      b != null
+                          ? '${b.name} · ${fileSize(b.size)}'
+                          : never
+                          ? 'Data lo cuma ada di HP ini doang'
+                          : ' ',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: small,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          AppButton.primary(
+            label: 'Backup sekarang',
+            icon: AppIcons.backup,
+            onPressed: onBackup,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Kotak ikon di kiri toast hasil backup.
+class _ToastTile extends StatelessWidget {
+  const _ToastTile({required this.icon, required this.bg, required this.fg});
+
+  final List<List<dynamic>> icon;
+  final Color bg;
+  final Color fg;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: 36,
+    height: 36,
+    decoration: BoxDecoration(
+      color: bg,
+      borderRadius: BorderRadius.circular(Radii.sm),
+    ),
+    child: Center(child: AppIcon(icon, size: 18, color: fg)),
+  );
 }
 
 /// RadioRow (board Komponen 04): titik kuning + nama + model ID mono.

@@ -50,4 +50,12 @@ void main() {
     await repo.saveModel('qwen/qwen3.8-flash');
     expect(await repo.watchModel().first, 'qwen/qwen3.8-flash');
   });
+
+  test('last backup: none until saved, then what was saved', () async {
+    final repo = SettingsRepository(db);
+    expect(await repo.watchLastBackup().first, isNull);
+    final b = (at: DateTime(2026, 10, 6, 21, 30), name: 'x.zip', size: 1234);
+    await repo.saveLastBackup(b);
+    expect(await repo.watchLastBackup().first, b);
+  });
 }

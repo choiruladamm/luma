@@ -4,6 +4,7 @@ import 'package:luma/data/repositories/settings_repository.dart';
 import 'package:luma/data/services/openrouter_service.dart';
 import 'package:luma/domain/models/ai_model.dart';
 import 'package:luma/domain/models/ai_reply.dart';
+import 'package:luma/domain/models/backup.dart';
 import 'package:luma/domain/models/reader_prefs.dart';
 import 'package:luma/data/repositories/reading_progress_repository.dart';
 
@@ -48,6 +49,21 @@ class FakeSettings implements SettingsRepository {
   Future<void> saveReaderPrefs(ReaderPrefs p) async {
     prefs = p;
     _saves.add(p);
+  }
+
+  LastBackup? lastBackup;
+  final _backups = StreamController<LastBackup?>.broadcast();
+
+  @override
+  Stream<LastBackup?> watchLastBackup() async* {
+    yield lastBackup;
+    yield* _backups.stream;
+  }
+
+  @override
+  Future<void> saveLastBackup(LastBackup b) async {
+    lastBackup = b;
+    _backups.add(b);
   }
 
   String model = defaultAiModel;

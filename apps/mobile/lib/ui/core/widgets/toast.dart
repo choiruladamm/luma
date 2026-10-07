@@ -7,9 +7,10 @@ import 'buttons.dart';
 
 /// Toast (board Komponen 04), ilang sendiri 2,5 detik.
 ///
-/// Tanpa [actionLabel]: pill di tengah + centang ("Udah disalin, tinggal
-/// paste"). Dengan action: bar lebar + tombol kecil ("Sip, udah masuk rak!"
-/// · Baca), boleh ada [leading] (mis. cover mini) & [subtitle].
+/// Cuma [message]: pill di tengah + centang ("Udah disalin, tinggal paste").
+/// Ada [subtitle] / [leading] / [actionLabel]: bar lebar ("Sip, udah masuk
+/// rak!" · Baca, "Backup kelar, aman!"), tombol kecilnya cuma kalau ada
+/// [actionLabel].
 void showToast(
   BuildContext context,
   String message, {
@@ -23,7 +24,7 @@ void showToast(
     ..hideCurrentSnackBar()
     ..showSnackBar(
       SnackBar(
-        content: actionLabel == null
+        content: actionLabel == null && subtitle == null && leading == null
             ? Center(child: _Toast.pill(message))
             : _Toast.bar(
                 message,
@@ -82,19 +83,21 @@ class _Toast extends StatelessWidget {
     : subtitle = null,
       leading = null,
       actionLabel = null,
-      onAction = null;
+      onAction = null,
+      pill = true;
   const _Toast.bar(
     this.message, {
-    required this.actionLabel,
+    this.actionLabel,
     this.subtitle,
     this.leading,
     this.onAction,
-  });
+  }) : pill = false;
 
   final String message;
   final String? subtitle;
   final Widget? leading;
   final String? actionLabel;
+  final bool pill;
   final VoidCallback? onAction;
 
   @override
@@ -104,7 +107,6 @@ class _Toast extends StatelessWidget {
       fontWeight: FontWeight.w600,
       color: c.toastInk,
     );
-    final pill = actionLabel == null;
     final rich = leading != null || subtitle != null;
     return Container(
       height: pill ? 48 : (rich ? null : 56),
@@ -157,7 +159,7 @@ class _Toast extends StatelessWidget {
                     ],
                   ),
           ),
-          if (!pill)
+          if (actionLabel != null)
             Material(
               color: c.accent,
               shape: const StadiumBorder(),

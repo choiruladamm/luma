@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/models/ai_model.dart';
+import '../../domain/models/backup.dart';
 import '../../domain/models/reader_prefs.dart';
 import '../database/app_database.dart';
 
@@ -32,6 +33,34 @@ class SettingsRepository {
 
   static const _model = 'ai.model';
 
+  /// Backup terakhir yang berhasil disimpen user; null = belum pernah.
+  Stream<LastBackup?> watchLastBackup() =>
+      (_db.select(_db.settings)
+            ..where((s) => s.key.isIn([_backupAt, _backupName, _backupSize])))
+          .watch()
+          .map((rows) {
+            final m = {for (final r in rows) r.key: r.value};
+            final at = DateTime.tryParse(m[_backupAt] ?? '');
+            if (at == null) return null;
+            return (
+              at: at,
+              name: m[_backupName] ?? '',
+              size: int.tryParse(m[_backupSize] ?? '') ?? 0,
+            );
+          });
+
+  Future<void> saveLastBackup(LastBackup b) => _db.batch(
+    (batch) => batch.insertAllOnConflictUpdate(_db.settings, [
+      SettingsCompanion.insert(key: _backupAt, value: b.at.toIso8601String()),
+      SettingsCompanion.insert(key: _backupName, value: b.name),
+      SettingsCompanion.insert(key: _backupSize, value: '${b.size}'),
+    ]),
+  );
+
+  static const _backupAt = 'backup.lastAt';
+  static const _backupName = 'backup.lastName';
+  static const _backupSize = 'backup.lastSize';
+
   Future<void> saveReaderPrefs(ReaderPrefs prefs) => _db.batch(
     (b) => b.insertAllOnConflictUpdate(_db.settings, [
       for (final MapEntry(:key, :value) in prefs.toSettings().entries)
@@ -52,4 +81,9 @@ final readerPrefsProvider = StreamProvider<ReaderPrefs>(
 /// Model LLM yang dipake (dibaca tiap manggil OpenRouter, bukan di-hardcode).
 final aiModelProvider = StreamProvider<String>(
   (ref) => ref.watch(settingsRepositoryProvider).watchModel(),
+);
+
+/// Backup terakhir (Pengaturan, pengingat backup).
+final lastBackupProvider = StreamProvider<LastBackup?>(
+  (ref) => ref.watch(settingsRepositoryProvider).watchLastBackup(),
 );

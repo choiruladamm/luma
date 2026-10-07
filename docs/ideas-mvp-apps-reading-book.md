@@ -263,7 +263,7 @@ Tiap ubah tabel: naikkan `schemaVersion`, tambah langkah di `onUpgrade`, dan tes
 
 ### Pengaturan
 
-API key di `flutter_secure_storage`. Model ID, preferensi Aa, dan `lastBackupAt` di tabel `settings` sederhana (key-value) di Drift, supaya ikut ter-backup. Model LLM: `ai.model` (model ID OpenRouter, default `z-ai/glm-5.3-flash`; pilihan dari daftar kandidat di bagian 9). API key di Keychain dengan kunci `openrouter_api_key`, disimpen tiap diketik (kosong = dihapus). "Hapus cache" di Pengaturan = kosongin `ai_results` setelah konfirmasi; Pengaturan nampilin jumlah paragraf yang udah diterjemahin + ukuran teksnya. Kunci Aa: `reader.size` (indeks step 0–6), `reader.font`, `reader.spacing`, `reader.margin`, `theme` (nama enum), `reader.hideStatusBar`, `reader.showProgressLine` (`true`/`false`). Hindari `shared_preferences` untuk data yang perlu ikut backup.
+API key di `flutter_secure_storage`. Model ID, preferensi Aa, dan backup terakhir di tabel `settings` sederhana (key-value) di Drift, supaya ikut ter-backup. Model LLM: `ai.model` (model ID OpenRouter, default `z-ai/glm-5.3-flash`; pilihan dari daftar kandidat di bagian 9). API key di Keychain dengan kunci `openrouter_api_key`, disimpen tiap diketik (kosong = dihapus). "Hapus cache" di Pengaturan = kosongin `ai_results` setelah konfirmasi; Pengaturan nampilin jumlah paragraf yang udah diterjemahin + ukuran teksnya. Backup terakhir: `backup.lastAt` (ISO 8601), `backup.lastName`, `backup.lastSize` (byte). Kunci Aa: `reader.size` (indeks step 0–6), `reader.font`, `reader.spacing`, `reader.margin`, `theme` (nama enum), `reader.hideStatusBar`, `reader.showProgressLine` (`true`/`false`). Hindari `shared_preferences` untuk data yang perlu ikut backup.
 
 ---
 
@@ -562,6 +562,15 @@ luma-backup-20261006-2130.zip
 4. Zip snapshot + folder `books/` + `covers/` (pakai package `archive`, jalankan di isolate karena file EPUB bisa besar)
 5. Buka share sheet (`share_plus`) → user pilih "Save to Files", iCloud Drive, atau AirDrop
 6. Simpan `lastBackupAt` di tabel `settings`, hapus file zip sementara
+
+**Implementasi** (`BackupService` + `BackupController`):
+
+- Snapshot `VACUUM INTO` ke folder sementara (`Directory.systemTemp`), hitung jumlah buku & `ai_results` buat manifest. `appVersion` dari konstanta yang dicek sama `version` di pubspec (test).
+- Zip di isolate (`Isolate.spawn` + port progres), urutan: `books/`, `covers/` (disimpen tanpa kompresi, udah kekompres), `luma.sqlite`, `manifest.json` (dikompres). Sheet "Lagi ngebungkus backup..." (board 26) nampilin nama file, persen, dan centang per tahap: buku → terjemahan (DB) → pengaturan (manifest). "Batalin" matiin isolate-nya, folder sementara dibuang.
+- Sheet progres ditutup dulu, baru menu share iOS muncul. Backup terakhir cuma dicatet kalau share-nya **beneran disimpen/dikirim** (`ShareResultStatus.success`); ditutup tanpa milih = gak dicatet. Zip sementara selalu dihapus.
+- Berhasil → toast "Backup kelar, aman!" + "12,4 MB · nama file" (board 27). Gagal → toast "Yah, backup gagal".
+- Pengaturan, bagian "Backup & pulihin": kapan backup terakhir ("Barusan" kalau < 1 jam, "Kemarin", "3 hari lalu", ...), nama + ukuran file, atau "Belum pernah backup" (ikon pink). Tombol "Pulihin dari backup" nyusul di #25.
+- Board nulis nama file `luma-backup-2026-10-06.luma`; yang dipake tetep `luma-backup-YYYYMMDD-HHmm.zip` (zip biasa, gak perlu daftar tipe file custom di iOS).
 
 ### Alur import (restore)
 
@@ -899,3 +908,4 @@ Setelah importer Luma Markdown ada, jalur 1 jadi jalur default untuk PDF: PDF �
 _Tempat dump ide selama dogfooding. Triage seminggu sekali._
 
 - **Bagian non-isi buku (Okt 2026, belum final).** Import cuma buang yang pasti bukan isi, dikenali dari struktur (bukan judul): lisensi Gutenberg, halaman daftar isi / indeks (kebanyakan isinya link), dan chapter kosong / cuma judul. Introduction, Notes, Appendix, Glossary, dan iklan penerbit tetep disimpen: salah buang = isi hilang + cache terjemahan ikut kehapus pas re-import, sedangkan kelebihan satu bab cuma nambah satu entri. Pantau pas dogfooding: kalau Introduction ganggu, opsinya buku dibuka langsung di bab isi pertama, bukan dibuang.
+- **Streaming response di sheet Artinya (Okt 2026, ide, prioritas rendah).** Teks terjemahan + makna muncul begitu model mulai nulis. Masalah utama: JSON setengah jadi gak bisa di-parse, jadi perlu spike format dulu. Detail: [#34](https://github.com/choiruladamm/luma/issues/34).
