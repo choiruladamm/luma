@@ -682,11 +682,12 @@ class _ChapterTextState extends ConsumerState<_ChapterText>
     final p = _scroll.position;
     final target = to.clamp(p.minScrollExtent, p.maxScrollExtent);
     if ((target - p.pixels).abs() < 0.5) return Future.value();
-    return _scroll.animateTo(
-      target,
-      duration: MediaQuery.disableAnimationsOf(context) ? Duration.zero : d,
-      curve: curve,
-    );
+    // Kurangi gerakan: langsung pindah (animateTo gak mau durasi nol).
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _scroll.jumpTo(target);
+      return Future.value();
+    }
+    return _scroll.animateTo(target, duration: d, curve: curve);
   }
 
   /// Simpen titik yang sekarang di atas (abis halaman digeser sheet).
