@@ -1263,18 +1263,19 @@ void main() {
       }
     });
 
-    testWidgets('on open the group starts at the safe area, highlighted', (
+    testWidgets('the group sits 16pt above the sheet, highlighted', (
       tester,
     ) async {
       await openTall(tester);
       await tapGroup(tester, 13);
       expect(block, findsOneWidget);
-      expect(tester.getRect(block).top, closeTo(0, 1)); // safe area 0
+      final sheetTop = tester.getTopLeft(sheetBox).dy;
+      expect(tester.getRect(block).bottom, closeTo(sheetTop - 16, 1));
       // Highlight reaches half the margin out: 24 / 2.
       expect(tester.getRect(block).left, 12);
     });
 
-    testWidgets('a group too tall to fit: its top is at the safe area', (
+    testWidgets('a group too tall to fit: its top goes under the safe area', (
       tester,
     ) async {
       const hugeBook = ReaderBook(
@@ -1293,7 +1294,7 @@ void main() {
       );
       await tester.tap(find.textContaining('Huge:'));
       await tester.pumpAndSettle();
-      expect(tester.getRect(block).top, closeTo(0, 1)); // safe area 0
+      expect(tester.getRect(block).top, closeTo(0 + 16, 1)); // safe area 0
     });
 
     testWidgets('one group: closing goes back to where you were', (

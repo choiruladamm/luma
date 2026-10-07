@@ -250,7 +250,7 @@ class _ReaderViewState extends ConsumerState<ReaderView>
       },
       onHeight: (h) {
         sheetTop = screen - h;
-        text.showGroupAtTop(group.value.groupIndex);
+        text.showGroupAbove(group.value.groupIndex, sheetTop);
       },
       onSettings: () {
         Navigator.of(context).pop();
@@ -717,16 +717,6 @@ class _ChapterTextState extends ConsumerState<_ChapterText>
         ? block.bottom - bottom
         : block.top - top;
     await _animateTo(pixels + delta, Motion.sheetOpen, Motion.sheetOpenCurve);
-  }
-
-  /// Sheet Artinya baru dibuka: atas blok grup = safe area, selalu. Grup
-  /// rata-rata lebih tinggi dari ruang di atas sheet, jadi bawahnya ketutup
-  /// sheet (sama kayak cabang grup kepanjangan di [showGroupAbove]).
-  Future<void> showGroupAtTop(int group) async {
-    final r = _groupRect(group);
-    if (r == null || !_scroll.hasClients) return;
-    final delta = _highlight(r).top - MediaQuery.paddingOf(context).top;
-    await _animateTo(pixels + delta, Motion.rise(delta), Motion.riseCurve);
   }
 
   /// Balik ke posisi sebelum sheet dibuka.
