@@ -1,32 +1,31 @@
-import 'dart:ui' show lerpDouble;
-
 import 'package:flutter/material.dart';
 
 import '../theme/stabilo_tokens.dart';
 
 /// Profil fade satu tepi, diukur dari tepi area scroll ke dalam:
-/// [clear] kosong total → [hold] di opacity [floor] → [fade] naik ke penuh.
-/// Standar cuma [fade]; layar baca pake [clear] (status bar / bawah garis
-/// progres) dan [hold] (teks di belakang kapsul).
+/// [clear] di opacity [clearAlpha] → [hold] di opacity [floor] → [fade] naik
+/// ke penuh. Standar cuma [fade]; layar baca pake [clear] (status bar) dan
+/// [hold] (teks di belakang kapsul).
 @immutable
 class EdgeFadeSide {
   const EdgeFadeSide(
     this.fade, {
     this.clear = 0,
+    this.clearAlpha = 0,
     this.hold = 0,
     this.floor = 0,
   });
 
+  /// Gak ada fade: tepi bawah layar/sheet yang gak ketemu tombol (isinya
+  /// edge-to-edge sampe tepi fisik).
   static const none = EdgeFadeSide(0);
 
-  /// Sheet & fade atas layar penuh (board EdgeFade: standar 20pt).
+  /// Di bawah judul/header yang nempel & di atas tombol aksi (standar 20pt).
   static const standard = EdgeFadeSide(20);
-
-  /// Bawah layar penuh (Rak, Pengaturan): 34pt = safe area home indicator.
-  static const screenBottom = EdgeFadeSide(34);
 
   final double fade;
   final double clear;
+  final double clearAlpha;
   final double hold;
 
   /// Opacity minimum isi di [hold] dan awal [fade].
@@ -34,30 +33,24 @@ class EdgeFadeSide {
 
   double get extent => clear + hold + fade;
 
-  static EdgeFadeSide lerp(EdgeFadeSide a, EdgeFadeSide b, double t) =>
-      EdgeFadeSide(
-        lerpDouble(a.fade, b.fade, t)!,
-        clear: lerpDouble(a.clear, b.clear, t)!,
-        hold: lerpDouble(a.hold, b.hold, t)!,
-        floor: lerpDouble(a.floor, b.floor, t)!,
-      );
-
   @override
   bool operator ==(Object other) =>
       other is EdgeFadeSide &&
       other.fade == fade &&
       other.clear == clear &&
+      other.clearAlpha == clearAlpha &&
       other.hold == hold &&
       other.floor == floor;
 
   @override
-  int get hashCode => Object.hash(fade, clear, hold, floor);
+  int get hashCode => Object.hash(fade, clear, clearAlpha, hold, floor);
 }
 
 /// Tepi area scroll mudar halus (board EdgeFade · tepi area scroll). Mask,
 /// bukan gradien warna latar: isinya yang transparan, aman di terang & gelap.
 /// Fade atas cuma kalau udah di-scroll, fade bawah cuma kalau masih ada isi
-/// di bawah; muncul/ilang 150ms. Kondisinya dibaca dari notifikasi scroll
+/// di bawah; muncul/ilang 150ms. Tepi bawah layar/sheet gak pernah dipudarin
+/// (`bottom: EdgeFadeSide.none`), kecuali ketemu tombol aksi atau kapsul. Kondisinya dibaca dari notifikasi scroll
 /// [child], jadi gak butuh ScrollController.
 class EdgeFadeScroll extends StatefulWidget {
   const EdgeFadeScroll({
@@ -158,8 +151,11 @@ class EdgeFadeScrollState extends State<EdgeFadeScroll> {
     if (s.extent <= 0) return const [(0, 1)];
     double a(double v) => 1 - on * (1 - v);
     return [
-      (0, a(s.clear > 0 ? 0 : s.floor)),
-      if (s.clear > 0) ...[(s.clear * k, a(0)), (s.clear * k, a(s.floor))],
+      (0, a(s.clear > 0 ? s.clearAlpha : s.floor)),
+      if (s.clear > 0) ...[
+        (s.clear * k, a(s.clearAlpha)),
+        (s.clear * k, a(s.floor)),
+      ],
       if (s.hold > 0) ((s.clear + s.hold) * k, a(s.floor)),
       (s.extent * k, 1),
     ];

@@ -101,13 +101,14 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
             ),
             Expanded(
               child: EdgeFadeScroll(
-                bottom: EdgeFadeSide.screenBottom,
+                // Bawah edge-to-edge, padding akhir = safe area.
+                bottom: EdgeFadeSide.none,
                 child: ListView(
                   padding: EdgeInsets.fromLTRB(
                     Layout.margin,
                     22,
                     Layout.margin,
-                    Space.s6 + MediaQuery.paddingOf(context).bottom,
+                    MediaQuery.paddingOf(context).bottom,
                   ),
                   children: [
                     AppField(

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:luma/ui/core/theme/stabilo_theme.dart';
+import 'package:luma/ui/core/widgets/buttons.dart';
 import 'package:luma/ui/core/widgets/edge_fade.dart';
+import 'package:luma/ui/core/widgets/sheet.dart';
 
 void main() {
   Future<void> pump(WidgetTester tester, int items) => tester.pumpWidget(
@@ -88,6 +91,18 @@ void main() {
       expect(g.alphas.last, 1);
     });
 
+    test('no bottom fade: content runs to the edge', () {
+      final g = edgeFadeStops(
+        400,
+        top: s20,
+        bottom: EdgeFadeSide.none,
+        topOn: 1,
+        bottomOn: 1,
+      );
+      expect(g.alphas.last, 1);
+      expect(g.stops.last, 1);
+    });
+
     test('reader profile: clear band, held floor, then the fade', () {
       const top = EdgeFadeSide(48, clear: 54, hold: 64, floor: 0.18);
       final g = edgeFadeStops(
@@ -116,4 +131,32 @@ void main() {
       expect(g.stops.last, 1);
     });
   });
+
+  for (final withButton in [false, true]) {
+    testWidgets('SheetFrame bottom edge (button: $withButton)', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: stabiloTheme(Brightness.light),
+          home: Scaffold(
+            body: SheetFrame(
+              title: 'Judul',
+              actions: [
+                if (withButton)
+                  Expanded(
+                    child: AppButton.primary(label: 'Oke', onPressed: () {}),
+                  ),
+              ],
+              children: const [Text('Isi')],
+            ),
+          ),
+        ),
+      );
+      final fade = tester.widget<EdgeFadeScroll>(find.byType(EdgeFadeScroll));
+      // No button: runs to the edge. Button: 20pt fade above it.
+      expect(
+        fade.bottom,
+        withButton ? EdgeFadeSide.standard : EdgeFadeSide.none,
+      );
+    });
+  }
 }

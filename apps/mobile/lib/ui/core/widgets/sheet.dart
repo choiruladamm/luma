@@ -74,8 +74,14 @@ class SheetFrame extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Tanpa tombol: isi jalan sampe tepi bawah sheet tanpa fade, padding
+    // akhirnya = safe area (board EdgeFade, edge-to-edge). Ada tombol: fade
+    // 20pt di atas tombol, tombolnya di atas safe area.
+    final edge = actions.isEmpty;
     return Padding(
-      padding: Layout.sheetPadding,
+      padding: edge
+          ? Layout.sheetPadding.copyWith(bottom: 0)
+          : Layout.sheetPadding,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -102,7 +108,13 @@ class SheetFrame extends StatelessWidget {
             ),
           Flexible(
             child: EdgeFadeScroll(
+              bottom: edge ? EdgeFadeSide.none : EdgeFadeSide.standard,
               child: SingleChildScrollView(
+                padding: edge
+                    ? EdgeInsets.only(
+                        bottom: MediaQuery.paddingOf(context).bottom,
+                      )
+                    : null,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   spacing: Space.s4,

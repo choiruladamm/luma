@@ -108,10 +108,12 @@ class _TocSheetState extends State<_TocSheet> {
             ),
           ),
           Flexible(
+            // Tanpa tombol aksi: list jalan sampe tepi bawah, tanpa fade bawah.
             child: EdgeFadeScroll(
+              bottom: EdgeFadeSide.none,
               child: SingleChildScrollView(
                 padding: EdgeInsets.only(
-                  bottom: Space.s4 + MediaQuery.paddingOf(context).bottom,
+                  bottom: MediaQuery.paddingOf(context).bottom,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,

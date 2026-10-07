@@ -134,16 +134,19 @@ Pas baca, layar isinya cuma teks + garis progres tipis. Menu nongol sebagai dua 
 
 ### EdgeFade (tepi area scroll)
 
-Board "EdgeFade · tepi area scroll". Tepi area scroll mudar halus pake **mask** (`ShaderMask` + `BlendMode.dstIn`, widget `EdgeFadeScroll`): isinya yang transparan, bukan gradien warna latar, jadi aman di terang & gelap. Fade atas cuma muncul kalau udah di-scroll, fade bawah cuma kalau masih ada isi di bawah, isi muat = gak ada fade. Muncul/ilang 150 ms. Gak dipasang di elemen yang gak ikut ke-scroll (judul, tombol aksi, kapsul).
+Board "EdgeFade · tepi area scroll". Tepi area scroll mudar halus pake **mask** (`ShaderMask` + `BlendMode.dstIn`, widget `EdgeFadeScroll`): isinya yang transparan, bukan gradien warna latar, jadi aman di terang & gelap. Dipasang di tepi area scroll yang ketemu elemen nempel (judul/header, tombol aksi, kapsul). Fade atas cuma muncul kalau udah di-scroll; fade bawah cuma ada di atas tombol aksi / kapsul bawah, dan cuma kalau masih ada isi di bawah. Muncul/ilang 150 ms.
+
+**Tepi bawah edge-to-edge.** Tepi bawah layar & sheet gak pernah dipudarin: isi digambar tembus sampe tepi fisik, lewat di bawah home indicator. Area scroll gak dibungkus `SafeArea(bottom: true)`; padding bawah scroll = safe area (`MediaQuery.paddingOf(context).bottom`, 34pt) di dalam scroll, jadi item terakhir bisa naik ke atas home indicator dan tetep bisa di-tap. Tombol & elemen nempel tetep di dalam safe area.
 
 | Tempat | Fade atas | Fade bawah | Catatan |
 |--------|-----------|------------|---------|
-| Sheet (Aa, Daftar isi, Artinya, `SheetFrame`, Ringkasan pulihin) | 20pt | 20pt | Standar |
-| Layar penuh (Rak, Pengaturan) | 20pt di bawah header yang nempel | 34pt (= safe area) | Rak: header + "Semua buku" nempel, tanpa garis pemisah. Pengaturan: balik + judul nempel |
-| Baca · kapsul keliatan | 48pt dari tepi kapsul | 48pt ke tepi kapsul | Teks di belakang kapsul ±18%. Status bar & di bawah garis progres kosong. Awal bab gak ada fade atas |
-| Baca · imersif | – | 24pt, selesai pas di garis progres | Di bawah garis progres kosong |
+| Sheet tanpa tombol aksi (Aa, Daftar isi, `SheetFrame` tanpa tombol) | 20pt di bawah judul | – (mentok ke tepi) | Padding bawah sheet 0, item terakhir padding = safe area |
+| Sheet + tombol aksi (Artinya, `SheetFrame` bertombol, Ringkasan pulihin) | 20pt di bawah judul | 20pt di atas tombol | Tombol di atas safe area 34 |
+| Layar penuh (Rak, Pengaturan) | 20pt di bawah header yang nempel | – (mentok ke tepi) | Rak: header + "Semua buku" nempel, tanpa garis pemisah. Pengaturan: balik + judul nempel |
+| Baca · kapsul keliatan | 48pt dari tepi kapsul | 48pt ke tepi kapsul, sisa ±18% terus sampe tepi layar | Status bar kosong; gak ada pita kosong di bawah garis progres. Awal bab gak ada fade atas |
+| Baca · imersif | – | – (mentok ke tepi) | Teks lewat di bawah garis progres sampe tepi |
 
-Varian kapsul ↔ imersif di-interpolasi sepanjang animasi kapsul ngumpet/muncul, gak loncat. Menu tekan lama & urutkan cuma 2–3 item, gak pernah scroll, jadi belum dipasang.
+Layar baca: kekuatan mask ngikutin `ReaderChrome.hidden` (controller kapsul yang sama, 200 ms ease-out). Kapsul geser keluar → sisa 18% naik ke 100%, status bar yang kosong keisi, jadi teks gak kedip atau loncat; kapsul masuk lagi → kebalikannya. Menu tekan lama & urutkan cuma 2–3 item, gak pernah scroll, jadi belum dipasang.
 
 ### Pengaturan Aa
 

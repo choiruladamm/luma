@@ -37,8 +37,9 @@ class _AaSheet extends ConsumerWidget {
     void set(ReaderPrefs p) =>
         ref.read(settingsRepositoryProvider).saveReaderPrefs(p).ignore();
 
+    // Tanpa tombol aksi: isi jalan sampe tepi bawah, tanpa fade bawah.
     return Padding(
-      padding: Layout.sheetPadding,
+      padding: Layout.sheetPadding.copyWith(bottom: 0),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -62,7 +63,11 @@ class _AaSheet extends ConsumerWidget {
           ),
           Flexible(
             child: EdgeFadeScroll(
+              bottom: EdgeFadeSide.none,
               child: SingleChildScrollView(
+                padding: EdgeInsets.only(
+                  bottom: MediaQuery.paddingOf(context).bottom,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   spacing: Space.s4,

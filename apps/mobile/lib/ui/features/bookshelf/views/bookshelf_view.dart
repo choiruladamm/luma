@@ -233,7 +233,9 @@ class _Shelf extends ConsumerWidget {
         ),
         Expanded(
           child: EdgeFadeScroll(
-            bottom: EdgeFadeSide.screenBottom,
+            // Bawah edge-to-edge: buku jalan sampe tepi layar, lewat di
+            // bawah home indicator; padding akhir = safe area.
+            bottom: EdgeFadeSide.none,
             child: CustomScrollView(
               slivers: [
                 SliverPadding(
@@ -241,7 +243,7 @@ class _Shelf extends ConsumerWidget {
                     Layout.margin,
                     Space.s2,
                     Layout.margin,
-                    Space.s8 + MediaQuery.paddingOf(context).bottom,
+                    MediaQuery.paddingOf(context).bottom,
                   ),
                   sliver: SliverLayoutBuilder(
                     builder: (context, constraints) {

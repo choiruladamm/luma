@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:ui' show lerpDouble;
 
 import 'package:flutter/material.dart';
 
@@ -25,30 +26,29 @@ const readerTextTop = 86.0;
 /// Ruang kosong di bawah teks terakhir (board: 100 dari tepi layar).
 const readerTextBottom = 66.0;
 
-/// Tepi teks baca (board EdgeFade · varian Baca). Kapsul keliatan: status bar
-/// & di bawah garis progres kosong, teks di belakang kapsul ±18%, terus naik
-/// penuh dalam 48pt. Imersif: cuma fade bawah 24pt yang selesai di garis
-/// progres. [t] = `ReaderChrome.hidden` (0 kapsul, 1 imersif).
+/// Tepi teks baca (board EdgeFade · varian Baca). [t] = `ReaderChrome.hidden`
+/// (0 kapsul keliatan, 1 imersif), jadi kekuatan fade ikut animasi kapsul.
+/// Kapsul keliatan: status bar kosong, teks di belakang kapsul ±18% terus
+/// sampe tepi bawah layar, 48pt dari tepi kapsul naik penuh. Imersif: gak ada
+/// fade sama sekali, teks lewat di bawah garis progres sampe tepi.
 ({EdgeFadeSide top, EdgeFadeSide bottom}) readerEdgeFade(
   EdgeInsets pad,
   double t,
 ) {
-  const behind = 0.18;
-  final top = EdgeFadeSide(
-    48,
-    clear: pad.top,
-    hold: capsuleTopGap + capsuleHeight,
-    floor: behind,
-  );
-  final bottom = EdgeFadeSide(
-    48,
-    clear: pad.bottom,
-    hold: capsuleBottomGap + capsuleBottomHeight,
-    floor: behind,
-  );
+  final behind = lerpDouble(0.18, 1, t)!;
   return (
-    top: EdgeFadeSide.lerp(top, EdgeFadeSide.none, t),
-    bottom: EdgeFadeSide.lerp(bottom, EdgeFadeSide(24, clear: pad.bottom), t),
+    top: EdgeFadeSide(
+      48,
+      clear: pad.top,
+      clearAlpha: t,
+      hold: capsuleTopGap + capsuleHeight,
+      floor: behind,
+    ),
+    bottom: EdgeFadeSide(
+      48,
+      hold: pad.bottom + capsuleBottomGap + capsuleBottomHeight,
+      floor: behind,
+    ),
   );
 }
 

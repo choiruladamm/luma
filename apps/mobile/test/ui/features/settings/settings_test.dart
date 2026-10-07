@@ -10,6 +10,7 @@ import 'package:luma/data/services/api_key_store.dart';
 import 'package:luma/data/services/openrouter_service.dart';
 import 'package:luma/domain/models/ai_model.dart';
 import 'package:luma/ui/core/theme/stabilo_theme.dart';
+import 'package:luma/ui/core/widgets/edge_fade.dart';
 import 'package:luma/ui/features/settings/views/settings_view.dart';
 
 import '../../../fakes.dart';
@@ -84,6 +85,22 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   }
+
+  testWidgets('header stays put; the list runs to the bottom edge', (
+    tester,
+  ) async {
+    await open(tester);
+    final fade = tester.widget<EdgeFadeScroll>(find.byType(EdgeFadeScroll));
+    expect(fade.top, EdgeFadeSide.standard);
+    expect(fade.bottom, EdgeFadeSide.none);
+    expect(
+      find.descendant(
+        of: find.byType(EdgeFadeScroll),
+        matching: find.text('Pengaturan'),
+      ),
+      findsNothing,
+    );
+  });
 
   testWidgets('typing a key saves it to the Keychain', (tester) async {
     await open(tester);

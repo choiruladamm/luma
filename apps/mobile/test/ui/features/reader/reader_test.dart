@@ -1077,37 +1077,55 @@ void main() {
       ),
     );
 
-    testWidgets('capsules showing vs immersive', (tester) async {
+    /// Mask opacity down the screen, edges fully on.
+    List<double> mask(WidgetTester tester) => edgeFadeStops(
+      1600,
+      top: fade(tester).top,
+      bottom: fade(tester).bottom,
+      topOn: 1,
+      bottomOn: 1,
+    ).alphas;
+
+    Future<void> open(WidgetTester tester) async {
+      tester.view.padding = const FakeViewPadding(top: 54, bottom: 34);
       await openBook(
         tester,
         readerBook: tallBook,
         saved: (chapterId: 13, paragraphIndex: 12, paragraphOffset: 0.0),
       );
-      // Capsules: 48pt off their edges, text behind them at 18%.
-      expect(fade(tester).top, const EdgeFadeSide(48, hold: 64, floor: 0.18));
+    }
+
+    testWidgets('capsules: empty status bar, 18% behind them to the edge', (
+      tester,
+    ) async {
+      await open(tester);
+      expect(
+        fade(tester).top,
+        const EdgeFadeSide(48, clear: 54, hold: 64, floor: 0.18),
+      );
+      // No empty band under the progress line: 18% right down to the edge.
       expect(
         fade(tester).bottom,
-        const EdgeFadeSide(48, hold: 54, floor: 0.18),
+        const EdgeFadeSide(48, hold: 34 + 14 + 40, floor: 0.18),
       );
-
-      await tester.tapAt(const Offset(10, 800)); // margin: hide
-      await tester.pumpAndSettle();
-      // Immersive: no top fade, 24pt down to the progress line.
-      expect(fade(tester).top, EdgeFadeSide.none);
-      expect(fade(tester).bottom, const EdgeFadeSide(24));
+      expect(mask(tester).first, 0); // status bar
+      expect(mask(tester).last, closeTo(0.18, 1e-9)); // bottom edge
     });
 
-    testWidgets('the switch follows the capsule animation', (tester) async {
-      await openBook(
-        tester,
-        readerBook: tallBook,
-        saved: (chapterId: 13, paragraphIndex: 12, paragraphOffset: 0.0),
-      );
+    testWidgets('immersive: no fade anywhere', (tester) async {
+      await open(tester);
+      await tester.tapAt(const Offset(10, 800)); // margin: hide
+      await tester.pumpAndSettle();
+      expect(mask(tester).every((a) => a == 1), isTrue);
+    });
+
+    testWidgets('the strength follows the capsule animation', (tester) async {
+      await open(tester);
       await tester.tapAt(const Offset(10, 800));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 100)); // mid-animation
-      final mid = fade(tester).bottom.fade;
-      expect(mid, inExclusiveRange(24, 48));
+      expect(fade(tester).bottom.floor, inExclusiveRange(0.18, 1));
+      expect(fade(tester).top.clearAlpha, inExclusiveRange(0, 1));
     });
   });
 
