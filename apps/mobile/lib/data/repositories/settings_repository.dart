@@ -54,6 +54,26 @@ class SettingsRepository {
 
   static const _shelfSort = 'shelf.sort';
 
+  /// Tampilan rak (grid / list); default grid, gak auto-ganti.
+  Stream<ShelfView> watchShelfView() =>
+      (_db.select(_db.settings)..where((s) => s.key.equals(_shelfView)))
+          .watchSingleOrNull()
+          .map(
+            (row) => ShelfView.values.firstWhere(
+              (v) => v.name == row?.value,
+              orElse: () => ShelfView.grid,
+            ),
+          )
+          .distinct();
+
+  Future<void> saveShelfView(ShelfView view) => _db
+      .into(_db.settings)
+      .insertOnConflictUpdate(
+        SettingsCompanion.insert(key: _shelfView, value: view.name),
+      );
+
+  static const _shelfView = 'shelf.view';
+
   /// Backup terakhir yang berhasil disimpen user; null = belum pernah.
   Stream<LastBackup?> watchLastBackup() =>
       (_db.select(_db.settings)
@@ -120,6 +140,11 @@ final aiModelProvider = StreamProvider<String>(
 /// Urutan rak yang dipilih.
 final shelfSortProvider = StreamProvider<ShelfSort>(
   (ref) => ref.watch(settingsRepositoryProvider).watchShelfSort(),
+);
+
+/// Tampilan rak yang dipilih.
+final shelfViewProvider = StreamProvider<ShelfView>(
+  (ref) => ref.watch(settingsRepositoryProvider).watchShelfView(),
 );
 
 /// Backup terakhir (Pengaturan, pengingat backup).

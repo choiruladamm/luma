@@ -103,6 +103,7 @@ class _BookCardState extends State<BookCard> {
                 children: [
                   Text(
                     widget.title,
+                    textScaler: TextScaler.noScaling, // blok dikunci 51
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: StabiloType.caption.copyWith(
@@ -115,6 +116,7 @@ class _BookCardState extends State<BookCard> {
                     const SizedBox(height: 2),
                     Text(
                       widget.author!,
+                      textScaler: TextScaler.noScaling,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: StabiloType.caption.copyWith(
@@ -291,7 +293,7 @@ class _ImportingCover extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.stabilo;
     return CustomPaint(
-      foregroundPainter: _DashedBorder(
+      foregroundPainter: DashedBorder(
         color: c.ink3,
         radius: BookCover.radiusFor(width),
       ),
@@ -321,8 +323,10 @@ class _ImportingCover extends StatelessWidget {
   }
 }
 
-class _DashedBorder extends CustomPainter {
-  const _DashedBorder({required this.color, required this.radius});
+/// Garis putus-putus 1,5 di sekeliling kotak bersudut [radius] (cover yang
+/// lagi diimport).
+class DashedBorder extends CustomPainter {
+  const DashedBorder({required this.color, required this.radius});
 
   final Color color;
   final double radius;
@@ -354,6 +358,6 @@ class _DashedBorder extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_DashedBorder old) =>
+  bool shouldRepaint(DashedBorder old) =>
       old.color != color || old.radius != radius;
 }

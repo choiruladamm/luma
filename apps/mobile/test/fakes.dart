@@ -67,6 +67,21 @@ class FakeSettings implements SettingsRepository {
     _sorts.add(sort);
   }
 
+  ShelfView shelfView = ShelfView.grid;
+  final _views = StreamController<ShelfView>.broadcast();
+
+  @override
+  Stream<ShelfView> watchShelfView() async* {
+    yield shelfView;
+    yield* _views.stream;
+  }
+
+  @override
+  Future<void> saveShelfView(ShelfView view) async {
+    shelfView = view;
+    _views.add(view);
+  }
+
   LastBackup? lastBackup;
   final _backups = StreamController<LastBackup?>.broadcast();
 

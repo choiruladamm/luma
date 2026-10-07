@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../theme/stabilo_theme.dart';
 import '../theme/stabilo_tokens.dart';
 import '../theme/stabilo_type.dart';
+import 'buttons.dart';
 
 enum TagTone { accent, pink, muted }
 
@@ -12,12 +13,20 @@ enum TagTone { accent, pink, muted }
 /// - [Tag.status]: chip progres di tile buku ("72%", "Kelar!", "Baru").
 class Tag extends StatelessWidget {
   const Tag.section(this.label, {super.key, this.tone = TagTone.accent})
-    : _section = true;
+    : _section = true,
+      icon = null;
 
-  const Tag.status(this.label, {super.key, this.tone = TagTone.muted})
-    : _section = false;
+  const Tag.status(
+    this.label, {
+    super.key,
+    this.tone = TagTone.muted,
+    this.icon,
+  }) : _section = false;
 
   final String label;
+
+  /// Ikon kecil di depan teks ("Kelar!" + centang). Cuma [Tag.status].
+  final List<List<dynamic>>? icon;
   final TagTone tone;
   final bool _section;
 
@@ -45,11 +54,17 @@ class Tag extends StatelessWidget {
         ),
         child: Align(
           widthFactor: 1,
-          child: Text(
-            _section ? label.toUpperCase() : label,
-            style: (_section ? StabiloType.tag : StabiloType.micro).copyWith(
-              color: fg,
-            ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            spacing: Space.s1,
+            children: [
+              if (icon != null) AppIcon(icon!, size: 12, color: fg),
+              Text(
+                _section ? label.toUpperCase() : label,
+                style: (_section ? StabiloType.tag : StabiloType.micro)
+                    .copyWith(color: fg),
+              ),
+            ],
           ),
         ),
       ),

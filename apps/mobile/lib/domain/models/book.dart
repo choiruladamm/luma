@@ -57,6 +57,9 @@ enum ShelfSort {
   final String label;
 }
 
+/// Tampilan rak: grid kartu atau daftar baris. Default [grid].
+enum ShelfView { grid, list }
+
 /// Isi sheet Info buku yang gak dibawa tiap baris rak.
 class BookInfo {
   const BookInfo({

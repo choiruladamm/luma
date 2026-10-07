@@ -12,7 +12,14 @@ import 'package:luma/domain/models/backup.dart';
 import 'package:luma/domain/models/book.dart';
 import 'package:luma/data/repositories/reading_progress_repository.dart';
 import 'package:luma/main.dart';
+import 'package:luma/ui/features/bookshelf/views/bookshelf_view.dart';
+import 'package:luma/ui/features/import_book/view_models/import_view_model.dart';
+import 'package:luma/ui/core/theme/stabilo_tokens.dart';
+import 'package:luma/data/repositories/import_repository.dart';
 import 'package:luma/ui/core/widgets/book_card.dart';
+import 'package:luma/ui/core/widgets/buttons.dart';
+import 'package:luma/ui/core/widgets/book_row.dart';
+import 'package:luma/ui/features/bookshelf/views/shelf_header.dart';
 import 'package:luma/ui/features/bookshelf/view_models/bookshelf_view_model.dart';
 import 'package:luma/ui/features/bookshelf/views/book_info_sheet.dart';
 import 'package:luma/ui/features/reader/view_models/reader_view_model.dart';
@@ -92,14 +99,17 @@ void main() {
     // Fresh backup by default: no reminder unless a test wants one.
     LastBackup? lastBackup,
     bool neverBackedUp = false,
+    ShelfView view = ShelfView.grid,
+    double width = 900,
   }) async {
     settings = FakeSettings()
+      ..shelfView = view
       ..lastBackup = neverBackedUp
           ? null
           : lastBackup ?? (at: DateTime.now(), name: 'x.zip', size: 1);
     backup = StuckBackup();
     repo = FakeBooks();
-    tester.view.physicalSize = const Size(900, 1600);
+    tester.view.physicalSize = Size(width, 1600);
     tester.view.devicePixelRatio = 1;
     tester.platformDispatcher.platformBrightnessTestValue = brightness;
     addTearDown(tester.view.reset);
@@ -123,6 +133,7 @@ void main() {
     );
     shelf.add(books);
     await tester.pump();
+    await tester.pump(); // sort + view come from settings, one frame later
   }
 
   for (final b in Brightness.values) {
@@ -148,6 +159,7 @@ void main() {
       book(1, 'Meditations'),
     ]);
     await tester.pump();
+    await tester.pump(); // empty → shelf swaps one frame later
 
     expect(find.text('Semua buku'), findsOneWidget);
     expect(
@@ -391,6 +403,151 @@ void main() {
         find.text('File aslinya di Files tetep aman kok.'),
         findsOneWidget,
       );
+    });
+  });
+
+  group('grid / list', () {
+    final books = [
+      book(1, 'Walden', opened: true, progress: 0.489),
+      book(2, 'Emma'),
+      book(3, 'Dracula', opened: true, progress: 1, finished: true),
+    ];
+
+    testWidgets('grid by default; the toggle switches and remembers', (
+      tester,
+    ) async {
+      await pump(tester, books);
+      expect(find.byType(BookCard), findsNWidgets(3));
+      expect(find.byType(BookRow), findsNothing);
+
+      await tester.tap(find.bySemanticsLabel('Tampilan list'));
+      await tester.pumpAndSettle();
+      expect(find.byType(BookRow), findsNWidgets(3));
+      expect(find.byType(BookCard), findsNothing);
+      expect(settings.shelfView, ShelfView.list);
+
+      await tester.tap(find.bySemanticsLabel('Tampilan grid'));
+      await tester.pumpAndSettle();
+      expect(find.byType(BookCard), findsNWidgets(3));
+      expect(settings.shelfView, ShelfView.grid);
+    });
+
+    testWidgets('a saved list choice is there on open', (tester) async {
+      await pump(tester, books, view: ShelfView.list);
+      expect(find.byType(BookRow), findsNWidgets(3));
+    });
+
+    for (final b in Brightness.values) {
+      testWidgets('list rows: progress, Baru, Kelar! ($b)', (tester) async {
+        await pump(tester, books, view: ShelfView.list, brightness: b);
+        expect(
+          tester.getSize(find.byType(BookRow).first).height,
+          Layout.rowHeight,
+        );
+        final rows = find.byType(BookRow);
+        Finder inRow(int i, String text) =>
+            find.descendant(of: rows.at(i), matching: find.text(text));
+        expect(inRow(0, '48%'), findsOneWidget);
+        expect(inRow(1, 'Baru'), findsOneWidget);
+        expect(inRow(2, 'Kelar!'), findsOneWidget);
+        expect(inRow(0, 'Walden'), findsOneWidget);
+        expect(inRow(0, 'Somebody'), findsOneWidget); // the mini cover has none
+        expect(tester.takeException(), isNull);
+      });
+    }
+
+    testWidgets('list: tap opens, long press opens the menu', (tester) async {
+      await pump(tester, books, view: ShelfView.list);
+      await tester.longPress(find.byType(BookRow).at(1));
+      await tester.pumpAndSettle();
+      expect(find.text('Info buku'), findsOneWidget);
+    });
+
+    testWidgets('an import in progress is a row too', (tester) async {
+      await pump(tester, books, view: ShelfView.list);
+      final context = tester.element(find.byType(BookshelfView));
+      final container = ProviderScope.containerOf(context);
+      container
+          .read(importControllerProvider.notifier)
+          .state = const ImportProcessing(
+        fileName: 'the-republic.epub',
+        size: 1,
+        stage: ImportStage.reading,
+      );
+      await tester.pump();
+      expect(find.text('the-republic.epub'), findsWidgets);
+      expect(find.text('Lagi diproses'), findsWidgets);
+    });
+
+    testWidgets('the shelf ends with a count', (tester) async {
+      await pump(tester, books);
+      await tester.scrollUntilVisible(
+        find.text('Udah mentok. 3 buku di rak lo.'),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(find.text('Udah mentok. 3 buku di rak lo.'), findsOneWidget);
+    });
+  });
+
+  group('header', () {
+    final many = [
+      for (var i = 1; i <= 40; i++)
+        book(i, 'Book $i', opened: i == 1, progress: 0.1, chapter: 1),
+    ];
+    final header = find.byType(ShelfHeader);
+
+    testWidgets('shrinks from 60 to a 44 bar over 52pt of scroll', (
+      tester,
+    ) async {
+      await pump(tester, many, width: 390);
+      expect(tester.getSize(header).height, 60);
+      final title = find.text('Rak buku lo');
+      final bigTitle = tester.getSize(title).height;
+
+      final position = tester
+          .state<ScrollableState>(find.byType(Scrollable).first)
+          .position;
+      position.jumpTo(26);
+      await tester.pump();
+      expect(tester.getSize(header).height, 52); // half way: 60 → 44
+
+      position.jumpTo(300);
+      await tester.pumpAndSettle();
+      expect(tester.getSize(header).height, 44);
+      expect(tester.getSize(title).height, lessThan(bigTitle));
+      // "Semua buku" stays pinned right under the bar.
+      expect(
+        tester.getTopLeft(find.text('Semua buku')).dy,
+        lessThan(tester.getBottomLeft(header).dy + 44),
+      );
+      expect(find.text('Semua buku'), findsOneWidget);
+    });
+
+    testWidgets('collapsed buttons are drawn 40 but still tap at 44', (
+      tester,
+    ) async {
+      await pump(tester, many, width: 390);
+      await tester.drag(find.byType(Scrollable).first, const Offset(0, -300));
+      await tester.pumpAndSettle();
+      final gear = find.bySemanticsLabel('Pengaturan app');
+      expect(tester.getSize(find.byType(CircleButton).last).width, 40);
+      // 21pt from the centre is outside the 40 circle, inside the 44 area.
+      await tester.tapAt(tester.getCenter(gear) + const Offset(21, 0));
+      await tester.pumpAndSettle();
+      expect(find.byType(SettingsView), findsOneWidget);
+    });
+
+    testWidgets('big text on a narrow phone: buttons stay, no overflow', (
+      tester,
+    ) async {
+      tester.platformDispatcher.textScaleFactorTestValue = 3;
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      await pump(tester, many, width: 375);
+      expect(find.bySemanticsLabel('Import EPUB'), findsOneWidget);
+      expect(find.bySemanticsLabel('Pengaturan app'), findsOneWidget);
+      expect(find.text('Rak buku lo'), findsOneWidget);
+      expect(tester.takeException(), isNull);
     });
   });
 

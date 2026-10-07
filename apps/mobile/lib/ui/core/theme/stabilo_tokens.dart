@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import 'stabilo_theme.dart';
@@ -36,10 +38,22 @@ abstract final class Layout {
   static const icon = 20.0; // ikon di tombol (18–20)
   static const iconStroke = 1.8; // 2.2 kalau ikon ≤14
   static const outline = 1.5; // cuma di objek yang bisa dipegang
-  static const shelfColumns = 3;
+  static const shelfMinColumns = 3;
+  static const shelfMinCard = 96.0; // di bawah ini kolom dikurangin
   static const shelfGapX = 14.0;
   static const shelfGapY = 24.0; // board Rak: stiker nongol 11 di bawah cover
+  static const rowHeight = 84.0; // tampilan list
+  static const rowGap = 4.0;
+  static const barMin = 44.0; // header rak pas nyusut (maks = topBar)
+  static const barShrink = 52.0; // jarak scroll buat nyusut penuh
   static const coverAspect = 2 / 3;
+
+  /// Kolom rak: max(3, floor((lebar − 2×margin + gap) / (96 + gap))). [width]
+  /// = lebar area isi (layar − 2×margin). Rumus yang sama buat landscape/iPad.
+  static int shelfColumns(double width) => math.max(
+    shelfMinColumns,
+    ((width + shelfGapX) / (shelfMinCard + shelfGapX)).floor(),
+  );
   static const sheetPadding = EdgeInsets.fromLTRB(24, 10, 24, 34);
 }
 

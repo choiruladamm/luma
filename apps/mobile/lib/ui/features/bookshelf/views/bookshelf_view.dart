@@ -16,10 +16,10 @@ import '../../../core/theme/stabilo_theme.dart';
 import '../../../core/theme/stabilo_tokens.dart';
 import '../../../core/theme/stabilo_type.dart';
 import '../../../core/widgets/book_card.dart';
+import '../../../core/widgets/book_row.dart';
 import '../../../core/widgets/edge_fade.dart';
 import '../../../core/widgets/buttons.dart';
 import '../../../core/widgets/book_cover.dart';
-import '../../../core/widgets/luma_logo.dart';
 import '../../../core/widgets/dialog.dart';
 import '../../../core/widgets/menu.dart';
 import '../../../core/widgets/sheet.dart';
@@ -31,6 +31,7 @@ import '../../settings/views/backup_listener.dart';
 import '../view_models/bookshelf_view_model.dart';
 import 'backup_reminder.dart';
 import 'book_info_sheet.dart';
+import 'shelf_header.dart';
 import 'continue_card.dart';
 
 /// Rak buku (board 01 Rak kosong, 02 Rak) + alur import (board 13–18).
@@ -218,12 +219,14 @@ class _BookshelfViewState extends ConsumerState<BookshelfView> {
   Widget build(BuildContext context) {
     ref.listen(importControllerProvider, _onImport);
     final books = ref.watch(booksStreamProvider);
+    final sort = ref.watch(shelfSortProvider).value;
+    final view = ref.watch(shelfViewProvider).value;
     final importing = switch (ref.watch(importControllerProvider)) {
       ImportProcessing(:final fileName) => fileName,
       _ => null,
     };
     void onImport() => _import.pick();
-    final header = _Header(onImport: onImport);
+    final header = ShelfHeader(onImport: onImport);
     final reminder = _reminder(switch (books) {
       AsyncData(value: final list) => list,
       _ => const <ShelfBook>[],
@@ -233,14 +236,22 @@ class _BookshelfViewState extends ConsumerState<BookshelfView> {
         body: SafeArea(
           bottom: false,
           child: switch (books) {
+            // Urutan & tampilan belum kebaca: tahan dulu, biar rak gak sempet
+            // nongol dalam urutan/tampilan default terus loncat.
+            AsyncData() when sort == null || view == null => _pad(header),
             AsyncData(value: final list)
                 when list.isEmpty && importing == null =>
               _Empty(header: header, onImport: onImport),
             AsyncData(value: final list) => _Shelf(
-              header: header,
               books: list,
-              sort: ref.watch(shelfSortProvider).value ?? ShelfSort.lastOpened,
+              sort: sort!,
+              view: view!,
+              onImport: onImport,
               onSort: _pickSort,
+              onView: (v) => ref
+                  .read(settingsRepositoryProvider)
+                  .saveShelfView(v)
+                  .ignore(),
               onBookMenu: _bookMenu,
               importing: importing,
               reminder: reminder,
@@ -273,75 +284,27 @@ Widget _pad(Widget child) => Padding(
   child: child,
 );
 
-class _Header extends StatelessWidget {
-  const _Header({required this.onImport});
-
-  final VoidCallback onImport;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: Layout.topBar,
-      child: Row(
-        children: [
-          Transform.translate(
-            offset: const Offset(-3, 0),
-            child: const LumaLogo(),
-          ),
-          const SizedBox(width: Space.s2 - 3),
-          Expanded(
-            child: Semantics(
-              header: true,
-              child: Text(
-                'Rak buku lo',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: StabiloType.titleLg,
-              ),
-            ),
-          ),
-          CircleButton(
-            semanticLabel: 'Import EPUB',
-            icon: AppIcons.add,
-            primary: true,
-            onPressed: onImport,
-          ),
-          const SizedBox(width: Space.s2),
-          CircleButton(
-            semanticLabel: 'Pengaturan app',
-            icon: AppIcons.settings,
-            onPressed: () => context.push(Routes.settings),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _Shelf extends ConsumerWidget {
+class _Shelf extends ConsumerStatefulWidget {
   const _Shelf({
-    required this.header,
     required this.books,
     required this.sort,
+    required this.view,
+    required this.onImport,
     required this.onSort,
+    required this.onView,
     required this.onBookMenu,
     this.importing,
     this.reminder,
   });
 
-  final Widget header;
-
-  /// Urut terakhir dibuka (urutan stream); [sort] diterapin buat grid.
+  /// Urut terakhir dibuka (urutan stream); [sort] diterapin buat isi rak.
   final List<ShelfBook> books;
   final ShelfSort sort;
+  final ShelfView view;
+  final VoidCallback onImport;
   final void Function(BuildContext anchor, ShelfSort current) onSort;
+  final ValueChanged<ShelfView> onView;
   final void Function(BuildContext anchor, ShelfBook book) onBookMenu;
-
-  /// Buku terakhir dibuka yang belum kelar, buat kartu "Lanjut baca yuk".
-  ShelfBook? get resume {
-    final first = books.firstOrNull;
-    return first != null && first.opened && !first.finished ? first : null;
-  }
 
   /// Nama file yang lagi diimport: kartu "Lagi diproses" di depan.
   final String? importing;
@@ -350,84 +313,93 @@ class _Shelf extends ConsumerWidget {
   final Widget? reminder;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final sorted = sortShelf(books, sort);
-    // Header + "Semua buku" nempel; grid di bawahnya mudar pas lewat (board
-    // EdgeFade), gak pake garis pemisah.
+  ConsumerState<_Shelf> createState() => _ShelfState();
+}
+
+class _ShelfState extends ConsumerState<_Shelf> {
+  final _scroll = ScrollController();
+
+  /// Header nyusut ngikutin scroll: 0 (gede) sampe 1 (bar kecil).
+  final _collapse = ValueNotifier<double>(0);
+
+  /// Baris "Semua buku" lagi nempel di atas isi yang lewat di bawahnya: fade
+  /// tepi atas baru dipasang di bawah baris itu.
+  final _stuck = ValueNotifier<bool>(false);
+
+  @override
+  void initState() {
+    super.initState();
+    _scroll.addListener(
+      () =>
+          _collapse.value = (_scroll.offset / Layout.barShrink).clamp(0.0, 1.0),
+    );
+  }
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    _collapse.dispose();
+    _stuck.dispose();
+    super.dispose();
+  }
+
+  /// Buku terakhir dibuka yang belum kelar, buat kartu "Lanjut baca yuk".
+  ShelfBook? get _resume {
+    final first = widget.books.firstOrNull;
+    return first != null && first.opened && !first.finished ? first : null;
+  }
+
+  void _setStuck(bool v) => WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (mounted && _stuck.value != v) _stuck.value = v;
+  });
+
+  File? _cover(ShelfBook b) => b.coverName == null
+      ? null
+      : ref.read(fileStorageProvider).cover(b.coverName!);
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.stabilo;
+    final sorted = sortShelf(widget.books, widget.sort);
+    final resume = _resume;
+    final importing = widget.importing;
+    final extra = importing == null ? 0 : 1;
+    final bottom = MediaQuery.paddingOf(context).bottom;
+
+    final toolbar = _Toolbar(
+      sort: widget.sort,
+      view: widget.view,
+      onSort: widget.onSort,
+      onView: widget.onView,
+    );
+
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: Layout.margin),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              header,
-              if (resume != null) ...[
-                const SizedBox(height: Space.s4),
-                ContinueCard(
-                  book: resume!,
-                  coverFile: resume!.coverName == null
-                      ? null
-                      : ref.read(fileStorageProvider).cover(resume!.coverName!),
-                  onTap: () => context.push(Routes.reader(resume!.id)),
-                ),
-                const SizedBox(height: Space.s2),
-              ] else
-                const SizedBox(height: Space.s4 + Space.s1),
-              SizedBox(
-                height: Layout.touch,
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Semantics(
-                        header: true,
-                        child: Text('Semua buku', style: StabiloType.titleSm),
-                      ),
-                    ),
-                    Builder(
-                      builder: (anchor) => Semantics(
-                        button: true,
-                        label: 'Urutan rak: ${sort.label}',
-                        excludeSemantics: true,
-                        child: InkWell(
-                          onTap: () => onSort(anchor, sort),
-                          child: SizedBox(
-                            height: Layout.touch,
-                            child: Row(
-                              spacing: 5,
-                              children: [
-                                Text(
-                                  sort.label,
-                                  style: StabiloType.caption.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                    color: context.stabilo.ink2,
-                                  ),
-                                ),
-                                AppIcon(
-                                  AppIcons.down,
-                                  size: 13,
-                                  color: context.stabilo.ink2,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+        // Header nempel & nyusut pas scroll 0–52pt; lewat itu "Semua buku"
+        // nempel di bawah bar.
+        _pad(
+          ValueListenableBuilder(
+            valueListenable: _collapse,
+            builder: (context, t, _) =>
+                ShelfHeader(collapse: t, onImport: widget.onImport),
           ),
         ),
         Expanded(
-          child: EdgeFadeScroll(
-            // Bawah edge-to-edge: buku jalan sampe tepi layar, lewat di
-            // bawah home indicator; padding akhir = safe area.
-            bottom: EdgeFadeSide.none,
+          child: ValueListenableBuilder(
+            valueListenable: _stuck,
+            builder: (context, stuck, child) => EdgeFadeScroll(
+              // Mudar cuma di bawah baris yang nempel (44), gak pake garis
+              // pemisah. Bawah edge-to-edge: buku jalan sampe tepi layar.
+              top: stuck
+                  ? const EdgeFadeSide(20, clear: Layout.touch, clearAlpha: 1)
+                  : EdgeFadeSide.none,
+              bottom: EdgeFadeSide.none,
+              child: child!,
+            ),
             child: CustomScrollView(
+              controller: _scroll,
               slivers: [
-                if (reminder != null)
+                if (widget.reminder != null)
                   SliverPadding(
                     padding: const EdgeInsets.fromLTRB(
                       Layout.margin,
@@ -435,60 +407,141 @@ class _Shelf extends ConsumerWidget {
                       Layout.margin,
                       Space.s2,
                     ),
-                    sliver: SliverToBoxAdapter(child: reminder),
+                    sliver: SliverToBoxAdapter(child: widget.reminder),
                   ),
                 SliverPadding(
                   padding: EdgeInsets.fromLTRB(
                     Layout.margin,
+                    resume == null ? Space.s4 + Space.s1 : Space.s4,
+                    Layout.margin,
+                    resume == null ? 0 : Space.s2,
+                  ),
+                  sliver: SliverToBoxAdapter(
+                    child: resume == null
+                        ? null
+                        : ContinueCard(
+                            book: resume,
+                            coverFile: _cover(resume),
+                            onTap: () => context.push(Routes.reader(resume.id)),
+                          ),
+                  ),
+                ),
+                SliverPersistentHeader(
+                  pinned: true,
+                  delegate: _PinnedRow(
+                    color: c.canvas,
+                    onStuck: _setStuck,
+                    child: toolbar,
+                  ),
+                ),
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(
+                    Layout.margin,
                     Space.s2,
                     Layout.margin,
-                    MediaQuery.paddingOf(context).bottom,
+                    0,
                   ),
-                  sliver: SliverLayoutBuilder(
-                    builder: (context, constraints) {
-                      const cols = Layout.shelfColumns;
-                      final colW = math.max(
-                        0.0,
-                        (constraints.crossAxisExtent -
-                                (cols - 1) * Layout.shelfGapX) /
-                            cols,
-                      );
-                      return SliverGrid.builder(
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: cols,
-                          crossAxisSpacing: Layout.shelfGapX,
-                          mainAxisSpacing: Layout.shelfGapY,
-                          mainAxisExtent: BookCard.heightFor(colW),
-                        ),
-                        itemCount: sorted.length + (importing == null ? 0 : 1),
-                        itemBuilder: (context, i) {
-                          if (importing != null) {
-                            if (i == 0) {
-                              return BookCard.importing(fileName: importing!);
+                  sliver: widget.view == ShelfView.list
+                      ? SliverFixedExtentList.builder(
+                          itemExtent: Layout.rowHeight + Layout.rowGap,
+                          itemCount: sorted.length + extra,
+                          itemBuilder: (context, i) {
+                            if (importing != null) {
+                              if (i == 0) {
+                                return BookRow.importing(fileName: importing);
+                              }
+                              i--;
                             }
-                            i--;
-                          }
-                          final book = sorted[i];
-                          return Builder(
-                            key: ValueKey(book.id),
-                            builder: (anchor) => BookCard(
-                              title: book.title,
-                              author: book.author,
-                              coverFile: book.coverName == null
-                                  ? null
-                                  : ref
-                                        .read(fileStorageProvider)
-                                        .cover(book.coverName!),
-                              progress: book.progress,
-                              opened: book.opened,
-                              finished: book.finished,
-                              onTap: () => context.push(Routes.reader(book.id)),
-                              onLongPress: () => onBookMenu(anchor, book),
-                            ),
-                          );
-                        },
-                      );
-                    },
+                            final book = sorted[i];
+                            return Padding(
+                              key: ValueKey(book.id),
+                              padding: const EdgeInsets.only(
+                                bottom: Layout.rowGap,
+                              ),
+                              child: Builder(
+                                builder: (anchor) => BookRow(
+                                  title: book.title,
+                                  author: book.author,
+                                  coverFile: _cover(book),
+                                  progress: book.progress,
+                                  opened: book.opened,
+                                  finished: book.finished,
+                                  onTap: () =>
+                                      context.push(Routes.reader(book.id)),
+                                  onLongPress: () =>
+                                      widget.onBookMenu(anchor, book),
+                                ),
+                              ),
+                            );
+                          },
+                        )
+                      : SliverLayoutBuilder(
+                          builder: (context, constraints) {
+                            final cols = Layout.shelfColumns(
+                              constraints.crossAxisExtent,
+                            );
+                            final colW = math.max(
+                              0.0,
+                              (constraints.crossAxisExtent -
+                                      (cols - 1) * Layout.shelfGapX) /
+                                  cols,
+                            );
+                            return SliverGrid.builder(
+                              gridDelegate:
+                                  SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: cols,
+                                    crossAxisSpacing: Layout.shelfGapX,
+                                    mainAxisSpacing: Layout.shelfGapY,
+                                    mainAxisExtent: BookCard.heightFor(colW),
+                                  ),
+                              itemCount: sorted.length + extra,
+                              itemBuilder: (context, i) {
+                                if (importing != null) {
+                                  if (i == 0) {
+                                    return BookCard.importing(
+                                      fileName: importing,
+                                    );
+                                  }
+                                  i--;
+                                }
+                                final book = sorted[i];
+                                return Builder(
+                                  key: ValueKey(book.id),
+                                  builder: (anchor) => BookCard(
+                                    title: book.title,
+                                    author: book.author,
+                                    coverFile: _cover(book),
+                                    progress: book.progress,
+                                    opened: book.opened,
+                                    finished: book.finished,
+                                    onTap: () =>
+                                        context.push(Routes.reader(book.id)),
+                                    onLongPress: () =>
+                                        widget.onBookMenu(anchor, book),
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                        ),
+                ),
+                // Penutup rak.
+                SliverPadding(
+                  padding: EdgeInsets.fromLTRB(
+                    Layout.margin,
+                    Space.s6 + Space.s1,
+                    Layout.margin,
+                    Space.s6 + bottom,
+                  ),
+                  sliver: SliverToBoxAdapter(
+                    child: Text(
+                      'Udah mentok. ${widget.books.length} buku di rak lo.',
+                      textAlign: TextAlign.center,
+                      style: StabiloType.caption.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: c.ink3,
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -496,6 +549,181 @@ class _Shelf extends ConsumerWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Baris "Semua buku" yang nempel di bawah header.
+class _PinnedRow extends SliverPersistentHeaderDelegate {
+  const _PinnedRow({
+    required this.color,
+    required this.onStuck,
+    required this.child,
+  });
+
+  final Color color;
+  final ValueChanged<bool> onStuck;
+  final Widget child;
+
+  @override
+  double get minExtent => Layout.touch;
+
+  @override
+  double get maxExtent => Layout.touch;
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    onStuck(overlapsContent);
+    return ColoredBox(color: color, child: child);
+  }
+
+  @override
+  bool shouldRebuild(_PinnedRow old) => true;
+}
+
+/// "Semua buku" + urutan + toggle grid / list.
+class _Toolbar extends StatelessWidget {
+  const _Toolbar({
+    required this.sort,
+    required this.view,
+    required this.onSort,
+    required this.onView,
+  });
+
+  final ShelfSort sort;
+  final ShelfView view;
+  final void Function(BuildContext anchor, ShelfSort current) onSort;
+  final ValueChanged<ShelfView> onView;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.stabilo;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: Layout.margin),
+      child: Row(
+        children: [
+          Expanded(
+            child: Semantics(
+              header: true,
+              child: Text(
+                'Semua buku',
+                // Baris 44 dikunci: ikut teks gede sampe 1,3×.
+                textScaler: MediaQuery.textScalerOf(context)
+                    .clamp(maxScaleFactor: 1.3),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: StabiloType.titleSm,
+              ),
+            ),
+          ),
+          Builder(
+            builder: (anchor) => Semantics(
+              button: true,
+              label: 'Urutan rak: ${sort.label}',
+              excludeSemantics: true,
+              child: InkWell(
+                onTap: () => onSort(anchor, sort),
+                child: SizedBox(
+                  height: Layout.touch,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                    child: Row(
+                      spacing: 5,
+                      children: [
+                        Text(
+                          sort.label,
+                          textScaler: TextScaler.noScaling,
+                          style: StabiloType.caption.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: c.ink2,
+                          ),
+                        ),
+                        AppIcon(AppIcons.down, size: 13, color: c.ink2),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: Space.s1),
+          _ViewToggle(value: view, onChanged: onView),
+        ],
+      ),
+    );
+  }
+}
+
+/// Toggle 2 ikon (grid / list): 40 tinggi, area tap tiap ikon 44.
+class _ViewToggle extends StatelessWidget {
+  const _ViewToggle({required this.value, required this.onChanged});
+
+  final ShelfView value;
+  final ValueChanged<ShelfView> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.stabilo;
+    Widget item(ShelfView v, List<List<dynamic>> icon, String label) {
+      final on = v == value;
+      return Semantics(
+        button: true,
+        selected: on,
+        label: label,
+        excludeSemantics: true,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () => onChanged(v),
+          child: SizedBox(
+            width: 34,
+            height: Layout.touch,
+            child: Center(
+              child: Container(
+                width: 32,
+                height: 32,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: on ? c.sheet : null,
+                  border: on
+                      ? Border.all(color: c.capsuleLine, width: Layout.outline)
+                      : null,
+                ),
+                child: AppIcon(icon, size: 16, color: on ? c.ink : c.ink2),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Pil 40 digambar di belakang; ikonnya 44 tinggi biar area tap-nya 44.
+    return SizedBox(
+      width: 76,
+      height: Layout.touch,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Container(
+            height: 40,
+            decoration: BoxDecoration(
+              color: c.muted,
+              borderRadius: BorderRadius.circular(20),
+            ),
+          ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              item(ShelfView.grid, AppIcons.grid, 'Tampilan grid'),
+              item(ShelfView.list, AppIcons.list, 'Tampilan list'),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
