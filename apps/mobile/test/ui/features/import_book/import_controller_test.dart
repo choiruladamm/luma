@@ -116,7 +116,7 @@ void main() {
       final seen = await timeline();
       final (at, last) = seen.last;
       expect(last, isA<ImportSuccess>());
-      // Minimum loading (1.2 s), a little slack for timer rounding.
+      // Minimum loading (1.5 s), a little slack for timer rounding.
       expect(
         at,
         greaterThanOrEqualTo(
