@@ -35,43 +35,105 @@ Future<void> showMeaningSheet(
   required ValueChanged<double> onHeight,
   required VoidCallback onSettings,
 }) {
-  final height = MediaQuery.sizeOf(context).height * Layout.artinyaHeight;
+  final screen = MediaQuery.sizeOf(context).height;
+  final height = screen * Layout.artinyaHeight;
   WidgetsBinding.instance.addPostFrameCallback((_) => onHeight(height));
+  final sheet = DraggableScrollableController();
   return showAppSheet<void>(
     context,
     maxHeight: 1, // tingginya diatur DraggableScrollableSheet
     enableDrag: false,
     backgroundColor: Colors.transparent,
     barrierColor: Colors.transparent,
-    builder: (context) => DraggableScrollableSheet(
-      // Tarik turun di isi pas offset 0 (atau di grabber) nutup sheet.
-      initialChildSize: Layout.artinyaHeight,
-      minChildSize: 0,
-      maxChildSize: Layout.artinyaHeight,
-      snap: true,
-      builder: (context, scroll) {
-        final theme = Theme.of(context).bottomSheetTheme;
-        return PrimaryScrollController(
-          controller: scroll,
-          child: Material(
-            key: const ValueKey('meaning-sheet'),
-            color: theme.modalBackgroundColor,
-            shape: theme.shape,
-            clipBehavior: Clip.antiAlias,
-            child: ValueListenableBuilder(
-              valueListenable: group,
-              builder: (context, g, _) => MeaningSheet(
-                key: ValueKey(g),
-                group: g,
-                onNext: hasNext(g) ? onNext : null,
-                onSettings: onSettings,
-              ),
-            ),
+    // Material bawaan sheet (transparan) nutupin seluruh layar dan nelen tap,
+    // jadi tap area kosong di atas sheet ditangkep lapisan di belakangnya.
+    builder: (context) => Stack(
+      children: [
+        Positioned.fill(
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => Navigator.of(context).pop(),
           ),
-        );
-      },
+        ),
+        DraggableScrollableSheet(
+          // Tarik turun di isi pas offset 0 nutup sheet; di grabber lewat [_Drag].
+          controller: sheet,
+          initialChildSize: Layout.artinyaHeight,
+          minChildSize: 0,
+          maxChildSize: Layout.artinyaHeight,
+          snap: true,
+          builder: (context, scroll) {
+            final theme = Theme.of(context).bottomSheetTheme;
+            return PrimaryScrollController(
+              controller: scroll,
+              child: Material(
+                key: const ValueKey('meaning-sheet'),
+                color: theme.modalBackgroundColor,
+                shape: theme.shape,
+                clipBehavior: Clip.antiAlias,
+                child: _Drag(
+                  sheet: sheet,
+                  screen: screen,
+                  child: ValueListenableBuilder(
+                    valueListenable: group,
+                    builder: (context, g, _) => MeaningSheet(
+                      key: ValueKey(g),
+                      group: g,
+                      onNext: hasNext(g) ? onNext : null,
+                      onSettings: onSettings,
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ],
     ),
-  );
+  ).whenComplete(sheet.dispose);
+}
+
+/// Drag di grabber: sheet ngikutin jari ke bawah; dilepas, nutup kalau
+/// di-fling atau udah ditarik jauh, kalau nggak balik ke atas. (Grabber
+/// lapisan di atas isi, jadi dragnya gak sampe ke scroll view.)
+class _Drag extends InheritedWidget {
+  const _Drag({
+    required this.sheet,
+    required this.screen,
+    required super.child,
+  });
+
+  final DraggableScrollableController sheet;
+  final double screen;
+
+  static _Drag of(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<_Drag>()!;
+
+  void update(DragUpdateDetails d) {
+    if (!sheet.isAttached) return;
+    sheet.jumpTo(
+      (sheet.size - d.delta.dy / screen).clamp(0.0, Layout.artinyaHeight),
+    );
+  }
+
+  void end(BuildContext context, DragEndDetails d) {
+    if (!sheet.isAttached) return;
+    final close =
+        (d.primaryVelocity ?? 0) >= Layout.sheetDismissFling ||
+        sheet.size < Layout.artinyaHeight * Layout.sheetDismissRatio;
+    if (close) {
+      Navigator.of(context).pop();
+    } else {
+      sheet.animateTo(
+        Layout.artinyaHeight,
+        duration: Motion.sheetClose,
+        curve: Curves.easeOut,
+      );
+    }
+  }
+
+  @override
+  bool updateShouldNotify(_Drag old) => false;
 }
 
 class MeaningSheet extends ConsumerStatefulWidget {
@@ -285,10 +347,23 @@ class _ScrollFrameState extends State<_ScrollFrame>
           ),
         ),
         Positioned(
-          top: pad.top,
+          top: 0,
           left: 0,
           right: 0,
-          child: const SheetGrabber(),
+          child: Builder(
+            builder: (context) {
+              final drag = _Drag.of(context);
+              return GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onVerticalDragUpdate: drag.update,
+                onVerticalDragEnd: (d) => drag.end(context, d),
+                child: Padding(
+                  padding: EdgeInsets.only(top: pad.top, bottom: Space.s4),
+                  child: const SheetGrabber(),
+                ),
+              );
+            },
+          ),
         ),
         Positioned(
           left: pad.left,

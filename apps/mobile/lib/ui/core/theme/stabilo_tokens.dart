@@ -61,6 +61,8 @@ abstract final class Layout {
   static const artinyaHeader = 91.0; // grabber + judul + X + jarak
   static const artinyaActions = 102.0; // tombol 52 + jarak 16 + safe area 34
   static const artinyaGrabberZone = 12.0; // isi pudar mulai dari sini
+  static const sheetDismissFling = 700.0; // fling turun segini (pt/dtk) nutup
+  static const sheetDismissRatio = 0.75; // atau ditarik sampe tinggal segini
 }
 
 /// Durasi & curve. Kalau iOS "Kurangi gerakan" nyala

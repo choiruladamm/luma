@@ -1578,6 +1578,46 @@ void main() {
       expect(find.text('Artinya gini nih'), findsNothing);
     });
 
+    testWidgets('swipe down on the grabber closes the sheet, at any offset', (
+      tester,
+    ) async {
+      await openLong(tester);
+      await tester.drag(sheetScroll(), const Offset(0, -300)); // not at top
+      await tester.pumpAndSettle();
+      await tester.drag(find.byType(SheetGrabber), const Offset(0, 400));
+      await tester.pumpAndSettle();
+      expect(find.text('Artinya gini nih'), findsNothing);
+    });
+
+    testWidgets('a short swipe on the grabber springs back', (tester) async {
+      await openLong(tester);
+      final top = tester.getTopLeft(sheetBox).dy;
+      await tester.drag(find.byType(SheetGrabber), const Offset(0, 40));
+      await tester.pumpAndSettle();
+      expect(find.text('Artinya gini nih'), findsOneWidget);
+      expect(tester.getTopLeft(sheetBox).dy, closeTo(top, 1));
+    });
+
+    testWidgets('tapping the empty area above the sheet closes it only', (
+      tester,
+    ) async {
+      await openLong(tester);
+      await tester.tapAt(const Offset(450, 100));
+      await tester.pumpAndSettle();
+      expect(find.text('Artinya gini nih'), findsNothing);
+      // The tap was the barrier's: the capsules stay away.
+      expect(tester.getTopLeft(find.byType(ReaderTopCapsule)).dy, lessThan(0));
+    });
+
+    testWidgets('tapping the text inside the sheet does not close it', (
+      tester,
+    ) async {
+      await openLong(tester);
+      await tester.tap(find.textContaining('ID line 0'));
+      await tester.pumpAndSettle();
+      expect(find.text('Artinya gini nih'), findsOneWidget);
+    });
+
     testWidgets('a small pull at offset 0 springs back', (tester) async {
       answer = (g) async => longReply(g);
       await openTall(tester);
