@@ -304,34 +304,32 @@ class _KeyStatus extends StatelessWidget {
       KeyStatus.refused => error(
         'Key-nya ditolak OpenRouter, jadi gak disimpen. Cek lagi ya.',
       ),
-      KeyStatus.rejected || KeyStatus.valid => Row(
+      KeyStatus.checking || KeyStatus.rejected || KeyStatus.valid => Row(
         children: [
           Expanded(
-            child: status == KeyStatus.valid
-                ? Row(
-                    spacing: 6,
-                    children: [
-                      Container(
-                        width: 18,
-                        height: 18,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: c.accent,
-                          shape: BoxShape.circle,
-                        ),
-                        child: AppIcon(
-                          AppIcons.check,
-                          size: 11,
-                          color: c.onAccent,
-                        ),
-                      ),
-                      Text(
-                        'Key-nya jalan',
-                        style: label.copyWith(color: c.ink),
-                      ),
-                    ],
-                  )
-                : error('Key-nya ditolak OpenRouter'),
+            child: switch (status) {
+              KeyStatus.checking => Text(
+                'Bentar, lagi ngecek...',
+                style: small,
+              ),
+              KeyStatus.valid => Row(
+                spacing: 6,
+                children: [
+                  Container(
+                    width: 18,
+                    height: 18,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: c.accent,
+                      shape: BoxShape.circle,
+                    ),
+                    child: AppIcon(AppIcons.check, size: 11, color: c.onAccent),
+                  ),
+                  Text('Key-nya jalan', style: label.copyWith(color: c.ink)),
+                ],
+              ),
+              _ => error('Key-nya ditolak OpenRouter'),
+            },
           ),
           Text('Disimpen di Keychain', style: small),
         ],

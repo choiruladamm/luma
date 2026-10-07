@@ -10,6 +10,7 @@ import 'package:luma/data/repositories/ai_results_repository.dart';
 import 'package:luma/data/repositories/settings_repository.dart';
 import 'package:luma/data/services/api_key_store.dart';
 import 'package:luma/data/services/restore_service.dart';
+import 'package:luma/ui/features/settings/view_models/settings_view_model.dart';
 import 'package:luma/data/services/file_picker_service.dart';
 import 'package:luma/domain/models/backup.dart';
 import 'package:luma/data/services/share_service.dart';
@@ -151,9 +152,12 @@ void main() {
     Brightness b = Brightness.light,
     AiCacheStats stats = (paragraphs: 1240, bytes: 3355443),
     bool? keyOk = true,
+    Completer<void>? gate,
     LastBackup? lastBackup,
   }) async {
-    openRouter = FakeOpenRouter()..keyOk = keyOk;
+    openRouter = FakeOpenRouter()
+      ..keyOk = keyOk
+      ..gate = gate;
     backup = FakeBackup();
     share = FakeShare();
     tester.view.physicalSize = const Size(900, 1600);
@@ -379,6 +383,52 @@ void main() {
       expect(find.text('Disimpen di Keychain'), findsOneWidget);
       expect(openRouter.checked, ['sk-or-v1-saved']);
     });
+
+    testWidgets('saved key still being checked: no Keychain note flash', (
+      tester,
+    ) async {
+      final gate = Completer<void>();
+      await open(tester, gate: gate);
+      expect(find.text('Bentar, lagi ngecek...'), findsOneWidget);
+      expect(find.text(keychain), findsNothing);
+      gate.complete();
+      await tester.pumpAndSettle();
+      expect(find.text('Key-nya jalan'), findsOneWidget);
+      expect(find.text('Bentar, lagi ngecek...'), findsNothing);
+    });
+
+    test(
+      'reopening shows the last verdict at once, re-checks quietly',
+      () async {
+        final fake = FakeOpenRouter();
+        final container = ProviderContainer(
+          overrides: [
+            apiKeyStoreProvider.overrideWithValue(ApiKeyStore()),
+            openRouterServiceProvider.overrideWithValue(fake),
+          ],
+        );
+        addTearDown(container.dispose);
+        final first = container.listen(apiKeyEntryProvider, (_, _) {});
+        expect(first.read(), KeyStatus.checking);
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+        expect(first.read(), KeyStatus.valid);
+        first.close();
+        await Future<void>.delayed(Duration.zero); // autoDispose
+
+        final gate = Completer<void>();
+        fake.gate = gate;
+        final again = container.listen(apiKeyEntryProvider, (_, _) {});
+        expect(again.read(), KeyStatus.valid); // no "checking" in between
+        await Future<void>.delayed(Duration.zero);
+        expect(again.read(), KeyStatus.valid);
+        fake.keyOk = false;
+        gate.complete();
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+        expect(again.read(), KeyStatus.rejected); // quiet re-check caught it
+      },
+    );
 
     testWidgets('a rejected key says so', (tester) async {
       await open(tester, keyOk: false);

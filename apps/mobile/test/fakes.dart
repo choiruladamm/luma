@@ -132,6 +132,9 @@ class FakeSettings implements SettingsRepository {
 /// [explain] answers "id: " + each target paragraph, or throws [failure].
 class FakeOpenRouter implements OpenRouterService {
   bool? keyOk = true;
+
+  /// Kalau diisi, checkKey nunggu sampai selesai (cek yang lagi jalan).
+  Completer<void>? gate;
   final checked = <String>[];
   final calls =
       <
@@ -147,6 +150,7 @@ class FakeOpenRouter implements OpenRouterService {
   @override
   Future<bool> checkKey(String apiKey) async {
     checked.add(apiKey);
+    await gate?.future;
     if (keyOk == null) throw const AiException(AiError.network);
     return keyOk!;
   }
