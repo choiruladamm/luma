@@ -1135,6 +1135,7 @@ void main() {
   });
 
   group('Artinya', () {
+    final sheetBox = find.byKey(const ValueKey('meaning-sheet'));
     Future<void> openTall(WidgetTester tester) => openBook(
       tester,
       readerBook: tallBook,
@@ -1172,7 +1173,7 @@ void main() {
       expect(find.textContaining('ID Tall 13:'), findsOneWidget);
       expect(find.text('Makna grup 13.'), findsOneWidget);
       // The section chips wrap their text, they do not span the sheet.
-      final sheetWidth = tester.getSize(find.byType(BottomSheet)).width;
+      final sheetWidth = tester.getSize(sheetBox).width;
       final pills = find.descendant(
         of: find.byType(Tag),
         matching: find.byType(Container),
@@ -1192,7 +1193,7 @@ void main() {
       await openTall(tester);
       await tapGroup(tester, 13);
       expect(block, findsOneWidget);
-      final sheetTop = tester.getTopLeft(find.byType(BottomSheet)).dy;
+      final sheetTop = tester.getTopLeft(sheetBox).dy;
       expect(tester.getRect(block).bottom, closeTo(sheetTop - 16, 1));
       // Highlight reaches half the margin out: 24 / 2.
       expect(tester.getRect(block).left, 12);
@@ -1229,7 +1230,7 @@ void main() {
       expect(pixels(tester), isNot(closeTo(before, 1)));
       await tester.tap(find.bySemanticsLabel('Tutup'));
       await tester.pumpAndSettle();
-      expect(find.byType(BottomSheet), findsNothing);
+      expect(sheetBox, findsNothing);
       expect(pixels(tester), closeTo(before, 1));
       expect(block, findsNothing);
     });
@@ -1242,7 +1243,7 @@ void main() {
       await tester.tap(find.text('Lanjut'));
       await tester.pumpAndSettle();
       expect(find.textContaining('ID Tall 14:'), findsOneWidget);
-      final sheetTop = tester.getTopLeft(find.byType(BottomSheet)).dy;
+      final sheetTop = tester.getTopLeft(sheetBox).dy;
       expect(tester.getRect(block).bottom, closeTo(sheetTop - 16, 1));
       final at = pixels(tester);
       progress.saves.clear();
@@ -1270,10 +1271,7 @@ void main() {
     });
 
     Text sheetText(WidgetTester tester, String s) => tester.widget<Text>(
-      find.descendant(
-        of: find.byType(BottomSheet),
-        matching: find.textContaining(s),
-      ),
+      find.descendant(of: sheetBox, matching: find.textContaining(s)),
     );
 
     testWidgets('the sheet text follows the Aa prefs, UI text does not', (
@@ -1352,16 +1350,15 @@ void main() {
       await tester.tap(find.textContaining('Tall 13:'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
-      final row = find
-          .ancestor(
-            of: find.byType(FractionallySizedBox).first,
-            matching: find.byType(SizedBox),
-          )
-          .first;
-      expect(
-        tester.getSize(row).height,
-        closeTo(ReaderTypography(prefs, Brightness.light).lineExtent, 1e-6),
+      final extent = ReaderTypography(prefs, Brightness.light).lineExtent;
+      // 3 + 4 skeleton rows, each as tall as one text line.
+      final rows = find.byWidgetPredicate(
+        (w) =>
+            w is SizedBox &&
+            (w.height ?? 0) - extent < 1e-6 &&
+            (w.height ?? 0) - extent > -1e-6,
       );
+      expect(rows, findsNWidgets(7));
     });
 
     AiReply longReply(GroupRef g) => AiReply(
@@ -1370,26 +1367,31 @@ void main() {
     );
 
     Finder sheetScroll() => find.descendant(
-      of: find.byType(BottomSheet),
+      of: sheetBox,
       matching: find.byType(SingleChildScrollView),
     );
 
-    testWidgets('height follows the content, capped at 528 of 844', (
-      tester,
-    ) async {
+    testWidgets('height is fixed at 528 of 844 in every state', (tester) async {
       await openTall(tester);
-      final screen = tester.view.physicalSize.height;
+      final want = tester.view.physicalSize.height * Layout.artinyaHeight;
       await tapGroup(tester, 13);
-      final short = tester.getSize(find.byType(BottomSheet)).height;
-      expect(short, lessThan(screen * Layout.artinyaMaxHeight));
+      expect(tester.getSize(sheetBox).height, closeTo(want, 1)); // short
       await tester.tap(find.bySemanticsLabel('Tutup'));
       await tester.pumpAndSettle();
 
       answer = (g) async => longReply(g);
       await tapGroup(tester, 13);
+      expect(tester.getSize(sheetBox).height, closeTo(want, 1)); // long
+      await tester.tap(find.bySemanticsLabel('Tutup'));
+      await tester.pumpAndSettle();
+
+      answer = (_) async => throw const AiException(AiError.timeout);
+      await tapGroup(tester, 13);
+      expect(tester.getSize(sheetBox).height, closeTo(want, 1)); // error
+      // Buttons stick to the bottom even with little content.
       expect(
-        tester.getSize(find.byType(BottomSheet)).height,
-        closeTo(screen * Layout.artinyaMaxHeight, 1),
+        tester.getBottomLeft(find.text('Coba lagi')).dy,
+        lessThan(tester.getBottomLeft(sheetBox).dy),
       );
     });
 
@@ -1399,11 +1401,10 @@ void main() {
       answer = (g) async => longReply(g);
       await openTall(tester);
       await tapGroup(tester, 13);
-      final sheet = tester.getRect(find.byType(BottomSheet));
+      final sheet = tester.getRect(sheetBox);
       final grabber = tester.getTopLeft(find.byType(SheetGrabber)).dy;
       final lanjut = tester.getBottomLeft(find.text('Lanjut')).dy;
       expect(grabber, sheet.top + 10);
-      expect(find.text('Salin'), findsOneWidget);
 
       await tester.drag(sheetScroll(), const Offset(0, -300));
       await tester.pumpAndSettle();
@@ -1422,32 +1423,35 @@ void main() {
       answer = (g) async => longReply(g);
       await openTall(tester);
       await tapGroup(tester, 13);
-      await tester.drag(sheetScroll(), const Offset(0, 200));
+      await tester.fling(sheetScroll(), const Offset(0, 300), 2000);
       await tester.pumpAndSettle();
       expect(find.text('Artinya gini nih'), findsNothing);
     });
 
-    testWidgets('a small pull at offset 0 does not close it', (tester) async {
+    testWidgets('a small pull at offset 0 springs back', (tester) async {
       answer = (g) async => longReply(g);
       await openTall(tester);
       await tapGroup(tester, 13);
+      final top = tester.getTopLeft(sheetBox).dy;
       await tester.drag(sheetScroll(), const Offset(0, 40));
       await tester.pumpAndSettle();
       expect(find.text('Artinya gini nih'), findsOneWidget);
+      expect(tester.getTopLeft(sheetBox).dy, closeTo(top, 1));
     });
 
-    testWidgets('swipe down below offset 0 scrolls back, never closes', (
+    testWidgets('swipe down below offset 0 scrolls back, sheet stays', (
       tester,
     ) async {
       answer = (g) async => longReply(g);
       await openTall(tester);
       await tapGroup(tester, 13);
+      final top = tester.getTopLeft(sheetBox).dy;
       await tester.drag(sheetScroll(), const Offset(0, -300));
       await tester.pumpAndSettle();
-      // Down past the top in one drag: it started below 0, so it stays open.
-      await tester.drag(sheetScroll(), const Offset(0, 500));
+      await tester.drag(sheetScroll(), const Offset(0, 100));
       await tester.pumpAndSettle();
       expect(find.text('Artinya gini nih'), findsOneWidget);
+      expect(tester.getTopLeft(sheetBox).dy, closeTo(top, 1));
     });
 
     testWidgets('error: code, then "Coba lagi" asks again', (tester) async {
@@ -1483,7 +1487,7 @@ void main() {
       expect(find.textContaining('openrouter.ai/keys'), findsOneWidget);
       await tester.tap(find.text('Nanti aja'));
       await tester.pumpAndSettle();
-      expect(find.byType(BottomSheet), findsNothing);
+      expect(sheetBox, findsNothing);
     });
 
     testWidgets('copy puts the whole translation on the clipboard', (

@@ -19,6 +19,14 @@ Future<T?> showAppSheet<T>(
   /// Transparan kalau layar di belakang gambar scrim sendiri (halaman baca:
   /// kapsul tetep keliatan di atas scrim).
   Color? barrierColor,
+
+  /// Default ngikutin [dismissible]. false = sheet-nya ngatur drag sendiri
+  /// (mis. DraggableScrollableSheet).
+  bool? enableDrag,
+
+  /// Null = warna sheet dari tema. Transparan kalau isinya gambar permukaan
+  /// sendiri.
+  Color? backgroundColor,
 }) {
   // ponytail: "Kurangi gerakan" cuma motong durasi, belum ganti slide → fade
   // kayak board. Ganti ke route fade sendiri kalau slide-nya masih ganggu.
@@ -28,7 +36,8 @@ Future<T?> showAppSheet<T>(
     isScrollControlled: true,
     isDismissible: dismissible,
     barrierColor: barrierColor,
-    enableDrag: dismissible,
+    backgroundColor: backgroundColor,
+    enableDrag: enableDrag ?? dismissible,
     constraints: BoxConstraints(
       maxHeight: MediaQuery.sizeOf(context).height * maxHeight,
     ),

@@ -2,7 +2,6 @@ import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -22,9 +21,10 @@ import '../view_models/reader_view_model.dart';
 
 /// Sheet Artinya (board 04 loading, 05 hasil, 06 error, 09 udah disalin,
 /// 10 API key kosong). [group] = grup yang lagi dibuka; "Lanjut" manggil
-/// [onNext] yang mindahin [group] ke grup berikutnya. [onHeight] tiap tinggi
-/// sheet berubah (state ganti), biar halaman di belakang bisa nyesuain.
-/// Barrier transparan: scrim (yang bolongin grup) digambar halaman baca.
+/// [onNext] yang mindahin [group] ke grup berikutnya. [onHeight] dipanggil
+/// sekali dengan tinggi sheet (tetap 528 di 844, semua state), biar halaman
+/// di belakang bisa nyesuain. Barrier transparan: scrim (yang bolongin grup)
+/// digambar halaman baca.
 Future<void> showMeaningSheet(
   BuildContext context, {
   required ValueListenable<GroupRef> group,
@@ -32,23 +32,45 @@ Future<void> showMeaningSheet(
   required VoidCallback onNext,
   required ValueChanged<double> onHeight,
   required VoidCallback onSettings,
-}) => showAppSheet<void>(
-  context,
-  maxHeight: Layout.artinyaMaxHeight,
-  barrierColor: Colors.transparent,
-  builder: (_) => _ReportHeight(
-    onHeight: onHeight,
-    child: ValueListenableBuilder(
-      valueListenable: group,
-      builder: (context, g, _) => MeaningSheet(
-        key: ValueKey(g),
-        group: g,
-        onNext: hasNext(g) ? onNext : null,
-        onSettings: onSettings,
-      ),
+}) {
+  final height = MediaQuery.sizeOf(context).height * Layout.artinyaHeight;
+  WidgetsBinding.instance.addPostFrameCallback((_) => onHeight(height));
+  return showAppSheet<void>(
+    context,
+    maxHeight: 1, // tingginya diatur DraggableScrollableSheet
+    enableDrag: false,
+    backgroundColor: Colors.transparent,
+    barrierColor: Colors.transparent,
+    builder: (context) => DraggableScrollableSheet(
+      // Tarik turun di isi pas offset 0 (atau di grabber) nutup sheet.
+      initialChildSize: Layout.artinyaHeight,
+      minChildSize: 0,
+      maxChildSize: Layout.artinyaHeight,
+      snap: true,
+      builder: (context, scroll) {
+        final theme = Theme.of(context).bottomSheetTheme;
+        return PrimaryScrollController(
+          controller: scroll,
+          child: Material(
+            key: const ValueKey('meaning-sheet'),
+            color: theme.modalBackgroundColor,
+            shape: theme.shape,
+            clipBehavior: Clip.antiAlias,
+            child: ValueListenableBuilder(
+              valueListenable: group,
+              builder: (context, g, _) => MeaningSheet(
+                key: ValueKey(g),
+                group: g,
+                onNext: hasNext(g) ? onNext : null,
+                onSettings: onSettings,
+              ),
+            ),
+          ),
+        );
+      },
     ),
-  ),
-);
+  );
+}
 
 class MeaningSheet extends ConsumerStatefulWidget {
   const MeaningSheet({
@@ -130,61 +152,17 @@ class _MeaningSheetState extends ConsumerState<MeaningSheet> {
   };
 }
 
-/// Rangka state pendek (error, API key kosong): grabber, header, isi yang
-/// bisa scroll (tepinya mudar), tombol nempel di bawah. Gak pernah ngumpet.
-class _Frame extends StatelessWidget {
-  const _Frame({
-    required this.header,
-    required this.content,
-    required this.actions,
-    this.gap = Space.s4,
-  });
-
-  final Widget header;
-  final List<Widget> content;
-  final List<Widget> actions;
-  final double gap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: Layout.sheetPadding,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        spacing: gap,
-        children: [
-          const SheetGrabber(),
-          header,
-          Flexible(
-            child: EdgeFadeScroll(
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  spacing: gap,
-                  children: content,
-                ),
-              ),
-            ),
-          ),
-          Row(spacing: 10, children: actions),
-        ],
-      ),
-    );
-  }
-}
-
-/// Rangka loading + hasil: isi scroll setinggi sheet (ngikutin isi, maks
-/// [Layout.artinyaMaxHeight]), header jadi bagian isi, grabber dan tombol
-/// Salin / Lanjut lapisan di atasnya (board Ngumpet · Opsi A). Tarik turun di
-/// isi pas offset 0 nutup sheet.
-class _ScrollFrame extends StatefulWidget {
+/// Rangka semua state: isi scroll setinggi sheet (528), header jadi bagian
+/// isi, grabber dan tombol lapisan di atasnya (board Ngumpet · Opsi A).
+/// Scroll view-nya pakai controller dari DraggableScrollableSheet
+/// (`PrimaryScrollController`), jadi tarik turun di offset 0 nutup sheet.
+class _ScrollFrame extends StatelessWidget {
   const _ScrollFrame({
     required this.header,
     required this.content,
     required this.actions,
-    required this.margin,
-    required this.onClose,
+    this.margin = 0,
+    this.gap = Space.s4,
   });
 
   final Widget header;
@@ -194,80 +172,44 @@ class _ScrollFrame extends StatefulWidget {
   /// Margin teks Aa. Padding dasar sheet (24) jadi batas bawahnya; isi cuma
   /// dilebarin kalau margin-nya lebih besar (Lega 32).
   final double margin;
-  final VoidCallback onClose;
-
-  @override
-  State<_ScrollFrame> createState() => _ScrollFrameState();
-}
-
-class _ScrollFrameState extends State<_ScrollFrame> {
-  /// Drag-nya mulai di offset 0 dan udah ditarik segini ke bawah.
-  bool _fromTop = false;
-  double _pulled = 0;
-
-  bool _onScroll(ScrollNotification n) {
-    if (n.depth != 0) return false;
-    switch (n) {
-      case ScrollStartNotification():
-        _fromTop = n.metrics.pixels <= 0;
-        _pulled = 0;
-      case OverscrollNotification(:final overscroll)
-          when _fromTop && n.dragDetails != null && overscroll < 0:
-        _pulled -= overscroll;
-      case ScrollEndNotification(:final dragDetails):
-        final fling = dragDetails?.velocity.pixelsPerSecond.dy ?? 0;
-        if (_fromTop &&
-            _pulled > 0 &&
-            (_pulled >= Layout.sheetDismissPull ||
-                fling >= Layout.sheetDismissFling)) {
-          widget.onClose();
-        }
-        _fromTop = false;
-      default:
-    }
-    return false;
-  }
+  final double gap;
 
   @override
   Widget build(BuildContext context) {
     final pad = Layout.sheetPadding;
-    final inset = math.max(0.0, widget.margin - pad.left);
+    final inset = math.max(0.0, margin - pad.left);
     return Stack(
       children: [
-        NotificationListener<ScrollNotification>(
-          onNotification: _onScroll,
-          child: EdgeFadeScroll(
-            top: const EdgeFadeSide(20, clear: Layout.artinyaGrabberZone),
-            // Tombol + safe area (86) bening, fade 20pt tepat di atasnya.
-            bottom: const EdgeFadeSide(
-              20,
-              clear: Layout.artinyaActions - Space.s4,
+        EdgeFadeScroll(
+          top: const EdgeFadeSide(20, clear: Layout.artinyaGrabberZone),
+          // Tombol + safe area (86) bening, fade 20pt tepat di atasnya.
+          bottom: const EdgeFadeSide(
+            20,
+            clear: Layout.artinyaActions - Space.s4,
+          ),
+          child: SingleChildScrollView(
+            primary: true,
+            physics: const ClampingScrollPhysics(),
+            padding: EdgeInsets.fromLTRB(
+              pad.left,
+              Layout.artinyaHeader - Space.s4 - Layout.touch, // grabber
+              pad.right,
+              Layout.artinyaActions,
             ),
-            child: SingleChildScrollView(
-              physics: const ClampingScrollPhysics(),
-              padding: EdgeInsets.fromLTRB(
-                pad.left,
-                Layout.artinyaHeader -
-                    Space.s4 -
-                    Layout.touch, // grabber, lalu header ngikut isi
-                pad.right,
-                Layout.artinyaActions,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                spacing: Space.s4,
-                children: [
-                  widget.header,
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: inset),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      spacing: Space.s4,
-                      children: widget.content,
-                    ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              spacing: gap,
+              children: [
+                header,
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: inset),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    spacing: gap,
+                    children: content,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
@@ -281,7 +223,7 @@ class _ScrollFrameState extends State<_ScrollFrame> {
           left: pad.left,
           right: pad.right,
           bottom: pad.bottom,
-          child: Row(spacing: 10, children: widget.actions),
+          child: Row(spacing: 10, children: actions),
         ),
       ],
     );
@@ -358,7 +300,6 @@ class _Result extends StatelessWidget {
     final text = typo.style.copyWith(color: c.ink);
     return _ScrollFrame(
       margin: typo.margin,
-      onClose: onClose,
       header: _Title('Artinya gini nih', closeLabel: 'Tutup', onClose: onClose),
       content: [
         _Section(
@@ -411,7 +352,6 @@ class _Loading extends StatelessWidget {
       label: 'Artinya, lagi dimuat',
       child: _ScrollFrame(
         margin: typo.margin,
-        onClose: onClose,
         header: _Title(
           'Bentar, lagi mikir...',
           leading: const _PulseDot(),
@@ -534,7 +474,7 @@ class _Failed extends StatelessWidget {
     return Semantics(
       liveRegion: true,
       label: 'Gagal ngambil artinya',
-      child: _Frame(
+      child: _ScrollFrame(
         gap: 14,
         header: _TileHeader(
           tile: _IconTile(icon: AppIcons.offline, bg: c.pink, fg: c.onPink),
@@ -588,7 +528,7 @@ class _NoKey extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.stabilo;
-    return _Frame(
+    return _ScrollFrame(
       gap: 14,
       header: _TileHeader(
         tile: _IconTile(icon: AppIcons.key, bg: c.accent, fg: c.onAccent),
@@ -755,36 +695,5 @@ class _SkeletonState extends State<_Skeleton>
         );
       },
     );
-  }
-}
-
-/// Lapor tinggi anak tiap berubah (abis layout).
-class _ReportHeight extends SingleChildRenderObjectWidget {
-  const _ReportHeight({required this.onHeight, super.child});
-
-  final ValueChanged<double> onHeight;
-
-  @override
-  RenderObject createRenderObject(BuildContext context) =>
-      _RenderReportHeight(onHeight);
-
-  @override
-  void updateRenderObject(BuildContext context, _RenderReportHeight r) =>
-      r.onHeight = onHeight;
-}
-
-class _RenderReportHeight extends RenderProxyBox {
-  _RenderReportHeight(this.onHeight);
-
-  ValueChanged<double> onHeight;
-  double? _last;
-
-  @override
-  void performLayout() {
-    super.performLayout();
-    final h = size.height;
-    if (h == _last) return;
-    _last = h;
-    WidgetsBinding.instance.addPostFrameCallback((_) => onHeight(h));
   }
 }
