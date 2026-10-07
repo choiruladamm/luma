@@ -105,7 +105,27 @@ void main() {
     expect(bg.opacity, closeTo(0.5, 0.01)); // halfway through 700-1000
   });
 
-  testWidgets('dark: no shadow behind the stabilo', (tester) async {
+  testWidgets('follows the iPhone, not the Aa theme (like the launch screen)', (
+    tester,
+  ) async {
+    // Aa forced light, iPhone dark: the launch screen is dark, so is this.
+    tester.platformDispatcher.platformBrightnessTestValue = Brightness.dark;
+    addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
+    await pumpGate(tester); // MaterialApp theme: light
+    final bg = tester.widget<ColoredBox>(
+      find.descendant(
+        of: find.byType(SplashOverlay),
+        matching: find.byType(ColoredBox),
+      ),
+    );
+    expect(bg.color, StabiloColors.dark.canvas);
+    expect(logo(tester).shadow, 0); // dark: no shadow
+    await tester.pump(const Duration(milliseconds: 1100));
+  });
+
+  testWidgets('dark iPhone: no shadow behind the stabilo', (tester) async {
+    tester.platformDispatcher.platformBrightnessTestValue = Brightness.dark;
+    addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
     await pumpGate(tester, brightness: Brightness.dark);
     expect(logo(tester).shadow, 0);
     await tester.pump(const Duration(milliseconds: 1100));

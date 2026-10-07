@@ -83,7 +83,15 @@ class _SplashOverlayState extends State<SplashOverlay>
       ((ms - from) / (to - from)).clamp(0.0, 1.0);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => Theme(
+    // Ngikut iPhone, bukan tema Aa: launch screen iOS juga ngikut iPhone, dan
+    // tema Aa baru kebaca beberapa frame setelah start. Rak di bawahnya
+    // tertutup penuh sampe animasinya lepas.
+    data: stabiloTheme(MediaQuery.platformBrightnessOf(context)),
+    child: Builder(builder: _frames),
+  );
+
+  Widget _frames(BuildContext context) {
     final c = context.stabilo;
     final light = Theme.of(context).brightness == Brightness.light;
     final screen = MediaQuery.sizeOf(context);
