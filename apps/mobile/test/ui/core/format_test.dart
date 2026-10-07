@@ -2,6 +2,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:luma/ui/core/format.dart';
 
 void main() {
+  test('thousands', () {
+    expect(thousands(0), '0');
+    expect(thousands(999), '999');
+    expect(thousands(1240), '1.240');
+    expect(thousands(1234567), '1.234.567');
+  });
+
   test('fileSize', () {
     expect(fileSize(85 * 1024), '85 KB');
     expect(fileSize(1), '1 KB');

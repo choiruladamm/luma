@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:luma/data/repositories/settings_repository.dart';
+import 'package:luma/domain/models/ai_model.dart';
 import 'package:luma/domain/models/reader_prefs.dart';
 import 'package:luma/data/repositories/reading_progress_repository.dart';
 
@@ -45,5 +46,20 @@ class FakeSettings implements SettingsRepository {
   Future<void> saveReaderPrefs(ReaderPrefs p) async {
     prefs = p;
     _saves.add(p);
+  }
+
+  String model = defaultAiModel;
+  final _models = StreamController<String>.broadcast();
+
+  @override
+  Stream<String> watchModel() async* {
+    yield model;
+    yield* _models.stream;
+  }
+
+  @override
+  Future<void> saveModel(String id) async {
+    model = id;
+    _models.add(id);
   }
 }

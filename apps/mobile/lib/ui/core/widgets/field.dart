@@ -14,6 +14,7 @@ class AppField extends StatefulWidget {
     required this.controller,
     this.helper,
     this.secret = false,
+    this.onChanged,
     this.onSubmitted,
   });
 
@@ -21,6 +22,7 @@ class AppField extends StatefulWidget {
   final TextEditingController controller;
   final String? helper;
   final bool secret;
+  final ValueChanged<String>? onChanged;
   final ValueChanged<String>? onSubmitted;
 
   @override
@@ -63,6 +65,7 @@ class _AppFieldState extends State<AppField> {
                     obscureText: _hidden,
                     autocorrect: !widget.secret,
                     enableSuggestions: !widget.secret,
+                    onChanged: widget.onChanged,
                     onSubmitted: widget.onSubmitted,
                     cursorColor: c.ink,
                     style: StabiloType.mono.copyWith(color: c.ink),

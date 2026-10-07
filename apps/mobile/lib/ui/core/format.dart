@@ -1,3 +1,7 @@
+/// "1.240" (titik ribuan).
+String thousands(int n) =>
+    n.toString().replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (_) => '.');
+
 /// "850 KB", "1,2 MB" (koma desimal).
 String fileSize(int bytes) {
   if (bytes < 1024 * 1024) return '${(bytes / 1024).ceil()} KB';

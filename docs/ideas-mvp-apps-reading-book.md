@@ -247,7 +247,7 @@ Tiap ubah tabel: naikkan `schemaVersion`, tambah langkah di `onUpgrade`, dan tes
 
 ### Pengaturan
 
-API key di `flutter_secure_storage`. Model ID, preferensi Aa, dan `lastBackupAt` di tabel `settings` sederhana (key-value) di Drift, supaya ikut ter-backup. Kunci Aa: `reader.size` (indeks step 0–6), `reader.font`, `reader.spacing`, `reader.margin`, `theme` (nama enum), `reader.hideStatusBar`, `reader.showProgressLine` (`true`/`false`). Hindari `shared_preferences` untuk data yang perlu ikut backup.
+API key di `flutter_secure_storage`. Model ID, preferensi Aa, dan `lastBackupAt` di tabel `settings` sederhana (key-value) di Drift, supaya ikut ter-backup. Model LLM: `ai.model` (model ID OpenRouter, default `z-ai/glm-5.3-flash`; pilihan dari daftar kandidat di bagian 9). API key di Keychain dengan kunci `openrouter_api_key`, disimpen tiap diketik (kosong = dihapus). "Hapus cache" di Pengaturan = kosongin `ai_results` setelah konfirmasi; Pengaturan nampilin jumlah paragraf yang udah diterjemahin + ukuran teksnya. Kunci Aa: `reader.size` (indeks step 0–6), `reader.font`, `reader.spacing`, `reader.margin`, `theme` (nama enum), `reader.hideStatusBar`, `reader.showProgressLine` (`true`/`false`). Hindari `shared_preferences` untuk data yang perlu ikut backup.
 
 ---
 

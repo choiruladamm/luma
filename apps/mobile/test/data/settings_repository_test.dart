@@ -3,6 +3,7 @@ import 'package:drift/drift.dart' show DatabaseConnection;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:luma/data/database/app_database.dart';
 import 'package:luma/data/repositories/settings_repository.dart';
+import 'package:luma/domain/models/ai_model.dart';
 import 'package:luma/domain/models/reader_prefs.dart';
 
 void main() {
@@ -41,5 +42,12 @@ void main() {
     expect(await repo.watchReaderPrefs().first, const ReaderPrefs(sizeStep: 2));
     final rows = await db.select(db.settings).get();
     expect(rows.where((r) => r.key == 'reader.size'), hasLength(1));
+  });
+
+  test('model: default until picked, then the pick', () async {
+    final repo = SettingsRepository(db);
+    expect(await repo.watchModel().first, defaultAiModel);
+    await repo.saveModel('qwen/qwen3.8-flash');
+    expect(await repo.watchModel().first, 'qwen/qwen3.8-flash');
   });
 }
