@@ -386,6 +386,7 @@ Parsing buku besar bisa berat: jalankan di isolate (`compute` / `Isolate.run`) s
 - **Sheet dari kapsul (Daftar isi, Aa)**: kapsul atas tetep keliatan di atas scrim, tombol yang sheet-nya kebuka jadi kuning, tap tombol itu lagi = nutup sheet. Sheet mulai 12pt di bawah kapsul. Implementasinya: barrier sheet transparan, scrim digambar halaman baca di bawah kapsul; tap di area kapsul kena barrier → sheet ketutup.
 - **Sheet Artinya** (dibuka dari teks, #23): kapsul ngumpet; sheet naik barengan halaman di-scroll sampe bawah grup = atas sheet − 16pt (grup kepanjangan: atas grup = safe area + 16pt, sheet di detent medium). "Lanjut" nge-scroll grup berikutnya ke atas sheet; pas ditutup halaman diem di grup terakhir. Cuma buka satu grup → halaman balik ke posisi sebelum sheet dibuka.
 - **Akhir bab**: kartu akhir bab keliatan → dua kapsul muncul, kapsul bawah nulis "Bab N beres". **Akhir buku**: layar sendiri tanpa kapsul, garis progres penuh 100%, cover pake cover default (tanpa bulatan huruf), status bar balik.
+- **Lanjut baca** (buka buku yang ada posisi tersimpannya): kapsul muncul 2,5 detik buat orientasi terus ngumpet sendiri (batal kalau user udah scroll duluan). Grup tempat posisi tersimpan dikasih kilatan stabilo sekali, 0 → 60% → 0 dalam 1,2 detik. "Kurangi gerakan" iOS nyala → tanpa kilatan, gantinya garis kiri 4pt yang ilang setelah 3 detik.
 - Status bar iOS ngumpet bareng kapsul kalau toggle "Sembunyiin jam & baterai" nyala (default nyala; togglenya di Aa, #18). Keluar halaman baca → status bar balik.
 
 ### Persentase baca

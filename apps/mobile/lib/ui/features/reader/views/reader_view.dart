@@ -351,8 +351,40 @@ class _ChapterText extends ConsumerStatefulWidget {
   ConsumerState<_ChapterText> createState() => _ChapterTextState();
 }
 
-class _ChapterTextState extends ConsumerState<_ChapterText> {
+class _ChapterTextState extends ConsumerState<_ChapterText>
+    with SingleTickerProviderStateMixin {
   final _scroll = ScrollController();
+
+  /// Lanjut baca: kotak grup tempat posisi tersimpan (koordinat isi bab),
+  /// dikasih kilatan stabilo sekali.
+  Rect? _mark;
+  final _contentKey = GlobalKey();
+  late final _flash = AnimationController(vsync: this, duration: Motion.flash)
+    ..addStatusListener((s) {
+      if (s == AnimationStatus.completed) setState(() => _mark = null);
+    });
+  Timer? _introTimer;
+  Timer? _markTimer;
+
+  /// 0 → 60% → 0 (board: tahan di puncak, turun pelan).
+  static final _flashCurve = TweenSequence<double>([
+    TweenSequenceItem(tween: ConstantTween(0), weight: 6),
+    TweenSequenceItem(
+      tween: Tween<double>(
+        begin: 0,
+        end: 1,
+      ).chain(CurveTween(curve: Curves.easeOut)),
+      weight: 12,
+    ),
+    TweenSequenceItem(tween: ConstantTween(1), weight: 40),
+    TweenSequenceItem(
+      tween: Tween<double>(
+        begin: 1,
+        end: 0,
+      ).chain(CurveTween(curve: Curves.easeOut)),
+      weight: 42,
+    ),
+  ]);
 
   /// Satu key per paragraf (indeks paragraf di DB) buat ngukur & lompat.
   // ponytail: satu chapter dirender utuh (Column), bukan lazy. Aman buat
@@ -424,7 +456,7 @@ class _ChapterTextState extends ConsumerState<_ChapterText> {
   static const _chapterStart = 80.0;
 
   /// Taruh titik tersimpan di ±⅓ tinggi layar, biar ada konteks di atasnya.
-  void _restore() {
+  void _restore(List<ReaderParagraph> paras) {
     final spot = widget.restoreTo;
     final box = spot == null ? null : _box(spot.index);
     if (box != null && _scroll.hasClients) {
@@ -433,14 +465,53 @@ class _ChapterTextState extends ConsumerState<_ChapterText> {
           box.localToGlobal(Offset.zero).dy + spot!.offset * box.size.height;
       final target = p.pixels + point - MediaQuery.sizeOf(context).height / 3;
       _scroll.jumpTo(target.clamp(p.minScrollExtent, p.maxScrollExtent));
+      _greet(paras, spot);
     }
     if (_scroll.hasClients) _track();
     // Baru keliatan setelah di posisi yang bener (lihat AnimatedOpacity).
     setState(() => _restored = true);
   }
 
+  /// Abis lanjut baca: kapsul muncul bentar buat orientasi terus ngumpet,
+  /// grup tersimpan dikasih kilatan sekali (Kurangi gerakan: garis kiri 4pt).
+  void _greet(List<ReaderParagraph> paras, _Spot spot) {
+    widget.chrome.show();
+    _introTimer = Timer(Motion.capsuleIntro, widget.chrome.hide);
+
+    final group = paras
+        .where((p) => p.index == spot.index)
+        .firstOrNull
+        ?.groupIndex;
+    final content = _contentKey.currentContext?.findRenderObject();
+    if (group == null || content is! RenderBox) return;
+    Rect? rect;
+    for (final p in paras.where((p) => p.groupIndex == group)) {
+      final box = _box(p.index);
+      if (box == null) continue;
+      final r = box.localToGlobal(Offset.zero, ancestor: content) & box.size;
+      rect = rect?.expandToInclude(r) ?? r;
+    }
+    if (rect == null) return;
+    _mark = Rect.fromLTRB(
+      rect.left - Space.s3,
+      rect.top - Space.s2,
+      rect.right + Space.s3,
+      rect.bottom + Space.s2,
+    );
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _markTimer = Timer(Motion.flashReduced, () {
+        if (mounted) setState(() => _mark = null);
+      });
+    } else {
+      _flash.forward(from: 0);
+    }
+  }
+
   @override
   void dispose() {
+    _introTimer?.cancel();
+    _markTimer?.cancel();
+    _flash.dispose();
     _scroll.dispose();
     super.dispose();
   }
@@ -470,7 +541,7 @@ class _ChapterTextState extends ConsumerState<_ChapterText> {
         if (!mounted || !_scroll.hasClients) return;
         // Lompat ke posisi tersimpan sekali; chapter pendek yang gak perlu
         // di-scroll langsung dianggap kebaca.
-        _restored ? _track() : _restore();
+        _restored ? _track() : _restore(paras);
       });
     }
 
@@ -489,6 +560,7 @@ class _ChapterTextState extends ConsumerState<_ChapterText> {
           if (n is UserScrollNotification &&
               n.direction != ScrollDirection.idle) {
             _userScrolled = true;
+            _introTimer?.cancel(); // udah pegang kendali sendiri
           } else if (n is ScrollUpdateNotification &&
               (_userScrolled || n.dragDetails != null)) {
             _moveChrome(n, paras);
@@ -513,62 +585,73 @@ class _ChapterTextState extends ConsumerState<_ChapterText> {
               Layout.margin,
               pad.bottom + readerTextBottom,
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+            child: Stack(
+              key: _contentKey,
               children: [
-                Padding(
-                  padding: EdgeInsets.only(bottom: gap),
-                  child: _ChapterHeading(
-                    number: widget.index + 1,
-                    title: chapter.title,
-                  ),
+                if (_mark != null)
+                  Positioned.fromRect(rect: _mark!, child: _markWidget(c)),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.only(bottom: gap),
+                      child: _ChapterHeading(
+                        number: widget.index + 1,
+                        title: chapter.title,
+                      ),
+                    ),
+                    for (final p in paras)
+                      Padding(
+                        padding: EdgeInsets.only(bottom: gap),
+                        // Key di isinya, bukan di sela bawah: offset = fraksi tinggi
+                        // paragraf doang.
+                        child: KeyedSubtree(
+                          key: _keys.putIfAbsent(p.index, GlobalKey.new),
+                          child: switch (p.type) {
+                            // Kotak paragraf selebar kolom, termasuk sisa baris
+                            // pendek. Sela antar paragraf & margin = area kosong.
+                            ParagraphType.paragraph => GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onTap: () => widget.onParagraphTap(p),
+                              child: Text(p.text, style: reading),
+                            ),
+                            ParagraphType.heading => Semantics(
+                              header: true,
+                              child: Text(
+                                p.text,
+                                style: StabiloType.titleSm.copyWith(
+                                  color: c.ink,
+                                ),
+                              ),
+                            ),
+                            ParagraphType.sceneBreak => Center(
+                              child: Text(
+                                '* * *',
+                                semanticsLabel: 'Pemisah adegan',
+                                style: StabiloType.label.copyWith(
+                                  color: c.ink2,
+                                ),
+                              ),
+                            ),
+                          },
+                        ),
+                      ),
+                    // Kartu akhir bab baru muncul bareng teks, biar gak nongol di atas
+                    // terus kedorong ke bawah.
+                    if (loaded)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 14),
+                        child: _ChapterEnd(
+                          chapterId: chapter.id,
+                          number: widget.index + 1,
+                          next: next,
+                          nextNumber: widget.index + 2,
+                          total: widget.book.chapters.length,
+                          onNext: widget.onNext,
+                        ),
+                      ),
+                  ],
                 ),
-                for (final p in paras)
-                  Padding(
-                    padding: EdgeInsets.only(bottom: gap),
-                    // Key di isinya, bukan di sela bawah: offset = fraksi tinggi
-                    // paragraf doang.
-                    child: KeyedSubtree(
-                      key: _keys.putIfAbsent(p.index, GlobalKey.new),
-                      child: switch (p.type) {
-                        // Kotak paragraf selebar kolom, termasuk sisa baris
-                        // pendek. Sela antar paragraf & margin = area kosong.
-                        ParagraphType.paragraph => GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          onTap: () => widget.onParagraphTap(p),
-                          child: Text(p.text, style: reading),
-                        ),
-                        ParagraphType.heading => Semantics(
-                          header: true,
-                          child: Text(
-                            p.text,
-                            style: StabiloType.titleSm.copyWith(color: c.ink),
-                          ),
-                        ),
-                        ParagraphType.sceneBreak => Center(
-                          child: Text(
-                            '* * *',
-                            semanticsLabel: 'Pemisah adegan',
-                            style: StabiloType.label.copyWith(color: c.ink2),
-                          ),
-                        ),
-                      },
-                    ),
-                  ),
-                // Kartu akhir bab baru muncul bareng teks, biar gak nongol di atas
-                // terus kedorong ke bawah.
-                if (loaded)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 14),
-                    child: _ChapterEnd(
-                      chapterId: chapter.id,
-                      number: widget.index + 1,
-                      next: next,
-                      nextNumber: widget.index + 2,
-                      total: widget.book.chapters.length,
-                      onNext: widget.onNext,
-                    ),
-                  ),
               ],
             ),
           ),
@@ -576,6 +659,34 @@ class _ChapterTextState extends ConsumerState<_ChapterText> {
       ),
     );
   }
+
+  /// Penanda "terakhir lo baca di sini": kilatan stabilo, atau garis kiri
+  /// kalau Kurangi gerakan nyala.
+  Widget _markWidget(StabiloColors c) => Semantics(
+    label: 'Terakhir lo baca di sini',
+    child: MediaQuery.disableAnimationsOf(context)
+        ? Align(
+            alignment: Alignment.centerLeft,
+            child: Container(
+              width: 4,
+              decoration: BoxDecoration(
+                color: c.mark,
+                borderRadius: BorderRadius.circular(Radii.full),
+              ),
+            ),
+          )
+        : AnimatedBuilder(
+            animation: _flash,
+            builder: (context, _) => DecoratedBox(
+              decoration: BoxDecoration(
+                color: c.flash.withValues(
+                  alpha: c.flash.a * _flashCurve.evaluate(_flash),
+                ),
+                borderRadius: BorderRadius.circular(Radii.md),
+              ),
+            ),
+          ),
+  );
 
   /// Heading pertama yang isinya sama kayak judul chapter udah ditampilin di
   /// [_ChapterHeading], gak usah dobel.

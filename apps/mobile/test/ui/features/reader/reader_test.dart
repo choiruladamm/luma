@@ -722,4 +722,108 @@ void main() {
       expect(capsulesShowing(tester), isFalse);
     });
   });
+
+  group('continue reading', () {
+    const saved = (chapterId: 13, paragraphIndex: 12, paragraphOffset: 0.0);
+
+    /// Straight into the reader, stopping right after the restore so the
+    /// greeting can be watched frame by frame.
+    Future<void> openReader(WidgetTester tester, {bool reduced = false}) async {
+      tester.view.physicalSize = const Size(900, 1600);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      if (reduced) {
+        tester.platformDispatcher.accessibilityFeaturesTestValue =
+            const FakeAccessibilityFeatures(disableAnimations: true);
+        addTearDown(
+          tester.platformDispatcher.clearAccessibilityFeaturesTestValue,
+        );
+      }
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            readerBookProvider.overrideWith((ref, id) async => tallBook),
+            readingProgressRepositoryProvider.overrideWithValue(
+              FakeProgress(saved),
+            ),
+            chapterParagraphsProvider.overrideWith(
+              (ref, id) async => paragraphs[id]!,
+            ),
+            chapterTranslatedProvider.overrideWith((ref, id) async => 0),
+          ],
+          child: MaterialApp(
+            theme: stabiloTheme(Brightness.light),
+            home: const ReaderView(bookId: 1),
+          ),
+        ),
+      );
+      await tester.pump(); // book + position
+      await tester.pump(); // paragraphs
+      await tester.pump(); // restore (post-frame)
+    }
+
+    Finder mark() => find.bySemanticsLabel('Terakhir lo baca di sini');
+    double flashAlpha(WidgetTester tester) {
+      final box = tester.widget<DecoratedBox>(
+        find.descendant(of: mark(), matching: find.byType(DecoratedBox)),
+      );
+      return (box.decoration as BoxDecoration).color!.a;
+    }
+
+    testWidgets('capsules show for 2.5 s, then hide', (tester) async {
+      await openReader(tester);
+      await tester.pump(const Duration(seconds: 2));
+      expect(tester.getTopLeft(find.byType(ReaderTopCapsule)).dy, 6);
+      await tester.pump(const Duration(milliseconds: 600));
+      await tester.pumpAndSettle();
+      expect(
+        tester.getTopLeft(find.byType(ReaderTopCapsule)).dy,
+        lessThan(-capsuleHeight),
+      );
+    });
+
+    testWidgets('the saved group flashes once: 0 → peak → 0 in 1.2 s', (
+      tester,
+    ) async {
+      await openReader(tester);
+      // Past the content fade-in (semantics come with it), still before the
+      // flash starts rising.
+      await tester.pump(const Duration(milliseconds: 50));
+      expect(mark(), findsOneWidget);
+      final group = tester.getRect(mark());
+      expect(
+        group.contains(tester.getCenter(find.textContaining('Tall 12:'))),
+        isTrue,
+      );
+      expect(flashAlpha(tester), 0);
+      await tester.pump(const Duration(milliseconds: 450));
+      expect(flashAlpha(tester), closeTo(0.62, 0.01)); // light flash, 62%
+      await tester.pump(const Duration(milliseconds: 750));
+      expect(mark(), findsNothing); // once, not looping
+    });
+
+    testWidgets('reduced motion: a left bar for 3 s instead of a flash', (
+      tester,
+    ) async {
+      await openReader(tester, reduced: true);
+      expect(mark(), findsOneWidget);
+      expect(
+        find.descendant(of: mark(), matching: find.byType(AnimatedBuilder)),
+        findsNothing,
+      );
+      final bar = tester.getSize(
+        find.descendant(of: mark(), matching: find.byType(Container)),
+      );
+      expect(bar.width, 4);
+      await tester.pump(const Duration(milliseconds: 2900));
+      expect(mark(), findsOneWidget);
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(mark(), findsNothing);
+    });
+
+    testWidgets('a fresh book gets no greeting', (tester) async {
+      await openBook(tester, readerBook: tallBook);
+      expect(mark(), findsNothing);
+    });
+  });
 }
