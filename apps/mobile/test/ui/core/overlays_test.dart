@@ -131,6 +131,13 @@ void main() {
             )
             .first,
       );
+      // Plain text, no debug yellow underline from a missing Material.
+      final style = DefaultTextStyle.of(tester.element(find.text(msg))).style;
+      expect(style.decoration, isNot(TextDecoration.underline));
+      expect(
+        find.ancestor(of: find.text(msg), matching: find.byType(Material)),
+        findsWidgets,
+      );
       expect(pill.height, 48);
       expect(tick.size, const Size(24, 24));
       expect(tick.left - pill.left, 14);

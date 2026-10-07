@@ -69,10 +69,15 @@ void showOverlayToast(
       left: Layout.margin,
       right: Layout.margin,
       bottom: bottom,
+      // Overlay root gak punya Material di atasnya: tanpa ini teksnya dapet
+      // gaya default Flutter (garis bawah kuning dobel).
       child: IgnorePointer(
-        child: Semantics(
-          liveRegion: true,
-          child: Center(child: _Toast.pill(message)),
+        child: Material(
+          type: MaterialType.transparency,
+          child: Semantics(
+            liveRegion: true,
+            child: Center(child: _Toast.pill(message)),
+          ),
         ),
       ),
     ),
