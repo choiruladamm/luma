@@ -239,6 +239,7 @@ class _ScrollFrame extends StatefulWidget {
     this.gap = Space.s4,
     this.hideable = false,
     this.locked = false,
+    this.frozen = false,
     this.topInset = Layout.artinyaHeader,
   });
 
@@ -255,6 +256,10 @@ class _ScrollFrame extends StatefulWidget {
   /// Lagi streaming: tombol dikunci keliatan, header ikut isi 1:1 kayak
   /// bagian dari isi scroll.
   final bool locked;
+
+  /// Belum ada teks (nunggu token): isi gak bisa di-scroll. Nutup tetep
+  /// lewat X, grabber, atau tap di atas sheet.
+  final bool frozen;
 
   /// Jarak isi dari atas sheet (ruang buat header yang jadi lapisan).
   final double topInset;
@@ -367,7 +372,9 @@ class _ScrollFrameState extends State<_ScrollFrame>
             },
             child: SingleChildScrollView(
               primary: true,
-              physics: const ClampingScrollPhysics(),
+              physics: widget.frozen
+                  ? const NeverScrollableScrollPhysics()
+                  : const ClampingScrollPhysics(),
               padding: EdgeInsets.fromLTRB(
                 pad.left,
                 widget.topInset,
@@ -713,6 +720,7 @@ class _AnswerState extends State<_Answer> with TickerProviderStateMixin {
         margin: typo.margin,
         hideable: true,
         locked: writing,
+        frozen: thinking,
         header: _Title(
           thinking ? 'Bentar, lagi mikir...' : 'Artinya gini nih',
           closeLabel: writing ? 'Batalin' : 'Tutup',
@@ -767,19 +775,12 @@ class _AnswerState extends State<_Answer> with TickerProviderStateMixin {
                   ),
           ),
           Expanded(
-            child: Semantics(
-              // Lanjut di tengah streaming = batalin yang ini dulu.
-              label: writing ? 'Batalin, lanjut ke berikutnya' : null,
-              button: writing,
-              enabled: writing ? widget.onNext != null : null,
-              onTap: writing ? widget.onNext : null,
-              excludeSemantics: writing,
-              child: AppButton.primary(
-                label: 'Lanjut',
-                icon: AppIcons.down,
-                iconAfter: true,
-                onPressed: widget.onNext,
-              ),
+            // Mati selama masih diproses; aktif lagi pas selesai / kepotong.
+            child: AppButton.primary(
+              label: 'Lanjut',
+              icon: AppIcons.down,
+              iconAfter: true,
+              onPressed: writing ? null : widget.onNext,
             ),
           ),
         ],

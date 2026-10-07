@@ -1892,7 +1892,7 @@ void main() {
 
       final long = 'Kata ${'panjang sekali ' * 300}akhir.';
 
-      testWidgets('waiting: placeholders, status on Salin, Lanjut stays on', (
+      testWidgets('waiting: placeholders, status on Salin, Lanjut off', (
         tester,
       ) async {
         await openStreaming(tester);
@@ -1904,11 +1904,7 @@ void main() {
           findsOne,
         );
         expect(find.bySemanticsLabel('Batalin'), findsOneWidget); // the X
-        expect(
-          find.bySemanticsLabel('Batalin, lanjut ke berikutnya'),
-          findsOneWidget,
-        );
-        expect(button(tester, 'Lanjut').onPressed, isNotNull);
+        expect(button(tester, 'Lanjut').onPressed, isNull);
       });
 
       testWidgets('text comes out paced, the tail fades, then goes solid', (
@@ -1942,6 +1938,23 @@ void main() {
         expect(find.text('Gitu maknanya.'), findsOneWidget);
         expect(button(tester, 'Salin').onPressed, isNotNull);
         expect(find.bySemanticsLabel('Tutup'), findsOneWidget);
+      });
+
+      testWidgets('no scrolling until the first text comes', (tester) async {
+        final s = await openStreaming(tester);
+        await tester.drag(sheetScroll(), const Offset(0, -200));
+        await tester.pump();
+        expect(sheetPixels(tester), 0);
+        expect(
+          sheetBox,
+          findsOneWidget,
+        ); // a drag down does not close it either
+
+        s.push(state(AiPhase.translating, translations: [long]));
+        await frames(tester, 30);
+        await tester.drag(sheetScroll(), const Offset(0, -200));
+        await frames(tester, 20);
+        expect(sheetPixels(tester), greaterThan(0));
       });
 
       testWidgets('stays at the start while writing; buttons never hide', (
@@ -2002,16 +2015,31 @@ void main() {
         expect(find.text('Bentar, lagi mikir...'), findsOneWidget);
       });
 
-      testWidgets('"Lanjut" mid-stream moves on; the X closes', (tester) async {
+      testWidgets('"Lanjut" is off until done or cut; the X closes', (
+        tester,
+      ) async {
         final s = await openStreaming(tester);
         s.push(state(AiPhase.translating, translations: ['Halo']));
         await frames(tester, 5);
+        expect(button(tester, 'Lanjut').onPressed, isNull);
         await tester.tap(find.text('Lanjut'));
         await tester.pump();
-        await tester.pump(const Duration(milliseconds: 400));
-        expect(streams.keys, contains((chapterId: 13, groupIndex: 14)));
-        expect(find.text('Bentar, lagi mikir...'), findsOneWidget);
+        expect(streams.keys, isNot(contains((chapterId: 13, groupIndex: 14))));
 
+        s.push(state(AiPhase.cut, translations: ['Halo']));
+        await tester.pump();
+        expect(button(tester, 'Lanjut').onPressed, isNotNull);
+
+        await tester.tap(find.bySemanticsLabel('Tutup'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 400));
+        expect(sheetBox, findsNothing);
+      });
+
+      testWidgets('the X cancels mid-stream', (tester) async {
+        final s = await openStreaming(tester);
+        s.push(state(AiPhase.translating, translations: ['Halo']));
+        await frames(tester, 5);
         await tester.tap(find.bySemanticsLabel('Batalin'));
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 400));
