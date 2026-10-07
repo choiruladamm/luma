@@ -121,6 +121,17 @@ Bundle font sebagai asset (jangan fetch runtime).
 
 Implementasi Flutter: `ThemeExtension` (`StabiloColors`) dengan satu set terang dan satu set gelap. Detail token lain (track, outline, scrim, highlight) ada di artifact.
 
+### Halaman baca imersif (ReaderCapsule)
+
+Pas baca, layar isinya cuma teks + garis progres tipis. Menu nongol sebagai dua kapsul ngambang kalau dibutuhin. Top bar 60pt cuma buat Rak & Pengaturan. Spek lengkap di board "Baca imersif · ReaderCapsule" (+ layar 03 Baca, 03b imersif, 03c Lanjut baca).
+
+- **Kapsul atas**: tinggi 58, radius penuh, 6pt di bawah safe area atas, kiri-kanan 24. Isi: balik · judul + "Bab N · judul bab" · daftar isi · Aa. Tombol 44 bulet muted; tombol yang sheet-nya lagi kebuka (Daftar isi / Aa) jadi kuning.
+- **Kapsul bawah**: tinggi 40, 14pt di atas safe area bawah, di tengah. Persen + bar 88 + "±N mnt lagi" (atau "Bab N beres"). Cuma info.
+- **Gaya kapsul**: latar sheet. Terang: garis 1,5 ink + bayangan tekan 2 + bayangan lembut. Gelap: garis `#46423A` + bayangan lembut.
+- **Gradien** latar di belakang kapsul (132 atas, 130 bawah) biar teks gak tabrakan pas lewat, ikut ngumpet bareng kapsul.
+- **Garis progres** 2pt selebar layar, tepat di atas safe area bawah (gak kepotong sudut layar, gak numpuk home indicator). Terang `#E6B800`, gelap `#E9C75A`, track ink 8–10%. Progres per buku; 100% di layar akhir buku.
+- Kapsul itu **overlay**: teks gak loncat pas kapsul muncul/ngumpet. Teks awal bab mulai 86pt di bawah safe area atas (board: 140) biar judul bab gak ketutup.
+
 ### Pengaturan Aa
 
 - Ukuran huruf: default 18,5
@@ -365,6 +376,13 @@ Parsing buku besar bisa berat: jalankan di isolate (`compute` / `Isolate.run`) s
 - **Nyimpen**: cuma setelah scroll dari jari (lompatan restore gak dihitung), debounce ±500 ms setelah scroll berhenti. Langsung disimpen pas app ke background (`AppLifecycleState` selain `resumed`), pindah bab, dan keluar halaman baca. Gak pernah nulis ke DB tiap frame.
 - **Restore** (buka buku): lompat ke paragraf tersimpan, terus geser sesuai offset supaya titiknya ada di ±⅓ tinggi layar (ada konteks di atasnya). Tinggi paragraf baru ketahuan setelah layout, jadi dihitung di post-frame callback; isi bab disembunyiin sampe udah di posisi, terus fade in. Kepotong di ujung scroll kalau titiknya deket akhir chapter.
 - Satu chapter dirender utuh (bukan list lazy), jadi posisi semua paragraf ketahuan tanpa package tambahan.
+
+### Perilaku kapsul baca
+
+- Scroll turun ≥ 24pt → dua kapsul geser keluar (200 ms, ease-out). Naik ≥ 12pt atau flick ke atas → muncul. Selama jari masih nge-drag, kapsul ngikutin 1:1, terus snap pas dilepas. Ambang dihitung per arah (ganti arah = mulai dari 0).
+- Awal bab (80pt pertama) dan akhir bab (paragraf terakhir keliatan) → kapsul muncul sendiri. Pindah bab → muncul.
+- Cuma scroll dari jari yang dihitung; lompatan restore posisi gak ngumpetin kapsul.
+- Status bar iOS ngumpet bareng kapsul kalau toggle "Sembunyiin jam & baterai" nyala (default nyala; togglenya di Aa, #18). Keluar halaman baca → status bar balik.
 
 ### Persentase baca
 

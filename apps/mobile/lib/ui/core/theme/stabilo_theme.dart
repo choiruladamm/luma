@@ -34,6 +34,10 @@ class StabiloColors extends ThemeExtension<StabiloColors> {
     required this.menuLine,
     required this.fieldLine,
     required this.progressFill,
+    required this.progressLine,
+    required this.progressLineTrack,
+    required this.capsuleLine,
+    required this.flash,
   });
 
   // Permukaan
@@ -52,6 +56,9 @@ class StabiloColors extends ThemeExtension<StabiloColors> {
   final Color menuLine, fieldLine;
   // Isi progress bar (terang: tinta, gelap: accent).
   final Color progressFill;
+  // Halaman baca imersif (board Baca imersif · ReaderCapsule): garis progres
+  // 2pt, garis kapsul, kilatan stabilo di grup tersimpan (puncak 60%).
+  final Color progressLine, progressLineTrack, capsuleLine, flash;
 
   static const light = StabiloColors(
     canvas: Color(0xFFFFFBEF),
@@ -81,6 +88,10 @@ class StabiloColors extends ThemeExtension<StabiloColors> {
     menuLine: Color(0xFFECE5D2),
     fieldLine: Color(0xFFCFC7B1),
     progressFill: Color(0xFF1A1A1A),
+    progressLine: Color(0xFFE6B800),
+    progressLineTrack: Color(0x141A1A1A), // 8%
+    capsuleLine: Color(0xFF1A1A1A),
+    flash: Color(0x9EFFD84D), // 62%
   );
 
   static const dark = StabiloColors(
@@ -111,6 +122,10 @@ class StabiloColors extends ThemeExtension<StabiloColors> {
     menuLine: Color(0xFF3A3732),
     fieldLine: Color(0xFF5A554B),
     progressFill: Color(0xFFE9C75A),
+    progressLine: Color(0xFFE9C75A),
+    progressLineTrack: Color(0x1ADDD7C8), // 10%
+    capsuleLine: Color(0xFF46423A),
+    flash: Color(0x57E9C75A), // 34%
   );
 
   // Token gak pernah diubah per widget; set baru = konstanta baru.

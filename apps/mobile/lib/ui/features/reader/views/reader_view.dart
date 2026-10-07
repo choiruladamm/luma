@@ -3,6 +3,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -15,6 +16,7 @@ import '../../../core/theme/stabilo_type.dart';
 import '../../../core/widgets/buttons.dart';
 import '../view_models/reader_view_model.dart';
 import 'book_end_view.dart';
+import 'reader_capsule.dart';
 import 'toc_sheet.dart';
 
 /// Halaman baca (board 03 Baca, 11 Akhir bab, 12 Akhir buku). Satu chapter per
@@ -30,9 +32,15 @@ class ReaderView extends ConsumerStatefulWidget {
 }
 
 class _ReaderViewState extends ConsumerState<ReaderView>
-    with WidgetsBindingObserver {
+    with WidgetsBindingObserver, SingleTickerProviderStateMixin {
   late final ReadingProgressRepository _progress;
   final _clock = ReadingClock(DateTime.now());
+  late final _chrome = ReaderChrome(vsync: this);
+
+  /// Toggle "Sembunyiin jam & baterai" & "Tampilin garis progres" di Aa
+  /// (#18); sementara pake default-nya.
+  static const _hideStatusBar = true;
+  static const _showProgressLine = true;
 
   /// Null sampai posisi tersimpan kebaca.
   int? _chapter;
@@ -61,6 +69,18 @@ class _ReaderViewState extends ConsumerState<ReaderView>
     _progress = ref.read(readingProgressRepositoryProvider);
     WidgetsBinding.instance.addObserver(this);
     _progress.markOpened(widget.bookId).ignore();
+    _chrome.visible.addListener(_syncStatusBar);
+  }
+
+  /// Status bar ngumpet bareng kapsul.
+  void _syncStatusBar() {
+    if (!_hideStatusBar) return;
+    SystemChrome.setEnabledSystemUIMode(
+      SystemUiMode.manual,
+      overlays: _chrome.visible.value
+          ? SystemUiOverlay.values
+          : const [SystemUiOverlay.bottom],
+    );
   }
 
   @override
@@ -80,6 +100,13 @@ class _ReaderViewState extends ConsumerState<ReaderView>
     _saveLater?.cancel();
     _save();
     WidgetsBinding.instance.removeObserver(this);
+    if (_hideStatusBar) {
+      SystemChrome.setEnabledSystemUIMode(
+        SystemUiMode.manual,
+        overlays: SystemUiOverlay.values,
+      );
+    }
+    _chrome.dispose();
     _fraction.dispose();
     super.dispose();
   }
@@ -99,6 +126,7 @@ class _ReaderViewState extends ConsumerState<ReaderView>
   }
 
   void _goTo(ReaderBook book, int chapter) => setState(() {
+    _chrome.show(); // awal bab
     _finished = false;
     _chapter = chapter;
     _chapterId = book.chapters[chapter].id;
@@ -146,129 +174,116 @@ class _ReaderViewState extends ConsumerState<ReaderView>
   Widget build(BuildContext context) {
     final book = ref.watch(readerBookProvider(widget.bookId));
     final saved = ref.watch(readingPositionProvider(widget.bookId));
-    final c = context.stabilo;
+    _chrome.reduceMotion = MediaQuery.disableAnimationsOf(context);
     return Scaffold(
       body: Listener(
         // Scroll & tap sama-sama mulai dari sini.
         onPointerDown: (_) => _clock.interact(DateTime.now()),
-        child: SafeArea(
-          bottom: false,
-          child: switch ((book, saved)) {
-            (AsyncData(value: final b?), AsyncData(value: final pos))
-                when b.chapters.isNotEmpty =>
-              () {
-                if (_chapter == null) _start(b, pos);
-                final i = _chapter!;
-                if (_finished) {
-                  return BookEndView(
+        child: switch ((book, saved)) {
+          (AsyncData(value: final b?), AsyncData(value: final pos))
+              when b.chapters.isNotEmpty =>
+            () {
+              if (_chapter == null) _start(b, pos);
+              final i = _chapter!;
+              if (_finished) {
+                return SafeArea(
+                  bottom: false,
+                  child: BookEndView(
                     book: b,
                     onClose: () => context.pop(),
                     onRestart: () => _goTo(b, 0),
-                  );
-                }
-                return Column(
-                  children: [
-                    _TopBar(title: b.title, onToc: () => _openToc(b)),
-                    Expanded(
-                      child: _ChapterText(
-                        key: ValueKey(b.chapters[i].id),
-                        book: b,
-                        index: i,
-                        fraction: _fraction,
-                        restoreTo: _restoreTo,
-                        onPosition: (spot) {
-                          _spot = spot;
-                          _saveLater?.cancel();
-                          _saveLater = Timer(_saveDelay, _save);
-                        },
-                        onNext: i + 1 < b.chapters.length
-                            ? () => _goTo(b, i + 1)
-                            : () {
-                                _save(); // waktu baca terbaru buat rekapnya
-                                setState(() => _finished = true);
-                              },
-                      ),
-                    ),
-                    _ProgressBar(book: b, index: i, fraction: _fraction),
-                  ],
+                  ),
                 );
-              }(),
-            (AsyncLoading(), _) ||
-            (_, AsyncLoading()) => const _TopBar(title: ''),
-            _ => Column(
-              children: [
-                const _TopBar(title: ''),
-                Expanded(
-                  child: Center(
-                    child: Text(
-                      'Yah, bukunya gagal kebuka',
-                      style: StabiloType.body.copyWith(color: c.ink2),
+              }
+              final ch = b.chapters[i];
+              return Stack(
+                children: [
+                  Positioned.fill(
+                    child: _ChapterText(
+                      key: ValueKey(ch.id),
+                      book: b,
+                      index: i,
+                      fraction: _fraction,
+                      chrome: _chrome,
+                      restoreTo: _restoreTo,
+                      onPosition: (spot) {
+                        _spot = spot;
+                        _saveLater?.cancel();
+                        _saveLater = Timer(_saveDelay, _save);
+                      },
+                      onNext: i + 1 < b.chapters.length
+                          ? () => _goTo(b, i + 1)
+                          : () {
+                              _save(); // waktu baca terbaru buat rekapnya
+                              setState(() => _finished = true);
+                            },
                     ),
                   ),
-                ),
-              ],
-            ),
-          },
-        ),
+                  Positioned.fill(
+                    child: ValueListenableBuilder(
+                      valueListenable: _fraction,
+                      builder: (context, f, _) {
+                        final progress = bookProgress(
+                          charOffset: ch.charOffset,
+                          chapterChars: ch.chars,
+                          fraction: f,
+                          totalChars: b.totalChars,
+                        );
+                        final left = ((1 - f) * ch.chars).round();
+                        return Stack(
+                          children: [
+                            Positioned.fill(
+                              child: ReaderCapsules(
+                                chrome: _chrome,
+                                top: ReaderTopCapsule(
+                                  title: b.title,
+                                  subtitle: 'Bab ${i + 1} · ${ch.title}',
+                                  onBack: () => context.pop(),
+                                  onToc: () => _openToc(b),
+                                ),
+                                bottom: ReaderBottomCapsule(
+                                  progress: progress,
+                                  label: f >= 0.999
+                                      ? 'Bab ${i + 1} beres'
+                                      : '±${readingMinutes(left)} mnt lagi',
+                                ),
+                              ),
+                            ),
+                            if (_showProgressLine)
+                              ReaderProgressLine(progress: progress),
+                          ],
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              );
+            }(),
+          (AsyncLoading(), _) || (_, AsyncLoading()) => _bare(),
+          _ => _bare('Yah, bukunya gagal kebuka'),
+        },
       ),
     );
   }
-}
 
-class _TopBar extends StatelessWidget {
-  const _TopBar({required this.title, this.onToc});
-
-  final String title;
-
-  /// Null = daftar isi belum bisa dibuka (buku belum kebaca).
-  final VoidCallback? onToc;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: Layout.topBar,
-      // Sama kayak header rak (board Baca pake 16; disamain biar tombolnya
-      // sejajar sama rak & tepi teks bacaan).
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: Layout.margin),
-        child: Row(
-          spacing: 10,
-          children: [
-            CircleButton(
-              semanticLabel: 'Balik ke rak',
-              icon: AppIcons.back,
-              onPressed: () => context.pop(),
-            ),
-            Expanded(
-              child: Text(
-                title,
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: StabiloType.label,
-              ),
-            ),
-            Row(
-              spacing: Space.s2,
-              children: [
-                CircleButton(
-                  semanticLabel: 'Daftar isi',
-                  icon: AppIcons.toc,
-                  onPressed: onToc,
-                ),
-                // Aa nyusul di #18; sementara mati.
-                const CircleButton(
-                  semanticLabel: 'Atur tampilan teks',
-                  text: 'Aa',
-                  onPressed: null,
-                ),
-              ],
-            ),
-          ],
+  /// Belum ada buku buat ditampilin: kapsul atas buat balik doang.
+  Widget _bare([String? message]) => Stack(
+    children: [
+      if (message != null)
+        Center(
+          child: Text(
+            message,
+            style: StabiloType.body.copyWith(color: context.stabilo.ink2),
+          ),
+        ),
+      Positioned.fill(
+        child: ReaderCapsules(
+          chrome: _chrome,
+          top: ReaderTopCapsule(title: '', onBack: () => context.pop()),
         ),
       ),
-    );
-  }
+    ],
+  );
 }
 
 class _ChapterText extends ConsumerStatefulWidget {
@@ -277,6 +292,7 @@ class _ChapterText extends ConsumerStatefulWidget {
     required this.book,
     required this.index,
     required this.fraction,
+    required this.chrome,
     required this.restoreTo,
     required this.onPosition,
     required this.onNext,
@@ -285,6 +301,7 @@ class _ChapterText extends ConsumerStatefulWidget {
   final ReaderBook book;
   final int index;
   final ValueNotifier<double> fraction;
+  final ReaderChrome chrome;
 
   /// Titik yang langsung dituju pas kebuka (posisi tersimpan).
   final _Spot? restoreTo;
@@ -350,6 +367,25 @@ class _ChapterTextState extends ConsumerState<_ChapterText> {
     return (index: paras.last.index, offset: 1);
   }
 
+  /// Kapsul ngikutin scroll dari jari. Awal bab (80pt pertama) & akhir bab
+  /// (paragraf terakhir keliatan) kapsulnya muncul sendiri.
+  void _moveChrome(ScrollUpdateNotification n, List<ReaderParagraph> paras) {
+    final last = paras.isEmpty ? null : _box(paras.last.index);
+    final atEnd =
+        last != null &&
+        last.localToGlobal(Offset.zero).dy < MediaQuery.sizeOf(context).height;
+    if (n.metrics.pixels < _chapterStart || atEnd) {
+      widget.chrome.show();
+    } else {
+      widget.chrome.scrolled(
+        n.scrollDelta ?? 0,
+        dragging: n.dragDetails != null,
+      );
+    }
+  }
+
+  static const _chapterStart = 80.0;
+
   /// Taruh titik tersimpan di ±⅓ tinggi layar, biar ada konteks di atasnya.
   void _restore() {
     final spot = widget.restoreTo;
@@ -385,6 +421,7 @@ class _ChapterTextState extends ConsumerState<_ChapterText> {
       Theme.of(context).brightness,
     ).copyWith(color: c.ink);
     final gap = reading.fontSize!; // 1em antar paragraf
+    final pad = MediaQuery.paddingOf(context);
     final loaded = paragraphs is AsyncData;
     final paras = switch (paragraphs) {
       AsyncData(:final value) => _withoutTitleHeading(value, chapter.title),
@@ -415,8 +452,12 @@ class _ChapterTextState extends ConsumerState<_ChapterText> {
           if (n is UserScrollNotification &&
               n.direction != ScrollDirection.idle) {
             _userScrolled = true;
+          } else if (n is ScrollUpdateNotification &&
+              (_userScrolled || n.dragDetails != null)) {
+            _moveChrome(n, paras);
           } else if (n is ScrollEndNotification && _userScrolled) {
             _userScrolled = false;
+            widget.chrome.release();
             final spot = _topSpot(paras);
             if (spot != null) widget.onPosition(spot);
           }
@@ -424,11 +465,11 @@ class _ChapterTextState extends ConsumerState<_ChapterText> {
         },
         child: SingleChildScrollView(
           controller: _scroll,
-          padding: const EdgeInsets.fromLTRB(
+          padding: EdgeInsets.fromLTRB(
             Layout.margin,
-            Space.s6,
+            pad.top + readerTextTop,
             Layout.margin,
-            Space.s2,
+            pad.bottom + readerTextBottom,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -664,74 +705,6 @@ class _ChapterEnd extends ConsumerWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _ProgressBar extends StatelessWidget {
-  const _ProgressBar({
-    required this.book,
-    required this.index,
-    required this.fraction,
-  });
-
-  final ReaderBook book;
-  final int index;
-  final ValueNotifier<double> fraction;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.stabilo;
-    final chapter = book.chapters[index];
-    return Container(
-      color: c.canvas,
-      padding: EdgeInsets.fromLTRB(
-        Layout.margin,
-        Space.s3,
-        Layout.margin,
-        Space.s3 + MediaQuery.paddingOf(context).bottom,
-      ),
-      child: ValueListenableBuilder(
-        valueListenable: fraction,
-        builder: (context, f, _) {
-          final progress = bookProgress(
-            charOffset: chapter.charOffset,
-            chapterChars: chapter.chars,
-            fraction: f,
-            totalChars: book.totalChars,
-          );
-          final done = f >= 0.999;
-          final left = ((1 - f) * chapter.chars).round();
-          return Row(
-            spacing: Space.s3,
-            children: [
-              Expanded(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(Radii.full),
-                  child: LinearProgressIndicator(
-                    value: progress,
-                    minHeight: 8,
-                    backgroundColor: c.track,
-                    color: c.progressFill,
-                  ),
-                ),
-              ),
-              Text(
-                '${(progress * 100).floor()}%',
-                style: StabiloType.caption.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              Text(
-                done
-                    ? 'Bab ${index + 1} beres'
-                    : '±${readingMinutes(left)} mnt lagi',
-                style: StabiloType.caption.copyWith(color: c.ink2),
-              ),
-            ],
-          );
-        },
       ),
     );
   }

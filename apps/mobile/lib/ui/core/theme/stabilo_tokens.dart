@@ -58,6 +58,10 @@ abstract final class Motion {
   static const reducedFade = Duration(milliseconds: 150);
   static const contentFade = Duration(milliseconds: 200); // isi bab muncul
   static const toast = Duration(milliseconds: 2500); // ilang sendiri
+  static const capsule = Duration(milliseconds: 200); // easeOut, kapsul baca
+  static const capsuleIntro = Duration(milliseconds: 2500); // abis lanjut baca
+  static const flash = Duration(milliseconds: 1200); // stabilo 0 → 60% → 0
+  static const flashReduced = Duration(seconds: 3); // garis kiri 4pt
 }
 
 /// Bayangan. Default flat (tanpa bayangan).
@@ -67,6 +71,26 @@ abstract final class Elevation {
       b == Brightness.light
       ? [BoxShadow(color: c.outline, offset: const Offset(0, 2))]
       : const [];
+
+  /// Kapsul halaman baca: terang garis + bayangan tekan 2 + bayangan lembut,
+  /// gelap bayangan lembut doang.
+  static List<BoxShadow> capsule(StabiloColors c, Brightness b) =>
+      b == Brightness.light
+      ? [
+          BoxShadow(color: c.outline, offset: const Offset(0, 2)),
+          const BoxShadow(
+            color: Color(0x1A1A1A1A), // 10%
+            offset: Offset(0, 10),
+            blurRadius: 24,
+          ),
+        ]
+      : const [
+          BoxShadow(
+            color: Color(0x73000000), // 45%
+            offset: Offset(0, 10),
+            blurRadius: 28,
+          ),
+        ];
 
   static const toast = [
     BoxShadow(color: Color(0x2E000000), offset: Offset(0, 8), blurRadius: 24),

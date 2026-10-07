@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -12,6 +13,7 @@ import 'package:luma/ui/core/widgets/buttons.dart';
 import 'package:luma/ui/features/bookshelf/view_models/bookshelf_view_model.dart';
 import 'package:luma/ui/features/bookshelf/views/bookshelf_view.dart';
 import 'package:luma/ui/features/reader/view_models/reader_view_model.dart';
+import 'package:luma/ui/features/reader/views/reader_capsule.dart';
 import 'package:luma/ui/features/reader/views/reader_view.dart';
 
 import '../../../fakes.dart';
@@ -123,6 +125,12 @@ void main() {
     );
     await tester.pumpAndSettle();
     await tester.tap(find.byType(BookCard));
+    await tester.pumpAndSettle();
+  }
+
+  /// System back: works whether the capsule is showing or not.
+  Future<void> leave(WidgetTester tester) async {
+    await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
   }
 
@@ -423,14 +431,12 @@ void main() {
     final top = tester.getTopLeft(find.byType(SingleChildScrollView)).dy;
     expect(spotY(tester, saved), closeTo(top, 1));
 
-    await tester.tap(find.bySemanticsLabel('Balik ke rak'));
-    await tester.pumpAndSettle();
+    await leave(tester);
     await openBook(tester, readerBook: tallBook, saved: saved);
     expect(spotY(tester, saved), closeTo(1600 / 3, 1));
 
     // Leaving without scrolling keeps the same spot.
-    await tester.tap(find.bySemanticsLabel('Balik ke rak'));
-    await tester.pumpAndSettle();
+    await leave(tester);
     expect(progress.saves.last, saved);
   });
 
@@ -546,5 +552,95 @@ void main() {
     await tester.tap(find.bySemanticsLabel('Balik ke rak'));
     await tester.pumpAndSettle();
     expect(progress.saves.last.chapterId, 11);
+  });
+
+  group('capsules', () {
+    /// Drags by [dy] (negative = read on), holds still so there's no fling,
+    /// then lets go. The touch slop (which scrolls too) goes the other way
+    /// first, so only [dy] counts in its direction.
+    Future<void> scrollBy(WidgetTester tester, double dy) async {
+      final g = await tester.startGesture(const Offset(450, 800));
+      await g.moveBy(Offset(0, -dy.sign * (kTouchSlop + 1)));
+      await tester.pump();
+      await g.moveBy(Offset(0, dy));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      await g.up();
+      await tester.pumpAndSettle();
+    }
+
+    double capsuleTop(WidgetTester tester) =>
+        tester.getTopLeft(find.byType(ReaderTopCapsule)).dy;
+
+    Future<void> openMiddle(WidgetTester tester) => openBook(
+      tester,
+      readerBook: tallBook,
+      saved: (chapterId: 13, paragraphIndex: 12, paragraphOffset: 0.0),
+    );
+
+    testWidgets('down ≥ 24 hides, less snaps back', (tester) async {
+      await openMiddle(tester);
+      expect(capsuleTop(tester), 6); // safe area 0 + 6
+      await scrollBy(tester, -18);
+      expect(capsuleTop(tester), 6);
+      await scrollBy(tester, -30);
+      expect(capsuleTop(tester), lessThan(-capsuleHeight));
+    });
+
+    testWidgets('up ≥ 12 shows again, less stays hidden', (tester) async {
+      await openMiddle(tester);
+      await scrollBy(tester, -60);
+      expect(capsuleTop(tester), lessThan(-capsuleHeight));
+      await scrollBy(tester, 8);
+      expect(capsuleTop(tester), lessThan(-capsuleHeight));
+      await scrollBy(tester, 16);
+      expect(capsuleTop(tester), 6);
+    });
+
+    testWidgets('follows the finger while dragging, then snaps', (
+      tester,
+    ) async {
+      await openMiddle(tester);
+      final g = await tester.startGesture(const Offset(450, 800));
+      await g.moveBy(const Offset(0, -(kTouchSlop + 1)));
+      await tester.pump();
+      await g.moveBy(const Offset(0, -40));
+      await tester.pump();
+      expect(capsuleTop(tester), inExclusiveRange(-60, 6)); // part way
+      await tester.pump(const Duration(milliseconds: 200));
+      await g.up();
+      await tester.pumpAndSettle();
+      expect(capsuleTop(tester), lessThan(-capsuleHeight));
+    });
+
+    testWidgets('the start of a chapter keeps them showing', (tester) async {
+      await openBook(tester, readerBook: tallBook);
+      await tester.tap(find.text('Lanjut, gas'));
+      await tester.pumpAndSettle();
+      await scrollBy(tester, -40); // still inside the first 80pt
+      expect(capsuleTop(tester), 6);
+    });
+
+    testWidgets('the end of a chapter brings them back', (tester) async {
+      await openMiddle(tester);
+      await scrollBy(tester, -60);
+      expect(capsuleTop(tester), lessThan(-capsuleHeight));
+      await tester.fling(
+        find.byType(SingleChildScrollView),
+        const Offset(0, -6000),
+        3000,
+      );
+      await tester.pumpAndSettle();
+      expect(capsuleTop(tester), 6);
+      expect(find.text('Bab 2 beres'), findsOneWidget);
+    });
+
+    testWidgets('the text does not move when they hide', (tester) async {
+      await openMiddle(tester);
+      await scrollBy(tester, -60);
+      final y = tester.getTopLeft(find.textContaining('Tall 14:')).dy;
+      await tester.pump(const Duration(seconds: 1));
+      expect(tester.getTopLeft(find.textContaining('Tall 14:')).dy, y);
+    });
   });
 }
