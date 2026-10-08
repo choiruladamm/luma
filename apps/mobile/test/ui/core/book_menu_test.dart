@@ -65,6 +65,21 @@ void main() {
     });
   }
 
+  testWidgets('no debug underline on any text (board 20 has none)', (
+    tester,
+  ) async {
+    await pumpApp(tester, open());
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    for (final text in ['Info buku', 'Hapus dari rak', '48%']) {
+      final style = DefaultTextStyle.of(tester.element(find.text(text))).style;
+      expect(style.decoration, isNot(TextDecoration.underline), reason: text);
+    }
+    for (final w in tester.widgetList<RichText>(find.byType(RichText))) {
+      expect(w.text.style?.decoration, isNot(TextDecoration.underline));
+    }
+  });
+
   testWidgets('picking a row returns its value', (tester) async {
     await pumpApp(tester, open());
     await tester.tap(find.text('open'));

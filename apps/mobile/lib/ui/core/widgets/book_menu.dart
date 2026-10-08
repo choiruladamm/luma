@@ -67,45 +67,49 @@ class _BookMenu<T> extends StatelessWidget {
     final c = context.stabilo;
     // "Kurangi gerakan": cuma fade, cover gak membesar.
     final still = MediaQuery.disableAnimationsOf(context);
-    return AnimatedBuilder(
-      animation: animation,
-      builder: (context, _) {
-        final t = Motion.highlightCurve.transform(animation.value);
-        final blur = Layout.bookMenuBlur * t;
-        return Stack(
-          children: [
-            // Kerudungnya gak nangkep tap: barrier route yang nutup.
-            Positioned.fill(
-              child: IgnorePointer(
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
-                  child: ColoredBox(
-                    color: Color.lerp(c.veil.withAlpha(0), c.veil, t)!,
+    // Route dialog gak punya Material: tanpa ini teks kena garis bawah kuning.
+    return Material(
+      type: MaterialType.transparency,
+      child: AnimatedBuilder(
+        animation: animation,
+        builder: (context, _) {
+          final t = Motion.highlightCurve.transform(animation.value);
+          final blur = Layout.bookMenuBlur * t;
+          return Stack(
+            children: [
+              // Kerudungnya gak nangkep tap: barrier route yang nutup.
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+                    child: ColoredBox(
+                      color: Color.lerp(c.veil.withAlpha(0), c.veil, t)!,
+                    ),
                   ),
                 ),
               ),
-            ),
-            Positioned(
-              top: Layout.bookMenuTop,
-              left: 0,
-              right: 0,
-              child: Opacity(
-                opacity: t,
-                child: Transform.scale(
-                  scale: still ? 1 : 0.9 + 0.1 * t,
-                  child: Column(
-                    spacing: Layout.bookMenuGap,
-                    children: [
-                      _cover(),
-                      _Panel<T>(title: title, items: items),
-                    ],
+              Positioned(
+                top: Layout.bookMenuTop,
+                left: 0,
+                right: 0,
+                child: Opacity(
+                  opacity: t,
+                  child: Transform.scale(
+                    scale: still ? 1 : 0.9 + 0.1 * t,
+                    child: Column(
+                      spacing: Layout.bookMenuGap,
+                      children: [
+                        _cover(),
+                        _Panel<T>(title: title, items: items),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
-        );
-      },
+            ],
+          );
+        },
+      ),
     );
   }
 
