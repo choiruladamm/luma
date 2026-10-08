@@ -588,7 +588,7 @@ class _ScreenState extends State<_Screen> with TickerProviderStateMixin {
                   maxHeight: screen.height * Layout.breakdownPanel,
                   highlight: !sync || term != null
                       ? null
-                      : _busy
+                      : _busy && !_locked
                       ? count - 1
                       : active < count
                       ? active
@@ -615,13 +615,24 @@ class _ScreenState extends State<_Screen> with TickerProviderStateMixin {
               },
             ),
           );
-    final chips = _interactive && count >= 3
+    // Chip udah ada selama proses (perkiraan ≥ 3 bagian): yang udah utuh bisa
+    // di-tap, yang lagi / belum ditulis skeleton. Istilah / Praktek nyusul
+    // pas lengkap.
+    final writing = _busy && !cut && !failed && !inline;
+    // Kurangi gerakan: [shown] udah cuma bagian yang utuh.
+    final ready = writing && !_reduced ? _whole(shown).sections.length : count;
+    final numbers = writing ? count + _placeholders(input, shown) : count;
+    final chips = (writing || _interactive) && numbers >= 3
         ? ValueListenableBuilder(
             valueListenable: _active,
             builder: (context, active, _) => _Chips(
-              labels: blocks,
-              sections: count,
-              active: active,
+              labels: [
+                for (var i = 0; i < numbers; i++) '${i + 1}',
+                ...blocks.skip(count),
+              ],
+              sections: numbers,
+              ready: ready,
+              active: writing && !_locked ? -1 : active,
               onTap: _jump,
             ),
           )
@@ -1949,12 +1960,18 @@ class _Chips extends StatelessWidget {
   const _Chips({
     required this.labels,
     required this.sections,
+    required this.ready,
     required this.active,
     required this.onTap,
   });
 
   final List<String> labels;
   final int sections;
+
+  /// Nomor di bawah ini udah utuh; sisanya (lagi / belum ditulis) skeleton.
+  final int ready;
+
+  /// -1 = belum ada yang aktif (lagi nulis, belum lompat).
   final int active;
   final ValueChanged<int> onTap;
 
@@ -1975,6 +1992,19 @@ class _Chips extends StatelessWidget {
           itemBuilder: (context, i) {
             final on = i == active;
             final number = i < sections;
+            if (number && i >= ready) {
+              return Semantics(
+                label: 'Bagian ${i + 1}, lagi ditulis',
+                excludeSemantics: true,
+                child: Container(
+                  width: Layout.touch,
+                  decoration: BoxDecoration(
+                    color: c.track,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              );
+            }
             return Semantics(
               button: true,
               selected: on,
