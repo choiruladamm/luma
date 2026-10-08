@@ -835,57 +835,7 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 50));
       expect(marked(tester), ['Dua ini.']); // last whole one, reduce motion
-    });
-
-    testWidgets('chips while writing: whole sections tappable, the rest '
-        'skeleton; extras only once done', (tester) async {
-      final handle = tester.ensureSemantics();
-      await open(tester, BreakdownState(input: four), reduce: true);
-      fake().push(
-        BreakdownState(
-          phase: BreakdownPhase.writing,
-          input: four,
-          draft: Breakdown(
-            sections: [
-              long(1),
-              long(2),
-              const BreakdownSection(from: 3, to: 4),
-            ],
-          ),
-        ),
-      );
-      await tester.pump();
-      expect(chip('1'), findsOneWidget);
-      expect(chip('2'), findsOneWidget);
-      expect(chip('3'), findsNothing);
-      expect(find.bySemanticsLabel('Bagian 3, lagi ditulis'), findsOneWidget);
-      expect(chip('Istilah'), findsNothing);
-
-      await tester.tap(chip('1'));
-      await tester.pump();
-      expect(marked(tester), ['Satu ini.']); // jumped, not the one writing
-
-      fake().push(done(sections(4, extras: true), from: four, cached: false));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
-      for (final l in ['1', '2', '3', '4', 'Istilah', 'Praktek']) {
-        expect(chip(l), findsOneWidget);
-      }
-      handle.dispose();
-    });
-
-    testWidgets('waiting with a long text: skeleton chips only', (
-      tester,
-    ) async {
-      final handle = tester.ensureSemantics();
-      final long = input(
-        [for (var i = 0; i < 18; i++) 'Kalimat $i ini.'].join(' ').split('|'),
-      );
-      await open(tester, BreakdownState(input: long));
-      expect(chips(), findsOneWidget);
-      expect(find.bySemanticsLabel('Bagian 1, lagi ditulis'), findsOneWidget);
-      expect(chip('1'), findsNothing);
-      handle.dispose();
+      expect(chips(), findsNothing);
     });
 
     testWidgets('1 section: no highlight, chips or folding', (tester) async {
