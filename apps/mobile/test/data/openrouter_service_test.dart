@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:luma/data/services/openrouter_service.dart';
+import 'package:luma/domain/breakdown_prompt.dart';
 import 'package:luma/domain/models/ai_reply.dart';
 
 /// Answers each request with the next queued reply; records what was sent.
@@ -328,5 +329,40 @@ void main() {
       );
       expect(adapter.requests, hasLength(1));
     });
+  });
+
+  test('breakdownStream: Bedahin prompts on the same stream path', () async {
+    const input = BreakdownInput(
+      book: (title: 'The Enchiridion', author: 'Epictetus', chapter: 'V'),
+      chapters: ['I', 'V'],
+      chapter: 2,
+      original: ['Men are disturbed.'],
+      translations: ['Manusia terganggu.'],
+      meaning: 'M.',
+    );
+    Stream<String> stream({String? key = 'sk-or-v1-x'}) =>
+        service.breakdownStream(
+          apiKey: key,
+          model: 'z-ai/glm-5.3-flash',
+          input: input,
+        );
+
+    adapter.replies
+      ..add(
+        sse([
+          '{"error": {"message": "Reasoning is mandatory for this '
+              'endpoint and cannot be disabled.", "code": 400}}',
+        ], 400),
+      )
+      ..add(sse([event('[BAGIAN K1-K1]\nJudul: A'), 'data: [DONE]\n']));
+    expect((await stream().toList()).join(), '[BAGIAN K1-K1]\nJudul: A');
+    final body = adapter.requests.last.data as Map<String, Object?>;
+    final messages = body['messages'] as List;
+    expect((messages[0] as Map)['content'], breakdownSystemPrompt);
+    expect((messages[1] as Map)['content'], breakdownUserPrompt(input));
+    expect(body['reasoning'], {'effort': 'minimal', 'exclude': true});
+
+    await expectLater(stream(key: null).drain<void>(), fails(AiError.noApiKey));
+    expect(adapter.requests, hasLength(2));
   });
 }

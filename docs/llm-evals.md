@@ -52,3 +52,26 @@ Okt 2026. Set 50 potong #41, prompt v3, jalur streaming, penilaian buta (A/B/C d
 - **DeepSeek jadi default**: paling setia ke teks dan paling hati-hati soal fakta (Caius: "kemungkinan Julius Caesar atau Caligula"), makna paling kaya. Kelemahannya sedikit kaku: ditambal di prompt v4 (gaya luwes, padanan istilah yang dikenal pembaca, istilah populer seperti dikotomi kendali / amor fati dengan label jujur, satu contoh gaya). v4 dipasang tanpa evaluasi ulang atas keputusan user; dinilai lewat dogfooding (#29), ganti model tetap bisa dari Pengaturan.
 - Biaya per tap sebenarnya beda dari tabel harga: GLM bukan yang termurah karena reasoning wajib.
 - Glosarium per buku (mis. "power" → "kendali", "opinion" → "penilaian") masih ditunda; aturan v4 nanggung sebagian.
+
+## Bedahin (#61)
+
+Okt 2026. Pertanyaan utama: bisa gak model balikin rentang kalimat (`K1-K3`) yang valid dengan konsisten. 4 teks × 3 run, terjemahan + makna dari DeepSeek (sama buat semua model), jalur non-streaming biar `usage` kebaca. Qwen 3.8 Flash gak dievaluasi: provider-nya (Alibaba) sering 429 / rate-limited.
+
+| | DeepSeek V4.1 Flash | GLM 5.3 Flash |
+|---|---|---|
+| Rentang valid (v2 + v3) | 24/24 | 23/24 (1× `K4-K7` dari 5 kalimat) |
+| XXIV (harapan 4 bagian) | 4, 4, 4 | 4, 4, 4 |
+| V (harapan 1) | 2, 2, 2 | 2, 4, 3 |
+| Meditations I (harapan 1 + `LANJUT`) | 2, 1, 4; `LANJUT` 3/3 | 1, 1, 1; `LANJUT` 3/3 |
+| Pride and Prejudice (naratif, harapan tanpa Praktek) | Praktek 1/3 | Praktek 2/3 |
+| Token output XXIV | 771–948 | 965–1.254 |
+| Waktu XXIV (total) | 2,6–3,3 dtk | 42–66 dtk |
+| Biaya XXIV | $0,0010–0,0018 | $0,0017–0,0022 |
+
+- **Rentang kalimat jalan**: desain Opsi C (nomor bagian, sorotan sinkron) aman, gak perlu fallback "model nulis kalimat awal aja".
+- XXIV dibagi persis per putaran debat (K1-6 takut jadi bukan siapa-siapa, K7-15 teman, K16-24 negara, K25-27 kesimpulan) di hampir semua run.
+- **v1 → v2**: v1 ngarang isi bab dari judul yang cuma angka romawi (Nyambung ke "Bab VIII" dengan isi yang salah), gak pernah nulis `LANJUT`, Meditations dipecah per kalimat, istilah kadang nyalin kata Inggris. v2: daftar sejenis = 1 bagian, `LANJUT` eksplisit, `B<n>` cuma kalau kenal isinya, kata persis wajib dari terjemahan. Hasilnya `LANJUT` 12/12 di grup yang punya lanjutan, Nyambung ke bab lain jarang (2/24) dan masuk akal.
+- **v2 → v3**: Praktek dipaksain ke novel (5/6 run) → v3 batasin ke teks nasihat / ajaran / argumen. Turun jadi 3/6, belum beres; dinilai lewat dogfooding (#29).
+- V tetep 2 bagian (penilaian vs kejadian, lalu tiga tahap menyalahkan). Bisa diterima: tampilan 2 bagian di desain (nomor, tanpa chip).
+- GLM lambat buat Bedahin (reasoning wajib, 40–66 dtk teks panjang) dan bagiannya lebih gampang kepecah. DeepSeek tetep default.
+

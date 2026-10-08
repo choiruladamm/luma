@@ -9,8 +9,17 @@ import 'models/ai_reply.dart';
 /// (#28).
 const aiPromptVersion = 4;
 
+/// Ejaan + kata ganti, dipake ulang prompt Bedahin (breakdown_prompt.dart).
+const aiSpellingRules = '''
+- Ejaan Bahasa Indonesia yang benar. Periksa tiap kata: jangan ada kata
+  rusak, salah ketik, atau kata bahasa Inggris yang nyelip (kecuali istilah
+  kunci yang memang dipertahankan).
+- Kata ganti konsisten: "you/thou/thee" = "kamu", "I/me" = "aku", "we" =
+  "kita". Jangan pakai "engkau", "Anda", atau "saya".''';
+
 /// Tugas yang sama buat dua format jawaban (docs/llm.md, draft prompt).
-const _aiTask = '''
+const _aiTask =
+    '''
 Kamu adalah asisten membaca. Pengguna sedang membaca buku berbahasa Inggris
 dan ingin memahami bagian TARGET, yang terdiri dari satu atau beberapa
 paragraf bernomor. BUKU dan BAB memberi tahu buku apa yang sedang dibaca.
@@ -36,11 +45,7 @@ Cara menerjemahkan:
   atau penulisnya, bukan mengulang terjemahan.
 
 Bahasa:
-- Ejaan Bahasa Indonesia yang benar. Periksa tiap kata: jangan ada kata
-  rusak, salah ketik, atau kata bahasa Inggris yang nyelip (kecuali istilah
-  kunci yang memang dipertahankan).
-- Kata ganti konsisten: "you/thou/thee" = "kamu", "I/me" = "aku", "we" =
-  "kita". Jangan pakai "engkau", "Anda", atau "saya".
+$aiSpellingRules
 - Terjemahan setia ke teks: jangan menambah keterangan dalam kurung,
   jangan menebak siapa tokoh yang disebut, jangan menambah kalimat yang
   tidak ada di teks. Penomoran (I., IX.) tetap ditulis.

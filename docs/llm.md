@@ -149,6 +149,76 @@ Contoh (`make live`, GLM 5.3 Flash, The Enchiridion bab I): makna langsung nyamb
 
 Hasil evaluasi prompt (#41): [llm-evals.md](llm-evals.md#evaluasi-prompt-41).
 
+## Bedahin (#60)
+
+Penjelasan per bagian, dipanggil manual dari akhir sheet Artinya ("Masih bingung? Bedahin"). Model sama (`ai.model`), jalur streaming sama (`breakdownStream` → `_stream` di `OpenRouterService`: SSE, retry reasoning wajib, error bertipe sama). Kode: `lib/domain/breakdown_prompt.dart`, `lib/domain/sentences.dart`.
+
+Versi: `breakdownPromptVersion` (sekarang **1**). Naikin tiap prompt Bedahin **atau aturan `splitSentences`** berubah: rentang kalimat di cache cuma berlaku buat pemecahan yang sama.
+
+**Kalimat bernomor** (`splitSentences`, pure): terjemahan tiap paragraf dipecah di `.` `!` `?` `…` (boleh beruntun) yang diikuti spasi + huruf besar / tanda kutip buka. Tanda kutip tutup ikut kalimat sebelumnya. Gak pecah di singkatan (`Mr.`, `Mrs.`, `Dr.`, `St.`, `dll.`, `mis.`, `dsb.`, dll.), inisial satu huruf (`J.`), angka desimal, dan penomoran di awal paragraf (`IX.`, `3.`). Nomor `K` nyambung lintas paragraf grup.
+
+**System** (`breakdownSystemPrompt`): 1–6 BAGIAN per langkah argumen (bagian baru cuma pas keberatan / analogi baru / kesimpulan; satu gagasan atau daftar hal sejenis = 1 bagian; ragu = gabung), tiap bagian Judul / Maksudnya / Logikanya. ISTILAH (maks 5, kata persis disalin dari TERJEMAHAN), NYAMBUNG (maks 2: `LANJUT` kalau KONTEKS SESUDAH nerusin teks ini; `B<n>` cuma kalau model kenal isi bab itu, bukan nebak dari judul), PRAKTEK (cuma teks nasihat / ajaran / argumen, bukan novel / dialog). MAKSUD gak boleh diulang. Aturan ejaan + kata ganti dipake bareng prompt makna cepat (`aiSpellingRules`).
+
+**User** (`breakdownUserPrompt(BreakdownInput)`):
+
+```
+BUKU: {judul}, {penulis}
+BAB: {judul bab}
+DAFTAR BAB:
+[B1] {judul chapter, urut sortOrder; kosong = (tanpa judul)}
+...
+
+KONTEKS SEBELUM:
+{sampe 3 paragraf sebelum grup}
+
+TEKS ASLI:
+[P1] {paragraf 1}
+...
+
+TERJEMAHAN (kalimat bernomor):
+[P1]
+[K1] ...
+[K2] ...
+[P2]
+[K3] ...
+
+MAKSUD (udah dibaca pengguna, jangan diulang/diparafrase):
+{meaning dari ai_results}
+
+KONTEKS SESUDAH (grup berikutnya di bab ini):
+{teks asli grup berikutnya}
+```
+
+Terjemahan + makna dari `ai_results` grup itu. KONTEKS SEBELUM / SESUDAH kosong → bloknya gak ditulis (grup terakhir bab = gak ada Lanjutan).
+
+**Output** (bersection, satu penanda per baris; blok opsional gak ada isinya = penandanya gak ditulis):
+
+```
+[BAGIAN K1-K3]
+Judul: ...
+Maksudnya: ...
+Logikanya: ...
+[ISTILAH]
+label | kata persis di terjemahan | penjelasan
+[NYAMBUNG]
+B17 | judul | kenapa nyambung
+LANJUT | judul | kenapa nyambung
+[PRAKTEK]
+...
+```
+
+**Validasi** (`parseBreakdown`, pure):
+
+- Gagal keras → `invalidResponse` (pemanggil retry sekali, #62): gak ada `[BAGIAN]`, > 6 bagian, rentang gak mulai `K1` / bolong / tumpang tindih / lewat `Kn` / gak nutup sampe `Kn`, Maksudnya atau Logikanya kosong. `[BAGIAN K3]` = `K3-K3`.
+- Dibuang per baris: baris istilah / nyambung yang kolomnya kurang dari 3; nyambung ke `B<n>` di luar daftar, `B<n>` = bab sendiri, `LANJUT` padahal gak ada grup berikutnya.
+- Istilah yang kata persisnya gak ketemu di terjemahan (gak peka huruf besar) tetep ada, `exact` = null (tanpa sorot); yang ketemu dapet `sentence` (`K` pertama yang memuatnya).
+- `parseBreakdownDraft` buat teks sebagian: teks sebelum penanda pertama dibuang, penanda / nama field kepotong di ujung ditahan, bagian langsung punya rentang begitu penandanya kebaca. Tanpa validasi.
+- Judul bagian ditampilin UI cuma kalau bagiannya ≥ 2.
+
+**Biaya**: Bab XXIV (±350 kata, 27 kalimat) ±3.200 token input + 770–1.250 token output, ±2× output makna cepat. DeepSeek ±$0,001–0,002 per Bedahin. Hasil eval: [llm-evals.md](llm-evals.md#bedahin-61).
+
+`make live` ikut ngetes Bedahin (Enchiridion XXIV & V, Meditations I, Pride and Prejudice 1): makna cepat dulu, terus Bedahin, divalidasi.
+
 ## Evaluasi model
 
 Default **DeepSeek V4.1 Flash**. Hasil dan alasannya: [llm-evals.md](llm-evals.md#evaluasi-model-28).

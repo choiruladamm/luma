@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 import 'package:luma/data/repositories/settings_repository.dart';
 import 'package:luma/data/services/openrouter_service.dart';
 import 'package:luma/domain/ai_prompt.dart';
+import 'package:luma/domain/breakdown_prompt.dart';
 import 'package:luma/domain/models/ai_model.dart';
 import 'package:luma/domain/models/ai_reply.dart';
 import 'package:luma/domain/models/backup.dart';
@@ -172,6 +173,15 @@ class FakeOpenRouter implements OpenRouterService {
     if (keyOk == null) throw const AiException(AiError.network);
     return keyOk!;
   }
+
+  /// Bedahin belum dipake layar mana pun (provider-nya di #62).
+  @override
+  Stream<String> breakdownStream({
+    required String? apiKey,
+    required String model,
+    required BreakdownInput input,
+    CancelToken? cancel,
+  }) => throw UnimplementedError();
 
   @override
   Future<AiReply> explain({
