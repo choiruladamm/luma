@@ -77,6 +77,22 @@ Unique key: `(chapterId, paragraphIndex)`. Index tambahan: `(chapterId, groupInd
 
 Unique key: `(chapterId, groupIndex)`.
 
+## `ai_breakdowns`
+
+Cache Bedahin per grup (#62). Dibuka lagi = langsung tampil, gak motong saldo.
+
+| Kolom | Tipe | Catatan |
+|-------|------|---------|
+| chapterId | int (FK → chapters.id, cascade) | Re-import / hapus buku ikut kehapus |
+| groupIndex | int | |
+| body | text | Teks mentah balasan model yang udah lolos `parseBreakdown`. Di-parse ulang pas dibaca, jadi parser jadi satu-satunya sumber kebenaran |
+| sourceHash | text | `breakdownSourceHash` (SHA-256 JSON `translations`) dari `ai_results` yang dipake. Beda = dianggap belum ada: terjemahannya udah diganti, rentang `K` gak berlaku lagi |
+| model | text | |
+| promptVersion | int | `breakdownPromptVersion`. Lebih lama = dianggap belum ada, dibedah ulang pas dibuka, baris ditimpa |
+| createdAt | datetime | |
+
+Unique key: `(chapterId, groupIndex)`.
+
 ## `reading_sessions`
 
 Log append-only potongan waktu baca aktif. Statistik (streak, heatmap, kecepatan baca) dihitung lewat query dari sini; gak ada tabel rollup. Gak ada backfill: waktu baca sebelum tabel ini cuma ada sebagai total `books.readingSeconds`.
@@ -126,9 +142,10 @@ Log append-only request LLM, terpisah dari cache `ai_results` (`createdAt`-nya k
 | 3 | `reading_progress.paragraphOffset` |
 | 4 | `ai_results.promptVersion` (baris lama = 1, prompt sebelum #40) |
 | 5 | Pencatatan statistik (#42): tabel `reading_sessions` + `ai_calls`, `books.finishedAt`, `ai_results.openCount` + `lastOpenedAt`. Tabel baru kosong, baris lama `openCount` = 0 |
+| 6 | Tabel `ai_breakdowns` (Bedahin, #62). Data lama gak disentuh |
 
 Tiap ubah tabel: naikkan `schemaVersion`, tambah langkah di `onUpgrade`, dan test migrasi dari versi sebelumnya (data tetap utuh, schema hasil migrasi sama dengan install baru). Restore backup dari schema lama ikut dimigrasi saat database dibuka ([backup.md](backup.md)).
 
 ## Pengaturan
 
-API key di `flutter_secure_storage`. Model ID, preferensi Aa, dan backup terakhir di tabel `settings` sederhana (key-value) di Drift, supaya ikut ter-backup. Model LLM: `ai.model` (model ID OpenRouter, default `z-ai/glm-5.3-flash`; pilihan dari daftar kandidat di [llm.md](llm.md)). API key di Keychain dengan kunci `openrouter_api_key`, cuma disimpen setelah lolos cek bentuk dan cek ke OpenRouter ([llm.md](llm.md)); kosong = dihapus. "Hapus cache" di Pengaturan = kosongin `ai_results` setelah konfirmasi; Pengaturan nampilin jumlah paragraf yang udah diterjemahin + ukuran teksnya. Backup terakhir: `backup.lastAt` (ISO 8601), `backup.lastName`, `backup.lastSize` (byte). Kunci Aa: `reader.size` (indeks step 0–6), `reader.font`, `reader.spacing`, `reader.margin`, `theme` (nama enum), `reader.hideStatusBar`, `reader.showProgressLine` (`true`/`false`). Urutan rak: `shelf.sort` (`lastOpened` / `title` / `added`, default `lastOpened`). Tampilan rak: `shelf.view` (`grid` / `list`, default `grid`). Hindari `shared_preferences` untuk data yang perlu ikut backup.
+API key di `flutter_secure_storage`. Model ID, preferensi Aa, dan backup terakhir di tabel `settings` sederhana (key-value) di Drift, supaya ikut ter-backup. Model LLM: `ai.model` (model ID OpenRouter, default `z-ai/glm-5.3-flash`; pilihan dari daftar kandidat di [llm.md](llm.md)). API key di Keychain dengan kunci `openrouter_api_key`, cuma disimpen setelah lolos cek bentuk dan cek ke OpenRouter ([llm.md](llm.md)); kosong = dihapus. "Hapus cache" di Pengaturan = kosongin `ai_results` + `ai_breakdowns` setelah konfirmasi; Pengaturan nampilin jumlah paragraf yang udah diterjemahin + ukuran teksnya. Backup terakhir: `backup.lastAt` (ISO 8601), `backup.lastName`, `backup.lastSize` (byte). Kunci Aa: `reader.size` (indeks step 0–6), `reader.font`, `reader.spacing`, `reader.margin`, `theme` (nama enum), `reader.hideStatusBar`, `reader.showProgressLine` (`true`/`false`). Urutan rak: `shelf.sort` (`lastOpened` / `title` / `added`, default `lastOpened`). Tampilan rak: `shelf.view` (`grid` / `list`, default `grid`). Hindari `shared_preferences` untuk data yang perlu ikut backup.

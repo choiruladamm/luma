@@ -247,6 +247,20 @@ void main() {
     },
   );
 
+  test('a late token after closing the sheet sets no timer on state', () {
+    fakeAsync((async) {
+      final c = ai.stream = StreamController<String>();
+      open(async);
+      c.add('[T1]\nHalo');
+      async.flushMicrotasks();
+      sub.close();
+      async.elapse(Duration.zero);
+      c.add(' lagi'); // would arm a stall timer that reads state
+      async.elapse(const Duration(minutes: 1));
+      expect(cache.saved, isEmpty);
+    });
+  });
+
   test('no API key: fails without streaming anything', () {
     fakeAsync((async) {
       FlutterSecureStorage.setMockInitialValues({});

@@ -13,8 +13,8 @@
 | [data-model.md](data-model.md) | Tabel Drift, versi schema & migrasi, kunci settings |
 | [grouping.md](grouping.md) | Pengelompokan paragraf jadi grup tap/AI |
 | [architecture.md](architecture.md) | Routing, provider Riverpod, alur import & baca |
-| [llm.md](llm.md) | OpenRouter, model, aturan implementasi, prompt |
-| [llm-evals.md](llm-evals.md) | Hasil spike & evaluasi (#34, #41, #28) |
+| [llm.md](llm.md) | OpenRouter, model, aturan implementasi, prompt, Bedahin |
+| [llm-evals.md](llm-evals.md) | Hasil spike & evaluasi (#34, #41, #28, #61) |
 | [backup.md](backup.md) | Backup & restore |
 | [ideas/recap.md](ideas/recap.md) | Iterasi 2: Recap bacaan |
 | [ideas/import-formats.md](ideas/import-formats.md) | Ide: Luma Markdown, foto buku fisik, PDF |

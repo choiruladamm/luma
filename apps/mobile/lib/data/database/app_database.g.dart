@@ -2645,6 +2645,488 @@ class AiResultsCompanion extends UpdateCompanion<AiResult> {
   }
 }
 
+class $AiBreakdownsTable extends AiBreakdowns
+    with TableInfo<$AiBreakdownsTable, AiBreakdown> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $AiBreakdownsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _chapterIdMeta = const VerificationMeta(
+    'chapterId',
+  );
+  @override
+  late final GeneratedColumn<int> chapterId = GeneratedColumn<int>(
+    'chapter_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES chapters (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _groupIndexMeta = const VerificationMeta(
+    'groupIndex',
+  );
+  @override
+  late final GeneratedColumn<int> groupIndex = GeneratedColumn<int>(
+    'group_index',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _bodyMeta = const VerificationMeta('body');
+  @override
+  late final GeneratedColumn<String> body = GeneratedColumn<String>(
+    'body',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sourceHashMeta = const VerificationMeta(
+    'sourceHash',
+  );
+  @override
+  late final GeneratedColumn<String> sourceHash = GeneratedColumn<String>(
+    'source_hash',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _modelMeta = const VerificationMeta('model');
+  @override
+  late final GeneratedColumn<String> model = GeneratedColumn<String>(
+    'model',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _promptVersionMeta = const VerificationMeta(
+    'promptVersion',
+  );
+  @override
+  late final GeneratedColumn<int> promptVersion = GeneratedColumn<int>(
+    'prompt_version',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    chapterId,
+    groupIndex,
+    body,
+    sourceHash,
+    model,
+    promptVersion,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'ai_breakdowns';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<AiBreakdown> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('chapter_id')) {
+      context.handle(
+        _chapterIdMeta,
+        chapterId.isAcceptableOrUnknown(data['chapter_id']!, _chapterIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_chapterIdMeta);
+    }
+    if (data.containsKey('group_index')) {
+      context.handle(
+        _groupIndexMeta,
+        groupIndex.isAcceptableOrUnknown(data['group_index']!, _groupIndexMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_groupIndexMeta);
+    }
+    if (data.containsKey('body')) {
+      context.handle(
+        _bodyMeta,
+        body.isAcceptableOrUnknown(data['body']!, _bodyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_bodyMeta);
+    }
+    if (data.containsKey('source_hash')) {
+      context.handle(
+        _sourceHashMeta,
+        sourceHash.isAcceptableOrUnknown(data['source_hash']!, _sourceHashMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sourceHashMeta);
+    }
+    if (data.containsKey('model')) {
+      context.handle(
+        _modelMeta,
+        model.isAcceptableOrUnknown(data['model']!, _modelMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_modelMeta);
+    }
+    if (data.containsKey('prompt_version')) {
+      context.handle(
+        _promptVersionMeta,
+        promptVersion.isAcceptableOrUnknown(
+          data['prompt_version']!,
+          _promptVersionMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_promptVersionMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {chapterId, groupIndex};
+  @override
+  AiBreakdown map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return AiBreakdown(
+      chapterId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}chapter_id'],
+      )!,
+      groupIndex: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}group_index'],
+      )!,
+      body: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}body'],
+      )!,
+      sourceHash: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source_hash'],
+      )!,
+      model: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}model'],
+      )!,
+      promptVersion: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}prompt_version'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $AiBreakdownsTable createAlias(String alias) {
+    return $AiBreakdownsTable(attachedDatabase, alias);
+  }
+}
+
+class AiBreakdown extends DataClass implements Insertable<AiBreakdown> {
+  final int chapterId;
+  final int groupIndex;
+
+  /// Teks mentah balasan model yang udah lolos `parseBreakdown`.
+  final String body;
+
+  /// `breakdownSourceHash` terjemahan `ai_results` yang dipake. Beda =
+  /// terjemahannya udah diganti, rentang kalimat gak berlaku lagi.
+  final String sourceHash;
+  final String model;
+
+  /// `breakdownPromptVersion`. Lebih lama = dianggap belum ada.
+  final int promptVersion;
+  final DateTime createdAt;
+  const AiBreakdown({
+    required this.chapterId,
+    required this.groupIndex,
+    required this.body,
+    required this.sourceHash,
+    required this.model,
+    required this.promptVersion,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['chapter_id'] = Variable<int>(chapterId);
+    map['group_index'] = Variable<int>(groupIndex);
+    map['body'] = Variable<String>(body);
+    map['source_hash'] = Variable<String>(sourceHash);
+    map['model'] = Variable<String>(model);
+    map['prompt_version'] = Variable<int>(promptVersion);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  AiBreakdownsCompanion toCompanion(bool nullToAbsent) {
+    return AiBreakdownsCompanion(
+      chapterId: Value(chapterId),
+      groupIndex: Value(groupIndex),
+      body: Value(body),
+      sourceHash: Value(sourceHash),
+      model: Value(model),
+      promptVersion: Value(promptVersion),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory AiBreakdown.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return AiBreakdown(
+      chapterId: serializer.fromJson<int>(json['chapterId']),
+      groupIndex: serializer.fromJson<int>(json['groupIndex']),
+      body: serializer.fromJson<String>(json['body']),
+      sourceHash: serializer.fromJson<String>(json['sourceHash']),
+      model: serializer.fromJson<String>(json['model']),
+      promptVersion: serializer.fromJson<int>(json['promptVersion']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'chapterId': serializer.toJson<int>(chapterId),
+      'groupIndex': serializer.toJson<int>(groupIndex),
+      'body': serializer.toJson<String>(body),
+      'sourceHash': serializer.toJson<String>(sourceHash),
+      'model': serializer.toJson<String>(model),
+      'promptVersion': serializer.toJson<int>(promptVersion),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  AiBreakdown copyWith({
+    int? chapterId,
+    int? groupIndex,
+    String? body,
+    String? sourceHash,
+    String? model,
+    int? promptVersion,
+    DateTime? createdAt,
+  }) => AiBreakdown(
+    chapterId: chapterId ?? this.chapterId,
+    groupIndex: groupIndex ?? this.groupIndex,
+    body: body ?? this.body,
+    sourceHash: sourceHash ?? this.sourceHash,
+    model: model ?? this.model,
+    promptVersion: promptVersion ?? this.promptVersion,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  AiBreakdown copyWithCompanion(AiBreakdownsCompanion data) {
+    return AiBreakdown(
+      chapterId: data.chapterId.present ? data.chapterId.value : this.chapterId,
+      groupIndex: data.groupIndex.present
+          ? data.groupIndex.value
+          : this.groupIndex,
+      body: data.body.present ? data.body.value : this.body,
+      sourceHash: data.sourceHash.present
+          ? data.sourceHash.value
+          : this.sourceHash,
+      model: data.model.present ? data.model.value : this.model,
+      promptVersion: data.promptVersion.present
+          ? data.promptVersion.value
+          : this.promptVersion,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AiBreakdown(')
+          ..write('chapterId: $chapterId, ')
+          ..write('groupIndex: $groupIndex, ')
+          ..write('body: $body, ')
+          ..write('sourceHash: $sourceHash, ')
+          ..write('model: $model, ')
+          ..write('promptVersion: $promptVersion, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    chapterId,
+    groupIndex,
+    body,
+    sourceHash,
+    model,
+    promptVersion,
+    createdAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is AiBreakdown &&
+          other.chapterId == this.chapterId &&
+          other.groupIndex == this.groupIndex &&
+          other.body == this.body &&
+          other.sourceHash == this.sourceHash &&
+          other.model == this.model &&
+          other.promptVersion == this.promptVersion &&
+          other.createdAt == this.createdAt);
+}
+
+class AiBreakdownsCompanion extends UpdateCompanion<AiBreakdown> {
+  final Value<int> chapterId;
+  final Value<int> groupIndex;
+  final Value<String> body;
+  final Value<String> sourceHash;
+  final Value<String> model;
+  final Value<int> promptVersion;
+  final Value<DateTime> createdAt;
+  final Value<int> rowid;
+  const AiBreakdownsCompanion({
+    this.chapterId = const Value.absent(),
+    this.groupIndex = const Value.absent(),
+    this.body = const Value.absent(),
+    this.sourceHash = const Value.absent(),
+    this.model = const Value.absent(),
+    this.promptVersion = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  AiBreakdownsCompanion.insert({
+    required int chapterId,
+    required int groupIndex,
+    required String body,
+    required String sourceHash,
+    required String model,
+    required int promptVersion,
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : chapterId = Value(chapterId),
+       groupIndex = Value(groupIndex),
+       body = Value(body),
+       sourceHash = Value(sourceHash),
+       model = Value(model),
+       promptVersion = Value(promptVersion);
+  static Insertable<AiBreakdown> custom({
+    Expression<int>? chapterId,
+    Expression<int>? groupIndex,
+    Expression<String>? body,
+    Expression<String>? sourceHash,
+    Expression<String>? model,
+    Expression<int>? promptVersion,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (chapterId != null) 'chapter_id': chapterId,
+      if (groupIndex != null) 'group_index': groupIndex,
+      if (body != null) 'body': body,
+      if (sourceHash != null) 'source_hash': sourceHash,
+      if (model != null) 'model': model,
+      if (promptVersion != null) 'prompt_version': promptVersion,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  AiBreakdownsCompanion copyWith({
+    Value<int>? chapterId,
+    Value<int>? groupIndex,
+    Value<String>? body,
+    Value<String>? sourceHash,
+    Value<String>? model,
+    Value<int>? promptVersion,
+    Value<DateTime>? createdAt,
+    Value<int>? rowid,
+  }) {
+    return AiBreakdownsCompanion(
+      chapterId: chapterId ?? this.chapterId,
+      groupIndex: groupIndex ?? this.groupIndex,
+      body: body ?? this.body,
+      sourceHash: sourceHash ?? this.sourceHash,
+      model: model ?? this.model,
+      promptVersion: promptVersion ?? this.promptVersion,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (chapterId.present) {
+      map['chapter_id'] = Variable<int>(chapterId.value);
+    }
+    if (groupIndex.present) {
+      map['group_index'] = Variable<int>(groupIndex.value);
+    }
+    if (body.present) {
+      map['body'] = Variable<String>(body.value);
+    }
+    if (sourceHash.present) {
+      map['source_hash'] = Variable<String>(sourceHash.value);
+    }
+    if (model.present) {
+      map['model'] = Variable<String>(model.value);
+    }
+    if (promptVersion.present) {
+      map['prompt_version'] = Variable<int>(promptVersion.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AiBreakdownsCompanion(')
+          ..write('chapterId: $chapterId, ')
+          ..write('groupIndex: $groupIndex, ')
+          ..write('body: $body, ')
+          ..write('sourceHash: $sourceHash, ')
+          ..write('model: $model, ')
+          ..write('promptVersion: $promptVersion, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $ReadingSessionsTable extends ReadingSessions
     with TableInfo<$ReadingSessionsTable, ReadingSession> {
   @override
@@ -4199,6 +4681,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     this,
   );
   late final $AiResultsTable aiResults = $AiResultsTable(this);
+  late final $AiBreakdownsTable aiBreakdowns = $AiBreakdownsTable(this);
   late final $ReadingSessionsTable readingSessions = $ReadingSessionsTable(
     this,
   );
@@ -4230,6 +4713,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     paragraphs,
     readingProgress,
     aiResults,
+    aiBreakdowns,
     readingSessions,
     aiCalls,
     settings,
@@ -4274,6 +4758,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('ai_results', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'chapters',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('ai_breakdowns', kind: UpdateKind.delete)],
     ),
     WritePropagation(
       on: TableUpdateQuery.onTableName(
@@ -5182,6 +5673,24 @@ final class $$ChaptersTableReferences
     );
   }
 
+  static MultiTypedResultKey<$AiBreakdownsTable, List<AiBreakdown>>
+  _aiBreakdownsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.aiBreakdowns,
+    aliasName: 'chapters__id__ai_breakdowns__chapter_id',
+  );
+
+  $$AiBreakdownsTableProcessedTableManager get aiBreakdownsRefs {
+    final manager = $$AiBreakdownsTableTableManager(
+      $_db,
+      $_db.aiBreakdowns,
+    ).filter((f) => f.chapterId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_aiBreakdownsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
   static MultiTypedResultKey<$ReadingSessionsTable, List<ReadingSession>>
   _readingSessionsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
     db.readingSessions,
@@ -5345,6 +5854,31 @@ class $$ChaptersTableFilterComposer
           }) => $$AiResultsTableFilterComposer(
             $db: $db,
             $table: $db.aiResults,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> aiBreakdownsRefs(
+    Expression<bool> Function($$AiBreakdownsTableFilterComposer f) f,
+  ) {
+    final $$AiBreakdownsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.aiBreakdowns,
+      getReferencedColumn: (t) => t.chapterId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AiBreakdownsTableFilterComposer(
+            $db: $db,
+            $table: $db.aiBreakdowns,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -5589,6 +6123,31 @@ class $$ChaptersTableAnnotationComposer
     return f(composer);
   }
 
+  Expression<T> aiBreakdownsRefs<T extends Object>(
+    Expression<T> Function($$AiBreakdownsTableAnnotationComposer a) f,
+  ) {
+    final $$AiBreakdownsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.aiBreakdowns,
+      getReferencedColumn: (t) => t.chapterId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AiBreakdownsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.aiBreakdowns,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
   Expression<T> readingSessionsRefs<T extends Object>(
     Expression<T> Function($$ReadingSessionsTableAnnotationComposer a) f,
   ) {
@@ -5658,6 +6217,7 @@ class $$ChaptersTableTableManager
             bool paragraphsRefs,
             bool readingProgressRefs,
             bool aiResultsRefs,
+            bool aiBreakdownsRefs,
             bool readingSessionsRefs,
             bool aiCallsRefs,
           })
@@ -5719,6 +6279,7 @@ class $$ChaptersTableTableManager
                 paragraphsRefs = false,
                 readingProgressRefs = false,
                 aiResultsRefs = false,
+                aiBreakdownsRefs = false,
                 readingSessionsRefs = false,
                 aiCallsRefs = false,
               }) {
@@ -5728,6 +6289,7 @@ class $$ChaptersTableTableManager
                     if (paragraphsRefs) db.paragraphs,
                     if (readingProgressRefs) db.readingProgress,
                     if (aiResultsRefs) db.aiResults,
+                    if (aiBreakdownsRefs) db.aiBreakdowns,
                     if (readingSessionsRefs) db.readingSessions,
                     if (aiCallsRefs) db.aiCalls,
                   ],
@@ -5826,6 +6388,27 @@ class $$ChaptersTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (aiBreakdownsRefs)
+                        await $_getPrefetchedData<
+                          Chapter,
+                          $ChaptersTable,
+                          AiBreakdown
+                        >(
+                          currentTable: table,
+                          referencedTable: $$ChaptersTableReferences
+                              ._aiBreakdownsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$ChaptersTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).aiBreakdownsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.chapterId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                       if (readingSessionsRefs)
                         await $_getPrefetchedData<
                           Chapter,
@@ -5893,6 +6476,7 @@ typedef $$ChaptersTableProcessedTableManager =
         bool paragraphsRefs,
         bool readingProgressRefs,
         bool aiResultsRefs,
+        bool aiBreakdownsRefs,
         bool readingSessionsRefs,
         bool aiCallsRefs,
       })
@@ -7020,6 +7604,365 @@ typedef $$AiResultsTableProcessedTableManager =
       $$AiResultsTableUpdateCompanionBuilder,
       (AiResult, $$AiResultsTableReferences),
       AiResult,
+      PrefetchHooks Function({bool chapterId})
+    >;
+typedef $$AiBreakdownsTableCreateCompanionBuilder =
+    AiBreakdownsCompanion Function({
+      required int chapterId,
+      required int groupIndex,
+      required String body,
+      required String sourceHash,
+      required String model,
+      required int promptVersion,
+      Value<DateTime> createdAt,
+      Value<int> rowid,
+    });
+typedef $$AiBreakdownsTableUpdateCompanionBuilder =
+    AiBreakdownsCompanion Function({
+      Value<int> chapterId,
+      Value<int> groupIndex,
+      Value<String> body,
+      Value<String> sourceHash,
+      Value<String> model,
+      Value<int> promptVersion,
+      Value<DateTime> createdAt,
+      Value<int> rowid,
+    });
+
+final class $$AiBreakdownsTableReferences
+    extends BaseReferences<_$AppDatabase, $AiBreakdownsTable, AiBreakdown> {
+  $$AiBreakdownsTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $ChaptersTable _chapterIdTable(_$AppDatabase db) =>
+      db.chapters.createAlias('ai_breakdowns__chapter_id__chapters__id');
+
+  $$ChaptersTableProcessedTableManager get chapterId {
+    final $_column = $_itemColumn<int>('chapter_id')!;
+
+    final manager = $$ChaptersTableTableManager(
+      $_db,
+      $_db.chapters,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_chapterIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$AiBreakdownsTableFilterComposer
+    extends Composer<_$AppDatabase, $AiBreakdownsTable> {
+  $$AiBreakdownsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get groupIndex => $composableBuilder(
+    column: $table.groupIndex,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get body => $composableBuilder(
+    column: $table.body,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get sourceHash => $composableBuilder(
+    column: $table.sourceHash,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get model => $composableBuilder(
+    column: $table.model,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get promptVersion => $composableBuilder(
+    column: $table.promptVersion,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$ChaptersTableFilterComposer get chapterId {
+    final $$ChaptersTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.chapterId,
+      referencedTable: $db.chapters,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ChaptersTableFilterComposer(
+            $db: $db,
+            $table: $db.chapters,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$AiBreakdownsTableOrderingComposer
+    extends Composer<_$AppDatabase, $AiBreakdownsTable> {
+  $$AiBreakdownsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get groupIndex => $composableBuilder(
+    column: $table.groupIndex,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get body => $composableBuilder(
+    column: $table.body,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get sourceHash => $composableBuilder(
+    column: $table.sourceHash,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get model => $composableBuilder(
+    column: $table.model,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get promptVersion => $composableBuilder(
+    column: $table.promptVersion,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$ChaptersTableOrderingComposer get chapterId {
+    final $$ChaptersTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.chapterId,
+      referencedTable: $db.chapters,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ChaptersTableOrderingComposer(
+            $db: $db,
+            $table: $db.chapters,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$AiBreakdownsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $AiBreakdownsTable> {
+  $$AiBreakdownsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get groupIndex => $composableBuilder(
+    column: $table.groupIndex,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get body =>
+      $composableBuilder(column: $table.body, builder: (column) => column);
+
+  GeneratedColumn<String> get sourceHash => $composableBuilder(
+    column: $table.sourceHash,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get model =>
+      $composableBuilder(column: $table.model, builder: (column) => column);
+
+  GeneratedColumn<int> get promptVersion => $composableBuilder(
+    column: $table.promptVersion,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  $$ChaptersTableAnnotationComposer get chapterId {
+    final $$ChaptersTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.chapterId,
+      referencedTable: $db.chapters,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ChaptersTableAnnotationComposer(
+            $db: $db,
+            $table: $db.chapters,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$AiBreakdownsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $AiBreakdownsTable,
+          AiBreakdown,
+          $$AiBreakdownsTableFilterComposer,
+          $$AiBreakdownsTableOrderingComposer,
+          $$AiBreakdownsTableAnnotationComposer,
+          $$AiBreakdownsTableCreateCompanionBuilder,
+          $$AiBreakdownsTableUpdateCompanionBuilder,
+          (AiBreakdown, $$AiBreakdownsTableReferences),
+          AiBreakdown,
+          PrefetchHooks Function({bool chapterId})
+        > {
+  $$AiBreakdownsTableTableManager(_$AppDatabase db, $AiBreakdownsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$AiBreakdownsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$AiBreakdownsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$AiBreakdownsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> chapterId = const Value.absent(),
+                Value<int> groupIndex = const Value.absent(),
+                Value<String> body = const Value.absent(),
+                Value<String> sourceHash = const Value.absent(),
+                Value<String> model = const Value.absent(),
+                Value<int> promptVersion = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => AiBreakdownsCompanion(
+                chapterId: chapterId,
+                groupIndex: groupIndex,
+                body: body,
+                sourceHash: sourceHash,
+                model: model,
+                promptVersion: promptVersion,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required int chapterId,
+                required int groupIndex,
+                required String body,
+                required String sourceHash,
+                required String model,
+                required int promptVersion,
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => AiBreakdownsCompanion.insert(
+                chapterId: chapterId,
+                groupIndex: groupIndex,
+                body: body,
+                sourceHash: sourceHash,
+                model: model,
+                promptVersion: promptVersion,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$AiBreakdownsTable, AiBreakdown>(table),
+                  $$AiBreakdownsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({chapterId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (chapterId) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.chapterId,
+                        referencedTable: $$AiBreakdownsTableReferences
+                            ._chapterIdTable(db),
+                        referencedColumn: $$AiBreakdownsTableReferences
+                            ._chapterIdTable(db)
+                            .id,
+                      ) as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$AiBreakdownsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $AiBreakdownsTable,
+      AiBreakdown,
+      $$AiBreakdownsTableFilterComposer,
+      $$AiBreakdownsTableOrderingComposer,
+      $$AiBreakdownsTableAnnotationComposer,
+      $$AiBreakdownsTableCreateCompanionBuilder,
+      $$AiBreakdownsTableUpdateCompanionBuilder,
+      (AiBreakdown, $$AiBreakdownsTableReferences),
+      AiBreakdown,
       PrefetchHooks Function({bool chapterId})
     >;
 typedef $$ReadingSessionsTableCreateCompanionBuilder =
@@ -8201,6 +9144,8 @@ class $AppDatabaseManager {
       $$ReadingProgressTableTableManager(_db, _db.readingProgress);
   $$AiResultsTableTableManager get aiResults =>
       $$AiResultsTableTableManager(_db, _db.aiResults);
+  $$AiBreakdownsTableTableManager get aiBreakdowns =>
+      $$AiBreakdownsTableTableManager(_db, _db.aiBreakdowns);
   $$ReadingSessionsTableTableManager get readingSessions =>
       $$ReadingSessionsTableTableManager(_db, _db.readingSessions);
   $$AiCallsTableTableManager get aiCalls =>

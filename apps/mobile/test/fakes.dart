@@ -5,12 +5,14 @@ import 'package:dio/dio.dart';
 import 'package:luma/data/repositories/settings_repository.dart';
 import 'package:luma/data/services/openrouter_service.dart';
 import 'package:luma/domain/ai_prompt.dart';
+import 'package:luma/domain/breakdown_prompt.dart';
 import 'package:luma/domain/models/ai_model.dart';
 import 'package:luma/domain/models/ai_reply.dart';
 import 'package:luma/domain/models/backup.dart';
 import 'package:luma/domain/models/book.dart';
 import 'package:luma/domain/models/reader_prefs.dart';
 import 'package:luma/data/repositories/reading_progress_repository.dart';
+import 'package:luma/ui/features/reader/view_models/breakdown_view_model.dart';
 
 /// Reading progress without a database: records saves, serves [saved].
 class FakeProgress implements ReadingProgressRepository {
@@ -173,6 +175,31 @@ class FakeOpenRouter implements OpenRouterService {
     return keyOk!;
   }
 
+  /// Satu per request Bedahin, urut (test yang ngatur jalannya stream). Abis
+  /// = jawaban valid satu bagian sekaligus.
+  final breakdowns = <StreamController<String>>[];
+  final breakdownCalls = <BreakdownInput>[];
+
+  @override
+  Stream<String> breakdownStream({
+    required String? apiKey,
+    required String model,
+    required BreakdownInput input,
+    CancelToken? cancel,
+  }) {
+    breakdownCalls.add(input);
+    lastCancel = cancel;
+    if (apiKey == null) {
+      return Stream.error(const AiException(AiError.noApiKey));
+    }
+    if (failure != null) return Stream.error(failure!);
+    if (breakdowns.isNotEmpty) return breakdowns.removeAt(0).stream;
+    final n = input.sentences.expand((s) => s).length;
+    return Stream.value(
+      '[BAGIAN K1-K$n]\nJudul: Satu\nMaksudnya: M\nLogikanya: L',
+    );
+  }
+
   @override
   Future<AiReply> explain({
     required String? apiKey,
@@ -230,4 +257,29 @@ class FakeOpenRouter implements OpenRouterService {
           ].join('\n'),
         );
   }
+}
+
+/// Layar Bedahin tanpa DB/LLM: mulai dari [initial], tes nge-[push] state.
+/// [builds] naik tiap provider dibikin ulang (Coba lagi = `invalidate`).
+class FakeBreakdown extends BreakdownStream {
+  FakeBreakdown(super.group);
+
+  static BreakdownState initial = const BreakdownState();
+  static final live = <GroupRef, FakeBreakdown>{};
+  static int builds = 0;
+
+  static void reset() {
+    initial = const BreakdownState();
+    live.clear();
+    builds = 0;
+  }
+
+  @override
+  BreakdownState build() {
+    builds++;
+    live[group] = this;
+    return initial;
+  }
+
+  void push(BreakdownState next) => state = next;
 }

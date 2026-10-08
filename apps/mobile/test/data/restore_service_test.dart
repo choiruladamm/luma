@@ -124,6 +124,18 @@ class Phone {
               lastOpenedAt: Value(DateTime(2026, 10, 7, 21)),
             ),
           );
+      await db
+          .into(db.aiBreakdowns)
+          .insert(
+            AiBreakdownsCompanion.insert(
+              chapterId: ch,
+              groupIndex: 0,
+              body: '[BAGIAN K1-K1]\nJudul: S\nMaksudnya: M\nLogikanya: L',
+              sourceHash: 'h',
+              model: 'm',
+              promptVersion: 1,
+            ),
+          );
     }
     await storage.book('$hash.epub').writeAsString('epub of $title');
     await storage.cover('$hash.png').writeAsString('cover of $title');
@@ -136,6 +148,7 @@ class Phone {
     await db.select(db.paragraphs).get(),
     await db.select(db.readingProgress).get(),
     await db.select(db.aiResults).get(),
+    await db.select(db.aiBreakdowns).get(),
     await db.select(db.readingSessions).get(),
     await db.select(db.aiCalls).get(),
     await db.select(db.settings).get(),
@@ -201,6 +214,7 @@ void main() {
     )..where((x) => x.title.equals('Walden'))).getSingle();
     expect(walden.finishedAt, DateTime(2026, 10, 7, 21));
     expect((await b.db.select(b.db.aiResults).getSingle()).openCount, 3);
+    expect(await b.db.select(b.db.aiBreakdowns).get(), hasLength(1));
     expect(b.files('books'), a.files('books'));
     expect(b.files('covers'), a.files('covers'));
     // Nothing of the old data or the swap left behind.

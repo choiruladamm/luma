@@ -4,6 +4,7 @@
 
 - `/` → Rak buku
 - `/reader/:bookId` → Halaman baca (posisi dari `reading_progress`)
+- `/reader/:bookId/breakdown/:chapterId/:groupIndex` → Bedahin satu grup (`Routes.breakdown`). Cuma di-`push` dari sheet Artinya: sheet tetep di bawah, balik = balik ke sheet. "Balik baca" = `pop(true)`, yang manggil (`ReaderView`) ikut nutup sheet-nya, jadi langsung ke halaman.
 - `/settings` → Pengaturan (termasuk bagian Backup & restore)
 - Bottom sheet artinya, Aa, dan Daftar isi **bukan route**, cukup `showModalBottomSheet`.
 
@@ -25,6 +26,14 @@
   2. Belum ada → stream jawaban bersection ([llm.md](llm.md)), state `waiting` → `translating` → `meaning` → `done`; cabang `slow` (15 detik tanpa token, request tetep jalan; token masuk → `translating`), `failed` (30 detik tanpa token = `timeout`, gak ada key, HTTP, dll), `cut` (putus, atau token berhenti 20 detik di tengah; teks yang udah masuk tetep di `draft`).
   3. Lengkap → validasi; gak valid → sekali lagi lewat jalur JSON tanpa streaming (`explain(attempts: 1)`). Disimpen cuma kalau lengkap dan valid.
   4. **Beda sama `groupAiProvider`:** ke-dispose (tutup sheet, Lanjut ke grup lain) = request dibatalin (`CancelToken`) dan gak ada yang disimpen; ngulang satu grup cuma pecahan sen. Dua tap ke grup yang sama tetep satu request (family). Coba lagi = `ref.invalidate`, mulai lagi dari `waiting`. Kalau pas dogfooding sering kebuka-tutup gak sengaja: tambah masa tenggang (request jalan 2–3 detik abis sheet ditutup).
+- `breakdownStreamProvider(GroupRef)` → `NotifierProvider.autoDispose.family` (`BreakdownStream`, di `reader/view_models/breakdown_view_model.dart`), sumber layar Bedahin ([llm.md](llm.md#bedahin-60)). State `BreakdownState`: `phase` (`BreakdownPhase`), `input` (terjemahan yang dibedah, buat panel teks), `draft` (`Breakdown`), `error`, `cached`.
+  1. Bahan dari `AiBreakdownsRepository.input`: terjemahan + makna `ai_results` (gak ada = `failed`, harusnya gak kejadian dari UI), teks asli grup, sampe 3 paragraf konteks, teks asli grup berikutnya, judul semua bab urut `sortOrder`.
+  2. Cache `ai_breakdowns` valid (versi + `sourceHash` terjemahan sekarang) → langsung `done` (`cached`).
+  3. Belum ada → stream, `waiting` → `writing` → `done`; cabang `slow`, `failed`, `cut` dengan ambang yang sama kayak `groupAiStreamProvider`.
+  4. Lengkap → `parseBreakdown`; gak valid → di-stream sekali lagi (bukan jalur JSON), masih gagal → `failed(invalidResponse)`. Disimpen cuma kalau valid, abis itu `breakdownSectionsProvider` grup itu di-refresh.
+  5. Ke-dispose (tutup layar) = `CancelToken`, gak ada yang disimpen. Coba lagi = `ref.invalidate`.
+- `breakdownSectionsProvider(GroupRef)` → `FutureProvider.autoDispose.family<int>`: jumlah bagian bedahan grup ini yang masih berlaku, 0 = belum ada (entri "Buka bedahan · N bagian" di sheet Artinya).
+- `breakdownPeekProvider(PeekKey)` → `FutureProvider.autoDispose.family<BreakdownPeek?>`, `PeekKey = ({GroupRef from, int? chapter})`: tujuan kartu Nyambung ke (`AiBreakdownsRepository.peek`). `B<n>` = grup pertama chapter ke-n (urut `sortOrder`), null = grup berikutnya di chapter yang sama. Isinya teks asli + terjemahan `ai_results` kalau ada. Null = tujuan gak ada, kartu jadi teks biasa.
 - `importControllerProvider` → `Notifier` untuk state import (idle / processing / success / error / duplicate).
 
 `GroupRef` = record `({int chapterId, int groupIndex})`: `==`/`hashCode` per nilai udah bawaan Dart, gak perlu `freezed`.

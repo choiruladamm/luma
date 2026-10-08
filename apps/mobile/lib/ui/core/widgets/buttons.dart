@@ -231,9 +231,12 @@ abstract final class AppIcons {
   static const add = HugeIcons.strokeRoundedAdd01;
   static const settings = HugeIcons.strokeRoundedSettings01;
   static const next = HugeIcons.strokeRoundedArrowRight02;
+  static const chevron = HugeIcons.strokeRoundedArrowRight01;
   static const toc = HugeIcons.strokeRoundedLeftToRightListBullet;
   static const copy = HugeIcons.strokeRoundedCopy01;
   static const down = HugeIcons.strokeRoundedArrowDown02;
+  static const expand = HugeIcons.strokeRoundedArrowDown01;
+  static const collapse = HugeIcons.strokeRoundedArrowUp01;
   static const retry = HugeIcons.strokeRoundedRefresh;
   static const offline = HugeIcons.strokeRoundedCloudOff;
   static const key = HugeIcons.strokeRoundedKey01;

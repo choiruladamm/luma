@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:path/path.dart' as p;
 
 import '../../../../data/database/app_database.dart';
+import '../../../../data/repositories/ai_breakdowns_repository.dart';
 import '../../../../data/repositories/ai_results_repository.dart';
 import '../../../../data/repositories/settings_repository.dart';
 import '../../../../data/services/api_key_store.dart';
@@ -169,7 +170,9 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
           'dibuka lagi manggil AI ulang dan motong saldo lagi.',
       confirmLabel: 'Hapus',
     );
-    if (ok) await ref.read(aiResultsRepositoryProvider).clear();
+    if (!ok) return;
+    await ref.read(aiResultsRepositoryProvider).clear();
+    await ref.read(aiBreakdownsRepositoryProvider).clear();
   }
 
   @override

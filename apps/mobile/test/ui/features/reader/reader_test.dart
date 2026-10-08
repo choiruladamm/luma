@@ -24,9 +24,13 @@ import 'package:luma/ui/core/widgets/switch.dart';
 import 'package:luma/ui/features/bookshelf/view_models/bookshelf_view_model.dart';
 import 'package:luma/ui/features/bookshelf/views/bookshelf_view.dart';
 import 'package:luma/ui/core/widgets/tag.dart';
+import 'package:luma/ui/features/reader/view_models/breakdown_view_model.dart';
 import 'package:luma/ui/features/reader/view_models/reader_view_model.dart';
 import 'package:luma/ui/features/reader/views/reader_capsule.dart';
 import 'package:luma/ui/features/reader/views/reader_view.dart';
+import 'package:luma/ui/features/breakdown/views/breakdown_view.dart';
+import 'package:luma/domain/breakdown_prompt.dart';
+import 'package:luma/domain/models/breakdown.dart';
 
 import '../../../fakes.dart';
 
@@ -77,6 +81,9 @@ final tall = [
 
 /// Groups already translated, per chapter (margin marks).
 var translated = <int, Set<int>>{};
+
+/// Sections of a group's saved breakdown (0 = none).
+var brokenDown = <GroupRef, int>{};
 
 /// What the AI says for a group; tests swap it.
 late Future<AiReply> Function(GroupRef) answer;
@@ -177,6 +184,8 @@ void main() {
 
   setUp(() {
     translated = {};
+    brokenDown = {};
+    FakeBreakdown.reset();
     streams.clear();
     answer = (g) async => replyFor(g);
   });
@@ -201,6 +210,10 @@ void main() {
       ProviderScope(
         overrides: [
           groupAiStreamProvider.overrideWith2(FakeAiStream.new),
+          breakdownStreamProvider.overrideWith2(FakeBreakdown.new),
+          breakdownSectionsProvider.overrideWith(
+            (ref, g) async => brokenDown[g] ?? 0,
+          ),
           settingsRepositoryProvider.overrideWithValue(settings),
           booksStreamProvider.overrideWith(
             (ref) => Stream.value([
@@ -2004,6 +2017,94 @@ void main() {
       expect(rect.top, closeTo(para.top + 5, 1));
     });
 
+    group('Bedahin entry', () {
+      const g = (chapterId: 13, groupIndex: 13);
+      final entry = find.text('Masih bingung? Bedahin');
+
+      Future<void> openEntry(WidgetTester tester) async {
+        await openTall(tester);
+        await tapGroup(tester, 13);
+        await tester.scrollUntilVisible(
+          find.textContaining('Per bagian'),
+          200,
+          scrollable: find.descendant(
+            of: sheetBox,
+            matching: find.byType(Scrollable),
+          ),
+        );
+        await tester.pumpAndSettle();
+      }
+
+      testWidgets('last item of the sheet; opens Bedahin over the sheet', (
+        tester,
+      ) async {
+        FakeBreakdown.initial = BreakdownState(
+          phase: BreakdownPhase.done,
+          input: BreakdownInput(
+            book: (title: 'The Enchiridion', author: null, chapter: 'Tall'),
+            chapters: const ['I', 'Tall'],
+            chapter: 2,
+            original: const ['Tall 13'],
+            translations: const ['ID Tall 13.'],
+            meaning: 'M',
+          ),
+          draft: const Breakdown(
+            sections: [
+              BreakdownSection(from: 1, to: 1, meaning: 'A.', logic: 'B.'),
+            ],
+          ),
+          cached: true,
+        );
+        await openEntry(tester);
+        expect(entry, findsOneWidget);
+        // After the meaning, inside the scrolling content.
+        expect(
+          tester.getTopLeft(entry).dy,
+          greaterThan(tester.getTopLeft(find.text('Makna grup 13.')).dy),
+        );
+
+        await tester.tap(entry);
+        await tester.pumpAndSettle();
+        expect(find.byType(BreakdownView), findsOneWidget);
+        expect(FakeBreakdown.live.keys, [g]);
+        expect(find.text('Udah dibedah nih'), findsOneWidget);
+
+        // Back: the sheet is still there.
+        await leave(tester);
+        expect(find.byType(BreakdownView), findsNothing);
+        expect(sheetBox, findsOneWidget);
+        expect(entry, findsOneWidget);
+
+        // "Balik baca": the screen and the sheet close together.
+        await tester.tap(entry);
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Balik baca'));
+        await tester.pumpAndSettle();
+        expect(find.byType(BreakdownView), findsNothing);
+        expect(sheetBox, findsNothing);
+        expect(find.byType(ReaderView), findsOneWidget);
+        expect(find.textContaining('Tall 13:'), findsOneWidget);
+      });
+
+      testWidgets('already broken down: "Buka bedahan" with its count', (
+        tester,
+      ) async {
+        brokenDown[g] = 4;
+        await openTall(tester);
+        await tapGroup(tester, 13);
+        await tester.scrollUntilVisible(
+          find.text('Buka bedahan'),
+          200,
+          scrollable: find.descendant(
+            of: sheetBox,
+            matching: find.byType(Scrollable),
+          ),
+        );
+        expect(find.text('Udah pernah dibedah · 4 bagian'), findsOneWidget);
+        expect(entry, findsNothing);
+      });
+    });
+
     group('streaming', () {
       const g = (chapterId: 13, groupIndex: 13);
 
@@ -2180,11 +2281,24 @@ void main() {
         expect(translation(tester, 'Halo').data, 'Halo, ini baru setengah');
         expect(find.text('Maksud penulisnya tuh...'), findsNothing);
         expect(button(tester, 'Salin').onPressed, isNull);
+        expect(find.text('Masih bingung? Bedahin'), findsNothing);
 
         await tester.tap(find.text('Coba lagi'));
         await tester.pump();
         expect(find.text('Yah, kepotong di tengah'), findsNothing);
         expect(find.text('Bentar, lagi mikir...'), findsOneWidget);
+      });
+
+      testWidgets('Bedahin entry waits for the whole meaning, then fades in', (
+        tester,
+      ) async {
+        final s = await openStreaming(tester);
+        s.push(state(AiPhase.meaning, translations: ['Halo.'], meaning: 'Mak'));
+        await frames(tester, 30);
+        expect(find.text('Masih bingung? Bedahin'), findsNothing);
+        s.push(state(AiPhase.done, translations: ['Halo.'], meaning: 'Makna.'));
+        await frames(tester, 90);
+        expect(find.text('Masih bingung? Bedahin'), findsOneWidget);
       });
 
       testWidgets('"Lanjut" is off until done or cut; the X closes', (

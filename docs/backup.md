@@ -7,7 +7,7 @@ Luma diinstall tanpa Apple Developer Program berbayar, jadi build harus diinstal
 - Install ulang **di atas app yang sudah ada** (bundle ID & tim signing sama) biasanya **mempertahankan data**.
 - Data **hilang** kalau app dihapus (mis. saat membereskan masalah signing), bundle ID berubah, atau ganti HP.
 
-Terjemahan di `ai_results` dibayar pakai saldo OpenRouter dan progres baca tidak bisa dibuat ulang, jadi wajib ada backup manual yang gampang.
+Terjemahan di `ai_results` (dan bedahan di `ai_breakdowns`) dibayar pakai saldo OpenRouter dan progres baca tidak bisa dibuat ulang, jadi wajib ada backup manual yang gampang.
 
 ## Prinsip
 

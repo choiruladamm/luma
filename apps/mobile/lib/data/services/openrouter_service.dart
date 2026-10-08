@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/ai_prompt.dart';
+import '../../domain/breakdown_prompt.dart';
 import '../../domain/models/ai_reply.dart';
 
 /// OpenRouter (API OpenAI-compatible, docs/llm.md).
@@ -38,7 +39,11 @@ class OpenRouterService {
       throw const AiException(AiError.noApiKey);
     }
     for (var attempt = 1; ; attempt++) {
-      final content = await _complete(apiKey, model, book, context, target);
+      final content = await _complete(
+        apiKey,
+        model,
+        aiUserPrompt(book: book, context: context, target: target),
+      );
       try {
         return parseAiReply(content, target.length);
       } on AiException {
@@ -58,16 +63,44 @@ class OpenRouterService {
     required List<String> context,
     required List<String> target,
     CancelToken? cancel,
-  }) async* {
+  }) => _stream(
+    apiKey,
+    model,
+    aiStreamSystemPrompt,
+    aiUserPrompt(book: book, context: context, target: target),
+    cancel,
+  );
+
+  /// Bedahin satu grup, format bersection ([breakdownSystemPrompt]); sama
+  /// kayak [explainStream], validasi ([parseBreakdown]) di pemanggil.
+  Stream<String> breakdownStream({
+    required String? apiKey,
+    required String model,
+    required BreakdownInput input,
+    CancelToken? cancel,
+  }) => _stream(
+    apiKey,
+    model,
+    breakdownSystemPrompt,
+    breakdownUserPrompt(input),
+    cancel,
+  );
+
+  Stream<String> _stream(
+    String? apiKey,
+    String model,
+    String system,
+    String user,
+    CancelToken? cancel,
+  ) async* {
     if (apiKey == null || apiKey.isEmpty) {
       throw const AiException(AiError.noApiKey);
     }
     final res = await _post<ResponseBody>(
       apiKey,
       model,
-      book,
-      context,
-      target,
+      system,
+      user,
       stream: true,
       cancel: cancel,
     );
@@ -104,14 +137,8 @@ class OpenRouterService {
     }
   }
 
-  Future<String> _complete(
-    String apiKey,
-    String model,
-    AiBook? book,
-    List<String> context,
-    List<String> target,
-  ) async {
-    final res = await _post<Object?>(apiKey, model, book, context, target);
+  Future<String> _complete(String apiKey, String model, String user) async {
+    final res = await _post<Object?>(apiKey, model, aiSystemPrompt, user);
     final content = switch (res.data) {
       {'choices': [{'message': {'content': final String c}}, ...]} => c,
       _ => null,
@@ -125,9 +152,8 @@ class OpenRouterService {
   Future<Response<T>> _post<T>(
     String apiKey,
     String model,
-    AiBook? book,
-    List<String> context,
-    List<String> target, {
+    String system,
+    String user, {
     bool stream = false,
     CancelToken? cancel,
     bool reasoningOff = true,
@@ -141,18 +167,8 @@ class OpenRouterService {
         data: {
           'model': model,
           'messages': [
-            {
-              'role': 'system',
-              'content': stream ? aiStreamSystemPrompt : aiSystemPrompt,
-            },
-            {
-              'role': 'user',
-              'content': aiUserPrompt(
-                book: book,
-                context: context,
-                target: target,
-              ),
-            },
+            {'role': 'system', 'content': system},
+            {'role': 'user', 'content': user},
           ],
           // Token reasoning dihitung output dan bikin lambat: matiin. Model
           // yang gak bisa dimatiin dapet yang paling minim, gak ikut dibalikin.
@@ -169,9 +185,8 @@ class OpenRouterService {
         return _post<T>(
           apiKey,
           model,
-          book,
-          context,
-          target,
+          system,
+          user,
           stream: stream,
           cancel: cancel,
           reasoningOff: false,
