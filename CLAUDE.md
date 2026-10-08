@@ -29,7 +29,7 @@ Issue baru disisipin di fase yang cocok di daftar ini.
 Kalau user bilang "next task" / "lanjut":
 1. `gh issue list --milestone MVP --state open` → ambil issue open pertama di urutan di atas yang semua **Tergantung**-nya udah closed.
 2. Sebutin nomor, judul, dan ringkasan scope-nya, terus tunggu user confirm. Jangan langsung ngoding.
-3. Setelah confirm: baca docs + board yang disebut issue, kerjain, `make check`, commit `Closes #N`, centang checklist, push.
+3. Setelah confirm: baca docs + board yang disebut issue, kerjain di branch fiturnya (lihat Git), `make check`, commit `Closes #N`, centang checklist, push branch.
 
 ## Project
 
@@ -38,7 +38,7 @@ App Flutter di `apps/mobile`, Flutter dikunci lewat `.fvmrc`. Jalankan perintah 
 - Setelah ubah tabel Drift atau model freezed: `make gen`. File `*.g.dart` / `*.freezed.dart` ikut di-commit.
 - Schema Drift: udah ada data di iPhone, jadi tiap ubah tabel wajib naikin `schemaVersion` + langkah di `onUpgrade` + test di `test/data/migration_test.dart` (fixture SQL versi lama, bandingin schema hasil migrasi sama install baru). Jangan minta user hapus app. `drift_dev make-migrations` gak bisa dipakai: kolom `paragraphs.text` bikin kode snapshot-nya gagal compile.
 - `make check` (format, analyze, test) harus bersih sebelum commit.
-- `make run` / `make release` ke device hanya kalau user minta.
+- `make run` / `make release` ke device hanya kalau user minta. `make release` = app Luma (data asli user), cuma dari `master`. Fitur yang belum di-merge dicoba di app **Luma Dev** (flavor `dev`, bundle id `id.ruma.luma.dev`, data & Keychain terpisah; setup #66), jangan pernah build branch fitur ke bundle id `id.ruma.luma`: migrasi schema yang belum stabil bakal nyentuh data asli dan Drift gak bisa turun versi.
 
 ## Arsitektur
 
@@ -109,6 +109,10 @@ UI berbahasa Indonesia gaya Gen Z santai ("Rak buku lo", "Bentar, lagi mikir..."
 
 ## Git
 
+- `master` = stable, yang di-build ke app Luma dan dipake baca tiap hari. Kerjaan baru di branch dari `master`, satu branch per fitur / issue induk (`feat/bedahin` buat #60–#65); issue tanpa induk = branch sendiri (`feat/<nama>`, `fix/<nama>`).
+- Di branch: satu commit per issue dengan `Closes #N` (issue baru ketutup pas masuk `master`), push ke branch-nya, bukan ke `master`.
+- Masuk `master` lewat PR (`gh pr create`), merge commit biasa (bukan squash, biar commit per issue keliatan). Merge cuma kalau user bilang fiturnya udah oke di Luma Dev.
+- Fix kecil buat stable, docs, atau `CLAUDE.md` boleh langsung ke `master`; abis itu merge `master` ke branch fitur yang lagi jalan.
 - Conventional Commits (`feat(reader): ...`, `fix(import): ...`), scope = area. Tutup issue lewat `Closes #N` di commit/PR.
 - Tanpa `Co-Authored-By` atau tanda AI apa pun di commit, PR, dan issue.
 - Repo public: link desain selalu tanpa parameter `?sk=`.

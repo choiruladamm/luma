@@ -22,7 +22,8 @@ watch: ## codegen in watch mode
 run: ## run app in debug (device: d=<id>)
 	$(FLUTTER) run $(if $(d),-d $(d))
 
-release: ## install release build on iPhone, redo every 7 days, data kept (d=<id>)
+release: ## install release build on iPhone, redo every 7 days, data kept (d=<id>), master only
+	@test "$$(git rev-parse --abbrev-ref HEAD)" = master || { echo "make release cuma dari master (app Luma, data asli). Fitur: Luma Dev"; exit 1; }
 	$(FLUTTER) run --release $(if $(d),-d $(d))
 
 profile: ## run app in profile mode, real perf (d=<id>)
