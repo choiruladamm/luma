@@ -12,9 +12,12 @@ import 'buttons.dart';
 /// Salin yang lagi nunggu jawaban: tiga titik berdenyut + "Lagi mikir" /
 /// "Lagi nulis". Nonaktif, warna ink2 di atas muted.
 class StatusButton extends StatelessWidget {
-  const StatusButton({super.key, required this.label});
+  const StatusButton({super.key, required this.label, this.action = 'Salin'});
 
   final String label;
+
+  /// Tombol yang lagi nunggu (VoiceOver: "Salin, belum bisa: lagi mikir").
+  final String action;
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +25,7 @@ class StatusButton extends StatelessWidget {
     return Semantics(
       button: true,
       enabled: false,
-      label: 'Salin, belum bisa: ${label.toLowerCase()}',
+      label: '$action, belum bisa: ${label.toLowerCase()}',
       excludeSemantics: true,
       child: Container(
         height: 52,
@@ -33,6 +36,8 @@ class StatusButton extends StatelessWidget {
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
+          // Dibentang (mis. di Expanded): isinya di tengah.
+          mainAxisAlignment: MainAxisAlignment.center,
           spacing: 9,
           children: [
             _WritingDots(color: c.ink2),

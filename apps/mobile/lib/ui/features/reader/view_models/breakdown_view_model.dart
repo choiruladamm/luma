@@ -201,3 +201,13 @@ final breakdownSectionsProvider = FutureProvider.autoDispose
     .family<int, GroupRef>(
       (ref, group) => ref.watch(aiBreakdownsRepositoryProvider).sections(group),
     );
+
+/// Kartu Nyambung ke: dari grup mana, ke bab ke berapa (null = lanjutan).
+typedef PeekKey = ({GroupRef from, int? chapter});
+
+/// Isi sheet intip (#65). Null = tujuannya gak ada, kartu jadi teks biasa.
+final breakdownPeekProvider = FutureProvider.autoDispose
+    .family<BreakdownPeek?, PeekKey>(
+      (ref, key) =>
+          ref.watch(aiBreakdownsRepositoryProvider).peek(key.from, key.chapter),
+    );

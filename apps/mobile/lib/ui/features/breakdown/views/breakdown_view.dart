@@ -27,14 +27,19 @@ import '../../../core/widgets/edge_fade.dart';
 import '../../../core/widgets/tag.dart';
 import '../../../core/widgets/toast.dart';
 import '../../reader/view_models/breakdown_view_model.dart';
+import 'peek_sheet.dart';
 
 /// Layar Bedahin (board "Terpilih · Bedahin · Opsi C · layar bedah" + "Spek ·
 /// Bedahin · state"). Di-push dari sheet Artinya: balik = ke sheet, "Balik
 /// baca" = `pop(true)`, sheet-nya ikut ditutup sama yang manggil. Ditutup di
-/// tengah proses = request dibatalin (provider autoDispose).
+/// tengah proses = request dibatalin (provider autoDispose). Bisa numpuk
+/// (#65): "Bedahin ini juga" dari intip push Bedahin lain di atasnya; balik =
+/// mundur satu lapis, "Balik baca" dari lapis mana pun nerusin `pop(true)`
+/// sampe ke halaman.
 class BreakdownView extends ConsumerStatefulWidget {
-  const BreakdownView({super.key, required this.group});
+  const BreakdownView({super.key, required this.bookId, required this.group});
 
+  final int bookId;
   final GroupRef group;
 
   @override
@@ -57,6 +62,27 @@ class _BreakdownViewState extends ConsumerState<BreakdownView> {
     if (mounted) _retry();
   }
 
+  /// Kartu Nyambung ke di-tap: sheet intip, lalu mungkin satu lapis lagi.
+  Future<void> _peek(BreakdownLink link, String where) async {
+    final result = await showPeekSheet(
+      context,
+      peek: (from: widget.group, chapter: link.chapter),
+      link: link,
+      where: where,
+    );
+    if (!mounted) return;
+    switch (result) {
+      case PeekBreakdown(:final group):
+        final read = await context.push<bool>(
+          Routes.breakdown(widget.bookId, group.chapterId, group.groupIndex),
+        );
+        if (read == true && mounted) context.pop(true);
+      case PeekSettings():
+        await context.push(Routes.settings);
+      case null:
+    }
+  }
+
   Future<void> _copy(BreakdownInput input, Breakdown result) async {
     await Clipboard.setData(ClipboardData(text: breakdownCopy(input, result)));
     if (!mounted) return;
@@ -75,6 +101,7 @@ class _BreakdownViewState extends ConsumerState<BreakdownView> {
     return Scaffold(
       body: _Screen(
         key: ValueKey(_attempt),
+        group: widget.group,
         state: state,
         typo: ReaderTypography(prefs, Theme.of(context).brightness),
         copied: _copied,
@@ -83,6 +110,7 @@ class _BreakdownViewState extends ConsumerState<BreakdownView> {
         onRetry: _retry,
         onSettings: _settings,
         onCopy: _copy,
+        onPeek: _peek,
       ),
     );
   }
@@ -218,6 +246,7 @@ Breakdown _whole(Breakdown b) {
 class _Screen extends StatefulWidget {
   const _Screen({
     super.key,
+    required this.group,
     required this.state,
     required this.typo,
     required this.copied,
@@ -226,8 +255,10 @@ class _Screen extends StatefulWidget {
     required this.onRetry,
     required this.onSettings,
     required this.onCopy,
+    required this.onPeek,
   });
 
+  final GroupRef group;
   final BreakdownState state;
   final ReaderTypography typo;
   final bool copied;
@@ -236,6 +267,7 @@ class _Screen extends StatefulWidget {
   final VoidCallback onRetry;
   final VoidCallback onSettings;
   final void Function(BreakdownInput, Breakdown) onCopy;
+  final void Function(BreakdownLink, String where) onPeek;
 
   @override
   State<_Screen> createState() => _ScreenState();
@@ -604,6 +636,8 @@ class _ScreenState extends State<_Screen> with TickerProviderStateMixin {
             placeholders: _busy && !cut ? _placeholders(input, shown) : 0,
             blocks: _blocks,
             onTerm: _interactive ? _focusTerm : null,
+            from: widget.group,
+            onPeek: _busy ? null : widget.onPeek,
             slow: phase == BreakdownPhase.slow,
             cut: cut,
             onCancel: widget.onBack,
@@ -1290,6 +1324,8 @@ class _Explanation extends StatelessWidget {
     required this.placeholders,
     required this.blocks,
     required this.onTerm,
+    required this.from,
+    required this.onPeek,
     required this.slow,
     required this.cut,
     required this.onCancel,
@@ -1310,6 +1346,12 @@ class _Explanation extends StatelessWidget {
 
   /// Istilah di-tap (indeks bagian asalnya). Null = gak bisa di-tap.
   final void Function(BreakdownTerm, int section)? onTerm;
+
+  /// Grup yang dibedah, buat nyari tujuan kartu Nyambung ke.
+  final GroupRef from;
+
+  /// Kartu di-tap. Null = kartunya belum bisa di-tap (lagi proses).
+  final void Function(BreakdownLink, String where)? onPeek;
   final bool slow;
   final bool cut;
   final VoidCallback onCancel;
@@ -1496,7 +1538,8 @@ class _Explanation extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               spacing: 10,
               children: [
-                for (final l in b.links) _LinkCard(link: l, input: input),
+                for (final l in b.links)
+                  _LinkCard(link: l, input: input, from: from, onTap: onPeek),
               ],
             ),
           ),
@@ -1568,53 +1611,86 @@ class _Block extends StatelessWidget {
   );
 }
 
-/// Kartu Nyambung ke. Belum bisa di-tap (intip = #65).
-class _LinkCard extends StatelessWidget {
-  const _LinkCard({required this.link, required this.input});
+/// Kartu Nyambung ke. Tujuannya ketemu = garis + chevron, tap = intip
+/// (#65); gak ketemu = teks biasa.
+class _LinkCard extends ConsumerWidget {
+  const _LinkCard({
+    required this.link,
+    required this.input,
+    required this.from,
+    required this.onTap,
+  });
 
   final BreakdownLink link;
   final BreakdownInput? input;
+  final GroupRef from;
+  final void Function(BreakdownLink, String where)? onTap;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final c = context.stabilo;
     final chapters = input?.chapters ?? const <String>[];
     final where = switch (link.chapter) {
-      null => 'Lanjutannya',
+      null => input == null ? 'Lanjutan' : 'Lanjutan ${_chapterLabel(input!)}',
       final n when n <= chapters.length && chapters[n - 1].trim().isNotEmpty =>
         chapters[n - 1].trim(),
       final n => 'Bab $n',
     };
+    final found =
+        ref
+            .watch(breakdownPeekProvider((from: from, chapter: link.chapter)))
+            .value !=
+        null;
+    final tap = found && onTap != null ? () => onTap!(link, where) : null;
     final text = link.why.isEmpty ? link.title : '${link.title}: ${link.why}';
+    final body = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      spacing: 2,
+      children: [
+        Text(
+          where.toUpperCase(),
+          style: StabiloType.tag.copyWith(
+            letterSpacing: 0.05 * 12,
+            height: 18 / 12,
+            color: c.ink2,
+          ),
+        ),
+        Text(text, style: StabiloType.body.copyWith(height: 1.4, color: c.ink)),
+      ],
+    );
+    if (!found) {
+      return Semantics(
+        label: 'Nyambung ke $where, ${link.title}',
+        excludeSemantics: true,
+        child: body,
+      );
+    }
     return Semantics(
-      label: 'Nyambung ke $where, ${link.title}',
+      button: true,
+      label: 'Nyambung ke $where, ${link.title}. Ketuk dua kali buat ngintip.',
       excludeSemantics: true,
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: Space.s4,
-          vertical: Space.s3,
-        ),
-        decoration: BoxDecoration(
+      child: Material(
+        color: Colors.transparent,
+        shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(Radii.menu),
-          border: Border.all(color: c.outline, width: Layout.outline),
+          side: BorderSide(color: c.outline, width: Layout.outline),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          spacing: 2,
-          children: [
-            Text(
-              where.toUpperCase(),
-              style: StabiloType.tag.copyWith(
-                letterSpacing: 0.05 * 12,
-                height: 18 / 12,
-                color: c.ink2,
-              ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: tap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: Space.s4,
+              vertical: Space.s3,
             ),
-            Text(
-              text,
-              style: StabiloType.body.copyWith(height: 1.4, color: c.ink),
+            child: Row(
+              spacing: Space.s3,
+              children: [
+                Expanded(child: body),
+                AppIcon(AppIcons.chevron, size: 18, color: c.ink),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

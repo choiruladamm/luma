@@ -4,6 +4,7 @@ import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/breakdown_prompt.dart';
+import '../../domain/models/breakdown.dart';
 import '../../domain/models/ai_reply.dart';
 import '../database/app_database.dart';
 import 'ai_results_repository.dart';
@@ -79,6 +80,53 @@ class AiBreakdownsRepository {
             row.sourceHash;
     // Yang disimpen udah lolos `parseBreakdown`: satu penanda per bagian.
     return valid ? '[BAGIAN'.allMatches(row.body).length : 0;
+  }
+
+  /// Tujuan kartu Nyambung ke dari grup [from]: [chapter] (`B<n>`, mulai 1,
+  /// urut `sortOrder`) = grup pertama bab itu; null = grup berikutnya di bab
+  /// yang sama. Null kalau tujuannya gak ada (kartunya jadi teks biasa).
+  Future<BreakdownPeek?> peek(GroupRef from, int? chapter) async {
+    GroupRef? target;
+    if (chapter == null) {
+      target = (chapterId: from.chapterId, groupIndex: from.groupIndex + 1);
+    } else {
+      final current = await (_db.select(
+        _db.chapters,
+      )..where((c) => c.id.equals(from.chapterId))).getSingleOrNull();
+      if (current == null) return null;
+      final chapters =
+          await (_db.select(_db.chapters)
+                ..where((c) => c.bookId.equals(current.bookId))
+                ..orderBy([(c) => OrderingTerm.asc(c.sortOrder)]))
+              .get();
+      if (chapter < 1 || chapter > chapters.length) return null;
+      final id = chapters[chapter - 1].id;
+      final first =
+          await (_db.select(_db.paragraphs)
+                ..where(
+                  (p) => p.chapterId.equals(id) & p.groupIndex.isNotNull(),
+                )
+                ..orderBy([(p) => OrderingTerm.asc(p.paragraphIndex)])
+                ..limit(1))
+              .getSingleOrNull();
+      if (first == null) return null;
+      target = (chapterId: id, groupIndex: first.groupIndex!);
+    }
+    final paragraphs =
+        await (_db.select(_db.paragraphs)
+              ..where(
+                (p) =>
+                    p.chapterId.equals(target!.chapterId) &
+                    p.groupIndex.equals(target.groupIndex),
+              )
+              ..orderBy([(p) => OrderingTerm.asc(p.paragraphIndex)]))
+            .get();
+    if (paragraphs.isEmpty) return null;
+    return BreakdownPeek(
+      group: target,
+      original: [for (final p in paragraphs) p.content],
+      translations: (await _results.find(target))?.translations,
+    );
   }
 
   /// Simpan / timpa hasil yang udah lolos `parseBreakdown`.

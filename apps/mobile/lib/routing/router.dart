@@ -33,6 +33,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: 'breakdown/:chapterId/:groupIndex',
             pageBuilder: (context, state) {
               final view = BreakdownView(
+                bookId: int.parse(state.pathParameters['bookId']!),
                 group: (
                   chapterId: int.parse(state.pathParameters['chapterId']!),
                   groupIndex: int.parse(state.pathParameters['groupIndex']!),

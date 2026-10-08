@@ -12,6 +12,8 @@ import 'package:luma/ui/core/theme/stabilo_theme.dart';
 import 'package:luma/ui/core/widgets/buttons.dart';
 import 'package:luma/ui/features/breakdown/views/breakdown_view.dart';
 import 'package:luma/ui/features/reader/view_models/breakdown_view_model.dart';
+import 'package:luma/ui/features/reader/view_models/reader_view_model.dart';
+import 'package:luma/domain/ai_prompt.dart';
 
 import '../../../fakes.dart';
 
@@ -54,11 +56,31 @@ final four = Breakdown(
   sections: [for (var i = 1; i <= 4; i++) section(i, i, '$i')],
 );
 
+/// Where each Nyambung ke card leads (by chapter, null = next group).
+var peeks = <int?, BreakdownPeek?>{};
+
+/// Artiin in the peek sheet: tests push the stream states.
+class FakeArtiin extends GroupAiStream {
+  FakeArtiin(super.group);
+
+  static final live = <GroupRef, FakeArtiin>{};
+
+  @override
+  AiStream build() {
+    live[this.group] = this;
+    return const AiStream();
+  }
+
+  void push(AiStream next) => state = next;
+}
+
 void main() {
   late bool? popped;
 
   setUp(() {
     FakeBreakdown.reset();
+    FakeArtiin.live.clear();
+    peeks = {};
     popped = null;
   });
 
@@ -95,15 +117,23 @@ void main() {
           builder: (_, _) => Scaffold(
             body: Builder(
               builder: (context) => TextButton(
-                onPressed: () async => popped = await context.push<bool>('/b'),
+                onPressed: () async => popped = await context.push<bool>(
+                  Routes.breakdown(1, g.chapterId, g.groupIndex),
+                ),
                 child: const Text('open'),
               ),
             ),
           ),
         ),
         GoRoute(
-          path: '/b',
-          builder: (_, _) => const BreakdownView(group: g),
+          path: '/reader/:bookId/breakdown/:chapterId/:groupIndex',
+          builder: (_, state) => BreakdownView(
+            bookId: int.parse(state.pathParameters['bookId']!),
+            group: (
+              chapterId: int.parse(state.pathParameters['chapterId']!),
+              groupIndex: int.parse(state.pathParameters['groupIndex']!),
+            ),
+          ),
         ),
         GoRoute(
           path: Routes.settings,
@@ -116,6 +146,10 @@ void main() {
       ProviderScope(
         overrides: [
           breakdownStreamProvider.overrideWith2(FakeBreakdown.new),
+          breakdownPeekProvider.overrideWith(
+            (ref, key) async => peeks[key.chapter],
+          ),
+          groupAiStreamProvider.overrideWith2(FakeArtiin.new),
           settingsRepositoryProvider.overrideWithValue(FakeSettings()),
         ],
         child: MaterialApp.router(
@@ -268,7 +302,7 @@ void main() {
     await see(find.text('NYAMBUNG KE'));
     expect(find.text('XVII'), findsOneWidget);
     expect(find.text('Aktor: peran.'), findsOneWidget);
-    expect(find.text('LANJUTANNYA'), findsOneWidget);
+    expect(find.text('LANJUTAN XXIV'), findsOneWidget);
     await see(find.text('Pisahin kejadian sama pendapat lo.'));
     expect(find.text('PRAKTEKINNYA GINI'), findsOneWidget);
   });
@@ -776,6 +810,221 @@ void main() {
       await tester.tap(chip('Istilah'));
       await tester.pump();
       expect(panel(), findsNothing);
+    });
+  });
+
+  group('Nyambung ke (#65)', () {
+    const xvii = (chapterId: 17, groupIndex: 0);
+    const next = (chapterId: 10, groupIndex: 1);
+    final linked = done(
+      Breakdown(
+        sections: two.sections,
+        links: const [
+          BreakdownLink(chapter: 2, title: 'Metafora aktor', why: 'Peran.'),
+          BreakdownLink(title: 'Dari ayahnya', why: 'Utang budi.'),
+        ],
+      ),
+    );
+    Finder card(String where) =>
+        find.ancestor(of: find.text(where), matching: find.byType(InkWell));
+    Future<void> peek(WidgetTester tester, String where) async {
+      await tester.scrollUntilVisible(
+        find.text(where),
+        200,
+        scrollable: find.byType(Scrollable).last,
+      );
+      await tester.tap(find.text(where));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('a card with a target is tappable, one without is plain', (
+      tester,
+    ) async {
+      peeks = {
+        2: const BreakdownPeek(group: xvii, original: ['Remember.']),
+      };
+      await open(tester, linked);
+      await tester.scrollUntilVisible(
+        find.text('XVII'),
+        200,
+        scrollable: find.byType(Scrollable).last,
+      );
+      expect(card('XVII'), findsOneWidget);
+      expect(card('LANJUTAN XXIV'), findsNothing); // no next group
+    });
+
+    testWidgets('1a translated: translation, original below, only '
+        '"Bedahin ini juga"', (tester) async {
+      peeks = {
+        2: const BreakdownPeek(
+          group: xvii,
+          original: ['Remember that you are an actor.'],
+          translations: ['Ingat, kamu itu aktor.'],
+        ),
+      };
+      await open(tester, linked);
+      await peek(tester, 'XVII');
+      expect(find.text('NYAMBUNG KE · AWAL XVII'), findsOneWidget);
+      expect(find.text('Metafora aktor'), findsWidgets);
+      expect(find.text('Peran.'), findsOneWidget);
+      expect(find.text('Ingat, kamu itu aktor.'), findsOneWidget);
+      expect(find.text('Remember that you are an actor.'), findsOneWidget);
+      expect(find.text('Artiin'), findsNothing);
+      expect(find.text('Bedahin ini juga'), findsOneWidget);
+    });
+
+    testWidgets('1b next group: its own header', (tester) async {
+      peeks = {
+        null: const BreakdownPeek(group: next, original: ['From my father.']),
+      };
+      await open(tester, linked);
+      await peek(tester, 'LANJUTAN XXIV');
+      expect(find.text('LANJUTAN XXIV · GRUP BERIKUTNYA'), findsOneWidget);
+      expect(find.text('From my father.'), findsOneWidget);
+    });
+
+    testWidgets('1c → 1d: Artiin streams over the original, then is gone', (
+      tester,
+    ) async {
+      peeks = {
+        2: const BreakdownPeek(group: xvii, original: ['Remember.']),
+      };
+      await open(tester, linked);
+      await peek(tester, 'XVII');
+      expect(find.text('Artiin'), findsOneWidget);
+      expect(FakeArtiin.live, isEmpty); // nothing asked yet
+
+      await tester.tap(find.text('Artiin'));
+      await tester.pump();
+      expect(FakeArtiin.live.keys, [xvii]);
+      expect(find.text('Lagi mikir'), findsOneWidget);
+      FakeArtiin.live[xvii]!.push(
+        const AiStream(
+          phase: AiPhase.translating,
+          draft: AiDraft(translations: ['Ingat, kamu']),
+        ),
+      );
+      await tester.pump();
+      expect(find.text('Lagi nulis'), findsOneWidget);
+      expect(find.textContaining('Ingat'), findsOneWidget);
+      FakeArtiin.live[xvii]!.push(
+        const AiStream(
+          phase: AiPhase.done,
+          draft: AiDraft(translations: ['Ingat, kamu aktor.'], meaning: 'M'),
+        ),
+      );
+      await tester.pump();
+      expect(find.text('Ingat, kamu aktor.'), findsOneWidget);
+      expect(find.text('Artiin'), findsNothing);
+      expect(find.text('Remember.'), findsOneWidget);
+    });
+
+    testWidgets('Artiin failed: a pink row, "Coba artiin lagi"', (
+      tester,
+    ) async {
+      peeks = {
+        2: const BreakdownPeek(group: xvii, original: ['Remember.']),
+      };
+      await open(tester, linked);
+      await peek(tester, 'XVII');
+      await tester.tap(find.text('Artiin'));
+      await tester.pump();
+      FakeArtiin.live[xvii]!.push(
+        const AiStream(
+          phase: AiPhase.failed,
+          error: AiException(AiError.network),
+        ),
+      );
+      await tester.pump();
+      expect(find.text('Yah, gagal ngartiin'), findsOneWidget);
+      expect(find.text('Remember.'), findsOneWidget);
+      await tester.tap(find.text('Coba artiin lagi'));
+      await tester.pump();
+      expect(find.text('Lagi mikir'), findsOneWidget);
+    });
+
+    testWidgets('key rejected: row links to Settings', (tester) async {
+      peeks = {
+        2: const BreakdownPeek(group: xvii, original: ['Remember.']),
+      };
+      await open(tester, linked);
+      await peek(tester, 'XVII');
+      await tester.tap(find.text('Artiin'));
+      await tester.pump();
+      FakeArtiin.live[xvii]!.push(
+        const AiStream(
+          phase: AiPhase.failed,
+          error: AiException(AiError.http, status: 401),
+        ),
+      );
+      await tester.pump();
+      await tester.tap(find.text('Buka Pengaturan'));
+      await tester.pumpAndSettle();
+      expect(find.text('Pengaturan'), findsOneWidget);
+    });
+
+    testWidgets('"Bedahin ini juga" stacks a layer: back steps one, '
+        '"Balik baca" closes them all', (tester) async {
+      peeks = {
+        2: const BreakdownPeek(
+          group: xvii,
+          original: ['Remember.'],
+          translations: ['Ingat.'],
+        ),
+      };
+      await open(tester, linked);
+      final pixels = tester
+          .state<ScrollableState>(find.byType(Scrollable).last)
+          .position
+          .pixels;
+      await peek(tester, 'XVII');
+      await tester.tap(find.text('Bedahin ini juga'));
+      await tester.pumpAndSettle();
+      expect(FakeBreakdown.live.keys, containsAll([g, xvii]));
+      expect(find.text('Bedahin ini juga'), findsNothing); // sheet gone
+
+      // Back: the first Bedahin, same scroll, no sheet.
+      await tester.tap(find.bySemanticsLabel('Balik ke Artinya'));
+      await tester.pumpAndSettle();
+      expect(find.byType(BreakdownView), findsOneWidget);
+      expect(
+        tester
+            .state<ScrollableState>(find.byType(Scrollable).last)
+            .position
+            .pixels,
+        pixels,
+      );
+      expect(find.text('Bedahin ini juga'), findsNothing);
+
+      // Again, then "Balik baca" from the top layer: all the way out.
+      await peek(tester, 'XVII');
+      await tester.tap(find.text('Bedahin ini juga'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Balik baca'));
+      await tester.pumpAndSettle();
+      expect(find.byType(BreakdownView), findsNothing);
+      expect(popped, isTrue);
+    });
+
+    testWidgets('"Bedahin ini juga" before Artiin: translates, then goes', (
+      tester,
+    ) async {
+      peeks = {
+        2: const BreakdownPeek(group: xvii, original: ['Remember.']),
+      };
+      await open(tester, linked);
+      await peek(tester, 'XVII');
+      await tester.tap(find.text('Bedahin ini juga'));
+      await tester.pump();
+      expect(find.text('Lagi mikir'), findsOneWidget);
+      FakeArtiin.live[xvii]!.push(
+        const AiStream(
+          phase: AiPhase.done,
+          draft: AiDraft(translations: ['Ingat.'], meaning: 'M'),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(FakeBreakdown.live.keys, contains(xvii));
     });
   });
 

@@ -89,3 +89,21 @@ class BreakdownLink {
   final String title;
   final String why;
 }
+
+/// Tujuan kartu Nyambung ke yang di-intip (#65): grup pertama bab [B<n>],
+/// atau grup berikutnya di bab yang sama (lanjutan).
+class BreakdownPeek {
+  const BreakdownPeek({
+    required this.group,
+    required this.original,
+    this.translations,
+  });
+
+  final ({int chapterId, int groupIndex}) group;
+
+  /// Teks asli grup tujuan: selalu ada, lokal.
+  final List<String> original;
+
+  /// Terjemahan dari cache makna cepat. Null = belum diartiin.
+  final List<String>? translations;
+}

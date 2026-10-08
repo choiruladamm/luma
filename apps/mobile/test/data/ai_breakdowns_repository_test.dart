@@ -140,6 +140,26 @@ void main() {
     },
   );
 
+  test('peek: next group, or the first group of chapter B<n>', () async {
+    // Lanjutan: group 1 of V, not translated yet.
+    var peek = (await repo.peek(g0, null))!;
+    expect(peek.group, (chapterId: ch, groupIndex: 1));
+    expect(peek.original, ['p3']);
+    expect(peek.translations, isNull);
+
+    // B2 = V itself (sortOrder), its first group is 0, translated.
+    await translate(g0, ['Satu.', 'Dua.']);
+    peek = (await repo.peek((chapterId: ch, groupIndex: 1), 2))!;
+    expect(peek.group, g0);
+    expect(peek.original, ['p1', 'p2']);
+    expect(peek.translations, ['Satu.', 'Dua.']);
+
+    // Nothing there: no next group, empty chapter, out of range.
+    expect(await repo.peek((chapterId: ch, groupIndex: 1), null), isNull);
+    expect(await repo.peek(g0, 1), isNull); // I has no paragraphs
+    expect(await repo.peek(g0, 9), isNull);
+  });
+
   test('clear empties; deleting the book takes them along', () async {
     final hash = breakdownSourceHash(['a']);
     await repo.save(g0, body: 'B', sourceHash: hash, model: 'x');
