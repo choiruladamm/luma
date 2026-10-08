@@ -239,8 +239,8 @@ Breakdown _whole(Breakdown b) {
 ///   selama proses atau VoiceOver nyala.
 /// - Sinkron (≥ 2 bagian, #64): blok yang lewat garis baca jadi aktif
 ///   ([activeBlock]), kalimat bagiannya disorot di panel dan panel scroll
-///   ke situ. Tap nomor / chip = lompat. Lewat bagian terakhir (3+ bagian)
-///   panel ngelipet jadi satu baris. Selama nulis sorotannya udah jalan dari
+///   ke situ. Tap nomor / chip = lompat. Panel kelipet by default, buka /
+///   lipet cuma dari tap ([_folded]). Selama nulis sorotannya udah jalan dari
 ///   bagian 1 dan ngikut scroll, gak nunggu lengkap. Scroll cuma ngubah
 ///   [_active]; panel cuma dibangun ulang
 ///   pas blok aktifnya ganti.
@@ -304,10 +304,10 @@ class _ScreenState extends State<_Screen> with TickerProviderStateMixin {
   /// Istilah yang di-tap: kata persisnya disorot gantiin sorotan bagian.
   final _term = ValueNotifier<BreakdownTerm?>(null);
 
-  /// Lipetan panel: null = otomatis (ngelipet lewat bagian terakhir, 3+
-  /// bagian), true = dibuka manual, false = dilipet manual (tap kotak /
-  /// chevron). Lipet manual nempel sampe dibuka lagi.
-  final _fold = ValueNotifier<bool?>(null);
+  /// Panel teks kelipet. Default kelipet di semua state (terjemahannya udah
+  /// dibaca di sheet Artinya); buka / lipet cuma dari tap. Gak diinget antar
+  /// layar.
+  final _folded = ValueNotifier(true);
 
   /// Abis lompat: blok aktif gak diitung ulang sampe jari scroll lagi.
   bool _locked = false;
@@ -402,7 +402,7 @@ class _ScreenState extends State<_Screen> with TickerProviderStateMixin {
     _explain.dispose();
     _active.dispose();
     _term.dispose();
-    _fold.dispose();
+    _folded.dispose();
     super.dispose();
   }
 
@@ -484,10 +484,7 @@ class _ScreenState extends State<_Screen> with TickerProviderStateMixin {
   void _setActive(int i) {
     if (i == _active.value) return;
     _active.value = i;
-    if (i < _sections) {
-      if (_fold.value == true) _fold.value = null;
-      _reveal(i);
-    }
+    if (i < _sections) _reveal(i);
   }
 
   /// Panel teks scroll biar nomor bagian [i] keliatan.
@@ -513,7 +510,6 @@ class _ScreenState extends State<_Screen> with TickerProviderStateMixin {
     final target = (p.pixels + top - Space.s3).clamp(0.0, p.maxScrollExtent);
     _locked = true;
     _term.value = null;
-    if (i < _sections && _fold.value == false) _fold.value = null;
     _setActive(i);
     if (_reduced) {
       p.jumpTo(target);
@@ -525,7 +521,7 @@ class _ScreenState extends State<_Screen> with TickerProviderStateMixin {
   /// Tap istilah: kata persisnya disorot, panel dibuka kalau lagi ngelipet.
   void _focusTerm(BreakdownTerm t, int section) {
     _term.value = t;
-    _fold.value = true;
+    _folded.value = false;
     _reveal(section);
   }
 
@@ -576,13 +572,8 @@ class _ScreenState extends State<_Screen> with TickerProviderStateMixin {
         : ValueListenableBuilder(
             valueListenable: _active,
             builder: (context, active, _) => ListenableBuilder(
-              listenable: Listenable.merge([_term, _fold]),
+              listenable: Listenable.merge([_term, _folded]),
               builder: (context, _) {
-                final fold = _fold.value;
-                final folded =
-                    _interactive &&
-                    (fold == false ||
-                        (fold == null && count >= 3 && active >= count));
                 final term = _term.value;
                 final text = _TextPanel(
                   input: input,
@@ -599,15 +590,15 @@ class _ScreenState extends State<_Screen> with TickerProviderStateMixin {
                   term: term,
                   badges: _badges,
                   onNumber: _interactive ? (i) => _jump(i) : null,
-                  onFold: _interactive ? () => _fold.value = false : null,
+                  onFold: () => _folded.value = true,
                 );
-                final child = folded
+                final child = _folded.value
                     ? _FoldedPanel(
-                        sections: count,
-                        onTap: () => _fold.value = true,
+                        count: _finished || cut ? _countLabel(count) : null,
+                        onTap: () => _folded.value = false,
                       )
                     : text;
-                return _reduced || !_interactive
+                return _reduced
                     ? child
                     : AnimatedSize(
                         duration: Motion.fold,
@@ -1229,34 +1220,54 @@ class _TextPanel extends StatelessWidget {
     final label = sections.isEmpty
         ? 'Teks terjemahan'
         : 'Teks terjemahan, ${sections.length} bagian';
+    // Ujung kotak: tanda bisa dilipet (seluruh kotak juga).
+    final strip = onFold == null
+        ? null
+        : Semantics(
+            button: true,
+            label: 'Lipet teks terjemahan',
+            onTap: onFold,
+            excludeSemantics: true,
+            child: SizedBox(
+              height: Layout.breakdownFoldStrip,
+              child: Center(
+                child: AppIcon(AppIcons.collapse, size: 18, color: c.ink2),
+              ),
+            ),
+          );
     if (inline) {
       return Semantics(
         container: true,
+        explicitChildNodes: true,
         label: 'Teks yang dibedah',
-        child: Container(
-          padding: padding,
-          decoration: decoration,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            spacing: 10,
-            children: [
-              text,
-              Container(
-                padding: const EdgeInsets.only(top: 10),
-                decoration: BoxDecoration(
-                  border: Border(top: BorderSide(color: c.track)),
-                ),
-                child: Text(
-                  input.original.join('\n\n'),
-                  style: style.copyWith(
-                    fontSize: 15,
-                    height: 1.5,
-                    fontStyle: FontStyle.italic,
-                    color: c.ink2,
+        child: GestureDetector(
+          onTap: onFold,
+          child: Container(
+            padding: strip == null ? padding : padding.copyWith(bottom: 0),
+            decoration: decoration,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              spacing: 10,
+              children: [
+                text,
+                Container(
+                  padding: const EdgeInsets.only(top: 10),
+                  decoration: BoxDecoration(
+                    border: Border(top: BorderSide(color: c.track)),
+                  ),
+                  child: Text(
+                    input.original.join('\n\n'),
+                    style: style.copyWith(
+                      fontSize: 15,
+                      height: 1.5,
+                      fontStyle: FontStyle.italic,
+                      color: c.ink2,
+                    ),
                   ),
                 ),
-              ),
-            ],
+                ?strip,
+              ],
+            ),
           ),
         ),
       );
@@ -1284,23 +1295,7 @@ class _TextPanel extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Flexible(child: scroll),
-                    // Ujung kotak: tanda bisa dilipet (seluruh kotak juga).
-                    Semantics(
-                      button: true,
-                      label: 'Lipet teks terjemahan',
-                      onTap: onFold,
-                      excludeSemantics: true,
-                      child: SizedBox(
-                        height: Layout.breakdownFoldStrip,
-                        child: Center(
-                          child: AppIcon(
-                            AppIcons.collapse,
-                            size: 18,
-                            color: c.ink2,
-                          ),
-                        ),
-                      ),
-                    ),
+                    strip!,
                   ],
                 ),
         ),
@@ -1890,11 +1885,12 @@ class _TermTap extends StatelessWidget {
         );
 }
 
-/// Panel teks yang ngelipet (lewat bagian terakhir): satu baris, tap = buka.
+/// Panel teks yang kelipet (default): satu baris, tap = buka.
 class _FoldedPanel extends StatelessWidget {
-  const _FoldedPanel({required this.sections, required this.onTap});
+  const _FoldedPanel({required this.count, required this.onTap});
 
-  final int sections;
+  /// "4 bagian" / "1 gagasan"; null = belum ketauan (lagi proses, error).
+  final String? count;
   final VoidCallback onTap;
 
   @override
@@ -1902,7 +1898,7 @@ class _FoldedPanel extends StatelessWidget {
     final c = context.stabilo;
     return Semantics(
       button: true,
-      label: 'Buka teks terjemahan, $sections bagian',
+      label: ['Buka teks terjemahan', ?count].join(', '),
       excludeSemantics: true,
       child: Material(
         color: c.sheet,
@@ -1924,13 +1920,14 @@ class _FoldedPanel extends StatelessWidget {
                     TextSpan(
                       children: [
                         const TextSpan(text: 'Teks terjemahan'),
-                        TextSpan(
-                          text: ' · $sections bagian',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w400,
-                            color: c.ink2,
+                        if (count != null)
+                          TextSpan(
+                            text: ' · $count',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w400,
+                              color: c.ink2,
+                            ),
                           ),
-                        ),
                       ],
                     ),
                     style: StabiloType.label.copyWith(color: c.ink),

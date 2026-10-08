@@ -104,6 +104,9 @@ void main() {
     BreakdownState state, {
     bool reduce = false,
     bool voiceOver = false,
+
+    /// The text panel starts folded; most tests look inside it.
+    bool unfold = true,
     Size size = const Size(900, 1400),
   }) async {
     FakeBreakdown.initial = state;
@@ -169,6 +172,12 @@ void main() {
     // Placeholders shimmer forever: no pumpAndSettle.
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
+    final folded = find.textContaining('Teks terjemahan');
+    if (unfold && folded.evaluate().isNotEmpty) {
+      await tester.tap(folded);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+    }
   }
 
   FakeBreakdown fake() => FakeBreakdown.live[g]!;
@@ -720,23 +729,55 @@ void main() {
       expect(explanationPixels(tester), greaterThan(0));
     });
 
-    testWidgets('past the last section the panel folds; tap opens it', (
-      tester,
-    ) async {
+    testWidgets('folded by default, every state; tap opens it', (tester) async {
+      final states = {
+        'Teks terjemahan · 4 bagian': done(sections(4), from: four),
+        'Teks terjemahan · 1 gagasan': done(sections(1), from: four),
+        'Teks terjemahan': BreakdownState(input: four),
+      };
+      for (final MapEntry(key: row, value: state) in states.entries) {
+        FakeBreakdown.reset();
+        await open(tester, state, unfold: false);
+        expect(panel(), findsNothing, reason: row);
+        expect(inlinePanel(), findsNothing, reason: row);
+        expect(find.text(row), findsOneWidget);
+        await tester.tap(find.text(row));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+        expect(
+          find.byWidgetPredicate(
+            (w) =>
+                w is Semantics &&
+                (w.properties.label?.startsWith('Teks') ?? false),
+          ),
+          findsOneWidget,
+          reason: row,
+        );
+      }
+    });
+
+    testWidgets('error: folded too, opens to the translation', (tester) async {
+      await open(
+        tester,
+        BreakdownState(
+          phase: BreakdownPhase.failed,
+          input: four,
+          error: const AiException(AiError.timeout),
+        ),
+        unfold: false,
+      );
+      expect(find.text('Teks terjemahan'), findsOneWidget);
+      expect(find.textContaining('Satu ini.'), findsNothing);
+      await tester.tap(find.text('Teks terjemahan'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Satu ini.'), findsOneWidget);
+    });
+
+    testWidgets('open stays open past the last section', (tester) async {
       await open(tester, done(sections(4, extras: true), from: four));
       await tester.tap(chip('Istilah'));
       await tester.pumpAndSettle();
-      expect(panel(), findsNothing);
-      expect(find.text('Teks terjemahan · 4 bagian'), findsOneWidget);
-      await tester.tap(find.text('Teks terjemahan · 4 bagian'));
-      await tester.pumpAndSettle();
       expect(panel(), findsOneWidget);
-      // Back to a section: folding works again later.
-      await tester.tap(chip('1'));
-      await tester.pumpAndSettle();
-      await tester.tap(chip('Praktek'));
-      await tester.pumpAndSettle();
-      expect(panel(), findsNothing);
     });
 
     testWidgets('tap the box: folds anywhere, stays folded while scrolling', (
@@ -757,7 +798,7 @@ void main() {
       expect(panel(), findsOneWidget);
     });
 
-    testWidgets('chevron folds; a number still jumps; a chip opens it', (
+    testWidgets('chevron folds; a number still jumps; a chip keeps it folded', (
       tester,
     ) async {
       await open(tester, done(sections(4), from: four));
@@ -771,11 +812,13 @@ void main() {
       expect(panel(), findsNothing);
       await tester.tap(chip('2'));
       await tester.pumpAndSettle();
-      expect(panel(), findsOneWidget);
+      expect(panel(), findsNothing);
+      await tester.tap(find.text('Teks terjemahan · 4 bagian'));
+      await tester.pumpAndSettle();
       expect(marked(tester), ['Dua ini.']);
     });
 
-    testWidgets('no manual fold while writing', (tester) async {
+    testWidgets('folds and opens while writing too', (tester) async {
       await open(tester, BreakdownState(input: four), reduce: true);
       fake().push(
         BreakdownState(
@@ -785,13 +828,16 @@ void main() {
         ),
       );
       await tester.pump();
-      expect(find.bySemanticsLabel('Lipet teks terjemahan'), findsNothing);
       await tester.tap(find.textContaining('Satu ini.'));
+      await tester.pump();
+      expect(panel(), findsNothing);
+      expect(find.text('Teks terjemahan'), findsOneWidget); // count unknown
+      await tester.tap(find.text('Teks terjemahan'));
       await tester.pump();
       expect(panel(), findsOneWidget);
     });
 
-    testWidgets('2 sections never fold', (tester) async {
+    testWidgets('2 sections: open stays open while scrolling', (tester) async {
       await open(tester, done(sections(2, extras: true), from: four));
       await tester.drag(explanation(), const Offset(0, -6000));
       await tester.pumpAndSettle();
@@ -802,6 +848,8 @@ void main() {
       tester,
     ) async {
       await open(tester, done(sections(4, extras: true), from: four));
+      await tester.tap(find.bySemanticsLabel('Lipet teks terjemahan'));
+      await tester.pumpAndSettle();
       await tester.tap(chip('Istilah'));
       await tester.pumpAndSettle();
       expect(panel(), findsNothing);
@@ -838,10 +886,9 @@ void main() {
       expect(chips(), findsNothing);
     });
 
-    testWidgets('1 section: no highlight, chips or folding', (tester) async {
+    testWidgets('1 section: no highlight or chips', (tester) async {
       await open(tester, done(sections(1, extras: true), from: four));
       expect(chips(), findsNothing);
-      expect(find.byType(AnimatedSize), findsNothing);
       for (final rt in tester.widgetList<RichText>(
         find.descendant(of: inlinePanel(), matching: find.byType(RichText)),
       )) {
@@ -859,7 +906,7 @@ void main() {
         reduce: true,
       );
       expect(find.byType(AnimatedSize), findsNothing);
-      await tester.tap(chip('Istilah'));
+      await tester.tap(find.bySemanticsLabel('Lipet teks terjemahan'));
       await tester.pump();
       expect(panel(), findsNothing);
     });
