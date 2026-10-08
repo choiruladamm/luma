@@ -76,6 +76,7 @@ abstract final class Layout {
   static const breakdownReadLine = 96.0; // garis baca dari atas penjelasan
   static const breakdownSwitch = 24.0; // histeresis ganti bagian aktif
   static const breakdownFolded = 52.0; // panel teks pas ngelipet
+  static const breakdownFoldStrip = 28.0; // chevron lipet di ujung panel
 }
 
 /// Durasi & curve. Kalau iOS "Kurangi gerakan" nyala

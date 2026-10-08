@@ -739,6 +739,58 @@ void main() {
       expect(panel(), findsNothing);
     });
 
+    testWidgets('tap the box: folds anywhere, stays folded while scrolling', (
+      tester,
+    ) async {
+      await open(tester, done(sections(2), from: four));
+      await tester.tap(find.textContaining('Dua ini.'));
+      await tester.pumpAndSettle();
+      expect(panel(), findsNothing);
+      expect(find.text('Teks terjemahan · 2 bagian'), findsOneWidget);
+      await tester.drag(explanation(), const Offset(0, -200));
+      await tester.pumpAndSettle();
+      await tester.drag(explanation(), const Offset(0, 400));
+      await tester.pumpAndSettle();
+      expect(panel(), findsNothing);
+      await tester.tap(find.text('Teks terjemahan · 2 bagian'));
+      await tester.pumpAndSettle();
+      expect(panel(), findsOneWidget);
+    });
+
+    testWidgets('chevron folds; a number still jumps; a chip opens it', (
+      tester,
+    ) async {
+      await open(tester, done(sections(4), from: four));
+      await tester.tap(find.descendant(of: panel(), matching: find.text('3')));
+      await tester.pumpAndSettle();
+      expect(panel(), findsOneWidget); // the number jumped, didn't fold
+      expect(marked(tester), ['Tiga ini.']);
+
+      await tester.tap(find.bySemanticsLabel('Lipet teks terjemahan'));
+      await tester.pumpAndSettle();
+      expect(panel(), findsNothing);
+      await tester.tap(chip('2'));
+      await tester.pumpAndSettle();
+      expect(panel(), findsOneWidget);
+      expect(marked(tester), ['Dua ini.']);
+    });
+
+    testWidgets('no manual fold while writing', (tester) async {
+      await open(tester, BreakdownState(input: four), reduce: true);
+      fake().push(
+        BreakdownState(
+          phase: BreakdownPhase.writing,
+          input: four,
+          draft: Breakdown(sections: [long(1), long(2), long(3)]),
+        ),
+      );
+      await tester.pump();
+      expect(find.bySemanticsLabel('Lipet teks terjemahan'), findsNothing);
+      await tester.tap(find.textContaining('Satu ini.'));
+      await tester.pump();
+      expect(panel(), findsOneWidget);
+    });
+
     testWidgets('2 sections never fold', (tester) async {
       await open(tester, done(sections(2, extras: true), from: four));
       await tester.drag(explanation(), const Offset(0, -6000));

@@ -303,8 +303,10 @@ class _ScreenState extends State<_Screen> with TickerProviderStateMixin {
   /// Istilah yang di-tap: kata persisnya disorot gantiin sorotan bagian.
   final _term = ValueNotifier<BreakdownTerm?>(null);
 
-  /// Panel dibuka manual pas mestinya ngelipet.
-  final _open = ValueNotifier(false);
+  /// Lipetan panel: null = otomatis (ngelipet lewat bagian terakhir, 3+
+  /// bagian), true = dibuka manual, false = dilipet manual (tap kotak /
+  /// chevron). Lipet manual nempel sampe dibuka lagi.
+  final _fold = ValueNotifier<bool?>(null);
 
   /// Abis lompat: blok aktif gak diitung ulang sampe jari scroll lagi.
   bool _locked = false;
@@ -396,7 +398,7 @@ class _ScreenState extends State<_Screen> with TickerProviderStateMixin {
     _explain.dispose();
     _active.dispose();
     _term.dispose();
-    _open.dispose();
+    _fold.dispose();
     super.dispose();
   }
 
@@ -479,7 +481,7 @@ class _ScreenState extends State<_Screen> with TickerProviderStateMixin {
     if (i == _active.value) return;
     _active.value = i;
     if (i < _sections) {
-      _open.value = false;
+      if (_fold.value == true) _fold.value = null;
       _reveal(i);
     }
   }
@@ -507,6 +509,7 @@ class _ScreenState extends State<_Screen> with TickerProviderStateMixin {
     final target = (p.pixels + top - Space.s3).clamp(0.0, p.maxScrollExtent);
     _locked = true;
     _term.value = null;
+    if (i < _sections && _fold.value == false) _fold.value = null;
     _setActive(i);
     if (_reduced) {
       p.jumpTo(target);
@@ -518,7 +521,7 @@ class _ScreenState extends State<_Screen> with TickerProviderStateMixin {
   /// Tap istilah: kata persisnya disorot, panel dibuka kalau lagi ngelipet.
   void _focusTerm(BreakdownTerm t, int section) {
     _term.value = t;
-    _open.value = true;
+    _fold.value = true;
     _reveal(section);
   }
 
@@ -568,13 +571,13 @@ class _ScreenState extends State<_Screen> with TickerProviderStateMixin {
         : ValueListenableBuilder(
             valueListenable: _active,
             builder: (context, active, _) => ListenableBuilder(
-              listenable: Listenable.merge([_term, _open]),
+              listenable: Listenable.merge([_term, _fold]),
               builder: (context, _) {
+                final fold = _fold.value;
                 final folded =
                     _interactive &&
-                    count >= 3 &&
-                    active >= count &&
-                    !_open.value;
+                    (fold == false ||
+                        (fold == null && count >= 3 && active >= count));
                 final term = _term.value;
                 final text = _TextPanel(
                   input: input,
@@ -593,11 +596,12 @@ class _ScreenState extends State<_Screen> with TickerProviderStateMixin {
                   term: term,
                   badges: _badges,
                   onNumber: _interactive ? (i) => _jump(i) : null,
+                  onFold: _interactive ? () => _fold.value = false : null,
                 );
                 final child = folded
                     ? _FoldedPanel(
                         sections: count,
-                        onTap: () => _open.value = true,
+                        onTap: () => _fold.value = true,
                       )
                     : text;
                 return _reduced || !_interactive
@@ -1095,6 +1099,7 @@ class _TextPanel extends StatelessWidget {
     this.term,
     this.badges = const [],
     this.onNumber,
+    this.onFold,
   });
 
   final BreakdownInput input;
@@ -1107,6 +1112,9 @@ class _TextPanel extends StatelessWidget {
   final BreakdownTerm? term;
   final List<GlobalKey> badges;
   final ValueChanged<int>? onNumber;
+
+  /// Tap kotak (selain nomor) / chevron pojok bawah = panel dilipet.
+  final VoidCallback? onFold;
 
   /// Kalimat [s] (nomor [k]) dengan sorotan bagian / kata istilah.
   List<InlineSpan> _sentence(String s, int k, TextStyle marked) {
@@ -1250,15 +1258,48 @@ class _TextPanel extends StatelessWidget {
         ),
       );
     }
+    final scroll = EdgeFadeScroll(
+      child: SingleChildScrollView(
+        padding: onFold == null ? padding : padding.copyWith(bottom: 0),
+        child: text,
+      ),
+    );
     return Semantics(
       container: true,
+      explicitChildNodes: true,
       label: label,
-      child: Container(
-        constraints: BoxConstraints(maxHeight: maxHeight),
-        decoration: decoration,
-        clipBehavior: Clip.antiAlias,
-        child: EdgeFadeScroll(
-          child: SingleChildScrollView(padding: padding, child: text),
+      child: GestureDetector(
+        onTap: onFold,
+        child: Container(
+          constraints: BoxConstraints(maxHeight: maxHeight),
+          decoration: decoration,
+          clipBehavior: Clip.antiAlias,
+          child: onFold == null
+              ? scroll
+              : Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Flexible(child: scroll),
+                    // Ujung kotak: tanda bisa dilipet (seluruh kotak juga).
+                    Semantics(
+                      button: true,
+                      label: 'Lipet teks terjemahan',
+                      onTap: onFold,
+                      excludeSemantics: true,
+                      child: SizedBox(
+                        height: Layout.breakdownFoldStrip,
+                        child: Center(
+                          child: AppIcon(
+                            AppIcons.collapse,
+                            size: 18,
+                            color: c.ink2,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
         ),
       ),
     );
