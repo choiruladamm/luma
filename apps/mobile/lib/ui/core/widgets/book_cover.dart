@@ -18,6 +18,7 @@ class BookCover extends StatelessWidget {
     this.author,
     this.file,
     this.progress,
+    this.shadows,
   });
 
   final String title;
@@ -27,6 +28,9 @@ class BookCover extends StatelessWidget {
 
   /// 0..1. Pita keisi segini; null = gak ada pita.
   final double? progress;
+
+  /// Gantiin bayangan bawaan (terang: [Elevation.cover], gelap: gak ada).
+  final List<BoxShadow>? shadows;
 
   /// Sudut ngikut ukuran: grid 12, kartu lanjut baca 10, list 7.
   static double radiusFor(double width) => width >= 100
@@ -53,7 +57,7 @@ class BookCover extends StatelessWidget {
       height: width / Layout.coverAspect,
       decoration: BoxDecoration(
         borderRadius: radius,
-        boxShadow: dark ? null : Elevation.cover,
+        boxShadow: shadows ?? (dark ? null : Elevation.cover),
       ),
       // Garis di atas isi, biar gak ketutup cover asli.
       foregroundDecoration: BoxDecoration(

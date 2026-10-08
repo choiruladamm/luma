@@ -20,6 +20,7 @@ import '../../../core/widgets/book_row.dart';
 import '../../../core/widgets/edge_fade.dart';
 import '../../../core/widgets/buttons.dart';
 import '../../../core/widgets/book_cover.dart';
+import '../../../core/widgets/book_menu.dart';
 import '../../../core/widgets/dialog.dart';
 import '../../../core/widgets/menu.dart';
 import '../../../core/widgets/sheet.dart';
@@ -150,17 +151,26 @@ class _BookshelfViewState extends ConsumerState<BookshelfView> {
   File? _cover(String? name) =>
       name == null ? null : ref.read(fileStorageProvider).cover(name);
 
-  /// Menu tekan lama, nempel ke kartu ([anchor]).
-  Future<void> _bookMenu(BuildContext anchor, ShelfBook book) async {
-    final pick = await showAppMenu<String>(anchor, const [
-      AppMenuItem('info', 'Info buku', icon: AppIcons.info),
-      AppMenuItem(
-        'delete',
-        'Hapus dari rak',
-        icon: AppIcons.delete,
-        destructive: true,
-      ),
-    ]);
+  /// Menu tekan lama (board 20 Tekan lama buku).
+  Future<void> _bookMenu(ShelfBook book) async {
+    final pick = await showBookMenu<String>(
+      context,
+      title: book.title,
+      author: book.author,
+      coverFile: _cover(book.coverName),
+      progress: book.progress,
+      opened: book.opened,
+      finished: book.finished,
+      items: const [
+        AppMenuItem('info', 'Info buku', icon: AppIcons.info),
+        AppMenuItem(
+          'delete',
+          'Hapus dari rak',
+          icon: AppIcons.delete,
+          destructive: true,
+        ),
+      ],
+    );
     if (!mounted) return;
     switch (pick) {
       case 'info':
@@ -321,7 +331,7 @@ class _Shelf extends ConsumerStatefulWidget {
   final VoidCallback onImport;
   final void Function(BuildContext anchor, ShelfSort current) onSort;
   final ValueChanged<ShelfView> onView;
-  final void Function(BuildContext anchor, ShelfBook book) onBookMenu;
+  final ValueChanged<ShelfBook> onBookMenu;
 
   /// Nama file yang lagi diimport: kartu "Lagi diproses" di depan.
   final String? importing;
@@ -475,19 +485,16 @@ class _ShelfState extends ConsumerState<_Shelf> {
                               padding: const EdgeInsets.only(
                                 bottom: Layout.rowGap,
                               ),
-                              child: Builder(
-                                builder: (anchor) => BookRow(
-                                  title: book.title,
-                                  author: book.author,
-                                  coverFile: _cover(book),
-                                  progress: book.progress,
-                                  opened: book.opened,
-                                  finished: book.finished,
-                                  onTap: () =>
-                                      context.push(Routes.reader(book.id)),
-                                  onLongPress: () =>
-                                      widget.onBookMenu(anchor, book),
-                                ),
+                              child: BookRow(
+                                title: book.title,
+                                author: book.author,
+                                coverFile: _cover(book),
+                                progress: book.progress,
+                                opened: book.opened,
+                                finished: book.finished,
+                                onTap: () =>
+                                    context.push(Routes.reader(book.id)),
+                                onLongPress: () => widget.onBookMenu(book),
                               ),
                             );
                           },
@@ -522,20 +529,17 @@ class _ShelfState extends ConsumerState<_Shelf> {
                                   i--;
                                 }
                                 final book = sorted[i];
-                                return Builder(
+                                return BookCard(
                                   key: ValueKey(book.id),
-                                  builder: (anchor) => BookCard(
-                                    title: book.title,
-                                    author: book.author,
-                                    coverFile: _cover(book),
-                                    progress: book.progress,
-                                    opened: book.opened,
-                                    finished: book.finished,
-                                    onTap: () =>
-                                        context.push(Routes.reader(book.id)),
-                                    onLongPress: () =>
-                                        widget.onBookMenu(anchor, book),
-                                  ),
+                                  title: book.title,
+                                  author: book.author,
+                                  coverFile: _cover(book),
+                                  progress: book.progress,
+                                  opened: book.opened,
+                                  finished: book.finished,
+                                  onTap: () =>
+                                      context.push(Routes.reader(book.id)),
+                                  onLongPress: () => widget.onBookMenu(book),
                                 );
                               },
                             );

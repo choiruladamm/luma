@@ -209,19 +209,43 @@ class _BookCardState extends State<BookCard> {
   }
 
   Widget _sticker(BuildContext context) {
-    final c = context.stabilo;
-    final light = Theme.of(context).brightness == Brightness.light;
     if (widget.importing) {
+      final c = context.stabilo;
       return _StickerBox(
         bg: c.muted,
         width: 26,
         child: AppIcon(AppIcons.loading, size: 14, color: c.ink2),
       );
     }
-    final label = bookSticker(
+    return ProgressSticker(
       progress: widget.progress,
       opened: widget.opened,
       finished: widget.finished,
+    );
+  }
+}
+
+/// Stiker [bookSticker] di pojok cover: dipake kartu rak dan menu tekan lama.
+class ProgressSticker extends StatelessWidget {
+  const ProgressSticker({
+    super.key,
+    required this.progress,
+    required this.opened,
+    required this.finished,
+  });
+
+  final double progress;
+  final bool opened;
+  final bool finished;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.stabilo;
+    final light = Theme.of(context).brightness == Brightness.light;
+    final label = bookSticker(
+      progress: progress,
+      opened: opened,
+      finished: finished,
     );
     final (bg, fg) = switch (label) {
       'Kelar!' => (c.accent, c.onAccent),
@@ -235,7 +259,7 @@ class _BookCardState extends State<BookCard> {
         mainAxisSize: MainAxisSize.min,
         spacing: Space.s1,
         children: [
-          if (widget.finished) AppIcon(AppIcons.check, size: 12, color: fg),
+          if (finished) AppIcon(AppIcons.check, size: 12, color: fg),
           Text(
             label,
             textScaler: TextScaler.noScaling,

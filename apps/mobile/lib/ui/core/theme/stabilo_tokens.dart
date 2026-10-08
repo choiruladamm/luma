@@ -77,6 +77,16 @@ abstract final class Layout {
   static const breakdownSwitch = 24.0; // histeresis ganti bagian aktif
   static const breakdownFolded = 52.0; // panel teks pas ngelipet
   static const breakdownFoldStrip = 28.0; // chevron lipet di ujung panel
+
+  // Menu tekan lama buku (board 20 Tekan lama buku, layar 390 × 844).
+  static const bookMenuTop = 168.0; // atas cover terangkat dari atas layar
+  static const bookMenuCover = 156.0; // lebar cover terangkat
+  // Kartu 3 kolom di 390: cover terangkat = kartu itu di-scale 156 / ini.
+  static const bookMenuCoverSource = (390 - 2 * margin - 2 * shelfGapX) / 3;
+  static const bookMenuGap = 18.0; // cover → panel menu
+  static const bookMenuWidth = 250.0;
+  static const bookMenuRow = 52.0;
+  static const bookMenuBlur = 8.0; // sigma blur rak
 }
 
 /// Durasi & curve. Kalau iOS "Kurangi gerakan" nyala
@@ -171,6 +181,16 @@ abstract final class Elevation {
 
   static const cover = [
     BoxShadow(color: Color(0x14000000), offset: Offset(0, 4), blurRadius: 12),
+  ];
+
+  /// Cover terangkat di menu tekan lama (terang & gelap sama).
+  static const lift = [
+    BoxShadow(color: Color(0x38000000), offset: Offset(0, 14), blurRadius: 28),
+  ];
+
+  /// Panel menu tekan lama.
+  static const menu = [
+    BoxShadow(color: Color(0x38000000), offset: Offset(0, 16), blurRadius: 40),
   ];
 
   static List<BoxShadow> sheet(Brightness b) => [
