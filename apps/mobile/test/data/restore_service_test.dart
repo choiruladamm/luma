@@ -324,6 +324,23 @@ void main() {
     );
   });
 
+  test('a paused stream (screen under Settings) does not hang it', () async {
+    // Riverpod 3 pauses the providers of hidden screens; closing the whole
+    // database would wait for their "done" forever.
+    final sub = b.db.select(b.db.books).watch().listen((_) {});
+    await b.db.select(b.db.books).get();
+    await Future<void>.delayed(Duration.zero);
+    sub.pause();
+    addTearDown(sub.cancel);
+    final zip = await backupOf(a);
+    final service = RestoreService(b.db, b.storage);
+    await service
+        .apply(await service.inspect(zip))
+        .timeout(const Duration(seconds: 5));
+    b.reopen();
+    expect(await b.dump(), await a.dump());
+  });
+
   test('a failure half way puts the old data back', () async {
     final zip = await backupOf(a);
     final service = RestoreService(b.db, b.storage);
