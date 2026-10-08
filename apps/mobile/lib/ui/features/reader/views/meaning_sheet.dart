@@ -30,13 +30,16 @@ import 'meaning_chrome.dart';
 /// [onNext] yang mindahin [group] ke grup berikutnya. [onHeight] dipanggil
 /// sekali dengan tinggi sheet (tetap 528 di 844, semua state), biar halaman
 /// di belakang bisa nyesuain. Barrier transparan: scrim (yang bolongin grup)
-/// digambar halaman baca.
+/// digambar halaman baca. [onProgress] (0–1) dipanggil pas sheet di-scroll:
+/// seberapa jauh terjemahan udah kebaca, biar isi card kuning ngikutin.
 Future<void> showMeaningSheet(
   BuildContext context, {
   required ValueListenable<GroupRef> group,
   required bool Function(GroupRef) hasNext,
   required VoidCallback onNext,
   required ValueChanged<double> onHeight,
+  required ValueChanged<double> onProgress,
+  required VoidCallback onClosing,
   required VoidCallback onSettings,
 }) {
   final screen = MediaQuery.sizeOf(context).height;
@@ -51,50 +54,92 @@ Future<void> showMeaningSheet(
     barrierColor: Colors.transparent,
     // Material bawaan sheet (transparan) nutupin seluruh layar dan nelen tap,
     // jadi tap area kosong di atas sheet ditangkep lapisan di belakangnya.
-    builder: (context) => Stack(
-      children: [
-        Positioned.fill(
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: () => Navigator.of(context).pop(),
+    builder: (context) => _ClosingWatcher(
+      onClosing: onClosing,
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => Navigator.of(context).pop(),
+            ),
           ),
-        ),
-        DraggableScrollableSheet(
-          // Tarik turun di isi pas offset 0 nutup sheet; di grabber lewat [_Drag].
-          controller: sheet,
-          initialChildSize: Layout.artinyaHeight,
-          minChildSize: 0,
-          maxChildSize: Layout.artinyaHeight,
-          snap: true,
-          builder: (context, scroll) {
-            final theme = Theme.of(context).bottomSheetTheme;
-            return PrimaryScrollController(
-              controller: scroll,
-              child: Material(
-                key: const ValueKey('meaning-sheet'),
-                color: theme.modalBackgroundColor,
-                shape: theme.shape,
-                clipBehavior: Clip.antiAlias,
-                child: _Drag(
-                  sheet: sheet,
-                  screen: screen,
-                  child: ValueListenableBuilder(
-                    valueListenable: group,
-                    builder: (context, g, _) => MeaningSheet(
-                      key: ValueKey(g),
-                      group: g,
-                      onNext: hasNext(g) ? onNext : null,
-                      onSettings: onSettings,
+          DraggableScrollableSheet(
+            // Tarik turun di isi pas offset 0 nutup sheet; di grabber lewat [_Drag].
+            controller: sheet,
+            initialChildSize: Layout.artinyaHeight,
+            minChildSize: 0,
+            maxChildSize: Layout.artinyaHeight,
+            snap: true,
+            builder: (context, scroll) {
+              final theme = Theme.of(context).bottomSheetTheme;
+              return PrimaryScrollController(
+                controller: scroll,
+                child: Material(
+                  key: const ValueKey('meaning-sheet'),
+                  color: theme.modalBackgroundColor,
+                  shape: theme.shape,
+                  clipBehavior: Clip.antiAlias,
+                  child: _Drag(
+                    sheet: sheet,
+                    screen: screen,
+                    child: ValueListenableBuilder(
+                      valueListenable: group,
+                      builder: (context, g, _) => MeaningSheet(
+                        key: ValueKey(g),
+                        group: g,
+                        onNext: hasNext(g) ? onNext : null,
+                        onProgress: onProgress,
+                        onSettings: onSettings,
+                      ),
                     ),
                   ),
                 ),
-              ),
-            );
-          },
-        ),
-      ],
+              );
+            },
+          ),
+        ],
+      ),
     ),
   ).whenComplete(sheet.dispose);
+}
+
+/// Ngabarin [onClosing] begitu route sheet mulai nutup, lewat tombol, tap di
+/// luar, atau tarik turun.
+class _ClosingWatcher extends StatefulWidget {
+  const _ClosingWatcher({required this.onClosing, required this.child});
+
+  final VoidCallback onClosing;
+  final Widget child;
+
+  @override
+  State<_ClosingWatcher> createState() => _ClosingWatcherState();
+}
+
+class _ClosingWatcherState extends State<_ClosingWatcher> {
+  Animation<double>? _animation;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final animation = ModalRoute.of(context)?.animation;
+    if (animation == _animation) return;
+    _animation?.removeStatusListener(_listen);
+    _animation = animation?..addStatusListener(_listen);
+  }
+
+  void _listen(AnimationStatus status) {
+    if (status == AnimationStatus.reverse) widget.onClosing();
+  }
+
+  @override
+  void dispose() {
+    _animation?.removeStatusListener(_listen);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }
 
 /// Drag di grabber: sheet ngikutin jari ke bawah; dilepas, nutup kalau
@@ -145,6 +190,7 @@ class MeaningSheet extends ConsumerStatefulWidget {
     super.key,
     required this.group,
     required this.onNext,
+    required this.onProgress,
     required this.onSettings,
   });
 
@@ -152,6 +198,7 @@ class MeaningSheet extends ConsumerStatefulWidget {
 
   /// Null = grup terakhir di bab ini.
   final VoidCallback? onNext;
+  final ValueChanged<double> onProgress;
   final VoidCallback onSettings;
 
   @override
@@ -205,6 +252,7 @@ class _MeaningSheetState extends ConsumerState<MeaningSheet> {
           ),
         ),
         onNext: widget.onNext,
+        onProgress: widget.onProgress,
         onClose: _close,
         onRetry: retry,
       ),
@@ -539,6 +587,7 @@ class _Answer extends StatefulWidget {
     required this.copied,
     required this.onCopy,
     required this.onNext,
+    required this.onProgress,
     required this.onClose,
     required this.onRetry,
   });
@@ -548,6 +597,7 @@ class _Answer extends StatefulWidget {
   final bool copied;
   final VoidCallback onCopy;
   final VoidCallback? onNext;
+  final ValueChanged<double> onProgress;
   final VoidCallback onClose;
   final VoidCallback onRetry;
 
@@ -643,6 +693,51 @@ class _AnswerState extends State<_Answer> with TickerProviderStateMixin {
     }
   }
 
+  /// Kotak tiap terjemahan: akhir yang terakhir nentuin seberapa jauh
+  /// terjemahan udah kebaca.
+  final _boxes = <GlobalKey>[];
+  double _progress = 0;
+
+  GlobalKey _boxKey(int i) {
+    while (_boxes.length <= i) {
+      _boxes.add(GlobalKey());
+    }
+    return _boxes[i];
+  }
+
+  bool _onScroll(ScrollNotification n) {
+    if (n.depth == 0 && n is ScrollUpdateNotification) {
+      _follow(n.metrics.pixels);
+    }
+    return false;
+  }
+
+  /// Sinkron sheet → isi card: progres baca terjemahan, 0 di awal sheet sampe 1
+  /// pas bawah terjemahan terakhir nyampe tepi bawah area isi. Blok makna gak
+  /// dihitung: lewat itu progresnya tetap 1. Linear terhadap scroll, jadi
+  /// ngikutin jari, dan berlaku juga buat grup satu paragraf panjang.
+  void _follow(double pixels) {
+    final root = context.findRenderObject();
+    final count = math.max(_ai.sources.length, _ai.draft.translations.length);
+    if (root is! RenderBox || !root.hasSize || count == 0) return;
+    final last = _boxKey(count - 1).currentContext?.findRenderObject();
+    if (last is! RenderBox || !last.hasSize) return;
+    final visibleBottom =
+        root.localToGlobal(Offset.zero).dy +
+        root.size.height -
+        Layout.artinyaActions;
+    final remaining = math.max(
+      0.0,
+      last.localToGlobal(Offset.zero).dy + last.size.height - visibleBottom,
+    );
+    // Scroll yang udah dijalanin + sisanya = total sampe terjemahan kebaca.
+    final total = pixels + remaining;
+    final next = total <= 0 ? 0.0 : (pixels / total).clamp(0.0, 1.0);
+    if ((next - _progress).abs() < 0.001) return;
+    _progress = next;
+    widget.onProgress(next);
+  }
+
   @override
   void dispose() {
     _ticker.dispose();
@@ -714,76 +809,85 @@ class _AnswerState extends State<_Answer> with TickerProviderStateMixin {
       );
     }
 
-    return Semantics(
-      label: writing ? 'Artinya, lagi ditulis' : null,
-      child: _ScrollFrame(
-        margin: typo.margin,
-        hideable: true,
-        locked: writing,
-        frozen: thinking,
-        header: _Title(
-          thinking ? 'Bentar, lagi mikir...' : 'Artinya gini nih',
-          closeLabel: writing ? 'Batalin' : 'Tutup',
-          onClose: widget.onClose,
-        ),
-        content: [
-          if (_ai.phase == AiPhase.slow)
-            _SlowCard(onCancel: widget.onClose, onRetry: widget.onRetry),
-          _Section(
-            tag: const Tag.section('Terjemahan'),
-            // Satu blok per paragraf, biar jeda dialognya sama kayak aslinya.
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              spacing: Space.s2,
-              children: [
-                for (var i = 0; i < count; i++)
-                  if (i < draft.translations.length)
-                    text(draft.translations[i], isLast: i == last)
-                  else if (!_cut && i < _ai.sources.length)
-                    _Placeholder(
-                      chars: estimateTranslation(_ai.sources[i]),
-                      style: style,
-                    ),
-              ],
-            ),
+    return NotificationListener<ScrollNotification>(
+      onNotification: _onScroll,
+      child: Semantics(
+        label: writing ? 'Artinya, lagi ditulis' : null,
+        child: _ScrollFrame(
+          margin: typo.margin,
+          hideable: true,
+          locked: writing,
+          frozen: thinking,
+          header: _Title(
+            thinking ? 'Bentar, lagi mikir...' : 'Artinya gini nih',
+            closeLabel: writing ? 'Batalin' : 'Tutup',
+            onClose: widget.onClose,
           ),
-          if (!_cut || lastMeaning)
+          content: [
+            if (_ai.phase == AiPhase.slow)
+              _SlowCard(onCancel: widget.onClose, onRetry: widget.onRetry),
             _Section(
-              tag: const Tag.section(
-                'Maksud penulisnya tuh...',
-                tone: TagTone.pink,
+              tag: const Tag.section('Terjemahan'),
+              // Satu blok per paragraf, biar jeda dialognya sama kayak aslinya.
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                spacing: Space.s2,
+                children: [
+                  for (var i = 0; i < count; i++)
+                    if (i < draft.translations.length)
+                      KeyedSubtree(
+                        key: _boxKey(i),
+                        child: text(draft.translations[i], isLast: i == last),
+                      )
+                    else if (!_cut && i < _ai.sources.length)
+                      KeyedSubtree(
+                        key: _boxKey(i),
+                        child: _Placeholder(
+                          chars: estimateTranslation(_ai.sources[i]),
+                          style: style,
+                        ),
+                      ),
+                ],
               ),
-              child: lastMeaning
-                  ? text(draft.meaning!, isLast: true)
-                  : _Placeholder(chars: estimatedMeaning, style: style),
             ),
-          if (_cut) _CutBanner(onRetry: widget.onRetry),
-        ],
-        actions: [
-          AnimatedSwitcher(
-            duration: reduced ? Duration.zero : Motion.statusSwap,
-            child: writing && !_cut && _ai.phase != AiPhase.slow
-                ? _StatusButton(
-                    key: ValueKey(thinking),
-                    label: thinking ? 'Lagi mikir' : 'Lagi nulis',
-                  )
-                : AppButton.secondary(
-                    key: const ValueKey('copy'),
-                    label: widget.copied ? 'Disalin' : 'Salin',
-                    icon: widget.copied ? AppIcons.check : AppIcons.copy,
-                    onPressed: _finished ? widget.onCopy : null,
-                  ),
-          ),
-          Expanded(
-            // Mati selama masih diproses; aktif lagi pas selesai / kepotong.
-            child: AppButton.primary(
-              label: 'Lanjut',
-              icon: AppIcons.down,
-              iconAfter: true,
-              onPressed: writing ? null : widget.onNext,
+            if (!_cut || lastMeaning)
+              _Section(
+                tag: const Tag.section(
+                  'Maksud penulisnya tuh...',
+                  tone: TagTone.pink,
+                ),
+                child: lastMeaning
+                    ? text(draft.meaning!, isLast: true)
+                    : _Placeholder(chars: estimatedMeaning, style: style),
+              ),
+            if (_cut) _CutBanner(onRetry: widget.onRetry),
+          ],
+          actions: [
+            AnimatedSwitcher(
+              duration: reduced ? Duration.zero : Motion.statusSwap,
+              child: writing && !_cut && _ai.phase != AiPhase.slow
+                  ? _StatusButton(
+                      key: ValueKey(thinking),
+                      label: thinking ? 'Lagi mikir' : 'Lagi nulis',
+                    )
+                  : AppButton.secondary(
+                      key: const ValueKey('copy'),
+                      label: widget.copied ? 'Disalin' : 'Salin',
+                      icon: widget.copied ? AppIcons.check : AppIcons.copy,
+                      onPressed: _finished ? widget.onCopy : null,
+                    ),
             ),
-          ),
-        ],
+            Expanded(
+              // Mati selama masih diproses; aktif lagi pas selesai / kepotong.
+              child: AppButton.primary(
+                label: 'Lanjut',
+                icon: AppIcons.down,
+                iconAfter: true,
+                onPressed: writing ? null : widget.onNext,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

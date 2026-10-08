@@ -63,6 +63,9 @@ abstract final class Layout {
   static const artinyaGrabberZone = 12.0; // isi pudar mulai dari sini
   static const sheetDismissFling = 700.0; // fling turun segini (pt/dtk) nutup
   static const sheetDismissRatio = 0.75; // atau ditarik sampe tinggal segini
+
+  // Sinkron sheet → isi card kuning.
+  static const followGap = Space.s6; // bawah paragraf aktif → atas sheet
 }
 
 /// Durasi & curve. Kalau iOS "Kurangi gerakan" nyala
@@ -73,6 +76,16 @@ abstract final class Motion {
   static const sheetOpenCurve = Curves.easeOutCubic;
   static const sheetClose = Duration(milliseconds: 200);
   static const sheetCloseCurve = Curves.easeInCubic;
+  static const follow = Duration(
+    milliseconds: 70,
+  ); // easeOut, ngejar jari, tipis
+  static const riseCurve = Curves.easeInOutCubic; // mulai & berhenti pelan
+
+  /// Halaman naik ke atas pas sheet Artinya dibuka: makin jauh makin lama
+  /// (0,6 ms per pt, 280–520 ms) biar paragraf di tengah gak tersentak.
+  static Duration rise(double distance) => Duration(
+    milliseconds: (distance.abs() * 0.6).clamp(280.0, 520.0).round(),
+  );
   static const highlight = Duration(milliseconds: 150);
   static const highlightCurve = Curves.easeOut;
   static const shimmer = Duration(milliseconds: 1400); // linear, loop

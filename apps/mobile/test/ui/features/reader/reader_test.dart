@@ -50,6 +50,16 @@ const tallBook = ReaderBook(
   ],
 );
 
+const groupedBook = ReaderBook(
+  id: 1,
+  title: 'The Enchiridion',
+  totalChars: 3000,
+  chapters: [
+    ChapterInfo(id: 10, title: 'I', charOffset: 0, chars: 100),
+    ChapterInfo(id: 15, title: 'Grouped', charOffset: 100, chars: 2900),
+  ],
+);
+
 ReaderParagraph p(int i, ParagraphType type, String text, [int? group]) =>
     ReaderParagraph(index: i, groupIndex: group, type: type, text: text);
 
@@ -119,7 +129,19 @@ AiReply replyFor(GroupRef g) => AiReply(
   meaning: 'Makna grup ${g.groupIndex}.',
 );
 
+/// One group (1) of three tall paragraphs between filler: taller than the room
+/// above the sheet, so its text has to scroll inside the card.
+final grouped = [
+  for (var i = 0; i < 12; i++)
+    p(i, ParagraphType.paragraph, 'Before $i: ${'word ' * 30}'.trim(), 0),
+  for (final (i, name) in ['Alpha', 'Bravo', 'Charlie'].indexed)
+    p(12 + i, ParagraphType.paragraph, '$name: ${'word ' * 60}'.trim(), 1),
+  for (var i = 0; i < 12; i++)
+    p(15 + i, ParagraphType.paragraph, 'After $i: ${'word ' * 30}'.trim(), 2),
+];
+
 final paragraphs = {
+  15: grouped,
   12: long,
   13: tall,
   // One paragraph taller than the space above the sheet.
@@ -1263,19 +1285,18 @@ void main() {
       }
     });
 
-    testWidgets('the group sits 16pt above the sheet, highlighted', (
+    testWidgets('on open the group starts at the safe area, highlighted', (
       tester,
     ) async {
       await openTall(tester);
       await tapGroup(tester, 13);
       expect(block, findsOneWidget);
-      final sheetTop = tester.getTopLeft(sheetBox).dy;
-      expect(tester.getRect(block).bottom, closeTo(sheetTop - 16, 1));
+      expect(tester.getRect(block).top, closeTo(0, 1)); // safe area 0
       // Highlight reaches half the margin out: 24 / 2.
       expect(tester.getRect(block).left, 12);
     });
 
-    testWidgets('a group too tall to fit: its top goes under the safe area', (
+    testWidgets('a group too tall to fit: its top is at the safe area', (
       tester,
     ) async {
       const hugeBook = ReaderBook(
@@ -1294,7 +1315,7 @@ void main() {
       );
       await tester.tap(find.textContaining('Huge:'));
       await tester.pumpAndSettle();
-      expect(tester.getRect(block).top, closeTo(0 + 16, 1)); // safe area 0
+      expect(tester.getRect(block).top, closeTo(0, 1)); // safe area 0
     });
 
     testWidgets('one group: closing goes back to where you were', (
@@ -1447,6 +1468,123 @@ void main() {
       of: sheetBox,
       matching: find.byType(SingleChildScrollView),
     );
+
+    /// A finger moving in 20pt steps with a frame in between, like a real one.
+    Future<void> slowDrag(WidgetTester tester, double dy) async {
+      final g = await tester.startGesture(tester.getCenter(sheetScroll()));
+      for (var moved = 0.0; moved.abs() < dy.abs(); moved += 20 * dy.sign) {
+        await g.moveBy(Offset(0, 20 * dy.sign));
+        await tester.pump(const Duration(milliseconds: 16));
+      }
+      await g.up();
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('the card stays put, its text follows the translation read', (
+      tester,
+    ) async {
+      answer = (g) async => AiReply(
+        translations: [
+          for (final n in ['satu', 'dua', 'tiga']) 'ID $n ${'kata ' * 200}',
+        ],
+        meaning: 'Makna panjang.',
+      );
+      await openBook(
+        tester,
+        readerBook: groupedBook,
+        saved: (chapterId: 15, paragraphIndex: 12, paragraphOffset: 0.0),
+      );
+      await tester.tap(find.textContaining('Bravo:').first);
+      await tester.pumpAndSettle();
+      final sheetTop = tester.getTopLeft(sheetBox).dy;
+      final pinned = find.byKey(const ValueKey('pinned-group'));
+      Rect card() => tester.getRect(pinned);
+      Rect inCard(String name) => tester.getRect(
+        find.descendant(of: pinned, matching: find.textContaining('$name:')),
+      );
+
+      // First open: the card starts at the safe area (0 in tests), its text at
+      // the start, and it runs on under the sheet.
+      final start = card();
+      expect(start.top, closeTo(0, 1));
+      expect(start.bottom, closeTo(sheetTop, 1));
+      expect(inCard('Alpha').top, closeTo(start.top + 8, 1));
+
+      // Reading to the end: the card does not move, Charlie comes into view
+      // 24pt above the sheet.
+      await slowDrag(tester, -4000);
+      expect(card(), start);
+      expect(inCard('Charlie').bottom, closeTo(sheetTop - 24, 1));
+      expect(inCard('Alpha').top, lessThan(start.top));
+
+      // Back up to the first translation: the text is where it opened.
+      final scroll = tester.state<ScrollableState>(
+        find.descendant(of: sheetScroll(), matching: find.byType(Scrollable)),
+      );
+      await slowDrag(tester, scroll.position.pixels - 20);
+      expect(card(), start);
+      // 20pt short of the very top: progress is almost, not exactly, zero.
+      expect(inCard('Alpha').top, closeTo(start.top + 8, 3));
+
+      // Closing: the card goes away, the page was never moved by the follow.
+      await tester.tap(find.bySemanticsLabel('Tutup'));
+      await tester.pumpAndSettle();
+      expect(pinned, findsNothing);
+    });
+
+    testWidgets('one long paragraph: its text scrolls inside the card', (
+      tester,
+    ) async {
+      const hugeBook = ReaderBook(
+        id: 1,
+        title: 'The Enchiridion',
+        totalChars: 3000,
+        chapters: [
+          ChapterInfo(id: 10, title: 'I', charOffset: 0, chars: 100),
+          ChapterInfo(id: 14, title: 'Huge', charOffset: 100, chars: 2900),
+        ],
+      );
+      answer = (g) async => AiReply(
+        translations: ['ID Huge ${'kata ' * 400}'],
+        meaning: 'Makna panjang.',
+      );
+      await openBook(
+        tester,
+        readerBook: hugeBook,
+        saved: (chapterId: 14, paragraphIndex: 0, paragraphOffset: 0.0),
+      );
+      await tester.tap(find.textContaining('Huge:').first);
+      await tester.pumpAndSettle();
+      final sheetTop = tester.getTopLeft(sheetBox).dy;
+      final pinned = find.byKey(const ValueKey('pinned-group'));
+      Rect text() => tester.getRect(
+        find.descendant(of: pinned, matching: find.textContaining('Huge:')),
+      );
+      final start = tester.getRect(pinned);
+      final at = text().top;
+      expect(start.top, closeTo(0, 1));
+
+      // Half way through the translation: the text moved up by about half.
+      await slowDrag(tester, -300);
+      expect(tester.getRect(pinned), start); // the card itself stays
+      expect(text().top, lessThan(at));
+      final half = text().top;
+
+      // To the end: the last line of the paragraph sits above the sheet.
+      await slowDrag(tester, -4000);
+      expect(text().top, lessThan(half));
+      expect(text().bottom, closeTo(sheetTop - 24, 1));
+
+      // Closing: the pinned card goes the moment the sheet starts down, so what
+      // shows under the sheet is the page's own card, not a second copy.
+      await tester.tap(find.bySemanticsLabel('Tutup'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+      expect(sheetBox, findsOneWidget);
+      expect(pinned, findsNothing);
+      await tester.pumpAndSettle();
+      expect(pinned, findsNothing);
+    });
 
     testWidgets('height is fixed at 528 of 844 in every state', (tester) async {
       await openTall(tester);
