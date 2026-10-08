@@ -240,8 +240,9 @@ Breakdown _whole(Breakdown b) {
 /// - Sinkron (≥ 2 bagian, #64): blok yang lewat garis baca jadi aktif
 ///   ([activeBlock]), kalimat bagiannya disorot di panel dan panel scroll
 ///   ke situ. Tap nomor / chip = lompat. Lewat bagian terakhir (3+ bagian)
-///   panel ngelipet jadi satu baris. Selama nulis, yang disorot bagian yang
-///   lagi ditulis. Scroll cuma ngubah [_active]; panel cuma dibangun ulang
+///   panel ngelipet jadi satu baris. Selama nulis sorotannya udah jalan dari
+///   bagian 1 dan ngikut scroll, gak nunggu lengkap. Scroll cuma ngubah
+///   [_active]; panel cuma dibangun ulang
 ///   pas blok aktifnya ganti.
 class _Screen extends StatefulWidget {
   const _Screen({
@@ -317,6 +318,9 @@ class _ScreenState extends State<_Screen> with TickerProviderStateMixin {
 
   /// Sinkron nyala dan bisa disentuh (≥ 2 bagian, lengkap / kepotong).
   bool _interactive = false;
+
+  /// Sorotan ngikut scroll (≥ 2 bagian), termasuk selama nulis.
+  bool _following = false;
 
   /// Lengkap dan semua hurufnya udah tampil.
   bool _finished = false;
@@ -459,7 +463,7 @@ class _ScreenState extends State<_Screen> with TickerProviderStateMixin {
 
   /// Hitung ulang blok aktif dari posisi tiap blok terhadap garis baca.
   void _follow(ScrollMetrics m) {
-    if (!_interactive || _locked) return;
+    if (!_following || _locked) return;
     final tops = <double>[];
     for (final key in _blocks.take(_blockCount)) {
       final top = _topOf(key);
@@ -555,6 +559,7 @@ class _ScreenState extends State<_Screen> with TickerProviderStateMixin {
 
     final sync = !inline && numbered && !failed;
     _interactive = sync && !_busy;
+    _following = sync;
     _sections = count;
     final blocks = [
       for (var i = 0; i < count; i++) '${i + 1}',
@@ -588,8 +593,6 @@ class _ScreenState extends State<_Screen> with TickerProviderStateMixin {
                   maxHeight: screen.height * Layout.breakdownPanel,
                   highlight: !sync || term != null
                       ? null
-                      : _busy
-                      ? count - 1
                       : active < count
                       ? active
                       : null,

@@ -815,7 +815,7 @@ void main() {
       expect(marked(tester), isNot(contains('Tiga')));
     });
 
-    testWidgets('streaming: the section being written is marked, no chips', (
+    testWidgets('streaming: highlight starts at section 1, no chips', (
       tester,
     ) async {
       await open(tester, BreakdownState(input: four), reduce: true);
@@ -834,7 +834,7 @@ void main() {
       );
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 50));
-      expect(marked(tester), ['Dua ini.']); // last whole one, reduce motion
+      expect(marked(tester), ['Satu ini.']); // from the start, not the tail
       expect(chips(), findsNothing);
     });
 
