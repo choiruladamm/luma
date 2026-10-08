@@ -38,7 +38,7 @@ App Flutter di `apps/mobile`, Flutter dikunci lewat `.fvmrc`. Jalankan perintah 
 - Setelah ubah tabel Drift atau model freezed: `make gen`. File `*.g.dart` / `*.freezed.dart` ikut di-commit.
 - Schema Drift: udah ada data di iPhone, jadi tiap ubah tabel wajib naikin `schemaVersion` + langkah di `onUpgrade` + test di `test/data/migration_test.dart` (fixture SQL versi lama, bandingin schema hasil migrasi sama install baru). Jangan minta user hapus app. `drift_dev make-migrations` gak bisa dipakai: kolom `paragraphs.text` bikin kode snapshot-nya gagal compile.
 - `make check` (format, analyze, test) harus bersih sebelum commit.
-- `make run` / `make release` ke device hanya kalau user minta. `make release` = app Luma (data asli user), cuma dari `master`. Fitur yang belum di-merge dicoba di app **Luma Dev** (flavor `dev`, bundle id `id.ruma.luma.dev`, data & Keychain terpisah; setup #66), jangan pernah build branch fitur ke bundle id `id.ruma.luma`: migrasi schema yang belum stabil bakal nyentuh data asli dan Drift gak bisa turun versi.
+- `make run` / `make release` / `make dev` ke device hanya kalau user minta. `make release` = app Luma (data asli user), cuma dari `master`. Fitur yang belum di-merge dicoba di app **Luma Dev** lewat `make dev` (flavor `dev`: scheme `dev`, config `*-dev`, bundle id `id.ruma.luma.dev`, ikon hitam, data & Keychain terpisah; debug: `make run f=dev`), jangan pernah build branch fitur ke bundle id `id.ruma.luma`: migrasi schema yang belum stabil bakal nyentuh data asli dan Drift gak bisa turun versi.
 
 ## Arsitektur
 

@@ -81,6 +81,8 @@ Buku Markdown yang chapternya belum lengkap (nanti, [import-formats.md](ideas/im
 
 ## Gotcha iOS
 
+- **Dua app: Luma & Luma Dev.** Scheme `Runner` (config `Debug`/`Release`/`Profile`) = Luma, `id.ruma.luma`, dipake baca tiap hari, cuma dari `master` (`make release`). Scheme `dev` (config `Debug-dev`/`Release-dev`/`Profile-dev`) = Luma Dev, `id.ruma.luma.dev`, ikon `AppIcon-dev` (varian tinted), nama dari `APP_DISPLAY_NAME`; branch fitur dicoba di sini (`make dev`). Container Documents + Keychain per bundle id, jadi data, DB (schema bisa lebih baru), dan API key terpisah; key diisi ulang sekali di Luma Dev. Data asli bisa dibawa lewat backup Luma → restore di Luma Dev (gak bisa sebaliknya kalau schema Luma Dev lebih baru). Akun Apple gratis: maks 3 app sideload aktif (Luma + Luma Dev = 2), 10 App ID baru per 7 hari, dua-duanya di-install ulang tiap 7 hari. Ikon dev ikut `make brand`.
+
 - **Jangan simpan absolute path di database.** Path container app iOS bisa berubah setiap update/reinstall. Simpan nama file, gabungkan dengan `getApplicationDocumentsDirectory()` saat runtime.
 - File dari picker biasanya ada di folder sementara, jadi wajib di-copy ke Documents.
 - Buat folder `books/` dan `covers/` saat app start (`create(recursive: true)`).
