@@ -31,6 +31,7 @@ class StabiloColors extends ThemeExtension<StabiloColors> {
     required this.toastInk,
     required this.mark,
     required this.scrim,
+    required this.veil,
     required this.grabber,
     required this.menuLine,
     required this.fieldLine,
@@ -60,8 +61,8 @@ class StabiloColors extends ThemeExtension<StabiloColors> {
   final Color highlight, onHighlight;
   // Status & feedback. mark = penanda grup yang udah diterjemahin.
   final Color danger, onDanger, dangerSoft, dangerInk, toastBg, toastInk, mark;
-  // Overlay
-  final Color scrim, grabber;
+  // Overlay. veil = kerudung di atas rak yang di-blur (menu tekan lama buku).
+  final Color scrim, veil, grabber;
   // Garis pemisah di menu/list, garis field input.
   final Color menuLine, fieldLine;
   // Isi progress bar (terang: tinta, gelap: accent).
@@ -103,6 +104,7 @@ class StabiloColors extends ThemeExtension<StabiloColors> {
     toastInk: Color(0xFFFFFBEF),
     mark: Color(0xFFE6B800),
     scrim: Color(0x611A1A1A), // 38%
+    veil: Color(0x8CFFFBEF), // canvas 55%
     grabber: Color(0xFFE2DBC6),
     menuLine: Color(0xFFECE5D2),
     fieldLine: Color(0xFFCFC7B1),
@@ -145,6 +147,7 @@ class StabiloColors extends ThemeExtension<StabiloColors> {
     toastInk: Color(0xFFF3EBD3),
     mark: Color(0xFFB39845),
     scrim: Color(0x6B000000), // 42%
+    veil: Color(0x99141311), // 60%
     grabber: Color(0xFF4A463E),
     menuLine: Color(0xFF3A3732),
     fieldLine: Color(0xFF5A554B),

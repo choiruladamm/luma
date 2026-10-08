@@ -23,41 +23,36 @@ class AppMenuItem<T> {
   final bool selected;
 }
 
-/// Menu popover yang nempel ke widget [context] (board Komponen 04).
-///
-/// Tanpa [title] = ContextMenu tekan lama (baris 50, ada garis pemisah).
-/// Dengan [title] = menu pilihan, mis. "Urutin pake" (baris 46, centang di
-/// yang [AppMenuItem.selected]).
+/// Menu pilihan yang nempel ke widget [context], mis. "Urutin pake" (board
+/// Komponen 04, baris 46, centang di yang [AppMenuItem.selected]). Menu tekan
+/// lama buku ada di `book_menu.dart`.
 Future<T?> showAppMenu<T>(
   BuildContext context,
   List<AppMenuItem<T>> items, {
-  String? title,
+  required String title,
 }) {
   final c = context.stabilo;
   final box = context.findRenderObject()! as RenderBox;
   final overlay = Overlay.of(context).context.findRenderObject()! as RenderBox;
   final rect = box.localToGlobal(Offset.zero, ancestor: overlay) & box.size;
-  final picker = title != null;
 
   return showMenu<T>(
     context: context,
     position: RelativeRect.fromRect(rect, Offset.zero & overlay.size),
     items: [
-      if (picker)
-        PopupMenuItem<T>(
-          enabled: false,
-          height: 0,
-          padding: const EdgeInsets.fromLTRB(Space.s4, Space.s3, Space.s4, 6),
-          child: Text(
-            title,
-            style: StabiloType.tag.copyWith(color: c.ink2, height: 1.2),
-          ),
+      PopupMenuItem<T>(
+        enabled: false,
+        height: 0,
+        padding: const EdgeInsets.fromLTRB(Space.s4, Space.s3, Space.s4, 6),
+        child: Text(
+          title,
+          style: StabiloType.tag.copyWith(color: c.ink2, height: 1.2),
         ),
-      for (final (i, item) in items.indexed) ...[
-        if (!picker && i > 0) const PopupMenuDivider(height: 1),
+      ),
+      for (final item in items)
         PopupMenuItem<T>(
           value: item.value,
-          height: picker ? 46 : 50,
+          height: 46,
           padding: const EdgeInsets.symmetric(horizontal: Space.s4),
           child: IconTheme.merge(
             data: IconThemeData(color: item.destructive ? c.danger : c.ink),
@@ -69,9 +64,9 @@ Future<T?> showAppMenu<T>(
                     item.label,
                     style: StabiloType.label.copyWith(
                       color: item.destructive ? c.danger : c.ink,
-                      fontWeight: picker
-                          ? (item.selected ? FontWeight.w700 : FontWeight.w500)
-                          : FontWeight.w600,
+                      fontWeight: item.selected
+                          ? FontWeight.w700
+                          : FontWeight.w500,
                     ),
                   ),
                 ),
@@ -83,7 +78,6 @@ Future<T?> showAppMenu<T>(
             ),
           ),
         ),
-      ],
     ],
   );
 }
