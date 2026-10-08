@@ -235,6 +235,7 @@ abstract final class AppIcons {
   static const toc = HugeIcons.strokeRoundedLeftToRightListBullet;
   static const copy = HugeIcons.strokeRoundedCopy01;
   static const down = HugeIcons.strokeRoundedArrowDown02;
+  static const expand = HugeIcons.strokeRoundedArrowDown01;
   static const retry = HugeIcons.strokeRoundedRefresh;
   static const offline = HugeIcons.strokeRoundedCloudOff;
   static const key = HugeIcons.strokeRoundedKey01;

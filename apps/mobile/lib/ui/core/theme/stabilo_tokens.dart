@@ -73,6 +73,9 @@ abstract final class Layout {
   static const breakdownBadge = 20.0; // nomor bagian di teks (min, ikut Aa)
   static const breakdownNumber = 28.0; // nomor bagian di penjelasan
   static const breakdownGutter = 20.0; // kolom ¶n di panel teks
+  static const breakdownReadLine = 96.0; // garis baca dari atas penjelasan
+  static const breakdownSwitch = 24.0; // histeresis ganti bagian aktif
+  static const breakdownFolded = 52.0; // panel teks pas ngelipet
 }
 
 /// Durasi & curve. Kalau iOS "Kurangi gerakan" nyala
@@ -118,6 +121,8 @@ abstract final class Motion {
   static const writingDots = Duration(milliseconds: 1600); // titik "Lagi nulis"
   static const tailFade = Duration(milliseconds: 300); // ujung teks jadi solid
   static const statusSwap = Duration(milliseconds: 150); // status → "Salin"
+  static const jump = Duration(milliseconds: 300); // lompat ke bagian
+  static const fold = Duration(milliseconds: 200); // panel Bedahin ngelipet
 }
 
 /// Bayangan. Default flat (tanpa bayangan).

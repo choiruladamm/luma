@@ -57,11 +57,14 @@ class EdgeFadeScroll extends StatefulWidget {
     super.key,
     this.top = EdgeFadeSide.standard,
     this.bottom = EdgeFadeSide.standard,
+    this.axis = Axis.vertical,
     required this.child,
   });
 
+  /// Horizontal: [top] = tepi kiri, [bottom] = tepi kanan.
   final EdgeFadeSide top;
   final EdgeFadeSide bottom;
+  final Axis axis;
 
   /// Scroll view (atau yang ngebungkus satu scroll view).
   final Widget child;
@@ -106,16 +109,17 @@ class EdgeFadeScrollState extends State<EdgeFadeScroll> {
             builder: (context, bottom, child) => ShaderMask(
               blendMode: BlendMode.dstIn,
               shaderCallback: (rect) {
+                final across = widget.axis == Axis.horizontal;
                 final g = edgeFadeStops(
-                  rect.height,
+                  across ? rect.width : rect.height,
                   top: widget.top,
                   bottom: widget.bottom,
                   topOn: top,
                   bottomOn: bottom,
                 );
                 return LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
+                  begin: across ? Alignment.centerLeft : Alignment.topCenter,
+                  end: across ? Alignment.centerRight : Alignment.bottomCenter,
                   colors: [
                     for (final a in g.alphas) Colors.black.withValues(alpha: a),
                   ],

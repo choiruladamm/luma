@@ -573,6 +573,212 @@ void main() {
     handle.dispose();
   });
 
+  group('sync (#64)', () {
+    final four = input(['Satu ini. Dua ini. Tiga ini. Empat ini.']);
+    BreakdownSection long(int k) => BreakdownSection(
+      from: k,
+      to: k,
+      title: 'Judul $k',
+      meaning: 'Maksud $k ${'kata ' * 60}ujung.',
+      logic: 'Logika $k ${'kata ' * 60}ujung.',
+    );
+    Breakdown sections(int n, {bool extras = false}) => Breakdown(
+      sections: [for (var k = 1; k <= n; k++) long(k)],
+      terms: extras
+          ? const [
+              BreakdownTerm(
+                label: 'Tiga',
+                exact: 'tiga',
+                explanation: 'Angka.',
+                sentence: 3,
+              ),
+            ]
+          : const [],
+      practice: extras ? 'Lakuin ini.' : null,
+    );
+
+    /// Text marked in the panel (section or term highlight).
+    List<String> marked(WidgetTester tester) => [
+      for (final rt in tester.widgetList<RichText>(
+        find.descendant(of: panel(), matching: find.byType(RichText)),
+      ))
+        ...() {
+          final out = <String>[];
+          rt.text.visitChildren((span) {
+            if (span is TextSpan &&
+                span.text != null &&
+                span.style?.backgroundColor != null) {
+              out.add(span.text!);
+            }
+            return true;
+          });
+          return out;
+        }(),
+    ];
+    Finder explanation() => find
+        .ancestor(
+          of: find.text('MAKSUDNYA').first,
+          matching: find.byType(Scrollable),
+        )
+        .first;
+    Finder chips() => find.byWidgetPredicate(
+      (w) => w is ListView && w.scrollDirection == Axis.horizontal,
+    );
+    Finder chip(String label) =>
+        find.descendant(of: chips(), matching: find.text(label));
+    double explanationPixels(WidgetTester tester) =>
+        tester.state<ScrollableState>(explanation()).position.pixels;
+
+    testWidgets('first section highlighted from the start (cached)', (
+      tester,
+    ) async {
+      await open(tester, done(sections(4), from: four));
+      expect(marked(tester), ['Satu ini.']);
+    });
+
+    testWidgets('scrolling moves the highlight; back up returns it', (
+      tester,
+    ) async {
+      await open(tester, done(sections(4), from: four));
+      final seen = <String>{};
+      for (var i = 0; i < 40; i++) {
+        await tester.drag(explanation(), const Offset(0, -60));
+        await tester.pump();
+        seen.addAll(marked(tester));
+      }
+      expect(seen, containsAll(['Dua ini.', 'Tiga ini.', 'Empat ini.']));
+      expect(marked(tester), ['Empat ini.']); // the end: last section
+      await tester.drag(explanation(), const Offset(0, 6000));
+      await tester.pumpAndSettle();
+      expect(marked(tester), ['Satu ini.']);
+    });
+
+    testWidgets('tap a number in the text: the explanation jumps there', (
+      tester,
+    ) async {
+      await open(tester, done(sections(4), from: four));
+      await tester.tap(find.descendant(of: panel(), matching: find.text('3')));
+      await tester.pumpAndSettle();
+      expect(marked(tester), ['Tiga ini.']);
+      final top = tester.getTopLeft(explanation()).dy;
+      expect(
+        tester.getTopLeft(find.text('Judul 3')).dy - top,
+        inInclusiveRange(0, 40),
+      );
+    });
+
+    testWidgets('chips only with 3+ sections; a chip jumps and turns ink', (
+      tester,
+    ) async {
+      await open(tester, done(sections(2), from: four));
+      expect(chips(), findsNothing);
+      expect(marked(tester), ['Satu ini.']); // 2 sections still sync
+
+      await open(tester, done(sections(4, extras: true), from: four));
+      for (final l in ['1', '2', '3', '4', 'Istilah', 'Praktek']) {
+        expect(chip(l), findsOneWidget);
+      }
+      await tester.tap(chip('2'));
+      await tester.pumpAndSettle();
+      expect(marked(tester), ['Dua ini.']);
+      final on = tester.widget<Text>(chip('2')).style!.color;
+      expect(on, tester.element(chip('2')).stabilo.canvas);
+      expect(explanationPixels(tester), greaterThan(0));
+    });
+
+    testWidgets('past the last section the panel folds; tap opens it', (
+      tester,
+    ) async {
+      await open(tester, done(sections(4, extras: true), from: four));
+      await tester.tap(chip('Istilah'));
+      await tester.pumpAndSettle();
+      expect(panel(), findsNothing);
+      expect(find.text('Teks terjemahan · 4 bagian'), findsOneWidget);
+      await tester.tap(find.text('Teks terjemahan · 4 bagian'));
+      await tester.pumpAndSettle();
+      expect(panel(), findsOneWidget);
+      // Back to a section: folding works again later.
+      await tester.tap(chip('1'));
+      await tester.pumpAndSettle();
+      await tester.tap(chip('Praktek'));
+      await tester.pumpAndSettle();
+      expect(panel(), findsNothing);
+    });
+
+    testWidgets('2 sections never fold', (tester) async {
+      await open(tester, done(sections(2, extras: true), from: four));
+      await tester.drag(explanation(), const Offset(0, -6000));
+      await tester.pumpAndSettle();
+      expect(panel(), findsOneWidget);
+    });
+
+    testWidgets('tap a term: its exact word is marked, the panel opens', (
+      tester,
+    ) async {
+      await open(tester, done(sections(4, extras: true), from: four));
+      await tester.tap(chip('Istilah'));
+      await tester.pumpAndSettle();
+      expect(panel(), findsNothing);
+      await tester.tap(find.text('Angka.'));
+      await tester.pumpAndSettle();
+      expect(panel(), findsOneWidget);
+      expect(marked(tester), ['Tiga']); // case kept from the text
+      // A finger scroll clears it.
+      await tester.drag(explanation(), const Offset(0, 300));
+      await tester.pumpAndSettle();
+      expect(marked(tester), isNot(contains('Tiga')));
+    });
+
+    testWidgets('streaming: the section being written is marked, no chips', (
+      tester,
+    ) async {
+      await open(tester, BreakdownState(input: four), reduce: true);
+      fake().push(
+        BreakdownState(
+          phase: BreakdownPhase.writing,
+          input: four,
+          draft: Breakdown(
+            sections: [
+              long(1),
+              long(2),
+              const BreakdownSection(from: 3, to: 4),
+            ],
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+      expect(marked(tester), ['Dua ini.']); // last whole one, reduce motion
+      expect(chips(), findsNothing);
+    });
+
+    testWidgets('1 section: no highlight, chips or folding', (tester) async {
+      await open(tester, done(sections(1, extras: true), from: four));
+      expect(chips(), findsNothing);
+      expect(find.byType(AnimatedSize), findsNothing);
+      for (final rt in tester.widgetList<RichText>(
+        find.descendant(of: inlinePanel(), matching: find.byType(RichText)),
+      )) {
+        rt.text.visitChildren((span) {
+          expect(span.style?.backgroundColor, isNull);
+          return true;
+        });
+      }
+    });
+
+    testWidgets('reduce motion: folds without animating', (tester) async {
+      await open(
+        tester,
+        done(sections(4, extras: true), from: four),
+        reduce: true,
+      );
+      expect(find.byType(AnimatedSize), findsNothing);
+      await tester.tap(chip('Istilah'));
+      await tester.pump();
+      expect(panel(), findsNothing);
+    });
+  });
+
   testWidgets('reduce motion: whole sections only while writing', (
     tester,
   ) async {
