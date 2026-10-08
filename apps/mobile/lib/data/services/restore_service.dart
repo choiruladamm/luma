@@ -121,7 +121,13 @@ class RestoreService {
       await Directory(there(d)).create(recursive: true);
     }
 
-    await _db.close();
+    // Cuma koneksi SQLite-nya yang ditutup, biar filenya bisa diganti.
+    // `_db.close()` nutup stream query dulu dan nunggu tiap listener nerima
+    // "done": listener yang di-pause (Riverpod 3 nge-pause provider layar
+    // yang ketutup, mis. Rak di bawah Pengaturan) gak pernah nerima, jadi
+    // restore nyangkut. Stream-nya ikut kebuang pas pemanggil invalidate
+    // `appDatabaseProvider`.
+    await _db.executor.close();
     final moved = <(String, String)>[];
     Future<void> move(String from, String to) async {
       if (!await FileSystemEntity.isDirectory(from) &&
