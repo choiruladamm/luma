@@ -17,11 +17,13 @@ import '../../../core/theme/reader_typography.dart';
 import '../../../core/theme/stabilo_theme.dart';
 import '../../../core/theme/stabilo_tokens.dart';
 import '../../../core/theme/stabilo_type.dart';
+import '../../../core/widgets/ai_status.dart';
 import '../../../core/widgets/buttons.dart';
 import '../../../core/widgets/edge_fade.dart';
 import '../../../core/widgets/sheet.dart';
 import '../../../core/widgets/tag.dart';
 import '../../../core/widgets/toast.dart';
+import '../view_models/breakdown_view_model.dart';
 import '../view_models/reader_view_model.dart';
 import 'meaning_chrome.dart';
 
@@ -32,6 +34,7 @@ import 'meaning_chrome.dart';
 /// di belakang bisa nyesuain. Barrier transparan: scrim (yang bolongin grup)
 /// digambar halaman baca. [onProgress] (0–1) dipanggil pas sheet di-scroll:
 /// seberapa jauh terjemahan udah kebaca, biar isi card kuning ngikutin.
+/// [onBreakdown]: entri "Masih bingung? Bedahin" di akhir isi di-tap.
 Future<void> showMeaningSheet(
   BuildContext context, {
   required ValueListenable<GroupRef> group,
@@ -41,6 +44,7 @@ Future<void> showMeaningSheet(
   required ValueChanged<double> onProgress,
   required VoidCallback onClosing,
   required VoidCallback onSettings,
+  required ValueChanged<GroupRef> onBreakdown,
 }) {
   final screen = MediaQuery.sizeOf(context).height;
   final height = screen * Layout.artinyaHeight;
@@ -91,6 +95,7 @@ Future<void> showMeaningSheet(
                         onNext: hasNext(g) ? onNext : null,
                         onProgress: onProgress,
                         onSettings: onSettings,
+                        onBreakdown: () => onBreakdown(g),
                       ),
                     ),
                   ),
@@ -192,6 +197,7 @@ class MeaningSheet extends ConsumerStatefulWidget {
     required this.onNext,
     required this.onProgress,
     required this.onSettings,
+    required this.onBreakdown,
   });
 
   final GroupRef group;
@@ -200,6 +206,7 @@ class MeaningSheet extends ConsumerStatefulWidget {
   final VoidCallback? onNext;
   final ValueChanged<double> onProgress;
   final VoidCallback onSettings;
+  final VoidCallback onBreakdown;
 
   @override
   ConsumerState<MeaningSheet> createState() => _MeaningSheetState();
@@ -255,6 +262,11 @@ class _MeaningSheetState extends ConsumerState<MeaningSheet> {
         onProgress: widget.onProgress,
         onClose: _close,
         onRetry: retry,
+        breakdown: _BreakdownEntry(
+          group: widget.group,
+          fade: !ai.cached,
+          onTap: widget.onBreakdown,
+        ),
       ),
     };
   }
@@ -590,6 +602,7 @@ class _Answer extends StatefulWidget {
     required this.onProgress,
     required this.onClose,
     required this.onRetry,
+    required this.breakdown,
   });
 
   final ReaderTypography typo;
@@ -600,6 +613,9 @@ class _Answer extends StatefulWidget {
   final ValueChanged<double> onProgress;
   final VoidCallback onClose;
   final VoidCallback onRetry;
+
+  /// Entri Bedahin, item terakhir isi; cuma pas jawabannya lengkap.
+  final Widget breakdown;
 
   @override
   State<_Answer> createState() => _AnswerState();
@@ -861,12 +877,13 @@ class _AnswerState extends State<_Answer> with TickerProviderStateMixin {
                     : _Placeholder(chars: estimatedMeaning, style: style),
               ),
             if (_cut) _CutBanner(onRetry: widget.onRetry),
+            if (_finished) widget.breakdown,
           ],
           actions: [
             AnimatedSwitcher(
               duration: reduced ? Duration.zero : Motion.statusSwap,
               child: writing && !_cut && _ai.phase != AiPhase.slow
-                  ? _StatusButton(
+                  ? StatusButton(
                       key: ValueKey(thinking),
                       label: thinking ? 'Lagi mikir' : 'Lagi nulis',
                     )
@@ -919,113 +936,9 @@ class _Placeholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => LayoutBuilder(
-    builder: (context, box) => _Skeleton(
+    builder: (context, box) => Skeleton(
       widths: placeholderRows(chars, _charWidth(), box.maxWidth),
       lineExtent: style.fontSize! * style.height!,
-    ),
-  );
-}
-
-/// Salin yang lagi nunggu jawaban: tiga titik berdenyut + "Lagi mikir" /
-/// "Lagi nulis". Nonaktif, warna ink2 di atas muted.
-class _StatusButton extends StatelessWidget {
-  const _StatusButton({super.key, required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.stabilo;
-    return Semantics(
-      button: true,
-      enabled: false,
-      label: 'Salin, belum bisa: ${label.toLowerCase()}',
-      excludeSemantics: true,
-      child: Container(
-        height: 52,
-        padding: const EdgeInsets.symmetric(horizontal: 18),
-        decoration: BoxDecoration(
-          color: c.muted,
-          borderRadius: BorderRadius.circular(Radii.full),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          spacing: 9,
-          children: [
-            _WritingDots(color: c.ink2),
-            Text(
-              label,
-              style: StabiloType.label.copyWith(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: c.ink2,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Tiga titik 4pt, opasitas 30 ↔ 85% tiap [Motion.writingDots], bergiliran.
-/// Kurangi gerakan: diem.
-class _WritingDots extends StatefulWidget {
-  const _WritingDots({required this.color});
-
-  final Color color;
-
-  @override
-  State<_WritingDots> createState() => _WritingDotsState();
-}
-
-class _WritingDotsState extends State<_WritingDots>
-    with SingleTickerProviderStateMixin {
-  late final _pulse = AnimationController(
-    vsync: this,
-    duration: Motion.writingDots,
-  );
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    MediaQuery.disableAnimationsOf(context) ? _pulse.stop() : _pulse.repeat();
-  }
-
-  @override
-  void dispose() {
-    _pulse.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) => AnimatedBuilder(
-    animation: _pulse,
-    builder: (context, _) => Row(
-      mainAxisSize: MainAxisSize.min,
-      spacing: 3,
-      children: [
-        for (var i = 0; i < 3; i++)
-          Opacity(
-            opacity: _pulse.isAnimating
-                ? 0.3 +
-                      0.55 *
-                          (0.5 -
-                              0.5 *
-                                  math.cos(
-                                    2 * math.pi * (_pulse.value - i * 0.16),
-                                  ))
-                : 0.6,
-            child: Container(
-              width: 4,
-              height: 4,
-              decoration: BoxDecoration(
-                color: widget.color,
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-      ],
     ),
   );
 }
@@ -1043,7 +956,7 @@ class _SlowCard extends StatelessWidget {
     final c = context.stabilo;
     return Semantics(
       liveRegion: true,
-      child: _Card(
+      child: StatusCard(
         color: c.muted,
         line: c.track,
         tile: c.accent,
@@ -1084,7 +997,7 @@ class _CutBanner extends StatelessWidget {
     final c = context.stabilo;
     return Semantics(
       liveRegion: true,
-      child: _Card(
+      child: StatusCard(
         color: c.pinkSoft,
         line: c.pink,
         tile: c.pink,
@@ -1107,110 +1020,10 @@ class _CutBanner extends StatelessWidget {
   }
 }
 
-/// Kartu status di dalam isi scroll (board perilaku): kotak ikon 36, judul,
-/// keterangan, tombol 40.
-class _Card extends StatelessWidget {
-  const _Card({
-    required this.color,
-    required this.line,
-    required this.tile,
-    required this.icon,
-    required this.iconColor,
-    required this.title,
-    required this.body,
-    required this.actions,
-  });
-
-  final Color color, line, tile, iconColor;
-  final List<List<dynamic>> icon;
-  final String title, body;
-  final List<Widget> actions;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.stabilo;
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(Radii.menu),
-        border: Border.all(color: line, width: Layout.outline),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        spacing: Space.s3,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            spacing: Space.s3,
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: tile,
-                  borderRadius: BorderRadius.circular(Radii.sm),
-                ),
-                child: Center(child: AppIcon(icon, color: iconColor)),
-              ),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  spacing: 2,
-                  children: [
-                    Text(
-                      title,
-                      style: StabiloType.label.copyWith(
-                        fontSize: 16,
-                        color: c.ink,
-                      ),
-                    ),
-                    Text(
-                      body,
-                      style: StabiloType.caption.copyWith(
-                        fontSize: 13.5,
-                        height: 1.4,
-                        fontWeight: FontWeight.w400,
-                        color: c.ink2,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          Row(spacing: 10, children: actions),
-        ],
-      ),
-    );
-  }
-}
-
 /// Kotak ikon di pojok state error / API key kosong, dan jarak isi di
 /// bawahnya: isi mulai [_tileInset] dari atas sheet (di bawah kotak, lega).
-const _tile = 52.0;
 const _tileInset =
-    Layout.artinyaHeader - Space.s4 - Layout.touch + _tile + Space.s6;
-
-/// Kotak ikon di pojok state error / API key kosong.
-class _IconTile extends StatelessWidget {
-  const _IconTile({required this.icon, required this.bg, required this.fg});
-
-  final List<List<dynamic>> icon;
-  final Color bg;
-  final Color fg;
-
-  @override
-  Widget build(BuildContext context) => Container(
-    width: _tile,
-    height: _tile,
-    decoration: BoxDecoration(
-      color: bg,
-      borderRadius: BorderRadius.circular(Radii.menu),
-    ),
-    child: Center(child: AppIcon(icon, size: 26, color: fg)),
-  );
-}
+    Layout.artinyaHeader - Space.s4 - Layout.touch + IconTile.size + Space.s6;
 
 /// Header state error / API key kosong: kotak ikon kiri, tutup kanan.
 class _TileHeader extends StatelessWidget {
@@ -1272,7 +1085,7 @@ class _Failed extends StatelessWidget {
         gap: 14,
         topInset: _tileInset,
         header: _TileHeader(
-          tile: _IconTile(icon: AppIcons.offline, bg: c.pink, fg: c.onPink),
+          tile: IconTile(icon: AppIcons.offline, bg: c.pink, fg: c.onPink),
           onClose: onClose,
         ),
         content: [
@@ -1327,7 +1140,7 @@ class _NoKey extends StatelessWidget {
       gap: 14,
       topInset: _tileInset,
       header: _TileHeader(
-        tile: _IconTile(icon: AppIcons.key, bg: c.accent, fg: c.onAccent),
+        tile: IconTile(icon: AppIcons.key, bg: c.accent, fg: c.onAccent),
         onClose: onClose,
       ),
       content: [
@@ -1368,76 +1181,104 @@ class _NoKey extends StatelessWidget {
   }
 }
 
-/// Baris skeleton 12pt di tengah baris teks setinggi [lineExtent] (ikut Aa,
-/// biar gak loncat pas hasilnya muncul), shimmer 1,4 detik. Kurangi gerakan:
-/// diem.
-class _Skeleton extends StatefulWidget {
-  const _Skeleton({required this.widths, required this.lineExtent});
+/// "Masih bingung? Bedahin" di akhir isi sheet (board Opsi C · C1, state B3 /
+/// B4): udah pernah dibedah = "Buka bedahan · N bagian". Muncul cuma pas
+/// makna lengkap, fade 150ms kalau abis di-stream. Nunggu jumlah bagian dari
+/// DB dulu biar copy-nya gak ganti di depan mata.
+class _BreakdownEntry extends ConsumerWidget {
+  const _BreakdownEntry({
+    required this.group,
+    required this.fade,
+    required this.onTap,
+  });
 
-  /// Lebar tiap baris, fraksi lebar kolom.
-  final List<double> widths;
-  final double lineExtent;
-
-  @override
-  State<_Skeleton> createState() => _SkeletonState();
-}
-
-class _SkeletonState extends State<_Skeleton>
-    with SingleTickerProviderStateMixin {
-  late final _shimmer = AnimationController(
-    vsync: this,
-    duration: Motion.shimmer,
-  );
+  final GroupRef group;
+  final bool fade;
+  final VoidCallback onTap;
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    MediaQuery.disableAnimationsOf(context)
-        ? _shimmer.stop()
-        : _shimmer.repeat();
-  }
-
-  @override
-  void dispose() {
-    _shimmer.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final sections = switch (ref.watch(breakdownSectionsProvider(group))) {
+      AsyncData(:final value) => value,
+      AsyncError() => 0,
+      _ => null,
+    };
+    if (sections == null) return const SizedBox.shrink();
     final c = context.stabilo;
-    return AnimatedBuilder(
-      animation: _shimmer,
-      builder: (context, _) {
-        // Sorot geser dari kanan ke kiri.
-        final x = 1 - 2 * _shimmer.value;
-        final gradient = LinearGradient(
-          begin: Alignment(x - 1, 0),
-          end: Alignment(x + 1, 0),
-          colors: [c.track, c.muted, c.track],
-        );
-        return Column(
-          children: [
-            for (final w in widget.widths)
-              SizedBox(
-                height: widget.lineExtent,
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: FractionallySizedBox(
-                    widthFactor: w,
-                    child: Container(
-                      height: 12,
-                      decoration: BoxDecoration(
-                        gradient: gradient,
-                        borderRadius: BorderRadius.circular(Radii.full),
-                      ),
+    final opened = sections > 0;
+    final title = opened ? 'Buka bedahan' : 'Masih bingung? Bedahin';
+    final subtitle = opened
+        ? 'Udah pernah dibedah · ${sections == 1 ? '1 gagasan' : '$sections bagian'}'
+        : 'Per bagian, plus tokoh & istilah';
+    final entry = Semantics(
+      button: true,
+      label: '$title. $subtitle',
+      excludeSemantics: true,
+      child: Material(
+        color: c.muted,
+        borderRadius: BorderRadius.circular(Radii.lg),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Container(
+            height: 64,
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            child: Row(
+              spacing: Space.s3,
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: c.ink,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: AppIcon(
+                      opened ? AppIcons.check : AppIcons.list,
+                      size: 18,
+                      color: c.canvas,
                     ),
                   ),
                 ),
-              ),
-          ],
-        );
-      },
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    spacing: 1,
+                    children: [
+                      Text(
+                        title,
+                        style: StabiloType.label.copyWith(
+                          fontSize: 16,
+                          color: c.ink,
+                        ),
+                      ),
+                      Text(
+                        subtitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: StabiloType.caption.copyWith(
+                          fontWeight: FontWeight.w400,
+                          color: c.ink2,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                AppIcon(AppIcons.chevron, size: 18, color: c.ink),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    if (!fade || MediaQuery.disableAnimationsOf(context)) return entry;
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: Motion.statusSwap,
+      builder: (context, t, child) => Opacity(opacity: t, child: child),
+      child: entry,
     );
   }
 }

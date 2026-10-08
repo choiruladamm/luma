@@ -66,6 +66,13 @@ abstract final class Layout {
 
   // Sinkron sheet → isi card kuning.
   static const followGap = Space.s6; // bawah paragraf aktif → atas sheet
+
+  // Layar Bedahin (board Bedahin · Opsi C).
+  static const breakdownHeader = 48.0; // balik + judul + buku · bab
+  static const breakdownPanel = 0.4; // panel teks maks segini dari layar
+  static const breakdownBadge = 20.0; // nomor bagian di teks (min, ikut Aa)
+  static const breakdownNumber = 28.0; // nomor bagian di penjelasan
+  static const breakdownGutter = 20.0; // kolom ¶n di panel teks
 }
 
 /// Durasi & curve. Kalau iOS "Kurangi gerakan" nyala

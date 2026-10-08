@@ -101,36 +101,44 @@ void main() {
     },
   );
 
-  test('find / exists follow the prompt version and the translation', () async {
-    await translate(g0, ['Satu.', 'Dua.']);
-    final hash = breakdownSourceHash(['Satu.', 'Dua.']);
-    expect(await repo.find(g0, hash), isNull);
-    expect(await repo.exists(g0), isFalse);
+  test(
+    'find / sections follow the prompt version and the translation',
+    () async {
+      await translate(g0, ['Satu.', 'Dua.']);
+      final hash = breakdownSourceHash(['Satu.', 'Dua.']);
+      expect(await repo.find(g0, hash), isNull);
+      expect(await repo.sections(g0), 0);
 
-    await repo.save(g0, body: 'B', sourceHash: hash, model: 'x');
-    expect(await repo.find(g0, hash), 'B');
-    expect(await repo.exists(g0), isTrue);
+      await repo.save(
+        g0,
+        body: '[BAGIAN K1]\nx\n[BAGIAN K2]\ny',
+        sourceHash: hash,
+        model: 'x',
+      );
+      expect(await repo.find(g0, hash), startsWith('[BAGIAN K1]'));
+      expect(await repo.sections(g0), 2);
 
-    // Overwrite, not a second row.
-    await repo.save(g0, body: 'B2', sourceHash: hash, model: 'x');
-    expect(await repo.find(g0, hash), 'B2');
-    expect(await db.select(db.aiBreakdowns).get(), hasLength(1));
+      // Overwrite, not a second row.
+      await repo.save(g0, body: 'B2', sourceHash: hash, model: 'x');
+      expect(await repo.find(g0, hash), 'B2');
+      expect(await db.select(db.aiBreakdowns).get(), hasLength(1));
 
-    // Retranslated: the sentence ranges no longer apply.
-    await translate(g0, ['Satu lagi.', 'Dua.']);
-    expect(
-      await repo.find(g0, breakdownSourceHash(['Satu lagi.', 'Dua.'])),
-      isNull,
-    );
-    expect(await repo.exists(g0), isFalse);
+      // Retranslated: the sentence ranges no longer apply.
+      await translate(g0, ['Satu lagi.', 'Dua.']);
+      expect(
+        await repo.find(g0, breakdownSourceHash(['Satu lagi.', 'Dua.'])),
+        isNull,
+      );
+      expect(await repo.sections(g0), 0);
 
-    // An older prompt version counts as missing.
-    await translate(g0, ['Satu.', 'Dua.']);
-    await (db.update(db.aiBreakdowns))
-        .write(const AiBreakdownsCompanion(promptVersion: Value(0)));
-    expect(await repo.find(g0, hash), isNull);
-    expect(await repo.exists(g0), isFalse);
-  });
+      // An older prompt version counts as missing.
+      await translate(g0, ['Satu.', 'Dua.']);
+      await (db.update(db.aiBreakdowns))
+          .write(const AiBreakdownsCompanion(promptVersion: Value(0)));
+      expect(await repo.find(g0, hash), isNull);
+      expect(await repo.sections(g0), 0);
+    },
+  );
 
   test('clear empties; deleting the book takes them along', () async {
     final hash = breakdownSourceHash(['a']);

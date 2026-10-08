@@ -168,7 +168,7 @@ class BreakdownStream extends Notifier<BreakdownState> {
         }
         await repo.save(group, body: content, sourceHash: hash, model: model);
         if (!run.live) return;
-        ref.invalidate(breakdownExistsProvider(group));
+        ref.invalidate(breakdownSectionsProvider(group));
         return finish(
           BreakdownState(
             phase: BreakdownPhase.done,
@@ -195,9 +195,9 @@ class BreakdownStream extends Notifier<BreakdownState> {
 final breakdownStreamProvider = NotifierProvider.autoDispose
     .family<BreakdownStream, BreakdownState, GroupRef>(BreakdownStream.new);
 
-/// Grup ini udah punya bedahan yang masih berlaku: entri di sheet Artinya
-/// jadi "Buka bedahan".
-final breakdownExistsProvider = FutureProvider.autoDispose
-    .family<bool, GroupRef>(
-      (ref, group) => ref.watch(aiBreakdownsRepositoryProvider).exists(group),
+/// Jumlah bagian bedahan grup ini yang masih berlaku (0 = belum ada): > 0,
+/// entri di sheet Artinya jadi "Buka bedahan · N bagian".
+final breakdownSectionsProvider = FutureProvider.autoDispose
+    .family<int, GroupRef>(
+      (ref, group) => ref.watch(aiBreakdownsRepositoryProvider).sections(group),
     );

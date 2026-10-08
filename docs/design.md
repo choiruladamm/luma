@@ -99,6 +99,20 @@ Board "Terpilih · Artinya streaming · Opsi B · muncul halus (diperbaiki)" dan
 - **Kurangi gerakan:** teks muncul per bagian utuh (satu paragraf, lalu makna), tanpa pudar, titik diem, placeholder tanpa shimmer.
 - **VoiceOver:** sheet berlabel "Artinya, lagi ditulis"; bagian yang lagi ditulis gak dibacain sampai utuh; selesai → diumumin "Artinya udah lengkap".
 
+## Bedahin
+
+Board "Terpilih · Bedahin · Opsi C · layar bedah" + "Spek · Bedahin · state" (terang + gelap). Layar sendiri (`BreakdownView`, route di [architecture.md](architecture.md)), sumbernya `breakdownStreamProvider`. Semua aturan streaming sheet Artinya (ritme `Pacer`, 4 kata memudar, placeholder shimmer, status di tombol Salin, kurangi gerakan, VoiceOver) berlaku juga di sini.
+
+- **Entri** di sheet Artinya: item terakhir isi, abis maksud, ikut ke-scroll, semua grup. "Masih bingung? Bedahin" / "Buka bedahan · Udah pernah dibedah · N bagian" (`breakdownSectionsProvider`). Gak muncul selama makna masih ditulis atau kepotong; muncul pakai fade 150ms. Nunggu jumlah bagian dari DB dulu biar copy-nya gak ganti di depan mata.
+- **Header:** balik (VoiceOver "Batalin, balik ke Artinya" selama proses) + status ("Lagi ngebedah..." / "Udah dibedah nih" / "Kepotong di tengah" / "Bedahin" pas error) + "buku · bab · N bagian" ("1 gagasan", "N bagian masuk" pas kepotong).
+- **Panel teks** (terjemahan, ikut Aa) selalu ada di semua state, termasuk nunggu dan error. Nomor bagian di depan kalimat pertama tiap bagian, cuma kalau ≥ 2 bagian; selama nulis nomornya muncul bareng penjelasan bagiannya. Grup > 1 paragraf: jarak 12 + `¶n` di kolom kiri, bagian yang nyebrang paragraf dapet tag `¶2–3` (**deviasi dari board C6**, ikut issue #63: board pakai garis tipis tanpa nomor + "Nyebrang 2 paragraf").
+- **Layout ikut jumlah bagian:** 1 bagian (selesai) = tanpa nomor & judul, panel ikut ke-scroll + kalimat asli di bawah terjemahan. ≥ 2 bagian, dan selama proses / error = panel nempel di atas, tinggi = teks, maks 40% layar, lebih = scroll sendiri.
+- **Penjelasan:** per bagian nomor + judul (≥ 2 bagian), MAKSUDNYA, LOGIKANYA. Lalu Tokoh & istilah (nyebut "bagian N" asal kalimatnya), Nyambung ke (kartu garis, belum bisa di-tap sampe #65, jadi tanpa chevron), Praktekinnya gini (teks UI tebal 20, apa adanya, gak difilter). Blok kosong gak tampil.
+- **Tombol:** Salin / status + "Balik baca" (kuning). Kepotong: Salin mati, "Balik baca" muted, kuningnya di "Coba lagi dari awal". Error: "Balik baca" + "Coba lagi" (401/403 & API key kosong: "Buka Pengaturan"; balik dari Pengaturan langsung jalan lagi). Tombol ngumpet pas scroll penjelasan (`ScrollRun`), kecuali selama proses / error / VoiceOver. **Deviasi:** header gak ikut ngumpet (board C3 / D3 header tetep keliatan, panel nempel di bawahnya).
+- **State:** nunggu (placeholder bulatan + judul + baris, jumlah ditebak dari jumlah kalimat ÷ 6, gak bisa di-scroll), kelamaan (kartu di atas placeholder, Batal = balik ke Artinya), kepotong (cuma bagian yang utuh, blok penutup dibuang, banner pink), error (copy per jenis, tabel board state), dari cache (langsung jadi, dari atas).
+- **Salin:** teks polos, "buku · bab (dibedah di Luma)", per bagian nomor + judul + Maksudnya + Logikanya, Tokoh & istilah, Praktekinnya gini; tanpa terjemahan & Nyambung ke. Toast "Udah disalin, tinggal paste", tombol jadi "Disalin".
+- **Kurangi gerakan:** push = fade 150ms, bagian muncul utuh, tanpa pudar. **VoiceOver:** penjelasan dibaca sebelum panel teks, tiap bagian heading "Bagian i dari n, judul", selesai diumumin "Bedahan udah lengkap, N bagian".
+
 ## Copy
 
 Bahasa Indonesia gaya Gen Z, santai. Contoh: "Rak buku lo", "Lanjut baca yuk", "Artinya gini nih", "Maksud penulisnya tuh...", "Bentar, lagi mikir...", "Yah, gagal nih".

@@ -58,11 +58,12 @@ class AiBreakdownsRepository {
     return row?.sourceHash == sourceHash ? row!.body : null;
   }
 
-  /// Ada bedahan yang masih berlaku buat terjemahan grup ini sekarang
-  /// (entri "Buka bedahan" di sheet Artinya).
-  Future<bool> exists(GroupRef group) async {
+  /// Jumlah bagian bedahan yang masih berlaku buat terjemahan grup ini
+  /// sekarang; 0 = belum ada (entri "Buka bedahan · N bagian" di sheet
+  /// Artinya).
+  Future<int> sections(GroupRef group) async {
     final row = await _row(group);
-    if (row == null) return false;
+    if (row == null) return 0;
     final current =
         await (_db.select(_db.aiResults)..where(
               (a) =>
@@ -70,11 +71,14 @@ class AiBreakdownsRepository {
                   a.groupIndex.equals(group.groupIndex),
             ))
             .getSingleOrNull();
-    return current != null &&
+    final valid =
+        current != null &&
         breakdownSourceHash(
               (jsonDecode(current.translations) as List).cast<String>(),
             ) ==
             row.sourceHash;
+    // Yang disimpen udah lolos `parseBreakdown`: satu penanda per bagian.
+    return valid ? '[BAGIAN'.allMatches(row.body).length : 0;
   }
 
   /// Simpan / timpa hasil yang udah lolos `parseBreakdown`.

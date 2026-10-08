@@ -39,8 +39,8 @@ class FakeBreakdowns implements AiBreakdownsRepository {
       saved[group]?.hash == sourceHash ? saved[group]!.body : null;
 
   @override
-  Future<bool> exists(GroupRef group) async =>
-      saved[group]?.hash == breakdownSourceHash(translations);
+  Future<int> sections(GroupRef group) async =>
+      saved[group]?.hash == breakdownSourceHash(translations) ? 1 : 0;
 
   @override
   Future<void> save(
@@ -257,15 +257,15 @@ void main() {
   test('done refreshes the "already broken down" flag', () {
     fakeAsync((async) {
       final exists = container.listen(
-        breakdownExistsProvider(group),
+        breakdownSectionsProvider(group),
         (_, _) {},
       );
       async.flushMicrotasks();
-      expect(exists.read().value, isFalse);
+      expect(exists.read().value, 0);
       open(async); // default fake answer: one valid section
       async.elapse(Duration.zero);
       expect(now().phase, BreakdownPhase.done);
-      expect(exists.read().value, isTrue);
+      expect(exists.read().value, 1);
       exists.close();
     });
   });

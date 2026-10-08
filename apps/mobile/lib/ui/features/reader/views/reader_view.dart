@@ -265,6 +265,14 @@ class _ReaderViewState extends ConsumerState<ReaderView>
         Navigator.of(context).pop();
         context.push(Routes.settings);
       },
+      // Sheet tetep di bawah layar Bedahin. "Balik baca" (`pop(true)`) =
+      // sheet-nya ikut ditutup, langsung ke halaman.
+      onBreakdown: (g) async {
+        final read = await context.push<bool>(
+          Routes.breakdown(widget.bookId, g.chapterId, g.groupIndex),
+        );
+        if (read == true && mounted) Navigator.of(context).pop();
+      },
     );
     group.dispose();
     if (!mounted) return;

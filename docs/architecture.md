@@ -4,6 +4,7 @@
 
 - `/` → Rak buku
 - `/reader/:bookId` → Halaman baca (posisi dari `reading_progress`)
+- `/reader/:bookId/breakdown/:chapterId/:groupIndex` → Bedahin satu grup (`Routes.breakdown`). Cuma di-`push` dari sheet Artinya: sheet tetep di bawah, balik = balik ke sheet. "Balik baca" = `pop(true)`, yang manggil (`ReaderView`) ikut nutup sheet-nya, jadi langsung ke halaman.
 - `/settings` → Pengaturan (termasuk bagian Backup & restore)
 - Bottom sheet artinya, Aa, dan Daftar isi **bukan route**, cukup `showModalBottomSheet`.
 
@@ -29,9 +30,9 @@
   1. Bahan dari `AiBreakdownsRepository.input`: terjemahan + makna `ai_results` (gak ada = `failed`, harusnya gak kejadian dari UI), teks asli grup, sampe 3 paragraf konteks, teks asli grup berikutnya, judul semua bab urut `sortOrder`.
   2. Cache `ai_breakdowns` valid (versi + `sourceHash` terjemahan sekarang) → langsung `done` (`cached`).
   3. Belum ada → stream, `waiting` → `writing` → `done`; cabang `slow`, `failed`, `cut` dengan ambang yang sama kayak `groupAiStreamProvider`.
-  4. Lengkap → `parseBreakdown`; gak valid → di-stream sekali lagi (bukan jalur JSON), masih gagal → `failed(invalidResponse)`. Disimpen cuma kalau valid, abis itu `breakdownExistsProvider` grup itu di-refresh.
+  4. Lengkap → `parseBreakdown`; gak valid → di-stream sekali lagi (bukan jalur JSON), masih gagal → `failed(invalidResponse)`. Disimpen cuma kalau valid, abis itu `breakdownSectionsProvider` grup itu di-refresh.
   5. Ke-dispose (tutup layar) = `CancelToken`, gak ada yang disimpen. Coba lagi = `ref.invalidate`.
-- `breakdownExistsProvider(GroupRef)` → `FutureProvider.autoDispose.family<bool>`: grup ini udah punya bedahan yang masih berlaku (entri "Buka bedahan" di sheet Artinya).
+- `breakdownSectionsProvider(GroupRef)` → `FutureProvider.autoDispose.family<int>`: jumlah bagian bedahan grup ini yang masih berlaku, 0 = belum ada (entri "Buka bedahan · N bagian" di sheet Artinya).
 - `importControllerProvider` → `Notifier` untuk state import (idle / processing / success / error / duplicate).
 
 `GroupRef` = record `({int chapterId, int groupIndex})`: `==`/`hashCode` per nilai udah bawaan Dart, gak perlu `freezed`.
