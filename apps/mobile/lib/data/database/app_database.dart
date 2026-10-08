@@ -123,6 +123,29 @@ class AiResults extends Table {
   Set<Column> get primaryKey => {chapterId, groupIndex};
 }
 
+/// Cache Bedahin per grup (docs/data-model.md). [body] di-parse ulang pas
+/// dibaca, jadi `parseBreakdown` tetep satu-satunya sumber kebenaran.
+class AiBreakdowns extends Table {
+  IntColumn get chapterId =>
+      integer().references(Chapters, #id, onDelete: KeyAction.cascade)();
+  IntColumn get groupIndex => integer()();
+
+  /// Teks mentah balasan model yang udah lolos `parseBreakdown`.
+  TextColumn get body => text()();
+
+  /// `breakdownSourceHash` terjemahan `ai_results` yang dipake. Beda =
+  /// terjemahannya udah diganti, rentang kalimat gak berlaku lagi.
+  TextColumn get sourceHash => text()();
+  TextColumn get model => text()();
+
+  /// `breakdownPromptVersion`. Lebih lama = dianggap belum ada.
+  IntColumn get promptVersion => integer()();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+
+  @override
+  Set<Column> get primaryKey => {chapterId, groupIndex};
+}
+
 /// Potongan waktu baca aktif. Log append-only: streak, heatmap, kecepatan
 /// baca dihitung lewat query. Satu potongan gak pernah lintas bab (pindah bab
 /// selalu nyimpen dulu), jadi lompat lewat daftar isi gak ikut keitung.
@@ -199,6 +222,7 @@ class Settings extends Table {
     Paragraphs,
     ReadingProgress,
     AiResults,
+    AiBreakdowns,
     ReadingSessions,
     AiCalls,
     Settings,
@@ -212,7 +236,7 @@ class AppDatabase extends _$AppDatabase {
   // test/data/migration_test.dart. Backup dari versi lama ikut dimigrasi pas
   // di-restore.
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -235,6 +259,9 @@ class AppDatabase extends _$AppDatabase {
         await m.createIndex(readingSessionsBookTime);
         await m.createIndex(readingSessionsTime);
         await m.createTable(aiCalls);
+      }
+      if (from < 6) {
+        await m.createTable(aiBreakdowns);
       }
     },
     // SQLite matiin foreign key secara default; cascade butuh ini.

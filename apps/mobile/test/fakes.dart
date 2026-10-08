@@ -174,14 +174,30 @@ class FakeOpenRouter implements OpenRouterService {
     return keyOk!;
   }
 
-  /// Bedahin belum dipake layar mana pun (provider-nya di #62).
+  /// Satu per request Bedahin, urut (test yang ngatur jalannya stream). Abis
+  /// = jawaban valid satu bagian sekaligus.
+  final breakdowns = <StreamController<String>>[];
+  final breakdownCalls = <BreakdownInput>[];
+
   @override
   Stream<String> breakdownStream({
     required String? apiKey,
     required String model,
     required BreakdownInput input,
     CancelToken? cancel,
-  }) => throw UnimplementedError();
+  }) {
+    breakdownCalls.add(input);
+    lastCancel = cancel;
+    if (apiKey == null) {
+      return Stream.error(const AiException(AiError.noApiKey));
+    }
+    if (failure != null) return Stream.error(failure!);
+    if (breakdowns.isNotEmpty) return breakdowns.removeAt(0).stream;
+    final n = input.sentences.expand((s) => s).length;
+    return Stream.value(
+      '[BAGIAN K1-K$n]\nJudul: Satu\nMaksudnya: M\nLogikanya: L',
+    );
+  }
 
   @override
   Future<AiReply> explain({

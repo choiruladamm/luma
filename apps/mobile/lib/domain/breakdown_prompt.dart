@@ -1,3 +1,7 @@
+import 'dart:convert';
+
+import 'package:crypto/crypto.dart';
+
 import 'ai_prompt.dart';
 import 'models/ai_reply.dart';
 import 'models/breakdown.dart';
@@ -131,6 +135,11 @@ class BreakdownInput {
     for (final t in translations) splitSentences(t),
   ];
 }
+
+/// Sidik terjemahan yang dibedah (`ai_breakdowns.sourceHash`): terjemahan
+/// diganti = rentang kalimat di cache gak berlaku lagi.
+String breakdownSourceHash(List<String> translations) =>
+    sha256.convert(utf8.encode(jsonEncode(translations))).toString();
 
 String breakdownUserPrompt(BreakdownInput input) {
   final book = input.book;

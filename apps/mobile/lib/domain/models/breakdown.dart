@@ -1,3 +1,24 @@
+/// Tahap Bedahin satu grup (#62). Ambang waktunya sama kayak makna cepat.
+enum BreakdownPhase {
+  /// Nunggu token pertama.
+  waiting,
+
+  /// Lagi nulis; bagian yang penandanya udah masuk langsung punya rentang.
+  writing,
+
+  /// Lengkap, valid, udah di-cache.
+  done,
+
+  /// 15 detik tanpa token. Request tetep jalan.
+  slow,
+
+  /// Putus / mandek di tengah; yang udah masuk tetep ada.
+  cut,
+
+  /// Gagal sebelum ada token, atau jawaban gak valid dua kali.
+  failed,
+}
+
 /// Hasil Bedahin satu grup (docs/llm.md, Bedahin).
 class Breakdown {
   const Breakdown({

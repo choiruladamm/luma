@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:luma/data/repositories/ai_breakdowns_repository.dart';
 import 'package:luma/data/repositories/ai_results_repository.dart';
 import 'package:luma/data/repositories/settings_repository.dart';
 import 'package:luma/data/services/api_key_store.dart';
@@ -36,6 +37,13 @@ class FakeAiResults extends Fake implements AiResultsRepository {
     clears++;
     stats.add((paragraphs: 0, bytes: 0));
   }
+}
+
+class FakeBreakdowns extends Fake implements AiBreakdownsRepository {
+  int clears = 0;
+
+  @override
+  Future<void> clear() async => clears++;
 }
 
 /// A finished backup without touching the disk.
@@ -143,6 +151,7 @@ class FakePicker implements FilePickerService {
 void main() {
   late FakeSettings settings;
   late FakeAiResults cache;
+  late FakeBreakdowns breakdowns;
   late FakeOpenRouter openRouter;
   late FakeBackup backup;
   late FakeShare share;
@@ -165,11 +174,13 @@ void main() {
     addTearDown(tester.view.reset);
     settings = FakeSettings()..lastBackup = lastBackup;
     cache = FakeAiResults();
+    breakdowns = FakeBreakdowns();
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
           settingsRepositoryProvider.overrideWithValue(settings),
           aiResultsRepositoryProvider.overrideWithValue(cache),
+          aiBreakdownsRepositoryProvider.overrideWithValue(breakdowns),
           // Secure storage goes in-memory via setMockInitialValues.
           apiKeyStoreProvider.overrideWithValue(ApiKeyStore()),
           openRouterServiceProvider.overrideWithValue(openRouter),
@@ -355,12 +366,14 @@ void main() {
     await tester.tap(find.text('Batal'));
     await tester.pumpAndSettle();
     expect(cache.clears, 0);
+    expect(breakdowns.clears, 0);
 
     await tester.tap(find.text('Hapus cache'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Hapus'));
     await tester.pumpAndSettle();
     expect(cache.clears, 1);
+    expect(breakdowns.clears, 1); // Bedahin goes with it
     expect(find.text('0 paragraf · 0 KB'), findsOneWidget);
   });
 

@@ -125,13 +125,13 @@ class GroupAiStream extends Notifier<AiStream> {
 
   @override
   AiStream build() {
-    final run = _Run();
+    final run = AiRun();
     ref.onDispose(run.stop);
     unawaited(_run(run));
     return const AiStream();
   }
 
-  Future<void> _run(_Run run) async {
+  Future<void> _run(AiRun run) async {
     // Ambil semua sebelum await.
     final cache = ref.read(aiResultsRepositoryProvider);
     final ai = ref.read(openRouterServiceProvider);
@@ -188,6 +188,9 @@ class GroupAiStream extends Notifier<AiStream> {
         target: text.target,
         cancel: run.cancel,
       )) {
+        // Token telat abis layar ditutup: jangan pasang timer yang baca
+        // `state`.
+        if (!run.live) return;
         if (content.isEmpty) run.clearTimers();
         content += delta;
         final draft = parseAiDraft(content);
@@ -248,7 +251,7 @@ class GroupAiStream extends Notifier<AiStream> {
 
 /// Satu percobaan request; mati pas provider ke-dispose / di-invalidate atau
 /// pas udah ada hasil akhir. Hasil yang dateng setelah itu dibuang.
-class _Run {
+class AiRun {
   bool live = true;
   final cancel = CancelToken();
   final timers = <Timer>[];
