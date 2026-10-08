@@ -29,6 +29,8 @@ magick "$TMP/light.png" -background '#FFD84D' -alpha remove -alpha off "$ICON/Ap
 render icon-dark.svg 1024 1024 "$ICON/AppIcon-1024-dark.png"
 render icon-tinted.svg 1024 1024 "$TMP/tinted.png"
 magick "$TMP/tinted.png" -background black -alpha remove -alpha off "$ICON/AppIcon-1024-tinted.png"
+# Luma Dev (flavor dev): the tinted variant, so it never passes for Luma.
+cp "$ICON/AppIcon-1024-tinted.png" "$IOS/AppIcon-dev.appiconset/AppIcon-dev-1024.png"
 
 # Android: legacy square icons + the adaptive foreground (432 = 108dp @4x).
 for d in mdpi:48 hdpi:72 xhdpi:96 xxhdpi:144 xxxhdpi:192; do

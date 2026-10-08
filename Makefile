@@ -2,7 +2,7 @@ APP := apps/mobile
 FLUTTER := cd $(APP) && fvm flutter
 DART := cd $(APP) && fvm dart
 
-.PHONY: help get gen brand live watch run release profile test analyze format check clean
+.PHONY: help get gen brand live watch run release dev profile test analyze format check clean
 
 help: ## list commands
 	@grep -E '^[a-z0-9-]+:.*## ' $(MAKEFILE_LIST) | awk -F ':.*## ' '{printf "  %-8s %s\n", $$1, $$2}'
@@ -19,12 +19,15 @@ brand: ## re-render app icon, launch logo, wordmark from assets/brand/*.svg (Chr
 watch: ## codegen in watch mode
 	$(DART) run build_runner watch
 
-run: ## run app in debug (device: d=<id>)
-	$(FLUTTER) run $(if $(d),-d $(d))
+run: ## run Luma in debug (device: d=<id>; f=dev for Luma Dev)
+	$(FLUTTER) run $(if $(f),--flavor $(f)) $(if $(d),-d $(d))
 
 release: ## install release build on iPhone, redo every 7 days, data kept (d=<id>), master only
 	@test "$$(git rev-parse --abbrev-ref HEAD)" = master || { echo "make release cuma dari master (app Luma, data asli). Fitur: Luma Dev"; exit 1; }
 	$(FLUTTER) run --release $(if $(d),-d $(d))
+
+dev: ## install release build of Luma Dev (own data & Keychain), any branch (d=<id>)
+	$(FLUTTER) run --release --flavor dev $(if $(d),-d $(d))
 
 profile: ## run app in profile mode, real perf (d=<id>)
 	$(FLUTTER) run --profile $(if $(d),-d $(d))
