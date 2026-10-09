@@ -68,29 +68,19 @@ class _BookEditSheetState extends ConsumerState<BookEditSheet> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              InkWell(
-                onTap: () => Navigator.of(context).pop(),
-                borderRadius: BorderRadius.circular(Radii.full),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: Space.s1,
-                    vertical: Space.s3,
-                  ),
-                  child: Text(
-                    'Batal',
-                    style: StabiloType.label.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
+              CircleButton(
+                semanticLabel: 'Batal',
+                icon: AppIcons.close,
+                onPressed: () => Navigator.of(context).pop(),
               ),
               Semantics(
                 header: true,
                 child: Text('Ubah judul & penulis', style: StabiloType.titleXs),
               ),
-              AppButton.primary(
-                label: 'Simpan',
-                height: 40,
+              CircleButton(
+                semanticLabel: 'Simpan',
+                icon: AppIcons.check,
+                primary: s.canSave,
                 onPressed: s.canSave ? _save : null,
               ),
             ],

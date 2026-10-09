@@ -122,7 +122,7 @@ Bahasa Indonesia gaya Gen Z, santai. Contoh: "Rak buku lo", "Lanjut baca yuk", "
 
 ## Ubah judul & penulis
 
-Boards 33–38 (+ baris masuk di Info buku, board 21). Sheet bertumpuk di atas Info buku: header `Batal` · judul · `Simpan`, preview cover 132px yang ikut isi field langsung, field Judul + Penulis (opsional), kartu "Pakai cover default" (cuma kalau EPUB punya cover), dan "Balikin ke aslinya" yang ngisi ulang field (baru kesimpen pas Simpan, gak nyentuh toggle cover). Judul kosong: error + Simpan nonaktif. Info buku: penulis kosong tampil "Penulis gak ketemu" (italic), judul tanpa spasi >= 16 karakter tampil 19px dan dipecah per karakter.
+Boards 33–38 (+ baris masuk di Info buku, board 21). Sheet bertumpuk di atas Info buku: header tombol bulat X (Batal) · judul · tombol bulat centang (Simpan, primer; nonaktif = muted), preview cover 132px yang ikut isi field langsung, field Judul + Penulis (opsional), kartu "Pakai cover default" (cuma kalau EPUB punya cover), dan "Balikin ke aslinya" yang ngisi ulang field (baru kesimpen pas Simpan, gak nyentuh toggle cover). Judul kosong: error + Simpan nonaktif. Info buku: penulis kosong tampil "Penulis gak ketemu" (italic), judul tanpa spasi >= 16 karakter tampil 19px dan dipecah per karakter.
 
 ## Layar yang sudah didesain
 

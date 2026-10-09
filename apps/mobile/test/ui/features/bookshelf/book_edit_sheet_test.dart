@@ -8,6 +8,7 @@ import 'package:luma/data/services/file_storage.dart';
 import 'package:luma/domain/models/book.dart';
 import 'package:luma/ui/core/theme/stabilo_theme.dart';
 import 'package:luma/ui/core/widgets/book_cover.dart';
+import 'package:luma/ui/core/widgets/buttons.dart';
 import 'package:luma/ui/core/widgets/switch.dart';
 import 'package:luma/ui/features/bookshelf/view_models/bookshelf_view_model.dart';
 import 'package:luma/ui/features/bookshelf/views/book_edit_sheet.dart';
@@ -33,6 +34,10 @@ BookInfo _info({String? epubCover, String? originalTitle}) => BookInfo(
   originalTitle: originalTitle,
   originalAuthor: null,
   epubCoverName: epubCover,
+);
+
+final simpan = find.byWidgetPredicate(
+  (w) => w is CircleButton && w.semanticLabel == 'Simpan',
 );
 
 void main() {
@@ -80,7 +85,8 @@ void main() {
     await tester.enterText(find.byType(TextField).first, '   ');
     await tester.pump();
     expect(find.text('Judul gak boleh kosong'), findsOneWidget);
-    await tester.tap(find.text('Simpan'));
+    expect(tester.widget<CircleButton>(simpan).onPressed, isNull);
+    await tester.tap(simpan, warnIfMissed: false);
     await tester.pump();
     expect(repo.saved, isEmpty);
   });
@@ -127,7 +133,7 @@ void main() {
     await tester.enterText(find.byType(TextField).first, '  Walden ');
     await tester.enterText(find.byType(TextField).last, '   ');
     await tester.pump();
-    await tester.tap(find.text('Simpan'));
+    await tester.tap(simpan);
     await tester.pump();
     expect(repo.saved.single, (title: 'Walden', author: null, cover: false));
   });
