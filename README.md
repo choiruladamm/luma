@@ -9,6 +9,31 @@
   EPUB reader untuk iOS. Tap satu paragraf, langsung muncul terjemahan Indonesia dan maknanya, tanpa keluar dari halaman baca.
 </p>
 
+<div align="center">
+<table>
+  <tr>
+    <td align="center">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/images/rak-dark.png">
+      <img src="docs/images/rak.png" alt="Rak buku" width="250">
+    </picture><br><sub>Rak buku</sub>
+    </td>
+    <td align="center">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/images/arti-dark.png">
+      <img src="docs/images/arti.png" alt="Sheet terjemahan dan makna" width="250">
+    </picture><br><sub>Tap paragraf, langsung artinya</sub>
+    </td>
+    <td align="center">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/images/bedahin-dark.png">
+      <img src="docs/images/bedahin.png" alt="Layar Bedahin" width="250">
+    </picture><br><sub>Bedahin: bedah gagasan per bagian</sub>
+    </td>
+  </tr>
+</table>
+</div>
+
 ## Kenapa ada
 
 Baca buku bahasa Inggris di app Books itu enak, sampai ketemu paragraf yang gak nyantol: select teks, copy, pindah ke app LLM, paste, ketik "artiin dong", baca, balik, cari lagi posisi terakhir. Terjemahannya bagus, tapi alurnya mutus fokus baca tiap beberapa menit.
@@ -28,6 +53,45 @@ Luma ngubah alur itu jadi **satu tap**.
 
 Data semuanya lokal di device (SQLite lewat Drift). Satu-satunya yang keluar adalah teks grup yang lagi di-tap, dikirim ke OpenRouter pakai API key milik sendiri.
 
+## Desain
+
+Desain sistemnya namanya **Stabilo**: teks dulu, UI belakangan. Kuning stabilo cuma buat yang lagi penting (satu layar, satu tombol kuning), dan mode gelap pakai hitam hangat, bukan hitam pekat. Semua layar punya versi terang dan gelap. Spek lengkapnya ada di [docs/design.md](docs/design.md).
+
+<table>
+  <tr>
+    <td align="center">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/images/baca-dark.png">
+      <img src="docs/images/baca.png" alt="Halaman baca imersif" width="250">
+    </picture><br><sub>Baca imersif</sub>
+    </td>
+    <td align="center">
+    <img src="docs/images/arti-stream.png" alt="Sheet Artinya saat streaming" width="250"><br><sub>Artinya, ditulis bertahap</sub>
+    </td>
+    <td align="center">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/images/aa-dark.png">
+      <img src="docs/images/aa.png" alt="Pengaturan bacaan Aa" width="250">
+    </picture><br><sub>Pengaturan bacaan (Aa)</sub>
+    </td>
+    <td align="center">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/images/bedahin-nyambung-dark.png">
+      <img src="docs/images/bedahin-nyambung.png" alt="Bedahin dengan sambungan antar bagian" width="250">
+    </picture><br><sub>Bedahin, nyambung ke bagian lain</sub>
+    </td>
+  </tr>
+</table>
+
+<details>
+<summary>Foundation: warna, tipografi, komponen</summary>
+
+<img src="docs/images/warna.png" alt="Token warna Stabilo, terang dan gelap">
+<img src="docs/images/tipografi.png" alt="Tipografi: Bricolage Grotesque, Atkinson Hyperlegible, Literata">
+<img src="docs/images/komponen.png" alt="Komponen dasar">
+
+</details>
+
 ## Tech stack
 
 | | |
@@ -39,8 +103,6 @@ Data semuanya lokal di device (SQLite lewat Drift). Satu-satunya yang keluar ada
 | LLM | [OpenRouter](https://openrouter.ai), model bisa diganti dari Pengaturan |
 | API key | `flutter_secure_storage` (Keychain), gak ikut backup |
 | Model data | freezed |
-
-Desain sistemnya namanya **Stabilo**: kuning stabilo cuma buat yang lagi penting, mode gelap pakai hitam hangat.
 
 ## Struktur repo
 
