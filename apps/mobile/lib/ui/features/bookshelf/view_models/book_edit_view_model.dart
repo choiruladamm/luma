@@ -26,6 +26,13 @@ class BookEditState {
 
   bool get titleEmpty => title.trim().isEmpty;
   String? get titleError => titleEmpty ? 'Judul gak boleh kosong' : null;
+
+  /// Penulis ter-trim; kosong = null.
+  String? get authorOrNull {
+    final a = author.trim();
+    return a.isEmpty ? null : a;
+  }
+
   bool get canSave => !titleEmpty && !saving;
   bool get canRevert => originalTitle != null;
 
@@ -91,7 +98,7 @@ class BookEditViewModel extends Notifier<BookEditState> {
           .updateMetadata(
             bookId,
             title: state.title.trim(),
-            author: state.author.trim().isEmpty ? null : state.author.trim(),
+            author: state.authorOrNull,
             useDefaultCover: state.useDefaultCover,
           );
       ref.invalidate(bookInfoProvider(bookId));

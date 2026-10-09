@@ -44,8 +44,7 @@ class BookInfoSheet extends ConsumerWidget {
     final coverFile = coverName == null
         ? null
         : ref.read(fileStorageProvider).cover(coverName);
-    // Judul mirip nama file (tanpa spasi, panjang) dipecah per karakter.
-    final fileLike = !book.title.contains(' ') && book.title.length >= 16;
+    final fileLike = book.titleLooksLikeFileName;
     final info = ref.watch(bookInfoProvider(book.id)).value;
     final now = DateTime.now();
     final percent = bookSticker(
@@ -54,14 +53,7 @@ class BookInfoSheet extends ConsumerWidget {
       finished: false,
     );
     final rows = [
-      (
-        'Lagi di',
-        !book.opened
-            ? 'Belum mulai'
-            : book.finished
-            ? 'Kelar dibaca'
-            : 'Bab ${book.chapter} dari ${book.chapterCount}',
-      ),
+      ('Lagi di', book.progressLabel),
       (
         'Terakhir dibuka',
         info?.lastOpenedAt == null ? '—' : lastSeen(info!.lastOpenedAt!, now),

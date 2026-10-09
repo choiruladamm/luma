@@ -96,7 +96,7 @@ class _BookEditSheetState extends ConsumerState<BookEditSheet> {
               children: [
                 BookCover(
                   title: s.title.trim(),
-                  author: s.author.trim().isEmpty ? null : s.author.trim(),
+                  author: s.authorOrNull,
                   file: showEpub
                       ? ref.read(fileStorageProvider).cover(epub)
                       : null,
