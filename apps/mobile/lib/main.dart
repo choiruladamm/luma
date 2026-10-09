@@ -33,7 +33,7 @@ class LumaApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       theme: stabiloTheme(Brightness.light),
       darkTheme: stabiloTheme(Brightness.dark),
-      // Tema dari Aa. Sebelum setelan kebaca: ikut iOS.
+      // Tema dari Aa. Sebelum setelan kebaca: ikut sistem.
       themeMode: switch (ref.watch(readerPrefsProvider).value?.theme) {
         AppTheme.light => ThemeMode.light,
         AppTheme.dark => ThemeMode.dark,

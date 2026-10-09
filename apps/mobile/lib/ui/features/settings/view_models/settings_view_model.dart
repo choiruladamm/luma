@@ -40,7 +40,7 @@ class KeyVerdict {
 final keyVerdictProvider = Provider<KeyVerdict>((ref) => KeyVerdict());
 
 /// Isi field API key: nerima teks, ngecek bentuknya, nanya OpenRouter, baru
-/// nyimpen ke Keychain. Teks ngawur dan key yang ditolak gak pernah
+/// nyimpen ke secure storage. Teks ngawur dan key yang ditolak gak pernah
 /// nimpa key yang udah kesimpen. Kosong = dihapus.
 class ApiKeyEntry extends Notifier<KeyStatus> {
   static const pause = Duration(milliseconds: 600);
@@ -134,7 +134,7 @@ class ApiKeyEntry extends Notifier<KeyStatus> {
   void _remember(String key, bool? ok) =>
       _verdict.last = ok == null ? null : (key: key, ok: ok);
 
-  /// Tombol hapus: key di Keychain ikut kehapus.
+  /// Tombol hapus: key di secure storage ikut kehapus.
   void clear() => edit('');
 
   /// true = diterima, false = ditolak, null = gak bisa ngecek.

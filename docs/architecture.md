@@ -16,7 +16,7 @@
 - `groupAiProvider(GroupRef)` → `FutureProvider.autoDispose.family`:
   1. Cek `ai_results`
   2. Kalau belum ada: ambil paragraf grup + sampe 3 paragraf (bukan heading/pemisah) sebelum paragraf pertama grup di chapter yang sama sebagai konteks
-  3. Panggil LLM (API key dibaca dari Keychain, model dari `ai.model`)
+  3. Panggil LLM (API key dibaca dari Keychain / Keystore, model dari `ai.model`)
   4. Validasi jumlah `translations` = jumlah paragraf grup
   5. Simpan ke Drift, return hasil
 
@@ -73,7 +73,7 @@ Parsing buku besar bisa berat: jalankan di isolate (`compute` / `Isolate.run`) s
   - **Penanda grup** yang udah diterjemahin (ParagraphMark): garis 4pt warna `mark` di tengah margin kiri, sepanjang grup (inset 5pt). Grup itu langsung keisi dari cache pas di-tap.
 - **Akhir bab**: kartu akhir bab keliatan → dua kapsul muncul, kapsul bawah nulis "Bab N beres". **Akhir buku**: layar sendiri tanpa kapsul, garis progres penuh 100%, cover pake cover default (tanpa bulatan huruf), status bar balik.
 - **Lanjut baca** (buka buku yang ada posisi tersimpannya): kapsul muncul 2,5 detik buat orientasi terus ngumpet sendiri (batal kalau user udah scroll duluan). Grup tempat posisi tersimpan dikasih kilatan stabilo sekali, 0 → 60% → 0 dalam 1,2 detik. "Kurangi gerakan" iOS nyala → tanpa kilatan, gantinya garis kiri 4pt yang ilang setelah 3 detik.
-- Status bar iOS ngumpet bareng kapsul kalau toggle "Sembunyiin jam & baterai" nyala (default nyala; togglenya di Aa, #18). Keluar halaman baca → status bar balik.
+- Status bar ngumpet bareng kapsul kalau toggle "Sembunyiin jam & baterai" nyala (default nyala; togglenya di Aa, #18). Keluar halaman baca → status bar balik.
 
 ## Persentase baca
 
@@ -81,10 +81,22 @@ Parsing buku besar bisa berat: jalankan di isolate (`compute` / `Isolate.run`) s
 
 Buku Markdown yang chapternya belum lengkap (nanti, [import-formats.md](ideas/import-formats.md)) tidak punya total yang pasti, jadi tampilkan progres per chapter saja.
 
-## Gotcha iOS
+## Gotcha platform
+
+### iOS
 
 - **Dua app: Luma & Luma Dev.** Scheme `Runner` (config `Debug`/`Release`/`Profile`) = Luma, `id.ruma.luma`, dipake baca tiap hari, cuma dari `master` (`make release`). Scheme `dev` (config `Debug-dev`/`Release-dev`/`Profile-dev`) = Luma Dev, `id.ruma.luma.dev`, ikon `AppIcon-dev` (varian tinted), nama dari `APP_DISPLAY_NAME`; branch fitur dicoba di sini (`make dev`). Container Documents + Keychain per bundle id, jadi data, DB (schema bisa lebih baru), dan API key terpisah; key diisi ulang sekali di Luma Dev. Data asli bisa dibawa lewat backup Luma → restore di Luma Dev (gak bisa sebaliknya kalau schema Luma Dev lebih baru). Akun Apple gratis: maks 3 app sideload aktif (Luma + Luma Dev = 2), 10 App ID baru per 7 hari, dua-duanya di-install ulang tiap 7 hari. Ikon dev ikut `make brand`.
 
 - **Jangan simpan absolute path di database.** Path container app iOS bisa berubah setiap update/reinstall. Simpan nama file, gabungkan dengan `getApplicationDocumentsDirectory()` saat runtime.
 - File dari picker biasanya ada di folder sementara, jadi wajib di-copy ke Documents.
 - Buat folder `books/` dan `covers/` saat app start (`create(recursive: true)`).
+
+### Android
+
+- **Dua app, kayak iOS.** Flavor `prod` = Luma (`id.ruma.luma`, label "Luma"), flavor `dev` = Luma Dev (`id.ruma.luma.dev`, label "Luma Dev", ikon hitam). Label dari `resValue app_name` di `build.gradle.kts`. Data + Keystore per application id. `flutter run` / `build` wajib `--flavor`; target Makefile Android (`run-android`, `dev-android`, `release-android`, `apk`) selalu ngirimnya. Aturan sama: branch fitur cuma ke Luma Dev, `release-android` / `apk` cuma dari `master`.
+- **Signing tetap.** Update APK (`install -r`) cuma jalan kalau key-nya sama. `android/key.properties` (gitignored) nunjuk ke keystore di luar repo; tanpa itu release jatuh ke debug key (langkah bikin keystore di README). Gak ada siklus 7 hari di Android; banner backup 6 hari tetap dipakai.
+- **`allowBackup="false"`** + `data_extraction_rules.xml` yang ngeluarin semuanya: prefs terenkripsi `flutter_secure_storage` gak boleh ke-restore ke HP lain tanpa master key-nya (key rusak), dan data Luma dibackup lewat fitur backup sendiri.
+- **Status share.** Di Android `share_plus` bisa balik `unavailable` (target share gak ngasih hasil). `shareSaved` nganggep `unavailable` = sukses di Android supaya `backup.lastAt` tetap kecatet; `dismissed` = batal.
+- **Edge-to-edge** (Android 15+ dipaksa): ngumpetin status bar lewat `SystemChrome` sama kayak iOS; konten pakai `SafeArea` / `MediaQuery.padding`. Splash: system splash Android 12+ polos, warnanya sama dengan `LaunchBackground` iOS dan overlay Flutter (`values/colors.xml`, `values-night/colors.xml`).
+- **Font "Bawaan sistem"**: SF (`CupertinoSystemText`) di iOS, Roboto di Android (`readingFamily`).
+- Buka `.epub` dari luar app (intent filter) belum ada: iOS juga belum punya, jadi di luar scope.

@@ -54,7 +54,7 @@ class BackupManifest {
 /// Backup terakhir yang berhasil disimpen user (Pengaturan).
 typedef LastBackup = ({DateTime at, String name, int size});
 
-/// `luma-backup-YYYYMMDD-HHmm.zip` (zip biasa: iOS gak perlu tipe file
+/// `luma-backup-YYYYMMDD-HHmm.zip` (zip biasa: gak perlu tipe file
 /// custom).
 String backupFileName(DateTime t) {
   String two(int n) => n.toString().padLeft(2, '0');

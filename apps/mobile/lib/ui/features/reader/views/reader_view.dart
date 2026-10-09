@@ -130,7 +130,7 @@ class _ReaderViewState extends ConsumerState<ReaderView>
       return;
     }
     _clock.pause(DateTime.now());
-    // iOS bisa matiin app kapan aja pas di background: simpen sekarang.
+    // OS bisa matiin app kapan aja pas di background: simpen sekarang.
     _saveLater?.cancel();
     _save();
   }

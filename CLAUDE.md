@@ -24,6 +24,8 @@ Urutan issue (alur utuh dulu, fitur inti sebelum pemanis, backup sebelum dogfood
 
 Tampilan statistik (#50–#58) cuma ide, tanpa milestone: dikerjain setelah datanya ngumpul dan desainnya ada.
 
+Android (#73) di luar urutan MVP, tanpa milestone: dikerjain kapan user mau build ke HP Android.
+
 Issue baru disisipin di fase yang cocok di daftar ini.
 
 Kalau user bilang "next task" / "lanjut":
@@ -33,12 +35,13 @@ Kalau user bilang "next task" / "lanjut":
 
 ## Project
 
-App Flutter di `apps/mobile`, Flutter dikunci lewat `.fvmrc`. Jalankan perintah lewat `Makefile` di root (`make help` untuk daftar); di luar itu pakai `fvm flutter` / `fvm dart` dari `apps/mobile`.
+App Flutter (iOS + Android) di `apps/mobile`, Flutter dikunci lewat `.fvmrc`. Jalankan perintah lewat `Makefile` di root (`make help` untuk daftar); di luar itu pakai `fvm flutter` / `fvm dart` dari `apps/mobile`.
 
 - Setelah ubah tabel Drift atau model freezed: `make gen`. File `*.g.dart` / `*.freezed.dart` ikut di-commit.
 - Schema Drift: udah ada data di iPhone, jadi tiap ubah tabel wajib naikin `schemaVersion` + langkah di `onUpgrade` + test di `test/data/migration_test.dart` (fixture SQL versi lama, bandingin schema hasil migrasi sama install baru). Jangan minta user hapus app. `drift_dev make-migrations` gak bisa dipakai: kolom `paragraphs.text` bikin kode snapshot-nya gagal compile.
 - `make check` (format, analyze, test) harus bersih sebelum commit.
 - `make run` / `make release` / `make dev` ke device hanya kalau user minta. `make release` = app Luma (data asli user), cuma dari `master`. Fitur yang belum di-merge dicoba di app **Luma Dev** lewat `make dev` (flavor `dev`: scheme `dev`, config `*-dev`, bundle id `id.ruma.luma.dev`, ikon hitam, data & Keychain terpisah; debug: `make run f=dev`), jangan pernah build branch fitur ke bundle id `id.ruma.luma`: migrasi schema yang belum stabil bakal nyentuh data asli dan Drift gak bisa turun versi.
+- Android: flavor `prod` = Luma (`id.ruma.luma`), `dev` = Luma Dev (`id.ruma.luma.dev`); selalu `--flavor`. Target `run-android` (`f=dev`), `dev-android`, `release-android` + `apk` (cuma `master`). Aturan sama: branch fitur cuma lewat `make dev-android`, jangan ke `id.ruma.luma`. Release ditandatangani keystore tetap lewat `android/key.properties` (gitignored, lihat README); gak ada siklus 7 hari. Detail: `docs/architecture.md` (Gotcha platform).
 
 ## Arsitektur
 

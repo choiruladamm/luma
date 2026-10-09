@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-/// API key OpenRouter di Keychain iPhone. Sengaja gak di Drift: gak ikut
-/// backup (docs/llm.md, docs/backup.md).
+/// API key OpenRouter di Keychain (iOS) / Keystore (Android). Sengaja gak di
+/// Drift: gak ikut backup (docs/llm.md, docs/backup.md).
 class ApiKeyStore {
   ApiKeyStore([this._storage = const FlutterSecureStorage()]);
 

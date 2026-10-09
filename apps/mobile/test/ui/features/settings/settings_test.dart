@@ -321,7 +321,7 @@ void main() {
       expect(await ApiKeyStore().read(), good);
     });
 
-    testWidgets('the clear button wipes the field and the Keychain', (
+    testWidgets('the clear button wipes the field and the secure storage', (
       tester,
     ) async {
       await open(tester);
@@ -387,17 +387,17 @@ void main() {
 
   group('key status', () {
     const keychain =
-        'Disimpen di Keychain iPhone, gak dikirim ke mana-mana selain '
-        'OpenRouter.';
+        'Disimpen aman di perangkat (Keychain / Keystore), gak dikirim ke '
+        'mana-mana selain OpenRouter.';
 
     testWidgets('a key OpenRouter accepts: "Key-nya jalan"', (tester) async {
       await open(tester);
       expect(find.text('Key-nya jalan'), findsOneWidget);
-      expect(find.text('Disimpen di Keychain'), findsOneWidget);
+      expect(find.text('Disimpen aman di perangkat'), findsOneWidget);
       expect(openRouter.checked, ['sk-or-v1-saved']);
     });
 
-    testWidgets('saved key still being checked: no Keychain note flash', (
+    testWidgets('saved key still being checked: no storage note flash', (
       tester,
     ) async {
       final gate = Completer<void>();

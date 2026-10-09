@@ -89,7 +89,7 @@ class _AaSheet extends ConsumerWidget {
                           for (final (font, label) in const [
                             (ReadingFont.clear, 'Jelas'),
                             (ReadingFont.book, 'Kayak buku'),
-                            (ReadingFont.system, 'Bawaan iOS'),
+                            (ReadingFont.system, 'Bawaan sistem'),
                           ])
                             Expanded(
                               child: _FontTile(
@@ -128,7 +128,7 @@ class _AaSheet extends ConsumerWidget {
                           for (final (theme, label) in const [
                             (AppTheme.light, 'Terang'),
                             (AppTheme.dark, 'Gelap'),
-                            (AppTheme.system, 'Ikut iOS'),
+                            (AppTheme.system, 'Ikut sistem'),
                           ])
                             Expanded(
                               child: _ThemePill(
@@ -469,7 +469,7 @@ class _ThemePill extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             spacing: Space.s2,
             children: [
-              // Contoh warna kanvas; "Ikut iOS" separo-separo.
+              // Contoh warna kanvas; "Ikut sistem" separo-separo.
               Container(
                 width: 18,
                 height: 18,

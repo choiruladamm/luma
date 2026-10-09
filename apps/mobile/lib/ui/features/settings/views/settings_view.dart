@@ -296,8 +296,8 @@ class _KeyStatus extends StatelessWidget {
         Text(text, style: label.copyWith(color: c.danger));
     return switch (status) {
       KeyStatus.idle => Text(
-        'Disimpen di Keychain iPhone, gak dikirim ke mana-mana selain '
-        'OpenRouter.',
+        'Disimpen aman di perangkat (Keychain / Keystore), gak dikirim ke '
+        'mana-mana selain OpenRouter.',
         style: small,
       ),
       KeyStatus.badFormat => error(
@@ -334,7 +334,7 @@ class _KeyStatus extends StatelessWidget {
               _ => error('Key-nya ditolak OpenRouter'),
             },
           ),
-          Text('Disimpen di Keychain', style: small),
+          Text('Disimpen aman di perangkat', style: small),
         ],
       ),
     };

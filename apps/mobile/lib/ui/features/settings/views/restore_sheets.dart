@@ -481,7 +481,7 @@ class _Failed extends StatelessWidget {
         AppIcons.fileRemove,
         'Ini bukan backup Luma',
         'File backup Luma itu yang namanya luma-backup-…zip, hasil dari '
-            'tombol "Backup sekarang". Coba cari lagi di Files ya.',
+            'tombol "Backup sekarang". Coba cari lagi di file manager ya.',
         fileName,
       ),
       RestoreError.tooNew => (

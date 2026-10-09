@@ -1,13 +1,18 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../domain/models/reader_prefs.dart';
 import 'stabilo_type.dart';
 
-/// Font bacaan buat [ReadingFont]. Bawaan iOS = font sistem (SF).
+/// Font bacaan buat [ReadingFont]. Bawaan sistem = SF di iOS, Roboto di
+/// Android ('CupertinoSystemText' cuma ada di iOS; null gak ngosongin family).
 String readingFamily(ReadingFont font) => switch (font) {
   ReadingFont.clear => StabiloType.readingFont,
   ReadingFont.book => StabiloType.bookFont,
-  ReadingFont.system => 'CupertinoSystemText',
+  ReadingFont.system =>
+    defaultTargetPlatform == TargetPlatform.iOS
+        ? 'CupertinoSystemText'
+        : 'Roboto',
 };
 
 /// Tipografi teks bacaan dari pengaturan Aa (font, ukuran, jarak baris,

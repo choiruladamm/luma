@@ -1,11 +1,11 @@
-/// Font bacaan di Aa: Jelas (Atkinson), Kayak buku (Literata), Bawaan iOS.
+/// Font bacaan di Aa: Jelas (Atkinson), Kayak buku (Literata), Bawaan sistem.
 enum ReadingFont { clear, book, system }
 
 enum LineSpacing { tight, normal, loose }
 
 enum TextMargin { narrow, normal, wide }
 
-/// Tema app: Terang / Gelap / Ikut iOS.
+/// Tema app: Terang / Gelap / Ikut sistem.
 enum AppTheme { light, dark, system }
 
 /// Setelan bacaan dari sheet Aa (board 07 Atur bacaan, 02 Tipografi). Disimpen
@@ -32,7 +32,7 @@ class ReaderPrefs {
   final TextMargin margin;
   final AppTheme theme;
 
-  /// Status bar iOS ngumpet bareng kapsul baca.
+  /// Status bar ngumpet bareng kapsul baca.
   final bool hideStatusBar;
 
   /// Garis progres 2pt di bawah layar baca.

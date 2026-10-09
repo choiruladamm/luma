@@ -2,7 +2,7 @@
 
 ## Kenapa masuk MVP
 
-Luma diinstall tanpa Apple Developer Program berbayar, jadi build harus diinstall ulang dari Xcode **setiap 7 hari**.
+Di iOS, Luma diinstall tanpa Apple Developer Program berbayar, jadi build harus diinstall ulang dari Xcode **setiap 7 hari**. Di Android (APK sideload) gak ada siklus itu, tapi backup tetap berguna kalau HP ilang / direset.
 
 - Install ulang **di atas app yang sudah ada** (bundle ID & tim signing sama) biasanya **mempertahankan data**.
 - Data **hilang** kalau app dihapus (mis. saat membereskan masalah signing), bundle ID berubah, atau ganti HP.
@@ -47,14 +47,14 @@ luma-backup-20261006-2130.zip
 2. Buat snapshot database yang konsisten dengan `VACUUM INTO '<tmp>/luma.sqlite'` (aman walau database sedang dipakai / mode WAL)
 3. Tulis `manifest.json`
 4. Zip snapshot + folder `books/` + `covers/` (pakai package `archive`, jalankan di isolate karena file EPUB bisa besar)
-5. Buka share sheet (`share_plus`) → user pilih "Save to Files", iCloud Drive, atau AirDrop
+5. Buka share sheet (`share_plus`) → user pilih "Save to Files", iCloud Drive, atau AirDrop (Android: Drive, Downloads, dll)
 6. Simpan `lastBackupAt` di tabel `settings`, hapus file zip sementara
 
 **Implementasi** (`BackupService` + `BackupController`):
 
 - Snapshot `VACUUM INTO` ke folder sementara (`Directory.systemTemp`), hitung jumlah buku & `ai_results` buat manifest. `appVersion` dari konstanta yang dicek sama `version` di pubspec (test).
 - Zip di isolate (`Isolate.spawn` + port progres), urutan: `books/`, `covers/` (disimpen tanpa kompresi, udah kekompres), `luma.sqlite`, `manifest.json` (dikompres). Sheet "Lagi ngebungkus backup..." (board 26) nampilin nama file, persen, dan centang per tahap: buku → terjemahan (DB) → pengaturan (manifest). "Batalin" matiin isolate-nya, folder sementara dibuang.
-- Sheet progres ditutup dulu, baru menu share iOS muncul. Backup terakhir cuma dicatet kalau share-nya **beneran disimpen/dikirim** (`ShareResultStatus.success`); ditutup tanpa milih = gak dicatet. Zip sementara selalu dihapus.
+- Sheet progres ditutup dulu, baru menu share muncul. Backup terakhir cuma dicatet kalau share-nya **beneran disimpen/dikirim** (`ShareResultStatus.success`; di Android `unavailable` juga dianggap sukses, lihat [architecture.md](architecture.md)); ditutup tanpa milih = gak dicatet. Zip sementara selalu dihapus.
 - Berhasil → toast "Backup kelar, aman!" + "12,4 MB · nama file" (board 27). Gagal → toast "Yah, backup gagal".
 - Pengaturan, bagian "Backup & pulihin": kapan backup terakhir ("Barusan" kalau < 1 jam, "Kemarin", "3 hari lalu", ...), nama + ukuran file, atau "Belum pernah backup" (ikon pink). Tombol "Pulihin dari backup" nyusul di #25.
 - Board nulis nama file `luma-backup-2026-10-06.luma`; yang dipake tetep `luma-backup-YYYYMMDD-HHmm.zip` (zip biasa, gak perlu daftar tipe file custom di iOS).

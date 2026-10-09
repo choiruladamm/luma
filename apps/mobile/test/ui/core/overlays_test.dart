@@ -74,7 +74,7 @@ void main() {
           context,
           icon: AppIcons.delete,
           title: 'Hapus "Dracula" dari rak?',
-          message: 'File aslinya di Files tetep aman kok.',
+          message: 'File aslinya tetep aman kok.',
           cancelLabel: 'Gak jadi',
           confirmLabel: 'Hapus',
         ),
