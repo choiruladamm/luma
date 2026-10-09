@@ -88,4 +88,11 @@ void main() {
     expect(gradle, contains('resValue("string", "app_name", "Luma")'));
     expect(gradle, contains('resValue("string", "app_name", "Luma Dev")'));
   });
+
+  test('main Android manifest has INTERNET (release builds need it)', () {
+    expect(
+      File('android/app/src/main/AndroidManifest.xml').readAsStringSync(),
+      contains('android.permission.INTERNET'),
+    );
+  });
 }
