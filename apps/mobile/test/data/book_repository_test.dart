@@ -404,4 +404,109 @@ void main() {
       expect(await full('Walden'), isNot(id));
     });
   });
+
+  group('updateMetadata', () {
+    Future<Book> row(int id) =>
+        (db.select(db.books)..where((b) => b.id.equals(id))).getSingle();
+
+    Future<int> addWithAuthor() async {
+      final id = await add('pride_FINAL(2)');
+      await (db.update(db.books)..where((b) => b.id.equals(id))).write(
+        const BooksCompanion(coverName: Value('c.jpg')),
+      );
+      return id;
+    }
+
+    test(
+      'first edit keeps the EPUB values; second does not overwrite',
+      () async {
+        final repo = BookRepository(db);
+        final id = await addWithAuthor();
+        await repo.updateMetadata(
+          id,
+          title: '  Pride  ',
+          author: ' Jane ',
+          useDefaultCover: false,
+        );
+        var b = await row(id);
+        expect((b.title, b.author), ('Pride', 'Jane'));
+        expect((b.originalTitle, b.originalAuthor), ('pride_FINAL(2)', null));
+
+        await repo.updateMetadata(
+          id,
+          title: 'Pride & Prejudice',
+          author: 'Jane Austen',
+          useDefaultCover: false,
+        );
+        b = await row(id);
+        expect(b.title, 'Pride & Prejudice');
+        expect(b.originalTitle, 'pride_FINAL(2)');
+      },
+    );
+
+    test('editing back to the original resets to "never edited"', () async {
+      final repo = BookRepository(db);
+      final id = await addWithAuthor();
+      await repo.updateMetadata(
+        id,
+        title: 'X',
+        author: 'Y',
+        useDefaultCover: false,
+      );
+      await repo.updateMetadata(
+        id,
+        title: 'pride_FINAL(2)',
+        author: '',
+        useDefaultCover: false,
+      );
+      final b = await row(id);
+      expect((b.originalTitle, b.originalAuthor), (null, null));
+      expect(b.author, isNull);
+    });
+
+    test('clearing the author saves null, original author is kept', () async {
+      final repo = BookRepository(db);
+      final id = await add('T');
+      await (db.update(db.books)..where((b) => b.id.equals(id))).write(
+        const BooksCompanion(author: Value('Orig')),
+      );
+      await repo.updateMetadata(
+        id,
+        title: 'T',
+        author: '  ',
+        useDefaultCover: false,
+      );
+      final b = await row(id);
+      expect(b.author, isNull);
+      expect(b.originalAuthor, 'Orig');
+    });
+
+    test('empty title is rejected', () async {
+      final id = await add('T');
+      expect(
+        () =>
+            BookRepository(db)
+                .updateMetadata(id, title: '  ', useDefaultCover: false),
+        throwsArgumentError,
+      );
+    });
+
+    test(
+      'useDefaultCover hides the cover everywhere but keeps the raw name',
+      () async {
+        final repo = BookRepository(db);
+        final id = await addWithAuthor();
+        expect((await repo.watchShelf().first).single.coverName, 'c.jpg');
+        await repo.updateMetadata(id, title: 'T', useDefaultCover: true);
+        expect((await repo.watchShelf().first).single.coverName, isNull);
+        expect((await repo.book(id))!.coverName, isNull);
+        expect((await repo.bookEnd(id))!.coverName, isNull);
+        final dir = Directory.systemTemp.createTempSync();
+        addTearDown(() => dir.deleteSync(recursive: true));
+        final info = await repo.bookInfo(id, FileStorage(dir));
+        expect(info!.epubCoverName, 'c.jpg');
+        expect(info.useDefaultCover, isTrue);
+      },
+    );
+  });
 }

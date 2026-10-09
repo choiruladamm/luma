@@ -62,6 +62,12 @@ const v5 = [
   'CREATE INDEX reading_sessions_time ON reading_sessions (started_at)',
 ];
 
+/// v6: ai_breakdowns (Bedahin).
+const v6 = [
+  ...v5,
+  '''CREATE TABLE "ai_breakdowns" ("chapter_id" INTEGER NOT NULL REFERENCES chapters (id) ON DELETE CASCADE, "group_index" INTEGER NOT NULL, "body" TEXT NOT NULL, "source_hash" TEXT NOT NULL, "model" TEXT NOT NULL, "prompt_version" INTEGER NOT NULL, "created_at" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)), PRIMARY KEY ("chapter_id", "group_index"))''',
+];
+
 AppDatabase _open([void Function(dynamic raw)? setup]) => AppDatabase(
   DatabaseConnection(
     NativeDatabase.memory(setup: setup),
@@ -136,6 +142,7 @@ void main() {
     (3, v3),
     (4, v4),
     (5, v5),
+    (6, v6),
   ]) {
     test(
       'v$version → now: same schema as a fresh install, data kept',
@@ -151,6 +158,9 @@ void main() {
         expect(book.firstOpenedAt, isNull);
         expect(book.readingSeconds, 0);
         expect(book.finishedAt, isNull);
+        expect(book.originalTitle, isNull);
+        expect(book.originalAuthor, isNull);
+        expect(book.useDefaultCover, isFalse);
         final progress = await migrated
             .select(migrated.readingProgress)
             .getSingle();

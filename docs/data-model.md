@@ -15,6 +15,9 @@ Prinsip: **file diparse sekali saat import** ke format internal. Reader, AI, dan
 | author | text? | |
 | fileName | text? | **Nama file saja**, bukan absolute path. Null untuk buku Markdown |
 | coverName | text? | Nama file cover. Null → pakai cover default |
+| originalTitle | text? | Judul asli EPUB, diisi sekali pas edit pertama. Null = belum pernah diedit. `title` / `author` tetap nilai yang **tampil** |
+| originalAuthor | text? | Penulis asli EPUB. Null + `originalTitle` terisi = aslinya tanpa penulis |
+| useDefaultCover | bool (default false) | true = cover EPUB disembunyiin (repository ngasih `coverName` null ke UI). `coverName` tetap utuh di DB + disk |
 | hash | text? (unique) | SHA-256 isi file EPUB, untuk cegah import dobel |
 | parserVersion | int | Versi logika parsing + grouping. Naik → re-import & invalidasi cache buku itu |
 | totalChars | int | Untuk hitung persentase baca (hanya bermakna untuk buku lengkap) |
@@ -23,6 +26,8 @@ Prinsip: **file diparse sekali saat import** ke format internal. Reader, AI, dan
 | firstOpenedAt | datetime? | Pertama kali dibuka. Diisi sekali, gak berubah lagi |
 | readingSeconds | int (default 0) | Total waktu baca aktif, ditampilkan di layar akhir buku ("6 jam 20 mnt", atau "45 mnt" di bawah 1 jam). Tetap dipertahankan walau ada `reading_sessions` (ditulis satu transaksi sama sesinya) |
 | finishedAt | datetime? | Pertama kali layar akhir buku kebuka. Diisi sekali, gak ditimpa. Sengaja gak disimpulin dari sesi: lompat ke bab terakhir bisa ngelabuin |
+
+**Ubah judul & penulis** ([#69](https://github.com/choiruladamm/luma/issues/69)): `updateMetadata` nyimpen nilai asli ke `original*` sekali, hasil edit yang sama persis dengan aslinya nge-null-in `original*` lagi. Re-import **gak boleh nimpa** `title` / `author` kalau `originalTitle != null`; yang diperbarui `originalTitle` / `originalAuthor`. Judul gak masuk kunci cache AI, jadi `promptVersion` gak naik.
 
 **Waktu baca aktif** dihitung selama halaman baca kebuka dan app di foreground. Berhenti kalau 2 menit gak ada scroll/tap (2 menit itu ikut dihitung), lanjut lagi pas ada interaksi. Disimpan bertahap (tiap scroll berhenti, pindah bab, app ke background, keluar halaman baca), jadi app yang dimatiin iOS cuma kehilangan beberapa detik terakhir.
 
@@ -143,6 +148,7 @@ Log append-only request LLM, terpisah dari cache `ai_results` (`createdAt`-nya k
 | 4 | `ai_results.promptVersion` (baris lama = 1, prompt sebelum #40) |
 | 5 | Pencatatan statistik (#42): tabel `reading_sessions` + `ai_calls`, `books.finishedAt`, `ai_results.openCount` + `lastOpenedAt`. Tabel baru kosong, baris lama `openCount` = 0 |
 | 6 | Tabel `ai_breakdowns` (Bedahin, #62). Data lama gak disentuh |
+| 7 | `books.originalTitle`, `originalAuthor`, `useDefaultCover` (ubah judul + penulis, #69). Baris lama: `null`, `null`, `false` |
 
 Tiap ubah tabel: naikkan `schemaVersion`, tambah langkah di `onUpgrade`, dan test migrasi dari versi sebelumnya (data tetap utuh, schema hasil migrasi sama dengan install baru). Restore backup dari schema lama ikut dimigrasi saat database dibuka ([backup.md](backup.md)).
 

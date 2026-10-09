@@ -25,6 +25,17 @@ class Books extends Table {
   /// Null = pake cover default.
   TextColumn get coverName => text().nullable()();
 
+  /// Judul/penulis asli EPUB, diisi sekali pas edit pertama. Null =
+  /// belum pernah diedit (`originalAuthor` null + `originalTitle` terisi =
+  /// aslinya tanpa penulis). Re-import gak boleh nimpa `title`/`author`
+  /// kalau `originalTitle` terisi.
+  TextColumn get originalTitle => text().nullable()();
+  TextColumn get originalAuthor => text().nullable()();
+
+  /// true = cover EPUB disembunyiin; `coverName` tetap utuh di DB + disk.
+  BoolColumn get useDefaultCover =>
+      boolean().withDefault(const Constant(false))();
+
   /// SHA-256 isi file EPUB, cegah import dobel.
   TextColumn get hash => text().nullable().unique()();
 
@@ -236,7 +247,7 @@ class AppDatabase extends _$AppDatabase {
   // test/data/migration_test.dart. Backup dari versi lama ikut dimigrasi pas
   // di-restore.
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -262,6 +273,11 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 6) {
         await m.createTable(aiBreakdowns);
+      }
+      if (from < 7) {
+        await m.addColumn(books, books.originalTitle);
+        await m.addColumn(books, books.originalAuthor);
+        await m.addColumn(books, books.useDefaultCover);
       }
     },
     // SQLite matiin foreign key secara default; cascade butuh ini.

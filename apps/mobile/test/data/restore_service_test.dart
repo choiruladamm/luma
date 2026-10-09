@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:archive/archive_io.dart';
-import 'package:drift/drift.dart' hide isNull;
+import 'package:drift/drift.dart' hide isNull, isNotNull;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:luma/data/database/app_database.dart';
@@ -12,7 +12,7 @@ import 'package:luma/data/services/restore_service.dart';
 import 'package:luma/domain/models/ai_reply.dart';
 import 'package:luma/domain/models/book.dart';
 
-import 'migration_test.dart' show v4;
+import 'migration_test.dart' show v4, v6;
 
 /// One "phone": a real database file in Documents plus books/ and covers/.
 class Phone {
@@ -226,6 +226,26 @@ void main() {
     );
   });
 
+  test('round trip keeps an edited title, author and cover choice', () async {
+    await (a.db.update(a.db.books)..where((x) => x.title.equals('Emma'))).write(
+      const BooksCompanion(
+        title: Value('Emma (edited)'),
+        originalTitle: Value('emma_final'),
+        useDefaultCover: Value(true),
+      ),
+    );
+    final service = RestoreService(b.db, b.storage);
+    await service.apply(await service.inspect(await backupOf(a)));
+    b.reopen();
+    final emma = await (b.db.select(
+      b.db.books,
+    )..where((x) => x.title.equals('Emma (edited)'))).getSingle();
+    expect(emma.originalTitle, 'emma_final');
+    expect(emma.originalAuthor, isNull);
+    expect(emma.useDefaultCover, isTrue);
+    expect(emma.coverName, isNotNull);
+  });
+
   test(
     'closing the database twice is fine (provider dispose after restore)',
     () async {
@@ -411,12 +431,49 @@ void main() {
       expect(await b.db.select(b.db.aiCalls).get(), isEmpty);
     },
   );
+
+  test('a backup from schema 6 restores: new book columns default', () async {
+    final dir = await Directory.systemTemp.createTemp('luma-v6-');
+    addTearDown(() => dir.delete(recursive: true));
+    final file = File('${dir.path}/luma.sqlite');
+    final old = NativeDatabase(
+      file,
+      setup: (raw) {
+        for (final sql in v6) {
+          raw.execute(sql);
+        }
+        raw.execute(
+          "INSERT INTO books (source_type, title, cover_name, hash, "
+          "parser_version, total_chars) "
+          "VALUES ('epub', 'Meditations', 'c.png', 'm', 1, 100)",
+        );
+      },
+    );
+    await old.ensureOpen(_Schema4(6));
+    await old.close();
+    final zip = await zipOf({
+      'manifest.json': utf8.encode(jsonEncode(manifest(schema: 6))),
+      'luma.sqlite': file.readAsBytesSync(),
+    });
+
+    final service = RestoreService(b.db, b.storage);
+    await service.apply(await service.inspect(zip));
+    b.reopen();
+
+    final book = await b.db.select(b.db.books).getSingle();
+    expect(book.title, 'Meditations');
+    expect(book.coverName, 'c.png');
+    expect(book.originalTitle, isNull);
+    expect(book.useDefaultCover, isFalse);
+  });
 }
 
-/// Opens a raw database at user_version 4 without any migration.
+/// Opens a raw database at a given user_version without any migration.
 class _Schema4 implements QueryExecutorUser {
+  _Schema4([this.schemaVersion = 4]);
+
   @override
-  int get schemaVersion => 4;
+  final int schemaVersion;
 
   @override
   Future<void> beforeOpen(

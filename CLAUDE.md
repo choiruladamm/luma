@@ -73,6 +73,13 @@ Load hanya skill yang dibutuhkan kerjaan saat itu:
 
 Kalau skill bentrok dengan file ini, ikuti file ini (architecture skill mencontohkan `ChangeNotifier` + `provider`/`get_it`, di sini pakai Riverpod).
 
+## Kode Dart: logika kondisional
+
+- Jangan pakai nested ternary. Maksimal 1 level ternary di widget tree.
+- Kondisi lebih dari 2 cabang, atau menghasilkan label/teks dari state model: extract ke getter di extension pada model (contoh: `book.progressLabel`).
+- Di dalam getter, pakai `if/return` berurutan, bukan ternary.
+- State yang bisa nambah: jadikan enum dan pakai switch expression (Dart 3+).
+
 ## Test
 
 Struktur folder ikut Mibu (`choiruladamm/mibu`, `apps/mobile/test/`), tapi **widget test gak pernah nyentuh Drift** (di Mibu itu bikin test nyangkut). Tiap issue selesai bawa test-nya:

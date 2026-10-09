@@ -120,6 +120,10 @@ Board "Terpilih · Bedahin · Opsi C · layar bedah" + "Spek · Bedahin · state
 
 Bahasa Indonesia gaya Gen Z, santai. Contoh: "Rak buku lo", "Lanjut baca yuk", "Artinya gini nih", "Maksud penulisnya tuh...", "Bentar, lagi mikir...", "Yah, gagal nih".
 
+## Ubah judul & penulis
+
+Boards 33–38 (+ baris masuk di Info buku, board 21). Sheet bertumpuk di atas Info buku: header tombol bulat X (Batal) · judul · tombol bulat centang (Simpan, primer; nonaktif = muted), preview cover 132px yang ikut isi field langsung, field Judul + Penulis (opsional), kartu "Pakai cover default" (cuma kalau EPUB punya cover), dan "Balikin ke aslinya" yang ngisi ulang field (baru kesimpen pas Simpan, gak nyentuh toggle cover). Judul kosong: error + Simpan nonaktif. Info buku: penulis kosong tampil "Penulis gak ketemu" (italic), judul tanpa spasi >= 16 karakter tampil 19px dan dipecah per karakter.
+
 ## Layar yang sudah didesain
 
 Semua layar MVP awal sudah final (terang + gelap): rak kosong/berisi, baca, artinya (loading / hasil / error / udah disalin / API key kosong) dengan highlight grup, Aa, daftar isi, akhir bab, akhir buku, import (proses / berhasil / duplikat / rusak / bukan EPUB / DRM), urutkan rak, tekan lama buku, info buku, konfirmasi hapus, pengaturan, penanda grup yang sudah diterjemahkan.

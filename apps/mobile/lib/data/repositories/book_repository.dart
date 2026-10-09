@@ -17,7 +17,9 @@ class BookRepository {
   /// paragraf sebelum posisi + bagian paragraf yang udah lewat.
   Stream<List<ShelfBook>> watchShelf() => _db
       .customSelect(
-        'SELECT b.id, b.title, b.author, b.cover_name, b.last_opened_at, '
+        'SELECT b.id, b.title, b.author, '
+        'CASE WHEN b.use_default_cover THEN NULL ELSE b.cover_name END '
+        'AS cover_name, b.last_opened_at, '
         'b.created_at, b.total_chars, rp.paragraph_offset AS off, '
         'c.char_offset AS ch_off, '
         '(SELECT COUNT(*) FROM chapters WHERE book_id = b.id) AS ch_count, '
@@ -59,7 +61,7 @@ class BookRepository {
             id: row.id,
             title: row.title,
             author: row.author,
-            coverName: row.coverName,
+            coverName: row.useDefaultCover ? null : row.coverName,
             opened: row.lastOpenedAt != null,
             createdAt: row.createdAt,
           );
@@ -124,7 +126,7 @@ class BookRepository {
     if (book == null) return null;
     return BookEnd(
       author: book.author,
-      coverName: book.coverName,
+      coverName: book.useDefaultCover ? null : book.coverName,
       readingSeconds: book.readingSeconds,
       translated: await _translated('c.book_id = ?', bookId),
     );
@@ -139,6 +141,10 @@ class BookRepository {
     final name = book.fileName;
     final file = name == null ? null : files.book(name);
     return BookInfo(
+      originalTitle: book.originalTitle,
+      originalAuthor: book.originalAuthor,
+      epubCoverName: book.coverName,
+      useDefaultCover: book.useDefaultCover,
       lastOpenedAt: book.lastOpenedAt,
       createdAt: book.createdAt,
       fileName: name,
@@ -147,6 +153,38 @@ class BookRepository {
           : null,
       translated: await _translated('c.book_id = ?', id),
     );
+  }
+
+  /// Edit judul/penulis/cover. Nilai asli EPUB disimpen sekali di `original*`
+  /// (edit pertama); hasil edit sama dengan aslinya = balik ke "belum diedit".
+  Future<void> updateMetadata(
+    int id, {
+    required String title,
+    String? author,
+    required bool useDefaultCover,
+  }) async {
+    final t = title.trim();
+    if (t.isEmpty) throw ArgumentError.value(title, 'title', 'kosong');
+    final a = (author?.trim().isEmpty ?? true) ? null : author!.trim();
+    await _db.transaction(() async {
+      final book = await (_db.select(
+        _db.books,
+      )..where((b) => b.id.equals(id))).getSingleOrNull();
+      if (book == null) return;
+      final edited = book.originalTitle != null;
+      final origTitle = edited ? book.originalTitle! : book.title;
+      final origAuthor = edited ? book.originalAuthor : book.author;
+      final same = t == origTitle && a == origAuthor;
+      await (_db.update(_db.books)..where((b) => b.id.equals(id))).write(
+        BooksCompanion(
+          title: Value(t),
+          author: Value(a),
+          originalTitle: Value(same ? null : origTitle),
+          originalAuthor: Value(same ? null : origAuthor),
+          useDefaultCover: Value(useDefaultCover),
+        ),
+      );
+    });
   }
 
   /// Hapus buku: row (chapter, paragraf, posisi baca, hasil AI ikut lewat
