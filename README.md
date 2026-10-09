@@ -1,7 +1,7 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="apps/mobile/assets/brand/wordmark-white.png">
-    <img src="apps/mobile/assets/brand/wordmark.png" alt="Luma" height="72">
+    <source media="(prefers-color-scheme: dark)" srcset="apps/mobile/assets/brand/logo-lockup-dark.svg">
+    <img src="apps/mobile/assets/brand/logo-lockup.svg" alt="Luma" height="84">
   </picture>
 </p>
 
