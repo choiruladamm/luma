@@ -97,7 +97,17 @@ class _ReaderViewState extends ConsumerState<ReaderView>
     _progress.markOpened(widget.bookId).ignore();
     _chrome.visible.addListener(_syncStatusBar);
     _fraction.addListener(_anchor);
+    // Android: bar yang kebuka sentuhan/swipe tepi atas nempel terus (mode
+    // `manual` gak ngumpetin lagi sendiri). Ngumpet lagi sesudah jeda kalau
+    // memang harusnya ngumpet. Navbar bawaan tetap tampil.
+    SystemChrome.setSystemUIChangeCallback((visible) async {
+      if (!visible || !mounted) return;
+      _rehide?.cancel();
+      _rehide = Timer(const Duration(seconds: 2), _syncStatusBar);
+    });
   }
+
+  Timer? _rehide;
 
   /// Posisi pertama yang kebaca (buku kebuka di titik tersimpan) = awal
   /// potongan sesi pertama.
@@ -138,6 +148,8 @@ class _ReaderViewState extends ConsumerState<ReaderView>
   @override
   void dispose() {
     _saveLater?.cancel();
+    _rehide?.cancel();
+    SystemChrome.setSystemUIChangeCallback(null);
     _save();
     WidgetsBinding.instance.removeObserver(this);
     SystemChrome.setEnabledSystemUIMode(
