@@ -9,8 +9,6 @@
   EPUB reader untuk iOS. Tap satu paragraf, langsung muncul terjemahan Indonesia dan maknanya, tanpa keluar dari halaman baca.
 </p>
 
-> Luma dibuat buat dipakai sendiri (dogfooding), bukan app yang dirilis ke App Store. Repo ini terbuka sebagai referensi dan bahan belajar.
-
 ## Kenapa ada
 
 Baca buku bahasa Inggris di app Books itu enak, sampai ketemu paragraf yang gak nyantol: select teks, copy, pindah ke app LLM, paste, ketik "artiin dong", baca, balik, cari lagi posisi terakhir. Terjemahannya bagus, tapi alurnya mutus fokus baca tiap beberapa menit.
