@@ -97,7 +97,20 @@ class _ReaderViewState extends ConsumerState<ReaderView>
     _progress.markOpened(widget.bookId).ignore();
     _chrome.visible.addListener(_syncStatusBar);
     _fraction.addListener(_anchor);
+    if (_android) {
+      // Bar yang kebuka swipe tepi ngumpet lagi sesudah jeda, kalau memang
+      // harusnya ngumpet.
+      SystemChrome.setSystemUIChangeCallback((visible) async {
+        if (!visible || !mounted) return;
+        _rehide?.cancel();
+        _rehide = Timer(const Duration(seconds: 2), _syncStatusBar);
+      });
+    }
   }
+
+  Timer? _rehide;
+
+  static bool get _android => defaultTargetPlatform == TargetPlatform.android;
 
   /// Posisi pertama yang kebaca (buku kebuka di titik tersimpan) = awal
   /// potongan sesi pertama.
@@ -115,13 +128,32 @@ class _ReaderViewState extends ConsumerState<ReaderView>
     );
   }
 
-  /// Status bar ngumpet bareng kapsul.
-  void _syncStatusBar() => SystemChrome.setEnabledSystemUIMode(
-    SystemUiMode.manual,
-    overlays: _chrome.visible.value || !_prefs.hideStatusBar
-        ? SystemUiOverlay.values
-        : const [SystemUiOverlay.bottom],
-  );
+  /// Layar lain (Bedahin, Pengaturan) bukan layar baca: di Android bar
+  /// sistem tampil selama di sana, balik ngikutin kapsul sesudahnya.
+  Future<T?> _pushOffReader<T>(String route) async {
+    if (!_android) return context.push<T>(route);
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    final result = await context.push<T>(route);
+    if (mounted) _syncStatusBar();
+    return result;
+  }
+
+  /// Status bar ngumpet bareng kapsul. Android: navbar ikut ngumpet
+  /// (immersive sticky, muncul sebentar kalau di-swipe). iOS: bar bawah
+  /// (home indicator) dibiarin.
+  void _syncStatusBar() {
+    final show = _chrome.visible.value || !_prefs.hideStatusBar;
+    if (_android) {
+      SystemChrome.setEnabledSystemUIMode(
+        show ? SystemUiMode.edgeToEdge : SystemUiMode.immersiveSticky,
+      );
+      return;
+    }
+    SystemChrome.setEnabledSystemUIMode(
+      SystemUiMode.manual,
+      overlays: show ? SystemUiOverlay.values : const [SystemUiOverlay.bottom],
+    );
+  }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
@@ -130,7 +162,7 @@ class _ReaderViewState extends ConsumerState<ReaderView>
       return;
     }
     _clock.pause(DateTime.now());
-    // iOS bisa matiin app kapan aja pas di background: simpen sekarang.
+    // OS bisa matiin app kapan aja pas di background: simpen sekarang.
     _saveLater?.cancel();
     _save();
   }
@@ -138,12 +170,18 @@ class _ReaderViewState extends ConsumerState<ReaderView>
   @override
   void dispose() {
     _saveLater?.cancel();
+    _rehide?.cancel();
+    if (_android) SystemChrome.setSystemUIChangeCallback(null);
     _save();
     WidgetsBinding.instance.removeObserver(this);
-    SystemChrome.setEnabledSystemUIMode(
-      SystemUiMode.manual,
-      overlays: SystemUiOverlay.values,
-    );
+    if (_android) {
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    } else {
+      SystemChrome.setEnabledSystemUIMode(
+        SystemUiMode.manual,
+        overlays: SystemUiOverlay.values,
+      );
+    }
     _chrome.dispose();
     _fraction.dispose();
     super.dispose();
@@ -263,12 +301,12 @@ class _ReaderViewState extends ConsumerState<ReaderView>
       onClosing: () => unawaited(text.unpinGroup(animate: false)),
       onSettings: () {
         Navigator.of(context).pop();
-        context.push(Routes.settings);
+        unawaited(_pushOffReader<void>(Routes.settings));
       },
       // Sheet tetep di bawah layar Bedahin. "Balik baca" (`pop(true)`) =
       // sheet-nya ikut ditutup, langsung ke halaman.
       onBreakdown: (g) async {
-        final read = await context.push<bool>(
+        final read = await _pushOffReader<bool>(
           Routes.breakdown(widget.bookId, g.chapterId, g.groupIndex),
         );
         if (read == true && mounted) Navigator.of(context).pop();

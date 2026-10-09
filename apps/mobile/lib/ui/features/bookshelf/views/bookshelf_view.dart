@@ -209,7 +209,7 @@ class _BookshelfViewState extends ConsumerState<BookshelfView> {
       title: 'Hapus "${book.title}" dari rak?',
       message:
           '${lost.isEmpty ? '' : '$lost ikut kehapus. '}'
-          'File aslinya di Files tetep aman kok.',
+          'File aslinya tetep aman kok.',
       cancelLabel: 'Gak jadi',
       confirmLabel: 'Hapus',
     );
@@ -830,7 +830,7 @@ class _Empty extends StatelessWidget {
           ),
           const SizedBox(height: Space.s3),
           Text(
-            'Ambil dari app Files, format .epub aja',
+            'Ambil dari file manager, format .epub aja',
             textAlign: TextAlign.center,
             style: StabiloType.caption.copyWith(color: c.ink2),
           ),

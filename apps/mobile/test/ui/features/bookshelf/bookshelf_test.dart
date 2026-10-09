@@ -144,7 +144,7 @@ void main() {
       expect(find.text('Rak buku lo'), findsOneWidget);
       expect(find.text('Import EPUB'), findsOneWidget);
       expect(
-        find.text('Ambil dari app Files, format .epub aja'),
+        find.text('Ambil dari file manager, format .epub aja'),
         findsOneWidget,
       );
       expect(find.byType(BookCard), findsNothing);
@@ -392,7 +392,7 @@ void main() {
       expect(
         find.text(
           'Progres 50% sama 37 paragraf yang udah diartiin ikut kehapus. '
-          'File aslinya di Files tetep aman kok.',
+          'File aslinya tetep aman kok.',
         ),
         findsOneWidget,
       );
@@ -431,10 +431,7 @@ void main() {
       await openMenu(tester);
       await tester.tap(find.text('Hapus dari rak'));
       await tester.pumpAndSettle();
-      expect(
-        find.text('File aslinya di Files tetep aman kok.'),
-        findsOneWidget,
-      );
+      expect(find.text('File aslinya tetep aman kok.'), findsOneWidget);
     });
   });
 

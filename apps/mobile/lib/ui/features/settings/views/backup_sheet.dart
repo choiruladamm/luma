@@ -110,8 +110,8 @@ class BackupProgressSheet extends ConsumerWidget {
               ],
             ),
             Text(
-              'Abis ini muncul menu share iOS. Pilih "Simpan ke Files" terus '
-              'taruh di iCloud Drive biar aman.',
+              'Abis ini muncul menu share. Simpen ke Files / Drive terus '
+              'taruh di tempat aman biar gak ilang.',
               style: StabiloType.caption.copyWith(
                 fontWeight: FontWeight.w400,
                 height: 1.45,

@@ -9,6 +9,7 @@ SRC=assets/brand
 TMP=$(mktemp -d)
 IOS=ios/Runner/Assets.xcassets
 RES=android/app/src/main/res
+DEV_RES=android/app/src/dev/res
 
 # render <svg> <width> <height> <out.png>: transparent background.
 render() {
@@ -37,6 +38,12 @@ for d in mdpi:48 hdpi:72 xhdpi:96 xxhdpi:144 xxxhdpi:192; do
   magick "$ICON/AppIcon-1024.png" -resize "${d#*:}x${d#*:}" "$RES/mipmap-${d%%:*}/ic_launcher.png"
 done
 render icon-android-fg.svg 432 432 "$RES/mipmap-xxxhdpi/ic_launcher_foreground.png"
+# Luma Dev (flavor dev): black tinted icon; the adaptive background is black
+# (src/dev/res/values/colors.xml) and the foreground is white.
+for d in mdpi:48 hdpi:72 xhdpi:96 xxhdpi:144 xxxhdpi:192; do
+  magick "$ICON/AppIcon-1024-tinted.png" -resize "${d#*:}x${d#*:}" "$DEV_RES/mipmap-${d%%:*}/ic_launcher.png"
+done
+render icon-android-fg-dev.svg 432 432 "$DEV_RES/mipmap-xxxhdpi/ic_launcher_foreground.png"
 
 # Wordmark for the Flutter splash: black alpha, tinted at runtime (3x of 103.6).
 render wordmark.svg 622 223 assets/brand/wordmark.png

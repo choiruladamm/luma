@@ -15,7 +15,7 @@ Referensi lengkap (layar, komponen, token): https://claude.ai/artifact/EBwv9zJBL
 | Bricolage Grotesque | UI, judul, label, tombol |
 | Atkinson Hyperlegible | Teks bacaan + isi sheet (default, opsi "Jelas") |
 | Literata | Opsi bacaan "Kayak buku" |
-| Font sistem iOS | Opsi bacaan "Bawaan iOS" |
+| Font sistem (SF di iOS, Roboto di Android) | Opsi bacaan "Bawaan sistem" |
 
 Bundle font sebagai asset (jangan fetch runtime).
 
@@ -66,10 +66,10 @@ Layar baca: kekuatan mask ngikutin `ReaderChrome.hidden` (controller kapsul yang
 Sheet "Atur bacaan lo" (board 07), dibuka dari tombol Aa di kapsul. Tiap pilihan langsung disimpen dan langsung keliatan di teks; scrim-nya tipis (8% terang, 18% gelap) biar teks di belakang jadi preview. Posisi baca nempel: titik yang lagi di garis atas tetep di situ pas ukuran/font/jarak/margin diganti.
 
 - Ukuran huruf: 7 step 16 · 17 · 18 · **18,5** · 20 · 22 · 24 (tombol A kecil / A gede)
-- Font: **Jelas** (Atkinson Hyperlegible) / Kayak buku (Literata, jarak baris +0,05) / Bawaan iOS (SF)
+- Font: **Jelas** (Atkinson Hyperlegible) / Kayak buku (Literata, jarak baris +0,05) / Bawaan sistem (SF di iOS, Roboto di Android)
 - Jarak baris: Rapat 1,5 / **Pas 1,65** / Lega 1,85; mode gelap +0,05
 - Margin teks: Sempit 16 / **Pas 24** / Lega 32. Area tap margin minimal 24pt: di Sempit, 8pt pinggir kolom ikut diitung area kosong
-- Tema: Terang / Gelap / **Ikut iOS** → `themeMode` app
+- Tema: Terang / Gelap / **Ikut sistem** → `themeMode` app
 - Tampilan layar: "Sembunyiin jam & baterai" (**nyala**) dan "Tampilin garis progres" (**nyala**), pake Switch dari board Komponen dasar (51 × 31)
 - Disimpen per perangkat (bukan per buku) di tabel `settings`, ikut backup. Nilai yang gak dikenal (backup rusak) balik ke default
 

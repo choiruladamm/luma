@@ -6,7 +6,7 @@
 </p>
 
 <p align="center">
-  EPUB reader untuk iOS. Tap satu paragraf, langsung muncul terjemahan Indonesia dan maknanya, tanpa keluar dari halaman baca.
+  EPUB reader untuk iOS dan Android. Tap satu paragraf, langsung muncul terjemahan Indonesia dan maknanya, tanpa keluar dari halaman baca.
 </p>
 
 <div align="center">
@@ -92,7 +92,7 @@ Desain sistemnya namanya **Stabilo**: teks dulu, UI belakangan. Kuning stabilo c
 | Database | Drift |
 | Routing | go_router |
 | LLM | [OpenRouter](https://openrouter.ai), model bisa diganti dari Pengaturan |
-| API key | `flutter_secure_storage` (Keychain), gak ikut backup |
+| API key | `flutter_secure_storage` (Keychain di iOS, Keystore di Android), gak ikut backup |
 | Model data | freezed |
 
 ## Struktur repo
@@ -127,19 +127,29 @@ Mulai dari [docs/README.md](docs/README.md). Isinya latar belakang, keputusan pr
 
 ## Menjalankan
 
-Butuh Flutter lewat [FVM](https://fvm.app), Xcode, dan iPhone atau simulator iOS.
+Butuh Flutter lewat [FVM](https://fvm.app), plus Xcode + iPhone / simulator iOS, dan / atau Android SDK + HP Android (USB debugging nyala).
 
 ```bash
 make get        # pub get
 make gen        # codegen (drift, freezed)
 make check      # format, analyze, test
 make run        # debug di device / simulator
+make run-android # debug di HP Android (f=dev buat Luma Dev)
 make help       # daftar semua perintah
 ```
 
 Buat pakai fitur AI, isi API key OpenRouter di **Pengaturan** (key diawali `sk-or-`).
 
 `make release` dan `make dev` meng-install build release ke iPhone yang tersambung. Ada dua app terpisah (bundle id, data, dan Keychain beda): **Luma** untuk dipakai sehari-hari (`make release`, hanya dari `master`) dan **Luma Dev** untuk nyoba fitur yang belum di-merge (`make dev`).
+
+Android sama: `make dev-android` (Luma Dev, branch apa aja), `make release-android` (Luma, hanya dari `master`), dan `make apk` (APK buat sideload, hanya dari `master`). Android gak punya siklus install ulang 7 hari, tapi update (`install -r`) cuma jalan kalau ditandatangani key yang sama, jadi bikin keystore tetap sekali (di luar repo, jangan di-commit):
+
+```bash
+keytool -genkeypair -v -keystore ~/.android/luma-release.jks -alias luma \
+  -keyalg RSA -keysize 2048 -validity 10000
+```
+
+Lalu bikin `apps/mobile/android/key.properties` (sudah di-gitignore) isinya `storeFile=/Users/<kamu>/.android/luma-release.jks`, `storePassword`, `keyAlias=luma`, `keyPassword`. Tanpa file ini build release jatuh ke debug key (jalan, tapi update di mesin lain minta uninstall dulu). Backup file `.jks` + passwordnya: kalau ilang, update harus uninstall dulu.
 
 ### Tes ke OpenRouter beneran (opsional)
 

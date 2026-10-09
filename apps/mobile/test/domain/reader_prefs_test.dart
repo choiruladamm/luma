@@ -3,7 +3,7 @@ import 'package:luma/domain/models/reader_prefs.dart';
 
 void main() {
   test(
-    'defaults: 18,5, Jelas, Pas, margin 24, follow iOS, both toggles on',
+    'defaults: 18,5, Jelas, Pas, margin 24, follow system, both toggles on',
     () {
       const p = ReaderPrefs();
       expect(p.fontSize, 18.5);

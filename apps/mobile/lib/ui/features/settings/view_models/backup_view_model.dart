@@ -48,7 +48,7 @@ class BackupController extends Notifier<BackupState> {
   @override
   BackupState build() => const BackupIdle();
 
-  /// Bungkus → menu share iOS → kalau beneran disimpen, catet sebagai backup
+  /// Bungkus → menu share → kalau beneran disimpen, catet sebagai backup
   /// terakhir. Zip sementaranya selalu dibuang di akhir.
   Future<void> start() async {
     if (_busy) return;

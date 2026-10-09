@@ -2,10 +2,10 @@ APP := apps/mobile
 FLUTTER := cd $(APP) && fvm flutter
 DART := cd $(APP) && fvm dart
 
-.PHONY: help get gen brand live watch run release dev profile test analyze format check clean
+.PHONY: help get gen brand live watch run release dev run-android release-android dev-android apk profile test analyze format check clean
 
 help: ## list commands
-	@grep -E '^[a-z0-9-]+:.*## ' $(MAKEFILE_LIST) | awk -F ':.*## ' '{printf "  %-8s %s\n", $$1, $$2}'
+	@grep -E '^[a-z0-9-]+:.*## ' $(MAKEFILE_LIST) | awk -F ':.*## ' '{printf "  %-16s %s\n", $$1, $$2}'
 
 get: ## pub get
 	$(FLUTTER) pub get
@@ -28,6 +28,21 @@ release: ## install release build on iPhone, redo every 7 days, data kept (d=<id
 
 dev: ## install release build of Luma Dev (own data & Keychain), any branch (d=<id>)
 	$(FLUTTER) run --release --flavor dev $(if $(d),-d $(d))
+
+run-android: ## run Luma on Android in debug (device: d=<id>; f=dev for Luma Dev, default prod)
+	$(FLUTTER) run --flavor $(or $(f),prod) $(if $(d),-d $(d))
+
+release-android: ## install release build of Luma on Android, signed with the fixed keystore (d=<id>), master only
+	@test "$$(git rev-parse --abbrev-ref HEAD)" = master || { echo "make release-android cuma dari master (app Luma, data asli). Fitur: make dev-android"; exit 1; }
+	$(FLUTTER) run --release --flavor prod $(if $(d),-d $(d))
+
+dev-android: ## install release build of Luma Dev on Android (own data & Keystore), any branch (d=<id>)
+	$(FLUTTER) run --release --flavor dev $(if $(d),-d $(d))
+
+apk: ## build release APK of Luma (prod) for sideload, master only
+	@test "$$(git rev-parse --abbrev-ref HEAD)" = master || { echo "make apk cuma dari master (app Luma, data asli)"; exit 1; }
+	$(FLUTTER) build apk --release --flavor prod
+	@echo "APK: $(APP)/build/app/outputs/flutter-apk/app-prod-release.apk"
 
 profile: ## run app in profile mode, real perf (d=<id>)
 	$(FLUTTER) run --profile $(if $(d),-d $(d))

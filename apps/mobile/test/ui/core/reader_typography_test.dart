@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:luma/domain/models/reader_prefs.dart';
 import 'package:luma/ui/core/theme/reader_typography.dart';
@@ -41,6 +41,13 @@ void main() {
   test('every font maps to a bundled family', () {
     expect(readingFamily(ReadingFont.clear), StabiloType.readingFont);
     expect(readingFamily(ReadingFont.book), StabiloType.bookFont);
+  });
+
+  test('system font: SF on iOS, Roboto elsewhere', () {
+    addTearDown(() => debugDefaultTargetPlatformOverride = null);
+    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
     expect(readingFamily(ReadingFont.system), 'CupertinoSystemText');
+    debugDefaultTargetPlatformOverride = TargetPlatform.android;
+    expect(readingFamily(ReadingFont.system), 'Roboto');
   });
 }
