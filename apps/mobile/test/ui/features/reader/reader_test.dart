@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -518,47 +519,60 @@ void main() {
       expect(find.byType(ReaderProgressLine), findsNothing);
     });
 
-    testWidgets('status bar hides with the capsules unless turned off', (
-      tester,
-    ) async {
-      final overlays = <List<Object?>>[];
-      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
-        SystemChannels.platform,
-        (call) async {
-          if (call.method == 'SystemChrome.setEnabledSystemUIOverlays') {
-            overlays.add(call.arguments as List<Object?>);
-          }
-          return null;
+    for (final platform in [TargetPlatform.iOS, TargetPlatform.android]) {
+      testWidgets(
+        'status bar hides with the capsules unless turned off ($platform)',
+        (tester) async {
+          debugDefaultTargetPlatformOverride = platform;
+          // true = system bars visible after each call. iOS: overlay list;
+          // Android: edgeToEdge shows them, immersiveSticky hides them.
+          final shown = <bool>[];
+          tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+            SystemChannels.platform,
+            (call) async {
+              if (call.method == 'SystemChrome.setEnabledSystemUIOverlays') {
+                shown.add(
+                  (call.arguments as List<Object?>).contains(
+                    'SystemUiOverlay.top',
+                  ),
+                );
+              }
+              if (call.method == 'SystemChrome.setEnabledSystemUIMode') {
+                shown.add(call.arguments == 'SystemUiMode.edgeToEdge');
+              }
+              return null;
+            },
+          );
+          addTearDown(
+            () => tester.binding.defaultBinaryMessenger
+                .setMockMethodCallHandler(SystemChannels.platform, null),
+          );
+          bool statusBar() => shown.last;
+
+          await openBook(
+            tester,
+            readerBook: tallBook,
+            saved: (chapterId: 13, paragraphIndex: 12, paragraphOffset: 0.0),
+          );
+          await tester.tapAt(const Offset(10, 800)); // margin: hide
+          await tester.pumpAndSettle();
+          expect(statusBar(), isFalse);
+          await tester.tapAt(const Offset(10, 800)); // show
+          await tester.pumpAndSettle();
+          expect(statusBar(), isTrue);
+
+          await settings.saveReaderPrefs(
+            settings.prefs.copyWith(hideStatusBar: false),
+          );
+          await tester.pumpAndSettle();
+          await tester.tapAt(const Offset(10, 800)); // hide capsules only
+          await tester.pumpAndSettle();
+          expect(statusBar(), isTrue);
+          // Reset inside the body: flutter_test checks this before tearDown.
+          debugDefaultTargetPlatformOverride = null;
         },
       );
-      addTearDown(
-        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
-          SystemChannels.platform,
-          null,
-        ),
-      );
-      bool statusBar() => overlays.last.contains('SystemUiOverlay.top');
-
-      await openBook(
-        tester,
-        readerBook: tallBook,
-        saved: (chapterId: 13, paragraphIndex: 12, paragraphOffset: 0.0),
-      );
-      await tester.tapAt(const Offset(10, 800)); // margin: hide
-      await tester.pumpAndSettle();
-      expect(statusBar(), isFalse);
-      await tester.tapAt(const Offset(10, 800)); // show
-      await tester.pumpAndSettle();
-      expect(statusBar(), isTrue);
-
-      await settings.saveReaderPrefs(
-        settings.prefs.copyWith(hideStatusBar: false),
-      );
-      await tester.pumpAndSettle();
-      await tester.tapAt(const Offset(10, 800)); // hide capsules only
-      await tester.pumpAndSettle();
-      expect(statusBar(), isTrue);
-    });
+    }
 
     testWidgets('changing the size keeps the top line in place', (
       tester,
