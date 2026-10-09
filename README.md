@@ -16,19 +16,19 @@
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="docs/images/rak-dark.png">
       <img src="docs/images/rak.png" alt="Rak buku" width="250">
-    </picture><br><sub>Rak buku</sub>
+    </picture>
     </td>
     <td align="center">
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="docs/images/arti-dark.png">
       <img src="docs/images/arti.png" alt="Sheet terjemahan dan makna" width="250">
-    </picture><br><sub>Tap paragraf, langsung artinya</sub>
+    </picture>
     </td>
     <td align="center">
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="docs/images/bedahin-dark.png">
       <img src="docs/images/bedahin.png" alt="Layar Bedahin" width="250">
-    </picture><br><sub>Bedahin: bedah gagasan per bagian</sub>
+    </picture>
     </td>
   </tr>
 </table>
@@ -63,22 +63,22 @@ Desain sistemnya namanya **Stabilo**: teks dulu, UI belakangan. Kuning stabilo c
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="docs/images/baca-dark.png">
       <img src="docs/images/baca.png" alt="Halaman baca imersif" width="250">
-    </picture><br><sub>Baca imersif</sub>
+    </picture>
     </td>
     <td align="center">
-    <img src="docs/images/arti-stream.png" alt="Sheet Artinya saat streaming" width="250"><br><sub>Artinya, ditulis bertahap</sub>
+    <img src="docs/images/arti-stream.png" alt="Sheet Artinya saat streaming" width="250">
     </td>
     <td align="center">
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="docs/images/aa-dark.png">
       <img src="docs/images/aa.png" alt="Pengaturan bacaan Aa" width="250">
-    </picture><br><sub>Pengaturan bacaan (Aa)</sub>
+    </picture>
     </td>
     <td align="center">
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="docs/images/bedahin-nyambung-dark.png">
       <img src="docs/images/bedahin-nyambung.png" alt="Bedahin dengan sambungan antar bagian" width="250">
-    </picture><br><sub>Bedahin, nyambung ke bagian lain</sub>
+    </picture>
     </td>
   </tr>
 </table>
