@@ -4,7 +4,7 @@ EPUB reader iOS (dipakai sendiri, dogfooding): tap paragraf → terjemahan Indon
 
 ## Sumber kebenaran
 
-- **Produk, data model, alur:** [docs/](docs/README.md), satu file per topik (indeks di `docs/README.md`: design, data-model, grouping, architecture, llm, llm-evals, backup). Baca file yang relevan sebelum mengerjakan fitur apa pun. `docs/ideas/` (Recap, Markdown, PDF, ide raw) di luar scope: kerjakan hanya kalau diminta. Rujuk docs pakai path file (`docs/llm.md`), bukan nomor bagian. `docs/ideas-mvp-apps-reading-book.md` cuma stub penunjuk buat link lama.
+- **Produk, data model, alur:** [docs/](docs/README.md), satu file per topik (indeks di `docs/README.md`: design, data-model, grouping, architecture, llm, llm-evals, backup). Baca file yang relevan sebelum mengerjakan fitur apa pun. `docs/ideas/` (Recap, Markdown, PDF, ide raw) di luar scope: kerjakan hanya kalau diminta. Rujuk docs pakai path file (`docs/llm.md`), bukan nomor bagian.
 - **Desain UI:** Stabilo di Claude Design, https://claude.ai/artifact/EBwv9zJBLZQJa5WWYiaJ7F. Baca board layar yang dikerjakan (nama board tercantum di issue) lewat Artifact tool, bukan WebFetch. Tiap layar punya versi terang + gelap.
 - **Task:** GitHub issues milestone `MVP`, label `area:*`. Satu issue = satu unit kerja. Cek baris **Tergantung** di issue dan pastikan dependensinya sudah selesai. Centang checklist scope saat selesai.
 
