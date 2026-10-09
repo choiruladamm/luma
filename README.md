@@ -46,7 +46,7 @@ Data semuanya lokal di device (SQLite lewat Drift). Satu-satunya yang keluar ada
 
 ## Desain
 
-Desain sistemnya namanya **Stabilo**: teks dulu, UI belakangan. Kuning stabilo cuma buat yang lagi penting (satu layar, satu tombol kuning), dan mode gelap pakai hitam hangat, bukan hitam pekat. Semua layar punya versi terang dan gelap. Spek lengkapnya ada di [docs/design.md](docs/design.md).
+Desain sistemnya namanya **Stabilo**: teks dulu, UI belakangan. Kuning stabilo cuma buat yang lagi penting (satu layar, satu tombol kuning), dan mode gelap pakai hitam hangat, bukan hitam pekat. Semua layar punya versi terang dan gelap.
 
 <table>
   <tr>
@@ -99,7 +99,6 @@ Desain sistemnya namanya **Stabilo**: teks dulu, UI belakangan. Kuning stabilo c
 
 ```
 apps/mobile/   app Flutter
-docs/          produk, data model, arsitektur, LLM, backup
 ```
 
 Arsitektur berlapis (UI → data) di `apps/mobile/lib`:
@@ -110,20 +109,6 @@ domain/      logika pure (grouping, parser) + model immutable
 routing/     go_router
 ui/          tema Stabilo, widget shared, fitur per folder (views + view_models)
 ```
-
-## Dokumentasi
-
-Mulai dari [docs/README.md](docs/README.md). Isinya latar belakang, keputusan produk, dan indeks ke:
-
-| | |
-|---|---|
-| [design.md](docs/design.md) | Desain Stabilo: font, warna, perilaku layar |
-| [data-model.md](docs/data-model.md) | Tabel Drift, schema, migrasi |
-| [grouping.md](docs/grouping.md) | Cara paragraf dikelompokin jadi grup tap |
-| [architecture.md](docs/architecture.md) | Routing, provider, alur import & baca |
-| [llm.md](docs/llm.md) | OpenRouter, prompt, streaming, Bedahin |
-| [llm-evals.md](docs/llm-evals.md) | Hasil evaluasi model |
-| [backup.md](docs/backup.md) | Backup & restore |
 
 ## Menjalankan
 
@@ -164,4 +149,4 @@ Tanpa key, tes ini di-skip.
 
 ## Status
 
-MVP lagi dikerjakan dan dipakai sendiri buat baca. Rencana berikutnya (Recap bacaan, import Markdown/PDF, dsb.) ada di [docs/ideas/](docs/ideas/) dan belum dikerjakan.
+MVP lagi dikerjakan dan dipakai sendiri buat baca. Rencana berikutnya: Recap bacaan dan import Markdown/PDF.
