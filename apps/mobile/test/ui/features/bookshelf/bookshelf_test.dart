@@ -21,6 +21,7 @@ import 'package:luma/ui/core/widgets/buttons.dart';
 import 'package:luma/ui/core/widgets/book_row.dart';
 import 'package:luma/ui/features/bookshelf/views/shelf_header.dart';
 import 'package:luma/ui/features/bookshelf/view_models/bookshelf_view_model.dart';
+import 'package:luma/ui/features/bookshelf/views/book_edit_sheet.dart';
 import 'package:luma/ui/features/bookshelf/views/book_info_sheet.dart';
 import 'package:luma/ui/features/reader/view_models/reader_view_model.dart';
 import 'package:luma/ui/features/reader/views/reader_view.dart';
@@ -37,10 +38,11 @@ ShelfBook book(
   bool finished = false,
   int chapter = 1,
   int chapterCount = 1,
+  String? author = 'Somebody',
 }) => ShelfBook(
   id: id,
   title: title,
-  author: 'Somebody',
+  author: author,
   coverName: null,
   opened: opened,
   createdAt: created ?? DateTime(2026, 10, 1),
@@ -338,6 +340,36 @@ void main() {
           reason: text,
         );
       }
+    });
+
+    testWidgets('info sheet: Ubah judul & penulis opens the edit sheet', (
+      tester,
+    ) async {
+      await pump(tester, [walden]);
+      repo.info = info;
+      await openMenu(tester);
+      await tester.tap(find.text('Info buku'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Ubah judul & penulis'));
+      await tester.pumpAndSettle();
+      expect(find.byType(BookEditSheet), findsOneWidget);
+    });
+
+    testWidgets('info sheet: no author reads "Penulis gak ketemu"', (
+      tester,
+    ) async {
+      await pump(tester, [book(1, 'pride_prejudice_FINAL(2)', author: null)]);
+      repo.info = info;
+      await openMenu(tester);
+      await tester.tap(find.text('Info buku'));
+      await tester.pumpAndSettle();
+      expect(
+        find.descendant(
+          of: find.byType(BookInfoSheet),
+          matching: find.text('Penulis gak ketemu'),
+        ),
+        findsOneWidget,
+      );
     });
 
     testWidgets('info sheet: Lanjut baca opens the reader', (tester) async {

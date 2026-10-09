@@ -82,6 +82,43 @@ class $BooksTable extends Books with TableInfo<$BooksTable, Book> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _originalTitleMeta = const VerificationMeta(
+    'originalTitle',
+  );
+  @override
+  late final GeneratedColumn<String> originalTitle = GeneratedColumn<String>(
+    'original_title',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _originalAuthorMeta = const VerificationMeta(
+    'originalAuthor',
+  );
+  @override
+  late final GeneratedColumn<String> originalAuthor = GeneratedColumn<String>(
+    'original_author',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _useDefaultCoverMeta = const VerificationMeta(
+    'useDefaultCover',
+  );
+  @override
+  late final GeneratedColumn<bool> useDefaultCover = GeneratedColumn<bool>(
+    'use_default_cover',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("use_default_cover" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   static const VerificationMeta _hashMeta = const VerificationMeta('hash');
   @override
   late final GeneratedColumn<String> hash = GeneratedColumn<String>(
@@ -181,6 +218,9 @@ class $BooksTable extends Books with TableInfo<$BooksTable, Book> {
     author,
     fileName,
     coverName,
+    originalTitle,
+    originalAuthor,
+    useDefaultCover,
     hash,
     parserVersion,
     totalChars,
@@ -235,6 +275,33 @@ class $BooksTable extends Books with TableInfo<$BooksTable, Book> {
       context.handle(
         _coverNameMeta,
         coverName.isAcceptableOrUnknown(data['cover_name']!, _coverNameMeta),
+      );
+    }
+    if (data.containsKey('original_title')) {
+      context.handle(
+        _originalTitleMeta,
+        originalTitle.isAcceptableOrUnknown(
+          data['original_title']!,
+          _originalTitleMeta,
+        ),
+      );
+    }
+    if (data.containsKey('original_author')) {
+      context.handle(
+        _originalAuthorMeta,
+        originalAuthor.isAcceptableOrUnknown(
+          data['original_author']!,
+          _originalAuthorMeta,
+        ),
+      );
+    }
+    if (data.containsKey('use_default_cover')) {
+      context.handle(
+        _useDefaultCoverMeta,
+        useDefaultCover.isAcceptableOrUnknown(
+          data['use_default_cover']!,
+          _useDefaultCoverMeta,
+        ),
       );
     }
     if (data.containsKey('hash')) {
@@ -340,6 +407,18 @@ class $BooksTable extends Books with TableInfo<$BooksTable, Book> {
         DriftSqlType.string,
         data['${effectivePrefix}cover_name'],
       ),
+      originalTitle: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}original_title'],
+      ),
+      originalAuthor: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}original_author'],
+      ),
+      useDefaultCover: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}use_default_cover'],
+      )!,
       hash: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}hash'],
@@ -397,6 +476,16 @@ class Book extends DataClass implements Insertable<Book> {
   /// Null = pake cover default.
   final String? coverName;
 
+  /// Judul/penulis asli EPUB, diisi sekali pas edit pertama. Null =
+  /// belum pernah diedit (`originalAuthor` null + `originalTitle` terisi =
+  /// aslinya tanpa penulis). Re-import gak boleh nimpa `title`/`author`
+  /// kalau `originalTitle` terisi.
+  final String? originalTitle;
+  final String? originalAuthor;
+
+  /// true = cover EPUB disembunyiin; `coverName` tetap utuh di DB + disk.
+  final bool useDefaultCover;
+
   /// SHA-256 isi file EPUB, cegah import dobel.
   final String? hash;
 
@@ -421,6 +510,9 @@ class Book extends DataClass implements Insertable<Book> {
     this.author,
     this.fileName,
     this.coverName,
+    this.originalTitle,
+    this.originalAuthor,
+    required this.useDefaultCover,
     this.hash,
     required this.parserVersion,
     required this.totalChars,
@@ -452,6 +544,13 @@ class Book extends DataClass implements Insertable<Book> {
     if (!nullToAbsent || coverName != null) {
       map['cover_name'] = Variable<String>(coverName);
     }
+    if (!nullToAbsent || originalTitle != null) {
+      map['original_title'] = Variable<String>(originalTitle);
+    }
+    if (!nullToAbsent || originalAuthor != null) {
+      map['original_author'] = Variable<String>(originalAuthor);
+    }
+    map['use_default_cover'] = Variable<bool>(useDefaultCover);
     if (!nullToAbsent || hash != null) {
       map['hash'] = Variable<String>(hash);
     }
@@ -488,6 +587,13 @@ class Book extends DataClass implements Insertable<Book> {
       coverName: coverName == null && nullToAbsent
           ? const Value.absent()
           : Value(coverName),
+      originalTitle: originalTitle == null && nullToAbsent
+          ? const Value.absent()
+          : Value(originalTitle),
+      originalAuthor: originalAuthor == null && nullToAbsent
+          ? const Value.absent()
+          : Value(originalAuthor),
+      useDefaultCover: Value(useDefaultCover),
       hash: hash == null && nullToAbsent ? const Value.absent() : Value(hash),
       parserVersion: Value(parserVersion),
       totalChars: Value(totalChars),
@@ -520,6 +626,9 @@ class Book extends DataClass implements Insertable<Book> {
       author: serializer.fromJson<String?>(json['author']),
       fileName: serializer.fromJson<String?>(json['fileName']),
       coverName: serializer.fromJson<String?>(json['coverName']),
+      originalTitle: serializer.fromJson<String?>(json['originalTitle']),
+      originalAuthor: serializer.fromJson<String?>(json['originalAuthor']),
+      useDefaultCover: serializer.fromJson<bool>(json['useDefaultCover']),
       hash: serializer.fromJson<String?>(json['hash']),
       parserVersion: serializer.fromJson<int>(json['parserVersion']),
       totalChars: serializer.fromJson<int>(json['totalChars']),
@@ -543,6 +652,9 @@ class Book extends DataClass implements Insertable<Book> {
       'author': serializer.toJson<String?>(author),
       'fileName': serializer.toJson<String?>(fileName),
       'coverName': serializer.toJson<String?>(coverName),
+      'originalTitle': serializer.toJson<String?>(originalTitle),
+      'originalAuthor': serializer.toJson<String?>(originalAuthor),
+      'useDefaultCover': serializer.toJson<bool>(useDefaultCover),
       'hash': serializer.toJson<String?>(hash),
       'parserVersion': serializer.toJson<int>(parserVersion),
       'totalChars': serializer.toJson<int>(totalChars),
@@ -562,6 +674,9 @@ class Book extends DataClass implements Insertable<Book> {
     Value<String?> author = const Value.absent(),
     Value<String?> fileName = const Value.absent(),
     Value<String?> coverName = const Value.absent(),
+    Value<String?> originalTitle = const Value.absent(),
+    Value<String?> originalAuthor = const Value.absent(),
+    bool? useDefaultCover,
     Value<String?> hash = const Value.absent(),
     int? parserVersion,
     int? totalChars,
@@ -578,6 +693,13 @@ class Book extends DataClass implements Insertable<Book> {
     author: author.present ? author.value : this.author,
     fileName: fileName.present ? fileName.value : this.fileName,
     coverName: coverName.present ? coverName.value : this.coverName,
+    originalTitle: originalTitle.present
+        ? originalTitle.value
+        : this.originalTitle,
+    originalAuthor: originalAuthor.present
+        ? originalAuthor.value
+        : this.originalAuthor,
+    useDefaultCover: useDefaultCover ?? this.useDefaultCover,
     hash: hash.present ? hash.value : this.hash,
     parserVersion: parserVersion ?? this.parserVersion,
     totalChars: totalChars ?? this.totalChars,
@@ -600,6 +722,15 @@ class Book extends DataClass implements Insertable<Book> {
       author: data.author.present ? data.author.value : this.author,
       fileName: data.fileName.present ? data.fileName.value : this.fileName,
       coverName: data.coverName.present ? data.coverName.value : this.coverName,
+      originalTitle: data.originalTitle.present
+          ? data.originalTitle.value
+          : this.originalTitle,
+      originalAuthor: data.originalAuthor.present
+          ? data.originalAuthor.value
+          : this.originalAuthor,
+      useDefaultCover: data.useDefaultCover.present
+          ? data.useDefaultCover.value
+          : this.useDefaultCover,
       hash: data.hash.present ? data.hash.value : this.hash,
       parserVersion: data.parserVersion.present
           ? data.parserVersion.value
@@ -633,6 +764,9 @@ class Book extends DataClass implements Insertable<Book> {
           ..write('author: $author, ')
           ..write('fileName: $fileName, ')
           ..write('coverName: $coverName, ')
+          ..write('originalTitle: $originalTitle, ')
+          ..write('originalAuthor: $originalAuthor, ')
+          ..write('useDefaultCover: $useDefaultCover, ')
           ..write('hash: $hash, ')
           ..write('parserVersion: $parserVersion, ')
           ..write('totalChars: $totalChars, ')
@@ -654,6 +788,9 @@ class Book extends DataClass implements Insertable<Book> {
     author,
     fileName,
     coverName,
+    originalTitle,
+    originalAuthor,
+    useDefaultCover,
     hash,
     parserVersion,
     totalChars,
@@ -674,6 +811,9 @@ class Book extends DataClass implements Insertable<Book> {
           other.author == this.author &&
           other.fileName == this.fileName &&
           other.coverName == this.coverName &&
+          other.originalTitle == this.originalTitle &&
+          other.originalAuthor == this.originalAuthor &&
+          other.useDefaultCover == this.useDefaultCover &&
           other.hash == this.hash &&
           other.parserVersion == this.parserVersion &&
           other.totalChars == this.totalChars &&
@@ -692,6 +832,9 @@ class BooksCompanion extends UpdateCompanion<Book> {
   final Value<String?> author;
   final Value<String?> fileName;
   final Value<String?> coverName;
+  final Value<String?> originalTitle;
+  final Value<String?> originalAuthor;
+  final Value<bool> useDefaultCover;
   final Value<String?> hash;
   final Value<int> parserVersion;
   final Value<int> totalChars;
@@ -708,6 +851,9 @@ class BooksCompanion extends UpdateCompanion<Book> {
     this.author = const Value.absent(),
     this.fileName = const Value.absent(),
     this.coverName = const Value.absent(),
+    this.originalTitle = const Value.absent(),
+    this.originalAuthor = const Value.absent(),
+    this.useDefaultCover = const Value.absent(),
     this.hash = const Value.absent(),
     this.parserVersion = const Value.absent(),
     this.totalChars = const Value.absent(),
@@ -725,6 +871,9 @@ class BooksCompanion extends UpdateCompanion<Book> {
     this.author = const Value.absent(),
     this.fileName = const Value.absent(),
     this.coverName = const Value.absent(),
+    this.originalTitle = const Value.absent(),
+    this.originalAuthor = const Value.absent(),
+    this.useDefaultCover = const Value.absent(),
     this.hash = const Value.absent(),
     required int parserVersion,
     required int totalChars,
@@ -745,6 +894,9 @@ class BooksCompanion extends UpdateCompanion<Book> {
     Expression<String>? author,
     Expression<String>? fileName,
     Expression<String>? coverName,
+    Expression<String>? originalTitle,
+    Expression<String>? originalAuthor,
+    Expression<bool>? useDefaultCover,
     Expression<String>? hash,
     Expression<int>? parserVersion,
     Expression<int>? totalChars,
@@ -762,6 +914,9 @@ class BooksCompanion extends UpdateCompanion<Book> {
       if (author != null) 'author': author,
       if (fileName != null) 'file_name': fileName,
       if (coverName != null) 'cover_name': coverName,
+      if (originalTitle != null) 'original_title': originalTitle,
+      if (originalAuthor != null) 'original_author': originalAuthor,
+      if (useDefaultCover != null) 'use_default_cover': useDefaultCover,
       if (hash != null) 'hash': hash,
       if (parserVersion != null) 'parser_version': parserVersion,
       if (totalChars != null) 'total_chars': totalChars,
@@ -781,6 +936,9 @@ class BooksCompanion extends UpdateCompanion<Book> {
     Value<String?>? author,
     Value<String?>? fileName,
     Value<String?>? coverName,
+    Value<String?>? originalTitle,
+    Value<String?>? originalAuthor,
+    Value<bool>? useDefaultCover,
     Value<String?>? hash,
     Value<int>? parserVersion,
     Value<int>? totalChars,
@@ -798,6 +956,9 @@ class BooksCompanion extends UpdateCompanion<Book> {
       author: author ?? this.author,
       fileName: fileName ?? this.fileName,
       coverName: coverName ?? this.coverName,
+      originalTitle: originalTitle ?? this.originalTitle,
+      originalAuthor: originalAuthor ?? this.originalAuthor,
+      useDefaultCover: useDefaultCover ?? this.useDefaultCover,
       hash: hash ?? this.hash,
       parserVersion: parserVersion ?? this.parserVersion,
       totalChars: totalChars ?? this.totalChars,
@@ -834,6 +995,15 @@ class BooksCompanion extends UpdateCompanion<Book> {
     }
     if (coverName.present) {
       map['cover_name'] = Variable<String>(coverName.value);
+    }
+    if (originalTitle.present) {
+      map['original_title'] = Variable<String>(originalTitle.value);
+    }
+    if (originalAuthor.present) {
+      map['original_author'] = Variable<String>(originalAuthor.value);
+    }
+    if (useDefaultCover.present) {
+      map['use_default_cover'] = Variable<bool>(useDefaultCover.value);
     }
     if (hash.present) {
       map['hash'] = Variable<String>(hash.value);
@@ -872,6 +1042,9 @@ class BooksCompanion extends UpdateCompanion<Book> {
           ..write('author: $author, ')
           ..write('fileName: $fileName, ')
           ..write('coverName: $coverName, ')
+          ..write('originalTitle: $originalTitle, ')
+          ..write('originalAuthor: $originalAuthor, ')
+          ..write('useDefaultCover: $useDefaultCover, ')
           ..write('hash: $hash, ')
           ..write('parserVersion: $parserVersion, ')
           ..write('totalChars: $totalChars, ')
@@ -4805,6 +4978,9 @@ typedef $$BooksTableCreateCompanionBuilder = BooksCompanion Function({
   Value<String?> author,
   Value<String?> fileName,
   Value<String?> coverName,
+  Value<String?> originalTitle,
+  Value<String?> originalAuthor,
+  Value<bool> useDefaultCover,
   Value<String?> hash,
   required int parserVersion,
   required int totalChars,
@@ -4822,6 +4998,9 @@ typedef $$BooksTableUpdateCompanionBuilder = BooksCompanion Function({
   Value<String?> author,
   Value<String?> fileName,
   Value<String?> coverName,
+  Value<String?> originalTitle,
+  Value<String?> originalAuthor,
+  Value<bool> useDefaultCover,
   Value<String?> hash,
   Value<int> parserVersion,
   Value<int> totalChars,
@@ -4956,6 +5135,21 @@ class $$BooksTableFilterComposer extends Composer<_$AppDatabase, $BooksTable> {
 
   ColumnFilters<String> get coverName => $composableBuilder(
     column: $table.coverName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get originalTitle => $composableBuilder(
+    column: $table.originalTitle,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get originalAuthor => $composableBuilder(
+    column: $table.originalAuthor,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get useDefaultCover => $composableBuilder(
+    column: $table.useDefaultCover,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -5144,6 +5338,21 @@ class $$BooksTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get originalTitle => $composableBuilder(
+    column: $table.originalTitle,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get originalAuthor => $composableBuilder(
+    column: $table.originalAuthor,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get useDefaultCover => $composableBuilder(
+    column: $table.useDefaultCover,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get hash => $composableBuilder(
     column: $table.hash,
     builder: (column) => ColumnOrderings(column),
@@ -5217,6 +5426,21 @@ class $$BooksTableAnnotationComposer
 
   GeneratedColumn<String> get coverName =>
       $composableBuilder(column: $table.coverName, builder: (column) => column);
+
+  GeneratedColumn<String> get originalTitle => $composableBuilder(
+    column: $table.originalTitle,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get originalAuthor => $composableBuilder(
+    column: $table.originalAuthor,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get useDefaultCover => $composableBuilder(
+    column: $table.useDefaultCover,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<String> get hash =>
       $composableBuilder(column: $table.hash, builder: (column) => column);
@@ -5395,6 +5619,9 @@ class $$BooksTableTableManager
                 Value<String?> author = const Value.absent(),
                 Value<String?> fileName = const Value.absent(),
                 Value<String?> coverName = const Value.absent(),
+                Value<String?> originalTitle = const Value.absent(),
+                Value<String?> originalAuthor = const Value.absent(),
+                Value<bool> useDefaultCover = const Value.absent(),
                 Value<String?> hash = const Value.absent(),
                 Value<int> parserVersion = const Value.absent(),
                 Value<int> totalChars = const Value.absent(),
@@ -5411,6 +5638,9 @@ class $$BooksTableTableManager
                 author: author,
                 fileName: fileName,
                 coverName: coverName,
+                originalTitle: originalTitle,
+                originalAuthor: originalAuthor,
+                useDefaultCover: useDefaultCover,
                 hash: hash,
                 parserVersion: parserVersion,
                 totalChars: totalChars,
@@ -5429,6 +5659,9 @@ class $$BooksTableTableManager
                 Value<String?> author = const Value.absent(),
                 Value<String?> fileName = const Value.absent(),
                 Value<String?> coverName = const Value.absent(),
+                Value<String?> originalTitle = const Value.absent(),
+                Value<String?> originalAuthor = const Value.absent(),
+                Value<bool> useDefaultCover = const Value.absent(),
                 Value<String?> hash = const Value.absent(),
                 required int parserVersion,
                 required int totalChars,
@@ -5445,6 +5678,9 @@ class $$BooksTableTableManager
                 author: author,
                 fileName: fileName,
                 coverName: coverName,
+                originalTitle: originalTitle,
+                originalAuthor: originalAuthor,
+                useDefaultCover: useDefaultCover,
                 hash: hash,
                 parserVersion: parserVersion,
                 totalChars: totalChars,

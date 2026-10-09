@@ -184,7 +184,6 @@ class _BookshelfViewState extends ConsumerState<BookshelfView> {
     context,
     builder: (sheet) => BookInfoSheet(
       book: book,
-      coverFile: _cover(book.coverName),
       onRead: () {
         Navigator.of(sheet).pop();
         context.push(Routes.reader(book.id));

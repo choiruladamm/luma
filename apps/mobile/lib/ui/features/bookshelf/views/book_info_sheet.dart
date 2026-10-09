@@ -1,8 +1,7 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../data/services/file_storage.dart';
 import '../../../../domain/models/book.dart';
 import '../../../core/format.dart';
 import '../../../core/theme/stabilo_theme.dart';
@@ -13,6 +12,7 @@ import '../../../core/widgets/book_cover.dart';
 import '../../../core/widgets/buttons.dart';
 import '../../../core/widgets/sheet.dart';
 import '../view_models/bookshelf_view_model.dart';
+import 'book_edit_sheet.dart';
 
 /// Board 21 Info buku: cover + judul + progres, daftar rincian, "Lanjut baca"
 /// dan "Hapus dari rak".
@@ -20,19 +20,32 @@ class BookInfoSheet extends ConsumerWidget {
   const BookInfoSheet({
     super.key,
     required this.book,
-    this.coverFile,
     required this.onRead,
     required this.onDelete,
   });
 
+  /// Bukunya waktu sheet dibuka; dipake kalau rak belum ngirim data baru.
   final ShelfBook book;
-  final File? coverFile;
   final VoidCallback onRead;
   final VoidCallback onDelete;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final c = context.stabilo;
+    // Rak nge-stream ulang abis edit judul, jadi sheet ini ikut berubah live.
+    final book =
+        ref
+            .watch(booksStreamProvider)
+            .value
+            ?.where((b) => b.id == this.book.id)
+            .firstOrNull ??
+        this.book;
+    final coverName = book.coverName;
+    final coverFile = coverName == null
+        ? null
+        : ref.read(fileStorageProvider).cover(coverName);
+    // Judul mirip nama file (tanpa spasi, panjang) dipecah per karakter.
+    final fileLike = !book.title.contains(' ') && book.title.length >= 16;
     final info = ref.watch(bookInfoProvider(book.id)).value;
     final now = DateTime.now();
     final percent = bookSticker(
@@ -84,22 +97,26 @@ class BookInfoSheet extends ConsumerWidget {
                     Semantics(
                       header: true,
                       child: Text(
-                        book.title,
+                        fileLike ? _breakAll(book.title) : book.title,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: StabiloType.titleMd,
+                        style: fileLike
+                            ? StabiloType.titleMd.copyWith(fontSize: 19)
+                            : StabiloType.titleMd,
                       ),
                     ),
-                    if (book.author != null)
-                      Text(
-                        book.author!,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: StabiloType.body.copyWith(
-                          fontSize: 15,
-                          color: c.ink2,
-                        ),
+                    Text(
+                      book.author ?? 'Penulis gak ketemu',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: StabiloType.body.copyWith(
+                        fontSize: 15,
+                        color: book.author == null ? c.ink3 : c.ink2,
+                        fontStyle: book.author == null
+                            ? FontStyle.italic
+                            : null,
                       ),
+                    ),
                     const SizedBox(height: Space.s2),
                     Row(
                       spacing: Space.s2,
@@ -135,6 +152,32 @@ class BookInfoSheet extends ConsumerWidget {
           ),
           child: Column(
             children: [
+              InkWell(
+                onTap: () => showAppSheet<void>(
+                  context,
+                  maxHeight: 0.92,
+                  builder: (_) => BookEditSheet(bookId: book.id),
+                ),
+                child: Container(
+                  constraints: const BoxConstraints(minHeight: Layout.touch),
+                  decoration: BoxDecoration(
+                    border: Border(bottom: BorderSide(color: c.track)),
+                  ),
+                  child: Row(
+                    spacing: Space.s3 - 2,
+                    children: [
+                      AppIcon(AppIcons.edit, size: 18, color: c.ink),
+                      Expanded(
+                        child: Text(
+                          'Ubah judul & penulis',
+                          style: StabiloType.label.copyWith(fontSize: 14.5),
+                        ),
+                      ),
+                      AppIcon(AppIcons.chevron, size: 18, color: c.ink2),
+                    ],
+                  ),
+                ),
+              ),
               for (final (i, (k, v)) in rows.indexed)
                 Container(
                   constraints: const BoxConstraints(minHeight: Layout.touch),
@@ -218,3 +261,7 @@ class _Bar extends StatelessWidget {
     );
   }
 }
+
+/// Flutter gak punya `word-break: break-all`: sisipin word joiner biar
+/// judul tanpa spasi bisa patah di karakter mana aja.
+String _breakAll(String s) => s.split('').join('\u200B');

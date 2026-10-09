@@ -14,6 +14,9 @@ class AppField extends StatefulWidget {
     required this.label,
     required this.controller,
     this.helper,
+    this.hint,
+    this.error,
+    this.mono = true,
     this.secret = false,
     this.onChanged,
     this.onSubmitted,
@@ -24,6 +27,15 @@ class AppField extends StatefulWidget {
   final String label;
   final TextEditingController controller;
   final String? helper;
+
+  /// Placeholder waktu kosong.
+  final String? hint;
+
+  /// Non-null = garis merah + pesan (ikon alert) gantiin [helper].
+  final String? error;
+
+  /// false = teks biasa (judul, nama), bukan font mono kayak API key.
+  final bool mono;
   final bool secret;
   final ValueChanged<String>? onChanged;
   final ValueChanged<String>? onSubmitted;
@@ -59,7 +71,10 @@ class _AppFieldState extends State<AppField> {
           decoration: BoxDecoration(
             color: c.sheet,
             borderRadius: BorderRadius.circular(Radii.field),
-            border: Border.all(color: c.fieldLine, width: Layout.outline),
+            border: Border.all(
+              color: widget.error != null ? c.danger : c.fieldLine,
+              width: Layout.outline,
+            ),
           ),
           child: Row(
             spacing: Space.s1,
@@ -76,8 +91,15 @@ class _AppFieldState extends State<AppField> {
                     onChanged: widget.onChanged,
                     onSubmitted: widget.onSubmitted,
                     cursorColor: c.ink,
-                    style: StabiloType.mono.copyWith(color: c.ink),
-                    decoration: const InputDecoration.collapsed(hintText: ''),
+                    style: (widget.mono ? StabiloType.mono : StabiloType.body)
+                        .copyWith(
+                          color: c.ink,
+                          fontWeight: widget.mono ? null : FontWeight.w600,
+                        ),
+                    decoration: InputDecoration.collapsed(
+                      hintText: widget.hint ?? '',
+                      hintStyle: TextStyle(color: c.ink3),
+                    ),
                   ),
                 ),
               ),
@@ -103,7 +125,26 @@ class _AppFieldState extends State<AppField> {
             ],
           ),
         ),
-        if (widget.helper != null)
+        if (widget.error != null)
+          Semantics(
+            liveRegion: true,
+            child: Row(
+              spacing: Space.s1 + 2,
+              children: [
+                AppIcon(AppIcons.alert, size: 16, color: c.danger),
+                Expanded(
+                  child: Text(
+                    widget.error!,
+                    style: StabiloType.caption.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: c.danger,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          )
+        else if (widget.helper != null)
           Text(
             widget.helper!,
             style: StabiloType.caption.copyWith(color: c.ink2),

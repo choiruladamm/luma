@@ -68,7 +68,18 @@ class BookInfo {
     required this.fileName,
     required this.fileBytes,
     required this.translated,
+    this.originalTitle,
+    this.originalAuthor,
+    this.epubCoverName,
+    this.useDefaultCover = false,
   });
+
+  /// Judul/penulis asli EPUB; null = belum pernah diedit.
+  final String? originalTitle, originalAuthor;
+
+  /// `coverName` mentah (tetap ada walau cover default dipake).
+  final String? epubCoverName;
+  final bool useDefaultCover;
 
   final DateTime? lastOpenedAt;
   final DateTime createdAt;
