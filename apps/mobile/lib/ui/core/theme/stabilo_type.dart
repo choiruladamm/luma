@@ -39,6 +39,14 @@ abstract final class StabiloType {
     fontWeight: FontWeight.w700,
     letterSpacing: -0.01 * 19,
   );
+
+  /// Judul header sheet bertumpuk (Ubah judul & penulis).
+  static const titleXs = TextStyle(
+    fontFamily: ui,
+    fontSize: 16,
+    height: 20 / 16,
+    fontWeight: FontWeight.w700,
+  );
   static const body = TextStyle(
     fontFamily: ui,
     fontSize: 16,

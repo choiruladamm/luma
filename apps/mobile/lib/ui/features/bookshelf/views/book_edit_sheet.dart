@@ -76,12 +76,17 @@ class _BookEditSheetState extends ConsumerState<BookEditSheet> {
                     horizontal: Space.s1,
                     vertical: Space.s3,
                   ),
-                  child: Text('Batal', style: StabiloType.label),
+                  child: Text(
+                    'Batal',
+                    style: StabiloType.label.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
               ),
               Semantics(
                 header: true,
-                child: Text('Ubah judul & penulis', style: StabiloType.titleMd),
+                child: Text('Ubah judul & penulis', style: StabiloType.titleXs),
               ),
               AppButton.primary(
                 label: 'Simpan',
