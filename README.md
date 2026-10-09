@@ -13,22 +13,13 @@
 <table>
   <tr>
     <td align="center">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="docs/images/rak-dark.png">
-      <img src="docs/images/rak.png" alt="Rak buku" width="250">
-    </picture>
+    <img src="docs/images/rak.png" alt="Rak buku" width="250">
     </td>
     <td align="center">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="docs/images/arti-dark.png">
-      <img src="docs/images/arti.png" alt="Sheet terjemahan dan makna" width="250">
-    </picture>
+    <img src="docs/images/arti.png" alt="Sheet terjemahan dan makna" width="250">
     </td>
     <td align="center">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="docs/images/bedahin-dark.png">
-      <img src="docs/images/bedahin.png" alt="Layar Bedahin" width="250">
-    </picture>
+    <img src="docs/images/bedahin.png" alt="Layar Bedahin" width="250">
     </td>
   </tr>
 </table>
