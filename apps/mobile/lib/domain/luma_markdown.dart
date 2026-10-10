@@ -76,7 +76,8 @@ ParsedMarkdown parseLumaMarkdown(String source, {String? fileName}) {
   }
 
   final name = fileName == null ? null : _fileStem(fileName);
-  final book = front['book'] ?? h1 ?? (name == null ? null : _titleCase(name));
+  final book =
+      front['book'] ?? h1 ?? (name == null ? null : _bookFromName(name));
   final chapter = _chapter(front['chapter']) ?? _chapterFromName(name);
   final slug = slugify(book ?? '');
   return ParsedMarkdown(
@@ -227,10 +228,18 @@ String _titleCase(String stem) => stem
 
 int? _chapter(String? s) => s == null ? null : int.tryParse(s);
 
+// Kata utuh, bukan potongan: "catch-22" bukan bab 22.
 final _chapterName = RegExp(
-  r'(?:bab|chapter|chap|ch)[\s_-]*0*(\d+)',
+  r'(?<![a-z])(?:bab|chapter|chap|ch)[\s_-]*0*(\d+)',
   caseSensitive: false,
 );
+
+/// Judul buku dari nama file tanpa token bab: "bab-1-deep-work" → "Deep Work".
+/// Isinya cuma token bab ("bab-3") → nama file utuh.
+String _bookFromName(String stem) {
+  final rest = _titleCase(stem.replaceFirst(_chapterName, ' '));
+  return rest.isEmpty ? _titleCase(stem) : rest;
+}
 
 int? _chapterFromName(String? stem) {
   if (stem == null) return null;

@@ -106,12 +106,32 @@ void main() {
       expect(m.chapter, 7);
     });
 
-    test('gak ada heading: judul dari nama file', () {
+    test('gak ada heading: judul dari nama file, tanpa token bab', () {
       final m = parseLumaMarkdown('Isi.', fileName: 'atomic-habits-bab3.md');
-      expect(m.book, 'Atomic Habits Bab3');
-      expect(m.bookKey, 'atomic-habits-bab3');
+      expect(m.book, 'Atomic Habits');
+      expect(m.bookKey, 'atomic-habits');
       expect(m.chapter, 3);
       expect(m.chapterTitle, isNull);
+    });
+
+    test('bab di depan nama file: bab beda, buku sama', () {
+      for (final (f, n) in [
+        ('bab-1-deep-work.md', 1),
+        ('Chapter_02_Deep_Work.md', 2),
+      ]) {
+        final m = parseLumaMarkdown('Isi.', fileName: f);
+        expect((m.book, m.bookKey, m.chapter), ('Deep Work', 'deep-work', n));
+      }
+    });
+
+    test('nama file cuma token bab: balik ke nama file utuh', () {
+      final m = parseLumaMarkdown('Isi.', fileName: 'bab-3.md');
+      expect((m.book, m.chapter), ('Bab 3', 3));
+    });
+
+    test('"ch" di tengah kata bukan nomor bab', () {
+      final m = parseLumaMarkdown('Isi.', fileName: 'catch-22.md');
+      expect((m.book, m.chapter), ('Catch 22', null));
     });
 
     test('nomor bab dari nama file', () {

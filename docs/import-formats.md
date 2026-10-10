@@ -78,9 +78,9 @@ Tidak ada satu pun paragraf bacaan (cuma heading, atau kosong) → error "Fileny
 
 | Field | Tebakan |
 |-------|---------|
-| Judul buku | `#` pertama; kalau tidak ada, nama file (`atomic-habits-bab3.md` → "Atomic Habits Bab3") |
+| Judul buku | `#` pertama; kalau tidak ada, nama file tanpa token bab (`bab-1-deep-work.md` dan `deep-work-bab3.md` → "Deep Work") |
 | Judul bab | Heading pertama; kalau tidak ada, "Bab N" |
-| Nomor bab | Angka di nama file (`bab3`, `chapter-07`, `ch12`); kalau tidak ada, bab terakhir buku itu + 1 (buku baru: 1) |
+| Nomor bab | Angka di nama file (`bab3`, `chapter-07`, `ch12`; "ch" di tengah kata seperti `catch-22` tidak dihitung); kalau tidak ada, bab terakhir buku itu + 1 (buku baru: 1) |
 | `book_key` | Slug dari judul buku (judul tanpa huruf latin: penanda waktu) |
 
 Semua boleh diubah di sheet.
@@ -157,7 +157,9 @@ Catatan:
 
 ## Import PDF
 
-PDF tidak dibaca langsung. Convert ke Markdown di luar app, lalu import. **Belum diuji dengan PDF asli** (#78): hasil di bawah bergantung pada PDF-nya.
+PDF tidak dibaca langsung. Convert ke Markdown di luar app, lalu import.
+
+Jalur ini diuji dengan **PDF buatan sendiri** (4 halaman, 2 bab, ada header halaman dan nomor halaman), bukan PDF terbitan asli. Layout asli (kolom ganda, catatan kaki, scan) hampir pasti lebih berantakan; catat temuannya di [ideas/raw.md](ideas/raw.md).
 
 ### Docling
 
@@ -173,10 +175,18 @@ Perintahnya `docling <sumber> --to md --output <folder>`. `--no-ocr` mempercepat
 
 Alternatif yang sama-sama mengubah PDF jadi Markdown. Cara pakainya belum diverifikasi di sini; cek dokumentasi resminya sebelum dipakai.
 
+### Yang kejadian di uji Docling
+
+- **Satu PDF = satu `.md`.** Dua bab keluar bersambung di satu file, tidak dipisah.
+- **Header halaman yang berulang jadi heading `##`** (judul buku, 3 kali, satu muncul di tengah adegan). Hapus manual.
+- **Nomor halaman hilang sendiri.**
+- Pemisah adegan keluar `* * *` (terbaca), list jadi `- `, miring/tebal hilang.
+- **Tanpa `#`**: semua heading `##`, jadi judul buku ditebak dari nama file, bukan dari isi.
+
 ### Setelah convert
 
-1. **Pecah per bab.** Luma menerima satu bab per file. Satu `.md` besar berisi seluruh buku masuk sebagai satu bab, jadi potong per bab dulu di editor, dan beri nama `bab-1-judul.md`, `bab-2-judul.md`, dst. supaya nomor bab ketebak dari nama file.
-2. **Cek hasilnya.** Yang sering berantakan: nomor halaman dan header/footer ikut jadi paragraf, kata terpotong tanda hubung (`kon-\ntinu`), kolom ganda tercampur, daftar isi jadi paragraf. Parser membuang gambar, tabel, dan blok kode, tapi tidak bisa menebak sampah teks.
+1. **Pecah per bab.** Luma menerima satu bab per file. Satu `.md` besar berisi seluruh buku masuk sebagai satu bab, jadi potong per bab dulu di editor, dan beri nama `bab-1-judul-buku.md`, `bab-2-judul-buku.md`, dst. Nomor bab dan judul buku (bagian setelah "bab-N") ketebak dari nama file, jadi semua bab otomatis masuk ke buku yang sama.
+2. **Cek hasilnya.** Yang sering berantakan: header/footer berulang ikut jadi paragraf atau heading, kata terpotong tanda hubung (`kon-\ntinu`), kolom ganda tercampur, daftar isi jadi paragraf. Parser membuang gambar, tabel, dan blok kode, tapi tidak bisa menebak sampah teks.
 3. **(Opsional) frontmatter** di atas tiap file supaya sheet dilewati.
 4. Import. Kalau satu bab kebanyakan sampah, buka file-nya, rapikan, lalu import ulang dengan nomor bab yang sama ("Ganti").
 
