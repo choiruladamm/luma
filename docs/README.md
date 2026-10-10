@@ -16,8 +16,8 @@
 | [llm.md](llm.md) | OpenRouter, model, aturan implementasi, prompt, Bedahin |
 | [llm-evals.md](llm-evals.md) | Hasil spike & evaluasi (#34, #41, #28, #61) |
 | [backup.md](backup.md) | Backup & restore |
+| [import-formats.md](import-formats.md) | Import Luma Markdown (foto buku fisik) & PDF lewat Markdown |
 | [ideas/recap.md](ideas/recap.md) | Iterasi 2: Recap bacaan |
-| [ideas/import-formats.md](ideas/import-formats.md) | Ide: Luma Markdown, foto buku fisik, PDF |
 | [ideas/raw.md](ideas/raw.md) | Catatan & ide raw dari dogfooding |
 
 ---
@@ -64,7 +64,7 @@ Mengubah alur di atas menjadi **satu tap**: tap paragraf → langsung muncul ter
 ## Di luar scope MVP (iterasi berikutnya)
 
 - **Recap bacaan**: terjemahan + makna semua yang sudah dibaca, plus overview "sejauh ini" → **Iterasi 2, lihat [recap.md](ideas/recap.md)**
-- Import **Luma Markdown** (hasil foto buku fisik, dikonversi di luar app) + support PDF & format lain → **ide kasar, lihat [import-formats.md](ideas/import-formats.md)**
+- Import **Luma Markdown** + PDF lewat Markdown sudah jalan setelah MVP → lihat [import-formats.md](import-formats.md). Format lain (TXT, HTML, MOBI) belum.
 - "Open in" dari app Files / share sheet iOS
 - Backend proxy untuk API key (wajib kalau app dirilis ke orang lain)
 - Highlight, catatan, bookmark

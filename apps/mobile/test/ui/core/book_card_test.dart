@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:luma/domain/models/markdown_shelf.dart';
 import 'package:luma/ui/core/widgets/book_card.dart';
+import 'package:luma/ui/core/widgets/chapter_slots.dart';
 
 import '../../app.dart';
 
@@ -15,6 +17,83 @@ void main() {
     expect(s(0.999), '99%');
     expect(s(1), '99%'); // only the last page makes it "Kelar!"
     expect(s(0.7, finished: true), 'Kelar!');
+  });
+
+  test(
+    'markdown sticker: "N bab" replaces the percent, "Baru" still first',
+    () {
+      String s({required bool opened, int? chapters}) => bookSticker(
+        progress: 0.5,
+        opened: opened,
+        finished: false,
+        chapters: chapters,
+      );
+      expect(s(opened: true, chapters: 3), '3 bab');
+      expect(s(opened: false, chapters: 3), 'Baru');
+      expect(s(opened: true), '50%');
+    },
+  );
+
+  for (final b in Brightness.values) {
+    testWidgets('markdown card: strip + "3 bab", no percent ($b)', (
+      tester,
+    ) async {
+      final handle = tester.ensureSemantics();
+      await pumpApp(
+        tester,
+        SizedBox(
+          width: 105,
+          child: BookCard(
+            title: 'Atomic Habits',
+            progress: 0.4,
+            opened: true,
+            finished: false,
+            markdown: const MarkdownShelf(
+              chapters: [1, 3, 7],
+              current: 3,
+              fraction: 0.4,
+            ),
+          ),
+        ),
+        brightness: b,
+      );
+      expect(find.text('3 bab'), findsOneWidget);
+      expect(find.text('40%'), findsNothing);
+      expect(find.byType(ChapterSlots), findsOneWidget);
+      expect(
+        find.bySemanticsLabel(
+          'Atomic Habits, 3 bab, bab 1 udah dibaca, lagi baca bab 3',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        tester.getSize(find.byType(BookCard)).height,
+        BookCard.heightFor(105), // card height does not change
+      );
+      expect(tester.takeException(), isNull);
+      handle.dispose();
+    });
+  }
+
+  testWidgets('markdown card, never opened: "Baru", strip stays', (
+    tester,
+  ) async {
+    await pumpApp(
+      tester,
+      const SizedBox(
+        width: 105,
+        child: BookCard(
+          title: 'Deep Work',
+          progress: 0,
+          opened: false,
+          finished: false,
+          markdown: MarkdownShelf(chapters: [1]),
+        ),
+      ),
+    );
+    expect(find.text('Baru'), findsOneWidget);
+    expect(find.text('1 bab'), findsNothing);
+    expect(find.byType(ChapterSlots), findsOneWidget);
   });
 
   Widget card({VoidCallback? onTap, VoidCallback? onLongPress}) => SizedBox(

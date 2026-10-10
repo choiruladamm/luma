@@ -44,6 +44,8 @@ abstract final class Layout {
   static const shelfGapY = 24.0; // board Rak: stiker nongol 11 di bawah cover
   static const rowHeight = 84.0; // tampilan list
   static const rowGap = 4.0;
+  static const chapterBarGap = 3.0; // jarak slot strip bab di list
+  static const chapterBarHeight = 4.0; // tinggi bar progres di list
   static const barMin = 44.0; // header rak pas nyusut (maks = topBar)
   static const barShrink = 52.0; // jarak scroll buat nyusut penuh
   static const coverAspect = 2 / 3;
@@ -55,6 +57,14 @@ abstract final class Layout {
     ((width + shelfGapX) / (shelfMinCard + shelfGapX)).floor(),
   );
   static const sheetPadding = EdgeInsets.fromLTRB(24, 10, 24, 34);
+
+  // Sheet "Masuk ke buku mana?" (board Import Markdown).
+  static const pickRow = 62.0; // cover 48 + 2 × 7
+  static const pickCover = 48.0; // tinggi cover mini di baris
+  static const pickRadio = 24.0;
+  static const pickFade = 28.0; // fade list yang ngintip
+  static const pickVisibleRows = 3; // baris keliatan penuh, sisanya scroll
+  static const pickSheetHeight = 1 - 72 / 844; // top sheet 72 di layar 844
 
   // Sheet Artinya (board Ngumpet pas scroll, layar 844).
   static const artinyaHeight = 528 / 844; // fraksi layar, tetap di semua state
@@ -118,6 +128,7 @@ abstract final class Motion {
   static const importSettle = Duration(milliseconds: 300); // jeda di 100%
   static const contentFade = Duration(milliseconds: 200); // isi bab muncul
   static const toast = Duration(milliseconds: 2500); // ilang sendiri
+  static const toastBaca = Duration(seconds: 5); // toast import Markdown + Baca
   static const toastLong = Duration(
     seconds: 6,
   ); // toast yang ada catatan + aksi

@@ -43,6 +43,7 @@ class AppButton extends StatelessWidget {
     this.icon,
     this.iconAfter = false,
     this.height = 52,
+    this.loading = false,
   }) : _tone = _Tone.primary,
        destructive = false;
 
@@ -54,6 +55,7 @@ class AppButton extends StatelessWidget {
     this.iconAfter = false,
     this.height = 52,
     this.destructive = false,
+    this.loading = false,
   }) : _tone = _Tone.secondary;
 
   const AppButton.danger({
@@ -63,6 +65,7 @@ class AppButton extends StatelessWidget {
     this.icon,
     this.iconAfter = false,
     this.height = 48,
+    this.loading = false,
   }) : _tone = _Tone.danger,
        destructive = true;
 
@@ -74,12 +77,15 @@ class AppButton extends StatelessWidget {
   final bool iconAfter;
   final double height;
   final bool destructive;
+
+  /// Spinner gantiin teks, lebar tetap, gak bisa di-tap.
+  final bool loading;
   final _Tone _tone;
 
   @override
   Widget build(BuildContext context) {
     final c = context.stabilo;
-    final enabled = onPressed != null;
+    final enabled = onPressed != null && !loading;
     final primary = _tone == _Tone.primary;
     final radius = BorderRadius.circular(height >= 56 ? Radii.lg : Radii.full);
 
@@ -111,37 +117,56 @@ class AppButton extends StatelessWidget {
           ),
           clipBehavior: Clip.antiAlias,
           child: InkWell(
-            onTap: onPressed,
+            onTap: enabled ? onPressed : null,
             child: SizedBox(
               height: height,
               child: Padding(
                 padding: EdgeInsets.symmetric(
                   horizontal: height >= 56 ? Space.s6 : Space.s4,
                 ),
-                child: IconTheme.merge(
-                  data: IconThemeData(color: fg),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    spacing: Space.s2,
-                    children: [
-                      if (icon != null && !iconAfter)
-                        AppIcon(icon!, size: fontSize + 4),
-                      Flexible(
-                        child: Text(
-                          label,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: StabiloType.label.copyWith(
-                            fontSize: fontSize,
-                            color: fg,
-                          ),
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Visibility(
+                      visible: !loading,
+                      maintainSize: true,
+                      maintainAnimation: true,
+                      maintainState: true,
+                      child: IconTheme.merge(
+                        data: IconThemeData(color: fg),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          spacing: Space.s2,
+                          children: [
+                            if (icon != null && !iconAfter)
+                              AppIcon(icon!, size: fontSize + 4),
+                            Flexible(
+                              child: Text(
+                                label,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: StabiloType.label.copyWith(
+                                  fontSize: fontSize,
+                                  color: fg,
+                                ),
+                              ),
+                            ),
+                            if (icon != null && iconAfter)
+                              AppIcon(icon!, size: fontSize + 4),
+                          ],
                         ),
                       ),
-                      if (icon != null && iconAfter)
-                        AppIcon(icon!, size: fontSize + 4),
-                    ],
-                  ),
+                    ),
+                    if (loading)
+                      SizedBox.square(
+                        dimension: fontSize + 4,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.5,
+                          color: fg,
+                        ),
+                      ),
+                  ],
                 ),
               ),
             ),

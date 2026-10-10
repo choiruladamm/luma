@@ -2,14 +2,14 @@
 
 Prinsip: **file diparse sekali saat import** ke format internal. Reader, AI, dan Recap hanya membaca tabel di bawah, tidak pernah parse file ulang.
 
-> **Keputusan penting: ID chapter stabil.** Chapter bisa masuk tidak berurutan (mis. import Markdown chapter 3, lalu 7, lalu 5; lihat [import-formats.md](ideas/import-formats.md)). Karena itu semua tabel lain menunjuk ke `chapters.id` (stabil), **bukan** ke posisi/urutan chapter. Urutan tampil diatur kolom `sortOrder`.
+> **Keputusan penting: ID chapter stabil.** Chapter bisa masuk tidak berurutan (mis. import Markdown chapter 3, lalu 7, lalu 5; lihat [import-formats.md](import-formats.md)). Karena itu semua tabel lain menunjuk ke `chapters.id` (stabil), **bukan** ke posisi/urutan chapter. Urutan tampil diatur kolom `sortOrder`.
 
 ## `books`
 
 | Kolom | Tipe | Catatan |
 |-------|------|---------|
 | id | int (PK) | |
-| sourceType | text | `epub` (MVP) / `markdown` (nanti) |
+| sourceType | text | `epub` / `markdown` |
 | bookKey | text? (unique) | Slug untuk mencocokkan import Markdown ke buku yang sama (mis. `atomic-habits`). Null untuk EPUB |
 | title | text | |
 | author | text? | |

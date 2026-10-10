@@ -28,6 +28,26 @@ void main() {
     });
   }
 
+  testWidgets('loading: spinner, same width, no taps', (tester) async {
+    var taps = 0;
+    Widget button({required bool loading}) => Center(
+      child: AppButton.danger(
+        label: 'Ganti',
+        loading: loading,
+        onPressed: () => taps++,
+      ),
+    );
+    await pumpApp(tester, button(loading: false));
+    final width = tester.getSize(find.byType(AppButton)).width;
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+
+    await pumpApp(tester, button(loading: true));
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(tester.getSize(find.byType(AppButton)).width, width);
+    await tester.tap(find.byType(AppButton), warnIfMissed: false);
+    expect(taps, 0);
+  });
+
   testWidgets('circle button exposes its label, not its glyph', (tester) async {
     final handle = tester.ensureSemantics();
     await pumpApp(

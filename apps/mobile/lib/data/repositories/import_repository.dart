@@ -5,6 +5,7 @@ import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 
+import '../../domain/luma_markdown.dart';
 import '../../domain/models/book.dart';
 import '../database/app_database.dart';
 import '../services/chapter_extractor.dart';
@@ -42,6 +43,27 @@ enum ImportStage {
 class ImportCancelled implements Exception {
   const ImportCancelled();
 }
+
+/// Bab [chapter] udah ada di buku [bookId]; ulang dengan `replace: true` buat
+/// nimpa.
+class ChapterExists implements Exception {
+  const ChapterExists(this.bookId, this.chapter);
+
+  final int bookId;
+  final int chapter;
+
+  @override
+  String toString() => 'ChapterExists(book $bookId, bab $chapter)';
+}
+
+/// [created] = buku baru dibikin; [replaced] = bab lama ditimpa.
+typedef MarkdownImportResult = ({
+  int bookId,
+  int chapterId,
+  int chapter,
+  bool created,
+  bool replaced,
+});
 
 /// Dua isolate biar tahap [ImportStage.outline] → [ImportStage.chapters]
 /// keliatan di UI. [onChapters] = progres per chapter dari isolate ke-2.
@@ -176,6 +198,149 @@ class ImportRepository {
       await _storage.deleteBookFiles(fileName: bookFile, coverName: coverFile);
       rethrow;
     }
+  }
+
+  /// Import satu bab Luma Markdown (docs/ideas/import-formats.md, Logika
+  /// import). Buku tujuan: [bookId] kalau ada, kalau enggak yang `book_key`-nya
+  /// = [bookKey], kalau belum ada dibikin baru dengan [bookTitle] / [author].
+  /// [chapter] null = bab terakhir + 1.
+  ///
+  /// Lempar [ChapterExists] kalau nomornya udah ada dan [replace] mati.
+  /// Ganti bab dikerjain di tempat (id bab tetap): isi paragraf + hasil AI bab
+  /// itu dibuang, tapi sesi baca dan statistiknya gak ikut hilang.
+  Future<MarkdownImportResult> importMarkdown(
+    ParsedMarkdown md, {
+    int? bookId,
+    required String bookKey,
+    required String bookTitle,
+    String? author,
+    int? chapter,
+    String? chapterTitle,
+    bool replace = false,
+  }) => _db.transaction(() async {
+    final byId = bookId != null;
+    final existing =
+        await (_db.select(_db.books)..where(
+              (b) => byId ? b.id.equals(bookId) : b.bookKey.equals(bookKey),
+            ))
+            .getSingleOrNull();
+    if (existing != null && existing.sourceType != SourceType.markdown) {
+      throw ArgumentError.value(existing.id, 'bookId', 'bukan buku Markdown');
+    }
+    if (byId && existing == null) {
+      throw ArgumentError.value(bookId, 'bookId', 'gak ada');
+    }
+
+    final id =
+        existing?.id ??
+        await _db
+            .into(_db.books)
+            .insert(
+              BooksCompanion.insert(
+                sourceType: SourceType.markdown,
+                bookKey: Value(bookKey),
+                title: bookTitle,
+                author: Value(author),
+                parserVersion: parserVersion,
+                totalChars: 0,
+              ),
+            );
+
+    final chapters = await (_db.select(
+      _db.chapters,
+    )..where((c) => c.bookId.equals(id))).get();
+    final number =
+        chapter ??
+        chapters.fold<int>(
+              0,
+              (m, c) => (c.chapterNumber ?? 0) > m ? c.chapterNumber! : m,
+            ) +
+            1;
+    final old = chapters.where((c) => c.chapterNumber == number).firstOrNull;
+    if (old != null && !replace) throw ChapterExists(id, number);
+
+    final title = chapterTitle ?? md.chapterTitle ?? 'Bab $number';
+    final int chapterId;
+    if (old == null) {
+      chapterId = await _db
+          .into(_db.chapters)
+          .insert(
+            ChaptersCompanion.insert(
+              bookId: id,
+              sortOrder: chapters.length, // dirapiin di _renumber
+              chapterNumber: Value(number),
+              title: title,
+              charOffset: 0,
+            ),
+          );
+    } else {
+      chapterId = old.id;
+      for (final t in ['paragraphs', 'ai_results', 'ai_breakdowns']) {
+        await _db.customStatement('DELETE FROM $t WHERE chapter_id = ?', [
+          chapterId,
+        ]);
+      }
+      await (_db.update(_db.chapters)..where((c) => c.id.equals(chapterId)))
+          .write(ChaptersCompanion(title: Value(title)));
+      // Indeks paragraf lama gak berlaku lagi buat isi baru.
+      await (_db.update(
+        _db.readingProgress,
+      )..where((r) => r.chapterId.equals(chapterId))).write(
+        const ReadingProgressCompanion(
+          paragraphIndex: Value(0),
+          paragraphOffset: Value(0),
+        ),
+      );
+    }
+
+    await _db.batch(
+      (b) => b.insertAll(_db.paragraphs, [
+        for (final (i, para) in md.paragraphs.indexed)
+          ParagraphsCompanion.insert(
+            chapterId: chapterId,
+            paragraphIndex: i,
+            groupIndex: Value(md.groups[i]),
+            type: para.type,
+            content: para.text,
+          ),
+      ]),
+    );
+    await _renumber(id);
+    return (
+      bookId: id,
+      chapterId: chapterId,
+      chapter: number,
+      created: existing == null,
+      replaced: old != null,
+    );
+  });
+
+  /// Urutan tampil dari nomor bab, `charOffset` dan `books.totalChars` dihitung
+  /// ulang (bab bisa masuk gak berurutan).
+  // ponytail: panjang bab dari SQL LENGTH (per karakter), bukan String.length
+  // Dart (per UTF-16): beda tipis cuma buat emoji, gak ngaruh ke persentase.
+  Future<void> _renumber(int bookId) async {
+    final rows = await _db
+        .customSelect(
+          'SELECT c.id, COALESCE(SUM(LENGTH(p.text)), 0) AS n '
+          'FROM chapters c LEFT JOIN paragraphs p ON p.chapter_id = c.id '
+          'WHERE c.book_id = ? GROUP BY c.id '
+          'ORDER BY c.chapter_number, c.id',
+          variables: [Variable(bookId)],
+        )
+        .get();
+    var offset = 0;
+    for (final (order, r) in rows.indexed) {
+      await (_db.update(
+        _db.chapters,
+      )..where((c) => c.id.equals(r.read('id')))).write(
+        ChaptersCompanion(sortOrder: Value(order), charOffset: Value(offset)),
+      );
+      offset += r.read<int>('n');
+    }
+    await (_db.update(_db.books)..where((b) => b.id.equals(bookId))).write(
+      BooksCompanion(totalChars: Value(offset)),
+    );
   }
 
   Future<int> _insert(

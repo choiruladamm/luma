@@ -145,7 +145,7 @@ class FakePicker implements FilePickerService {
   Future<File?> pickBackup() async => picks.isEmpty ? null : picks.removeAt(0);
 
   @override
-  Future<PickedFile?> pickEpub() => throw UnimplementedError();
+  Future<PickedFile?> pickBook() => throw UnimplementedError();
 }
 
 void main() {

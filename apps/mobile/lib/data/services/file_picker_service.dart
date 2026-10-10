@@ -4,7 +4,7 @@ import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// File EPUB yang dipilih user (masih di folder sementara picker).
+/// File EPUB / Markdown yang dipilih user (masih di folder sementara picker).
 class PickedFile {
   const PickedFile({
     required this.name,
@@ -30,11 +30,11 @@ class FilePickerService {
     return path == null ? null : File(path);
   }
 
-  /// Null = user batal milih.
-  Future<PickedFile?> pickEpub() async {
+  /// EPUB atau Luma Markdown. Null = user batal milih.
+  Future<PickedFile?> pickBook() async {
     final file = await FilePicker.pickFile(
       type: FileType.custom,
-      allowedExtensions: const ['epub'],
+      allowedExtensions: const ['epub', 'md', 'markdown'],
     );
     if (file == null) return null;
     return PickedFile(

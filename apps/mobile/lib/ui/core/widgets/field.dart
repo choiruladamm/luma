@@ -21,6 +21,8 @@ class AppField extends StatefulWidget {
     this.onChanged,
     this.onSubmitted,
     this.inputFormatters,
+    this.keyboardType,
+    this.focusNode,
     this.onClear,
   });
 
@@ -40,6 +42,8 @@ class AppField extends StatefulWidget {
   final ValueChanged<String>? onChanged;
   final ValueChanged<String>? onSubmitted;
   final List<TextInputFormatter>? inputFormatters;
+  final TextInputType? keyboardType;
+  final FocusNode? focusNode;
 
   /// Ada = tombol hapus nongol selama field ada isinya.
   final VoidCallback? onClear;
@@ -84,10 +88,12 @@ class _AppFieldState extends State<AppField> {
                   label: widget.label,
                   child: TextField(
                     controller: widget.controller,
+                    focusNode: widget.focusNode,
                     obscureText: _hidden,
                     autocorrect: !widget.secret,
                     enableSuggestions: !widget.secret,
                     inputFormatters: widget.inputFormatters,
+                    keyboardType: widget.keyboardType,
                     onChanged: widget.onChanged,
                     onSubmitted: widget.onSubmitted,
                     cursorColor: c.ink,

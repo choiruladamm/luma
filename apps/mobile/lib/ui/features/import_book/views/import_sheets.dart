@@ -5,6 +5,7 @@ import 'package:hugeicons/hugeicons.dart';
 import '../../../../data/repositories/import_repository.dart';
 import '../../../../data/services/epub_parser.dart';
 import '../../../../data/services/file_storage.dart';
+import '../../../../domain/luma_markdown.dart';
 import '../../../../domain/models/book.dart';
 import '../../../core/format.dart';
 import '../../../core/theme/stabilo_theme.dart';
@@ -415,11 +416,93 @@ class ImportFailedSheet extends StatelessWidget {
   }
 }
 
+/// Board Import Markdown 6a–6d: file kosong, header salah, atau gak kebaca.
+class ImportMarkdownFailedSheet extends StatelessWidget {
+  const ImportMarkdownFailedSheet({
+    super.key,
+    required this.failed,
+    required this.onRetry,
+  });
+
+  final ImportMarkdownFailed failed;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.stabilo;
+    final copy = failed.copy;
+    return Semantics(
+      liveRegion: true,
+      child: SheetFrame(
+        actions: [
+          AppButton.secondary(
+            label: 'Tutup',
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          Expanded(
+            child: AppButton.primary(label: 'Coba lagi', onPressed: onRetry),
+          ),
+        ],
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _Tile(
+                color: c.pink,
+                size: 52,
+                radius: Radii.menu,
+                child: AppIcon(
+                  switch (failed.error) {
+                    LumaMarkdownError.empty => AppIcons.fileRemove,
+                    LumaMarkdownError.badFrontmatter => AppIcons.alert,
+                    LumaMarkdownError.unreadable =>
+                      HugeIcons.strokeRoundedFileCorrupt,
+                  },
+                  size: 26,
+                  color: c.onPink,
+                ),
+              ),
+              const Spacer(),
+              CircleButton(
+                semanticLabel: 'Tutup',
+                icon: AppIcons.close,
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+            ],
+          ),
+          _Heading(copy.title, copy.body, code: copy.code, tail: copy.tail),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Container(
+              height: 26,
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: c.muted,
+                borderRadius: BorderRadius.circular(Space.s2),
+              ),
+              child: Text(
+                copy.chip,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: StabiloType.mono.copyWith(fontSize: 12, color: c.ink2),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _Heading extends StatelessWidget {
-  const _Heading(this.title, this.body);
+  const _Heading(this.title, this.body, {this.code, this.tail});
 
   final String title;
   final String body;
+
+  /// Contoh format (mono) + lanjutan kalimat di belakang [body].
+  final String? code, tail;
 
   @override
   Widget build(BuildContext context) {
@@ -428,8 +511,21 @@ class _Heading extends StatelessWidget {
       spacing: Space.s2,
       children: [
         Semantics(header: true, child: Text(title, style: StabiloType.titleMd)),
-        Text(
-          body,
+        Text.rich(
+          TextSpan(
+            text: body,
+            children: [
+              if (code != null)
+                TextSpan(
+                  text: code,
+                  style: StabiloType.mono.copyWith(
+                    fontSize: 14,
+                    color: context.stabilo.ink,
+                  ),
+                ),
+              if (tail != null) TextSpan(text: tail),
+            ],
+          ),
           style: StabiloType.readingSheet.copyWith(
             fontFamily: StabiloType.ui,
             color: context.stabilo.ink2,

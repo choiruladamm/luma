@@ -5,6 +5,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../domain/models/markdown_shelf.dart';
 import '../theme/stabilo_theme.dart';
 import '../theme/stabilo_tokens.dart';
 import '../theme/stabilo_type.dart';
@@ -15,14 +16,17 @@ import 'buttons.dart';
 ///
 /// - belum pernah dibuka → "Baru" (pink)
 /// - [finished] → "Kelar!" (kuning + centang)
+/// - [chapters] (buku Markdown) → "N bab" gantiin persen
 /// - selain itu → persen, dibulatin ke bawah, 0,4% tetep 1%, maks 99%
 String bookSticker({
   required double progress,
   required bool opened,
   required bool finished,
+  int? chapters,
 }) {
   if (finished) return 'Kelar!';
   if (!opened) return 'Baru';
+  if (chapters != null) return '$chapters bab';
   if (progress <= 0) return '0%';
   return '${math.min(99, math.max(1, (progress * 100).floor()))}%';
 }
@@ -39,6 +43,7 @@ class BookCard extends StatefulWidget {
     required this.progress,
     required this.opened,
     required this.finished,
+    this.markdown,
     this.onTap,
     this.onLongPress,
   }) : importing = false;
@@ -51,6 +56,7 @@ class BookCard extends StatefulWidget {
       progress = 0,
       opened = false,
       finished = false,
+      markdown = null,
       onTap = null,
       onLongPress = null,
       importing = true;
@@ -63,6 +69,9 @@ class BookCard extends StatefulWidget {
   final double progress;
   final bool opened;
   final bool finished;
+
+  /// Buku Markdown: strip bab + "N bab" gantiin pita dan persen.
+  final MarkdownShelf? markdown;
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
   final bool importing;
@@ -137,7 +146,9 @@ class _BookCardState extends State<BookCard> {
         }
         return Semantics(
           button: true,
-          label: widget.title,
+          label: widget.markdown?.semanticLabel(widget.title) ?? widget.title,
+          // Buku Markdown: satu label utuh, strip + chip gak dibaca terpisah.
+          excludeSemantics: widget.markdown != null,
           onTap: widget.onTap,
           onLongPress: widget.onLongPress,
           child: RawGestureDetector(
@@ -185,7 +196,10 @@ class _BookCardState extends State<BookCard> {
     author: widget.author,
     file: widget.coverFile,
     width: w,
-    progress: widget.finished
+    chapters: widget.markdown,
+    progress: widget.markdown != null
+        ? null
+        : widget.finished
         ? 1
         : widget.progress > 0
         ? widget.progress
@@ -221,6 +235,7 @@ class _BookCardState extends State<BookCard> {
       progress: widget.progress,
       opened: widget.opened,
       finished: widget.finished,
+      chapters: widget.markdown?.count,
     );
   }
 }
@@ -232,11 +247,15 @@ class ProgressSticker extends StatelessWidget {
     required this.progress,
     required this.opened,
     required this.finished,
+    this.chapters,
   });
 
   final double progress;
   final bool opened;
   final bool finished;
+
+  /// Jumlah bab buku Markdown; null = EPUB.
+  final int? chapters;
 
   @override
   Widget build(BuildContext context) {
@@ -246,6 +265,7 @@ class ProgressSticker extends StatelessWidget {
       progress: progress,
       opened: opened,
       finished: finished,
+      chapters: chapters,
     );
     final (bg, fg) = switch (label) {
       'Kelar!' => (c.accent, c.onAccent),

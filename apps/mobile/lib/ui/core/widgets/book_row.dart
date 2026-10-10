@@ -4,12 +4,14 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../domain/models/markdown_shelf.dart';
 import '../theme/stabilo_theme.dart';
 import '../theme/stabilo_tokens.dart';
 import '../theme/stabilo_type.dart';
 import 'book_card.dart';
 import 'book_cover.dart';
 import 'buttons.dart';
+import 'chapter_slots.dart';
 import 'tag.dart';
 
 /// Baris buku di tampilan list (board "Rak · tampilan list"): cover mini
@@ -24,6 +26,7 @@ class BookRow extends StatelessWidget {
     required this.progress,
     required this.opened,
     required this.finished,
+    this.markdown,
     this.onTap,
     this.onLongPress,
   }) : importing = false;
@@ -36,6 +39,7 @@ class BookRow extends StatelessWidget {
       progress = 0,
       opened = false,
       finished = false,
+      markdown = null,
       onTap = null,
       onLongPress = null,
       importing = true;
@@ -48,6 +52,10 @@ class BookRow extends StatelessWidget {
   final double progress;
   final bool opened;
   final bool finished;
+
+  /// Buku Markdown: baris ke-2 nulis bab yang ada (kalau gak ada penulis),
+  /// bar jadi strip bab, label "N bab".
+  final MarkdownShelf? markdown;
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
   final bool importing;
@@ -91,7 +99,7 @@ class BookRow extends StatelessWidget {
                   SizedBox(
                     height: 17,
                     child: Text(
-                      author ?? '',
+                      author ?? markdown?.label ?? '',
                       textScaler: TextScaler.noScaling,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -116,7 +124,9 @@ class BookRow extends StatelessWidget {
     }
     return Semantics(
       button: true,
-      label: title,
+      label: markdown?.semanticLabel(title) ?? title,
+      // Buku Markdown: satu label utuh, strip + label gak dibaca terpisah.
+      excludeSemantics: markdown != null,
       onTap: onTap,
       onLongPress: onLongPress,
       child: RawGestureDetector(
@@ -164,6 +174,8 @@ class BookRow extends StatelessWidget {
         ],
       );
     }
+    final md = markdown;
+    if (md != null) return _markdownStatus(context, md);
     if (!opened && !finished) {
       return const Align(
         alignment: Alignment.centerRight,
@@ -191,6 +203,40 @@ class BookRow extends StatelessWidget {
               style: StabiloType.micro.copyWith(color: c.ink, height: 1),
             ),
           ),
+      ],
+    );
+  }
+
+  /// Strip bab + "N bab"; belum dibuka: "Baru" gantiin label, strip tetap.
+  Widget _markdownStatus(BuildContext context, MarkdownShelf md) {
+    final c = context.stabilo;
+    return Row(
+      spacing: Space.s2,
+      children: [
+        Expanded(
+          child: SizedBox(
+            height: Layout.chapterBarHeight,
+            child: ChapterSlots(
+              shelf: md,
+              gap: Layout.chapterBarGap,
+              radius: 2,
+              done: c.progressFill,
+              todo: c.track,
+              missing: c.ink3,
+              track: c.track,
+            ),
+          ),
+        ),
+        if (opened)
+          Text(
+            '${md.count} bab',
+            maxLines: 1,
+            textAlign: TextAlign.right,
+            textScaler: TextScaler.noScaling,
+            style: StabiloType.micro.copyWith(color: c.ink, height: 1),
+          )
+        else
+          const Tag.status('Baru', tone: TagTone.pink),
       ],
     );
   }

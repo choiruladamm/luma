@@ -4,8 +4,12 @@ import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/models/book.dart';
+import '../../domain/models/markdown_shelf.dart';
 import '../database/app_database.dart';
 import '../services/file_storage.dart';
+
+/// Buku Markdown di rak + nomor bab yang udah ada (urut tampil).
+typedef MarkdownBook = ({ShelfBook book, List<int> chapters});
 
 class BookRepository {
   BookRepository(this._db);
@@ -17,7 +21,12 @@ class BookRepository {
   /// paragraf sebelum posisi + bagian paragraf yang udah lewat.
   Stream<List<ShelfBook>> watchShelf() => _db
       .customSelect(
-        'SELECT b.id, b.title, b.author, '
+        'SELECT b.id, b.title, b.author, b.source_type AS src, '
+        'c.chapter_number AS cur_number, '
+        '(SELECT COALESCE(SUM(LENGTH(text)), 0) FROM paragraphs '
+        'WHERE chapter_id = rp.chapter_id) AS cur_total, '
+        '(SELECT GROUP_CONCAT(chapter_number) FROM chapters '
+        'WHERE book_id = b.id AND chapter_number IS NOT NULL) AS md_numbers, '
         'CASE WHEN b.use_default_cover THEN NULL ELSE b.cover_name END '
         'AS cover_name, b.last_opened_at, '
         'b.created_at, b.total_chars, rp.paragraph_offset AS off, '
@@ -50,6 +59,38 @@ class BookRepository {
       )
       .watch()
       .map((rows) => rows.map(_shelfBook).toList());
+
+  /// Buku Markdown + nomor bab yang udah masuk, terakhir dibuka dulu. Buat
+  /// pilihan "masuk ke buku mana" pas import.
+  Future<List<MarkdownBook>> markdownBooks() async {
+    final rows =
+        await (_db.select(_db.books)
+              ..where((b) => b.sourceType.equalsValue(SourceType.markdown))
+              ..orderBy([
+                (b) => OrderingTerm(
+                  expression: b.lastOpenedAt,
+                  mode: OrderingMode.desc,
+                  nulls: NullsOrder.last,
+                ),
+                (b) => OrderingTerm.desc(b.createdAt),
+                (b) => OrderingTerm.desc(b.id),
+              ]))
+            .get();
+    return [
+      for (final row in rows)
+        (
+          book: (await book(row.id))!,
+          chapters: [
+            for (final c
+                in await (_db.select(_db.chapters)
+                      ..where((c) => c.bookId.equals(row.id))
+                      ..orderBy([(c) => OrderingTerm.asc(c.sortOrder)]))
+                    .get())
+              ?c.chapterNumber,
+          ],
+        ),
+    ];
+  }
 
   Future<ShelfBook?> book(int id) async {
     final row = await (_db.select(
@@ -225,6 +266,9 @@ class BookRepository {
         r.read<int>('before') +
         (r.readNullable<double>('off') ?? 0) * r.read<int>('cur');
     final done = r.readNullable<int>('done') == 1;
+    final markdown = r.read<String>('src') == SourceType.markdown.name
+        ? _markdownShelf(r)
+        : null;
     return ShelfBook(
       id: r.read<int>('id'),
       title: r.read<String>('title'),
@@ -237,9 +281,32 @@ class BookRepository {
           : total <= 0
           ? 0
           : (spot / total).clamp(0, 1).toDouble(),
-      finished: done,
+      // Buku Markdown gak punya akhir: total bab gak diketahui.
+      finished: done && markdown == null,
       chapter: math.max(1, r.read<int>('ch_n')),
       chapterCount: math.max(1, r.read<int>('ch_count')),
+      markdown: markdown,
+    );
+  }
+
+  static MarkdownShelf _markdownShelf(QueryRow r) {
+    final numbers =
+        (r.readNullable<String>('md_numbers') ?? '')
+            .split(',')
+            .where((s) => s.isNotEmpty)
+            .map(int.parse)
+            .toList()
+          ..sort();
+    final chapterTotal = r.read<int>('cur_total');
+    final inChapter =
+        r.read<int>('before') +
+        (r.readNullable<double>('off') ?? 0) * r.read<int>('cur');
+    return MarkdownShelf(
+      chapters: numbers,
+      current: r.readNullable<int>('cur_number'),
+      fraction: chapterTotal <= 0
+          ? 0
+          : (inChapter / chapterTotal).clamp(0, 1).toDouble(),
     );
   }
 }

@@ -79,7 +79,7 @@ Parsing buku besar bisa berat: jalankan di isolate (`compute` / `Isolate.run`) s
 
 `(chapters.charOffset + jumlah karakter paragraf sebelum posisi) / books.totalChars`.
 
-Buku Markdown yang chapternya belum lengkap (nanti, [import-formats.md](ideas/import-formats.md)) tidak punya total yang pasti, jadi tampilkan progres per chapter saja.
+Buku Markdown ([import-formats.md](import-formats.md)) totalnya cuma bab yang sudah masuk, jadi persentase bisa turun tiap bab baru masuk. Kartu Rak-nya pakai strip bab dan chip "N bab", bukan persen, dan tidak pernah "Kelar!".
 
 ## Gotcha platform
 

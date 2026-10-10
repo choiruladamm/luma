@@ -68,4 +68,4 @@ Lalu buat `apps/mobile/android/key.properties` (gitignored): `storeFile`, `store
 
 ## Status
 
-Luma v0.1.0 (Pre-release). Berikutnya: Recap bacaan, import Markdown/PDF.
+Luma v0.1.0 (Pre-release). Import Markdown (PDF lewat Markdown) sudah jalan. Berikutnya: Recap bacaan.
