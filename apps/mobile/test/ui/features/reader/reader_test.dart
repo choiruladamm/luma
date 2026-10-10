@@ -1604,7 +1604,9 @@ void main() {
 
       // Closing: the pinned card goes the moment the sheet starts down, so what
       // shows under the sheet is the page's own card, not a second copy.
-      await tester.tap(find.bySemanticsLabel('Tutup'));
+      // Scrolled to the end the header is out of reach (clipped above the
+      // sheet), so close the way a finger would: tap the barrier.
+      await tester.tapAt(Offset(450, tester.getTopLeft(sheetBox).dy - 20));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 50));
       expect(sheetBox, findsOneWidget);
@@ -1805,8 +1807,12 @@ void main() {
       answer = (_) => pending.future;
       await openTall(tester);
       await tester.tap(find.textContaining('Tall 13:'));
-      await tester.pump(const Duration(milliseconds: 400));
-      await tester.drag(sheetScroll(), const Offset(0, -300));
+      // Not pumpAndSettle (the loading pulse never settles). Let the sheet
+      // slide in, else the drag lands below the screen. The scroll view is
+      // taller than the screen here, so drag the sheet itself.
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.drag(sheetBox, const Offset(0, -300));
       await tester.pump(const Duration(milliseconds: 400));
       expect(find.text('Lagi mikir'), findsOneWidget);
       expect(

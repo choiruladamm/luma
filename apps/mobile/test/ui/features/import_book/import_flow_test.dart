@@ -108,10 +108,17 @@ void main() {
   testWidgets('Import buttons start the picker', (tester) async {
     await pump(tester);
     await tester.tap(find.text('Import EPUB')); // big empty-shelf button
+    // The header button is inert (IgnorePointer); its tap target is the
+    // GestureDetector around it.
     await tester.tap(
-      find.byWidgetPredicate(
-        (w) => w is CircleButton && w.semanticLabel == 'Import EPUB',
-      ),
+      find
+          .ancestor(
+            of: find.byWidgetPredicate(
+              (w) => w is CircleButton && w.semanticLabel == 'Import EPUB',
+            ),
+            matching: find.byType(GestureDetector),
+          )
+          .first,
     );
     expect(import.picks, 2);
   });
