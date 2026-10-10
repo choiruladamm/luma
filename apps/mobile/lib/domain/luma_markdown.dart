@@ -14,10 +14,15 @@ enum LumaMarkdownError {
 }
 
 class LumaMarkdownException implements Exception {
-  const LumaMarkdownException(this.error, [this.detail]);
+  const LumaMarkdownException(this.error, [this.detail, this.value]);
 
   final LumaMarkdownError error;
+
+  /// Kunci frontmatter yang salah (`book_key`, `chapter`).
   final String? detail;
+
+  /// Isi mentah kunci itu, buat ditampilin ke user.
+  final String? value;
 
   @override
   String toString() => 'LumaMarkdownException($error, $detail)';
@@ -116,11 +121,19 @@ final _keyLine = RegExp(r'^([A-Za-z_][\w-]*)\s*:(.*)$');
 
   final key = map['book_key'];
   if (key != null && !_slug.hasMatch(key)) {
-    throw LumaMarkdownException(LumaMarkdownError.badFrontmatter, 'book_key');
+    throw LumaMarkdownException(
+      LumaMarkdownError.badFrontmatter,
+      'book_key',
+      key,
+    );
   }
   final chapter = map['chapter'];
   if (chapter != null && int.tryParse(chapter) == null) {
-    throw LumaMarkdownException(LumaMarkdownError.badFrontmatter, 'chapter');
+    throw LumaMarkdownException(
+      LumaMarkdownError.badFrontmatter,
+      'chapter',
+      chapter,
+    );
   }
   return (map, end + 1);
 }

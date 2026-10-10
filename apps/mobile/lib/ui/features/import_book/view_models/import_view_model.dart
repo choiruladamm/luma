@@ -99,10 +99,13 @@ class ImportMarkdownConflict extends ImportMarkdownPending {
   const ImportMarkdownConflict({
     required super.fileName,
     required super.parsed,
+    required this.books,
     required this.choice,
     required this.chapter,
   });
 
+  /// Dibawa biar Batal bisa balik ke [ImportMarkdownAsk].
+  final List<MarkdownBook> books;
   final MarkdownChoice choice;
   final int chapter;
 }
@@ -111,6 +114,7 @@ class ImportMarkdownDone extends ImportState {
   const ImportMarkdownDone({
     required this.book,
     required this.chapter,
+    required this.chapterId,
     required this.created,
     required this.replaced,
   });
@@ -118,15 +122,81 @@ class ImportMarkdownDone extends ImportState {
   final ShelfBook book;
   final int chapter;
 
+  /// Bab yang barusan masuk, buat tombol "Baca".
+  final int chapterId;
+
   /// Buku baru dibikin / bab lama ditimpa.
   final bool created, replaced;
 }
 
 class ImportMarkdownFailed extends ImportState {
-  const ImportMarkdownFailed({required this.fileName, required this.error});
+  const ImportMarkdownFailed({
+    required this.fileName,
+    required this.error,
+    this.detail,
+    this.value,
+  });
 
   final String fileName;
   final LumaMarkdownError error;
+
+  /// Kunci frontmatter yang salah + isinya (cuma buat `badFrontmatter`).
+  final String? detail, value;
+}
+
+/// Teks sheet error Markdown (board 6a–6d).
+extension ImportMarkdownFailedCopy on ImportMarkdownFailed {
+  ({String title, String body, String chip}) get copy {
+    if (error == LumaMarkdownError.empty) {
+      return (
+        title: 'Filenya kosong nih',
+        body:
+            'Gak ada teks bacaan di dalamnya, jadi belum ada yang bisa '
+            'dimasukin. Cek lagi file-nya, atau pilih file bab yang lain.',
+        chip: '$fileName · 0 kata',
+      );
+    }
+    if (error == LumaMarkdownError.badFrontmatter && detail == 'chapter') {
+      return (
+        title: 'Nomor babnya gak kebaca',
+        body:
+            'Di bagian atas file ada tulisan nomor bab, tapi bukan angka. '
+            'Ganti jadi angka, terus coba lagi. Atau pilih file lain.',
+        chip: '$fileName · nomor bab: “$value”',
+      );
+    }
+    if (error == LumaMarkdownError.badFrontmatter) {
+      return (
+        title: 'Nama bukunya gak valid',
+        body:
+            'Di bagian atas file ada nama buku, tapi isinya bukan huruf '
+            'kecil, angka, atau strip. Ganti jadi kayak atomic-habits, atau '
+            'hapus bagian itu biar Luma yang nebak.',
+        chip: '$fileName · nama buku: “$value”',
+      );
+    }
+    return (
+      title: 'Filenya gak kebaca',
+      body:
+          'Luma gak bisa baca isi file ini. Coba pilih file lain, atau '
+          'simpan ulang filenya dulu.',
+      chip: fileName,
+    );
+  }
+}
+
+/// Teks + angka buat daftar buku di sheet "Masuk ke buku mana?".
+extension MarkdownBookLabels on MarkdownBook {
+  /// "Bab 1, 3, 7".
+  String get chaptersLabel {
+    if (chapters.isEmpty) return 'Belum ada bab';
+    return 'Bab ${chapters.join(', ')}';
+  }
+
+  /// Bab terakhir + 1, nomor bawaan kalau file gak nyebut nomor.
+  int get nextChapter => chapters.fold(0, (m, n) => n > m ? n : m) + 1;
+
+  int? get lastChapter => chapters.isEmpty ? null : nextChapter - 1;
 }
 
 class ImportController extends Notifier<ImportState> {
@@ -239,7 +309,12 @@ class ImportController extends Notifier<ImportState> {
         fileName: file.name,
       );
     } on LumaMarkdownException catch (e) {
-      state = ImportMarkdownFailed(fileName: file.name, error: e.error);
+      state = ImportMarkdownFailed(
+        fileName: file.name,
+        error: e.error,
+        detail: e.detail,
+        value: e.value,
+      );
       return;
     } catch (_) {
       state = ImportMarkdownFailed(
@@ -249,7 +324,7 @@ class ImportController extends Notifier<ImportState> {
       return;
     }
     if (md.complete) {
-      return _saveMarkdown(file.name, md, (
+      return _saveMarkdown(file.name, md, const [], (
         bookId: null,
         bookKey: md.bookKey!,
         bookTitle: md.book ?? md.bookKey!,
@@ -273,9 +348,14 @@ class ImportController extends Notifier<ImportState> {
   }) async {
     final pending = state;
     if (pending is! ImportMarkdownPending) return;
+    final books = switch (pending) {
+      ImportMarkdownAsk() => pending.books,
+      ImportMarkdownConflict() => pending.books,
+    };
     return _saveMarkdown(
       pending.fileName,
       pending.parsed,
+      books,
       choice,
       replace: replace,
     );
@@ -284,6 +364,7 @@ class ImportController extends Notifier<ImportState> {
   Future<void> _saveMarkdown(
     String fileName,
     ParsedMarkdown parsed,
+    List<MarkdownBook> books,
     MarkdownChoice choice, {
     bool replace = false,
   }) async {
@@ -305,6 +386,7 @@ class ImportController extends Notifier<ImportState> {
       state = ImportMarkdownDone(
         book: book,
         chapter: r.chapter,
+        chapterId: r.chapterId,
         created: r.created,
         replaced: r.replaced,
       );
@@ -312,6 +394,7 @@ class ImportController extends Notifier<ImportState> {
       state = ImportMarkdownConflict(
         fileName: fileName,
         parsed: parsed,
+        books: books,
         choice: choice,
         chapter: e.chapter,
       );
@@ -321,6 +404,17 @@ class ImportController extends Notifier<ImportState> {
         error: LumaMarkdownError.unreadable,
       );
     }
+  }
+
+  /// "Batal" di dialog bab dobel: balik ke sheet pilih buku.
+  void cancelReplace() {
+    final s = state;
+    if (s is! ImportMarkdownConflict) return;
+    state = ImportMarkdownAsk(
+      fileName: s.fileName,
+      parsed: s.parsed,
+      books: s.books,
+    );
   }
 
   /// "Ganti" di dialog bab dobel.

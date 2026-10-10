@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../data/repositories/book_repository.dart';
+import '../../../../data/repositories/reading_progress_repository.dart';
 import '../../../../data/repositories/settings_repository.dart';
 import '../../../../data/services/file_storage.dart';
 import '../../../../domain/models/backup.dart';
@@ -26,6 +27,7 @@ import '../../../core/widgets/menu.dart';
 import '../../../core/widgets/sheet.dart';
 import '../../../core/widgets/toast.dart';
 import '../../import_book/view_models/import_view_model.dart';
+import '../../import_book/views/import_markdown_sheet.dart';
 import '../../import_book/views/import_sheets.dart';
 import '../../settings/view_models/backup_view_model.dart';
 import '../../settings/views/backup_listener.dart';
@@ -48,6 +50,10 @@ class _BookshelfViewState extends ConsumerState<BookshelfView> {
   /// sendiri) biar gak nutup sheet hasil yang baru dibuka.
   bool _progressOpen = false;
 
+  /// Sheet "Masuk ke buku mana?" kebuka. Tetap kebuka pas dialog bab dobel
+  /// nongol di atasnya; ditutup dari sini begitu import beres / gagal.
+  bool _markdownSheetOpen = false;
+
   /// Id buku terbesar di rak pas import mulai. Buku baru (id lebih besar) udah
   /// masuk DB sebelum import "berhasil", tapi disembunyiin dulu: yang tampil
   /// cuma kartu proses.
@@ -58,6 +64,11 @@ class _BookshelfViewState extends ConsumerState<BookshelfView> {
   void _onImport(ImportState? prev, ImportState next) {
     if (next is! ImportProcessing && _progressOpen) {
       _progressOpen = false;
+      Navigator.of(context).pop();
+    }
+    if (_markdownSheetOpen &&
+        (next is ImportMarkdownDone || next is ImportMarkdownFailed)) {
+      _markdownSheetOpen = false;
       Navigator.of(context).pop();
     }
     switch (next) {
@@ -113,8 +124,72 @@ class _BookshelfViewState extends ConsumerState<BookshelfView> {
             },
           ),
         ).whenComplete(_dismissIf(next));
+      case final ImportMarkdownAsk ask when prev is! ImportMarkdownPending:
+        _markdownSheetOpen = true;
+        showAppSheet<void>(
+          context,
+          maxHeight: Layout.pickSheetHeight,
+          builder: (_) => ImportMarkdownSheet(ask: ask),
+        ).whenComplete(() {
+          _markdownSheetOpen = false;
+          if (ref.read(importControllerProvider) is ImportMarkdownPending) {
+            _import.dismiss();
+          }
+        });
+      case ImportMarkdownConflict(:final chapter):
+        showConfirmDialog(
+          context,
+          title: 'Bab $chapter udah ada',
+          message:
+              'Kalau diganti, terjemahan yang udah kesimpen di bab $chapter '
+              'yang lama ikut kehapus.',
+          confirmLabel: 'Ganti',
+          icon: AppIcons.retry,
+        ).then((ok) => ok ? _import.confirmReplace() : _import.cancelReplace());
+      case ImportMarkdownDone(
+        :final book,
+        :final chapter,
+        :final chapterId,
+        :final created,
+      ):
+        _import.dismiss();
+        showToast(
+          context,
+          created
+              ? '${book.title} masuk rak ✨'
+              : 'Bab $chapter masuk ke ${book.title} ✨',
+          leading: BookCover(
+            title: book.title,
+            width: 30,
+            file: _cover(book.coverName),
+          ),
+          actionLabel: 'Baca',
+          onAction: () => _readChapter(book.id, chapterId),
+        );
+      case final ImportMarkdownFailed failed:
+        showAppSheet<void>(
+          context,
+          builder: (sheet) => ImportMarkdownFailedSheet(
+            failed: failed,
+            onRetry: () {
+              Navigator.of(sheet).pop();
+              _import.pick();
+            },
+          ),
+        ).whenComplete(_dismissIf(next));
       default:
     }
+  }
+
+  /// "Baca" di toast: buka bab yang barusan masuk. Posisi baca pindah ke
+  /// awal bab itu, cuma karena user sendiri yang tap.
+  Future<void> _readChapter(int bookId, int chapterId) async {
+    await ref.read(readingProgressRepositoryProvider).save(bookId, (
+      chapterId: chapterId,
+      paragraphIndex: 0,
+      paragraphOffset: 0.0,
+    ));
+    if (mounted) context.push(Routes.reader(bookId));
   }
 
   /// Sheet hasil ketutup → balik idle, kecuali udah ada import baru jalan.

@@ -56,6 +56,14 @@ abstract final class Layout {
   );
   static const sheetPadding = EdgeInsets.fromLTRB(24, 10, 24, 34);
 
+  // Sheet "Masuk ke buku mana?" (board Import Markdown).
+  static const pickRow = 62.0; // cover 48 + 2 × 7
+  static const pickCover = 48.0; // tinggi cover mini di baris
+  static const pickRadio = 24.0;
+  static const pickFade = 28.0; // fade list yang ngintip
+  static const pickVisibleRows = 3; // baris keliatan penuh, sisanya scroll
+  static const pickSheetHeight = 1 - 72 / 844; // top sheet 72 di layar 844
+
   // Sheet Artinya (board Ngumpet pas scroll, layar 844).
   static const artinyaHeight = 528 / 844; // fraksi layar, tetap di semua state
   static const artinyaHeader = 91.0; // grabber + judul + X + jarak

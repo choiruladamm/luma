@@ -5,6 +5,7 @@ import 'package:hugeicons/hugeicons.dart';
 import '../../../../data/repositories/import_repository.dart';
 import '../../../../data/services/epub_parser.dart';
 import '../../../../data/services/file_storage.dart';
+import '../../../../domain/luma_markdown.dart';
 import '../../../../domain/models/book.dart';
 import '../../../core/format.dart';
 import '../../../core/theme/stabilo_theme.dart';
@@ -403,6 +404,83 @@ class ImportFailedSheet extends StatelessWidget {
               ),
               child: Text(
                 code,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: StabiloType.mono.copyWith(fontSize: 12, color: c.ink2),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Board Import Markdown 6a–6d: file kosong, header salah, atau gak kebaca.
+class ImportMarkdownFailedSheet extends StatelessWidget {
+  const ImportMarkdownFailedSheet({
+    super.key,
+    required this.failed,
+    required this.onRetry,
+  });
+
+  final ImportMarkdownFailed failed;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.stabilo;
+    final copy = failed.copy;
+    final empty = failed.error == LumaMarkdownError.empty;
+    return Semantics(
+      liveRegion: true,
+      child: SheetFrame(
+        actions: [
+          AppButton.secondary(
+            label: 'Tutup',
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          Expanded(
+            child: AppButton.primary(label: 'Coba lagi', onPressed: onRetry),
+          ),
+        ],
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _Tile(
+                color: c.pink,
+                size: 52,
+                radius: Radii.menu,
+                child: AppIcon(
+                  empty
+                      ? HugeIcons.strokeRoundedFileRemove
+                      : HugeIcons.strokeRoundedFileCorrupt,
+                  size: 26,
+                  color: c.onPink,
+                ),
+              ),
+              const Spacer(),
+              CircleButton(
+                semanticLabel: 'Tutup',
+                icon: AppIcons.close,
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+            ],
+          ),
+          _Heading(copy.title, copy.body),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Container(
+              height: 26,
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: c.muted,
+                borderRadius: BorderRadius.circular(Space.s2),
+              ),
+              child: Text(
+                copy.chip,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: StabiloType.mono.copyWith(fontSize: 12, color: c.ink2),

@@ -4,6 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:luma/data/repositories/settings_repository.dart';
 import 'package:luma/data/repositories/import_repository.dart';
 import 'package:luma/data/services/epub_parser.dart';
+import 'package:luma/data/repositories/book_repository.dart';
+import 'package:luma/domain/luma_markdown.dart';
 import 'package:luma/domain/models/book.dart';
 import 'package:luma/main.dart';
 import 'package:luma/ui/core/widgets/book_card.dart';
@@ -15,10 +17,24 @@ import '../../../fakes.dart';
 
 /// Drives the flow by hand: no picker, no Drift, no isolates.
 class FakeImport extends ImportController {
-  int picks = 0, cancels = 0;
+  int picks = 0, cancels = 0, replaces = 0, cancelReplaces = 0;
+  final submitted = <MarkdownChoice>[];
   @override
   ImportState build() => const ImportIdle();
   void emit(ImportState s) => state = s;
+  @override
+  Future<void> submitMarkdown(
+    MarkdownChoice choice, {
+    bool replace = false,
+  }) async => submitted.add(choice);
+  @override
+  Future<void> confirmReplace() async => replaces++;
+  @override
+  void cancelReplace() {
+    cancelReplaces++;
+    super.cancelReplace();
+  }
+
   @override
   Future<void> pick() async => picks++;
   @override
@@ -227,4 +243,281 @@ void main() {
       expect(import.state, isA<ImportIdle>());
     });
   }
+
+  group('markdown', () {
+    ShelfBook shelf(int id, String title) => ShelfBook(
+      id: id,
+      title: title,
+      author: null,
+      coverName: null,
+      opened: false,
+      createdAt: DateTime(2026, 9, 20),
+    );
+    final atomic = (book: shelf(1, 'Atomic Habits'), chapters: [1, 3, 7]);
+    final filsafat = (
+      book: shelf(2, 'Catatan Kuliah Filsafat'),
+      chapters: [1, 2],
+    );
+    final psikologi = (book: shelf(3, 'Psikologi Uang'), chapters: [5]);
+    final sapiens = (book: shelf(4, 'Sapiens (catatan)'), chapters: [2, 4]);
+
+    ImportMarkdownAsk ask({List<MarkdownBook>? books}) => ImportMarkdownAsk(
+      fileName: 'bab-1-deep-work.md',
+      parsed: parseLumaMarkdown(
+        '# Deep Work\n\n## Deep Work Is Valuable\n\nIsi.',
+        fileName: 'bab-1-deep-work.md',
+      ),
+      books: books ?? [atomic, filsafat],
+    );
+
+    Finder field(int i) => find.byType(TextField).at(i);
+    Finder masukin() => find.widgetWithText(AppButton, 'Masukin');
+    bool masukinOn(WidgetTester t) =>
+        t.widget<AppButton>(masukin()).onPressed != null;
+
+    testWidgets('sheet: "Buku baru" selected, fields prefilled with guesses', (
+      tester,
+    ) async {
+      await pump(tester);
+      await emit(tester, ask());
+      expect(find.text('Masuk ke buku mana?'), findsOneWidget);
+      expect(find.text('bab-1-deep-work.md'), findsOneWidget);
+      expect(find.text('Buku baru'), findsOneWidget);
+      expect(find.text('Bikin buku dari file ini'), findsOneWidget);
+      expect(find.text('Bab 1, 3, 7'), findsOneWidget);
+      expect(find.text('Bab 1, 2'), findsOneWidget);
+      expect(find.text('Ditebak dari judul di file. Boleh diubah.'), findsOne);
+      expect(tester.widget<TextField>(field(0)).controller!.text, 'Deep Work');
+      expect(tester.widget<TextField>(field(1)).controller!.text, 'Deep Work');
+      expect(tester.widget<TextField>(field(2)).controller!.text, '1');
+      expect(masukinOn(tester), isTrue);
+
+      await tester.tap(masukin());
+      expect(import.submitted.single, (
+        bookId: null,
+        bookKey: 'deep-work',
+        bookTitle: 'Deep Work',
+        author: null,
+        chapter: 1,
+        chapterTitle: 'Deep Work',
+      ));
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('picking a book hides Judul buku, number = last + 1', (
+      tester,
+    ) async {
+      await pump(tester);
+      await emit(tester, ask());
+      await tester.tap(find.text('Atomic Habits'));
+      await tester.pump();
+      expect(find.text('Judul buku'), findsNothing);
+      expect(
+        find.text('Ditebak dari judul di file. Boleh diubah.'),
+        findsNothing,
+      );
+      expect(find.text('Bab terakhir di buku ini: 7'), findsOneWidget);
+      // File says bab 1 (from the name), which Atomic Habits already has.
+      expect(tester.widget<TextField>(field(1)).controller!.text, '1');
+
+      await tester.enterText(field(1), '8');
+      await tester.tap(masukin());
+      expect(import.submitted.single.bookId, 1);
+      expect(import.submitted.single.chapter, 8);
+    });
+
+    testWidgets('more than 3 rows: list scrolls inside the sheet', (
+      tester,
+    ) async {
+      await pump(tester);
+      await emit(tester, ask(books: [atomic, filsafat, psikologi, sapiens]));
+      // "Buku baru" + 4 books; rows past the 3 visible ones peek + scroll.
+      final list = find.byType(SingleChildScrollView).evaluate().length;
+      expect(list, greaterThanOrEqualTo(2)); // sheet body + book list
+      await tester.ensureVisible(find.text('Sapiens (catatan)'));
+      await tester.tap(find.text('Sapiens (catatan)'));
+      await tester.pump();
+      expect(find.text('Bab terakhir di buku ini: 4'), findsOneWidget);
+    });
+
+    testWidgets('validation: empty book title and non-number chapter', (
+      tester,
+    ) async {
+      await pump(tester);
+      await emit(tester, ask());
+      await tester.enterText(field(0), '');
+      await tester.enterText(field(2), 'dua');
+      await tester.pump();
+      expect(find.text('Judul buku gak boleh kosong'), findsOneWidget);
+      expect(find.text('Harus angka'), findsOneWidget);
+      expect(masukinOn(tester), isFalse);
+
+      await tester.enterText(field(0), 'Deep Work');
+      await tester.enterText(field(2), '2');
+      await tester.pump();
+      expect(find.text('Judul buku gak boleh kosong'), findsNothing);
+      expect(masukinOn(tester), isTrue);
+    });
+
+    testWidgets('duplicate chapter: dialog over the sheet, Batal keeps input', (
+      tester,
+    ) async {
+      await pump(tester);
+      final a = ask();
+      await emit(tester, a);
+      await tester.tap(find.text('Atomic Habits'));
+      await tester.pump();
+      await tester.enterText(field(1), '7');
+      await tester.pump();
+
+      await emit(
+        tester,
+        ImportMarkdownConflict(
+          fileName: a.fileName,
+          parsed: a.parsed,
+          books: a.books,
+          choice: (
+            bookId: 1,
+            bookKey: 'atomic-habits',
+            bookTitle: 'Atomic Habits',
+            author: null,
+            chapter: 7,
+            chapterTitle: null,
+          ),
+          chapter: 7,
+        ),
+      );
+      expect(find.text('Bab 7 udah ada'), findsOneWidget);
+      expect(
+        find.text(
+          'Kalau diganti, terjemahan yang udah kesimpen di bab 7 yang lama '
+          'ikut kehapus.',
+        ),
+        findsOneWidget,
+      );
+
+      final dialog = find.byType(Dialog);
+      await tester.tap(
+        find.descendant(of: dialog, matching: find.text('Batal')),
+      );
+      await settle(tester);
+      expect(import.cancelReplaces, 1);
+      expect(import.state, isA<ImportMarkdownAsk>());
+      expect(find.text('Bab 7 udah ada'), findsNothing);
+      expect(find.text('Masuk ke buku mana?'), findsOneWidget); // one sheet
+      expect(tester.widget<TextField>(field(1)).controller!.text, '7');
+
+      await emit(
+        tester,
+        ImportMarkdownConflict(
+          fileName: a.fileName,
+          parsed: a.parsed,
+          books: a.books,
+          choice: (
+            bookId: 1,
+            bookKey: 'atomic-habits',
+            bookTitle: 'Atomic Habits',
+            author: null,
+            chapter: 7,
+            chapterTitle: null,
+          ),
+          chapter: 7,
+        ),
+      );
+      await tester.tap(
+        find.descendant(of: dialog, matching: find.text('Ganti')),
+      );
+      await settle(tester);
+      expect(import.replaces, 1);
+    });
+
+    testWidgets('Batal closes the sheet and goes idle', (tester) async {
+      await pump(tester);
+      await emit(tester, ask());
+      await tester.tap(find.widgetWithText(AppButton, 'Batal'));
+      await settle(tester);
+      expect(find.text('Masuk ke buku mana?'), findsNothing);
+      expect(import.state, isA<ImportIdle>());
+    });
+
+    for (final (created, text) in [
+      (false, 'Bab 7 masuk ke Atomic Habits ✨'),
+      (true, 'Atomic Habits masuk rak ✨'),
+    ]) {
+      testWidgets('done: sheet closes, toast "$text" with Baca', (
+        tester,
+      ) async {
+        await pump(tester);
+        await emit(tester, ask());
+        await emit(
+          tester,
+          ImportMarkdownDone(
+            book: atomic.book,
+            chapter: 7,
+            chapterId: 70,
+            created: created,
+            replaced: false,
+          ),
+        );
+        expect(find.text('Masuk ke buku mana?'), findsNothing);
+        expect(find.text(text), findsOneWidget);
+        expect(find.text('Baca'), findsOneWidget);
+        expect(import.state, isA<ImportIdle>());
+      });
+    }
+
+    for (final (failed, title, chip) in [
+      (
+        const ImportMarkdownFailed(
+          fileName: 'bab-3.md',
+          error: LumaMarkdownError.empty,
+        ),
+        'Filenya kosong nih',
+        'bab-3.md · 0 kata',
+      ),
+      (
+        const ImportMarkdownFailed(
+          fileName: 'bab-3.md',
+          error: LumaMarkdownError.badFrontmatter,
+          detail: 'chapter',
+          value: 'tiga',
+        ),
+        'Nomor babnya gak kebaca',
+        'bab-3.md · nomor bab: “tiga”',
+      ),
+      (
+        const ImportMarkdownFailed(
+          fileName: 'bab-3.md',
+          error: LumaMarkdownError.badFrontmatter,
+          detail: 'book_key',
+          value: 'Atomic Habits!',
+        ),
+        'Nama bukunya gak valid',
+        'bab-3.md · nama buku: “Atomic Habits!”',
+      ),
+      (
+        const ImportMarkdownFailed(
+          fileName: 'bab-3.md',
+          error: LumaMarkdownError.unreadable,
+        ),
+        'Filenya gak kebaca',
+        'bab-3.md',
+      ),
+    ]) {
+      testWidgets('failed: $title; Coba lagi reopens the picker', (
+        tester,
+      ) async {
+        await pump(tester, b: Brightness.dark);
+        await emit(tester, failed);
+        expect(find.text(title), findsOneWidget);
+        expect(find.text(chip), findsOneWidget);
+        expect(tester.takeException(), isNull);
+
+        await tester.tap(find.text('Coba lagi'));
+        await settle(tester);
+        expect(import.picks, 1);
+        expect(find.text(title), findsNothing);
+      });
+    }
+  });
 }
