@@ -10,19 +10,15 @@
 </p>
 
 <div align="center">
-<table>
-  <tr>
-    <td align="center">
-    <img src="docs/images/rak.png" alt="Rak buku" width="250">
-    </td>
-    <td align="center">
-    <img src="docs/images/arti.png" alt="Sheet terjemahan dan makna" width="250">
-    </td>
-    <td align="center">
-    <img src="docs/images/bedahin.png" alt="Layar Bedahin" width="250">
-    </td>
-  </tr>
-</table>
+  <img src="docs/images/showcase-1.png" alt="Rak, baca, terjemahan, dan Bedahin" width="100%">
+
+<details>
+<summary>Intip showcase lainnya</summary>
+<br>
+  <img src="docs/images/showcase-2.png" alt="Alur: tap paragraf, terjemahan, bedah" width="100%">
+  <br><br>
+  <img src="docs/images/showcase-3.png" alt="Daftar isi, font, dan Pengaturan" width="100%">
+</details>
 </div>
 
 ## Features
