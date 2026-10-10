@@ -69,7 +69,8 @@ class _BookshelfViewState extends ConsumerState<BookshelfView> {
     if (_markdownSheetOpen &&
         (next is ImportMarkdownDone || next is ImportMarkdownFailed)) {
       _markdownSheetOpen = false;
-      Navigator.of(context).pop();
+      // Sheet + dialog bab dobel (kalau ada) turun bareng.
+      Navigator.of(context).popUntil((r) => r is! PopupRoute);
     }
     switch (next) {
       case ImportProcessing() when !_progressOpen:
@@ -145,7 +146,10 @@ class _BookshelfViewState extends ConsumerState<BookshelfView> {
               'yang lama ikut kehapus.',
           confirmLabel: 'Ganti',
           icon: AppIcons.retry,
-        ).then((ok) => ok ? _import.confirmReplace() : _import.cancelReplace());
+          onConfirm: _import.confirmReplace,
+        ).then((ok) {
+          if (!ok) _import.cancelReplace();
+        });
       case ImportMarkdownDone(
         :final book,
         :final chapter,
@@ -164,6 +168,7 @@ class _BookshelfViewState extends ConsumerState<BookshelfView> {
             file: _cover(book.coverName),
           ),
           actionLabel: 'Baca',
+          duration: Motion.toastBaca,
           onAction: () => _readChapter(book.id, chapterId),
         );
       case final ImportMarkdownFailed failed:

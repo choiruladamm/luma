@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hugeicons/hugeicons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:luma/data/repositories/settings_repository.dart';
@@ -8,6 +9,7 @@ import 'package:luma/data/repositories/book_repository.dart';
 import 'package:luma/domain/luma_markdown.dart';
 import 'package:luma/domain/models/book.dart';
 import 'package:luma/main.dart';
+import 'package:luma/ui/core/theme/stabilo_tokens.dart';
 import 'package:luma/ui/core/widgets/book_card.dart';
 import 'package:luma/ui/core/widgets/buttons.dart';
 import 'package:luma/ui/features/bookshelf/view_models/bookshelf_view_model.dart';
@@ -406,6 +408,8 @@ void main() {
       expect(find.text('Bab 7 udah ada'), findsNothing);
       expect(find.text('Masuk ke buku mana?'), findsOneWidget); // one sheet
       expect(tester.widget<TextField>(field(1)).controller!.text, '7');
+      // Batal put the cursor back on Nomor bab.
+      expect(tester.widget<TextField>(field(1)).focusNode!.hasFocus, isTrue);
 
       await emit(
         tester,
@@ -427,8 +431,91 @@ void main() {
       await tester.tap(
         find.descendant(of: dialog, matching: find.text('Ganti')),
       );
-      await settle(tester);
+      await tester.pump();
       expect(import.replaces, 1);
+      // Ganti: spinner instead of the label, Batal off, dialog stays.
+      expect(
+        find.descendant(
+          of: dialog,
+          matching: find.byType(CircularProgressIndicator),
+        ),
+        findsOneWidget,
+      );
+      final batal = find.descendant(
+        of: dialog,
+        matching: find.widgetWithText(AppButton, 'Batal'),
+      );
+      expect(tester.widget<AppButton>(batal).onPressed, isNull);
+
+      // Result arrives: sheet + dialog go together, toast follows (5 s).
+      await emit(
+        tester,
+        ImportMarkdownDone(
+          book: atomic.book,
+          chapter: 7,
+          chapterId: 70,
+          created: false,
+          replaced: true,
+        ),
+      );
+      expect(find.text('Bab 7 udah ada'), findsNothing);
+      expect(find.text('Masuk ke buku mana?'), findsNothing);
+      expect(find.text('Bab 7 masuk ke Atomic Habits ✨'), findsOneWidget);
+      expect(
+        tester.widget<SnackBar>(find.byType(SnackBar)).duration,
+        Motion.toastBaca,
+      );
+    });
+
+    testWidgets('errors show after leaving the field, not before', (
+      tester,
+    ) async {
+      await pump(tester);
+      await emit(tester, ask());
+      tester.widget<TextField>(field(2)).controller!.text = 'dua';
+      await tester.pump();
+      expect(find.text('Harus angka'), findsNothing);
+
+      await tester.tap(field(2));
+      await tester.pump();
+      await tester.tap(field(1)); // focus leaves Nomor bab
+      await tester.pump();
+      expect(find.text('Harus angka'), findsOneWidget);
+    });
+
+    testWidgets('failed after Ganti: dialog + sheet close, error sheet opens', (
+      tester,
+    ) async {
+      await pump(tester);
+      final a = ask();
+      await emit(tester, a);
+      await emit(
+        tester,
+        ImportMarkdownConflict(
+          fileName: a.fileName,
+          parsed: a.parsed,
+          books: a.books,
+          choice: (
+            bookId: 1,
+            bookKey: 'atomic-habits',
+            bookTitle: 'Atomic Habits',
+            author: null,
+            chapter: 7,
+            chapterTitle: null,
+          ),
+          chapter: 7,
+        ),
+      );
+      await emit(
+        tester,
+        const ImportMarkdownFailed(
+          fileName: 'bab-1-deep-work.md',
+          error: LumaMarkdownError.unreadable,
+        ),
+      );
+      expect(find.text('Bab 7 udah ada'), findsNothing);
+      expect(find.text('Masuk ke buku mana?'), findsNothing);
+      expect(find.text('Filenya gak kebaca'), findsOneWidget);
     });
 
     testWidgets('Batal closes the sheet and goes idle', (tester) async {
@@ -512,6 +599,28 @@ void main() {
         expect(find.text(title), findsOneWidget);
         expect(find.text(chip), findsOneWidget);
         expect(tester.takeException(), isNull);
+        // Board 6a–6d icons: file-remove / alert / alert / file-corrupt.
+        final icon = switch (failed.error) {
+          LumaMarkdownError.empty => AppIcons.fileRemove,
+          LumaMarkdownError.badFrontmatter => AppIcons.alert,
+          LumaMarkdownError.unreadable => HugeIcons.strokeRoundedFileCorrupt,
+        };
+        expect(
+          find.byWidgetPredicate((w) => w is AppIcon && w.icon == icon),
+          findsWidgets,
+        );
+        if (failed.detail == 'book_key') {
+          expect(
+            find.byWidgetPredicate(
+              (w) =>
+                  w is RichText &&
+                  w.text.toPlainText().contains(
+                    'Ganti jadi kayak atomic-habits, atau hapus baris itu',
+                  ),
+            ),
+            findsOneWidget,
+          );
+        }
 
         await tester.tap(find.text('Coba lagi'));
         await settle(tester);

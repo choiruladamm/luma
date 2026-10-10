@@ -146,7 +146,9 @@ class ImportMarkdownFailed extends ImportState {
 
 /// Teks sheet error Markdown (board 6a–6d).
 extension ImportMarkdownFailedCopy on ImportMarkdownFailed {
-  ({String title, String body, String chip}) get copy {
+  /// [code] + [tail] nyambung di belakang [body] (contoh format, mono).
+  ({String title, String body, String chip, String? code, String? tail})
+  get copy {
     if (error == LumaMarkdownError.empty) {
       return (
         title: 'Filenya kosong nih',
@@ -154,6 +156,8 @@ extension ImportMarkdownFailedCopy on ImportMarkdownFailed {
             'Gak ada teks bacaan di dalamnya, jadi belum ada yang bisa '
             'dimasukin. Cek lagi file-nya, atau pilih file bab yang lain.',
         chip: '$fileName · 0 kata',
+        code: null,
+        tail: null,
       );
     }
     if (error == LumaMarkdownError.badFrontmatter && detail == 'chapter') {
@@ -163,16 +167,19 @@ extension ImportMarkdownFailedCopy on ImportMarkdownFailed {
             'Di bagian atas file ada tulisan nomor bab, tapi bukan angka. '
             'Ganti jadi angka, terus coba lagi. Atau pilih file lain.',
         chip: '$fileName · nomor bab: “$value”',
+        code: null,
+        tail: null,
       );
     }
     if (error == LumaMarkdownError.badFrontmatter) {
       return (
         title: 'Nama bukunya gak valid',
         body:
-            'Di bagian atas file ada nama buku, tapi isinya bukan huruf '
-            'kecil, angka, atau strip. Ganti jadi kayak atomic-habits, atau '
-            'hapus bagian itu biar Luma yang nebak.',
+            'Nama buku di bagian atas file cuma boleh huruf kecil, angka, '
+            'sama strip. Ganti jadi kayak ',
         chip: '$fileName · nama buku: “$value”',
+        code: 'atomic-habits',
+        tail: ', atau hapus baris itu biar Luma yang nebak.',
       );
     }
     return (
@@ -181,6 +188,8 @@ extension ImportMarkdownFailedCopy on ImportMarkdownFailed {
           'Luma gak bisa baca isi file ini. Coba pilih file lain, atau '
           'simpan ulang filenya dulu.',
       chip: fileName,
+      code: null,
+      tail: null,
     );
   }
 }

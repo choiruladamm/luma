@@ -38,6 +38,9 @@ class _ImportMarkdownSheetState extends ConsumerState<ImportMarkdownSheet> {
   );
   late final _number = TextEditingController(text: '${_parsed.chapter ?? 1}');
 
+  final _bookFocus = FocusNode();
+  final _numberFocus = FocusNode();
+
   /// Buku Markdown yang dipilih; null = "Buku baru".
   MarkdownBook? _picked;
   var _saving = false;
@@ -48,7 +51,21 @@ class _ImportMarkdownSheetState extends ConsumerState<ImportMarkdownSheet> {
   ParsedMarkdown get _parsed => widget.ask.parsed;
 
   @override
+  void initState() {
+    super.initState();
+    _bookFocus.addListener(() => _blur(_bookFocus, 'book'));
+    _numberFocus.addListener(() => _blur(_numberFocus, 'number'));
+  }
+
+  /// Error baru muncul pas field ditinggal (atau pas diketik).
+  void _blur(FocusNode node, String key) {
+    if (!node.hasFocus && mounted) setState(() => _touched.add(key));
+  }
+
+  @override
   void dispose() {
+    _bookFocus.dispose();
+    _numberFocus.dispose();
     _book.dispose();
     _chapterTitle.dispose();
     _number.dispose();
@@ -118,6 +135,19 @@ class _ImportMarkdownSheetState extends ConsumerState<ImportMarkdownSheet> {
     final picked = _picked;
     final canSubmit = _valid && !_saving;
 
+    // Batal di dialog bab dobel: fokus balik ke Nomor bab biar gampang diganti.
+    ref.listen(importControllerProvider, (prev, next) {
+      if (prev is ImportMarkdownConflict && next is ImportMarkdownAsk) {
+        // ponytail: sheet baru boleh nerima fokus satu frame setelah dialog
+        // turun (route-nya gak `isCurrent` dulu), jadi nunggu dua frame.
+        WidgetsBinding.instance.addPostFrameCallback(
+          (_) => WidgetsBinding.instance.addPostFrameCallback(
+            (_) => mounted ? _numberFocus.requestFocus() : null,
+          ),
+        );
+      }
+    });
+
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
       child: SheetFrame(
@@ -162,6 +192,7 @@ class _ImportMarkdownSheetState extends ConsumerState<ImportMarkdownSheet> {
               label: 'Judul buku',
               hint: 'Judul buku',
               controller: _book,
+              focusNode: _bookFocus,
               mono: false,
               error: _bookError,
               onChanged: (_) => setState(() => _touched.add('book')),
@@ -175,6 +206,7 @@ class _ImportMarkdownSheetState extends ConsumerState<ImportMarkdownSheet> {
           AppField(
             label: 'Nomor bab',
             controller: _number,
+            focusNode: _numberFocus,
             mono: false,
             keyboardType: TextInputType.number,
             error: _numberError,

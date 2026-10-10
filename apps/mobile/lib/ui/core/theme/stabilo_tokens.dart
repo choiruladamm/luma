@@ -126,6 +126,7 @@ abstract final class Motion {
   static const importSettle = Duration(milliseconds: 300); // jeda di 100%
   static const contentFade = Duration(milliseconds: 200); // isi bab muncul
   static const toast = Duration(milliseconds: 2500); // ilang sendiri
+  static const toastBaca = Duration(seconds: 5); // toast import Markdown + Baca
   static const toastLong = Duration(
     seconds: 6,
   ); // toast yang ada catatan + aksi

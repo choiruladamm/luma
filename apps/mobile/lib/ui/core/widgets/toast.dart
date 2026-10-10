@@ -22,6 +22,9 @@ void showToast(
   /// Baris kedua di bawah garis, tombol aksinya pindah ke sini ("API key gak
   /// ikut backup..." · Isi key).
   String? note,
+
+  /// Gantiin lama bawaan.
+  Duration? duration,
 }) {
   final messenger = ScaffoldMessenger.of(context);
   messenger
@@ -41,7 +44,7 @@ void showToast(
                   onAction?.call();
                 },
               ),
-        duration: note == null ? Motion.toast : Motion.toastLong,
+        duration: duration ?? (note == null ? Motion.toast : Motion.toastLong),
         behavior: SnackBarBehavior.floating,
         backgroundColor: Colors.transparent,
         elevation: 0,

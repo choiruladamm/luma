@@ -431,7 +431,6 @@ class ImportMarkdownFailedSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.stabilo;
     final copy = failed.copy;
-    final empty = failed.error == LumaMarkdownError.empty;
     return Semantics(
       liveRegion: true,
       child: SheetFrame(
@@ -453,9 +452,12 @@ class ImportMarkdownFailedSheet extends StatelessWidget {
                 size: 52,
                 radius: Radii.menu,
                 child: AppIcon(
-                  empty
-                      ? HugeIcons.strokeRoundedFileRemove
-                      : HugeIcons.strokeRoundedFileCorrupt,
+                  switch (failed.error) {
+                    LumaMarkdownError.empty => AppIcons.fileRemove,
+                    LumaMarkdownError.badFrontmatter => AppIcons.alert,
+                    LumaMarkdownError.unreadable =>
+                      HugeIcons.strokeRoundedFileCorrupt,
+                  },
                   size: 26,
                   color: c.onPink,
                 ),
@@ -468,7 +470,7 @@ class ImportMarkdownFailedSheet extends StatelessWidget {
               ),
             ],
           ),
-          _Heading(copy.title, copy.body),
+          _Heading(copy.title, copy.body, code: copy.code, tail: copy.tail),
           Align(
             alignment: Alignment.centerLeft,
             child: Container(
@@ -494,10 +496,13 @@ class ImportMarkdownFailedSheet extends StatelessWidget {
 }
 
 class _Heading extends StatelessWidget {
-  const _Heading(this.title, this.body);
+  const _Heading(this.title, this.body, {this.code, this.tail});
 
   final String title;
   final String body;
+
+  /// Contoh format (mono) + lanjutan kalimat di belakang [body].
+  final String? code, tail;
 
   @override
   Widget build(BuildContext context) {
@@ -506,8 +511,21 @@ class _Heading extends StatelessWidget {
       spacing: Space.s2,
       children: [
         Semantics(header: true, child: Text(title, style: StabiloType.titleMd)),
-        Text(
-          body,
+        Text.rich(
+          TextSpan(
+            text: body,
+            children: [
+              if (code != null)
+                TextSpan(
+                  text: code,
+                  style: StabiloType.mono.copyWith(
+                    fontSize: 14,
+                    color: context.stabilo.ink,
+                  ),
+                ),
+              if (tail != null) TextSpan(text: tail),
+            ],
+          ),
           style: StabiloType.readingSheet.copyWith(
             fontFamily: StabiloType.ui,
             color: context.stabilo.ink2,
