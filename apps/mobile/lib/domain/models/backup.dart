@@ -1,6 +1,6 @@
 /// Versi app di manifest backup. Samain sama `version` di pubspec.yaml
 /// (ada test yang ngecek).
-const appVersion = '0.1.0';
+const appVersion = '0.2.0';
 
 /// Isi `manifest.json` di file backup (docs/backup.md).
 class BackupManifest {

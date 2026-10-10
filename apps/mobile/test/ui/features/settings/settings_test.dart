@@ -726,7 +726,10 @@ void main() {
       await tapRestore(tester);
       expect(find.text('Backup-nya dari Luma yang lebih baru'), findsOneWidget);
       expect(find.textContaining('dibikin pake Luma 0.3.0'), findsOneWidget);
-      expect(find.textContaining('keinstall masih 0.1.0'), findsOneWidget);
+      expect(
+        find.textContaining('keinstall masih $appVersion'),
+        findsOneWidget,
+      );
       expect(
         find.text('luma-backup-20261003-2140.zip · v0.3.0'),
         findsOneWidget,
