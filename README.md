@@ -10,11 +10,13 @@
 </p>
 
 <div align="center">
-  <img src="docs/images/showcase-1.png" alt="Rak, baca, terjemahan, dan Bedahin" width="100%">
+  <img src="docs/images/showcase-4.png" alt="Layar Luma: rak, baca, terjemahan, Bedahin, dan Pengaturan" width="100%">
 
 <details>
 <summary>Intip showcase lainnya</summary>
 <br>
+  <img src="docs/images/showcase-1.png" alt="Rak, baca, terjemahan, dan Bedahin" width="100%">
+  <br><br>
   <img src="docs/images/showcase-2.png" alt="Alur: tap paragraf, terjemahan, bedah" width="100%">
   <br><br>
   <img src="docs/images/showcase-3.png" alt="Daftar isi, font, dan Pengaturan" width="100%">
