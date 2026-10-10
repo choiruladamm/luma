@@ -6,7 +6,7 @@
 </p>
 
 <p align="center">
-  EPUB reader untuk iOS dan Android. Tap satu paragraf, langsung muncul terjemahan Indonesia dan maknanya, tanpa keluar dari halaman baca.
+  Reader EPUB dan Markdown untuk iOS dan Android. Tap satu paragraf, langsung muncul terjemahan Indonesia dan maknanya, tanpa keluar dari halaman baca.
 </p>
 
 <div align="center">
@@ -26,7 +26,7 @@
 - **Tap paragraf → terjemahan + makna**, ditulis bertahap (streaming) di bottom sheet.
 - **Bedahin**: bedah gagasan jadi beberapa bagian, dengan sambungan ke bagian lain di buku.
 - **Cache hasil AI**: grup yang pernah di-tap gak manggil LLM lagi.
-- **Import EPUB** lewat parser sendiri, jalan di isolate.
+- **Import EPUB dan Markdown** lewat parser sendiri, jalan di isolate.
 - **Rak buku** dengan cover, progres, dan posisi baca per buku.
 - **Halaman baca imersif** dengan pengaturan font, ukuran, jarak baris, dan tema terang/gelap.
 - **Backup & restore** semua data ke satu file `.zip`.
@@ -61,7 +61,3 @@ keytool -genkeypair -v -keystore ~/.android/luma-release.jks -alias luma \
 ```
 
 Lalu buat `apps/mobile/android/key.properties` (gitignored): `storeFile`, `storePassword`, `keyAlias=luma`, `keyPassword`.
-
-## Status
-
-Luma v0.1.0 (Pre-release). Import Markdown (PDF lewat Markdown) sudah jalan. Berikutnya: Recap bacaan.
