@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../domain/models/book.dart';
 import '../../domain/reading.dart';
 import '../database/app_database.dart';
 
@@ -60,10 +61,15 @@ class ReadingProgressRepository {
     );
   }
 
-  /// Layar akhir buku kebuka: dicatet sekali, baca ulang gak nimpa.
+  /// Layar akhir buku kebuka: dicatet sekali, baca ulang gak nimpa. Buku
+  /// Markdown dilewat: bab terakhir yang ada belum tentu akhir buku.
   Future<void> markFinished(int bookId) =>
-      (_db.update(_db.books)
-            ..where((b) => b.id.equals(bookId) & b.finishedAt.isNull()))
+      (_db.update(_db.books)..where(
+            (b) =>
+                b.id.equals(bookId) &
+                b.finishedAt.isNull() &
+                b.sourceType.equalsValue(SourceType.epub),
+          ))
           .write(BooksCompanion(finishedAt: Value(DateTime.now())));
 
   /// Potongan sesi yang digabung paling lama segini, biar jam di heatmap dan
