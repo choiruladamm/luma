@@ -44,6 +44,8 @@ abstract final class Layout {
   static const shelfGapY = 24.0; // board Rak: stiker nongol 11 di bawah cover
   static const rowHeight = 84.0; // tampilan list
   static const rowGap = 4.0;
+  static const chapterBarGap = 3.0; // jarak slot strip bab di list
+  static const chapterBarHeight = 4.0; // tinggi bar progres di list
   static const barMin = 44.0; // header rak pas nyusut (maks = topBar)
   static const barShrink = 52.0; // jarak scroll buat nyusut penuh
   static const coverAspect = 2 / 3;

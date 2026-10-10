@@ -8,6 +8,7 @@ import '../../../../data/services/epub_parser.dart';
 import '../../../../data/services/file_picker_service.dart';
 import '../../../../domain/luma_markdown.dart';
 import '../../../../domain/models/book.dart';
+import '../../../../domain/models/markdown_shelf.dart';
 import '../../../core/theme/stabilo_tokens.dart';
 
 /// State alur import (board 13–18).
@@ -196,11 +197,8 @@ extension ImportMarkdownFailedCopy on ImportMarkdownFailed {
 
 /// Teks + angka buat daftar buku di sheet "Masuk ke buku mana?".
 extension MarkdownBookLabels on MarkdownBook {
-  /// "Bab 1, 3, 7".
-  String get chaptersLabel {
-    if (chapters.isEmpty) return 'Belum ada bab';
-    return 'Bab ${chapters.join(', ')}';
-  }
+  /// "Bab 1, 3, 7" / "Bab 1–40".
+  String get chaptersLabel => chapterRanges(chapters);
 
   /// Bab terakhir + 1, nomor bawaan kalau file gak nyebut nomor.
   int get nextChapter => chapters.fold(0, (m, n) => n > m ? n : m) + 1;

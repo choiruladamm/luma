@@ -571,6 +571,7 @@ class _ShelfState extends ConsumerState<_Shelf> {
                                 progress: book.progress,
                                 opened: book.opened,
                                 finished: book.finished,
+                                markdown: book.markdown,
                                 onTap: () =>
                                     context.push(Routes.reader(book.id)),
                                 onLongPress: () => widget.onBookMenu(book),
@@ -616,6 +617,7 @@ class _ShelfState extends ConsumerState<_Shelf> {
                                   progress: book.progress,
                                   opened: book.opened,
                                   finished: book.finished,
+                                  markdown: book.markdown,
                                   onTap: () =>
                                       context.push(Routes.reader(book.id)),
                                   onLongPress: () => widget.onBookMenu(book),

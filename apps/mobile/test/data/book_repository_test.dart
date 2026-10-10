@@ -49,6 +49,122 @@ void main() {
     ]);
   });
 
+  test('shelf: markdown book carries chapter numbers + reading spot', () async {
+    final id = await db
+        .into(db.books)
+        .insert(
+          BooksCompanion.insert(
+            sourceType: SourceType.markdown,
+            bookKey: const Value('atomic-habits'),
+            title: 'Atomic Habits',
+            parserVersion: 1,
+            totalChars: 30,
+            lastOpenedAt: Value(DateTime(2026, 10, 7)),
+          ),
+        );
+    final ids = <int, int>{};
+    for (final (order, number) in [(0, 1), (1, 3), (2, 7)]) {
+      final c = await db
+          .into(db.chapters)
+          .insert(
+            ChaptersCompanion.insert(
+              bookId: id,
+              sortOrder: order,
+              chapterNumber: Value(number),
+              title: 'Bab $number',
+              charOffset: order * 10,
+            ),
+          );
+      ids[number] = c;
+      await db
+          .into(db.paragraphs)
+          .insert(
+            ParagraphsCompanion.insert(
+              chapterId: c,
+              paragraphIndex: 0,
+              type: ParagraphType.paragraph,
+              content: 'x' * 10,
+            ),
+          );
+    }
+    await db
+        .into(db.readingProgress)
+        .insert(
+          ReadingProgressCompanion.insert(
+            bookId: Value(id),
+            chapterId: ids[3]!,
+            paragraphIndex: 0,
+            paragraphOffset: const Value(0.4),
+          ),
+        );
+
+    final book = (await BookRepository(db).watchShelf().first).single;
+    final md = book.markdown!;
+    expect(md.chapters, [1, 3, 7]);
+    expect(md.current, 3);
+    expect(md.fraction, closeTo(0.4, 1e-9));
+    expect(book.finished, isFalse);
+  });
+
+  test(
+    'shelf: markdown at the end of its last chapter is never "Kelar!"',
+    () async {
+      final id = await db
+          .into(db.books)
+          .insert(
+            BooksCompanion.insert(
+              sourceType: SourceType.markdown,
+              title: 'Deep Work',
+              parserVersion: 1,
+              totalChars: 10,
+              lastOpenedAt: Value(DateTime(2026, 10, 7)),
+            ),
+          );
+      final c = await db
+          .into(db.chapters)
+          .insert(
+            ChaptersCompanion.insert(
+              bookId: id,
+              sortOrder: 0,
+              chapterNumber: const Value(1),
+              title: 'Bab 1',
+              charOffset: 0,
+            ),
+          );
+      await db
+          .into(db.paragraphs)
+          .insert(
+            ParagraphsCompanion.insert(
+              chapterId: c,
+              paragraphIndex: 0,
+              type: ParagraphType.paragraph,
+              content: 'x' * 10,
+            ),
+          );
+      await db
+          .into(db.readingProgress)
+          .insert(
+            ReadingProgressCompanion.insert(
+              bookId: Value(id),
+              chapterId: c,
+              paragraphIndex: 0,
+              paragraphOffset: const Value(1.0),
+            ),
+          );
+      final book = (await BookRepository(db).watchShelf().first).single;
+      expect(book.finished, isFalse);
+      expect(book.markdown!.fraction, 1);
+    },
+  );
+
+  test('shelf: EPUB has no markdown data', () async {
+    await add('Meditations');
+    expect(
+      (await BookRepository(db).watchShelf().first).single.markdown,
+      isNull,
+    );
+  });
+
   test('shelf stream re-emits when a book is imported or deleted', () async {
     final emissions = BookRepository(db)
         .watchShelf()

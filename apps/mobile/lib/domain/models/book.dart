@@ -1,3 +1,5 @@
+import 'markdown_shelf.dart';
+
 /// Asal buku. EPUB di MVP; Markdown nanti (docs/ideas/import-formats.md).
 enum SourceType { epub, markdown }
 
@@ -20,6 +22,7 @@ class ShelfBook {
     this.finished = false,
     this.chapter = 1,
     this.chapterCount = 1,
+    this.markdown,
   });
 
   final int id;
@@ -44,6 +47,9 @@ class ShelfBook {
 
   /// Bab posisi tersimpan (urutan 1-based) dari [chapterCount] bab.
   final int chapter, chapterCount;
+
+  /// Bab yang udah masuk + posisi baca; null buat EPUB.
+  final MarkdownShelf? markdown;
 }
 
 extension ShelfBookLabels on ShelfBook {

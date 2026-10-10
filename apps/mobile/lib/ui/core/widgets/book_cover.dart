@@ -3,13 +3,16 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 
 import '../../../domain/cover.dart';
+import '../../../domain/models/markdown_shelf.dart';
 import '../theme/stabilo_theme.dart';
 import '../theme/stabilo_tokens.dart';
 import '../theme/stabilo_type.dart';
+import 'chapter_slots.dart';
 
 /// Cover buku rasio 2:3 (board "Cover default" & "Kartu buku"). Cover asli
 /// EPUB di-crop rata atas; gak ada / rusak / < 200px → cover default dari
-/// judul. [progress] non-null = pita progres di bawah cover.
+/// judul. [progress] non-null = pita progres di bawah cover; [chapters]
+/// (buku Markdown) = strip bab di tempat yang sama.
 class BookCover extends StatelessWidget {
   const BookCover({
     super.key,
@@ -18,6 +21,7 @@ class BookCover extends StatelessWidget {
     this.author,
     this.file,
     this.progress,
+    this.chapters,
     this.shadows,
   });
 
@@ -28,6 +32,7 @@ class BookCover extends StatelessWidget {
 
   /// 0..1. Pita keisi segini; null = gak ada pita.
   final double? progress;
+  final MarkdownShelf? chapters;
 
   /// Gantiin bayangan bawaan (terang: [Elevation.cover], gelap: gak ada).
   final List<BoxShadow>? shadows;
@@ -49,7 +54,7 @@ class BookCover extends StatelessWidget {
       author: author,
       width: width,
       dark: dark,
-      bandSpace: progress != null,
+      bandSpace: progress != null || chapters != null,
     );
 
     return Container(
@@ -69,13 +74,31 @@ class BookCover extends StatelessWidget {
         fit: StackFit.expand,
         children: [
           if (file == null) fallback else _FileCover(file!, fallback, dark),
-          if (progress != null)
+          if (progress != null || chapters != null)
             Positioned(
               left: 0,
               right: 0,
               bottom: 0,
               height: 7 + Layout.outline,
-              child: _Band(progress!.clamp(0, 1), dark),
+              child: _Band(
+                dark: dark,
+                child: chapters != null
+                    ? ChapterSlots(
+                        shelf: chapters!,
+                        gap: Layout.outline,
+                        done: c.accent,
+                        todo: c.outline,
+                        missing: c.ink3,
+                      )
+                    : Align(
+                        alignment: Alignment.centerLeft,
+                        child: FractionallySizedBox(
+                          widthFactor: progress!.clamp(0, 1),
+                          heightFactor: 1,
+                          child: ColoredBox(color: c.accent),
+                        ),
+                      ),
+              ),
             ),
         ],
       ),
@@ -84,9 +107,9 @@ class BookCover extends StatelessWidget {
 }
 
 class _Band extends StatelessWidget {
-  const _Band(this.progress, this.dark);
+  const _Band({required this.child, required this.dark});
 
-  final double progress;
+  final Widget child;
   final bool dark;
 
   @override
@@ -102,12 +125,7 @@ class _Band extends StatelessWidget {
           ),
         ),
       ),
-      alignment: Alignment.centerLeft,
-      child: FractionallySizedBox(
-        widthFactor: progress,
-        heightFactor: 1,
-        child: ColoredBox(color: c.accent),
-      ),
+      child: child,
     );
   }
 }
