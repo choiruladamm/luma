@@ -97,6 +97,6 @@ luma-backup-20261006-2130.zip
 
 ## Ditunda (setelah MVP)
 
-- Export/import **per buku** (satu buku + terjemahannya, untuk dipindah atau dibagikan)
-- Restore **merge** (gabung dengan data yang ada)
-- Export terjemahan + makna ke Markdown (nyambung dengan Recap)
+- Export/import **per buku**: satu buku + terjemahannya, untuk dipindah atau dibagikan ([#101](https://github.com/choiruladamm/luma/issues/101))
+- Restore **merge**: gabung dengan data yang ada ([#102](https://github.com/choiruladamm/luma/issues/102))
+- Export terjemahan + makna ke Markdown, nyambung dengan Recap ([#103](https://github.com/choiruladamm/luma/issues/103))

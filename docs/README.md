@@ -63,13 +63,15 @@ Mengubah alur di atas menjadi **satu tap**: tap paragraf → langsung muncul ter
 
 ## Di luar scope MVP (iterasi berikutnya)
 
-- **Recap bacaan**: terjemahan + makna semua yang sudah dibaca, plus overview "sejauh ini" → **Iterasi 2, lihat [recap.md](ideas/recap.md)**
-- Import **Luma Markdown** + PDF lewat Markdown sudah jalan setelah MVP → lihat [import-formats.md](import-formats.md). Format lain (TXT, HTML, MOBI) belum.
-- "Open in" dari app Files / share sheet iOS
-- Backend proxy untuk API key (wajib kalau app dirilis ke orang lain)
-- Highlight, catatan, bookmark
-- Pilihan mode penjelasan (ringkas / detail / istilah sulit)
-- Sinkronisasi antar device
+Semua item di sini dan di bagian "Ditunda" tiap file docs punya issue. Label status: `status:ready` (plan jelas), `status:deferred` (nunggu pemicu, lihat "Dibuka kalau" di issue), `status:idea` (belum diputusin).
+
+- **Recap bacaan**: terjemahan + makna semua yang sudah dibaca, plus overview "sejauh ini" → **Iterasi 2, lihat [recap.md](ideas/recap.md)** ([#104](https://github.com/choiruladamm/luma/issues/104))
+- Import **Luma Markdown** + PDF lewat Markdown sudah jalan setelah MVP → lihat [import-formats.md](import-formats.md). Import PDF langsung di app direncanakan ([#83](https://github.com/choiruladamm/luma/issues/83)). Format lain (TXT, HTML, MOBI) belum ([#100](https://github.com/choiruladamm/luma/issues/100)).
+- "Open in" dari app Files / share sheet ([#105](https://github.com/choiruladamm/luma/issues/105))
+- Backend proxy untuk API key, wajib kalau app dirilis ke orang lain ([#106](https://github.com/choiruladamm/luma/issues/106))
+- Highlight, catatan, bookmark ([#107](https://github.com/choiruladamm/luma/issues/107))
+- Pilihan mode penjelasan: ringkas / detail / istilah sulit ([#108](https://github.com/choiruladamm/luma/issues/108))
+- Sinkronisasi antar device ([#109](https://github.com/choiruladamm/luma/issues/109))
 
 ---
 

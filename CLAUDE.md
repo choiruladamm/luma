@@ -28,10 +28,19 @@ Android (#73) di luar urutan MVP, tanpa milestone: dikerjain kapan user mau buil
 
 Import Markdown & PDF (induk #79, branch `feat/import-markdown`) di luar MVP, tanpa milestone: #75 → #76 → #77 → #78.
 
+Import PDF langsung (induk #83, branch `feat/import-pdf`) di luar MVP, tanpa milestone: #84 (spike, gerbang: hasil jelek = stop) → #85 → #86 → #87 → #88 → #89.
+
 Issue baru disisipin di fase yang cocok di daftar ini.
 
+Backlog di luar MVP pakai label status (semua "Ditunda" / ide di docs punya issue, docs nge-link nomornya):
+- `status:ready`: plan jelas, tinggal dikerjain.
+- `status:deferred`: nunggu pemicu (baris **Dibuka kalau** di issue). Pemicu kejadian → ganti ke `status:ready`.
+- `status:idea`: belum diputusin; bisa ditutup `wontfix`.
+
+Ide / item ditunda baru: bikin issue dengan label status yang cocok + tambah link `(#N)` di docs-nya.
+
 Kalau user bilang "next task" / "lanjut":
-1. `gh issue list --milestone MVP --state open` → ambil issue open pertama di urutan di atas yang semua **Tergantung**-nya udah closed.
+1. `gh issue list --milestone MVP --state open` → ambil issue open pertama di urutan di atas yang semua **Tergantung**-nya udah closed. MVP habis → `gh issue list --label status:ready`.
 2. Sebutin nomor, judul, dan ringkasan scope-nya, terus tunggu user confirm. Jangan langsung ngoding.
 3. Setelah confirm: baca docs + board yang disebut issue, kerjain di branch fiturnya (lihat Git), `make check`, commit `Closes #N`, centang checklist, push branch.
 

@@ -192,12 +192,116 @@ Alternatif yang sama-sama mengubah PDF jadi Markdown. Cara pakainya belum diveri
 
 PDF scan tanpa teks butuh OCR; hasilnya paling riskan salah. Untuk PDF scan atau foto, [prompt template](#prompt-template-konversi-foto) ke LLM biasanya lebih rapi.
 
+## Import PDF langsung
+
+> Status: **rencana** (induk [#83](https://github.com/choiruladamm/luma/issues/83), branch `feat/import-pdf`). Dimulai dari spike #84; hasil jelek = berhenti, jalur Docling di atas tetap jadi caranya.
+
+Pilih `.pdf` di picker, langsung jadi satu buku utuh, tanpa Docling.
+
+### Keputusan
+
+| Keputusan | Pilihan | Alasan |
+|---|---|---|
+| Engine | `pdfrx` (PDFium, MIT, iOS + Android) | Teks + posisi per huruf (`loadStructuredText`), outline/bookmark, render halaman buat cover. Syncfusion lisensinya komersial, PDFKit cuma iOS |
+| Ekstraksi | Heuristik di device, bukan LLM | Gratis, offline, teks gak diubah. LLM berisiko parafrase, mahal satu buku penuh, lambat |
+| Model buku | Satu PDF = satu buku utuh, kayak EPUB | `finishedAt` dan cek dobel lewat hash jalan |
+| `SourceType` | Tambah `pdf` | Kolom `textEnum`: schema gak berubah, tanpa migrasi |
+| File asli | Disimpen (`$hash.pdf`), ikut backup (`books/`) | Heuristik bakal sering di-tuning: naikin versi parser + re-import tanpa minta file lagi |
+| Versi parser | `pdfParserVersion` terpisah, disimpan di `books.parserVersion` | Tuning PDF gak maksa re-import EPUB |
+| Jalur Docling | Tetap ada | PDF scan / layout rumit |
+
+### Arsitektur
+
+```
+picker (.pdf) ─► ImportRepository.importPdf
+   1. hash → cek dobel
+   2. PdfService (pdfrx, worker PDFium-nya sendiri)
+        → per halaman: baris {text, x, y, w, h}
+        → outline (bookmark → halaman), metadata, render halaman 1 → cover
+   3. Isolate.run(layout + pecah bab)   ← Dart murni, gak tau pdfrx
+        → List<ParsedChapter> (paragraf + assignGroups)
+   4. simpan file + _insert (jalur EPUB, sourceType: pdf)
+```
+
+PDFium gak thread-safe dan pdfrx udah jalanin di worker sendiri, jadi logika layout dipisah ke `lib/domain/pdf_layout.dart` + `pdf_chapters.dart`: dites pakai fixture baris, tanpa PDF dan tanpa native lib. File baru: `lib/data/services/pdf_service.dart` + dua file domain itu.
+
+### Pipeline layout (#85)
+
+1. **Baris dari huruf**, dikelompokkan per baseline, urut per **posisi** (bukan urutan stream; ada PDF yang stream-nya acak).
+2. **Bersihin karakter**: ligatur (`ﬁ ﬂ ﬀ`) jadi huruf biasa; soft hyphen, `\u0000`, `�`, zero-width dibuang; NBSP jadi spasi.
+3. **Kolom**: histogram x per baris; celah vertikal konsisten di tengah = dua kolom, kiri dulu baru kanan.
+4. **Header/footer**: baris di pita atas/bawah (~8% tinggi halaman) yang teksnya (tanpa angka) berulang di ≥ 30% halaman dibuang. Nomor halaman polos (`12`, `xii`, `- 12 -`) dibuang.
+5. **Font badan** = modus tinggi huruf, dibobot jumlah karakter.
+6. **Catatan kaki**: baris bawah dengan font < 0.85× badan yang diawali angka dibuang; angka superscript di badan (lebih kecil dan naik) dibuang.
+7. **Heading**: baris pendek dengan font ≥ 1.2× badan, atau pola `Chapter N` / `Bab N` / `Part`. Drop cap (satu huruf besar) digabung ke baris berikutnya.
+8. **Paragraf baru** kalau jarak antarbaris > 1.5× spasi normal, ada indent baris pertama, atau baris sebelumnya pendek (< 80% lebar) dan berakhiran `.?!"”`.
+9. **Sambung antarhalaman**: akhir halaman tanpa tanda titik + halaman berikut diawali huruf kecil = satu paragraf.
+10. **Tanda hubung**: `kon-` + `tinu` (huruf kecil) jadi `kontinu`; huruf besar / angka setelahnya = hubung dipertahankan.
+11. **Pemisah adegan**: `* * *`, `***`, `#`, atau celah vertikal besar tanpa teks jadi `scene_break`.
+
+### Pecah bab (#86)
+
+1. **Outline PDF**: pilih level yang masuk akal (level atas isinya Part I/II → turun satu level). Bab mulai di halaman tujuan bookmark; mulai di tengah halaman dicari lewat heading yang cocok judul bookmark.
+2. **Heading terbesar** di awal halaman, atau pola `Chapter|Bab N`.
+3. **Fallback** per ~20 halaman ("Bagian 1, 2, ..."), biar gak jadi satu bab raksasa.
+
+Lalu aturan non-isi yang sama kayak EPUB ([raw.md](ideas/raw.md)): bab kosong dan halaman daftar isi / indeks (baris berakhiran nomor halaman / titik-titik) dibuang, sisanya disimpen.
+
+### Edge case
+
+| Kasus | Penanganan |
+|---|---|
+| Ber-password | Error "PDF-nya dikunci password" (input password ditunda, #90) |
+| PDF scan (> 50% halaman tanpa teks) | Error "PDF ini hasil scan, gak ada teksnya" + arahan ke prompt foto / Docling |
+| Campuran scan + teks | Halaman tanpa teks dilewati, toast nyebut jumlahnya |
+| Rusak / bukan PDF | `PdfException`, pola `EpubException` |
+| PDF yang sama | Cek hash → buka buku lama |
+| Besar (500+ halaman, 100MB+) | `openFile(path)`, bukan bytes; teks dilepas per halaman; progres per halaman; bisa dibatalin |
+| Dua kolom | Langkah 3. Tiga kolom ke atas gak dijamin (#94), arahkan ke Docling |
+| Landscape / terputar / spread 2-up | Normalisasi rotasi halaman; spread dibaca sebagai dua kolom |
+| Puisi, dialog, list | Baris pendek bisa kepecah jadi banyak paragraf; diterima, grouping tetap gabung yang pendek |
+| Tabel, angka | Baris yang mayoritas angka/simbol dibuang; caption gambar tetap ikut |
+| RTL / CJK / teks vertikal | Di luar scope |
+| Judul / penulis | Judul: metadata → heading terbesar halaman 1 → nama file. Penulis: metadata atau null |
+| Cover | Render halaman 1; gagal = cover default |
+| Tuning nanti | Naikin `pdfParserVersion`, re-import dari file tersimpan, hapus `ai_results` buku itu |
+| `finishedAt` | `reading_progress_repository.dart` sekarang cuma `SourceType.epub`, tambah `pdf` |
+| Backup / restore | `$hash.pdf` ikut `books/`; cek restore gak cuma nerima `.epub` |
+| Ukuran app | PDFium nambah ~5–8MB per arsitektur, diukur di spike |
+
+### UI (#88)
+
+Tanpa layar baru. Picker nerima `pdf`; sheet import EPUB dipakai ulang dengan copy "Lagi ngebongkar PDF" (tahap sama); error password / scan / rusak / kosong; kartu Rak = tampilan EPUB (persen).
+
+### Test
+
+- `test/domain/pdf_layout_test.dart`: fixture baris sintetis, satu kasus per langkah pipeline.
+- `test/domain/pdf_chapters_test.dart`: outline, heading, fallback, buang daftar isi.
+- `test/data/`: `importPdf` dengan `PdfService` palsu, cek dobel, rollback, `sourceType`.
+- Widget test picker / sheet: service palsu, gak sentuh pdfrx / Drift.
+- Korpus manual 5–8 PDF asli (gak di-commit): novel satu kolom, nonfiksi + catatan kaki, jurnal dua kolom, scan, ber-password, tanpa bookmark. `tool/pdf_probe.dart` dump hasil ke `.md` buat dicek mata (#89).
+
+### Urutan
+
+#84 spike (gerbang) → #85 layout → #86 pecah bab → #87 data → #88 UI → #89 validasi korpus.
+
+**Selesai kalau** novel PDF asli satu kolom masuk sekali tap, bab kepecah sesuai bookmark, gak ada header / nomor halaman nyelip, paragraf bisa di-tap terjemahan di Luma Dev.
+
+### Ditunda (dibuka kalau korpus nunjukin perlu)
+
+- Input password ([#90](https://github.com/choiruladamm/luma/issues/90))
+- OCR di device buat PDF scan ([#91](https://github.com/choiruladamm/luma/issues/91))
+- Rapikan hasil pakai LLM ([#92](https://github.com/choiruladamm/luma/issues/92))
+- Preview bab sebelum simpan ([#93](https://github.com/choiruladamm/luma/issues/93))
+- Layout 3+ kolom ([#94](https://github.com/choiruladamm/luma/issues/94))
+
 ## Ditunda
 
-- Daftar isi buku Markdown yang menampilkan bab bolong ("Bab 4–6 belum ada") dan progres per bab
-- Tombol "Tambah bab" di menu buku (sekarang cukup lewat picker biasa)
-- Tandai buku Markdown "kelar" manual
-- Script konversi foto → `.md` lewat OpenRouter (model vision)
-- Parse PDF langsung di dalam app (`pdfrx` atau LLM)
-- Render miring/tebal
-- TXT, HTML, MOBI/AZW3 (convert ke EPUB via Calibre dulu). File ber-DRM tidak bisa diparse.
+- Daftar isi buku Markdown yang menampilkan bab bolong ("Bab 4–6 belum ada") dan progres per bab ([#95](https://github.com/choiruladamm/luma/issues/95))
+- Tombol "Tambah bab" di menu buku, sekarang cukup lewat picker biasa ([#96](https://github.com/choiruladamm/luma/issues/96))
+- Tandai buku Markdown "kelar" manual ([#97](https://github.com/choiruladamm/luma/issues/97))
+- Script konversi foto → `.md` lewat OpenRouter, model vision ([#98](https://github.com/choiruladamm/luma/issues/98))
+- Buang header Docling berulang + skrip pecah `.md` per bab ([#110](https://github.com/choiruladamm/luma/issues/110))
+- Parse PDF langsung di dalam app: lihat [Import PDF langsung](#import-pdf-langsung) ([#83](https://github.com/choiruladamm/luma/issues/83))
+- Render miring/tebal ([#99](https://github.com/choiruladamm/luma/issues/99))
+- TXT, HTML, MOBI/AZW3; sementara convert ke EPUB via Calibre ([#100](https://github.com/choiruladamm/luma/issues/100)). File ber-DRM tidak bisa diparse.

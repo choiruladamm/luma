@@ -99,4 +99,4 @@ Buku Markdown ([import-formats.md](import-formats.md)) totalnya cuma bab yang su
 - **Status share.** Di Android `share_plus` bisa balik `unavailable` (target share gak ngasih hasil). `shareSaved` nganggep `unavailable` = sukses di Android supaya `backup.lastAt` tetap kecatet; `dismissed` = batal.
 - **Edge-to-edge** (Android 15+ dipaksa): ngumpetin status bar lewat `SystemChrome` sama kayak iOS; konten pakai `SafeArea` / `MediaQuery.padding`. Splash: system splash Android 12+ polos, warnanya sama dengan `LaunchBackground` iOS dan overlay Flutter (`values/colors.xml`, `values-night/colors.xml`).
 - **Font "Bawaan sistem"**: SF (`CupertinoSystemText`) di iOS, Roboto di Android (`readingFamily`).
-- Buka `.epub` dari luar app (intent filter) belum ada: iOS juga belum punya, jadi di luar scope.
+- Buka `.epub` dari luar app (intent filter) belum ada: iOS juga belum punya, jadi di luar scope ([#105](https://github.com/choiruladamm/luma/issues/105)).
