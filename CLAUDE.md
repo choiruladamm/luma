@@ -26,6 +26,8 @@ Tampilan statistik (#50–#58) cuma ide, tanpa milestone: dikerjain setelah data
 
 Android (#73) di luar urutan MVP, tanpa milestone: dikerjain kapan user mau build ke HP Android.
 
+Import Markdown & PDF (induk #79, branch `feat/import-markdown`) di luar MVP, tanpa milestone: #75 → #76 → #77 → #78.
+
 Issue baru disisipin di fase yang cocok di daftar ini.
 
 Kalau user bilang "next task" / "lanjut":
