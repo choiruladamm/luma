@@ -7,6 +7,9 @@ import '../../domain/models/book.dart';
 import '../database/app_database.dart';
 import '../services/file_storage.dart';
 
+/// Buku Markdown di rak + nomor bab yang udah ada (urut tampil).
+typedef MarkdownBook = ({ShelfBook book, List<int> chapters});
+
 class BookRepository {
   BookRepository(this._db);
 
@@ -50,6 +53,38 @@ class BookRepository {
       )
       .watch()
       .map((rows) => rows.map(_shelfBook).toList());
+
+  /// Buku Markdown + nomor bab yang udah masuk, terakhir dibuka dulu. Buat
+  /// pilihan "masuk ke buku mana" pas import.
+  Future<List<MarkdownBook>> markdownBooks() async {
+    final rows =
+        await (_db.select(_db.books)
+              ..where((b) => b.sourceType.equalsValue(SourceType.markdown))
+              ..orderBy([
+                (b) => OrderingTerm(
+                  expression: b.lastOpenedAt,
+                  mode: OrderingMode.desc,
+                  nulls: NullsOrder.last,
+                ),
+                (b) => OrderingTerm.desc(b.createdAt),
+                (b) => OrderingTerm.desc(b.id),
+              ]))
+            .get();
+    return [
+      for (final row in rows)
+        (
+          book: (await book(row.id))!,
+          chapters: [
+            for (final c
+                in await (_db.select(_db.chapters)
+                      ..where((c) => c.bookId.equals(row.id))
+                      ..orderBy([(c) => OrderingTerm.asc(c.sortOrder)]))
+                    .get())
+              ?c.chapterNumber,
+          ],
+        ),
+    ];
+  }
 
   Future<ShelfBook?> book(int id) async {
     final row = await (_db.select(

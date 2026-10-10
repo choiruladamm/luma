@@ -8,6 +8,9 @@ enum LumaMarkdownError {
 
   /// Gak ada satu pun paragraf bacaan.
   empty,
+
+  /// Filenya gak kebaca (dipakai pemanggil, bukan parser).
+  unreadable,
 }
 
 class LumaMarkdownException implements Exception {

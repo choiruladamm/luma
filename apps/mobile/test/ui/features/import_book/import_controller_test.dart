@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:drift/drift.dart';
@@ -9,13 +10,14 @@ import 'package:luma/data/repositories/import_repository.dart';
 import 'package:luma/data/services/epub_parser.dart';
 import 'package:luma/data/services/file_picker_service.dart';
 import 'package:luma/data/services/file_storage.dart';
+import 'package:luma/domain/luma_markdown.dart';
 import 'package:luma/ui/core/theme/stabilo_tokens.dart';
 import 'package:luma/ui/features/import_book/view_models/import_view_model.dart';
 
 class FakePicker extends FilePickerService {
   PickedFile? next;
   @override
-  Future<PickedFile?> pickEpub() async => next;
+  Future<PickedFile?> pickBook() async => next;
 }
 
 PickedFile picked(String name, Uint8List bytes) =>
@@ -231,5 +233,97 @@ void main() {
     await run;
     expect(state(), isA<ImportIdle>());
     expect(await db.select(db.books).get(), isEmpty);
+  });
+
+  group('markdown', () {
+    PickedFile md(String name, String text) =>
+        picked(name, Uint8List.fromList(utf8.encode(text)));
+    const full = '---\nbook_key: dune\nbook: Dune\nchapter: 2\n---\n\nIsi.';
+
+    test(
+      'complete frontmatter imports straight away, no sheet state',
+      () async {
+        final seen = <Type>[];
+        container.listen(importControllerProvider, (_, s) {
+          seen.add(s.runtimeType);
+        });
+        await controller().importFile(md('x.md', full));
+
+        expect(seen, [ImportMarkdownDone]);
+        final s = state() as ImportMarkdownDone;
+        expect((s.book.title, s.chapter, s.created), ('Dune', 2, true));
+      },
+    );
+
+    test('no frontmatter asks, guesses ready; submit saves', () async {
+      await controller().importFile(md('dune-bab5.md', '# Dune\n\nIsi.'));
+      final ask = state() as ImportMarkdownAsk;
+      expect(ask.books, isEmpty);
+      expect(
+        (ask.parsed.book, ask.parsed.bookKey, ask.parsed.chapter),
+        ('Dune', 'dune', 5),
+      );
+
+      await controller().submitMarkdown((
+        bookId: null,
+        bookKey: 'dune',
+        bookTitle: 'Dune',
+        author: null,
+        chapter: 5,
+        chapterTitle: null,
+      ));
+      expect((state() as ImportMarkdownDone).chapter, 5);
+    });
+
+    test(
+      'existing markdown books are offered, duplicate chapter asks',
+      () async {
+        await controller().importFile(md('a.md', full));
+        controller().dismiss();
+
+        await controller().importFile(md('b.md', 'Teks.'));
+        final ask = state() as ImportMarkdownAsk;
+        expect(ask.books.single.book.title, 'Dune');
+        expect(ask.books.single.chapters, [2]);
+
+        final choice = (
+          bookId: ask.books.single.book.id,
+          bookKey: 'dune',
+          bookTitle: 'Dune',
+          author: null,
+          chapter: 2,
+          chapterTitle: null,
+        );
+        await controller().submitMarkdown(choice);
+        expect((state() as ImportMarkdownConflict).chapter, 2);
+
+        await controller().confirmReplace();
+        final done = state() as ImportMarkdownDone;
+        expect((done.replaced, done.created), (true, false));
+      },
+    );
+
+    test('bad frontmatter and empty file fail with a typed error', () async {
+      for (final (text, error) in [
+        ('---\nchapter: x\n---\n\nIsi.', LumaMarkdownError.badFrontmatter),
+        ('# cuma heading', LumaMarkdownError.empty),
+      ]) {
+        await controller().importFile(md('x.md', text));
+        expect((state() as ImportMarkdownFailed).error, error, reason: text);
+      }
+    });
+
+    test('submit outside a pending state does nothing', () async {
+      await controller().submitMarkdown((
+        bookId: null,
+        bookKey: 'x',
+        bookTitle: 'X',
+        author: null,
+        chapter: null,
+        chapterTitle: null,
+      ));
+      expect(state(), isA<ImportIdle>());
+      expect(await db.select(db.books).get(), isEmpty);
+    });
   });
 }
