@@ -4041,7 +4041,8 @@
                   "content": "Import EPUB dulu gih. Abis itu tap paragraf yang bikin pusing.",
                   "lineHeight": 1.5,
                   "fontFamily": "$fontUi",
-                  "fontSize": 16
+                  "fontSize": 16,
+                  "fontWeight": "normal"
                 }
               ]
             },
@@ -4444,7 +4445,8 @@
                   "content": "However little known the feelings or views of such a man may be on his first entering a neighbourhood, this truth is so well fixed in the minds of the surrounding families.",
                   "lineHeight": 1.65,
                   "fontFamily": "$fontRead",
-                  "fontSize": 18.5
+                  "fontSize": 18.5,
+                  "fontWeight": "normal"
                 }
               ]
             },
@@ -4516,7 +4518,8 @@
                   "content": "Sekalipun perasaan atau pandangan pria semacam itu belum banyak diketahui saat ia baru pindah ke suatu lingkungan.",
                   "lineHeight": 1.65,
                   "fontFamily": "$fontRead",
-                  "fontSize": 18.5
+                  "fontSize": 18.5,
+                  "fontWeight": "normal"
                 }
               ]
             },
@@ -4588,7 +4591,8 @@
                   "content": "However little known the feelings or views of such a man may be on his first entering a neighbourhood, this truth is so well fixed in the minds of the surrounding families.",
                   "lineHeight": 1.7,
                   "fontFamily": "$fontBook",
-                  "fontSize": 18.5
+                  "fontSize": 18.5,
+                  "fontWeight": "normal"
                 }
               ]
             }
@@ -9776,39 +9780,6 @@
         },
         {
           "type": "frame",
-          "id": "k9K8m",
-          "name": "Batas sumber",
-          "width": "fill_container",
-          "gap": 8,
-          "alignItems": "center",
-          "children": [
-            {
-              "type": "icon",
-              "id": "MnogT",
-              "name": "Batas bacaan",
-              "width": 16,
-              "height": 16,
-              "icon": "book-open",
-              "library": "lucide",
-              "fill": "$ink"
-            },
-            {
-              "type": "text",
-              "id": "xEDLv",
-              "name": "Cakupan",
-              "fill": "$ink2",
-              "textGrowth": "fixed-width",
-              "width": "fill_container",
-              "content": "Sampai Bab IV · Ubah",
-              "lineHeight": 1.4,
-              "fontFamily": "$fontUi",
-              "fontSize": 13,
-              "fontWeight": "600"
-            }
-          ]
-        },
-        {
-          "type": "frame",
           "id": "v2h61Y",
           "name": "Pertanyaan lo",
           "width": "fill_container",
@@ -10655,39 +10626,6 @@
         },
         {
           "type": "frame",
-          "id": "u2I3t",
-          "name": "Batas sumber",
-          "width": "fill_container",
-          "gap": 8,
-          "alignItems": "center",
-          "children": [
-            {
-              "type": "icon",
-              "id": "gLcfj",
-              "name": "Batas bacaan",
-              "width": 16,
-              "height": 16,
-              "icon": "book-open",
-              "library": "lucide",
-              "fill": "$ink"
-            },
-            {
-              "type": "text",
-              "id": "M47GDY",
-              "name": "Cakupan",
-              "fill": "$ink2",
-              "textGrowth": "fixed-width",
-              "width": "fill_container",
-              "content": "Sampai Bab IV · Ubah",
-              "lineHeight": 1.4,
-              "fontFamily": "$fontUi",
-              "fontSize": 13,
-              "fontWeight": "600"
-            }
-          ]
-        },
-        {
-          "type": "frame",
           "id": "D7Lb6",
           "name": "Mulai ngobrol",
           "width": "fill_container",
@@ -10976,39 +10914,6 @@
                   "fill": "$ink"
                 }
               ]
-            }
-          ]
-        },
-        {
-          "type": "frame",
-          "id": "MAgh7",
-          "name": "Batas sumber",
-          "width": "fill_container",
-          "gap": 8,
-          "alignItems": "center",
-          "children": [
-            {
-              "type": "icon",
-              "id": "trZlL",
-              "name": "Batas bacaan",
-              "width": 16,
-              "height": 16,
-              "icon": "book-open",
-              "library": "lucide",
-              "fill": "$ink"
-            },
-            {
-              "type": "text",
-              "id": "h6XCAN",
-              "name": "Cakupan",
-              "fill": "$ink2",
-              "textGrowth": "fixed-width",
-              "width": "fill_container",
-              "content": "Sampai Bab IV · Ubah",
-              "lineHeight": 1.4,
-              "fontFamily": "$fontUi",
-              "fontSize": 13,
-              "fontWeight": "600"
             }
           ]
         },
@@ -11400,7 +11305,7 @@
           "fill": "$ink2",
           "textGrowth": "fixed-width",
           "width": "fill_container",
-          "content": "Judul buku dan batas sumber selalu jelas.",
+          "content": "Judul sesi dan identitas buku selalu jelas.",
           "lineHeight": 1.3,
           "fontFamily": "$fontUi",
           "fontSize": 12,
@@ -11581,11 +11486,11 @@
         {
           "type": "text",
           "id": "SkrXy",
-          "name": "Cakupan sumber",
+          "name": "Sumber dan sesi",
           "fill": "$ink2",
           "textGrowth": "fixed-width",
           "width": "fill_container",
-          "content": "Cakupan tersimpan per sesi. Reader membuka sesi terakhir; belum ada sesi membuka Obrolan baru. Ikon riwayat membuka daftar sesi buku ini. Tanyain ini membuat sesi baru dengan kutipan.",
+          "content": "Seluruh isi buku menjadi sumber. Tiap sesi punya konteks percakapan terpisah. Reader melanjutkan sesi terakhir; Tanyain ini membuka draft baru dengan kutipan.",
           "lineHeight": 1.4,
           "fontFamily": "$fontUi",
           "fontSize": 15,
@@ -12113,39 +12018,6 @@
           ]
         },
         {
-          "type": "frame",
-          "id": "gNNPi",
-          "name": "Batas sumber",
-          "width": "fill_container",
-          "gap": 8,
-          "alignItems": "center",
-          "children": [
-            {
-              "type": "icon",
-              "id": "awEkx",
-              "name": "Batas bacaan",
-              "width": 16,
-              "height": 16,
-              "icon": "book-open",
-              "library": "lucide",
-              "fill": "$ink"
-            },
-            {
-              "type": "text",
-              "id": "y0NZh",
-              "name": "Cakupan",
-              "fill": "$ink2",
-              "textGrowth": "fixed-width",
-              "width": "fill_container",
-              "content": "Sampai Bab IV · Ubah",
-              "lineHeight": 1.4,
-              "fontFamily": "$fontUi",
-              "fontSize": 13,
-              "fontWeight": "600"
-            }
-          ]
-        },
-        {
           "type": "text",
           "id": "LN30C",
           "name": "Judul Bedahin",
@@ -12469,39 +12341,6 @@
                   "fill": "$ink"
                 }
               ]
-            }
-          ]
-        },
-        {
-          "type": "frame",
-          "id": "D5yGq",
-          "name": "Batas sumber",
-          "width": "fill_container",
-          "gap": 8,
-          "alignItems": "center",
-          "children": [
-            {
-              "type": "icon",
-              "id": "RS3h0",
-              "name": "Batas bacaan",
-              "width": 16,
-              "height": 16,
-              "icon": "book-open",
-              "library": "lucide",
-              "fill": "$ink"
-            },
-            {
-              "type": "text",
-              "id": "tj41h",
-              "name": "Cakupan",
-              "fill": "$ink2",
-              "textGrowth": "fixed-width",
-              "width": "fill_container",
-              "content": "Sampai Bab IV · Ubah",
-              "lineHeight": 1.4,
-              "fontFamily": "$fontUi",
-              "fontSize": 13,
-              "fontWeight": "600"
             }
           ]
         },
@@ -13571,7 +13410,7 @@
           "fill": "$ink2",
           "textGrowth": "fixed-width",
           "width": "fill_container",
-          "content": "Cakupan kembali ke batas bacaan buku yang aktif.",
+          "content": "Tanpa kutipan, lo tetap bisa bertanya tentang seluruh buku.",
           "lineHeight": 1.3,
           "fontFamily": "$fontUi",
           "fontSize": 12,
@@ -13719,46 +13558,13 @@
           ]
         },
         {
-          "type": "frame",
-          "id": "V2KypH",
-          "name": "Batas sumber",
-          "width": "fill_container",
-          "gap": 8,
-          "alignItems": "center",
-          "children": [
-            {
-              "type": "icon",
-              "id": "R9ZbYO",
-              "name": "Batas bacaan",
-              "width": 16,
-              "height": 16,
-              "icon": "book-open",
-              "library": "lucide",
-              "fill": "$ink"
-            },
-            {
-              "type": "text",
-              "id": "FGuTm",
-              "name": "Cakupan",
-              "fill": "$ink2",
-              "textGrowth": "fixed-width",
-              "width": "fill_container",
-              "content": "Sampai Bab IV · Ubah",
-              "lineHeight": 1.4,
-              "fontFamily": "$fontUi",
-              "fontSize": 13,
-              "fontWeight": "600"
-            }
-          ]
-        },
-        {
           "type": "text",
           "id": "c7oxyZ",
           "name": "Keterangan",
           "fill": "$ink",
           "textGrowth": "fixed-width",
           "width": "fill_container",
-          "content": "Sekarang lo bisa tanya tentang bacaan sampai Bab IV.",
+          "content": "Sekarang lo bisa tanya tentang seluruh isi buku.",
           "lineHeight": 1.65,
           "fontFamily": "$fontRead",
           "fontSize": 18.5,
@@ -14888,39 +14694,6 @@
                   "fill": "$ink"
                 }
               ]
-            }
-          ]
-        },
-        {
-          "type": "frame",
-          "id": "TuL4b",
-          "name": "Batas sumber",
-          "width": "fill_container",
-          "gap": 8,
-          "alignItems": "center",
-          "children": [
-            {
-              "type": "icon",
-              "id": "WVMAg",
-              "name": "Batas bacaan",
-              "width": 16,
-              "height": 16,
-              "icon": "book-open",
-              "library": "lucide",
-              "fill": "$ink"
-            },
-            {
-              "type": "text",
-              "id": "wTsUI",
-              "name": "Cakupan",
-              "fill": "$ink2",
-              "textGrowth": "fixed-width",
-              "width": "fill_container",
-              "content": "Sampai Bab IV · Ubah",
-              "lineHeight": 1.4,
-              "fontFamily": "$fontUi",
-              "fontSize": 13,
-              "fontWeight": "600"
             }
           ]
         },
@@ -16090,39 +15863,6 @@
           ]
         },
         {
-          "type": "frame",
-          "id": "eo1dn",
-          "name": "Batas sumber",
-          "width": "fill_container",
-          "gap": 8,
-          "alignItems": "center",
-          "children": [
-            {
-              "type": "icon",
-              "id": "Z1sNUu",
-              "name": "Batas bacaan",
-              "width": 16,
-              "height": 16,
-              "icon": "book-open",
-              "library": "lucide",
-              "fill": "$ink"
-            },
-            {
-              "type": "text",
-              "id": "Ba6xN",
-              "name": "Cakupan",
-              "fill": "$ink2",
-              "textGrowth": "fixed-width",
-              "width": "fill_container",
-              "content": "Sampai Bab IV · Ubah",
-              "lineHeight": 1.4,
-              "fontFamily": "$fontUi",
-              "fontSize": 13,
-              "fontWeight": "600"
-            }
-          ]
-        },
-        {
           "type": "text",
           "id": "Kxgrp",
           "name": "Riwayat ringkas",
@@ -17085,11 +16825,11 @@
       "id": "b2Cf5q",
       "x": 4080,
       "y": 2750,
-      "name": "Jawaban berjalan & batas bacaan",
+      "name": "Jawaban berjalan & pertanyaan lanjutan",
       "theme": {
         "mode": "light"
       },
-      "width": 2590,
+      "width": 1270,
       "fill": "$canvas",
       "layout": "vertical",
       "gap": 8,
@@ -17102,7 +16842,7 @@
           "fill": "$ink",
           "textGrowth": "fixed-width",
           "width": "fill_container",
-          "content": "Jawaban berjalan & batas bacaan",
+          "content": "Jawaban berjalan & pertanyaan lanjutan",
           "lineHeight": 1.2,
           "fontFamily": "$fontUi",
           "fontSize": 28,
@@ -17115,7 +16855,7 @@
           "fill": "$ink2",
           "textGrowth": "fixed-width",
           "width": "fill_container",
-          "content": "State proses tetap memakai ruang chat A. Pilihan seluruh buku eksplisit; perubahan batas tidak menghapus riwayat diam-diam.",
+          "content": "State menunggu, menulis, dan follow-up memakai ruang chat A. Sumber tersedia dari seluruh isi buku; tidak ada pilihan batas progres baca.",
           "lineHeight": 1.4,
           "fontFamily": "$fontUi",
           "fontSize": 15,
@@ -17307,39 +17047,6 @@
         },
         {
           "type": "frame",
-          "id": "Vu9Q2",
-          "name": "Batas sumber",
-          "width": "fill_container",
-          "gap": 8,
-          "alignItems": "center",
-          "children": [
-            {
-              "type": "icon",
-              "id": "kkgBP",
-              "name": "Batas bacaan",
-              "width": 16,
-              "height": 16,
-              "icon": "book-open",
-              "library": "lucide",
-              "fill": "$ink"
-            },
-            {
-              "type": "text",
-              "id": "h9FVD",
-              "name": "Cakupan",
-              "fill": "$ink2",
-              "textGrowth": "fixed-width",
-              "width": "fill_container",
-              "content": "Sampai Bab IV · Ubah",
-              "lineHeight": 1.4,
-              "fontFamily": "$fontUi",
-              "fontSize": 13,
-              "fontWeight": "600"
-            }
-          ]
-        },
-        {
-          "type": "frame",
           "id": "LAplX",
           "name": "Pertanyaan lo",
           "width": "fill_container",
@@ -17391,11 +17098,11 @@
             {
               "type": "text",
               "id": "Z7XOng",
-              "name": "Cakupan",
+              "name": "Status pencarian",
               "fill": "$ink2",
               "textGrowth": "fixed-width",
               "width": "fill_container",
-              "content": "Nyari sumber sampai Bab IV.",
+              "content": "Nyari sumber di buku ini.",
               "lineHeight": 1.4,
               "fontFamily": "$fontUi",
               "fontSize": 14,
@@ -17681,39 +17388,6 @@
                   "fill": "$ink"
                 }
               ]
-            }
-          ]
-        },
-        {
-          "type": "frame",
-          "id": "Ou8iL",
-          "name": "Batas sumber",
-          "width": "fill_container",
-          "gap": 8,
-          "alignItems": "center",
-          "children": [
-            {
-              "type": "icon",
-              "id": "EWdKQ",
-              "name": "Batas bacaan",
-              "width": 16,
-              "height": 16,
-              "icon": "book-open",
-              "library": "lucide",
-              "fill": "$ink"
-            },
-            {
-              "type": "text",
-              "id": "oU4Ne",
-              "name": "Cakupan",
-              "fill": "$ink2",
-              "textGrowth": "fixed-width",
-              "width": "fill_container",
-              "content": "Sampai Bab IV · Ubah",
-              "lineHeight": 1.4,
-              "fontFamily": "$fontUi",
-              "fontSize": 13,
-              "fontWeight": "600"
             }
           ]
         },
@@ -18019,39 +17693,6 @@
         },
         {
           "type": "frame",
-          "id": "l1lSdB",
-          "name": "Batas sumber",
-          "width": "fill_container",
-          "gap": 8,
-          "alignItems": "center",
-          "children": [
-            {
-              "type": "icon",
-              "id": "T5XJ3",
-              "name": "Batas bacaan",
-              "width": 16,
-              "height": 16,
-              "icon": "book-open",
-              "library": "lucide",
-              "fill": "$ink"
-            },
-            {
-              "type": "text",
-              "id": "I3FI97",
-              "name": "Cakupan",
-              "fill": "$ink2",
-              "textGrowth": "fixed-width",
-              "width": "fill_container",
-              "content": "Sampai Bab IV · Ubah",
-              "lineHeight": 1.4,
-              "fontFamily": "$fontUi",
-              "fontSize": 13,
-              "fontWeight": "600"
-            }
-          ]
-        },
-        {
-          "type": "frame",
           "id": "cQt6R",
           "name": "Pertanyaan lo",
           "width": "fill_container",
@@ -18237,1165 +17878,6 @@
                   ]
                 }
               ]
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "type": "frame",
-      "id": "Bt9kV",
-      "x": 5400,
-      "y": 2876,
-      "name": "A16 · Pilih batas sumber",
-      "theme": {
-        "mode": "light"
-      },
-      "width": 390,
-      "height": 62,
-      "fill": "$canvas",
-      "layout": "vertical",
-      "gap": 4,
-      "children": [
-        {
-          "type": "text",
-          "id": "MK1Bc",
-          "name": "State",
-          "fill": "$ink",
-          "textGrowth": "fixed-width",
-          "width": "fill_container",
-          "content": "A16 · Pilih batas sumber",
-          "lineHeight": 1.4,
-          "fontFamily": "$fontUi",
-          "fontSize": 15,
-          "fontWeight": "700"
-        },
-        {
-          "type": "text",
-          "id": "oLx1t",
-          "name": "Alur",
-          "fill": "$ink2",
-          "textGrowth": "fixed-width",
-          "width": "fill_container",
-          "content": "Sampai bacaan lo dipilih awal; seluruh buku bisa membuka spoiler.",
-          "lineHeight": 1.3,
-          "fontFamily": "$fontUi",
-          "fontSize": 12,
-          "fontWeight": "normal"
-        }
-      ]
-    },
-    {
-      "type": "frame",
-      "id": "YguxN",
-      "x": 5400,
-      "y": 2950,
-      "name": "A16 · Pilih batas sumber",
-      "theme": {
-        "mode": "light"
-      },
-      "clip": true,
-      "width": 390,
-      "height": 844,
-      "fill": "$canvas",
-      "layout": "vertical",
-      "gap": 20,
-      "padding": [
-        54,
-        24,
-        34,
-        24
-      ],
-      "children": [
-        {
-          "type": "frame",
-          "id": "ysKTD",
-          "name": "Header",
-          "width": "fill_container",
-          "gap": 10,
-          "alignItems": "center",
-          "children": [
-            {
-              "type": "frame",
-              "id": "HSOpC",
-              "name": "Balik",
-              "width": 44,
-              "height": 44,
-              "fill": "$muted",
-              "cornerRadius": "$rFull",
-              "layout": "vertical",
-              "justifyContent": "center",
-              "alignItems": "center",
-              "children": [
-                {
-                  "type": "icon",
-                  "id": "Hy9Cy",
-                  "name": "Balik",
-                  "width": 20,
-                  "height": 20,
-                  "icon": "arrow-left",
-                  "library": "lucide",
-                  "fill": "$ink"
-                }
-              ]
-            },
-            {
-              "type": "frame",
-              "id": "rirrZ",
-              "name": "Judul",
-              "width": "fill_container",
-              "layout": "vertical",
-              "children": [
-                {
-                  "type": "text",
-                  "id": "Hl2Cd",
-                  "name": "Judul",
-                  "fill": "$ink",
-                  "textGrowth": "fixed-width",
-                  "width": "fill_container",
-                  "content": "Sesuai alam itu pasrah?",
-                  "lineHeight": 1.2,
-                  "fontFamily": "$fontUi",
-                  "fontSize": 16,
-                  "fontWeight": "700"
-                },
-                {
-                  "type": "text",
-                  "id": "f5rH2d",
-                  "name": "Buku",
-                  "fill": "$ink2",
-                  "textGrowth": "fixed-width",
-                  "width": "fill_container",
-                  "content": "The Enchiridion",
-                  "lineHeight": 1.4,
-                  "fontFamily": "$fontUi",
-                  "fontSize": 13,
-                  "fontWeight": "normal"
-                }
-              ]
-            },
-            {
-              "type": "frame",
-              "id": "T2HPA",
-              "name": "Menu obrolan",
-              "width": 44,
-              "height": 44,
-              "fill": "$muted",
-              "cornerRadius": "$rFull",
-              "layout": "vertical",
-              "justifyContent": "center",
-              "alignItems": "center",
-              "children": [
-                {
-                  "type": "icon",
-                  "id": "thPk7",
-                  "name": "Menu obrolan",
-                  "width": 20,
-                  "height": 20,
-                  "icon": "ellipsis",
-                  "library": "lucide",
-                  "fill": "$ink"
-                }
-              ]
-            },
-            {
-              "type": "frame",
-              "id": "FTuMJ",
-              "name": "Daftar sesi buku",
-              "width": 44,
-              "height": 44,
-              "fill": "$muted",
-              "cornerRadius": "$rFull",
-              "layout": "vertical",
-              "justifyContent": "center",
-              "alignItems": "center",
-              "children": [
-                {
-                  "type": "icon",
-                  "id": "S0FnmD",
-                  "name": "Daftar sesi buku",
-                  "width": 20,
-                  "height": 20,
-                  "icon": "history",
-                  "library": "lucide",
-                  "fill": "$ink"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "type": "frame",
-          "id": "t02qB",
-          "name": "Batas sumber",
-          "width": "fill_container",
-          "gap": 8,
-          "alignItems": "center",
-          "children": [
-            {
-              "type": "icon",
-              "id": "HrYv9",
-              "name": "Batas bacaan",
-              "width": 16,
-              "height": 16,
-              "icon": "book-open",
-              "library": "lucide",
-              "fill": "$ink"
-            },
-            {
-              "type": "text",
-              "id": "L1wgD",
-              "name": "Cakupan",
-              "fill": "$ink2",
-              "textGrowth": "fixed-width",
-              "width": "fill_container",
-              "content": "Sampai Bab IV · Ubah",
-              "lineHeight": 1.4,
-              "fontFamily": "$fontUi",
-              "fontSize": 13,
-              "fontWeight": "600"
-            }
-          ]
-        },
-        {
-          "type": "frame",
-          "id": "RXZMJ",
-          "name": "Pertanyaan lo",
-          "width": "fill_container",
-          "fill": "$muted",
-          "cornerRadius": 20,
-          "layout": "vertical",
-          "padding": 16,
-          "children": [
-            {
-              "type": "text",
-              "id": "Y0m4s",
-              "name": "Pertanyaan",
-              "fill": "$ink",
-              "textGrowth": "fixed-width",
-              "width": "fill_container",
-              "content": "Maksud “sesuai alam” di sini apa?",
-              "lineHeight": 1.4,
-              "fontFamily": "$fontUi",
-              "fontSize": 16,
-              "fontWeight": "600"
-            }
-          ]
-        },
-        {
-          "type": "frame",
-          "id": "bS0pp",
-          "layoutPosition": "absolute",
-          "x": 0,
-          "y": 0,
-          "name": "Scrim",
-          "width": 390,
-          "height": 844,
-          "fill": "$scrim",
-          "layout": "vertical"
-        },
-        {
-          "type": "frame",
-          "id": "S57Ypa",
-          "layoutPosition": "absolute",
-          "x": 0,
-          "y": 354,
-          "name": "Batas sumber",
-          "width": 390,
-          "height": 490,
-          "fill": "$sheet",
-          "cornerRadius": [
-            28,
-            28,
-            0,
-            0
-          ],
-          "layout": "vertical",
-          "gap": 16,
-          "padding": [
-            26,
-            24,
-            34,
-            24
-          ],
-          "children": [
-            {
-              "id": "H0BCq",
-              "type": "ref",
-              "ref": "sxV2S",
-              "name": "Grabber",
-              "layoutPosition": "absolute",
-              "x": 175,
-              "y": 10
-            },
-            {
-              "type": "frame",
-              "id": "Q6mnQj",
-              "name": "Header sheet",
-              "width": "fill_container",
-              "gap": 12,
-              "alignItems": "center",
-              "children": [
-                {
-                  "type": "text",
-                  "id": "g4Gfgi",
-                  "name": "Judul",
-                  "fill": "$ink",
-                  "textGrowth": "fixed-width",
-                  "width": "fill_container",
-                  "content": "Batas sumber",
-                  "lineHeight": 1.1666666666666667,
-                  "fontFamily": "$fontUi",
-                  "fontSize": 24,
-                  "fontWeight": "700"
-                },
-                {
-                  "type": "frame",
-                  "id": "Wj2mK",
-                  "name": "Tutup",
-                  "width": 44,
-                  "height": 44,
-                  "fill": "$muted",
-                  "cornerRadius": "$rFull",
-                  "layout": "vertical",
-                  "justifyContent": "center",
-                  "alignItems": "center",
-                  "children": [
-                    {
-                      "type": "icon",
-                      "id": "w7sMkL",
-                      "name": "Tutup",
-                      "width": 20,
-                      "height": 20,
-                      "icon": "x",
-                      "library": "lucide",
-                      "fill": "$ink"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "type": "frame",
-              "id": "d5XNvg",
-              "name": "Pilihan sampai bacaan",
-              "width": "fill_container",
-              "fill": "$accent",
-              "cornerRadius": 20,
-              "stroke": "$accentBorder",
-              "strokeWidth": 1.5,
-              "layout": "vertical",
-              "gap": 8,
-              "padding": 16,
-              "children": [
-                {
-                  "type": "text",
-                  "id": "Ymshi",
-                  "name": "Pilihan",
-                  "fill": "$ink",
-                  "textGrowth": "fixed-width",
-                  "width": "fill_container",
-                  "content": "Sampai bacaan lo",
-                  "lineHeight": 1.4,
-                  "fontFamily": "$fontUi",
-                  "fontSize": 16,
-                  "fontWeight": "700"
-                },
-                {
-                  "type": "text",
-                  "id": "hbCOT",
-                  "name": "Detail",
-                  "fill": "$ink",
-                  "textGrowth": "fixed-width",
-                  "width": "fill_container",
-                  "content": "Sampai Bab IV. Bagian setelahnya tidak dipakai untuk jawaban.",
-                  "lineHeight": 1.4,
-                  "fontFamily": "$fontUi",
-                  "fontSize": 14,
-                  "fontWeight": "normal"
-                }
-              ]
-            },
-            {
-              "type": "frame",
-              "id": "GVPqc",
-              "name": "Pilihan seluruh buku",
-              "width": "fill_container",
-              "fill": "$muted",
-              "cornerRadius": 20,
-              "layout": "vertical",
-              "gap": 8,
-              "padding": 16,
-              "children": [
-                {
-                  "type": "text",
-                  "id": "PLS3G",
-                  "name": "Pilihan",
-                  "fill": "$ink",
-                  "textGrowth": "fixed-width",
-                  "width": "fill_container",
-                  "content": "Seluruh buku",
-                  "lineHeight": 1.4,
-                  "fontFamily": "$fontUi",
-                  "fontSize": 16,
-                  "fontWeight": "700"
-                },
-                {
-                  "type": "text",
-                  "id": "riZG0",
-                  "name": "Detail",
-                  "fill": "$ink2",
-                  "textGrowth": "fixed-width",
-                  "width": "fill_container",
-                  "content": "Termasuk bagian yang belum lo baca. Jawaban bisa mengandung spoiler.",
-                  "lineHeight": 1.4,
-                  "fontFamily": "$fontUi",
-                  "fontSize": 14,
-                  "fontWeight": "normal"
-                }
-              ]
-            },
-            {
-              "id": "rwiav",
-              "type": "ref",
-              "ref": "nDWB0",
-              "name": "Pakai batas ini",
-              "width": "fill_container",
-              "height": 52,
-              "cornerRadius": "$rFull",
-              "descendants": {
-                "i8bu19": {
-                  "content": "Pakai batas ini",
-                  "fontSize": 15
-                }
-              }
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "type": "frame",
-      "id": "ikaEi",
-      "x": 5840,
-      "y": 2876,
-      "name": "A17 · Seluruh buku aktif",
-      "theme": {
-        "mode": "light"
-      },
-      "width": 390,
-      "height": 62,
-      "fill": "$canvas",
-      "layout": "vertical",
-      "gap": 4,
-      "children": [
-        {
-          "type": "text",
-          "id": "u8mIHC",
-          "name": "State",
-          "fill": "$ink",
-          "textGrowth": "fixed-width",
-          "width": "fill_container",
-          "content": "A17 · Seluruh buku aktif",
-          "lineHeight": 1.4,
-          "fontFamily": "$fontUi",
-          "fontSize": 15,
-          "fontWeight": "700"
-        },
-        {
-          "type": "text",
-          "id": "ENqk3",
-          "name": "Alur",
-          "fill": "$ink2",
-          "textGrowth": "fixed-width",
-          "width": "fill_container",
-          "content": "Cakupan terlihat di chat; pertanyaan berikutnya memakai batas ini.",
-          "lineHeight": 1.3,
-          "fontFamily": "$fontUi",
-          "fontSize": 12,
-          "fontWeight": "normal"
-        }
-      ]
-    },
-    {
-      "type": "frame",
-      "id": "qbva3",
-      "x": 5840,
-      "y": 2950,
-      "name": "A17 · Seluruh buku aktif",
-      "theme": {
-        "mode": "light"
-      },
-      "clip": true,
-      "width": 390,
-      "height": 844,
-      "fill": "$canvas",
-      "layout": "vertical",
-      "gap": 20,
-      "padding": [
-        54,
-        24,
-        34,
-        24
-      ],
-      "children": [
-        {
-          "type": "frame",
-          "id": "KGnAu",
-          "name": "Header",
-          "width": "fill_container",
-          "gap": 10,
-          "alignItems": "center",
-          "children": [
-            {
-              "type": "frame",
-              "id": "RfY4L",
-              "name": "Balik",
-              "width": 44,
-              "height": 44,
-              "fill": "$muted",
-              "cornerRadius": "$rFull",
-              "layout": "vertical",
-              "justifyContent": "center",
-              "alignItems": "center",
-              "children": [
-                {
-                  "type": "icon",
-                  "id": "wvc08",
-                  "name": "Balik",
-                  "width": 20,
-                  "height": 20,
-                  "icon": "arrow-left",
-                  "library": "lucide",
-                  "fill": "$ink"
-                }
-              ]
-            },
-            {
-              "type": "frame",
-              "id": "ATo7s",
-              "name": "Judul",
-              "width": "fill_container",
-              "layout": "vertical",
-              "children": [
-                {
-                  "type": "text",
-                  "id": "F25Al",
-                  "name": "Judul",
-                  "fill": "$ink",
-                  "textGrowth": "fixed-width",
-                  "width": "fill_container",
-                  "content": "Sesuai alam itu pasrah?",
-                  "lineHeight": 1.2,
-                  "fontFamily": "$fontUi",
-                  "fontSize": 16,
-                  "fontWeight": "700"
-                },
-                {
-                  "type": "text",
-                  "id": "dRKvQ",
-                  "name": "Buku",
-                  "fill": "$ink2",
-                  "textGrowth": "fixed-width",
-                  "width": "fill_container",
-                  "content": "The Enchiridion",
-                  "lineHeight": 1.4,
-                  "fontFamily": "$fontUi",
-                  "fontSize": 13,
-                  "fontWeight": "normal"
-                }
-              ]
-            },
-            {
-              "type": "frame",
-              "id": "e43ltS",
-              "name": "Menu obrolan",
-              "width": 44,
-              "height": 44,
-              "fill": "$muted",
-              "cornerRadius": "$rFull",
-              "layout": "vertical",
-              "justifyContent": "center",
-              "alignItems": "center",
-              "children": [
-                {
-                  "type": "icon",
-                  "id": "Gx1sE",
-                  "name": "Menu obrolan",
-                  "width": 20,
-                  "height": 20,
-                  "icon": "ellipsis",
-                  "library": "lucide",
-                  "fill": "$ink"
-                }
-              ]
-            },
-            {
-              "type": "frame",
-              "id": "yMcvm",
-              "name": "Daftar sesi buku",
-              "width": 44,
-              "height": 44,
-              "fill": "$muted",
-              "cornerRadius": "$rFull",
-              "layout": "vertical",
-              "justifyContent": "center",
-              "alignItems": "center",
-              "children": [
-                {
-                  "type": "icon",
-                  "id": "H3D58",
-                  "name": "Daftar sesi buku",
-                  "width": 20,
-                  "height": 20,
-                  "icon": "history",
-                  "library": "lucide",
-                  "fill": "$ink"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "type": "frame",
-          "id": "O7tbbb",
-          "name": "Batas sumber",
-          "width": "fill_container",
-          "gap": 8,
-          "alignItems": "center",
-          "children": [
-            {
-              "type": "icon",
-              "id": "BCFql",
-              "name": "Batas bacaan",
-              "width": 16,
-              "height": 16,
-              "icon": "book-open",
-              "library": "lucide",
-              "fill": "$ink"
-            },
-            {
-              "type": "text",
-              "id": "tQbDq",
-              "name": "Cakupan",
-              "fill": "$ink2",
-              "textGrowth": "fixed-width",
-              "width": "fill_container",
-              "content": "Seluruh buku · Ubah",
-              "lineHeight": 1.4,
-              "fontFamily": "$fontUi",
-              "fontSize": 13,
-              "fontWeight": "600"
-            }
-          ]
-        },
-        {
-          "type": "text",
-          "id": "RMTBd",
-          "name": "Pemberitahuan",
-          "fill": "$ink2",
-          "textGrowth": "fixed-width",
-          "width": "fill_container",
-          "content": "Jawaban bisa membahas bagian yang belum lo baca.",
-          "lineHeight": 1.4,
-          "fontFamily": "$fontUi",
-          "fontSize": 14,
-          "fontWeight": "normal"
-        },
-        {
-          "type": "frame",
-          "id": "G3Ojh3",
-          "name": "Pertanyaan lo",
-          "width": "fill_container",
-          "fill": "$muted",
-          "cornerRadius": 20,
-          "layout": "vertical",
-          "padding": 16,
-          "children": [
-            {
-              "type": "text",
-              "id": "IcpoW",
-              "name": "Pertanyaan",
-              "fill": "$ink",
-              "textGrowth": "fixed-width",
-              "width": "fill_container",
-              "content": "Gimana gagasan ini berkembang di bab lain?",
-              "lineHeight": 1.4,
-              "fontFamily": "$fontUi",
-              "fontSize": 16,
-              "fontWeight": "600"
-            }
-          ]
-        },
-        {
-          "type": "text",
-          "id": "wlI04",
-          "name": "Jawaban",
-          "fill": "$ink",
-          "textGrowth": "fixed-width",
-          "width": "fill_container",
-          "content": "Dengan seluruh buku sebagai sumber, kita bisa membandingkan cara gagasan ini dipakai di bagian berikutnya.",
-          "lineHeight": 1.65,
-          "fontFamily": "$fontRead",
-          "fontSize": 18.5,
-          "fontWeight": "normal"
-        },
-        {
-          "type": "text",
-          "id": "Y5V4vu",
-          "name": "Contoh state",
-          "fill": "$ink2",
-          "textGrowth": "fixed-width",
-          "width": "fill_container",
-          "content": "Referensi dapat melintasi batas bacaan.",
-          "lineHeight": 1.4,
-          "fontFamily": "$fontUi",
-          "fontSize": 14,
-          "fontWeight": "normal"
-        },
-        {
-          "type": "frame",
-          "id": "h1ACVn",
-          "layoutPosition": "absolute",
-          "x": 24,
-          "y": 724,
-          "name": "Input pertanyaan",
-          "width": 342,
-          "fill": "$sheet",
-          "cornerRadius": 20,
-          "stroke": "#CFC7B1",
-          "strokeWidth": 1,
-          "layout": "vertical",
-          "gap": 12,
-          "padding": 12,
-          "children": [
-            {
-              "type": "frame",
-              "id": "l4tBCk",
-              "name": "Tulis dan kirim",
-              "width": "fill_container",
-              "gap": 12,
-              "alignItems": "end",
-              "children": [
-                {
-                  "type": "text",
-                  "id": "FSUUC",
-                  "name": "Isi input",
-                  "fill": "$ink2",
-                  "textGrowth": "fixed-width",
-                  "width": "fill_container",
-                  "content": "Tanyain isi buku ini…",
-                  "lineHeight": 1.5,
-                  "fontFamily": "$fontUi",
-                  "fontSize": 16,
-                  "fontWeight": "normal"
-                },
-                {
-                  "type": "frame",
-                  "id": "QTp2f",
-                  "name": "Kirim",
-                  "width": 44,
-                  "height": 44,
-                  "fill": "$muted",
-                  "cornerRadius": "$rFull",
-                  "layout": "vertical",
-                  "justifyContent": "center",
-                  "alignItems": "center",
-                  "children": [
-                    {
-                      "type": "icon",
-                      "id": "BIQl2",
-                      "name": "Kirim",
-                      "width": 18,
-                      "height": 18,
-                      "icon": "arrow-up",
-                      "library": "lucide",
-                      "fill": "$ink3"
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "type": "frame",
-      "id": "o1xz6",
-      "x": 6280,
-      "y": 2876,
-      "name": "A18 · Kembali batasi bacaan",
-      "theme": {
-        "mode": "light"
-      },
-      "width": 390,
-      "height": 62,
-      "fill": "$canvas",
-      "layout": "vertical",
-      "gap": 4,
-      "children": [
-        {
-          "type": "text",
-          "id": "nM7DP",
-          "name": "State",
-          "fill": "$ink",
-          "textGrowth": "fixed-width",
-          "width": "fill_container",
-          "content": "A18 · Kembali batasi bacaan",
-          "lineHeight": 1.4,
-          "fontFamily": "$fontUi",
-          "fontSize": 15,
-          "fontWeight": "700"
-        },
-        {
-          "type": "text",
-          "id": "edmbK",
-          "name": "Alur",
-          "fill": "$ink2",
-          "textGrowth": "fixed-width",
-          "width": "fill_container",
-          "content": "Usulan: tutup pesan cakupan luas, simpan riwayatnya.",
-          "lineHeight": 1.3,
-          "fontFamily": "$fontUi",
-          "fontSize": 12,
-          "fontWeight": "normal"
-        }
-      ]
-    },
-    {
-      "type": "frame",
-      "id": "mnPL6",
-      "x": 6280,
-      "y": 2950,
-      "name": "A18 · Kembali batasi bacaan",
-      "theme": {
-        "mode": "light"
-      },
-      "clip": true,
-      "width": 390,
-      "height": 844,
-      "fill": "$canvas",
-      "layout": "vertical",
-      "gap": 20,
-      "padding": [
-        54,
-        24,
-        34,
-        24
-      ],
-      "children": [
-        {
-          "type": "frame",
-          "id": "gME8T",
-          "name": "Header",
-          "width": "fill_container",
-          "gap": 10,
-          "alignItems": "center",
-          "children": [
-            {
-              "type": "frame",
-              "id": "pPnWe",
-              "name": "Balik",
-              "width": 44,
-              "height": 44,
-              "fill": "$muted",
-              "cornerRadius": "$rFull",
-              "layout": "vertical",
-              "justifyContent": "center",
-              "alignItems": "center",
-              "children": [
-                {
-                  "type": "icon",
-                  "id": "wWddT",
-                  "name": "Balik",
-                  "width": 20,
-                  "height": 20,
-                  "icon": "arrow-left",
-                  "library": "lucide",
-                  "fill": "$ink"
-                }
-              ]
-            },
-            {
-              "type": "frame",
-              "id": "g85x4",
-              "name": "Judul",
-              "width": "fill_container",
-              "layout": "vertical",
-              "children": [
-                {
-                  "type": "text",
-                  "id": "RNgPz",
-                  "name": "Judul",
-                  "fill": "$ink",
-                  "textGrowth": "fixed-width",
-                  "width": "fill_container",
-                  "content": "Sesuai alam itu pasrah?",
-                  "lineHeight": 1.2,
-                  "fontFamily": "$fontUi",
-                  "fontSize": 16,
-                  "fontWeight": "700"
-                },
-                {
-                  "type": "text",
-                  "id": "z48eD",
-                  "name": "Buku",
-                  "fill": "$ink2",
-                  "textGrowth": "fixed-width",
-                  "width": "fill_container",
-                  "content": "The Enchiridion",
-                  "lineHeight": 1.4,
-                  "fontFamily": "$fontUi",
-                  "fontSize": 13,
-                  "fontWeight": "normal"
-                }
-              ]
-            },
-            {
-              "type": "frame",
-              "id": "mqCQE",
-              "name": "Menu obrolan",
-              "width": 44,
-              "height": 44,
-              "fill": "$muted",
-              "cornerRadius": "$rFull",
-              "layout": "vertical",
-              "justifyContent": "center",
-              "alignItems": "center",
-              "children": [
-                {
-                  "type": "icon",
-                  "id": "D3wFi6",
-                  "name": "Menu obrolan",
-                  "width": 20,
-                  "height": 20,
-                  "icon": "ellipsis",
-                  "library": "lucide",
-                  "fill": "$ink"
-                }
-              ]
-            },
-            {
-              "type": "frame",
-              "id": "mPZFh",
-              "name": "Daftar sesi buku",
-              "width": 44,
-              "height": 44,
-              "fill": "$muted",
-              "cornerRadius": "$rFull",
-              "layout": "vertical",
-              "justifyContent": "center",
-              "alignItems": "center",
-              "children": [
-                {
-                  "type": "icon",
-                  "id": "M1bIX",
-                  "name": "Daftar sesi buku",
-                  "width": 20,
-                  "height": 20,
-                  "icon": "history",
-                  "library": "lucide",
-                  "fill": "$ink"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "type": "frame",
-          "id": "Ynu96",
-          "name": "Batas sumber",
-          "width": "fill_container",
-          "gap": 8,
-          "alignItems": "center",
-          "children": [
-            {
-              "type": "icon",
-              "id": "uYL7g",
-              "name": "Batas bacaan",
-              "width": 16,
-              "height": 16,
-              "icon": "book-open",
-              "library": "lucide",
-              "fill": "$ink"
-            },
-            {
-              "type": "text",
-              "id": "ArOD2",
-              "name": "Cakupan",
-              "fill": "$ink2",
-              "textGrowth": "fixed-width",
-              "width": "fill_container",
-              "content": "Sampai Bab IV · Ubah",
-              "lineHeight": 1.4,
-              "fontFamily": "$fontUi",
-              "fontSize": 13,
-              "fontWeight": "600"
-            }
-          ]
-        },
-        {
-          "type": "frame",
-          "id": "Lz3Q1",
-          "layoutPosition": "absolute",
-          "x": 0,
-          "y": 0,
-          "name": "Scrim",
-          "width": 390,
-          "height": 844,
-          "fill": "$scrim",
-          "layout": "vertical"
-        },
-        {
-          "type": "frame",
-          "id": "cmHrW",
-          "layoutPosition": "absolute",
-          "x": 0,
-          "y": 384,
-          "name": "Batasi lagi?",
-          "width": 390,
-          "height": 460,
-          "fill": "$sheet",
-          "cornerRadius": [
-            28,
-            28,
-            0,
-            0
-          ],
-          "layout": "vertical",
-          "gap": 16,
-          "padding": [
-            26,
-            24,
-            34,
-            24
-          ],
-          "children": [
-            {
-              "id": "LswW8",
-              "type": "ref",
-              "ref": "sxV2S",
-              "name": "Grabber",
-              "layoutPosition": "absolute",
-              "x": 175,
-              "y": 10
-            },
-            {
-              "type": "frame",
-              "id": "aq9lN",
-              "name": "Header sheet",
-              "width": "fill_container",
-              "gap": 12,
-              "alignItems": "center",
-              "children": [
-                {
-                  "type": "text",
-                  "id": "Tu3UW",
-                  "name": "Judul",
-                  "fill": "$ink",
-                  "textGrowth": "fixed-width",
-                  "width": "fill_container",
-                  "content": "Batasi lagi?",
-                  "lineHeight": 1.1666666666666667,
-                  "fontFamily": "$fontUi",
-                  "fontSize": 24,
-                  "fontWeight": "700"
-                },
-                {
-                  "type": "frame",
-                  "id": "kO4xL",
-                  "name": "Tutup",
-                  "width": 44,
-                  "height": 44,
-                  "fill": "$muted",
-                  "cornerRadius": "$rFull",
-                  "layout": "vertical",
-                  "justifyContent": "center",
-                  "alignItems": "center",
-                  "children": [
-                    {
-                      "type": "icon",
-                      "id": "R6PqGW",
-                      "name": "Tutup",
-                      "width": 20,
-                      "height": 20,
-                      "icon": "x",
-                      "library": "lucide",
-                      "fill": "$ink"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "type": "text",
-              "id": "hKPc7",
-              "name": "Penjelasan",
-              "fill": "$ink",
-              "textGrowth": "fixed-width",
-              "width": "fill_container",
-              "content": "Obrolan ini pernah memakai seluruh buku.",
-              "lineHeight": 1.4,
-              "fontFamily": "$fontUi",
-              "fontSize": 18,
-              "fontWeight": "600"
-            },
-            {
-              "type": "text",
-              "id": "epju3",
-              "name": "Aturan",
-              "fill": "$ink2",
-              "textGrowth": "fixed-width",
-              "width": "fill_container",
-              "content": "Pesan dari cakupan seluruh buku akan ditutup selama batas sempit aktif dan tidak dipakai sebagai konteks pertanyaan berikutnya. Riwayatnya tetap tersimpan.",
-              "lineHeight": 1.4,
-              "fontFamily": "$fontUi",
-              "fontSize": 16,
-              "fontWeight": "normal"
-            },
-            {
-              "id": "GpNi3",
-              "type": "ref",
-              "ref": "ydNMj",
-              "name": "Batasi sampai Bab IV",
-              "width": "fill_container",
-              "height": 52,
-              "cornerRadius": "$rFull",
-              "descendants": {
-                "tHckF": {
-                  "content": "Batasi sampai Bab IV",
-                  "fontSize": 15
-                }
-              }
-            },
-            {
-              "id": "G2Zoj",
-              "type": "ref",
-              "ref": "nDWB0",
-              "name": "Tetap seluruh buku",
-              "width": "fill_container",
-              "height": 52,
-              "cornerRadius": "$rFull",
-              "descendants": {
-                "i8bu19": {
-                  "content": "Tetap seluruh buku",
-                  "fontSize": 15
-                }
-              }
-            },
-            {
-              "type": "text",
-              "id": "kUSho",
-              "name": "Status rancangan",
-              "fill": "$ink2",
-              "textGrowth": "fixed-width",
-              "width": "fill_container",
-              "content": "Usulan perilaku anti-spoiler untuk dipilih saat review.",
-              "lineHeight": 1.4,
-              "fontFamily": "$fontUi",
-              "fontSize": 12,
-              "fontWeight": "normal"
             }
           ]
         }
@@ -19623,39 +18105,6 @@
                   "fill": "$ink"
                 }
               ]
-            }
-          ]
-        },
-        {
-          "type": "frame",
-          "id": "V41ly",
-          "name": "Batas sumber",
-          "width": "fill_container",
-          "gap": 8,
-          "alignItems": "center",
-          "children": [
-            {
-              "type": "icon",
-              "id": "HYzKy",
-              "name": "Batas bacaan",
-              "width": 16,
-              "height": 16,
-              "icon": "book-open",
-              "library": "lucide",
-              "fill": "$ink"
-            },
-            {
-              "type": "text",
-              "id": "ETNPQ",
-              "name": "Cakupan",
-              "fill": "$ink2",
-              "textGrowth": "fixed-width",
-              "width": "fill_container",
-              "content": "Sampai Bab IV · Ubah",
-              "lineHeight": 1.4,
-              "fontFamily": "$fontUi",
-              "fontSize": 13,
-              "fontWeight": "600"
             }
           ]
         },
@@ -20059,39 +18508,6 @@
         },
         {
           "type": "frame",
-          "id": "Y0DEwC",
-          "name": "Batas sumber",
-          "width": "fill_container",
-          "gap": 8,
-          "alignItems": "center",
-          "children": [
-            {
-              "type": "icon",
-              "id": "xmAo4",
-              "name": "Batas bacaan",
-              "width": 16,
-              "height": 16,
-              "icon": "book-open",
-              "library": "lucide",
-              "fill": "$ink"
-            },
-            {
-              "type": "text",
-              "id": "e4v4LW",
-              "name": "Cakupan",
-              "fill": "$ink2",
-              "textGrowth": "fixed-width",
-              "width": "fill_container",
-              "content": "Sampai Bab IV · Ubah",
-              "lineHeight": 1.4,
-              "fontFamily": "$fontUi",
-              "fontSize": 13,
-              "fontWeight": "600"
-            }
-          ]
-        },
-        {
-          "type": "frame",
           "id": "NY1px",
           "name": "Pertanyaan lo",
           "width": "fill_container",
@@ -20483,39 +18899,6 @@
         },
         {
           "type": "frame",
-          "id": "k2w22",
-          "name": "Batas sumber",
-          "width": "fill_container",
-          "gap": 8,
-          "alignItems": "center",
-          "children": [
-            {
-              "type": "icon",
-              "id": "srFjm",
-              "name": "Batas bacaan",
-              "width": 16,
-              "height": 16,
-              "icon": "book-open",
-              "library": "lucide",
-              "fill": "$ink"
-            },
-            {
-              "type": "text",
-              "id": "sUHcm",
-              "name": "Cakupan",
-              "fill": "$ink2",
-              "textGrowth": "fixed-width",
-              "width": "fill_container",
-              "content": "Sampai Bab IV · Ubah",
-              "lineHeight": 1.4,
-              "fontFamily": "$fontUi",
-              "fontSize": 13,
-              "fontWeight": "600"
-            }
-          ]
-        },
-        {
-          "type": "frame",
           "id": "U50yLI",
           "name": "Pertanyaan lo",
           "width": "fill_container",
@@ -20546,7 +18929,7 @@
           "fill": "$ink",
           "textGrowth": "fixed-width",
           "width": "fill_container",
-          "content": "Gue belum nemu bagian yang mendukung itu di bacaan sampai Bab IV.",
+          "content": "Gue belum nemu bagian di buku ini yang mendukung itu.",
           "lineHeight": 1.65,
           "fontFamily": "$fontRead",
           "fontSize": 18.5,
@@ -20559,7 +18942,7 @@
           "fill": "$ink2",
           "textGrowth": "fixed-width",
           "width": "fill_container",
-          "content": "Lo bisa tanya kaitannya sebagai contoh masa kini, atau perluas sumber ke seluruh buku.",
+          "content": "Coba ubah pertanyaannya, atau tanya kaitannya sebagai konteks tambahan.",
           "lineHeight": 1.4,
           "fontFamily": "$fontUi",
           "fontSize": 16,
@@ -20917,39 +19300,6 @@
         },
         {
           "type": "frame",
-          "id": "qwSHb",
-          "name": "Batas sumber",
-          "width": "fill_container",
-          "gap": 8,
-          "alignItems": "center",
-          "children": [
-            {
-              "type": "icon",
-              "id": "D42F5n",
-              "name": "Batas bacaan",
-              "width": 16,
-              "height": 16,
-              "icon": "book-open",
-              "library": "lucide",
-              "fill": "$ink"
-            },
-            {
-              "type": "text",
-              "id": "rUl4R",
-              "name": "Cakupan",
-              "fill": "$ink2",
-              "textGrowth": "fixed-width",
-              "width": "fill_container",
-              "content": "Sampai Bab IV · Ubah",
-              "lineHeight": 1.4,
-              "fontFamily": "$fontUi",
-              "fontSize": 13,
-              "fontWeight": "600"
-            }
-          ]
-        },
-        {
-          "type": "frame",
           "id": "keimA",
           "name": "Pertanyaan lo",
           "width": "fill_container",
@@ -21278,39 +19628,6 @@
         },
         {
           "type": "frame",
-          "id": "LAySe",
-          "name": "Batas sumber",
-          "width": "fill_container",
-          "gap": 8,
-          "alignItems": "center",
-          "children": [
-            {
-              "type": "icon",
-              "id": "DrgK5",
-              "name": "Batas bacaan",
-              "width": 16,
-              "height": 16,
-              "icon": "book-open",
-              "library": "lucide",
-              "fill": "$ink"
-            },
-            {
-              "type": "text",
-              "id": "guXRa",
-              "name": "Cakupan",
-              "fill": "$ink2",
-              "textGrowth": "fixed-width",
-              "width": "fill_container",
-              "content": "Sampai Bab IV · Ubah",
-              "lineHeight": 1.4,
-              "fontFamily": "$fontUi",
-              "fontSize": 13,
-              "fontWeight": "600"
-            }
-          ]
-        },
-        {
-          "type": "frame",
           "id": "Humxb",
           "name": "Pertanyaan lo",
           "width": "fill_container",
@@ -21621,39 +19938,6 @@
                   "fill": "$ink"
                 }
               ]
-            }
-          ]
-        },
-        {
-          "type": "frame",
-          "id": "DdZgb",
-          "name": "Batas sumber",
-          "width": "fill_container",
-          "gap": 8,
-          "alignItems": "center",
-          "children": [
-            {
-              "type": "icon",
-              "id": "EuLos",
-              "name": "Batas bacaan",
-              "width": 16,
-              "height": 16,
-              "icon": "book-open",
-              "library": "lucide",
-              "fill": "$ink"
-            },
-            {
-              "type": "text",
-              "id": "kwfof",
-              "name": "Cakupan",
-              "fill": "$ink2",
-              "textGrowth": "fixed-width",
-              "width": "fill_container",
-              "content": "Sampai Bab IV · Ubah",
-              "lineHeight": 1.4,
-              "fontFamily": "$fontUi",
-              "fontSize": 13,
-              "fontWeight": "600"
             }
           ]
         },
@@ -22000,39 +20284,6 @@
         },
         {
           "type": "frame",
-          "id": "PF73q",
-          "name": "Batas sumber",
-          "width": "fill_container",
-          "gap": 8,
-          "alignItems": "center",
-          "children": [
-            {
-              "type": "icon",
-              "id": "Cz8R1",
-              "name": "Batas bacaan",
-              "width": 16,
-              "height": 16,
-              "icon": "book-open",
-              "library": "lucide",
-              "fill": "$ink"
-            },
-            {
-              "type": "text",
-              "id": "p20WS9",
-              "name": "Cakupan",
-              "fill": "$ink2",
-              "textGrowth": "fixed-width",
-              "width": "fill_container",
-              "content": "Sampai Bab IV · Ubah",
-              "lineHeight": 1.4,
-              "fontFamily": "$fontUi",
-              "fontSize": 13,
-              "fontWeight": "600"
-            }
-          ]
-        },
-        {
-          "type": "frame",
           "id": "Q2Obh",
           "name": "Pertanyaan lo",
           "width": "fill_container",
@@ -22361,39 +20612,6 @@
         },
         {
           "type": "frame",
-          "id": "WuTHd",
-          "name": "Batas sumber",
-          "width": "fill_container",
-          "gap": 8,
-          "alignItems": "center",
-          "children": [
-            {
-              "type": "icon",
-              "id": "LtC4U",
-              "name": "Batas bacaan",
-              "width": 16,
-              "height": 16,
-              "icon": "book-open",
-              "library": "lucide",
-              "fill": "$ink"
-            },
-            {
-              "type": "text",
-              "id": "s47Kzt",
-              "name": "Cakupan",
-              "fill": "$ink2",
-              "textGrowth": "fixed-width",
-              "width": "fill_container",
-              "content": "Sampai Bab IV · Ubah",
-              "lineHeight": 1.4,
-              "fontFamily": "$fontUi",
-              "fontSize": 13,
-              "fontWeight": "600"
-            }
-          ]
-        },
-        {
-          "type": "frame",
           "id": "aoxVX",
           "name": "Pertanyaan lo",
           "width": "fill_container",
@@ -22588,7 +20806,7 @@
           "fill": "$ink2",
           "textGrowth": "fixed-width",
           "width": "fill_container",
-          "content": "Beberapa sesi per buku. Ikon riwayat → daftar sesi; titik tiga → menu sesi. Tiap sesi punya judul, konteks, dan batas sumber sendiri. Textarea memakai versi ringkas.",
+          "content": "Beberapa sesi per buku. Ikon riwayat → daftar sesi; titik tiga → menu sesi. Tiap sesi punya judul dan konteks percakapan sendiri. Seluruh isi buku menjadi sumber. Textarea memakai versi ringkas.",
           "lineHeight": 1.4,
           "fontFamily": "$fontUi",
           "fontSize": 15,
@@ -23374,39 +21592,6 @@
         },
         {
           "type": "frame",
-          "id": "YMalX",
-          "name": "Batas sumber",
-          "width": "fill_container",
-          "gap": 8,
-          "alignItems": "center",
-          "children": [
-            {
-              "type": "icon",
-              "id": "QNqLf",
-              "name": "Batas bacaan",
-              "width": 16,
-              "height": 16,
-              "icon": "book-open",
-              "library": "lucide",
-              "fill": "$ink"
-            },
-            {
-              "type": "text",
-              "id": "mBNhz",
-              "name": "Cakupan",
-              "fill": "$ink2",
-              "textGrowth": "fixed-width",
-              "width": "fill_container",
-              "content": "Sampai Bab IV · Ubah",
-              "lineHeight": 1.4,
-              "fontFamily": "$fontUi",
-              "fontSize": 13,
-              "fontWeight": "600"
-            }
-          ]
-        },
-        {
-          "type": "frame",
           "id": "zSV1b",
           "name": "Pertanyaan lo",
           "width": "fill_container",
@@ -23787,7 +21972,7 @@
                   "fill": "$ink2",
                   "textGrowth": "fixed-width",
                   "width": "fill_container",
-                  "content": "Lagi dibuka · Sampai Bab IV · 10.42",
+                  "content": "Lagi dibuka · 10.42",
                   "lineHeight": 1.4,
                   "fontFamily": "$fontUi",
                   "fontSize": 12,
@@ -23865,7 +22050,7 @@
                   "fill": "$ink2",
                   "textGrowth": "fixed-width",
                   "width": "fill_container",
-                  "content": "Sampai Bab II · kemarin",
+                  "content": "Kemarin",
                   "lineHeight": 1.4,
                   "fontFamily": "$fontUi",
                   "fontSize": 12,
@@ -23930,7 +22115,7 @@
                   "fill": "$ink2",
                   "textGrowth": "fixed-width",
                   "width": "fill_container",
-                  "content": "Seluruh buku · 24 Okt",
+                  "content": "24 Okt",
                   "lineHeight": 1.4,
                   "fontFamily": "$fontUi",
                   "fontSize": 12,
@@ -23960,7 +22145,7 @@
           "fill": "$ink2",
           "textGrowth": "fixed-width",
           "width": "fill_container",
-          "content": "Setiap obrolan punya konteks dan batas sumber sendiri.",
+          "content": "Setiap obrolan punya konteks percakapan sendiri.",
           "lineHeight": 1.4,
           "fontFamily": "$fontUi",
           "fontSize": 13,
@@ -24080,39 +22265,6 @@
                   "fill": "$ink"
                 }
               ]
-            }
-          ]
-        },
-        {
-          "type": "frame",
-          "id": "EltGv",
-          "name": "Batas sumber",
-          "width": "fill_container",
-          "gap": 8,
-          "alignItems": "center",
-          "children": [
-            {
-              "type": "icon",
-              "id": "b5Vzlo",
-              "name": "Batas bacaan",
-              "width": 16,
-              "height": 16,
-              "icon": "book-open",
-              "library": "lucide",
-              "fill": "$ink"
-            },
-            {
-              "type": "text",
-              "id": "fahjy",
-              "name": "Cakupan",
-              "fill": "$ink2",
-              "textGrowth": "fixed-width",
-              "width": "fill_container",
-              "content": "Sampai Bab IV · Ubah",
-              "lineHeight": 1.4,
-              "fontFamily": "$fontUi",
-              "fontSize": 13,
-              "fontWeight": "600"
             }
           ]
         },
@@ -24406,39 +22558,6 @@
                   "fill": "$ink"
                 }
               ]
-            }
-          ]
-        },
-        {
-          "type": "frame",
-          "id": "qlKuc",
-          "name": "Batas sumber",
-          "width": "fill_container",
-          "gap": 8,
-          "alignItems": "center",
-          "children": [
-            {
-              "type": "icon",
-              "id": "A4Q1z",
-              "name": "Batas bacaan",
-              "width": 16,
-              "height": 16,
-              "icon": "book-open",
-              "library": "lucide",
-              "fill": "$ink"
-            },
-            {
-              "type": "text",
-              "id": "YMZ6p",
-              "name": "Cakupan",
-              "fill": "$ink2",
-              "textGrowth": "fixed-width",
-              "width": "fill_container",
-              "content": "Sampai Bab IV · Ubah",
-              "lineHeight": 1.4,
-              "fontFamily": "$fontUi",
-              "fontSize": 13,
-              "fontWeight": "600"
             }
           ]
         },
@@ -24763,7 +22882,7 @@
               "fill": "$ink2",
               "textGrowth": "fixed-width",
               "width": "fill_container",
-              "content": "The Enchiridion · sampai Bab IV",
+              "content": "The Enchiridion",
               "lineHeight": 1.4,
               "fontFamily": "$fontUi",
               "fontSize": 13,
@@ -25029,39 +23148,6 @@
                   "fill": "$ink"
                 }
               ]
-            }
-          ]
-        },
-        {
-          "type": "frame",
-          "id": "WY3DR",
-          "name": "Batas sumber",
-          "width": "fill_container",
-          "gap": 8,
-          "alignItems": "center",
-          "children": [
-            {
-              "type": "icon",
-              "id": "UlVpm",
-              "name": "Batas bacaan",
-              "width": 16,
-              "height": 16,
-              "icon": "book-open",
-              "library": "lucide",
-              "fill": "$ink"
-            },
-            {
-              "type": "text",
-              "id": "CHKQw",
-              "name": "Cakupan",
-              "fill": "$ink2",
-              "textGrowth": "fixed-width",
-              "width": "fill_container",
-              "content": "Sampai Bab IV · Ubah",
-              "lineHeight": 1.4,
-              "fontFamily": "$fontUi",
-              "fontSize": 13,
-              "fontWeight": "600"
             }
           ]
         },
@@ -25576,39 +23662,6 @@
                   "fill": "$ink"
                 }
               ]
-            }
-          ]
-        },
-        {
-          "type": "frame",
-          "id": "MPlz5",
-          "name": "Batas sumber",
-          "width": "fill_container",
-          "gap": 8,
-          "alignItems": "center",
-          "children": [
-            {
-              "type": "icon",
-              "id": "T3o460",
-              "name": "Batas bacaan",
-              "width": 16,
-              "height": 16,
-              "icon": "book-open",
-              "library": "lucide",
-              "fill": "$ink"
-            },
-            {
-              "type": "text",
-              "id": "Y95JFL",
-              "name": "Cakupan",
-              "fill": "$ink2",
-              "textGrowth": "fixed-width",
-              "width": "fill_container",
-              "content": "Sampai Bab IV · Ubah",
-              "lineHeight": 1.4,
-              "fontFamily": "$fontUi",
-              "fontSize": 13,
-              "fontWeight": "600"
             }
           ]
         },
@@ -26227,7 +24280,7 @@
           "fill": "$ink2",
           "textGrowth": "fixed-width",
           "width": "fill_container",
-          "content": "Batas sumber tersimpan per sesi. Sesi baru default sampai bacaan saat dibuat; konteks pesan sesi lain tidak ikut. Daftar menunjukkan label Seluruh buku agar sesi berpotensi spoiler dikenali sebelum dibuka.",
+          "content": "Seluruh isi buku menjadi sumber untuk semua sesi. Konteks percakapan tiap sesi tetap terpisah. Tidak ada pembatasan berdasarkan progres baca.",
           "lineHeight": 1.4,
           "fontFamily": "$fontUi",
           "fontSize": 15,
