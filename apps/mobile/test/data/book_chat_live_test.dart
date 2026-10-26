@@ -33,7 +33,7 @@ void main() {
       void checkpoint() => File(path).writeAsStringSync(
         const JsonEncoder.withIndent('  ').convert({
           'model': picked,
-          'protocol': 'book-chat-spike-v3',
+          'protocol': 'book-chat-spike-v4',
           'method': rerank ? 'rewrite+bm25-40+llm-select' : 'rewrite+bm25-8',
           'platform': Platform.operatingSystem,
           'rewriteSystem': rewriteSystem,
