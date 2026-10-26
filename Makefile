@@ -2,7 +2,7 @@ APP := apps/mobile
 FLUTTER := cd $(APP) && fvm flutter
 DART := cd $(APP) && fvm dart
 
-.PHONY: help get gen brand live watch run release dev run-android release-android dev-android apk profile test analyze format check clean
+.PHONY: help get gen brand live chat-spike chat-spike-live watch run release dev run-android release-android dev-android apk profile test analyze format check clean
 
 help: ## list commands
 	@grep -E '^[a-z0-9-]+:.*## ' $(MAKEFILE_LIST) | awk -F ':.*## ' '{printf "  %-16s %s\n", $$1, $$2}'
@@ -52,6 +52,12 @@ test: ## run tests, 30s cap per test so a hang fails fast (one file/folder: make
 
 live: ## real OpenRouter call, key from .env (gitignored; m=<model id> optional)
 	@set -a; . ./.env; set +a; cd $(APP) && OPENROUTER_MODEL=$(m) fvm flutter test test/data/openrouter_live_test.dart
+
+chat-spike: ## #113 offline corpus + isolation/budget/citation checks (no API)
+	$(FLUTTER) test --timeout 30s test/data/book_chat_spike_test.dart
+
+chat-spike-live: ## #113 paid corpus, local .env; m=<model>, BOOK_CHAT_CASE=E01 optional
+	@set -a; . ./.env; set +a; cd $(APP) && BOOK_CHAT_LIVE=1 OPENROUTER_MODEL=$(m) fvm flutter test test/data/book_chat_live_test.dart
 
 analyze: ## static analysis
 	$(FLUTTER) analyze

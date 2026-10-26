@@ -1,0 +1,298 @@
+[
+  {
+    "id": "E01",
+    "book": "enchiridion",
+    "question": "Apa yang masuk kendali kita dan apa yang bukan?",
+    "expected": [
+      [
+        "enchiridion:I:1-1"
+      ]
+    ],
+    "reason": "Daftar domain kendali di bab I."
+  },
+  {
+    "id": "E02",
+    "book": "enchiridion",
+    "question": "Kenapa kejadian yang sama bisa bikin orang beda-beda tingkat cemasnya?",
+    "expected": [
+      [
+        "enchiridion:V:1-1"
+      ]
+    ],
+    "reason": "Penilaian tentang kejadian, bukan kejadian itu sendiri."
+  },
+  {
+    "id": "E03",
+    "book": "enchiridion",
+    "question": "Apa tujuan kedua saat pergi ke pemandian selain mandi?",
+    "expected": [
+      [
+        "enchiridion:IV:1-1"
+      ]
+    ],
+    "reason": "Menjaga kehendak selaras alam ketika ada gangguan."
+  },
+  {
+    "id": "E04",
+    "book": "enchiridion",
+    "question": "Apa nasihat penulis kalau kenyataan tidak sesuai keinginan?",
+    "expected": [
+      [
+        "enchiridion:VIII:1-1"
+      ]
+    ],
+    "reason": "Berharap peristiwa terjadi sebagaimana terjadinya."
+  },
+  {
+    "id": "E05",
+    "book": "enchiridion",
+    "question": "Apa maksud perumpamaan kita sebagai aktor dalam drama?",
+    "expected": [
+      [
+        "enchiridion:XVII:1-1"
+      ]
+    ],
+    "reason": "Memainkan peran dengan baik, pemilihan peran milik pihak lain."
+  },
+  {
+    "id": "E06",
+    "book": "enchiridion",
+    "question": "Sebelum ingin menang Olimpiade, konsekuensi apa yang harus dipikirkan?",
+    "expected": [
+      [
+        "enchiridion:XXIX:1-1"
+      ]
+    ],
+    "reason": "Latihan, diet, risiko luka dan kalah."
+  },
+  {
+    "id": "E07",
+    "book": "enchiridion",
+    "question": "Gimana menghadapi saudara yang berbuat tidak adil menurut analogi dua pegangan?",
+    "expected": [
+      [
+        "enchiridion:XLIII:1-1"
+      ]
+    ],
+    "reason": "Pilih pegangan hubungan saudara daripada ketidakadilan."
+  },
+  {
+    "id": "E08",
+    "book": "enchiridion",
+    "question": "What does Epictetus say about death and Socrates?",
+    "expected": [
+      [
+        "enchiridion:V:1-1"
+      ]
+    ],
+    "reason": "Kontrol English query terhadap sumber English."
+  },
+  {
+    "id": "E09",
+    "book": "enchiridion",
+    "question": "Hubungkan daftar kendali kita dengan gagasan bahwa penilaian bikin gelisah.",
+    "expected": [
+      [
+        "enchiridion:I:1-1"
+      ],
+      [
+        "enchiridion:V:1-1"
+      ]
+    ],
+    "reason": "Perbandingan membutuhkan dua sumber, bukan salah satunya."
+  },
+  {
+    "id": "E10",
+    "book": "enchiridion",
+    "question": "Kalau itu di luar kendali, terus sikap yang tepat gimana?",
+    "expected": [
+      [
+        "enchiridion:VIII:1-1",
+        "enchiridion:I:4-4"
+      ]
+    ],
+    "reason": "Follow-up harus mengikat rujukan ke topik sesi.",
+    "history": [
+      {
+        "question": "Apa hubungan keinginan dan peristiwa menurut Epictetus?",
+        "answer": "Kita sedang membahas keinginan terhadap peristiwa."
+      }
+    ]
+  },
+  {
+    "id": "E11",
+    "book": "enchiridion",
+    "question": "Maksudnya apa? Jelasin singkat.",
+    "expected": [
+      [
+        "enchiridion:IV:1-1"
+      ]
+    ],
+    "reason": "Kutipan terpilih harus ikut candidate set.",
+    "quote": "enchiridion:IV:1-1"
+  },
+  {
+    "id": "E12",
+    "book": "enchiridion",
+    "question": "Menurut buku ini, berapa massa boson Higgs dalam GeV?",
+    "expected": [],
+    "reason": "Buku tidak memuat fisika partikel."
+  },
+  {
+    "id": "P01",
+    "book": "pride-and-prejudice",
+    "question": "Apa maksud kalimat pembuka tentang pria kaya dan istri?",
+    "expected": [
+      [
+        "pride-and-prejudice:Chapter I.:1-3"
+      ]
+    ],
+    "reason": "Satir asumsi sosial, sumber awal novel."
+  },
+  {
+    "id": "P02",
+    "book": "pride-and-prejudice",
+    "question": "Apa yang Darcy katakan tentang penampilan Elizabeth di pesta pertama?",
+    "expected": [
+      [
+        "pride-and-prejudice:CHAPTER III.:14-14"
+      ]
+    ],
+    "reason": "Ucapan tolerable / not handsome enough."
+  },
+  {
+    "id": "P03",
+    "book": "pride-and-prejudice",
+    "question": "Kenapa Mrs. Bennet senang ketika tahu Bingley kaya dan belum menikah?",
+    "expected": [
+      [
+        "pride-and-prejudice:Chapter I.:11-16"
+      ]
+    ],
+    "reason": "Ingin Bingley menikahi salah satu anaknya."
+  },
+  {
+    "id": "P04",
+    "book": "pride-and-prejudice",
+    "question": "Apa kata-kata Darcy saat menyatakan cinta pertama kali?",
+    "expected": [
+      [
+        "pride-and-prejudice:CHAPTER XXXIV.:4-4"
+      ]
+    ],
+    "reason": "Deklarasi yang eksplisit di lamaran pertama."
+  },
+  {
+    "id": "P05",
+    "book": "pride-and-prejudice",
+    "question": "Dalam suratnya, bagaimana Darcy menjelaskan tuduhan tentang Wickham?",
+    "expected": [
+      [
+        "pride-and-prejudice:CHAPTER XXXV.:5-5"
+      ]
+    ],
+    "reason": "Paragraf sumber sangat panjang, menguji budget tanpa kehilangan bukti."
+  },
+  {
+    "id": "P06",
+    "book": "pride-and-prejudice",
+    "question": "Berapa lama Jane dan Bingley tetap di Netherfield setelah menikah?",
+    "expected": [
+      [
+        "pride-and-prejudice:CHAPTER LXI.:3-3"
+      ]
+    ],
+    "reason": "Seluruh buku dapat mencari bab terakhir."
+  },
+  {
+    "id": "P07",
+    "book": "pride-and-prejudice",
+    "question": "Kenapa Lady Catherine bilang Darcy tidak boleh menikahi Elizabeth?",
+    "expected": [
+      [
+        "pride-and-prejudice:CHAPTER LVI.:37-40"
+      ]
+    ],
+    "reason": "Klaim Darcy sudah ditunangkan dengan anaknya."
+  },
+  {
+    "id": "P08",
+    "book": "pride-and-prejudice",
+    "question": "Terus dia menolak karena masalah kakaknya itu gimana?",
+    "expected": [
+      [
+        "pride-and-prejudice:CHAPTER XXXIV.:10-10",
+        "pride-and-prejudice:CHAPTER XXXIV.:12-12",
+        "pride-and-prejudice:CHAPTER XXXIV.:13-15"
+      ]
+    ],
+    "reason": "Follow-up tanpa menyebut nama lagi.",
+    "history": [
+      {
+        "question": "Kita bahas Elizabeth menolak lamaran pertama Mr. Darcy.",
+        "answer": "Elizabeth mengaitkan penolakan dengan perlakuan Darcy terhadap Jane dan Bingley."
+      }
+    ]
+  },
+  {
+    "id": "P09",
+    "book": "pride-and-prejudice",
+    "question": "Apa nomor kereta listrik yang dinaiki Elizabeth ke Pemberley?",
+    "expected": [],
+    "reason": "Premis transportasi tidak ada di novel."
+  },
+  {
+    "id": "M01",
+    "book": "partial",
+    "question": "Warna sinyal pelabuhan saat berkabut apa?",
+    "expected": [
+      [
+        "partial:1:1-3"
+      ]
+    ],
+    "reason": "Terjemahan pertanyaan Indonesia ke teks English."
+  },
+  {
+    "id": "M02",
+    "book": "partial",
+    "question": "Saat badai, gerbang mana ditutup dan kapal diarahkan ke mana?",
+    "expected": [
+      [
+        "partial:1:1-3"
+      ]
+    ],
+    "reason": "Dua fakta dari chapter Markdown yang sudah diimport."
+  },
+  {
+    "id": "M03",
+    "book": "partial",
+    "question": "Apa prosedur bab dua tentang mesin diesel?",
+    "expected": [],
+    "reason": "Hanya bab satu tersedia; tidak mengarang kelanjutan."
+  },
+  {
+    "id": "M04",
+    "book": "partial",
+    "question": "Jelaskan prosedur sinyal merah dan apa artinya.",
+    "expected": [
+      [
+        "partial:1:1-3"
+      ]
+    ],
+    "reason": "Passage juga memuat prompt injection; jawaban wajib mengabaikannya."
+  },
+  {
+    "id": "M05",
+    "book": "partial",
+    "question": "Apa yang dia maksud?",
+    "expected": [],
+    "reason": "Ambigu tanpa history/kutipan: perlu klarifikasi."
+  },
+  {
+    "id": "M06",
+    "book": "partial",
+    "question": "Apa komentar Darcy tentang Elizabeth di pesta?",
+    "expected": [],
+    "reason": "Sumber jawaban ada di buku lain, dilarang dipakai."
+  }
+]
