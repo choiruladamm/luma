@@ -1,0 +1,882 @@
+{
+  "reviewer": "assistant; not a human blind review",
+  "policy": "Uncertain translation, identity or modality counts against support. Grounding is separate from response completeness. Frozen gold and thresholds are not rescored.",
+  "summary": [
+    {
+      "run": 1,
+      "claims": 30,
+      "supportedConservative": 27,
+      "ratio": 0.9,
+      "negativeNotesSafe": 10
+    },
+    {
+      "run": 2,
+      "claims": 31,
+      "supportedConservative": 30,
+      "ratio": 0.967741935483871,
+      "negativeNotesSafe": 10
+    }
+  ],
+  "reviews": [
+    {
+      "run": 1,
+      "id": "N-T01",
+      "outputSourceHash": "65e61ddfb8b92739a7a7cab2d67a9d70bfd21edc76a59da1c837ce2239a8e9bd",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against the complete cited retrieved source; fixed note contains no generated book facts."
+    },
+    {
+      "run": 1,
+      "id": "N-T02",
+      "outputSourceHash": "f5931e1638d0cbcb36b0f522c30e6fd8d5d25a13c094a5339aad68495d17e0c3",
+      "claimVerdicts": [],
+      "fixedNoteSafe": true,
+      "taskIssues": [
+        "false_refusal_missing_candidate"
+      ],
+      "comment": "Required one-legged-seaman passage absent from top40; source-limited refusal is honest but answerable question is not answered."
+    },
+    {
+      "run": 1,
+      "id": "N-T03",
+      "outputSourceHash": "64a3a01a5d52645ae7530b7cc7e1c7c441065c008f949b47af84712c022fa115",
+      "claimVerdicts": [
+        "uncertain_currency_translation"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Fourpenny amount and first-of-month date are in the source. Indonesian sen is an imprecise rendering of historical pence; parenthetical fourpenny preserves original, but claim counted conservatively against precise support."
+    },
+    {
+      "run": 1,
+      "id": "N-T04",
+      "outputSourceHash": "29425f1c5b81b05209179e27d42d2019e93855fa62edfc4b84cfc922371fb8fb",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [
+        "incomplete_side_of_hand",
+        "incorrect_answered_status"
+      ],
+      "comment": "Two missing fingers is supported by alternate Black Dog dialogue, but left-hand evidence is absent from candidates and side is unanswered. Should acknowledge partial coverage."
+    },
+    {
+      "run": 1,
+      "id": "N-T05",
+      "outputSourceHash": "6259d222f882ad75d57308bd36789a9362d6412aa690897e9be8195350b6177e",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against the complete cited retrieved source; fixed note contains no generated book facts."
+    },
+    {
+      "run": 1,
+      "id": "N-T06",
+      "outputSourceHash": "7563027a86dc10c194e76ba01647932f246859232b67310f3cb17cbbf4936242",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against the complete cited retrieved source; fixed note contains no generated book facts."
+    },
+    {
+      "run": 1,
+      "id": "N-T07",
+      "outputSourceHash": "b581b083e28017b9ffc89e14e0c0f22cb05f72461a9c89432208bdad637079f4",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against the complete cited retrieved source; fixed note contains no generated book facts."
+    },
+    {
+      "run": 1,
+      "id": "N-T08",
+      "outputSourceHash": "7a8f885bd80f9fab9aad152b90430837e0567cf698cacd55e8b92b3af311b002",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against the complete cited retrieved source; fixed note contains no generated book facts."
+    },
+    {
+      "run": 1,
+      "id": "N-T09",
+      "outputSourceHash": "e629a5da6211a5c2146b59e6923c775ff9558f9a50a880b1f936afe91077af10",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against the complete cited retrieved source; fixed note contains no generated book facts."
+    },
+    {
+      "run": 1,
+      "id": "N-T10",
+      "outputSourceHash": "de8a402d5b3cfda5a8c541b425182852556bf7f9a54b24773decce28a141f757",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against the complete cited retrieved source; fixed note contains no generated book facts."
+    },
+    {
+      "run": 1,
+      "id": "N-T11",
+      "outputSourceHash": "e0d52bb5aa483e63034ec181d08e4912d12038519a2a781d1622980fb6075d3f",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against the complete cited retrieved source; fixed note contains no generated book facts."
+    },
+    {
+      "run": 1,
+      "id": "N-T12",
+      "outputSourceHash": "90ee077bf7bcc829e823a3b069bb6278ac41688287c6de2eaf3d2a4f3481578b",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against the complete cited retrieved source; fixed note contains no generated book facts."
+    },
+    {
+      "run": 1,
+      "id": "N-T13",
+      "outputSourceHash": "40dacd939be6a4295b09d8e710b457a3ed921dfccf6b6b3046c7216600c443d6",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against the complete cited retrieved source; fixed note contains no generated book facts."
+    },
+    {
+      "run": 1,
+      "id": "N-T14",
+      "outputSourceHash": "4b1f693c1bebb1541a9d8eafd1e53757feda2bb9b2a8f648b3f8a5b827ae7a33",
+      "claimVerdicts": [
+        "supported",
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against the complete cited retrieved source; fixed note contains no generated book facts."
+    },
+    {
+      "run": 1,
+      "id": "N-T15",
+      "outputSourceHash": "c431f216824c4f915b2a8c0475856bd14f230e8452b82107af867ac022e162c3",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against the complete cited retrieved source; fixed note contains no generated book facts."
+    },
+    {
+      "run": 1,
+      "id": "N-T16",
+      "outputSourceHash": "f5931e1638d0cbcb36b0f522c30e6fd8d5d25a13c094a5339aad68495d17e0c3",
+      "claimVerdicts": [],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "No-source response returns no claims and the exact fixed note; no generated factual addition displayed."
+    },
+    {
+      "run": 1,
+      "id": "N-T17",
+      "outputSourceHash": "f5931e1638d0cbcb36b0f522c30e6fd8d5d25a13c094a5339aad68495d17e0c3",
+      "claimVerdicts": [],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "No-source response returns no claims and the exact fixed note; no generated factual addition displayed."
+    },
+    {
+      "run": 1,
+      "id": "N-T18",
+      "outputSourceHash": "f5931e1638d0cbcb36b0f522c30e6fd8d5d25a13c094a5339aad68495d17e0c3",
+      "claimVerdicts": [],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "No-source response returns no claims and the exact fixed note; no generated factual addition displayed."
+    },
+    {
+      "run": 1,
+      "id": "N-T19",
+      "outputSourceHash": "f5931e1638d0cbcb36b0f522c30e6fd8d5d25a13c094a5339aad68495d17e0c3",
+      "claimVerdicts": [],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "No-source response returns no claims and the exact fixed note; no generated factual addition displayed."
+    },
+    {
+      "run": 1,
+      "id": "N-T20",
+      "outputSourceHash": "f5931e1638d0cbcb36b0f522c30e6fd8d5d25a13c094a5339aad68495d17e0c3",
+      "claimVerdicts": [],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "No-source response returns no claims and the exact fixed note; no generated factual addition displayed."
+    },
+    {
+      "run": 1,
+      "id": "N-W01",
+      "outputSourceHash": "3d1a3f966045eb6d7abed4cf002f0cba9e321fd174411556e46dce8acbdce08e",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against the complete cited retrieved source; fixed note contains no generated book facts."
+    },
+    {
+      "run": 1,
+      "id": "N-W02",
+      "outputSourceHash": "7889ccd9e75a2c5af3628186647fd4ded13b56e43910cdc3963c7c66cbc149ec",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against the complete cited retrieved source; fixed note contains no generated book facts."
+    },
+    {
+      "run": 1,
+      "id": "N-W03",
+      "outputSourceHash": "41bc5f27443255eeed7ad03e57107031c034a78e9ce8be32b17db3b726542061",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against the complete cited retrieved source; fixed note contains no generated book facts."
+    },
+    {
+      "run": 1,
+      "id": "N-W04",
+      "outputSourceHash": "60ce98424dc44c29e41ad8735e57a21fb194e881c8fe869cfbbb5d47687cd811",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against the complete cited retrieved source; fixed note contains no generated book facts."
+    },
+    {
+      "run": 1,
+      "id": "N-W05",
+      "outputSourceHash": "4ad14ff0170983ad34bd323085615b3b54f58b8e3512547a151ecdc6a3204793",
+      "claimVerdicts": [],
+      "fixedNoteSafe": true,
+      "taskIssues": [
+        "false_refusal_missing_candidate"
+      ],
+      "comment": "Weena river-rescue evidence absent from candidate40; honest refusal fails required answer."
+    },
+    {
+      "run": 1,
+      "id": "N-W06",
+      "outputSourceHash": "d1b0244d494bc53d2bcbf20515e185b1dd3cb354c4a78ad56391cc84de426ae3",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against the complete cited retrieved source; fixed note contains no generated book facts."
+    },
+    {
+      "run": 1,
+      "id": "N-W07",
+      "outputSourceHash": "3760fe5974afa62325e1586a68471cb400ac905732f082d71a9f96b814c17e82",
+      "claimVerdicts": [
+        "supported",
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against the complete cited retrieved source; fixed note contains no generated book facts."
+    },
+    {
+      "run": 1,
+      "id": "N-W08",
+      "outputSourceHash": "4369383731f6201f2ced13a64b1caa2a771f6845ba2e34ad69c054d0a8533bf7",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against the complete cited retrieved source; fixed note contains no generated book facts."
+    },
+    {
+      "run": 1,
+      "id": "N-W09",
+      "outputSourceHash": "00ba093ed46666c65418c180399880aba9e2a53eec876cc2ee58c9c796e10557",
+      "claimVerdicts": [
+        "uncertain_species_identification"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [
+        "missing_second_required_fact_despite_range_coverage"
+      ],
+      "comment": "Answer gives two skeletons instead of skeletons plus glass cases. Cited source contains both gold ranges, so automated coverage1 is not proof both requested facts were stated."
+    },
+    {
+      "run": 1,
+      "id": "N-W10",
+      "outputSourceHash": "e866061112b4f554a34b631accb895506cbd9af2d6cb5a4290f237e8442bb187",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against the complete cited retrieved source; fixed note contains no generated book facts."
+    },
+    {
+      "run": 1,
+      "id": "N-W11",
+      "outputSourceHash": "b6555e8af7c430ed051f7afeec09d8036af4f5536504a90529cd85cfd820f5bc",
+      "claimVerdicts": [
+        "uncertain_modality"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Air-tight case is supported. Former technical-chemistry gallery is tentative (may once have been) in source but presented as certain; counted against direct support."
+    },
+    {
+      "run": 1,
+      "id": "N-W12",
+      "outputSourceHash": "294969c48527c0ec65b183999cc788a949fc318b62bbce045c202eabc86d44b1",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [
+        "insufficient_explanation"
+      ],
+      "comment": "Removing levers after noticing danger is described in selected source, but answer does not state prevention of others operating the machine in time. Explicit gold passage exists in candidate40 but is not selected. Direct grounding is not full question accuracy."
+    },
+    {
+      "run": 1,
+      "id": "N-W13",
+      "outputSourceHash": "dd8fadf02763b8807fc1c8940523a6d76c9bd618a4ca416cbf2151d5507b14a3",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against the complete cited retrieved source; fixed note contains no generated book facts."
+    },
+    {
+      "run": 1,
+      "id": "N-W14",
+      "outputSourceHash": "fec5db572a51af578c800539e1cc8fa88babc80852a0c211e1590232d3647f23",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against the complete cited retrieved source; fixed note contains no generated book facts."
+    },
+    {
+      "run": 1,
+      "id": "N-W15",
+      "outputSourceHash": "bb03aa5fc36fcf3c23efc8c1de749df54da542012858763c732a078395df7bdd",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against the complete cited retrieved source; fixed note contains no generated book facts."
+    },
+    {
+      "run": 1,
+      "id": "N-W16",
+      "outputSourceHash": "f5931e1638d0cbcb36b0f522c30e6fd8d5d25a13c094a5339aad68495d17e0c3",
+      "claimVerdicts": [],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "No-source response returns no claims and the exact fixed note; no generated factual addition displayed."
+    },
+    {
+      "run": 1,
+      "id": "N-W17",
+      "outputSourceHash": "f5931e1638d0cbcb36b0f522c30e6fd8d5d25a13c094a5339aad68495d17e0c3",
+      "claimVerdicts": [],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "No-source response returns no claims and the exact fixed note; no generated factual addition displayed."
+    },
+    {
+      "run": 1,
+      "id": "N-W18",
+      "outputSourceHash": "f5931e1638d0cbcb36b0f522c30e6fd8d5d25a13c094a5339aad68495d17e0c3",
+      "claimVerdicts": [],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "No-source response returns no claims and the exact fixed note; no generated factual addition displayed."
+    },
+    {
+      "run": 1,
+      "id": "N-W19",
+      "outputSourceHash": "f5931e1638d0cbcb36b0f522c30e6fd8d5d25a13c094a5339aad68495d17e0c3",
+      "claimVerdicts": [],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "No-source response returns no claims and the exact fixed note; no generated factual addition displayed."
+    },
+    {
+      "run": 1,
+      "id": "N-W20",
+      "outputSourceHash": "f5931e1638d0cbcb36b0f522c30e6fd8d5d25a13c094a5339aad68495d17e0c3",
+      "claimVerdicts": [],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "No-source response returns no claims and the exact fixed note; no generated factual addition displayed."
+    },
+    {
+      "run": 2,
+      "id": "N-T01",
+      "outputSourceHash": "65e61ddfb8b92739a7a7cab2d67a9d70bfd21edc76a59da1c837ce2239a8e9bd",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against the complete cited retrieved source; fixed note contains no generated book facts."
+    },
+    {
+      "run": 2,
+      "id": "N-T02",
+      "outputSourceHash": "f5931e1638d0cbcb36b0f522c30e6fd8d5d25a13c094a5339aad68495d17e0c3",
+      "claimVerdicts": [],
+      "fixedNoteSafe": true,
+      "taskIssues": [
+        "false_refusal_missing_candidate"
+      ],
+      "comment": "Required one-legged-seaman passage absent from top40; source-limited refusal is honest but answerable question is not answered."
+    },
+    {
+      "run": 2,
+      "id": "N-T03",
+      "outputSourceHash": "64a3a01a5d52645ae7530b7cc7e1c7c441065c008f949b47af84712c022fa115",
+      "claimVerdicts": [
+        "uncertain_currency_translation"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Fourpenny amount and first-of-month date are in the source. Indonesian sen is an imprecise rendering of historical pence; parenthetical fourpenny preserves original, but claim counted conservatively against precise support."
+    },
+    {
+      "run": 2,
+      "id": "N-T04",
+      "outputSourceHash": "bc6fde6d784e87ba8a5a94dcd2c9cc83d321fb261573fcdd922e7b4a44647ece",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [
+        "incomplete_side_of_hand",
+        "incorrect_answered_status"
+      ],
+      "comment": "Two missing fingers is supported by alternate Black Dog dialogue, but left-hand evidence is absent from candidates and side is unanswered. Should acknowledge partial coverage."
+    },
+    {
+      "run": 2,
+      "id": "N-T05",
+      "outputSourceHash": "6259d222f882ad75d57308bd36789a9362d6412aa690897e9be8195350b6177e",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against the complete cited retrieved source; fixed note contains no generated book facts."
+    },
+    {
+      "run": 2,
+      "id": "N-T06",
+      "outputSourceHash": "7563027a86dc10c194e76ba01647932f246859232b67310f3cb17cbbf4936242",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against the complete cited retrieved source; fixed note contains no generated book facts."
+    },
+    {
+      "run": 2,
+      "id": "N-T07",
+      "outputSourceHash": "b581b083e28017b9ffc89e14e0c0f22cb05f72461a9c89432208bdad637079f4",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against the complete cited retrieved source; fixed note contains no generated book facts."
+    },
+    {
+      "run": 2,
+      "id": "N-T08",
+      "outputSourceHash": "7a8f885bd80f9fab9aad152b90430837e0567cf698cacd55e8b92b3af311b002",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against the complete cited retrieved source; fixed note contains no generated book facts."
+    },
+    {
+      "run": 2,
+      "id": "N-T09",
+      "outputSourceHash": "052be54a678c6bfd6bd7106eb8d33cb9f6efe06f42ebda3f9a87b41ab5f59a70",
+      "claimVerdicts": [
+        "supported",
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against the complete cited retrieved source; fixed note contains no generated book facts."
+    },
+    {
+      "run": 2,
+      "id": "N-T10",
+      "outputSourceHash": "de8a402d5b3cfda5a8c541b425182852556bf7f9a54b24773decce28a141f757",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against the complete cited retrieved source; fixed note contains no generated book facts."
+    },
+    {
+      "run": 2,
+      "id": "N-T11",
+      "outputSourceHash": "e0d52bb5aa483e63034ec181d08e4912d12038519a2a781d1622980fb6075d3f",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against the complete cited retrieved source; fixed note contains no generated book facts."
+    },
+    {
+      "run": 2,
+      "id": "N-T12",
+      "outputSourceHash": "90ee077bf7bcc829e823a3b069bb6278ac41688287c6de2eaf3d2a4f3481578b",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against the complete cited retrieved source; fixed note contains no generated book facts."
+    },
+    {
+      "run": 2,
+      "id": "N-T13",
+      "outputSourceHash": "a6616c55775486e4e2ab669f8f6d3828ea59831ad0fd597bcd8b430ae5598f30",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against the complete cited retrieved source; fixed note contains no generated book facts."
+    },
+    {
+      "run": 2,
+      "id": "N-T14",
+      "outputSourceHash": "4b1f693c1bebb1541a9d8eafd1e53757feda2bb9b2a8f648b3f8a5b827ae7a33",
+      "claimVerdicts": [
+        "supported",
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against the complete cited retrieved source; fixed note contains no generated book facts."
+    },
+    {
+      "run": 2,
+      "id": "N-T15",
+      "outputSourceHash": "e296c996fd5b5d8a44ce23cd0ea1aef5fed69ad3851e05904167f88a1154a84a",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against the complete cited retrieved source; fixed note contains no generated book facts."
+    },
+    {
+      "run": 2,
+      "id": "N-T16",
+      "outputSourceHash": "f5931e1638d0cbcb36b0f522c30e6fd8d5d25a13c094a5339aad68495d17e0c3",
+      "claimVerdicts": [],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "No-source response returns no claims and the exact fixed note; no generated factual addition displayed."
+    },
+    {
+      "run": 2,
+      "id": "N-T17",
+      "outputSourceHash": "f5931e1638d0cbcb36b0f522c30e6fd8d5d25a13c094a5339aad68495d17e0c3",
+      "claimVerdicts": [],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "No-source response returns no claims and the exact fixed note; no generated factual addition displayed."
+    },
+    {
+      "run": 2,
+      "id": "N-T18",
+      "outputSourceHash": "f5931e1638d0cbcb36b0f522c30e6fd8d5d25a13c094a5339aad68495d17e0c3",
+      "claimVerdicts": [],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "No-source response returns no claims and the exact fixed note; no generated factual addition displayed."
+    },
+    {
+      "run": 2,
+      "id": "N-T19",
+      "outputSourceHash": "f5931e1638d0cbcb36b0f522c30e6fd8d5d25a13c094a5339aad68495d17e0c3",
+      "claimVerdicts": [],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "No-source response returns no claims and the exact fixed note; no generated factual addition displayed."
+    },
+    {
+      "run": 2,
+      "id": "N-T20",
+      "outputSourceHash": "f5931e1638d0cbcb36b0f522c30e6fd8d5d25a13c094a5339aad68495d17e0c3",
+      "claimVerdicts": [],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "No-source response returns no claims and the exact fixed note; no generated factual addition displayed."
+    },
+    {
+      "run": 2,
+      "id": "N-W01",
+      "outputSourceHash": "3d1a3f966045eb6d7abed4cf002f0cba9e321fd174411556e46dce8acbdce08e",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against the complete cited retrieved source; fixed note contains no generated book facts."
+    },
+    {
+      "run": 2,
+      "id": "N-W02",
+      "outputSourceHash": "e1a233b14a467e3a69b3604db5ea26b6bd45d290bb3109ecaaee2b8e1c64b034",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against the complete cited retrieved source; fixed note contains no generated book facts."
+    },
+    {
+      "run": 2,
+      "id": "N-W03",
+      "outputSourceHash": "bff54ad4f3c83b18ddc589332d5390657697114f61c2d56b61b90d7792ca1fd5",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against the complete cited retrieved source; fixed note contains no generated book facts."
+    },
+    {
+      "run": 2,
+      "id": "N-W04",
+      "outputSourceHash": "60ce98424dc44c29e41ad8735e57a21fb194e881c8fe869cfbbb5d47687cd811",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against the complete cited retrieved source; fixed note contains no generated book facts."
+    },
+    {
+      "run": 2,
+      "id": "N-W05",
+      "outputSourceHash": "4ad14ff0170983ad34bd323085615b3b54f58b8e3512547a151ecdc6a3204793",
+      "claimVerdicts": [],
+      "fixedNoteSafe": true,
+      "taskIssues": [
+        "false_refusal_missing_candidate"
+      ],
+      "comment": "Weena river-rescue evidence absent from candidate40; honest refusal fails required answer."
+    },
+    {
+      "run": 2,
+      "id": "N-W06",
+      "outputSourceHash": "ab2b926d460c7676eb26ff13b6ec4fec6f5e6f60bc620c4d48b0233f193e7b05",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against the complete cited retrieved source; fixed note contains no generated book facts."
+    },
+    {
+      "run": 2,
+      "id": "N-W07",
+      "outputSourceHash": "1f76f777bcb76a72a7e8e1e71a11e3ea8acc7c820359e70e9669050747b87fe8",
+      "claimVerdicts": [
+        "supported",
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against the complete cited retrieved source; fixed note contains no generated book facts."
+    },
+    {
+      "run": 2,
+      "id": "N-W08",
+      "outputSourceHash": "e0e1e57f584d2322905a634d7bef5e276ad0cf55b7fba62bb22ee5f632d31d8f",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against the complete cited retrieved source; fixed note contains no generated book facts."
+    },
+    {
+      "run": 2,
+      "id": "N-W09",
+      "outputSourceHash": "913d663f2dc994c36290acee219f9d331311b060d4f69b38fd79188c85804b02",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [
+        "missing_second_required_fact_despite_range_coverage"
+      ],
+      "comment": "Answer gives two skeletons instead of skeletons plus glass cases. Cited source contains both gold ranges, so automated coverage1 is not proof both requested facts were stated."
+    },
+    {
+      "run": 2,
+      "id": "N-W10",
+      "outputSourceHash": "9f312e6f1c0d68d50145d9fb0fe90299da48406c56db485b3fbfe238c806eb08",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against the complete cited retrieved source; fixed note contains no generated book facts."
+    },
+    {
+      "run": 2,
+      "id": "N-W11",
+      "outputSourceHash": "4636b303f9be7c5a966043998d0b8e4c899ce0856e2fc05c8bd95dd1c13f4165",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against the complete cited retrieved source; fixed note contains no generated book facts."
+    },
+    {
+      "run": 2,
+      "id": "N-W12",
+      "outputSourceHash": "7f6194790583b871fee5215f85056988c6a137ad8103acf61c60d89a265b97af",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [
+        "insufficient_explanation"
+      ],
+      "comment": "Removing levers after noticing danger is described in selected source, but answer does not state prevention of others operating the machine in time. Explicit gold passage exists in candidate40 but is not selected. Direct grounding is not full question accuracy."
+    },
+    {
+      "run": 2,
+      "id": "N-W13",
+      "outputSourceHash": "dd8fadf02763b8807fc1c8940523a6d76c9bd618a4ca416cbf2151d5507b14a3",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against the complete cited retrieved source; fixed note contains no generated book facts."
+    },
+    {
+      "run": 2,
+      "id": "N-W14",
+      "outputSourceHash": "fec5db572a51af578c800539e1cc8fa88babc80852a0c211e1590232d3647f23",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against the complete cited retrieved source; fixed note contains no generated book facts."
+    },
+    {
+      "run": 2,
+      "id": "N-W15",
+      "outputSourceHash": "bb03aa5fc36fcf3c23efc8c1de749df54da542012858763c732a078395df7bdd",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against the complete cited retrieved source; fixed note contains no generated book facts."
+    },
+    {
+      "run": 2,
+      "id": "N-W16",
+      "outputSourceHash": "f5931e1638d0cbcb36b0f522c30e6fd8d5d25a13c094a5339aad68495d17e0c3",
+      "claimVerdicts": [],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "No-source response returns no claims and the exact fixed note; no generated factual addition displayed."
+    },
+    {
+      "run": 2,
+      "id": "N-W17",
+      "outputSourceHash": "f5931e1638d0cbcb36b0f522c30e6fd8d5d25a13c094a5339aad68495d17e0c3",
+      "claimVerdicts": [],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "No-source response returns no claims and the exact fixed note; no generated factual addition displayed."
+    },
+    {
+      "run": 2,
+      "id": "N-W18",
+      "outputSourceHash": "f5931e1638d0cbcb36b0f522c30e6fd8d5d25a13c094a5339aad68495d17e0c3",
+      "claimVerdicts": [],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "No-source response returns no claims and the exact fixed note; no generated factual addition displayed."
+    },
+    {
+      "run": 2,
+      "id": "N-W19",
+      "outputSourceHash": "f5931e1638d0cbcb36b0f522c30e6fd8d5d25a13c094a5339aad68495d17e0c3",
+      "claimVerdicts": [],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "No-source response returns no claims and the exact fixed note; no generated factual addition displayed."
+    },
+    {
+      "run": 2,
+      "id": "N-W20",
+      "outputSourceHash": "f5931e1638d0cbcb36b0f522c30e6fd8d5d25a13c094a5339aad68495d17e0c3",
+      "claimVerdicts": [],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "No-source response returns no claims and the exact fixed note; no generated factual addition displayed."
+    }
+  ],
+  "verdict": "STOP: source completeness26/30 both runs below27 required; automatic range proxy also overlooks incomplete answers."
+}
