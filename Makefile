@@ -2,7 +2,7 @@ APP := apps/mobile
 FLUTTER := cd $(APP) && fvm flutter
 DART := cd $(APP) && fvm dart
 
-.PHONY: help get gen brand live chat-spike chat-spike-live chat-oracle-live chat-retrieval chat-dense-live chat-dense-replay chat-heldout-live chat-refine-live chat-validation2-live watch run release dev run-android release-android dev-android apk profile test analyze format check clean
+.PHONY: help get gen brand live chat-spike chat-spike-live chat-oracle-live chat-retrieval chat-dense-live chat-dense-replay chat-heldout-live chat-refine-live chat-validation2-live chat-recovery-live chat-validation3-live watch run release dev run-android release-android dev-android apk profile test analyze format check clean
 
 help: ## list commands
 	@grep -E '^[a-z0-9-]+:.*## ' $(MAKEFILE_LIST) | awk -F ':.*## ' '{printf "  %-16s %s\n", $$1, $$2}'
@@ -73,6 +73,12 @@ chat-refine-live: ## #113 paid development/consumed diagnostics; cached embeddin
 
 chat-validation2-live: ## #113 fresh book-level validation2; frozen pipeline, consumes split
 	@set -a; . ./.env; set +a; cd $(APP) && BOOK_CHAT_VALIDATION2_LIVE=1 fvm flutter test test/data/book_chat_validation2_live_test.dart
+
+chat-recovery-live: ## #113 paid diagnostic on consumed validation2; no independent validation claim
+	@set -a; . ./.env; set +a; cd $(APP) && BOOK_CHAT_RECOVERY_LIVE=1 fvm flutter test test/data/book_chat_recovery_live_test.dart
+
+chat-validation3-live: ## #113 fresh book-level validation3; frozen pipeline, consumes split
+	@set -a; . ./.env; set +a; cd $(APP) && BOOK_CHAT_VALIDATION3_LIVE=1 fvm flutter test test/data/book_chat_validation3_live_test.dart
 
 chat-spike-live: ## #113 paid corpus, local .env; m=<model>, BOOK_CHAT_CASE=E01 optional
 	@set -a; . ./.env; set +a; cd $(APP) && BOOK_CHAT_LIVE=1 OPENROUTER_MODEL=$(m) fvm flutter test test/data/book_chat_live_test.dart
