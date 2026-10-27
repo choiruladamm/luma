@@ -163,7 +163,7 @@ API key di `flutter_secure_storage` (Keychain di iOS, Keystore di Android). Mode
 
 Schema **8** menambah penyimpanan mengikuti kontrak final
 session/turn/quote/answer/source/index di `lib/domain/models/book_chat.dart`.
-Repository/mapper (#116) belum dihubungkan ke aplikasi.
+Repository/mapper (#116) tersedia; UI/transport belum dihubungkan ke aplikasi.
 Session menyimpan judul/manualTitle, revision dan timestamps; `lastOpenedAt`
 terpisah dari `updatedAt`. Turn memiliki sequence, attempt, model/promptVersion,
 phase, draft, answer/error/status dan quote snapshot. Retry mengganti attempt pada
@@ -216,6 +216,18 @@ revision, angka dan range; payload rusak menjadi invalidResponse, phase tidak di
 menjadi interrupted. `answer` adalah hasil terstruktur, `draft` respons mentah; tidak
 menyimpan salinan raw answer kedua. Semua sumber berada pada `sources`; claims mengacu
 ke ID lokal attempt itu. Snapshot arsip didekode tanpa mensyaratkan paragraf lama ada.
+
+Mapper `chat_snapshot.dart` memvalidasi JSON/enum, batas byte, angka, book/revision,
+range UTF-16/snapshot length, hash SHA-256, urutan anchor, dan ID sumber/klaim.
+Payload turn rusak menjadi failed/invalidResponse tanpa answer/quote terpercaya;
+unknown phase tetap interrupted. Session rusak membawa flag domain `invalid`
+dan tetap dapat dihapus; preview/invalid hanya hasil query, bukan kolom schema.
+Live prepare/finalize memeriksa lagi paragraf/owner/hash terkini. Note model
+tidak disimpan sebagai teks terpercaya; copy diturunkan dari status jawaban.
+
+Archive tetap boleh dibuka, di-scroll dan dihapus, tetapi append/retry/rename atau
+checkpoint ke revision lama ditolak. `markOpened` dan scroll tidak mengubah
+updatedAt; terminal dan checkpoint yang benar-benar dipersist memperbarui aktivitas.
 
 Migrasi hanya `ADD COLUMN` dan `CREATE TABLE/INDEX`; tidak mengganti tabel lama.
 Backup ZIP tetap format 1 karena membawa snapshot seluruh DB; manifest melaporkan

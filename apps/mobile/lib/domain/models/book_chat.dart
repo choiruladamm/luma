@@ -42,6 +42,8 @@ class ChatSession {
     required this.updatedAt,
     this.lastOpenedAt,
     this.scrollAnchor,
+    this.preview,
+    this.invalid = false,
   });
 
   final int id;
@@ -51,6 +53,10 @@ class ChatSession {
   final DateTime createdAt, updatedAt;
   final DateTime? lastOpenedAt;
   final ChatScrollAnchor? scrollAnchor;
+
+  /// Pertanyaan terakhir sesi ini, bukan jawaban atau konteks lintas sesi.
+  final String? preview;
+  final bool invalid;
 
   bool isArchived(ChatBookRef current) => book != current;
 }
