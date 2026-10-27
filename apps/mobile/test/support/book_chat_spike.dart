@@ -87,9 +87,12 @@ double? recall(List<List<String>> expected, List<Passage> found) {
 String textHash(String text) => sha256.convert(utf8.encode(text)).toString();
 int bytes(String text) => utf8.encode(text).length;
 
-List<Passage> loadCorpus() {
+List<Passage> loadCorpus({bool heldOut = false}) {
   final out = <Passage>[];
-  for (final book in ['enchiridion', 'pride-and-prejudice']) {
+  for (final book
+      in heldOut
+          ? ['alice-in-wonderland', 'meditations']
+          : ['enchiridion', 'pride-and-prejudice']) {
     final parsed = extractChapters(
       parseEpub(File('test/fixtures/$book.epub').readAsBytesSync()),
     );
@@ -97,6 +100,7 @@ List<Passage> loadCorpus() {
       out.addAll(passages(book, c.title, c.paragraphs, c.groups));
     }
   }
+  if (heldOut) return out;
   final md = parseLumaMarkdown(
     File('test/fixtures/book_chat_partial.txt').readAsStringSync(),
   );
