@@ -106,7 +106,9 @@ Buku Markdown ([import-formats.md](import-formats.md)) totalnya cuma bab yang su
 
 Kontrak di `lib/domain/models/book_chat.dart` dan `lib/domain/chat_prompt.dart`;
 [keputusan/lifecycle/state matrix #114](https://github.com/choiruladamm/luma/issues/114).
-Belum ada route, provider, repository, tabel chat, atau request jaringan baru.
+Schema 8 menyediakan tabel chat (#115). `ChatRepository` +
+`chatRepositoryProvider` non-autoDispose menyediakan persistence (#116), tanpa
+network. Route/UI/transport belum dihubungkan.
 
 `ChatBookRef` = `(bookId, contentRevision)`. Session revision lama read-only;
 metadata judul/penulis/cover tidak menaikkan revision. Append/replace/reorder isi,
@@ -128,4 +130,36 @@ Stop/back/switch/background memanggil cancel+flush, lalu `interrupt(cancelled: t
 process restart memanggil `interrupt()` menjadi interrupted. Draft tetap tersimpan,
 tidak auto-send. `slow` tetap request aktif; archived merupakan relasi session vs
 current revision, bukan status turn yang menghapus history. Detail persist/cancel/
-stream dimiliki #116/#118, bukan model domain.
+stream dimiliki repository/#118, bukan model domain.
+
+`ChatRepository` menyediakan `watchSessions(bookId)`,
+`watchTurns(bookId,sessionId)`, `lastOpenedSession`, `createFirstTurn`,
+`appendTurn`, `rename`, `markOpened`, `saveScrollAnchor`, `deleteSession`,
+`retry`, `prepareSources`, `checkpoint`, `finalize`, dan `recoverInterrupted`.
+Semua caller menerima model domain; mapper snapshot berada di
+`data/repositories/chat_snapshot.dart`. Preview sesi hanya pertanyaan terakhir
+sesi itu; urutan aktivitas `(updatedAt,id)` terpisah dari resume
+`(lastOpenedAt,id)`. Stream tidak menandai sesi sebagai dibuka.
+
+First-send membuat sesi + turn secara atomik; kegagalan validasi rollback keduanya.
+Append/retry menolak pending kedua di sesi yang sama. ViewModel #118 tetap harus
+menahan double tap pada draft sebelum sessionId pertama tersedia; dua panggilan
+`createFirstTurn` terpisah berarti dua sesi baru. Tidak ada draft-session kosong
+di database atau request ID persist tambahan.
+
+`prepareSources` membekukan snapshot tervalidasi sebelum transport, lalu menjadi
+waiting. Checkpoint menerima draft kumulatif, menolak regresi dan phase mundur;
+menulis tiap ≥500ms atau pertumbuhan ≥1KiB (phase berubah langsung ditulis).
+Sisa draft terbaru ditahan di memori tanpa timer; terminal `finalize` langsung
+flush, termasuk tail yang belum masuk DB. True dari checkpoint berarti diterima,
+bukan selalu sudah ditulis. Proses mati mendadak dapat kehilangan tail terakhir
+di bawah ambang; stop/back/switch/background di #118 wajib finalize sebelum dispose.
+
+Recovery sekali per lifetime repository berjalan sebelum read/write pertama:
+persisted running/unknown phase menjadi interrupted, tanpa resend atau jaringan.
+Jangan membuat repository kedua di DB yang sama ketika request masih aktif.
+Setiap update attempt memeriksa session/turn ownership, revision aktif, attempt,
+dan running phase dalam transaksi; terminal/attempt lama ditolak (false).
+Sebelum restore menutup/mengganti DB, cancel + finalize request, lalu invalidate
+provider. Provider dispose mematikan callback instance lama; callback transport
+wajib menangkap instance repository asal, bukan mencari provider baru (#118/#119).
