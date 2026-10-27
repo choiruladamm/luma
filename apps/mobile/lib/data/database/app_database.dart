@@ -41,6 +41,9 @@ class Books extends Table {
 
   /// Naik = re-import + hapus ai_results buku itu.
   IntColumn get parserVersion => integer()();
+
+  /// Snapshot isi/urutan untuk chat; metadata tidak menaikkan revision.
+  IntColumn get contentRevision => integer().withDefault(const Constant(1))();
   IntColumn get totalChars => integer()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
   DateTimeColumn get lastOpenedAt => dateTime().nullable()();
@@ -226,6 +229,56 @@ class Settings extends Table {
   Set<Column> get primaryKey => {key};
 }
 
+@TableIndex(
+  name: 'chat_sessions_book_opened',
+  columns: {#bookId, #lastOpenedAt, #id},
+)
+@DataClassName('ChatSessionRow')
+class ChatSessions extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get bookId =>
+      integer().references(Books, #id, onDelete: KeyAction.cascade)();
+  IntColumn get contentRevision => integer()();
+  TextColumn get title => text()();
+  BoolColumn get manualTitle => boolean().withDefault(const Constant(false))();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
+  DateTimeColumn get lastOpenedAt => dateTime().nullable()();
+
+  /// JSON ChatScrollAnchor (turnId/blockIndex/alignment), bukan offset pixel.
+  TextColumn get scrollAnchor => text().nullable()();
+}
+
+@DataClassName('ChatTurnRow')
+class ChatTurns extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get sessionId =>
+      integer().references(ChatSessions, #id, onDelete: KeyAction.cascade)();
+  IntColumn get sequence => integer()();
+  TextColumn get question => text()();
+
+  /// Snapshot JSON tidak menunjuk chapter lewat FK: re-import menjaga arsip.
+  TextColumn get quote => text().nullable()();
+  TextColumn get answer => text().nullable()();
+  TextColumn get sources => text().withDefault(const Constant('[]'))();
+  TextColumn get draft => text().withDefault(const Constant(''))();
+
+  /// Teks mentah supaya mapper #116 bisa menangani enum backup yang rusak.
+  TextColumn get phase => text()();
+  IntColumn get attempt => integer().withDefault(const Constant(1))();
+  TextColumn get model => text()();
+  IntColumn get promptVersion => integer()();
+  TextColumn get error => text().nullable()();
+  IntColumn get httpStatus => integer().nullable()();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
+
+  @override
+  List<Set<Column>> get uniqueKeys => [
+    {sessionId, sequence},
+  ];
+}
+
 @DriftDatabase(
   tables: [
     Books,
@@ -237,6 +290,8 @@ class Settings extends Table {
     ReadingSessions,
     AiCalls,
     Settings,
+    ChatSessions,
+    ChatTurns,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -247,7 +302,7 @@ class AppDatabase extends _$AppDatabase {
   // test/data/migration_test.dart. Backup dari versi lama ikut dimigrasi pas
   // di-restore.
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -278,6 +333,12 @@ class AppDatabase extends _$AppDatabase {
         await m.addColumn(books, books.originalTitle);
         await m.addColumn(books, books.originalAuthor);
         await m.addColumn(books, books.useDefaultCover);
+      }
+      if (from < 8) {
+        await m.addColumn(books, books.contentRevision);
+        await m.createTable(chatSessions);
+        await m.createIndex(chatSessionsBookOpened);
+        await m.createTable(chatTurns);
       }
     },
     // SQLite matiin foreign key secara default; cascade butuh ini.

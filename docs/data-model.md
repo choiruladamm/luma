@@ -20,6 +20,7 @@ Prinsip: **file diparse sekali saat import** ke format internal. Reader, AI, dan
 | useDefaultCover | bool (default false) | true = cover EPUB disembunyiin (repository ngasih `coverName` null ke UI). `coverName` tetap utuh di DB + disk |
 | hash | text? (unique) | SHA-256 isi file EPUB, untuk cegah import dobel |
 | parserVersion | int | Versi logika parsing + grouping. Naik → re-import & invalidasi cache buku itu |
+| contentRevision | int (default 1) | Snapshot isi/urutan untuk Book Chat. Metadata tidak menaikkan revision; hook mutasi mengikuti issue integritas |
 | totalChars | int | Untuk hitung persentase baca (hanya bermakna untuk buku lengkap) |
 | createdAt | datetime | |
 | lastOpenedAt | datetime? | Untuk urutan rak |
@@ -149,6 +150,7 @@ Log append-only request LLM, terpisah dari cache `ai_results` (`createdAt`-nya k
 | 5 | Pencatatan statistik (#42): tabel `reading_sessions` + `ai_calls`, `books.finishedAt`, `ai_results.openCount` + `lastOpenedAt`. Tabel baru kosong, baris lama `openCount` = 0 |
 | 6 | Tabel `ai_breakdowns` (Bedahin, #62). Data lama gak disentuh |
 | 7 | `books.originalTitle`, `originalAuthor`, `useDefaultCover` (ubah judul + penulis, #69). Baris lama: `null`, `null`, `false` |
+| 8 | `books.contentRevision` default 1, `chat_sessions`, `chat_turns` (#115). Tabel chat kosong saat upgrade; semua data lama dipertahankan |
 
 Tiap ubah tabel: naikkan `schemaVersion`, tambah langkah di `onUpgrade`, dan test migrasi dari versi sebelumnya (data tetap utuh, schema hasil migrasi sama dengan install baru). Restore backup dari schema lama ikut dimigrasi saat database dibuka ([backup.md](backup.md)).
 
@@ -157,11 +159,11 @@ Tiap ubah tabel: naikkan `schemaVersion`, tambah langkah di `onUpgrade`, dan tes
 API key di `flutter_secure_storage` (Keychain di iOS, Keystore di Android). Model ID, preferensi Aa, dan backup terakhir di tabel `settings` sederhana (key-value) di Drift, supaya ikut ter-backup. Model LLM: `ai.model` (model ID OpenRouter, default `z-ai/glm-5.3-flash`; pilihan dari daftar kandidat di [llm.md](llm.md)). API key di Keychain / Keystore dengan kunci `openrouter_api_key`, cuma disimpen setelah lolos cek bentuk dan cek ke OpenRouter ([llm.md](llm.md)); kosong = dihapus. "Hapus cache" di Pengaturan = kosongin `ai_results` + `ai_breakdowns` setelah konfirmasi; Pengaturan nampilin jumlah paragraf yang udah diterjemahin + ukuran teksnya. Backup terakhir: `backup.lastAt` (ISO 8601), `backup.lastName`, `backup.lastSize` (byte). Kunci Aa: `reader.size` (indeks step 0–6), `reader.font`, `reader.spacing`, `reader.margin`, `theme` (nama enum), `reader.hideStatusBar`, `reader.showProgressLine` (`true`/`false`). Urutan rak: `shelf.sort` (`lastOpened` / `title` / `added`, default `lastOpened`). Tampilan rak: `shelf.view` (`grid` / `list`, default `grid`). Hindari `shared_preferences` untuk data yang perlu ikut backup.
 
 
-## Kontrak percakapan sebelum migrasi (#114)
+## Penyimpanan percakapan (#114/#115)
 
-Schema masih **7**; belum ada tabel chat/contentRevision yang aktif. Kontrak final
-session/turn/quote/answer/source/index ada di `lib/domain/models/book_chat.dart`;
-[migrasi #115](https://github.com/choiruladamm/luma/issues/115) mengikuti kontrak ini.
+Schema **8** menambah penyimpanan mengikuti kontrak final
+session/turn/quote/answer/source/index di `lib/domain/models/book_chat.dart`.
+Repository/mapper (#116) belum dihubungkan ke aplikasi.
 Session menyimpan judul/manualTitle, revision dan timestamps; `lastOpenedAt`
 terpisah dari `updatedAt`. Turn memiliki sequence, attempt, model/promptVersion,
 phase, draft, answer/error/status dan quote snapshot. Retry mengganti attempt pada
@@ -178,3 +180,44 @@ Decoder arsip merekonstruksi snapshot tersimpan dengan validasi struktural/owner
 tanpa mengharuskan paragraf lama masih ada. `parseChatAnswer` adalah validator output
 live terhadap sumber attempt yang dikirim, bukan decoder arsip terhadap isi buku baru.
 Arsip tetap terbaca, tetapi tidak boleh dipakai untuk prompt baru atau jump yang stale.
+
+### `chat_sessions`
+
+| Kolom | Tipe | Catatan |
+|-------|------|---------|
+| id | int PK autoincrement | Row Drift `ChatSessionRow`, berbeda dari model domain |
+| bookId | int FK books.id cascade | Hapus buku menghapus sesi dan turn |
+| contentRevision | int | Revision isi buku saat sesi dibuat; bookId/revision turn diwarisi dari sesi |
+| title, manualTitle | text, bool default false | Judul otomatis atau hasil rename |
+| createdAt, updatedAt | datetime default now | lastOpenedAt tidak ikut berubah saat jawaban ditulis |
+| lastOpenedAt | datetime? | Index `chat_sessions_book_opened(book_id,last_opened_at,id)` |
+| scrollAnchor | text? | JSON `{turnId,blockIndex,alignment}`; fraksi alignment, bukan pixel |
+
+### `chat_turns`
+
+| Kolom | Tipe | Catatan |
+|-------|------|---------|
+| id | int PK autoincrement | Row Drift `ChatTurnRow` |
+| sessionId | int FK chat_sessions.id cascade | Tidak ada FK ke chapter/paragraf snapshot |
+| sequence | int | Unique `(session_id,sequence)` juga menyediakan index urutan pesan |
+| question | text | Pertanyaan asli |
+| quote | text? | JSON ChatQuote: anchors + translation opsional (UI saja) |
+| answer | text? | JSON jawaban tervalidasi: status + claims `{text,sourceIds}`; note diturunkan dari status, tidak mempercayai note model |
+| sources | text default `[]` | JSON daftar sumber attempt: id/chapterTitle/anchors, termasuk snapshot asli |
+| draft | text default kosong | Respons mentah/parsial, dipertahankan saat stop/cut/restart; tidak menjadi history terpercaya |
+| phase | text | Nama ChatPhase; teks mentah agar enum rusak ditangani mapper, bukan textEnum yang melempar saat query |
+| attempt | int default 1 | Generation retry pada turn yang sama |
+| model, promptVersion | text, int | Identitas attempt |
+| error, httpStatus | text?, int? | AiError.name dan status HTTP bila tersedia |
+| createdAt, updatedAt | datetime default now | Tidak mengubah lastOpenedAt sesi |
+
+JSON/enum bukan data terpercaya. Mapper #116 wajib memvalidasi struktur, ownership,
+revision, angka dan range; payload rusak menjadi invalidResponse, phase tidak dikenal
+menjadi interrupted. `answer` adalah hasil terstruktur, `draft` respons mentah; tidak
+menyimpan salinan raw answer kedua. Semua sumber berada pada `sources`; claims mengacu
+ke ID lokal attempt itu. Snapshot arsip didekode tanpa mensyaratkan paragraf lama ada.
+
+Migrasi hanya `ADD COLUMN` dan `CREATE TABLE/INDEX`; tidak mengganti tabel lama.
+Backup ZIP tetap format 1 karena membawa snapshot seluruh DB; manifest melaporkan
+schema 8. Downgrade binary schema 7 tidak didukung: rollback data memakai backup
+sebelum upgrade, bukan menurunkan PRAGMA user_version atau menghapus app.

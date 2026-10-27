@@ -42,6 +42,155 @@ void main() {
         ),
       );
 
+  Future<int> insertSession(int bookId) => db
+      .into(db.chatSessions)
+      .insert(
+        ChatSessionsCompanion.insert(
+          bookId: bookId,
+          contentRevision: 1,
+          title: 'Tema buku',
+        ),
+      );
+
+  Future<int> insertTurn(int sessionId, {int sequence = 0}) => db
+      .into(db.chatTurns)
+      .insert(
+        ChatTurnsCompanion.insert(
+          sessionId: sessionId,
+          sequence: sequence,
+          question: 'Kenapa?',
+          phase: 'preparing',
+          model: 'test/model',
+          promptVersion: 1,
+        ),
+      );
+
+  test('chat snapshots survive chapter replacement; session and book delete cascade', () async {
+    final keep = await insertBook(hash: 'keep');
+    final gone = await insertBook(hash: 'gone');
+    final chapter = await insertChapter(gone, 0);
+    final keptSession = await insertSession(keep);
+    final deletedSession = await insertSession(gone);
+    final archivedSession = await insertSession(gone);
+    await insertTurn(keptSession);
+    await insertTurn(deletedSession);
+    final turn = await insertTurn(archivedSession);
+    final snapshot =
+        '[{"id":"S1","chapterId":$chapter,"paragraphIndex":0,"snapshot":"Bukti 🌿"}]';
+    await (db.update(db.chatTurns)..where((t) => t.id.equals(turn))).write(
+      ChatTurnsCompanion(
+        sources: Value(snapshot),
+        quote: Value(snapshot),
+        answer: const Value('{"status":"partial","claims":[]}'),
+        draft: const Value('Potongan mentah'),
+        attempt: const Value(2),
+        phase: const Value('cut'),
+        error: const Value('network'),
+        httpStatus: const Value(502),
+      ),
+    );
+    await (db.delete(db.chapters)..where((c) => c.id.equals(chapter))).go();
+    final archived = await (db.select(
+      db.chatTurns,
+    )..where((t) => t.id.equals(turn))).getSingle();
+    expect(archived.sources, snapshot);
+    expect(archived.quote, snapshot);
+    expect(archived.answer, '{"status":"partial","claims":[]}');
+    expect(
+      (
+        archived.draft,
+        archived.attempt,
+        archived.phase,
+        archived.error,
+        archived.httpStatus,
+      ),
+      ('Potongan mentah', 2, 'cut', 'network', 502),
+    );
+    await (db.delete(
+      db.chatSessions,
+    )..where((s) => s.id.equals(deletedSession))).go();
+    expect((await db.select(db.chatTurns).get()).map((t) => t.sessionId), [
+      keptSession,
+      archivedSession,
+    ]);
+    await (db.delete(db.books)..where((b) => b.id.equals(gone))).go();
+    expect((await db.select(db.chatSessions).get()).map((s) => s.id), [
+      keptSession,
+    ]);
+    expect((await db.select(db.chatTurns).get()).map((t) => t.sessionId), [
+      keptSession,
+    ]);
+  });
+
+  test('chat order unique per session; payload defaults and opened time are independent', () async {
+    final book = await insertBook();
+    final first = await insertSession(book);
+    final second = await insertSession(book);
+    await insertTurn(first);
+    await insertTurn(second);
+    await expectLater(insertTurn(first), throwsA(isA<SqliteException>()));
+    await expectLater(insertTurn(9999), throwsA(isA<SqliteException>()));
+    final row = (await db.select(db.chatTurns).get()).first;
+    expect(
+      (
+        row.attempt,
+        row.draft,
+        row.sources,
+        row.quote,
+        row.answer,
+        row.error,
+        row.httpStatus,
+      ),
+      (1, '', '[]', null, null, null, null),
+    );
+    final before = await (db.select(
+      db.chatSessions,
+    )..where((s) => s.id.equals(first))).getSingle();
+    expect(before.manualTitle, isFalse);
+    expect(before.lastOpenedAt, isNull);
+    const scroll = '{"turnId":1,"blockIndex":0,"alignment":0.4}';
+    final opened = DateTime(2026, 10, 28, 2);
+    await (db.update(db.chatSessions)..where((s) => s.id.equals(first))).write(
+      ChatSessionsCompanion(
+        lastOpenedAt: Value(opened),
+        scrollAnchor: const Value(scroll),
+      ),
+    );
+    await (db.update(db.chatSessions)..where((s) => s.id.equals(first))).write(
+      ChatSessionsCompanion(
+        title: const Value('Judul manual'),
+        manualTitle: const Value(true),
+        updatedAt: Value(opened.add(const Duration(minutes: 1))),
+      ),
+    );
+    final after = await (db.select(
+      db.chatSessions,
+    )..where((s) => s.id.equals(first))).getSingle();
+    expect(after.lastOpenedAt, opened);
+    expect(after.createdAt, before.createdAt);
+    expect(after.scrollAnchor, scroll);
+    expect(after.manualTitle, isTrue);
+    expect((await db.select(db.books).getSingle()).contentRevision, 1);
+    final indexes = await db
+        .customSelect('PRAGMA index_info(chat_sessions_book_opened)')
+        .get();
+    expect(indexes.map((r) => r.read<String>('name')), [
+      'book_id',
+      'last_opened_at',
+      'id',
+    ]);
+    // Unique constraint's automatic index also serves ordered turn queries.
+    final plan = await db
+        .customSelect(
+          'EXPLAIN QUERY PLAN SELECT * FROM chat_turns WHERE session_id = 1 ORDER BY sequence',
+        )
+        .get();
+    expect(
+      plan.map((r) => r.read<String>('detail')).join(' '),
+      contains('USING INDEX'),
+    );
+  });
+
   test('book → chapters → paragraphs round-trip in display order', () async {
     final bookId = await insertBook();
     // Inserted out of order: display order comes from sortOrder, not id.

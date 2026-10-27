@@ -140,6 +140,18 @@ class $BooksTable extends Books with TableInfo<$BooksTable, Book> {
     type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _contentRevisionMeta = const VerificationMeta(
+    'contentRevision',
+  );
+  @override
+  late final GeneratedColumn<int> contentRevision = GeneratedColumn<int>(
+    'content_revision',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
   static const VerificationMeta _totalCharsMeta = const VerificationMeta(
     'totalChars',
   );
@@ -223,6 +235,7 @@ class $BooksTable extends Books with TableInfo<$BooksTable, Book> {
     useDefaultCover,
     hash,
     parserVersion,
+    contentRevision,
     totalChars,
     createdAt,
     lastOpenedAt,
@@ -320,6 +333,15 @@ class $BooksTable extends Books with TableInfo<$BooksTable, Book> {
       );
     } else if (isInserting) {
       context.missing(_parserVersionMeta);
+    }
+    if (data.containsKey('content_revision')) {
+      context.handle(
+        _contentRevisionMeta,
+        contentRevision.isAcceptableOrUnknown(
+          data['content_revision']!,
+          _contentRevisionMeta,
+        ),
+      );
     }
     if (data.containsKey('total_chars')) {
       context.handle(
@@ -427,6 +449,10 @@ class $BooksTable extends Books with TableInfo<$BooksTable, Book> {
         DriftSqlType.int,
         data['${effectivePrefix}parser_version'],
       )!,
+      contentRevision: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}content_revision'],
+      )!,
       totalChars: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}total_chars'],
@@ -491,6 +517,9 @@ class Book extends DataClass implements Insertable<Book> {
 
   /// Naik = re-import + hapus ai_results buku itu.
   final int parserVersion;
+
+  /// Snapshot isi/urutan untuk chat; metadata tidak menaikkan revision.
+  final int contentRevision;
   final int totalChars;
   final DateTime createdAt;
   final DateTime? lastOpenedAt;
@@ -515,6 +544,7 @@ class Book extends DataClass implements Insertable<Book> {
     required this.useDefaultCover,
     this.hash,
     required this.parserVersion,
+    required this.contentRevision,
     required this.totalChars,
     required this.createdAt,
     this.lastOpenedAt,
@@ -555,6 +585,7 @@ class Book extends DataClass implements Insertable<Book> {
       map['hash'] = Variable<String>(hash);
     }
     map['parser_version'] = Variable<int>(parserVersion);
+    map['content_revision'] = Variable<int>(contentRevision);
     map['total_chars'] = Variable<int>(totalChars);
     map['created_at'] = Variable<DateTime>(createdAt);
     if (!nullToAbsent || lastOpenedAt != null) {
@@ -596,6 +627,7 @@ class Book extends DataClass implements Insertable<Book> {
       useDefaultCover: Value(useDefaultCover),
       hash: hash == null && nullToAbsent ? const Value.absent() : Value(hash),
       parserVersion: Value(parserVersion),
+      contentRevision: Value(contentRevision),
       totalChars: Value(totalChars),
       createdAt: Value(createdAt),
       lastOpenedAt: lastOpenedAt == null && nullToAbsent
@@ -631,6 +663,7 @@ class Book extends DataClass implements Insertable<Book> {
       useDefaultCover: serializer.fromJson<bool>(json['useDefaultCover']),
       hash: serializer.fromJson<String?>(json['hash']),
       parserVersion: serializer.fromJson<int>(json['parserVersion']),
+      contentRevision: serializer.fromJson<int>(json['contentRevision']),
       totalChars: serializer.fromJson<int>(json['totalChars']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       lastOpenedAt: serializer.fromJson<DateTime?>(json['lastOpenedAt']),
@@ -657,6 +690,7 @@ class Book extends DataClass implements Insertable<Book> {
       'useDefaultCover': serializer.toJson<bool>(useDefaultCover),
       'hash': serializer.toJson<String?>(hash),
       'parserVersion': serializer.toJson<int>(parserVersion),
+      'contentRevision': serializer.toJson<int>(contentRevision),
       'totalChars': serializer.toJson<int>(totalChars),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'lastOpenedAt': serializer.toJson<DateTime?>(lastOpenedAt),
@@ -679,6 +713,7 @@ class Book extends DataClass implements Insertable<Book> {
     bool? useDefaultCover,
     Value<String?> hash = const Value.absent(),
     int? parserVersion,
+    int? contentRevision,
     int? totalChars,
     DateTime? createdAt,
     Value<DateTime?> lastOpenedAt = const Value.absent(),
@@ -702,6 +737,7 @@ class Book extends DataClass implements Insertable<Book> {
     useDefaultCover: useDefaultCover ?? this.useDefaultCover,
     hash: hash.present ? hash.value : this.hash,
     parserVersion: parserVersion ?? this.parserVersion,
+    contentRevision: contentRevision ?? this.contentRevision,
     totalChars: totalChars ?? this.totalChars,
     createdAt: createdAt ?? this.createdAt,
     lastOpenedAt: lastOpenedAt.present ? lastOpenedAt.value : this.lastOpenedAt,
@@ -735,6 +771,9 @@ class Book extends DataClass implements Insertable<Book> {
       parserVersion: data.parserVersion.present
           ? data.parserVersion.value
           : this.parserVersion,
+      contentRevision: data.contentRevision.present
+          ? data.contentRevision.value
+          : this.contentRevision,
       totalChars: data.totalChars.present
           ? data.totalChars.value
           : this.totalChars,
@@ -769,6 +808,7 @@ class Book extends DataClass implements Insertable<Book> {
           ..write('useDefaultCover: $useDefaultCover, ')
           ..write('hash: $hash, ')
           ..write('parserVersion: $parserVersion, ')
+          ..write('contentRevision: $contentRevision, ')
           ..write('totalChars: $totalChars, ')
           ..write('createdAt: $createdAt, ')
           ..write('lastOpenedAt: $lastOpenedAt, ')
@@ -793,6 +833,7 @@ class Book extends DataClass implements Insertable<Book> {
     useDefaultCover,
     hash,
     parserVersion,
+    contentRevision,
     totalChars,
     createdAt,
     lastOpenedAt,
@@ -816,6 +857,7 @@ class Book extends DataClass implements Insertable<Book> {
           other.useDefaultCover == this.useDefaultCover &&
           other.hash == this.hash &&
           other.parserVersion == this.parserVersion &&
+          other.contentRevision == this.contentRevision &&
           other.totalChars == this.totalChars &&
           other.createdAt == this.createdAt &&
           other.lastOpenedAt == this.lastOpenedAt &&
@@ -837,6 +879,7 @@ class BooksCompanion extends UpdateCompanion<Book> {
   final Value<bool> useDefaultCover;
   final Value<String?> hash;
   final Value<int> parserVersion;
+  final Value<int> contentRevision;
   final Value<int> totalChars;
   final Value<DateTime> createdAt;
   final Value<DateTime?> lastOpenedAt;
@@ -856,6 +899,7 @@ class BooksCompanion extends UpdateCompanion<Book> {
     this.useDefaultCover = const Value.absent(),
     this.hash = const Value.absent(),
     this.parserVersion = const Value.absent(),
+    this.contentRevision = const Value.absent(),
     this.totalChars = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.lastOpenedAt = const Value.absent(),
@@ -876,6 +920,7 @@ class BooksCompanion extends UpdateCompanion<Book> {
     this.useDefaultCover = const Value.absent(),
     this.hash = const Value.absent(),
     required int parserVersion,
+    this.contentRevision = const Value.absent(),
     required int totalChars,
     this.createdAt = const Value.absent(),
     this.lastOpenedAt = const Value.absent(),
@@ -899,6 +944,7 @@ class BooksCompanion extends UpdateCompanion<Book> {
     Expression<bool>? useDefaultCover,
     Expression<String>? hash,
     Expression<int>? parserVersion,
+    Expression<int>? contentRevision,
     Expression<int>? totalChars,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? lastOpenedAt,
@@ -919,6 +965,7 @@ class BooksCompanion extends UpdateCompanion<Book> {
       if (useDefaultCover != null) 'use_default_cover': useDefaultCover,
       if (hash != null) 'hash': hash,
       if (parserVersion != null) 'parser_version': parserVersion,
+      if (contentRevision != null) 'content_revision': contentRevision,
       if (totalChars != null) 'total_chars': totalChars,
       if (createdAt != null) 'created_at': createdAt,
       if (lastOpenedAt != null) 'last_opened_at': lastOpenedAt,
@@ -941,6 +988,7 @@ class BooksCompanion extends UpdateCompanion<Book> {
     Value<bool>? useDefaultCover,
     Value<String?>? hash,
     Value<int>? parserVersion,
+    Value<int>? contentRevision,
     Value<int>? totalChars,
     Value<DateTime>? createdAt,
     Value<DateTime?>? lastOpenedAt,
@@ -961,6 +1009,7 @@ class BooksCompanion extends UpdateCompanion<Book> {
       useDefaultCover: useDefaultCover ?? this.useDefaultCover,
       hash: hash ?? this.hash,
       parserVersion: parserVersion ?? this.parserVersion,
+      contentRevision: contentRevision ?? this.contentRevision,
       totalChars: totalChars ?? this.totalChars,
       createdAt: createdAt ?? this.createdAt,
       lastOpenedAt: lastOpenedAt ?? this.lastOpenedAt,
@@ -1011,6 +1060,9 @@ class BooksCompanion extends UpdateCompanion<Book> {
     if (parserVersion.present) {
       map['parser_version'] = Variable<int>(parserVersion.value);
     }
+    if (contentRevision.present) {
+      map['content_revision'] = Variable<int>(contentRevision.value);
+    }
     if (totalChars.present) {
       map['total_chars'] = Variable<int>(totalChars.value);
     }
@@ -1047,6 +1099,7 @@ class BooksCompanion extends UpdateCompanion<Book> {
           ..write('useDefaultCover: $useDefaultCover, ')
           ..write('hash: $hash, ')
           ..write('parserVersion: $parserVersion, ')
+          ..write('contentRevision: $contentRevision, ')
           ..write('totalChars: $totalChars, ')
           ..write('createdAt: $createdAt, ')
           ..write('lastOpenedAt: $lastOpenedAt, ')
@@ -4844,6 +4897,1462 @@ class SettingsCompanion extends UpdateCompanion<Setting> {
   }
 }
 
+class $ChatSessionsTable extends ChatSessions
+    with TableInfo<$ChatSessionsTable, ChatSessionRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ChatSessionsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _bookIdMeta = const VerificationMeta('bookId');
+  @override
+  late final GeneratedColumn<int> bookId = GeneratedColumn<int>(
+    'book_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES books (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _contentRevisionMeta = const VerificationMeta(
+    'contentRevision',
+  );
+  @override
+  late final GeneratedColumn<int> contentRevision = GeneratedColumn<int>(
+    'content_revision',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _titleMeta = const VerificationMeta('title');
+  @override
+  late final GeneratedColumn<String> title = GeneratedColumn<String>(
+    'title',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _manualTitleMeta = const VerificationMeta(
+    'manualTitle',
+  );
+  @override
+  late final GeneratedColumn<bool> manualTitle = GeneratedColumn<bool>(
+    'manual_title',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("manual_title" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  static const VerificationMeta _lastOpenedAtMeta = const VerificationMeta(
+    'lastOpenedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> lastOpenedAt = GeneratedColumn<DateTime>(
+    'last_opened_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _scrollAnchorMeta = const VerificationMeta(
+    'scrollAnchor',
+  );
+  @override
+  late final GeneratedColumn<String> scrollAnchor = GeneratedColumn<String>(
+    'scroll_anchor',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    bookId,
+    contentRevision,
+    title,
+    manualTitle,
+    createdAt,
+    updatedAt,
+    lastOpenedAt,
+    scrollAnchor,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'chat_sessions';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ChatSessionRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('book_id')) {
+      context.handle(
+        _bookIdMeta,
+        bookId.isAcceptableOrUnknown(data['book_id']!, _bookIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_bookIdMeta);
+    }
+    if (data.containsKey('content_revision')) {
+      context.handle(
+        _contentRevisionMeta,
+        contentRevision.isAcceptableOrUnknown(
+          data['content_revision']!,
+          _contentRevisionMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_contentRevisionMeta);
+    }
+    if (data.containsKey('title')) {
+      context.handle(
+        _titleMeta,
+        title.isAcceptableOrUnknown(data['title']!, _titleMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_titleMeta);
+    }
+    if (data.containsKey('manual_title')) {
+      context.handle(
+        _manualTitleMeta,
+        manualTitle.isAcceptableOrUnknown(
+          data['manual_title']!,
+          _manualTitleMeta,
+        ),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
+    if (data.containsKey('last_opened_at')) {
+      context.handle(
+        _lastOpenedAtMeta,
+        lastOpenedAt.isAcceptableOrUnknown(
+          data['last_opened_at']!,
+          _lastOpenedAtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('scroll_anchor')) {
+      context.handle(
+        _scrollAnchorMeta,
+        scrollAnchor.isAcceptableOrUnknown(
+          data['scroll_anchor']!,
+          _scrollAnchorMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ChatSessionRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ChatSessionRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      bookId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}book_id'],
+      )!,
+      contentRevision: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}content_revision'],
+      )!,
+      title: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}title'],
+      )!,
+      manualTitle: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}manual_title'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      lastOpenedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}last_opened_at'],
+      ),
+      scrollAnchor: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}scroll_anchor'],
+      ),
+    );
+  }
+
+  @override
+  $ChatSessionsTable createAlias(String alias) {
+    return $ChatSessionsTable(attachedDatabase, alias);
+  }
+}
+
+class ChatSessionRow extends DataClass implements Insertable<ChatSessionRow> {
+  final int id;
+  final int bookId;
+  final int contentRevision;
+  final String title;
+  final bool manualTitle;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final DateTime? lastOpenedAt;
+
+  /// JSON ChatScrollAnchor (turnId/blockIndex/alignment), bukan offset pixel.
+  final String? scrollAnchor;
+  const ChatSessionRow({
+    required this.id,
+    required this.bookId,
+    required this.contentRevision,
+    required this.title,
+    required this.manualTitle,
+    required this.createdAt,
+    required this.updatedAt,
+    this.lastOpenedAt,
+    this.scrollAnchor,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['book_id'] = Variable<int>(bookId);
+    map['content_revision'] = Variable<int>(contentRevision);
+    map['title'] = Variable<String>(title);
+    map['manual_title'] = Variable<bool>(manualTitle);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    if (!nullToAbsent || lastOpenedAt != null) {
+      map['last_opened_at'] = Variable<DateTime>(lastOpenedAt);
+    }
+    if (!nullToAbsent || scrollAnchor != null) {
+      map['scroll_anchor'] = Variable<String>(scrollAnchor);
+    }
+    return map;
+  }
+
+  ChatSessionsCompanion toCompanion(bool nullToAbsent) {
+    return ChatSessionsCompanion(
+      id: Value(id),
+      bookId: Value(bookId),
+      contentRevision: Value(contentRevision),
+      title: Value(title),
+      manualTitle: Value(manualTitle),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+      lastOpenedAt: lastOpenedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastOpenedAt),
+      scrollAnchor: scrollAnchor == null && nullToAbsent
+          ? const Value.absent()
+          : Value(scrollAnchor),
+    );
+  }
+
+  factory ChatSessionRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ChatSessionRow(
+      id: serializer.fromJson<int>(json['id']),
+      bookId: serializer.fromJson<int>(json['bookId']),
+      contentRevision: serializer.fromJson<int>(json['contentRevision']),
+      title: serializer.fromJson<String>(json['title']),
+      manualTitle: serializer.fromJson<bool>(json['manualTitle']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      lastOpenedAt: serializer.fromJson<DateTime?>(json['lastOpenedAt']),
+      scrollAnchor: serializer.fromJson<String?>(json['scrollAnchor']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'bookId': serializer.toJson<int>(bookId),
+      'contentRevision': serializer.toJson<int>(contentRevision),
+      'title': serializer.toJson<String>(title),
+      'manualTitle': serializer.toJson<bool>(manualTitle),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'lastOpenedAt': serializer.toJson<DateTime?>(lastOpenedAt),
+      'scrollAnchor': serializer.toJson<String?>(scrollAnchor),
+    };
+  }
+
+  ChatSessionRow copyWith({
+    int? id,
+    int? bookId,
+    int? contentRevision,
+    String? title,
+    bool? manualTitle,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    Value<DateTime?> lastOpenedAt = const Value.absent(),
+    Value<String?> scrollAnchor = const Value.absent(),
+  }) => ChatSessionRow(
+    id: id ?? this.id,
+    bookId: bookId ?? this.bookId,
+    contentRevision: contentRevision ?? this.contentRevision,
+    title: title ?? this.title,
+    manualTitle: manualTitle ?? this.manualTitle,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+    lastOpenedAt: lastOpenedAt.present ? lastOpenedAt.value : this.lastOpenedAt,
+    scrollAnchor: scrollAnchor.present ? scrollAnchor.value : this.scrollAnchor,
+  );
+  ChatSessionRow copyWithCompanion(ChatSessionsCompanion data) {
+    return ChatSessionRow(
+      id: data.id.present ? data.id.value : this.id,
+      bookId: data.bookId.present ? data.bookId.value : this.bookId,
+      contentRevision: data.contentRevision.present
+          ? data.contentRevision.value
+          : this.contentRevision,
+      title: data.title.present ? data.title.value : this.title,
+      manualTitle: data.manualTitle.present
+          ? data.manualTitle.value
+          : this.manualTitle,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      lastOpenedAt: data.lastOpenedAt.present
+          ? data.lastOpenedAt.value
+          : this.lastOpenedAt,
+      scrollAnchor: data.scrollAnchor.present
+          ? data.scrollAnchor.value
+          : this.scrollAnchor,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ChatSessionRow(')
+          ..write('id: $id, ')
+          ..write('bookId: $bookId, ')
+          ..write('contentRevision: $contentRevision, ')
+          ..write('title: $title, ')
+          ..write('manualTitle: $manualTitle, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('lastOpenedAt: $lastOpenedAt, ')
+          ..write('scrollAnchor: $scrollAnchor')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    bookId,
+    contentRevision,
+    title,
+    manualTitle,
+    createdAt,
+    updatedAt,
+    lastOpenedAt,
+    scrollAnchor,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ChatSessionRow &&
+          other.id == this.id &&
+          other.bookId == this.bookId &&
+          other.contentRevision == this.contentRevision &&
+          other.title == this.title &&
+          other.manualTitle == this.manualTitle &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt &&
+          other.lastOpenedAt == this.lastOpenedAt &&
+          other.scrollAnchor == this.scrollAnchor);
+}
+
+class ChatSessionsCompanion extends UpdateCompanion<ChatSessionRow> {
+  final Value<int> id;
+  final Value<int> bookId;
+  final Value<int> contentRevision;
+  final Value<String> title;
+  final Value<bool> manualTitle;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  final Value<DateTime?> lastOpenedAt;
+  final Value<String?> scrollAnchor;
+  const ChatSessionsCompanion({
+    this.id = const Value.absent(),
+    this.bookId = const Value.absent(),
+    this.contentRevision = const Value.absent(),
+    this.title = const Value.absent(),
+    this.manualTitle = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.lastOpenedAt = const Value.absent(),
+    this.scrollAnchor = const Value.absent(),
+  });
+  ChatSessionsCompanion.insert({
+    this.id = const Value.absent(),
+    required int bookId,
+    required int contentRevision,
+    required String title,
+    this.manualTitle = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.lastOpenedAt = const Value.absent(),
+    this.scrollAnchor = const Value.absent(),
+  }) : bookId = Value(bookId),
+       contentRevision = Value(contentRevision),
+       title = Value(title);
+  static Insertable<ChatSessionRow> custom({
+    Expression<int>? id,
+    Expression<int>? bookId,
+    Expression<int>? contentRevision,
+    Expression<String>? title,
+    Expression<bool>? manualTitle,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<DateTime>? lastOpenedAt,
+    Expression<String>? scrollAnchor,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (bookId != null) 'book_id': bookId,
+      if (contentRevision != null) 'content_revision': contentRevision,
+      if (title != null) 'title': title,
+      if (manualTitle != null) 'manual_title': manualTitle,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (lastOpenedAt != null) 'last_opened_at': lastOpenedAt,
+      if (scrollAnchor != null) 'scroll_anchor': scrollAnchor,
+    });
+  }
+
+  ChatSessionsCompanion copyWith({
+    Value<int>? id,
+    Value<int>? bookId,
+    Value<int>? contentRevision,
+    Value<String>? title,
+    Value<bool>? manualTitle,
+    Value<DateTime>? createdAt,
+    Value<DateTime>? updatedAt,
+    Value<DateTime?>? lastOpenedAt,
+    Value<String?>? scrollAnchor,
+  }) {
+    return ChatSessionsCompanion(
+      id: id ?? this.id,
+      bookId: bookId ?? this.bookId,
+      contentRevision: contentRevision ?? this.contentRevision,
+      title: title ?? this.title,
+      manualTitle: manualTitle ?? this.manualTitle,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      lastOpenedAt: lastOpenedAt ?? this.lastOpenedAt,
+      scrollAnchor: scrollAnchor ?? this.scrollAnchor,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (bookId.present) {
+      map['book_id'] = Variable<int>(bookId.value);
+    }
+    if (contentRevision.present) {
+      map['content_revision'] = Variable<int>(contentRevision.value);
+    }
+    if (title.present) {
+      map['title'] = Variable<String>(title.value);
+    }
+    if (manualTitle.present) {
+      map['manual_title'] = Variable<bool>(manualTitle.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (lastOpenedAt.present) {
+      map['last_opened_at'] = Variable<DateTime>(lastOpenedAt.value);
+    }
+    if (scrollAnchor.present) {
+      map['scroll_anchor'] = Variable<String>(scrollAnchor.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ChatSessionsCompanion(')
+          ..write('id: $id, ')
+          ..write('bookId: $bookId, ')
+          ..write('contentRevision: $contentRevision, ')
+          ..write('title: $title, ')
+          ..write('manualTitle: $manualTitle, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('lastOpenedAt: $lastOpenedAt, ')
+          ..write('scrollAnchor: $scrollAnchor')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ChatTurnsTable extends ChatTurns
+    with TableInfo<$ChatTurnsTable, ChatTurnRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ChatTurnsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _sessionIdMeta = const VerificationMeta(
+    'sessionId',
+  );
+  @override
+  late final GeneratedColumn<int> sessionId = GeneratedColumn<int>(
+    'session_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES chat_sessions (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _sequenceMeta = const VerificationMeta(
+    'sequence',
+  );
+  @override
+  late final GeneratedColumn<int> sequence = GeneratedColumn<int>(
+    'sequence',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _questionMeta = const VerificationMeta(
+    'question',
+  );
+  @override
+  late final GeneratedColumn<String> question = GeneratedColumn<String>(
+    'question',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _quoteMeta = const VerificationMeta('quote');
+  @override
+  late final GeneratedColumn<String> quote = GeneratedColumn<String>(
+    'quote',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _answerMeta = const VerificationMeta('answer');
+  @override
+  late final GeneratedColumn<String> answer = GeneratedColumn<String>(
+    'answer',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _sourcesMeta = const VerificationMeta(
+    'sources',
+  );
+  @override
+  late final GeneratedColumn<String> sources = GeneratedColumn<String>(
+    'sources',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('[]'),
+  );
+  static const VerificationMeta _draftMeta = const VerificationMeta('draft');
+  @override
+  late final GeneratedColumn<String> draft = GeneratedColumn<String>(
+    'draft',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  static const VerificationMeta _phaseMeta = const VerificationMeta('phase');
+  @override
+  late final GeneratedColumn<String> phase = GeneratedColumn<String>(
+    'phase',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _attemptMeta = const VerificationMeta(
+    'attempt',
+  );
+  @override
+  late final GeneratedColumn<int> attempt = GeneratedColumn<int>(
+    'attempt',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
+  static const VerificationMeta _modelMeta = const VerificationMeta('model');
+  @override
+  late final GeneratedColumn<String> model = GeneratedColumn<String>(
+    'model',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _promptVersionMeta = const VerificationMeta(
+    'promptVersion',
+  );
+  @override
+  late final GeneratedColumn<int> promptVersion = GeneratedColumn<int>(
+    'prompt_version',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _errorMeta = const VerificationMeta('error');
+  @override
+  late final GeneratedColumn<String> error = GeneratedColumn<String>(
+    'error',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _httpStatusMeta = const VerificationMeta(
+    'httpStatus',
+  );
+  @override
+  late final GeneratedColumn<int> httpStatus = GeneratedColumn<int>(
+    'http_status',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    sessionId,
+    sequence,
+    question,
+    quote,
+    answer,
+    sources,
+    draft,
+    phase,
+    attempt,
+    model,
+    promptVersion,
+    error,
+    httpStatus,
+    createdAt,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'chat_turns';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ChatTurnRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('session_id')) {
+      context.handle(
+        _sessionIdMeta,
+        sessionId.isAcceptableOrUnknown(data['session_id']!, _sessionIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sessionIdMeta);
+    }
+    if (data.containsKey('sequence')) {
+      context.handle(
+        _sequenceMeta,
+        sequence.isAcceptableOrUnknown(data['sequence']!, _sequenceMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sequenceMeta);
+    }
+    if (data.containsKey('question')) {
+      context.handle(
+        _questionMeta,
+        question.isAcceptableOrUnknown(data['question']!, _questionMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_questionMeta);
+    }
+    if (data.containsKey('quote')) {
+      context.handle(
+        _quoteMeta,
+        quote.isAcceptableOrUnknown(data['quote']!, _quoteMeta),
+      );
+    }
+    if (data.containsKey('answer')) {
+      context.handle(
+        _answerMeta,
+        answer.isAcceptableOrUnknown(data['answer']!, _answerMeta),
+      );
+    }
+    if (data.containsKey('sources')) {
+      context.handle(
+        _sourcesMeta,
+        sources.isAcceptableOrUnknown(data['sources']!, _sourcesMeta),
+      );
+    }
+    if (data.containsKey('draft')) {
+      context.handle(
+        _draftMeta,
+        draft.isAcceptableOrUnknown(data['draft']!, _draftMeta),
+      );
+    }
+    if (data.containsKey('phase')) {
+      context.handle(
+        _phaseMeta,
+        phase.isAcceptableOrUnknown(data['phase']!, _phaseMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_phaseMeta);
+    }
+    if (data.containsKey('attempt')) {
+      context.handle(
+        _attemptMeta,
+        attempt.isAcceptableOrUnknown(data['attempt']!, _attemptMeta),
+      );
+    }
+    if (data.containsKey('model')) {
+      context.handle(
+        _modelMeta,
+        model.isAcceptableOrUnknown(data['model']!, _modelMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_modelMeta);
+    }
+    if (data.containsKey('prompt_version')) {
+      context.handle(
+        _promptVersionMeta,
+        promptVersion.isAcceptableOrUnknown(
+          data['prompt_version']!,
+          _promptVersionMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_promptVersionMeta);
+    }
+    if (data.containsKey('error')) {
+      context.handle(
+        _errorMeta,
+        error.isAcceptableOrUnknown(data['error']!, _errorMeta),
+      );
+    }
+    if (data.containsKey('http_status')) {
+      context.handle(
+        _httpStatusMeta,
+        httpStatus.isAcceptableOrUnknown(data['http_status']!, _httpStatusMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+    {sessionId, sequence},
+  ];
+  @override
+  ChatTurnRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ChatTurnRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      sessionId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}session_id'],
+      )!,
+      sequence: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}sequence'],
+      )!,
+      question: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}question'],
+      )!,
+      quote: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}quote'],
+      ),
+      answer: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}answer'],
+      ),
+      sources: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}sources'],
+      )!,
+      draft: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}draft'],
+      )!,
+      phase: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}phase'],
+      )!,
+      attempt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}attempt'],
+      )!,
+      model: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}model'],
+      )!,
+      promptVersion: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}prompt_version'],
+      )!,
+      error: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}error'],
+      ),
+      httpStatus: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}http_status'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $ChatTurnsTable createAlias(String alias) {
+    return $ChatTurnsTable(attachedDatabase, alias);
+  }
+}
+
+class ChatTurnRow extends DataClass implements Insertable<ChatTurnRow> {
+  final int id;
+  final int sessionId;
+  final int sequence;
+  final String question;
+
+  /// Snapshot JSON tidak menunjuk chapter lewat FK: re-import menjaga arsip.
+  final String? quote;
+  final String? answer;
+  final String sources;
+  final String draft;
+
+  /// Teks mentah supaya mapper #116 bisa menangani enum backup yang rusak.
+  final String phase;
+  final int attempt;
+  final String model;
+  final int promptVersion;
+  final String? error;
+  final int? httpStatus;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  const ChatTurnRow({
+    required this.id,
+    required this.sessionId,
+    required this.sequence,
+    required this.question,
+    this.quote,
+    this.answer,
+    required this.sources,
+    required this.draft,
+    required this.phase,
+    required this.attempt,
+    required this.model,
+    required this.promptVersion,
+    this.error,
+    this.httpStatus,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['session_id'] = Variable<int>(sessionId);
+    map['sequence'] = Variable<int>(sequence);
+    map['question'] = Variable<String>(question);
+    if (!nullToAbsent || quote != null) {
+      map['quote'] = Variable<String>(quote);
+    }
+    if (!nullToAbsent || answer != null) {
+      map['answer'] = Variable<String>(answer);
+    }
+    map['sources'] = Variable<String>(sources);
+    map['draft'] = Variable<String>(draft);
+    map['phase'] = Variable<String>(phase);
+    map['attempt'] = Variable<int>(attempt);
+    map['model'] = Variable<String>(model);
+    map['prompt_version'] = Variable<int>(promptVersion);
+    if (!nullToAbsent || error != null) {
+      map['error'] = Variable<String>(error);
+    }
+    if (!nullToAbsent || httpStatus != null) {
+      map['http_status'] = Variable<int>(httpStatus);
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  ChatTurnsCompanion toCompanion(bool nullToAbsent) {
+    return ChatTurnsCompanion(
+      id: Value(id),
+      sessionId: Value(sessionId),
+      sequence: Value(sequence),
+      question: Value(question),
+      quote: quote == null && nullToAbsent
+          ? const Value.absent()
+          : Value(quote),
+      answer: answer == null && nullToAbsent
+          ? const Value.absent()
+          : Value(answer),
+      sources: Value(sources),
+      draft: Value(draft),
+      phase: Value(phase),
+      attempt: Value(attempt),
+      model: Value(model),
+      promptVersion: Value(promptVersion),
+      error: error == null && nullToAbsent
+          ? const Value.absent()
+          : Value(error),
+      httpStatus: httpStatus == null && nullToAbsent
+          ? const Value.absent()
+          : Value(httpStatus),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory ChatTurnRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ChatTurnRow(
+      id: serializer.fromJson<int>(json['id']),
+      sessionId: serializer.fromJson<int>(json['sessionId']),
+      sequence: serializer.fromJson<int>(json['sequence']),
+      question: serializer.fromJson<String>(json['question']),
+      quote: serializer.fromJson<String?>(json['quote']),
+      answer: serializer.fromJson<String?>(json['answer']),
+      sources: serializer.fromJson<String>(json['sources']),
+      draft: serializer.fromJson<String>(json['draft']),
+      phase: serializer.fromJson<String>(json['phase']),
+      attempt: serializer.fromJson<int>(json['attempt']),
+      model: serializer.fromJson<String>(json['model']),
+      promptVersion: serializer.fromJson<int>(json['promptVersion']),
+      error: serializer.fromJson<String?>(json['error']),
+      httpStatus: serializer.fromJson<int?>(json['httpStatus']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'sessionId': serializer.toJson<int>(sessionId),
+      'sequence': serializer.toJson<int>(sequence),
+      'question': serializer.toJson<String>(question),
+      'quote': serializer.toJson<String?>(quote),
+      'answer': serializer.toJson<String?>(answer),
+      'sources': serializer.toJson<String>(sources),
+      'draft': serializer.toJson<String>(draft),
+      'phase': serializer.toJson<String>(phase),
+      'attempt': serializer.toJson<int>(attempt),
+      'model': serializer.toJson<String>(model),
+      'promptVersion': serializer.toJson<int>(promptVersion),
+      'error': serializer.toJson<String?>(error),
+      'httpStatus': serializer.toJson<int?>(httpStatus),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  ChatTurnRow copyWith({
+    int? id,
+    int? sessionId,
+    int? sequence,
+    String? question,
+    Value<String?> quote = const Value.absent(),
+    Value<String?> answer = const Value.absent(),
+    String? sources,
+    String? draft,
+    String? phase,
+    int? attempt,
+    String? model,
+    int? promptVersion,
+    Value<String?> error = const Value.absent(),
+    Value<int?> httpStatus = const Value.absent(),
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) => ChatTurnRow(
+    id: id ?? this.id,
+    sessionId: sessionId ?? this.sessionId,
+    sequence: sequence ?? this.sequence,
+    question: question ?? this.question,
+    quote: quote.present ? quote.value : this.quote,
+    answer: answer.present ? answer.value : this.answer,
+    sources: sources ?? this.sources,
+    draft: draft ?? this.draft,
+    phase: phase ?? this.phase,
+    attempt: attempt ?? this.attempt,
+    model: model ?? this.model,
+    promptVersion: promptVersion ?? this.promptVersion,
+    error: error.present ? error.value : this.error,
+    httpStatus: httpStatus.present ? httpStatus.value : this.httpStatus,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  ChatTurnRow copyWithCompanion(ChatTurnsCompanion data) {
+    return ChatTurnRow(
+      id: data.id.present ? data.id.value : this.id,
+      sessionId: data.sessionId.present ? data.sessionId.value : this.sessionId,
+      sequence: data.sequence.present ? data.sequence.value : this.sequence,
+      question: data.question.present ? data.question.value : this.question,
+      quote: data.quote.present ? data.quote.value : this.quote,
+      answer: data.answer.present ? data.answer.value : this.answer,
+      sources: data.sources.present ? data.sources.value : this.sources,
+      draft: data.draft.present ? data.draft.value : this.draft,
+      phase: data.phase.present ? data.phase.value : this.phase,
+      attempt: data.attempt.present ? data.attempt.value : this.attempt,
+      model: data.model.present ? data.model.value : this.model,
+      promptVersion: data.promptVersion.present
+          ? data.promptVersion.value
+          : this.promptVersion,
+      error: data.error.present ? data.error.value : this.error,
+      httpStatus: data.httpStatus.present
+          ? data.httpStatus.value
+          : this.httpStatus,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ChatTurnRow(')
+          ..write('id: $id, ')
+          ..write('sessionId: $sessionId, ')
+          ..write('sequence: $sequence, ')
+          ..write('question: $question, ')
+          ..write('quote: $quote, ')
+          ..write('answer: $answer, ')
+          ..write('sources: $sources, ')
+          ..write('draft: $draft, ')
+          ..write('phase: $phase, ')
+          ..write('attempt: $attempt, ')
+          ..write('model: $model, ')
+          ..write('promptVersion: $promptVersion, ')
+          ..write('error: $error, ')
+          ..write('httpStatus: $httpStatus, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    sessionId,
+    sequence,
+    question,
+    quote,
+    answer,
+    sources,
+    draft,
+    phase,
+    attempt,
+    model,
+    promptVersion,
+    error,
+    httpStatus,
+    createdAt,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ChatTurnRow &&
+          other.id == this.id &&
+          other.sessionId == this.sessionId &&
+          other.sequence == this.sequence &&
+          other.question == this.question &&
+          other.quote == this.quote &&
+          other.answer == this.answer &&
+          other.sources == this.sources &&
+          other.draft == this.draft &&
+          other.phase == this.phase &&
+          other.attempt == this.attempt &&
+          other.model == this.model &&
+          other.promptVersion == this.promptVersion &&
+          other.error == this.error &&
+          other.httpStatus == this.httpStatus &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class ChatTurnsCompanion extends UpdateCompanion<ChatTurnRow> {
+  final Value<int> id;
+  final Value<int> sessionId;
+  final Value<int> sequence;
+  final Value<String> question;
+  final Value<String?> quote;
+  final Value<String?> answer;
+  final Value<String> sources;
+  final Value<String> draft;
+  final Value<String> phase;
+  final Value<int> attempt;
+  final Value<String> model;
+  final Value<int> promptVersion;
+  final Value<String?> error;
+  final Value<int?> httpStatus;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  const ChatTurnsCompanion({
+    this.id = const Value.absent(),
+    this.sessionId = const Value.absent(),
+    this.sequence = const Value.absent(),
+    this.question = const Value.absent(),
+    this.quote = const Value.absent(),
+    this.answer = const Value.absent(),
+    this.sources = const Value.absent(),
+    this.draft = const Value.absent(),
+    this.phase = const Value.absent(),
+    this.attempt = const Value.absent(),
+    this.model = const Value.absent(),
+    this.promptVersion = const Value.absent(),
+    this.error = const Value.absent(),
+    this.httpStatus = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+  });
+  ChatTurnsCompanion.insert({
+    this.id = const Value.absent(),
+    required int sessionId,
+    required int sequence,
+    required String question,
+    this.quote = const Value.absent(),
+    this.answer = const Value.absent(),
+    this.sources = const Value.absent(),
+    this.draft = const Value.absent(),
+    required String phase,
+    this.attempt = const Value.absent(),
+    required String model,
+    required int promptVersion,
+    this.error = const Value.absent(),
+    this.httpStatus = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+  }) : sessionId = Value(sessionId),
+       sequence = Value(sequence),
+       question = Value(question),
+       phase = Value(phase),
+       model = Value(model),
+       promptVersion = Value(promptVersion);
+  static Insertable<ChatTurnRow> custom({
+    Expression<int>? id,
+    Expression<int>? sessionId,
+    Expression<int>? sequence,
+    Expression<String>? question,
+    Expression<String>? quote,
+    Expression<String>? answer,
+    Expression<String>? sources,
+    Expression<String>? draft,
+    Expression<String>? phase,
+    Expression<int>? attempt,
+    Expression<String>? model,
+    Expression<int>? promptVersion,
+    Expression<String>? error,
+    Expression<int>? httpStatus,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (sessionId != null) 'session_id': sessionId,
+      if (sequence != null) 'sequence': sequence,
+      if (question != null) 'question': question,
+      if (quote != null) 'quote': quote,
+      if (answer != null) 'answer': answer,
+      if (sources != null) 'sources': sources,
+      if (draft != null) 'draft': draft,
+      if (phase != null) 'phase': phase,
+      if (attempt != null) 'attempt': attempt,
+      if (model != null) 'model': model,
+      if (promptVersion != null) 'prompt_version': promptVersion,
+      if (error != null) 'error': error,
+      if (httpStatus != null) 'http_status': httpStatus,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+    });
+  }
+
+  ChatTurnsCompanion copyWith({
+    Value<int>? id,
+    Value<int>? sessionId,
+    Value<int>? sequence,
+    Value<String>? question,
+    Value<String?>? quote,
+    Value<String?>? answer,
+    Value<String>? sources,
+    Value<String>? draft,
+    Value<String>? phase,
+    Value<int>? attempt,
+    Value<String>? model,
+    Value<int>? promptVersion,
+    Value<String?>? error,
+    Value<int?>? httpStatus,
+    Value<DateTime>? createdAt,
+    Value<DateTime>? updatedAt,
+  }) {
+    return ChatTurnsCompanion(
+      id: id ?? this.id,
+      sessionId: sessionId ?? this.sessionId,
+      sequence: sequence ?? this.sequence,
+      question: question ?? this.question,
+      quote: quote ?? this.quote,
+      answer: answer ?? this.answer,
+      sources: sources ?? this.sources,
+      draft: draft ?? this.draft,
+      phase: phase ?? this.phase,
+      attempt: attempt ?? this.attempt,
+      model: model ?? this.model,
+      promptVersion: promptVersion ?? this.promptVersion,
+      error: error ?? this.error,
+      httpStatus: httpStatus ?? this.httpStatus,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (sessionId.present) {
+      map['session_id'] = Variable<int>(sessionId.value);
+    }
+    if (sequence.present) {
+      map['sequence'] = Variable<int>(sequence.value);
+    }
+    if (question.present) {
+      map['question'] = Variable<String>(question.value);
+    }
+    if (quote.present) {
+      map['quote'] = Variable<String>(quote.value);
+    }
+    if (answer.present) {
+      map['answer'] = Variable<String>(answer.value);
+    }
+    if (sources.present) {
+      map['sources'] = Variable<String>(sources.value);
+    }
+    if (draft.present) {
+      map['draft'] = Variable<String>(draft.value);
+    }
+    if (phase.present) {
+      map['phase'] = Variable<String>(phase.value);
+    }
+    if (attempt.present) {
+      map['attempt'] = Variable<int>(attempt.value);
+    }
+    if (model.present) {
+      map['model'] = Variable<String>(model.value);
+    }
+    if (promptVersion.present) {
+      map['prompt_version'] = Variable<int>(promptVersion.value);
+    }
+    if (error.present) {
+      map['error'] = Variable<String>(error.value);
+    }
+    if (httpStatus.present) {
+      map['http_status'] = Variable<int>(httpStatus.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ChatTurnsCompanion(')
+          ..write('id: $id, ')
+          ..write('sessionId: $sessionId, ')
+          ..write('sequence: $sequence, ')
+          ..write('question: $question, ')
+          ..write('quote: $quote, ')
+          ..write('answer: $answer, ')
+          ..write('sources: $sources, ')
+          ..write('draft: $draft, ')
+          ..write('phase: $phase, ')
+          ..write('attempt: $attempt, ')
+          ..write('model: $model, ')
+          ..write('promptVersion: $promptVersion, ')
+          ..write('error: $error, ')
+          ..write('httpStatus: $httpStatus, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -4860,6 +6369,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   );
   late final $AiCallsTable aiCalls = $AiCallsTable(this);
   late final $SettingsTable settings = $SettingsTable(this);
+  late final $ChatSessionsTable chatSessions = $ChatSessionsTable(this);
+  late final $ChatTurnsTable chatTurns = $ChatTurnsTable(this);
   late final Index chaptersBookOrder = Index(
     'chapters_book_order',
     'CREATE INDEX chapters_book_order ON chapters (book_id, sort_order)',
@@ -4876,6 +6387,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     'reading_sessions_time',
     'CREATE INDEX reading_sessions_time ON reading_sessions (started_at)',
   );
+  late final Index chatSessionsBookOpened = Index(
+    'chat_sessions_book_opened',
+    'CREATE INDEX chat_sessions_book_opened ON chat_sessions (book_id, last_opened_at, id)',
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -4890,10 +6405,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     readingSessions,
     aiCalls,
     settings,
+    chatSessions,
+    chatTurns,
     chaptersBookOrder,
     paragraphsChapterGroup,
     readingSessionsBookTime,
     readingSessionsTime,
+    chatSessionsBookOpened,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -4967,6 +6485,20 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       ),
       result: [TableUpdate('ai_calls', kind: UpdateKind.update)],
     ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'books',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('chat_sessions', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'chat_sessions',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('chat_turns', kind: UpdateKind.delete)],
+    ),
   ]);
 }
 
@@ -4983,6 +6515,7 @@ typedef $$BooksTableCreateCompanionBuilder = BooksCompanion Function({
   Value<bool> useDefaultCover,
   Value<String?> hash,
   required int parserVersion,
+  Value<int> contentRevision,
   required int totalChars,
   Value<DateTime> createdAt,
   Value<DateTime?> lastOpenedAt,
@@ -5003,6 +6536,7 @@ typedef $$BooksTableUpdateCompanionBuilder = BooksCompanion Function({
   Value<bool> useDefaultCover,
   Value<String?> hash,
   Value<int> parserVersion,
+  Value<int> contentRevision,
   Value<int> totalChars,
   Value<DateTime> createdAt,
   Value<DateTime?> lastOpenedAt,
@@ -5092,6 +6626,24 @@ final class $$BooksTableReferences
       manager.$state.copyWith(prefetchedData: cache),
     );
   }
+
+  static MultiTypedResultKey<$ChatSessionsTable, List<ChatSessionRow>>
+  _chatSessionsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.chatSessions,
+    aliasName: 'books__id__chat_sessions__book_id',
+  );
+
+  $$ChatSessionsTableProcessedTableManager get chatSessionsRefs {
+    final manager = $$ChatSessionsTableTableManager(
+      $_db,
+      $_db.chatSessions,
+    ).filter((f) => f.bookId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_chatSessionsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
 }
 
 class $$BooksTableFilterComposer extends Composer<_$AppDatabase, $BooksTable> {
@@ -5160,6 +6712,11 @@ class $$BooksTableFilterComposer extends Composer<_$AppDatabase, $BooksTable> {
 
   ColumnFilters<int> get parserVersion => $composableBuilder(
     column: $table.parserVersion,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get contentRevision => $composableBuilder(
+    column: $table.contentRevision,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -5292,6 +6849,31 @@ class $$BooksTableFilterComposer extends Composer<_$AppDatabase, $BooksTable> {
     );
     return f(composer);
   }
+
+  Expression<bool> chatSessionsRefs(
+    Expression<bool> Function($$ChatSessionsTableFilterComposer f) f,
+  ) {
+    final $$ChatSessionsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.chatSessions,
+      getReferencedColumn: (t) => t.bookId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ChatSessionsTableFilterComposer(
+            $db: $db,
+            $table: $db.chatSessions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$BooksTableOrderingComposer
@@ -5360,6 +6942,11 @@ class $$BooksTableOrderingComposer
 
   ColumnOrderings<int> get parserVersion => $composableBuilder(
     column: $table.parserVersion,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get contentRevision => $composableBuilder(
+    column: $table.contentRevision,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -5447,6 +7034,11 @@ class $$BooksTableAnnotationComposer
 
   GeneratedColumn<int> get parserVersion => $composableBuilder(
     column: $table.parserVersion,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get contentRevision => $composableBuilder(
+    column: $table.contentRevision,
     builder: (column) => column,
   );
 
@@ -5577,6 +7169,31 @@ class $$BooksTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> chatSessionsRefs<T extends Object>(
+    Expression<T> Function($$ChatSessionsTableAnnotationComposer a) f,
+  ) {
+    final $$ChatSessionsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.chatSessions,
+      getReferencedColumn: (t) => t.bookId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ChatSessionsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.chatSessions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$BooksTableTableManager
@@ -5597,6 +7214,7 @@ class $$BooksTableTableManager
             bool readingProgressRefs,
             bool readingSessionsRefs,
             bool aiCallsRefs,
+            bool chatSessionsRefs,
           })
         > {
   $$BooksTableTableManager(_$AppDatabase db, $BooksTable table)
@@ -5624,6 +7242,7 @@ class $$BooksTableTableManager
                 Value<bool> useDefaultCover = const Value.absent(),
                 Value<String?> hash = const Value.absent(),
                 Value<int> parserVersion = const Value.absent(),
+                Value<int> contentRevision = const Value.absent(),
                 Value<int> totalChars = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime?> lastOpenedAt = const Value.absent(),
@@ -5643,6 +7262,7 @@ class $$BooksTableTableManager
                 useDefaultCover: useDefaultCover,
                 hash: hash,
                 parserVersion: parserVersion,
+                contentRevision: contentRevision,
                 totalChars: totalChars,
                 createdAt: createdAt,
                 lastOpenedAt: lastOpenedAt,
@@ -5664,6 +7284,7 @@ class $$BooksTableTableManager
                 Value<bool> useDefaultCover = const Value.absent(),
                 Value<String?> hash = const Value.absent(),
                 required int parserVersion,
+                Value<int> contentRevision = const Value.absent(),
                 required int totalChars,
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime?> lastOpenedAt = const Value.absent(),
@@ -5683,6 +7304,7 @@ class $$BooksTableTableManager
                 useDefaultCover: useDefaultCover,
                 hash: hash,
                 parserVersion: parserVersion,
+                contentRevision: contentRevision,
                 totalChars: totalChars,
                 createdAt: createdAt,
                 lastOpenedAt: lastOpenedAt,
@@ -5704,6 +7326,7 @@ class $$BooksTableTableManager
                 readingProgressRefs = false,
                 readingSessionsRefs = false,
                 aiCallsRefs = false,
+                chatSessionsRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
@@ -5712,6 +7335,7 @@ class $$BooksTableTableManager
                     if (readingProgressRefs) db.readingProgress,
                     if (readingSessionsRefs) db.readingSessions,
                     if (aiCallsRefs) db.aiCalls,
+                    if (chatSessionsRefs) db.chatSessions,
                   ],
                   addJoins: null,
                   getPrefetchedDataCallback: (items) async {
@@ -5788,6 +7412,27 @@ class $$BooksTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (chatSessionsRefs)
+                        await $_getPrefetchedData<
+                          Book,
+                          $BooksTable,
+                          ChatSessionRow
+                        >(
+                          currentTable: table,
+                          referencedTable: $$BooksTableReferences
+                              ._chatSessionsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$BooksTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).chatSessionsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.bookId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -5813,6 +7458,7 @@ typedef $$BooksTableProcessedTableManager =
         bool readingProgressRefs,
         bool readingSessionsRefs,
         bool aiCallsRefs,
+        bool chatSessionsRefs,
       })
     >;
 typedef $$ChaptersTableCreateCompanionBuilder = ChaptersCompanion Function({
@@ -9366,6 +11012,1007 @@ typedef $$SettingsTableProcessedTableManager =
       Setting,
       PrefetchHooks Function()
     >;
+typedef $$ChatSessionsTableCreateCompanionBuilder =
+    ChatSessionsCompanion Function({
+      Value<int> id,
+      required int bookId,
+      required int contentRevision,
+      required String title,
+      Value<bool> manualTitle,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
+      Value<DateTime?> lastOpenedAt,
+      Value<String?> scrollAnchor,
+    });
+typedef $$ChatSessionsTableUpdateCompanionBuilder =
+    ChatSessionsCompanion Function({
+      Value<int> id,
+      Value<int> bookId,
+      Value<int> contentRevision,
+      Value<String> title,
+      Value<bool> manualTitle,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
+      Value<DateTime?> lastOpenedAt,
+      Value<String?> scrollAnchor,
+    });
+
+final class $$ChatSessionsTableReferences
+    extends BaseReferences<_$AppDatabase, $ChatSessionsTable, ChatSessionRow> {
+  $$ChatSessionsTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $BooksTable _bookIdTable(_$AppDatabase db) =>
+      db.books.createAlias('chat_sessions__book_id__books__id');
+
+  $$BooksTableProcessedTableManager get bookId {
+    final $_column = $_itemColumn<int>('book_id')!;
+
+    final manager = $$BooksTableTableManager(
+      $_db,
+      $_db.books,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_bookIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static MultiTypedResultKey<$ChatTurnsTable, List<ChatTurnRow>>
+  _chatTurnsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.chatTurns,
+    aliasName: 'chat_sessions__id__chat_turns__session_id',
+  );
+
+  $$ChatTurnsTableProcessedTableManager get chatTurnsRefs {
+    final manager = $$ChatTurnsTableTableManager(
+      $_db,
+      $_db.chatTurns,
+    ).filter((f) => f.sessionId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_chatTurnsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $$ChatSessionsTableFilterComposer
+    extends Composer<_$AppDatabase, $ChatSessionsTable> {
+  $$ChatSessionsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get contentRevision => $composableBuilder(
+    column: $table.contentRevision,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get manualTitle => $composableBuilder(
+    column: $table.manualTitle,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get lastOpenedAt => $composableBuilder(
+    column: $table.lastOpenedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get scrollAnchor => $composableBuilder(
+    column: $table.scrollAnchor,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$BooksTableFilterComposer get bookId {
+    final $$BooksTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.bookId,
+      referencedTable: $db.books,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BooksTableFilterComposer(
+            $db: $db,
+            $table: $db.books,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  Expression<bool> chatTurnsRefs(
+    Expression<bool> Function($$ChatTurnsTableFilterComposer f) f,
+  ) {
+    final $$ChatTurnsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.chatTurns,
+      getReferencedColumn: (t) => t.sessionId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ChatTurnsTableFilterComposer(
+            $db: $db,
+            $table: $db.chatTurns,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$ChatSessionsTableOrderingComposer
+    extends Composer<_$AppDatabase, $ChatSessionsTable> {
+  $$ChatSessionsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get contentRevision => $composableBuilder(
+    column: $table.contentRevision,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get manualTitle => $composableBuilder(
+    column: $table.manualTitle,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get lastOpenedAt => $composableBuilder(
+    column: $table.lastOpenedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get scrollAnchor => $composableBuilder(
+    column: $table.scrollAnchor,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$BooksTableOrderingComposer get bookId {
+    final $$BooksTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.bookId,
+      referencedTable: $db.books,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BooksTableOrderingComposer(
+            $db: $db,
+            $table: $db.books,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ChatSessionsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ChatSessionsTable> {
+  $$ChatSessionsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get contentRevision => $composableBuilder(
+    column: $table.contentRevision,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get title =>
+      $composableBuilder(column: $table.title, builder: (column) => column);
+
+  GeneratedColumn<bool> get manualTitle => $composableBuilder(
+    column: $table.manualTitle,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get lastOpenedAt => $composableBuilder(
+    column: $table.lastOpenedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get scrollAnchor => $composableBuilder(
+    column: $table.scrollAnchor,
+    builder: (column) => column,
+  );
+
+  $$BooksTableAnnotationComposer get bookId {
+    final $$BooksTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.bookId,
+      referencedTable: $db.books,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BooksTableAnnotationComposer(
+            $db: $db,
+            $table: $db.books,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  Expression<T> chatTurnsRefs<T extends Object>(
+    Expression<T> Function($$ChatTurnsTableAnnotationComposer a) f,
+  ) {
+    final $$ChatTurnsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.chatTurns,
+      getReferencedColumn: (t) => t.sessionId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ChatTurnsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.chatTurns,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$ChatSessionsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ChatSessionsTable,
+          ChatSessionRow,
+          $$ChatSessionsTableFilterComposer,
+          $$ChatSessionsTableOrderingComposer,
+          $$ChatSessionsTableAnnotationComposer,
+          $$ChatSessionsTableCreateCompanionBuilder,
+          $$ChatSessionsTableUpdateCompanionBuilder,
+          (ChatSessionRow, $$ChatSessionsTableReferences),
+          ChatSessionRow,
+          PrefetchHooks Function({bool bookId, bool chatTurnsRefs})
+        > {
+  $$ChatSessionsTableTableManager(_$AppDatabase db, $ChatSessionsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ChatSessionsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ChatSessionsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ChatSessionsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> bookId = const Value.absent(),
+                Value<int> contentRevision = const Value.absent(),
+                Value<String> title = const Value.absent(),
+                Value<bool> manualTitle = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<DateTime?> lastOpenedAt = const Value.absent(),
+                Value<String?> scrollAnchor = const Value.absent(),
+              }) => ChatSessionsCompanion(
+                id: id,
+                bookId: bookId,
+                contentRevision: contentRevision,
+                title: title,
+                manualTitle: manualTitle,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                lastOpenedAt: lastOpenedAt,
+                scrollAnchor: scrollAnchor,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int bookId,
+                required int contentRevision,
+                required String title,
+                Value<bool> manualTitle = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<DateTime?> lastOpenedAt = const Value.absent(),
+                Value<String?> scrollAnchor = const Value.absent(),
+              }) => ChatSessionsCompanion.insert(
+                id: id,
+                bookId: bookId,
+                contentRevision: contentRevision,
+                title: title,
+                manualTitle: manualTitle,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                lastOpenedAt: lastOpenedAt,
+                scrollAnchor: scrollAnchor,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$ChatSessionsTable, ChatSessionRow>(table),
+                  $$ChatSessionsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({bookId = false, chatTurnsRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [if (chatTurnsRefs) db.chatTurns],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (bookId) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.bookId,
+                        referencedTable: $$ChatSessionsTableReferences
+                            ._bookIdTable(db),
+                        referencedColumn: $$ChatSessionsTableReferences
+                            ._bookIdTable(db)
+                            .id,
+                      ) as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (chatTurnsRefs)
+                    await $_getPrefetchedData<
+                      ChatSessionRow,
+                      $ChatSessionsTable,
+                      ChatTurnRow
+                    >(
+                      currentTable: table,
+                      referencedTable: $$ChatSessionsTableReferences
+                          ._chatTurnsRefsTable(db),
+                      managerFromTypedResult: (p0) =>
+                          $$ChatSessionsTableReferences(
+                            db,
+                            table,
+                            p0,
+                          ).chatTurnsRefs,
+                      referencedItemsForCurrentItem: (item, referencedItems) =>
+                          referencedItems.where((e) => e.sessionId == item.id),
+                      typedResults: items,
+                    ),
+                ];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$ChatSessionsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ChatSessionsTable,
+      ChatSessionRow,
+      $$ChatSessionsTableFilterComposer,
+      $$ChatSessionsTableOrderingComposer,
+      $$ChatSessionsTableAnnotationComposer,
+      $$ChatSessionsTableCreateCompanionBuilder,
+      $$ChatSessionsTableUpdateCompanionBuilder,
+      (ChatSessionRow, $$ChatSessionsTableReferences),
+      ChatSessionRow,
+      PrefetchHooks Function({bool bookId, bool chatTurnsRefs})
+    >;
+typedef $$ChatTurnsTableCreateCompanionBuilder = ChatTurnsCompanion Function({
+  Value<int> id,
+  required int sessionId,
+  required int sequence,
+  required String question,
+  Value<String?> quote,
+  Value<String?> answer,
+  Value<String> sources,
+  Value<String> draft,
+  required String phase,
+  Value<int> attempt,
+  required String model,
+  required int promptVersion,
+  Value<String?> error,
+  Value<int?> httpStatus,
+  Value<DateTime> createdAt,
+  Value<DateTime> updatedAt,
+});
+typedef $$ChatTurnsTableUpdateCompanionBuilder = ChatTurnsCompanion Function({
+  Value<int> id,
+  Value<int> sessionId,
+  Value<int> sequence,
+  Value<String> question,
+  Value<String?> quote,
+  Value<String?> answer,
+  Value<String> sources,
+  Value<String> draft,
+  Value<String> phase,
+  Value<int> attempt,
+  Value<String> model,
+  Value<int> promptVersion,
+  Value<String?> error,
+  Value<int?> httpStatus,
+  Value<DateTime> createdAt,
+  Value<DateTime> updatedAt,
+});
+
+final class $$ChatTurnsTableReferences
+    extends BaseReferences<_$AppDatabase, $ChatTurnsTable, ChatTurnRow> {
+  $$ChatTurnsTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $ChatSessionsTable _sessionIdTable(_$AppDatabase db) =>
+      db.chatSessions.createAlias('chat_turns__session_id__chat_sessions__id');
+
+  $$ChatSessionsTableProcessedTableManager get sessionId {
+    final $_column = $_itemColumn<int>('session_id')!;
+
+    final manager = $$ChatSessionsTableTableManager(
+      $_db,
+      $_db.chatSessions,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_sessionIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$ChatTurnsTableFilterComposer
+    extends Composer<_$AppDatabase, $ChatTurnsTable> {
+  $$ChatTurnsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sequence => $composableBuilder(
+    column: $table.sequence,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get question => $composableBuilder(
+    column: $table.question,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get quote => $composableBuilder(
+    column: $table.quote,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get answer => $composableBuilder(
+    column: $table.answer,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get sources => $composableBuilder(
+    column: $table.sources,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get draft => $composableBuilder(
+    column: $table.draft,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get phase => $composableBuilder(
+    column: $table.phase,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get attempt => $composableBuilder(
+    column: $table.attempt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get model => $composableBuilder(
+    column: $table.model,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get promptVersion => $composableBuilder(
+    column: $table.promptVersion,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get error => $composableBuilder(
+    column: $table.error,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get httpStatus => $composableBuilder(
+    column: $table.httpStatus,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$ChatSessionsTableFilterComposer get sessionId {
+    final $$ChatSessionsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sessionId,
+      referencedTable: $db.chatSessions,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ChatSessionsTableFilterComposer(
+            $db: $db,
+            $table: $db.chatSessions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ChatTurnsTableOrderingComposer
+    extends Composer<_$AppDatabase, $ChatTurnsTable> {
+  $$ChatTurnsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sequence => $composableBuilder(
+    column: $table.sequence,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get question => $composableBuilder(
+    column: $table.question,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get quote => $composableBuilder(
+    column: $table.quote,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get answer => $composableBuilder(
+    column: $table.answer,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get sources => $composableBuilder(
+    column: $table.sources,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get draft => $composableBuilder(
+    column: $table.draft,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get phase => $composableBuilder(
+    column: $table.phase,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get attempt => $composableBuilder(
+    column: $table.attempt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get model => $composableBuilder(
+    column: $table.model,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get promptVersion => $composableBuilder(
+    column: $table.promptVersion,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get error => $composableBuilder(
+    column: $table.error,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get httpStatus => $composableBuilder(
+    column: $table.httpStatus,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$ChatSessionsTableOrderingComposer get sessionId {
+    final $$ChatSessionsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sessionId,
+      referencedTable: $db.chatSessions,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ChatSessionsTableOrderingComposer(
+            $db: $db,
+            $table: $db.chatSessions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ChatTurnsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ChatTurnsTable> {
+  $$ChatTurnsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get sequence =>
+      $composableBuilder(column: $table.sequence, builder: (column) => column);
+
+  GeneratedColumn<String> get question =>
+      $composableBuilder(column: $table.question, builder: (column) => column);
+
+  GeneratedColumn<String> get quote =>
+      $composableBuilder(column: $table.quote, builder: (column) => column);
+
+  GeneratedColumn<String> get answer =>
+      $composableBuilder(column: $table.answer, builder: (column) => column);
+
+  GeneratedColumn<String> get sources =>
+      $composableBuilder(column: $table.sources, builder: (column) => column);
+
+  GeneratedColumn<String> get draft =>
+      $composableBuilder(column: $table.draft, builder: (column) => column);
+
+  GeneratedColumn<String> get phase =>
+      $composableBuilder(column: $table.phase, builder: (column) => column);
+
+  GeneratedColumn<int> get attempt =>
+      $composableBuilder(column: $table.attempt, builder: (column) => column);
+
+  GeneratedColumn<String> get model =>
+      $composableBuilder(column: $table.model, builder: (column) => column);
+
+  GeneratedColumn<int> get promptVersion => $composableBuilder(
+    column: $table.promptVersion,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get error =>
+      $composableBuilder(column: $table.error, builder: (column) => column);
+
+  GeneratedColumn<int> get httpStatus => $composableBuilder(
+    column: $table.httpStatus,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  $$ChatSessionsTableAnnotationComposer get sessionId {
+    final $$ChatSessionsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sessionId,
+      referencedTable: $db.chatSessions,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ChatSessionsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.chatSessions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ChatTurnsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ChatTurnsTable,
+          ChatTurnRow,
+          $$ChatTurnsTableFilterComposer,
+          $$ChatTurnsTableOrderingComposer,
+          $$ChatTurnsTableAnnotationComposer,
+          $$ChatTurnsTableCreateCompanionBuilder,
+          $$ChatTurnsTableUpdateCompanionBuilder,
+          (ChatTurnRow, $$ChatTurnsTableReferences),
+          ChatTurnRow,
+          PrefetchHooks Function({bool sessionId})
+        > {
+  $$ChatTurnsTableTableManager(_$AppDatabase db, $ChatTurnsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ChatTurnsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ChatTurnsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ChatTurnsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> sessionId = const Value.absent(),
+                Value<int> sequence = const Value.absent(),
+                Value<String> question = const Value.absent(),
+                Value<String?> quote = const Value.absent(),
+                Value<String?> answer = const Value.absent(),
+                Value<String> sources = const Value.absent(),
+                Value<String> draft = const Value.absent(),
+                Value<String> phase = const Value.absent(),
+                Value<int> attempt = const Value.absent(),
+                Value<String> model = const Value.absent(),
+                Value<int> promptVersion = const Value.absent(),
+                Value<String?> error = const Value.absent(),
+                Value<int?> httpStatus = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+              }) => ChatTurnsCompanion(
+                id: id,
+                sessionId: sessionId,
+                sequence: sequence,
+                question: question,
+                quote: quote,
+                answer: answer,
+                sources: sources,
+                draft: draft,
+                phase: phase,
+                attempt: attempt,
+                model: model,
+                promptVersion: promptVersion,
+                error: error,
+                httpStatus: httpStatus,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int sessionId,
+                required int sequence,
+                required String question,
+                Value<String?> quote = const Value.absent(),
+                Value<String?> answer = const Value.absent(),
+                Value<String> sources = const Value.absent(),
+                Value<String> draft = const Value.absent(),
+                required String phase,
+                Value<int> attempt = const Value.absent(),
+                required String model,
+                required int promptVersion,
+                Value<String?> error = const Value.absent(),
+                Value<int?> httpStatus = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+              }) => ChatTurnsCompanion.insert(
+                id: id,
+                sessionId: sessionId,
+                sequence: sequence,
+                question: question,
+                quote: quote,
+                answer: answer,
+                sources: sources,
+                draft: draft,
+                phase: phase,
+                attempt: attempt,
+                model: model,
+                promptVersion: promptVersion,
+                error: error,
+                httpStatus: httpStatus,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$ChatTurnsTable, ChatTurnRow>(table),
+                  $$ChatTurnsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({sessionId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (sessionId) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.sessionId,
+                        referencedTable: $$ChatTurnsTableReferences
+                            ._sessionIdTable(db),
+                        referencedColumn: $$ChatTurnsTableReferences
+                            ._sessionIdTable(db)
+                            .id,
+                      ) as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$ChatTurnsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ChatTurnsTable,
+      ChatTurnRow,
+      $$ChatTurnsTableFilterComposer,
+      $$ChatTurnsTableOrderingComposer,
+      $$ChatTurnsTableAnnotationComposer,
+      $$ChatTurnsTableCreateCompanionBuilder,
+      $$ChatTurnsTableUpdateCompanionBuilder,
+      (ChatTurnRow, $$ChatTurnsTableReferences),
+      ChatTurnRow,
+      PrefetchHooks Function({bool sessionId})
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -9388,4 +12035,8 @@ class $AppDatabaseManager {
       $$AiCallsTableTableManager(_db, _db.aiCalls);
   $$SettingsTableTableManager get settings =>
       $$SettingsTableTableManager(_db, _db.settings);
+  $$ChatSessionsTableTableManager get chatSessions =>
+      $$ChatSessionsTableTableManager(_db, _db.chatSessions);
+  $$ChatTurnsTableTableManager get chatTurns =>
+      $$ChatTurnsTableTableManager(_db, _db.chatTurns);
 }
