@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:luma/domain/models/ai_reply.dart';
 
 import '../support/book_chat_dense.dart';
+import '../support/book_chat_embedding_fallback.dart';
 import '../support/book_chat_gold.dart';
 import '../support/book_chat_heldout.dart';
 import '../support/book_chat_refinement.dart';
@@ -32,14 +33,33 @@ void main() {
       final chunks = data.chunks;
       final corpus = chunks.map((s) => s.passage).toList();
       final byId = {for (final s in chunks) s.passage.id: s};
-      final query = {
+      final primaryQuery = {
         for (final c in cases) c.input.id: heldoutQuery(c.input, chunks),
       };
-      final cache = EmbeddingCache(
+      final primaryCache = EmbeddingCache(
         File('/tmp/luma-book-chat-validation2-qwen.jsonl'),
         model: heldoutEmbeddingModel,
         dimensions: 4096,
       );
+      final fallbackCache = LargeEmbeddingCache(
+        File('/tmp/luma-book-chat-validation2-large.jsonl'),
+      );
+      final routing =
+          (jsonDecode(
+                File('test/fixtures/book_chat_validation2_protocol.json')
+                    .readAsStringSync(),
+              ) as Map)['embeddingRouting']
+              as Map;
+      final primaryUnavailable =
+          routing['primaryUnavailableForThisEvaluation'] == true;
+      EmbeddingCache cache = primaryUnavailable ? fallbackCache : primaryCache;
+      String? fallbackReason = primaryUnavailable
+          ? 'recorded_primary_provider_timeouts'
+          : null;
+      var query = {
+        for (final e in primaryQuery.entries)
+          e.key: embeddingQueryForModel(e.value, cache.model),
+      };
       final dio = Dio(
         BaseOptions(
           baseUrl: 'https://openrouter.ai/api/v1',
@@ -58,9 +78,16 @@ void main() {
           'startedAt': started,
           'independentValidation': true,
           'tunedAfterOpening': false,
-          'embeddingModel': heldoutEmbeddingModel,
+          'embeddingModel': cache.model,
+          'embeddingDimensions': cache.dimensions,
+          'primaryEmbeddingModel': heldoutEmbeddingModel,
+          'fallbackEmbeddingModel': largeEmbeddingModel,
+          'fallbackReason': fallbackReason,
           'answerModel': heldoutAnswerModel,
-          'embeddingRequests': cache.newRequests,
+          'embeddingRequests':
+              primaryCache.newRequests + fallbackCache.newRequests,
+          'primaryEmbeddingRequests': primaryCache.newRequests,
+          'fallbackEmbeddingRequests': fallbackCache.newRequests,
           'embeddingLedger': cache.ledger,
           'chunkCount': corpus.length,
           'float32Bytes': cache.vectors.values.fold<int>(
@@ -74,12 +101,25 @@ void main() {
       );
       checkpoint();
       try {
-        await cache.fill(
-          [...corpus.map((p) => p.text), ...query.values],
+        final filled = await fillWithEmbeddingFallback(
+          primary: primaryCache,
+          fallback: fallbackCache,
+          documents: corpus.map((p) => p.text).toList(),
+          primaryQueries: primaryQuery.values.toList(),
+          fallbackQueries: primaryQuery.values
+              .map((q) => embeddingQueryForModel(q, largeEmbeddingModel))
+              .toList(),
           live: true,
           apiKey: key,
           dio: dio,
+          primaryUnavailable: primaryUnavailable,
         );
+        cache = filled.cache;
+        fallbackReason = filled.fallbackReason;
+        query = {
+          for (final e in primaryQuery.entries)
+            e.key: embeddingQueryForModel(e.value, cache.model),
+        };
       } on DioException catch (e) {
         checkpoint();
         fail(

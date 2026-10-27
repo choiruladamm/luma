@@ -1,6 +1,6 @@
 {
-  "protocol": "fresh-book-validation2",
-  "frozenAt": "2026-10-27T13:53:25.731511+00:00",
+  "protocol": "fresh-book-validation2-large-fallback",
+  "frozenAt": "2026-10-27T17:35:40.227082+00:00",
   "refinedCandidateCommit": "6e2e97a",
   "refinedCandidateProtocolHash": "ba096cbca523072f758bcf598fa886a27cb7a6a5307bc7b92dd82782b4fe21b9",
   "bookIds": [
@@ -32,9 +32,10 @@
     "lib/data/services/openrouter_service.dart": "f52ee183b6c674c3558186a814fab0abb0bcaca47968b0adc604b236dd594b65",
     "pubspec.lock": "445de7039b418d08f7ce92f50623a276245949014d7a4060a63b312510368b5d",
     "test/support/book_chat_validation2.dart": "ac49e22357fdd6953d5583725ef1e66461b487f7b14c916d251823c84f806091",
-    "test/data/book_chat_validation2_live_test.dart": "fd4c4da9cc80e7638931afa891b748dc3937f61fa09999405f88115fb927d32c",
+    "test/data/book_chat_validation2_live_test.dart": "05b8cd09be0dad3e005d3b04bf8e02adef8c18477e2fafd57958de356f70e00e",
     "test/fixtures/book_chat_validation2_cases.json": "2136ef3b2d179c69920183a79186e67eabc6a2c1caf93ba563bac7e090023105",
-    "test/fixtures/book_chat_refined_protocol_v2.json": "ba096cbca523072f758bcf598fa886a27cb7a6a5307bc7b92dd82782b4fe21b9"
+    "test/fixtures/book_chat_refined_protocol_v2.json": "ba096cbca523072f758bcf598fa886a27cb7a6a5307bc7b92dd82782b4fe21b9",
+    "test/support/book_chat_embedding_fallback.dart": "9e753e49544e11ae937a127d5011d00f47c972a2eb761090c446bad882be397c"
   },
   "binarySha256": {
     "test/fixtures/treasure-island.epub": "6d6781328ac1f559053b88e46a0881d69bf228d08e5d0b0e81ca39bd89b94edd",
@@ -44,5 +45,18 @@
     "treasure-island": "https://www.gutenberg.org/ebooks/120.epub.noimages",
     "the-time-machine": "https://www.gutenberg.org/ebooks/35.epub.noimages"
   },
-  "licensing": "Original Project Gutenberg EPUBs retain credits/licensing; public domain in the USA."
+  "licensing": "Original Project Gutenberg EPUBs retain credits/licensing; public domain in the USA.",
+  "amendsProtocolHash": "c5aa180269fc99b2815eff828005c2b3bb56bbaf30a41a51123a1ecb03c4a39a",
+  "amendmentReason": "User explicitly selected OpenAI Large fallback after two Qwen provider receiveTimeouts; zero selector/answer outputs existed before amendment. Questions/gold/books and selection/answer prompts unchanged.",
+  "embeddingRouting": {
+    "primary": "qwen/qwen3-embedding-8b",
+    "primaryDimensions": 4096,
+    "fallback": "openai/text-embedding-3-large",
+    "fallbackDimensions": 3072,
+    "primaryUnavailableForThisEvaluation": true,
+    "reason": "two recorded receiveTimeouts before any selector/answer request",
+    "fallbackPolicy": "network/timeouts,404/408/429/5xx; no auth/billing/invalid-input/cancel/certificate fallback",
+    "indexPolicy": "Rebuild full document index and every query under one model; never mix spaces or silently truncate dimensions.",
+    "queryPolicy": "Qwen instruct prefix on primary; plain original question/history/selected text on Large."
+  }
 }

@@ -1,0 +1,351 @@
+{
+  "attempts": [
+    {
+      "fileName": "luma-book-chat-validation2.json",
+      "error": "receiveTimeout",
+      "report": {
+        "experiment": "fresh-book-validation2",
+        "protocolHash": "c5aa180269fc99b2815eff828005c2b3bb56bbaf30a41a51123a1ecb03c4a39a",
+        "startedAt": "2026-10-27T17:19:55.723368Z",
+        "independentValidation": true,
+        "tunedAfterOpening": false,
+        "embeddingModel": "qwen/qwen3-embedding-8b",
+        "answerModel": "deepseek/deepseek-v4.1-flash",
+        "embeddingRequests": 8,
+        "embeddingLedger": [
+          {
+            "model": "qwen/qwen3-embedding-8b",
+            "dimensions": 4096,
+            "usage": {
+              "prompt_tokens": 62,
+              "total_tokens": 62,
+              "cost": 6.2e-07,
+              "is_byok": false,
+              "cost_details": {
+                "upstream_inference_cost": 6.2e-07,
+                "upstream_inference_prompt_cost": 6.2e-07,
+                "upstream_inference_completions_cost": 0
+              }
+            },
+            "provider": "Nebius",
+            "responseModel": "Qwen/Qwen3-Embedding-8B",
+            "requestId": "gen-emb-1793121596-MG4A8kdXx2EP7L6vNq85",
+            "elapsedMs": 1873,
+            "inputs": 2
+          },
+          {
+            "model": "qwen/qwen3-embedding-8b",
+            "dimensions": 4096,
+            "usage": {
+              "prompt_tokens": 7116,
+              "total_tokens": 7116,
+              "cost": 7.116e-05,
+              "is_byok": false,
+              "cost_details": {
+                "upstream_inference_cost": 7.116e-05,
+                "upstream_inference_prompt_cost": 7.116e-05,
+                "upstream_inference_completions_cost": 0
+              }
+            },
+            "provider": "DeepInfra",
+            "responseModel": "Qwen/Qwen3-Embedding-8B",
+            "requestId": "gen-emb-1793121597-ESujCE7baqu7M0Tra90C",
+            "elapsedMs": 26506,
+            "inputs": 64
+          },
+          {
+            "model": "qwen/qwen3-embedding-8b",
+            "dimensions": 4096,
+            "usage": {
+              "prompt_tokens": 7386,
+              "total_tokens": 7386,
+              "cost": 7.386e-05,
+              "is_byok": false,
+              "cost_details": {
+                "upstream_inference_cost": 7.386e-05,
+                "upstream_inference_prompt_cost": 7.386e-05,
+                "upstream_inference_completions_cost": 0
+              }
+            },
+            "provider": "Nebius",
+            "responseModel": "Qwen/Qwen3-Embedding-8B",
+            "requestId": "gen-emb-1793121624-VJXro7dY4gLqXVU4o3oN",
+            "elapsedMs": 14646,
+            "inputs": 64
+          },
+          {
+            "model": "qwen/qwen3-embedding-8b",
+            "dimensions": 4096,
+            "usage": {
+              "prompt_tokens": 6373,
+              "total_tokens": 6373,
+              "cost": 6.373e-05,
+              "is_byok": false,
+              "cost_details": {
+                "upstream_inference_cost": 6.373e-05,
+                "upstream_inference_prompt_cost": 6.373e-05,
+                "upstream_inference_completions_cost": 0
+              }
+            },
+            "provider": "Nebius",
+            "responseModel": "Qwen/Qwen3-Embedding-8B",
+            "requestId": "gen-emb-1793121638-Yq2A67aszJfLctraPcxH",
+            "elapsedMs": 4282,
+            "inputs": 64
+          },
+          {
+            "model": "qwen/qwen3-embedding-8b",
+            "dimensions": 4096,
+            "usage": {
+              "prompt_tokens": 6479,
+              "total_tokens": 6479,
+              "cost": 6.479e-05,
+              "is_byok": false,
+              "cost_details": {
+                "upstream_inference_cost": 6.479e-05,
+                "upstream_inference_prompt_cost": 6.479e-05,
+                "upstream_inference_completions_cost": 0
+              }
+            },
+            "provider": "DeepInfra",
+            "responseModel": "Qwen/Qwen3-Embedding-8B",
+            "requestId": "gen-emb-1793121643-x7KbtBAph2eSaeE5VeNa",
+            "elapsedMs": 26930,
+            "inputs": 64
+          },
+          {
+            "model": "qwen/qwen3-embedding-8b",
+            "dimensions": 4096,
+            "usage": {
+              "prompt_tokens": 5778,
+              "total_tokens": 5778,
+              "cost": 5.778e-05,
+              "is_byok": false,
+              "cost_details": {
+                "upstream_inference_cost": 5.778e-05,
+                "upstream_inference_prompt_cost": 5.778e-05,
+                "upstream_inference_completions_cost": 0
+              }
+            },
+            "provider": "Nebius",
+            "responseModel": "Qwen/Qwen3-Embedding-8B",
+            "requestId": "gen-emb-1793121670-k1CB0qoYHRMoYAo0KhMq",
+            "elapsedMs": 52624,
+            "inputs": 64
+          },
+          {
+            "model": "qwen/qwen3-embedding-8b",
+            "dimensions": 4096,
+            "usage": {
+              "prompt_tokens": 6423,
+              "total_tokens": 6423,
+              "cost": 6.423e-05,
+              "is_byok": false,
+              "cost_details": {
+                "upstream_inference_cost": 6.423e-05,
+                "upstream_inference_prompt_cost": 6.423e-05,
+                "upstream_inference_completions_cost": 0
+              }
+            },
+            "provider": "Nebius",
+            "responseModel": "Qwen/Qwen3-Embedding-8B",
+            "requestId": "gen-emb-1793121722-ZW028O8kOFpQmyfQCAK4",
+            "elapsedMs": 59225,
+            "inputs": 64
+          }
+        ],
+        "chunkCount": 1136,
+        "float32Bytes": 6324224,
+        "twoRuns": "Fresh selector and answer calls per case/run, no previous output in history; shared frozen embeddings.",
+        "semanticReview": "pending; range/IDs are proxies",
+        "cases": []
+      }
+    },
+    {
+      "fileName": "luma-book-chat-validation2-resume1.json",
+      "error": "receiveTimeout",
+      "report": {
+        "experiment": "fresh-book-validation2",
+        "protocolHash": "c5aa180269fc99b2815eff828005c2b3bb56bbaf30a41a51123a1ecb03c4a39a",
+        "startedAt": "2026-10-27T17:25:30.225992Z",
+        "independentValidation": true,
+        "tunedAfterOpening": false,
+        "embeddingModel": "qwen/qwen3-embedding-8b",
+        "answerModel": "deepseek/deepseek-v4.1-flash",
+        "embeddingRequests": 2,
+        "embeddingLedger": [
+          {
+            "model": "qwen/qwen3-embedding-8b",
+            "dimensions": 4096,
+            "usage": {
+              "prompt_tokens": 62,
+              "total_tokens": 62,
+              "cost": 6.2e-07,
+              "is_byok": false,
+              "cost_details": {
+                "upstream_inference_cost": 6.2e-07,
+                "upstream_inference_prompt_cost": 6.2e-07,
+                "upstream_inference_completions_cost": 0
+              }
+            },
+            "provider": "Nebius",
+            "responseModel": "Qwen/Qwen3-Embedding-8B",
+            "requestId": "gen-emb-1793121596-MG4A8kdXx2EP7L6vNq85",
+            "elapsedMs": 1873,
+            "inputs": 2
+          },
+          {
+            "model": "qwen/qwen3-embedding-8b",
+            "dimensions": 4096,
+            "usage": {
+              "prompt_tokens": 7116,
+              "total_tokens": 7116,
+              "cost": 7.116e-05,
+              "is_byok": false,
+              "cost_details": {
+                "upstream_inference_cost": 7.116e-05,
+                "upstream_inference_prompt_cost": 7.116e-05,
+                "upstream_inference_completions_cost": 0
+              }
+            },
+            "provider": "DeepInfra",
+            "responseModel": "Qwen/Qwen3-Embedding-8B",
+            "requestId": "gen-emb-1793121597-ESujCE7baqu7M0Tra90C",
+            "elapsedMs": 26506,
+            "inputs": 64
+          },
+          {
+            "model": "qwen/qwen3-embedding-8b",
+            "dimensions": 4096,
+            "usage": {
+              "prompt_tokens": 7386,
+              "total_tokens": 7386,
+              "cost": 7.386e-05,
+              "is_byok": false,
+              "cost_details": {
+                "upstream_inference_cost": 7.386e-05,
+                "upstream_inference_prompt_cost": 7.386e-05,
+                "upstream_inference_completions_cost": 0
+              }
+            },
+            "provider": "Nebius",
+            "responseModel": "Qwen/Qwen3-Embedding-8B",
+            "requestId": "gen-emb-1793121624-VJXro7dY4gLqXVU4o3oN",
+            "elapsedMs": 14646,
+            "inputs": 64
+          },
+          {
+            "model": "qwen/qwen3-embedding-8b",
+            "dimensions": 4096,
+            "usage": {
+              "prompt_tokens": 6373,
+              "total_tokens": 6373,
+              "cost": 6.373e-05,
+              "is_byok": false,
+              "cost_details": {
+                "upstream_inference_cost": 6.373e-05,
+                "upstream_inference_prompt_cost": 6.373e-05,
+                "upstream_inference_completions_cost": 0
+              }
+            },
+            "provider": "Nebius",
+            "responseModel": "Qwen/Qwen3-Embedding-8B",
+            "requestId": "gen-emb-1793121638-Yq2A67aszJfLctraPcxH",
+            "elapsedMs": 4282,
+            "inputs": 64
+          },
+          {
+            "model": "qwen/qwen3-embedding-8b",
+            "dimensions": 4096,
+            "usage": {
+              "prompt_tokens": 6479,
+              "total_tokens": 6479,
+              "cost": 6.479e-05,
+              "is_byok": false,
+              "cost_details": {
+                "upstream_inference_cost": 6.479e-05,
+                "upstream_inference_prompt_cost": 6.479e-05,
+                "upstream_inference_completions_cost": 0
+              }
+            },
+            "provider": "DeepInfra",
+            "responseModel": "Qwen/Qwen3-Embedding-8B",
+            "requestId": "gen-emb-1793121643-x7KbtBAph2eSaeE5VeNa",
+            "elapsedMs": 26930,
+            "inputs": 64
+          },
+          {
+            "model": "qwen/qwen3-embedding-8b",
+            "dimensions": 4096,
+            "usage": {
+              "prompt_tokens": 5778,
+              "total_tokens": 5778,
+              "cost": 5.778e-05,
+              "is_byok": false,
+              "cost_details": {
+                "upstream_inference_cost": 5.778e-05,
+                "upstream_inference_prompt_cost": 5.778e-05,
+                "upstream_inference_completions_cost": 0
+              }
+            },
+            "provider": "Nebius",
+            "responseModel": "Qwen/Qwen3-Embedding-8B",
+            "requestId": "gen-emb-1793121670-k1CB0qoYHRMoYAo0KhMq",
+            "elapsedMs": 52624,
+            "inputs": 64
+          },
+          {
+            "model": "qwen/qwen3-embedding-8b",
+            "dimensions": 4096,
+            "usage": {
+              "prompt_tokens": 6423,
+              "total_tokens": 6423,
+              "cost": 6.423e-05,
+              "is_byok": false,
+              "cost_details": {
+                "upstream_inference_cost": 6.423e-05,
+                "upstream_inference_prompt_cost": 6.423e-05,
+                "upstream_inference_completions_cost": 0
+              }
+            },
+            "provider": "Nebius",
+            "responseModel": "Qwen/Qwen3-Embedding-8B",
+            "requestId": "gen-emb-1793121722-ZW028O8kOFpQmyfQCAK4",
+            "elapsedMs": 59225,
+            "inputs": 64
+          },
+          {
+            "model": "qwen/qwen3-embedding-8b",
+            "dimensions": 4096,
+            "usage": {
+              "prompt_tokens": 212,
+              "total_tokens": 212,
+              "cost": 8.48e-06,
+              "is_byok": false,
+              "cost_details": {
+                "upstream_inference_cost": 8.48e-06,
+                "upstream_inference_prompt_cost": 8.48e-06,
+                "upstream_inference_completions_cost": 0
+              }
+            },
+            "provider": "SiliconFlow",
+            "responseModel": "Qwen/Qwen3-Embedding-8B",
+            "requestId": "gen-emb-1793121930-tXHeVxu6LbQXvezndeMI",
+            "elapsedMs": 2829,
+            "inputs": 2
+          }
+        ],
+        "chunkCount": 1136,
+        "float32Bytes": 6356992,
+        "twoRuns": "Fresh selector and answer calls per case/run, no previous output in history; shared frozen embeddings.",
+        "semanticReview": "pending; range/IDs are proxies",
+        "cases": []
+      }
+    }
+  ],
+  "selectorOrAnswerRequestsBeforeFallback": 0,
+  "attemptedQwenEmbeddingRequests": 10,
+  "successfulCachedQwenRequests": 8,
+  "unknownUsageTimeoutRequests": 2,
+  "policy": "Keep these request/cost records; do not call them quality failures or hide them in fallback totals."
+}
