@@ -74,6 +74,37 @@ void main() {
   });
 
   test('zip holds manifest, a working DB snapshot, books and covers', () async {
+    final session = await db
+        .into(db.chatSessions)
+        .insert(
+          ChatSessionsCompanion.insert(
+            bookId: 1,
+            contentRevision: 1,
+            title: 'Ngobrol Walden',
+            manualTitle: const Value(true),
+            scrollAnchor: const Value(
+              '{"turnId":1,"blockIndex":0,"alignment":0.5}',
+            ),
+          ),
+        );
+    await db
+        .into(db.chatTurns)
+        .insert(
+          ChatTurnsCompanion.insert(
+            sessionId: session,
+            sequence: 0,
+            question: 'Apa temanya?',
+            phase: 'stopped',
+            model: 'test/model',
+            promptVersion: 1,
+            attempt: const Value(2),
+            quote: const Value('{"anchors":[]}'),
+            sources: const Value('[{"id":"S1"}]'),
+            draft: const Value('Jawaban belum selesai 🌿'),
+          ),
+        );
+    final originalSession = await db.select(db.chatSessions).getSingle();
+    final originalTurn = await db.select(db.chatTurns).getSingle();
     String? started;
     final stages = <BackupStage>{};
     final backup = (await BackupService(db, storage).export(
@@ -117,6 +148,9 @@ void main() {
     expect((await copy.select(copy.books).getSingle()).title, 'Walden');
     expect(await copy.select(copy.aiResults).get(), hasLength(1));
     expect((await copy.select(copy.settings).getSingle()).value, 'x/y');
+    expect(await copy.select(copy.chatSessions).getSingle(), originalSession);
+    expect(await copy.select(copy.chatTurns).getSingle(), originalTurn);
+    expect((await copy.select(copy.books).getSingle()).contentRevision, 1);
   });
 
   test('dispose removes the temporary zip', () async {

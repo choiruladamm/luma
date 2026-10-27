@@ -68,6 +68,12 @@ const v6 = [
   '''CREATE TABLE "ai_breakdowns" ("chapter_id" INTEGER NOT NULL REFERENCES chapters (id) ON DELETE CASCADE, "group_index" INTEGER NOT NULL, "body" TEXT NOT NULL, "source_hash" TEXT NOT NULL, "model" TEXT NOT NULL, "prompt_version" INTEGER NOT NULL, "created_at" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)), PRIMARY KEY ("chapter_id", "group_index"))''',
 ];
 
+/// v7 install baru: metadata EPUB #69. Fixture tidak memakai model schema baru.
+final v7 = [
+  '''CREATE TABLE "books" ("id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, "source_type" TEXT NOT NULL, "book_key" TEXT NULL UNIQUE, "title" TEXT NOT NULL, "author" TEXT NULL, "file_name" TEXT NULL, "cover_name" TEXT NULL, "original_title" TEXT NULL, "original_author" TEXT NULL, "use_default_cover" INTEGER NOT NULL DEFAULT 0 CHECK ("use_default_cover" IN (0, 1)), "hash" TEXT NULL UNIQUE, "parser_version" INTEGER NOT NULL, "total_chars" INTEGER NOT NULL, "created_at" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)), "last_opened_at" INTEGER NULL, "first_opened_at" INTEGER NULL, "reading_seconds" INTEGER NOT NULL DEFAULT 0, "finished_at" INTEGER NULL)''',
+  ...v6.skip(1),
+];
+
 AppDatabase _open([void Function(dynamic raw)? setup]) => AppDatabase(
   DatabaseConnection(
     NativeDatabase.memory(setup: setup),
@@ -107,6 +113,24 @@ Future<Map<String, List<String>>> _shape(AppDatabase db) async {
   for (final cols in shape.values) {
     cols.sort(); // ALTER nambah kolom di akhir; urutan gak ngaruh ke Drift
   }
+  for (final e in entities.where((e) => e.read<String>('type') == 'table')) {
+    final name = e.read<String>('name');
+    shape['$name.foreign_keys'] = [
+      for (final fk
+          in await db.customSelect('PRAGMA foreign_key_list("$name")').get())
+        [
+          fk.read<String>('from'),
+          fk.read<String>('table'),
+          fk.read<String>('to'),
+          fk.read<String>('on_delete'),
+        ].join(' '),
+    ]..sort();
+    shape['$name.indexes'] = [
+      for (final index
+          in await db.customSelect('PRAGMA index_list("$name")').get())
+        '${index.read<String>('name')} ${index.read<int>('unique')}',
+    ]..sort();
+  }
   return shape;
 }
 
@@ -143,6 +167,7 @@ void main() {
     (4, v4),
     (5, v5),
     (6, v6),
+    (7, v7),
   ]) {
     test(
       'v$version → now: same schema as a fresh install, data kept',
@@ -161,6 +186,9 @@ void main() {
         expect(book.originalTitle, isNull);
         expect(book.originalAuthor, isNull);
         expect(book.useDefaultCover, isFalse);
+        expect(book.contentRevision, 1);
+        expect(await migrated.select(migrated.chatSessions).get(), isEmpty);
+        expect(await migrated.select(migrated.chatTurns).get(), isEmpty);
         final progress = await migrated
             .select(migrated.readingProgress)
             .getSingle();
@@ -179,6 +207,96 @@ void main() {
       },
     );
   }
+
+  test('v7 → v8 preserves populated user data byte for byte', () async {
+    final db = _open((raw) {
+      for (final sql in v7) {
+        raw.execute(sql);
+      }
+      for (final sql in [
+        "INSERT INTO books (id,source_type,title,original_title,author,original_author,use_default_cover,hash,parser_version,total_chars,created_at,last_opened_at,first_opened_at,reading_seconds,finished_at) VALUES (42,'epub','Edited','Original','A','B',1,'hash',3,900,100,200,150,3600,300)",
+        "INSERT INTO chapters VALUES (71,42,5,6,'VI',400)",
+        "INSERT INTO paragraphs VALUES (71,3,0,'paragraph','Original paragraph 🌿')",
+        'INSERT INTO reading_progress VALUES (42,71,3,0.75,200)',
+        '''INSERT INTO ai_results VALUES (71,0,'["translation"]','meaning','model',4,100,8,200)''',
+        "INSERT INTO ai_breakdowns VALUES (71,0,'body','sourceHash','model',2,100)",
+        'INSERT INTO reading_sessions VALUES (81,42,71,100,60,400,600)',
+        "INSERT INTO ai_calls (id,book_id,chapter_id,kind,model,prompt_version,chars,cost_usd,created_at) VALUES (91,42,71,'group','model',4,200,0.002,100)",
+        "INSERT INTO settings VALUES ('reader.font','literata')",
+      ]) {
+        raw.execute(sql);
+      }
+      raw.execute('PRAGMA user_version = 7');
+    });
+    addTearDown(db.close);
+    // Raw values verify every old column without domain mapper normalization.
+    final expected = <String, List<Object?>>{
+      'books': [
+        42,
+        'epub',
+        null,
+        'Edited',
+        'A',
+        null,
+        null,
+        'Original',
+        'B',
+        1,
+        'hash',
+        3,
+        900,
+        100,
+        200,
+        150,
+        3600,
+        300,
+        1,
+      ],
+      'chapters': [71, 42, 5, 6, 'VI', 400],
+      'paragraphs': [71, 3, 0, 'paragraph', 'Original paragraph 🌿'],
+      'reading_progress': [42, 71, 3, 0.75, 200],
+      'ai_results': [
+        71,
+        0,
+        '["translation"]',
+        'meaning',
+        'model',
+        4,
+        100,
+        8,
+        200,
+      ],
+      'ai_breakdowns': [71, 0, 'body', 'sourceHash', 'model', 2, 100],
+      'reading_sessions': [81, 42, 71, 100, 60, 400, 600],
+      'ai_calls': [
+        91,
+        42,
+        71,
+        null,
+        'group',
+        'model',
+        4,
+        200,
+        null,
+        null,
+        0.002,
+        null,
+        null,
+        null,
+        100,
+      ],
+      'settings': ['reader.font', 'literata'],
+    };
+    for (final entry in expected.entries) {
+      final row = await db
+          .customSelect('SELECT * FROM ${entry.key}')
+          .getSingle();
+      expect(row.data.values.toList(), entry.value, reason: entry.key);
+    }
+    expect(await db.select(db.chatSessions).get(), isEmpty);
+    expect(await db.select(db.chatTurns).get(), isEmpty);
+    expect(await db.customSelect('PRAGMA foreign_key_check').get(), isEmpty);
+  });
 
   test(
     'delete book: sessions go with it, ai_calls stay (cost history)',
