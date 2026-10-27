@@ -2,7 +2,7 @@ APP := apps/mobile
 FLUTTER := cd $(APP) && fvm flutter
 DART := cd $(APP) && fvm dart
 
-.PHONY: help get gen brand live chat-spike chat-spike-live chat-oracle-live chat-retrieval chat-dense-live chat-dense-replay chat-heldout-live watch run release dev run-android release-android dev-android apk profile test analyze format check clean
+.PHONY: help get gen brand live chat-spike chat-spike-live chat-oracle-live chat-retrieval chat-dense-live chat-dense-replay chat-heldout-live chat-refine-live watch run release dev run-android release-android dev-android apk profile test analyze format check clean
 
 help: ## list commands
 	@grep -E '^[a-z0-9-]+:.*## ' $(MAKEFILE_LIST) | awk -F ':.*## ' '{printf "  %-16s %s\n", $$1, $$2}'
@@ -67,6 +67,9 @@ chat-dense-replay: ## #113 offline replay; fails if embedding cache is incomplet
 
 chat-heldout-live: ## #113 final FROZEN held-out: consumes split, 80 fresh answers, no tuning
 	@set -a; . ./.env; set +a; cd $(APP) && BOOK_CHAT_HELDOUT_LIVE=1 fvm flutter test test/data/book_chat_heldout_live_test.dart
+
+chat-refine-live: ## #113 paid development/consumed diagnostics; cached embeddings only
+	@set -a; . ./.env; set +a; cd $(APP) && BOOK_CHAT_REFINEMENT_LIVE=1 fvm flutter test test/data/book_chat_refinement_live_test.dart
 
 chat-spike-live: ## #113 paid corpus, local .env; m=<model>, BOOK_CHAT_CASE=E01 optional
 	@set -a; . ./.env; set +a; cd $(APP) && BOOK_CHAT_LIVE=1 OPENROUTER_MODEL=$(m) fvm flutter test test/data/book_chat_live_test.dart
