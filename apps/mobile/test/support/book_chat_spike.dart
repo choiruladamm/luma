@@ -475,6 +475,7 @@ evalStream({
   required String user,
   int maxTokens = answerTokens,
   Dio? client,
+  bool jsonOutput = false,
   void Function(String text, int elapsedMs)? onText,
 }) async {
   final dio =
@@ -502,6 +503,7 @@ evalStream({
         ];
         data['max_tokens'] = maxTokens;
         data['temperature'] = 0;
+        if (jsonOutput) data['response_format'] = {'type': 'json_object'};
         options.data = data;
         handler.next(options);
       },

@@ -1,0 +1,662 @@
+{
+  "version": 2,
+  "split": "development",
+  "historicalGold": "book_chat_cases.json (unchanged v1)",
+  "auditType": "post-hoc source review; not independent validation",
+  "cases": [
+    {
+      "id": "E01",
+      "expectedStatus": "answered",
+      "facts": [
+        {
+          "fact": "Bedakan tindakan/penilaian/keinginan sendiri dari tubuh, harta, reputasi dan jabatan di luar kendali.",
+          "alternatives": [
+            {
+              "book": "enchiridion",
+              "revision": 1,
+              "chapter": "I",
+              "paragraph": 1,
+              "start": 0,
+              "end": 312,
+              "paragraphHash": "98f4a8d7b41057e7a83116314c60ec50197d00ae7a850f426bda3db4602cc9b2",
+              "quote": "There are things which are within our power, and there are things which are beyond our power. Within our power are opinion, aim, desire, aversion, and, in one word, whatever affairs are our own. Beyond our power are body, property, reputation, office, and, in one word, whatever are not properly our own affairs."
+            },
+            {
+              "book": "enchiridion",
+              "revision": 1,
+              "chapter": "INTRODUCTION",
+              "paragraph": 8,
+              "start": 960,
+              "end": 1205,
+              "paragraphHash": "1dead52278ec40a9233afb87fd404880de55d827720a18f37f16ff41cf9e6faf",
+              "quote": "Not in our power are all the elements which constitute our environment, such as wealth, health, reputation, social prestige, power, the lives of those we love, and death. In our power are our thinking, our intentions, our desires, our decisions."
+            }
+          ]
+        }
+      ],
+      "audit": "Tambahkan pengantar yang secara eksplisit memuat kedua daftar; sumber canonical lama tetap sah."
+    },
+    {
+      "id": "E02",
+      "expectedStatus": "answered",
+      "facts": [
+        {
+          "fact": "Teks menekankan penilaian tentang peristiwa sebagai penyebab gangguan, bukan menjelaskan diagnosis psikologi individual.",
+          "alternatives": [
+            {
+              "book": "enchiridion",
+              "revision": 1,
+              "chapter": "V",
+              "paragraph": 1,
+              "start": 0,
+              "end": 358,
+              "paragraphHash": "7023c69be57757c0243bb6680477e6dda90e13cf201020452a4f8d759a5e1e07",
+              "quote": "Men are disturbed not by things, but by the views which they take of things. Thus death is nothing terrible, else it would have appeared so to Socrates. But the terror consists in our notion of death, that it is terrible. When, therefore, we are hindered or disturbed, or grieved, let us never impute it to others, but to ourselves—that is, to our own views."
+            }
+          ]
+        }
+      ],
+      "audit": "Makna pertanyaan dibatasi pada argumen teks, bukan klaim klinis perbedaan kecemasan."
+    },
+    {
+      "id": "E03",
+      "expectedStatus": "answered",
+      "facts": [
+        {
+          "fact": "Selain mandi, menjaga kehendak selaras alam saat ada gangguan.",
+          "alternatives": [
+            {
+              "book": "enchiridion",
+              "revision": 1,
+              "chapter": "IV",
+              "paragraph": 1,
+              "start": 0,
+              "end": 656,
+              "paragraphHash": "52fe422e74a5f0709b06b94ceb1f1479d70326220d874119d4bbeecac98b38a0",
+              "quote": "When you set about any action, remind yourself of what nature the action is. If you are going to bathe, represent to yourself the incidents usual in the bath—some persons pouring out, others pushing in, others scolding, others pilfering. And thus you will more safely go about this action if you say to yourself, “I will now go to bathe and keep my own will in harmony with nature.” And so with regard to every other action. For thus, if any impediment arises in bathing, you will be able to say, “It was not only to bathe that I desired, but to keep my will in harmony with nature; and I shall not keep it thus if I am out of humor at things that happen.”"
+            }
+          ]
+        }
+      ],
+      "audit": "Target lama dipertahankan pada rentang teks asli."
+    },
+    {
+      "id": "E04",
+      "expectedStatus": "answered",
+      "facts": [
+        {
+          "fact": "Menerima kejadian atau menahan keinginan terhadap hal di luar kendali.",
+          "alternatives": [
+            {
+              "book": "enchiridion",
+              "revision": 1,
+              "chapter": "VIII",
+              "paragraph": 1,
+              "start": 0,
+              "end": 117,
+              "paragraphHash": "2e2b8cda365fec08f1fc3a490bd4321b0eac7793ac2cc310e767e2ed9f70690e",
+              "quote": "Demand not that events should happen as you wish; but wish them to happen as they do happen, and you will go on well."
+            },
+            {
+              "book": "enchiridion",
+              "revision": 1,
+              "chapter": "II",
+              "paragraph": 1,
+              "start": 474,
+              "end": 769,
+              "paragraphHash": "a3539ed4dc3dbf4ca7769bde9efc70c44903c3ecc4e84f9284e9aff1fb93e4bc",
+              "quote": "Remove [the habit of] aversion, then, from all things that are not within our power, and apply it to things undesirable which are within our power. But for the present, altogether restrain desire; for if you desire any of the things not within our own power, you must necessarily be disappointed"
+            }
+          ]
+        }
+      ],
+      "audit": "Terima nasihat bab II yang langsung terkait keinginan di luar kendali, selain rumusan bab VIII."
+    },
+    {
+      "id": "E05",
+      "expectedStatus": "answered",
+      "facts": [
+        {
+          "fact": "Mainkan peran yang diberikan dengan baik; pemilihan peran milik pihak lain.",
+          "alternatives": [
+            {
+              "book": "enchiridion",
+              "revision": 1,
+              "chapter": "XVII",
+              "paragraph": 1,
+              "start": 0,
+              "end": 357,
+              "paragraphHash": "54f42c6143935924793e695f8a0e4b8a966224c2785aa6624342d241c197e984",
+              "quote": "Remember that you are an actor in a drama of such sort as the Author chooses—if short, then in a short one; if long, then in a long one. If it be his pleasure that you should enact a poor man, or a cripple, or a ruler, or a private citizen, see that you act it well. For this is your business—to act well the given part, but to choose it belongs to another."
+            }
+          ]
+        }
+      ],
+      "audit": "Target lama dipertahankan pada rentang teks asli."
+    },
+    {
+      "id": "E06",
+      "expectedStatus": "answered",
+      "facts": [
+        {
+          "fact": "Kemenangan Olimpiade memerlukan aturan/diet/latihan dan tetap membawa risiko luka/kalah.",
+          "alternatives": [
+            {
+              "book": "enchiridion",
+              "revision": 1,
+              "chapter": "XXIX",
+              "paragraph": 1,
+              "start": 360,
+              "end": 825,
+              "paragraphHash": "de5029597e6fd3e592fc663110890e78124293adaec00f2593e12311772dcb11",
+              "quote": "You must conform to rules, submit to a diet, refrain from dainties; exercise your body, whether you choose it or not, at a stated hour, in heat and cold; you must drink no cold water, and sometimes no wine—in a word, you must give yourself up to your trainer as to a physician. Then, in the combat, you may be thrown into a ditch, dislocate your arm, turn your ankle, swallow an abundance of dust, receive stripes [for negligence], and, after all, lose the victory."
+            }
+          ]
+        }
+      ],
+      "audit": "Target lama dipertahankan pada rentang teks asli."
+    },
+    {
+      "id": "E07",
+      "expectedStatus": "answered",
+      "facts": [
+        {
+          "fact": "Pegang hubungan saudara daripada sisi ketidakadilannya.",
+          "alternatives": [
+            {
+              "book": "enchiridion",
+              "revision": 1,
+              "chapter": "XLIII",
+              "paragraph": 1,
+              "start": 0,
+              "end": 350,
+              "paragraphHash": "6cd7d2115bedf5a6b02da539ca159d90a7a06e6b998b8735a5243e2b460d9eef",
+              "quote": "Everything has two handles: one by which it may be borne, another by which it cannot. If your brother acts unjustly, do not lay hold on the affair by the handle of his injustice, for by that it cannot be borne, but rather by the opposite—that he is your brother, that he was brought up with you; and thus you will lay hold on it as it is to be borne."
+            }
+          ]
+        }
+      ],
+      "audit": "Target lama dipertahankan pada rentang teks asli."
+    },
+    {
+      "id": "E08",
+      "expectedStatus": "answered",
+      "facts": [
+        {
+          "fact": "Kematian tidak mengerikan bagi Socrates; ketakutan berasal dari anggapan tentang kematian.",
+          "alternatives": [
+            {
+              "book": "enchiridion",
+              "revision": 1,
+              "chapter": "V",
+              "paragraph": 1,
+              "start": 77,
+              "end": 221,
+              "paragraphHash": "7023c69be57757c0243bb6680477e6dda90e13cf201020452a4f8d759a5e1e07",
+              "quote": "Thus death is nothing terrible, else it would have appeared so to Socrates. But the terror consists in our notion of death, that it is terrible."
+            }
+          ]
+        }
+      ],
+      "audit": "Target lama dipertahankan pada rentang teks asli."
+    },
+    {
+      "id": "E09",
+      "expectedStatus": "answered",
+      "facts": [
+        {
+          "fact": "Penilaian/tindakan sendiri berada dalam kendali, berbeda dari hal eksternal.",
+          "alternatives": [
+            {
+              "book": "enchiridion",
+              "revision": 1,
+              "chapter": "I",
+              "paragraph": 1,
+              "start": 0,
+              "end": 312,
+              "paragraphHash": "98f4a8d7b41057e7a83116314c60ec50197d00ae7a850f426bda3db4602cc9b2",
+              "quote": "There are things which are within our power, and there are things which are beyond our power. Within our power are opinion, aim, desire, aversion, and, in one word, whatever affairs are our own. Beyond our power are body, property, reputation, office, and, in one word, whatever are not properly our own affairs."
+            },
+            {
+              "book": "enchiridion",
+              "revision": 1,
+              "chapter": "INTRODUCTION",
+              "paragraph": 8,
+              "start": 960,
+              "end": 1205,
+              "paragraphHash": "1dead52278ec40a9233afb87fd404880de55d827720a18f37f16ff41cf9e6faf",
+              "quote": "Not in our power are all the elements which constitute our environment, such as wealth, health, reputation, social prestige, power, the lives of those we love, and death. In our power are our thinking, our intentions, our desires, our decisions."
+            }
+          ]
+        },
+        {
+          "fact": "Gangguan berasal dari pandangan kita atas hal, sehingga penilaian itulah titik yang dapat dikerjakan.",
+          "alternatives": [
+            {
+              "book": "enchiridion",
+              "revision": 1,
+              "chapter": "V",
+              "paragraph": 1,
+              "start": 0,
+              "end": 358,
+              "paragraphHash": "7023c69be57757c0243bb6680477e6dda90e13cf201020452a4f8d759a5e1e07",
+              "quote": "Men are disturbed not by things, but by the views which they take of things. Thus death is nothing terrible, else it would have appeared so to Socrates. But the terror consists in our notion of death, that it is terrible. When, therefore, we are hindered or disturbed, or grieved, let us never impute it to others, but to ourselves—that is, to our own views."
+            }
+          ]
+        }
+      ],
+      "audit": "Tetap dua kelompok bukti; menemukan salah satunya tidak cukup untuk perbandingan."
+    },
+    {
+      "id": "E10",
+      "expectedStatus": "answered",
+      "facts": [
+        {
+          "fact": "Sikap terhadap hal di luar kendali: menerima kejadian atau mengalihkan aversion/keinginan ke hal yang bisa dikendalikan.",
+          "alternatives": [
+            {
+              "book": "enchiridion",
+              "revision": 1,
+              "chapter": "VIII",
+              "paragraph": 1,
+              "start": 0,
+              "end": 117,
+              "paragraphHash": "2e2b8cda365fec08f1fc3a490bd4321b0eac7793ac2cc310e767e2ed9f70690e",
+              "quote": "Demand not that events should happen as you wish; but wish them to happen as they do happen, and you will go on well."
+            },
+            {
+              "book": "enchiridion",
+              "revision": 1,
+              "chapter": "I",
+              "paragraph": 4,
+              "start": 0,
+              "end": 391,
+              "paragraphHash": "47760fd9743dee63246c8a373db473fd5d92e15dbb6816dfc5afa9ea003a7bec",
+              "quote": "Seek at once, therefore, to be able to say to every unpleasing semblance, “You are but a semblance and by no means the real thing.” And then examine it by those rules which you have; and first and chiefly by this: whether it concerns the things which are within our own power or those which are not; and if it concerns anything beyond our power, be prepared to say that it is nothing to you."
+            },
+            {
+              "book": "enchiridion",
+              "revision": 1,
+              "chapter": "II",
+              "paragraph": 1,
+              "start": 474,
+              "end": 769,
+              "paragraphHash": "a3539ed4dc3dbf4ca7769bde9efc70c44903c3ecc4e84f9284e9aff1fb93e4bc",
+              "quote": "Remove [the habit of] aversion, then, from all things that are not within our power, and apply it to things undesirable which are within our power. But for the present, altogether restrain desire; for if you desire any of the things not within our own power, you must necessarily be disappointed"
+            }
+          ]
+        }
+      ],
+      "audit": "Terima bab II, I atau VIII yang menjawab sikap terhadap hal di luar kendali."
+    },
+    {
+      "id": "E11",
+      "expectedStatus": "answered",
+      "facts": [
+        {
+          "fact": "Kutipan aktif bab IV membahas persiapan menghadapi gangguan sambil menjaga kehendak selaras alam.",
+          "alternatives": [
+            {
+              "book": "enchiridion",
+              "revision": 1,
+              "chapter": "IV",
+              "paragraph": 1,
+              "start": 0,
+              "end": 656,
+              "paragraphHash": "52fe422e74a5f0709b06b94ceb1f1479d70326220d874119d4bbeecac98b38a0",
+              "quote": "When you set about any action, remind yourself of what nature the action is. If you are going to bathe, represent to yourself the incidents usual in the bath—some persons pouring out, others pushing in, others scolding, others pilfering. And thus you will more safely go about this action if you say to yourself, “I will now go to bathe and keep my own will in harmony with nature.” And so with regard to every other action. For thus, if any impediment arises in bathing, you will be able to say, “It was not only to bathe that I desired, but to keep my will in harmony with nature; and I shall not keep it thus if I am out of humor at things that happen.”"
+            }
+          ]
+        }
+      ],
+      "audit": "Target lama dipertahankan pada rentang teks asli."
+    },
+    {
+      "id": "E12",
+      "expectedStatus": "not_found",
+      "facts": [],
+      "audit": "Buku tidak memuat fisika partikel."
+    },
+    {
+      "id": "P01",
+      "expectedStatus": "answered",
+      "facts": [
+        {
+          "fact": "Pembukaan menunjukkan ekspektasi keluarga sekitar agar pria lajang kaya menikahi putri mereka; bukan hukum universal empiris.",
+          "alternatives": [
+            {
+              "book": "pride-and-prejudice",
+              "revision": 1,
+              "chapter": "Chapter I.",
+              "paragraph": 2,
+              "start": 0,
+              "end": 260,
+              "paragraphHash": "478e01cffb5b7e1f93a463eede3c9063637df33a65da6e04885e147615603245",
+              "quote": "However little known the feelings or views of such a man may be on his first entering a neighbourhood, this truth is so well fixed in the minds of the surrounding families, that he is considered as the rightful property of some one or other of their daughters."
+            },
+            {
+              "book": "pride-and-prejudice",
+              "revision": 1,
+              "chapter": "Chapter I.",
+              "paragraph": 16,
+              "start": 0,
+              "end": 131,
+              "paragraphHash": "f123849f354a0d67c746cc338496166d25db83dedb49a58f72011681c1640b2a",
+              "quote": "“My dear Mr. Bennet,” replied his wife, “how can you be so tiresome? You must know that I am thinking of his marrying one of them.”"
+            }
+          ]
+        }
+      ],
+      "audit": "Patokan dipersempit ke ekspektasi sosial yang tampak dalam teks; satire dapat berupa interpretasi bertanda."
+    },
+    {
+      "id": "P02",
+      "expectedStatus": "answered",
+      "facts": [
+        {
+          "fact": "Darcy menganggap Elizabeth tidak cukup cantik untuk memikatnya/berdansa; kutipan retrospektif juga sah tanpa mengarang ucapan baru.",
+          "alternatives": [
+            {
+              "book": "pride-and-prejudice",
+              "revision": 1,
+              "chapter": "CHAPTER III.",
+              "paragraph": 14,
+              "start": 0,
+              "end": 394,
+              "paragraphHash": "aac426b93df49d736e2381738e57f7b303a86d53c499a72a3423a373ecf8dc90",
+              "quote": "“Which do you mean?” and turning round, he looked for a moment at Elizabeth, till, catching her eye, he withdrew his own, and coldly said, “She is tolerable: but not handsome enough to tempt me; and I am in no humour at present to give consequence to young ladies who are slighted by other men. You had better return to your partner and enjoy her smiles, for you are wasting your time with me.”"
+            },
+            {
+              "book": "pride-and-prejudice",
+              "revision": 1,
+              "chapter": "CHAPTER VI.",
+              "paragraph": 12,
+              "start": 920,
+              "end": 1076,
+              "paragraphHash": "eed5b741b9e0dfb9e23ba346985244cdfaf21233d84168e46d11c441e898e308",
+              "quote": "Of this she was perfectly unaware: to her he was only the man who made himself agreeable nowhere, and who had not thought her handsome enough to dance with."
+            }
+          ]
+        }
+      ],
+      "audit": "Terima narasi retrospektif yang mendukung penilaian yang sama; jangan membuat kutipan dialog dari narasi."
+    },
+    {
+      "id": "P03",
+      "expectedStatus": "answered",
+      "facts": [
+        {
+          "fact": "Mrs Bennet menginginkan Bingley menikahi salah satu putrinya.",
+          "alternatives": [
+            {
+              "book": "pride-and-prejudice",
+              "revision": 1,
+              "chapter": "Chapter I.",
+              "paragraph": 16,
+              "start": 0,
+              "end": 131,
+              "paragraphHash": "f123849f354a0d67c746cc338496166d25db83dedb49a58f72011681c1640b2a",
+              "quote": "“My dear Mr. Bennet,” replied his wife, “how can you be so tiresome? You must know that I am thinking of his marrying one of them.”"
+            }
+          ]
+        }
+      ],
+      "audit": "Target lama dipertahankan pada rentang teks asli."
+    },
+    {
+      "id": "P04",
+      "expectedStatus": "answered",
+      "facts": [
+        {
+          "fact": "Lamaran pertama berisi pengakuan ia tak mampu menekan perasaan dan sangat mengagumi/mencintai Elizabeth.",
+          "alternatives": [
+            {
+              "book": "pride-and-prejudice",
+              "revision": 1,
+              "chapter": "CHAPTER XXXIV.",
+              "paragraph": 4,
+              "start": 0,
+              "end": 144,
+              "paragraphHash": "bf135384570d19f88f00f468ddb29fe85b028cf0399f69af62953c99606f3bc0",
+              "quote": "“In vain have I struggled. It will not do. My feelings will not be repressed. You must allow me to tell you how ardently I admire and love you.”"
+            }
+          ]
+        }
+      ],
+      "audit": "Target lama dipertahankan pada rentang teks asli."
+    },
+    {
+      "id": "P05",
+      "expectedStatus": "answered",
+      "facts": [
+        {
+          "fact": "Menurut penjelasan Darcy, Wickham memilih uang tiga ribu pound sebagai ganti klaim bantuan gereja.",
+          "alternatives": [
+            {
+              "book": "pride-and-prejudice",
+              "revision": 1,
+              "chapter": "CHAPTER XXXV.",
+              "paragraph": 5,
+              "start": 8841,
+              "end": 9625,
+              "paragraphHash": "64c3eae45906751d95583dc1d240f8b9820d2c18cc742836f5a012a54cd0e1d5",
+              "quote": "Mr. Wickham wrote to inform me that, having finally resolved against taking orders, he hoped I should not think it unreasonable for him to expect some more immediate pecuniary advantage, in lieu of the preferment, by which he could not be benefited. He had some intention, he added, of studying the law, and I must be aware that the interest of one thousand pounds would be a very insufficient support therein. I rather wished than believed him to be sincere; but, at any rate, was perfectly ready to accede to his proposal. I knew that Mr. Wickham ought not to be a clergyman. The business was therefore soon settled. He resigned all claim to assistance in the church, were it possible that he could ever be in a situation to receive it, and accepted in return three thousand pounds."
+            },
+            {
+              "book": "pride-and-prejudice",
+              "revision": 1,
+              "chapter": "CHAPTER XXXVI.",
+              "paragraph": 3,
+              "start": 927,
+              "end": 1149,
+              "paragraphHash": "a432a5c08a336f83ed84d0538f4bb9f3ea4ca026896e4b033628860ccddd558b",
+              "quote": "But when she read and re-read, with the closest attention, the particulars immediately following of Wickham’s resigning all pretensions to the living, of his receiving in lieu so considerable a sum as three thousand pounds"
+            }
+          ]
+        }
+      ],
+      "audit": "Terima isi surat atau pembacaan ulang yang eksplisit menyebut pertukaran klaim gereja dengan uang; referensi umum bahwa surat ada tidak cukup."
+    },
+    {
+      "id": "P06",
+      "expectedStatus": "answered",
+      "facts": [
+        {
+          "fact": "Jane dan Bingley tinggal di Netherfield setahun setelah menikah sebelum pindah estate dekat Derbyshire.",
+          "alternatives": [
+            {
+              "book": "pride-and-prejudice",
+              "revision": 1,
+              "chapter": "CHAPTER LXI.",
+              "paragraph": 3,
+              "start": 0,
+              "end": 413,
+              "paragraphHash": "ce8d3ac4a34f9746b2ec7b50aaa7f88a168c06c36ed7b7a8c6c3794a668f95bf",
+              "quote": "Mr. Bingley and Jane remained at Netherfield only a twelvemonth. So near a vicinity to her mother and Meryton relations was not desirable even to his easy temper, or her affectionate heart. The darling wish of his sisters was then gratified: he bought an estate in a neighbouring county to Derbyshire; and Jane and Elizabeth, in addition to every other source of happiness, were within thirty miles of each other."
+            }
+          ]
+        }
+      ],
+      "audit": "Target lama dipertahankan pada rentang teks asli."
+    },
+    {
+      "id": "P07",
+      "expectedStatus": "answered",
+      "facts": [
+        {
+          "fact": "Lady Catherine mengandalkan rencana Darcy menikahi anaknya atau menganggap Elizabeth tidak setara secara keluarga/status.",
+          "alternatives": [
+            {
+              "book": "pride-and-prejudice",
+              "revision": 1,
+              "chapter": "CHAPTER LVI.",
+              "paragraph": 40,
+              "start": 0,
+              "end": 185,
+              "paragraphHash": "fcd5b1d91ba7a8408838e9d2ce7b547452a83769dadddac86134c196bf4ddd63",
+              "quote": "“Let me be rightly understood. This match, to which you have the presumption to aspire, can never take place. No, never. Mr. Darcy is engaged to my daughter. Now, what have you to say?”"
+            },
+            {
+              "book": "pride-and-prejudice",
+              "revision": 1,
+              "chapter": "CHAPTER LVI.",
+              "paragraph": 43,
+              "start": 0,
+              "end": 672,
+              "paragraphHash": "37d0b396db17dfae4c786c2b4da7c56030b8587c2fdfd01e51661cc9c772a3b5",
+              "quote": "“The engagement between them is of a peculiar kind. From their infancy, they have been intended for each other. It was the favourite wish of his mother, as well as of hers. While in their cradles we planned the union; and now, at the moment when the wishes of both sisters would be accomplished, is their marriage to be prevented by a young woman of inferior birth, of no importance in the world, and wholly unallied to the family? Do you pay no regard to the wishes of his friends—to his tacit engagement with Miss de Bourgh? Are you lost to every feeling of propriety and delicacy? Have you not heard me say, that from his earliest hours he was destined for his cousin?”"
+            }
+          ]
+        }
+      ],
+      "audit": "Terima alasan rencana perkawinan atau alasan status yang eksplisit; tidak wajib mengulang semua keberatan."
+    },
+    {
+      "id": "P08",
+      "expectedStatus": "answered",
+      "facts": [
+        {
+          "fact": "Elizabeth mengaitkan penolakan dengan tindakan Darcy memisahkan Jane dari Bingley.",
+          "alternatives": [
+            {
+              "book": "pride-and-prejudice",
+              "revision": 1,
+              "chapter": "CHAPTER XXXIV.",
+              "paragraph": 10,
+              "start": 0,
+              "end": 589,
+              "paragraphHash": "ae3b3928405484c3a708f94624170b82cea26524d9ca92bba7ff78dc472e274d",
+              "quote": "“I might as well inquire,” replied she, “why, with so evident a design of offending and insulting me, you chose to tell me that you liked me against your will, against your reason, and even against your character? Was not this some excuse for incivility, if I was uncivil? But I have other provocations. You know I have. Had not my own feelings decided against you, had they been indifferent, or had they even been favourable, do you think that any consideration would tempt me to accept the man who has been the means of ruining, perhaps for ever, the happiness of a most beloved sister?”"
+            },
+            {
+              "book": "pride-and-prejudice",
+              "revision": 1,
+              "chapter": "CHAPTER XXXIV.",
+              "paragraph": 12,
+              "start": 0,
+              "end": 422,
+              "paragraphHash": "9803dee8b348e23884319c2833244c922cb47d88fa609c82919c7f7fbf609346",
+              "quote": "“I have every reason in the world to think ill of you. No motive can excuse the unjust and ungenerous part you acted there. You dare not, you cannot deny that you have been the principal, if not the only means of dividing them from each other, of exposing one to the censure of the world for caprice and instability, the other to its derision for disappointed hopes, and involving them both in misery of the acutest kind.”"
+            },
+            {
+              "book": "pride-and-prejudice",
+              "revision": 1,
+              "chapter": "CHAPTER XXXIV.",
+              "paragraph": 30,
+              "start": 0,
+              "end": 1167,
+              "paragraphHash": "0add93a7bf9123b7670cdad87fad2fd8d0a0f9abbc827288528b1048bdd11ce8",
+              "quote": "And with these words he hastily left the room, and Elizabeth heard him the next moment open the front door and quit the house. The tumult of her mind was now painfully great. She knew not how to support herself, and, from actual weakness, sat down and cried for half an hour. Her astonishment, as she reflected on what had passed, was increased by every review of it. That she should receive an offer of marriage from Mr. Darcy! that he should have been in love with her for so many months! so much in love as to wish to marry her in spite of all the objections which had made him prevent his friend’s marrying her sister, and which must appear at least with equal force in his own case, was almost incredible! it was gratifying to have inspired unconsciously so strong an affection. But his pride, his abominable pride, his shameless avowal of what he had done with respect to Jane, his unpardonable assurance in acknowledging, though he could not justify it, and the unfeeling manner which he had mentioned Mr. Wickham, his cruelty towards whom he had not attempted to deny, soon overcame the pity which the consideration of his attachment had for a moment excited."
+            }
+          ]
+        }
+      ],
+      "audit": "Tambahkan reaksi akhir adegan yang secara eksplisit menghubungkan penolakan dengan Jane/Bingley."
+    },
+    {
+      "id": "P09",
+      "expectedStatus": "not_found",
+      "facts": [],
+      "audit": "Premis transportasi tidak ada di novel."
+    },
+    {
+      "id": "M01",
+      "expectedStatus": "answered",
+      "facts": [
+        {
+          "fact": "Sinyal kabut berwarna biru.",
+          "alternatives": [
+            {
+              "book": "partial",
+              "revision": 1,
+              "chapter": "1",
+              "paragraph": 1,
+              "start": 0,
+              "end": 49,
+              "paragraphHash": "7637ec8871311100112df000abe7c7c0841a4e70400cfc27a5ee881c8f1979d8",
+              "quote": "The harbor lantern uses a blue signal during fog."
+            }
+          ]
+        }
+      ],
+      "audit": "Target lama dipertahankan pada rentang teks asli."
+    },
+    {
+      "id": "M02",
+      "expectedStatus": "answered",
+      "facts": [
+        {
+          "fact": "Gerbang timur ditutup saat badai.",
+          "alternatives": [
+            {
+              "book": "partial",
+              "revision": 1,
+              "chapter": "1",
+              "paragraph": 2,
+              "start": 0,
+              "end": 50,
+              "paragraphHash": "bce423fc0cccb7845fd4217003286b68db216a3962db3cece4542361babb03db",
+              "quote": "During a storm, the keeper closes the eastern gate"
+            }
+          ]
+        },
+        {
+          "fact": "Kapal diarahkan ke shelter barat.",
+          "alternatives": [
+            {
+              "book": "partial",
+              "revision": 1,
+              "chapter": "1",
+              "paragraph": 2,
+              "start": 55,
+              "end": 90,
+              "paragraphHash": "bce423fc0cccb7845fd4217003286b68db216a3962db3cece4542361babb03db",
+              "quote": "sends boats to the western shelter."
+            }
+          ]
+        }
+      ],
+      "audit": "Dua bagian pertanyaan menjadi dua kelompok fakta walau berasal dari paragraf sama."
+    },
+    {
+      "id": "M03",
+      "expectedStatus": "not_found",
+      "facts": [],
+      "audit": "Hanya bab satu tersedia; tidak mengarang kelanjutan."
+    },
+    {
+      "id": "M04",
+      "expectedStatus": "partial",
+      "facts": [
+        {
+          "fact": "Sinyal merah berarti pintu masuk ditutup; pencatatan sinyal disebutkan, prosedur detail lain tidak tersedia.",
+          "alternatives": [
+            {
+              "book": "partial",
+              "revision": 1,
+              "chapter": "1",
+              "paragraph": 1,
+              "start": 50,
+              "end": 146,
+              "paragraphHash": "7637ec8871311100112df000abe7c7c0841a4e70400cfc27a5ee881c8f1979d8",
+              "quote": "A red signal means the harbor entrance is closed. The keeper records each signal in a paper log."
+            }
+          ]
+        }
+      ],
+      "audit": "Jawaban parsial wajib membedakan arti/pencatatan sinyal dari langkah prosedur yang tidak tersedia."
+    },
+    {
+      "id": "M05",
+      "expectedStatus": "not_found",
+      "facts": [],
+      "audit": "Ambigu tanpa history/kutipan: perlu klarifikasi."
+    },
+    {
+      "id": "M06",
+      "expectedStatus": "not_found",
+      "facts": [],
+      "audit": "Sumber jawaban ada di buku lain, dilarang dipakai."
+    }
+  ]
+}
