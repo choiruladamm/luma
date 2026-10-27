@@ -145,6 +145,9 @@ dengan aksi obrolan baru. Semua sumber berasal dari seluruh buku yang diimport.
 Kontrak menetapkan input ringkas min1/max5 baris, rename wajib judul terisi (maks120
 Unicode code points), dan target entry tetap44pt saat dock menyusut. Daftar kosong,
 keyboard/error rename, arsip, serta fallback layar sempit/teks besar dijelaskan di
-issue; visual/dark/a11y finish tetap #123. Canvas belum dibaca ulang pada implementasi
-kontrak karena Pencil MCP `Transport closed`; file .pen tidak diubah atau dibaca
-melalui filesystem, dan tidak ada gambar ditambahkan ke issue.
+issue; visual/dark/a11y finish tetap #123. Canvas sudah dibaca ulang lewat Pencil MCP.
+A20 menjadi contoh jawaban parsial dengan pesan keterbatasan tetap; A21 hanya
+menampilkan pesan sumber tidak ditemukan. Blok pengetahuan umum dan aksi contoh
+masa kini dihapus sesuai instruksi user agar sama dengan kontrak. Nomor layar/ID
+utama dipertahankan. Dua state diperiksa secara visual dan tanpa clipping terdeteksi;
+tidak ada gambar ditambahkan ke issue.

@@ -17888,7 +17888,7 @@
       "id": "I5RgqY",
       "x": 4080,
       "y": 4000,
-      "name": "Referensi, konteks tambahan & riwayat",
+      "name": "Referensi, jawaban parsial & riwayat",
       "theme": {
         "mode": "light"
       },
@@ -17905,7 +17905,7 @@
           "fill": "$ink",
           "textGrowth": "fixed-width",
           "width": "fill_container",
-          "content": "Referensi, konteks tambahan & riwayat",
+          "content": "Referensi, jawaban parsial & riwayat",
           "lineHeight": 1.2,
           "fontFamily": "$fontUi",
           "fontSize": 28,
@@ -17918,7 +17918,7 @@
           "fill": "$ink2",
           "textGrowth": "fixed-width",
           "width": "fill_container",
-          "content": "Sumber buku bisa diperiksa. Konteks tambahan diberi label. Riwayat memuat beberapa sesi terpisah untuk setiap buku.",
+          "content": "Sumber buku bisa diperiksa. Bukti belum lengkap memakai pesan tetap. Riwayat memuat sesi terpisah untuk setiap buku.",
           "lineHeight": 1.4,
           "fontFamily": "$fontUi",
           "fontSize": 15,
@@ -18329,7 +18329,7 @@
       "id": "DwYjK",
       "x": 4520,
       "y": 4126,
-      "name": "A20 · Konteks tambahan",
+      "name": "A20 · Jawaban parsial",
       "theme": {
         "mode": "light"
       },
@@ -18346,7 +18346,7 @@
           "fill": "$ink",
           "textGrowth": "fixed-width",
           "width": "fill_container",
-          "content": "A20 · Konteks tambahan",
+          "content": "A20 · Jawaban parsial",
           "lineHeight": 1.4,
           "fontFamily": "$fontUi",
           "fontSize": 15,
@@ -18359,7 +18359,7 @@
           "fill": "$ink2",
           "textGrowth": "fixed-width",
           "width": "fill_container",
-          "content": "Pengetahuan umum dipisahkan dari klaim isi buku.",
+          "content": "Jawab bagian yang didukung buku; sisanya memakai pesan keterbatasan tetap.",
           "lineHeight": 1.3,
           "fontFamily": "$fontUi",
           "fontSize": 12,
@@ -18372,7 +18372,7 @@
       "id": "KQ1MX",
       "x": 4520,
       "y": 4200,
-      "name": "A20 · Konteks tambahan",
+      "name": "A20 · Jawaban parsial",
       "theme": {
         "mode": "light"
       },
@@ -18523,7 +18523,7 @@
               "fill": "$ink",
               "textGrowth": "fixed-width",
               "width": "fill_container",
-              "content": "Kenapa Epictetus memakai contoh pemandian?",
+              "content": "Kenapa Epictetus memakai contoh pemandian, dan apa pendapatnya tentang media sosial?",
               "lineHeight": 1.4,
               "fontFamily": "$fontUi",
               "fontSize": 16,
@@ -18596,7 +18596,7 @@
         {
           "type": "frame",
           "id": "M9ymyy",
-          "name": "Konteks tambahan",
+          "name": "Batas jawaban parsial",
           "width": "fill_container",
           "layout": "vertical",
           "gap": 8,
@@ -18610,37 +18610,11 @@
             {
               "type": "text",
               "id": "F1rzh",
-              "name": "Label konteks",
-              "fill": "$ink",
-              "textGrowth": "fixed-width",
-              "width": "fill_container",
-              "content": "Konteks tambahan",
-              "lineHeight": 1.4,
-              "fontFamily": "$fontUi",
-              "fontSize": 15,
-              "fontWeight": "700"
-            },
-            {
-              "type": "text",
-              "id": "OfuDL",
-              "name": "Batas pengetahuan",
+              "name": "Pesan tetap jawaban parsial",
               "fill": "$ink2",
               "textGrowth": "fixed-width",
               "width": "fill_container",
-              "content": "Pengetahuan umum, bukan kutipan buku.",
-              "lineHeight": 1.4,
-              "fontFamily": "$fontUi",
-              "fontSize": 13,
-              "fontWeight": "normal"
-            },
-            {
-              "type": "text",
-              "id": "u5cNQT",
-              "name": "Isi tambahan",
-              "fill": "$ink",
-              "textGrowth": "fixed-width",
-              "width": "fill_container",
-              "content": "Pemandian umum adalah bagian dari kehidupan sosial dunia Romawi. Latar ini membantu menjelaskan pilihan contohnya.",
+              "content": "Sebagian pertanyaan belum punya bukti yang cukup di sumber ini.",
               "lineHeight": 1.4,
               "fontFamily": "$fontUi",
               "fontSize": 16,
@@ -18750,7 +18724,7 @@
           "fill": "$ink2",
           "textGrowth": "fixed-width",
           "width": "fill_container",
-          "content": "Tidak membuat kutipan palsu; tawarkan memperjelas pertanyaan.",
+          "content": "Tanpa bukti yang cukup, tampilkan pesan tetap untuk memperjelas pertanyaan.",
           "lineHeight": 1.3,
           "fontFamily": "$fontUi",
           "fontSize": 12,
@@ -18925,43 +18899,15 @@
         {
           "type": "text",
           "id": "LeiAD",
-          "name": "Jawaban",
-          "fill": "$ink",
-          "textGrowth": "fixed-width",
-          "width": "fill_container",
-          "content": "Gue belum nemu bagian di buku ini yang mendukung itu.",
-          "lineHeight": 1.65,
-          "fontFamily": "$fontRead",
-          "fontSize": 18.5,
-          "fontWeight": "normal"
-        },
-        {
-          "type": "text",
-          "id": "mzbcD",
-          "name": "Bantuan",
+          "name": "Pesan tetap sumber tidak ditemukan",
           "fill": "$ink2",
           "textGrowth": "fixed-width",
           "width": "fill_container",
-          "content": "Coba ubah pertanyaannya, atau tanya kaitannya sebagai konteks tambahan.",
-          "lineHeight": 1.4,
+          "content": "Belum ada sumber yang cukup untuk menjawab itu. Coba tunjukkan kutipan atau perjelas pertanyaannya.",
+          "lineHeight": 1.5,
           "fontFamily": "$fontUi",
           "fontSize": 16,
           "fontWeight": "normal"
-        },
-        {
-          "id": "o2cvp",
-          "type": "ref",
-          "ref": "nDWB0",
-          "name": "Tanya sebagai contoh masa kini",
-          "width": "fill_container",
-          "height": 52,
-          "cornerRadius": "$rFull",
-          "descendants": {
-            "i8bu19": {
-              "content": "Tanya sebagai contoh masa kini",
-              "fontSize": 15
-            }
-          }
         },
         {
           "type": "frame",
