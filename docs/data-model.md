@@ -155,3 +155,26 @@ Tiap ubah tabel: naikkan `schemaVersion`, tambah langkah di `onUpgrade`, dan tes
 ## Pengaturan
 
 API key di `flutter_secure_storage` (Keychain di iOS, Keystore di Android). Model ID, preferensi Aa, dan backup terakhir di tabel `settings` sederhana (key-value) di Drift, supaya ikut ter-backup. Model LLM: `ai.model` (model ID OpenRouter, default `z-ai/glm-5.3-flash`; pilihan dari daftar kandidat di [llm.md](llm.md)). API key di Keychain / Keystore dengan kunci `openrouter_api_key`, cuma disimpen setelah lolos cek bentuk dan cek ke OpenRouter ([llm.md](llm.md)); kosong = dihapus. "Hapus cache" di Pengaturan = kosongin `ai_results` + `ai_breakdowns` setelah konfirmasi; Pengaturan nampilin jumlah paragraf yang udah diterjemahin + ukuran teksnya. Backup terakhir: `backup.lastAt` (ISO 8601), `backup.lastName`, `backup.lastSize` (byte). Kunci Aa: `reader.size` (indeks step 0–6), `reader.font`, `reader.spacing`, `reader.margin`, `theme` (nama enum), `reader.hideStatusBar`, `reader.showProgressLine` (`true`/`false`). Urutan rak: `shelf.sort` (`lastOpened` / `title` / `added`, default `lastOpened`). Tampilan rak: `shelf.view` (`grid` / `list`, default `grid`). Hindari `shared_preferences` untuk data yang perlu ikut backup.
+
+
+## Kontrak percakapan sebelum migrasi (#114)
+
+Schema masih **7**; belum ada tabel chat/contentRevision yang aktif. Kontrak final
+session/turn/quote/answer/source/index ada di `lib/domain/models/book_chat.dart`;
+[migrasi #115](https://github.com/choiruladamm/luma/issues/115) mengikuti kontrak ini.
+Session menyimpan judul/manualTitle, revision dan timestamps; `lastOpenedAt`
+terpisah dari `updatedAt`. Turn memiliki sequence, attempt, model/promptVersion,
+phase, draft, answer/error/status dan quote snapshot. Retry mengganti attempt pada
+turn yang sama. Decoder tidak mempercayai JSON/enum backup: status turn tidak dikenal
+menjadi interrupted; payload rusak diberi invalidResponse oleh mapper (#116).
+
+SourceAnchor menyimpan book/revision + **chapter.id** + paragraphIndex + range
+UTF-16 `[start,end)` + SHA-256 seluruh teks paragraf + snapshot teks range. Quote
+multi-paragraf menggunakan beberapa anchor. Snapshot history tidak di-FK cascade
+ke paragraf yang dapat diganti; book delete tetap menghapus sessions/turns. Semua
+anchor wajib cocok lagi sebelum menjadi konteks baru atau tujuan navigasi.
+
+Decoder arsip merekonstruksi snapshot tersimpan dengan validasi struktural/ownership,
+tanpa mengharuskan paragraf lama masih ada. `parseChatAnswer` adalah validator output
+live terhadap sumber attempt yang dikirim, bukan decoder arsip terhadap isi buku baru.
+Arsip tetap terbaca, tetapi tidak boleh dipakai untuk prompt baru atau jump yang stale.

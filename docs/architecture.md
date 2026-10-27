@@ -100,3 +100,32 @@ Buku Markdown ([import-formats.md](import-formats.md)) totalnya cuma bab yang su
 - **Edge-to-edge** (Android 15+ dipaksa): ngumpetin status bar lewat `SystemChrome` sama kayak iOS; konten pakai `SafeArea` / `MediaQuery.padding`. Splash: system splash Android 12+ polos, warnanya sama dengan `LaunchBackground` iOS dan overlay Flutter (`values/colors.xml`, `values-night/colors.xml`).
 - **Font "Bawaan sistem"**: SF (`CupertinoSystemText`) di iOS, Roboto di Android (`readingFamily`).
 - Buka `.epub` dari luar app (intent filter) belum ada: iOS juga belum punya, jadi di luar scope ([#105](https://github.com/choiruladamm/luma/issues/105)).
+
+
+## Ngobrolin buku: kontrak domain (#114)
+
+Kontrak di `lib/domain/models/book_chat.dart` dan `lib/domain/chat_prompt.dart`;
+[keputusan/lifecycle/state matrix #114](https://github.com/choiruladamm/luma/issues/114).
+Belum ada route, provider, repository, tabel chat, atau request jaringan baru.
+
+`ChatBookRef` = `(bookId, contentRevision)`. Session revision lama read-only;
+metadata judul/penulis/cover tidak menaikkan revision. Append/replace/reorder isi,
+reparse yang mengganti identitas paragraf/bab, dan re-import harus menaikkannya
+secara atomik di implementasi integritas (#119). Snapshot history lama tetap ada.
+
+`ChatLaunchContext` dari reader melanjutkan sesi terakhir; quote explicit dari
+Artinya/Bedahin selalu draft sesi baru. Draft kosong tidak dipersist. Judul awal
+berasal dari `chatTitle(question, automatic: true)`; rename manual tidak ditimpa.
+`ChatReadingPosition` berbentuk record yang sama dengan `ReadingPosition` existing,
+sehingga domain tidak mengimpor repository. Kunjungan sumber membawa return
+position reader dan `ChatScrollAnchor` (turnId/blockIndex/alignment), tidak menulis
+progres. Resolver memvalidasi owner session/turn, revision/hash/range sebelum jump.
+
+`ChatTurn` menyimpan satu pertanyaan dan attempt yang dapat diganti hanya lewat
+retry eksplisit atas turn terakhir. `ChatAttemptRef` mengikat session/turn/attempt/
+book revision; repository juga wajib memeriksa session masih ada sebelum menulis.
+Stop/back/switch/background memanggil cancel+flush, lalu `interrupt(cancelled: true)`;
+process restart memanggil `interrupt()` menjadi interrupted. Draft tetap tersimpan,
+tidak auto-send. `slow` tetap request aktif; archived merupakan relasi session vs
+current revision, bukan status turn yang menghapus history. Detail persist/cancel/
+stream dimiliki #116/#118, bukan model domain.

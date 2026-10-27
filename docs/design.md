@@ -131,3 +131,20 @@ Semua layar MVP awal sudah final (terang + gelap): rak kosong/berisi, baca, arti
 ## Layar yang masih didesain
 
 Backup & restore ([backup.md](backup.md)): bagian Backup di Pengaturan, proses export, restore (pilih file → ringkasan → konfirmasi → proses → berhasil / gagal), banner pengingat backup.
+
+
+## Ngobrolin buku: flow dan state kontrak (#114)
+
+Flow A/sesi/textarea ringkas ada di `design/luma.pen` yang sudah di-track.
+[State matrix dan keputusan edge case](https://github.com/choiruladamm/luma/issues/114)
+menjadi handoff implementasi; belum ada screen chat produksi. Reader entry membuka
+sesi terakhir, Tanyain ini membuat draft baru dengan quote removable. Draft baru
+belum masuk riwayat sampai send pertama. Sesi revision lama menjadi arsip read-only,
+dengan aksi obrolan baru. Semua sumber berasal dari seluruh buku yang diimport.
+
+Kontrak menetapkan input ringkas min1/max5 baris, rename wajib judul terisi (maks120
+Unicode code points), dan target entry tetap44pt saat dock menyusut. Daftar kosong,
+keyboard/error rename, arsip, serta fallback layar sempit/teks besar dijelaskan di
+issue; visual/dark/a11y finish tetap #123. Canvas belum dibaca ulang pada implementasi
+kontrak karena Pencil MCP `Transport closed`; file .pen tidak diubah atau dibaca
+melalui filesystem, dan tidak ada gambar ditambahkan ke issue.
