@@ -2,7 +2,7 @@ APP := apps/mobile
 FLUTTER := cd $(APP) && fvm flutter
 DART := cd $(APP) && fvm dart
 
-.PHONY: help get gen brand live chat-spike chat-spike-live chat-oracle-live watch run release dev run-android release-android dev-android apk profile test analyze format check clean
+.PHONY: help get gen brand live chat-spike chat-spike-live chat-oracle-live chat-retrieval watch run release dev run-android release-android dev-android apk profile test analyze format check clean
 
 help: ## list commands
 	@grep -E '^[a-z0-9-]+:.*## ' $(MAKEFILE_LIST) | awk -F ':.*## ' '{printf "  %-16s %s\n", $$1, $$2}'
@@ -55,6 +55,9 @@ live: ## real OpenRouter call, key from .env (gitignored; m=<model id> optional)
 
 chat-spike: ## #113 offline corpus + isolation/budget/citation checks (no API)
 	$(FLUTTER) test --timeout 30s test/data/book_chat_spike_test.dart
+
+chat-retrieval: ## #113 offline development chunk/query replay (no API, no held-out)
+	$(FLUTTER) test --timeout 30s test/data/book_chat_retrieval_test.dart
 
 chat-spike-live: ## #113 paid corpus, local .env; m=<model>, BOOK_CHAT_CASE=E01 optional
 	@set -a; . ./.env; set +a; cd $(APP) && BOOK_CHAT_LIVE=1 OPENROUTER_MODEL=$(m) fvm flutter test test/data/book_chat_live_test.dart
