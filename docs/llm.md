@@ -222,3 +222,38 @@ LANJUT | judul | kenapa nyambung
 ## Evaluasi model
 
 Default **DeepSeek V4.1 Flash**. Hasil dan alasannya: [llm-evals.md](llm-evals.md#evaluasi-model-28).
+
+
+## Kontrak Book Chat (#114)
+
+`chatPromptVersion = 1` di `lib/domain/chat_prompt.dart`; system answer disalin
+**identik** dari kandidat spike #113 yang diterima user. Produksi transport/retrieval
+belum dihubungkan. Model jawaban nantinya tetap mengikuti Pengaturan. Bukti mutu
+spike hanya untuk model/provider yang diuji, dan masih memiliki keterbatasan yang
+[diterima user](https://github.com/choiruladamm/luma/issues/113#issuecomment-6449993269).
+
+- JSON `status: answered | partial | not_found`, maksimal dua `claims` dengan
+  `text` dan `source_ids`. Parser menolak status/ID tidak dikenal, duplikat, sumber
+  foreign/stale, dan kontradiksi status. ID dipetakan ke snapshot sumber yang
+  dikirim attempt itu; model tidak membuat chapter ID atau kutipan.
+- `note` dari model selalu diganti copy tetap. Hanya claims yang berisi fakta buku;
+  tidak ada blok konteks tambahan generatif. Snapshot ber-ID sah tidak membuktikan
+  semua isi klaim benar. JSON parsial/draft bukan jawaban tervalidasi.
+- Budget **UTF-8 bytes**, bukan token: question 2.000, history 4.000, source 18.000,
+  answer prompt termasuk system 28.000; selector 90.000; kandidat 40, sumber 8,
+  answer maxTokens 800. Sumber dibuang utuh bila tidak muat; kutipan pengguna wajib
+  tetap tercakup seluruh rentangnya atau request ditolak jelas. Quote multi-window
+  memiliki `selectedSourceIds`; `selectedQuote` selalu teks asli, bukan terjemahan.
+- History hanya turn sebelum target sequence, dari session/book/revision aktif,
+  phase done dan answer status answered tanpa error. Partial/not_found/cut/failed/
+  stopped/interrupted tidak menjadi konteks assistant. Giliran terbaru yang utuh
+  dipertahankan sampai budget, tanpa memotong jawaban. History membantu rujukan,
+  tidak menjadi bukti.
+- `ChatQueryPlan` memisahkan English search query dan `needsClarification` sebelum
+  melihat kandidat. Ambiguitas menghasilkan no-source deterministik; bukan alasan
+  menebak dari pengetahuan model. Implementasi rewrite/ranking ada di #117.
+- `ChatIndexKey` memisahkan book revision/parser/chunk policy/model/query template.
+  Qwen3 Embedding8B (4096) primary, OpenAI Large (3072) fallback sesuai user.
+  Provider timeout/network/404/408/429/5xx dapat memicu **full** reindex dan re-embed
+  semua query. Auth/billing/input/cancel/certificate tidak memicu fallback. Tidak
+  mencampur/memotong vektor lintas model. Mutu hybrid baru terbukti pada Large saja.
