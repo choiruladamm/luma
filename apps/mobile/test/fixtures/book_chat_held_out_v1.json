@@ -1,0 +1,909 @@
+{
+  "version": 1,
+  "split": "held_out",
+  "state": "frozen_unqueried",
+  "policy": "Do not use for oracle development or prompt tuning. If any model outputs are used to tune, retire this split and author a new held-out book set.",
+  "cases": [
+    {
+      "id": "H-A01",
+      "book": "alice-in-wonderland",
+      "question": "Kenapa Alice menganggap buku kakaknya membosankan?",
+      "expectedStatus": "answered",
+      "category": "direct",
+      "facts": [
+        {
+          "fact": "Tidak ada gambar atau percakapan.",
+          "alternatives": [
+            {
+              "book": "alice-in-wonderland",
+              "revision": 1,
+              "chapter": "CHAPTER I. Down the Rabbit-Hole",
+              "paragraph": 1,
+              "start": 0,
+              "end": 302,
+              "paragraphHash": "13059a06f39e742eb543f71d331c6088785a34f5286433aec07e4f023e327e70",
+              "quote": "Alice was beginning to get very tired of sitting by her sister on the bank, and of having nothing to do: once or twice she had peeped into the book her sister was reading, but it had no pictures or conversations in it, “and what is the use of a book,” thought Alice “without pictures or conversations?”"
+            }
+          ]
+        }
+      ],
+      "audit": "Held-out authored before new oracle runs; no model outputs inspected."
+    },
+    {
+      "id": "H-A02",
+      "book": "alice-in-wonderland",
+      "question": "Apa yang membuat kelinci putih itu terasa tidak biasa sampai Alice mengejarnya?",
+      "expectedStatus": "answered",
+      "category": "direct",
+      "facts": [
+        {
+          "fact": "Kelinci mengeluarkan jam dari saku rompinya.",
+          "alternatives": [
+            {
+              "book": "alice-in-wonderland",
+              "revision": 1,
+              "chapter": "CHAPTER I. Down the Rabbit-Hole",
+              "paragraph": 3,
+              "start": 0,
+              "end": 733,
+              "paragraphHash": "fe13915de3945aff9a34fd49a1b093e065ba6943f138fc5af530094e27865843",
+              "quote": "There was nothing so very remarkable in that; nor did Alice think it so very much out of the way to hear the Rabbit say to itself, “Oh dear! Oh dear! I shall be late!” (when she thought it over afterwards, it occurred to her that she ought to have wondered at this, but at the time it all seemed quite natural); but when the Rabbit actually took a watch out of its waistcoat-pocket, and looked at it, and then hurried on, Alice started to her feet, for it flashed across her mind that she had never before seen a rabbit with either a waistcoat-pocket, or a watch to take out of it, and burning with curiosity, she ran across the field after it, and fortunately was just in time to see it pop down a large rabbit-hole under the hedge."
+            }
+          ]
+        }
+      ],
+      "audit": "Held-out authored before new oracle runs; no model outputs inspected."
+    },
+    {
+      "id": "H-A03",
+      "book": "alice-in-wonderland",
+      "question": "Apa isi stoples marmalade yang diambil Alice saat jatuh, dan kenapa tidak dijatuhkannya?",
+      "expectedStatus": "answered",
+      "category": "multi_fact",
+      "facts": [
+        {
+          "fact": "Stoples berlabel ORANGE MARMALADE ternyata kosong.",
+          "alternatives": [
+            {
+              "book": "alice-in-wonderland",
+              "revision": 1,
+              "chapter": "CHAPTER I. Down the Rabbit-Hole",
+              "paragraph": 6,
+              "start": 433,
+              "end": 573,
+              "paragraphHash": "fd72f2efbfc48a493af23f617c6a2a3242af11f504bdf061289c1fbf6cb73087",
+              "quote": "She took down a jar from one of the shelves as she passed; it was labelled “ORANGE MARMALADE”, but to her great disappointment it was empty:"
+            }
+          ]
+        },
+        {
+          "fact": "Ia takut stoples membunuh orang di bawahnya.",
+          "alternatives": [
+            {
+              "book": "alice-in-wonderland",
+              "revision": 1,
+              "chapter": "CHAPTER I. Down the Rabbit-Hole",
+              "paragraph": 6,
+              "start": 574,
+              "end": 715,
+              "paragraphHash": "fd72f2efbfc48a493af23f617c6a2a3242af11f504bdf061289c1fbf6cb73087",
+              "quote": "she did not like to drop the jar for fear of killing somebody underneath, so managed to put it into one of the cupboards as she fell past it."
+            }
+          ]
+        }
+      ],
+      "audit": "Held-out authored before new oracle runs; no model outputs inspected."
+    },
+    {
+      "id": "H-A04",
+      "book": "alice-in-wonderland",
+      "question": "Tulisan apa yang ada di label botol di atas meja?",
+      "expectedStatus": "answered",
+      "category": "direct",
+      "facts": [
+        {
+          "fact": "DRINK ME.",
+          "alternatives": [
+            {
+              "book": "alice-in-wonderland",
+              "revision": 1,
+              "chapter": "CHAPTER I. Down the Rabbit-Hole",
+              "paragraph": 15,
+              "start": 0,
+              "end": 423,
+              "paragraphHash": "91809a600a3a493d6177413bb01afb30c8ab393293f6c872a43d137198646c63",
+              "quote": "There seemed to be no use in waiting by the little door, so she went back to the table, half hoping she might find another key on it, or at any rate a book of rules for shutting people up like telescopes: this time she found a little bottle on it, (“which certainly was not here before,” said Alice,) and round the neck of the bottle was a paper label, with the words “DRINK ME,” beautifully printed on it in large letters."
+            }
+          ]
+        }
+      ],
+      "audit": "Held-out authored before new oracle runs; no model outputs inspected."
+    },
+    {
+      "id": "H-A05",
+      "book": "alice-in-wonderland",
+      "question": "Sebelum meminum isi botol, Alice memeriksa apa?",
+      "expectedStatus": "answered",
+      "category": "direct",
+      "facts": [
+        {
+          "fact": "Apakah botol diberi tanda poison.",
+          "alternatives": [
+            {
+              "book": "alice-in-wonderland",
+              "revision": 1,
+              "chapter": "CHAPTER I. Down the Rabbit-Hole",
+              "paragraph": 16,
+              "start": 0,
+              "end": 693,
+              "paragraphHash": "294c622bf4690282a7c17cf4522c9c2bf2d14d359417fb325e40930d99426c8b",
+              "quote": "It was all very well to say “Drink me,” but the wise little Alice was not going to do that in a hurry. “No, I’ll look first,” she said, “and see whether it’s marked ‘poison’ or not”; for she had read several nice little histories about children who had got burnt, and eaten up by wild beasts and other unpleasant things, all because they would not remember the simple rules their friends had taught them: such as, that a red-hot poker will burn you if you hold it too long; and that if you cut your finger very deeply with a knife, it usually bleeds; and she had never forgotten that, if you drink much from a bottle marked “poison,” it is almost certain to disagree with you, sooner or later."
+            }
+          ]
+        }
+      ],
+      "audit": "Held-out authored before new oracle runs; no model outputs inspected."
+    },
+    {
+      "id": "H-A06",
+      "book": "alice-in-wonderland",
+      "question": "Setelah diminum itu, tingginya jadi berapa?",
+      "expectedStatus": "answered",
+      "category": "follow_up",
+      "facts": [
+        {
+          "fact": "Sepuluh inci.",
+          "alternatives": [
+            {
+              "book": "alice-in-wonderland",
+              "revision": 1,
+              "chapter": "CHAPTER I. Down the Rabbit-Hole",
+              "paragraph": 20,
+              "start": 22,
+              "end": 54,
+              "paragraphHash": "cb30de2fbae7f272d1aa54d0c2b292ba4b2c6abc8474a68350394a06ff5d4cbb",
+              "quote": "she was now only ten inches high"
+            }
+          ]
+        }
+      ],
+      "audit": "Held-out authored before new oracle runs; no model outputs inspected.",
+      "history": [
+        {
+          "question": "Kita sedang membahas botol bertuliskan DRINK ME yang ditemukan Alice.",
+          "answer": "Alice memutuskan meminumnya setelah memeriksa botol."
+        }
+      ]
+    },
+    {
+      "id": "H-A07",
+      "book": "alice-in-wonderland",
+      "question": "Apa tulisan pada kue kecil yang ditemukan Alice di bawah meja?",
+      "expectedStatus": "answered",
+      "category": "direct",
+      "facts": [
+        {
+          "fact": "EAT ME, ditandai dengan currants.",
+          "alternatives": [
+            {
+              "book": "alice-in-wonderland",
+              "revision": 1,
+              "chapter": "CHAPTER I. Down the Rabbit-Hole",
+              "paragraph": 23,
+              "start": 0,
+              "end": 407,
+              "paragraphHash": "c3506c36a1fadf1168de6c3829fd8b646ce85b58076649eed59c3c4980d19bfe",
+              "quote": "Soon her eye fell on a little glass box that was lying under the table: she opened it, and found in it a very small cake, on which the words “EAT ME” were beautifully marked in currants. “Well, I’ll eat it,” said Alice, “and if it makes me grow larger, I can reach the key; and if it makes me grow smaller, I can creep under the door; so either way I’ll get into the garden, and I don’t care which happens!”"
+            }
+          ]
+        }
+      ],
+      "audit": "Held-out authored before new oracle runs; no model outputs inspected."
+    },
+    {
+      "id": "H-A08",
+      "book": "alice-in-wonderland",
+      "question": "Siapa pemenang Caucus-Race menurut Dodo?",
+      "expectedStatus": "answered",
+      "category": "direct",
+      "facts": [
+        {
+          "fact": "Semua peserta menang dan harus mendapat hadiah.",
+          "alternatives": [
+            {
+              "book": "alice-in-wonderland",
+              "revision": 1,
+              "chapter": "CHAPTER III. A Caucus-Race and a Long Tale",
+              "paragraph": 20,
+              "start": 0,
+              "end": 322,
+              "paragraphHash": "3675ff28a2e2038c48647ab9de9d273081ef10f775e2d1f11584c7761f2aa845",
+              "quote": "This question the Dodo could not answer without a great deal of thought, and it sat for a long time with one finger pressed upon its forehead (the position in which you usually see Shakespeare, in the pictures of him), while the rest waited in silence. At last the Dodo said, “Everybody has won, and all must have prizes.”"
+            }
+          ]
+        }
+      ],
+      "audit": "Held-out authored before new oracle runs; no model outputs inspected."
+    },
+    {
+      "id": "H-A09",
+      "book": "alice-in-wonderland",
+      "question": "Hadiah apa yang Dodo serahkan secara khidmat ke Alice?",
+      "expectedStatus": "answered",
+      "category": "direct",
+      "facts": [
+        {
+          "fact": "Thimble, bidal.",
+          "alternatives": [
+            {
+              "book": "alice-in-wonderland",
+              "revision": 1,
+              "chapter": "CHAPTER III. A Caucus-Race and a Long Tale",
+              "paragraph": 28,
+              "start": 0,
+              "end": 209,
+              "paragraphHash": "2d2f5dc208e0565b7e075ea6439031faf4e0fb290b05d9e3b12998fcbe771eb0",
+              "quote": "Then they all crowded round her once more, while the Dodo solemnly presented the thimble, saying “We beg your acceptance of this elegant thimble;” and, when it had finished this short speech, they all cheered."
+            }
+          ]
+        }
+      ],
+      "audit": "Held-out authored before new oracle runs; no model outputs inspected."
+    },
+    {
+      "id": "H-A10",
+      "book": "alice-in-wonderland",
+      "question": "Apa dua efek sisi jamur yang dijelaskan Caterpillar?",
+      "expectedStatus": "answered",
+      "category": "direct",
+      "facts": [
+        {
+          "fact": "Satu sisi menambah tinggi, sisi lain memendekkan.",
+          "alternatives": [
+            {
+              "book": "alice-in-wonderland",
+              "revision": 1,
+              "chapter": "CHAPTER V. Advice from a Caterpillar",
+              "paragraph": 41,
+              "start": 0,
+              "end": 355,
+              "paragraphHash": "03ff410d3a9e255b726ad657821aba03713ac260fe273473959e85e371b259e6",
+              "quote": "This time Alice waited patiently until it chose to speak again. In a minute or two the Caterpillar took the hookah out of its mouth and yawned once or twice, and shook itself. Then it got down off the mushroom, and crawled away in the grass, merely remarking as it went, “One side will make you grow taller, and the other side will make you grow shorter.”"
+            }
+          ]
+        }
+      ],
+      "audit": "Held-out authored before new oracle runs; no model outputs inspected."
+    },
+    {
+      "id": "H-A11",
+      "book": "alice-in-wonderland",
+      "question": "Jelasin kutipan ini singkat dong.",
+      "expectedStatus": "answered",
+      "category": "selected_quote",
+      "facts": [
+        {
+          "fact": "Sup mengandung terlalu banyak lada yang membuat bersin.",
+          "alternatives": [
+            {
+              "book": "alice-in-wonderland",
+              "revision": 1,
+              "chapter": "CHAPTER VI. Pig and Pepper",
+              "paragraph": 20,
+              "start": 0,
+              "end": 107,
+              "paragraphHash": "ae4138a49cd3b2d1757950e7d30615ee3011048f0888184c6cbc196fbb6cb6d3",
+              "quote": "“There’s certainly too much pepper in that soup!” Alice said to herself, as well as she could for sneezing."
+            }
+          ]
+        }
+      ],
+      "audit": "Held-out authored before new oracle runs; no model outputs inspected.",
+      "selectedQuote": {
+        "book": "alice-in-wonderland",
+        "revision": 1,
+        "chapter": "CHAPTER VI. Pig and Pepper",
+        "paragraph": 20,
+        "start": 0,
+        "end": 107,
+        "paragraphHash": "ae4138a49cd3b2d1757950e7d30615ee3011048f0888184c6cbc196fbb6cb6d3",
+        "quote": "“There’s certainly too much pepper in that soup!” Alice said to herself, as well as she could for sneezing."
+      }
+    },
+    {
+      "id": "H-A12",
+      "book": "alice-in-wonderland",
+      "question": "Dormouse dipakai sebagai apa oleh dua teman minum tehnya?",
+      "expectedStatus": "answered",
+      "category": "direct",
+      "facts": [
+        {
+          "fact": "Bantalan untuk menaruh siku saat ia tertidur.",
+          "alternatives": [
+            {
+              "book": "alice-in-wonderland",
+              "revision": 1,
+              "chapter": "CHAPTER VII. A Mad Tea-Party",
+              "paragraph": 1,
+              "start": 0,
+              "end": 374,
+              "paragraphHash": "f09097be653ee6242aa433e9b32910c7033d23f49ba4ee57e45604f95335b538",
+              "quote": "There was a table set out under a tree in front of the house, and the March Hare and the Hatter were having tea at it: a Dormouse was sitting between them, fast asleep, and the other two were using it as a cushion, resting their elbows on it, and talking over its head. “Very uncomfortable for the Dormouse,” thought Alice; “only, as it’s asleep, I suppose it doesn’t mind.”"
+            }
+          ]
+        }
+      ],
+      "audit": "Held-out authored before new oracle runs; no model outputs inspected."
+    },
+    {
+      "id": "H-A13",
+      "book": "alice-in-wonderland",
+      "question": "Bola dan pemukul croquet Ratu menggunakan makhluk apa?",
+      "expectedStatus": "answered",
+      "category": "multi_fact",
+      "facts": [
+        {
+          "fact": "Bola adalah hedgehog hidup.",
+          "alternatives": [
+            {
+              "book": "alice-in-wonderland",
+              "revision": 1,
+              "chapter": "CHAPTER VIII. The Queen’s Croquet-Ground",
+              "paragraph": 41,
+              "start": 0,
+              "end": 485,
+              "paragraphHash": "eb033e3bdff8cfea3b94e4644ba7d5de91cb0b12842e860f07219c5a6e86cbf0",
+              "quote": "“Get to your places!” shouted the Queen in a voice of thunder, and people began running about in all directions, tumbling up against each other; however, they got settled down in a minute or two, and the game began. Alice thought she had never seen such a curious croquet-ground in her life; it was all ridges and furrows; the balls were live hedgehogs, the mallets live flamingoes, and the soldiers had to double themselves up and to stand on their hands and feet, to make the arches."
+            }
+          ]
+        },
+        {
+          "fact": "Pemukul adalah flamingo hidup.",
+          "alternatives": [
+            {
+              "book": "alice-in-wonderland",
+              "revision": 1,
+              "chapter": "CHAPTER VIII. The Queen’s Croquet-Ground",
+              "paragraph": 41,
+              "start": 0,
+              "end": 485,
+              "paragraphHash": "eb033e3bdff8cfea3b94e4644ba7d5de91cb0b12842e860f07219c5a6e86cbf0",
+              "quote": "“Get to your places!” shouted the Queen in a voice of thunder, and people began running about in all directions, tumbling up against each other; however, they got settled down in a minute or two, and the game began. Alice thought she had never seen such a curious croquet-ground in her life; it was all ridges and furrows; the balls were live hedgehogs, the mallets live flamingoes, and the soldiers had to double themselves up and to stand on their hands and feet, to make the arches."
+            }
+          ]
+        }
+      ],
+      "audit": "Held-out authored before new oracle runs; no model outputs inspected."
+    },
+    {
+      "id": "H-A14",
+      "book": "alice-in-wonderland",
+      "question": "Dalam sidang tarts, siapa yang dituduh mencuri?",
+      "expectedStatus": "answered",
+      "category": "direct",
+      "facts": [
+        {
+          "fact": "Knave of Hearts.",
+          "alternatives": [
+            {
+              "book": "alice-in-wonderland",
+              "revision": 1,
+              "chapter": "CHAPTER XI. Who Stole the Tarts?",
+              "paragraph": 12,
+              "start": 0,
+              "end": 133,
+              "paragraphHash": "03be50360a2e89c3eb1f80298c8aac275908ea41aa75d821ed64e8278fe8037a",
+              "quote": "“The Queen of Hearts, she made some tarts,\nAll on a summer day:\nThe Knave of Hearts, he stole those tarts,\nAnd took them quite away!”"
+            }
+          ]
+        }
+      ],
+      "audit": "Held-out authored before new oracle runs; no model outputs inspected."
+    },
+    {
+      "id": "H-A15",
+      "book": "alice-in-wonderland",
+      "question": "Siapa yang membangunkan Alice di akhir cerita?",
+      "expectedStatus": "answered",
+      "category": "last_chapter",
+      "facts": [
+        {
+          "fact": "Kakaknya.",
+          "alternatives": [
+            {
+              "book": "alice-in-wonderland",
+              "revision": 1,
+              "chapter": "CHAPTER XII. Alice’s Evidence",
+              "paragraph": 60,
+              "start": 0,
+              "end": 76,
+              "paragraphHash": "bd02850c6cc7cfed58952927b36cac83a90eb6469c73563bf5748279378ebb10",
+              "quote": "“Wake up, Alice dear!” said her sister; “Why, what a long sleep you’ve had!”"
+            }
+          ]
+        }
+      ],
+      "audit": "Held-out authored before new oracle runs; no model outputs inspected."
+    },
+    {
+      "id": "H-A16",
+      "book": "alice-in-wonderland",
+      "question": "Siapa nama ayah Mad Hatter?",
+      "expectedStatus": "not_found",
+      "category": "not_stated",
+      "facts": [],
+      "audit": "Held-out authored before new oracle runs; no model outputs inspected."
+    },
+    {
+      "id": "H-A17",
+      "book": "alice-in-wonderland",
+      "question": "Berapa berat mahkota Ratu dalam kilogram?",
+      "expectedStatus": "not_found",
+      "category": "not_stated",
+      "facts": [],
+      "audit": "Held-out authored before new oracle runs; no model outputs inspected."
+    },
+    {
+      "id": "H-A18",
+      "book": "alice-in-wonderland",
+      "question": "Kenapa dia ngomong begitu?",
+      "expectedStatus": "not_found",
+      "category": "ambiguous",
+      "facts": [],
+      "audit": "Held-out authored before new oracle runs; no model outputs inspected."
+    },
+    {
+      "id": "H-A19",
+      "book": "alice-in-wonderland",
+      "question": "Kenapa Darcy merendahkan Elizabeth di pesta?",
+      "expectedStatus": "not_found",
+      "category": "foreign_book",
+      "facts": [],
+      "audit": "Held-out authored before new oracle runs; no model outputs inspected."
+    },
+    {
+      "id": "H-A20",
+      "book": "alice-in-wonderland",
+      "question": "Apa yang Tweedledee katakan kepada Alice dalam buku ini?",
+      "expectedStatus": "not_found",
+      "category": "other_volume",
+      "facts": [],
+      "audit": "Held-out authored before new oracle runs; no model outputs inspected."
+    },
+    {
+      "id": "H-M01",
+      "book": "meditations",
+      "question": "Sikap apa yang Marcus pelajari dari kakeknya Verus?",
+      "expectedStatus": "answered",
+      "category": "direct",
+      "facts": [
+        {
+          "fact": "Lembut, rendah hati dan menahan amarah.",
+          "alternatives": [
+            {
+              "book": "meditations",
+              "revision": 1,
+              "chapter": "THE FIRST BOOK",
+              "paragraph": 1,
+              "start": 3,
+              "end": 107,
+              "paragraphHash": "56042421af1500373b36d9a7b98bad1596e9d488e4feb69463077b2f6d2e8da7",
+              "quote": "Of my grandfather Verus I have learned to be gentle and meek, and to refrain from all anger and passion."
+            }
+          ]
+        }
+      ],
+      "audit": "Held-out authored before new oracle runs; no model outputs inspected."
+    },
+    {
+      "id": "H-M02",
+      "book": "meditations",
+      "question": "Apa yang Marcus pelajari dari ibunya tentang gaya hidup?",
+      "expectedStatus": "answered",
+      "category": "direct",
+      "facts": [
+        {
+          "fact": "Hidup sederhana, tidak berlebihan karena kekayaan.",
+          "alternatives": [
+            {
+              "book": "meditations",
+              "revision": 1,
+              "chapter": "THE FIRST BOOK",
+              "paragraph": 1,
+              "start": 211,
+              "end": 424,
+              "paragraphHash": "56042421af1500373b36d9a7b98bad1596e9d488e4feb69463077b2f6d2e8da7",
+              "quote": "Of my mother I have learned to be religious, and bountiful; and to forbear, not only to do, but to intend any evil; to content myself with a spare diet, and to fly all such excess as is incidental to great wealth."
+            }
+          ]
+        }
+      ],
+      "audit": "Held-out authored before new oracle runs; no model outputs inspected."
+    },
+    {
+      "id": "H-M03",
+      "book": "meditations",
+      "question": "Apa pelajaran tentang guru di rumah dari kakek buyutnya?",
+      "expectedStatus": "answered",
+      "category": "direct",
+      "facts": [
+        {
+          "fact": "Mendapat guru yang baik dan mampu, tidak terlalu mempermasalahkan biaya.",
+          "alternatives": [
+            {
+              "book": "meditations",
+              "revision": 1,
+              "chapter": "THE FIRST BOOK",
+              "paragraph": 1,
+              "start": 425,
+              "end": 632,
+              "paragraphHash": "56042421af1500373b36d9a7b98bad1596e9d488e4feb69463077b2f6d2e8da7",
+              "quote": "Of my great-grandfather, both to frequent public schools and auditories, and to get me good and able teachers at home; and that I ought not to think much, if upon such occasions, I were at excessive charges."
+            }
+          ]
+        }
+      ],
+      "audit": "Held-out authored before new oracle runs; no model outputs inspected."
+    },
+    {
+      "id": "H-M04",
+      "book": "meditations",
+      "question": "Menurut pelajaran Diognetus, permainan burung apa yang perlu ditinggalkan?",
+      "expectedStatus": "answered",
+      "category": "direct",
+      "facts": [
+        {
+          "fact": "Memelihara puyuh untuk permainan aduan.",
+          "alternatives": [
+            {
+              "book": "meditations",
+              "revision": 1,
+              "chapter": "THE FIRST BOOK",
+              "paragraph": 3,
+              "start": 317,
+              "end": 382,
+              "paragraphHash": "c7a1d737acea76d57782f23bb0c93af5b4862f7e3d33dae891dc41171ae02fff",
+              "quote": "Not to keep quails for the game; nor to be mad after such things."
+            }
+          ]
+        }
+      ],
+      "audit": "Held-out authored before new oracle runs; no model outputs inspected."
+    },
+    {
+      "id": "H-M05",
+      "book": "meditations",
+      "question": "Apa nasihat Rusticus tentang cara membaca?",
+      "expectedStatus": "answered",
+      "category": "direct",
+      "facts": [
+        {
+          "fact": "Membaca teliti, tidak puas dengan pengetahuan dangkal.",
+          "alternatives": [
+            {
+              "book": "meditations",
+              "revision": 1,
+              "chapter": "THE FIRST BOOK",
+              "paragraph": 4,
+              "start": 924,
+              "end": 1061,
+              "paragraphHash": "666ded00bec7e39494ff4782fbf2c89803e5d21b2ef0a5a97a544d0b7a4dd1a3",
+              "quote": "To read with diligence; not to rest satisfied with a light and superficial knowledge, nor quickly to assent to things commonly spoken of:"
+            }
+          ]
+        }
+      ],
+      "audit": "Held-out authored before new oracle runs; no model outputs inspected."
+    },
+    {
+      "id": "H-M06",
+      "book": "meditations",
+      "question": "Bagaimana Alexander the Grammarian memberi teladan mengoreksi ucapan orang?",
+      "expectedStatus": "answered",
+      "category": "direct",
+      "facts": [
+        {
+          "fact": "Tidak mengejek; memakai bentuk benar secara halus dan tidak langsung.",
+          "alternatives": [
+            {
+              "book": "meditations",
+              "revision": 1,
+              "chapter": "THE FIRST BOOK",
+              "paragraph": 7,
+              "start": 0,
+              "end": 417,
+              "paragraphHash": "68b2ef69b26805d926d4287e76b57df8ce5ffd95845c2b358ba457b90c031ff7",
+              "quote": "VII. From Alexander the Grammarian, to be un-reprovable myself, and not reproachfully to reprehend any man for a barbarism, or a solecism, or any false pronunciation, but dextrously by way of answer, or testimony, or confirmation of the same matter (taking no notice of the word) to utter it as it should have been spoken; or by some other such close and indirect admonition, handsomely and civilly to tell him of it."
+            }
+          ]
+        }
+      ],
+      "audit": "Held-out authored before new oracle runs; no model outputs inspected."
+    },
+    {
+      "id": "H-M07",
+      "book": "meditations",
+      "question": "Apa hubungan manfaat sarang lebah dengan manfaat seekor lebah?",
+      "expectedStatus": "answered",
+      "category": "direct",
+      "facts": [
+        {
+          "fact": "Yang tidak baik bagi sarang tidak baik bagi lebah.",
+          "alternatives": [
+            {
+              "book": "meditations",
+              "revision": 1,
+              "chapter": "THE SIXTH BOOK",
+              "paragraph": 47,
+              "start": 0,
+              "end": 74,
+              "paragraphHash": "13e4a206f505efddd278f5949695b966d156e25a0ed5150e8cbe34da248d31c3",
+              "quote": "XLIX. That which is not good for the bee-hive, cannot be good for the bee."
+            }
+          ]
+        }
+      ],
+      "audit": "Held-out authored before new oracle runs; no model outputs inspected."
+    },
+    {
+      "id": "H-M08",
+      "book": "meditations",
+      "question": "Kenapa Marcus menyebut dunia seperti satu kota bersama?",
+      "expectedStatus": "answered",
+      "category": "direct",
+      "facts": [
+        {
+          "fact": "Akal, aturan dan hukum yang umum membuat manusia sesama warga.",
+          "alternatives": [
+            {
+              "book": "meditations",
+              "revision": 1,
+              "chapter": "THE FOURTH BOOK",
+              "paragraph": 4,
+              "start": 4,
+              "end": 407,
+              "paragraphHash": "81b068582256b677cfe67f441868e21c6ce6aad19dda12775ca6c6891a71cbda",
+              "quote": "If to understand and to be reasonable be common unto all men, then is that reason, for which we are termed reasonable, common unto all. If reason is general, then is that reason also, which prescribeth what is to be done and what not, common unto all. If that, then law. If law, then are we fellow-citizens. If so, then are we partners in some one commonweal. If so, then the world is as it were a city."
+            }
+          ]
+        }
+      ],
+      "audit": "Held-out authored before new oracle runs; no model outputs inspected."
+    },
+    {
+      "id": "H-M09",
+      "book": "meditations",
+      "question": "Saat malas bangun pagi, apa yang perlu Marcus ingat?",
+      "expectedStatus": "answered",
+      "category": "long_paragraph",
+      "facts": [
+        {
+          "fact": "Bangun untuk pekerjaan/tindakan manusia, bukan hanya nyaman di tempat tidur.",
+          "alternatives": [
+            {
+              "book": "meditations",
+              "revision": 1,
+              "chapter": "THE FIFTH BOOK",
+              "paragraph": 1,
+              "start": 3,
+              "end": 332,
+              "paragraphHash": "0eb17fc9a6bc3989d4c83ac07ad60774b7e3a883d3f009b1447a40e90abd21ca",
+              "quote": "In the morning when thou findest thyself unwilling to rise, consider with thyself presently, it is to go about a man's work that I am stirred up. Am I then yet unwilling to go about that, for which I myself was born and brought forth into this world? Or was I made for this, to lay me down, and make much of myself in a warm bed?"
+            }
+          ]
+        }
+      ],
+      "audit": "Held-out authored before new oracle runs; no model outputs inspected."
+    },
+    {
+      "id": "H-M10",
+      "book": "meditations",
+      "question": "Apa maksud perbandingan orang baik dengan zamrud yang menjaga warnanya?",
+      "expectedStatus": "answered",
+      "category": "direct",
+      "facts": [
+        {
+          "fact": "Tetap baik karena sifat sendiri, terlepas dari ucapan/tindakan orang lain.",
+          "alternatives": [
+            {
+              "book": "meditations",
+              "revision": 1,
+              "chapter": "THE SEVENTH BOOK",
+              "paragraph": 12,
+              "start": 0,
+              "end": 300,
+              "paragraphHash": "9500bc0cadd1df12e189dd1668eda17e8fcb7ff75bd9d137aad3fd9c4e0019cc",
+              "quote": "XII. Whatsoever any man either doth or saith, thou must be good; not for any man's sake, but for thine own nature's sake; as if either gold, or the emerald, or purple, should ever be saying to themselves, Whatsoever any man either doth or saith, I must still be an emerald, and I must keep my colour."
+            }
+          ]
+        }
+      ],
+      "audit": "Held-out authored before new oracle runs; no model outputs inspected."
+    },
+    {
+      "id": "H-M11",
+      "book": "meditations",
+      "question": "Mengapa orang yang berbuat baik disamakan dengan pohon anggur?",
+      "expectedStatus": "answered",
+      "category": "direct",
+      "facts": [
+        {
+          "fact": "Menghasilkan buah/kebaikan tanpa meminta balasan atau pujian.",
+          "alternatives": [
+            {
+              "book": "meditations",
+              "revision": 1,
+              "chapter": "THE FIFTH BOOK",
+              "paragraph": 6,
+              "start": 341,
+              "end": 602,
+              "paragraphHash": "074c3599781ea4cdd415c142e0064a0506057b1c96573cc67464ba3a5ea8492f",
+              "quote": "Others again there be, who when they have done any such thing, do not so much as know what they have done; but are like unto the vine, which beareth her grapes, and when once she hath borne her own proper fruit, is contented and seeks for no further recompense."
+            }
+          ]
+        }
+      ],
+      "audit": "Held-out authored before new oracle runs; no model outputs inspected."
+    },
+    {
+      "id": "H-M12",
+      "book": "meditations",
+      "question": "Bagaimana roti yang retak dan buah ara yang mengerut menggambarkan keindahan alami?",
+      "expectedStatus": "answered",
+      "category": "comparison",
+      "facts": [
+        {
+          "fact": "Retak roti bisa menambah selera.",
+          "alternatives": [
+            {
+              "book": "meditations",
+              "revision": 1,
+              "chapter": "THE THIRD BOOK",
+              "paragraph": 2,
+              "start": 158,
+              "end": 587,
+              "paragraphHash": "1071dda537c0493c655a5a260eb66f270057d69479778e007e85c1acaae32802",
+              "quote": "as a great loaf when it is baked, some parts of it cleave as it were, and part asunder, and make the crust of it rugged and unequal, and yet those parts of it, though in some sort it be against the art and intention of baking itself, that they are thus cleft and parted, which should have been and were first made all even and uniform, they become it well nevertheless, and have a certain peculiar property, to stir the appetite."
+            }
+          ]
+        },
+        {
+          "fact": "Ara yang mulai mengerut dianggap matang dan indah.",
+          "alternatives": [
+            {
+              "book": "meditations",
+              "revision": 1,
+              "chapter": "THE THIRD BOOK",
+              "paragraph": 2,
+              "start": 588,
+              "end": 684,
+              "paragraphHash": "1071dda537c0493c655a5a260eb66f270057d69479778e007e85c1acaae32802",
+              "quote": "So figs are accounted fairest and ripest then, when they begin to shrink, and wither as it were."
+            }
+          ]
+        }
+      ],
+      "audit": "Held-out authored before new oracle runs; no model outputs inspected."
+    },
+    {
+      "id": "H-M13",
+      "book": "meditations",
+      "question": "Apa bentuk balas dendam terbaik menurut Marcus?",
+      "expectedStatus": "answered",
+      "category": "direct",
+      "facts": [
+        {
+          "fact": "Tidak menjadi seperti pelaku yang menyakiti.",
+          "alternatives": [
+            {
+              "book": "meditations",
+              "revision": 1,
+              "chapter": "THE SIXTH BOOK",
+              "paragraph": 5,
+              "start": 3,
+              "end": 61,
+              "paragraphHash": "7d4826139727fa8e0f959b40f6eb7dba63e99613a12d42601297d4c8432e3928",
+              "quote": "The best kind of revenge is, not to become like unto them."
+            }
+          ]
+        }
+      ],
+      "audit": "Held-out authored before new oracle runs; no model outputs inspected."
+    },
+    {
+      "id": "H-M14",
+      "book": "meditations",
+      "question": "Kapan Marcus bersedia mengubah pendapatnya?",
+      "expectedStatus": "answered",
+      "category": "direct",
+      "facts": [
+        {
+          "fact": "Ketika alasan yang masuk akal menunjuk keadilan atau kebaikan umum, bukan kesenangan/reputasi.",
+          "alternatives": [
+            {
+              "book": "meditations",
+              "revision": 1,
+              "chapter": "THE FOURTH BOOK",
+              "paragraph": 10,
+              "start": 0,
+              "end": 603,
+              "paragraphHash": "b6f7bb73311b355c5267645137d16342d329d636eb192ab913f5b3a2ab9fadb0",
+              "quote": "X. These two rules, thou must have always in a readiness. First, do nothing at all, but what reason proceeding from that regal and supreme part, shall for the good and benefit of men, suggest unto thee. And secondly, if any man that is present shall be able to rectify thee or to turn thee from some erroneous persuasion, that thou be always ready to change thy mind, and this change to proceed, not from any respect of any pleasure or credit thereon depending, but always from some probable apparent ground of justice, or of some public good thereby to be furthered; or from some other such inducement."
+            }
+          ]
+        }
+      ],
+      "audit": "Held-out authored before new oracle runs; no model outputs inspected."
+    },
+    {
+      "id": "H-M15",
+      "book": "meditations",
+      "question": "Di mana tempat menyepi yang dapat diakses tanpa pergi ke gunung atau pantai?",
+      "expectedStatus": "answered",
+      "category": "direct",
+      "facts": [
+        {
+          "fact": "Ke dalam jiwa sendiri.",
+          "alternatives": [
+            {
+              "book": "meditations",
+              "revision": 1,
+              "chapter": "THE FOURTH BOOK",
+              "paragraph": 3,
+              "start": 5,
+              "end": 800,
+              "paragraphHash": "381216d41a4f59fc9681f8c7a18c8100bbdc9936c55ddf53522621fd23ca4baa",
+              "quote": "They seek for themselves private retiring places, as country villages, the sea-shore, mountains; yea thou thyself art wont to long much after such places. But all this thou must know proceeds from simplicity in the highest degree. At what time soever thou wilt, it is in thy power to retire into thyself, and to be at rest, and free from all businesses. A man cannot any whither retire better than to his own soul; he especially who is beforehand provided of such things within, which whensoever he doth withdraw himself to look in, may presently afford unto him perfect ease and tranquillity. By tranquillity I understand a decent orderly disposition and carriage, free from all confusion and tumultuousness. Afford then thyself this retiring continually, and thereby refresh and renew thyself."
+            }
+          ]
+        }
+      ],
+      "audit": "Held-out authored before new oracle runs; no model outputs inspected."
+    },
+    {
+      "id": "H-M16",
+      "book": "meditations",
+      "question": "Siapa nama penjahit jubah Marcus yang disebut di buku?",
+      "expectedStatus": "not_found",
+      "category": "not_stated",
+      "facts": [],
+      "audit": "Held-out authored before new oracle runs; no model outputs inspected."
+    },
+    {
+      "id": "H-M17",
+      "book": "meditations",
+      "question": "Jam berapa tepatnya Marcus mulai menulis catatan pertama?",
+      "expectedStatus": "not_found",
+      "category": "not_stated",
+      "facts": [],
+      "audit": "Held-out authored before new oracle runs; no model outputs inspected."
+    },
+    {
+      "id": "H-M18",
+      "book": "meditations",
+      "question": "Maksud ucapannya itu apa?",
+      "expectedStatus": "not_found",
+      "category": "ambiguous",
+      "facts": [],
+      "audit": "Held-out authored before new oracle runs; no model outputs inspected."
+    },
+    {
+      "id": "H-M19",
+      "book": "meditations",
+      "question": "Dalam buku ini, kenapa Mad Hatter mengadakan pesta teh?",
+      "expectedStatus": "not_found",
+      "category": "foreign_book",
+      "facts": [],
+      "audit": "Held-out authored before new oracle runs; no model outputs inspected."
+    },
+    {
+      "id": "H-M20",
+      "book": "meditations",
+      "question": "Apa dosis antibiotik yang Marcus anjurkan untuk infeksi?",
+      "expectedStatus": "not_found",
+      "category": "not_stated",
+      "facts": [],
+      "audit": "Held-out authored before new oracle runs; no model outputs inspected."
+    }
+  ]
+}

@@ -496,7 +496,8 @@ void main() {
     });
 
     testWidgets('shows when, name and size of the last backup', (tester) async {
-      final at = DateTime.now().subtract(const Duration(days: 3, hours: 1));
+      final now = DateTime.now();
+      final at = DateTime(now.year, now.month, now.day - 3, 12);
       await open(
         tester,
         lastBackup: (at: at, name: 'luma-backup-x.zip', size: 12688179),

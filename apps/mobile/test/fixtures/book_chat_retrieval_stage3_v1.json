@@ -1,0 +1,2357 @@
+{
+  "protocol": "offline-chunk-query-v1",
+  "manifestHash": "e7a429145ebf1f436c25127c92da8cfee7ce447b893ac4de3c0c19526172ee67",
+  "replayHash": "40ed101977409c69d91c88bc1dc2feb095fb3ea209c1018b4dbf3c9d085156aa",
+  "requests": 0,
+  "heldOutModelRuns": 0,
+  "heldOutRetrievalRuns": 0,
+  "note": "Development tuning only. Source-range recall is not answer accuracy; negatives have null recall.",
+  "platform": "macos",
+  "dart": "3.13.5 (stable) (Tue Sep 29 01:00:52 2026 -0700) on \"macos_arm64\"",
+  "sourceBudgetBytes": 18000,
+  "loadUs": 596918,
+  "fullReportSha256": "61e0b2c174931676facdce8200e3802719f4ddaaaecca60ab79560c8d0df18a5",
+  "reproduce": "make chat-retrieval; full ranges and candidate IDs: /tmp/luma-book-chat-retrieval.json",
+  "results": [
+    {
+      "chunks": "groups",
+      "cleanQuery": false,
+      "chunkCount": 1397,
+      "indexBuildUs": 171565,
+      "answerable": 22,
+      "complete40": 19,
+      "complete8": 13,
+      "cases": [
+        {
+          "id": "E01",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 1209,
+          "selectedBytes": 7140
+        },
+        {
+          "id": "E02",
+          "quoteId": null,
+          "candidateRecall40": 0.0,
+          "finalRecall8": 0.0,
+          "searchUs": 293,
+          "selectedBytes": 6578
+        },
+        {
+          "id": "E03",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 340,
+          "selectedBytes": 6277
+        },
+        {
+          "id": "E04",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 544,
+          "selectedBytes": 9281
+        },
+        {
+          "id": "E05",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 264,
+          "selectedBytes": 9660
+        },
+        {
+          "id": "E06",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 0.0,
+          "searchUs": 179,
+          "selectedBytes": 5555
+        },
+        {
+          "id": "E07",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 225,
+          "selectedBytes": 6983
+        },
+        {
+          "id": "E08",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 0.0,
+          "searchUs": 384,
+          "selectedBytes": 8523
+        },
+        {
+          "id": "E09",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 0.5,
+          "searchUs": 304,
+          "selectedBytes": 7118
+        },
+        {
+          "id": "E10",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 455,
+          "selectedBytes": 8645
+        },
+        {
+          "id": "E11",
+          "quoteId": "enchiridion:IV:1-1",
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 512,
+          "selectedBytes": 7343
+        },
+        {
+          "id": "E12",
+          "quoteId": null,
+          "candidateRecall40": null,
+          "finalRecall8": null,
+          "searchUs": 136,
+          "selectedBytes": 6791
+        },
+        {
+          "id": "P01",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 3425,
+          "selectedBytes": 5125
+        },
+        {
+          "id": "P02",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 9363,
+          "selectedBytes": 5046
+        },
+        {
+          "id": "P03",
+          "quoteId": null,
+          "candidateRecall40": 0.0,
+          "finalRecall8": 0.0,
+          "searchUs": 6575,
+          "selectedBytes": 4229
+        },
+        {
+          "id": "P04",
+          "quoteId": null,
+          "candidateRecall40": 0.0,
+          "finalRecall8": 0.0,
+          "searchUs": 7368,
+          "selectedBytes": 10046
+        },
+        {
+          "id": "P05",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 0.0,
+          "searchUs": 5124,
+          "selectedBytes": 5376
+        },
+        {
+          "id": "P06",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 0.0,
+          "searchUs": 7523,
+          "selectedBytes": 5337
+        },
+        {
+          "id": "P07",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 0.0,
+          "searchUs": 9443,
+          "selectedBytes": 5729
+        },
+        {
+          "id": "P08",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 10521,
+          "selectedBytes": 4471
+        },
+        {
+          "id": "P09",
+          "quoteId": null,
+          "candidateRecall40": null,
+          "finalRecall8": null,
+          "searchUs": 7529,
+          "selectedBytes": 4495
+        },
+        {
+          "id": "M01",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 22,
+          "selectedBytes": 436
+        },
+        {
+          "id": "M02",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 12,
+          "selectedBytes": 436
+        },
+        {
+          "id": "M03",
+          "quoteId": null,
+          "candidateRecall40": null,
+          "finalRecall8": null,
+          "searchUs": 7,
+          "selectedBytes": 436
+        },
+        {
+          "id": "M04",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 8,
+          "selectedBytes": 436
+        },
+        {
+          "id": "M05",
+          "quoteId": null,
+          "candidateRecall40": null,
+          "finalRecall8": null,
+          "searchUs": 8,
+          "selectedBytes": 436
+        },
+        {
+          "id": "M06",
+          "quoteId": null,
+          "candidateRecall40": null,
+          "finalRecall8": null,
+          "searchUs": 8,
+          "selectedBytes": 0
+        }
+      ]
+    },
+    {
+      "chunks": "groups",
+      "cleanQuery": true,
+      "chunkCount": 1397,
+      "indexBuildUs": 171565,
+      "answerable": 22,
+      "complete40": 18,
+      "complete8": 15,
+      "cases": [
+        {
+          "id": "E01",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 234,
+          "selectedBytes": 6732
+        },
+        {
+          "id": "E02",
+          "quoteId": null,
+          "candidateRecall40": 0.0,
+          "finalRecall8": 0.0,
+          "searchUs": 221,
+          "selectedBytes": 4939,
+          "selected": [
+            "enchiridion:VIII:1-1",
+            "enchiridion:I:1-1",
+            "enchiridion:XX:1-1",
+            "enchiridion:Footnotes:1-3",
+            "enchiridion:Footnotes:4-7",
+            "enchiridion:Main Works on Stoicism and Related Problems:1-6",
+            "enchiridion:INTRODUCTION:3-3",
+            "enchiridion:XXV:1-1"
+          ]
+        },
+        {
+          "id": "E03",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 217,
+          "selectedBytes": 5178
+        },
+        {
+          "id": "E04",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 407,
+          "selectedBytes": 7526
+        },
+        {
+          "id": "E05",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 112,
+          "selectedBytes": 8898
+        },
+        {
+          "id": "E06",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 39,
+          "selectedBytes": 3677
+        },
+        {
+          "id": "E07",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 159,
+          "selectedBytes": 5241
+        },
+        {
+          "id": "E08",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 268,
+          "selectedBytes": 7005
+        },
+        {
+          "id": "E09",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 132,
+          "selectedBytes": 6064
+        },
+        {
+          "id": "E10",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 274,
+          "selectedBytes": 9489
+        },
+        {
+          "id": "E11",
+          "quoteId": "enchiridion:IV:1-1",
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 445,
+          "selectedBytes": 7041
+        },
+        {
+          "id": "E12",
+          "quoteId": null,
+          "candidateRecall40": null,
+          "finalRecall8": null,
+          "searchUs": 126,
+          "selectedBytes": 5602
+        },
+        {
+          "id": "P01",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 2757,
+          "selectedBytes": 5302
+        },
+        {
+          "id": "P02",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 8957,
+          "selectedBytes": 5046
+        },
+        {
+          "id": "P03",
+          "quoteId": null,
+          "candidateRecall40": 0.0,
+          "finalRecall8": 0.0,
+          "searchUs": 5594,
+          "selectedBytes": 4267,
+          "selected": [
+            "pride-and-prejudice:CHAPTER LXI.:1-1",
+            "pride-and-prejudice:CHAPTER LIV.:29-29",
+            "pride-and-prejudice:CHAPTER L.:7-7",
+            "pride-and-prejudice:CHAPTER LV.:34-34",
+            "pride-and-prejudice:CHAPTER XXVI.:11-11",
+            "pride-and-prejudice:CHAPTER XVIII.:76-76",
+            "pride-and-prejudice:CHAPTER XXIII.:8-8",
+            "pride-and-prejudice:CHAPTER XX.:12-17"
+          ]
+        },
+        {
+          "id": "P04",
+          "quoteId": null,
+          "candidateRecall40": 0.0,
+          "finalRecall8": 0.0,
+          "searchUs": 4609,
+          "selectedBytes": 4673,
+          "selected": [
+            "pride-and-prejudice:CHAPTER LX.:1-2",
+            "pride-and-prejudice:CHAPTER XXI.:14-17",
+            "pride-and-prejudice:CHAPTER XIX.:1-1",
+            "pride-and-prejudice:PRIDE. and PREJUDICE:17-17",
+            "pride-and-prejudice:CHAPTER LIV.:17-19",
+            "pride-and-prejudice:CHAPTER IX.:32-34",
+            "pride-and-prejudice:CHAPTER XXXIV.:11-11",
+            "pride-and-prejudice:CHAPTER XXV.:11-11"
+          ]
+        },
+        {
+          "id": "P05",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 0.0,
+          "searchUs": 4630,
+          "selectedBytes": 4934,
+          "selected": [
+            "pride-and-prejudice:CHAPTER LI.:37-37",
+            "pride-and-prejudice:CHAPTER XI.:13-14",
+            "pride-and-prejudice:CHAPTER LXI.:6-6",
+            "pride-and-prejudice:CHAPTER XXXVII.:17-17",
+            "pride-and-prejudice:CHAPTER XXXVI.:1-1",
+            "pride-and-prejudice:CHAPTER LVIII.:12-13",
+            "pride-and-prejudice:CHAPTER XL.:18-20",
+            "pride-and-prejudice:CHAPTER XL.:9-9"
+          ]
+        },
+        {
+          "id": "P06",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 0.0,
+          "searchUs": 6884,
+          "selectedBytes": 5863,
+          "selected": [
+            "pride-and-prejudice:CHAPTER XXVI.:11-11",
+            "pride-and-prejudice:CHAPTER XII.:1-1",
+            "pride-and-prejudice:CHAPTER XVIII.:77-77",
+            "pride-and-prejudice:CHAPTER IX.:2-2",
+            "pride-and-prejudice:CHAPTER VII.:49-49",
+            "pride-and-prejudice:CHAPTER XXI.:6-6",
+            "pride-and-prejudice:CHAPTER XXVI.:25-25",
+            "pride-and-prejudice:CHAPTER IX.:1-1"
+          ]
+        },
+        {
+          "id": "P07",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 0.0,
+          "searchUs": 9850,
+          "selectedBytes": 5729,
+          "selected": [
+            "pride-and-prejudice:CHAPTER XVI.:52-54",
+            "pride-and-prejudice:CHAPTER LVI.:44-44",
+            "pride-and-prejudice:CHAPTER XVIII.:57-57",
+            "pride-and-prejudice:CHAPTERXXVIII.:15-17",
+            "pride-and-prejudice:CHAPTER XXXI.:29-29",
+            "pride-and-prejudice:CHAPTER XIV:1-1",
+            "pride-and-prejudice:CHAPTER XXXVII.:20-20",
+            "pride-and-prejudice:CHAPTER XXIX.:14-14"
+          ]
+        },
+        {
+          "id": "P08",
+          "quoteId": null,
+          "candidateRecall40": 0.0,
+          "finalRecall8": 0.0,
+          "searchUs": 10452,
+          "selectedBytes": 3871,
+          "selected": [
+            "pride-and-prejudice:CHAPTER LIX.:21-23",
+            "pride-and-prejudice:CHAPTER XVIII.:46-47",
+            "pride-and-prejudice:CHAPTER IX.:2-2",
+            "pride-and-prejudice:CHAPTER X.:53-54",
+            "pride-and-prejudice:CHAPTER IX.:39-39",
+            "pride-and-prejudice:CHAPTER LVIII.:1-1",
+            "pride-and-prejudice:CHAPTER XLI.:10-10",
+            "pride-and-prejudice:CHAPTER LXI.:11-11"
+          ]
+        },
+        {
+          "id": "P09",
+          "quoteId": null,
+          "candidateRecall40": null,
+          "finalRecall8": null,
+          "searchUs": 6605,
+          "selectedBytes": 3126
+        },
+        {
+          "id": "M01",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 7,
+          "selectedBytes": 436
+        },
+        {
+          "id": "M02",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 11,
+          "selectedBytes": 436
+        },
+        {
+          "id": "M03",
+          "quoteId": null,
+          "candidateRecall40": null,
+          "finalRecall8": null,
+          "searchUs": 10,
+          "selectedBytes": 436
+        },
+        {
+          "id": "M04",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 7,
+          "selectedBytes": 436
+        },
+        {
+          "id": "M05",
+          "quoteId": null,
+          "candidateRecall40": null,
+          "finalRecall8": null,
+          "searchUs": 6,
+          "selectedBytes": 0
+        },
+        {
+          "id": "M06",
+          "quoteId": null,
+          "candidateRecall40": null,
+          "finalRecall8": null,
+          "searchUs": 7,
+          "selectedBytes": 0
+        }
+      ]
+    },
+    {
+      "chunks": "bounded-groups-1800",
+      "cleanQuery": false,
+      "chunkCount": 1434,
+      "indexBuildUs": 154364,
+      "answerable": 22,
+      "complete40": 19,
+      "complete8": 13,
+      "cases": [
+        {
+          "id": "E01",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 256,
+          "selectedBytes": 6486
+        },
+        {
+          "id": "E02",
+          "quoteId": null,
+          "candidateRecall40": 0.0,
+          "finalRecall8": 0.0,
+          "searchUs": 335,
+          "selectedBytes": 6578
+        },
+        {
+          "id": "E03",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 261,
+          "selectedBytes": 6277
+        },
+        {
+          "id": "E04",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 505,
+          "selectedBytes": 8497
+        },
+        {
+          "id": "E05",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 152,
+          "selectedBytes": 8475
+        },
+        {
+          "id": "E06",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 145,
+          "selectedBytes": 6075
+        },
+        {
+          "id": "E07",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 173,
+          "selectedBytes": 6983
+        },
+        {
+          "id": "E08",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 0.0,
+          "searchUs": 256,
+          "selectedBytes": 7869
+        },
+        {
+          "id": "E09",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 0.5,
+          "searchUs": 249,
+          "selectedBytes": 6464
+        },
+        {
+          "id": "E10",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 181,
+          "selectedBytes": 8394
+        },
+        {
+          "id": "E11",
+          "quoteId": "enchiridion:IV:1-1",
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 509,
+          "selectedBytes": 6689
+        },
+        {
+          "id": "E12",
+          "quoteId": null,
+          "candidateRecall40": null,
+          "finalRecall8": null,
+          "searchUs": 136,
+          "selectedBytes": 6791
+        },
+        {
+          "id": "P01",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 3002,
+          "selectedBytes": 5125
+        },
+        {
+          "id": "P02",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 8447,
+          "selectedBytes": 5046
+        },
+        {
+          "id": "P03",
+          "quoteId": null,
+          "candidateRecall40": 0.0,
+          "finalRecall8": 0.0,
+          "searchUs": 6342,
+          "selectedBytes": 4229
+        },
+        {
+          "id": "P04",
+          "quoteId": null,
+          "candidateRecall40": 0.0,
+          "finalRecall8": 0.0,
+          "searchUs": 6024,
+          "selectedBytes": 8309
+        },
+        {
+          "id": "P05",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 0.0,
+          "searchUs": 5411,
+          "selectedBytes": 5734
+        },
+        {
+          "id": "P06",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 0.0,
+          "searchUs": 7562,
+          "selectedBytes": 5337
+        },
+        {
+          "id": "P07",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 0.0,
+          "searchUs": 9273,
+          "selectedBytes": 5729
+        },
+        {
+          "id": "P08",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 0.0,
+          "searchUs": 10777,
+          "selectedBytes": 4178
+        },
+        {
+          "id": "P09",
+          "quoteId": null,
+          "candidateRecall40": null,
+          "finalRecall8": null,
+          "searchUs": 6802,
+          "selectedBytes": 5004
+        },
+        {
+          "id": "M01",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 8,
+          "selectedBytes": 436
+        },
+        {
+          "id": "M02",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 10,
+          "selectedBytes": 436
+        },
+        {
+          "id": "M03",
+          "quoteId": null,
+          "candidateRecall40": null,
+          "finalRecall8": null,
+          "searchUs": 6,
+          "selectedBytes": 436
+        },
+        {
+          "id": "M04",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 7,
+          "selectedBytes": 436
+        },
+        {
+          "id": "M05",
+          "quoteId": null,
+          "candidateRecall40": null,
+          "finalRecall8": null,
+          "searchUs": 8,
+          "selectedBytes": 436
+        },
+        {
+          "id": "M06",
+          "quoteId": null,
+          "candidateRecall40": null,
+          "finalRecall8": null,
+          "searchUs": 7,
+          "selectedBytes": 0
+        }
+      ]
+    },
+    {
+      "chunks": "bounded-groups-1800",
+      "cleanQuery": true,
+      "chunkCount": 1434,
+      "indexBuildUs": 154364,
+      "answerable": 22,
+      "complete40": 18,
+      "complete8": 15,
+      "cases": [
+        {
+          "id": "E01",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 264,
+          "selectedBytes": 6078
+        },
+        {
+          "id": "E02",
+          "quoteId": null,
+          "candidateRecall40": 0.0,
+          "finalRecall8": 0.0,
+          "searchUs": 250,
+          "selectedBytes": 5038
+        },
+        {
+          "id": "E03",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 246,
+          "selectedBytes": 5178
+        },
+        {
+          "id": "E04",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 518,
+          "selectedBytes": 7053
+        },
+        {
+          "id": "E05",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 119,
+          "selectedBytes": 8865
+        },
+        {
+          "id": "E06",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 41,
+          "selectedBytes": 2605
+        },
+        {
+          "id": "E07",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 169,
+          "selectedBytes": 4807
+        },
+        {
+          "id": "E08",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 296,
+          "selectedBytes": 7005
+        },
+        {
+          "id": "E09",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 147,
+          "selectedBytes": 5410
+        },
+        {
+          "id": "E10",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 202,
+          "selectedBytes": 8512
+        },
+        {
+          "id": "E11",
+          "quoteId": "enchiridion:IV:1-1",
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 385,
+          "selectedBytes": 6387
+        },
+        {
+          "id": "E12",
+          "quoteId": null,
+          "candidateRecall40": null,
+          "finalRecall8": null,
+          "searchUs": 140,
+          "selectedBytes": 5168
+        },
+        {
+          "id": "P01",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 2368,
+          "selectedBytes": 5302
+        },
+        {
+          "id": "P02",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 8321,
+          "selectedBytes": 5046
+        },
+        {
+          "id": "P03",
+          "quoteId": null,
+          "candidateRecall40": 0.0,
+          "finalRecall8": 0.0,
+          "searchUs": 5860,
+          "selectedBytes": 4240
+        },
+        {
+          "id": "P04",
+          "quoteId": null,
+          "candidateRecall40": 0.0,
+          "finalRecall8": 0.0,
+          "searchUs": 4818,
+          "selectedBytes": 4542
+        },
+        {
+          "id": "P05",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 0.0,
+          "searchUs": 4469,
+          "selectedBytes": 4934
+        },
+        {
+          "id": "P06",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 0.0,
+          "searchUs": 8017,
+          "selectedBytes": 5863
+        },
+        {
+          "id": "P07",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 0.0,
+          "searchUs": 10057,
+          "selectedBytes": 5729
+        },
+        {
+          "id": "P08",
+          "quoteId": null,
+          "candidateRecall40": 0.0,
+          "finalRecall8": 0.0,
+          "searchUs": 10058,
+          "selectedBytes": 3871
+        },
+        {
+          "id": "P09",
+          "quoteId": null,
+          "candidateRecall40": null,
+          "finalRecall8": null,
+          "searchUs": 7537,
+          "selectedBytes": 3126
+        },
+        {
+          "id": "M01",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 8,
+          "selectedBytes": 436
+        },
+        {
+          "id": "M02",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 9,
+          "selectedBytes": 436
+        },
+        {
+          "id": "M03",
+          "quoteId": null,
+          "candidateRecall40": null,
+          "finalRecall8": null,
+          "searchUs": 5,
+          "selectedBytes": 436
+        },
+        {
+          "id": "M04",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 6,
+          "selectedBytes": 436
+        },
+        {
+          "id": "M05",
+          "quoteId": null,
+          "candidateRecall40": null,
+          "finalRecall8": null,
+          "searchUs": 5,
+          "selectedBytes": 0
+        },
+        {
+          "id": "M06",
+          "quoteId": null,
+          "candidateRecall40": null,
+          "finalRecall8": null,
+          "searchUs": 6,
+          "selectedBytes": 0
+        }
+      ]
+    },
+    {
+      "chunks": "window-600",
+      "cleanQuery": false,
+      "chunkCount": 2941,
+      "indexBuildUs": 168707,
+      "answerable": 22,
+      "complete40": 14,
+      "complete8": 7,
+      "cases": [
+        {
+          "id": "E01",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 633,
+          "selectedBytes": 3194
+        },
+        {
+          "id": "E02",
+          "quoteId": null,
+          "candidateRecall40": 0.0,
+          "finalRecall8": 0.0,
+          "searchUs": 373,
+          "selectedBytes": 3200
+        },
+        {
+          "id": "E03",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 0.0,
+          "searchUs": 496,
+          "selectedBytes": 3184
+        },
+        {
+          "id": "E04",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 0.0,
+          "searchUs": 910,
+          "selectedBytes": 3656
+        },
+        {
+          "id": "E05",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 347,
+          "selectedBytes": 3696
+        },
+        {
+          "id": "E06",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 0.0,
+          "searchUs": 366,
+          "selectedBytes": 2934
+        },
+        {
+          "id": "E07",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 379,
+          "selectedBytes": 3390
+        },
+        {
+          "id": "E08",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 0.0,
+          "searchUs": 621,
+          "selectedBytes": 3925
+        },
+        {
+          "id": "E09",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 0.5,
+          "searchUs": 588,
+          "selectedBytes": 3194
+        },
+        {
+          "id": "E10",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 0.0,
+          "searchUs": 538,
+          "selectedBytes": 2692
+        },
+        {
+          "id": "E11",
+          "quoteId": "enchiridion:IV:1:0-598",
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 974,
+          "selectedBytes": 3831
+        },
+        {
+          "id": "E12",
+          "quoteId": null,
+          "candidateRecall40": null,
+          "finalRecall8": null,
+          "searchUs": 323,
+          "selectedBytes": 2141
+        },
+        {
+          "id": "P01",
+          "quoteId": null,
+          "candidateRecall40": 0.0,
+          "finalRecall8": 0.0,
+          "searchUs": 4656,
+          "selectedBytes": 1930
+        },
+        {
+          "id": "P02",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 0.0,
+          "searchUs": 14259,
+          "selectedBytes": 2917
+        },
+        {
+          "id": "P03",
+          "quoteId": null,
+          "candidateRecall40": 0.0,
+          "finalRecall8": 0.0,
+          "searchUs": 9736,
+          "selectedBytes": 2786
+        },
+        {
+          "id": "P04",
+          "quoteId": null,
+          "candidateRecall40": 0.0,
+          "finalRecall8": 0.0,
+          "searchUs": 11328,
+          "selectedBytes": 3177
+        },
+        {
+          "id": "P05",
+          "quoteId": null,
+          "candidateRecall40": 0.0,
+          "finalRecall8": 0.0,
+          "searchUs": 8844,
+          "selectedBytes": 3229
+        },
+        {
+          "id": "P06",
+          "quoteId": null,
+          "candidateRecall40": 0.0,
+          "finalRecall8": 0.0,
+          "searchUs": 12176,
+          "selectedBytes": 3440
+        },
+        {
+          "id": "P07",
+          "quoteId": null,
+          "candidateRecall40": 0.0,
+          "finalRecall8": 0.0,
+          "searchUs": 15144,
+          "selectedBytes": 3438
+        },
+        {
+          "id": "P08",
+          "quoteId": null,
+          "candidateRecall40": 0.0,
+          "finalRecall8": 0.0,
+          "searchUs": 17124,
+          "selectedBytes": 3610
+        },
+        {
+          "id": "P09",
+          "quoteId": null,
+          "candidateRecall40": null,
+          "finalRecall8": null,
+          "searchUs": 9525,
+          "selectedBytes": 3196
+        },
+        {
+          "id": "M01",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 18,
+          "selectedBytes": 280
+        },
+        {
+          "id": "M02",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 15,
+          "selectedBytes": 432
+        },
+        {
+          "id": "M03",
+          "quoteId": null,
+          "candidateRecall40": null,
+          "finalRecall8": null,
+          "searchUs": 12,
+          "selectedBytes": 432
+        },
+        {
+          "id": "M04",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 9,
+          "selectedBytes": 280
+        },
+        {
+          "id": "M05",
+          "quoteId": null,
+          "candidateRecall40": null,
+          "finalRecall8": null,
+          "searchUs": 10,
+          "selectedBytes": 280
+        },
+        {
+          "id": "M06",
+          "quoteId": null,
+          "candidateRecall40": null,
+          "finalRecall8": null,
+          "searchUs": 7,
+          "selectedBytes": 0
+        }
+      ]
+    },
+    {
+      "chunks": "window-600",
+      "cleanQuery": true,
+      "chunkCount": 2941,
+      "indexBuildUs": 168707,
+      "answerable": 22,
+      "complete40": 15,
+      "complete8": 8,
+      "cases": [
+        {
+          "id": "E01",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 345,
+          "selectedBytes": 3011
+        },
+        {
+          "id": "E02",
+          "quoteId": null,
+          "candidateRecall40": 0.0,
+          "finalRecall8": 0.0,
+          "searchUs": 364,
+          "selectedBytes": 2679
+        },
+        {
+          "id": "E03",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 0.0,
+          "searchUs": 273,
+          "selectedBytes": 2831
+        },
+        {
+          "id": "E04",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 0.0,
+          "searchUs": 847,
+          "selectedBytes": 3802
+        },
+        {
+          "id": "E05",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 358,
+          "selectedBytes": 3882
+        },
+        {
+          "id": "E06",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 94,
+          "selectedBytes": 2123
+        },
+        {
+          "id": "E07",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 298,
+          "selectedBytes": 987
+        },
+        {
+          "id": "E08",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 0.0,
+          "searchUs": 575,
+          "selectedBytes": 3618
+        },
+        {
+          "id": "E09",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 0.5,
+          "searchUs": 294,
+          "selectedBytes": 3158
+        },
+        {
+          "id": "E10",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 0.0,
+          "searchUs": 409,
+          "selectedBytes": 3541
+        },
+        {
+          "id": "E11",
+          "quoteId": "enchiridion:IV:1:0-598",
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 1027,
+          "selectedBytes": 3991
+        },
+        {
+          "id": "E12",
+          "quoteId": null,
+          "candidateRecall40": null,
+          "finalRecall8": null,
+          "searchUs": 427,
+          "selectedBytes": 1557
+        },
+        {
+          "id": "P01",
+          "quoteId": null,
+          "candidateRecall40": 0.0,
+          "finalRecall8": 0.0,
+          "searchUs": 4098,
+          "selectedBytes": 2592
+        },
+        {
+          "id": "P02",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 0.0,
+          "searchUs": 13946,
+          "selectedBytes": 2917
+        },
+        {
+          "id": "P03",
+          "quoteId": null,
+          "candidateRecall40": 0.0,
+          "finalRecall8": 0.0,
+          "searchUs": 9073,
+          "selectedBytes": 2784
+        },
+        {
+          "id": "P04",
+          "quoteId": null,
+          "candidateRecall40": 0.0,
+          "finalRecall8": 0.0,
+          "searchUs": 8191,
+          "selectedBytes": 3110
+        },
+        {
+          "id": "P05",
+          "quoteId": null,
+          "candidateRecall40": 0.0,
+          "finalRecall8": 0.0,
+          "searchUs": 6936,
+          "selectedBytes": 2122
+        },
+        {
+          "id": "P06",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 0.0,
+          "searchUs": 10433,
+          "selectedBytes": 3440
+        },
+        {
+          "id": "P07",
+          "quoteId": null,
+          "candidateRecall40": 0.0,
+          "finalRecall8": 0.0,
+          "searchUs": 14777,
+          "selectedBytes": 3438
+        },
+        {
+          "id": "P08",
+          "quoteId": null,
+          "candidateRecall40": 0.0,
+          "finalRecall8": 0.0,
+          "searchUs": 17769,
+          "selectedBytes": 3133
+        },
+        {
+          "id": "P09",
+          "quoteId": null,
+          "candidateRecall40": null,
+          "finalRecall8": null,
+          "searchUs": 9014,
+          "selectedBytes": 2598
+        },
+        {
+          "id": "M01",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 10,
+          "selectedBytes": 280
+        },
+        {
+          "id": "M02",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 12,
+          "selectedBytes": 298
+        },
+        {
+          "id": "M03",
+          "quoteId": null,
+          "candidateRecall40": null,
+          "finalRecall8": null,
+          "searchUs": 5,
+          "selectedBytes": 152
+        },
+        {
+          "id": "M04",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 6,
+          "selectedBytes": 146
+        },
+        {
+          "id": "M05",
+          "quoteId": null,
+          "candidateRecall40": null,
+          "finalRecall8": null,
+          "searchUs": 6,
+          "selectedBytes": 0
+        },
+        {
+          "id": "M06",
+          "quoteId": null,
+          "candidateRecall40": null,
+          "finalRecall8": null,
+          "searchUs": 6,
+          "selectedBytes": 0
+        }
+      ]
+    },
+    {
+      "chunks": "window-1200",
+      "cleanQuery": false,
+      "chunkCount": 2436,
+      "indexBuildUs": 174263,
+      "answerable": 22,
+      "complete40": 16,
+      "complete8": 11,
+      "cases": [
+        {
+          "id": "E01",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 325,
+          "selectedBytes": 5091
+        },
+        {
+          "id": "E02",
+          "quoteId": null,
+          "candidateRecall40": 0.0,
+          "finalRecall8": 0.0,
+          "searchUs": 288,
+          "selectedBytes": 5164
+        },
+        {
+          "id": "E03",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 385,
+          "selectedBytes": 2840
+        },
+        {
+          "id": "E04",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 688,
+          "selectedBytes": 6005
+        },
+        {
+          "id": "E05",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 302,
+          "selectedBytes": 6051
+        },
+        {
+          "id": "E06",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 266,
+          "selectedBytes": 4423
+        },
+        {
+          "id": "E07",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 545,
+          "selectedBytes": 5354
+        },
+        {
+          "id": "E08",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 0.0,
+          "searchUs": 402,
+          "selectedBytes": 5781
+        },
+        {
+          "id": "E09",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 0.0,
+          "searchUs": 396,
+          "selectedBytes": 3591
+        },
+        {
+          "id": "E10",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 0.0,
+          "searchUs": 323,
+          "selectedBytes": 5321
+        },
+        {
+          "id": "E11",
+          "quoteId": "enchiridion:IV:1:0-656",
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 1349,
+          "selectedBytes": 6020
+        },
+        {
+          "id": "E12",
+          "quoteId": null,
+          "candidateRecall40": null,
+          "finalRecall8": null,
+          "searchUs": 347,
+          "selectedBytes": 4176
+        },
+        {
+          "id": "P01",
+          "quoteId": null,
+          "candidateRecall40": 0.0,
+          "finalRecall8": 0.0,
+          "searchUs": 6307,
+          "selectedBytes": 1845
+        },
+        {
+          "id": "P02",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 12757,
+          "selectedBytes": 3444
+        },
+        {
+          "id": "P03",
+          "quoteId": null,
+          "candidateRecall40": 0.0,
+          "finalRecall8": 0.0,
+          "searchUs": 8750,
+          "selectedBytes": 2295
+        },
+        {
+          "id": "P04",
+          "quoteId": null,
+          "candidateRecall40": 0.0,
+          "finalRecall8": 0.0,
+          "searchUs": 10848,
+          "selectedBytes": 7241
+        },
+        {
+          "id": "P05",
+          "quoteId": null,
+          "candidateRecall40": 0.0,
+          "finalRecall8": 0.0,
+          "searchUs": 5980,
+          "selectedBytes": 3522
+        },
+        {
+          "id": "P06",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 0.0,
+          "searchUs": 10425,
+          "selectedBytes": 4591
+        },
+        {
+          "id": "P07",
+          "quoteId": null,
+          "candidateRecall40": 0.0,
+          "finalRecall8": 0.0,
+          "searchUs": 13965,
+          "selectedBytes": 2577
+        },
+        {
+          "id": "P08",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 0.0,
+          "searchUs": 18495,
+          "selectedBytes": 4606
+        },
+        {
+          "id": "P09",
+          "quoteId": null,
+          "candidateRecall40": null,
+          "finalRecall8": null,
+          "searchUs": 9785,
+          "selectedBytes": 2182
+        },
+        {
+          "id": "M01",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 37,
+          "selectedBytes": 280
+        },
+        {
+          "id": "M02",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 22,
+          "selectedBytes": 432
+        },
+        {
+          "id": "M03",
+          "quoteId": null,
+          "candidateRecall40": null,
+          "finalRecall8": null,
+          "searchUs": 13,
+          "selectedBytes": 432
+        },
+        {
+          "id": "M04",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 9,
+          "selectedBytes": 280
+        },
+        {
+          "id": "M05",
+          "quoteId": null,
+          "candidateRecall40": null,
+          "finalRecall8": null,
+          "searchUs": 29,
+          "selectedBytes": 280
+        },
+        {
+          "id": "M06",
+          "quoteId": null,
+          "candidateRecall40": null,
+          "finalRecall8": null,
+          "searchUs": 9,
+          "selectedBytes": 0
+        }
+      ]
+    },
+    {
+      "chunks": "window-1200",
+      "cleanQuery": true,
+      "chunkCount": 2436,
+      "indexBuildUs": 174263,
+      "answerable": 22,
+      "complete40": 16,
+      "complete8": 13,
+      "cases": [
+        {
+          "id": "E01",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 285,
+          "selectedBytes": 4178
+        },
+        {
+          "id": "E02",
+          "quoteId": null,
+          "candidateRecall40": 0.0,
+          "finalRecall8": 0.0,
+          "searchUs": 479,
+          "selectedBytes": 1395
+        },
+        {
+          "id": "E03",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 371,
+          "selectedBytes": 3325
+        },
+        {
+          "id": "E04",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 668,
+          "selectedBytes": 5918
+        },
+        {
+          "id": "E05",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 231,
+          "selectedBytes": 5658
+        },
+        {
+          "id": "E06",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 74,
+          "selectedBytes": 1925
+        },
+        {
+          "id": "E07",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 323,
+          "selectedBytes": 987
+        },
+        {
+          "id": "E08",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 354,
+          "selectedBytes": 6392
+        },
+        {
+          "id": "E09",
+          "quoteId": null,
+          "candidateRecall40": 0.5,
+          "finalRecall8": 0.0,
+          "searchUs": 208,
+          "selectedBytes": 4308
+        },
+        {
+          "id": "E10",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 284,
+          "selectedBytes": 5847
+        },
+        {
+          "id": "E11",
+          "quoteId": "enchiridion:IV:1:0-656",
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 559,
+          "selectedBytes": 5787
+        },
+        {
+          "id": "E12",
+          "quoteId": null,
+          "candidateRecall40": null,
+          "finalRecall8": null,
+          "searchUs": 250,
+          "selectedBytes": 1442
+        },
+        {
+          "id": "P01",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 0.0,
+          "searchUs": 3419,
+          "selectedBytes": 2116
+        },
+        {
+          "id": "P02",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 11104,
+          "selectedBytes": 3444
+        },
+        {
+          "id": "P03",
+          "quoteId": null,
+          "candidateRecall40": 0.0,
+          "finalRecall8": 0.0,
+          "searchUs": 7902,
+          "selectedBytes": 2456
+        },
+        {
+          "id": "P04",
+          "quoteId": null,
+          "candidateRecall40": 0.0,
+          "finalRecall8": 0.0,
+          "searchUs": 6205,
+          "selectedBytes": 3521
+        },
+        {
+          "id": "P05",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 0.0,
+          "searchUs": 5419,
+          "selectedBytes": 2100
+        },
+        {
+          "id": "P06",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 0.0,
+          "searchUs": 9309,
+          "selectedBytes": 4725
+        },
+        {
+          "id": "P07",
+          "quoteId": null,
+          "candidateRecall40": 0.0,
+          "finalRecall8": 0.0,
+          "searchUs": 12915,
+          "selectedBytes": 2577
+        },
+        {
+          "id": "P08",
+          "quoteId": null,
+          "candidateRecall40": 0.0,
+          "finalRecall8": 0.0,
+          "searchUs": 13294,
+          "selectedBytes": 3229
+        },
+        {
+          "id": "P09",
+          "quoteId": null,
+          "candidateRecall40": null,
+          "finalRecall8": null,
+          "searchUs": 8294,
+          "selectedBytes": 2145
+        },
+        {
+          "id": "M01",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 9,
+          "selectedBytes": 280
+        },
+        {
+          "id": "M02",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 11,
+          "selectedBytes": 298
+        },
+        {
+          "id": "M03",
+          "quoteId": null,
+          "candidateRecall40": null,
+          "finalRecall8": null,
+          "searchUs": 5,
+          "selectedBytes": 152
+        },
+        {
+          "id": "M04",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 6,
+          "selectedBytes": 146
+        },
+        {
+          "id": "M05",
+          "quoteId": null,
+          "candidateRecall40": null,
+          "finalRecall8": null,
+          "searchUs": 6,
+          "selectedBytes": 0
+        },
+        {
+          "id": "M06",
+          "quoteId": null,
+          "candidateRecall40": null,
+          "finalRecall8": null,
+          "searchUs": 6,
+          "selectedBytes": 0
+        }
+      ]
+    },
+    {
+      "chunks": "window-1800",
+      "cleanQuery": false,
+      "chunkCount": 2363,
+      "indexBuildUs": 150796,
+      "answerable": 22,
+      "complete40": 17,
+      "complete8": 10,
+      "cases": [
+        {
+          "id": "E01",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 342,
+          "selectedBytes": 4904
+        },
+        {
+          "id": "E02",
+          "quoteId": null,
+          "candidateRecall40": 0.0,
+          "finalRecall8": 0.0,
+          "searchUs": 303,
+          "selectedBytes": 5079
+        },
+        {
+          "id": "E03",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 256,
+          "selectedBytes": 3978
+        },
+        {
+          "id": "E04",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 571,
+          "selectedBytes": 8196
+        },
+        {
+          "id": "E05",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 229,
+          "selectedBytes": 7681
+        },
+        {
+          "id": "E06",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 0.0,
+          "searchUs": 183,
+          "selectedBytes": 5185
+        },
+        {
+          "id": "E07",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 298,
+          "selectedBytes": 6384
+        },
+        {
+          "id": "E08",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 0.0,
+          "searchUs": 304,
+          "selectedBytes": 5993
+        },
+        {
+          "id": "E09",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 0.5,
+          "searchUs": 305,
+          "selectedBytes": 5186
+        },
+        {
+          "id": "E10",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 0.0,
+          "searchUs": 306,
+          "selectedBytes": 6702
+        },
+        {
+          "id": "E11",
+          "quoteId": "enchiridion:IV:1:0-656",
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 498,
+          "selectedBytes": 6388
+        },
+        {
+          "id": "E12",
+          "quoteId": null,
+          "candidateRecall40": null,
+          "finalRecall8": null,
+          "searchUs": 213,
+          "selectedBytes": 4958
+        },
+        {
+          "id": "P01",
+          "quoteId": null,
+          "candidateRecall40": 0.0,
+          "finalRecall8": 0.0,
+          "searchUs": 3321,
+          "selectedBytes": 2603
+        },
+        {
+          "id": "P02",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 9800,
+          "selectedBytes": 3444
+        },
+        {
+          "id": "P03",
+          "quoteId": null,
+          "candidateRecall40": 0.0,
+          "finalRecall8": 0.0,
+          "searchUs": 8545,
+          "selectedBytes": 2295
+        },
+        {
+          "id": "P04",
+          "quoteId": null,
+          "candidateRecall40": 0.0,
+          "finalRecall8": 0.0,
+          "searchUs": 7382,
+          "selectedBytes": 7399
+        },
+        {
+          "id": "P05",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 0.0,
+          "searchUs": 6276,
+          "selectedBytes": 4118
+        },
+        {
+          "id": "P06",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 0.0,
+          "searchUs": 9490,
+          "selectedBytes": 4591
+        },
+        {
+          "id": "P07",
+          "quoteId": null,
+          "candidateRecall40": 0.0,
+          "finalRecall8": 0.0,
+          "searchUs": 12948,
+          "selectedBytes": 2577
+        },
+        {
+          "id": "P08",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 0.0,
+          "searchUs": 14099,
+          "selectedBytes": 3528
+        },
+        {
+          "id": "P09",
+          "quoteId": null,
+          "candidateRecall40": null,
+          "finalRecall8": null,
+          "searchUs": 8278,
+          "selectedBytes": 1930
+        },
+        {
+          "id": "M01",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 15,
+          "selectedBytes": 280
+        },
+        {
+          "id": "M02",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 14,
+          "selectedBytes": 432
+        },
+        {
+          "id": "M03",
+          "quoteId": null,
+          "candidateRecall40": null,
+          "finalRecall8": null,
+          "searchUs": 11,
+          "selectedBytes": 432
+        },
+        {
+          "id": "M04",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 9,
+          "selectedBytes": 280
+        },
+        {
+          "id": "M05",
+          "quoteId": null,
+          "candidateRecall40": null,
+          "finalRecall8": null,
+          "searchUs": 14,
+          "selectedBytes": 280
+        },
+        {
+          "id": "M06",
+          "quoteId": null,
+          "candidateRecall40": null,
+          "finalRecall8": null,
+          "searchUs": 7,
+          "selectedBytes": 0
+        }
+      ]
+    },
+    {
+      "chunks": "window-1800",
+      "cleanQuery": true,
+      "chunkCount": 2363,
+      "indexBuildUs": 150796,
+      "answerable": 22,
+      "complete40": 17,
+      "complete8": 14,
+      "cases": [
+        {
+          "id": "E01",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 254,
+          "selectedBytes": 5780
+        },
+        {
+          "id": "E02",
+          "quoteId": null,
+          "candidateRecall40": 0.0,
+          "finalRecall8": 0.0,
+          "searchUs": 333,
+          "selectedBytes": 1395
+        },
+        {
+          "id": "E03",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 317,
+          "selectedBytes": 3559
+        },
+        {
+          "id": "E04",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 553,
+          "selectedBytes": 6168
+        },
+        {
+          "id": "E05",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 203,
+          "selectedBytes": 7879
+        },
+        {
+          "id": "E06",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 72,
+          "selectedBytes": 2536
+        },
+        {
+          "id": "E07",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 257,
+          "selectedBytes": 987
+        },
+        {
+          "id": "E08",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 329,
+          "selectedBytes": 6856
+        },
+        {
+          "id": "E09",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 186,
+          "selectedBytes": 5112
+        },
+        {
+          "id": "E10",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 218,
+          "selectedBytes": 7450
+        },
+        {
+          "id": "E11",
+          "quoteId": "enchiridion:IV:1:0-656",
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 549,
+          "selectedBytes": 6387
+        },
+        {
+          "id": "E12",
+          "quoteId": null,
+          "candidateRecall40": null,
+          "finalRecall8": null,
+          "searchUs": 208,
+          "selectedBytes": 1442
+        },
+        {
+          "id": "P01",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 0.0,
+          "searchUs": 3302,
+          "selectedBytes": 2116
+        },
+        {
+          "id": "P02",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 9890,
+          "selectedBytes": 3444
+        },
+        {
+          "id": "P03",
+          "quoteId": null,
+          "candidateRecall40": 0.0,
+          "finalRecall8": 0.0,
+          "searchUs": 8057,
+          "selectedBytes": 2456
+        },
+        {
+          "id": "P04",
+          "quoteId": null,
+          "candidateRecall40": 0.0,
+          "finalRecall8": 0.0,
+          "searchUs": 5967,
+          "selectedBytes": 2073
+        },
+        {
+          "id": "P05",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 0.0,
+          "searchUs": 6479,
+          "selectedBytes": 2100
+        },
+        {
+          "id": "P06",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 0.0,
+          "searchUs": 8426,
+          "selectedBytes": 4725
+        },
+        {
+          "id": "P07",
+          "quoteId": null,
+          "candidateRecall40": 0.0,
+          "finalRecall8": 0.0,
+          "searchUs": 11372,
+          "selectedBytes": 2577
+        },
+        {
+          "id": "P08",
+          "quoteId": null,
+          "candidateRecall40": 0.0,
+          "finalRecall8": 0.0,
+          "searchUs": 14369,
+          "selectedBytes": 2976
+        },
+        {
+          "id": "P09",
+          "quoteId": null,
+          "candidateRecall40": null,
+          "finalRecall8": null,
+          "searchUs": 8955,
+          "selectedBytes": 1946
+        },
+        {
+          "id": "M01",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 10,
+          "selectedBytes": 280
+        },
+        {
+          "id": "M02",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 12,
+          "selectedBytes": 298
+        },
+        {
+          "id": "M03",
+          "quoteId": null,
+          "candidateRecall40": null,
+          "finalRecall8": null,
+          "searchUs": 5,
+          "selectedBytes": 152
+        },
+        {
+          "id": "M04",
+          "quoteId": null,
+          "candidateRecall40": 1.0,
+          "finalRecall8": 1.0,
+          "searchUs": 6,
+          "selectedBytes": 146
+        },
+        {
+          "id": "M05",
+          "quoteId": null,
+          "candidateRecall40": null,
+          "finalRecall8": null,
+          "searchUs": 6,
+          "selectedBytes": 0
+        },
+        {
+          "id": "M06",
+          "quoteId": null,
+          "candidateRecall40": null,
+          "finalRecall8": null,
+          "searchUs": 9,
+          "selectedBytes": 0
+        }
+      ]
+    }
+  ]
+}

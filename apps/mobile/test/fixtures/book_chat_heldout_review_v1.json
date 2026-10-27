@@ -1,0 +1,883 @@
+{
+  "reviewer": "assistant; not a human blind review",
+  "policy": "supported only when each claim follows from its cited retrieved source; uncertain/inference/attribution failures count against direct support; inspect negative notes too",
+  "reviews": [
+    {
+      "run": 1,
+      "id": "H-A01",
+      "outputSourceHash": "487ca8d162c5cf6ea0c31ed6e40e70512872ec7eb2f80c30ccaebd28f8ee4b08",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "noteSupported": true,
+      "comment": "Each factual statement is directly supported by its cited source; reviewed complete referenced paragraphs."
+    },
+    {
+      "run": 1,
+      "id": "H-A02",
+      "outputSourceHash": "c0a17583c72fd5e41a3aa9e8c2a0662d3dadf378fb3b592ab2342185d6c25bae",
+      "claimVerdicts": [
+        "supported",
+        "supported",
+        "supported",
+        "supported"
+      ],
+      "noteSupported": true,
+      "comment": "Each factual statement is directly supported by its cited source; reviewed complete referenced paragraphs."
+    },
+    {
+      "run": 1,
+      "id": "H-A03",
+      "outputSourceHash": "aaca3d99ba8f4e653e09388613b0b9808cc7861e52e88bc525ec3305c670e118",
+      "claimVerdicts": [
+        "supported",
+        "supported",
+        "supported",
+        "supported"
+      ],
+      "noteSupported": true,
+      "comment": "Each factual statement is directly supported by its cited source; reviewed complete referenced paragraphs."
+    },
+    {
+      "run": 1,
+      "id": "H-A04",
+      "outputSourceHash": "0ff0a51c161df195c80a498a6a59e45058d1108b69603cf3a6143b54449bfdde",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "noteSupported": true,
+      "comment": "Each factual statement is directly supported by its cited source; reviewed complete referenced paragraphs."
+    },
+    {
+      "run": 1,
+      "id": "H-A05",
+      "outputSourceHash": "443f70bfc197b3cf455519a7b06cb95846a51935ca5b3e09dc0489a1c6604ed1",
+      "claimVerdicts": [
+        "supported",
+        "supported"
+      ],
+      "noteSupported": true,
+      "comment": "Each factual statement is directly supported by its cited source; reviewed complete referenced paragraphs."
+    },
+    {
+      "run": 1,
+      "id": "H-A06",
+      "outputSourceHash": "3d29a8ade92f6183f4602ce0708cf689a35bbc06dabd55372ed663f7c2c683e1",
+      "claimVerdicts": [
+        "source_supported_wrong_referent",
+        "source_supported_wrong_referent"
+      ],
+      "noteSupported": true,
+      "comment": "Cited facts concern the later unlabelled bottle, while history explicitly refers to the earlier DRINK ME bottle. Count both claims conservatively against support/relevance; numeric follow-up not answered."
+    },
+    {
+      "run": 1,
+      "id": "H-A07",
+      "outputSourceHash": "8453e977f4bc5316a13f28bfd860231f53fbc8b0a337c3b5fefc8fc3a0429d05",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "noteSupported": true,
+      "comment": "All claims reviewed against complete cited retrieved text; no unsupported factual addition identified."
+    },
+    {
+      "run": 1,
+      "id": "H-A08",
+      "outputSourceHash": "a7b586d2aab0064c91ba65fd561f37587d099ce873f15d2fce5b69e1b2345695",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "noteSupported": true,
+      "comment": "All claims reviewed against complete cited retrieved text; no unsupported factual addition identified."
+    },
+    {
+      "run": 1,
+      "id": "H-A09",
+      "outputSourceHash": "3d78729334d445839e12f928aa2a0a17a7ba7ce5597bf81d38ce6645177c6082",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "noteSupported": true,
+      "comment": "All claims reviewed against complete cited retrieved text; no unsupported factual addition identified."
+    },
+    {
+      "run": 1,
+      "id": "H-A10",
+      "outputSourceHash": "a8598353e66b0c36ef3ccc4b353f87d5731e61269ce052ec3af8cb6edcbe7c0e",
+      "claimVerdicts": [
+        "supported",
+        "supported"
+      ],
+      "noteSupported": true,
+      "comment": "All claims reviewed against complete cited retrieved text; no unsupported factual addition identified."
+    },
+    {
+      "run": 1,
+      "id": "H-A11",
+      "outputSourceHash": "b3ae9048c40171dbbec6bf9a5c74a7bbf1ee9c4b4feb434e39e1f617e3230a85",
+      "claimVerdicts": [
+        "supported",
+        "supported",
+        "supported"
+      ],
+      "noteSupported": true,
+      "comment": "All claims reviewed against complete cited retrieved text; no unsupported factual addition identified."
+    },
+    {
+      "run": 1,
+      "id": "H-A12",
+      "outputSourceHash": "c72ec0fad64cef2797a117f639df7c78c4218134e9e6a2785bb36be1e9b548bd",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "noteSupported": true,
+      "comment": "All claims reviewed against complete cited retrieved text; no unsupported factual addition identified."
+    },
+    {
+      "run": 1,
+      "id": "H-A13",
+      "outputSourceHash": "4d23c558ca15f51986a4e8b2722396dec850633b5d0b031b31e38a535c61a510",
+      "claimVerdicts": [
+        "supported",
+        "supported"
+      ],
+      "noteSupported": true,
+      "comment": "All claims reviewed against complete cited retrieved text; no unsupported factual addition identified."
+    },
+    {
+      "run": 1,
+      "id": "H-A14",
+      "outputSourceHash": "c05f6ee09eeda8348b23a3817c96acc38928158326b66c6625730f8517ec86e8",
+      "claimVerdicts": [
+        "supported",
+        "supported"
+      ],
+      "noteSupported": true,
+      "comment": "All claims reviewed against complete cited retrieved text; no unsupported factual addition identified."
+    },
+    {
+      "run": 1,
+      "id": "H-A15",
+      "outputSourceHash": "dfb536b64e170ddacb68d06d0a5bd92ff50d58c53800d9a153ca24dbfdacf812",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "noteSupported": true,
+      "comment": "All claims reviewed against complete cited retrieved text; no unsupported factual addition identified."
+    },
+    {
+      "run": 1,
+      "id": "H-A16",
+      "outputSourceHash": "eeb63744fca1184ad7d680f85921788d4816b19f4012262a29a1b47d7486a212",
+      "claimVerdicts": [],
+      "noteSupported": true,
+      "comment": "Negative answer and limitation/clarification note checked. No invented requested fact; M18 and M20 ancillary source descriptions verified against retrieved text."
+    },
+    {
+      "run": 1,
+      "id": "H-A17",
+      "outputSourceHash": "7448bb14f710d55b13a39b31855b06efc7e7f117918ed05bf0a8ea702bfb60ac",
+      "claimVerdicts": [],
+      "noteSupported": true,
+      "comment": "Negative answer and limitation/clarification note checked. No invented requested fact; M18 and M20 ancillary source descriptions verified against retrieved text."
+    },
+    {
+      "run": 1,
+      "id": "H-A18",
+      "outputSourceHash": "758b8392c9b839e855edbe91864bdb1961bc7ddc2c9f2efa07d1d5fd15c8ad7e",
+      "claimVerdicts": [],
+      "noteSupported": true,
+      "comment": "Negative answer and limitation/clarification note checked. No invented requested fact; M18 and M20 ancillary source descriptions verified against retrieved text."
+    },
+    {
+      "run": 1,
+      "id": "H-A19",
+      "outputSourceHash": "f15efb3fa5181c57500452eeb982945b28fa751f8639b1d95cc8d4edd4d54a81",
+      "claimVerdicts": [],
+      "noteSupported": true,
+      "comment": "Negative answer and limitation/clarification note checked. No invented requested fact; M18 and M20 ancillary source descriptions verified against retrieved text."
+    },
+    {
+      "run": 1,
+      "id": "H-A20",
+      "outputSourceHash": "519d53e7c6a398111eeb7a104c87503e262246839fe8b9104359168f54d2053b",
+      "claimVerdicts": [],
+      "noteSupported": true,
+      "comment": "Negative answer and limitation/clarification note checked. No invented requested fact; M18 and M20 ancillary source descriptions verified against retrieved text."
+    },
+    {
+      "run": 1,
+      "id": "H-M01",
+      "outputSourceHash": "b2a4cc38c89d1a133bc57a89eb2e5536da7aff2c13c4074b5e6058ef0de5d805",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "noteSupported": true,
+      "comment": "All claims reviewed against complete cited retrieved text; no unsupported factual addition identified."
+    },
+    {
+      "run": 1,
+      "id": "H-M02",
+      "outputSourceHash": "b2f78d7cf11fe62ac968064b8b5f16a41efb66690088005b88ead276405b934e",
+      "claimVerdicts": [
+        "supported",
+        "supported",
+        "supported",
+        "supported"
+      ],
+      "noteSupported": true,
+      "comment": "All claims reviewed against complete cited retrieved text; no unsupported factual addition identified."
+    },
+    {
+      "run": 1,
+      "id": "H-M03",
+      "outputSourceHash": "5ce6b5763f90b891d62aacad836bc52b93485540dcc6bf556cd419b3f5fb5c3b",
+      "claimVerdicts": [
+        "supported",
+        "supported",
+        "supported"
+      ],
+      "noteSupported": true,
+      "comment": "All claims reviewed against complete cited retrieved text; no unsupported factual addition identified."
+    },
+    {
+      "run": 1,
+      "id": "H-M04",
+      "outputSourceHash": "c9d8389833dda4f91382cf1a670714472583356355677f3542a6bb0e5228a5df",
+      "claimVerdicts": [
+        "supported",
+        "supported",
+        "supported"
+      ],
+      "noteSupported": true,
+      "comment": "All claims reviewed against complete cited retrieved text; no unsupported factual addition identified."
+    },
+    {
+      "run": 1,
+      "id": "H-M05",
+      "outputSourceHash": "11646a05ec1d905253ea1129a5044335f22ae0c41d69663e81e62ad727afe1fa",
+      "claimVerdicts": [
+        "supported",
+        "uncertain_translation",
+        "supported"
+      ],
+      "noteSupported": true,
+      "comment": "Core reading advice supported. Claim2 renders old-English curiosity as keingintahuan, a questionable meaning in a style-of-writing context; counted against direct support."
+    },
+    {
+      "run": 1,
+      "id": "H-M06",
+      "outputSourceHash": "fc04aeaba694b8128dc6302525d4d2e9a3fcc33b576dd1346d51e24fb3201c2e",
+      "claimVerdicts": [
+        "supported",
+        "supported",
+        "supported"
+      ],
+      "noteSupported": true,
+      "comment": "All claims reviewed against complete cited retrieved text; no unsupported factual addition identified."
+    },
+    {
+      "run": 1,
+      "id": "H-M07",
+      "outputSourceHash": "ab3e1a2f780d72261a440e1b254e891d6464780760ab7aa120019ff4f3c51933",
+      "claimVerdicts": [
+        "supported",
+        "supported",
+        "supported",
+        "supported"
+      ],
+      "noteSupported": true,
+      "comment": "All claims reviewed against complete cited retrieved text; no unsupported factual addition identified."
+    },
+    {
+      "run": 1,
+      "id": "H-M08",
+      "outputSourceHash": "3743496f59641104d1eac584dbf5e70caa0b8635348c0429c99b327a69528603",
+      "claimVerdicts": [
+        "supported",
+        "supported"
+      ],
+      "noteSupported": true,
+      "comment": "All claims reviewed against complete cited retrieved text; no unsupported factual addition identified."
+    },
+    {
+      "run": 1,
+      "id": "H-M09",
+      "outputSourceHash": "e78b81b8fcce52dbc43e705024d1f41bfb2d0b01588b964e1ce449b761a3c860",
+      "claimVerdicts": [
+        "supported",
+        "supported",
+        "uncertain_translation"
+      ],
+      "noteSupported": true,
+      "comment": "Core morning/common-good advice supported. Claim3 uses material without preserving whether it matters who performs the just act; ambiguous mistranslation, counted against support."
+    },
+    {
+      "run": 1,
+      "id": "H-M10",
+      "outputSourceHash": "9a194c5d2761030e1145f5410f698a8818423994c9433ced222462d80a4f9f0f",
+      "claimVerdicts": [
+        "supported",
+        "supported"
+      ],
+      "noteSupported": true,
+      "comment": "All claims reviewed against complete cited retrieved text; no unsupported factual addition identified."
+    },
+    {
+      "run": 1,
+      "id": "H-M11",
+      "outputSourceHash": "84806582fda8ff01e530e350472a5bfe001b84051916e358592d5cc94812ecfb",
+      "claimVerdicts": [
+        "supported",
+        "supported",
+        "supported",
+        "supported"
+      ],
+      "noteSupported": true,
+      "comment": "All claims reviewed against complete cited retrieved text; no unsupported factual addition identified."
+    },
+    {
+      "run": 1,
+      "id": "H-M12",
+      "outputSourceHash": "9176b8c3dffa27b5ebb2a1d5c3413897f79a880e370d78c436e050a5a4303209",
+      "claimVerdicts": [
+        "supported",
+        "supported",
+        "supported",
+        "supported"
+      ],
+      "noteSupported": true,
+      "comment": "All claims reviewed against complete cited retrieved text; no unsupported factual addition identified."
+    },
+    {
+      "run": 1,
+      "id": "H-M13",
+      "outputSourceHash": "b7bf2166f0cab54f6b29ca626fa6f9f26efd0f62b50712603c34d138cd622ac1",
+      "claimVerdicts": [
+        "supported",
+        "supported",
+        "supported"
+      ],
+      "noteSupported": true,
+      "comment": "All three claims supported by cited introduction/biographical sources. Frozen gold range points elsewhere; keep range coverage0 without silently adding alternatives."
+    },
+    {
+      "run": 1,
+      "id": "H-M14",
+      "outputSourceHash": "0981e5332067a3c550ab52a15686e495c56f566ee28d43154ce9e42e701a92ee",
+      "claimVerdicts": [],
+      "noteSupported": true,
+      "comment": "No claims; appropriate source-limited refusal, but fails to answer answerable case because final retrieval omitted required passage."
+    },
+    {
+      "run": 1,
+      "id": "H-M15",
+      "outputSourceHash": "4836998aa6d1d5282f67ad792c60f76ef036fb2d0c1eafa4a1958315726194e3",
+      "claimVerdicts": [
+        "supported",
+        "supported",
+        "supported",
+        "supported"
+      ],
+      "noteSupported": true,
+      "comment": "All claims reviewed against complete cited retrieved text; no unsupported factual addition identified."
+    },
+    {
+      "run": 1,
+      "id": "H-M16",
+      "outputSourceHash": "5719945f22a6a05c671862e7e32d4adc13acaed7f913acfafbbf782fc0184d05",
+      "claimVerdicts": [],
+      "noteSupported": true,
+      "comment": "Negative answer and limitation/clarification note checked. No invented requested fact; M18 and M20 ancillary source descriptions verified against retrieved text."
+    },
+    {
+      "run": 1,
+      "id": "H-M17",
+      "outputSourceHash": "489f174f9af3f7bf1bd0193ca9c8e9217650b749f487d78e162a3389f5d35f3a",
+      "claimVerdicts": [],
+      "noteSupported": true,
+      "comment": "Negative answer and limitation/clarification note checked. No invented requested fact; M18 and M20 ancillary source descriptions verified against retrieved text."
+    },
+    {
+      "run": 1,
+      "id": "H-M18",
+      "outputSourceHash": "269e284f6a261a1cddcbf8d0cbef3b775cb8dd18b762599b55392d5ecd6d5831",
+      "claimVerdicts": [],
+      "noteSupported": true,
+      "comment": "Negative answer and limitation/clarification note checked. No invented requested fact; M18 and M20 ancillary source descriptions verified against retrieved text."
+    },
+    {
+      "run": 1,
+      "id": "H-M19",
+      "outputSourceHash": "0cc1fa4a212d990acb24408fcdd85a29eed87b48b75c54dfe2c788b439047b3a",
+      "claimVerdicts": [],
+      "noteSupported": true,
+      "comment": "Negative answer and limitation/clarification note checked. No invented requested fact; M18 and M20 ancillary source descriptions verified against retrieved text."
+    },
+    {
+      "run": 1,
+      "id": "H-M20",
+      "outputSourceHash": "ae0f19c1afadebc1eb8e95b23ca2aef74e159929d961cfb9a81e979b49185880",
+      "claimVerdicts": [],
+      "noteSupported": true,
+      "comment": "Negative answer and limitation/clarification note checked. No invented requested fact; M18 and M20 ancillary source descriptions verified against retrieved text."
+    },
+    {
+      "run": 2,
+      "id": "H-A01",
+      "outputSourceHash": "487ca8d162c5cf6ea0c31ed6e40e70512872ec7eb2f80c30ccaebd28f8ee4b08",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "noteSupported": true,
+      "comment": "Exact parsed answer and source snapshot match run1; same reviewed verdict. Each factual statement is directly supported by its cited source; reviewed complete referenced paragraphs."
+    },
+    {
+      "run": 2,
+      "id": "H-A04",
+      "outputSourceHash": "0ff0a51c161df195c80a498a6a59e45058d1108b69603cf3a6143b54449bfdde",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "noteSupported": true,
+      "comment": "Exact parsed answer and source snapshot match run1; same reviewed verdict. Each factual statement is directly supported by its cited source; reviewed complete referenced paragraphs."
+    },
+    {
+      "run": 2,
+      "id": "H-A05",
+      "outputSourceHash": "443f70bfc197b3cf455519a7b06cb95846a51935ca5b3e09dc0489a1c6604ed1",
+      "claimVerdicts": [
+        "supported",
+        "supported"
+      ],
+      "noteSupported": true,
+      "comment": "Exact parsed answer and source snapshot match run1; same reviewed verdict. Each factual statement is directly supported by its cited source; reviewed complete referenced paragraphs."
+    },
+    {
+      "run": 2,
+      "id": "H-A07",
+      "outputSourceHash": "8453e977f4bc5316a13f28bfd860231f53fbc8b0a337c3b5fefc8fc3a0429d05",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "noteSupported": true,
+      "comment": "Exact parsed answer and source snapshot match run1; same reviewed verdict. All claims reviewed against complete cited retrieved text; no unsupported factual addition identified."
+    },
+    {
+      "run": 2,
+      "id": "H-A08",
+      "outputSourceHash": "a7b586d2aab0064c91ba65fd561f37587d099ce873f15d2fce5b69e1b2345695",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "noteSupported": true,
+      "comment": "Exact parsed answer and source snapshot match run1; same reviewed verdict. All claims reviewed against complete cited retrieved text; no unsupported factual addition identified."
+    },
+    {
+      "run": 2,
+      "id": "H-A09",
+      "outputSourceHash": "3d78729334d445839e12f928aa2a0a17a7ba7ce5597bf81d38ce6645177c6082",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "noteSupported": true,
+      "comment": "Exact parsed answer and source snapshot match run1; same reviewed verdict. All claims reviewed against complete cited retrieved text; no unsupported factual addition identified."
+    },
+    {
+      "run": 2,
+      "id": "H-A12",
+      "outputSourceHash": "c72ec0fad64cef2797a117f639df7c78c4218134e9e6a2785bb36be1e9b548bd",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "noteSupported": true,
+      "comment": "Exact parsed answer and source snapshot match run1; same reviewed verdict. All claims reviewed against complete cited retrieved text; no unsupported factual addition identified."
+    },
+    {
+      "run": 2,
+      "id": "H-A13",
+      "outputSourceHash": "4d23c558ca15f51986a4e8b2722396dec850633b5d0b031b31e38a535c61a510",
+      "claimVerdicts": [
+        "supported",
+        "supported"
+      ],
+      "noteSupported": true,
+      "comment": "Exact parsed answer and source snapshot match run1; same reviewed verdict. All claims reviewed against complete cited retrieved text; no unsupported factual addition identified."
+    },
+    {
+      "run": 2,
+      "id": "H-A16",
+      "outputSourceHash": "eeb63744fca1184ad7d680f85921788d4816b19f4012262a29a1b47d7486a212",
+      "claimVerdicts": [],
+      "noteSupported": true,
+      "comment": "Exact parsed answer and source snapshot match run1; same reviewed verdict. Negative answer and limitation/clarification note checked. No invented requested fact; M18 and M20 ancillary source descriptions verified against retrieved text."
+    },
+    {
+      "run": 2,
+      "id": "H-A18",
+      "outputSourceHash": "758b8392c9b839e855edbe91864bdb1961bc7ddc2c9f2efa07d1d5fd15c8ad7e",
+      "claimVerdicts": [],
+      "noteSupported": true,
+      "comment": "Exact parsed answer and source snapshot match run1; same reviewed verdict. Negative answer and limitation/clarification note checked. No invented requested fact; M18 and M20 ancillary source descriptions verified against retrieved text."
+    },
+    {
+      "run": 2,
+      "id": "H-M01",
+      "outputSourceHash": "b2a4cc38c89d1a133bc57a89eb2e5536da7aff2c13c4074b5e6058ef0de5d805",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "noteSupported": true,
+      "comment": "Exact parsed answer and source snapshot match run1; same reviewed verdict. All claims reviewed against complete cited retrieved text; no unsupported factual addition identified."
+    },
+    {
+      "run": 2,
+      "id": "H-M16",
+      "outputSourceHash": "5719945f22a6a05c671862e7e32d4adc13acaed7f913acfafbbf782fc0184d05",
+      "claimVerdicts": [],
+      "noteSupported": true,
+      "comment": "Exact parsed answer and source snapshot match run1; same reviewed verdict. Negative answer and limitation/clarification note checked. No invented requested fact; M18 and M20 ancillary source descriptions verified against retrieved text."
+    },
+    {
+      "run": 2,
+      "id": "H-M20",
+      "outputSourceHash": "ae0f19c1afadebc1eb8e95b23ca2aef74e159929d961cfb9a81e979b49185880",
+      "claimVerdicts": [],
+      "noteSupported": true,
+      "comment": "Exact parsed answer and source snapshot match run1; same reviewed verdict. Negative answer and limitation/clarification note checked. No invented requested fact; M18 and M20 ancillary source descriptions verified against retrieved text."
+    },
+    {
+      "run": 2,
+      "id": "H-A02",
+      "outputSourceHash": "d1e513804677a5566da9d8d4367609f5e9f24fddcc52c250c9ea1cff534e14d5",
+      "claimVerdicts": [
+        "unsupported_inference",
+        "supported",
+        "supported",
+        "supported"
+      ],
+      "noteSupported": true,
+      "comment": "Claim1 says rabbit talking caused Alice to pay attention; source explicitly says it seemed natural at the time. Watch/chase/late claims remain supported."
+    },
+    {
+      "run": 2,
+      "id": "H-A03",
+      "outputSourceHash": "bfa0af86c4e09b0ba41b1b2364e3b070478c0f5956e4415eeeb0ad55ecda0f0d",
+      "claimVerdicts": [
+        "supported",
+        "supported",
+        "supported",
+        "supported"
+      ],
+      "noteSupported": true,
+      "comment": "Changed wording reviewed against the same retrieved source snapshot; all statements follow from cited source."
+    },
+    {
+      "run": 2,
+      "id": "H-A06",
+      "outputSourceHash": "a4f104faabdf56b03390d06c2b38719aa573cf0e9215523e659d8b05eda1e3ab",
+      "claimVerdicts": [
+        "source_supported_wrong_referent",
+        "source_supported_wrong_referent"
+      ],
+      "noteSupported": true,
+      "comment": "Wrong later bottle, although history refers to initial DRINK ME bottle; numeric follow-up unanswered and status answered is overconfident. Both claims counted against support/relevance."
+    },
+    {
+      "run": 2,
+      "id": "H-A10",
+      "outputSourceHash": "26e3b755d79b999af332e757ef8c3f56b188dc79df57ca9cad90563c8897649a",
+      "claimVerdicts": [
+        "supported",
+        "supported",
+        "supported"
+      ],
+      "noteSupported": true,
+      "comment": "Changed wording reviewed against the same retrieved source snapshot; all statements follow from cited source."
+    },
+    {
+      "run": 2,
+      "id": "H-A11",
+      "outputSourceHash": "e3afb8f15b4db9dfe33ec14b0e0ac577dd8f9aad0d26add7098dcdd30c163fe0",
+      "claimVerdicts": [
+        "supported",
+        "supported",
+        "supported"
+      ],
+      "noteSupported": true,
+      "comment": "Changed wording reviewed against the same retrieved source snapshot; all statements follow from cited source."
+    },
+    {
+      "run": 2,
+      "id": "H-A14",
+      "outputSourceHash": "365eb8bf99c14201996daebd595f2137536c6bd063116ee4f9be061b3af01711",
+      "claimVerdicts": [
+        "supported",
+        "supported"
+      ],
+      "noteSupported": true,
+      "comment": "Changed wording reviewed against the same retrieved source snapshot; all statements follow from cited source."
+    },
+    {
+      "run": 2,
+      "id": "H-A15",
+      "outputSourceHash": "495469f6ab597a13def3ce8d7c64f49f570d43dc9f01dfcd1ac63d0a6b43b47c",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "noteSupported": true,
+      "comment": "Changed wording reviewed against the same retrieved source snapshot; all statements follow from cited source."
+    },
+    {
+      "run": 2,
+      "id": "H-A17",
+      "outputSourceHash": "dd95a3a55e119d7a9db4a720d7cb91129692eece59b964246565813ca34fa8a1",
+      "claimVerdicts": [],
+      "noteSupported": true,
+      "comment": "Negative refusal/clarification and ancillary source descriptions checked against source snapshot; no unsupported requested answer."
+    },
+    {
+      "run": 2,
+      "id": "H-A19",
+      "outputSourceHash": "17b84a5de61e5ba238066b88695bb7de37f83a6f683b9b2e86e76ffe737c0b3a",
+      "claimVerdicts": [],
+      "noteSupported": true,
+      "comment": "Negative refusal/clarification and ancillary source descriptions checked against source snapshot; no unsupported requested answer."
+    },
+    {
+      "run": 2,
+      "id": "H-A20",
+      "outputSourceHash": "87f305cde65d59d3f3b3560b028347e81647f5cdd48c4712979aebdf3ddd5cb5",
+      "claimVerdicts": [],
+      "noteSupported": true,
+      "comment": "Negative refusal/clarification and ancillary source descriptions checked against source snapshot; no unsupported requested answer."
+    },
+    {
+      "run": 2,
+      "id": "H-M02",
+      "outputSourceHash": "3a4f51b15b5484a910745fa85606f1baf663f79431e56f560d3f337c8d895394",
+      "claimVerdicts": [
+        "supported",
+        "supported"
+      ],
+      "noteSupported": true,
+      "comment": "Changed wording reviewed against the same retrieved source snapshot; all statements follow from cited source."
+    },
+    {
+      "run": 2,
+      "id": "H-M03",
+      "outputSourceHash": "c1a5d13aba68338264ce0328585e9b938d312f10f014443bedd9f6b5c2303e9e",
+      "claimVerdicts": [
+        "supported",
+        "supported",
+        "supported"
+      ],
+      "noteSupported": true,
+      "comment": "Changed wording reviewed against the same retrieved source snapshot; all statements follow from cited source."
+    },
+    {
+      "run": 2,
+      "id": "H-M04",
+      "outputSourceHash": "a57bda36e32b617cf52ea187c49f0934678939be6509171d5e895a385c523b74",
+      "claimVerdicts": [
+        "supported",
+        "supported"
+      ],
+      "noteSupported": true,
+      "comment": "Changed wording reviewed against the same retrieved source snapshot; all statements follow from cited source."
+    },
+    {
+      "run": 2,
+      "id": "H-M05",
+      "outputSourceHash": "86fab4138efeded92de650387dc3022f11144735b706ec89a7029a4b486793ef",
+      "claimVerdicts": [
+        "supported",
+        "supported",
+        "supported"
+      ],
+      "noteSupported": true,
+      "comment": "Changed wording reviewed against the same retrieved source snapshot; all statements follow from cited source."
+    },
+    {
+      "run": 2,
+      "id": "H-M06",
+      "outputSourceHash": "be6ca3e1f95ea3e6a4f4d9b973b2ff4f89bb5b73a6b6a1ec838fe00b3f694c2b",
+      "claimVerdicts": [
+        "supported",
+        "supported",
+        "supported"
+      ],
+      "noteSupported": true,
+      "comment": "Changed wording reviewed against the same retrieved source snapshot; all statements follow from cited source."
+    },
+    {
+      "run": 2,
+      "id": "H-M07",
+      "outputSourceHash": "44e0b8b4943be4922e611b6eee9c4bd38825db22ebd02c0890ed0cf01459d74a",
+      "claimVerdicts": [
+        "supported",
+        "supported",
+        "uncertain_overstatement",
+        "supported"
+      ],
+      "noteSupported": true,
+      "comment": "Claim3 turns exhortation not to weary of beneficial action into a statement that it does not cause fatigue. Count conservatively against support. Other claims source-supported."
+    },
+    {
+      "run": 2,
+      "id": "H-M08",
+      "outputSourceHash": "2e7e0bf84ba0e6016bf11bf91dc524c9a13a13055f1d89868e7d373fb08e7b0d",
+      "claimVerdicts": [
+        "supported",
+        "supported",
+        "supported"
+      ],
+      "noteSupported": true,
+      "comment": "Changed wording reviewed against the same retrieved source snapshot; all statements follow from cited source."
+    },
+    {
+      "run": 2,
+      "id": "H-M09",
+      "outputSourceHash": "cc9824a5380ec26e0c842cdd58985712fb9222a2f98b2f5fbe8a943bb085428d",
+      "claimVerdicts": [
+        "supported",
+        "supported",
+        "uncertain_translation"
+      ],
+      "noteSupported": true,
+      "comment": "Claim3 renders material without preserving whether it matters who performs the just act, as in run1; counted against direct support."
+    },
+    {
+      "run": 2,
+      "id": "H-M10",
+      "outputSourceHash": "e69fc70915ff836dcd62373b2a6fc6acee5d1203aa0181775daeed8cbfabbb75",
+      "claimVerdicts": [
+        "supported",
+        "supported",
+        "supported"
+      ],
+      "noteSupported": true,
+      "comment": "Changed wording reviewed against the same retrieved source snapshot; all statements follow from cited source."
+    },
+    {
+      "run": 2,
+      "id": "H-M11",
+      "outputSourceHash": "077a20248e127f103fe823e50aa1652c238d445d1003ed50bd3179c3635c45b1",
+      "claimVerdicts": [
+        "supported",
+        "supported",
+        "supported",
+        "supported"
+      ],
+      "noteSupported": true,
+      "comment": "Changed wording reviewed against the same retrieved source snapshot; all statements follow from cited source."
+    },
+    {
+      "run": 2,
+      "id": "H-M12",
+      "outputSourceHash": "7700e8541477f89fe0637b4bbafc4744b5942f883fac4c56ba872e6bc96accb5",
+      "claimVerdicts": [
+        "supported",
+        "supported",
+        "supported",
+        "supported"
+      ],
+      "noteSupported": true,
+      "comment": "Changed wording reviewed against the same retrieved source snapshot; all statements follow from cited source."
+    },
+    {
+      "run": 2,
+      "id": "H-M13",
+      "outputSourceHash": "fabc371f4e78d9b1efc4df0d79779b7b745f0653196931e3e2af177a59fac432",
+      "claimVerdicts": [
+        "supported",
+        "supported",
+        "supported",
+        "partly_unsupported"
+      ],
+      "noteSupported": true,
+      "comment": "Core revenge advice supported. Source says Marcus rejected Cassius head and refused audience to murderers; it does not establish that he did not punish them. Entire compound claim4 fails direct-support scoring. Frozen gold-range omission remains0."
+    },
+    {
+      "run": 2,
+      "id": "H-M14",
+      "outputSourceHash": "68826c799cb57409fbd6cd5e0267820411eaa2bd08a38207f33f18f9fef1dc53",
+      "claimVerdicts": [
+        "unsupported_condition",
+        "supported_nonresponsive",
+        "supported_nonresponsive"
+      ],
+      "noteSupported": true,
+      "comment": "Fronto agreeing with Marcus counsel does not establish when Marcus changes his opinion. Claims2/3 faithfully describe the letter/fair trial but do not answer the question; counted supported only for direct grounding, not task correctness."
+    },
+    {
+      "run": 2,
+      "id": "H-M15",
+      "outputSourceHash": "4f92d69b603bb251dadeee0f2ce14477889c389074d5a63019762df3e8d4ad7f",
+      "claimVerdicts": [
+        "supported",
+        "supported",
+        "supported",
+        "supported"
+      ],
+      "noteSupported": true,
+      "comment": "Changed wording reviewed against the same retrieved source snapshot; all statements follow from cited source."
+    },
+    {
+      "run": 2,
+      "id": "H-M17",
+      "outputSourceHash": "4993fc46ef6f3ee46407ff6d5553fe56bd456107ab8d1e51202ef2105ae03fdb",
+      "claimVerdicts": [],
+      "noteSupported": false,
+      "comment": "Requested exact time correctly withheld. Ancillary note generalizes one letter written late at night to a writing habit. Sources show night reading and a specific late-night letter, insufficient to certify that generalized habit; conservative note-support failure."
+    },
+    {
+      "run": 2,
+      "id": "H-M18",
+      "outputSourceHash": "27ece680c53dd6b8c40dca7aa9ce05cf26c6683d9ec5291b507ba04f3a51eb44",
+      "claimVerdicts": [],
+      "noteSupported": true,
+      "comment": "Negative refusal/clarification and ancillary source descriptions checked against source snapshot; no unsupported requested answer."
+    },
+    {
+      "run": 2,
+      "id": "H-M19",
+      "outputSourceHash": "ba1d3a65da97fb2221ac51de80cc74ca18c7191391731b75ded19df1e2d600ec",
+      "claimVerdicts": [],
+      "noteSupported": true,
+      "comment": "Negative refusal/clarification and ancillary source descriptions checked against source snapshot; no unsupported requested answer."
+    }
+  ],
+  "scoring": {
+    "supportedLabels": [
+      "supported",
+      "supported_nonresponsive"
+    ],
+    "otherLabels": "Count conservatively against support; do not award uncertain translations/inferences. Source-supported but wrong-referent claims count against context-sensitive grounding.",
+    "nonresponsive": "Directly supported but nonresponsive claims are kept separate from question correctness; never treat claim support as case answer accuracy.",
+    "notes": "Unsupported or uncertain factual additions in negative notes fail strict no-invention certification."
+  },
+  "summary": [
+    {
+      "run": 1,
+      "claims": 71,
+      "supportedClaimsConservative": 67,
+      "supportRatio": 0.9436619718309859,
+      "negativeAnswersWithoutRequestedFactInvention": 10,
+      "negativeNotesCertifiedConservative": 10,
+      "claimSupportThresholdMet": true,
+      "strictNegativeGateMet": true
+    },
+    {
+      "run": 2,
+      "claims": 75,
+      "supportedClaimsConservative": 68,
+      "supportRatio": 0.9066666666666666,
+      "negativeAnswersWithoutRequestedFactInvention": 10,
+      "negativeNotesCertifiedConservative": 9,
+      "claimSupportThresholdMet": true,
+      "strictNegativeGateMet": false
+    }
+  ],
+  "verdict": "Automated thresholds met both runs; strict quality gate NOT fully passed because run2 negative-note factual generalization is not certified. Do not tune using this held-out set."
+}

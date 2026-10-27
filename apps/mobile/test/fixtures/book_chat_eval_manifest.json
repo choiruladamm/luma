@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "frozenAt": "2026-10-27T11:59:43.200214+00:00",
+  "developmentCount": 27,
+  "heldOutCount": 40,
+  "heldOutAnswerable": 30,
+  "heldOutUnanswerable": 10,
+  "heldOutModelRuns": 0,
+  "offsetUnit": "UTF-16 code units (Dart String); selected source spans contain BMP characters",
+  "sha256": {
+    "book_chat_cases.json": "b46eafdd4df80a610cc7df336bb0d94d275a0cb3851d5ef6eb29e6509ff6529e",
+    "book_chat_gold_v2.json": "ec0c39a2bfb4220345f78f2e2ab5819c1d259cdbca5103eaf8f378dd4ae03d11",
+    "book_chat_held_out_v1.json": "006446edbe8e0a39d5dec7c51eec79558fec8a69607fedd7debac921b84c13ef",
+    "enchiridion.epub": "c017ff81e19c8e6ac1329e3aca701d67009013bc7aad81e4a016cb05497c9dba",
+    "pride-and-prejudice.epub": "e59e587472723023b21bf380b8327858e7540b25e57affa3a68935b291e370dc",
+    "book_chat_partial.txt": "0238289c1a877b18c0b63fc854d8162b3993bb5e0b23db60d28c82d53359db74",
+    "alice-in-wonderland.epub": "08a2de3a58226311915bd87056e59ed4ee49a284dcb5e722fef415bca4032a4b",
+    "meditations.epub": "ec920201a771669782099f0d2a2d89af2401b1c76047514b99ca7739ec8c5b8d"
+  },
+  "sources": {
+    "alice-in-wonderland.epub": "https://www.gutenberg.org/ebooks/11.epub.noimages",
+    "meditations.epub": "https://www.gutenberg.org/ebooks/2680.epub.noimages"
+  },
+  "license": "Project Gutenberg source EPUBs include their original licensing and credits. Public domain in the USA."
+}

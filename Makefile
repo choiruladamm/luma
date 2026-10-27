@@ -2,7 +2,7 @@ APP := apps/mobile
 FLUTTER := cd $(APP) && fvm flutter
 DART := cd $(APP) && fvm dart
 
-.PHONY: help get gen brand live watch run release dev run-android release-android dev-android apk profile test analyze format check clean
+.PHONY: help get gen brand live chat-spike chat-spike-live chat-oracle-live chat-retrieval chat-dense-live chat-dense-replay chat-heldout-live chat-refine-live chat-validation2-live chat-recovery-live chat-validation3-live watch run release dev run-android release-android dev-android apk profile test analyze format check clean
 
 help: ## list commands
 	@grep -E '^[a-z0-9-]+:.*## ' $(MAKEFILE_LIST) | awk -F ':.*## ' '{printf "  %-16s %s\n", $$1, $$2}'
@@ -52,6 +52,39 @@ test: ## run tests, 30s cap per test so a hang fails fast (one file/folder: make
 
 live: ## real OpenRouter call, key from .env (gitignored; m=<model id> optional)
 	@set -a; . ./.env; set +a; cd $(APP) && OPENROUTER_MODEL=$(m) fvm flutter test test/data/openrouter_live_test.dart
+
+chat-spike: ## #113 offline corpus + isolation/budget/citation checks (no API)
+	$(FLUTTER) test --timeout 30s test/data/book_chat_spike_test.dart
+
+chat-retrieval: ## #113 offline development chunk/query replay (no API, no held-out)
+	$(FLUTTER) test --timeout 30s test/data/book_chat_retrieval_test.dart
+
+chat-dense-live: ## #113 paid development embedding indexing; BOOK_CHAT_EMBEDDING_MODEL optional
+	@set -a; . ./.env; set +a; cd $(APP) && BOOK_CHAT_EMBEDDING_RUN=1 BOOK_CHAT_EMBEDDING_LIVE=1 fvm flutter test test/data/book_chat_dense_eval_test.dart
+
+chat-dense-replay: ## #113 offline replay; fails if embedding cache is incomplete
+	cd $(APP) && BOOK_CHAT_EMBEDDING_RUN=1 BOOK_CHAT_EMBEDDING_LIVE=0 fvm flutter test test/data/book_chat_dense_eval_test.dart
+
+chat-heldout-live: ## #113 final FROZEN held-out: consumes split, 80 fresh answers, no tuning
+	@set -a; . ./.env; set +a; cd $(APP) && BOOK_CHAT_HELDOUT_LIVE=1 fvm flutter test test/data/book_chat_heldout_live_test.dart
+
+chat-refine-live: ## #113 paid development/consumed diagnostics; cached embeddings only
+	@set -a; . ./.env; set +a; cd $(APP) && BOOK_CHAT_REFINEMENT_LIVE=1 fvm flutter test test/data/book_chat_refinement_live_test.dart
+
+chat-validation2-live: ## #113 fresh book-level validation2; frozen pipeline, consumes split
+	@set -a; . ./.env; set +a; cd $(APP) && BOOK_CHAT_VALIDATION2_LIVE=1 fvm flutter test test/data/book_chat_validation2_live_test.dart
+
+chat-recovery-live: ## #113 paid diagnostic on consumed validation2; no independent validation claim
+	@set -a; . ./.env; set +a; cd $(APP) && BOOK_CHAT_RECOVERY_LIVE=1 fvm flutter test test/data/book_chat_recovery_live_test.dart
+
+chat-validation3-live: ## #113 fresh book-level validation3; frozen pipeline, consumes split
+	@set -a; . ./.env; set +a; cd $(APP) && BOOK_CHAT_VALIDATION3_LIVE=1 fvm flutter test test/data/book_chat_validation3_live_test.dart
+
+chat-spike-live: ## #113 paid corpus, local .env; m=<model>, BOOK_CHAT_CASE=E01 optional
+	@set -a; . ./.env; set +a; cd $(APP) && BOOK_CHAT_LIVE=1 OPENROUTER_MODEL=$(m) fvm flutter test test/data/book_chat_live_test.dart
+
+chat-oracle-live: ## #113 paid DEVELOPMENT oracle A/B; held-out is never queried
+	@set -a; . ./.env; set +a; cd $(APP) && BOOK_CHAT_ORACLE_LIVE=1 OPENROUTER_MODEL=$(m) fvm flutter test test/data/book_chat_oracle_live_test.dart
 
 analyze: ## static analysis
 	$(FLUTTER) analyze

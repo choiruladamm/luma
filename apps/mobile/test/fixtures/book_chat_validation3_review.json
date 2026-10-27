@@ -1,0 +1,1894 @@
+{
+  "protocolHash": "59c59b755437bb6efbc87c553de7183d8966efd6e659bdc256657a8ae272f702",
+  "rawReportSha256": "e197666bbe2801f04cfcf810414d7cfec202b41ac13b902973c73d86bf8a58fb",
+  "reviewer": "assistant; conservative manual claim/completeness review, not independent human adjudication",
+  "rubric": "Read all displayed claims against cited owned source text; accept provable alternative evidence in separate review only. Primary frozen metrics/gold unchanged. Answer completeness separate from claim support and evidence presence.",
+  "summary": {
+    "1": {
+      "valid": 40,
+      "candidateRecall40Complete": 27,
+      "finalRangeProxyComplete": 25,
+      "referencedRangeProxyComplete": 25,
+      "reviewedCompleteEvidence": 27,
+      "reviewedCompleteAnswers": 26,
+      "supportedClaimsLowerBound": 43,
+      "reviewedClaims": 44,
+      "noSourceCorrect": 10,
+      "falseRefusals": 1,
+      "foreignStaleAccepted": 0,
+      "clarificationOutcomes": 2
+    },
+    "2": {
+      "valid": 40,
+      "candidateRecall40Complete": 27,
+      "finalRangeProxyComplete": 25,
+      "referencedRangeProxyComplete": 25,
+      "reviewedCompleteEvidence": 27,
+      "reviewedCompleteAnswers": 27,
+      "supportedClaimsLowerBound": 45,
+      "reviewedClaims": 46,
+      "noSourceCorrect": 10,
+      "falseRefusals": 1,
+      "foreignStaleAccepted": 0,
+      "clarificationOutcomes": 2
+    }
+  },
+  "cases": [
+    {
+      "run": 1,
+      "id": "F-C01",
+      "outputHash": "c6b76e402a980cbdcb787a8e0fae3258b6c8c5c2e2010adcbef9b96811cb3189",
+      "deterministicClarification": false,
+      "claims": [
+        {
+          "text": "Marley telah meninggal tujuh tahun ketika cerita dimulai.",
+          "sourceIds": [
+            "S1",
+            "S2",
+            "S3",
+            "S4"
+          ],
+          "supported": true
+        }
+      ],
+      "completeAnswer": true,
+      "reviewedCompleteEvidence": true,
+      "primaryRangeProxy": 1.0,
+      "noSourceCorrect": null,
+      "notes": [],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 1,
+      "id": "F-C02",
+      "outputHash": "d8b0cdb93b58f26d40234513fd2e67581a2151020c9cdb553baaafed1119a425",
+      "deterministicClarification": false,
+      "claims": [
+        {
+          "text": "Gaji mingguan pegawai Scrooge sebelum perubahan sikapnya adalah lima belas shilling per minggu.",
+          "sourceIds": [
+            "S2"
+          ],
+          "supported": true
+        }
+      ],
+      "completeAnswer": true,
+      "reviewedCompleteEvidence": true,
+      "primaryRangeProxy": 1.0,
+      "noSourceCorrect": null,
+      "notes": [],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 1,
+      "id": "F-C03",
+      "outputHash": "a802db7c36f8eab00deb70d306645c46d65bb1e45095e1a9fe58f85a83a1bb12",
+      "deterministicClarification": false,
+      "claims": [
+        {
+          "text": "Rantai Marley terbuat dari cash-boxes, keys, padlocks, ledgers, deeds, dan heavy purses yang ditempa dari baja.",
+          "sourceIds": [
+            "S1"
+          ],
+          "supported": true
+        }
+      ],
+      "completeAnswer": true,
+      "reviewedCompleteEvidence": true,
+      "primaryRangeProxy": 1.0,
+      "noSourceCorrect": null,
+      "notes": [
+        "All six items supported, but left largely in English instead of Indonesian; language polish deferred."
+      ],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 1,
+      "id": "F-C04",
+      "outputHash": "90172088edd38e1d7383bbe5987532a3fdb5dd2c28bea79e1a71d81b313b55c3",
+      "deterministicClarification": false,
+      "claims": [
+        {
+          "text": "Marley memperoleh rantai itu karena ia sendiri yang menempa rantai tersebut selama hidupnya, mata rantai demi mata rantai dan yard demi yard.",
+          "sourceIds": [
+            "S1"
+          ],
+          "supported": true
+        },
+        {
+          "text": "Ia mengikatkan rantai itu pada dirinya atas kehendak bebasnya sendiri, dan atas kehendak bebasnya sendiri pula ia memakainya.",
+          "sourceIds": [
+            "S1"
+          ],
+          "supported": true
+        }
+      ],
+      "completeAnswer": true,
+      "reviewedCompleteEvidence": true,
+      "primaryRangeProxy": 1.0,
+      "noSourceCorrect": null,
+      "notes": [],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 1,
+      "id": "F-C05",
+      "outputHash": "9dac5cacf7d8de1a8e0ec6339cb6b4faa96d650e692fe031f9ce8b9c8f4ce283",
+      "deterministicClarification": false,
+      "claims": [
+        {
+          "text": "Roh pertama datang besok ketika lonceng berdentang pukul satu.",
+          "sourceIds": [
+            "S1"
+          ],
+          "supported": true
+        },
+        {
+          "text": "Roh kedua datang malam berikutnya pada jam yang sama; roh ketiga datang malam berikutnya setelah pukulan terakhir pukul dua belas berhenti bergetar.",
+          "sourceIds": [
+            "S1"
+          ],
+          "supported": true
+        }
+      ],
+      "completeAnswer": true,
+      "reviewedCompleteEvidence": true,
+      "primaryRangeProxy": 1.0,
+      "noSourceCorrect": null,
+      "notes": [],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 1,
+      "id": "F-C06",
+      "outputHash": "fd878d890cf3ddee1970459536d919587ed543f9e3be63c1bc0104bd4fc83f72",
+      "deterministicClarification": false,
+      "claims": [
+        {
+          "text": "Wujudnya tampak seperti anak-anak, tetapi lebih mirip orang tua yang menyusut hingga berukuran seperti anak; rambutnya putih seperti karena usia, namun wajahnya tidak berkerut dan kulitnya masih segar.",
+          "sourceIds": [
+            "S1"
+          ],
+          "supported": true
+        }
+      ],
+      "completeAnswer": true,
+      "reviewedCompleteEvidence": true,
+      "primaryRangeProxy": 1.0,
+      "noSourceCorrect": null,
+      "notes": [],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 1,
+      "id": "F-C07",
+      "outputHash": "cbec7c504da14262ad4ecd85397dde583d076fd79cc10a80ff17b2e661eb44bf",
+      "deterministicClarification": false,
+      "claims": [
+        {
+          "text": "Ayahnya menjadi jauh lebih baik hati daripada sebelumnya, dan ketika anak itu meminta agar Fan boleh pulang, ayahnya berkata ya.",
+          "sourceIds": [
+            "S2"
+          ],
+          "supported": false
+        },
+        {
+          "text": "Ayahnya mengirim Fan dengan kereta untuk menjemputnya pulang.",
+          "sourceIds": [
+            "S2"
+          ],
+          "supported": true
+        }
+      ],
+      "completeAnswer": false,
+      "reviewedCompleteEvidence": true,
+      "primaryRangeProxy": 1.0,
+      "noSourceCorrect": null,
+      "notes": [
+        "First claim gives Fan the permission intended for Scrooge; second claim/reason are supported, but conservative answer completeness fails."
+      ],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 1,
+      "id": "F-C08",
+      "outputHash": "b3c26d81953c5ed358d2195393d65b7327c5d3b93ff16626f7cbb88dabe87b78",
+      "deterministicClarification": false,
+      "claims": [
+        {
+          "text": "Gudang Fezziwig diubah menjadi ruang dansa (ball-room).",
+          "sourceIds": [
+            "S1"
+          ],
+          "supported": true
+        }
+      ],
+      "completeAnswer": true,
+      "reviewedCompleteEvidence": true,
+      "primaryRangeProxy": 1.0,
+      "noSourceCorrect": null,
+      "notes": [],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 1,
+      "id": "F-C09",
+      "outputHash": "0b0bc7e5b03ad33cbd3ce98833ab9419821cc7a4dd221b6e85b7ac2d3d915be6",
+      "deterministicClarification": false,
+      "claims": [],
+      "completeAnswer": false,
+      "reviewedCompleteEvidence": false,
+      "primaryRangeProxy": 0.0,
+      "noSourceCorrect": null,
+      "notes": [
+        "False refusal. English dense top40 had gold evidence, but equal RRF fusion removed it from final candidate pool."
+      ],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 1,
+      "id": "F-C10",
+      "outputHash": "a9e179bbdfb115368f9f3d12d8fe5bdce60d85e4e696e23fbe94d1de3eb61a7e",
+      "deterministicClarification": false,
+      "claims": [
+        {
+          "text": "Tiny Tim memakai kruk kecil dan rangka besi sebagai penopang tubuhnya.",
+          "sourceIds": [
+            "S1"
+          ],
+          "supported": true
+        }
+      ],
+      "completeAnswer": true,
+      "reviewedCompleteEvidence": true,
+      "primaryRangeProxy": 1.0,
+      "noSourceCorrect": null,
+      "notes": [],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 1,
+      "id": "F-C11",
+      "outputHash": "e68f9fa8f2cf0ee45f84b0e0350a52b747b7e035da10dd54968197fef9f3d25f",
+      "deterministicClarification": false,
+      "claims": [
+        {
+          "text": "Kedua anak itu bernama Ignorance dan Want; yang laki-laki adalah Ignorance dan yang perempuan adalah Want.",
+          "sourceIds": [
+            "S3"
+          ],
+          "supported": true
+        }
+      ],
+      "completeAnswer": true,
+      "reviewedCompleteEvidence": true,
+      "primaryRangeProxy": 1.0,
+      "noSourceCorrect": null,
+      "notes": [],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 1,
+      "id": "F-C12",
+      "outputHash": "460cd37f833489d5023db12fae1fe8d2d7e400673060f26baf624cbbc2bc394c",
+      "deterministicClarification": false,
+      "claims": [
+        {
+          "text": "Roh itu tidak menjawab dengan kata-kata, melainkan hanya menunjuk ke depan dengan tangannya.",
+          "sourceIds": [
+            "S1"
+          ],
+          "supported": true
+        }
+      ],
+      "completeAnswer": true,
+      "reviewedCompleteEvidence": true,
+      "primaryRangeProxy": 1.0,
+      "noSourceCorrect": null,
+      "notes": [],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 1,
+      "id": "F-C13",
+      "outputHash": "034edea07c32b259a3650977665020e4a10614f83ed8911ec299cafae92c6b4e",
+      "deterministicClarification": false,
+      "claims": [
+        {
+          "text": "Perempuan itu melepas tirai ranjang beserta ring-nya (rings and all) saat orang mati masih terbaring di sana.",
+          "sourceIds": [
+            "S1"
+          ],
+          "supported": true
+        },
+        {
+          "text": "Tubuh orang mati itu masih ada di ranjang, dalam keadaan dirampok, tanpa dijaga, ditangisi, atau dipedulikan.",
+          "sourceIds": [
+            "S2"
+          ],
+          "supported": true
+        }
+      ],
+      "completeAnswer": true,
+      "reviewedCompleteEvidence": true,
+      "primaryRangeProxy": 1.0,
+      "noSourceCorrect": null,
+      "notes": [
+        "Extra corpse description is supported by selected paragraph79 but exceeds the smallest direct answer; UX brevity remains a limitation."
+      ],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 1,
+      "id": "F-C14",
+      "outputHash": "00cb05c33dcf11761558ed4c9ab2e5d4f24b5c15fd95b12b37e298776e37df3a",
+      "deterministicClarification": false,
+      "claims": [
+        {
+          "text": "Hadiah yang ditawarkan adalah satu shilling jika anak itu kembali bersama penjual kalkun.",
+          "sourceIds": [
+            "S1"
+          ],
+          "supported": true
+        },
+        {
+          "text": "Syarat mendapatkan setengah crown adalah kembali bersama penjual kalkun dalam waktu kurang dari lima menit.",
+          "sourceIds": [
+            "S1"
+          ],
+          "supported": true
+        }
+      ],
+      "completeAnswer": true,
+      "reviewedCompleteEvidence": true,
+      "primaryRangeProxy": 1.0,
+      "noSourceCorrect": null,
+      "notes": [],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 1,
+      "id": "F-C15",
+      "outputHash": "188276a7b1a2bef33654aa655c93a21849a9737abbfde045a47b6e79f42a3a2f",
+      "deterministicClarification": false,
+      "claims": [
+        {
+          "text": "Scrooge menaikkan gaji Bob dan berusaha membantu keluarganya yang kesulitan.",
+          "sourceIds": [
+            "S2",
+            "S3"
+          ],
+          "supported": true
+        },
+        {
+          "text": "Tiny Tim tidak meninggal dan Scrooge menjadi seperti ayah kedua baginya.",
+          "sourceIds": [
+            "S1"
+          ],
+          "supported": true
+        }
+      ],
+      "completeAnswer": true,
+      "reviewedCompleteEvidence": true,
+      "primaryRangeProxy": 1.0,
+      "noSourceCorrect": null,
+      "notes": [],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 1,
+      "id": "F-C16",
+      "outputHash": "0b0bc7e5b03ad33cbd3ce98833ab9419821cc7a4dd221b6e85b7ac2d3d915be6",
+      "deterministicClarification": false,
+      "claims": [],
+      "completeAnswer": null,
+      "reviewedCompleteEvidence": null,
+      "primaryRangeProxy": null,
+      "noSourceCorrect": true,
+      "notes": [],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 1,
+      "id": "F-C17",
+      "outputHash": "0b0bc7e5b03ad33cbd3ce98833ab9419821cc7a4dd221b6e85b7ac2d3d915be6",
+      "deterministicClarification": false,
+      "claims": [],
+      "completeAnswer": null,
+      "reviewedCompleteEvidence": null,
+      "primaryRangeProxy": null,
+      "noSourceCorrect": true,
+      "notes": [],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 1,
+      "id": "F-C18",
+      "outputHash": null,
+      "deterministicClarification": true,
+      "claims": [],
+      "completeAnswer": null,
+      "reviewedCompleteEvidence": null,
+      "primaryRangeProxy": null,
+      "noSourceCorrect": true,
+      "notes": [],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 1,
+      "id": "F-C19",
+      "outputHash": "0b0bc7e5b03ad33cbd3ce98833ab9419821cc7a4dd221b6e85b7ac2d3d915be6",
+      "deterministicClarification": false,
+      "claims": [],
+      "completeAnswer": null,
+      "reviewedCompleteEvidence": null,
+      "primaryRangeProxy": null,
+      "noSourceCorrect": true,
+      "notes": [],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 1,
+      "id": "F-C20",
+      "outputHash": "0b0bc7e5b03ad33cbd3ce98833ab9419821cc7a4dd221b6e85b7ac2d3d915be6",
+      "deterministicClarification": false,
+      "claims": [],
+      "completeAnswer": null,
+      "reviewedCompleteEvidence": null,
+      "primaryRangeProxy": null,
+      "noSourceCorrect": true,
+      "notes": [],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 1,
+      "id": "F-H01",
+      "outputHash": "cbaaa19d6025dcac3568deb4e6fbcefce0eb9c8a28e9144f40ea90171ef92fb8",
+      "deterministicClarification": false,
+      "claims": [
+        {
+          "text": "Holmes mengetahui ada tujuh belas anak tangga.",
+          "sourceIds": [
+            "S1"
+          ],
+          "supported": true
+        },
+        {
+          "text": "Ia membedakan melihat dan mengamati.",
+          "sourceIds": [
+            "S1",
+            "S2"
+          ],
+          "supported": true
+        }
+      ],
+      "completeAnswer": true,
+      "reviewedCompleteEvidence": true,
+      "primaryRangeProxy": 1.0,
+      "noSourceCorrect": null,
+      "notes": [],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 1,
+      "id": "F-H02",
+      "outputHash": "c878efce068ec5e0f4981a8e2be963497787ab876be69a0113c60950b838a930",
+      "deterministicClarification": false,
+      "claims": [
+        {
+          "text": "Holmes meminta fotografi Irene Adler sebagai kenang-kenangan, bukan cincin yang ditawarkan raja.",
+          "sourceIds": [
+            "S1",
+            "S2"
+          ],
+          "supported": true
+        }
+      ],
+      "completeAnswer": true,
+      "reviewedCompleteEvidence": true,
+      "primaryRangeProxy": 1.0,
+      "noSourceCorrect": null,
+      "notes": [],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 1,
+      "id": "F-H03",
+      "outputHash": "72da91cf8a4c38e25c23f1d291751d1ced0895672d4301b690dc41adb5304ba1",
+      "deterministicClarification": false,
+      "claims": [
+        {
+          "text": "Pekerjaan Jabez Wilson untuk liga rambut merah adalah pekerjaan yang bersifat nominal, yaitu ia harus berada di kantor atau setidaknya di gedung sepanjang waktu.",
+          "sourceIds": [
+            "S1"
+          ],
+          "supported": true
+        },
+        {
+          "text": "Bayaran mingguannya adalah £4.",
+          "sourceIds": [
+            "S1",
+            "S2"
+          ],
+          "supported": true
+        }
+      ],
+      "completeAnswer": false,
+      "reviewedCompleteEvidence": false,
+      "primaryRangeProxy": 0.5,
+      "noSourceCorrect": null,
+      "notes": [
+        "Payment supported, copy Encyclopaedia task missing; answered status should be partial. Each retrieval route contains only half required evidence."
+      ],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 1,
+      "id": "F-H04",
+      "outputHash": "81aeb80d71ec513c133c04563b1e9ee2b3947527282179ff61661d5f1c9c6517",
+      "deterministicClarification": false,
+      "claims": [
+        {
+          "text": "Agar Wilson tidak berada di tokonya selama beberapa jam setiap hari, sehingga mereka bisa menjalankan rencana mereka.",
+          "sourceIds": [
+            "S1"
+          ],
+          "supported": true
+        }
+      ],
+      "completeAnswer": false,
+      "reviewedCompleteEvidence": false,
+      "primaryRangeProxy": 0.3333333333333333,
+      "noSourceCorrect": null,
+      "notes": [
+        "Repeats removing Wilson from shop, without the tunnel/bank mechanism. Query asks why; requested causal explanation incomplete. Only one of three gold facts retrieved."
+      ],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 1,
+      "id": "F-H05",
+      "outputHash": "a1265dfbd49e312b18a34ecfd0811cf04ebae9556295c71dd060d2d119cc0291",
+      "deterministicClarification": false,
+      "claims": [
+        {
+          "text": "Upah Mary Sutherland adalah twopence per lembar ketikan.",
+          "sourceIds": [
+            "S1"
+          ],
+          "supported": true
+        },
+        {
+          "text": "Ia biasanya dapat mengerjakan lima belas hingga dua puluh lembar dalam sehari.",
+          "sourceIds": [
+            "S1"
+          ],
+          "supported": true
+        }
+      ],
+      "completeAnswer": true,
+      "reviewedCompleteEvidence": true,
+      "primaryRangeProxy": 1.0,
+      "noSourceCorrect": null,
+      "notes": [],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 1,
+      "id": "F-H06",
+      "outputHash": "6680ac9dbe46af1818b7f434e61ab93ab814be36793d540d4c28ae976a16eb16",
+      "deterministicClarification": false,
+      "claims": [
+        {
+          "text": "Windibank menyamar sebagai Hosmer Angel untuk mencegah pernikahan Mary, karena pernikahan itu akan membuatnya kehilangan seratus pound setahun yang ia peroleh dari penghasilan Mary.",
+          "sourceIds": [
+            "S1"
+          ],
+          "supported": true
+        },
+        {
+          "text": "Dengan menyamar dan berpura-pura mencintai Mary, ia berhasil menjauhkan para pelamar lain.",
+          "sourceIds": [
+            "S1"
+          ],
+          "supported": true
+        }
+      ],
+      "completeAnswer": true,
+      "reviewedCompleteEvidence": true,
+      "primaryRangeProxy": 1.0,
+      "noSourceCorrect": null,
+      "notes": [],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 1,
+      "id": "F-H07",
+      "outputHash": "b54c3db94be5e616b78e0412d10af3d4eb8539fba5e4fa1e89bd76e1e17a2700",
+      "deterministicClarification": false,
+      "claims": [
+        {
+          "text": "Holmes menafsirkan potongan kata 'rat' sebagai bagian dari nama tempat Ballarat, yang sedang diucapkan korban untuk menyebut nama pembunuhnya.",
+          "sourceIds": [
+            "S1"
+          ],
+          "supported": true
+        }
+      ],
+      "completeAnswer": true,
+      "reviewedCompleteEvidence": true,
+      "primaryRangeProxy": 1.0,
+      "noSourceCorrect": null,
+      "notes": [],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 1,
+      "id": "F-H08",
+      "outputHash": "8331e712c68cc6d95bfd9a3c4b3ee22f919f8e2c9e4c357a99d5fac26f3283c0",
+      "deterministicClarification": false,
+      "claims": [
+        {
+          "text": "Surat itu berisi lima biji jeruk kering kecil yang jatuh ke piring kolonel.",
+          "sourceIds": [
+            "S1"
+          ],
+          "supported": true
+        },
+        {
+          "text": "Cap posnya dari Pondicherry.",
+          "sourceIds": [
+            "S1"
+          ],
+          "supported": true
+        }
+      ],
+      "completeAnswer": true,
+      "reviewedCompleteEvidence": true,
+      "primaryRangeProxy": 1.0,
+      "noSourceCorrect": null,
+      "notes": [],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 1,
+      "id": "F-H09",
+      "outputHash": "45ed360040b39b7fbb4355b408f1e0e62153c16de8ecdbb7d6ce7b428d6eb4db",
+      "deterministicClarification": false,
+      "claims": [
+        {
+          "text": "Holmes membongkar penampilan tahanan dengan membasahi spons dan menggosoknya dua kali dengan kuat melintasi dan menuruni wajah tahanan.",
+          "sourceIds": [
+            "S2"
+          ],
+          "supported": true
+        },
+        {
+          "text": "Akibatnya, wajah tahanan terkelupas di bawah spons seperti kulit kayu dari pohon; warna cokelat kasar, bekas luka mengerikan, bibir sumbing, dan rambut merah kusut hilang, memperlihatkan seorang pria pucat, berwajah sedih, berpenampilan halus, berambut hitam dan berkulit mulus.",
+          "sourceIds": [
+            "S4"
+          ],
+          "supported": true
+        }
+      ],
+      "completeAnswer": true,
+      "reviewedCompleteEvidence": true,
+      "primaryRangeProxy": 1.0,
+      "noSourceCorrect": null,
+      "notes": [],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 1,
+      "id": "F-H10",
+      "outputHash": "e1ab46cd3796b6307c75b7b368c524691ef3fc59edef122c64dd20efe13110e0",
+      "deterministicClarification": false,
+      "claims": [
+        {
+          "text": "Batu blue carbuncle ditemukan di dalam tembolok (crop) angsa.",
+          "sourceIds": [
+            "S1",
+            "S2"
+          ],
+          "supported": true
+        }
+      ],
+      "completeAnswer": true,
+      "reviewedCompleteEvidence": true,
+      "primaryRangeProxy": 0.0,
+      "noSourceCorrect": null,
+      "notes": [
+        "Correct crop answer grounded in owned alternative paragraph51 and191. Frozen gold anchors only paragraph62; do not change/rescore primary proxy."
+      ],
+      "additionalValidAnchors": [
+        {
+          "book": "sherlock-holmes",
+          "revision": 1,
+          "chapter": "VII. THE ADVENTURE OF THE BLUE CARBUNCLE",
+          "paragraph": 51,
+          "start": 16,
+          "end": 51,
+          "paragraphHash": "bc4572753d5ade0a5719be9139884de59987e28e73241f045f4e3412feeb7f63",
+          "quote": "See what my wife found in its crop!"
+        },
+        {
+          "book": "sherlock-holmes",
+          "revision": 1,
+          "chapter": "VII. THE ADVENTURE OF THE BLUE CARBUNCLE",
+          "paragraph": 191,
+          "start": 484,
+          "end": 546,
+          "paragraphHash": "cb3206cc0a600b586ed098d011ca02f4a8a9b8dd6d8953dc6b16f91585a81112",
+          "quote": "I felt the stone pass along its gullet and down into its crop."
+        }
+      ]
+    },
+    {
+      "run": 1,
+      "id": "F-H11",
+      "outputHash": "dd4ad7fc60506227fefd147bb6fc723662780cd2e59f0778a967bb609a9c1203",
+      "deterministicClarification": false,
+      "claims": [
+        {
+          "text": "Karena tali itu tidak terpasang pada kawat dan tidak dimaksudkan sebagai tali bel.",
+          "sourceIds": [
+            "S1",
+            "S2"
+          ],
+          "supported": true
+        }
+      ],
+      "completeAnswer": true,
+      "reviewedCompleteEvidence": true,
+      "primaryRangeProxy": 1.0,
+      "noSourceCorrect": null,
+      "notes": [
+        "Question asks why dummy: no wire is sufficient. Hook location is an extra gold detail; reviewed answer complete for actual request."
+      ],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 1,
+      "id": "F-H12",
+      "outputHash": "6e9e29f96f0ef593feec24d985bf0f2fd186a51269c2246566ff20c475d4dd24",
+      "deterministicClarification": false,
+      "claims": [
+        {
+          "text": "Senjata yang melukai Hatherley adalah senjata berat milik Kolonel Lysander Stark, yang digambarkan seperti golok tukang daging.",
+          "sourceIds": [
+            "S1",
+            "S2"
+          ],
+          "supported": true
+        },
+        {
+          "text": "Saat pukulan itu mengenai tangannya, Hatherley sedang bergantung dengan kedua tangan pada ambang jendela.",
+          "sourceIds": [
+            "S1"
+          ],
+          "supported": true
+        }
+      ],
+      "completeAnswer": true,
+      "reviewedCompleteEvidence": true,
+      "primaryRangeProxy": 1.0,
+      "noSourceCorrect": null,
+      "notes": [],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 1,
+      "id": "F-H13",
+      "outputHash": "95536116fb867d4b7cc71c2d4c8d8f6cf68204fa7a1c0786f34062e9402b6d4b",
+      "deterministicClarification": false,
+      "claims": [
+        {
+          "text": "Saat melewati bangku Frank dalam perjalanan keluar, pengantin perempuan menjatuhkan buketnya ke arah Frank, dan Frank menyelipkan catatan itu ke tangannya ketika mengembalikan bunga tersebut.",
+          "sourceIds": [
+            "S1"
+          ],
+          "supported": true
+        }
+      ],
+      "completeAnswer": true,
+      "reviewedCompleteEvidence": true,
+      "primaryRangeProxy": 1.0,
+      "noSourceCorrect": null,
+      "notes": [],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 1,
+      "id": "F-H14",
+      "outputHash": "6ac59e98addc6f290f479bafa35f6037d43cbba0cb0816dd27671774644189ac",
+      "deterministicClarification": false,
+      "claims": [
+        {
+          "text": "Mahkota itu memiliki tiga puluh sembilan batu beryl besar.",
+          "sourceIds": [
+            "S1",
+            "S4"
+          ],
+          "supported": true
+        },
+        {
+          "text": "Tiga batu beryl dilaporkan hilang.",
+          "sourceIds": [
+            "S2",
+            "S3",
+            "S4"
+          ],
+          "supported": true
+        }
+      ],
+      "completeAnswer": true,
+      "reviewedCompleteEvidence": true,
+      "primaryRangeProxy": 0.5,
+      "noSourceCorrect": null,
+      "notes": [
+        "39 total and3 missing supported. Missing-count alternative paragraphs67/147/103 are not the sole frozen gold paragraph72; keep primary proxy unchanged."
+      ],
+      "additionalValidAnchors": [
+        {
+          "book": "sherlock-holmes",
+          "revision": 1,
+          "chapter": "XI. THE ADVENTURE OF THE BERYL CORONET",
+          "paragraph": 67,
+          "start": 339,
+          "end": 408,
+          "paragraphHash": "8cd97cd2caa2d47294271117e991ed3a3418a86b38909a4d9223bd557c789bd4",
+          "quote": "One of the gold corners, with three of the beryls in it, was missing."
+        }
+      ]
+    },
+    {
+      "run": 1,
+      "id": "F-H15",
+      "outputHash": "9aa03ec369960389c5d41d4619148a58a3b8325655b1a0d33053ee9b45a234cf",
+      "deterministicClarification": false,
+      "claims": [
+        {
+          "text": "Gaji tahunan yang ditawarkan adalah £120 per tahun (atau £30 per kuartal).",
+          "sourceIds": [
+            "S1"
+          ],
+          "supported": true
+        },
+        {
+          "text": "Tuntutan terkait rambutnya adalah ia harus memotong rambutnya cukup pendek sebelum datang.",
+          "sourceIds": [
+            "S1",
+            "S2"
+          ],
+          "supported": true
+        }
+      ],
+      "completeAnswer": true,
+      "reviewedCompleteEvidence": true,
+      "primaryRangeProxy": 1.0,
+      "noSourceCorrect": null,
+      "notes": [],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 1,
+      "id": "F-H16",
+      "outputHash": "0b0bc7e5b03ad33cbd3ce98833ab9419821cc7a4dd221b6e85b7ac2d3d915be6",
+      "deterministicClarification": false,
+      "claims": [],
+      "completeAnswer": null,
+      "reviewedCompleteEvidence": null,
+      "primaryRangeProxy": null,
+      "noSourceCorrect": true,
+      "notes": [],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 1,
+      "id": "F-H17",
+      "outputHash": "0b0bc7e5b03ad33cbd3ce98833ab9419821cc7a4dd221b6e85b7ac2d3d915be6",
+      "deterministicClarification": false,
+      "claims": [],
+      "completeAnswer": null,
+      "reviewedCompleteEvidence": null,
+      "primaryRangeProxy": null,
+      "noSourceCorrect": true,
+      "notes": [],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 1,
+      "id": "F-H18",
+      "outputHash": null,
+      "deterministicClarification": true,
+      "claims": [],
+      "completeAnswer": null,
+      "reviewedCompleteEvidence": null,
+      "primaryRangeProxy": null,
+      "noSourceCorrect": true,
+      "notes": [],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 1,
+      "id": "F-H19",
+      "outputHash": "0b0bc7e5b03ad33cbd3ce98833ab9419821cc7a4dd221b6e85b7ac2d3d915be6",
+      "deterministicClarification": false,
+      "claims": [],
+      "completeAnswer": null,
+      "reviewedCompleteEvidence": null,
+      "primaryRangeProxy": null,
+      "noSourceCorrect": true,
+      "notes": [],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 1,
+      "id": "F-H20",
+      "outputHash": "0b0bc7e5b03ad33cbd3ce98833ab9419821cc7a4dd221b6e85b7ac2d3d915be6",
+      "deterministicClarification": false,
+      "claims": [],
+      "completeAnswer": null,
+      "reviewedCompleteEvidence": null,
+      "primaryRangeProxy": null,
+      "noSourceCorrect": true,
+      "notes": [],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 2,
+      "id": "F-C01",
+      "outputHash": "c6b76e402a980cbdcb787a8e0fae3258b6c8c5c2e2010adcbef9b96811cb3189",
+      "deterministicClarification": false,
+      "claims": [
+        {
+          "text": "Marley telah meninggal tujuh tahun ketika cerita dimulai.",
+          "sourceIds": [
+            "S1",
+            "S2",
+            "S3",
+            "S4"
+          ],
+          "supported": true
+        }
+      ],
+      "completeAnswer": true,
+      "reviewedCompleteEvidence": true,
+      "primaryRangeProxy": 1.0,
+      "noSourceCorrect": null,
+      "notes": [],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 2,
+      "id": "F-C02",
+      "outputHash": "e569acade5fffc777bb9b35d48fd59b27f1a3692126e11ac9c13fb28e4041e20",
+      "deterministicClarification": false,
+      "claims": [
+        {
+          "text": "Gaji mingguan pegawai Scrooge sebelum perubahan sikapnya adalah lima belas shilling.",
+          "sourceIds": [
+            "S2"
+          ],
+          "supported": true
+        }
+      ],
+      "completeAnswer": true,
+      "reviewedCompleteEvidence": true,
+      "primaryRangeProxy": 1.0,
+      "noSourceCorrect": null,
+      "notes": [],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 2,
+      "id": "F-C03",
+      "outputHash": "a802db7c36f8eab00deb70d306645c46d65bb1e45095e1a9fe58f85a83a1bb12",
+      "deterministicClarification": false,
+      "claims": [
+        {
+          "text": "Rantai Marley terbuat dari cash-boxes, keys, padlocks, ledgers, deeds, dan heavy purses yang ditempa dari baja.",
+          "sourceIds": [
+            "S1"
+          ],
+          "supported": true
+        }
+      ],
+      "completeAnswer": true,
+      "reviewedCompleteEvidence": true,
+      "primaryRangeProxy": 1.0,
+      "noSourceCorrect": null,
+      "notes": [
+        "All six items supported, but left largely in English instead of Indonesian; language polish deferred."
+      ],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 2,
+      "id": "F-C04",
+      "outputHash": "294768d30de0ec42738ba59b8d66505384f471f11dcdcdde973c1be5b82f7635",
+      "deterministicClarification": false,
+      "claims": [
+        {
+          "text": "Marley memperoleh rantai itu dengan membuatnya sendiri selama hidup, mata rantai demi mata rantai dan yard demi yard.",
+          "sourceIds": [
+            "S1"
+          ],
+          "supported": true
+        },
+        {
+          "text": "Ia mengenakan rantai itu atas kehendak bebasnya sendiri.",
+          "sourceIds": [
+            "S1"
+          ],
+          "supported": true
+        }
+      ],
+      "completeAnswer": true,
+      "reviewedCompleteEvidence": true,
+      "primaryRangeProxy": 1.0,
+      "noSourceCorrect": null,
+      "notes": [],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 2,
+      "id": "F-C05",
+      "outputHash": "739dee5e8b1a8e7b9b4c791e7af51c23b71b3cb520b183f9673c2af75f040b2f",
+      "deterministicClarification": false,
+      "claims": [
+        {
+          "text": "Roh pertama diharapkan datang besok saat lonceng berdentang pukul satu.",
+          "sourceIds": [
+            "S1"
+          ],
+          "supported": true
+        },
+        {
+          "text": "Roh kedua diharapkan datang pada malam berikutnya pada jam yang sama, roh ketiga pada malam berikutnya lagi ketika pukulan terakhir pukul dua belas berhenti bergetar.",
+          "sourceIds": [
+            "S1"
+          ],
+          "supported": true
+        }
+      ],
+      "completeAnswer": true,
+      "reviewedCompleteEvidence": true,
+      "primaryRangeProxy": 1.0,
+      "noSourceCorrect": null,
+      "notes": [],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 2,
+      "id": "F-C06",
+      "outputHash": "73db706ed239c82c85c59716e84e18f8c46c01aa8e3cf235f7a0ccde273eaca3",
+      "deterministicClarification": false,
+      "claims": [
+        {
+          "text": "Ukuran tubuhnya tampak seperti anak-anak, namun rambutnya putih seperti karena usia tua, sedangkan wajahnya tidak memiliki kerutan dan kulitnya masih segar.",
+          "sourceIds": [
+            "S1"
+          ],
+          "supported": true
+        }
+      ],
+      "completeAnswer": true,
+      "reviewedCompleteEvidence": true,
+      "primaryRangeProxy": 1.0,
+      "noSourceCorrect": null,
+      "notes": [],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 2,
+      "id": "F-C07",
+      "outputHash": "b607d4c5673a45f502a9602830a457edf1800bd6c918bdd60998a8333974a665",
+      "deterministicClarification": false,
+      "claims": [
+        {
+          "text": "Ayahnya menjadi jauh lebih baik hati daripada sebelumnya, dan setelah anak itu meminta dengan lembut, ayahnya mengizinkan Fan membawa Scrooge kecil pulang.",
+          "sourceIds": [
+            "S2"
+          ],
+          "supported": false
+        },
+        {
+          "text": "Fan datang dengan kereta untuk membawanya pulang.",
+          "sourceIds": [
+            "S2"
+          ],
+          "supported": true
+        }
+      ],
+      "completeAnswer": true,
+      "reviewedCompleteEvidence": true,
+      "primaryRangeProxy": 1.0,
+      "noSourceCorrect": null,
+      "notes": [
+        "Core answer correctly permits Fan to bring Scrooge home; source says father spoke gently, not that the child asked gently. Count first claim unsupported conservatively."
+      ],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 2,
+      "id": "F-C08",
+      "outputHash": "b3c26d81953c5ed358d2195393d65b7327c5d3b93ff16626f7cbb88dabe87b78",
+      "deterministicClarification": false,
+      "claims": [
+        {
+          "text": "Gudang Fezziwig diubah menjadi ruang dansa (ball-room).",
+          "sourceIds": [
+            "S1"
+          ],
+          "supported": true
+        }
+      ],
+      "completeAnswer": true,
+      "reviewedCompleteEvidence": true,
+      "primaryRangeProxy": 1.0,
+      "noSourceCorrect": null,
+      "notes": [],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 2,
+      "id": "F-C09",
+      "outputHash": "0b0bc7e5b03ad33cbd3ce98833ab9419821cc7a4dd221b6e85b7ac2d3d915be6",
+      "deterministicClarification": false,
+      "claims": [],
+      "completeAnswer": false,
+      "reviewedCompleteEvidence": false,
+      "primaryRangeProxy": 0.0,
+      "noSourceCorrect": null,
+      "notes": [
+        "False refusal. English dense top40 had gold evidence, but equal RRF fusion removed it from final candidate pool."
+      ],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 2,
+      "id": "F-C10",
+      "outputHash": "a9e179bbdfb115368f9f3d12d8fe5bdce60d85e4e696e23fbe94d1de3eb61a7e",
+      "deterministicClarification": false,
+      "claims": [
+        {
+          "text": "Tiny Tim memakai kruk kecil dan rangka besi sebagai penopang tubuhnya.",
+          "sourceIds": [
+            "S1"
+          ],
+          "supported": true
+        }
+      ],
+      "completeAnswer": true,
+      "reviewedCompleteEvidence": true,
+      "primaryRangeProxy": 1.0,
+      "noSourceCorrect": null,
+      "notes": [],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 2,
+      "id": "F-C11",
+      "outputHash": "b8873c2907d3ded4bee1636bbd28c237a64ac38c728b18bd20a5e6ef9ae6761b",
+      "deterministicClarification": false,
+      "claims": [
+        {
+          "text": "Kedua anak itu bernama Ignorance (laki-laki) dan Want (perempuan).",
+          "sourceIds": [
+            "S3"
+          ],
+          "supported": true
+        }
+      ],
+      "completeAnswer": true,
+      "reviewedCompleteEvidence": true,
+      "primaryRangeProxy": 1.0,
+      "noSourceCorrect": null,
+      "notes": [],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 2,
+      "id": "F-C12",
+      "outputHash": "460cd37f833489d5023db12fae1fe8d2d7e400673060f26baf624cbbc2bc394c",
+      "deterministicClarification": false,
+      "claims": [
+        {
+          "text": "Roh itu tidak menjawab dengan kata-kata, melainkan hanya menunjuk ke depan dengan tangannya.",
+          "sourceIds": [
+            "S1"
+          ],
+          "supported": true
+        }
+      ],
+      "completeAnswer": true,
+      "reviewedCompleteEvidence": true,
+      "primaryRangeProxy": 1.0,
+      "noSourceCorrect": null,
+      "notes": [],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 2,
+      "id": "F-C13",
+      "outputHash": "a78abab66e83ef4713172cfeb0e7e41677266a1bde017f71d10619d1ed553ddb",
+      "deterministicClarification": false,
+      "claims": [
+        {
+          "text": "Perempuan itu melepas tirai ranjang beserta ring-nya (rings and all) saat orang mati masih terbaring di sana.",
+          "sourceIds": [
+            "S1"
+          ],
+          "supported": true
+        },
+        {
+          "text": "Tubuh orang mati itu masih ada di ranjang, dalam keadaan dirampok, tanpa dijaga, tanpa ditangisi, dan tanpa dipedulikan.",
+          "sourceIds": [
+            "S2"
+          ],
+          "supported": true
+        }
+      ],
+      "completeAnswer": true,
+      "reviewedCompleteEvidence": true,
+      "primaryRangeProxy": 1.0,
+      "noSourceCorrect": null,
+      "notes": [
+        "Extra corpse description is supported by selected paragraph79 but exceeds the smallest direct answer; UX brevity remains a limitation."
+      ],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 2,
+      "id": "F-C14",
+      "outputHash": "e962f30fb8cca2772b596f2a94e3d58c721e7da3923ab1fa2fb75cb8c596074c",
+      "deterministicClarification": false,
+      "claims": [
+        {
+          "text": "Hadiah yang ditawarkan adalah satu shilling jika anak itu kembali bersama penjual kalkun.",
+          "sourceIds": [
+            "S1"
+          ],
+          "supported": true
+        },
+        {
+          "text": "Syarat mendapatkan jumlah yang lebih besar, setengah crown, adalah kembali bersama penjual itu dalam waktu kurang dari lima menit.",
+          "sourceIds": [
+            "S1"
+          ],
+          "supported": true
+        }
+      ],
+      "completeAnswer": true,
+      "reviewedCompleteEvidence": true,
+      "primaryRangeProxy": 1.0,
+      "noSourceCorrect": null,
+      "notes": [],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 2,
+      "id": "F-C15",
+      "outputHash": "188276a7b1a2bef33654aa655c93a21849a9737abbfde045a47b6e79f42a3a2f",
+      "deterministicClarification": false,
+      "claims": [
+        {
+          "text": "Scrooge menaikkan gaji Bob dan berusaha membantu keluarganya yang kesulitan.",
+          "sourceIds": [
+            "S2",
+            "S3"
+          ],
+          "supported": true
+        },
+        {
+          "text": "Tiny Tim tidak meninggal dan Scrooge menjadi seperti ayah kedua baginya.",
+          "sourceIds": [
+            "S1"
+          ],
+          "supported": true
+        }
+      ],
+      "completeAnswer": true,
+      "reviewedCompleteEvidence": true,
+      "primaryRangeProxy": 1.0,
+      "noSourceCorrect": null,
+      "notes": [],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 2,
+      "id": "F-C16",
+      "outputHash": "0b0bc7e5b03ad33cbd3ce98833ab9419821cc7a4dd221b6e85b7ac2d3d915be6",
+      "deterministicClarification": false,
+      "claims": [],
+      "completeAnswer": null,
+      "reviewedCompleteEvidence": null,
+      "primaryRangeProxy": null,
+      "noSourceCorrect": true,
+      "notes": [],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 2,
+      "id": "F-C17",
+      "outputHash": "0b0bc7e5b03ad33cbd3ce98833ab9419821cc7a4dd221b6e85b7ac2d3d915be6",
+      "deterministicClarification": false,
+      "claims": [],
+      "completeAnswer": null,
+      "reviewedCompleteEvidence": null,
+      "primaryRangeProxy": null,
+      "noSourceCorrect": true,
+      "notes": [],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 2,
+      "id": "F-C18",
+      "outputHash": null,
+      "deterministicClarification": true,
+      "claims": [],
+      "completeAnswer": null,
+      "reviewedCompleteEvidence": null,
+      "primaryRangeProxy": null,
+      "noSourceCorrect": true,
+      "notes": [],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 2,
+      "id": "F-C19",
+      "outputHash": "0b0bc7e5b03ad33cbd3ce98833ab9419821cc7a4dd221b6e85b7ac2d3d915be6",
+      "deterministicClarification": false,
+      "claims": [],
+      "completeAnswer": null,
+      "reviewedCompleteEvidence": null,
+      "primaryRangeProxy": null,
+      "noSourceCorrect": true,
+      "notes": [],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 2,
+      "id": "F-C20",
+      "outputHash": "0b0bc7e5b03ad33cbd3ce98833ab9419821cc7a4dd221b6e85b7ac2d3d915be6",
+      "deterministicClarification": false,
+      "claims": [],
+      "completeAnswer": null,
+      "reviewedCompleteEvidence": null,
+      "primaryRangeProxy": null,
+      "noSourceCorrect": true,
+      "notes": [],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 2,
+      "id": "F-H01",
+      "outputHash": "cbaaa19d6025dcac3568deb4e6fbcefce0eb9c8a28e9144f40ea90171ef92fb8",
+      "deterministicClarification": false,
+      "claims": [
+        {
+          "text": "Holmes mengetahui ada tujuh belas anak tangga.",
+          "sourceIds": [
+            "S1"
+          ],
+          "supported": true
+        },
+        {
+          "text": "Ia membedakan melihat dan mengamati.",
+          "sourceIds": [
+            "S1",
+            "S2"
+          ],
+          "supported": true
+        }
+      ],
+      "completeAnswer": true,
+      "reviewedCompleteEvidence": true,
+      "primaryRangeProxy": 1.0,
+      "noSourceCorrect": null,
+      "notes": [],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 2,
+      "id": "F-H02",
+      "outputHash": "c878efce068ec5e0f4981a8e2be963497787ab876be69a0113c60950b838a930",
+      "deterministicClarification": false,
+      "claims": [
+        {
+          "text": "Holmes meminta fotografi Irene Adler sebagai kenang-kenangan, bukan cincin yang ditawarkan raja.",
+          "sourceIds": [
+            "S1",
+            "S2"
+          ],
+          "supported": true
+        }
+      ],
+      "completeAnswer": true,
+      "reviewedCompleteEvidence": true,
+      "primaryRangeProxy": 1.0,
+      "noSourceCorrect": null,
+      "notes": [],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 2,
+      "id": "F-H03",
+      "outputHash": "2a4a8bd9e7a6786dda72b3b2256597edec6dce9456e74503813fbe35568325fb",
+      "deterministicClarification": false,
+      "claims": [
+        {
+          "text": "Pekerjaan Jabez Wilson untuk liga rambut merah bersifat nominal, yaitu ia harus berada di kantor atau setidaknya di gedung sepanjang waktu.",
+          "sourceIds": [
+            "S1"
+          ],
+          "supported": true
+        },
+        {
+          "text": "Bayaran mingguannya adalah £4.",
+          "sourceIds": [
+            "S1",
+            "S2"
+          ],
+          "supported": true
+        }
+      ],
+      "completeAnswer": false,
+      "reviewedCompleteEvidence": false,
+      "primaryRangeProxy": 0.5,
+      "noSourceCorrect": null,
+      "notes": [
+        "Payment supported, copy Encyclopaedia task missing; answered status should be partial. Each retrieval route contains only half required evidence."
+      ],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 2,
+      "id": "F-H04",
+      "outputHash": "2a3a453468cad9a6071e9f05b15e79521e1012c35b025c67b33a3113a2c24c9b",
+      "deterministicClarification": false,
+      "claims": [
+        {
+          "text": "Agar Wilson tidak berada di tokonya selama beberapa jam setiap hari.",
+          "sourceIds": [
+            "S1"
+          ],
+          "supported": true
+        },
+        {
+          "text": "Mereka menginginkan ketidakhadiran Wilson setiap pagi sepanjang minggu.",
+          "sourceIds": [
+            "S1"
+          ],
+          "supported": true
+        }
+      ],
+      "completeAnswer": false,
+      "reviewedCompleteEvidence": false,
+      "primaryRangeProxy": 0.3333333333333333,
+      "noSourceCorrect": null,
+      "notes": [
+        "Repeats removing Wilson from shop, without the tunnel/bank mechanism. Query asks why; requested causal explanation incomplete. Only one of three gold facts retrieved."
+      ],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 2,
+      "id": "F-H05",
+      "outputHash": "0d644f7df0b3071e5b1e554d5ae215e15ff6b8cc0417e161784607f60e12f6b4",
+      "deterministicClarification": false,
+      "claims": [
+        {
+          "text": "Upah Mary Sutherland adalah dua penny per lembar ketikan.",
+          "sourceIds": [
+            "S1"
+          ],
+          "supported": true
+        },
+        {
+          "text": "Ia biasanya dapat mengerjakan lima belas hingga dua puluh lembar dalam sehari.",
+          "sourceIds": [
+            "S1"
+          ],
+          "supported": true
+        }
+      ],
+      "completeAnswer": true,
+      "reviewedCompleteEvidence": true,
+      "primaryRangeProxy": 1.0,
+      "noSourceCorrect": null,
+      "notes": [],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 2,
+      "id": "F-H06",
+      "outputHash": "1d151e163f0a8a00fb4c2ff0d1aded5baf000f6d194b076c143c6913b2b1a232",
+      "deterministicClarification": false,
+      "claims": [
+        {
+          "text": "Windibank menyamar sebagai Hosmer Angel untuk mencegah pernikahan Mary, karena pernikahan itu akan menghilangkan seratus pound per tahun yang ia nikmati dari penghasilan Mary.",
+          "sourceIds": [
+            "S1"
+          ],
+          "supported": true
+        },
+        {
+          "text": "Ia berusaha membuat Mary terikat pada Hosmer Angel dan tidak yakin akan nasibnya, agar untuk sepuluh tahun ke depan ia tidak mau mendengarkan pria lain.",
+          "sourceIds": [
+            "S2"
+          ],
+          "supported": true
+        }
+      ],
+      "completeAnswer": true,
+      "reviewedCompleteEvidence": true,
+      "primaryRangeProxy": 1.0,
+      "noSourceCorrect": null,
+      "notes": [],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 2,
+      "id": "F-H07",
+      "outputHash": "e287116bfd04c8b66a38c72a05d22432271fd5d99544df2113bb522cf0d9b2c4",
+      "deterministicClarification": false,
+      "claims": [
+        {
+          "text": "Holmes menafsirkan kata yang terdengar seperti 'rat' itu sebagai bagian dari nama tempat Ballarat; anak McCarthy hanya menangkap dua suku kata terakhir, dan ayahnya sedang mencoba menyebut nama pembunuhnya.",
+          "sourceIds": [
+            "S1"
+          ],
+          "supported": true
+        }
+      ],
+      "completeAnswer": true,
+      "reviewedCompleteEvidence": true,
+      "primaryRangeProxy": 1.0,
+      "noSourceCorrect": null,
+      "notes": [],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 2,
+      "id": "F-H08",
+      "outputHash": "6e979d56a81c5e8d3cd0b8dca9552c72843fcf5014d5ff9e71e834bda629aa33",
+      "deterministicClarification": false,
+      "claims": [
+        {
+          "text": "Surat itu berisi lima biji jeruk kering kecil yang jatuh ke piring kolonel.",
+          "sourceIds": [
+            "S1"
+          ],
+          "supported": true
+        },
+        {
+          "text": "Cap posnya dari Pondicherry, India.",
+          "sourceIds": [
+            "S1"
+          ],
+          "supported": true
+        }
+      ],
+      "completeAnswer": true,
+      "reviewedCompleteEvidence": true,
+      "primaryRangeProxy": 1.0,
+      "noSourceCorrect": null,
+      "notes": [],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 2,
+      "id": "F-H09",
+      "outputHash": "4e69cc01f0481b3ca30239a6555409ddc1f73e63dacb07e02916c7637d07757a",
+      "deterministicClarification": false,
+      "claims": [
+        {
+          "text": "Holmes membasahi spons dan menggosoknya dua kali dengan kuat melintasi dan ke bawah wajah tahanan.",
+          "sourceIds": [
+            "S2"
+          ],
+          "supported": true
+        },
+        {
+          "text": "Wajah tahanan terkelupas di bawah spons, menghilangkan warna cokelat kasar, bekas luka, bibir sumbing, dan rambut merah kusut, sehingga tampak pria pucat, sedih, berpenampilan halus, berambut hitam, dan berkulit mulus.",
+          "sourceIds": [
+            "S3"
+          ],
+          "supported": true
+        }
+      ],
+      "completeAnswer": true,
+      "reviewedCompleteEvidence": true,
+      "primaryRangeProxy": 1.0,
+      "noSourceCorrect": null,
+      "notes": [],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 2,
+      "id": "F-H10",
+      "outputHash": "3e07e56a585c84d700c1252c3d6b2ef8b949dec57216e93cbd7fea34aedd4456",
+      "deterministicClarification": false,
+      "claims": [
+        {
+          "text": "Batu blue carbuncle ditemukan di dalam crop (tembolok) angsa.",
+          "sourceIds": [
+            "S1",
+            "S2"
+          ],
+          "supported": true
+        }
+      ],
+      "completeAnswer": true,
+      "reviewedCompleteEvidence": true,
+      "primaryRangeProxy": 0.0,
+      "noSourceCorrect": null,
+      "notes": [
+        "Correct crop answer grounded in owned alternative paragraph51 and191. Frozen gold anchors only paragraph62; do not change/rescore primary proxy."
+      ],
+      "additionalValidAnchors": [
+        {
+          "book": "sherlock-holmes",
+          "revision": 1,
+          "chapter": "VII. THE ADVENTURE OF THE BLUE CARBUNCLE",
+          "paragraph": 51,
+          "start": 16,
+          "end": 51,
+          "paragraphHash": "bc4572753d5ade0a5719be9139884de59987e28e73241f045f4e3412feeb7f63",
+          "quote": "See what my wife found in its crop!"
+        },
+        {
+          "book": "sherlock-holmes",
+          "revision": 1,
+          "chapter": "VII. THE ADVENTURE OF THE BLUE CARBUNCLE",
+          "paragraph": 191,
+          "start": 484,
+          "end": 546,
+          "paragraphHash": "cb3206cc0a600b586ed098d011ca02f4a8a9b8dd6d8953dc6b16f91585a81112",
+          "quote": "I felt the stone pass along its gullet and down into its crop."
+        }
+      ]
+    },
+    {
+      "run": 2,
+      "id": "F-H11",
+      "outputHash": "b5a9295675e4874acf37e1b52bfb72b51854a7eaf56398db0db8f862a8f0aa00",
+      "deterministicClarification": false,
+      "claims": [
+        {
+          "text": "Karena tali bel itu tidak terpasang pada kawat dan hanya diikatkan pada kait, sehingga tidak bisa berdering.",
+          "sourceIds": [
+            "S1"
+          ],
+          "supported": true
+        },
+        {
+          "text": "Holmes menyebutnya dummy karena tali itu jelas tidak dimaksudkan sebagai tali bel.",
+          "sourceIds": [
+            "S1",
+            "S2"
+          ],
+          "supported": true
+        }
+      ],
+      "completeAnswer": true,
+      "reviewedCompleteEvidence": true,
+      "primaryRangeProxy": 1.0,
+      "noSourceCorrect": null,
+      "notes": [],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 2,
+      "id": "F-H12",
+      "outputHash": "763af1771ca903a9701443c811abf68239bf8cd47a89dd5c8dbebde9421fc44e",
+      "deterministicClarification": false,
+      "claims": [
+        {
+          "text": "Hatherley dilukai oleh senjata berat seperti golok tukang daging yang diayunkan Kolonel Lysander Stark.",
+          "sourceIds": [
+            "S1",
+            "S2"
+          ],
+          "supported": true
+        },
+        {
+          "text": "Saat pukulan itu mengenai tangannya, ia sedang bergantung pada tangan di ambang jendela.",
+          "sourceIds": [
+            "S2"
+          ],
+          "supported": true
+        }
+      ],
+      "completeAnswer": true,
+      "reviewedCompleteEvidence": true,
+      "primaryRangeProxy": 1.0,
+      "noSourceCorrect": null,
+      "notes": [],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 2,
+      "id": "F-H13",
+      "outputHash": "971ff8b582a130e0ad8d146e5b5dea8596d6a0883a121a81510f7c5a75128090",
+      "deterministicClarification": false,
+      "claims": [
+        {
+          "text": "Saat melewati bangku Frank dalam perjalanan keluar, pengantin perempuan menjatuhkan buketnya kepadanya, dan Frank menyelipkan catatan ke tangannya ketika mengembalikan bunga itu.",
+          "sourceIds": [
+            "S1"
+          ],
+          "supported": true
+        }
+      ],
+      "completeAnswer": true,
+      "reviewedCompleteEvidence": true,
+      "primaryRangeProxy": 1.0,
+      "noSourceCorrect": null,
+      "notes": [],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 2,
+      "id": "F-H14",
+      "outputHash": "b45444021a89ebeb06fef3a3e0ba4f06217d57bfc0d806479d12238e05e88c2b",
+      "deterministicClarification": false,
+      "claims": [
+        {
+          "text": "Mahkota itu memiliki tiga puluh sembilan batu beryl.",
+          "sourceIds": [
+            "S1",
+            "S4"
+          ],
+          "supported": true
+        },
+        {
+          "text": "Tiga batu beryl dilaporkan hilang.",
+          "sourceIds": [
+            "S2",
+            "S3",
+            "S4"
+          ],
+          "supported": true
+        }
+      ],
+      "completeAnswer": true,
+      "reviewedCompleteEvidence": true,
+      "primaryRangeProxy": 0.5,
+      "noSourceCorrect": null,
+      "notes": [
+        "39 total and3 missing supported. Missing-count alternative paragraphs67/147/103 are not the sole frozen gold paragraph72; keep primary proxy unchanged."
+      ],
+      "additionalValidAnchors": [
+        {
+          "book": "sherlock-holmes",
+          "revision": 1,
+          "chapter": "XI. THE ADVENTURE OF THE BERYL CORONET",
+          "paragraph": 67,
+          "start": 339,
+          "end": 408,
+          "paragraphHash": "8cd97cd2caa2d47294271117e991ed3a3418a86b38909a4d9223bd557c789bd4",
+          "quote": "One of the gold corners, with three of the beryls in it, was missing."
+        }
+      ]
+    },
+    {
+      "run": 2,
+      "id": "F-H15",
+      "outputHash": "8a9b7dd65cc944eca165ccf10a71a918e8b82feaf3fb1380812570efef61ccc4",
+      "deterministicClarification": false,
+      "claims": [
+        {
+          "text": "Tawaran gaji tahunan yang dinaikkan adalah £120 per tahun (setara £30 per kuartal).",
+          "sourceIds": [
+            "S1"
+          ],
+          "supported": true
+        },
+        {
+          "text": "Tuntutan terkait rambutnya adalah ia harus memotong rambutnya cukup pendek sebelum datang.",
+          "sourceIds": [
+            "S1",
+            "S2"
+          ],
+          "supported": true
+        }
+      ],
+      "completeAnswer": true,
+      "reviewedCompleteEvidence": true,
+      "primaryRangeProxy": 1.0,
+      "noSourceCorrect": null,
+      "notes": [],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 2,
+      "id": "F-H16",
+      "outputHash": "0b0bc7e5b03ad33cbd3ce98833ab9419821cc7a4dd221b6e85b7ac2d3d915be6",
+      "deterministicClarification": false,
+      "claims": [],
+      "completeAnswer": null,
+      "reviewedCompleteEvidence": null,
+      "primaryRangeProxy": null,
+      "noSourceCorrect": true,
+      "notes": [],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 2,
+      "id": "F-H17",
+      "outputHash": "0b0bc7e5b03ad33cbd3ce98833ab9419821cc7a4dd221b6e85b7ac2d3d915be6",
+      "deterministicClarification": false,
+      "claims": [],
+      "completeAnswer": null,
+      "reviewedCompleteEvidence": null,
+      "primaryRangeProxy": null,
+      "noSourceCorrect": true,
+      "notes": [],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 2,
+      "id": "F-H18",
+      "outputHash": null,
+      "deterministicClarification": true,
+      "claims": [],
+      "completeAnswer": null,
+      "reviewedCompleteEvidence": null,
+      "primaryRangeProxy": null,
+      "noSourceCorrect": true,
+      "notes": [],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 2,
+      "id": "F-H19",
+      "outputHash": "0b0bc7e5b03ad33cbd3ce98833ab9419821cc7a4dd221b6e85b7ac2d3d915be6",
+      "deterministicClarification": false,
+      "claims": [],
+      "completeAnswer": null,
+      "reviewedCompleteEvidence": null,
+      "primaryRangeProxy": null,
+      "noSourceCorrect": true,
+      "notes": [],
+      "additionalValidAnchors": []
+    },
+    {
+      "run": 2,
+      "id": "F-H20",
+      "outputHash": "0b0bc7e5b03ad33cbd3ce98833ab9419821cc7a4dd221b6e85b7ac2d3d915be6",
+      "deterministicClarification": false,
+      "claims": [],
+      "completeAnswer": null,
+      "reviewedCompleteEvidence": null,
+      "primaryRangeProxy": null,
+      "noSourceCorrect": true,
+      "notes": [],
+      "additionalValidAnchors": []
+    }
+  ],
+  "strictGateVerdict": "STOP",
+  "productVerdict": "ACCEPTED_WITH_LIMITATIONS_BY_USER"
+}

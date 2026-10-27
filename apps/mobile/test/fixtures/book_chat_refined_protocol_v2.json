@@ -1,0 +1,55 @@
+{
+  "protocol": "refined-v2-final-candidate",
+  "frozenAt": "2026-10-27T13:40:44.805475+00:00",
+  "state": "tuning stopped; awaiting fresh independent validation and device gates",
+  "embeddingModel": "qwen/qwen3-embedding-8b",
+  "dimensions": 4096,
+  "query": "same original question/history/selected source and Qwen instruct prefix as v1",
+  "chunking": {
+    "maxChars": 1800,
+    "overlap": 200,
+    "preserveShortParserGroups": true
+  },
+  "candidates": 40,
+  "selector": {
+    "model": "deepseek/deepseek-v4.1-flash",
+    "fullCandidateTexts": true,
+    "paragraphPositions": true,
+    "resolvedQuestionForAuditOnly": true,
+    "maxInputBytes": 90000,
+    "maxOutputTokens": 256,
+    "selectedMax": 8,
+    "quotePinned": true,
+    "contentRetry": false
+  },
+  "answer": {
+    "model": "deepseek/deepseek-v4.1-flash",
+    "maxClaims": 2,
+    "maxOutputTokens": 800,
+    "sourceBudgetBytes": 18000,
+    "promptBudgetBytes": 28000,
+    "temperature": 0,
+    "notes": "status-based deterministic application text; raw model notes never displayed",
+    "contentRetry": false
+  },
+  "limits": [
+    "H-A06 wrong-event answer remains despite correct selected evidence",
+    "P05 lacks substantive financial explanation",
+    "M04 should be partial, not answered",
+    "additional reranker network latency/cost; device peak RAM not measured"
+  ],
+  "freshValidationRequired": true,
+  "consumedV1NeverIndependentAgain": true,
+  "tests": "make check t=--concurrency=1:659passed/11skipped",
+  "sourceHashes": {
+    "test/support/book_chat_refinement.dart": "9d1a8f36a0a7690a06fae89cd2dda02afa9aafbbd68ad35cfb9ae0aae8e2e5a5",
+    "test/support/book_chat_dense.dart": "14fa0226ea66680eb8dc75df439bf9cf7f4866349856d46d9b970d631ad15a0f",
+    "test/support/book_chat_retrieval.dart": "926dd868bd6925e88b7bd48cc021aa01e3b4e1b226cb82595c6d41b9ecbe3935",
+    "test/support/book_chat_spike.dart": "d80198306a284b4db2f493997b217277fe566d927689f87858e5f03f320951eb",
+    "test/support/book_chat_oracle.dart": "d94ead16a532624c86bec75a720d12a5259d7a74d6726b8372252bc4c53f6b7a",
+    "test/support/book_chat_heldout.dart": "1835ae11825afd15b75e0a3d576984b562086a2603c740d54b1d5683197ad651",
+    "test/data/book_chat_refinement_live_test.dart": "9265be93f14666c5ac29b16dc18aeab9e7cf90d1bc4421ad3170ab8fa43e405f",
+    "lib/data/services/openrouter_service.dart": "f52ee183b6c674c3558186a814fab0abb0bcaca47968b0adc604b236dd594b65",
+    "pubspec.lock": "445de7039b418d08f7ce92f50623a276245949014d7a4060a63b312510368b5d"
+  }
+}

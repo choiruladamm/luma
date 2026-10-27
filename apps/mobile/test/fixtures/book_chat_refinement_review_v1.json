@@ -1,0 +1,744 @@
+{
+  "reviewer": "assistant; not a human blind review",
+  "independentValidation": false,
+  "reviews": [
+    {
+      "id": "E01",
+      "split": "development",
+      "outputSourceHash": "b0c07f347a3fa741c6250e6a6520918acde0e1f4a04957d89b179733badf1d42",
+      "claimVerdicts": [
+        "supported",
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against complete cited source text; fixed note contains no model-authored book fact."
+    },
+    {
+      "id": "E02",
+      "split": "development",
+      "outputSourceHash": "d5e573f3e29ffb2d510d391304206b19bfc9761a926bdda24727696679695a7b",
+      "claimVerdicts": [
+        "supported",
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against complete cited source text; fixed note contains no model-authored book fact."
+    },
+    {
+      "id": "E03",
+      "split": "development",
+      "outputSourceHash": "8131a70130defa81e0327146550e54784bac2d04c6eb4b28a54a8ce0dd71afdf",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against complete cited source text; fixed note contains no model-authored book fact."
+    },
+    {
+      "id": "E04",
+      "split": "development",
+      "outputSourceHash": "7aeaaf3310b1cbb978078c13cae4f71f71b148f8541bbb973375a62eb1df01df",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against complete cited source text; fixed note contains no model-authored book fact."
+    },
+    {
+      "id": "E05",
+      "split": "development",
+      "outputSourceHash": "51aa25c461160731bce43cd62ebb60e688eacf1004bbded2969b36ef2cbbf129",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against complete cited source text; fixed note contains no model-authored book fact."
+    },
+    {
+      "id": "E06",
+      "split": "development",
+      "outputSourceHash": "29f94783b383487b7479ec535b6142a95b3e1f08e9b7b23d23d059b6f2f46396",
+      "claimVerdicts": [
+        "supported",
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against complete cited source text; fixed note contains no model-authored book fact."
+    },
+    {
+      "id": "E07",
+      "split": "development",
+      "outputSourceHash": "4fe03f89048ef4188a1a198dc6bc5d57d4464384645c31faed2b434310aeeba7",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against complete cited source text; fixed note contains no model-authored book fact."
+    },
+    {
+      "id": "E08",
+      "split": "development",
+      "outputSourceHash": "2589e112634d417cb8427dac7d65c919c888491e6db5c148d9b609d299360e9a",
+      "claimVerdicts": [
+        "supported",
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against complete cited source text; fixed note contains no model-authored book fact."
+    },
+    {
+      "id": "E09",
+      "split": "development",
+      "outputSourceHash": "6f46f9b0819a305e2ed35029f2581d828c1b1fbcb1fb87f6cf28104a314545e3",
+      "claimVerdicts": [
+        "supported",
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against complete cited source text; fixed note contains no model-authored book fact."
+    },
+    {
+      "id": "E10",
+      "split": "development",
+      "outputSourceHash": "7789bef77a29ecfd83e55c6aefaf6a3ba0d2e7c64f1220f1c652df508047bdc8",
+      "claimVerdicts": [
+        "supported",
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against complete cited source text; fixed note contains no model-authored book fact."
+    },
+    {
+      "id": "E11",
+      "split": "development",
+      "outputSourceHash": "45436b33616d1f935cb2cbdfdd25c43936f5bbb5c1588168b8b275744d07b3d1",
+      "claimVerdicts": [
+        "supported",
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against complete cited source text; fixed note contains no model-authored book fact."
+    },
+    {
+      "id": "E12",
+      "split": "development",
+      "outputSourceHash": "f5931e1638d0cbcb36b0f522c30e6fd8d5d25a13c094a5339aad68495d17e0c3",
+      "claimVerdicts": [],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against complete cited source text; fixed note contains no model-authored book fact."
+    },
+    {
+      "id": "P01",
+      "split": "development",
+      "outputSourceHash": "b8f594ff4bb5420f45b04516c2eec13dbcb53b15b8ec6b1778397a5b584262be",
+      "claimVerdicts": [
+        "supported",
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against complete cited source text; fixed note contains no model-authored book fact."
+    },
+    {
+      "id": "P02",
+      "split": "development",
+      "outputSourceHash": "14112f5cda71ddb372dc953db3c63f0f152490007fb9293cc1a00183833e9e69",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against complete cited source text; fixed note contains no model-authored book fact."
+    },
+    {
+      "id": "P03",
+      "split": "development",
+      "outputSourceHash": "8497a9b31bd04a47341905b89da452cb3465aa259971116a112a8dc53882ded0",
+      "claimVerdicts": [
+        "supported",
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against complete cited source text; fixed note contains no model-authored book fact."
+    },
+    {
+      "id": "P04",
+      "split": "development",
+      "outputSourceHash": "b9bc5635de96eec25686c6b40a7f4e0cab74f6e5ec773c8dfc0eafdd7bf1448b",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against complete cited source text; fixed note contains no model-authored book fact."
+    },
+    {
+      "id": "P05",
+      "split": "development",
+      "outputSourceHash": "f1bf962d78f5a47e24925cdf4e2d76bc6a3ddd779d9c9276c6070c33d186516d",
+      "claimVerdicts": [
+        "supported",
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [
+        "insufficient_substantive_answer"
+      ],
+      "comment": "Claims match letter introduction about rebuttal/witnesses, but do not give substantive financial explanation required by gold. Keep referenced coverage0; do not inflate task accuracy."
+    },
+    {
+      "id": "P06",
+      "split": "development",
+      "outputSourceHash": "84ce093f69d0173dfd141d3827d7928e4d7e93c7b9a15b487f274f5471fef9c9",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against complete cited source text; fixed note contains no model-authored book fact."
+    },
+    {
+      "id": "P07",
+      "split": "development",
+      "outputSourceHash": "d064cd9865cb6219fe30ff9aac74036395b40fb7f28d4eaa266f1b0f06c3fc70",
+      "claimVerdicts": [
+        "supported",
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Statement is framed as Lady Catherine reasons/objections; cited passages support planned union and alleged family inferiority as her expressed views, not Darcy consent."
+    },
+    {
+      "id": "P08",
+      "split": "development",
+      "outputSourceHash": "0688b1104e844503c743a3c452b5e662e01f651a484b36f6c538bfc349f12ab2",
+      "claimVerdicts": [
+        "supported",
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against complete cited source text; fixed note contains no model-authored book fact."
+    },
+    {
+      "id": "P09",
+      "split": "development",
+      "outputSourceHash": "f5931e1638d0cbcb36b0f522c30e6fd8d5d25a13c094a5339aad68495d17e0c3",
+      "claimVerdicts": [],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against complete cited source text; fixed note contains no model-authored book fact."
+    },
+    {
+      "id": "M01",
+      "split": "development",
+      "outputSourceHash": "de9bb54b8466c97af352f19a08ac0ba53c86ca522fa1f06291f7f3e69b0f96e7",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against complete cited source text; fixed note contains no model-authored book fact."
+    },
+    {
+      "id": "M02",
+      "split": "development",
+      "outputSourceHash": "c53f29b109facd6b3c52c11037a882c19f8926edcafbac216ee5fea300f94eef",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against complete cited source text; fixed note contains no model-authored book fact."
+    },
+    {
+      "id": "M03",
+      "split": "development",
+      "outputSourceHash": "f5931e1638d0cbcb36b0f522c30e6fd8d5d25a13c094a5339aad68495d17e0c3",
+      "claimVerdicts": [],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against complete cited source text; fixed note contains no model-authored book fact."
+    },
+    {
+      "id": "M04",
+      "split": "development",
+      "outputSourceHash": "287f8f37951679181ec4c3d4ff34ce1de079e8f812cbb2df4c17076d9973bd79",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [
+        "incomplete_answer_incorrect_status"
+      ],
+      "comment": "Signal meaning is supported, but requested detailed procedure is absent. Should be partial, not answered. No invented procedure, but question completeness/status is wrong."
+    },
+    {
+      "id": "M05",
+      "split": "development",
+      "outputSourceHash": "f5931e1638d0cbcb36b0f522c30e6fd8d5d25a13c094a5339aad68495d17e0c3",
+      "claimVerdicts": [],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against complete cited source text; fixed note contains no model-authored book fact."
+    },
+    {
+      "id": "M06",
+      "split": "development",
+      "outputSourceHash": "f5931e1638d0cbcb36b0f522c30e6fd8d5d25a13c094a5339aad68495d17e0c3",
+      "claimVerdicts": [],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against complete cited source text; fixed note contains no model-authored book fact."
+    },
+    {
+      "id": "H-A01",
+      "split": "consumed_diagnostic",
+      "outputSourceHash": "324cfee74749578c97b9b1a759e4c2def1997efcc290c2cbf6bfccf498763be1",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against complete cited source text; fixed note contains no model-authored book fact."
+    },
+    {
+      "id": "H-A02",
+      "split": "consumed_diagnostic",
+      "outputSourceHash": "4c6fcf7ea66f3d999afade7dbb729e0eabee0288e2229a0ecbed4b9a9bf148a2",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against complete cited source text; fixed note contains no model-authored book fact."
+    },
+    {
+      "id": "H-A03",
+      "split": "consumed_diagnostic",
+      "outputSourceHash": "37baa57d52126d4e0800d841542a4ec97623a644f1fc02cbc29f1fdb204163cc",
+      "claimVerdicts": [
+        "supported",
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against complete cited source text; fixed note contains no model-authored book fact."
+    },
+    {
+      "id": "H-A04",
+      "split": "consumed_diagnostic",
+      "outputSourceHash": "30a6e82bcaebb2236e1372c80055419df5f557625b3e92805181346d20842a17",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against complete cited source text; fixed note contains no model-authored book fact."
+    },
+    {
+      "id": "H-A05",
+      "split": "consumed_diagnostic",
+      "outputSourceHash": "c5a8cf2dfcc40ed09cb29c9a6e8a4abb511b30a330288ed661695cd63a07c7cf",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against complete cited source text; fixed note contains no model-authored book fact."
+    },
+    {
+      "id": "H-A06",
+      "split": "consumed_diagnostic",
+      "outputSourceHash": "0ea12d52d3f9d2527eab8406e241aabc215fb8b2046db28dcd5ac237ee23c7f6",
+      "claimVerdicts": [
+        "wrong_event"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [
+        "wrong_history_referent"
+      ],
+      "comment": "Claim cites nine-foot growth after cake, not the earlier DRINK ME bottle. Correct ten-inch evidence was selected but answer still used wrong event. Count against grounding/context."
+    },
+    {
+      "id": "H-A07",
+      "split": "consumed_diagnostic",
+      "outputSourceHash": "d889cfe91ff68fbaaba5c5cde709c38302d1f9398b1893dc4a38255a8014f102",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against complete cited source text; fixed note contains no model-authored book fact."
+    },
+    {
+      "id": "H-A08",
+      "split": "consumed_diagnostic",
+      "outputSourceHash": "2a9b788b53aab5e7ead6f1a9a7d1b6a3175c4e4e6de2f7938e4e22d315dfa549",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against complete cited source text; fixed note contains no model-authored book fact."
+    },
+    {
+      "id": "H-A09",
+      "split": "consumed_diagnostic",
+      "outputSourceHash": "5b5c2be083a6a64d521255e467b29c348078840170a8e5d4a4d69f6ef2dea5be",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against complete cited source text; fixed note contains no model-authored book fact."
+    },
+    {
+      "id": "H-A10",
+      "split": "consumed_diagnostic",
+      "outputSourceHash": "6b23349abfe768e9bf34e70d7025bd227a1e44fa95eba15523396b04cad51aa1",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against complete cited source text; fixed note contains no model-authored book fact."
+    },
+    {
+      "id": "H-A11",
+      "split": "consumed_diagnostic",
+      "outputSourceHash": "6613e2efa277041a8f5366ea7835165fb32027fa659a5bd48b0fefe68298cf0d",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against complete cited source text; fixed note contains no model-authored book fact."
+    },
+    {
+      "id": "H-A12",
+      "split": "consumed_diagnostic",
+      "outputSourceHash": "cc265eb8ed8e110ab55ae29e4e23798baafc59b3f7f131a61923cf46b5bb1c29",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against complete cited source text; fixed note contains no model-authored book fact."
+    },
+    {
+      "id": "H-A13",
+      "split": "consumed_diagnostic",
+      "outputSourceHash": "be86f34ada559e447ccaacd14c5051ebe51f42882e54ba37f99fedb6c5dd052b",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against complete cited source text; fixed note contains no model-authored book fact."
+    },
+    {
+      "id": "H-A14",
+      "split": "consumed_diagnostic",
+      "outputSourceHash": "eb0d320cb10b71cae2f4f27b9301054d253b3cff8b727c1a53641d43b7d41ff9",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against complete cited source text; fixed note contains no model-authored book fact."
+    },
+    {
+      "id": "H-A15",
+      "split": "consumed_diagnostic",
+      "outputSourceHash": "cb95982b7a95f0b581d15656f8c11a8cfb50acd0cf7295188154702e5a96d2cf",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against complete cited source text; fixed note contains no model-authored book fact."
+    },
+    {
+      "id": "H-A16",
+      "split": "consumed_diagnostic",
+      "outputSourceHash": "f5931e1638d0cbcb36b0f522c30e6fd8d5d25a13c094a5339aad68495d17e0c3",
+      "claimVerdicts": [],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against complete cited source text; fixed note contains no model-authored book fact."
+    },
+    {
+      "id": "H-A17",
+      "split": "consumed_diagnostic",
+      "outputSourceHash": "f5931e1638d0cbcb36b0f522c30e6fd8d5d25a13c094a5339aad68495d17e0c3",
+      "claimVerdicts": [],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against complete cited source text; fixed note contains no model-authored book fact."
+    },
+    {
+      "id": "H-A18",
+      "split": "consumed_diagnostic",
+      "outputSourceHash": "f5931e1638d0cbcb36b0f522c30e6fd8d5d25a13c094a5339aad68495d17e0c3",
+      "claimVerdicts": [],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against complete cited source text; fixed note contains no model-authored book fact."
+    },
+    {
+      "id": "H-A19",
+      "split": "consumed_diagnostic",
+      "outputSourceHash": "f5931e1638d0cbcb36b0f522c30e6fd8d5d25a13c094a5339aad68495d17e0c3",
+      "claimVerdicts": [],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against complete cited source text; fixed note contains no model-authored book fact."
+    },
+    {
+      "id": "H-A20",
+      "split": "consumed_diagnostic",
+      "outputSourceHash": "f5931e1638d0cbcb36b0f522c30e6fd8d5d25a13c094a5339aad68495d17e0c3",
+      "claimVerdicts": [],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against complete cited source text; fixed note contains no model-authored book fact."
+    },
+    {
+      "id": "H-M01",
+      "split": "consumed_diagnostic",
+      "outputSourceHash": "144de4455717ca50310e510dcd6861060f54712fd96b6017525269b3956cc592",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against complete cited source text; fixed note contains no model-authored book fact."
+    },
+    {
+      "id": "H-M02",
+      "split": "consumed_diagnostic",
+      "outputSourceHash": "e98b4424c2667deb356dc0ab81d2a586561c8e8f55761ff51e843b325ed8aa55",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against complete cited source text; fixed note contains no model-authored book fact."
+    },
+    {
+      "id": "H-M03",
+      "split": "consumed_diagnostic",
+      "outputSourceHash": "a776dceff93d349d5477d0098bbdd9acad7fcc3cfd2407e35209c03d202ee70c",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against complete cited source text; fixed note contains no model-authored book fact."
+    },
+    {
+      "id": "H-M04",
+      "split": "consumed_diagnostic",
+      "outputSourceHash": "3eac8ac8a2fa6a1921deeadb3f06731062b63788c292537b50de22d8b4d7924b",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against complete cited source text; fixed note contains no model-authored book fact."
+    },
+    {
+      "id": "H-M05",
+      "split": "consumed_diagnostic",
+      "outputSourceHash": "61319a5755e9fe775851cb6b557573282540f619c3afa089843a400d4ca035c9",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against complete cited source text; fixed note contains no model-authored book fact."
+    },
+    {
+      "id": "H-M06",
+      "split": "consumed_diagnostic",
+      "outputSourceHash": "29d932a28ca54c9fafe4de83ab37e701be92a35ab490ccdc3160b342036ec924",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against complete cited source text; fixed note contains no model-authored book fact."
+    },
+    {
+      "id": "H-M07",
+      "split": "consumed_diagnostic",
+      "outputSourceHash": "ef5486a9c28513e1b15af94e9d0f217c2ea25fa707281c4baf4fd388c68e248f",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against complete cited source text; fixed note contains no model-authored book fact."
+    },
+    {
+      "id": "H-M08",
+      "split": "consumed_diagnostic",
+      "outputSourceHash": "dba863b2e3682131feda2fa342fe6e9a4d7b810e1f026706f0369191b1d6f3a2",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against complete cited source text; fixed note contains no model-authored book fact."
+    },
+    {
+      "id": "H-M09",
+      "split": "consumed_diagnostic",
+      "outputSourceHash": "84945d37fed63319497b5f31706c842b993f00a8c44a6e09e4cb7b8a7a9a82dc",
+      "claimVerdicts": [
+        "supported",
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [
+        "gold_range_proxy_undercoverage"
+      ],
+      "comment": "Answer accurately states common-good/morning advice from another supplied paragraph. Frozen gold range targets different passage; retain referenced coverage0 without rescore."
+    },
+    {
+      "id": "H-M10",
+      "split": "consumed_diagnostic",
+      "outputSourceHash": "36d9d99c07b3609fba3456fe18ae56ddf305dd449d6f41a5ad29761cc5231e5e",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against complete cited source text; fixed note contains no model-authored book fact."
+    },
+    {
+      "id": "H-M11",
+      "split": "consumed_diagnostic",
+      "outputSourceHash": "50657982a8b8fdbe0ecbfffd912b3faa1b85d07bf9a07dc859b316746a095bd0",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against complete cited source text; fixed note contains no model-authored book fact."
+    },
+    {
+      "id": "H-M12",
+      "split": "consumed_diagnostic",
+      "outputSourceHash": "c0ceca7ced1c6ee70aeb437150f3fc5e145ad53ff3422c2143d7891066ea8f64",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against complete cited source text; fixed note contains no model-authored book fact."
+    },
+    {
+      "id": "H-M13",
+      "split": "consumed_diagnostic",
+      "outputSourceHash": "267719ff5389df28ec4158d2e38873188e7a0424eb738a2b2df3a3f8703d0b38",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against complete cited source text; fixed note contains no model-authored book fact."
+    },
+    {
+      "id": "H-M14",
+      "split": "consumed_diagnostic",
+      "outputSourceHash": "cad3b56678f330ddf8f3f383c8dc81bc8711b914052cad82ffca49ca055f9dd8",
+      "claimVerdicts": [
+        "supported",
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against complete cited source text; fixed note contains no model-authored book fact."
+    },
+    {
+      "id": "H-M15",
+      "split": "consumed_diagnostic",
+      "outputSourceHash": "e054fd20ee4ea13688b6163c0ed44dd16f6e73a719615f104b89ec166881b89d",
+      "claimVerdicts": [
+        "supported"
+      ],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against complete cited source text; fixed note contains no model-authored book fact."
+    },
+    {
+      "id": "H-M16",
+      "split": "consumed_diagnostic",
+      "outputSourceHash": "f5931e1638d0cbcb36b0f522c30e6fd8d5d25a13c094a5339aad68495d17e0c3",
+      "claimVerdicts": [],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against complete cited source text; fixed note contains no model-authored book fact."
+    },
+    {
+      "id": "H-M17",
+      "split": "consumed_diagnostic",
+      "outputSourceHash": "f5931e1638d0cbcb36b0f522c30e6fd8d5d25a13c094a5339aad68495d17e0c3",
+      "claimVerdicts": [],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against complete cited source text; fixed note contains no model-authored book fact."
+    },
+    {
+      "id": "H-M18",
+      "split": "consumed_diagnostic",
+      "outputSourceHash": "f5931e1638d0cbcb36b0f522c30e6fd8d5d25a13c094a5339aad68495d17e0c3",
+      "claimVerdicts": [],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against complete cited source text; fixed note contains no model-authored book fact."
+    },
+    {
+      "id": "H-M19",
+      "split": "consumed_diagnostic",
+      "outputSourceHash": "f5931e1638d0cbcb36b0f522c30e6fd8d5d25a13c094a5339aad68495d17e0c3",
+      "claimVerdicts": [],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against complete cited source text; fixed note contains no model-authored book fact."
+    },
+    {
+      "id": "H-M20",
+      "split": "consumed_diagnostic",
+      "outputSourceHash": "f5931e1638d0cbcb36b0f522c30e6fd8d5d25a13c094a5339aad68495d17e0c3",
+      "claimVerdicts": [],
+      "fixedNoteSafe": true,
+      "taskIssues": [],
+      "comment": "Displayed claims checked against complete cited source text; fixed note contains no model-authored book fact."
+    }
+  ],
+  "summary": {
+    "claims": 67,
+    "supported": 66,
+    "ratio": 0.9850746268656716,
+    "displayedNoSourceNotes": 15,
+    "safeNoSourceNotes": 15,
+    "caveat": "Direct support is not case answer accuracy; M04 and P05 remain incomplete; H-A06 is wrong event."
+  }
+}

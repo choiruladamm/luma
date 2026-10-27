@@ -1,0 +1,4302 @@
+{
+  "protocol": "embedding-stage4-v1",
+  "models": [
+    {
+      "protocol": "embedding-hybrid-v1",
+      "manifestHash": "e7a429145ebf1f436c25127c92da8cfee7ce447b893ac4de3c0c19526172ee67",
+      "model": "baai/bge-m3",
+      "dimensions": 1024,
+      "chunking": "bounded-groups-1800 overlap200",
+      "chunkCount": 1434,
+      "corpusHash": "b70c9f5b396144c7018bf95d936cf13953ce383e8192a5cb3a227c524ca23f7a",
+      "rrfK": 60,
+      "denseCandidates": 20,
+      "bm25Candidates": 20,
+      "heldOutModelRuns": 0,
+      "heldOutRetrievalRuns": 0,
+      "answerModelRuns": 0,
+      "newEmbeddingRequests": 25,
+      "newInputBytes": 791971,
+      "embeddingOrCacheLoadMs": 63056,
+      "cacheVectorCount": 1488,
+      "float32Bytes": 6094848,
+      "embeddingLedger": [
+        {
+          "model": "baai/bge-m3",
+          "dimensions": 1024,
+          "usage": {
+            "prompt_tokens": 184,
+            "total_tokens": 184,
+            "cost": 1.84e-06,
+            "is_byok": false,
+            "cost_details": {
+              "upstream_inference_cost": 1.84e-06,
+              "upstream_inference_prompt_cost": 1.84e-06,
+              "upstream_inference_completions_cost": 0
+            }
+          },
+          "requestId": "gen-emb-1793105066-GiwpBPpCGx3pnvGAwWSN",
+          "elapsedMs": 1817,
+          "inputs": 2
+        },
+        {
+          "model": "baai/bge-m3",
+          "dimensions": 1024,
+          "usage": {
+            "prompt_tokens": 500,
+            "total_tokens": 500,
+            "cost": 5e-06,
+            "is_byok": false,
+            "cost_details": {
+              "upstream_inference_cost": 5e-06,
+              "upstream_inference_prompt_cost": 5e-06,
+              "upstream_inference_completions_cost": 0
+            }
+          },
+          "provider": "Parasail",
+          "responseModel": "parasail-bge-m3",
+          "requestId": "gen-emb-1793105198-ullkrE89AT7CCJ3jDLHn",
+          "elapsedMs": 1351,
+          "inputs": 2
+        },
+        {
+          "model": "baai/bge-m3",
+          "dimensions": 1024,
+          "usage": {
+            "prompt_tokens": 10339,
+            "total_tokens": 10339,
+            "cost": 0.00010339,
+            "is_byok": false,
+            "cost_details": {
+              "upstream_inference_cost": 0.00010339,
+              "upstream_inference_prompt_cost": 0.00010339,
+              "upstream_inference_completions_cost": 0
+            }
+          },
+          "provider": "Parasail",
+          "responseModel": "parasail-bge-m3",
+          "requestId": "gen-emb-1793105199-CaWKRpJikCWi90fhrR7Z",
+          "elapsedMs": 2254,
+          "inputs": 64
+        },
+        {
+          "model": "baai/bge-m3",
+          "dimensions": 1024,
+          "usage": {
+            "prompt_tokens": 12539,
+            "total_tokens": 12539,
+            "cost": 0.00012539,
+            "is_byok": false,
+            "cost_details": {
+              "upstream_inference_cost": 0.00012539,
+              "upstream_inference_prompt_cost": 0.00012539,
+              "upstream_inference_completions_cost": 0
+            }
+          },
+          "provider": "Parasail",
+          "responseModel": "parasail-bge-m3",
+          "requestId": "gen-emb-1793105201-1OTupLEFwuXVvoPLQ0E5",
+          "elapsedMs": 2033,
+          "inputs": 64
+        },
+        {
+          "model": "baai/bge-m3",
+          "dimensions": 1024,
+          "usage": {
+            "prompt_tokens": 8128,
+            "total_tokens": 8128,
+            "cost": 8.128e-05,
+            "is_byok": false,
+            "cost_details": {
+              "upstream_inference_cost": 8.128e-05,
+              "upstream_inference_prompt_cost": 8.128e-05,
+              "upstream_inference_completions_cost": 0
+            }
+          },
+          "provider": "Parasail",
+          "responseModel": "parasail-bge-m3",
+          "requestId": "gen-emb-1793105203-3eZvaHgQW11hXfVV9HJV",
+          "elapsedMs": 2455,
+          "inputs": 64
+        },
+        {
+          "model": "baai/bge-m3",
+          "dimensions": 1024,
+          "usage": {
+            "prompt_tokens": 7833,
+            "total_tokens": 7833,
+            "cost": 7.833e-05,
+            "is_byok": false,
+            "cost_details": {
+              "upstream_inference_cost": 7.833e-05,
+              "upstream_inference_prompt_cost": 7.833e-05,
+              "upstream_inference_completions_cost": 0
+            }
+          },
+          "provider": "DeepInfra",
+          "responseModel": "BAAI/bge-m3",
+          "requestId": "gen-emb-1793105206-WB9otUaDLfwxb3KOpq90",
+          "elapsedMs": 2751,
+          "inputs": 64
+        },
+        {
+          "model": "baai/bge-m3",
+          "dimensions": 1024,
+          "usage": {
+            "prompt_tokens": 7217,
+            "total_tokens": 7217,
+            "cost": 7.217e-05,
+            "is_byok": false,
+            "cost_details": {
+              "upstream_inference_cost": 7.217e-05,
+              "upstream_inference_prompt_cost": 7.217e-05,
+              "upstream_inference_completions_cost": 0
+            }
+          },
+          "provider": "DeepInfra",
+          "responseModel": "BAAI/bge-m3",
+          "requestId": "gen-emb-1793105209-s4chnTYtp1aT70EYvWyu",
+          "elapsedMs": 2713,
+          "inputs": 64
+        },
+        {
+          "model": "baai/bge-m3",
+          "dimensions": 1024,
+          "usage": {
+            "prompt_tokens": 8780,
+            "total_tokens": 8780,
+            "cost": 8.78e-05,
+            "is_byok": false,
+            "cost_details": {
+              "upstream_inference_cost": 8.78e-05,
+              "upstream_inference_prompt_cost": 8.78e-05,
+              "upstream_inference_completions_cost": 0
+            }
+          },
+          "provider": "Parasail",
+          "responseModel": "parasail-bge-m3",
+          "requestId": "gen-emb-1793105211-CasHguxHQFrM29rgzCpd",
+          "elapsedMs": 1987,
+          "inputs": 64
+        },
+        {
+          "model": "baai/bge-m3",
+          "dimensions": 1024,
+          "usage": {
+            "prompt_tokens": 8106,
+            "total_tokens": 8106,
+            "cost": 8.106e-05,
+            "is_byok": false,
+            "cost_details": {
+              "upstream_inference_cost": 8.106e-05,
+              "upstream_inference_prompt_cost": 8.106e-05,
+              "upstream_inference_completions_cost": 0
+            }
+          },
+          "provider": "Parasail",
+          "responseModel": "parasail-bge-m3",
+          "requestId": "gen-emb-1793105213-xJkeTRXhzegnJHnj9PRj",
+          "elapsedMs": 2512,
+          "inputs": 64
+        },
+        {
+          "model": "baai/bge-m3",
+          "dimensions": 1024,
+          "usage": {
+            "prompt_tokens": 9461,
+            "total_tokens": 9461,
+            "cost": 9.461e-05,
+            "is_byok": false,
+            "cost_details": {
+              "upstream_inference_cost": 9.461e-05,
+              "upstream_inference_prompt_cost": 9.461e-05,
+              "upstream_inference_completions_cost": 0
+            }
+          },
+          "provider": "Parasail",
+          "responseModel": "parasail-bge-m3",
+          "requestId": "gen-emb-1793105216-7rpTd2Rhj8nC72xPigLd",
+          "elapsedMs": 2989,
+          "inputs": 64
+        },
+        {
+          "model": "baai/bge-m3",
+          "dimensions": 1024,
+          "usage": {
+            "prompt_tokens": 8549,
+            "total_tokens": 8549,
+            "cost": 8.549e-05,
+            "is_byok": false,
+            "cost_details": {
+              "upstream_inference_cost": 8.549e-05,
+              "upstream_inference_prompt_cost": 8.549e-05,
+              "upstream_inference_completions_cost": 0
+            }
+          },
+          "provider": "Parasail",
+          "responseModel": "parasail-bge-m3",
+          "requestId": "gen-emb-1793105219-khh97bkjR6O1kQ3LK6pu",
+          "elapsedMs": 2725,
+          "inputs": 64
+        },
+        {
+          "model": "baai/bge-m3",
+          "dimensions": 1024,
+          "usage": {
+            "prompt_tokens": 8325,
+            "total_tokens": 8325,
+            "cost": 8.325e-05,
+            "is_byok": false,
+            "cost_details": {
+              "upstream_inference_cost": 8.325e-05,
+              "upstream_inference_prompt_cost": 8.325e-05,
+              "upstream_inference_completions_cost": 0
+            }
+          },
+          "provider": "Parasail",
+          "responseModel": "parasail-bge-m3",
+          "requestId": "gen-emb-1793105222-nZ1pysaYxe4QsSeiQHCK",
+          "elapsedMs": 2327,
+          "inputs": 64
+        },
+        {
+          "model": "baai/bge-m3",
+          "dimensions": 1024,
+          "usage": {
+            "prompt_tokens": 8435,
+            "total_tokens": 8435,
+            "cost": 8.435e-05,
+            "is_byok": false,
+            "cost_details": {
+              "upstream_inference_cost": 8.435e-05,
+              "upstream_inference_prompt_cost": 8.435e-05,
+              "upstream_inference_completions_cost": 0
+            }
+          },
+          "provider": "Parasail",
+          "responseModel": "parasail-bge-m3",
+          "requestId": "gen-emb-1793105224-679pHOaIPJRA1IMyv1Fy",
+          "elapsedMs": 1988,
+          "inputs": 64
+        },
+        {
+          "model": "baai/bge-m3",
+          "dimensions": 1024,
+          "usage": {
+            "prompt_tokens": 7464,
+            "total_tokens": 7464,
+            "cost": 7.464e-05,
+            "is_byok": false,
+            "cost_details": {
+              "upstream_inference_cost": 7.464e-05,
+              "upstream_inference_prompt_cost": 7.464e-05,
+              "upstream_inference_completions_cost": 0
+            }
+          },
+          "provider": "Parasail",
+          "responseModel": "parasail-bge-m3",
+          "requestId": "gen-emb-1793105226-kIRGxon7BhCVryiQ1nNJ",
+          "elapsedMs": 2040,
+          "inputs": 64
+        },
+        {
+          "model": "baai/bge-m3",
+          "dimensions": 1024,
+          "usage": {
+            "prompt_tokens": 11685,
+            "total_tokens": 11685,
+            "cost": 0.00011685,
+            "is_byok": false,
+            "cost_details": {
+              "upstream_inference_cost": 0.00011685,
+              "upstream_inference_prompt_cost": 0.00011685,
+              "upstream_inference_completions_cost": 0
+            }
+          },
+          "provider": "Parasail",
+          "responseModel": "parasail-bge-m3",
+          "requestId": "gen-emb-1793105228-Q4hPvYQCfBTSU6hihiP5",
+          "elapsedMs": 2686,
+          "inputs": 64
+        },
+        {
+          "model": "baai/bge-m3",
+          "dimensions": 1024,
+          "usage": {
+            "prompt_tokens": 7580,
+            "total_tokens": 7580,
+            "cost": 7.58e-05,
+            "is_byok": false,
+            "cost_details": {
+              "upstream_inference_cost": 7.58e-05,
+              "upstream_inference_prompt_cost": 7.58e-05,
+              "upstream_inference_completions_cost": 0
+            }
+          },
+          "provider": "DeepInfra",
+          "responseModel": "BAAI/bge-m3",
+          "requestId": "gen-emb-1793105231-efPIO0rVlcrREYnZ9TeC",
+          "elapsedMs": 3078,
+          "inputs": 64
+        },
+        {
+          "model": "baai/bge-m3",
+          "dimensions": 1024,
+          "usage": {
+            "prompt_tokens": 9198,
+            "total_tokens": 9198,
+            "cost": 9.198e-05,
+            "is_byok": false,
+            "cost_details": {
+              "upstream_inference_cost": 9.198e-05,
+              "upstream_inference_prompt_cost": 9.198e-05,
+              "upstream_inference_completions_cost": 0
+            }
+          },
+          "provider": "Parasail",
+          "responseModel": "parasail-bge-m3",
+          "requestId": "gen-emb-1793105234-Cyk7qMmEUdCEvkWVULQc",
+          "elapsedMs": 2221,
+          "inputs": 64
+        },
+        {
+          "model": "baai/bge-m3",
+          "dimensions": 1024,
+          "usage": {
+            "prompt_tokens": 9976,
+            "total_tokens": 9976,
+            "cost": 9.976e-05,
+            "is_byok": false,
+            "cost_details": {
+              "upstream_inference_cost": 9.976e-05,
+              "upstream_inference_prompt_cost": 9.976e-05,
+              "upstream_inference_completions_cost": 0
+            }
+          },
+          "provider": "Parasail",
+          "responseModel": "parasail-bge-m3",
+          "requestId": "gen-emb-1793105236-vfrtkec7ppTsTXo13tyz",
+          "elapsedMs": 2281,
+          "inputs": 64
+        },
+        {
+          "model": "baai/bge-m3",
+          "dimensions": 1024,
+          "usage": {
+            "prompt_tokens": 7581,
+            "total_tokens": 7581,
+            "cost": 7.581e-05,
+            "is_byok": false,
+            "cost_details": {
+              "upstream_inference_cost": 7.581e-05,
+              "upstream_inference_prompt_cost": 7.581e-05,
+              "upstream_inference_completions_cost": 0
+            }
+          },
+          "provider": "DeepInfra",
+          "responseModel": "BAAI/bge-m3",
+          "requestId": "gen-emb-1793105238-bTafxHMnLKu2Vh4TCyKi",
+          "elapsedMs": 3420,
+          "inputs": 64
+        },
+        {
+          "model": "baai/bge-m3",
+          "dimensions": 1024,
+          "usage": {
+            "prompt_tokens": 8152,
+            "total_tokens": 8152,
+            "cost": 8.152e-05,
+            "is_byok": false,
+            "cost_details": {
+              "upstream_inference_cost": 8.152e-05,
+              "upstream_inference_prompt_cost": 8.152e-05,
+              "upstream_inference_completions_cost": 0
+            }
+          },
+          "provider": "Parasail",
+          "responseModel": "parasail-bge-m3",
+          "requestId": "gen-emb-1793105242-LvPMYHLnqvZTYzUnuP6J",
+          "elapsedMs": 2140,
+          "inputs": 64
+        },
+        {
+          "model": "baai/bge-m3",
+          "dimensions": 1024,
+          "usage": {
+            "prompt_tokens": 9377,
+            "total_tokens": 9377,
+            "cost": 9.377e-05,
+            "is_byok": false,
+            "cost_details": {
+              "upstream_inference_cost": 9.377e-05,
+              "upstream_inference_prompt_cost": 9.377e-05,
+              "upstream_inference_completions_cost": 0
+            }
+          },
+          "provider": "Parasail",
+          "responseModel": "parasail-bge-m3",
+          "requestId": "gen-emb-1793105244-S1H7KPxaO50RsxfzYD1Q",
+          "elapsedMs": 2824,
+          "inputs": 64
+        },
+        {
+          "model": "baai/bge-m3",
+          "dimensions": 1024,
+          "usage": {
+            "prompt_tokens": 7355,
+            "total_tokens": 7355,
+            "cost": 7.355e-05,
+            "is_byok": false,
+            "cost_details": {
+              "upstream_inference_cost": 7.355e-05,
+              "upstream_inference_prompt_cost": 7.355e-05,
+              "upstream_inference_completions_cost": 0
+            }
+          },
+          "provider": "Parasail",
+          "responseModel": "parasail-bge-m3",
+          "requestId": "gen-emb-1793105247-RTki4mV9tOdDk4eAkE4P",
+          "elapsedMs": 2852,
+          "inputs": 64
+        },
+        {
+          "model": "baai/bge-m3",
+          "dimensions": 1024,
+          "usage": {
+            "prompt_tokens": 8080,
+            "total_tokens": 8080,
+            "cost": 8.08e-05,
+            "is_byok": false,
+            "cost_details": {
+              "upstream_inference_cost": 8.08e-05,
+              "upstream_inference_prompt_cost": 8.08e-05,
+              "upstream_inference_completions_cost": 0
+            }
+          },
+          "provider": "Parasail",
+          "responseModel": "parasail-bge-m3",
+          "requestId": "gen-emb-1793105250-L7tWpMiEazv3GrsTTfTw",
+          "elapsedMs": 2556,
+          "inputs": 64
+        },
+        {
+          "model": "baai/bge-m3",
+          "dimensions": 1024,
+          "usage": {
+            "prompt_tokens": 7726,
+            "total_tokens": 7726,
+            "cost": 7.726e-05,
+            "is_byok": false,
+            "cost_details": {
+              "upstream_inference_cost": 7.726e-05,
+              "upstream_inference_prompt_cost": 7.726e-05,
+              "upstream_inference_completions_cost": 0
+            }
+          },
+          "provider": "DeepInfra",
+          "responseModel": "BAAI/bge-m3",
+          "requestId": "gen-emb-1793105252-6Rw8griHPIyvxqPR9utb",
+          "elapsedMs": 3587,
+          "inputs": 64
+        },
+        {
+          "model": "baai/bge-m3",
+          "dimensions": 1024,
+          "usage": {
+            "prompt_tokens": 4106,
+            "total_tokens": 4106,
+            "cost": 4.106e-05,
+            "is_byok": false,
+            "cost_details": {
+              "upstream_inference_cost": 4.106e-05,
+              "upstream_inference_prompt_cost": 4.106e-05,
+              "upstream_inference_completions_cost": 0
+            }
+          },
+          "provider": "Parasail",
+          "responseModel": "parasail-bge-m3",
+          "requestId": "gen-emb-1793105256-Dxr8eumYPRQBumYPcemN",
+          "elapsedMs": 2998,
+          "inputs": 64
+        },
+        {
+          "model": "baai/bge-m3",
+          "dimensions": 1024,
+          "usage": {
+            "prompt_tokens": 205,
+            "total_tokens": 205,
+            "cost": 2.05e-06,
+            "is_byok": false,
+            "cost_details": {
+              "upstream_inference_cost": 2.05e-06,
+              "upstream_inference_prompt_cost": 2.05e-06,
+              "upstream_inference_completions_cost": 0
+            }
+          },
+          "provider": "DeepInfra",
+          "responseModel": "BAAI/bge-m3",
+          "requestId": "gen-emb-1793105259-7Gu5DiBTNmpPdu8mRKzT",
+          "elapsedMs": 1846,
+          "inputs": 12
+        }
+      ],
+      "platform": "macos",
+      "note": "Development source-range coverage only. Not answer accuracy; no-source recall is null. Dense-only uses top40; hybrid unions top20+top20.",
+      "results": [
+        {
+          "queryMode": "original",
+          "hybrid": false,
+          "completeCandidates": 20,
+          "complete8": 17,
+          "cases": [
+            {
+              "id": "E01",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 4093,
+              "selected": [
+                "enchiridion:I:1-1",
+                "enchiridion:I:2-2",
+                "enchiridion:II:1-1",
+                "enchiridion:I:4-4",
+                "enchiridion:INTRODUCTION:8:0-1794",
+                "enchiridion:XIX:1-1",
+                "enchiridion:XXXI:1:0-1794",
+                "enchiridion:XXXIX:1-1"
+              ]
+            },
+            {
+              "id": "E02",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 4363,
+              "selected": [
+                "enchiridion:V:1-1",
+                "enchiridion:XXVIII:1-1",
+                "enchiridion:XXXIII:13-13",
+                "enchiridion:XXVI:1-1",
+                "enchiridion:XX:1-1",
+                "enchiridion:XVI:1-1",
+                "enchiridion:XLII:1-1",
+                "enchiridion:IV:1-1"
+              ]
+            },
+            {
+              "id": "E03",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 1905,
+              "selected": [
+                "enchiridion:IV:1-1",
+                "enchiridion:XXIX:1:0-1798",
+                "enchiridion:XLI:1-1",
+                "enchiridion:XLV:1-1",
+                "enchiridion:XXXIII:1-1",
+                "enchiridion:LI:1-1",
+                "enchiridion:XLVII:1-1",
+                "enchiridion:VII:1-1"
+              ]
+            },
+            {
+              "id": "E04",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 1740,
+              "selected": [
+                "enchiridion:X:1-1",
+                "enchiridion:II:1-1",
+                "enchiridion:I:4-4",
+                "enchiridion:VIII:1-1",
+                "enchiridion:XXXIII:12-12",
+                "enchiridion:XXXIV:1-1",
+                "enchiridion:LI:2-5",
+                "enchiridion:XIII:1-1"
+              ]
+            },
+            {
+              "id": "E05",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 1553,
+              "selected": [
+                "enchiridion:XVII:1-1",
+                "enchiridion:INTRODUCTION:8:0-1794",
+                "enchiridion:INTRODUCTION:8:1594-2448",
+                "enchiridion:XXX:1-1",
+                "enchiridion:INTRODUCTION:7-7",
+                "enchiridion:XXIX:1:0-1798",
+                "enchiridion:XXXIII:1-1",
+                "enchiridion:XXIX:1:1598-2862"
+              ]
+            },
+            {
+              "id": "E06",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 1731,
+              "selected": [
+                "enchiridion:XXIX:1:0-1798",
+                "enchiridion:L:1-1",
+                "enchiridion:XXXIV:1-1",
+                "enchiridion:XXIX:1:1598-2862",
+                "enchiridion:I:3-3",
+                "enchiridion:XV:1-1",
+                "enchiridion:X:1-1",
+                "enchiridion:XXII:1-1"
+              ]
+            },
+            {
+              "id": "E07",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 1996,
+              "selected": [
+                "enchiridion:XLIII:1-1",
+                "enchiridion:XXX:1-1",
+                "enchiridion:I:4-4",
+                "enchiridion:XLII:1-1",
+                "enchiridion:XXXI:1:0-1794",
+                "enchiridion:XVI:1-1",
+                "enchiridion:XXIV:1:0-1800",
+                "enchiridion:XXIX:1:0-1798"
+              ]
+            },
+            {
+              "id": "E08",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 1859,
+              "selected": [
+                "enchiridion:V:1-1",
+                "enchiridion:Footnotes:1-3",
+                "enchiridion:INTRODUCTION:3-3",
+                "enchiridion:INTRODUCTION:6-6",
+                "enchiridion:INTRODUCTION:7-7",
+                "enchiridion:INTRODUCTION:5-5",
+                "enchiridion:L:1-1",
+                "enchiridion:INTRODUCTION:4-4"
+              ]
+            },
+            {
+              "id": "E09",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 1790,
+              "selected": [
+                "enchiridion:V:1-1",
+                "enchiridion:I:1-1",
+                "enchiridion:XX:1-1",
+                "enchiridion:XXXVIII:1-1",
+                "enchiridion:I:4-4",
+                "enchiridion:XLI:1-1",
+                "enchiridion:XXX:1-1",
+                "enchiridion:XXVIII:1-1"
+              ]
+            },
+            {
+              "id": "E10",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 1752,
+              "selected": [
+                "enchiridion:I:1-1",
+                "enchiridion:II:1-1",
+                "enchiridion:LI:2-5",
+                "enchiridion:I:2-2",
+                "enchiridion:XXVI:1-1",
+                "enchiridion:XXXI:1:0-1794",
+                "enchiridion:XXX:1-1",
+                "enchiridion:VIII:1-1"
+              ]
+            },
+            {
+              "id": "E11",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 1491,
+              "selected": [
+                "enchiridion:IV:1-1",
+                "enchiridion:XXIX:1:0-1798",
+                "enchiridion:XLV:1-1",
+                "enchiridion:XXXVIII:1-1",
+                "enchiridion:III:1-1",
+                "enchiridion:I:2-2",
+                "enchiridion:IX:1-1",
+                "enchiridion:XX:1-1"
+              ]
+            },
+            {
+              "id": "E12",
+              "candidateRecall": null,
+              "finalRecall8": null,
+              "searchUs": 2393,
+              "selected": [
+                "enchiridion:The Library of Liberal Arts:43-48",
+                "enchiridion:The Library of Liberal Arts:55-60",
+                "enchiridion:The Library of Liberal Arts:7-12",
+                "enchiridion:The Library of Liberal Arts:37-42",
+                "enchiridion:The Library of Liberal Arts:31-36",
+                "enchiridion:The Library of Liberal Arts:13-18",
+                "enchiridion:Main Works on Stoicism and Related Problems:1-6",
+                "enchiridion:The Library of Liberal Arts:19-24"
+              ]
+            },
+            {
+              "id": "P01",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 24402,
+              "selected": [
+                "pride-and-prejudice:Chapter I.:11-16",
+                "pride-and-prejudice:Chapter I.:1-3",
+                "pride-and-prejudice:CHAPTER LIX.:43-43",
+                "pride-and-prejudice:CHAPTER LV.:40-40",
+                "pride-and-prejudice:CHAPTER XIII:1-3",
+                "pride-and-prejudice:CHAPTER LV.:38-38",
+                "pride-and-prejudice:CHAPTER LVII.:14:0-1792",
+                "pride-and-prejudice:CHAPTER XLVIII.:14-14"
+              ]
+            },
+            {
+              "id": "P02",
+              "candidateRecall": 1.0,
+              "finalRecall8": 0.0,
+              "searchUs": 23098,
+              "selected": [
+                "pride-and-prejudice:CHAPTER XVI.:43-43",
+                "pride-and-prejudice:CHAPTER XI.:12-12",
+                "pride-and-prejudice:CHAPTER XLIV.:1-1",
+                "pride-and-prejudice:CHAPTER VI.:42-46",
+                "pride-and-prejudice:CHAPTER XLIV.:3-3",
+                "pride-and-prejudice:CHAPTER IX.:35-35",
+                "pride-and-prejudice:CHAPTER LIII.:50-50",
+                "pride-and-prejudice:CHAPTER LI.:31-34"
+              ]
+            },
+            {
+              "id": "P03",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 22215,
+              "selected": [
+                "pride-and-prejudice:CHAPTER LIV.:29-29",
+                "pride-and-prejudice:CHAPTER XIII:4-4",
+                "pride-and-prejudice:Chapter I.:11-16",
+                "pride-and-prejudice:CHAPTER XVIII.:63:0-1799",
+                "pride-and-prejudice:CHAPTER IX.:30-30",
+                "pride-and-prejudice:CHAPTER II.:18-22",
+                "pride-and-prejudice:CHAPTER LV.:18-18",
+                "pride-and-prejudice:CHAPTER III.:1-1"
+              ]
+            },
+            {
+              "id": "P04",
+              "candidateRecall": 0.0,
+              "finalRecall8": 0.0,
+              "searchUs": 22854,
+              "selected": [
+                "pride-and-prejudice:CHAPTER XVI.:43-43",
+                "pride-and-prejudice:CHAPTER XLV.:18-19",
+                "pride-and-prejudice:CHAPTER LIX.:3-5",
+                "pride-and-prejudice:Chapter XLVI.:19-20",
+                "pride-and-prejudice:CHAPTER LVIII.:32-32",
+                "pride-and-prejudice:CHAPTER LIX.:45-45",
+                "pride-and-prejudice:CHAPTER LIX.:43-43",
+                "pride-and-prejudice:CHAPTER IX.:32-34"
+              ]
+            },
+            {
+              "id": "P05",
+              "candidateRecall": 1.0,
+              "finalRecall8": 0.0,
+              "searchUs": 22177,
+              "selected": [
+                "pride-and-prejudice:CHAPTER XL.:23-23",
+                "pride-and-prejudice:CHAPTER LII.:4:0-1800",
+                "pride-and-prejudice:CHAPTER XXXV.:5:6381-8180",
+                "pride-and-prejudice:CHAPTER XVIII.:45-45",
+                "pride-and-prejudice:CHAPTER XXVI.:7-7",
+                "pride-and-prejudice:CHAPTER XVIII.:50-50",
+                "pride-and-prejudice:CHAPTER XL.:9-9",
+                "pride-and-prejudice:CHAPTER XVIII.:3-3"
+              ]
+            },
+            {
+              "id": "P06",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 22877,
+              "selected": [
+                "pride-and-prejudice:CHAPTER LXI.:3-3",
+                "pride-and-prejudice:CHAPTER LX.:6-6",
+                "pride-and-prejudice:CHAPTER XXI.:27-27",
+                "pride-and-prejudice:CHAPTER XLIV.:8-8",
+                "pride-and-prejudice:CHAPTER XII.:1-1",
+                "pride-and-prejudice:CHAPTER IX.:7-7",
+                "pride-and-prejudice:CHAPTER V.:11-13",
+                "pride-and-prejudice:CHAPTER LIII.:22-25"
+              ]
+            },
+            {
+              "id": "P07",
+              "candidateRecall": 1.0,
+              "finalRecall8": 0.0,
+              "searchUs": 21718,
+              "selected": [
+                "pride-and-prejudice:CHAPTER LVI.:60-60",
+                "pride-and-prejudice:CHAPTER LVI.:69-69",
+                "pride-and-prejudice:CHAPTER XVI.:43-43",
+                "pride-and-prejudice:CHAPTER XXXI.:26-28",
+                "pride-and-prejudice:CHAPTER XL.:10-10",
+                "pride-and-prejudice:CHAPTER XIX.:14-14",
+                "pride-and-prejudice:CHAPTER LI.:31-34",
+                "pride-and-prejudice:CHAPTER XXXI.:19-22"
+              ]
+            },
+            {
+              "id": "P08",
+              "candidateRecall": 0.0,
+              "finalRecall8": 0.0,
+              "searchUs": 22042,
+              "selected": [
+                "pride-and-prejudice:CHAPTER LIII.:36-36",
+                "pride-and-prejudice:CHAPTER XLV.:12-12",
+                "pride-and-prejudice:CHAPTER XXIII.:13-13",
+                "pride-and-prejudice:CHAPTER XVIII.:48-48",
+                "pride-and-prejudice:CHAPTER XXIV.:3-3",
+                "pride-and-prejudice:CHAPTER XVI.:45-48",
+                "pride-and-prejudice:CHAPTER XXIV.:24-24",
+                "pride-and-prejudice:CHAPTER XXI.:14-17"
+              ]
+            },
+            {
+              "id": "P09",
+              "candidateRecall": null,
+              "finalRecall8": null,
+              "searchUs": 22955,
+              "selected": [
+                "pride-and-prejudice:CHAPTER XLII.:18-18",
+                "pride-and-prejudice:CHAPTER XLII.:12-12",
+                "pride-and-prejudice:CHAPTER XLIII.:3-3",
+                "pride-and-prejudice:CHAPTER XLIV.:1-1",
+                "pride-and-prejudice:CHAPTER XLII.:13-14",
+                "pride-and-prejudice:Chapter XLVI.:29-29",
+                "pride-and-prejudice:CHAPTER VII.:49-49",
+                "pride-and-prejudice:CHAPTER XII.:1-1"
+              ]
+            },
+            {
+              "id": "M01",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 18,
+              "selected": [
+                "partial:1:1-3"
+              ]
+            },
+            {
+              "id": "M02",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 15,
+              "selected": [
+                "partial:1:1-3"
+              ]
+            },
+            {
+              "id": "M03",
+              "candidateRecall": null,
+              "finalRecall8": null,
+              "searchUs": 15,
+              "selected": [
+                "partial:1:1-3"
+              ]
+            },
+            {
+              "id": "M04",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 15,
+              "selected": [
+                "partial:1:1-3"
+              ]
+            },
+            {
+              "id": "M05",
+              "candidateRecall": null,
+              "finalRecall8": null,
+              "searchUs": 14,
+              "selected": [
+                "partial:1:1-3"
+              ]
+            },
+            {
+              "id": "M06",
+              "candidateRecall": null,
+              "finalRecall8": null,
+              "searchUs": 19,
+              "selected": [
+                "partial:1:1-3"
+              ]
+            }
+          ],
+          "searchMedianMs": 1.905
+        },
+        {
+          "queryMode": "original",
+          "hybrid": true,
+          "completeCandidates": 19,
+          "complete8": 19,
+          "cases": [
+            {
+              "id": "E01",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 2836,
+              "selected": [
+                "enchiridion:INTRODUCTION:8:0-1794",
+                "enchiridion:II:1-1",
+                "enchiridion:I:1-1",
+                "enchiridion:I:4-4",
+                "enchiridion:XIX:1-1",
+                "enchiridion:I:2-2",
+                "enchiridion:XLIII:1-1",
+                "enchiridion:XXXII:1-1"
+              ]
+            },
+            {
+              "id": "E02",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 1817,
+              "selected": [
+                "enchiridion:XX:1-1",
+                "enchiridion:XXVI:1-1",
+                "enchiridion:Footnotes:1-3",
+                "enchiridion:V:1-1",
+                "enchiridion:VIII:1-1",
+                "enchiridion:I:1-1",
+                "enchiridion:XXVIII:1-1",
+                "enchiridion:XXXIII:13-13"
+              ]
+            },
+            {
+              "id": "E03",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 1946,
+              "selected": [
+                "enchiridion:IV:1-1",
+                "enchiridion:LI:1-1",
+                "enchiridion:XLI:1-1",
+                "enchiridion:XLVII:1-1",
+                "enchiridion:L:1-1",
+                "enchiridion:XXIX:1:0-1798",
+                "enchiridion:XLV:1-1",
+                "enchiridion:XXXIII:12-12"
+              ]
+            },
+            {
+              "id": "E04",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 2194,
+              "selected": [
+                "enchiridion:II:1-1",
+                "enchiridion:XIII:1-1",
+                "enchiridion:XVIII:1-1",
+                "enchiridion:XXXII:1-1",
+                "enchiridion:IX:1-1",
+                "enchiridion:IV:1-1",
+                "enchiridion:INTRODUCTION:8:0-1794",
+                "enchiridion:X:1-1"
+              ]
+            },
+            {
+              "id": "E05",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 1805,
+              "selected": [
+                "enchiridion:XVII:1-1",
+                "enchiridion:INTRODUCTION:8:0-1794",
+                "enchiridion:INTRODUCTION:8:1594-2448",
+                "enchiridion:INTRODUCTION:7-7",
+                "enchiridion:INTRODUCTION:1-1",
+                "enchiridion:INTRODUCTION:5-5",
+                "enchiridion:INTRODUCTION:3-3",
+                "enchiridion:XXX:1-1"
+              ]
+            },
+            {
+              "id": "E06",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 1765,
+              "selected": [
+                "enchiridion:XXIX:1:0-1798",
+                "enchiridion:XXXIV:1-1",
+                "enchiridion:The Library of Liberal Arts:109-110",
+                "enchiridion:L:1-1",
+                "enchiridion:XXIX:1:1598-2862",
+                "enchiridion:I:3-3",
+                "enchiridion:XV:1-1",
+                "enchiridion:X:1-1"
+              ]
+            },
+            {
+              "id": "E07",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 1903,
+              "selected": [
+                "enchiridion:XLIII:1-1",
+                "enchiridion:XXX:1-1",
+                "enchiridion:Footnotes:4-7",
+                "enchiridion:I:4-4",
+                "enchiridion:The Library of Liberal Arts:67-72",
+                "enchiridion:XLII:1-1",
+                "enchiridion:The Library of Liberal Arts:91-96",
+                "enchiridion:XXXI:1:0-1794"
+              ]
+            },
+            {
+              "id": "E08",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 2014,
+              "selected": [
+                "enchiridion:INTRODUCTION:3-3",
+                "enchiridion:INTRODUCTION:5-5",
+                "enchiridion:V:1-1",
+                "enchiridion:INTRODUCTION:6-6",
+                "enchiridion:INTRODUCTION:4-4",
+                "enchiridion:INTRODUCTION:8:0-1794",
+                "enchiridion:L:1-1",
+                "enchiridion:INTRODUCTION:1-1"
+              ]
+            },
+            {
+              "id": "E09",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 2106,
+              "selected": [
+                "enchiridion:V:1-1",
+                "enchiridion:XXVIII:1-1",
+                "enchiridion:II:1-1",
+                "enchiridion:INTRODUCTION:8:0-1794",
+                "enchiridion:Footnotes:1-3",
+                "enchiridion:I:1-1",
+                "enchiridion:L:1-1",
+                "enchiridion:XX:1-1"
+              ]
+            },
+            {
+              "id": "E10",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 2160,
+              "selected": [
+                "enchiridion:II:1-1",
+                "enchiridion:I:1-1",
+                "enchiridion:INTRODUCTION:7-7",
+                "enchiridion:INTRODUCTION:5-5",
+                "enchiridion:Epictetus: Life and Work:1-6",
+                "enchiridion:LI:2-5",
+                "enchiridion:I:2-2",
+                "enchiridion:INTRODUCTION:6-6"
+              ]
+            },
+            {
+              "id": "E11",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 1872,
+              "selected": [
+                "enchiridion:IV:1-1",
+                "enchiridion:II:1-1",
+                "enchiridion:XIII:1-1",
+                "enchiridion:VI:1-1",
+                "enchiridion:I:2-2",
+                "enchiridion:XXIX:1:0-1798",
+                "enchiridion:XLV:1-1",
+                "enchiridion:INTRODUCTION:8:0-1794"
+              ]
+            },
+            {
+              "id": "E12",
+              "candidateRecall": null,
+              "finalRecall8": null,
+              "searchUs": 1978,
+              "selected": [
+                "enchiridion:The Library of Liberal Arts:55-60",
+                "enchiridion:Main Works on Stoicism and Related Problems:1-6",
+                "enchiridion:Epictetus: Life and Work:1-6",
+                "enchiridion:INTRODUCTION:1-1",
+                "enchiridion:INTRODUCTION:8:0-1794",
+                "enchiridion:INTRODUCTION:6-6",
+                "enchiridion:The Library of Liberal Arts:43-48",
+                "enchiridion:The Library of Liberal Arts:1-6"
+              ]
+            },
+            {
+              "id": "P01",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 25143,
+              "selected": [
+                "pride-and-prejudice:Chapter I.:11-16",
+                "pride-and-prejudice:Chapter I.:1-3",
+                "pride-and-prejudice:CHAPTER LIX.:43-43",
+                "pride-and-prejudice:CHAPTER XX.:4-4",
+                "pride-and-prejudice:CHAPTER LV.:40-40",
+                "pride-and-prejudice:CHAPTER LXI.:6-6",
+                "pride-and-prejudice:CHAPTER XIII:1-3",
+                "pride-and-prejudice:CHAPTER XL.:17-17"
+              ]
+            },
+            {
+              "id": "P02",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 32674,
+              "selected": [
+                "pride-and-prejudice:CHAPTER IV.:15-15",
+                "pride-and-prejudice:CHAPTER XVI.:43-43",
+                "pride-and-prejudice:CHAPTER III.:5-5",
+                "pride-and-prejudice:CHAPTER XI.:12-12",
+                "pride-and-prejudice:CHAPTER V.:2-4",
+                "pride-and-prejudice:CHAPTER XLIV.:1-1",
+                "pride-and-prejudice:CHAPTER VI.:12-12",
+                "pride-and-prejudice:CHAPTER VI.:42-46"
+              ]
+            },
+            {
+              "id": "P03",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 31949,
+              "selected": [
+                "pride-and-prejudice:CHAPTER LIV.:29-29",
+                "pride-and-prejudice:CHAPTER LV.:34-34",
+                "pride-and-prejudice:CHAPTER LXI.:1-1",
+                "pride-and-prejudice:CHAPTER XVIII.:63:0-1799",
+                "pride-and-prejudice:CHAPTER LIV.:7-10",
+                "pride-and-prejudice:CHAPTER XIII:4-4",
+                "pride-and-prejudice:CHAPTER L.:7-7",
+                "pride-and-prejudice:Chapter I.:11-16"
+              ]
+            },
+            {
+              "id": "P04",
+              "candidateRecall": 0.0,
+              "finalRecall8": 0.0,
+              "searchUs": 28482,
+              "selected": [
+                "pride-and-prejudice:CHAPTER LX.:1-2",
+                "pride-and-prejudice:CHAPTER IX.:32-34",
+                "pride-and-prejudice:CHAPTER LIV.:17-19",
+                "pride-and-prejudice:CHAPTER XVI.:43-43",
+                "pride-and-prejudice:CHAPTER XLV.:18-19",
+                "pride-and-prejudice:CHAPTER XXI.:14-17",
+                "pride-and-prejudice:CHAPTER LIX.:3-5",
+                "pride-and-prejudice:CHAPTER XIX.:1-1"
+              ]
+            },
+            {
+              "id": "P05",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 26711,
+              "selected": [
+                "pride-and-prejudice:CHAPTER XL.:9-9",
+                "pride-and-prejudice:CHAPTER XL.:18-20",
+                "pride-and-prejudice:CHAPTER XXXVI.:3-3",
+                "pride-and-prejudice:CHAPTER LI.:37-37",
+                "pride-and-prejudice:CHAPTER XL.:23-23",
+                "pride-and-prejudice:CHAPTER LII.:4:0-1800",
+                "pride-and-prejudice:CHAPTER XI.:13-14",
+                "pride-and-prejudice:CHAPTER LXI.:6-6"
+              ]
+            },
+            {
+              "id": "P06",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 31923,
+              "selected": [
+                "pride-and-prejudice:CHAPTER XII.:1-1",
+                "pride-and-prejudice:CHAPTER IX.:2-2",
+                "pride-and-prejudice:CHAPTER XXI.:6-6",
+                "pride-and-prejudice:CHAPTER XVIII.:77-77",
+                "pride-and-prejudice:CHAPTER XXVI.:25-25",
+                "pride-and-prejudice:CHAPTER XXXII.:4-7",
+                "pride-and-prejudice:CHAPTER LXI.:3-3",
+                "pride-and-prejudice:CHAPTER XXVI.:11-11"
+              ]
+            },
+            {
+              "id": "P07",
+              "candidateRecall": 0.0,
+              "finalRecall8": 0.0,
+              "searchUs": 32608,
+              "selected": [
+                "pride-and-prejudice:CHAPTER LVI.:60-60",
+                "pride-and-prejudice:CHAPTER XVI.:52-54",
+                "pride-and-prejudice:CHAPTER LVI.:44-44",
+                "pride-and-prejudice:CHAPTER LVI.:69-69",
+                "pride-and-prejudice:CHAPTER XVI.:43-43",
+                "pride-and-prejudice:CHAPTER XVIII.:57-57",
+                "pride-and-prejudice:CHAPTER XXXI.:26-28",
+                "pride-and-prejudice:CHAPTERXXVIII.:15-17"
+              ]
+            },
+            {
+              "id": "P08",
+              "candidateRecall": 0.0,
+              "finalRecall8": 0.0,
+              "searchUs": 33332,
+              "selected": [
+                "pride-and-prejudice:CHAPTER IX.:39-39",
+                "pride-and-prejudice:CHAPTER XXI.:18-18",
+                "pride-and-prejudice:CHAPTER LIII.:36-36",
+                "pride-and-prejudice:CHAPTER LIX.:21-23",
+                "pride-and-prejudice:CHAPTER XLV.:12-12",
+                "pride-and-prejudice:CHAPTER XVIII.:46-47",
+                "pride-and-prejudice:CHAPTER IX.:2-2",
+                "pride-and-prejudice:CHAPTER XXIII.:13-13"
+              ]
+            },
+            {
+              "id": "P09",
+              "candidateRecall": null,
+              "finalRecall8": null,
+              "searchUs": 30399,
+              "selected": [
+                "pride-and-prejudice:CHAPTER XLII.:18-18",
+                "pride-and-prejudice:Chapter XLVI.:29-29",
+                "pride-and-prejudice:CHAPTER XLV.:1-1",
+                "pride-and-prejudice:CHAPTER LII.:12-14",
+                "pride-and-prejudice:CHAPTER LVI.:21-25",
+                "pride-and-prejudice:CHAPTER XLII.:12-12",
+                "pride-and-prejudice:CHAPTER XXII.:6-6",
+                "pride-and-prejudice:CHAPTER LXI.:2-2"
+              ]
+            },
+            {
+              "id": "M01",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 44,
+              "selected": [
+                "partial:1:1-3"
+              ]
+            },
+            {
+              "id": "M02",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 44,
+              "selected": [
+                "partial:1:1-3"
+              ]
+            },
+            {
+              "id": "M03",
+              "candidateRecall": null,
+              "finalRecall8": null,
+              "searchUs": 35,
+              "selected": [
+                "partial:1:1-3"
+              ]
+            },
+            {
+              "id": "M04",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 34,
+              "selected": [
+                "partial:1:1-3"
+              ]
+            },
+            {
+              "id": "M05",
+              "candidateRecall": null,
+              "finalRecall8": null,
+              "searchUs": 32,
+              "selected": [
+                "partial:1:1-3"
+              ]
+            },
+            {
+              "id": "M06",
+              "candidateRecall": null,
+              "finalRecall8": null,
+              "searchUs": 31,
+              "selected": [
+                "partial:1:1-3"
+              ]
+            }
+          ],
+          "searchMedianMs": 2.014
+        },
+        {
+          "queryMode": "rewrite",
+          "hybrid": false,
+          "completeCandidates": 19,
+          "complete8": 16,
+          "cases": [
+            {
+              "id": "E01",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 1712,
+              "selected": [
+                "enchiridion:I:1-1",
+                "enchiridion:I:2-2",
+                "enchiridion:I:4-4",
+                "enchiridion:II:1-1",
+                "enchiridion:XIX:1-1",
+                "enchiridion:XXX:1-1",
+                "enchiridion:XLI:1-1",
+                "enchiridion:XXXI:1:0-1794"
+              ]
+            },
+            {
+              "id": "E02",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 1580,
+              "selected": [
+                "enchiridion:V:1-1",
+                "enchiridion:INTRODUCTION:10-10",
+                "enchiridion:XX:1-1",
+                "enchiridion:XLII:1-1",
+                "enchiridion:INTRODUCTION:2-2",
+                "enchiridion:INTRODUCTION:8:1594-2448",
+                "enchiridion:XXVI:1-1",
+                "enchiridion:Footnotes:4-7"
+              ]
+            },
+            {
+              "id": "E03",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 1559,
+              "selected": [
+                "enchiridion:IV:1-1",
+                "enchiridion:XLI:1-1",
+                "enchiridion:XLV:1-1",
+                "enchiridion:XXIX:1:0-1798",
+                "enchiridion:IX:1-1",
+                "enchiridion:XXXVIII:1-1",
+                "enchiridion:XXXIX:1-1",
+                "enchiridion:XII:1-1"
+              ]
+            },
+            {
+              "id": "E04",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 1474,
+              "selected": [
+                "enchiridion:II:1-1",
+                "enchiridion:X:1-1",
+                "enchiridion:I:4-4",
+                "enchiridion:LI:2-5",
+                "enchiridion:XXXIV:1-1",
+                "enchiridion:XIII:1-1",
+                "enchiridion:INTRODUCTION:8:1594-2448",
+                "enchiridion:IX:1-1"
+              ]
+            },
+            {
+              "id": "E05",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 1417,
+              "selected": [
+                "enchiridion:INTRODUCTION:8:0-1794",
+                "enchiridion:INTRODUCTION:8:1594-2448",
+                "enchiridion:XVII:1-1",
+                "enchiridion:INTRODUCTION:2-2",
+                "enchiridion:INTRODUCTION:10-10",
+                "enchiridion:INTRODUCTION:11-11",
+                "enchiridion:INTRODUCTION:3-3",
+                "enchiridion:INTRODUCTION:7-7"
+              ]
+            },
+            {
+              "id": "E06",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 1696,
+              "selected": [
+                "enchiridion:XXIX:1:0-1798",
+                "enchiridion:L:1-1",
+                "enchiridion:II:1-1",
+                "enchiridion:XXXIV:1-1",
+                "enchiridion:I:3-3",
+                "enchiridion:X:1-1",
+                "enchiridion:XLI:1-1",
+                "enchiridion:XXXVIII:1-1"
+              ]
+            },
+            {
+              "id": "E07",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 1583,
+              "selected": [
+                "enchiridion:XLIII:1-1",
+                "enchiridion:XXX:1-1",
+                "enchiridion:I:4-4",
+                "enchiridion:INTRODUCTION:8:1594-2448",
+                "enchiridion:XVI:1-1",
+                "enchiridion:XXXI:1:0-1794",
+                "enchiridion:XLII:1-1",
+                "enchiridion:XX:1-1"
+              ]
+            },
+            {
+              "id": "E08",
+              "candidateRecall": 1.0,
+              "finalRecall8": 0.0,
+              "searchUs": 1558,
+              "selected": [
+                "enchiridion:Main Works on Stoicism and Related Problems:1-6",
+                "enchiridion:INTRODUCTION:6-6",
+                "enchiridion:Epictetus: Life and Work:12-14",
+                "enchiridion:INTRODUCTION:3-3",
+                "enchiridion:Epictetus: Life and Work:1-6",
+                "enchiridion:INTRODUCTION:10-10",
+                "enchiridion:Footnotes:4-7",
+                "enchiridion:Footnotes:8-11"
+              ]
+            },
+            {
+              "id": "E09",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 1817,
+              "selected": [
+                "enchiridion:I:1-1",
+                "enchiridion:XXX:1-1",
+                "enchiridion:I:4-4",
+                "enchiridion:V:1-1",
+                "enchiridion:XX:1-1",
+                "enchiridion:XXXVIII:1-1",
+                "enchiridion:II:1-1",
+                "enchiridion:XLI:1-1"
+              ]
+            },
+            {
+              "id": "E10",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 1622,
+              "selected": [
+                "enchiridion:LI:2-5",
+                "enchiridion:INTRODUCTION:8:1594-2448",
+                "enchiridion:I:1-1",
+                "enchiridion:XXXI:1:0-1794",
+                "enchiridion:INTRODUCTION:11-11",
+                "enchiridion:INTRODUCTION:3-3",
+                "enchiridion:INTRODUCTION:10-10",
+                "enchiridion:I:4-4"
+              ]
+            },
+            {
+              "id": "E11",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 1635,
+              "selected": [
+                "enchiridion:IV:1-1",
+                "enchiridion:XXIX:1:0-1798",
+                "enchiridion:XLV:1-1",
+                "enchiridion:IX:1-1",
+                "enchiridion:INTRODUCTION:8:1594-2448",
+                "enchiridion:INTRODUCTION:8:0-1794",
+                "enchiridion:XLI:1-1",
+                "enchiridion:II:1-1"
+              ]
+            },
+            {
+              "id": "E12",
+              "candidateRecall": null,
+              "finalRecall8": null,
+              "searchUs": 1692,
+              "selected": [
+                "enchiridion:Main Works on Stoicism and Related Problems:1-6",
+                "enchiridion:Main Works on Stoicism and Related Problems:7-11",
+                "enchiridion:Influence of Stoicism:1-3",
+                "enchiridion:Epictetus: Life and Work:1-6",
+                "enchiridion:The Library of Liberal Arts:43-48",
+                "enchiridion:The Library of Liberal Arts:49-54",
+                "enchiridion:Epictetus: Life and Work:12-14",
+                "enchiridion:The Library of Liberal Arts:55-60"
+              ]
+            },
+            {
+              "id": "P01",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 22627,
+              "selected": [
+                "pride-and-prejudice:Chapter I.:11-16",
+                "pride-and-prejudice:Chapter I.:1-3",
+                "pride-and-prejudice:CHAPTER LIX.:43-43",
+                "pride-and-prejudice:CHAPTER LI.:4-4",
+                "pride-and-prejudice:CHAPTER LV.:40-40",
+                "pride-and-prejudice:CHAPTER XIII:1-3",
+                "pride-and-prejudice:CHAPTER XXXII.:13-14",
+                "pride-and-prejudice:CHAPTER LVI.:46-46"
+              ]
+            },
+            {
+              "id": "P02",
+              "candidateRecall": 1.0,
+              "finalRecall8": 0.0,
+              "searchUs": 21082,
+              "selected": [
+                "pride-and-prejudice:CHAPTER VI.:17-19",
+                "pride-and-prejudice:CHAPTER XLIV.:3-3",
+                "pride-and-prejudice:CHAPTER VI.:42-46",
+                "pride-and-prejudice:CHAPTER IX.:35-35",
+                "pride-and-prejudice:CHAPTER XVII.:13-13",
+                "pride-and-prejudice:CHAPTER IV.:15-15",
+                "pride-and-prejudice:CHAPTER XLVII.:14-14",
+                "pride-and-prejudice:CHAPTER XVIII.:69-70"
+              ]
+            },
+            {
+              "id": "P03",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 22054,
+              "selected": [
+                "pride-and-prejudice:CHAPTER LIV.:29-29",
+                "pride-and-prejudice:CHAPTER XVIII.:63:0-1799",
+                "pride-and-prejudice:Chapter I.:11-16",
+                "pride-and-prejudice:CHAPTER XIII:4-4",
+                "pride-and-prejudice:CHAPTER XXV.:17-17",
+                "pride-and-prejudice:CHAPTER LXI.:1-1",
+                "pride-and-prejudice:CHAPTER III.:1-1",
+                "pride-and-prejudice:CHAPTER II.:13-14"
+              ]
+            },
+            {
+              "id": "P04",
+              "candidateRecall": 0.0,
+              "finalRecall8": 0.0,
+              "searchUs": 21481,
+              "selected": [
+                "pride-and-prejudice:CHAPTER LIX.:45-45",
+                "pride-and-prejudice:CHAPTER LIX.:43-43",
+                "pride-and-prejudice:CHAPTER LVIII.:32-32",
+                "pride-and-prejudice:CHAPTER XXXIV.:22-22",
+                "pride-and-prejudice:CHAPTER IX.:32-34",
+                "pride-and-prejudice:CHAPTER XLV.:18-19",
+                "pride-and-prejudice:CHAPTER LIX.:37-38",
+                "pride-and-prejudice:CHAPTER LX.:1-2"
+              ]
+            },
+            {
+              "id": "P05",
+              "candidateRecall": 1.0,
+              "finalRecall8": 0.0,
+              "searchUs": 20917,
+              "selected": [
+                "pride-and-prejudice:CHAPTER LII.:4:0-1800",
+                "pride-and-prejudice:CHAPTER XXXV.:5:6381-8180",
+                "pride-and-prejudice:CHAPTER XL.:23-23",
+                "pride-and-prejudice:CHAPTER XVIII.:45-45",
+                "pride-and-prejudice:CHAPTER XL.:9-9",
+                "pride-and-prejudice:CHAPTER XXXV.:5:12767-14053",
+                "pride-and-prejudice:CHAPTER XXVI.:7-7",
+                "pride-and-prejudice:CHAPTER LVIII.:18-20"
+              ]
+            },
+            {
+              "id": "P06",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 22652,
+              "selected": [
+                "pride-and-prejudice:CHAPTER LXI.:3-3",
+                "pride-and-prejudice:CHAPTER XII.:1-1",
+                "pride-and-prejudice:CHAPTER LIII.:22-25",
+                "pride-and-prejudice:CHAPTER XVIII.:77-77",
+                "pride-and-prejudice:CHAPTER XXI.:27-27",
+                "pride-and-prejudice:CHAPTER XLIV.:8-8",
+                "pride-and-prejudice:CHAPTER XXIV.:4-5",
+                "pride-and-prejudice:CHAPTER III.:2-2"
+              ]
+            },
+            {
+              "id": "P07",
+              "candidateRecall": 0.0,
+              "finalRecall8": 0.0,
+              "searchUs": 22432,
+              "selected": [
+                "pride-and-prejudice:CHAPTER LX.:22-25",
+                "pride-and-prejudice:CHAPTER LVI.:69-69",
+                "pride-and-prejudice:CHAPTER LVII.:14:0-1792",
+                "pride-and-prejudice:CHAPTER IX.:39-39",
+                "pride-and-prejudice:CHAPTER XIV:1-1",
+                "pride-and-prejudice:CHAPTER XVI.:52-54",
+                "pride-and-prejudice:CHAPTER LVII.:2-2",
+                "pride-and-prejudice:CHAPTER LVI.:44-44"
+              ]
+            },
+            {
+              "id": "P08",
+              "candidateRecall": 0.0,
+              "finalRecall8": 0.0,
+              "searchUs": 21919,
+              "selected": [
+                "pride-and-prejudice:CHAPTER XXI.:14-17",
+                "pride-and-prejudice:CHAPTER IX.:39-39",
+                "pride-and-prejudice:CHAPTER XXIII.:13-13",
+                "pride-and-prejudice:CHAPTER XX.:25-25",
+                "pride-and-prejudice:CHAPTER XL.:2-2",
+                "pride-and-prejudice:CHAPTER X.:53-54",
+                "pride-and-prejudice:CHAPTER II.:2-6",
+                "pride-and-prejudice:CHAPTER XVIII.:63:0-1799"
+              ]
+            },
+            {
+              "id": "P09",
+              "candidateRecall": null,
+              "finalRecall8": null,
+              "searchUs": 23304,
+              "selected": [
+                "pride-and-prejudice:CHAPTER XLIII.:3-3",
+                "pride-and-prejudice:CHAPTER XLII.:12-12",
+                "pride-and-prejudice:CHAPTER VII.:47-47",
+                "pride-and-prejudice:CHAPTER XII.:1-1",
+                "pride-and-prejudice:CHAPTER XLII.:13-14",
+                "pride-and-prejudice:CHAPTER XLIII.:1-2",
+                "pride-and-prejudice:CHAPTER IX.:1-1",
+                "pride-and-prejudice:CHAPTER XLIV.:1-1"
+              ]
+            },
+            {
+              "id": "M01",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 18,
+              "selected": [
+                "partial:1:1-3"
+              ]
+            },
+            {
+              "id": "M02",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 16,
+              "selected": [
+                "partial:1:1-3"
+              ]
+            },
+            {
+              "id": "M03",
+              "candidateRecall": null,
+              "finalRecall8": null,
+              "searchUs": 15,
+              "selected": [
+                "partial:1:1-3"
+              ]
+            },
+            {
+              "id": "M04",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 15,
+              "selected": [
+                "partial:1:1-3"
+              ]
+            },
+            {
+              "id": "M05",
+              "candidateRecall": null,
+              "finalRecall8": null,
+              "searchUs": 14,
+              "selected": [
+                "partial:1:1-3"
+              ]
+            },
+            {
+              "id": "M06",
+              "candidateRecall": null,
+              "finalRecall8": null,
+              "searchUs": 15,
+              "selected": [
+                "partial:1:1-3"
+              ]
+            }
+          ],
+          "searchMedianMs": 1.635
+        },
+        {
+          "queryMode": "rewrite",
+          "hybrid": true,
+          "completeCandidates": 19,
+          "complete8": 19,
+          "cases": [
+            {
+              "id": "E01",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 2243,
+              "selected": [
+                "enchiridion:II:1-1",
+                "enchiridion:I:1-1",
+                "enchiridion:I:4-4",
+                "enchiridion:XIX:1-1",
+                "enchiridion:INTRODUCTION:8:0-1794",
+                "enchiridion:I:2-2",
+                "enchiridion:XXXII:1-1",
+                "enchiridion:XIV:1-1"
+              ]
+            },
+            {
+              "id": "E02",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 1841,
+              "selected": [
+                "enchiridion:XX:1-1",
+                "enchiridion:I:1-1",
+                "enchiridion:Footnotes:4-7",
+                "enchiridion:INTRODUCTION:8:1594-2448",
+                "enchiridion:INTRODUCTION:10-10",
+                "enchiridion:XXVI:1-1",
+                "enchiridion:V:1-1",
+                "enchiridion:VIII:1-1"
+              ]
+            },
+            {
+              "id": "E03",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 1818,
+              "selected": [
+                "enchiridion:IV:1-1",
+                "enchiridion:LI:1-1",
+                "enchiridion:XLI:1-1",
+                "enchiridion:XLVII:1-1",
+                "enchiridion:NOTE ON THE TEXT:1-3",
+                "enchiridion:L:1-1",
+                "enchiridion:XLV:1-1",
+                "enchiridion:XXIX:1:0-1798"
+              ]
+            },
+            {
+              "id": "E04",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 2099,
+              "selected": [
+                "enchiridion:II:1-1",
+                "enchiridion:INTRODUCTION:8:1594-2448",
+                "enchiridion:XIII:1-1",
+                "enchiridion:IX:1-1",
+                "enchiridion:XXVI:1-1",
+                "enchiridion:IV:1-1",
+                "enchiridion:I:2-2",
+                "enchiridion:INTRODUCTION:8:0-1794"
+              ]
+            },
+            {
+              "id": "E05",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 1700,
+              "selected": [
+                "enchiridion:XVII:1-1",
+                "enchiridion:INTRODUCTION:8:0-1794",
+                "enchiridion:INTRODUCTION:8:1594-2448",
+                "enchiridion:INTRODUCTION:2-2",
+                "enchiridion:INTRODUCTION:3-3",
+                "enchiridion:INTRODUCTION:11-11",
+                "enchiridion:Footnotes:4-7",
+                "enchiridion:INTRODUCTION:10-10"
+              ]
+            },
+            {
+              "id": "E06",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 1799,
+              "selected": [
+                "enchiridion:XXIX:1:0-1798",
+                "enchiridion:XXXIV:1-1",
+                "enchiridion:The Library of Liberal Arts:109-110",
+                "enchiridion:L:1-1",
+                "enchiridion:II:1-1",
+                "enchiridion:I:3-3",
+                "enchiridion:X:1-1",
+                "enchiridion:XLI:1-1"
+              ]
+            },
+            {
+              "id": "E07",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 1790,
+              "selected": [
+                "enchiridion:XLIII:1-1",
+                "enchiridion:XXX:1-1",
+                "enchiridion:INTRODUCTION:8:1594-2448",
+                "enchiridion:INTRODUCTION:3-3",
+                "enchiridion:INTRODUCTION:8:0-1794",
+                "enchiridion:Footnotes:4-7",
+                "enchiridion:I:4-4",
+                "enchiridion:The Library of Liberal Arts:67-72"
+              ]
+            },
+            {
+              "id": "E08",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 1902,
+              "selected": [
+                "enchiridion:INTRODUCTION:3-3",
+                "enchiridion:INTRODUCTION:6-6",
+                "enchiridion:V:1-1",
+                "enchiridion:INTRODUCTION:10-10",
+                "enchiridion:Influence of Stoicism:4-6",
+                "enchiridion:INTRODUCTION:2-2",
+                "enchiridion:INTRODUCTION:5-5",
+                "enchiridion:Main Works on Stoicism and Related Problems:1-6"
+              ]
+            },
+            {
+              "id": "E09",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 1846,
+              "selected": [
+                "enchiridion:V:1-1",
+                "enchiridion:II:1-1",
+                "enchiridion:I:1-1",
+                "enchiridion:INTRODUCTION:8:0-1794",
+                "enchiridion:Footnotes:1-3",
+                "enchiridion:XXX:1-1",
+                "enchiridion:I:4-4",
+                "enchiridion:L:1-1"
+              ]
+            },
+            {
+              "id": "E10",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 1866,
+              "selected": [
+                "enchiridion:INTRODUCTION:8:1594-2448",
+                "enchiridion:II:1-1",
+                "enchiridion:INTRODUCTION:11-11",
+                "enchiridion:INTRODUCTION:3-3",
+                "enchiridion:INTRODUCTION:6-6",
+                "enchiridion:INTRODUCTION:10-10",
+                "enchiridion:I:1-1",
+                "enchiridion:Main Works on Stoicism and Related Problems:1-6"
+              ]
+            },
+            {
+              "id": "E11",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 2165,
+              "selected": [
+                "enchiridion:IV:1-1",
+                "enchiridion:INTRODUCTION:8:0-1794",
+                "enchiridion:II:1-1",
+                "enchiridion:XIII:1-1",
+                "enchiridion:I:1-1",
+                "enchiridion:INTRODUCTION:2-2",
+                "enchiridion:INTRODUCTION:11-11",
+                "enchiridion:XXIX:1:0-1798"
+              ]
+            },
+            {
+              "id": "E12",
+              "candidateRecall": null,
+              "finalRecall8": null,
+              "searchUs": 1759,
+              "selected": [
+                "enchiridion:Main Works on Stoicism and Related Problems:1-6",
+                "enchiridion:Epictetus: Life and Work:1-6",
+                "enchiridion:The Library of Liberal Arts:55-60",
+                "enchiridion:The Library of Liberal Arts:1-6",
+                "enchiridion:INTRODUCTION:8:1594-2448",
+                "enchiridion:INTRODUCTION:6-6",
+                "enchiridion:Main Works on Stoicism and Related Problems:7-11",
+                "enchiridion:Influence of Stoicism:1-3"
+              ]
+            },
+            {
+              "id": "P01",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 25729,
+              "selected": [
+                "pride-and-prejudice:Chapter I.:11-16",
+                "pride-and-prejudice:Chapter I.:1-3",
+                "pride-and-prejudice:CHAPTER XLII.:1-1",
+                "pride-and-prejudice:CHAPTER XXXIII.:28-28",
+                "pride-and-prejudice:CHAPTER LIX.:43-43",
+                "pride-and-prejudice:CHAPTER XX.:4-4",
+                "pride-and-prejudice:CHAPTER LI.:4-4",
+                "pride-and-prejudice:CHAPTER LXI.:6-6"
+              ]
+            },
+            {
+              "id": "P02",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 30384,
+              "selected": [
+                "pride-and-prejudice:CHAPTER IV.:15-15",
+                "pride-and-prejudice:CHAPTER VI.:17-19",
+                "pride-and-prejudice:CHAPTER VI.:12-12",
+                "pride-and-prejudice:CHAPTER III.:5-5",
+                "pride-and-prejudice:CHAPTER XLIV.:3-3",
+                "pride-and-prejudice:CHAPTER V.:2-4",
+                "pride-and-prejudice:CHAPTER VI.:42-46",
+                "pride-and-prejudice:CHAPTER IX.:35-35"
+              ]
+            },
+            {
+              "id": "P03",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 28853,
+              "selected": [
+                "pride-and-prejudice:CHAPTER LIV.:29-29",
+                "pride-and-prejudice:CHAPTER LXI.:1-1",
+                "pride-and-prejudice:CHAPTER LV.:34-34",
+                "pride-and-prejudice:CHAPTER XVIII.:63:0-1799",
+                "pride-and-prejudice:CHAPTER XVIII.:76-76",
+                "pride-and-prejudice:CHAPTER LIV.:7-10",
+                "pride-and-prejudice:CHAPTER L.:7-7",
+                "pride-and-prejudice:Chapter I.:11-16"
+              ]
+            },
+            {
+              "id": "P04",
+              "candidateRecall": 0.0,
+              "finalRecall8": 0.0,
+              "searchUs": 26880,
+              "selected": [
+                "pride-and-prejudice:CHAPTER LX.:1-2",
+                "pride-and-prejudice:CHAPTER IX.:32-34",
+                "pride-and-prejudice:CHAPTER LIV.:17-19",
+                "pride-and-prejudice:CHAPTER XXXIV.:30-30",
+                "pride-and-prejudice:CHAPTER LIX.:45-45",
+                "pride-and-prejudice:CHAPTER LIX.:43-43",
+                "pride-and-prejudice:CHAPTER XXI.:14-17",
+                "pride-and-prejudice:CHAPTER LVIII.:32-32"
+              ]
+            },
+            {
+              "id": "P05",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 26027,
+              "selected": [
+                "pride-and-prejudice:CHAPTER XL.:9-9",
+                "pride-and-prejudice:CHAPTER XXXVI.:3-3",
+                "pride-and-prejudice:CHAPTER XL.:18-20",
+                "pride-and-prejudice:CHAPTER XXXIV.:22-22",
+                "pride-and-prejudice:CHAPTER LI.:37-37",
+                "pride-and-prejudice:CHAPTER LII.:4:0-1800",
+                "pride-and-prejudice:CHAPTER XI.:13-14",
+                "pride-and-prejudice:CHAPTER XXXV.:5:6381-8180"
+              ]
+            },
+            {
+              "id": "P06",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 31570,
+              "selected": [
+                "pride-and-prejudice:CHAPTER XII.:1-1",
+                "pride-and-prejudice:CHAPTER XVIII.:77-77",
+                "pride-and-prejudice:CHAPTER XXI.:6-6",
+                "pride-and-prejudice:CHAPTER IX.:2-2",
+                "pride-and-prejudice:CHAPTER XXVI.:25-25",
+                "pride-and-prejudice:CHAPTER XXIII.:12-12",
+                "pride-and-prejudice:CHAPTER XXIV.:4-5",
+                "pride-and-prejudice:CHAPTER LXI.:3-3"
+              ]
+            },
+            {
+              "id": "P07",
+              "candidateRecall": 0.0,
+              "finalRecall8": 0.0,
+              "searchUs": 34211,
+              "selected": [
+                "pride-and-prejudice:CHAPTER XVI.:52-54",
+                "pride-and-prejudice:CHAPTER LVI.:44-44",
+                "pride-and-prejudice:CHAPTER XIV:1-1",
+                "pride-and-prejudice:CHAPTER XXXI.:29-29",
+                "pride-and-prejudice:CHAPTER LX.:22-25",
+                "pride-and-prejudice:CHAPTER LVI.:69-69",
+                "pride-and-prejudice:CHAPTER LVII.:14:0-1792",
+                "pride-and-prejudice:CHAPTER XVIII.:57-57"
+              ]
+            },
+            {
+              "id": "P08",
+              "candidateRecall": 0.0,
+              "finalRecall8": 0.0,
+              "searchUs": 33675,
+              "selected": [
+                "pride-and-prejudice:CHAPTER IX.:39-39",
+                "pride-and-prejudice:CHAPTER X.:53-54",
+                "pride-and-prejudice:CHAPTER XX.:12-17",
+                "pride-and-prejudice:CHAPTER XXI.:18-18",
+                "pride-and-prejudice:CHAPTER LIX.:21-23",
+                "pride-and-prejudice:CHAPTER XXI.:14-17",
+                "pride-and-prejudice:CHAPTER XVIII.:46-47",
+                "pride-and-prejudice:CHAPTER IX.:2-2"
+              ]
+            },
+            {
+              "id": "P09",
+              "candidateRecall": null,
+              "finalRecall8": null,
+              "searchUs": 31391,
+              "selected": [
+                "pride-and-prejudice:CHAPTER LXI.:2-2",
+                "pride-and-prejudice:CHAPTER LII.:12-14",
+                "pride-and-prejudice:CHAPTER XLII.:18-18",
+                "pride-and-prejudice:CHAPTER XLV.:1-1",
+                "pride-and-prejudice:CHAPTER LVI.:21-25",
+                "pride-and-prejudice:CHAPTER XLIII.:3-3",
+                "pride-and-prejudice:CHAPTER XLII.:12-12",
+                "pride-and-prejudice:CHAPTER XXII.:6-6"
+              ]
+            },
+            {
+              "id": "M01",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 42,
+              "selected": [
+                "partial:1:1-3"
+              ]
+            },
+            {
+              "id": "M02",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 43,
+              "selected": [
+                "partial:1:1-3"
+              ]
+            },
+            {
+              "id": "M03",
+              "candidateRecall": null,
+              "finalRecall8": null,
+              "searchUs": 33,
+              "selected": [
+                "partial:1:1-3"
+              ]
+            },
+            {
+              "id": "M04",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 34,
+              "selected": [
+                "partial:1:1-3"
+              ]
+            },
+            {
+              "id": "M05",
+              "candidateRecall": null,
+              "finalRecall8": null,
+              "searchUs": 31,
+              "selected": [
+                "partial:1:1-3"
+              ]
+            },
+            {
+              "id": "M06",
+              "candidateRecall": null,
+              "finalRecall8": null,
+              "searchUs": 31,
+              "selected": [
+                "partial:1:1-3"
+              ]
+            }
+          ],
+          "searchMedianMs": 1.866
+        }
+      ],
+      "replayVerified": {
+        "requests": 0,
+        "identicalCandidateAndSelectedIds": true,
+        "identicalCoverage": true
+      },
+      "fullReportSha256": "da7d3f8605b97b16694d2c6b6542fd9a3a86baad46862cc6a68c664b224a9f1e",
+      "cacheSha256": "64f66706325f24df14d670c70caf1d4c0085830670f0a4646e085e391a04c76c"
+    },
+    {
+      "protocol": "embedding-hybrid-v1",
+      "manifestHash": "e7a429145ebf1f436c25127c92da8cfee7ce447b893ac4de3c0c19526172ee67",
+      "model": "qwen/qwen3-embedding-8b",
+      "dimensions": 4096,
+      "chunking": "bounded-groups-1800 overlap200",
+      "chunkCount": 1434,
+      "corpusHash": "b70c9f5b396144c7018bf95d936cf13953ce383e8192a5cb3a227c524ca23f7a",
+      "rrfK": 60,
+      "denseCandidates": 20,
+      "bm25Candidates": 20,
+      "heldOutModelRuns": 0,
+      "heldOutRetrievalRuns": 0,
+      "answerModelRuns": 0,
+      "newEmbeddingRequests": 25,
+      "newInputBytes": 798474,
+      "embeddingOrCacheLoadMs": 190196,
+      "cacheVectorCount": 1488,
+      "float32Bytes": 24379392,
+      "embeddingLedger": [
+        {
+          "model": "qwen/qwen3-embedding-8b",
+          "dimensions": 4096,
+          "usage": {
+            "prompt_tokens": 199,
+            "total_tokens": 199,
+            "cost": 1.99e-06,
+            "is_byok": false,
+            "cost_details": {
+              "upstream_inference_cost": 1.99e-06,
+              "upstream_inference_prompt_cost": 1.99e-06,
+              "upstream_inference_completions_cost": 0
+            }
+          },
+          "requestId": "gen-emb-1793105073-zcpbS9xEFwfYrwbn9KSA",
+          "elapsedMs": 1686,
+          "inputs": 2
+        },
+        {
+          "model": "qwen/qwen3-embedding-8b",
+          "dimensions": 4096,
+          "usage": {
+            "prompt_tokens": 9706,
+            "total_tokens": 9706,
+            "cost": 9.706e-05,
+            "is_byok": false,
+            "cost_details": {
+              "upstream_inference_cost": 9.706e-05,
+              "upstream_inference_prompt_cost": 9.706e-05,
+              "upstream_inference_completions_cost": 0
+            }
+          },
+          "requestId": "gen-emb-1793105075-r5MnAnkX7NvaRZ3C6Gmt",
+          "elapsedMs": 12726,
+          "inputs": 64
+        },
+        {
+          "model": "qwen/qwen3-embedding-8b",
+          "dimensions": 4096,
+          "usage": {
+            "prompt_tokens": 11426,
+            "total_tokens": 11426,
+            "cost": 0.00011426,
+            "is_byok": false,
+            "cost_details": {
+              "upstream_inference_cost": 0.00011426,
+              "upstream_inference_prompt_cost": 0.00011426,
+              "upstream_inference_completions_cost": 0
+            }
+          },
+          "requestId": "gen-emb-1793105087-J9urVvYzufFeOFvwLmWg",
+          "elapsedMs": 4303,
+          "inputs": 64
+        },
+        {
+          "model": "qwen/qwen3-embedding-8b",
+          "dimensions": 4096,
+          "usage": {
+            "prompt_tokens": 7359,
+            "total_tokens": 7359,
+            "cost": 7.359e-05,
+            "is_byok": false,
+            "cost_details": {
+              "upstream_inference_cost": 7.359e-05,
+              "upstream_inference_prompt_cost": 7.359e-05,
+              "upstream_inference_completions_cost": 0
+            }
+          },
+          "requestId": "gen-emb-1793105092-Z6Z6wT1Zls4wmUqMFa1Q",
+          "elapsedMs": 4034,
+          "inputs": 64
+        },
+        {
+          "model": "qwen/qwen3-embedding-8b",
+          "dimensions": 4096,
+          "usage": {
+            "prompt_tokens": 7286,
+            "total_tokens": 7286,
+            "cost": 0.00029144,
+            "is_byok": false,
+            "cost_details": {
+              "upstream_inference_cost": 0.00029144,
+              "upstream_inference_prompt_cost": 0.00029144,
+              "upstream_inference_completions_cost": 0
+            }
+          },
+          "requestId": "gen-emb-1793105096-Klu95lYre99iEk9vDu4s",
+          "elapsedMs": 5561,
+          "inputs": 64
+        },
+        {
+          "model": "qwen/qwen3-embedding-8b",
+          "dimensions": 4096,
+          "usage": {
+            "prompt_tokens": 6377,
+            "total_tokens": 6377,
+            "cost": 6.377e-05,
+            "is_byok": false,
+            "cost_details": {
+              "upstream_inference_cost": 6.377e-05,
+              "upstream_inference_prompt_cost": 6.377e-05,
+              "upstream_inference_completions_cost": 0
+            }
+          },
+          "requestId": "gen-emb-1793105101-2hDziCWViTBPa6EACR5m",
+          "elapsedMs": 14964,
+          "inputs": 64
+        },
+        {
+          "model": "qwen/qwen3-embedding-8b",
+          "dimensions": 4096,
+          "usage": {
+            "prompt_tokens": 7857,
+            "total_tokens": 7857,
+            "cost": 7.857e-05,
+            "is_byok": false,
+            "cost_details": {
+              "upstream_inference_cost": 7.857e-05,
+              "upstream_inference_prompt_cost": 7.857e-05,
+              "upstream_inference_completions_cost": 0
+            }
+          },
+          "requestId": "gen-emb-1793105116-Gg8zX0uDCGWw0tBLvRJl",
+          "elapsedMs": 4098,
+          "inputs": 64
+        },
+        {
+          "model": "qwen/qwen3-embedding-8b",
+          "dimensions": 4096,
+          "usage": {
+            "prompt_tokens": 7236,
+            "total_tokens": 7236,
+            "cost": 7.236e-05,
+            "is_byok": false,
+            "cost_details": {
+              "upstream_inference_cost": 7.236e-05,
+              "upstream_inference_prompt_cost": 7.236e-05,
+              "upstream_inference_completions_cost": 0
+            }
+          },
+          "requestId": "gen-emb-1793105120-b5QO7U19CuXL0SVztesB",
+          "elapsedMs": 12980,
+          "inputs": 64
+        },
+        {
+          "model": "qwen/qwen3-embedding-8b",
+          "dimensions": 4096,
+          "usage": {
+            "prompt_tokens": 8457,
+            "total_tokens": 8457,
+            "cost": 0.00033828,
+            "is_byok": false,
+            "cost_details": {
+              "upstream_inference_cost": 0.00033828,
+              "upstream_inference_prompt_cost": 0.00033828,
+              "upstream_inference_completions_cost": 0
+            }
+          },
+          "requestId": "gen-emb-1793105133-ZWhynqKwd5JiRogCpgLM",
+          "elapsedMs": 8771,
+          "inputs": 64
+        },
+        {
+          "model": "qwen/qwen3-embedding-8b",
+          "dimensions": 4096,
+          "usage": {
+            "prompt_tokens": 7571,
+            "total_tokens": 7571,
+            "cost": 7.571e-05,
+            "is_byok": false,
+            "cost_details": {
+              "upstream_inference_cost": 7.571e-05,
+              "upstream_inference_prompt_cost": 7.571e-05,
+              "upstream_inference_completions_cost": 0
+            }
+          },
+          "requestId": "gen-emb-1793105142-fh41xBKJFMv7h0r30Zuz",
+          "elapsedMs": 11901,
+          "inputs": 64
+        },
+        {
+          "model": "qwen/qwen3-embedding-8b",
+          "dimensions": 4096,
+          "usage": {
+            "prompt_tokens": 7258,
+            "total_tokens": 7258,
+            "cost": 7.258e-05,
+            "is_byok": false,
+            "cost_details": {
+              "upstream_inference_cost": 7.258e-05,
+              "upstream_inference_prompt_cost": 7.258e-05,
+              "upstream_inference_completions_cost": 0
+            }
+          },
+          "requestId": "gen-emb-1793105154-OMqu3HarIQ3tvsypmOQz",
+          "elapsedMs": 10950,
+          "inputs": 64
+        },
+        {
+          "model": "qwen/qwen3-embedding-8b",
+          "dimensions": 4096,
+          "usage": {
+            "prompt_tokens": 7859,
+            "total_tokens": 7859,
+            "cost": 7.859e-05,
+            "is_byok": false,
+            "cost_details": {
+              "upstream_inference_cost": 7.859e-05,
+              "upstream_inference_prompt_cost": 7.859e-05,
+              "upstream_inference_completions_cost": 0
+            }
+          },
+          "requestId": "gen-emb-1793105165-VBJO9poAlAoiVoDgDk4O",
+          "elapsedMs": 3778,
+          "inputs": 64
+        },
+        {
+          "model": "qwen/qwen3-embedding-8b",
+          "dimensions": 4096,
+          "usage": {
+            "prompt_tokens": 6560,
+            "total_tokens": 6560,
+            "cost": 6.56e-05,
+            "is_byok": false,
+            "cost_details": {
+              "upstream_inference_cost": 6.56e-05,
+              "upstream_inference_prompt_cost": 6.56e-05,
+              "upstream_inference_completions_cost": 0
+            }
+          },
+          "requestId": "gen-emb-1793105169-oMoB5Y2BsrOH7i22pmri",
+          "elapsedMs": 7458,
+          "inputs": 64
+        },
+        {
+          "model": "qwen/qwen3-embedding-8b",
+          "dimensions": 4096,
+          "usage": {
+            "prompt_tokens": 10374,
+            "total_tokens": 10374,
+            "cost": 0.00010374,
+            "is_byok": false,
+            "cost_details": {
+              "upstream_inference_cost": 0.00010374,
+              "upstream_inference_prompt_cost": 0.00010374,
+              "upstream_inference_completions_cost": 0
+            }
+          },
+          "requestId": "gen-emb-1793105177-D4FAwTMRmsm64aIZDkRz",
+          "elapsedMs": 6933,
+          "inputs": 64
+        },
+        {
+          "model": "qwen/qwen3-embedding-8b",
+          "dimensions": 4096,
+          "usage": {
+            "prompt_tokens": 6544,
+            "total_tokens": 6544,
+            "cost": 6.544e-05,
+            "is_byok": false,
+            "cost_details": {
+              "upstream_inference_cost": 6.544e-05,
+              "upstream_inference_prompt_cost": 6.544e-05,
+              "upstream_inference_completions_cost": 0
+            }
+          },
+          "requestId": "gen-emb-1793105184-BPqWql0u9IBvRj6BaLv5",
+          "elapsedMs": 11705,
+          "inputs": 64
+        },
+        {
+          "model": "qwen/qwen3-embedding-8b",
+          "dimensions": 4096,
+          "usage": {
+            "prompt_tokens": 8041,
+            "total_tokens": 8041,
+            "cost": 8.041e-05,
+            "is_byok": false,
+            "cost_details": {
+              "upstream_inference_cost": 8.041e-05,
+              "upstream_inference_prompt_cost": 8.041e-05,
+              "upstream_inference_completions_cost": 0
+            }
+          },
+          "requestId": "gen-emb-1793105195-YbimyCz5LIMP5qHG2qdB",
+          "elapsedMs": 9219,
+          "inputs": 64
+        },
+        {
+          "model": "qwen/qwen3-embedding-8b",
+          "dimensions": 4096,
+          "usage": {
+            "prompt_tokens": 9097,
+            "total_tokens": 9097,
+            "cost": 9.097e-05,
+            "is_byok": false,
+            "cost_details": {
+              "upstream_inference_cost": 9.097e-05,
+              "upstream_inference_prompt_cost": 9.097e-05,
+              "upstream_inference_completions_cost": 0
+            }
+          },
+          "requestId": "gen-emb-1793105205-bf1VXZo3wJH2BO93FWxZ",
+          "elapsedMs": 5402,
+          "inputs": 64
+        },
+        {
+          "model": "qwen/qwen3-embedding-8b",
+          "dimensions": 4096,
+          "usage": {
+            "prompt_tokens": 6675,
+            "total_tokens": 6675,
+            "cost": 6.675e-05,
+            "is_byok": false,
+            "cost_details": {
+              "upstream_inference_cost": 6.675e-05,
+              "upstream_inference_prompt_cost": 6.675e-05,
+              "upstream_inference_completions_cost": 0
+            }
+          },
+          "requestId": "gen-emb-1793105210-e5scwy1x6TYkZl8DtJU4",
+          "elapsedMs": 4935,
+          "inputs": 64
+        },
+        {
+          "model": "qwen/qwen3-embedding-8b",
+          "dimensions": 4096,
+          "usage": {
+            "prompt_tokens": 7294,
+            "total_tokens": 7294,
+            "cost": 7.294e-05,
+            "is_byok": false,
+            "cost_details": {
+              "upstream_inference_cost": 7.294e-05,
+              "upstream_inference_prompt_cost": 7.294e-05,
+              "upstream_inference_completions_cost": 0
+            }
+          },
+          "requestId": "gen-emb-1793105215-75geXDji8uCDSG0JVevB",
+          "elapsedMs": 4385,
+          "inputs": 64
+        },
+        {
+          "model": "qwen/qwen3-embedding-8b",
+          "dimensions": 4096,
+          "usage": {
+            "prompt_tokens": 8395,
+            "total_tokens": 8395,
+            "cost": 8.395e-05,
+            "is_byok": false,
+            "cost_details": {
+              "upstream_inference_cost": 8.395e-05,
+              "upstream_inference_prompt_cost": 8.395e-05,
+              "upstream_inference_completions_cost": 0
+            }
+          },
+          "requestId": "gen-emb-1793105220-TxFuHlsdfnn2njJp3Jjw",
+          "elapsedMs": 6223,
+          "inputs": 64
+        },
+        {
+          "model": "qwen/qwen3-embedding-8b",
+          "dimensions": 4096,
+          "usage": {
+            "prompt_tokens": 6646,
+            "total_tokens": 6646,
+            "cost": 6.646e-05,
+            "is_byok": false,
+            "cost_details": {
+              "upstream_inference_cost": 6.646e-05,
+              "upstream_inference_prompt_cost": 6.646e-05,
+              "upstream_inference_completions_cost": 0
+            }
+          },
+          "requestId": "gen-emb-1793105226-JmQr9aZMiIyqcWeyn2wd",
+          "elapsedMs": 3889,
+          "inputs": 64
+        },
+        {
+          "model": "qwen/qwen3-embedding-8b",
+          "dimensions": 4096,
+          "usage": {
+            "prompt_tokens": 7136,
+            "total_tokens": 7136,
+            "cost": 7.136e-05,
+            "is_byok": false,
+            "cost_details": {
+              "upstream_inference_cost": 7.136e-05,
+              "upstream_inference_prompt_cost": 7.136e-05,
+              "upstream_inference_completions_cost": 0
+            }
+          },
+          "requestId": "gen-emb-1793105230-IEaBG6Z8gasKu7LlYhYW",
+          "elapsedMs": 14269,
+          "inputs": 64
+        },
+        {
+          "model": "qwen/qwen3-embedding-8b",
+          "dimensions": 4096,
+          "usage": {
+            "prompt_tokens": 6903,
+            "total_tokens": 6903,
+            "cost": 6.903e-05,
+            "is_byok": false,
+            "cost_details": {
+              "upstream_inference_cost": 6.903e-05,
+              "upstream_inference_prompt_cost": 6.903e-05,
+              "upstream_inference_completions_cost": 0
+            }
+          },
+          "requestId": "gen-emb-1793105244-6ut6iCuARcF8po9YflqQ",
+          "elapsedMs": 7637,
+          "inputs": 64
+        },
+        {
+          "model": "qwen/qwen3-embedding-8b",
+          "dimensions": 4096,
+          "usage": {
+            "prompt_tokens": 4985,
+            "total_tokens": 4985,
+            "cost": 4.985e-05,
+            "is_byok": false,
+            "cost_details": {
+              "upstream_inference_cost": 4.985e-05,
+              "upstream_inference_prompt_cost": 4.985e-05,
+              "upstream_inference_completions_cost": 0
+            }
+          },
+          "requestId": "gen-emb-1793105252-fOx2lRW2lv0Z5rLzidlq",
+          "elapsedMs": 6618,
+          "inputs": 64
+        },
+        {
+          "model": "qwen/qwen3-embedding-8b",
+          "dimensions": 4096,
+          "usage": {
+            "prompt_tokens": 590,
+            "total_tokens": 590,
+            "cost": 5.9e-06,
+            "is_byok": false,
+            "cost_details": {
+              "upstream_inference_cost": 5.9e-06,
+              "upstream_inference_prompt_cost": 5.9e-06,
+              "upstream_inference_completions_cost": 0
+            }
+          },
+          "requestId": "gen-emb-1793105258-hC4PIb3tDPXmDAcbuO1e",
+          "elapsedMs": 4435,
+          "inputs": 14
+        }
+      ],
+      "platform": "macos",
+      "note": "Development source-range coverage only. Not answer accuracy; no-source recall is null. Dense-only uses top40; hybrid unions top20+top20.",
+      "results": [
+        {
+          "queryMode": "original",
+          "hybrid": false,
+          "completeCandidates": 22,
+          "complete8": 20,
+          "cases": [
+            {
+              "id": "E01",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 4017,
+              "selected": [
+                "enchiridion:I:1-1",
+                "enchiridion:I:2-2",
+                "enchiridion:II:1-1",
+                "enchiridion:XIV:1-1",
+                "enchiridion:INTRODUCTION:8:0-1794",
+                "enchiridion:VIII:1-1",
+                "enchiridion:I:4-4",
+                "enchiridion:XIX:1-1"
+              ]
+            },
+            {
+              "id": "E02",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 3628,
+              "selected": [
+                "enchiridion:XXVI:1-1",
+                "enchiridion:V:1-1",
+                "enchiridion:XX:1-1",
+                "enchiridion:XVI:1-1",
+                "enchiridion:X:1-1",
+                "enchiridion:I:1-1",
+                "enchiridion:IX:1-1",
+                "enchiridion:I:4-4"
+              ]
+            },
+            {
+              "id": "E03",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 1949,
+              "selected": [
+                "enchiridion:IV:1-1",
+                "enchiridion:XLV:1-1",
+                "enchiridion:XLVII:1-1",
+                "enchiridion:XXXIII:5-5",
+                "enchiridion:XLI:1-1",
+                "enchiridion:VII:1-1",
+                "enchiridion:XXXIII:2-2",
+                "enchiridion:XXIX:1:0-1798"
+              ]
+            },
+            {
+              "id": "E04",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 2552,
+              "selected": [
+                "enchiridion:VIII:1-1",
+                "enchiridion:I:4-4",
+                "enchiridion:II:1-1",
+                "enchiridion:XIII:1-1",
+                "enchiridion:XXXIII:12-12",
+                "enchiridion:I:3-3",
+                "enchiridion:IV:1-1",
+                "enchiridion:XXIII:1-1"
+              ]
+            },
+            {
+              "id": "E05",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 1893,
+              "selected": [
+                "enchiridion:XVII:1-1",
+                "enchiridion:INTRODUCTION:8:1594-2448",
+                "enchiridion:XXXIII:1-1",
+                "enchiridion:I:1-1",
+                "enchiridion:INTRODUCTION:8:0-1794",
+                "enchiridion:XXIX:1:1598-2862",
+                "enchiridion:IV:1-1",
+                "enchiridion:XXXVII:1-1"
+              ]
+            },
+            {
+              "id": "E06",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 1875,
+              "selected": [
+                "enchiridion:XXIX:1:0-1798",
+                "enchiridion:I:3-3",
+                "enchiridion:L:1-1",
+                "enchiridion:XXIX:1:1598-2862",
+                "enchiridion:XXXIII:9-9",
+                "enchiridion:XIX:1-1",
+                "enchiridion:IV:1-1",
+                "enchiridion:XIII:1-1"
+              ]
+            },
+            {
+              "id": "E07",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 2136,
+              "selected": [
+                "enchiridion:XLIII:1-1",
+                "enchiridion:XXX:1-1",
+                "enchiridion:XLII:1-1",
+                "enchiridion:XVI:1-1",
+                "enchiridion:I:2-2",
+                "enchiridion:XX:1-1",
+                "enchiridion:XI:1-1",
+                "enchiridion:XXVI:1-1"
+              ]
+            },
+            {
+              "id": "E08",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 1901,
+              "selected": [
+                "enchiridion:V:1-1",
+                "enchiridion:LI:2-5",
+                "enchiridion:INTRODUCTION:6-6",
+                "enchiridion:INTRODUCTION:4-4",
+                "enchiridion:XXI:1-1",
+                "enchiridion:INTRODUCTION:3-3",
+                "enchiridion:L:1-1",
+                "enchiridion:III:1-1"
+              ]
+            },
+            {
+              "id": "E09",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 1826,
+              "selected": [
+                "enchiridion:II:1-1",
+                "enchiridion:V:1-1",
+                "enchiridion:I:1-1",
+                "enchiridion:XX:1-1",
+                "enchiridion:I:4-4",
+                "enchiridion:INTRODUCTION:8:0-1794",
+                "enchiridion:I:2-2",
+                "enchiridion:XXXVIII:1-1"
+              ]
+            },
+            {
+              "id": "E10",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 1728,
+              "selected": [
+                "enchiridion:VIII:1-1",
+                "enchiridion:II:1-1",
+                "enchiridion:I:1-1",
+                "enchiridion:XIV:1-1",
+                "enchiridion:I:2-2",
+                "enchiridion:I:4-4",
+                "enchiridion:IV:1-1",
+                "enchiridion:XIX:1-1"
+              ]
+            },
+            {
+              "id": "E11",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 1856,
+              "selected": [
+                "enchiridion:IV:1-1",
+                "enchiridion:I:4-4",
+                "enchiridion:XIII:1-1",
+                "enchiridion:I:1-1",
+                "enchiridion:II:1-1",
+                "enchiridion:I:2-2",
+                "enchiridion:III:1-1",
+                "enchiridion:XXIX:1:0-1798"
+              ]
+            },
+            {
+              "id": "E12",
+              "candidateRecall": null,
+              "finalRecall8": null,
+              "searchUs": 1684,
+              "selected": [
+                "enchiridion:The Library of Liberal Arts:43-48",
+                "enchiridion:The Library of Liberal Arts:7-12",
+                "enchiridion:The Library of Liberal Arts:55-60",
+                "enchiridion:The Library of Liberal Arts:13-18",
+                "enchiridion:XXXIX:1-1",
+                "enchiridion:INTRODUCTION:10-10",
+                "enchiridion:I:1-1",
+                "enchiridion:XXVII:1-1"
+              ]
+            },
+            {
+              "id": "P01",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 26264,
+              "selected": [
+                "pride-and-prejudice:CHAPTER XIII:8-8",
+                "pride-and-prejudice:Chapter I.:11-16",
+                "pride-and-prejudice:CHAPTERXXVII.:9-9",
+                "pride-and-prejudice:CHAPTER XIX.:10:1597-2694",
+                "pride-and-prejudice:CHAPTER LV.:40-40",
+                "pride-and-prejudice:Chapter I.:1-3",
+                "pride-and-prejudice:CHAPTER LV.:38-38",
+                "pride-and-prejudice:CHAPTER XIII:5-6"
+              ]
+            },
+            {
+              "id": "P02",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 24077,
+              "selected": [
+                "pride-and-prejudice:CHAPTER VI.:12-12",
+                "pride-and-prejudice:CHAPTER XXXI.:18-18",
+                "pride-and-prejudice:CHAPTER IV.:15-15",
+                "pride-and-prejudice:CHAPTER III.:7-7",
+                "pride-and-prejudice:CHAPTER XVIII.:23-23",
+                "pride-and-prejudice:CHAPTER III.:6-6",
+                "pride-and-prejudice:CHAPTER X.:46-46",
+                "pride-and-prejudice:CHAPTER III.:12-13"
+              ]
+            },
+            {
+              "id": "P03",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 24576,
+              "selected": [
+                "pride-and-prejudice:Chapter I.:11-16",
+                "pride-and-prejudice:CHAPTER LV.:40-40",
+                "pride-and-prejudice:CHAPTER III.:1-1",
+                "pride-and-prejudice:CHAPTER III.:2-2",
+                "pride-and-prejudice:CHAPTER LIV.:29-29",
+                "pride-and-prejudice:CHAPTER XVIII.:63:0-1799",
+                "pride-and-prejudice:CHAPTER L.:3-3",
+                "pride-and-prejudice:CHAPTER VII.:1-1"
+              ]
+            },
+            {
+              "id": "P04",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 25506,
+              "selected": [
+                "pride-and-prejudice:CHAPTER LX.:1-2",
+                "pride-and-prejudice:CHAPTER XXXIV.:22-22",
+                "pride-and-prejudice:CHAPTER LVIII.:32-32",
+                "pride-and-prejudice:CHAPTER XXXIV.:4-4",
+                "pride-and-prejudice:CHAPTER III.:12-13",
+                "pride-and-prejudice:CHAPTER VI.:48-51",
+                "pride-and-prejudice:CHAPTER LIX.:12-16",
+                "pride-and-prejudice:CHAPTER XXXIV.:28-28"
+              ]
+            },
+            {
+              "id": "P05",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 24804,
+              "selected": [
+                "pride-and-prejudice:CHAPTER XL.:23-23",
+                "pride-and-prejudice:CHAPTER XXXV.:5:12767-14053",
+                "pride-and-prejudice:CHAPTER XVIII.:45-45",
+                "pride-and-prejudice:CHAPTER XL.:12-12",
+                "pride-and-prejudice:CHAPTER LII.:4:0-1800",
+                "pride-and-prejudice:CHAPTER XVIII.:19-21",
+                "pride-and-prejudice:CHAPTER XXXVI.:3-3",
+                "pride-and-prejudice:CHAPTER XXXIV.:22-22"
+              ]
+            },
+            {
+              "id": "P06",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 25939,
+              "selected": [
+                "pride-and-prejudice:CHAPTER LXI.:3-3",
+                "pride-and-prejudice:CHAPTER LV.:1-1",
+                "pride-and-prejudice:CHAPTER XXI.:6-6",
+                "pride-and-prejudice:CHAPTER XLIV.:8-8",
+                "pride-and-prejudice:CHAPTER LXI.:11-11",
+                "pride-and-prejudice:CHAPTER XXXII.:4-7",
+                "pride-and-prejudice:CHAPTER LIII.:28-28",
+                "pride-and-prejudice:CHAPTER LIII.:51-51"
+              ]
+            },
+            {
+              "id": "P07",
+              "candidateRecall": 1.0,
+              "finalRecall8": 0.0,
+              "searchUs": 25389,
+              "selected": [
+                "pride-and-prejudice:CHAPTER LVI.:54-59",
+                "pride-and-prejudice:CHAPTER LVI.:60-60",
+                "pride-and-prejudice:CHAPTER LVII.:14:0-1792",
+                "pride-and-prejudice:CHAPTER XIX.:14-14",
+                "pride-and-prejudice:CHAPTER LVI.:69-69",
+                "pride-and-prejudice:CHAPTER LX.:14-14",
+                "pride-and-prejudice:CHAPTER LVII.:1-1",
+                "pride-and-prejudice:CHAPTER LVII.:2-2"
+              ]
+            },
+            {
+              "id": "P08",
+              "candidateRecall": 1.0,
+              "finalRecall8": 0.0,
+              "searchUs": 23796,
+              "selected": [
+                "pride-and-prejudice:CHAPTER XXXIII.:40-40",
+                "pride-and-prejudice:CHAPTER XVIII.:48-48",
+                "pride-and-prejudice:CHAPTER LIII.:36-36",
+                "pride-and-prejudice:CHAPTER XXXIV.:23-26",
+                "pride-and-prejudice:CHAPTER XXIV.:3-3",
+                "pride-and-prejudice:CHAPTER XIX.:14-14",
+                "pride-and-prejudice:CHAPTER XXXIII.:29-34",
+                "pride-and-prejudice:CHAPTER XXIV.:24-24"
+              ]
+            },
+            {
+              "id": "P09",
+              "candidateRecall": null,
+              "finalRecall8": null,
+              "searchUs": 25292,
+              "selected": [
+                "pride-and-prejudice:CHAPTER VII.:49-49",
+                "pride-and-prejudice:CHAPTER XLIV.:1-1",
+                "pride-and-prejudice:CHAPTER XXXVIII.:8-8",
+                "pride-and-prejudice:CHAPTER XLIII.:67-67",
+                "pride-and-prejudice:CHAPTER LVI.:73-73",
+                "pride-and-prejudice:Chapter XLVI.:6-6",
+                "pride-and-prejudice:CHAPTER XXXII.:1-1",
+                "pride-and-prejudice:Chapter XLVI.:32-32"
+              ]
+            },
+            {
+              "id": "M01",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 22,
+              "selected": [
+                "partial:1:1-3"
+              ]
+            },
+            {
+              "id": "M02",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 18,
+              "selected": [
+                "partial:1:1-3"
+              ]
+            },
+            {
+              "id": "M03",
+              "candidateRecall": null,
+              "finalRecall8": null,
+              "searchUs": 17,
+              "selected": [
+                "partial:1:1-3"
+              ]
+            },
+            {
+              "id": "M04",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 17,
+              "selected": [
+                "partial:1:1-3"
+              ]
+            },
+            {
+              "id": "M05",
+              "candidateRecall": null,
+              "finalRecall8": null,
+              "searchUs": 28,
+              "selected": [
+                "partial:1:1-3"
+              ]
+            },
+            {
+              "id": "M06",
+              "candidateRecall": null,
+              "finalRecall8": null,
+              "searchUs": 19,
+              "selected": [
+                "partial:1:1-3"
+              ]
+            }
+          ],
+          "searchMedianMs": 1.949
+        },
+        {
+          "queryMode": "original",
+          "hybrid": true,
+          "completeCandidates": 22,
+          "complete8": 20,
+          "cases": [
+            {
+              "id": "E01",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 3262,
+              "selected": [
+                "enchiridion:INTRODUCTION:8:0-1794",
+                "enchiridion:II:1-1",
+                "enchiridion:I:1-1",
+                "enchiridion:XIV:1-1",
+                "enchiridion:I:2-2",
+                "enchiridion:XIX:1-1",
+                "enchiridion:I:4-4",
+                "enchiridion:V:1-1"
+              ]
+            },
+            {
+              "id": "E02",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 2091,
+              "selected": [
+                "enchiridion:XX:1-1",
+                "enchiridion:I:1-1",
+                "enchiridion:XXVI:1-1",
+                "enchiridion:VIII:1-1",
+                "enchiridion:V:1-1",
+                "enchiridion:XVI:1-1",
+                "enchiridion:XXIX:1:1598-2862",
+                "enchiridion:Footnotes:1-3"
+              ]
+            },
+            {
+              "id": "E03",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 2268,
+              "selected": [
+                "enchiridion:IV:1-1",
+                "enchiridion:XLVII:1-1",
+                "enchiridion:L:1-1",
+                "enchiridion:XLI:1-1",
+                "enchiridion:XXXIII:13-13",
+                "enchiridion:XXXIII:12-12",
+                "enchiridion:XLV:1-1",
+                "enchiridion:LI:1-1"
+              ]
+            },
+            {
+              "id": "E04",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 2548,
+              "selected": [
+                "enchiridion:II:1-1",
+                "enchiridion:XIII:1-1",
+                "enchiridion:IV:1-1",
+                "enchiridion:IX:1-1",
+                "enchiridion:XVIII:1-1",
+                "enchiridion:XIX:1-1",
+                "enchiridion:INTRODUCTION:8:0-1794",
+                "enchiridion:VIII:1-1"
+              ]
+            },
+            {
+              "id": "E05",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 2089,
+              "selected": [
+                "enchiridion:XVII:1-1",
+                "enchiridion:INTRODUCTION:8:1594-2448",
+                "enchiridion:INTRODUCTION:8:0-1794",
+                "enchiridion:XXIII:1-1",
+                "enchiridion:INTRODUCTION:1-1",
+                "enchiridion:INTRODUCTION:5-5",
+                "enchiridion:XXXIII:1-1",
+                "enchiridion:I:1-1"
+              ]
+            },
+            {
+              "id": "E06",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 1981,
+              "selected": [
+                "enchiridion:XXIX:1:0-1798",
+                "enchiridion:XXXIV:1-1",
+                "enchiridion:The Library of Liberal Arts:109-110",
+                "enchiridion:I:3-3",
+                "enchiridion:L:1-1",
+                "enchiridion:XXIX:1:1598-2862",
+                "enchiridion:XXXIII:9-9",
+                "enchiridion:XIX:1-1"
+              ]
+            },
+            {
+              "id": "E07",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 2134,
+              "selected": [
+                "enchiridion:XLIII:1-1",
+                "enchiridion:XXX:1-1",
+                "enchiridion:Footnotes:4-7",
+                "enchiridion:The Library of Liberal Arts:67-72",
+                "enchiridion:XLII:1-1",
+                "enchiridion:XVI:1-1",
+                "enchiridion:I:2-2",
+                "enchiridion:The Library of Liberal Arts:91-96"
+              ]
+            },
+            {
+              "id": "E08",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 2132,
+              "selected": [
+                "enchiridion:V:1-1",
+                "enchiridion:INTRODUCTION:3-3",
+                "enchiridion:INTRODUCTION:6-6",
+                "enchiridion:INTRODUCTION:4-4",
+                "enchiridion:XXI:1-1",
+                "enchiridion:INTRODUCTION:8:0-1794",
+                "enchiridion:L:1-1",
+                "enchiridion:INTRODUCTION:1-1"
+              ]
+            },
+            {
+              "id": "E09",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 2314,
+              "selected": [
+                "enchiridion:INTRODUCTION:8:0-1794",
+                "enchiridion:V:1-1",
+                "enchiridion:II:1-1",
+                "enchiridion:XXVIII:1-1",
+                "enchiridion:XXIX:1:0-1798",
+                "enchiridion:Footnotes:1-3",
+                "enchiridion:I:1-1",
+                "enchiridion:L:1-1"
+              ]
+            },
+            {
+              "id": "E10",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 2084,
+              "selected": [
+                "enchiridion:II:1-1",
+                "enchiridion:INTRODUCTION:8:0-1794",
+                "enchiridion:INTRODUCTION:6-6",
+                "enchiridion:I:1-1",
+                "enchiridion:INTRODUCTION:3-3",
+                "enchiridion:XIII:1-1",
+                "enchiridion:VIII:1-1",
+                "enchiridion:INTRODUCTION:5-5"
+              ]
+            },
+            {
+              "id": "E11",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 2309,
+              "selected": [
+                "enchiridion:IV:1-1",
+                "enchiridion:XIII:1-1",
+                "enchiridion:II:1-1",
+                "enchiridion:I:1-1",
+                "enchiridion:INTRODUCTION:8:0-1794",
+                "enchiridion:I:2-2",
+                "enchiridion:I:4-4",
+                "enchiridion:VI:1-1"
+              ]
+            },
+            {
+              "id": "E12",
+              "candidateRecall": null,
+              "finalRecall8": null,
+              "searchUs": 1913,
+              "selected": [
+                "enchiridion:The Library of Liberal Arts:55-60",
+                "enchiridion:INTRODUCTION:10-10",
+                "enchiridion:The Library of Liberal Arts:1-6",
+                "enchiridion:INTRODUCTION:1-1",
+                "enchiridion:INTRODUCTION:8:0-1794",
+                "enchiridion:INTRODUCTION:6-6",
+                "enchiridion:The Library of Liberal Arts:43-48",
+                "enchiridion:The Library of Liberal Arts:7-12"
+              ]
+            },
+            {
+              "id": "P01",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 28310,
+              "selected": [
+                "pride-and-prejudice:Chapter I.:11-16",
+                "pride-and-prejudice:Chapter I.:1-3",
+                "pride-and-prejudice:CHAPTER XIII:8-8",
+                "pride-and-prejudice:CHAPTER XLII.:1-1",
+                "pride-and-prejudice:CHAPTER XX.:4-4",
+                "pride-and-prejudice:CHAPTERXXVII.:9-9",
+                "pride-and-prejudice:CHAPTER LXI.:6-6",
+                "pride-and-prejudice:CHAPTER XIX.:10:1597-2694"
+              ]
+            },
+            {
+              "id": "P02",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 33864,
+              "selected": [
+                "pride-and-prejudice:CHAPTER IV.:15-15",
+                "pride-and-prejudice:CHAPTER VI.:12-12",
+                "pride-and-prejudice:CHAPTER XXXI.:18-18",
+                "pride-and-prejudice:CHAPTER III.:9-11",
+                "pride-and-prejudice:CHAPTER III.:5-5",
+                "pride-and-prejudice:CHAPTER V.:2-4",
+                "pride-and-prejudice:CHAPTER III.:7-7",
+                "pride-and-prejudice:CHAPTER XVIII.:23-23"
+              ]
+            },
+            {
+              "id": "P03",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 31309,
+              "selected": [
+                "pride-and-prejudice:CHAPTER LIV.:29-29",
+                "pride-and-prejudice:CHAPTER L.:7-7",
+                "pride-and-prejudice:CHAPTER XVIII.:63:0-1799",
+                "pride-and-prejudice:CHAPTER LXI.:1-1",
+                "pride-and-prejudice:Chapter I.:11-16",
+                "pride-and-prejudice:CHAPTER LV.:40-40",
+                "pride-and-prejudice:CHAPTER III.:1-1",
+                "pride-and-prejudice:CHAPTER III.:2-2"
+              ]
+            },
+            {
+              "id": "P04",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 31066,
+              "selected": [
+                "pride-and-prejudice:CHAPTER LX.:1-2",
+                "pride-and-prejudice:CHAPTER XXXIV.:30-30",
+                "pride-and-prejudice:CHAPTER XXXIV.:23-26",
+                "pride-and-prejudice:CHAPTER XXI.:14-17",
+                "pride-and-prejudice:CHAPTER XXXIV.:22-22",
+                "pride-and-prejudice:CHAPTER LVIII.:32-32",
+                "pride-and-prejudice:CHAPTER XIX.:1-1",
+                "pride-and-prejudice:CHAPTER XXXIV.:4-4"
+              ]
+            },
+            {
+              "id": "P05",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 29775,
+              "selected": [
+                "pride-and-prejudice:CHAPTER XXXVI.:3-3",
+                "pride-and-prejudice:CHAPTER XXXIV.:22-22",
+                "pride-and-prejudice:CHAPTER LVIII.:21-22",
+                "pride-and-prejudice:CHAPTER LI.:37-37",
+                "pride-and-prejudice:CHAPTER XL.:23-23",
+                "pride-and-prejudice:CHAPTER XI.:13-14",
+                "pride-and-prejudice:CHAPTER XXXV.:5:12767-14053",
+                "pride-and-prejudice:CHAPTER LXI.:6-6"
+              ]
+            },
+            {
+              "id": "P06",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 33833,
+              "selected": [
+                "pride-and-prejudice:CHAPTER XXI.:6-6",
+                "pride-and-prejudice:CHAPTER LIII.:28-28",
+                "pride-and-prejudice:CHAPTER XVIII.:77-77",
+                "pride-and-prejudice:CHAPTER XXXII.:4-7",
+                "pride-and-prejudice:CHAPTER XVIII.:76-76",
+                "pride-and-prejudice:CHAPTER LXI.:3-3",
+                "pride-and-prejudice:CHAPTER XXVI.:11-11",
+                "pride-and-prejudice:CHAPTER LV.:1-1"
+              ]
+            },
+            {
+              "id": "P07",
+              "candidateRecall": 1.0,
+              "finalRecall8": 0.0,
+              "searchUs": 35918,
+              "selected": [
+                "pride-and-prejudice:CHAPTER LVI.:44-44",
+                "pride-and-prejudice:CHAPTERXXVIII.:7-7",
+                "pride-and-prejudice:CHAPTER XVI.:55-57",
+                "pride-and-prejudice:CHAPTER LVI.:54-59",
+                "pride-and-prejudice:CHAPTER XVI.:52-54",
+                "pride-and-prejudice:CHAPTER LVI.:60-60",
+                "pride-and-prejudice:CHAPTER LVII.:14:0-1792",
+                "pride-and-prejudice:CHAPTER XVIII.:57-57"
+              ]
+            },
+            {
+              "id": "P08",
+              "candidateRecall": 1.0,
+              "finalRecall8": 0.0,
+              "searchUs": 34766,
+              "selected": [
+                "pride-and-prejudice:CHAPTER XXI.:18-18",
+                "pride-and-prejudice:CHAPTER LIX.:21-23",
+                "pride-and-prejudice:CHAPTER XXXIII.:40-40",
+                "pride-and-prejudice:CHAPTER XVIII.:46-47",
+                "pride-and-prejudice:CHAPTER XVIII.:48-48",
+                "pride-and-prejudice:CHAPTER IX.:2-2",
+                "pride-and-prejudice:CHAPTER LIII.:36-36",
+                "pride-and-prejudice:CHAPTER X.:53-54"
+              ]
+            },
+            {
+              "id": "P09",
+              "candidateRecall": null,
+              "finalRecall8": null,
+              "searchUs": 36855,
+              "selected": [
+                "pride-and-prejudice:CHAPTER XLIV.:17-17",
+                "pride-and-prejudice:CHAPTER LVI.:21-25",
+                "pride-and-prejudice:CHAPTER VII.:49-49",
+                "pride-and-prejudice:CHAPTER XLIV.:1-1",
+                "pride-and-prejudice:CHAPTER XXII.:6-6",
+                "pride-and-prejudice:CHAPTER LXI.:2-2",
+                "pride-and-prejudice:CHAPTER XXXVIII.:8-8",
+                "pride-and-prejudice:CHAPTER XLIII.:67-67"
+              ]
+            },
+            {
+              "id": "M01",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 72,
+              "selected": [
+                "partial:1:1-3"
+              ]
+            },
+            {
+              "id": "M02",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 52,
+              "selected": [
+                "partial:1:1-3"
+              ]
+            },
+            {
+              "id": "M03",
+              "candidateRecall": null,
+              "finalRecall8": null,
+              "searchUs": 37,
+              "selected": [
+                "partial:1:1-3"
+              ]
+            },
+            {
+              "id": "M04",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 38,
+              "selected": [
+                "partial:1:1-3"
+              ]
+            },
+            {
+              "id": "M05",
+              "candidateRecall": null,
+              "finalRecall8": null,
+              "searchUs": 41,
+              "selected": [
+                "partial:1:1-3"
+              ]
+            },
+            {
+              "id": "M06",
+              "candidateRecall": null,
+              "finalRecall8": null,
+              "searchUs": 39,
+              "selected": [
+                "partial:1:1-3"
+              ]
+            }
+          ],
+          "searchMedianMs": 2.268
+        },
+        {
+          "queryMode": "rewrite",
+          "hybrid": false,
+          "completeCandidates": 22,
+          "complete8": 20,
+          "cases": [
+            {
+              "id": "E01",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 1872,
+              "selected": [
+                "enchiridion:I:1-1",
+                "enchiridion:I:2-2",
+                "enchiridion:INTRODUCTION:8:0-1794",
+                "enchiridion:XIV:1-1",
+                "enchiridion:II:1-1",
+                "enchiridion:I:4-4",
+                "enchiridion:XIX:1-1",
+                "enchiridion:V:1-1"
+              ]
+            },
+            {
+              "id": "E02",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 1830,
+              "selected": [
+                "enchiridion:V:1-1",
+                "enchiridion:I:1-1",
+                "enchiridion:XXVI:1-1",
+                "enchiridion:XX:1-1",
+                "enchiridion:XVI:1-1",
+                "enchiridion:INTRODUCTION:8:0-1794",
+                "enchiridion:I:4-4",
+                "enchiridion:I:2-2"
+              ]
+            },
+            {
+              "id": "E03",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 1761,
+              "selected": [
+                "enchiridion:IV:1-1",
+                "enchiridion:XLV:1-1",
+                "enchiridion:XLI:1-1",
+                "enchiridion:XLVII:1-1",
+                "enchiridion:XXIX:1:0-1798",
+                "enchiridion:XXXIII:2-2",
+                "enchiridion:XXXIII:5-5",
+                "enchiridion:L:1-1"
+              ]
+            },
+            {
+              "id": "E04",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 1743,
+              "selected": [
+                "enchiridion:II:1-1",
+                "enchiridion:VIII:1-1",
+                "enchiridion:I:4-4",
+                "enchiridion:I:1-1",
+                "enchiridion:INTRODUCTION:8:0-1794",
+                "enchiridion:I:2-2",
+                "enchiridion:XIV:1-1",
+                "enchiridion:IV:1-1"
+              ]
+            },
+            {
+              "id": "E05",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 2088,
+              "selected": [
+                "enchiridion:XVII:1-1",
+                "enchiridion:INTRODUCTION:8:1594-2448",
+                "enchiridion:INTRODUCTION:8:0-1794",
+                "enchiridion:I:1-1",
+                "enchiridion:INTRODUCTION:3-3",
+                "enchiridion:IV:1-1",
+                "enchiridion:LI:2-5",
+                "enchiridion:XXIX:1:1598-2862"
+              ]
+            },
+            {
+              "id": "E06",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 2057,
+              "selected": [
+                "enchiridion:XXIX:1:0-1798",
+                "enchiridion:L:1-1",
+                "enchiridion:I:3-3",
+                "enchiridion:XXIX:1:1598-2862",
+                "enchiridion:XXXIII:9-9",
+                "enchiridion:XIX:1-1",
+                "enchiridion:II:1-1",
+                "enchiridion:XLVII:1-1"
+              ]
+            },
+            {
+              "id": "E07",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 1928,
+              "selected": [
+                "enchiridion:XLIII:1-1",
+                "enchiridion:XXX:1-1",
+                "enchiridion:XLII:1-1",
+                "enchiridion:I:2-2",
+                "enchiridion:V:1-1",
+                "enchiridion:XVI:1-1",
+                "enchiridion:I:4-4",
+                "enchiridion:XX:1-1"
+              ]
+            },
+            {
+              "id": "E08",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 1817,
+              "selected": [
+                "enchiridion:V:1-1",
+                "enchiridion:INTRODUCTION:6-6",
+                "enchiridion:INTRODUCTION:4-4",
+                "enchiridion:LI:2-5",
+                "enchiridion:INTRODUCTION:3-3",
+                "enchiridion:Epictetus: Life and Work:1-6",
+                "enchiridion:XXI:1-1",
+                "enchiridion:INTRODUCTION:8:1594-2448"
+              ]
+            },
+            {
+              "id": "E09",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 1833,
+              "selected": [
+                "enchiridion:I:1-1",
+                "enchiridion:II:1-1",
+                "enchiridion:I:2-2",
+                "enchiridion:V:1-1",
+                "enchiridion:I:4-4",
+                "enchiridion:INTRODUCTION:8:0-1794",
+                "enchiridion:XIV:1-1",
+                "enchiridion:XX:1-1"
+              ]
+            },
+            {
+              "id": "E10",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 1865,
+              "selected": [
+                "enchiridion:II:1-1",
+                "enchiridion:I:1-1",
+                "enchiridion:I:2-2",
+                "enchiridion:XIV:1-1",
+                "enchiridion:INTRODUCTION:8:0-1794",
+                "enchiridion:I:4-4",
+                "enchiridion:V:1-1",
+                "enchiridion:INTRODUCTION:8:1594-2448"
+              ]
+            },
+            {
+              "id": "E11",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 1921,
+              "selected": [
+                "enchiridion:IV:1-1",
+                "enchiridion:II:1-1",
+                "enchiridion:INTRODUCTION:8:0-1794",
+                "enchiridion:INTRODUCTION:8:1594-2448",
+                "enchiridion:XXIX:1:0-1798",
+                "enchiridion:I:1-1",
+                "enchiridion:XIV:1-1",
+                "enchiridion:XLV:1-1"
+              ]
+            },
+            {
+              "id": "E12",
+              "candidateRecall": null,
+              "finalRecall8": null,
+              "searchUs": 1848,
+              "selected": [
+                "enchiridion:INTRODUCTION:10-10",
+                "enchiridion:INTRODUCTION:2-2",
+                "enchiridion:Main Works on Stoicism and Related Problems:1-6",
+                "enchiridion:Influence of Stoicism:1-3",
+                "enchiridion:The Library of Liberal Arts:43-48",
+                "enchiridion:INTRODUCTION:8:0-1794",
+                "enchiridion:Main Works on Stoicism and Related Problems:7-11",
+                "enchiridion:INTRODUCTION:11-11"
+              ]
+            },
+            {
+              "id": "P01",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 26316,
+              "selected": [
+                "pride-and-prejudice:Chapter I.:1-3",
+                "pride-and-prejudice:Chapter I.:11-16",
+                "pride-and-prejudice:CHAPTER LV.:40-40",
+                "pride-and-prejudice:CHAPTER XIX.:10:1597-2694",
+                "pride-and-prejudice:CHAPTER XV.:2-2",
+                "pride-and-prejudice:CHAPTERXXVII.:9-9",
+                "pride-and-prejudice:CHAPTER III.:2-2",
+                "pride-and-prejudice:CHAPTER LIX.:43-43"
+              ]
+            },
+            {
+              "id": "P02",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 25121,
+              "selected": [
+                "pride-and-prejudice:CHAPTER IV.:15-15",
+                "pride-and-prejudice:CHAPTER XXXI.:18-18",
+                "pride-and-prejudice:CHAPTER VI.:12-12",
+                "pride-and-prejudice:CHAPTER III.:7-7",
+                "pride-and-prejudice:CHAPTER III.:6-6",
+                "pride-and-prejudice:CHAPTER XVIII.:23-23",
+                "pride-and-prejudice:CHAPTER III.:9-11",
+                "pride-and-prejudice:CHAPTER III.:12-13"
+              ]
+            },
+            {
+              "id": "P03",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 25176,
+              "selected": [
+                "pride-and-prejudice:Chapter I.:11-16",
+                "pride-and-prejudice:CHAPTER III.:1-1",
+                "pride-and-prejudice:CHAPTER LV.:40-40",
+                "pride-and-prejudice:CHAPTER III.:2-2",
+                "pride-and-prejudice:CHAPTER LIV.:29-29",
+                "pride-and-prejudice:CHAPTER XVIII.:63:0-1799",
+                "pride-and-prejudice:CHAPTER LV.:18-18",
+                "pride-and-prejudice:CHAPTER IX.:27-27"
+              ]
+            },
+            {
+              "id": "P04",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 24433,
+              "selected": [
+                "pride-and-prejudice:CHAPTER XXXIV.:22-22",
+                "pride-and-prejudice:CHAPTER LX.:1-2",
+                "pride-and-prejudice:CHAPTER XXXIV.:4-4",
+                "pride-and-prejudice:CHAPTER XXXIV.:28-28",
+                "pride-and-prejudice:CHAPTER LVIII.:32-32",
+                "pride-and-prejudice:CHAPTER III.:12-13",
+                "pride-and-prejudice:CHAPTER XIX.:8-8",
+                "pride-and-prejudice:CHAPTER LVIII.:3-3"
+              ]
+            },
+            {
+              "id": "P05",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 25491,
+              "selected": [
+                "pride-and-prejudice:CHAPTER XXXV.:5:12767-14053",
+                "pride-and-prejudice:CHAPTER XL.:23-23",
+                "pride-and-prejudice:CHAPTER XVIII.:45-45",
+                "pride-and-prejudice:CHAPTER LII.:4:0-1800",
+                "pride-and-prejudice:CHAPTER XXXVI.:3-3",
+                "pride-and-prejudice:CHAPTER XL.:12-12",
+                "pride-and-prejudice:CHAPTER XVIII.:50-50",
+                "pride-and-prejudice:CHAPTER XVIII.:19-21"
+              ]
+            },
+            {
+              "id": "P06",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 26005,
+              "selected": [
+                "pride-and-prejudice:CHAPTER LXI.:3-3",
+                "pride-and-prejudice:CHAPTER LV.:1-1",
+                "pride-and-prejudice:CHAPTER XLIV.:8-8",
+                "pride-and-prejudice:CHAPTER XXI.:6-6",
+                "pride-and-prejudice:CHAPTER LXI.:11-11",
+                "pride-and-prejudice:CHAPTER LIII.:51-51",
+                "pride-and-prejudice:CHAPTER LX.:26-26",
+                "pride-and-prejudice:CHAPTER XVIII.:77-77"
+              ]
+            },
+            {
+              "id": "P07",
+              "candidateRecall": 1.0,
+              "finalRecall8": 0.0,
+              "searchUs": 24630,
+              "selected": [
+                "pride-and-prejudice:CHAPTER LVI.:60-60",
+                "pride-and-prejudice:CHAPTER LVII.:14:0-1792",
+                "pride-and-prejudice:CHAPTERXXVIII.:7-7",
+                "pride-and-prejudice:CHAPTER LVI.:54-59",
+                "pride-and-prejudice:CHAPTER LVI.:69-69",
+                "pride-and-prejudice:CHAPTER LVI.:50-53",
+                "pride-and-prejudice:CHAPTER XXXIV.:22-22",
+                "pride-and-prejudice:CHAPTER XIX.:14-14"
+              ]
+            },
+            {
+              "id": "P08",
+              "candidateRecall": 1.0,
+              "finalRecall8": 0.0,
+              "searchUs": 24909,
+              "selected": [
+                "pride-and-prejudice:CHAPTER XIX.:14-14",
+                "pride-and-prejudice:CHAPTER LVI.:69-69",
+                "pride-and-prejudice:CHAPTER XXIV.:24-24",
+                "pride-and-prejudice:CHAPTER XXXIV.:23-26",
+                "pride-and-prejudice:CHAPTER LII.:6:0-1798",
+                "pride-and-prejudice:CHAPTER XXI.:21-23",
+                "pride-and-prejudice:CHAPTER XXI.:18-18",
+                "pride-and-prejudice:CHAPTER XXXIII.:40-40"
+              ]
+            },
+            {
+              "id": "P09",
+              "candidateRecall": null,
+              "finalRecall8": null,
+              "searchUs": 25103,
+              "selected": [
+                "pride-and-prejudice:CHAPTER VII.:49-49",
+                "pride-and-prejudice:CHAPTER XLIV.:1-1",
+                "pride-and-prejudice:CHAPTER XLIII.:67-67",
+                "pride-and-prejudice:CHAPTER XLIII.:3-3",
+                "pride-and-prejudice:CHAPTER XLII.:12-12",
+                "pride-and-prejudice:CHAPTER XXXVII.:12-12",
+                "pride-and-prejudice:CHAPTERXXVII.:1-1",
+                "pride-and-prejudice:CHAPTER XXXVIII.:8-8"
+              ]
+            },
+            {
+              "id": "M01",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 22,
+              "selected": [
+                "partial:1:1-3"
+              ]
+            },
+            {
+              "id": "M02",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 20,
+              "selected": [
+                "partial:1:1-3"
+              ]
+            },
+            {
+              "id": "M03",
+              "candidateRecall": null,
+              "finalRecall8": null,
+              "searchUs": 19,
+              "selected": [
+                "partial:1:1-3"
+              ]
+            },
+            {
+              "id": "M04",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 19,
+              "selected": [
+                "partial:1:1-3"
+              ]
+            },
+            {
+              "id": "M05",
+              "candidateRecall": null,
+              "finalRecall8": null,
+              "searchUs": 19,
+              "selected": [
+                "partial:1:1-3"
+              ]
+            },
+            {
+              "id": "M06",
+              "candidateRecall": null,
+              "finalRecall8": null,
+              "searchUs": 23,
+              "selected": [
+                "partial:1:1-3"
+              ]
+            }
+          ],
+          "searchMedianMs": 1.872
+        },
+        {
+          "queryMode": "rewrite",
+          "hybrid": true,
+          "completeCandidates": 21,
+          "complete8": 19,
+          "cases": [
+            {
+              "id": "E01",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 2344,
+              "selected": [
+                "enchiridion:INTRODUCTION:8:0-1794",
+                "enchiridion:I:1-1",
+                "enchiridion:II:1-1",
+                "enchiridion:XIV:1-1",
+                "enchiridion:XIX:1-1",
+                "enchiridion:I:2-2",
+                "enchiridion:I:4-4",
+                "enchiridion:Footnotes:1-3"
+              ]
+            },
+            {
+              "id": "E02",
+              "candidateRecall": 1.0,
+              "finalRecall8": 0.0,
+              "searchUs": 2135,
+              "selected": [
+                "enchiridion:I:1-1",
+                "enchiridion:XX:1-1",
+                "enchiridion:XXVI:1-1",
+                "enchiridion:INTRODUCTION:3-3",
+                "enchiridion:INTRODUCTION:8:1594-2448",
+                "enchiridion:INTRODUCTION:8:0-1794",
+                "enchiridion:INTRODUCTION:10-10",
+                "enchiridion:INTRODUCTION:1-1"
+              ]
+            },
+            {
+              "id": "E03",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 2080,
+              "selected": [
+                "enchiridion:IV:1-1",
+                "enchiridion:L:1-1",
+                "enchiridion:XLVII:1-1",
+                "enchiridion:XLI:1-1",
+                "enchiridion:XXXIII:13-13",
+                "enchiridion:XIV:1-1",
+                "enchiridion:XLV:1-1",
+                "enchiridion:LI:1-1"
+              ]
+            },
+            {
+              "id": "E04",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 2306,
+              "selected": [
+                "enchiridion:II:1-1",
+                "enchiridion:INTRODUCTION:8:0-1794",
+                "enchiridion:XIII:1-1",
+                "enchiridion:INTRODUCTION:8:1594-2448",
+                "enchiridion:I:2-2",
+                "enchiridion:IV:1-1",
+                "enchiridion:IX:1-1",
+                "enchiridion:XIX:1-1"
+              ]
+            },
+            {
+              "id": "E05",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 2178,
+              "selected": [
+                "enchiridion:XVII:1-1",
+                "enchiridion:INTRODUCTION:8:0-1794",
+                "enchiridion:INTRODUCTION:8:1594-2448",
+                "enchiridion:INTRODUCTION:3-3",
+                "enchiridion:INTRODUCTION:2-2",
+                "enchiridion:INTRODUCTION:6-6",
+                "enchiridion:INTRODUCTION:7-7",
+                "enchiridion:INTRODUCTION:10-10"
+              ]
+            },
+            {
+              "id": "E06",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 1920,
+              "selected": [
+                "enchiridion:XXIX:1:0-1798",
+                "enchiridion:XXXIV:1-1",
+                "enchiridion:The Library of Liberal Arts:109-110",
+                "enchiridion:L:1-1",
+                "enchiridion:I:3-3",
+                "enchiridion:XXIX:1:1598-2862",
+                "enchiridion:XXXIII:9-9",
+                "enchiridion:XIX:1-1"
+              ]
+            },
+            {
+              "id": "E07",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 2149,
+              "selected": [
+                "enchiridion:XLIII:1-1",
+                "enchiridion:XXX:1-1",
+                "enchiridion:INTRODUCTION:8:0-1794",
+                "enchiridion:Footnotes:4-7",
+                "enchiridion:The Library of Liberal Arts:67-72",
+                "enchiridion:XLII:1-1",
+                "enchiridion:I:2-2",
+                "enchiridion:The Library of Liberal Arts:91-96"
+              ]
+            },
+            {
+              "id": "E08",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 2185,
+              "selected": [
+                "enchiridion:V:1-1",
+                "enchiridion:INTRODUCTION:3-3",
+                "enchiridion:INTRODUCTION:6-6",
+                "enchiridion:INTRODUCTION:4-4",
+                "enchiridion:INTRODUCTION:5-5",
+                "enchiridion:INTRODUCTION:1-1",
+                "enchiridion:XXI:1-1",
+                "enchiridion:INTRODUCTION:8:0-1794"
+              ]
+            },
+            {
+              "id": "E09",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 2067,
+              "selected": [
+                "enchiridion:INTRODUCTION:8:0-1794",
+                "enchiridion:V:1-1",
+                "enchiridion:II:1-1",
+                "enchiridion:I:1-1",
+                "enchiridion:Footnotes:1-3",
+                "enchiridion:I:2-2",
+                "enchiridion:L:1-1",
+                "enchiridion:XII:2-2"
+              ]
+            },
+            {
+              "id": "E10",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 2037,
+              "selected": [
+                "enchiridion:II:1-1",
+                "enchiridion:INTRODUCTION:8:0-1794",
+                "enchiridion:INTRODUCTION:6-6",
+                "enchiridion:INTRODUCTION:8:1594-2448",
+                "enchiridion:I:1-1",
+                "enchiridion:INTRODUCTION:3-3",
+                "enchiridion:INTRODUCTION:10-10",
+                "enchiridion:INTRODUCTION:1-1"
+              ]
+            },
+            {
+              "id": "E11",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 2194,
+              "selected": [
+                "enchiridion:IV:1-1",
+                "enchiridion:II:1-1",
+                "enchiridion:INTRODUCTION:8:0-1794",
+                "enchiridion:XIII:1-1",
+                "enchiridion:I:1-1",
+                "enchiridion:INTRODUCTION:3-3",
+                "enchiridion:I:2-2",
+                "enchiridion:INTRODUCTION:8:1594-2448"
+              ]
+            },
+            {
+              "id": "E12",
+              "candidateRecall": null,
+              "finalRecall8": null,
+              "searchUs": 2023,
+              "selected": [
+                "enchiridion:Main Works on Stoicism and Related Problems:1-6",
+                "enchiridion:INTRODUCTION:6-6",
+                "enchiridion:INTRODUCTION:10-10",
+                "enchiridion:INTRODUCTION:2-2",
+                "enchiridion:Epictetus: Life and Work:1-6",
+                "enchiridion:INTRODUCTION:8:1594-2448",
+                "enchiridion:INTRODUCTION:8:0-1794",
+                "enchiridion:The Library of Liberal Arts:1-6"
+              ]
+            },
+            {
+              "id": "P01",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 28097,
+              "selected": [
+                "pride-and-prejudice:Chapter I.:1-3",
+                "pride-and-prejudice:Chapter I.:11-16",
+                "pride-and-prejudice:CHAPTER XLII.:1-1",
+                "pride-and-prejudice:CHAPTER XIII:8-8",
+                "pride-and-prejudice:CHAPTER XX.:4-4",
+                "pride-and-prejudice:CHAPTER LV.:40-40",
+                "pride-and-prejudice:CHAPTER LXI.:6-6",
+                "pride-and-prejudice:CHAPTER XIX.:10:1597-2694"
+              ]
+            },
+            {
+              "id": "P02",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 33909,
+              "selected": [
+                "pride-and-prejudice:CHAPTER IV.:15-15",
+                "pride-and-prejudice:CHAPTER VI.:12-12",
+                "pride-and-prejudice:CHAPTER XXXI.:18-18",
+                "pride-and-prejudice:CHAPTER III.:9-11",
+                "pride-and-prejudice:CHAPTER III.:14-14",
+                "pride-and-prejudice:CHAPTER III.:5-5",
+                "pride-and-prejudice:CHAPTER V.:2-4",
+                "pride-and-prejudice:CHAPTER III.:7-7"
+              ]
+            },
+            {
+              "id": "P03",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 31567,
+              "selected": [
+                "pride-and-prejudice:CHAPTER LIV.:29-29",
+                "pride-and-prejudice:CHAPTER L.:7-7",
+                "pride-and-prejudice:CHAPTER XVIII.:63:0-1799",
+                "pride-and-prejudice:CHAPTER LXI.:1-1",
+                "pride-and-prejudice:Chapter I.:11-16",
+                "pride-and-prejudice:CHAPTER III.:1-1",
+                "pride-and-prejudice:CHAPTER LV.:40-40",
+                "pride-and-prejudice:CHAPTER III.:2-2"
+              ]
+            },
+            {
+              "id": "P04",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 29893,
+              "selected": [
+                "pride-and-prejudice:CHAPTER LX.:1-2",
+                "pride-and-prejudice:CHAPTER XXXIV.:23-26",
+                "pride-and-prejudice:CHAPTER XXXIV.:30-30",
+                "pride-and-prejudice:CHAPTER XXXIV.:22-22",
+                "pride-and-prejudice:CHAPTER XXI.:14-17",
+                "pride-and-prejudice:CHAPTER XIX.:1-1",
+                "pride-and-prejudice:CHAPTER XXXIV.:4-4",
+                "pride-and-prejudice:CHAPTER XXXIV.:28-28"
+              ]
+            },
+            {
+              "id": "P05",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 30102,
+              "selected": [
+                "pride-and-prejudice:CHAPTER XXXVI.:3-3",
+                "pride-and-prejudice:CHAPTER XXXIV.:22-22",
+                "pride-and-prejudice:CHAPTER XXXVI.:1-1",
+                "pride-and-prejudice:CHAPTER LVIII.:21-22",
+                "pride-and-prejudice:CHAPTER LI.:37-37",
+                "pride-and-prejudice:CHAPTER XXXV.:5:12767-14053",
+                "pride-and-prejudice:CHAPTER XI.:13-14",
+                "pride-and-prejudice:CHAPTER XL.:23-23"
+              ]
+            },
+            {
+              "id": "P06",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 34576,
+              "selected": [
+                "pride-and-prejudice:CHAPTER XXI.:6-6",
+                "pride-and-prejudice:CHAPTER XVIII.:77-77",
+                "pride-and-prejudice:CHAPTER LIII.:28-28",
+                "pride-and-prejudice:CHAPTER XVIII.:76-76",
+                "pride-and-prejudice:CHAPTER XXXII.:4-7",
+                "pride-and-prejudice:CHAPTER LXI.:3-3",
+                "pride-and-prejudice:CHAPTER XXVI.:11-11",
+                "pride-and-prejudice:CHAPTER LV.:1-1"
+              ]
+            },
+            {
+              "id": "P07",
+              "candidateRecall": 0.0,
+              "finalRecall8": 0.0,
+              "searchUs": 36750,
+              "selected": [
+                "pride-and-prejudice:CHAPTER XVI.:52-54",
+                "pride-and-prejudice:CHAPTERXXVIII.:7-7",
+                "pride-and-prejudice:CHAPTER XVI.:55-57",
+                "pride-and-prejudice:CHAPTER LVI.:60-60",
+                "pride-and-prejudice:CHAPTER LVI.:44-44",
+                "pride-and-prejudice:CHAPTER LVII.:14:0-1792",
+                "pride-and-prejudice:CHAPTER XVIII.:57-57",
+                "pride-and-prejudice:CHAPTER LVI.:54-59"
+              ]
+            },
+            {
+              "id": "P08",
+              "candidateRecall": 1.0,
+              "finalRecall8": 0.0,
+              "searchUs": 36514,
+              "selected": [
+                "pride-and-prejudice:CHAPTER XXI.:18-18",
+                "pride-and-prejudice:CHAPTER LIX.:21-23",
+                "pride-and-prejudice:CHAPTER XIX.:14-14",
+                "pride-and-prejudice:CHAPTER LVI.:69-69",
+                "pride-and-prejudice:CHAPTER XVIII.:46-47",
+                "pride-and-prejudice:CHAPTER IX.:2-2",
+                "pride-and-prejudice:CHAPTER XXIV.:24-24",
+                "pride-and-prejudice:CHAPTER X.:53-54"
+              ]
+            },
+            {
+              "id": "P09",
+              "candidateRecall": null,
+              "finalRecall8": null,
+              "searchUs": 39254,
+              "selected": [
+                "pride-and-prejudice:CHAPTER XLIV.:17-17",
+                "pride-and-prejudice:CHAPTER XXXII.:16-19",
+                "pride-and-prejudice:CHAPTER LII.:12-14",
+                "pride-and-prejudice:CHAPTER LVI.:21-25",
+                "pride-and-prejudice:CHAPTER VII.:49-49",
+                "pride-and-prejudice:CHAPTER XLIV.:1-1",
+                "pride-and-prejudice:CHAPTER XXII.:6-6",
+                "pride-and-prejudice:CHAPTER LXI.:2-2"
+              ]
+            },
+            {
+              "id": "M01",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 138,
+              "selected": [
+                "partial:1:1-3"
+              ]
+            },
+            {
+              "id": "M02",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 54,
+              "selected": [
+                "partial:1:1-3"
+              ]
+            },
+            {
+              "id": "M03",
+              "candidateRecall": null,
+              "finalRecall8": null,
+              "searchUs": 114,
+              "selected": [
+                "partial:1:1-3"
+              ]
+            },
+            {
+              "id": "M04",
+              "candidateRecall": 1.0,
+              "finalRecall8": 1.0,
+              "searchUs": 49,
+              "selected": [
+                "partial:1:1-3"
+              ]
+            },
+            {
+              "id": "M05",
+              "candidateRecall": null,
+              "finalRecall8": null,
+              "searchUs": 128,
+              "selected": [
+                "partial:1:1-3"
+              ]
+            },
+            {
+              "id": "M06",
+              "candidateRecall": null,
+              "finalRecall8": null,
+              "searchUs": 41,
+              "selected": [
+                "partial:1:1-3"
+              ]
+            }
+          ],
+          "searchMedianMs": 2.178
+        }
+      ],
+      "replayVerified": {
+        "requests": 0,
+        "identicalCandidateAndSelectedIds": true,
+        "identicalCoverage": true
+      },
+      "fullReportSha256": "2ddeb2181b550a8b3bb0810212a6374fc8bd26bee38cd445aa1fddfff7480fcf",
+      "cacheSha256": "a0e3c0046623f00f46b12824c1305ef4dd68ddbfd741af62ff4b5e4a776d70e4"
+    }
+  ],
+  "cohere": {
+    "model": "cohere/embed-multilingual-v3.0",
+    "status": "skipped by explicit user instruction; not evaluated",
+    "tested": false
+  },
+  "diagnosticLedger": {
+    "diagnosticRequests": 3,
+    "failedValidation": "provider model capitalization BAAI/bge-m3 vs baai/bge-m3",
+    "knownResponse": {
+      "object": "list",
+      "model": "BAAI/bge-m3",
+      "usage": {
+        "prompt_tokens": 184,
+        "total_tokens": 184,
+        "cost": 1.84e-06,
+        "is_byok": false,
+        "cost_details": {
+          "upstream_inference_cost": 1.84e-06,
+          "upstream_inference_prompt_cost": 1.84e-06,
+          "upstream_inference_completions_cost": 0
+        }
+      },
+      "provider": "DeepInfra",
+      "id": "gen-emb-1793105013-IpRawtLlPtIQlpU1xbrH"
+    },
+    "firstResponseUsage": "not captured; identical 2-input request, cost unverified",
+    "thirdValidationFailure": {
+      "id": "gen-emb-1793105068-gS0nFB5OxkBC3Fz6ESvY",
+      "object": "list",
+      "model": "parasail-bge-m3",
+      "usage": {
+        "prompt_tokens": 10616,
+        "total_tokens": 10616,
+        "cost": 0.00010616,
+        "is_byok": false,
+        "cost_details": {
+          "upstream_inference_cost": 0.00010616,
+          "upstream_inference_prompt_cost": 0.00010616,
+          "upstream_inference_completions_cost": 0
+        }
+      },
+      "provider": "Parasail"
+    }
+  },
+  "note": "Development only, no held-out retrieval/model or answer generation. First diagnostic response usage was not captured; do not claim an exact cumulative cost.",
+  "requestAccounting": {
+    "stage4Requests": 54,
+    "validCachedRequests": 51,
+    "validationRejectedRequests": 3,
+    "verifiedUsageRequests": 53,
+    "unverifiedUsageRequests": 1,
+    "knownCostUsd": "0.00432741",
+    "priorRequests": 246,
+    "cumulativeRequests": 300,
+    "cumulativeKnownCostUsd": "0.051182736456",
+    "exactTotalCostKnown": false
+  },
+  "frontRunner": {
+    "model": "qwen/qwen3-embedding-8b",
+    "queryMode": "original",
+    "retrieval": "dense top40 then budgeted top8",
+    "rationale": "Ties hybrid quality on this development set and does not require an AI rewrite for BM25. Not a held-out or answer-accuracy result.",
+    "pipelineFrozen": false,
+    "next": "Freeze pipeline and answer protocol before running the 40 held-out cases."
+  },
+  "checks": {
+    "command": "make check t=--concurrency=1",
+    "passed": 656,
+    "skipped": 9,
+    "timingFlake": "One default-parallel run failed an unchanged import real-time upper-bound test; focused 13 tests and full serial suite passed. Earlier parallel suite also passed."
+  }
+}
