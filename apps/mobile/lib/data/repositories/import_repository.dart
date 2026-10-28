@@ -8,6 +8,7 @@ import 'package:path/path.dart' as p;
 import '../../domain/luma_markdown.dart';
 import '../../domain/models/book.dart';
 import '../database/app_database.dart';
+import '../services/chat_lifecycle.dart';
 import '../services/chapter_extractor.dart';
 import '../services/epub_parser.dart';
 import '../services/file_storage.dart';
@@ -117,7 +118,14 @@ const _beforeDone = 0.99; // 100% dikasih controller, setelah transaksi commit
 /// file, jadi EPUB jelek gak ninggalin apa-apa; gagal setelah nyalin = file
 /// dihapus lagi, transaksi DB di-rollback.
 class ImportRepository {
-  ImportRepository(this._db, this._storage, {this.parse = parseInIsolate});
+  ImportRepository(
+    this._db,
+    this._storage, {
+    this.parse = parseInIsolate,
+    this.chatLifecycle,
+  });
+
+  final ChatLifecycle? chatLifecycle;
 
   final AppDatabase _db;
   final FileStorage _storage;
@@ -217,6 +225,39 @@ class ImportRepository {
     int? chapter,
     String? chapterTitle,
     bool replace = false,
+  }) async {
+    final existing =
+        await (_db.select(_db.books)..where(
+              (b) => bookId != null
+                  ? b.id.equals(bookId)
+                  : b.bookKey.equals(bookKey),
+            ))
+            .getSingleOrNull();
+    Future<MarkdownImportResult> change() => _importMarkdown(
+      md,
+      bookId: bookId,
+      bookKey: bookKey,
+      bookTitle: bookTitle,
+      author: author,
+      chapter: chapter,
+      chapterTitle: chapterTitle,
+      replace: replace,
+    );
+    if (existing != null && chatLifecycle != null) {
+      return chatLifecycle!.changeContent(existing.id, change);
+    }
+    return change();
+  }
+
+  Future<MarkdownImportResult> _importMarkdown(
+    ParsedMarkdown md, {
+    int? bookId,
+    required String bookKey,
+    required String bookTitle,
+    String? author,
+    int? chapter,
+    String? chapterTitle,
+    required bool replace,
   }) => _db.transaction(() async {
     final byId = bookId != null;
     final existing =
@@ -306,6 +347,7 @@ class ImportRepository {
       ]),
     );
     await _renumber(id);
+    if (existing != null) await _db.contentChanged(id);
     return (
       bookId: id,
       chapterId: chapterId,
@@ -401,5 +443,6 @@ final importRepositoryProvider = Provider<ImportRepository>(
   (ref) => ImportRepository(
     ref.watch(appDatabaseProvider),
     ref.watch(fileStorageProvider),
+    chatLifecycle: ref.watch(chatLifecycleProvider),
   ),
 );

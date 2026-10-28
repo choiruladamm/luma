@@ -69,7 +69,7 @@ luma-backup-20261006-2130.zip
    - `luma.sqlite` bisa dibuka
 4. Tampilkan ringkasan: jumlah buku, jumlah terjemahan, tanggal backup
 5. Konfirmasi: "Semua data di Luma sekarang bakal diganti. Lanjut?"
-6. Tutup koneksi Drift → ganti file database + folder `books/` & `covers/` → buka lagi database (migrasi Drift otomatis jalan kalau backup dari schema lama). Backup dari sebelum schema 4: terjemahannya jadi `promptVersion` 1, diterjemahin ulang pas grupnya dibuka
+6. Blok send/retry chat → cancel + await flush terminal → tutup koneksi Drift → ganti file database + folder `books/` & `covers/` → buka lagi database (migrasi Drift otomatis jalan kalau backup dari schema lama). Backup dari sebelum schema 4: terjemahannya jadi `promptVersion` 1, diterjemahin ulang pas grupnya dibuka
 7. Invalidate provider Riverpod (atau restart ke Rak)
 8. Gagal di langkah mana pun → hapus folder sementara, data lama tetap utuh
 
@@ -100,3 +100,27 @@ luma-backup-20261006-2130.zip
 - Export/import **per buku**: satu buku + terjemahannya, untuk dipindah atau dibagikan ([#101](https://github.com/choiruladamm/luma/issues/101))
 - Restore **merge**: gabung dengan data yang ada ([#102](https://github.com/choiruladamm/luma/issues/102))
 - Export terjemahan + makna ke Markdown, nyambung dengan Recap ([#103](https://github.com/choiruladamm/luma/issues/103))
+
+## Percakapan buku (#119)
+
+Snapshot `VACUUM INTO` ikut membawa `chat_sessions`, `chat_turns`, revision isi,
+judul manual, anchor scroll dan snapshot sumber. Format backup tetap1; manifest
+mengikuti schema DB (sekarang8), tanpa model/key atau isi percakapan. Model attempt
+tersimpan di DB sebagaimana sebelumnya; API key tetap hanya di secure storage.
+
+Backup saat streaming menangkap checkpoint durable terakhir yang konsisten,
+bukan tail throttle yang masih di memori. Saat hydrate hasil restore, repository
+mengubah running menjadi interrupted sekali, tanpa request/resend otomatis.
+Snapshot arsip tetap terbaca tanpa paragraf asli. Backup schema7 dimigrasi dengan
+revision1 dan chat kosong; versi schema lebih baru tetap ditolak.
+
+`restoreServiceProvider` memasang barrier `ChatLifecycle.close()` sebelum menutup
+executor: send/retry diblok, semua controller (termasuk disposal flush yang belum
+selesai) dihentikan dan ditunggu. Flush gagal membatalkan penggantian. Repository
+chat dan retrieval asal lalu di-dispose supaya late callback tidak menulis ke DB
+baru meski ID buku/sesi/turn dari backup sama. Pemanggil tetap wajib invalidate
+`appDatabaseProvider` setelah apply sukses/gagal; lifecycle/index/seleksi ikut baru.
+Konstruksi `RestoreService` langsung di luar provider harus memasang `beforeClose`
+bila ada controller chat aktif. Rollback file mengembalikan history bersama data
+lama. Hapus cache terjemahan/Bedahin tidak menghapus obrolan; hapus buku cascade
+semua chat buku itu, sedangkan hapus sesi tidak mengubah cache/progres/file buku.

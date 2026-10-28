@@ -5,8 +5,15 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:luma/data/database/app_database.dart';
 import 'package:luma/data/repositories/import_repository.dart';
+import 'package:luma/data/repositories/chat_repository.dart';
+import 'package:luma/data/repositories/book_repository.dart';
+import 'package:luma/data/repositories/ai_results_repository.dart';
+import 'package:luma/data/repositories/ai_breakdowns_repository.dart';
+import 'package:luma/domain/models/book_chat.dart';
+import 'package:luma/domain/chat_prompt.dart';
 import 'package:luma/data/repositories/reading_progress_repository.dart';
 import 'package:luma/data/services/file_storage.dart';
+import 'package:luma/data/services/chat_lifecycle.dart';
 import 'package:luma/domain/luma_markdown.dart';
 import 'package:luma/domain/models/book.dart';
 
@@ -159,6 +166,154 @@ void main() {
       expect(paras.map((p) => p.content), ['baru banget']);
     },
   );
+
+  test('content changes archive snapshots atomically; metadata and AI clear preserve chat', () async {
+    final first = await add('lama', chapter: 2);
+    final chat = ChatRepository(db);
+    final ref = (bookId: first.bookId, contentRevision: 1);
+    final turn = await chat.createFirstTurn(
+      ref,
+      question: 'Apa?',
+      model: 'm',
+      promptVersion: chatPromptVersion,
+    );
+    final source = ChatSource(
+      id: 'S1',
+      chapterTitle: 'Bab 2',
+      anchors: [
+        SourceAnchor(
+          book: ref,
+          chapterId: first.chapterId,
+          paragraphIndex: 0,
+          start: 0,
+          end: 4,
+          paragraphHash: chatTextHash('lama'),
+          snapshot: 'lama',
+        ),
+      ],
+    );
+    await chat.prepareSources(turn.attemptRef, [source]);
+    await chat.checkpoint(
+      turn.attemptRef,
+      draft: '{partial',
+      phase: ChatPhase.writing,
+    );
+    await BookRepository(db).updateMetadata(
+      first.bookId,
+      title: 'Edited',
+      author: 'A',
+      useDefaultCover: true,
+    );
+    expect((await db.select(db.books).getSingle()).contentRevision, 1);
+    await AiResultsRepository(db).clear();
+    await AiBreakdownsRepository(db, AiResultsRepository(db)).clear();
+    expect(
+      (await db.select(db.chatTurns).getSingle()).sources,
+      contains('lama'),
+    );
+    await expectLater(add('no', chapter: 2), throwsA(isA<ChapterExists>()));
+    expect((await db.select(db.books).getSingle()).contentRevision, 1);
+
+    // Identical length and same parser version still invalidate the source identity.
+    final replacement = await add('baru', chapter: 2, replace: true);
+    expect(replacement.chapterId, first.chapterId);
+    expect((await db.select(db.books).getSingle()).contentRevision, 2);
+    final oldSession = (await chat.watchSessions(first.bookId).first).single;
+    expect(
+      oldSession.isArchived((bookId: first.bookId, contentRevision: 2)),
+      true,
+    );
+    final archived =
+        (await chat.watchTurns(first.bookId, turn.sessionId).first).single;
+    expect(archived.phase, ChatPhase.interrupted);
+    expect(archived.draft, '{partial');
+    expect(
+      (await db.select(db.chatTurns).getSingle()).sources,
+      contains('lama'),
+    );
+    expect(
+      await chat.checkpoint(
+        turn.attemptRef,
+        draft: '{partial late',
+        phase: ChatPhase.writing,
+      ),
+      false,
+    );
+    expect(await chat.validatePrepared(turn.attemptRef, [source]), false);
+    await expectLater(
+      chat.appendTurn(
+        ref,
+        turn.sessionId,
+        question: 'Lagi?',
+        model: 'm',
+        promptVersion: chatPromptVersion,
+      ),
+      throwsStateError,
+    );
+    await add('awal', chapter: 1);
+    expect((await db.select(db.books).getSingle()).contentRevision, 3);
+    expect((await chapters()).last.id, first.chapterId);
+    expect(await db.select(db.chatTurns).get(), hasLength(1));
+    chat.dispose();
+  });
+
+  test(
+    'import awaits chat tail before bumping revision and reopening send',
+    () async {
+      final first = await add('lama', chapter: 2);
+      final chat = ChatRepository(db);
+      final turn = await chat.createFirstTurn(
+        (bookId: first.bookId, contentRevision: 1),
+        question: 'Apa?',
+        model: 'm',
+        promptVersion: chatPromptVersion,
+      );
+      final lifecycle = ChatLifecycle();
+      final unregister = lifecycle.register(first.bookId, () async {
+        expect(lifecycle.canStart(first.bookId), false);
+        expect((await db.select(db.books).getSingle()).contentRevision, 1);
+        expect(
+          await chat.finalize(
+            turn.attemptRef,
+            phase: ChatPhase.stopped,
+            draft: '{latest tail',
+          ),
+          true,
+        );
+      });
+      final importer = ImportRepository(
+        db,
+        FileStorage(root),
+        chatLifecycle: lifecycle,
+      );
+      await importer.importMarkdown(
+        md('baru'),
+        bookId: first.bookId,
+        bookKey: 'atomic-habits',
+        bookTitle: 'Atomic Habits',
+        chapter: 2,
+        replace: true,
+      );
+      final stored = await db.select(db.chatTurns).getSingle();
+      expect((stored.phase, stored.draft), ('stopped', '{latest tail'));
+      expect((await db.select(db.books).getSingle()).contentRevision, 2);
+      expect(lifecycle.canStart(first.bookId), true);
+      unregister();
+      chat.dispose();
+    },
+  );
+
+  test('revision hook rolls back with content transaction', () async {
+    final first = await add('lama', chapter: 2);
+    await expectLater(
+      db.transaction(() async {
+        await db.contentChanged(first.bookId);
+        throw StateError('rollback');
+      }),
+      throwsStateError,
+    );
+    expect((await db.select(db.books).getSingle()).contentRevision, 1);
+  });
 
   test('markFinished never stamps a markdown book', () async {
     final r = await add('x', chapter: 1);

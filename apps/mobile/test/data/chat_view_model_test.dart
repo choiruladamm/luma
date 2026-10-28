@@ -6,6 +6,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:luma/data/repositories/chat_context_repository.dart';
 import 'package:luma/data/repositories/chat_repository.dart';
+import 'package:luma/data/services/chat_lifecycle.dart';
 import 'package:luma/domain/models/ai_reply.dart';
 import 'package:luma/domain/models/book_chat.dart';
 import 'package:luma/ui/features/chat/view_models/chat_view_model.dart';
@@ -69,6 +70,83 @@ void main() {
     );
     pump(time);
   }
+
+  test(
+    'restore waits for raw tail flush and blocks new sends, including disposed controllers',
+    () => fakeAsync((time) {
+      open(time);
+      send(time);
+      delta(time, '{partial tail');
+      final lifecycle = container.read(chatLifecycleProvider);
+      repo.finalizeGate = Completer();
+      container.invalidate(provider);
+      pump(time);
+      var closed = false;
+      unawaited(lifecycle.close().then((_) => closed = true));
+      pump(time);
+      expect(closed, false);
+      expect(context.cancels.single!.isCancelled, true);
+      send(time, 'Blocked');
+      expect(repo.creates, 1);
+      repo.finalizeGate!.complete();
+      pump(time);
+      expect(closed, true);
+      expect(repo.turns.values.single.phase, ChatPhase.stopped);
+      expect(repo.turns.values.single.draft, '{partial tail');
+      expect(lifecycle.canStart(1), false);
+      close(time);
+    }),
+  );
+
+  test(
+    'content change pauses only its book and awaits stop before mutation',
+    () => fakeAsync((time) {
+      open(time);
+      send(time);
+      delta(time, '{tail');
+      final lifecycle = container.read(chatLifecycleProvider);
+      repo.finalizeGate = Completer();
+      var changed = false;
+      unawaited(
+        lifecycle.changeContent(1, () async {
+          changed = true;
+        }),
+      );
+      pump(time);
+      expect(changed, false);
+      expect(lifecycle.canStart(1), false);
+      expect(lifecycle.canStart(2), true);
+      repo.finalizeGate!.complete();
+      pump(time);
+      expect(changed, true);
+      expect(lifecycle.canStart(1), true);
+      expect(repo.turns.values.single.draft, '{tail');
+      close(time);
+    }),
+  );
+
+  test(
+    'failed terminal flush rejects database replacement even after dispose',
+    () => fakeAsync((time) {
+      open(time);
+      send(time);
+      delta(time, '{tail');
+      repo.finalizeError = StateError('disk full');
+      final lifecycle = container.read(chatLifecycleProvider);
+      container.invalidate(provider);
+      pump(time);
+      Object? failure;
+      unawaited(
+        lifecycle.close().catchError((Object e) {
+          failure = e;
+        }),
+      );
+      pump(time);
+      expect(failure, isStateError);
+      expect(repo.finalized, isEmpty);
+      close(time);
+    }),
+  );
 
   test(
     'hydrate/list/open and empty submit never create a paid request',

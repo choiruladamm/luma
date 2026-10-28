@@ -298,6 +298,27 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor])
     : super(executor ?? driftDatabase(name: 'luma'));
 
+  /// Call inside the content mutation transaction; EPUB re-import must reuse it.
+  /// Snapshots survive paragraph replacement; old attempts become read-only.
+  Future<void> contentChanged(int bookId) => transaction(() async {
+    await customUpdate(
+      'UPDATE chat_turns SET phase = ?, updated_at = ? '
+      'WHERE session_id IN (SELECT id FROM chat_sessions WHERE book_id = ?) '
+      "AND phase IN ('preparing', 'retrieving', 'waiting', 'writing', 'slow')",
+      variables: [
+        Variable('interrupted'),
+        Variable(DateTime.now().millisecondsSinceEpoch ~/ 1000),
+        Variable(bookId),
+      ],
+      updates: {chatTurns},
+    );
+    await customUpdate(
+      'UPDATE books SET content_revision = content_revision + 1 WHERE id = ?',
+      variables: [Variable(bookId)],
+      updates: {books},
+    );
+  });
+
   // Ubah tabel: naikin versi, tambah langkah di onUpgrade, tambah test di
   // test/data/migration_test.dart. Backup dari versi lama ikut dimigrasi pas
   // di-restore.

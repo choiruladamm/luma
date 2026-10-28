@@ -6,6 +6,7 @@ import 'package:flutter/widgets.dart';
 
 import '../../../../data/repositories/chat_context_repository.dart';
 import '../../../../data/repositories/chat_repository.dart';
+import '../../../../data/services/chat_lifecycle.dart';
 import '../../../../domain/chat_prompt.dart';
 import '../../../../domain/models/ai_reply.dart';
 import '../../../../domain/models/book_chat.dart';
@@ -112,6 +113,11 @@ class ChatViewModel extends Notifier<ChatState> {
       ref.watch(chatRepositoryProvider),
       ref.watch(chatContextRepositoryProvider),
     );
+    final chatLifecycle = ref.watch(chatLifecycleProvider);
+    final unregister = chatLifecycle.register(bookId, () async {
+      await _stop(life);
+      if (life.flushError != null) throw life.flushError!;
+    });
     final lifecycle = AppLifecycleListener(
       onStateChange: (appState) {
         if (_live(life) && appState != AppLifecycleState.resumed) {
@@ -125,7 +131,12 @@ class ChatViewModel extends Notifier<ChatState> {
       unawaited(life.books?.cancel());
       unawaited(life.sessions?.cancel());
       unawaited(life.turns?.cancel());
-      unawaited(_stop(life));
+      // Keep pending disposal flushes registered until restore can await them.
+      unawaited(
+        _stop(life).then((_) {
+          if (life.flushError == null) unregister();
+        }),
+      );
     });
     unawaited(life.hydration = _hydrate(life));
     return ChatState();
@@ -350,6 +361,9 @@ class ChatViewModel extends Notifier<ChatState> {
     ChatQuote? quote,
     ChatTurn? retry,
   }) {
+    if (!ref.read(chatLifecycleProvider).canStart(bookId)) {
+      return Future.value();
+    }
     final run = life.run =
         _ChatRun(); // Guard first-send before the first await.
     final book = state.book!, session = life.session;
@@ -534,6 +548,7 @@ class ChatViewModel extends Notifier<ChatState> {
             error: error?.error,
             httpStatus: error?.status,
           );
+          if (accepted) life.flushError = null;
           if (accepted &&
               _live(life) &&
               life.session == null &&
@@ -552,6 +567,7 @@ class ChatViewModel extends Notifier<ChatState> {
           }
         }
       } catch (e) {
+        life.flushError = e;
         phase = ChatPhase.failed;
         error = _error(e);
         _problem(life, e);
@@ -598,6 +614,7 @@ class _ChatLifetime {
   final ChatRepository repo;
   final ChatContextRepository context;
   bool alive = true;
+  Object? flushError;
   late Future<void> hydration;
   int selection = 0;
   ChatSession? session;
