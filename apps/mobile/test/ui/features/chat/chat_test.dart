@@ -533,6 +533,54 @@ void main() {
   });
 
   testWidgets(
+    'long answer can scroll up slowly from latest without snapping back',
+    (t) async {
+      final longAnswer = ChatAnswer(
+        status: ChatAnswerStatus.answered,
+        blocks: [
+          ChatAnswerBlock(
+            text: List.filled(
+              100,
+              'Jawaban panjang yang bisa dibaca dengan menggulir.',
+            ).join('\n'),
+            sources: [source],
+          ),
+        ],
+      );
+      await open(
+        t,
+        size: const Size(390, 844),
+        state: ChatState(
+          book: book,
+          loading: false,
+          activeSession: session(1),
+          turns: [turn(1, answer: longAnswer)],
+        ),
+      );
+      final scroll = t
+          .widget<CustomScrollView>(find.byType(CustomScrollView))
+          .controller!;
+      final bottom = scroll.offset;
+      final gesture = await t.startGesture(
+        t.getCenter(find.byType(CustomScrollView)),
+      );
+      for (var i = 0; i < 12; i++) {
+        await gesture.moveBy(const Offset(0, 20));
+        if (i == 2) vm.push(vm.current.copyWith(phase: ChatPhase.waiting));
+        await t.pump(const Duration(milliseconds: 16));
+      }
+      await gesture.up();
+      await t.pumpAndSettle();
+      expect(scroll.offset, lessThan(bottom - 150));
+      expect(find.text('Ke terbaru'), findsOneWidget);
+      final away = scroll.offset;
+      vm.push(vm.current.copyWith(turns: [...vm.current.turns]));
+      await t.pumpAndSettle();
+      expect(scroll.offset, closeTo(away, 1));
+    },
+  );
+
+  testWidgets(
     'long history is lazy and respects scroll away and stable anchor',
     (t) async {
       await open(
