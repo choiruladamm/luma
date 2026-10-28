@@ -106,6 +106,26 @@ class ChatRepository {
     );
   }
 
+  /// Current book identity for lifecycle invalidation; never starts a request.
+  Stream<ChatBookRef?> watchBook(int bookId) =>
+      (_db.select(_db.books)..where((b) => b.id.equals(bookId)))
+          .watchSingleOrNull()
+          .map(
+            (b) => b == null
+                ? null
+                : (bookId: b.id, contentRevision: b.contentRevision),
+          )
+          .distinct();
+
+  Future<ChatSession?> session(int bookId, int sessionId) async {
+    await _ready();
+    final row =
+        await (_db.select(_db.chatSessions)
+              ..where((s) => s.bookId.equals(bookId) & s.id.equals(sessionId)))
+            .getSingleOrNull();
+    return row == null ? null : ChatSnapshot.session(row);
+  }
+
   Future<ChatSession?> lastOpenedSession(int bookId) async {
     await _ready();
     final row =
