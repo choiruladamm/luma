@@ -125,6 +125,13 @@ class _ChatViewState extends ConsumerState<ChatView> {
                 ],
               ),
               Expanded(child: _body(state)),
+              if (widget.launch != null &&
+                  widget.launch!.origin != ChatLaunchOrigin.reader)
+                AppButton.secondary(
+                  label: 'Balik baca',
+                  onPressed: () =>
+                      _navigate(() => context.pop(ReaderReturn.reading)),
+                ),
               if (state.archived)
                 const Text(
                   'Isi buku berubah. Obrolan ini jadi arsip dan gak bisa dilanjutkan.',

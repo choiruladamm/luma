@@ -45,6 +45,7 @@ Future<void> showMeaningSheet(
   required VoidCallback onClosing,
   required VoidCallback onSettings,
   required ValueChanged<GroupRef> onBreakdown,
+  void Function(GroupRef, String)? onChat,
 }) {
   final screen = MediaQuery.sizeOf(context).height;
   final height = screen * Layout.artinyaHeight;
@@ -96,6 +97,9 @@ Future<void> showMeaningSheet(
                         onProgress: onProgress,
                         onSettings: onSettings,
                         onBreakdown: () => onBreakdown(g),
+                        onChat: onChat == null
+                            ? null
+                            : (translation) => onChat(g, translation),
                       ),
                     ),
                   ),
@@ -198,6 +202,7 @@ class MeaningSheet extends ConsumerStatefulWidget {
     required this.onProgress,
     required this.onSettings,
     required this.onBreakdown,
+    this.onChat,
   });
 
   final GroupRef group;
@@ -207,6 +212,7 @@ class MeaningSheet extends ConsumerStatefulWidget {
   final ValueChanged<double> onProgress;
   final VoidCallback onSettings;
   final VoidCallback onBreakdown;
+  final ValueChanged<String>? onChat;
 
   @override
   ConsumerState<MeaningSheet> createState() => _MeaningSheetState();
@@ -262,10 +268,23 @@ class _MeaningSheetState extends ConsumerState<MeaningSheet> {
         onProgress: widget.onProgress,
         onClose: _close,
         onRetry: retry,
-        breakdown: _BreakdownEntry(
-          group: widget.group,
-          fade: !ai.cached,
-          onTap: widget.onBreakdown,
+        breakdown: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          spacing: Space.s3,
+          children: [
+            _BreakdownEntry(
+              group: widget.group,
+              fade: !ai.cached,
+              onTap: widget.onBreakdown,
+            ),
+            if (widget.onChat != null && ai.phase == AiPhase.done)
+              AppButton.secondary(
+                label: 'Tanyain ini',
+                icon: AppIcons.chat,
+                onPressed: () =>
+                    widget.onChat!(ai.draft.translations.join('\n\n')),
+              ),
+          ],
         ),
       ),
     };

@@ -389,3 +389,6 @@ class SourceVisitRequest {
     anchor.validate(paragraph, current);
   }
 }
+
+/// Null means return to the immediate origin; reading unwinds its overlays.
+enum ReaderReturn { reading }

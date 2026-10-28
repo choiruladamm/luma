@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:luma/data/repositories/settings_repository.dart';
 import 'package:luma/domain/breakdown_prompt.dart';
 import 'package:luma/domain/models/ai_reply.dart';
+import 'package:luma/domain/models/book_chat.dart';
 import 'package:luma/domain/models/breakdown.dart';
 import 'package:luma/routing/router.dart';
 import 'package:luma/ui/core/theme/stabilo_theme.dart';
@@ -75,7 +76,7 @@ class FakeArtiin extends GroupAiStream {
 }
 
 void main() {
-  late bool? popped;
+  late ReaderReturn? popped;
 
   setUp(() {
     FakeBreakdown.reset();
@@ -120,9 +121,10 @@ void main() {
           builder: (_, _) => Scaffold(
             body: Builder(
               builder: (context) => TextButton(
-                onPressed: () async => popped = await context.push<bool>(
-                  Routes.breakdown(1, g.chapterId, g.groupIndex),
-                ),
+                onPressed: () async =>
+                    popped = await context.push<ReaderReturn>(
+                      Routes.breakdown(1, g.chapterId, g.groupIndex),
+                    ),
                 child: const Text('open'),
               ),
             ),
@@ -574,7 +576,7 @@ void main() {
     await open(tester, done(two));
     await tester.tap(find.text('Balik baca'));
     await tester.pumpAndSettle();
-    expect(popped, isTrue);
+    expect(popped, ReaderReturn.reading);
 
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
@@ -1102,7 +1104,7 @@ void main() {
       await tester.tap(find.text('Balik baca'));
       await tester.pumpAndSettle();
       expect(find.byType(BreakdownView), findsNothing);
-      expect(popped, isTrue);
+      expect(popped, ReaderReturn.reading);
     });
 
     testWidgets('"Bedahin ini juga" before Artiin: translates, then goes', (

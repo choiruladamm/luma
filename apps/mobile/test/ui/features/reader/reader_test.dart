@@ -12,6 +12,10 @@ import 'package:luma/domain/ai_prompt.dart';
 import 'package:luma/domain/models/reader_prefs.dart';
 import 'package:luma/domain/models/ai_reply.dart';
 import 'package:luma/domain/models/book.dart';
+import 'package:luma/domain/models/book_chat.dart';
+import 'package:luma/ui/features/chat/view_models/chat_view_model.dart';
+import 'package:luma/ui/features/chat/views/chat_view.dart';
+import 'package:luma/ui/features/chat/views/chat_composer.dart';
 import 'package:luma/main.dart';
 import 'package:luma/ui/core/theme/reader_typography.dart';
 import 'package:luma/ui/core/theme/stabilo_theme.dart';
@@ -180,6 +184,41 @@ final paragraphs = {
   ],
 };
 
+class EntryChat extends ChatViewModel {
+  EntryChat(super.bookId);
+  static EntryChat? live;
+  ChatLaunchContext? entry;
+  @override
+  ChatState build() {
+    live = this;
+    return ChatState(
+      book: (bookId: bookId, contentRevision: 1),
+      loading: false,
+    );
+  }
+
+  @override
+  Future<void> launch(ChatLaunchContext context) async {
+    entry = context;
+    state = state.copyWith(selectedQuote: context.quote);
+  }
+
+  @override
+  Future<void> stop() async {}
+  @override
+  void removeQuote() => state = state.copyWith(selectedQuote: null);
+}
+
+class EntryProgress extends FakeProgress {
+  EntryProgress(super.saved);
+  Completer<void>? gate;
+  @override
+  Future<void> save(int bookId, ReadingPosition position) async {
+    await gate?.future;
+    await super.save(bookId, position);
+  }
+}
+
 void main() {
   late FakeProgress progress;
 
@@ -199,8 +238,10 @@ void main() {
     ReaderBook readerBook = book,
     ReadingPosition? saved,
     ReaderPrefs prefs = const ReaderPrefs(),
+    DateTime Function()? now,
+    FakeProgress? progressOverride,
   }) async {
-    progress = FakeProgress(saved);
+    progress = progressOverride ?? FakeProgress(saved);
     settings = FakeSettings(prefs);
     tester.view.physicalSize = const Size(900, 1600);
     tester.view.devicePixelRatio = 1;
@@ -210,6 +251,8 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          readerNowProvider.overrideWithValue(now ?? DateTime.now),
+          chatViewModelProvider.overrideWith2(EntryChat.new),
           groupAiStreamProvider.overrideWith2(FakeAiStream.new),
           breakdownStreamProvider.overrideWith2(FakeBreakdown.new),
           breakdownSectionsProvider.overrideWith(
@@ -260,6 +303,282 @@ void main() {
   Future<void> leave(WidgetTester tester) async {
     await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
+  }
+
+  testWidgets('Ngobrol stays disabled for a chapter without imported text', (
+    t,
+  ) async {
+    final original = paragraphs[10]!;
+    paragraphs[10] = [];
+    addTearDown(() => paragraphs[10] = original);
+    await openBook(t);
+    final entry = t.widget<AppButton>(
+      find.byWidgetPredicate((w) => w is AppButton && w.label == 'Ngobrol'),
+    );
+    expect(entry.onPressed, isNull);
+    expect(find.byType(ChatView), findsNothing);
+  });
+
+  testWidgets(
+    'Ngobrol waits position flush and excludes covered/background time',
+    (t) async {
+      var now = DateTime(2026, 10, 28, 10);
+      final repo = EntryProgress((
+        chapterId: 10,
+        paragraphIndex: 1,
+        paragraphOffset: 0,
+      ));
+      await openBook(t, now: () => now, progressOverride: repo);
+      now = now.add(const Duration(seconds: 10));
+      repo.gate = Completer<void>();
+      await t.tap(find.text('Ngobrol'));
+      await t.pump();
+      expect(find.byType(ChatView), findsNothing);
+      repo.gate!.complete();
+      await t.pumpAndSettle();
+      expect(find.byType(ChatView), findsOneWidget);
+      expect(progress.readingSeconds, 10);
+      final saved = progress.saves.toList();
+      expect(EntryChat.live!.entry!.origin, ChatLaunchOrigin.reader);
+      expect(EntryChat.live!.entry!.quote, isNull);
+      expect(EntryChat.live!.entry!.returnPosition, saved.last);
+      now = now.add(const Duration(minutes: 3));
+      for (final phase in [
+        AppLifecycleState.inactive,
+        AppLifecycleState.hidden,
+        AppLifecycleState.paused,
+        AppLifecycleState.hidden,
+        AppLifecycleState.inactive,
+        AppLifecycleState.resumed,
+      ]) {
+        t.binding.handleAppLifecycleStateChanged(phase);
+      }
+      await t.pump();
+      now = now.add(const Duration(minutes: 2));
+      expect(progress.readingSeconds, 10);
+      expect(progress.saves, saved);
+      await leave(t);
+      expect(find.byType(ReaderView), findsOneWidget);
+      now = now.add(const Duration(seconds: 7));
+      await leave(t);
+      expect(progress.readingSeconds, 17);
+      expect(progress.saves.last, saved.last);
+    },
+  );
+
+  testWidgets(
+    'Tanyain ini carries exact imported quote and returns to Artinya',
+    (t) async {
+      await openBook(t);
+      await t.tap(find.text('There are things which are within our power.'));
+      await t.pumpAndSettle();
+      final scroll = find
+          .descendant(
+            of: find.byKey(const ValueKey('meaning-sheet')),
+            matching: find.byType(Scrollable),
+          )
+          .last;
+      await t.scrollUntilVisible(
+        find.text('Tanyain ini'),
+        300,
+        scrollable: scroll,
+      );
+      await t.pumpAndSettle();
+      await t.tap(find.text('Tanyain ini'));
+      await t.pumpAndSettle();
+      expect(find.byType(ChatView), findsOneWidget);
+      final entry = EntryChat.live!.entry!;
+      expect(entry.origin, ChatLaunchOrigin.meaning);
+      expect(entry.startsNewSession, isTrue);
+      expect(entry.quote!.anchors.single.paragraphIndex, 1);
+      expect(entry.quote!.text, 'There are things which are within our power.');
+      expect(
+        entry.quote!.anchors.single.paragraphHash,
+        chatTextHash(entry.quote!.text),
+      );
+      expect(find.byType(ChatComposer), findsOneWidget);
+      await leave(t);
+      expect(find.byKey(const ValueKey('meaning-sheet')), findsOneWidget);
+    },
+  );
+
+  testWidgets('chat Balik baca closes Artinya without duplicating reader', (
+    t,
+  ) async {
+    await openBook(t);
+    await t.tap(find.text('There are things which are within our power.'));
+    await t.pumpAndSettle();
+    final scroll = find
+        .descendant(
+          of: find.byKey(const ValueKey('meaning-sheet')),
+          matching: find.byType(Scrollable),
+        )
+        .last;
+    await t.scrollUntilVisible(
+      find.text('Tanyain ini'),
+      300,
+      scrollable: scroll,
+    );
+    await t.pumpAndSettle();
+    await t.tap(find.text('Tanyain ini'));
+    await t.pumpAndSettle();
+    await t.tap(find.text('Balik baca'));
+    await t.pumpAndSettle();
+    expect(find.byType(ReaderView), findsOneWidget);
+    expect(find.byKey(const ValueKey('meaning-sheet')), findsNothing);
+    expect(find.byType(ChatView), findsNothing);
+  });
+
+  testWidgets(
+    'Bedahin Tanyain opens quote, back returns, Balik baca unwinds stack',
+    (t) async {
+      const original = 'There are things which are within our power.';
+      FakeBreakdown.initial = BreakdownState(
+        phase: BreakdownPhase.done,
+        input: BreakdownInput(
+          book: (title: 'The Enchiridion', author: null, chapter: 'I'),
+          chapters: const ['I', 'II'],
+          chapter: 1,
+          original: const [original],
+          translations: const ['ID asli'],
+          meaning: 'Makna',
+        ),
+        draft: const Breakdown(
+          sections: [
+            BreakdownSection(from: 1, to: 1, meaning: 'A.', logic: 'B.'),
+          ],
+        ),
+        cached: true,
+      );
+      await openBook(t);
+      await t.tap(find.text(original));
+      await t.pumpAndSettle();
+      final sheetScroll = find
+          .descendant(
+            of: find.byKey(const ValueKey('meaning-sheet')),
+            matching: find.byType(Scrollable),
+          )
+          .last;
+      await t.scrollUntilVisible(
+        find.text('Masih bingung? Bedahin'),
+        300,
+        scrollable: sheetScroll,
+      );
+      await t.pumpAndSettle();
+      await t.tap(find.text('Masih bingung? Bedahin'));
+      await t.pumpAndSettle();
+      expect(find.byType(BreakdownView), findsOneWidget);
+      final breakdownScroll = find
+          .descendant(
+            of: find.byType(BreakdownView),
+            matching: find.byType(Scrollable),
+          )
+          .last;
+      await t.scrollUntilVisible(
+        find.text('Tanyain ini'),
+        300,
+        scrollable: breakdownScroll,
+      );
+      await t.pumpAndSettle();
+      await t.tap(find.text('Tanyain ini'));
+      await t.pumpAndSettle();
+      expect(EntryChat.live!.entry!.origin, ChatLaunchOrigin.breakdown);
+      expect(EntryChat.live!.entry!.quote!.text, original);
+      expect(EntryChat.live!.entry!.quote!.translation, 'ID asli');
+      await leave(t);
+      expect(find.byType(BreakdownView), findsOneWidget);
+      await t.tap(find.text('Tanyain ini'));
+      await t.pumpAndSettle();
+      await t.tap(find.text('Balik baca'));
+      await t.pumpAndSettle();
+      expect(find.byType(ChatView), findsNothing);
+      expect(find.byType(BreakdownView), findsNothing);
+      expect(find.byKey(const ValueKey('meaning-sheet')), findsNothing);
+      expect(find.byType(ReaderView), findsOneWidget);
+    },
+  );
+
+  for (final platform in [TargetPlatform.iOS, TargetPlatform.android]) {
+    testWidgets('chat restores system bars and original chrome on $platform', (
+      t,
+    ) async {
+      debugDefaultTargetPlatformOverride = platform;
+      addTearDown(() => debugDefaultTargetPlatformOverride = null);
+      final modes = <String>[];
+      t.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (call) async {
+          if (call.method == 'SystemChrome.setEnabledSystemUIMode') {
+            modes.add(call.arguments.toString());
+          }
+          if (call.method == 'SystemChrome.setEnabledSystemUIOverlays') {
+            modes.add(call.arguments.toString());
+          }
+          return null;
+        },
+      );
+      addTearDown(
+        () => t.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          null,
+        ),
+      );
+      await openBook(t);
+      await t.tap(find.text('Ngobrol'));
+      await t.pumpAndSettle();
+      expect(modes.last, 'SystemUiMode.edgeToEdge');
+      await leave(t);
+      expect(find.byType(ReaderView), findsOneWidget);
+      if (platform == TargetPlatform.iOS) {
+        expect(modes.last, contains('SystemUiOverlay.top'));
+      } else {
+        expect(modes.last, 'SystemUiMode.edgeToEdge');
+      }
+      await leave(t);
+      debugDefaultTargetPlatformOverride = null;
+    });
+  }
+
+  for (final width in [320.0, 390.0, 844.0]) {
+    for (final scale in [1.0, 1.6, 2.0]) {
+      testWidgets('chat dock fits width$width textScale$scale', (t) async {
+        t.view.physicalSize = Size(width, 844);
+        t.view.devicePixelRatio = 1;
+        addTearDown(t.view.reset);
+        await t.pumpWidget(
+          MaterialApp(
+            theme: stabiloTheme(Brightness.light),
+            home: MediaQuery(
+              data: MediaQueryData(
+                size: Size(width, 844),
+                textScaler: TextScaler.linear(scale),
+              ),
+              child: Scaffold(
+                body: Align(
+                  alignment: Alignment.bottomCenter,
+                  child: ReaderChatDock(
+                    progress: 1,
+                    label: 'Bab panjang sekali beres',
+                    onChat: () {},
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+        expect(find.text('Ngobrol'), findsOneWidget);
+        expect(
+          t.getSize(find.byType(ReaderChatDock)).height,
+          readerDockHeight(t.element(find.byType(ReaderChatDock))),
+        );
+        final button = find.byWidgetPredicate(
+          (w) => w is AppButton && w.label == 'Ngobrol',
+        );
+        expect(t.getSize(button).height, 44);
+        expect(t.getSize(button).width, greaterThanOrEqualTo(44));
+        expect(t.takeException(), isNull);
+      });
+    }
   }
 
   for (final b in Brightness.values) {
@@ -1236,7 +1555,7 @@ void main() {
       // No empty band under the progress line: 18% right down to the edge.
       expect(
         fade(tester).bottom,
-        const EdgeFadeSide(48, hold: 34 + 14 + 40, floor: 0.18),
+        const EdgeFadeSide(48, hold: 34 + 14 + 44, floor: 0.18),
       );
       expect(mask(tester).first, 0); // status bar
       expect(mask(tester).last, closeTo(0.18, 1e-9)); // bottom edge

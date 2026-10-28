@@ -121,6 +121,7 @@ class BookRepository {
             .get();
     return ReaderBook(
       id: book.id,
+      contentRevision: book.contentRevision,
       title: book.title,
       totalChars: book.totalChars,
       chapters: [
