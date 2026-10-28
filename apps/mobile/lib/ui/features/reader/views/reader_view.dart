@@ -13,6 +13,9 @@ import '../../../../routing/router.dart';
 import '../../../../data/repositories/settings_repository.dart';
 import '../../../../domain/models/ai_reply.dart';
 import '../../../../domain/models/book.dart';
+import '../../../../domain/models/book_chat.dart';
+import '../../../core/widgets/toast.dart';
+import '../../chat/view_models/chat_entry.dart';
 import '../../../../domain/models/reader_prefs.dart';
 import '../../../../domain/reading.dart';
 import '../../../core/theme/reader_typography.dart';
@@ -43,7 +46,8 @@ class ReaderView extends ConsumerStatefulWidget {
 class _ReaderViewState extends ConsumerState<ReaderView>
     with WidgetsBindingObserver, SingleTickerProviderStateMixin {
   late final ReadingProgressRepository _progress;
-  final _clock = ReadingClock(DateTime.now());
+  late final _now = ref.read(readerNowProvider);
+  late final _clock = ReadingClock(_now());
   late final _chrome = ReaderChrome(vsync: this);
 
   /// Setelan Aa terakhir (status bar, garis progres, gaya teks).
@@ -93,6 +97,7 @@ class _ReaderViewState extends ConsumerState<ReaderView>
   void initState() {
     super.initState();
     _progress = ref.read(readingProgressRepositoryProvider);
+    _clock.resume(_now());
     WidgetsBinding.instance.addObserver(this);
     _progress.markOpened(widget.bookId).ignore();
     _chrome.visible.addListener(_syncStatusBar);
@@ -108,6 +113,9 @@ class _ReaderViewState extends ConsumerState<ReaderView>
     }
   }
 
+  int _offReader = 0;
+  bool _openingChat = false;
+  Future<void> _pendingSave = Future.value();
   Timer? _rehide;
 
   static bool get _android => defaultTargetPlatform == TargetPlatform.android;
@@ -130,18 +138,97 @@ class _ReaderViewState extends ConsumerState<ReaderView>
 
   /// Layar lain (Bedahin, Pengaturan) bukan layar baca: di Android bar
   /// sistem tampil selama di sana, balik ngikutin kapsul sesudahnya.
-  Future<T?> _pushOffReader<T>(String route) async {
-    if (!_android) return context.push<T>(route);
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-    final result = await context.push<T>(route);
-    if (mounted) _syncStatusBar();
-    return result;
+  Future<T?> _pushOffReader<T>(String route, {Object? extra}) async {
+    _saveLater?.cancel();
+    _clock.pause(_now());
+    _offReader++;
+    try {
+      await _save(force: true);
+      if (!mounted) return null;
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+      return await context.push<T>(route, extra: extra);
+    } finally {
+      // Wait for the router to remove the outgoing page before unwinding a sheet.
+      await WidgetsBinding.instance.endOfFrame;
+      _offReader--;
+      if (mounted && _offReader == 0) {
+        if (WidgetsBinding.instance.lifecycleState == null ||
+            WidgetsBinding.instance.lifecycleState ==
+                AppLifecycleState.resumed) {
+          _clock.resume(_now());
+        }
+        _syncStatusBar();
+      }
+    }
+  }
+
+  ChatLaunchContext? _chatContext() {
+    final book = _book, chapter = _chapterId;
+    if (book == null || chapter == null) return null;
+    return ChatLaunchContext(
+      book: (bookId: book.id, contentRevision: book.contentRevision),
+      returnPosition: (
+        chapterId: chapter,
+        paragraphIndex: _spot.index,
+        paragraphOffset: _spot.offset,
+      ),
+    );
+  }
+
+  Future<ReaderReturn?> _openChat({
+    GroupRef? group,
+    String? translation,
+  }) async {
+    if (_openingChat) return null;
+    if (group == null) _text.currentState?.stopAndReportPosition();
+    final initial = _chatContext();
+    if (initial == null) return null;
+    setState(() => _openingChat = true);
+    try {
+      ChatQuote? quote;
+      if (group != null) {
+        final source = await ref.read(
+          chatEntryQuoteProvider((bookId: widget.bookId, group: group)).future,
+        );
+        if (source.anchors.any((a) => a.book != initial.book)) {
+          throw const FormatException('Isi buku berubah');
+        }
+        quote = ChatQuote(anchors: source.anchors, translation: translation);
+      }
+      if (!mounted) return null;
+      final launch = ChatLaunchContext(
+        book: initial.book,
+        returnPosition: initial.returnPosition,
+        origin: group == null
+            ? ChatLaunchOrigin.reader
+            : ChatLaunchOrigin.meaning,
+        quote: quote,
+      );
+      return await _pushOffReader<ReaderReturn>(
+        Routes.chat(widget.bookId),
+        extra: launch,
+      );
+    } catch (_) {
+      if (mounted) {
+        showToast(
+          context,
+          'Obrolan belum bisa dibuka. Coba buka ulang bukunya.',
+        );
+      }
+      return null;
+    } finally {
+      if (mounted) setState(() => _openingChat = false);
+    }
   }
 
   /// Status bar ngumpet bareng kapsul. Android: navbar ikut ngumpet
   /// (immersive sticky, muncul sebentar kalau di-swipe). iOS: bar bawah
   /// (home indicator) dibiarin.
   void _syncStatusBar() {
+    if (_offReader > 0) {
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+      return;
+    }
     final show = _chrome.visible.value || !_prefs.hideStatusBar;
     if (_android) {
       SystemChrome.setEnabledSystemUIMode(
@@ -158,13 +245,13 @@ class _ReaderViewState extends ConsumerState<ReaderView>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      _clock.resume(DateTime.now());
+      if (_offReader == 0) _clock.resume(_now());
       return;
     }
-    _clock.pause(DateTime.now());
+    _clock.pause(_now());
     // OS bisa matiin app kapan aja pas di background: simpen sekarang.
     _saveLater?.cancel();
-    _save();
+    _save().ignore();
   }
 
   @override
@@ -172,7 +259,7 @@ class _ReaderViewState extends ConsumerState<ReaderView>
     _saveLater?.cancel();
     _rehide?.cancel();
     if (_android) SystemChrome.setSystemUIChangeCallback(null);
-    _save();
+    _save().ignore();
     WidgetsBinding.instance.removeObserver(this);
     if (_android) {
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
@@ -191,8 +278,8 @@ class _ReaderViewState extends ConsumerState<ReaderView>
   /// di bab dan posisi sekarang. Pindah bab harus manggil ini SEBELUM state
   /// bab diganti, biar potongannya masuk ke bab yang bener dan lompatan lewat
   /// daftar isi gak ikut keitung sebagai karakter terbaca.
-  void _flushReading() {
-    final now = DateTime.now();
+  Future<void> _flushReading() async {
+    final now = _now();
     final seconds = _clock.take(now);
     if (seconds <= 0) return;
     final chapterId = _chapterId, end = _charNow();
@@ -200,24 +287,27 @@ class _ReaderViewState extends ConsumerState<ReaderView>
         ? null
         : (chapterId: chapterId, startChar: _lastChar ?? end, endChar: end);
     if (end != null) _lastChar = end;
-    _progress
-        .addReadingTime(widget.bookId, seconds, at: now, span: span)
-        .ignore();
+    await _progress.addReadingTime(widget.bookId, seconds, at: now, span: span);
   }
 
-  void _save() {
-    _flushReading();
+  Future<void> _save({bool force = false}) {
+    if (_offReader > 0 && !force) return Future.value();
     final chapterId = _chapterId;
-    if (chapterId == null) return;
-    _progress.save(widget.bookId, (
-      chapterId: chapterId,
+    final position = (
+      chapterId: chapterId ?? 0,
       paragraphIndex: _spot.index,
       paragraphOffset: _spot.offset,
-    )).ignore();
+    );
+    final previous = _pendingSave;
+    final reading = _flushReading();
+    return _pendingSave = () async {
+      await Future.wait([previous, reading]);
+      if (chapterId != null) await _progress.save(widget.bookId, position);
+    }();
   }
 
   void _goTo(ReaderBook book, int chapter) {
-    _flushReading(); // masih di bab lama
+    _flushReading().ignore(); // masih di bab lama
     setState(() {
       _text = GlobalKey();
       _chrome.show(); // awal bab
@@ -229,7 +319,7 @@ class _ReaderViewState extends ConsumerState<ReaderView>
       _restoreTo = null;
       _fraction.value = 0;
       _saveLater?.cancel();
-      _save();
+      _save().ignore();
     });
   }
 
@@ -303,13 +393,22 @@ class _ReaderViewState extends ConsumerState<ReaderView>
         Navigator.of(context).pop();
         unawaited(_pushOffReader<void>(Routes.settings));
       },
-      // Sheet tetep di bawah layar Bedahin. "Balik baca" (`pop(true)`) =
+      // Sheet tetep di bawah layar Bedahin. "Balik baca" (`pop(ReaderReturn.reading)`) =
       // sheet-nya ikut ditutup, langsung ke halaman.
+      onChat: (g, translation) async {
+        final result = await _openChat(group: g, translation: translation);
+        if (result == ReaderReturn.reading && mounted) {
+          Navigator.of(context).pop();
+        }
+      },
       onBreakdown: (g) async {
-        final read = await _pushOffReader<bool>(
+        final read = await _pushOffReader<ReaderReturn>(
           Routes.breakdown(widget.bookId, g.chapterId, g.groupIndex),
+          extra: _chatContext(),
         );
-        if (read == true && mounted) Navigator.of(context).pop();
+        if (read == ReaderReturn.reading && mounted) {
+          Navigator.of(context).pop();
+        }
       },
     );
     group.dispose();
@@ -359,7 +458,7 @@ class _ReaderViewState extends ConsumerState<ReaderView>
     return Scaffold(
       body: Listener(
         // Scroll & tap sama-sama mulai dari sini.
-        onPointerDown: (_) => _clock.interact(DateTime.now()),
+        onPointerDown: (_) => _clock.interact(_now()),
         child: switch ((book, saved)) {
           (AsyncData(value: final b?), AsyncData(value: final pos))
               when b.chapters.isNotEmpty =>
@@ -386,6 +485,8 @@ class _ReaderViewState extends ConsumerState<ReaderView>
                 );
               }
               final ch = b.chapters[i];
+              final content = ref.watch(chapterParagraphsProvider(ch.id));
+              final chatReady = content.asData?.value.isNotEmpty ?? false;
               return Stack(
                 children: [
                   Positioned.fill(
@@ -400,7 +501,7 @@ class _ReaderViewState extends ConsumerState<ReaderView>
                       onPosition: (spot) {
                         _spot = spot;
                         _saveLater?.cancel();
-                        _saveLater = Timer(_saveDelay, _save);
+                        _saveLater = Timer(_saveDelay, () => _save().ignore());
                       },
                       onParagraphTap: _openMeaning,
                       openGroup: _openGroup,
@@ -413,7 +514,8 @@ class _ReaderViewState extends ConsumerState<ReaderView>
                               if (last != null) {
                                 _spot = (index: last.index, offset: 1);
                               }
-                              _save(); // waktu baca terbaru buat rekapnya
+                              _save()
+                                  .ignore(); // waktu baca terbaru buat rekapnya
                               _progress.markFinished(widget.bookId).ignore();
                               _chrome.show(); // status bar balik
                               setState(() => _finished = true);
@@ -466,8 +568,11 @@ class _ReaderViewState extends ConsumerState<ReaderView>
                                       _sheetOpen && _lastSheet == _Sheet.toc,
                                   aaOpen: _sheetOpen && _lastSheet == _Sheet.aa,
                                 ),
-                                bottom: ReaderBottomCapsule(
+                                bottom: ReaderChatDock(
                                   progress: progress,
+                                  onChat: _openingChat || !chatReady
+                                      ? null
+                                      : () => _openChat(),
                                   label: f >= 0.999
                                       ? 'Bab ${i + 1} beres'
                                       : '±${readingMinutes(left)} mnt lagi',
@@ -900,6 +1005,11 @@ class _ChapterTextState extends ConsumerState<_ChapterText>
   }
 
   /// Simpen titik yang sekarang di atas (abis halaman digeser sheet).
+  void stopAndReportPosition() {
+    if (_scroll.hasClients) _scroll.jumpTo(_scroll.offset);
+    reportPosition();
+  }
+
   void reportPosition() {
     final spot = _topSpot(_paras);
     if (spot != null) widget.onPosition(spot);
@@ -1017,7 +1127,11 @@ class _ChapterTextState extends ConsumerState<_ChapterText>
               animation: widget.chrome.hidden,
               // Tepi teks ikut varian kapsul ↔ imersif sepanjang animasi kapsul.
               builder: (context, child) {
-                final edges = readerEdgeFade(pad, widget.chrome.hidden.value);
+                final edges = readerEdgeFade(
+                  pad,
+                  widget.chrome.hidden.value,
+                  bottomHeight: readerDockHeight(context),
+                );
                 return EdgeFadeScroll(
                   top: edges.top,
                   bottom: edges.bottom,
@@ -1052,7 +1166,10 @@ class _ChapterTextState extends ConsumerState<_ChapterText>
                       widget.prefs.marginWidth,
                       pad.top + readerTextTop,
                       widget.prefs.marginWidth,
-                      pad.bottom + readerTextBottom,
+                      pad.bottom +
+                          readerTextBottom +
+                          readerDockHeight(context) -
+                          capsuleBottomHeight,
                     ),
                     child: Stack(
                       key: _contentKey,

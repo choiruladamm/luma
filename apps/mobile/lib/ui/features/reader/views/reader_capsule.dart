@@ -21,6 +21,18 @@ const capsuleHeight = 58.0;
 const capsuleBottomGap = 14.0;
 const capsuleBottomHeight = 40.0;
 
+bool _dockStacks(double width, double scale) =>
+    width <
+    Layout.readerChatWidth * scale + Space.s3 + Layout.touch * scale + Space.s8;
+
+double readerDockHeight(BuildContext context) {
+  final width = MediaQuery.sizeOf(context).width - 2 * Layout.margin;
+  final scale = MediaQuery.textScalerOf(context).scale(1);
+  return _dockStacks(width, scale)
+      ? capsuleBottomHeight + Space.s2 + Layout.touch
+      : Layout.touch;
+}
+
 /// Teks awal bab mulai di sini (board: 140), biar judulnya gak ketutup.
 const readerTextTop = 86.0;
 
@@ -34,8 +46,9 @@ const readerTextBottom = 66.0;
 /// fade sama sekali, teks lewat di bawah garis progres sampe tepi.
 ({EdgeFadeSide top, EdgeFadeSide bottom}) readerEdgeFade(
   EdgeInsets pad,
-  double t,
-) {
+  double t, {
+  double bottomHeight = capsuleBottomHeight,
+}) {
   final behind = lerpDouble(0.18, 1, t)!;
   return (
     top: EdgeFadeSide(
@@ -47,7 +60,7 @@ const readerTextBottom = 66.0;
     ),
     bottom: EdgeFadeSide(
       48,
-      hold: pad.bottom + capsuleBottomGap + capsuleBottomHeight,
+      hold: pad.bottom + capsuleBottomGap + bottomHeight,
       floor: behind,
     ),
   );
@@ -136,7 +149,7 @@ class ReaderCapsules extends StatelessWidget {
     final pad = MediaQuery.paddingOf(context);
     final topTravel = pad.top + capsuleTopGap + capsuleHeight + Space.s6;
     final bottomTravel =
-        pad.bottom + capsuleBottomGap + capsuleBottomHeight + Space.s6;
+        pad.bottom + capsuleBottomGap + readerDockHeight(context) + Space.s6;
     return AnimatedBuilder(
       animation: chrome.hidden,
       builder: (context, _) {
@@ -300,7 +313,10 @@ class ReaderBottomCapsule extends StatelessWidget {
     super.key,
     required this.progress,
     required this.label,
+    this.compact = false,
   });
+
+  final bool compact;
 
   /// Progres buku 0..1.
   final double progress;
@@ -323,23 +339,105 @@ class ReaderBottomCapsule extends StatelessWidget {
               color: c.ink,
             ),
           ),
-          SizedBox(
-            width: 88,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(Radii.full),
-              child: LinearProgressIndicator(
-                value: progress,
-                minHeight: 6,
-                backgroundColor: c.track,
-                color: c.progressFill,
+          if (!compact)
+            SizedBox(
+              width: Layout.readerProgressTrack,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(Radii.full),
+                child: LinearProgressIndicator(
+                  value: progress,
+                  minHeight: 6,
+                  backgroundColor: c.track,
+                  color: c.progressFill,
+                ),
               ),
             ),
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: StabiloType.caption.copyWith(color: c.ink2),
+            ),
           ),
-          Text(label, style: StabiloType.caption.copyWith(color: c.ink2)),
         ],
       ),
     );
   }
+}
+
+/// Shares the capsules' visibility and pointer handling; progress stays informational.
+class ReaderChatDock extends StatelessWidget {
+  const ReaderChatDock({
+    super.key,
+    required this.progress,
+    required this.label,
+    required this.onChat,
+  });
+  final double progress;
+  final String label;
+  final VoidCallback? onChat;
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(horizontal: Layout.margin),
+    child: LayoutBuilder(
+      builder: (context, constraints) {
+        final scale = MediaQuery.textScalerOf(context).scale(1);
+        final chatWidth = Layout.readerChatWidth * scale;
+        if (_dockStacks(constraints.maxWidth, scale)) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            spacing: Space.s2,
+            children: [
+              ReaderBottomCapsule(
+                progress: progress,
+                label: label,
+                compact: true,
+              ),
+              SizedBox(
+                width: math.min(chatWidth, constraints.maxWidth),
+                child: AppButton.secondary(
+                  label: 'Ngobrol',
+                  icon: AppIcons.chat,
+                  height: Layout.touch,
+                  onPressed: onChat,
+                ),
+              ),
+            ],
+          );
+        }
+        final compact =
+            constraints.maxWidth <
+            Layout.readerProgressWidth + Space.s3 + chatWidth;
+        return ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: Layout.readerProgressWidth + Space.s3 + chatWidth,
+          ),
+          child: Row(
+            spacing: Space.s3,
+            children: [
+              Expanded(
+                child: ReaderBottomCapsule(
+                  progress: progress,
+                  label: label,
+                  compact: compact,
+                ),
+              ),
+              SizedBox(
+                width: chatWidth,
+                child: AppButton.secondary(
+                  label: 'Ngobrol',
+                  icon: AppIcons.chat,
+                  height: Layout.touch,
+                  onPressed: onChat,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    ),
+  );
 }
 
 /// Garis progres 2pt selebar layar, duduk tepat di atas safe area bawah.

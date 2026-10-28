@@ -34,6 +34,14 @@ void main() {
         ),
       );
 
+  test('reader book exposes content revision used by chat entry', () async {
+    final id = await add('Revision');
+    final repo = BookRepository(db);
+    expect((await repo.readerBook(id))!.contentRevision, 1);
+    await db.contentChanged(id);
+    expect((await repo.readerBook(id))!.contentRevision, 2);
+  });
+
   test('shelf: last opened first, then never-opened newest first', () async {
     await add('Old unopened', created: DateTime(2026, 1, 1));
     await add('New unopened', created: DateTime(2026, 2, 1));

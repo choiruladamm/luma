@@ -134,9 +134,11 @@ class ReaderBook {
     required this.title,
     required this.totalChars,
     required this.chapters,
+    this.contentRevision = 1,
   });
 
   final int id;
+  final int contentRevision;
   final String title;
   final int totalChars;
   final List<ChapterInfo> chapters;

@@ -11,6 +11,9 @@ import '../../../../data/repositories/settings_repository.dart';
 import '../../../../domain/breakdown_prompt.dart';
 import '../../../../domain/breakdown_sync.dart';
 import '../../../../domain/models/ai_reply.dart';
+import '../../../../domain/models/book_chat.dart';
+import '../../chat/view_models/chat_entry.dart';
+import '../../reader/view_models/reader_view_model.dart';
 import '../../../../domain/models/breakdown.dart';
 import '../../../../domain/models/reader_prefs.dart';
 import '../../../../domain/pacing.dart';
@@ -31,14 +34,20 @@ import 'peek_sheet.dart';
 
 /// Layar Bedahin (board "Terpilih · Bedahin · Opsi C · layar bedah" + "Spek ·
 /// Bedahin · state"). Di-push dari sheet Artinya: balik = ke sheet, "Balik
-/// baca" = `pop(true)`, sheet-nya ikut ditutup sama yang manggil. Ditutup di
+/// baca" = `pop(ReaderReturn.reading)`, sheet-nya ikut ditutup sama yang manggil. Ditutup di
 /// tengah proses = request dibatalin (provider autoDispose). Bisa numpuk
 /// (#65): "Bedahin ini juga" dari intip push Bedahin lain di atasnya; balik =
-/// mundur satu lapis, "Balik baca" dari lapis mana pun nerusin `pop(true)`
+/// mundur satu lapis, "Balik baca" dari lapis mana pun nerusin `pop(ReaderReturn.reading)`
 /// sampe ke halaman.
 class BreakdownView extends ConsumerStatefulWidget {
-  const BreakdownView({super.key, required this.bookId, required this.group});
+  const BreakdownView({
+    super.key,
+    required this.bookId,
+    required this.group,
+    this.chatContext,
+  });
 
+  final ChatLaunchContext? chatContext;
   final int bookId;
   final GroupRef group;
 
@@ -73,13 +82,75 @@ class _BreakdownViewState extends ConsumerState<BreakdownView> {
     if (!mounted) return;
     switch (result) {
       case PeekBreakdown(:final group):
-        final read = await context.push<bool>(
+        final read = await context.push<ReaderReturn>(
           Routes.breakdown(widget.bookId, group.chapterId, group.groupIndex),
+          extra: widget.chatContext,
         );
-        if (read == true && mounted) context.pop(true);
+        if (read == ReaderReturn.reading && mounted) {
+          context.pop(ReaderReturn.reading);
+        }
       case PeekSettings():
         await context.push(Routes.settings);
       case null:
+    }
+  }
+
+  bool _openingChat = false;
+  Future<void> _askChat() async {
+    if (_openingChat) return;
+    final state = ref.read(breakdownStreamProvider(widget.group));
+    if (state.phase != BreakdownPhase.done || state.input == null) return;
+    _openingChat = true;
+    try {
+      final quote = await ref.read(
+        chatEntryQuoteProvider((bookId: widget.bookId, group: widget.group))
+            .future,
+      );
+      final book = quote.anchors.first.book;
+      final entry = widget.chatContext;
+      if (entry != null && entry.book != book) {
+        throw const FormatException('Isi buku berubah');
+      }
+      if (quote.anchors.map((a) => a.snapshot).join('\n\n') !=
+          state.input!.original.join('\n\n')) {
+        throw const FormatException('Kutipan berubah');
+      }
+      final position =
+          entry?.returnPosition ??
+          await ref.read(readingPositionProvider(widget.bookId).future);
+      if (!mounted) return;
+      final launch = ChatLaunchContext(
+        book: book,
+        quote: ChatQuote(
+          anchors: quote.anchors,
+          translation: state.input!.translations.join('\n\n'),
+        ),
+        origin: ChatLaunchOrigin.breakdown,
+        returnPosition:
+            position ??
+            (
+              chapterId: widget.group.chapterId,
+              paragraphIndex: quote.anchors.first.paragraphIndex,
+              paragraphOffset: 0,
+            ),
+      );
+      final result = await context.push<ReaderReturn>(
+        Routes.chat(widget.bookId),
+        extra: launch,
+      );
+      await WidgetsBinding.instance.endOfFrame;
+      if (result == ReaderReturn.reading && mounted) {
+        context.pop(ReaderReturn.reading);
+      }
+    } catch (_) {
+      if (mounted) {
+        showToast(
+          context,
+          'Kutipannya belum bisa dibawa. Coba buka ulang bukunya.',
+        );
+      }
+    } finally {
+      _openingChat = false;
     }
   }
 
@@ -106,11 +177,12 @@ class _BreakdownViewState extends ConsumerState<BreakdownView> {
         typo: ReaderTypography(prefs, Theme.of(context).brightness),
         copied: _copied,
         onBack: () => context.pop(),
-        onDone: () => context.pop(true),
+        onDone: () => context.pop(ReaderReturn.reading),
         onRetry: _retry,
         onSettings: _settings,
         onCopy: _copy,
         onPeek: _peek,
+        onChat: _askChat,
       ),
     );
   }
@@ -257,6 +329,7 @@ class _Screen extends StatefulWidget {
     required this.onSettings,
     required this.onCopy,
     required this.onPeek,
+    required this.onChat,
   });
 
   final GroupRef group;
@@ -265,6 +338,7 @@ class _Screen extends StatefulWidget {
   final bool copied;
   final VoidCallback onBack;
   final VoidCallback onDone;
+  final VoidCallback onChat;
   final VoidCallback onRetry;
   final VoidCallback onSettings;
   final void Function(BreakdownInput, Breakdown) onCopy;
@@ -660,7 +734,22 @@ class _ScreenState extends State<_Screen> with TickerProviderStateMixin {
               padding: const EdgeInsets.symmetric(horizontal: Space.s4),
               child: panel,
             ),
-            Padding(padding: pad, child: explanation),
+            Padding(
+              padding: pad,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                spacing: Space.s4,
+                children: [
+                  explanation,
+                  if (_finished && !cut)
+                    AppButton.secondary(
+                      label: 'Tanyain ini',
+                      icon: AppIcons.chat,
+                      onPressed: widget.onChat,
+                    ),
+                ],
+              ),
+            ),
           ],
         ),
       );
@@ -692,7 +781,22 @@ class _ScreenState extends State<_Screen> with TickerProviderStateMixin {
               explicitChildNodes: true,
               child: _scroll(
                 frozen: thinking || failed,
-                child: Padding(padding: pad, child: explanation),
+                child: Padding(
+                  padding: pad,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    spacing: Space.s4,
+                    children: [
+                      explanation,
+                      if (_finished && !cut)
+                        AppButton.secondary(
+                          label: 'Tanyain ini',
+                          icon: AppIcons.chat,
+                          onPressed: widget.onChat,
+                        ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),

@@ -13,6 +13,9 @@ import '../../../../domain/ai_prompt.dart';
 import '../../../../domain/models/ai_reply.dart';
 import '../../../../domain/models/book.dart';
 
+/// Injectable wall clock for reader activity accounting.
+final readerNowProvider = Provider<DateTime Function()>((ref) => DateTime.now);
+
 /// Buku + daftar chapter. Daftar isi (#17) pake ini juga.
 final readerBookProvider = FutureProvider.autoDispose.family<ReaderBook?, int>(
   (ref, bookId) => ref.watch(bookRepositoryProvider).readerBook(bookId),

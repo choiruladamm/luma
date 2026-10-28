@@ -38,7 +38,9 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: 'breakdown/:chapterId/:groupIndex',
             pageBuilder: (context, state) {
+              final entry = state.extra;
               final view = BreakdownView(
+                chatContext: entry is ChatLaunchContext ? entry : null,
                 bookId: int.parse(state.pathParameters['bookId']!),
                 group: (
                   chapterId: int.parse(state.pathParameters['chapterId']!),
