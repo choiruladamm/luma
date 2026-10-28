@@ -29,7 +29,7 @@
     "test/support/book_chat_oracle.dart": "d94ead16a532624c86bec75a720d12a5259d7a74d6726b8372252bc4c53f6b7a",
     "test/support/book_chat_heldout.dart": "1835ae11825afd15b75e0a3d576984b562086a2603c740d54b1d5683197ad651",
     "test/data/book_chat_refinement_live_test.dart": "9265be93f14666c5ac29b16dc18aeab9e7cf90d1bc4421ad3170ab8fa43e405f",
-    "lib/data/services/openrouter_service.dart": "f52ee183b6c674c3558186a814fab0abb0bcaca47968b0adc604b236dd594b65",
+    "lib/data/services/openrouter_service.dart": "25b40e8d6441cdaab0074c2d3c766dac2f418ca62544c02fe6ee658a364e62c6",
     "pubspec.lock": "445de7039b418d08f7ce92f50623a276245949014d7a4060a63b312510368b5d",
     "test/support/book_chat_validation2.dart": "ac49e22357fdd6953d5583725ef1e66461b487f7b14c916d251823c84f806091",
     "test/data/book_chat_validation2_live_test.dart": "05b8cd09be0dad3e005d3b04bf8e02adef8c18477e2fafd57958de356f70e00e",
@@ -58,5 +58,10 @@
     "fallbackPolicy": "network/timeouts,404/408/429/5xx; no auth/billing/invalid-input/cancel/certificate fallback",
     "indexPolicy": "Rebuild full document index and every query under one model; never mix spaces or silently truncate dimensions.",
     "queryPolicy": "Qwen instruct prefix on primary; plain original question/history/selected text on Large."
-  }
+  },
+  "replayOf": {
+    "file": "test/fixtures/book_chat_spike113/book_chat_validation2_protocol.json",
+    "sha256": "ef79ac4af7d4c0a42cda80647be297512976d0c29920f155def31f8e9742a02c"
+  },
+  "replayAdaptation": "#117 extends the shared OpenRouter transport; frozen spike evidence is archived byte-for-byte in replayOf. Gold, prompts and retrieval helpers unchanged. This replay manifest is not a new quality evaluation."
 }

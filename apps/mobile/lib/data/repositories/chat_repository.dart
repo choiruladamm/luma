@@ -534,6 +534,33 @@ class ChatRepository {
     });
   }
 
+  /// Recheck the frozen attempt before network and before exposing live citations.
+  Future<bool> validatePrepared(
+    ChatAttemptRef ref,
+    List<ChatSource> sources,
+  ) async {
+    if (!await _callbackReady()) return false;
+    return _db.transaction(() async {
+      final owned = await _guard(ref);
+      if (owned == null ||
+          ![
+            ChatPhase.waiting.name,
+            ChatPhase.writing.name,
+            ChatPhase.slow.name,
+          ].contains(owned.turn.phase)) {
+        return false;
+      }
+      final raw = jsonEncode(ChatSnapshot.sourcesData(sources));
+      if (owned.turn.sources != raw) return false;
+      validateChatSources(
+        sources,
+        ref.book,
+        await _paragraphs(ref.book, sources.expand((s) => s.anchors)),
+      );
+      return !_disposed;
+    });
+  }
+
   /// True = accepted (possibly buffered). Cumulative drafts must never shrink.
   /// At most one write/500ms unless ≥1KiB grew or phase changed; no token timers.
   Future<bool> checkpoint(

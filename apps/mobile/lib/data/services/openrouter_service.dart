@@ -1,10 +1,15 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/ai_prompt.dart';
 import '../../domain/breakdown_prompt.dart';
+import '../../domain/chat_prompt.dart';
+import '../../domain/chat_retrieval.dart';
+import '../../domain/models/book_chat.dart';
+
 import '../../domain/models/ai_reply.dart';
 
 /// OpenRouter (API OpenAI-compatible, docs/llm.md).
@@ -35,7 +40,7 @@ class OpenRouterService {
     required List<String> target,
     int attempts = 2,
   }) async {
-    if (apiKey == null || apiKey.isEmpty) {
+    if (apiKey == null || apiKey.trim().isEmpty) {
       throw const AiException(AiError.noApiKey);
     }
     for (var attempt = 1; ; attempt++) {
@@ -86,14 +91,99 @@ class OpenRouterService {
     cancel,
   );
 
+  /// Chat/rewrite/selector share SSE and bounded pre-content reasoning fallback.
+  /// History can be supplied as native user/assistant messages by other callers.
+  Stream<String> chatStream({
+    required String? apiKey,
+    required String model,
+    required String system,
+    required String user,
+    List<Map<String, String>> history = const [],
+    int maxTokens = chatAnswerMaxTokens,
+    CancelToken? cancel,
+  }) {
+    final messages = [
+      {'role': 'system', 'content': system},
+      ...history,
+      {'role': 'user', 'content': user},
+    ];
+    if (maxTokens <= 0 ||
+        maxTokens > chatAnswerMaxTokens ||
+        history.any(
+          (m) =>
+              !['user', 'assistant'].contains(m['role']) ||
+              m['content'] == null,
+        ) ||
+        utf8.encode(jsonEncode(messages)).length > chatSelectorBytes) {
+      throw const AiException(
+        AiError.invalidResponse,
+        detail: 'chat input budget',
+      );
+    }
+    return _stream(
+      apiKey,
+      model,
+      system,
+      user,
+      cancel,
+      messages: messages,
+      maxTokens: maxTokens,
+      jsonOutput: true,
+    );
+  }
+
+  Future<List<Float32List>> embeddings({
+    required String? apiKey,
+    required ChatEmbeddingModel model,
+    required List<String> input,
+    CancelToken? cancel,
+  }) async {
+    if (apiKey == null || apiKey.trim().isEmpty) {
+      throw const AiException(AiError.noApiKey);
+    }
+    if (input.isEmpty ||
+        input.length > 64 ||
+        input.any(
+          (t) =>
+              t.isEmpty || !chatValidUnicode(t) || utf8.encode(t).length > 8000,
+        )) {
+      throw const AiException(
+        AiError.invalidResponse,
+        detail: 'embedding input budget',
+      );
+    }
+    try {
+      final res = await _dio.post<Object?>(
+        '/embeddings',
+        cancelToken: cancel,
+        options: _auth(apiKey),
+        data: {'model': model.id, 'input': input, 'encoding_format': 'float'},
+      );
+      return parseChatEmbeddings(res.data, input.length, model);
+    } on DioException catch (e) {
+      // Preserve cancel/certificate/unknown so these never trigger provider fallback.
+      if (e.type == DioExceptionType.cancel ||
+          e.type == DioExceptionType.badCertificate ||
+          e.type == DioExceptionType.unknown) {
+        rethrow;
+      }
+      throw await _failure(e);
+    } on FormatException catch (e) {
+      throw AiException(AiError.invalidResponse, detail: e.message);
+    }
+  }
+
   Stream<String> _stream(
     String? apiKey,
     String model,
     String system,
     String user,
-    CancelToken? cancel,
-  ) async* {
-    if (apiKey == null || apiKey.isEmpty) {
+    CancelToken? cancel, {
+    List<Map<String, String>>? messages,
+    int? maxTokens,
+    bool jsonOutput = false,
+  }) async* {
+    if (apiKey == null || apiKey.trim().isEmpty) {
       throw const AiException(AiError.noApiKey);
     }
     final res = await _post<ResponseBody>(
@@ -103,11 +193,15 @@ class OpenRouterService {
       user,
       stream: true,
       cancel: cancel,
+      messages: messages,
+      maxTokens: maxTokens,
+      jsonOutput: jsonOutput,
     );
     final sse = SseDecoder();
     try {
       await for (final chunk in utf8.decoder.bind(res.data!.stream)) {
         for (final data in sse.add(chunk)) {
+          if (cancel?.isCancelled ?? false) throw cancel!.cancelError!;
           if (data == '[DONE]') return;
           final delta = _delta(data);
           if (delta.isNotEmpty) yield delta;
@@ -157,6 +251,9 @@ class OpenRouterService {
     bool stream = false,
     CancelToken? cancel,
     bool reasoningOff = true,
+    List<Map<String, String>>? messages,
+    int? maxTokens,
+    bool jsonOutput = false,
   }) async {
     try {
       return await _dio.post<T>(
@@ -166,17 +263,21 @@ class OpenRouterService {
             .copyWith(responseType: stream ? ResponseType.stream : null),
         data: {
           'model': model,
-          'messages': [
-            {'role': 'system', 'content': system},
-            {'role': 'user', 'content': user},
-          ],
+          'messages':
+              messages ??
+              [
+                {'role': 'system', 'content': system},
+                {'role': 'user', 'content': user},
+              ],
           // Token reasoning dihitung output dan bikin lambat: matiin. Model
           // yang gak bisa dimatiin dapet yang paling minim, gak ikut dibalikin.
           'reasoning': reasoningOff
               ? {'enabled': false}
               : {'effort': 'minimal', 'exclude': true},
           if (stream) 'stream': true,
-          if (!stream) 'response_format': {'type': 'json_object'},
+          'max_tokens': ?maxTokens,
+          if (jsonOutput) 'temperature': 0,
+          if (!stream || jsonOutput) 'response_format': {'type': 'json_object'},
         },
       );
     } on DioException catch (e) {
@@ -190,6 +291,9 @@ class OpenRouterService {
           stream: stream,
           cancel: cancel,
           reasoningOff: false,
+          messages: messages,
+          maxTokens: maxTokens,
+          jsonOutput: jsonOutput,
         );
       }
       throw failure;

@@ -1,4 +1,8 @@
 import 'dart:async';
+import 'dart:typed_data';
+
+import 'package:luma/domain/chat_prompt.dart';
+import 'package:luma/domain/models/book_chat.dart';
 
 import 'package:dio/dio.dart';
 
@@ -150,6 +154,25 @@ class FakeSettings implements SettingsRepository {
 /// OpenRouter without the network. [keyOk] null = can't reach it.
 /// [explain] answers "id: " + each target paragraph, or throws [failure].
 class FakeOpenRouter implements OpenRouterService {
+  @override
+  Stream<String> chatStream({
+    required String? apiKey,
+    required String model,
+    required String system,
+    required String user,
+    List<Map<String, String>> history = const [],
+    int maxTokens = chatAnswerMaxTokens,
+    CancelToken? cancel,
+  }) => throw UnimplementedError('Use the fake Dio chat transport');
+
+  @override
+  Future<List<Float32List>> embeddings({
+    required String? apiKey,
+    required ChatEmbeddingModel model,
+    required List<String> input,
+    CancelToken? cancel,
+  }) => throw UnimplementedError('Use the fake Dio embedding transport');
+
   bool? keyOk = true;
 
   /// Kalau diisi, checkKey nunggu sampai selesai (cek yang lagi jalan).
