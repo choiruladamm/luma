@@ -204,6 +204,31 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  test('unfinished index progress never hides a terminal status', () {
+    for (final phase in [
+      ChatPhase.done,
+      ChatPhase.failed,
+      ChatPhase.cut,
+      ChatPhase.stopped,
+      ChatPhase.interrupted,
+    ]) {
+      expect(
+        ChatState(
+          phase: phase,
+          indexProgress: (completed: 64, total: 100),
+        ).indexLabel,
+        isNull,
+      );
+    }
+    expect(
+      ChatState(
+        phase: ChatPhase.slow,
+        indexProgress: (completed: 100, total: 100),
+      ).indexLabel,
+      isNull,
+    );
+  });
+
   for (final theme in [ThemeMode.light, ThemeMode.dark]) {
     testWidgets('index progress and Stop remain available in $theme', (
       tester,
@@ -222,7 +247,19 @@ void main() {
       );
       expect(find.text('Lagi nyiapin buku… 64/100 potongan'), findsOneWidget);
       expect(tester.takeException(), isNull);
-      vm.push(vm.current.copyWith(indexProgress: (completed: 100, total: 100)));
+      vm.push(vm.current.copyWith(phase: ChatPhase.slow));
+      await tester.pump();
+      expect(find.text('Lagi nyiapin buku… 64/100 potongan'), findsOneWidget);
+      expect(find.text('Agak lama nih, masih diproses…'), findsNothing);
+      vm.push(vm.current.copyWith(indexProgress: (completed: 80, total: 100)));
+      await tester.pump();
+      expect(find.text('Lagi nyiapin buku… 80/100 potongan'), findsOneWidget);
+      vm.push(
+        vm.current.copyWith(
+          phase: ChatPhase.retrieving,
+          indexProgress: (completed: 100, total: 100),
+        ),
+      );
       await tester.pump();
       expect(find.text('Lagi nyari sumber di buku…'), findsOneWidget);
       expect(vm.sends, 0);
