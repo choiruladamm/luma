@@ -948,4 +948,24 @@ void main() {
     await repo.deleteSession(book.bookId, t.sessionId);
     expect(await sessions(), isEmpty);
   });
+  test('lifecycle lookup is book-scoped and book identity stream follows revision/deletion', () async {
+    final t = await first();
+    expect((await repo.session(book.bookId, t.sessionId))!.id, t.sessionId);
+    expect(await repo.session(other.bookId, t.sessionId), isNull);
+    final stream = StreamIterator(repo.watchBook(book.bookId));
+    try {
+      expect(await stream.moveNext(), true);
+      expect(stream.current, book);
+      await (db.update(db.books)..where((b) => b.id.equals(book.bookId))).write(
+        const BooksCompanion(contentRevision: Value(2)),
+      );
+      expect(await stream.moveNext(), true);
+      expect(stream.current, (bookId: book.bookId, contentRevision: 2));
+      await (db.delete(db.books)..where((b) => b.id.equals(book.bookId))).go();
+      expect(await stream.moveNext(), true);
+      expect(stream.current, isNull);
+    } finally {
+      await stream.cancel();
+    }
+  });
 }

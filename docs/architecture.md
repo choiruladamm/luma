@@ -109,7 +109,7 @@ Kontrak di `lib/domain/models/book_chat.dart` dan `lib/domain/chat_prompt.dart`;
 Schema 8 menyediakan tabel chat (#115). `ChatRepository` +
 `chatRepositoryProvider` non-autoDispose menyediakan persistence (#116), tanpa
 network. Retrieval dan transport tersedia lewat `ChatContextRepository` (#117);
-ViewModel, route dan UI menyusul.
+ViewModel/lifecycle tersedia lewat `chatViewModelProvider` (#118); route dan UI menyusul.
 
 `ChatBookRef` = `(bookId, contentRevision)`. Session revision lama read-only;
 metadata judul/penulis/cover tidak menaikkan revision. Append/replace/reorder isi,
@@ -178,3 +178,68 @@ failed/cut oleh ViewModel. Embedding mempertahankan DioException cancel/certific
 unknown agar tidak memicu fallback; #118 menangani ini bersama AiException. Semua
 tahap memakai cancel yang sama. Keluar/pindah sesi/background tetap harus cancel dan finalize; repository konteks tidak memiliki lifecycle
 UI atau auto-retry. Detail budget, cache dan protocol: [llm.md](llm.md).
+
+
+### ViewModel dan lifecycle Ngobrolin buku (#118)
+
+`chatViewModelProvider(bookId)` adalah `NotifierProvider.autoDispose.family` manual,
+satu controller per route buku. `ChatState` immutable memuat book/revision aktif,
+activeSession, turns, draft, selectedQuote, phase/error/problem, loading,
+changingSession dan scrollAnchor. `archived/readOnly/canSend/canRetry` diturunkan
+dari state; archived bukan phase baru. `chatSessionsProvider(bookId)` terpisah
+untuk daftar sesi (`AsyncValue`). `ChatRepository.watchBook` memantau revision/
+penghapusan, `session(bookId,sessionId)` tetap book-scoped.
+
+Build/hydrate/open/list/resume hanya membaca DB dan memulihkan running sebagai
+interrupted lewat recovery repository. Tidak ada request berbayar. Entry reader
+melanjutkan lastOpened; #120/#121 memanggil `launch(ChatLaunchContext)` **sekali dari
+aksi/entry**, bukan setiap build. Quote explicit membuat draft baru tanpa record;
+bisa dilepas. Launch menunggu hydrate agar quote tidak tertimpa resume. Draft
+bertahan saat kembali dari Pengaturan; settings/model/key tidak memicu auto-send.
+
+API aksi: `setDraft`, `removeQuote`, `send`, `retry`, `stop`, `openSession`,
+`newSession`, `launch`, `deleteSession`, `rename`, dan `setScrollAnchor`.
+`send/retry` mengembalikan Future sampai attempt terminal. Guard dipasang sebelum
+await model/first insert, termasuk untuk double tap retry. Setelah turn tersimpan,
+draft/quote dilepas dan controller memakai sessionId/attemptRef dari repository.
+Jika stop datang saat insert belum selesai, stop menunggu hasil insert dan
+memfinalisasi turn stopped; sesi yang sudah tersimpan tetap aktif jika tidak
+sedang navigasi. Insert yang gagal menyisakan draft untuk dikirim ulang eksplisit.
+
+| Pemicu | Transisi/efek |
+|---|---|
+| Send/retry eksplisit | preparing → retrieving → waiting → writing → done |
+| 15s belum ada raw token | slow di state UI; request masih berjalan |
+| Retrieval/rewrite/embedding/selector total 3 menit | failed + timeout; cancel, tanpa retry |
+| 30s setelah prepare tanpa raw token | failed + timeout |
+| 20s stall setelah raw token | cut + timeout, flush raw partial |
+| HTTP/network/invalid output | failed sebelum raw, cut setelah raw; error dipertahankan |
+| Stop/back/switch/new/delete/background | cancel segera, flush stopped sebelum perpindahan |
+| Proses restart | interrupted dari repository; tidak resend |
+| Owner/attempt hilang atau callback false | interrupted/discard; tidak menjadi not_found |
+| Revision berubah/buku dihapus | cancel, archive/readOnly atau state buku hilang |
+
+Raw JSON dari #117 hanya untuk checkpoint, bukan preview/rich text. UI tidak boleh
+menganggap raw partial sebagai jawaban atau source action. Hanya final frame yang
+tervalidasi diteruskan ke finalize done. Clock memakai 15/30/20s yang sama dengan
+Artinya; retrieval memakai deadline total3menit terpisah karena dapat mencakup
+indexing buku. Nilai ini batas produksi konservatif, bukan hasil benchmark device.
+Tidak memakai Pacer untuk menampilkan JSON yang belum tervalidasi.
+
+Perpindahan sesi diserialkan dan menutup satu run sebelum aksi berikutnya; send
+nonaktif selama perpindahan. Scroll anchor stabil ditahan di memori dan disimpan
+saat stop/perpindahan. Callback stream baca lama ditolak memakai generation seleksi;
+cleanup subscription tidak menghambat navigasi. Retry hanya turn terakhir yang
+cut/failed/stopped/interrupted, menimpa attempt tanpa menambah pertanyaan user.
+
+`AppLifecycleListener` memanggil stop pada inactive/hidden/paused/detached; resumed
+tidak mengirim ulang. Back/route change di #120/#121 **harus await `stop()` sebelum
+navigasi**. Dispose juga cancel/flush melalui instance repository asal, dan semua
+callback lama dipagari lifetime. Dispose Riverpod bersifat sinkron: flush fallback
+berjalan async; sebelum menutup/mengganti DB, #119 wajib await stop terlebih dahulu.
+Restore/provider rebuild memasang lifetime baru; callback lama tidak membaca ref/
+state/instance provider baru. Tidak ada key di ChatState.
+
+Perubahan revision atomik di semua jalur import/restore tetap scope #119. Jika isi
+sudah berubah sebelum cancel/flush, guard repository menolak late write; arsip tetap
+readOnly. Jangan melemahkan guard untuk memfinalisasi ke revision lain.
