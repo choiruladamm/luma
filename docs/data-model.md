@@ -151,6 +151,7 @@ Log append-only request LLM, terpisah dari cache `ai_results` (`createdAt`-nya k
 | 6 | Tabel `ai_breakdowns` (Bedahin, #62). Data lama gak disentuh |
 | 7 | `books.originalTitle`, `originalAuthor`, `useDefaultCover` (ubah judul + penulis, #69). Baris lama: `null`, `null`, `false` |
 | 8 | `books.contentRevision` default 1, `chat_sessions`, `chat_turns` (#115). Tabel chat kosong saat upgrade; semua data lama dipertahankan |
+| 9 | `chat_indexes` dan `chat_vectors` (#134), kosong saat upgrade; seluruh data user dipertahankan |
 
 Tiap ubah tabel: naikkan `schemaVersion`, tambah langkah di `onUpgrade`, dan test migrasi dari versi sebelumnya (data tetap utuh, schema hasil migrasi sama dengan install baru). Restore backup dari schema lama ikut dimigrasi saat database dibuka ([backup.md](backup.md)).
 
@@ -233,3 +234,16 @@ Migrasi hanya `ADD COLUMN` dan `CREATE TABLE/INDEX`; tidak mengganti tabel lama.
 Backup ZIP tetap format 1 karena membawa snapshot seluruh DB; manifest melaporkan
 schema 8. Downgrade binary schema 7 tidak didukung: rollback data memakai backup
 sebelum upgrade, bukan menurunkan PRAGMA user_version atau menghapus app.
+
+
+## Cache index Ngobrol (#134)
+
+`chat_indexes`: id, bookId (FK cascade), identity unik (JSON versi format1,
+bookId/contentRevision/parser/chunkPolicy/model/dimensions/queryTemplate), manifest,
+chunkCount, ready defaultfalse. `chat_vectors`: indexId (FK cascade), ordinal,
+vector BLOB Float32 little-endian, checksum SHA-256 base64 BLOB; PK(indexId,ordinal).
+Anchor tidak disalin: chunk/anchor dibangun ulang dari teks dan dicek manifest-nya.
+Index lengkap dan partial ikut backup sebagai data turunan yang bisa dibuat ulang.
+Perubahan isi melalui contentChanged menghapus cache buku; hapus buku cascade.
+Hapus sesi tidak menghapus cache. Index building menyimpan prefix batch sukses;
+ready hanya setelah semua vektor tersimpan. Tidak ada transaksi selama network.

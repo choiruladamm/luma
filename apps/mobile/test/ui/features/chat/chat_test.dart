@@ -204,6 +204,72 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  test('unfinished index progress never hides a terminal status', () {
+    for (final phase in [
+      ChatPhase.done,
+      ChatPhase.failed,
+      ChatPhase.cut,
+      ChatPhase.stopped,
+      ChatPhase.interrupted,
+    ]) {
+      expect(
+        ChatState(
+          phase: phase,
+          indexProgress: (completed: 64, total: 100),
+        ).indexLabel,
+        isNull,
+      );
+    }
+    expect(
+      ChatState(
+        phase: ChatPhase.slow,
+        indexProgress: (completed: 100, total: 100),
+      ).indexLabel,
+      isNull,
+    );
+  });
+
+  for (final theme in [ThemeMode.light, ThemeMode.dark]) {
+    testWidgets('index progress and Stop remain available in $theme', (
+      tester,
+    ) async {
+      await open(
+        tester,
+        themeMode: theme,
+        state: ChatState(
+          book: book,
+          loading: false,
+          activeSession: session(1),
+          turns: [turn(1, phase: ChatPhase.retrieving)],
+          phase: ChatPhase.retrieving,
+          indexProgress: (completed: 64, total: 100),
+        ),
+      );
+      expect(find.text('Lagi nyiapin buku… 64/100 potongan'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      vm.push(vm.current.copyWith(phase: ChatPhase.slow));
+      await tester.pump();
+      expect(find.text('Lagi nyiapin buku… 64/100 potongan'), findsOneWidget);
+      expect(find.text('Agak lama nih, masih diproses…'), findsNothing);
+      vm.push(vm.current.copyWith(indexProgress: (completed: 80, total: 100)));
+      await tester.pump();
+      expect(find.text('Lagi nyiapin buku… 80/100 potongan'), findsOneWidget);
+      vm.push(
+        vm.current.copyWith(
+          phase: ChatPhase.retrieving,
+          indexProgress: (completed: 100, total: 100),
+        ),
+      );
+      await tester.pump();
+      expect(find.text('Lagi nyari sumber di buku…'), findsOneWidget);
+      expect(vm.sends, 0);
+      await tester.tap(button('Hentikan jawaban'));
+      await tester.pumpAndSettle();
+      expect(vm.stops, 1);
+      expect(find.text('Jawaban dihentikan'), findsOneWidget);
+    });
+  }
+
   testWidgets('launch extra is applied once and mismatched book is ignored', (
     t,
   ) async {
@@ -502,6 +568,54 @@ void main() {
     expect(t.getBottomLeft(button('Kirim pertanyaan')).dy, lessThan(544));
     expect(t.takeException(), isNull);
   });
+
+  testWidgets(
+    'long answer can scroll up slowly from latest without snapping back',
+    (t) async {
+      final longAnswer = ChatAnswer(
+        status: ChatAnswerStatus.answered,
+        blocks: [
+          ChatAnswerBlock(
+            text: List.filled(
+              100,
+              'Jawaban panjang yang bisa dibaca dengan menggulir.',
+            ).join('\n'),
+            sources: [source],
+          ),
+        ],
+      );
+      await open(
+        t,
+        size: const Size(390, 844),
+        state: ChatState(
+          book: book,
+          loading: false,
+          activeSession: session(1),
+          turns: [turn(1, answer: longAnswer)],
+        ),
+      );
+      final scroll = t
+          .widget<CustomScrollView>(find.byType(CustomScrollView))
+          .controller!;
+      final bottom = scroll.offset;
+      final gesture = await t.startGesture(
+        t.getCenter(find.byType(CustomScrollView)),
+      );
+      for (var i = 0; i < 12; i++) {
+        await gesture.moveBy(const Offset(0, 20));
+        if (i == 2) vm.push(vm.current.copyWith(phase: ChatPhase.waiting));
+        await t.pump(const Duration(milliseconds: 16));
+      }
+      await gesture.up();
+      await t.pumpAndSettle();
+      expect(scroll.offset, lessThan(bottom - 150));
+      expect(find.text('Ke terbaru'), findsOneWidget);
+      final away = scroll.offset;
+      vm.push(vm.current.copyWith(turns: [...vm.current.turns]));
+      await t.pumpAndSettle();
+      expect(scroll.offset, closeTo(away, 1));
+    },
+  );
 
   testWidgets(
     'long history is lazy and respects scroll away and stable anchor',

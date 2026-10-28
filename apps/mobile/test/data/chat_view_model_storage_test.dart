@@ -119,6 +119,25 @@ void main() {
     await db.close();
   });
 
+  test('ViewModel exposes durable index progress and ignores late progress after stop', () async {
+    final entered = Completer<void>(), release = Completer<void>();
+    adapter.onEmbedding = () async {
+      adapter.onEmbedding = null;
+      entered.complete();
+      await release.future;
+    };
+    vm().setDraft('Siapa?');
+    final send = vm().send();
+    await entered.future;
+    expect(state().indexProgress, (completed: 0, total: 2));
+    await vm().stop();
+    release.complete();
+    await send;
+    expect(state().phase, ChatPhase.stopped);
+    expect(state().indexProgress, (completed: 0, total: 2));
+    expect(await db.select(db.chatVectors).get(), isEmpty);
+  });
+
   test('real Drift + fake Dio: first send, completed sources, append and resume without paid hydration', () async {
     vm().setDraft('Siapa yang punya taman?');
     final first = vm().send();

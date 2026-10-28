@@ -38,6 +38,7 @@ class ChatAdapter implements HttpClientAdapter {
   bool badRewrite = false;
   String answerId = 'S1';
   Future<void> Function()? onSelect;
+  Future<void> Function()? onEmbedding;
   @override
   Future<ResponseBody> fetch(
     RequestOptions options,
@@ -47,6 +48,7 @@ class ChatAdapter implements HttpClientAdapter {
     requests.add(options);
     final data = options.data as Map;
     if (options.path == '/embeddings') {
+      await onEmbedding?.call();
       final model = data['model'] as String;
       embeddingModels.add(model);
       if (model == ChatEmbeddingModel.qwen8b.id) {
@@ -224,6 +226,168 @@ void main() {
     chat.dispose();
     await db.close();
   });
+
+  int documentRequests() => adapter.requests
+      .where(
+        (r) =>
+            r.path == '/embeddings' &&
+            !(((r.data as Map)['input'] as List).first as String).startsWith(
+              chatQueryPrefix,
+            ),
+      )
+      .length;
+  ChatContextRepository reopenContext() => ChatContextRepository(
+    db,
+    chat,
+    OpenRouterService(
+      Dio(BaseOptions(baseUrl: 'https://openrouter.ai/api/v1'))
+        ..httpClientAdapter = adapter,
+    ),
+    keys,
+  );
+
+  test('concurrent preparation shares document indexing work', () async {
+    final second = await first();
+    await Future.wait([context.prepare(turn), context.prepare(second)]);
+    expect(documentRequests(), 1);
+  });
+
+  test(
+    'fallback reuses durable Large documents without discarding Qwen',
+    () async {
+      adapter.embeddingStatus = 503;
+      adapter.failQueryOnly = true;
+      await context.prepare(turn);
+      expect(adapter.embeddingModels, hasLength(4));
+      context.dispose();
+      context = reopenContext();
+      await context.prepare(await first());
+      expect(adapter.embeddingModels, hasLength(6));
+      expect(await db.select(db.chatIndexes).get(), hasLength(2));
+    },
+  );
+
+  test('document index survives repository restart and A to B to A', () async {
+    await context.prepare(turn);
+    expect(documentRequests(), 1);
+    context.dispose();
+    context = reopenContext();
+    final next = await first();
+    await context.prepare(next);
+    expect(documentRequests(), 1);
+    final foreign = await chat.createFirstTurn(
+      other,
+      question: 'Who?',
+      model: model,
+      promptVersion: chatPromptVersion,
+    );
+    adapter.emptySelection = true;
+    await context.prepare(foreign);
+    adapter.emptySelection = false;
+    expect(documentRequests(), 2);
+    await context.prepare(await first());
+    expect(documentRequests(), 2);
+    expect(await db.select(db.chatIndexes).get(), hasLength(2));
+  });
+
+  test('cancel after durable batch resumes without document request', () async {
+    final cancel = CancelToken();
+    final progress = <int>[];
+    await expectLater(
+      context.prepare(
+        turn,
+        cancel: cancel,
+        onIndexProgress: (done, total) {
+          progress.add(done);
+          if (done == total) cancel.cancel();
+        },
+      ),
+      throwsA(isA<DioException>()),
+    );
+    expect(progress, [0, 2]);
+    expect(documentRequests(), 1);
+    context.dispose();
+    context = reopenContext();
+    expect(await context.prepare(turn), isNotNull);
+    expect(documentRequests(), 1);
+  });
+
+  test('metadata and answer model changes reuse document vectors', () async {
+    await context.prepare(turn);
+    await (db.update(db.books)..where((b) => b.id.equals(book.bookId))).write(
+      const BooksCompanion(title: Value('New title')),
+    );
+    context.dispose();
+    context = reopenContext();
+    await (db.update(db.settings)..where((s) => s.key.equals('ai.model')))
+        .write(const SettingsCompanion(value: Value('different/answer')));
+    final next = await chat.createFirstTurn(
+      book,
+      question: 'Who?',
+      model: 'different/answer',
+      promptVersion: chatPromptVersion,
+    );
+    await context.prepare(next);
+    expect(documentRequests(), 1);
+  });
+
+  test(
+    'interrupted multi-batch indexing resumes only missing documents',
+    () async {
+      for (var i = 11; i < 78; i++) {
+        await addChapter(book.bookId, i, 'The keeper tends garden number $i.');
+      }
+      final token = CancelToken();
+      await expectLater(
+        context.prepare(
+          turn,
+          cancel: token,
+          onIndexProgress: (done, total) {
+            if (done == 64) token.cancel();
+          },
+        ),
+        throwsA(isA<DioException>()),
+      );
+      expect(await db.select(db.chatVectors).get(), hasLength(64));
+      expect((await db.select(db.chatIndexes).getSingle()).ready, isFalse);
+      context.dispose();
+      context = reopenContext();
+      final before = adapter.requests.length;
+      await context.prepare(turn);
+      final docs = adapter.requests
+          .skip(before)
+          .where(
+            (r) =>
+                r.path == '/embeddings' &&
+                !(((r.data as Map)['input'] as List).first as String)
+                    .startsWith(chatQueryPrefix),
+          );
+      expect(docs, hasLength(1));
+      expect(((docs.single.data as Map)['input'] as List).length, 5);
+      expect((await db.select(db.chatIndexes).getSingle()).ready, isTrue);
+    },
+  );
+
+  for (final change in ['stop', 'revision', 'dispose']) {
+    test('late embedding cannot commit after $change', () async {
+      adapter.onEmbedding = () async {
+        adapter.onEmbedding = null;
+        if (change == 'stop') {
+          await chat.finalize(
+            turn.attemptRef,
+            phase: ChatPhase.stopped,
+            draft: '',
+          );
+        } else if (change == 'revision') {
+          await db.contentChanged(book.bookId);
+        } else {
+          context.dispose();
+        }
+      };
+      await expectLater(context.prepare(turn), throwsStateError);
+      expect(await db.select(db.chatVectors).get(), isEmpty);
+    });
+  }
 
   test('whole-book scoped retrieval -> frozen prompt -> validated stream -> persistence', () async {
     final prepared = (await context.prepare(turn))!;

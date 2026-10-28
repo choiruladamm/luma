@@ -74,6 +74,20 @@ final v7 = [
   ...v6.skip(1),
 ];
 
+// Frozen schema 8: sessions/turns, before persistent document vectors.
+final v8 = [
+  for (final sql in v7)
+    sql.startsWith('CREATE TABLE "books"')
+        ? sql.replaceFirst(
+            '"total_chars"',
+            '"content_revision" INTEGER NOT NULL DEFAULT 1, "total_chars"',
+          )
+        : sql,
+  '''CREATE TABLE chat_sessions (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, book_id INTEGER NOT NULL REFERENCES books(id) ON DELETE CASCADE, content_revision INTEGER NOT NULL, title TEXT NOT NULL, manual_title INTEGER NOT NULL DEFAULT 0 CHECK (manual_title IN (0,1)), created_at INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)), updated_at INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)), last_opened_at INTEGER NULL, scroll_anchor TEXT NULL)''',
+  'CREATE INDEX chat_sessions_book_opened ON chat_sessions(book_id,last_opened_at,id)',
+  '''CREATE TABLE chat_turns (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, session_id INTEGER NOT NULL REFERENCES chat_sessions(id) ON DELETE CASCADE, sequence INTEGER NOT NULL, question TEXT NOT NULL, quote TEXT NULL, answer TEXT NULL, sources TEXT NOT NULL DEFAULT '[]', draft TEXT NOT NULL DEFAULT '', phase TEXT NOT NULL, attempt INTEGER NOT NULL DEFAULT 1, model TEXT NOT NULL, prompt_version INTEGER NOT NULL, error TEXT NULL, http_status INTEGER NULL, created_at INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)), updated_at INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)), UNIQUE(session_id,sequence))''',
+];
+
 AppDatabase _open([void Function(dynamic raw)? setup]) => AppDatabase(
   DatabaseConnection(
     NativeDatabase.memory(setup: setup),
@@ -168,6 +182,7 @@ void main() {
     (5, v5),
     (6, v6),
     (7, v7),
+    (8, v8),
   ]) {
     test(
       'v$version → now: same schema as a fresh install, data kept',
@@ -207,6 +222,35 @@ void main() {
       },
     );
   }
+
+  test(
+    'v8 migration preserves paid chat and adds empty index tables',
+    () async {
+      final db = _open((raw) {
+        for (final sql in v8) {
+          raw.execute(sql);
+        }
+        raw.execute(
+          "INSERT INTO books(id,source_type,title,parser_version,total_chars) VALUES (1,'epub','Book',1,10)",
+        );
+        raw.execute(
+          "INSERT INTO chat_sessions(id,book_id,content_revision,title) VALUES (9,1,1,'Saved')",
+        );
+        raw.execute(
+          "INSERT INTO chat_turns(id,session_id,sequence,question,phase,model,prompt_version,draft) VALUES (12,9,0,'Question','stopped','model',1,'paid partial')",
+        );
+        raw.execute('PRAGMA user_version = 8');
+      });
+      addTearDown(db.close);
+      expect((await db.select(db.chatTurns).getSingle()).draft, 'paid partial');
+      expect((await db.select(db.chatSessions).getSingle()).title, 'Saved');
+      expect(await db.select(db.chatIndexes).get(), isEmpty);
+      expect(await db.select(db.chatVectors).get(), isEmpty);
+      final fresh = _open();
+      addTearDown(fresh.close);
+      expect(await _shape(db), await _shape(fresh));
+    },
+  );
 
   test('v7 → v8 preserves populated user data byte for byte', () async {
     final db = _open((raw) {

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../domain/models/book_chat.dart';
@@ -15,10 +16,12 @@ class ChatHistory extends StatefulWidget {
     required this.onAnchor,
     this.anchor,
     this.phase,
+    this.indexLabel,
   });
   final List<ChatTurn> turns;
   final ChatScrollAnchor? anchor;
   final ChatPhase? phase;
+  final String? indexLabel;
   final ValueChanged<ChatScrollAnchor> onAnchor;
   @override
   State<ChatHistory> createState() => _ChatHistoryState();
@@ -60,9 +63,12 @@ class _ChatHistoryState extends State<ChatHistory> {
   void didUpdateWidget(ChatHistory oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (!_away &&
-        (oldWidget.turns != widget.turns || oldWidget.phase != widget.phase)) {
+        (!listEquals(oldWidget.turns, widget.turns) ||
+            oldWidget.phase != widget.phase)) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _latest();
+        if (mounted && !_away && !_scroll.position.isScrollingNotifier.value) {
+          _latest();
+        }
       });
     }
   }
@@ -171,7 +177,12 @@ class _ChatHistoryState extends State<ChatHistory> {
           if (phase != ChatPhase.done)
             Semantics(
               liveRegion: true,
-              child: Text(phase.label, style: StabiloType.caption),
+              child: Text(
+                turn.id == widget.turns.last.id
+                    ? widget.indexLabel ?? phase.label
+                    : phase.label,
+                style: StabiloType.caption,
+              ),
             ),
         ],
       ),
@@ -196,10 +207,16 @@ class _ChatHistoryState extends State<ChatHistory> {
               onNotification: (notification) {
                 if (!_restoring &&
                     !_away &&
+                    // Metric updates also arrive during a drag; never cancel it.
+                    !_scroll.position.isScrollingNotifier.value &&
                     notification.depth == 0 &&
                     notification.metrics.extentAfter > 0) {
                   WidgetsBinding.instance.addPostFrameCallback((_) {
-                    if (mounted && !_away) _latest();
+                    if (mounted &&
+                        !_away &&
+                        !_scroll.position.isScrollingNotifier.value) {
+                      _latest();
+                    }
                   });
                 }
                 return false;

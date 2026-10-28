@@ -321,7 +321,11 @@ class LifecycleContext implements ChatContextRepository {
   }
 
   @override
-  Future<PreparedChat?> prepare(ChatTurn target, {CancelToken? cancel}) async {
+  Future<PreparedChat?> prepare(
+    ChatTurn target, {
+    CancelToken? cancel,
+    void Function(int, int)? onIndexProgress,
+  }) async {
     calls++;
     cancels.add(cancel);
     await prepareGate?.future;
