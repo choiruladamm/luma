@@ -1,11 +1,13 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:archive/archive_io.dart';
 import 'package:drift/drift.dart' hide isNull, isNotNull;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:luma/data/database/app_database.dart';
+import 'package:luma/data/repositories/chat_index_repository.dart';
 import 'package:luma/data/services/backup_service.dart';
 import 'package:luma/data/repositories/chat_repository.dart';
 import 'package:luma/data/repositories/book_repository.dart';
@@ -210,6 +212,8 @@ class Phone {
     await db.select(db.settings).get(),
     await db.select(db.chatSessions).get(),
     await db.select(db.chatTurns).get(),
+    await db.select(db.chatIndexes).get(),
+    await db.select(db.chatVectors).get(),
   ];
 
   List<String> files(String dir) => [
@@ -255,6 +259,27 @@ void main() {
   }
 
   test('round trip: export, restore onto another phone, same data', () async {
+    final cachedBook = (await a.db.select(a.db.books).get()).first;
+    final key = (
+      book: (
+        bookId: cachedBook.id,
+        contentRevision: cachedBook.contentRevision,
+      ),
+      parserVersion: cachedBook.parserVersion,
+      chunkPolicyVersion: 1,
+      embedding: ChatEmbeddingModel.qwen8b,
+      queryTemplateVersion: 1,
+    );
+    Future<void> guard() async {}
+    final indexes = ChatIndexRepository(a.db);
+    final cache = await indexes.load(key, 'restore-manifest', 1, guard);
+    await indexes.saveBatch(
+      cache.id,
+      0,
+      [Float32List(4096)..[0] = 0.5],
+      4096,
+      guard,
+    );
     final zip = await backupOf(a);
     final service = RestoreService(b.db, b.storage);
     expect(await service.currentBooks(), 1);
@@ -269,6 +294,10 @@ void main() {
 
     b.reopen();
     expect(await b.dump(), await a.dump());
+    final restoredCache = await ChatIndexRepository(b.db)
+        .load(key, 'restore-manifest', 1, guard);
+    expect(restoredCache.vectors.single[0], 0.5);
+
     // Not empty == empty: the stats really came across.
     expect(await b.db.select(b.db.readingSessions).get(), hasLength(2));
     expect(await b.db.select(b.db.aiCalls).get(), hasLength(2));

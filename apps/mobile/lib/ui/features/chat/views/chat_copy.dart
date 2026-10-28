@@ -1,3 +1,4 @@
+import '../view_models/chat_view_model.dart';
 import '../../../../domain/models/ai_reply.dart';
 import '../../../../domain/models/book_chat.dart';
 
@@ -55,4 +56,16 @@ String chatTimeGroup(DateTime at, DateTime now) {
     return 'Kemarin';
   }
   return 'Sebelumnya';
+}
+
+extension ChatIndexCopy on ChatState {
+  String? get indexLabel {
+    final progress = indexProgress;
+    if (phase != ChatPhase.retrieving ||
+        progress == null ||
+        progress.completed >= progress.total) {
+      return null;
+    }
+    return 'Lagi nyiapin buku… ${progress.completed}/${progress.total} potongan';
+  }
 }

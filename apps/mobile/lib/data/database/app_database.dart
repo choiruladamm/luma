@@ -279,6 +279,28 @@ class ChatTurns extends Table {
   ];
 }
 
+@DataClassName('ChatIndexRow')
+class ChatIndexes extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get bookId =>
+      integer().references(Books, #id, onDelete: KeyAction.cascade)();
+  TextColumn get identity => text().unique()();
+  TextColumn get manifest => text()();
+  IntColumn get chunkCount => integer()();
+  BoolColumn get ready => boolean().withDefault(const Constant(false))();
+}
+
+@DataClassName('ChatVectorRow')
+class ChatVectors extends Table {
+  IntColumn get indexId =>
+      integer().references(ChatIndexes, #id, onDelete: KeyAction.cascade)();
+  IntColumn get ordinal => integer()();
+  BlobColumn get vector => blob()();
+  TextColumn get checksum => text()();
+  @override
+  Set<Column> get primaryKey => {indexId, ordinal};
+}
+
 @DriftDatabase(
   tables: [
     Books,
@@ -292,6 +314,8 @@ class ChatTurns extends Table {
     Settings,
     ChatSessions,
     ChatTurns,
+    ChatIndexes,
+    ChatVectors,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -301,6 +325,7 @@ class AppDatabase extends _$AppDatabase {
   /// Call inside the content mutation transaction; EPUB re-import must reuse it.
   /// Snapshots survive paragraph replacement; old attempts become read-only.
   Future<void> contentChanged(int bookId) => transaction(() async {
+    await (delete(chatIndexes)..where((i) => i.bookId.equals(bookId))).go();
     await customUpdate(
       'UPDATE chat_turns SET phase = ?, updated_at = ? '
       'WHERE session_id IN (SELECT id FROM chat_sessions WHERE book_id = ?) '
@@ -323,7 +348,7 @@ class AppDatabase extends _$AppDatabase {
   // test/data/migration_test.dart. Backup dari versi lama ikut dimigrasi pas
   // di-restore.
   @override
-  int get schemaVersion => 8;
+  int get schemaVersion => 9;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -360,6 +385,10 @@ class AppDatabase extends _$AppDatabase {
         await m.createTable(chatSessions);
         await m.createIndex(chatSessionsBookOpened);
         await m.createTable(chatTurns);
+      }
+      if (from < 9) {
+        await m.createTable(chatIndexes);
+        await m.createTable(chatVectors);
       }
     },
     // SQLite matiin foreign key secara default; cascade butuh ini.

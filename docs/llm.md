@@ -278,20 +278,34 @@ request gagal jelas. Source final diberi S1…S8 menurut urutan seleksi; anchor 
 chapter.id, paragraphIndex, offset UTF-16, hash seluruh paragraf dan excerpt asli.
 Teks terjemahan pendamping quote tidak dikirim sebagai bukti.
 
-Vektor dokumen hanya di memori, satu index terakhir per lifetime repository. Key
-memuat book/revision/parser/chunk policy/model/dimensi/query template serta manifest
-chapter/range/hash. Cold send/restart memerlukan embedding dokumen lagi. Qwen4096
-primary; kegagalan provider yang diizinkan membangun ulang **semua** dokumen dan
-kedua query dengan Large3072, termasuk ketika Qwen baru gagal di query sesudah
-index berhasil. Auth/billing/input/cancel/certificate/unknown tidak beralih model.
+Vektor dokumen disimpan permanen di Drift lokal ([#134](https://github.com/choiruladamm/luma/issues/134)),
+sementara RAM hanya memegang satu index aktif. Key memuat versi format storage,
+book/revision/parser/chunk policy/model/dimensi/query template; manifest mengikat
+chapter/range/hash dan judul bab. Restart atau pindah buku memuat ulang cache yang
+valid, tanpa embedding dokumen ulang. Import/buka chat/history tidak mengirim request;
+index dibangun hanya pada send/retry eksplisit yang memerlukan retrieval.
+
+Batch maksimal64 disimpan atomik sebagai Float32 little-endian + checksum. Index
+building dapat dilanjutkan dari prefix lengkap tersimpan pada aksi user berikutnya;
+ranking baru berjalan setelah seluruh chunk lengkap. Progres UI menghitung chunk
+yang sudah durable. Stop/back/background tidak auto-resume. Crash sesudah provider
+sukses sebelum commit lokal tetap bisa mengulang biaya batch itu. Count, ordinal,
+checksum, dimensions dan nilai finite/nonzero diperiksa saat load; cache rusak
+khusus index itu dibangun ulang. Perubahan isi menghapus index buku dalam transaksi;
+metadata judul/cover dan model jawaban saja tidak mengulang embedding.
+
+Qwen4096 primary; fallback provider memakai Large3072 dengan dokumen dan query
+pada model-space terpisah. Cache valid masing-masing model dipertahankan dan dapat
+digunakan ulang. Auth/billing/input/cancel/certificate/unknown tidak beralih model.
 Batas input embedding **1.500.000 UTF-8 bytes** per model-space (dokumen + query),
 8.000 per input, batch64. Overflow ditolak sebelum request berikutnya; tidak
 memotong vektor atau kutipan. Maksimal dua model-space jika fallback, bukan retry
-jawaban. Index tidak disimpan ke DB atau ikut backup.
+jawaban. Cache ikut snapshot backup DB, tetapi selalu divalidasi sebelum dipakai;
+backup lama tanpa index tetap bekerja. Tidak ada API key dalam cache.
 
 Satu send normal memakai satu rewrite, embedding dokumen saat cache miss + satu
 batch dua query, satu selector, dan satu answer. Warm send tanpa index ulang =
-**4 request**; cold send = `ceil(chunkCount/64) + 4`, ditambah full Large reindex jika
+**4 request**; cold send = `ceil(chunkCount/64) + 4`, ditambah embedding dokumen Large yang belum tersimpan jika
 fallback. Clarification = satu rewrite saja. Answer kosong setelah seleksi tidak
 memanggil model jawaban. Chat max output800, JSON mode dan temperature0; exception
 mandatory-reasoning dapat menambah satu HTTP request per panggilan chat sebelum

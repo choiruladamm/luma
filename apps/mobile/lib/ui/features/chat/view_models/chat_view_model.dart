@@ -27,8 +27,10 @@ class ChatState {
     this.loading = true,
     this.changingSession = false,
     this.scrollAnchor,
+    this.indexProgress,
   }) : turns = List.unmodifiable(turns);
 
+  final ({int completed, int total})? indexProgress;
   final ChatBookRef? book;
   final ChatSession? activeSession;
   final String draft;
@@ -69,7 +71,11 @@ class ChatState {
     bool? loading,
     bool? changingSession,
     Object? scrollAnchor = _unchanged,
+    Object? indexProgress = _unchanged,
   }) => ChatState(
+    indexProgress: identical(indexProgress, _unchanged)
+        ? this.indexProgress
+        : indexProgress as ({int completed, int total})?,
     book: identical(book, _unchanged) ? this.book : book as ChatBookRef?,
     activeSession: identical(activeSession, _unchanged)
         ? this.activeSession
@@ -444,6 +450,7 @@ class ChatViewModel extends Notifier<ChatState> {
         draft: '',
         selectedQuote: null,
         phase: ChatPhase.retrieving,
+        indexProgress: null,
       );
       if (!await life.repo.checkpoint(
         turn.attemptRef,
@@ -454,7 +461,17 @@ class ChatViewModel extends Notifier<ChatState> {
         return;
       }
       if (!_running(life, run)) return;
-      final prepared = await life.context.prepare(turn, cancel: run.cancel);
+      final prepared = await life.context.prepare(
+        turn,
+        cancel: run.cancel,
+        onIndexProgress: (completed, total) {
+          if (_running(life, run)) {
+            state = state.copyWith(
+              indexProgress: (completed: completed, total: total),
+            );
+          }
+        },
+      );
       if (!_running(life, run)) return;
       if (prepared == null) {
         await _finish(life, run, phase: ChatPhase.interrupted);

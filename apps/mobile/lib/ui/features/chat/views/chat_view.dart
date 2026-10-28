@@ -183,6 +183,7 @@ class _ChatViewState extends ConsumerState<ChatView> {
     if (state.loading) return const Center(child: CircularProgressIndicator());
     if (state.turns.isNotEmpty) {
       return ChatHistory(
+        indexLabel: state.indexLabel,
         key: ValueKey(state.activeSession?.id),
         turns: state.turns,
         anchor: state.scrollAnchor,

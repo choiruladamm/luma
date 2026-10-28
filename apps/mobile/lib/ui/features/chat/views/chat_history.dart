@@ -15,10 +15,12 @@ class ChatHistory extends StatefulWidget {
     required this.onAnchor,
     this.anchor,
     this.phase,
+    this.indexLabel,
   });
   final List<ChatTurn> turns;
   final ChatScrollAnchor? anchor;
   final ChatPhase? phase;
+  final String? indexLabel;
   final ValueChanged<ChatScrollAnchor> onAnchor;
   @override
   State<ChatHistory> createState() => _ChatHistoryState();
@@ -171,7 +173,12 @@ class _ChatHistoryState extends State<ChatHistory> {
           if (phase != ChatPhase.done)
             Semantics(
               liveRegion: true,
-              child: Text(phase.label, style: StabiloType.caption),
+              child: Text(
+                turn.id == widget.turns.last.id
+                    ? widget.indexLabel ?? phase.label
+                    : phase.label,
+                style: StabiloType.caption,
+              ),
             ),
         ],
       ),

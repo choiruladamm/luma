@@ -105,7 +105,7 @@ luma-backup-20261006-2130.zip
 
 Snapshot `VACUUM INTO` ikut membawa `chat_sessions`, `chat_turns`, revision isi,
 judul manual, anchor scroll dan snapshot sumber. Format backup tetap1; manifest
-mengikuti schema DB (sekarang8), tanpa model/key atau isi percakapan. Model attempt
+mengikuti schema DB (sekarang9), tanpa model/key atau isi percakapan. Model attempt
 tersimpan di DB sebagaimana sebelumnya; API key tetap hanya di secure storage.
 
 Backup saat streaming menangkap checkpoint durable terakhir yang konsisten,
@@ -124,3 +124,10 @@ Konstruksi `RestoreService` langsung di luar provider harus memasang `beforeClos
 bila ada controller chat aktif. Rollback file mengembalikan history bersama data
 lama. Hapus cache terjemahan/Bedahin tidak menghapus obrolan; hapus buku cascade
 semua chat buku itu, sedangkan hapus sesi tidak mengubah cache/progres/file buku.
+
+
+Cache index Ngobrol (#134) ikut snapshot DB schema9, termasuk batch building yang
+sudah durable. Restore lama tanpa cache dimigrasi dengan tabel kosong. Cache bukan
+sumber kebenaran: identitas/manifest/vektor diperiksa lagi sebelum retrieval; yang
+rusak dibangun ulang pada send/retry eksplisit. Barrier lifecycle membatalkan
+pekerjaan lama sebelum DB ditutup. Cache tidak menyimpan API key.

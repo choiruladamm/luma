@@ -204,6 +204,35 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  for (final theme in [ThemeMode.light, ThemeMode.dark]) {
+    testWidgets('index progress and Stop remain available in $theme', (
+      tester,
+    ) async {
+      await open(
+        tester,
+        themeMode: theme,
+        state: ChatState(
+          book: book,
+          loading: false,
+          activeSession: session(1),
+          turns: [turn(1, phase: ChatPhase.retrieving)],
+          phase: ChatPhase.retrieving,
+          indexProgress: (completed: 64, total: 100),
+        ),
+      );
+      expect(find.text('Lagi nyiapin buku… 64/100 potongan'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      vm.push(vm.current.copyWith(indexProgress: (completed: 100, total: 100)));
+      await tester.pump();
+      expect(find.text('Lagi nyari sumber di buku…'), findsOneWidget);
+      expect(vm.sends, 0);
+      await tester.tap(button('Hentikan jawaban'));
+      await tester.pumpAndSettle();
+      expect(vm.stops, 1);
+      expect(find.text('Jawaban dihentikan'), findsOneWidget);
+    });
+  }
+
   testWidgets('launch extra is applied once and mismatched book is ignored', (
     t,
   ) async {

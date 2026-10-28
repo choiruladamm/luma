@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -14,16 +15,17 @@ import '../database/app_database.dart';
 import '../services/api_key_store.dart';
 import '../services/openrouter_service.dart';
 import 'chat_repository.dart';
+import 'chat_index_repository.dart';
 import 'chat_snapshot.dart';
 
-/// Each send reads credentials afresh. Only document vectors are cached in memory.
+/// Each send reads credentials afresh. Document vectors survive in the local DB.
 class ChatContextRepository {
   ChatContextRepository(this._db, this._chat, this._router, this._keys);
   final AppDatabase _db;
   final ChatRepository _chat;
   final OpenRouterService _router;
   final ApiKeyStore _keys;
-  // shortcut: one in-memory index is rebuilt after restart, persist if measured cost warrants it.
+  Future<void> _indexTail = Future.value();
   ChatIndexKey? _indexKey;
   String? _manifest;
   List<Float32List>? _documents;
@@ -49,9 +51,13 @@ class ChatContextRepository {
     return row?.value ?? defaultAiModel;
   }
 
-  /// No writes until evidence is frozen. A stale attempt returns null, never sends
-  /// an answer request. Caller #118 owns checkpoint/finalize and stop lifecycle.
-  Future<PreparedChat?> prepare(ChatTurn target, {CancelToken? cancel}) async {
+  /// Document batches may be cached before evidence is frozen. A stale attempt
+  /// never sends an answer. Caller owns checkpoint/finalize and stop lifecycle.
+  Future<PreparedChat?> prepare(
+    ChatTurn target, {
+    CancelToken? cancel,
+    void Function(int completed, int total)? onIndexProgress,
+  }) async {
     _check(cancel);
     final key = await _keys.read();
     _check(cancel);
@@ -218,6 +224,8 @@ class ChatContextRepository {
           input.quoted,
           key,
           cancel,
+          target,
+          onIndexProgress,
         );
         final candidates = chatFuseRanks(rankings, quoteSources: input.quoted);
         validateChatSources(candidates, current, input.paragraphs);
@@ -349,7 +357,71 @@ class ChatContextRepository {
     List<ChatSource> quoted,
     String key,
     CancelToken? cancel,
+    ChatTurn target,
+    void Function(int, int)? onProgress,
   ) async {
+    final previous = _indexTail;
+    final done = Completer<void>();
+    _indexTail = done.future;
+    await previous;
+    try {
+      _check(cancel);
+      return await _rankIndex(
+        chunks,
+        book,
+        parserVersion,
+        original,
+        english,
+        quoted,
+        key,
+        cancel,
+        target,
+        onProgress,
+      );
+    } finally {
+      done.complete();
+    }
+  }
+
+  Future<List<List<ChatSource>>> _rankIndex(
+    List<ChatSource> chunks,
+    ChatBookRef book,
+    int parserVersion,
+    String original,
+    String english,
+    List<ChatSource> quoted,
+    String key,
+    CancelToken? cancel,
+    ChatTurn target,
+    void Function(int, int)? onProgress,
+  ) async {
+    Future<void> guard() async {
+      _check(cancel);
+      final b = await (_db.select(
+        _db.books,
+      )..where((b) => b.id.equals(book.bookId))).getSingleOrNull();
+      final t = await (_db.select(
+        _db.chatTurns,
+      )..where((t) => t.id.equals(target.id))).getSingleOrNull();
+      final session = await (_db.select(
+        _db.chatSessions,
+      )..where((s) => s.id.equals(target.sessionId))).getSingleOrNull();
+      _check(cancel);
+      if (session == null ||
+          session.bookId != book.bookId ||
+          session.contentRevision != book.contentRevision ||
+          b == null ||
+          b.contentRevision != book.contentRevision ||
+          b.parserVersion != parserVersion ||
+          t == null ||
+          t.sessionId != target.sessionId ||
+          t.attempt != target.attempt ||
+          !ChatPhase.values.any((p) => p.name == t.phase && p.isRunning)) {
+        throw StateError('Index attempt sudah tidak aktif');
+      }
+    }
+
+    final store = ChatIndexRepository(_db);
     final manifest = chatTextHash(
       jsonEncode([
         for (final s in chunks)
@@ -388,26 +460,41 @@ class ChatContextRepository {
       if (_indexKey != indexKey ||
           _manifest != manifest ||
           _documents == null) {
-        // Build locally, commit cache only when the whole model-space is valid.
-        final vectors = <Float32List>[];
-        for (var i = 0; i < documents.length; i += 64) {
-          _check(cancel);
-          vectors.addAll(
-            await _router.embeddings(
-              apiKey: key,
-              model: embedding,
-              input: documents.skip(i).take(64).toList(),
-              cancel: cancel,
-            ),
+        // Drop the previous book from RAM before loading/building this index.
+        _documents = null;
+        final cached = await store.load(
+          indexKey,
+          manifest,
+          documents.length,
+          guard,
+        );
+        final vectors = cached.vectors;
+        onProgress?.call(vectors.length, documents.length);
+        while (vectors.length < documents.length) {
+          await guard();
+          final batch = await _router.embeddings(
+            apiKey: key,
+            model: embedding,
+            input: documents.skip(vectors.length).take(64).toList(),
+            cancel: cancel,
           );
+          await store.saveBatch(
+            cached.id,
+            vectors.length,
+            batch,
+            embedding.dimensions,
+            guard,
+          );
+          vectors.addAll(batch);
+          onProgress?.call(vectors.length, documents.length);
         }
-        _check(cancel);
+        await guard();
         _indexKey = indexKey;
         _manifest = manifest;
         _documents = vectors;
       }
       final vectors = _documents!;
-      _check(cancel);
+      await guard();
       final q = await _router.embeddings(
         apiKey: key,
         model: embedding,

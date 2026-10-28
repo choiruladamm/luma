@@ -6353,6 +6353,726 @@ class ChatTurnsCompanion extends UpdateCompanion<ChatTurnRow> {
   }
 }
 
+class $ChatIndexesTable extends ChatIndexes
+    with TableInfo<$ChatIndexesTable, ChatIndexRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ChatIndexesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _bookIdMeta = const VerificationMeta('bookId');
+  @override
+  late final GeneratedColumn<int> bookId = GeneratedColumn<int>(
+    'book_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES books (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _identityMeta = const VerificationMeta(
+    'identity',
+  );
+  @override
+  late final GeneratedColumn<String> identity = GeneratedColumn<String>(
+    'identity',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'),
+  );
+  static const VerificationMeta _manifestMeta = const VerificationMeta(
+    'manifest',
+  );
+  @override
+  late final GeneratedColumn<String> manifest = GeneratedColumn<String>(
+    'manifest',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _chunkCountMeta = const VerificationMeta(
+    'chunkCount',
+  );
+  @override
+  late final GeneratedColumn<int> chunkCount = GeneratedColumn<int>(
+    'chunk_count',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _readyMeta = const VerificationMeta('ready');
+  @override
+  late final GeneratedColumn<bool> ready = GeneratedColumn<bool>(
+    'ready',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("ready" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    bookId,
+    identity,
+    manifest,
+    chunkCount,
+    ready,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'chat_indexes';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ChatIndexRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('book_id')) {
+      context.handle(
+        _bookIdMeta,
+        bookId.isAcceptableOrUnknown(data['book_id']!, _bookIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_bookIdMeta);
+    }
+    if (data.containsKey('identity')) {
+      context.handle(
+        _identityMeta,
+        identity.isAcceptableOrUnknown(data['identity']!, _identityMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_identityMeta);
+    }
+    if (data.containsKey('manifest')) {
+      context.handle(
+        _manifestMeta,
+        manifest.isAcceptableOrUnknown(data['manifest']!, _manifestMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_manifestMeta);
+    }
+    if (data.containsKey('chunk_count')) {
+      context.handle(
+        _chunkCountMeta,
+        chunkCount.isAcceptableOrUnknown(data['chunk_count']!, _chunkCountMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_chunkCountMeta);
+    }
+    if (data.containsKey('ready')) {
+      context.handle(
+        _readyMeta,
+        ready.isAcceptableOrUnknown(data['ready']!, _readyMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ChatIndexRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ChatIndexRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      bookId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}book_id'],
+      )!,
+      identity: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}identity'],
+      )!,
+      manifest: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}manifest'],
+      )!,
+      chunkCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}chunk_count'],
+      )!,
+      ready: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}ready'],
+      )!,
+    );
+  }
+
+  @override
+  $ChatIndexesTable createAlias(String alias) {
+    return $ChatIndexesTable(attachedDatabase, alias);
+  }
+}
+
+class ChatIndexRow extends DataClass implements Insertable<ChatIndexRow> {
+  final int id;
+  final int bookId;
+  final String identity;
+  final String manifest;
+  final int chunkCount;
+  final bool ready;
+  const ChatIndexRow({
+    required this.id,
+    required this.bookId,
+    required this.identity,
+    required this.manifest,
+    required this.chunkCount,
+    required this.ready,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['book_id'] = Variable<int>(bookId);
+    map['identity'] = Variable<String>(identity);
+    map['manifest'] = Variable<String>(manifest);
+    map['chunk_count'] = Variable<int>(chunkCount);
+    map['ready'] = Variable<bool>(ready);
+    return map;
+  }
+
+  ChatIndexesCompanion toCompanion(bool nullToAbsent) {
+    return ChatIndexesCompanion(
+      id: Value(id),
+      bookId: Value(bookId),
+      identity: Value(identity),
+      manifest: Value(manifest),
+      chunkCount: Value(chunkCount),
+      ready: Value(ready),
+    );
+  }
+
+  factory ChatIndexRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ChatIndexRow(
+      id: serializer.fromJson<int>(json['id']),
+      bookId: serializer.fromJson<int>(json['bookId']),
+      identity: serializer.fromJson<String>(json['identity']),
+      manifest: serializer.fromJson<String>(json['manifest']),
+      chunkCount: serializer.fromJson<int>(json['chunkCount']),
+      ready: serializer.fromJson<bool>(json['ready']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'bookId': serializer.toJson<int>(bookId),
+      'identity': serializer.toJson<String>(identity),
+      'manifest': serializer.toJson<String>(manifest),
+      'chunkCount': serializer.toJson<int>(chunkCount),
+      'ready': serializer.toJson<bool>(ready),
+    };
+  }
+
+  ChatIndexRow copyWith({
+    int? id,
+    int? bookId,
+    String? identity,
+    String? manifest,
+    int? chunkCount,
+    bool? ready,
+  }) => ChatIndexRow(
+    id: id ?? this.id,
+    bookId: bookId ?? this.bookId,
+    identity: identity ?? this.identity,
+    manifest: manifest ?? this.manifest,
+    chunkCount: chunkCount ?? this.chunkCount,
+    ready: ready ?? this.ready,
+  );
+  ChatIndexRow copyWithCompanion(ChatIndexesCompanion data) {
+    return ChatIndexRow(
+      id: data.id.present ? data.id.value : this.id,
+      bookId: data.bookId.present ? data.bookId.value : this.bookId,
+      identity: data.identity.present ? data.identity.value : this.identity,
+      manifest: data.manifest.present ? data.manifest.value : this.manifest,
+      chunkCount: data.chunkCount.present
+          ? data.chunkCount.value
+          : this.chunkCount,
+      ready: data.ready.present ? data.ready.value : this.ready,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ChatIndexRow(')
+          ..write('id: $id, ')
+          ..write('bookId: $bookId, ')
+          ..write('identity: $identity, ')
+          ..write('manifest: $manifest, ')
+          ..write('chunkCount: $chunkCount, ')
+          ..write('ready: $ready')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, bookId, identity, manifest, chunkCount, ready);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ChatIndexRow &&
+          other.id == this.id &&
+          other.bookId == this.bookId &&
+          other.identity == this.identity &&
+          other.manifest == this.manifest &&
+          other.chunkCount == this.chunkCount &&
+          other.ready == this.ready);
+}
+
+class ChatIndexesCompanion extends UpdateCompanion<ChatIndexRow> {
+  final Value<int> id;
+  final Value<int> bookId;
+  final Value<String> identity;
+  final Value<String> manifest;
+  final Value<int> chunkCount;
+  final Value<bool> ready;
+  const ChatIndexesCompanion({
+    this.id = const Value.absent(),
+    this.bookId = const Value.absent(),
+    this.identity = const Value.absent(),
+    this.manifest = const Value.absent(),
+    this.chunkCount = const Value.absent(),
+    this.ready = const Value.absent(),
+  });
+  ChatIndexesCompanion.insert({
+    this.id = const Value.absent(),
+    required int bookId,
+    required String identity,
+    required String manifest,
+    required int chunkCount,
+    this.ready = const Value.absent(),
+  }) : bookId = Value(bookId),
+       identity = Value(identity),
+       manifest = Value(manifest),
+       chunkCount = Value(chunkCount);
+  static Insertable<ChatIndexRow> custom({
+    Expression<int>? id,
+    Expression<int>? bookId,
+    Expression<String>? identity,
+    Expression<String>? manifest,
+    Expression<int>? chunkCount,
+    Expression<bool>? ready,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (bookId != null) 'book_id': bookId,
+      if (identity != null) 'identity': identity,
+      if (manifest != null) 'manifest': manifest,
+      if (chunkCount != null) 'chunk_count': chunkCount,
+      if (ready != null) 'ready': ready,
+    });
+  }
+
+  ChatIndexesCompanion copyWith({
+    Value<int>? id,
+    Value<int>? bookId,
+    Value<String>? identity,
+    Value<String>? manifest,
+    Value<int>? chunkCount,
+    Value<bool>? ready,
+  }) {
+    return ChatIndexesCompanion(
+      id: id ?? this.id,
+      bookId: bookId ?? this.bookId,
+      identity: identity ?? this.identity,
+      manifest: manifest ?? this.manifest,
+      chunkCount: chunkCount ?? this.chunkCount,
+      ready: ready ?? this.ready,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (bookId.present) {
+      map['book_id'] = Variable<int>(bookId.value);
+    }
+    if (identity.present) {
+      map['identity'] = Variable<String>(identity.value);
+    }
+    if (manifest.present) {
+      map['manifest'] = Variable<String>(manifest.value);
+    }
+    if (chunkCount.present) {
+      map['chunk_count'] = Variable<int>(chunkCount.value);
+    }
+    if (ready.present) {
+      map['ready'] = Variable<bool>(ready.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ChatIndexesCompanion(')
+          ..write('id: $id, ')
+          ..write('bookId: $bookId, ')
+          ..write('identity: $identity, ')
+          ..write('manifest: $manifest, ')
+          ..write('chunkCount: $chunkCount, ')
+          ..write('ready: $ready')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ChatVectorsTable extends ChatVectors
+    with TableInfo<$ChatVectorsTable, ChatVectorRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ChatVectorsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _indexIdMeta = const VerificationMeta(
+    'indexId',
+  );
+  @override
+  late final GeneratedColumn<int> indexId = GeneratedColumn<int>(
+    'index_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES chat_indexes (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _ordinalMeta = const VerificationMeta(
+    'ordinal',
+  );
+  @override
+  late final GeneratedColumn<int> ordinal = GeneratedColumn<int>(
+    'ordinal',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _vectorMeta = const VerificationMeta('vector');
+  @override
+  late final GeneratedColumn<Uint8List> vector = GeneratedColumn<Uint8List>(
+    'vector',
+    aliasedName,
+    false,
+    type: DriftSqlType.blob,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _checksumMeta = const VerificationMeta(
+    'checksum',
+  );
+  @override
+  late final GeneratedColumn<String> checksum = GeneratedColumn<String>(
+    'checksum',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [indexId, ordinal, vector, checksum];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'chat_vectors';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ChatVectorRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('index_id')) {
+      context.handle(
+        _indexIdMeta,
+        indexId.isAcceptableOrUnknown(data['index_id']!, _indexIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_indexIdMeta);
+    }
+    if (data.containsKey('ordinal')) {
+      context.handle(
+        _ordinalMeta,
+        ordinal.isAcceptableOrUnknown(data['ordinal']!, _ordinalMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_ordinalMeta);
+    }
+    if (data.containsKey('vector')) {
+      context.handle(
+        _vectorMeta,
+        vector.isAcceptableOrUnknown(data['vector']!, _vectorMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_vectorMeta);
+    }
+    if (data.containsKey('checksum')) {
+      context.handle(
+        _checksumMeta,
+        checksum.isAcceptableOrUnknown(data['checksum']!, _checksumMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_checksumMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {indexId, ordinal};
+  @override
+  ChatVectorRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ChatVectorRow(
+      indexId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}index_id'],
+      )!,
+      ordinal: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}ordinal'],
+      )!,
+      vector: attachedDatabase.typeMapping.read(
+        DriftSqlType.blob,
+        data['${effectivePrefix}vector'],
+      )!,
+      checksum: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}checksum'],
+      )!,
+    );
+  }
+
+  @override
+  $ChatVectorsTable createAlias(String alias) {
+    return $ChatVectorsTable(attachedDatabase, alias);
+  }
+}
+
+class ChatVectorRow extends DataClass implements Insertable<ChatVectorRow> {
+  final int indexId;
+  final int ordinal;
+  final Uint8List vector;
+  final String checksum;
+  const ChatVectorRow({
+    required this.indexId,
+    required this.ordinal,
+    required this.vector,
+    required this.checksum,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['index_id'] = Variable<int>(indexId);
+    map['ordinal'] = Variable<int>(ordinal);
+    map['vector'] = Variable<Uint8List>(vector);
+    map['checksum'] = Variable<String>(checksum);
+    return map;
+  }
+
+  ChatVectorsCompanion toCompanion(bool nullToAbsent) {
+    return ChatVectorsCompanion(
+      indexId: Value(indexId),
+      ordinal: Value(ordinal),
+      vector: Value(vector),
+      checksum: Value(checksum),
+    );
+  }
+
+  factory ChatVectorRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ChatVectorRow(
+      indexId: serializer.fromJson<int>(json['indexId']),
+      ordinal: serializer.fromJson<int>(json['ordinal']),
+      vector: serializer.fromJson<Uint8List>(json['vector']),
+      checksum: serializer.fromJson<String>(json['checksum']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'indexId': serializer.toJson<int>(indexId),
+      'ordinal': serializer.toJson<int>(ordinal),
+      'vector': serializer.toJson<Uint8List>(vector),
+      'checksum': serializer.toJson<String>(checksum),
+    };
+  }
+
+  ChatVectorRow copyWith({
+    int? indexId,
+    int? ordinal,
+    Uint8List? vector,
+    String? checksum,
+  }) => ChatVectorRow(
+    indexId: indexId ?? this.indexId,
+    ordinal: ordinal ?? this.ordinal,
+    vector: vector ?? this.vector,
+    checksum: checksum ?? this.checksum,
+  );
+  ChatVectorRow copyWithCompanion(ChatVectorsCompanion data) {
+    return ChatVectorRow(
+      indexId: data.indexId.present ? data.indexId.value : this.indexId,
+      ordinal: data.ordinal.present ? data.ordinal.value : this.ordinal,
+      vector: data.vector.present ? data.vector.value : this.vector,
+      checksum: data.checksum.present ? data.checksum.value : this.checksum,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ChatVectorRow(')
+          ..write('indexId: $indexId, ')
+          ..write('ordinal: $ordinal, ')
+          ..write('vector: $vector, ')
+          ..write('checksum: $checksum')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(indexId, ordinal, $driftBlobEquality.hash(vector), checksum);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ChatVectorRow &&
+          other.indexId == this.indexId &&
+          other.ordinal == this.ordinal &&
+          $driftBlobEquality.equals(other.vector, this.vector) &&
+          other.checksum == this.checksum);
+}
+
+class ChatVectorsCompanion extends UpdateCompanion<ChatVectorRow> {
+  final Value<int> indexId;
+  final Value<int> ordinal;
+  final Value<Uint8List> vector;
+  final Value<String> checksum;
+  final Value<int> rowid;
+  const ChatVectorsCompanion({
+    this.indexId = const Value.absent(),
+    this.ordinal = const Value.absent(),
+    this.vector = const Value.absent(),
+    this.checksum = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ChatVectorsCompanion.insert({
+    required int indexId,
+    required int ordinal,
+    required Uint8List vector,
+    required String checksum,
+    this.rowid = const Value.absent(),
+  }) : indexId = Value(indexId),
+       ordinal = Value(ordinal),
+       vector = Value(vector),
+       checksum = Value(checksum);
+  static Insertable<ChatVectorRow> custom({
+    Expression<int>? indexId,
+    Expression<int>? ordinal,
+    Expression<Uint8List>? vector,
+    Expression<String>? checksum,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (indexId != null) 'index_id': indexId,
+      if (ordinal != null) 'ordinal': ordinal,
+      if (vector != null) 'vector': vector,
+      if (checksum != null) 'checksum': checksum,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ChatVectorsCompanion copyWith({
+    Value<int>? indexId,
+    Value<int>? ordinal,
+    Value<Uint8List>? vector,
+    Value<String>? checksum,
+    Value<int>? rowid,
+  }) {
+    return ChatVectorsCompanion(
+      indexId: indexId ?? this.indexId,
+      ordinal: ordinal ?? this.ordinal,
+      vector: vector ?? this.vector,
+      checksum: checksum ?? this.checksum,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (indexId.present) {
+      map['index_id'] = Variable<int>(indexId.value);
+    }
+    if (ordinal.present) {
+      map['ordinal'] = Variable<int>(ordinal.value);
+    }
+    if (vector.present) {
+      map['vector'] = Variable<Uint8List>(vector.value);
+    }
+    if (checksum.present) {
+      map['checksum'] = Variable<String>(checksum.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ChatVectorsCompanion(')
+          ..write('indexId: $indexId, ')
+          ..write('ordinal: $ordinal, ')
+          ..write('vector: $vector, ')
+          ..write('checksum: $checksum, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -6371,6 +7091,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $SettingsTable settings = $SettingsTable(this);
   late final $ChatSessionsTable chatSessions = $ChatSessionsTable(this);
   late final $ChatTurnsTable chatTurns = $ChatTurnsTable(this);
+  late final $ChatIndexesTable chatIndexes = $ChatIndexesTable(this);
+  late final $ChatVectorsTable chatVectors = $ChatVectorsTable(this);
   late final Index chaptersBookOrder = Index(
     'chapters_book_order',
     'CREATE INDEX chapters_book_order ON chapters (book_id, sort_order)',
@@ -6407,6 +7129,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     settings,
     chatSessions,
     chatTurns,
+    chatIndexes,
+    chatVectors,
     chaptersBookOrder,
     paragraphsChapterGroup,
     readingSessionsBookTime,
@@ -6498,6 +7222,20 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('chat_turns', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'books',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('chat_indexes', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'chat_indexes',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('chat_vectors', kind: UpdateKind.delete)],
     ),
   ]);
 }
@@ -6640,6 +7378,24 @@ final class $$BooksTableReferences
     ).filter((f) => f.bookId.id.sqlEquals($_itemColumn<int>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_chatSessionsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$ChatIndexesTable, List<ChatIndexRow>>
+  _chatIndexesRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.chatIndexes,
+    aliasName: 'books__id__chat_indexes__book_id',
+  );
+
+  $$ChatIndexesTableProcessedTableManager get chatIndexesRefs {
+    final manager = $$ChatIndexesTableTableManager(
+      $_db,
+      $_db.chatIndexes,
+    ).filter((f) => f.bookId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_chatIndexesRefsTable($_db));
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -6866,6 +7622,31 @@ class $$BooksTableFilterComposer extends Composer<_$AppDatabase, $BooksTable> {
           }) => $$ChatSessionsTableFilterComposer(
             $db: $db,
             $table: $db.chatSessions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> chatIndexesRefs(
+    Expression<bool> Function($$ChatIndexesTableFilterComposer f) f,
+  ) {
+    final $$ChatIndexesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.chatIndexes,
+      getReferencedColumn: (t) => t.bookId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ChatIndexesTableFilterComposer(
+            $db: $db,
+            $table: $db.chatIndexes,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -7194,6 +7975,31 @@ class $$BooksTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> chatIndexesRefs<T extends Object>(
+    Expression<T> Function($$ChatIndexesTableAnnotationComposer a) f,
+  ) {
+    final $$ChatIndexesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.chatIndexes,
+      getReferencedColumn: (t) => t.bookId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ChatIndexesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.chatIndexes,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$BooksTableTableManager
@@ -7215,6 +8021,7 @@ class $$BooksTableTableManager
             bool readingSessionsRefs,
             bool aiCallsRefs,
             bool chatSessionsRefs,
+            bool chatIndexesRefs,
           })
         > {
   $$BooksTableTableManager(_$AppDatabase db, $BooksTable table)
@@ -7327,6 +8134,7 @@ class $$BooksTableTableManager
                 readingSessionsRefs = false,
                 aiCallsRefs = false,
                 chatSessionsRefs = false,
+                chatIndexesRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
@@ -7336,6 +8144,7 @@ class $$BooksTableTableManager
                     if (readingSessionsRefs) db.readingSessions,
                     if (aiCallsRefs) db.aiCalls,
                     if (chatSessionsRefs) db.chatSessions,
+                    if (chatIndexesRefs) db.chatIndexes,
                   ],
                   addJoins: null,
                   getPrefetchedDataCallback: (items) async {
@@ -7433,6 +8242,27 @@ class $$BooksTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (chatIndexesRefs)
+                        await $_getPrefetchedData<
+                          Book,
+                          $BooksTable,
+                          ChatIndexRow
+                        >(
+                          currentTable: table,
+                          referencedTable: $$BooksTableReferences
+                              ._chatIndexesRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$BooksTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).chatIndexesRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.bookId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -7459,6 +8289,7 @@ typedef $$BooksTableProcessedTableManager =
         bool readingSessionsRefs,
         bool aiCallsRefs,
         bool chatSessionsRefs,
+        bool chatIndexesRefs,
       })
     >;
 typedef $$ChaptersTableCreateCompanionBuilder = ChaptersCompanion Function({
@@ -12013,6 +12844,720 @@ typedef $$ChatTurnsTableProcessedTableManager =
       ChatTurnRow,
       PrefetchHooks Function({bool sessionId})
     >;
+typedef $$ChatIndexesTableCreateCompanionBuilder =
+    ChatIndexesCompanion Function({
+      Value<int> id,
+      required int bookId,
+      required String identity,
+      required String manifest,
+      required int chunkCount,
+      Value<bool> ready,
+    });
+typedef $$ChatIndexesTableUpdateCompanionBuilder =
+    ChatIndexesCompanion Function({
+      Value<int> id,
+      Value<int> bookId,
+      Value<String> identity,
+      Value<String> manifest,
+      Value<int> chunkCount,
+      Value<bool> ready,
+    });
+
+final class $$ChatIndexesTableReferences
+    extends BaseReferences<_$AppDatabase, $ChatIndexesTable, ChatIndexRow> {
+  $$ChatIndexesTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $BooksTable _bookIdTable(_$AppDatabase db) =>
+      db.books.createAlias('chat_indexes__book_id__books__id');
+
+  $$BooksTableProcessedTableManager get bookId {
+    final $_column = $_itemColumn<int>('book_id')!;
+
+    final manager = $$BooksTableTableManager(
+      $_db,
+      $_db.books,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_bookIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static MultiTypedResultKey<$ChatVectorsTable, List<ChatVectorRow>>
+  _chatVectorsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.chatVectors,
+    aliasName: 'chat_indexes__id__chat_vectors__index_id',
+  );
+
+  $$ChatVectorsTableProcessedTableManager get chatVectorsRefs {
+    final manager = $$ChatVectorsTableTableManager(
+      $_db,
+      $_db.chatVectors,
+    ).filter((f) => f.indexId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_chatVectorsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $$ChatIndexesTableFilterComposer
+    extends Composer<_$AppDatabase, $ChatIndexesTable> {
+  $$ChatIndexesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get identity => $composableBuilder(
+    column: $table.identity,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get manifest => $composableBuilder(
+    column: $table.manifest,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get chunkCount => $composableBuilder(
+    column: $table.chunkCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get ready => $composableBuilder(
+    column: $table.ready,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$BooksTableFilterComposer get bookId {
+    final $$BooksTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.bookId,
+      referencedTable: $db.books,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BooksTableFilterComposer(
+            $db: $db,
+            $table: $db.books,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  Expression<bool> chatVectorsRefs(
+    Expression<bool> Function($$ChatVectorsTableFilterComposer f) f,
+  ) {
+    final $$ChatVectorsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.chatVectors,
+      getReferencedColumn: (t) => t.indexId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ChatVectorsTableFilterComposer(
+            $db: $db,
+            $table: $db.chatVectors,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$ChatIndexesTableOrderingComposer
+    extends Composer<_$AppDatabase, $ChatIndexesTable> {
+  $$ChatIndexesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get identity => $composableBuilder(
+    column: $table.identity,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get manifest => $composableBuilder(
+    column: $table.manifest,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get chunkCount => $composableBuilder(
+    column: $table.chunkCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get ready => $composableBuilder(
+    column: $table.ready,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$BooksTableOrderingComposer get bookId {
+    final $$BooksTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.bookId,
+      referencedTable: $db.books,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BooksTableOrderingComposer(
+            $db: $db,
+            $table: $db.books,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ChatIndexesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ChatIndexesTable> {
+  $$ChatIndexesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get identity =>
+      $composableBuilder(column: $table.identity, builder: (column) => column);
+
+  GeneratedColumn<String> get manifest =>
+      $composableBuilder(column: $table.manifest, builder: (column) => column);
+
+  GeneratedColumn<int> get chunkCount => $composableBuilder(
+    column: $table.chunkCount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get ready =>
+      $composableBuilder(column: $table.ready, builder: (column) => column);
+
+  $$BooksTableAnnotationComposer get bookId {
+    final $$BooksTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.bookId,
+      referencedTable: $db.books,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BooksTableAnnotationComposer(
+            $db: $db,
+            $table: $db.books,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  Expression<T> chatVectorsRefs<T extends Object>(
+    Expression<T> Function($$ChatVectorsTableAnnotationComposer a) f,
+  ) {
+    final $$ChatVectorsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.chatVectors,
+      getReferencedColumn: (t) => t.indexId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ChatVectorsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.chatVectors,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$ChatIndexesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ChatIndexesTable,
+          ChatIndexRow,
+          $$ChatIndexesTableFilterComposer,
+          $$ChatIndexesTableOrderingComposer,
+          $$ChatIndexesTableAnnotationComposer,
+          $$ChatIndexesTableCreateCompanionBuilder,
+          $$ChatIndexesTableUpdateCompanionBuilder,
+          (ChatIndexRow, $$ChatIndexesTableReferences),
+          ChatIndexRow,
+          PrefetchHooks Function({bool bookId, bool chatVectorsRefs})
+        > {
+  $$ChatIndexesTableTableManager(_$AppDatabase db, $ChatIndexesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ChatIndexesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ChatIndexesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ChatIndexesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> bookId = const Value.absent(),
+                Value<String> identity = const Value.absent(),
+                Value<String> manifest = const Value.absent(),
+                Value<int> chunkCount = const Value.absent(),
+                Value<bool> ready = const Value.absent(),
+              }) => ChatIndexesCompanion(
+                id: id,
+                bookId: bookId,
+                identity: identity,
+                manifest: manifest,
+                chunkCount: chunkCount,
+                ready: ready,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int bookId,
+                required String identity,
+                required String manifest,
+                required int chunkCount,
+                Value<bool> ready = const Value.absent(),
+              }) => ChatIndexesCompanion.insert(
+                id: id,
+                bookId: bookId,
+                identity: identity,
+                manifest: manifest,
+                chunkCount: chunkCount,
+                ready: ready,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$ChatIndexesTable, ChatIndexRow>(table),
+                  $$ChatIndexesTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({bookId = false, chatVectorsRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [if (chatVectorsRefs) db.chatVectors],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (bookId) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.bookId,
+                        referencedTable: $$ChatIndexesTableReferences
+                            ._bookIdTable(db),
+                        referencedColumn: $$ChatIndexesTableReferences
+                            ._bookIdTable(db)
+                            .id,
+                      ) as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (chatVectorsRefs)
+                    await $_getPrefetchedData<
+                      ChatIndexRow,
+                      $ChatIndexesTable,
+                      ChatVectorRow
+                    >(
+                      currentTable: table,
+                      referencedTable: $$ChatIndexesTableReferences
+                          ._chatVectorsRefsTable(db),
+                      managerFromTypedResult: (p0) =>
+                          $$ChatIndexesTableReferences(
+                            db,
+                            table,
+                            p0,
+                          ).chatVectorsRefs,
+                      referencedItemsForCurrentItem: (item, referencedItems) =>
+                          referencedItems.where((e) => e.indexId == item.id),
+                      typedResults: items,
+                    ),
+                ];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$ChatIndexesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ChatIndexesTable,
+      ChatIndexRow,
+      $$ChatIndexesTableFilterComposer,
+      $$ChatIndexesTableOrderingComposer,
+      $$ChatIndexesTableAnnotationComposer,
+      $$ChatIndexesTableCreateCompanionBuilder,
+      $$ChatIndexesTableUpdateCompanionBuilder,
+      (ChatIndexRow, $$ChatIndexesTableReferences),
+      ChatIndexRow,
+      PrefetchHooks Function({bool bookId, bool chatVectorsRefs})
+    >;
+typedef $$ChatVectorsTableCreateCompanionBuilder =
+    ChatVectorsCompanion Function({
+      required int indexId,
+      required int ordinal,
+      required Uint8List vector,
+      required String checksum,
+      Value<int> rowid,
+    });
+typedef $$ChatVectorsTableUpdateCompanionBuilder =
+    ChatVectorsCompanion Function({
+      Value<int> indexId,
+      Value<int> ordinal,
+      Value<Uint8List> vector,
+      Value<String> checksum,
+      Value<int> rowid,
+    });
+
+final class $$ChatVectorsTableReferences
+    extends BaseReferences<_$AppDatabase, $ChatVectorsTable, ChatVectorRow> {
+  $$ChatVectorsTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $ChatIndexesTable _indexIdTable(_$AppDatabase db) =>
+      db.chatIndexes.createAlias('chat_vectors__index_id__chat_indexes__id');
+
+  $$ChatIndexesTableProcessedTableManager get indexId {
+    final $_column = $_itemColumn<int>('index_id')!;
+
+    final manager = $$ChatIndexesTableTableManager(
+      $_db,
+      $_db.chatIndexes,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_indexIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$ChatVectorsTableFilterComposer
+    extends Composer<_$AppDatabase, $ChatVectorsTable> {
+  $$ChatVectorsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get ordinal => $composableBuilder(
+    column: $table.ordinal,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<Uint8List> get vector => $composableBuilder(
+    column: $table.vector,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get checksum => $composableBuilder(
+    column: $table.checksum,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$ChatIndexesTableFilterComposer get indexId {
+    final $$ChatIndexesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.indexId,
+      referencedTable: $db.chatIndexes,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ChatIndexesTableFilterComposer(
+            $db: $db,
+            $table: $db.chatIndexes,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ChatVectorsTableOrderingComposer
+    extends Composer<_$AppDatabase, $ChatVectorsTable> {
+  $$ChatVectorsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get ordinal => $composableBuilder(
+    column: $table.ordinal,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<Uint8List> get vector => $composableBuilder(
+    column: $table.vector,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get checksum => $composableBuilder(
+    column: $table.checksum,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$ChatIndexesTableOrderingComposer get indexId {
+    final $$ChatIndexesTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.indexId,
+      referencedTable: $db.chatIndexes,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ChatIndexesTableOrderingComposer(
+            $db: $db,
+            $table: $db.chatIndexes,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ChatVectorsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ChatVectorsTable> {
+  $$ChatVectorsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get ordinal =>
+      $composableBuilder(column: $table.ordinal, builder: (column) => column);
+
+  GeneratedColumn<Uint8List> get vector =>
+      $composableBuilder(column: $table.vector, builder: (column) => column);
+
+  GeneratedColumn<String> get checksum =>
+      $composableBuilder(column: $table.checksum, builder: (column) => column);
+
+  $$ChatIndexesTableAnnotationComposer get indexId {
+    final $$ChatIndexesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.indexId,
+      referencedTable: $db.chatIndexes,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ChatIndexesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.chatIndexes,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ChatVectorsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ChatVectorsTable,
+          ChatVectorRow,
+          $$ChatVectorsTableFilterComposer,
+          $$ChatVectorsTableOrderingComposer,
+          $$ChatVectorsTableAnnotationComposer,
+          $$ChatVectorsTableCreateCompanionBuilder,
+          $$ChatVectorsTableUpdateCompanionBuilder,
+          (ChatVectorRow, $$ChatVectorsTableReferences),
+          ChatVectorRow,
+          PrefetchHooks Function({bool indexId})
+        > {
+  $$ChatVectorsTableTableManager(_$AppDatabase db, $ChatVectorsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ChatVectorsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ChatVectorsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ChatVectorsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> indexId = const Value.absent(),
+                Value<int> ordinal = const Value.absent(),
+                Value<Uint8List> vector = const Value.absent(),
+                Value<String> checksum = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ChatVectorsCompanion(
+                indexId: indexId,
+                ordinal: ordinal,
+                vector: vector,
+                checksum: checksum,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required int indexId,
+                required int ordinal,
+                required Uint8List vector,
+                required String checksum,
+                Value<int> rowid = const Value.absent(),
+              }) => ChatVectorsCompanion.insert(
+                indexId: indexId,
+                ordinal: ordinal,
+                vector: vector,
+                checksum: checksum,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$ChatVectorsTable, ChatVectorRow>(table),
+                  $$ChatVectorsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({indexId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (indexId) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.indexId,
+                        referencedTable: $$ChatVectorsTableReferences
+                            ._indexIdTable(db),
+                        referencedColumn: $$ChatVectorsTableReferences
+                            ._indexIdTable(db)
+                            .id,
+                      ) as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$ChatVectorsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ChatVectorsTable,
+      ChatVectorRow,
+      $$ChatVectorsTableFilterComposer,
+      $$ChatVectorsTableOrderingComposer,
+      $$ChatVectorsTableAnnotationComposer,
+      $$ChatVectorsTableCreateCompanionBuilder,
+      $$ChatVectorsTableUpdateCompanionBuilder,
+      (ChatVectorRow, $$ChatVectorsTableReferences),
+      ChatVectorRow,
+      PrefetchHooks Function({bool indexId})
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -12039,4 +13584,8 @@ class $AppDatabaseManager {
       $$ChatSessionsTableTableManager(_db, _db.chatSessions);
   $$ChatTurnsTableTableManager get chatTurns =>
       $$ChatTurnsTableTableManager(_db, _db.chatTurns);
+  $$ChatIndexesTableTableManager get chatIndexes =>
+      $$ChatIndexesTableTableManager(_db, _db.chatIndexes);
+  $$ChatVectorsTableTableManager get chatVectors =>
+      $$ChatVectorsTableTableManager(_db, _db.chatVectors);
 }
