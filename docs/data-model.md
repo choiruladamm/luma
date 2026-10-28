@@ -20,7 +20,7 @@ Prinsip: **file diparse sekali saat import** ke format internal. Reader, AI, dan
 | useDefaultCover | bool (default false) | true = cover EPUB disembunyiin (repository ngasih `coverName` null ke UI). `coverName` tetap utuh di DB + disk |
 | hash | text? (unique) | SHA-256 isi file EPUB, untuk cegah import dobel |
 | parserVersion | int | Versi logika parsing + grouping. Naik → re-import & invalidasi cache buku itu |
-| contentRevision | int (default 1) | Snapshot isi/urutan untuk Book Chat. Metadata tidak menaikkan revision; hook mutasi mengikuti issue integritas |
+| contentRevision | int (default 1) | Snapshot isi/urutan untuk Book Chat. Metadata tidak menaikkan revision; append/replace/reorder Markdown menaikkan revision atomik lewat `AppDatabase.contentChanged` (#119) |
 | totalChars | int | Untuk hitung persentase baca (hanya bermakna untuk buku lengkap) |
 | createdAt | datetime | |
 | lastOpenedAt | datetime? | Untuk urutan rak |

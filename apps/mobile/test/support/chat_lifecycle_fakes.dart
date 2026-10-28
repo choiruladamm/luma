@@ -17,6 +17,7 @@ class LifecycleRepo implements ChatRepository {
   final books = StreamController<ChatBookRef?>.broadcast();
   Completer<void>? createGate;
   Object? createError;
+  Object? finalizeError;
   Completer<void>? finalizeGate;
   int creates = 0, retries = 0, opened = 0;
   int? last;
@@ -202,6 +203,7 @@ class LifecycleRepo implements ChatRepository {
     int? httpStatus,
   }) async {
     await finalizeGate?.future;
+    if (finalizeError != null) throw finalizeError!;
     final t = owned(ref);
     if (t == null) return false;
     finalized.add((ref: ref, phase: phase, draft: draft ?? t.draft));

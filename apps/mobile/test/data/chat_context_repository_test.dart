@@ -311,6 +311,32 @@ void main() {
     },
   );
 
+  test('revision alone invalidates cached vectors and prepared answer even with identical text', () async {
+    final old = (await context.prepare(turn))!;
+    await chat.finalize(turn.attemptRef, phase: ChatPhase.stopped);
+    await db.contentChanged(book.bookId);
+    final next = await chat.createFirstTurn(
+      (bookId: book.bookId, contentRevision: 2),
+      question: 'Siapa?',
+      model: model,
+      promptVersion: 1,
+    );
+    final prepared = (await context.prepare(next))!;
+    expect(
+      prepared.prompt.sources.every(
+        (s) => s.anchors.every((a) => a.book.contentRevision == 2),
+      ),
+      true,
+    );
+    expect(
+      adapter.requests.where((r) => r.path == '/embeddings'),
+      hasLength(4),
+    );
+    final requests = adapter.requests.length;
+    expect(await old.stream().toList(), isEmpty);
+    expect(adapter.requests.length, requests);
+  });
+
   test(
     'no key, stale revision and model mismatch stop before network',
     () async {

@@ -114,7 +114,10 @@ ViewModel/lifecycle tersedia lewat `chatViewModelProvider` (#118); route dan UI 
 `ChatBookRef` = `(bookId, contentRevision)`. Session revision lama read-only;
 metadata judul/penulis/cover tidak menaikkan revision. Append/replace/reorder isi,
 reparse yang mengganti identitas paragraf/bab, dan re-import harus menaikkannya
-secara atomik di implementasi integritas (#119). Snapshot history lama tetap ada.
+secara atomik lewat `AppDatabase.contentChanged(bookId)` (#119), dalam transaksi isi.
+Import Markdown memakai hook ini setelah append/replace + renumber; fresh import
+revision1. Re-import EPUB kelak wajib memakai hook yang sama. Running lama menjadi
+interrupted; sesi dan snapshot history lama tetap ada.
 
 `ChatLaunchContext` dari reader melanjutkan sesi terakhir; quote explicit dari
 Artinya/Bedahin selalu draft sesi baru. Draft kosong tidak dipersist. Judul awal
@@ -236,10 +239,19 @@ cut/failed/stopped/interrupted, menimpa attempt tanpa menambah pertanyaan user.
 tidak mengirim ulang. Back/route change di #120/#121 **harus await `stop()` sebelum
 navigasi**. Dispose juga cancel/flush melalui instance repository asal, dan semua
 callback lama dipagari lifetime. Dispose Riverpod bersifat sinkron: flush fallback
-berjalan async; sebelum menutup/mengganti DB, #119 wajib await stop terlebih dahulu.
+berjalan async. `ChatLifecycle` (#119) menyimpan callback stop setiap lifetime
+controller sampai flush dispose selesai, termasuk layar tertutup/paused. Restore
+memanggil `close()` sebelum SQLite ditutup: blok send/retry, await stop seluruh
+controller, lalu dispose repository + retrieval asal. Flush gagal membatalkan
+restore; callback asal tidak dapat menulis ke DB baru meski ID backup sama.
 Restore/provider rebuild memasang lifetime baru; callback lama tidak membaca ref/
 state/instance provider baru. Tidak ada key di ChatState.
 
-Perubahan revision atomik di semua jalur import/restore tetap scope #119. Jika isi
+Import Markdown memakai `ChatLifecycle.changeContent` untuk blok send/retry buku
+itu + await stop sebelum transaksi isi/revision; buku lain tetap dapat berjalan.
+Invalidasi `appDatabaseProvider` setelah restore (sukses/gagal) membangun ulang
+repository, retrieval, lifecycle, ViewModel dan seleksi sesi dari DB yang dibuka.
+Index in-memory memakai bookId+revision+manifest, sehingga append/reorder atau
+replace panjang sama tetap reindex pada send berikutnya. Jika isi
 sudah berubah sebelum cancel/flush, guard repository menolak late write; arsip tetap
 readOnly. Jangan melemahkan guard untuk memfinalisasi ke revision lain.

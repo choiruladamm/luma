@@ -7,12 +7,16 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:luma/data/database/app_database.dart';
 import 'package:luma/data/services/backup_service.dart';
+import 'package:luma/data/repositories/chat_repository.dart';
+import 'package:luma/data/repositories/book_repository.dart';
+import 'package:luma/domain/models/book_chat.dart';
+import 'package:luma/domain/chat_prompt.dart';
 import 'package:luma/data/services/file_storage.dart';
 import 'package:luma/data/services/restore_service.dart';
 import 'package:luma/domain/models/ai_reply.dart';
 import 'package:luma/domain/models/book.dart';
 
-import 'migration_test.dart' show v4, v6;
+import 'migration_test.dart' show v4, v6, v7;
 
 /// One "phone": a real database file in Documents plus books/ and covers/.
 class Phone {
@@ -141,6 +145,58 @@ class Phone {
     await storage.cover('$hash.png').writeAsString('cover of $title');
   }
 
+  Future<void> addChats() async {
+    final repo = ChatRepository(db);
+    for (final book in await db.select(db.books).get()) {
+      final chapter = await (db.select(
+        db.chapters,
+      )..where((c) => c.bookId.equals(book.id))).getSingle();
+      final paragraph = await (db.select(
+        db.paragraphs,
+      )..where((p) => p.chapterId.equals(chapter.id))).getSingle();
+      final ref = (bookId: book.id, contentRevision: book.contentRevision);
+      final source = ChatSource(
+        id: 'S1',
+        chapterTitle: chapter.title,
+        anchors: [
+          SourceAnchor(
+            book: ref,
+            chapterId: chapter.id,
+            paragraphIndex: 0,
+            start: 0,
+            end: paragraph.content.length,
+            paragraphHash: chatTextHash(paragraph.content),
+            snapshot: paragraph.content,
+          ),
+        ],
+      );
+      for (var i = 0; i < 2; i++) {
+        final turn = await repo.createFirstTurn(
+          ref,
+          question: 'Siapa $i?',
+          model: 'private/model',
+          promptVersion: chatPromptVersion,
+        );
+        await repo.prepareSources(turn.attemptRef, [source]);
+        await repo.rename(ref, turn.sessionId, 'Judul manual $i');
+        await repo.finalize(
+          turn.attemptRef,
+          phase: i == 0 ? ChatPhase.done : ChatPhase.stopped,
+          draft: i == 0 ? 'finished' : '{partial',
+          answer: i == 0
+              ? ChatAnswer(
+                  status: ChatAnswerStatus.answered,
+                  blocks: [
+                    ChatAnswerBlock(text: 'Sapaan.', sources: [source]),
+                  ],
+                )
+              : null,
+        );
+      }
+    }
+    repo.dispose();
+  }
+
   /// Every row of every table, for comparing two phones.
   Future<List<Object>> dump() async => [
     await db.select(db.books).get(),
@@ -152,6 +208,8 @@ class Phone {
     await db.select(db.readingSessions).get(),
     await db.select(db.aiCalls).get(),
     await db.select(db.settings).get(),
+    await db.select(db.chatSessions).get(),
+    await db.select(db.chatTurns).get(),
   ];
 
   List<String> files(String dir) => [
@@ -177,7 +235,12 @@ void main() {
     await a.db
         .into(a.db.settings)
         .insert(SettingsCompanion.insert(key: 'ai.model', value: 'x/y'));
+    await a.db
+        .update(a.db.books)
+        .write(const BooksCompanion(contentRevision: Value(3)));
+    await a.addChats();
     await b.addBook('Dracula'); // what's on the phone before restoring
+    await b.addChats();
   });
 
   tearDown(() async {
@@ -215,6 +278,19 @@ void main() {
     expect(walden.finishedAt, DateTime(2026, 10, 7, 21));
     expect((await b.db.select(b.db.aiResults).getSingle()).openCount, 3);
     expect(await b.db.select(b.db.aiBreakdowns).get(), hasLength(1));
+    final sessions = await b.db.select(b.db.chatSessions).get();
+    expect(sessions, hasLength(4));
+    expect(
+      sessions.every((s) => s.manualTitle && s.contentRevision == 3),
+      true,
+    );
+    final turns = await b.db.select(b.db.chatTurns).get();
+    expect(turns.where((t) => t.phase == 'stopped'), hasLength(2));
+    expect(turns.every((t) => t.sources.contains('Hello')), true);
+    expect(
+      jsonEncode(preview.manifest.toJson()),
+      isNot(contains('private/model')),
+    );
     expect(b.files('books'), a.files('books'));
     expect(b.files('covers'), a.files('covers'));
     // Nothing of the old data or the swap left behind.
@@ -224,6 +300,24 @@ void main() {
       ),
       unorderedEquals(['luma.sqlite', 'books', 'covers']),
     );
+  });
+
+  test('session deletion preserves book/cache/progress/files; book deletion cascades chat only for that book', () async {
+    final before = await a.dump();
+    final repo = ChatRepository(a.db);
+    await repo.deleteSession(1, 1);
+    final after = await a.dump();
+    expect(after.take(9), before.take(9));
+    expect(await a.db.select(a.db.chatSessions).get(), hasLength(3));
+    expect(await a.db.select(a.db.chatTurns).get(), hasLength(3));
+    expect(a.files('books'), hasLength(2));
+    await BookRepository(a.db).delete(1, a.storage);
+    final sessions = await a.db.select(a.db.chatSessions).get();
+    expect(sessions, hasLength(2));
+    expect(sessions.every((s) => s.bookId == 2), true);
+    expect(await a.db.select(a.db.chatTurns).get(), hasLength(2));
+    expect(a.files('books'), ['emma.epub=epub of Emma']);
+    repo.dispose();
   });
 
   test('round trip keeps an edited title, author and cover choice', () async {
@@ -429,6 +523,80 @@ void main() {
       expect(cached.openCount, 0);
       expect(await b.db.select(b.db.readingSessions).get(), isEmpty);
       expect(await b.db.select(b.db.aiCalls).get(), isEmpty);
+    },
+  );
+
+  test('schema 7 backup migrates with empty chat and revision 1', () async {
+    final dir = await Directory.systemTemp.createTemp('luma-v7-');
+    addTearDown(() => dir.delete(recursive: true));
+    final file = File('${dir.path}/luma.sqlite');
+    final old = NativeDatabase(
+      file,
+      setup: (raw) {
+        for (final sql in v7) {
+          raw.execute(sql);
+        }
+        raw.execute(
+          "INSERT INTO books (source_type,title,parser_version,total_chars) VALUES ('markdown','Old',1,4)",
+        );
+      },
+    );
+    await old.ensureOpen(_Schema4(7));
+    await old.close();
+    final zip = await zipOf({
+      'manifest.json': utf8.encode(jsonEncode(manifest(schema: 7))),
+      'luma.sqlite': file.readAsBytesSync(),
+    });
+    final service = RestoreService(b.db, b.storage);
+    await service.apply(await service.inspect(zip));
+    b.reopen();
+    expect((await b.db.select(b.db.books).getSingle()).contentRevision, 1);
+    expect(await b.db.select(b.db.chatSessions).get(), isEmpty);
+    expect(await b.db.select(b.db.chatTurns).get(), isEmpty);
+  });
+
+  test(
+    'backup during writing restores persisted checkpoint as interrupted',
+    () async {
+      final repo = ChatRepository(a.db);
+      final turn = await repo.createFirstTurn(
+        (bookId: 1, contentRevision: 3),
+        question: 'Running?',
+        model: 'm',
+        promptVersion: chatPromptVersion,
+      );
+      final source = (await repo.watchTurns(1, 1).first)
+          .single
+          .answer!
+          .blocks
+          .single
+          .sources
+          .single;
+      await repo.prepareSources(turn.attemptRef, [source]);
+      await repo.checkpoint(
+        turn.attemptRef,
+        draft: '{first',
+        phase: ChatPhase.writing,
+      );
+      await repo.checkpoint(
+        turn.attemptRef,
+        draft: '{first tail',
+        phase: ChatPhase.writing,
+      );
+      final service = RestoreService(b.db, b.storage);
+      await service.apply(await service.inspect(await backupOf(a)));
+      b.reopen();
+      final restored = ChatRepository(b.db);
+      expect(await restored.recoverInterrupted(), 1);
+      final rows = await restored.watchTurns(1, turn.sessionId).first;
+      expect(rows.single.phase, ChatPhase.interrupted);
+      expect(
+        rows.single.draft,
+        '{first',
+      ); // snapshot contains the durable checkpoint
+      expect(await restored.recoverInterrupted(), 1); // cached; no resend
+      restored.dispose();
+      repo.dispose();
     },
   );
 

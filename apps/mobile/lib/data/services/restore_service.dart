@@ -9,6 +9,9 @@ import 'package:path/path.dart' as p;
 
 import '../../domain/models/backup.dart';
 import '../database/app_database.dart';
+import '../repositories/chat_repository.dart';
+import '../repositories/chat_context_repository.dart';
+import 'chat_lifecycle.dart';
 import 'file_storage.dart';
 
 enum RestoreError {
@@ -51,7 +54,9 @@ class RestorePreview {
 /// sementara, data lama baru diganti kalau semuanya beres. Gagal di tengah
 /// jalan → semua yang udah dipindah dibalikin.
 class RestoreService {
-  RestoreService(this._db, this._storage);
+  RestoreService(this._db, this._storage, {this.beforeClose});
+
+  final Future<void> Function()? beforeClose;
 
   final AppDatabase _db;
   final FileStorage _storage;
@@ -127,6 +132,7 @@ class RestoreService {
     // yang ketutup, mis. Rak di bawah Pengaturan) gak pernah nerima, jadi
     // restore nyangkut. Stream-nya ikut kebuang pas pemanggil invalidate
     // `appDatabaseProvider`.
+    await beforeClose?.call();
     await _db.executor.close();
     final moved = <(String, String)>[];
     Future<void> move(String from, String to) async {
@@ -229,9 +235,17 @@ class RestoreService {
   }
 }
 
-final restoreServiceProvider = Provider<RestoreService>(
-  (ref) => RestoreService(
+final restoreServiceProvider = Provider<RestoreService>((ref) {
+  final lifecycle = ref.watch(chatLifecycleProvider);
+  final chat = ref.watch(chatRepositoryProvider);
+  final context = ref.watch(chatContextRepositoryProvider);
+  return RestoreService(
     ref.watch(appDatabaseProvider),
     ref.watch(fileStorageProvider),
-  ),
-);
+    beforeClose: () async {
+      await lifecycle.close();
+      context.dispose();
+      chat.dispose();
+    },
+  );
+});

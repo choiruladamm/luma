@@ -167,7 +167,8 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
       title: 'Hapus cache terjemahan?',
       message:
           'Semua terjemahan yang udah kesimpen bakal ilang. Paragraf yang '
-          'dibuka lagi manggil AI ulang dan motong saldo lagi.',
+          'dibuka lagi manggil AI ulang dan motong saldo lagi. '
+          'Obrolan buku lo tetap kesimpen.',
       confirmLabel: 'Hapus',
     );
     if (!ok) return;
