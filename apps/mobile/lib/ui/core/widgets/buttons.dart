@@ -247,6 +247,12 @@ class CircleButton extends StatelessWidget {
 
 /// Ikon yang sering dipake, biar nama Hugeicons-nya gak nyebar.
 abstract final class AppIcons {
+  static const chat = HugeIcons.strokeRoundedBubbleChat;
+  static const history = HugeIcons.strokeRoundedClock01;
+  static const more = HugeIcons.strokeRoundedMoreHorizontal;
+  static const send = HugeIcons.strokeRoundedArrowUp02;
+  static const stop = HugeIcons.strokeRoundedStop;
+  static const book = HugeIcons.strokeRoundedBookOpen01;
   static const back = HugeIcons.strokeRoundedArrowLeft01;
   static const close = HugeIcons.strokeRoundedCancel01;
   static const check = HugeIcons.strokeRoundedTick02;

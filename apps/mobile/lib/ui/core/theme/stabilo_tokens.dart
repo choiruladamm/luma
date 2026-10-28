@@ -32,6 +32,7 @@ abstract final class Radii {
 
 /// Layout acuan iPhone 390 × 844.
 abstract final class Layout {
+  static const chatFollowDistance = 96.0;
   static const margin = Space.s6;
   static const topBar = 60.0;
   static const touch = 44.0; // target sentuh minimal
