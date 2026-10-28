@@ -108,7 +108,8 @@ Kontrak di `lib/domain/models/book_chat.dart` dan `lib/domain/chat_prompt.dart`;
 [keputusan/lifecycle/state matrix #114](https://github.com/choiruladamm/luma/issues/114).
 Schema 8 menyediakan tabel chat (#115). `ChatRepository` +
 `chatRepositoryProvider` non-autoDispose menyediakan persistence (#116), tanpa
-network. Route/UI/transport belum dihubungkan.
+network. Retrieval dan transport tersedia lewat `ChatContextRepository` (#117);
+ViewModel, route dan UI menyusul.
 
 `ChatBookRef` = `(bookId, contentRevision)`. Session revision lama read-only;
 metadata judul/penulis/cover tidak menaikkan revision. Append/replace/reorder isi,
@@ -135,7 +136,8 @@ stream dimiliki repository/#118, bukan model domain.
 `ChatRepository` menyediakan `watchSessions(bookId)`,
 `watchTurns(bookId,sessionId)`, `lastOpenedSession`, `createFirstTurn`,
 `appendTurn`, `rename`, `markOpened`, `saveScrollAnchor`, `deleteSession`,
-`retry`, `prepareSources`, `checkpoint`, `finalize`, dan `recoverInterrupted`.
+`retry`, `prepareSources`, `validatePrepared`, `checkpoint`, `finalize`, dan
+`recoverInterrupted`.
 Semua caller menerima model domain; mapper snapshot berada di
 `data/repositories/chat_snapshot.dart`. Preview sesi hanya pertanyaan terakhir
 sesi itu; urutan aktivitas `(updatedAt,id)` terpisah dari resume
@@ -163,3 +165,16 @@ dan running phase dalam transaksi; terminal/attempt lama ditolak (false).
 Sebelum restore menutup/mengganti DB, cancel + finalize request, lalu invalidate
 provider. Provider dispose mematikan callback instance lama; callback transport
 wajib menangkap instance repository asal, bukan mencari provider baru (#118/#119).
+
+
+`chatContextRepositoryProvider` non-autoDispose memakai DB, `ChatRepository`,
+`OpenRouterService`, dan `ApiKeyStore`. Domain retrieval di `chat_retrieval.dart`;
+tidak ada framework agent atau index persist. #118 mengambil `model()`, membuat
+turn dengan `chatPromptVersion`, lalu `prepare(turn,cancel:)` → `stream(cancel:)`.
+Simpan `frame.draft` dengan checkpoint writing, dan finalize done hanya untuk
+`frame.answer` terakhir yang tervalidasi. Stream tanpa frame final berarti attempt
+sudah tidak aktif; jangan mengubahnya menjadi not_found. Error dipetakan ke terminal
+failed/cut oleh ViewModel. Embedding mempertahankan DioException cancel/certificate/
+unknown agar tidak memicu fallback; #118 menangani ini bersama AiException. Semua
+tahap memakai cancel yang sama. Keluar/pindah sesi/background tetap harus cancel dan finalize; repository konteks tidak memiliki lifecycle
+UI atau auto-retry. Detail budget, cache dan protocol: [llm.md](llm.md).

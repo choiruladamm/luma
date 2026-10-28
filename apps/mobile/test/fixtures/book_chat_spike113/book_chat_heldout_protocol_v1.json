@@ -1,0 +1,51 @@
+{
+  "protocol": "heldout-frozen-v1",
+  "frozenAt": "2026-10-27T13:01:51.535192+00:00",
+  "developmentCommit": "d381b1b3a79c973c01dc8b1d6af744833678c04b",
+  "embeddingModel": "qwen/qwen3-embedding-8b",
+  "dimensions": 4096,
+  "answerModel": "deepseek/deepseek-v4.1-flash",
+  "answerSystemHash": "2242f7b5cd6f824cfab31087da36410b0f70ec7c2ba3290ccf2ed4b05d4e5145",
+  "query": "Original question + completed same-session history + selected source text; English Qwen instruct prefix. No rewrite.",
+  "chunking": {
+    "short": "existing parser groups",
+    "maxChars": 1800,
+    "overlapChars": 200
+  },
+  "ranking": {
+    "denseCandidates": 40,
+    "finalTop": 8,
+    "sourceBudgetBytes": 18000,
+    "quotePin": "first intersecting window, per stage4; no gold rescue"
+  },
+  "answerProtocol": "existing oracleJsonSystem JSON source IDs, temperature0, 1200output tokens, no content retry",
+  "runs": 2,
+  "independence": "Fresh answer requests each run; embeddings reused, retrieval re-executed; previous run responses never added to history.",
+  "thresholdsPerRun": {
+    "validFormatAtLeast": 38,
+    "answerable": 30,
+    "fullFinalEvidenceAtLeast": 27,
+    "referencedGoldRangeAndNonRefusalAtLeast": 27,
+    "all10NoSourceNoInvention": true,
+    "directClaimSupportAtLeast": 0.9,
+    "foreignStaleAccepted": 0
+  },
+  "semanticReview": "Assistant manual review against retrieved sources; not a human blind study. Range coverage alone cannot pass this gate.",
+  "noTuningPolicy": "Do not change pipeline/prompts/gold using these results. If tuned, retire this set and create a fresh book-level held-out set.",
+  "fixtureManifestHash": "e7a429145ebf1f436c25127c92da8cfee7ce447b893ac4de3c0c19526172ee67",
+  "sourceHashes": {
+    "test/support/book_chat_dense.dart": "14fa0226ea66680eb8dc75df439bf9cf7f4866349856d46d9b970d631ad15a0f",
+    "test/support/book_chat_gold.dart": "9f5378e167f8c13bbe8d9a43f13d08742837bb36f576f20589ca11fe8d01687d",
+    "test/support/book_chat_heldout.dart": "1835ae11825afd15b75e0a3d576984b562086a2603c740d54b1d5683197ad651",
+    "test/support/book_chat_oracle.dart": "d94ead16a532624c86bec75a720d12a5259d7a74d6726b8372252bc4c53f6b7a",
+    "test/support/book_chat_retrieval.dart": "926dd868bd6925e88b7bd48cc021aa01e3b4e1b226cb82595c6d41b9ecbe3935",
+    "test/support/book_chat_spike.dart": "d80198306a284b4db2f493997b217277fe566d927689f87858e5f03f320951eb",
+    "test/data/book_chat_heldout_live_test.dart": "7697fd67688fa7b2fb0545746088c594fb28ecc069c6e8f80dd37f89f50dc11b",
+    "lib/data/services/openrouter_service.dart": "f52ee183b6c674c3558186a814fab0abb0bcaca47968b0adc604b236dd594b65",
+    "lib/data/services/epub_parser.dart": "b974c6b22e57726a694ad1a1b45d68da2d7980034876ecda03074b339d601a9f",
+    "lib/data/services/chapter_extractor.dart": "959a9751ee7a6592ad5dba8d93cb64254271a3a1308995b4927de94046a38b88",
+    "lib/domain/grouping.dart": "f05b72b647b4030bbc122d29291ad3f70fc716ad9cb4509a4886c2ddbea13c7e",
+    "lib/domain/luma_markdown.dart": "6ca17d92a05852da73ab491c108ae15f6395516632ec023d083b313332a75b63",
+    "pubspec.lock": "445de7039b418d08f7ce92f50623a276245949014d7a4060a63b312510368b5d"
+  }
+}

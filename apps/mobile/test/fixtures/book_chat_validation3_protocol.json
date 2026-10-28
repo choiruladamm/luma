@@ -40,7 +40,7 @@
     "test/support/book_chat_oracle.dart": "d94ead16a532624c86bec75a720d12a5259d7a74d6726b8372252bc4c53f6b7a",
     "test/support/book_chat_heldout.dart": "1835ae11825afd15b75e0a3d576984b562086a2603c740d54b1d5683197ad651",
     "test/support/book_chat_embedding_fallback.dart": "9e753e49544e11ae937a127d5011d00f47c972a2eb761090c446bad882be397c",
-    "lib/data/services/openrouter_service.dart": "f52ee183b6c674c3558186a814fab0abb0bcaca47968b0adc604b236dd594b65",
+    "lib/data/services/openrouter_service.dart": "25b40e8d6441cdaab0074c2d3c766dac2f418ca62544c02fe6ee658a364e62c6",
     "pubspec.lock": "445de7039b418d08f7ce92f50623a276245949014d7a4060a63b312510368b5d",
     "test/support/book_chat_recovery.dart": "6f10eda8a994578e82a50221dec44854324ddf09d7eff45181fc510f7a79c9f4",
     "test/support/book_chat_validation3.dart": "7f1daeb2237e4e8a031e8bf6e04aae4d363e73d7c0eaab68d2ad5257672409dd",
@@ -56,5 +56,10 @@
     "sherlock-holmes": "https://www.gutenberg.org/ebooks/1661.epub.noimages"
   },
   "licensing": "Original public-domain-USA Gutenberg EPUBs retained with credits/licensing.",
-  "diagnostic": "validation2 consumed; final candidate28/30 range proxy, conservative complete27/30;10/10 negatives. No further tuning before validation3."
+  "diagnostic": "validation2 consumed; final candidate28/30 range proxy, conservative complete27/30;10/10 negatives. No further tuning before validation3.",
+  "replayOf": {
+    "file": "test/fixtures/book_chat_spike113/book_chat_validation3_protocol.json",
+    "sha256": "59c59b755437bb6efbc87c553de7183d8966efd6e659bdc256657a8ae272f702"
+  },
+  "replayAdaptation": "#117 extends the shared OpenRouter transport; frozen spike evidence is archived byte-for-byte in replayOf. Gold, prompts and retrieval helpers unchanged. This replay manifest is not a new quality evaluation."
 }

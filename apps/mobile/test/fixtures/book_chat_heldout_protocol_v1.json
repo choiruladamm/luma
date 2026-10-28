@@ -41,11 +41,16 @@
     "test/support/book_chat_retrieval.dart": "926dd868bd6925e88b7bd48cc021aa01e3b4e1b226cb82595c6d41b9ecbe3935",
     "test/support/book_chat_spike.dart": "d80198306a284b4db2f493997b217277fe566d927689f87858e5f03f320951eb",
     "test/data/book_chat_heldout_live_test.dart": "7697fd67688fa7b2fb0545746088c594fb28ecc069c6e8f80dd37f89f50dc11b",
-    "lib/data/services/openrouter_service.dart": "f52ee183b6c674c3558186a814fab0abb0bcaca47968b0adc604b236dd594b65",
+    "lib/data/services/openrouter_service.dart": "25b40e8d6441cdaab0074c2d3c766dac2f418ca62544c02fe6ee658a364e62c6",
     "lib/data/services/epub_parser.dart": "b974c6b22e57726a694ad1a1b45d68da2d7980034876ecda03074b339d601a9f",
     "lib/data/services/chapter_extractor.dart": "959a9751ee7a6592ad5dba8d93cb64254271a3a1308995b4927de94046a38b88",
     "lib/domain/grouping.dart": "f05b72b647b4030bbc122d29291ad3f70fc716ad9cb4509a4886c2ddbea13c7e",
     "lib/domain/luma_markdown.dart": "6ca17d92a05852da73ab491c108ae15f6395516632ec023d083b313332a75b63",
     "pubspec.lock": "445de7039b418d08f7ce92f50623a276245949014d7a4060a63b312510368b5d"
-  }
+  },
+  "replayOf": {
+    "file": "test/fixtures/book_chat_spike113/book_chat_heldout_protocol_v1.json",
+    "sha256": "d99ecaaf0bbcaef9855fe63381cea9e4e8e0539b9e7437f61d4b05dc1b98040c"
+  },
+  "replayAdaptation": "#117 extends the shared OpenRouter transport; frozen spike evidence is archived byte-for-byte in replayOf. Gold, prompts and retrieval helpers unchanged. This replay manifest is not a new quality evaluation."
 }

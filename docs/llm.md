@@ -227,8 +227,9 @@ Default **DeepSeek V4.1 Flash**. Hasil dan alasannya: [llm-evals.md](llm-evals.m
 ## Kontrak Book Chat (#114)
 
 `chatPromptVersion = 1` di `lib/domain/chat_prompt.dart`; system answer disalin
-**identik** dari kandidat spike #113 yang diterima user. Produksi transport/retrieval
-belum dihubungkan. Model jawaban nantinya tetap mengikuti Pengaturan. Bukti mutu
+**identik** dari kandidat spike #113 yang diterima user. Retrieval/prompt/transport
+produksi tersedia tanpa UI (#117). Model rewrite, selector, dan jawaban mengikuti
+`ai.model` di Pengaturan. Bukti mutu
 spike hanya untuk model/provider yang diuji, dan masih memiliki keterbatasan yang
 [diterima user](https://github.com/choiruladamm/luma/issues/113#issuecomment-6449993269).
 
@@ -257,3 +258,67 @@ spike hanya untuk model/provider yang diuji, dan masih memiliki keterbatasan yan
   Provider timeout/network/404/408/429/5xx dapat memicu **full** reindex dan re-embed
   semua query. Auth/billing/input/cancel/certificate tidak memicu fallback. Tidak
   mencampur/memotong vektor lintas model. Mutu hybrid baru terbukti pada Large saja.
+
+
+### Retrieval dan streaming produksi (#117)
+
+`ChatContextRepository.prepare(turn, cancel:)` membaca key dari `ApiKeyStore` pada
+setiap send, mengambil turn/history/paragraf dari DB dalam snapshot transaksi,
+dan menolak model/versi prompt yang berbeda dari attempt tersimpan. Caller mengambil
+`model()` sebelum create/append/retry. Tidak ada network ketika hydrate history.
+Tidak ada filter reading_progress: semua bab buku pada revision sesi dapat dicari.
+
+Pipeline mengikuti spike yang diterima: group parser, window 1.800 UTF-16 dengan
+overlap 200 untuk group panjang, original dense + English dense + English BM25,
+RRF60 top40, selector max8. Rewrite Inggris (max256 output tokens) berjalan sebelum
+kandidat; needs_clarification menghasilkan not_found deterministik tanpa embedding,
+selector, atau jawaban. Selector (max256) memilih indeks kandidat yang tervalidasi.
+Kutipan dipertahankan utuh, termasuk multi-window/multi-group; jika tidak muat,
+request gagal jelas. Source final diberi S1…S8 menurut urutan seleksi; anchor berisi
+chapter.id, paragraphIndex, offset UTF-16, hash seluruh paragraf dan excerpt asli.
+Teks terjemahan pendamping quote tidak dikirim sebagai bukti.
+
+Vektor dokumen hanya di memori, satu index terakhir per lifetime repository. Key
+memuat book/revision/parser/chunk policy/model/dimensi/query template serta manifest
+chapter/range/hash. Cold send/restart memerlukan embedding dokumen lagi. Qwen4096
+primary; kegagalan provider yang diizinkan membangun ulang **semua** dokumen dan
+kedua query dengan Large3072, termasuk ketika Qwen baru gagal di query sesudah
+index berhasil. Auth/billing/input/cancel/certificate/unknown tidak beralih model.
+Batas input embedding **1.500.000 UTF-8 bytes** per model-space (dokumen + query),
+8.000 per input, batch64. Overflow ditolak sebelum request berikutnya; tidak
+memotong vektor atau kutipan. Maksimal dua model-space jika fallback, bukan retry
+jawaban. Index tidak disimpan ke DB atau ikut backup.
+
+Satu send normal memakai satu rewrite, embedding dokumen saat cache miss + satu
+batch dua query, satu selector, dan satu answer. Warm send tanpa index ulang =
+**4 request**; cold send = `ceil(chunkCount/64) + 4`, ditambah full Large reindex jika
+fallback. Clarification = satu rewrite saja. Answer kosong setelah seleksi tidak
+memanggil model jawaban. Chat max output800, JSON mode dan temperature0; exception
+mandatory-reasoning dapat menambah satu HTTP request per panggilan chat sebelum
+konten. Tidak ada retry otomatis untuk HTTP lain atau output invalid. Ini batas
+request/input, bukan nominal biaya: biaya aktual bergantung model/provider; tidak
+menjalankan evaluasi berbayar baru untuk port produksi ini.
+
+`prepare` memanggil `ChatRepository.prepareSources` sebelum mengembalikan
+`PreparedChat`. Null berarti attempt stale/terminal/deleted dan harus dibuang.
+`PreparedChat.stream(cancel:)` hanya dapat dipakai sekali. `ChatStreamFrame.draft`
+adalah JSON mentah kumulatif untuk checkpoint, **bukan teks UI**. Decoder menahan
+JSON parsial; hanya frame terakhir setelah SSE DONE dan validasi final memiliki
+`answer` beserta sources. Tidak ada marker mentah, HTML, tautan eksternal, atau
+instruksi buku yang dijadikan aksi. #120 merender teks klaim sebagai teks biasa;
+action sumber hanya dari objek `ChatSource` yang dipetakan aplikasi.
+
+`validatePrepared` memeriksa exact frozen sources + live owner/attempt/revision/hash
+sebelum network jawaban dan sebelum memaparkan sitasi. Attempt yang tidak aktif
+mengakhiri stream tanpa frame final; hash rusak/output invalid menjadi
+`AiError.invalidResponse`. SSE putus/DONE hilang dan error provider tetap error,
+bukan not_found. #118 memiliki cancel/checkpoint/finalize, termasuk error sebelum
+prepare selesai. Callback harus memakai repository instance asal. Finalize memvalidasi
+ulang snapshot; resolver #122 memvalidasi lagi ketika sumber dikunjungi.
+
+Bukti historis spike tidak diubah menjadi evaluasi baru: tiga manifest original
+diarsipkan byte-for-byte di `test/fixtures/book_chat_spike113/`. Manifest replay
+aktif menyimpan `replayOf` + hash arsip dan hash transport produksi yang diperluas;
+seluruh hash helper/prompt/gold tetap sama. Tes parity memeriksa teks/range chunk
+pada kedua buku validation3, sistem prompt beku, dan integritas manifest/arsip.
+Batas kualitas spike tetap berlaku; Qwen hybrid dan performa perangkat belum dibuktikan.

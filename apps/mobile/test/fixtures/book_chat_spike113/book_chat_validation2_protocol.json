@@ -1,0 +1,62 @@
+{
+  "protocol": "fresh-book-validation2-large-fallback",
+  "frozenAt": "2026-10-27T17:35:40.227082+00:00",
+  "refinedCandidateCommit": "6e2e97a",
+  "refinedCandidateProtocolHash": "ba096cbca523072f758bcf598fa886a27cb7a6a5307bc7b92dd82782b4fe21b9",
+  "bookIds": [
+    "treasure-island",
+    "the-time-machine"
+  ],
+  "cases": 40,
+  "answerable": 30,
+  "negative": 10,
+  "runs": 2,
+  "independence": "Each run makes fresh selector+answer requests; no run output changes history. Shared frozen embeddings; no tuning during evaluation.",
+  "guard": "Retire this bank if model outputs are used to tune. Do not overwrite reports or modify gold after opening.",
+  "thresholds": {
+    "validPerRun": 38,
+    "finalEvidencePerRun": 27,
+    "referencedRangePerRun": 27,
+    "supportedClaimsRatio": 0.9,
+    "all10NegativesWithoutUnsupportedDisplayedFacts": true,
+    "foreignStaleAccepted": 0
+  },
+  "sha256": {
+    "test/support/book_chat_refinement.dart": "9d1a8f36a0a7690a06fae89cd2dda02afa9aafbbd68ad35cfb9ae0aae8e2e5a5",
+    "test/support/book_chat_dense.dart": "14fa0226ea66680eb8dc75df439bf9cf7f4866349856d46d9b970d631ad15a0f",
+    "test/support/book_chat_retrieval.dart": "926dd868bd6925e88b7bd48cc021aa01e3b4e1b226cb82595c6d41b9ecbe3935",
+    "test/support/book_chat_spike.dart": "d80198306a284b4db2f493997b217277fe566d927689f87858e5f03f320951eb",
+    "test/support/book_chat_oracle.dart": "d94ead16a532624c86bec75a720d12a5259d7a74d6726b8372252bc4c53f6b7a",
+    "test/support/book_chat_heldout.dart": "1835ae11825afd15b75e0a3d576984b562086a2603c740d54b1d5683197ad651",
+    "test/data/book_chat_refinement_live_test.dart": "9265be93f14666c5ac29b16dc18aeab9e7cf90d1bc4421ad3170ab8fa43e405f",
+    "lib/data/services/openrouter_service.dart": "f52ee183b6c674c3558186a814fab0abb0bcaca47968b0adc604b236dd594b65",
+    "pubspec.lock": "445de7039b418d08f7ce92f50623a276245949014d7a4060a63b312510368b5d",
+    "test/support/book_chat_validation2.dart": "ac49e22357fdd6953d5583725ef1e66461b487f7b14c916d251823c84f806091",
+    "test/data/book_chat_validation2_live_test.dart": "05b8cd09be0dad3e005d3b04bf8e02adef8c18477e2fafd57958de356f70e00e",
+    "test/fixtures/book_chat_validation2_cases.json": "2136ef3b2d179c69920183a79186e67eabc6a2c1caf93ba563bac7e090023105",
+    "test/fixtures/book_chat_refined_protocol_v2.json": "ba096cbca523072f758bcf598fa886a27cb7a6a5307bc7b92dd82782b4fe21b9",
+    "test/support/book_chat_embedding_fallback.dart": "9e753e49544e11ae937a127d5011d00f47c972a2eb761090c446bad882be397c"
+  },
+  "binarySha256": {
+    "test/fixtures/treasure-island.epub": "6d6781328ac1f559053b88e46a0881d69bf228d08e5d0b0e81ca39bd89b94edd",
+    "test/fixtures/the-time-machine.epub": "9b453c2a14fe9490b866105dd9ef8a1e475911c4e83218cbe62ec648c9ef82de"
+  },
+  "sources": {
+    "treasure-island": "https://www.gutenberg.org/ebooks/120.epub.noimages",
+    "the-time-machine": "https://www.gutenberg.org/ebooks/35.epub.noimages"
+  },
+  "licensing": "Original Project Gutenberg EPUBs retain credits/licensing; public domain in the USA.",
+  "amendsProtocolHash": "c5aa180269fc99b2815eff828005c2b3bb56bbaf30a41a51123a1ecb03c4a39a",
+  "amendmentReason": "User explicitly selected OpenAI Large fallback after two Qwen provider receiveTimeouts; zero selector/answer outputs existed before amendment. Questions/gold/books and selection/answer prompts unchanged.",
+  "embeddingRouting": {
+    "primary": "qwen/qwen3-embedding-8b",
+    "primaryDimensions": 4096,
+    "fallback": "openai/text-embedding-3-large",
+    "fallbackDimensions": 3072,
+    "primaryUnavailableForThisEvaluation": true,
+    "reason": "two recorded receiveTimeouts before any selector/answer request",
+    "fallbackPolicy": "network/timeouts,404/408/429/5xx; no auth/billing/invalid-input/cancel/certificate fallback",
+    "indexPolicy": "Rebuild full document index and every query under one model; never mix spaces or silently truncate dimensions.",
+    "queryPolicy": "Qwen instruct prefix on primary; plain original question/history/selected text on Large."
+  }
+}

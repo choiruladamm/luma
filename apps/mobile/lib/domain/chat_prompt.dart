@@ -274,3 +274,34 @@ ChatQueryPlan parseChatQueryPlan(String raw) {
     needsClarification: value['needs_clarification'] as bool,
   );
 }
+
+/// Raw JSON is checkpoint data, never rich text or an actionable source preview.
+/// The accepted spike protocol holds incomplete JSON until SSE has completed.
+class ChatAnswerDecoder {
+  ChatAnswerDecoder({
+    required this.prompt,
+    required this.current,
+    required this.paragraphs,
+  });
+  final ChatPrompt prompt;
+  final ChatBookRef current;
+  final Map<ChatParagraphRef, ChatParagraph> paragraphs;
+  String _raw = '';
+  int _size = 0;
+  String get raw => _raw;
+
+  void add(String delta) {
+    _size += utf8.encode(delta).length;
+    if (_size > chatPromptBytes) {
+      throw const FormatException('Jawaban melebihi batas');
+    }
+    _raw += delta;
+  }
+
+  ChatAnswer finish() => parseChatAnswer(
+    _raw,
+    sources: prompt.sources,
+    current: current,
+    paragraphs: paragraphs,
+  );
+}

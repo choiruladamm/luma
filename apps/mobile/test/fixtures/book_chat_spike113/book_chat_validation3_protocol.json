@@ -1,0 +1,60 @@
+{
+  "protocol": "fresh-book-validation3-translated-hybrid",
+  "frozenAt": "2026-10-27T18:02:44.535444+00:00",
+  "bookIds": [
+    "a-christmas-carol",
+    "sherlock-holmes"
+  ],
+  "cases": 40,
+  "answerable": 30,
+  "negative": 10,
+  "runs": 2,
+  "independence": "Fresh rewrite, selector and answer calls for every case in each run; prior model output never added to history. Shared embeddings only. No tuning after opening.",
+  "guard": "Retire split if outputs used for tuning. Never overwrite reports or modify gold after querying.",
+  "thresholds": {
+    "validPerRun": 38,
+    "finalEvidencePerRun": 27,
+    "referencedRangePerRun": 27,
+    "supportedClaimsRatio": 0.9,
+    "all10NegativesWithoutUnsupportedDisplayedFacts": true,
+    "foreignStaleAccepted": 0,
+    "semanticallyCompleteAnswersPerRun": 27
+  },
+  "pipeline": {
+    "embeddingModel": "openai/text-embedding-3-large",
+    "dimensions": 3072,
+    "route": "Known Qwen provider timeouts: this evaluation exercises Large route only, not Qwen quality.",
+    "chunks": "same bounded app paragraph groups, 1800 UTF16/200 overlap for long groups",
+    "query": "original/history/selected text plus independently generated English query without answer facts",
+    "ambiguity": "rewrite flags unresolvable pronoun-only questions before candidates; deterministic no-source result, no selector/answer calls",
+    "candidates": "equal RRF60 original dense top40 + English dense top40 + English BM25 top40; retain top40; pin user quote",
+    "selection": "DeepSeek V4.1 Flash JSON, max8 sources, sourceBudget18000 UTF8 bytes",
+    "answer": "same model, max2 claims; fixed partial/not_found display notes; promptBudget28000 UTF8 bytes",
+    "noContentRetry": true
+  },
+  "sha256": {
+    "test/support/book_chat_refinement.dart": "9d1a8f36a0a7690a06fae89cd2dda02afa9aafbbd68ad35cfb9ae0aae8e2e5a5",
+    "test/support/book_chat_dense.dart": "14fa0226ea66680eb8dc75df439bf9cf7f4866349856d46d9b970d631ad15a0f",
+    "test/support/book_chat_retrieval.dart": "926dd868bd6925e88b7bd48cc021aa01e3b4e1b226cb82595c6d41b9ecbe3935",
+    "test/support/book_chat_spike.dart": "d80198306a284b4db2f493997b217277fe566d927689f87858e5f03f320951eb",
+    "test/support/book_chat_oracle.dart": "d94ead16a532624c86bec75a720d12a5259d7a74d6726b8372252bc4c53f6b7a",
+    "test/support/book_chat_heldout.dart": "1835ae11825afd15b75e0a3d576984b562086a2603c740d54b1d5683197ad651",
+    "test/support/book_chat_embedding_fallback.dart": "9e753e49544e11ae937a127d5011d00f47c972a2eb761090c446bad882be397c",
+    "lib/data/services/openrouter_service.dart": "f52ee183b6c674c3558186a814fab0abb0bcaca47968b0adc604b236dd594b65",
+    "pubspec.lock": "445de7039b418d08f7ce92f50623a276245949014d7a4060a63b312510368b5d",
+    "test/support/book_chat_recovery.dart": "6f10eda8a994578e82a50221dec44854324ddf09d7eff45181fc510f7a79c9f4",
+    "test/support/book_chat_validation3.dart": "7f1daeb2237e4e8a031e8bf6e04aae4d363e73d7c0eaab68d2ad5257672409dd",
+    "test/data/book_chat_validation3_live_test.dart": "d41f0b122db59440706ce62bdb4f3b835f4ddd69465eff6d8c586d2485cd460d",
+    "test/fixtures/book_chat_validation3_cases.json": "5ba4fc8f7e5405aa19b5aaa192f10af395d8c2a750a777593a9c74dcfe4c140b"
+  },
+  "binarySha256": {
+    "test/fixtures/a-christmas-carol.epub": "86b33cf1a5732535e7845189b062d660a22e17156f1a75258c3e061b6b730f75",
+    "test/fixtures/sherlock-holmes.epub": "dad985e2300b30e6a5459444fb78ee1675c766411b62bdb3d6a21314cc927331"
+  },
+  "sources": {
+    "a-christmas-carol": "https://www.gutenberg.org/ebooks/46.epub.noimages",
+    "sherlock-holmes": "https://www.gutenberg.org/ebooks/1661.epub.noimages"
+  },
+  "licensing": "Original public-domain-USA Gutenberg EPUBs retained with credits/licensing.",
+  "diagnostic": "validation2 consumed; final candidate28/30 range proxy, conservative complete27/30;10/10 negatives. No further tuning before validation3."
+}
