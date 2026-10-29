@@ -727,6 +727,63 @@ void main() {
     },
   );
 
+  test('terminal readable drafts survive real file reopen and backup restore without trusting history', () async {
+    var repo = ChatRepository(a.db);
+    for (final error in [null, AiError.network, AiError.invalidResponse]) {
+      final turn = await repo.createFirstTurn(
+        (bookId: 1, contentRevision: 3),
+        question: 'Draf?',
+        model: 'm',
+        promptVersion: chatPromptVersion,
+      );
+      await repo.prepareSources(turn.attemptRef, []);
+      await repo.finalize(
+        turn.attemptRef,
+        phase: error == null ? ChatPhase.stopped : ChatPhase.cut,
+        error: error,
+        draft: '{"status":"partial","parts":[{"text":"Masih bisa dibaca 😀","kind":"conversation","source_ids":[]},{"text":"Belum selesai',
+      );
+    }
+    repo.dispose();
+    await a.db.close();
+    a.reopen();
+    repo = ChatRepository(a.db);
+    final sessions = await repo.watchSessions(1).first;
+    final draftSessions = sessions.where((s) => s.preview == 'Draf?').toList();
+    expect(draftSessions, hasLength(3));
+    for (final session in draftSessions) {
+      final turn = (await repo.watchTurns(1, session.id).first).single;
+      expect(turn.preview.map((b) => b.text), [
+        'Masih bisa dibaca 😀',
+        'Belum selesai',
+      ]);
+      expect(turn.preview.every((b) => b.sources.isEmpty), true);
+      expect(turn.trustedHistory, false);
+    }
+    final service = RestoreService(b.db, b.storage);
+    await service.apply(await service.inspect(await backupOf(a)));
+    b.reopen();
+    final restored = ChatRepository(b.db);
+    for (final session in draftSessions) {
+      final turn = (await restored.watchTurns(1, session.id).first).single;
+      expect(turn.preview.map((b) => b.text), [
+        'Masih bisa dibaca 😀',
+        'Belum selesai',
+      ]);
+      expect(turn.phase.isRunning, false);
+      expect(turn.trustedHistory, false);
+      expect(turn.answer, isNull);
+      expect(turn.preview.every((b) => b.sources.isEmpty), true);
+    }
+    // Existing paid answer is preserved alongside the untrusted drafts.
+    expect(
+      (await restored.watchTurns(1, 1).first).single.answer!.blocks.single.text,
+      'Sapaan.',
+    );
+    restored.dispose();
+    repo.dispose();
+  });
+
   test('a backup from schema 6 restores: new book columns default', () async {
     final dir = await Directory.systemTemp.createTemp('luma-v6-');
     addTearDown(() => dir.delete(recursive: true));

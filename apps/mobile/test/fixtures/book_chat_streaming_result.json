@@ -1,0 +1,238 @@
+{
+  "issue": 141,
+  "model": "z-ai/glm-5.3-flash",
+  "scope": "Production PreparedChat global scan and explicit continuation, original synthetic The Shared Rain Ledger; no embedding or real device measurement.",
+  "result": "First answer streamed and finalized; continuation rejected duplicate root parts key. No retry or Qwen dispatch.",
+  "firstTurn": {
+    "sequence": 0,
+    "cursor": 24,
+    "total": 32,
+    "complete": false,
+    "latencyMs": 24299,
+    "firstReadableMs": 22583,
+    "firstCitationMs": 24255,
+    "previewFramesBeforeFinal": 33,
+    "answer": [
+      {
+        "text": "Berdasarkan cuplikan yang tersedia, saya bisa menjelaskan perkembangan gagasan Mira dan perubahan aturan pembagian air dari Bab 1 hingga Bab 3. Namun, perlu diketahui bahwa saya hanya memiliki data dari tiga bab pertama, jadi saya belum bisa menelusuri keseluruhan buku dari awal sampai akhir. \n\nDi awal (Bab 1), Mira mengusulkan sistem tangki hujan bersama di mana setiap rumah tangga harus menerima jatah harian yang sama, dan dewan menyetujuinya sebagai masa uji coba (S1). Perkembangan gagasan Mira mulai bergeser di Bab 2 ketika ia mencatat bahwa kebutuhan klinik melebihi jatah rumah tangga biasa selama masa uji coba. Karena hal ini, ia merevisi proposalnya untuk memprioritaskan kebutuhan esensial (S2). \n\nPerkembangan gagasan ini semakin meluas di Bab 3. Aturan tidak lagi hanya berfokus pada pembagian air, tetapi juga pada manajemen sumber daya kolaboratif. Contohnya, ketika distrik Utara memperbaiki pipa dan distrik Selatan menyediakan tong cadangan, mereka awalnya berselisih mengenai kredit, namun akhirnya menggunakan buku besar bersama untuk mencatat kedua kontribusi tersebut (S3). Jadi, perkembangan utamanya adalah pergeseran dari pembagian yang sama menuju sistem yang memprioritaskan kebutuhan esensial dan kemudian berkembang menjadi sistem pencatatan kontribusi sumber daya yang kolaboratif (S1, S2, S3).",
+        "kind": "book",
+        "sources": [
+          "S1",
+          "S2",
+          "S3"
+        ]
+      },
+      {
+        "text": "Udah diperiksa 24/32 potongan isi buku. Masih ada 8 potongan yang belum diperiksa. Pakai Lanjutkan buat meneruskan penelusuran.",
+        "kind": "conversation",
+        "sources": []
+      }
+    ]
+  },
+  "failedContinuation": {
+    "error": "invalidResponse: Duplicate discussion JSON key",
+    "rawAnswer": "{\"status\":\"answered\",\"parts\":[{\"text\":\"Secara keseluruhan, gagasan Mira dalam buku The Shared Rain Ledger menunjukkan perkembangan yang sangat progresif, bergerak dari sistem pembagian yang sederhana menuju model manajemen sumber daya yang kompleks dan adil. Perkembangan ini dapat ditelusuri melalui beberapa tahapan utama.\",\"kind\":\"book\",\"source_ids\":[]}],\"parts\":[{\"text\":\"Di awal, pada Bab 1, Mira mengusulkan sistem tangki hujan bersama di mana setiap rumah tangga harus menerima jatah harian yang sama. Dewan menyetujui usulan ini sebagai masa uji coba, bukan aturan permanen.\",\"kind\":\"book\",\"source_ids\":[\"S1\"]},{\"text\":\"Perubahan pertama terjadi di Bab 2. Selama masa uji coba, Mira mencatat bahwa kebutuhan klinik melebihi jatah yang ditetapkan untuk rumah tangga biasa. Berdasarkan temuan ini, ia merevisi proposalnya untuk memprioritaskan kebutuhan esensial.\",\"kind\":\"book\",\"source_ids\":[\"S2\"]},{\"text\":\"Di Bab 3, fokus gagasan Mira meluas dari sekadar pembagian air menjadi manajemen sumber daya kolaboratif. Contohnya, ketika distrik Utara memperbaiki pipa dan distrik Selatan menyediakan tong cadangan, mereka awalnya berselisih mengenai kredit, namun akhirnya menggunakan buku besar bersama untuk mencatat kedua kontribusi tersebut.\",\"kind\":\"book\",\"source_ids\":[\"S3\"]},{\"text\":\"Puncak perkembangan gagasan ini tercapai di Bab 4. Dewan akhirnya mengadopsi sistem hibrida yang menggabungkan alokasi darurat berbasis kebutuhan dengan jatah biasa yang setara. Mira juga menekankan pentingnya transparansi dengan menyatakan bahwa buku besar harus tetap terbuka untuk koreksi dan menyarankan peninjauan ulang setelah musim kemarau berikutnya.\",\"kind\":\"book\",\"source_ids\": [\"S4\"]}]}",
+    "expectedHandling": "Retain readable draft, revoke all provisional citations, exclude from trusted history; separately verified in decoder, ViewModel and persistence tests."
+  },
+  "physicalRequests": 7,
+  "knownCostUsd": 0.0009800088,
+  "newUnknownUsage": 0,
+  "requestUsage": [
+    {
+      "reservation": 71,
+      "durationMs": 5354,
+      "usage": {
+        "prompt_tokens": 415,
+        "completion_tokens": 600,
+        "total_tokens": 1015,
+        "cost": 5.60935e-05,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 5.60935e-05,
+          "upstream_inference_prompt_cost": 2.19535e-05,
+          "upstream_inference_completions_cost": 3.414e-05
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 600,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      }
+    },
+    {
+      "reservation": 72,
+      "durationMs": 3439,
+      "usage": {
+        "prompt_tokens": 939,
+        "completion_tokens": 551,
+        "total_tokens": 1490,
+        "cost": 8.1025e-05,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 8.1025e-05,
+          "upstream_inference_prompt_cost": 4.96731e-05,
+          "upstream_inference_completions_cost": 3.13519e-05
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 394,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      }
+    },
+    {
+      "reservation": 73,
+      "durationMs": 4545,
+      "usage": {
+        "prompt_tokens": 1282,
+        "completion_tokens": 759,
+        "total_tokens": 2041,
+        "cost": 0.0001110049,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.0001110049,
+          "upstream_inference_prompt_cost": 6.78178e-05,
+          "upstream_inference_completions_cost": 4.31871e-05
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 538,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      }
+    },
+    {
+      "reservation": 74,
+      "durationMs": 5226,
+      "usage": {
+        "prompt_tokens": 1875,
+        "completion_tokens": 869,
+        "total_tokens": 2744,
+        "cost": 0.0001486336,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.0001486336,
+          "upstream_inference_prompt_cost": 9.91875e-05,
+          "upstream_inference_completions_cost": 4.94461e-05
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 617,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      }
+    },
+    {
+      "reservation": 75,
+      "durationMs": 5715,
+      "usage": {
+        "prompt_tokens": 2044,
+        "completion_tokens": 961,
+        "total_tokens": 3005,
+        "cost": 0.0001628085,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.0001628085,
+          "upstream_inference_prompt_cost": 0.0001081276,
+          "upstream_inference_completions_cost": 5.46809e-05
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 632,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      }
+    },
+    {
+      "reservation": 76,
+      "durationMs": 7056,
+      "usage": {
+        "prompt_tokens": 2437,
+        "completion_tokens": 1272,
+        "total_tokens": 3709,
+        "cost": 0.0002012941,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.0002012941,
+          "upstream_inference_prompt_cost": 0.0001289173,
+          "upstream_inference_completions_cost": 7.23768e-05
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 785,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      }
+    },
+    {
+      "reservation": 77,
+      "durationMs": 5623,
+      "usage": {
+        "prompt_tokens": 3080,
+        "completion_tokens": 988,
+        "total_tokens": 4068,
+        "cost": 0.0002191492,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.0002191492,
+          "upstream_inference_prompt_cost": 0.000162932,
+          "upstream_inference_completions_cost": 5.62172e-05
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 611,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      }
+    }
+  ],
+  "sourceReport": "/tmp/luma-adaptive-1793297767295813.json",
+  "limits": [
+    "First readable time includes retrieval/scan, not just answer generation.",
+    "Live diagnostic exits failed on duplicate model JSON; this is not an all-pass live run.",
+    "Manual review: model still used inline (S1) IDs and saya; no prompt tuning in streaming issue.",
+    "No real device, cold/warm embedding billing, source navigation or semantic factuality guarantee."
+  ]
+}

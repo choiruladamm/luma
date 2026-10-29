@@ -271,3 +271,9 @@ ke turn baru dan mengganti owner turnId secara atomik; finished answer/source la
 tidak ditulis ulang. Retry interrupted tetap satu turn; pergantian model/prompt
 pada retry eksplisit memulai checkpoint baru. Jangan downgrade binary schema9;
 gunakan backup sebelum upgrade sebagai rollback data.
+
+Preview streaming (#141) tidak menambah kolom/schema: `ChatTurn.preview` dibaca
+secara defensif dari `draft` saat snapshot, tanpa sumber. Preview runtime dengan
+sumber provisional terikat attempt di ViewModel. Keduanya bukan `answer` dan
+selalu dikecualikan dari trustedHistory. Invalid/corrupt draft berhenti di teks
+terbaca terakhir tanpa mengubah paid answer lain.

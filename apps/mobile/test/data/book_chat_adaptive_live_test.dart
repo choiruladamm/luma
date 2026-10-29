@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
-import 'package:drift/drift.dart';
+import 'package:drift/drift.dart' hide isNull, isNotNull;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:luma/data/database/app_database.dart';
@@ -170,6 +170,7 @@ void main() {
       final results = <Map<String, Object?>>[];
       final result = <String, Object?>{
         'issue': 138,
+        'streamingIssue': 141,
         'model': model,
         'scope': 'production global pipeline on original synthetic 4-chapter book; no retrieval or embedding billing measured',
         'turns': results,
@@ -273,7 +274,25 @@ void main() {
           final time = Stopwatch()..start();
           final prepared = await context.prepare(turn);
           if (prepared == null) throw StateError('Preparation rejected');
-          final frame = (await prepared.stream().toList()).last;
+          int? firstReadableMs, firstCitationMs;
+          var previewFrames = 0;
+          ChatStreamFrame? last;
+          await for (final update in prepared.stream()) {
+            last = update;
+            if (update.answer == null &&
+                update.preview.any((b) => b.text.isNotEmpty)) {
+              firstReadableMs ??= time.elapsedMilliseconds;
+              previewFrames++;
+            }
+            if (update.answer == null &&
+                update.preview.any((b) => b.sources.isNotEmpty)) {
+              firstCitationMs ??= time.elapsedMilliseconds;
+            }
+          }
+          final frame = last!;
+          expect(firstReadableMs, isNotNull);
+          expect(firstReadableMs!, lessThanOrEqualTo(time.elapsedMilliseconds));
+          expect(firstCitationMs, isNotNull);
           if (frame.answer == null) throw StateError('No validated answer');
           await repo.finalize(
             turn.attemptRef,
@@ -291,6 +310,9 @@ void main() {
             'total': work.total,
             'complete': work.complete,
             'latencyMs': time.elapsedMilliseconds,
+            'firstReadableMs': firstReadableMs,
+            'firstCitationMs': firstCitationMs,
+            'previewFramesBeforeFinal': previewFrames,
             'answer': frame.answer!.blocks
                 .map(
                   (b) => {

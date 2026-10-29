@@ -16,11 +16,13 @@ class ChatHistory extends StatefulWidget {
     required this.onAnchor,
     this.anchor,
     this.phase,
+    this.preview,
     this.indexLabel,
   });
   final List<ChatTurn> turns;
   final ChatScrollAnchor? anchor;
   final ChatPhase? phase;
+  final ({ChatAttemptRef attempt, List<ChatAnswerBlock> blocks})? preview;
   final String? indexLabel;
   final ValueChanged<ChatScrollAnchor> onAnchor;
   @override
@@ -31,6 +33,17 @@ class _ChatHistoryState extends State<ChatHistory> {
   final _scroll = ScrollController();
   final _viewport = GlobalKey();
   final _blocks = <({int turnId, int blockIndex}), GlobalKey>{};
+  final _rendered =
+      <
+        int,
+        ({
+          ChatTurn turn,
+          ChatPhase phase,
+          List<ChatAnswerBlock> blocks,
+          String label,
+          Widget child,
+        })
+      >{};
   late final int _centerId;
   bool _away = false;
   bool _restoring = true;
@@ -60,11 +73,21 @@ class _ChatHistoryState extends State<ChatHistory> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _rendered.clear();
+  }
+
+  @override
   void didUpdateWidget(ChatHistory oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.turns.last.id != widget.turns.last.id) {
+      _rendered.remove(oldWidget.turns.last.id);
+    }
     if (!_away &&
         (!listEquals(oldWidget.turns, widget.turns) ||
-            oldWidget.phase != widget.phase)) {
+            oldWidget.phase != widget.phase ||
+            oldWidget.preview != widget.preview)) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted && !_away && !_scroll.position.isScrollingNotifier.value) {
           _latest();
@@ -115,10 +138,25 @@ class _ChatHistoryState extends State<ChatHistory> {
       child: child,
     );
     final answer = turn.answer;
+    final active = widget.preview;
+    final blocks =
+        answer?.blocks ??
+        (active?.attempt == turn.attemptRef ? active!.blocks : turn.preview);
     final phase = turn.id == widget.turns.last.id
         ? widget.phase ?? turn.phase
         : turn.phase;
-    return Padding(
+    final label = turn.id == widget.turns.last.id
+        ? widget.indexLabel ?? turn.draftLabel(phase)
+        : turn.draftLabel(phase);
+    final cached = _rendered[turn.id];
+    if (cached != null &&
+        identical(cached.turn, turn) &&
+        cached.phase == phase &&
+        identical(cached.blocks, blocks) &&
+        cached.label == label) {
+      return cached.child;
+    }
+    final child = Padding(
       key: ValueKey(turn.id),
       padding: const EdgeInsets.only(bottom: Space.s6),
       child: Column(
@@ -149,8 +187,8 @@ class _ChatHistoryState extends State<ChatHistory> {
               ),
             ),
           ),
-          if (answer != null)
-            for (var i = 0; i < answer.blocks.length; i++)
+          for (var i = 0; i < blocks.length; i++)
+            if (blocks[i].text.isNotEmpty)
               anchor(
                 i + 1,
                 Column(
@@ -158,13 +196,13 @@ class _ChatHistoryState extends State<ChatHistory> {
                   spacing: Space.s3,
                   children: [
                     SelectableText(
-                      answer.blocks[i].text,
+                      blocks[i].text,
                       style: StabiloType.forBrightness(
                         StabiloType.reading,
                         Theme.of(context).brightness,
                       ),
                     ),
-                    for (final source in answer.blocks[i].sources)
+                    for (final source in blocks[i].sources)
                       ChatSourceChip(source: source),
                   ],
                 ),
@@ -174,19 +212,28 @@ class _ChatHistoryState extends State<ChatHistory> {
               answer.note,
               style: StabiloType.body.copyWith(color: context.stabilo.ink2),
             ),
+          if (phase == ChatPhase.done && turn.id == widget.turns.last.id)
+            Semantics(
+              liveRegion: true,
+              label: phase.label,
+              child: const SizedBox.shrink(),
+            ),
           if (phase != ChatPhase.done)
             Semantics(
               liveRegion: true,
-              child: Text(
-                turn.id == widget.turns.last.id
-                    ? widget.indexLabel ?? phase.label
-                    : phase.label,
-                style: StabiloType.caption,
-              ),
+              child: Text(label, style: StabiloType.caption),
             ),
         ],
       ),
     );
+    _rendered[turn.id] = (
+      turn: turn,
+      phase: phase,
+      blocks: blocks,
+      label: label,
+      child: child,
+    );
+    return child;
   }
 
   @override

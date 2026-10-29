@@ -149,3 +149,9 @@ memilih Lanjutkan, lalu checkpoint divalidasi lagi terhadap isi buku/model/polic
 Barrier lifecycle existing juga meliputi batch scan dan continuation. Repository
 asal disposed sebelum swap, sehingga callback lama tidak dapat menulis checkpoint
 ke database pengganti. Manifest ZIP tetap format1 dan tidak mengandung isi catatan.
+
+Draf chat streaming (#141) ikut lewat kolom raw `draft` existing (schema10).
+Setelah restore/reopen, proyeksi `parts[].text` defensif tetap terbaca sebagai
+draf terminal tanpa sitasi/auto-send/trusted history. Status running dipulihkan
+ke interrupted; partial escape/Unicode ditahan. Stop/background flush tail;
+backup/process kill hanya memiliki checkpoint durable terakhir.

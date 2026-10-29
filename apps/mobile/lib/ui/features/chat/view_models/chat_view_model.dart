@@ -23,6 +23,7 @@ class ChatState {
     this.selectedQuote,
     List<ChatTurn> turns = const [],
     this.phase,
+    this.preview,
     this.error,
     this.problem,
     this.loading = true,
@@ -45,6 +46,7 @@ class ChatState {
   final ChatQuote? selectedQuote;
   final List<ChatTurn> turns;
   final ChatPhase? phase;
+  final ({ChatAttemptRef attempt, List<ChatAnswerBlock> blocks})? preview;
   final AiException? error;
   final String? problem;
   final bool loading, changingSession;
@@ -74,6 +76,7 @@ class ChatState {
     Object? selectedQuote = _unchanged,
     List<ChatTurn>? turns,
     Object? phase = _unchanged,
+    Object? preview = _unchanged,
     Object? error = _unchanged,
     Object? problem = _unchanged,
     bool? loading,
@@ -97,6 +100,9 @@ class ChatState {
         ? this.selectedQuote
         : selectedQuote as ChatQuote?,
     turns: turns ?? this.turns,
+    preview: identical(preview, _unchanged)
+        ? this.preview
+        : preview as ({ChatAttemptRef attempt, List<ChatAnswerBlock> blocks})?,
     phase: identical(phase, _unchanged) ? this.phase : phase as ChatPhase?,
     error: identical(error, _unchanged) ? this.error : error as AiException?,
     problem: identical(problem, _unchanged) ? this.problem : problem as String?,
@@ -232,6 +238,7 @@ class ChatViewModel extends Notifier<ChatState> {
     state = state.copyWith(
       activeSession: session,
       turns: [],
+      preview: null,
       draft: '',
       selectedQuote: null,
       phase: life.run == null ? null : state.phase,
@@ -480,6 +487,7 @@ class ChatViewModel extends Notifier<ChatState> {
         draft: '',
         selectedQuote: null,
         phase: ChatPhase.retrieving,
+        preview: null,
         indexProgress: null,
         explorationProgress: null,
       );
@@ -528,9 +536,16 @@ class ChatViewModel extends Notifier<ChatState> {
           await _finish(life, run, phase: ChatPhase.done, answer: frame.answer);
           return;
         }
+        run.preview = frame.preview;
         if (run.raw.isEmpty) continue;
         run.clearTimers();
-        state = state.copyWith(phase: ChatPhase.writing);
+        if (state.phase != ChatPhase.writing) {
+          state = state.copyWith(phase: ChatPhase.writing);
+        }
+        run.previewTimer ??= Timer(const Duration(milliseconds: 50), () {
+          run.previewTimer = null;
+          if (_running(life, run)) _publishPreview(run);
+        });
         run.timers.add(
           Timer(GroupAiStream.stallAfter, () {
             unawaited(
@@ -589,6 +604,15 @@ class ChatViewModel extends Notifier<ChatState> {
     return const AiException(AiError.invalidResponse);
   }
 
+  void _publishPreview(_ChatRun run) {
+    final turn = run.turn;
+    if (turn != null) {
+      state = state.copyWith(
+        preview: (attempt: turn.attemptRef, blocks: run.preview),
+      );
+    }
+  }
+
   Future<void> _finish(
     _ChatLifetime life,
     _ChatRun run, {
@@ -598,6 +622,15 @@ class ChatViewModel extends Notifier<ChatState> {
   }) {
     if (run.terminal != null) return run.terminal!;
     run.live = false;
+    run.previewTimer?.cancel();
+    run.previewTimer = null;
+    run.preview = phase == ChatPhase.done
+        ? run.preview
+        : [
+            for (final b in run.preview)
+              ChatAnswerBlock(text: b.text, kind: b.kind, sources: []),
+          ];
+    if (_live(life)) _publishPreview(run);
     run.cancel.cancel();
     run.clearTimers();
     unawaited(run.iterator?.cancel());
@@ -614,7 +647,13 @@ class ChatViewModel extends Notifier<ChatState> {
             error: error?.error,
             httpStatus: error?.status,
           );
-          if (accepted) life.flushError = null;
+          if (accepted) {
+            life.flushError = null;
+            if (answer != null) {
+              run.preview = answer.blocks;
+              if (_live(life)) _publishPreview(run);
+            }
+          }
           if (accepted &&
               _live(life) &&
               life.session == null &&
@@ -628,12 +667,22 @@ class ChatViewModel extends Notifier<ChatState> {
             }
           }
           if (!accepted) {
+            run.preview = [
+              for (final b in run.preview)
+                ChatAnswerBlock(text: b.text, kind: b.kind, sources: []),
+            ];
+            if (_live(life)) _publishPreview(run);
             phase = ChatPhase.interrupted;
             error = null;
           }
         }
       } catch (e) {
         life.flushError = e;
+        run.preview = [
+          for (final b in run.preview)
+            ChatAnswerBlock(text: b.text, kind: b.kind, sources: []),
+        ];
+        if (_live(life)) _publishPreview(run);
         phase = ChatPhase.failed;
         error = _error(e);
         _problem(life, e);
@@ -664,6 +713,8 @@ class _ChatRun {
   final created = Completer<void>();
   ChatTurn? turn;
   String raw = '';
+  List<ChatAnswerBlock> preview = const [];
+  Timer? previewTimer;
   Future<void>? terminal;
   StreamIterator<ChatStreamFrame>? iterator;
   final timers = <Timer>[];

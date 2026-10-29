@@ -71,6 +71,100 @@ void main() {
     pump(time);
   }
 
+  test('invalid final and storage failure retain draft but revoke provisional citations', () {
+    for (final storageFailure in [false, true]) {
+      fakeAsync((time) {
+        open(time);
+        send(time);
+        final source = ChatSource(
+          id: 'S1',
+          chapterTitle: 'Bab',
+          anchors: [
+            SourceAnchor(
+              book: lifecycleBook,
+              chapterId: 1,
+              paragraphIndex: 0,
+              start: 0,
+              end: 1,
+              paragraphHash: 'h',
+              snapshot: 'x',
+            ),
+          ],
+        );
+        final block = ChatAnswerBlock(text: 'Draf terbaca', sources: [source]);
+        context.prepared.last.frames.add(
+          ChatStreamFrame('raw', preview: [block]),
+        );
+        pump(time);
+        time.elapse(const Duration(milliseconds: 50));
+        expect(state().preview!.blocks.single.sources, isNotEmpty);
+        if (storageFailure) {
+          repo.finalizeError = StateError('disk');
+          context.prepared.last.frames.add(
+            ChatStreamFrame(
+              'raw',
+              answer: ChatAnswer(
+                status: ChatAnswerStatus.answered,
+                blocks: [block],
+              ),
+            ),
+          );
+        } else {
+          context.prepared.last.frames.addError(
+            const AiException(AiError.invalidResponse),
+          );
+        }
+        pump(time);
+        expect(state().preview!.blocks.single.text, 'Draf terbaca');
+        expect(state().preview!.blocks.single.sources, isEmpty);
+        expect(
+          state().phase,
+          storageFailure ? ChatPhase.failed : ChatPhase.cut,
+        );
+        expect(state().turns.every((t) => !t.trustedHistory), true);
+        repo.finalizeError = null;
+        close(time);
+      });
+    }
+  });
+
+  test(
+    'throttled preview flushes on Stop, revokes sources, and rejects late frames/retry leakage',
+    () => fakeAsync((time) {
+      open(time);
+      send(time);
+      final attempt = context.prepared.last;
+      attempt.frames.add(
+        ChatStreamFrame(
+          'raw1',
+          preview: [ChatAnswerBlock(text: 'Hai', sources: [])],
+        ),
+      );
+      pump(time);
+      expect(state().preview, isNull);
+      time.elapse(const Duration(milliseconds: 50));
+      expect(state().preview!.blocks.single.text, 'Hai');
+      attempt.frames.add(
+        ChatStreamFrame(
+          'raw12',
+          preview: [ChatAnswerBlock(text: 'Hai lagi', sources: [])],
+        ),
+      );
+      pump(time);
+      unawaited(vm().stop());
+      pump(time);
+      expect(state().preview!.blocks.single.text, 'Hai lagi');
+      expect(state().preview!.blocks.single.sources, isEmpty);
+      expect(state().phase, ChatPhase.stopped);
+      time.elapse(const Duration(milliseconds: 100));
+      expect(state().preview!.blocks.single.text, 'Hai lagi');
+      unawaited(vm().retry());
+      pump(time);
+      expect(state().preview, isNull);
+      close(time);
+    }),
+  );
+
   test(
     'restore waits for raw tail flush and blocks new sends, including disposed controllers',
     () => fakeAsync((time) {

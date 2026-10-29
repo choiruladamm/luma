@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import '../../domain/chat_prompt.dart';
+import '../../domain/chat_preview.dart';
 import '../../domain/models/ai_reply.dart';
 import '../../domain/models/book_chat.dart';
 import '../database/app_database.dart';
@@ -301,6 +302,7 @@ class ChatSnapshot {
         attempt: row.attempt,
         quote: quote(row.quote, book),
         draft: draft,
+        preview: result == null ? chatDraftPreview(draft) : const [],
         answer: result,
         error: error,
         httpStatus: row.httpStatus,
@@ -321,6 +323,7 @@ class ChatSnapshot {
         promptVersion: row.promptVersion,
         attempt: row.attempt,
         draft: _readable(row.draft),
+        preview: chatDraftPreview(_readable(row.draft)),
         error: AiError.invalidResponse,
       );
     }
