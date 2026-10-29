@@ -131,3 +131,11 @@ sudah durable. Restore lama tanpa cache dimigrasi dengan tabel kosong. Cache buk
 sumber kebenaran: identitas/manifest/vektor diperiksa lagi sebelum retrieval; yang
 rusak dibangun ulang pada send/retry eksplisit. Barrier lifecycle membatalkan
 pekerjaan lama sebelum DB ditutup. Cache tidak menyimpan API key.
+
+### Riwayat percakapan v2 (#137)
+
+Snapshot SQLite membawa jawaban v1 maupun formatVersion2 apa adanya. Restore
+mempertahankan teks, jenis paragraf dan source snapshots; decoder baru membaca
+keduanya. Tidak ada transformasi atau penghapusan jawaban lama. Schema tetap9;
+format JSON baru tidak menjanjikan dukungan pada binary aplikasi lama. Round-trip
+backup/restore campuran kedua format dibuktikan dengan database file asli.

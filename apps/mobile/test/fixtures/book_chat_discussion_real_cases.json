@@ -1,0 +1,675 @@
+{
+  "version": 1,
+  "issue": 136,
+  "purpose": "Real-book oracle answer diagnosis, NOT retrieval/full-book coverage or release validation.",
+  "license": "Source EPUBs retain original Project Gutenberg licensing and credits; public domain in the USA.",
+  "validationPolicy": "New Oz book for this project evaluation, author-inspected labels, not blinded and no claim model pretraining excluded. Freeze before model querying. New cases on previously consumed Enchiridion are development only.",
+  "books": [
+    {
+      "id": "enchiridion",
+      "title": "The Enchiridion",
+      "split": "development",
+      "previouslyConsumed": true,
+      "source": "https://www.gutenberg.org/ebooks/45109",
+      "sha256": "c017ff81e19c8e6ac1329e3aca701d67009013bc7aad81e4a016cb05497c9dba"
+    },
+    {
+      "id": "wizard-of-oz",
+      "title": "The Wonderful Wizard of Oz",
+      "split": "validation",
+      "previouslyConsumed": false,
+      "source": "https://www.gutenberg.org/ebooks/55",
+      "sha256": "fe2536baf486f564ab6b4af37e9bcbc6172974ecc345393ad06b89483cd8bb09"
+    }
+  ],
+  "cases": [
+    {
+      "id": "RD01",
+      "book": "enchiridion",
+      "split": "development",
+      "category": "fact",
+      "input": {
+        "question": "Apa yang termasuk dalam kendali kita menurut buku ini?",
+        "history": []
+      },
+      "context": [
+        {
+          "chapter": "I",
+          "paragraph": 1,
+          "hash": "98f4a8d7b41057e7a83116314c60ec50197d00ae7a850f426bda3db4602cc9b2",
+          "excerpt": "There are things which are within our power, and there are things which are beyond our power. Within our power are opinion, aim, desire, aversion, and, in one word, whatever affairs are our own. Beyond our power are body, property, reputation, office, and, in one word, whatever are not properly our own affairs."
+        }
+      ],
+      "gold": {
+        "expectations": [
+          "Sebut opini/penilaian, tujuan, keinginan/penolakan atau tindakan sendiri; bedakan harta/reputasi yang di luar kendali."
+        ]
+      },
+      "contextPolicy": "Manual oracle passages for answer-only diagnosis, not retrieval output. Incomplete book context must not be represented as full-book coverage."
+    },
+    {
+      "id": "RD02",
+      "book": "enchiridion",
+      "split": "development",
+      "category": "cross_chapter",
+      "input": {
+        "question": "Hubungkan bab I, V, dan VIII: kenapa membedakan kendali memengaruhi cara menghadapi kejadian?",
+        "history": []
+      },
+      "context": [
+        {
+          "chapter": "I",
+          "paragraph": 1,
+          "hash": "98f4a8d7b41057e7a83116314c60ec50197d00ae7a850f426bda3db4602cc9b2",
+          "excerpt": "There are things which are within our power, and there are things which are beyond our power. Within our power are opinion, aim, desire, aversion, and, in one word, whatever affairs are our own. Beyond our power are body, property, reputation, office, and, in one word, whatever are not properly our own affairs."
+        },
+        {
+          "chapter": "V",
+          "paragraph": 1,
+          "hash": "7023c69be57757c0243bb6680477e6dda90e13cf201020452a4f8d759a5e1e07",
+          "excerpt": "Men are disturbed not by things, but by the views which they take of things. Thus death is nothing terrible, else it would have appeared so to Socrates. But the terror consists in our notion of death, that it is terrible. When, therefore, we are hindered or disturbed, or grieved, let us never impute it to others, but to ourselves—that is, to our own views. It is the action of an uninstructed person to reproach others for his own misfortunes; of one entering upon instruction, to reproach himself; and one perfectly instructed, to reproach neither others nor himself."
+        },
+        {
+          "chapter": "VIII",
+          "paragraph": 1,
+          "hash": "2e2b8cda365fec08f1fc3a490bd4321b0eac7793ac2cc310e767e2ed9f70690e",
+          "excerpt": "Demand not that events should happen as you wish; but wish them to happen as they do happen, and you will go on well."
+        }
+      ],
+      "gold": {
+        "expectations": [
+          "Bahas ketiga gagasan, bedakan sintesis AI dari kutipan literal; jangan mengubahnya jadi jaminan semua penderitaan hilang."
+        ]
+      },
+      "contextPolicy": "Manual oracle passages for answer-only diagnosis, not retrieval output. Incomplete book context must not be represented as full-book coverage."
+    },
+    {
+      "id": "RD03",
+      "book": "enchiridion",
+      "split": "development",
+      "category": "application",
+      "input": {
+        "question": "Dari gagasan buku ini, gimana gua menghadapi bos yang suka menghina? Kasih contoh langkah dan kalimat konkret.",
+        "history": []
+      },
+      "context": [
+        {
+          "chapter": "I",
+          "paragraph": 1,
+          "hash": "98f4a8d7b41057e7a83116314c60ec50197d00ae7a850f426bda3db4602cc9b2",
+          "excerpt": "There are things which are within our power, and there are things which are beyond our power. Within our power are opinion, aim, desire, aversion, and, in one word, whatever affairs are our own. Beyond our power are body, property, reputation, office, and, in one word, whatever are not properly our own affairs."
+        },
+        {
+          "chapter": "XX",
+          "paragraph": 1,
+          "hash": "5f18cb6c983eb51bf9d462fec499563a5cf896a2ecfc4ac5189a054a5841e556",
+          "excerpt": "Remember that it is not he who gives abuse or blows, who affronts, but the view we take of these things as insulting. When, therefore, anyone provokes you, be assured that it is your own opinion which provokes you. Try, therefore, in the first place, not to be bewildered by appearances. For if you once gain time and respite, you will more easily command yourself."
+        }
+      ],
+      "gold": {
+        "expectations": [
+          "Beri penerapan sebagai usulan AI; jangan klaim penulis membahas bos modern. Jangan menganggap menerima penghinaan berarti wajib bertahan dalam bahaya."
+        ]
+      },
+      "contextPolicy": "Manual oracle passages for answer-only diagnosis, not retrieval output. Incomplete book context must not be represented as full-book coverage."
+    },
+    {
+      "id": "RD04",
+      "book": "enchiridion",
+      "split": "development",
+      "category": "external_comparison",
+      "input": {
+        "question": "Bandingkan gagasan kendali di buku ini dengan pendekatan CBT.",
+        "history": []
+      },
+      "context": [
+        {
+          "chapter": "I",
+          "paragraph": 1,
+          "hash": "98f4a8d7b41057e7a83116314c60ec50197d00ae7a850f426bda3db4602cc9b2",
+          "excerpt": "There are things which are within our power, and there are things which are beyond our power. Within our power are opinion, aim, desire, aversion, and, in one word, whatever affairs are our own. Beyond our power are body, property, reputation, office, and, in one word, whatever are not properly our own affairs."
+        },
+        {
+          "chapter": "V",
+          "paragraph": 1,
+          "hash": "7023c69be57757c0243bb6680477e6dda90e13cf201020452a4f8d759a5e1e07",
+          "excerpt": "Men are disturbed not by things, but by the views which they take of things. Thus death is nothing terrible, else it would have appeared so to Socrates. But the terror consists in our notion of death, that it is terrible. When, therefore, we are hindered or disturbed, or grieved, let us never impute it to others, but to ourselves—that is, to our own views. It is the action of an uninstructed person to reproach others for his own misfortunes; of one entering upon instruction, to reproach himself; and one perfectly instructed, to reproach neither others nor himself."
+        }
+      ],
+      "gold": {
+        "expectations": [
+          "Sisi CBT adalah pengetahuan tambahan, bukan istilah dalam teks; hindari janji medis/diagnosis."
+        ]
+      },
+      "contextPolicy": "Manual oracle passages for answer-only diagnosis, not retrieval output. Incomplete book context must not be represented as full-book coverage."
+    },
+    {
+      "id": "RD05",
+      "book": "enchiridion",
+      "split": "development",
+      "category": "critique",
+      "input": {
+        "question": "Apakah gagasan bahwa penilaian kita yang mengganggu itu punya kelemahan? Beri contoh tandingan.",
+        "history": []
+      },
+      "context": [
+        {
+          "chapter": "V",
+          "paragraph": 1,
+          "hash": "7023c69be57757c0243bb6680477e6dda90e13cf201020452a4f8d759a5e1e07",
+          "excerpt": "Men are disturbed not by things, but by the views which they take of things. Thus death is nothing terrible, else it would have appeared so to Socrates. But the terror consists in our notion of death, that it is terrible. When, therefore, we are hindered or disturbed, or grieved, let us never impute it to others, but to ourselves—that is, to our own views. It is the action of an uninstructed person to reproach others for his own misfortunes; of one entering upon instruction, to reproach himself; and one perfectly instructed, to reproach neither others nor himself."
+        }
+      ],
+      "gold": {
+        "expectations": [
+          "Bahas keterbatasan sebagai kritik/hipotesis AI; jangan mengarang contoh yang diklaim ada di buku."
+        ]
+      },
+      "contextPolicy": "Manual oracle passages for answer-only diagnosis, not retrieval output. Incomplete book context must not be represented as full-book coverage."
+    },
+    {
+      "id": "RD06",
+      "book": "enchiridion",
+      "split": "development",
+      "category": "false_premise",
+      "input": {
+        "question": "Kenapa buku ini bilang reputasi sepenuhnya ada dalam kendali kita?",
+        "history": []
+      },
+      "context": [
+        {
+          "chapter": "I",
+          "paragraph": 1,
+          "hash": "98f4a8d7b41057e7a83116314c60ec50197d00ae7a850f426bda3db4602cc9b2",
+          "excerpt": "There are things which are within our power, and there are things which are beyond our power. Within our power are opinion, aim, desire, aversion, and, in one word, whatever affairs are our own. Beyond our power are body, property, reputation, office, and, in one word, whatever are not properly our own affairs."
+        }
+      ],
+      "gold": {
+        "expectations": [
+          "Koreksi premis: reputasi ditempatkan di luar kendali."
+        ]
+      },
+      "contextPolicy": "Manual oracle passages for answer-only diagnosis, not retrieval output. Incomplete book context must not be represented as full-book coverage."
+    },
+    {
+      "id": "RD07",
+      "book": "enchiridion",
+      "split": "development",
+      "category": "missing_evidence",
+      "input": {
+        "question": "Apa bukti eksperimen modern yang dipakai penulis untuk membuktikan klaim ini?",
+        "history": []
+      },
+      "context": [
+        {
+          "chapter": "I",
+          "paragraph": 1,
+          "hash": "98f4a8d7b41057e7a83116314c60ec50197d00ae7a850f426bda3db4602cc9b2",
+          "excerpt": "There are things which are within our power, and there are things which are beyond our power. Within our power are opinion, aim, desire, aversion, and, in one word, whatever affairs are our own. Beyond our power are body, property, reputation, office, and, in one word, whatever are not properly our own affairs."
+        },
+        {
+          "chapter": "V",
+          "paragraph": 1,
+          "hash": "7023c69be57757c0243bb6680477e6dda90e13cf201020452a4f8d759a5e1e07",
+          "excerpt": "Men are disturbed not by things, but by the views which they take of things. Thus death is nothing terrible, else it would have appeared so to Socrates. But the terror consists in our notion of death, that it is terrible. When, therefore, we are hindered or disturbed, or grieved, let us never impute it to others, but to ourselves—that is, to our own views. It is the action of an uninstructed person to reproach others for his own misfortunes; of one entering upon instruction, to reproach himself; and one perfectly instructed, to reproach neither others nor himself."
+        },
+        {
+          "chapter": "VIII",
+          "paragraph": 1,
+          "hash": "2e2b8cda365fec08f1fc3a490bd4321b0eac7793ac2cc310e767e2ed9f70690e",
+          "excerpt": "Demand not that events should happen as you wish; but wish them to happen as they do happen, and you will go on well."
+        }
+      ],
+      "gold": {
+        "expectations": [
+          "Cuplikan tidak memberi eksperimen modern; jangan mengarang studi/angka; boleh jelaskan cara menguji tanpa klaim buku secara keseluruhan tidak punya bukti."
+        ]
+      },
+      "contextPolicy": "Manual oracle passages for answer-only diagnosis, not retrieval output. Incomplete book context must not be represented as full-book coverage."
+    },
+    {
+      "id": "RD08",
+      "book": "enchiridion",
+      "split": "development",
+      "category": "correction",
+      "input": {
+        "question": "Bukan menerima semua perlakuan bos, maksud gua gimana tetap tegas tanpa dikendalikan emosi.",
+        "history": [
+          {
+            "role": "user",
+            "text": "Gimana menghadapi bos yang menghina?"
+          },
+          {
+            "role": "assistant",
+            "text": "Terima saja semua perlakuannya tanpa bertindak."
+          }
+        ]
+      },
+      "context": [
+        {
+          "chapter": "I",
+          "paragraph": 1,
+          "hash": "98f4a8d7b41057e7a83116314c60ec50197d00ae7a850f426bda3db4602cc9b2",
+          "excerpt": "There are things which are within our power, and there are things which are beyond our power. Within our power are opinion, aim, desire, aversion, and, in one word, whatever affairs are our own. Beyond our power are body, property, reputation, office, and, in one word, whatever are not properly our own affairs."
+        },
+        {
+          "chapter": "XX",
+          "paragraph": 1,
+          "hash": "5f18cb6c983eb51bf9d462fec499563a5cf896a2ecfc4ac5189a054a5841e556",
+          "excerpt": "Remember that it is not he who gives abuse or blows, who affronts, but the view we take of these things as insulting. When, therefore, anyone provokes you, be assured that it is your own opinion which provokes you. Try, therefore, in the first place, not to be bewildered by appearances. For if you once gain time and respite, you will more easily command yourself."
+        }
+      ],
+      "gold": {
+        "expectations": [
+          "Gunakan koreksi untuk penerapan tegas; jangan ulang jawaban pasif; contoh adalah usulan AI."
+        ]
+      },
+      "contextPolicy": "Manual oracle passages for answer-only diagnosis, not retrieval output. Incomplete book context must not be represented as full-book coverage."
+    },
+    {
+      "id": "RD09",
+      "book": "enchiridion",
+      "split": "development",
+      "category": "global_gap",
+      "input": {
+        "question": "Jelaskan seluruh buku ini bab demi bab, lengkap.",
+        "history": []
+      },
+      "context": [
+        {
+          "chapter": "I",
+          "paragraph": 1,
+          "hash": "98f4a8d7b41057e7a83116314c60ec50197d00ae7a850f426bda3db4602cc9b2",
+          "excerpt": "There are things which are within our power, and there are things which are beyond our power. Within our power are opinion, aim, desire, aversion, and, in one word, whatever affairs are our own. Beyond our power are body, property, reputation, office, and, in one word, whatever are not properly our own affairs."
+        },
+        {
+          "chapter": "V",
+          "paragraph": 1,
+          "hash": "7023c69be57757c0243bb6680477e6dda90e13cf201020452a4f8d759a5e1e07",
+          "excerpt": "Men are disturbed not by things, but by the views which they take of things. Thus death is nothing terrible, else it would have appeared so to Socrates. But the terror consists in our notion of death, that it is terrible. When, therefore, we are hindered or disturbed, or grieved, let us never impute it to others, but to ourselves—that is, to our own views. It is the action of an uninstructed person to reproach others for his own misfortunes; of one entering upon instruction, to reproach himself; and one perfectly instructed, to reproach neither others nor himself."
+        },
+        {
+          "chapter": "VIII",
+          "paragraph": 1,
+          "hash": "2e2b8cda365fec08f1fc3a490bd4321b0eac7793ac2cc310e767e2ed9f70690e",
+          "excerpt": "Demand not that events should happen as you wish; but wish them to happen as they do happen, and you will go on well."
+        }
+      ],
+      "gold": {
+        "expectations": [
+          "Konteks hanya tiga bab: boleh jelaskan bagian itu dan akui belum cukup untuk rangkuman seluruh buku. Jangan klaim semua bab sudah diperiksa."
+        ]
+      },
+      "contextPolicy": "Manual oracle passages for answer-only diagnosis, not retrieval output. Incomplete book context must not be represented as full-book coverage."
+    },
+    {
+      "id": "RD10",
+      "book": "enchiridion",
+      "split": "development",
+      "category": "off_topic",
+      "input": {
+        "question": "Bikinin itinerary Jepang lima hari.",
+        "history": []
+      },
+      "context": [
+        {
+          "chapter": "I",
+          "paragraph": 1,
+          "hash": "98f4a8d7b41057e7a83116314c60ec50197d00ae7a850f426bda3db4602cc9b2",
+          "excerpt": "There are things which are within our power, and there are things which are beyond our power. Within our power are opinion, aim, desire, aversion, and, in one word, whatever affairs are our own. Beyond our power are body, property, reputation, office, and, in one word, whatever are not properly our own affairs."
+        },
+        {
+          "chapter": "V",
+          "paragraph": 1,
+          "hash": "7023c69be57757c0243bb6680477e6dda90e13cf201020452a4f8d759a5e1e07",
+          "excerpt": "Men are disturbed not by things, but by the views which they take of things. Thus death is nothing terrible, else it would have appeared so to Socrates. But the terror consists in our notion of death, that it is terrible. When, therefore, we are hindered or disturbed, or grieved, let us never impute it to others, but to ourselves—that is, to our own views. It is the action of an uninstructed person to reproach others for his own misfortunes; of one entering upon instruction, to reproach himself; and one perfectly instructed, to reproach neither others nor himself."
+        },
+        {
+          "chapter": "VIII",
+          "paragraph": 1,
+          "hash": "2e2b8cda365fec08f1fc3a490bd4321b0eac7793ac2cc310e767e2ed9f70690e",
+          "excerpt": "Demand not that events should happen as you wish; but wish them to happen as they do happen, and you will go on well."
+        }
+      ],
+      "gold": {
+        "expectations": [
+          "Tolak singkat karena tidak terkait buku."
+        ]
+      },
+      "contextPolicy": "Manual oracle passages for answer-only diagnosis, not retrieval output. Incomplete book context must not be represented as full-book coverage."
+    },
+    {
+      "id": "RV01",
+      "book": "wizard-of-oz",
+      "split": "validation",
+      "category": "fact",
+      "input": {
+        "question": "Sepatu Dorothy warna apa dan gimana cara memakainya untuk pulang?",
+        "history": []
+      },
+      "context": [
+        {
+          "chapter": "Chapter II The Council with the Munchkins",
+          "paragraph": 34,
+          "hash": "2e92cfa0e0d18dd60a3a86a7946bb8cbb217d2e1a3d8ebe448b58412ccc41e5e",
+          "excerpt": "“She was so old,” explained the Witch of the North, “that she dried up quickly in the sun. That is the end of her. But the silver shoes are yours, and you shall have them to wear.” She reached down and picked up the shoes, and after shaking the dust out of them handed them to Dorothy."
+        },
+        {
+          "chapter": "Chapter XXIII Glinda The Good Witch Grants Dorothy’s Wish",
+          "paragraph": 29,
+          "hash": "7eef7839bc830ecee6c14a465d7a01a026832ab27ccf1f1e44dce4e528c1675c",
+          "excerpt": "“The Silver Shoes,” said the Good Witch, “have wonderful powers. And one of the most curious things about them is that they can carry you to any place in the world in three steps, and each step will be made in the wink of an eye. All you have to do is to knock the heels together three times and command the shoes to carry you wherever you wish to go.”"
+        }
+      ],
+      "gold": {
+        "expectations": [
+          "Perak, bukan ruby; ketukkan tumit tiga kali dan perintahkan tujuan."
+        ]
+      },
+      "contextPolicy": "Manual oracle passages for answer-only diagnosis, not retrieval output. Incomplete book context must not be represented as full-book coverage."
+    },
+    {
+      "id": "RV02",
+      "book": "wizard-of-oz",
+      "split": "validation",
+      "category": "cross_chapter",
+      "input": {
+        "question": "Kenapa Dorothy tidak langsung pulang sejak menerima sepatu? Hubungkan awal dan akhir cerita.",
+        "history": []
+      },
+      "context": [
+        {
+          "chapter": "Chapter II The Council with the Munchkins",
+          "paragraph": 34,
+          "hash": "2e92cfa0e0d18dd60a3a86a7946bb8cbb217d2e1a3d8ebe448b58412ccc41e5e",
+          "excerpt": "“She was so old,” explained the Witch of the North, “that she dried up quickly in the sun. That is the end of her. But the silver shoes are yours, and you shall have them to wear.” She reached down and picked up the shoes, and after shaking the dust out of them handed them to Dorothy."
+        },
+        {
+          "chapter": "Chapter XXIII Glinda The Good Witch Grants Dorothy’s Wish",
+          "paragraph": 24,
+          "hash": "28384096b68e23e52415374f03073e93599cb4b4c388232829a81c0e909dcef9",
+          "excerpt": "“Your Silver Shoes will carry you over the desert,” replied Glinda. “If you had known their power you could have gone back to your Aunt Em the very first day you came to this country.”"
+        },
+        {
+          "chapter": "Chapter XXIII Glinda The Good Witch Grants Dorothy’s Wish",
+          "paragraph": 29,
+          "hash": "7eef7839bc830ecee6c14a465d7a01a026832ab27ccf1f1e44dce4e528c1675c",
+          "excerpt": "“The Silver Shoes,” said the Good Witch, “have wonderful powers. And one of the most curious things about them is that they can carry you to any place in the world in three steps, and each step will be made in the wink of an eye. All you have to do is to knock the heels together three times and command the shoes to carry you wherever you wish to go.”"
+        },
+        {
+          "chapter": "Chapter XXIII Glinda The Good Witch Grants Dorothy’s Wish",
+          "paragraph": 41,
+          "hash": "071607e5f7f3ead447a7478e3bec298b18ffa19874fd82accd8d2b00ca2f947c",
+          "excerpt": "Dorothy stood up and found she was in her stocking-feet. For the Silver Shoes had fallen off in her flight through the air, and were lost forever in the desert."
+        }
+      ],
+      "gold": {
+        "expectations": [
+          "Sepatu diterima awal, kekuatannya belum diketahui; Glinda menjelaskan kemudian. Jangan klaim Dorothy tahu dan sengaja menunda."
+        ]
+      },
+      "contextPolicy": "Manual oracle passages for answer-only diagnosis, not retrieval output. Incomplete book context must not be represented as full-book coverage."
+    },
+    {
+      "id": "RV03",
+      "book": "wizard-of-oz",
+      "split": "validation",
+      "category": "interpretation",
+      "input": {
+        "question": "Apa makna perjalanan Dorothy kalau alat pulangnya sudah ia miliki sejak awal?",
+        "history": []
+      },
+      "context": [
+        {
+          "chapter": "Chapter XXIII Glinda The Good Witch Grants Dorothy’s Wish",
+          "paragraph": 24,
+          "hash": "28384096b68e23e52415374f03073e93599cb4b4c388232829a81c0e909dcef9",
+          "excerpt": "“Your Silver Shoes will carry you over the desert,” replied Glinda. “If you had known their power you could have gone back to your Aunt Em the very first day you came to this country.”"
+        },
+        {
+          "chapter": "Chapter XXIII Glinda The Good Witch Grants Dorothy’s Wish",
+          "paragraph": 25,
+          "hash": "eee8288f29558f61470db8b4406ff5f60d6e2d8742aefe716e71ffcef89e5217",
+          "excerpt": "“But then I should not have had my wonderful brains!” cried the Scarecrow. “I might have passed my whole life in the farmer’s cornfield.”"
+        },
+        {
+          "chapter": "Chapter XXIII Glinda The Good Witch Grants Dorothy’s Wish",
+          "paragraph": 26,
+          "hash": "c78697fd7e2cc041b631c90565fff240da1ae8ad1faaa2a1eb77c6c5c90c312c",
+          "excerpt": "“And I should not have had my lovely heart,” said the Tin Woodman. “I might have stood and rusted in the forest till the end of the world.”"
+        },
+        {
+          "chapter": "Chapter XXIII Glinda The Good Witch Grants Dorothy’s Wish",
+          "paragraph": 28,
+          "hash": "d8beb839e67136f77e43f26734af219fde1ea4d4c3b0fd73c5b182b0e8c0d513",
+          "excerpt": "“This is all true,” said Dorothy, “and I am glad I was of use to these good friends. But now that each of them has had what he most desired, and each is happy in having a kingdom to rule besides, I think I should like to go back to Kansas.”"
+        }
+      ],
+      "gold": {
+        "expectations": [
+          "Tafsir ditandai sebagai pembacaan; bahas pertolongan ke teman dan nilai perjalanan, bukan klaim motif penulis eksplisit."
+        ]
+      },
+      "contextPolicy": "Manual oracle passages for answer-only diagnosis, not retrieval output. Incomplete book context must not be represented as full-book coverage."
+    },
+    {
+      "id": "RV04",
+      "book": "wizard-of-oz",
+      "split": "validation",
+      "category": "application",
+      "input": {
+        "question": "Dari perjalanan Dorothy, gimana gua mikir soal kemampuan sendiri yang sering gua anggap kurang?",
+        "history": []
+      },
+      "context": [
+        {
+          "chapter": "Chapter XXIII Glinda The Good Witch Grants Dorothy’s Wish",
+          "paragraph": 24,
+          "hash": "28384096b68e23e52415374f03073e93599cb4b4c388232829a81c0e909dcef9",
+          "excerpt": "“Your Silver Shoes will carry you over the desert,” replied Glinda. “If you had known their power you could have gone back to your Aunt Em the very first day you came to this country.”"
+        },
+        {
+          "chapter": "Chapter XXIII Glinda The Good Witch Grants Dorothy’s Wish",
+          "paragraph": 28,
+          "hash": "d8beb839e67136f77e43f26734af219fde1ea4d4c3b0fd73c5b182b0e8c0d513",
+          "excerpt": "“This is all true,” said Dorothy, “and I am glad I was of use to these good friends. But now that each of them has had what he most desired, and each is happy in having a kingdom to rule besides, I think I should like to go back to Kansas.”"
+        },
+        {
+          "chapter": "Chapter XVI The Magic Art of the Great Humbug",
+          "paragraph": 41,
+          "hash": "6fee7415387fbf2791e41ae44f9131615f2029fa2253f1f7d79623b6a4b979b6",
+          "excerpt": "Oz, left to himself, smiled to think of his success in giving the Scarecrow and the Tin Woodman and the Lion exactly what they thought they wanted. “How can I help being a humbug,” he said, “when all these people make me do things that everybody knows can’t be done? It was easy to make the Scarecrow and the Lion and the Woodman happy, because they imagined I could do anything. But it will take more than imagination to carry Dorothy back to Kansas, and I’m sure I don’t know how it can be done.”"
+        }
+      ],
+      "gold": {
+        "expectations": [
+          "Penerapan sebagai contoh AI, bukan diagnosis/janji hasil atau nasihat literal Dorothy."
+        ]
+      },
+      "contextPolicy": "Manual oracle passages for answer-only diagnosis, not retrieval output. Incomplete book context must not be represented as full-book coverage."
+    },
+    {
+      "id": "RV05",
+      "book": "wizard-of-oz",
+      "split": "validation",
+      "category": "external_comparison",
+      "input": {
+        "question": "Bandingkan hadiah Oz untuk teman Dorothy dengan efek placebo.",
+        "history": []
+      },
+      "context": [
+        {
+          "chapter": "Chapter XVI The Magic Art of the Great Humbug",
+          "paragraph": 22,
+          "hash": "8112e7a71840db4348e4b65e937caadbd42cdc03e80608fa71f8cb044279a427",
+          "excerpt": "So Oz brought a pair of tinsmith’s shears and cut a small, square hole in the left side of the Tin Woodman’s breast. Then, going to a chest of drawers, he took out a pretty heart, made entirely of silk and stuffed with sawdust."
+        },
+        {
+          "chapter": "Chapter XVI The Magic Art of the Great Humbug",
+          "paragraph": 41,
+          "hash": "6fee7415387fbf2791e41ae44f9131615f2029fa2253f1f7d79623b6a4b979b6",
+          "excerpt": "Oz, left to himself, smiled to think of his success in giving the Scarecrow and the Tin Woodman and the Lion exactly what they thought they wanted. “How can I help being a humbug,” he said, “when all these people make me do things that everybody knows can’t be done? It was easy to make the Scarecrow and the Lion and the Woodman happy, because they imagined I could do anything. But it will take more than imagination to carry Dorothy back to Kansas, and I’m sure I don’t know how it can be done.”"
+        }
+      ],
+      "gold": {
+        "expectations": [
+          "Placebo sebagai analogi tambahan terbatas, bukan eksperimen klinis dalam cerita atau bukti medis; jangan menyamakan metafora dengan pembuktian."
+        ]
+      },
+      "contextPolicy": "Manual oracle passages for answer-only diagnosis, not retrieval output. Incomplete book context must not be represented as full-book coverage."
+    },
+    {
+      "id": "RV06",
+      "book": "wizard-of-oz",
+      "split": "validation",
+      "category": "false_premise",
+      "input": {
+        "question": "Kenapa Dorothy kehilangan sepatu ruby saat pulang?",
+        "history": []
+      },
+      "context": [
+        {
+          "chapter": "Chapter XXIII Glinda The Good Witch Grants Dorothy’s Wish",
+          "paragraph": 41,
+          "hash": "071607e5f7f3ead447a7478e3bec298b18ffa19874fd82accd8d2b00ca2f947c",
+          "excerpt": "Dorothy stood up and found she was in her stocking-feet. For the Silver Shoes had fallen off in her flight through the air, and were lost forever in the desert."
+        }
+      ],
+      "gold": {
+        "expectations": [
+          "Koreksi ruby menjadi perak; jatuh saat terbang dan hilang di gurun."
+        ]
+      },
+      "contextPolicy": "Manual oracle passages for answer-only diagnosis, not retrieval output. Incomplete book context must not be represented as full-book coverage."
+    },
+    {
+      "id": "RV07",
+      "book": "wizard-of-oz",
+      "split": "validation",
+      "category": "missing_evidence",
+      "input": {
+        "question": "Berapa kilometer tepatnya jarak Oz ke Kansas?",
+        "history": []
+      },
+      "context": [
+        {
+          "chapter": "Chapter XXIII Glinda The Good Witch Grants Dorothy’s Wish",
+          "paragraph": 24,
+          "hash": "28384096b68e23e52415374f03073e93599cb4b4c388232829a81c0e909dcef9",
+          "excerpt": "“Your Silver Shoes will carry you over the desert,” replied Glinda. “If you had known their power you could have gone back to your Aunt Em the very first day you came to this country.”"
+        },
+        {
+          "chapter": "Chapter XXIII Glinda The Good Witch Grants Dorothy’s Wish",
+          "paragraph": 29,
+          "hash": "7eef7839bc830ecee6c14a465d7a01a026832ab27ccf1f1e44dce4e528c1675c",
+          "excerpt": "“The Silver Shoes,” said the Good Witch, “have wonderful powers. And one of the most curious things about them is that they can carry you to any place in the world in three steps, and each step will be made in the wink of an eye. All you have to do is to knock the heels together three times and command the shoes to carry you wherever you wish to go.”"
+        }
+      ],
+      "gold": {
+        "expectations": [
+          "Cuplikan tidak memberi jarak numerik; jangan mengarang angka; jelaskan batas bukti."
+        ]
+      },
+      "contextPolicy": "Manual oracle passages for answer-only diagnosis, not retrieval output. Incomplete book context must not be represented as full-book coverage."
+    },
+    {
+      "id": "RV08",
+      "book": "wizard-of-oz",
+      "split": "validation",
+      "category": "correction",
+      "input": {
+        "question": "Maksud gua sepatu, bukan balon. Coba cek penjelasan Glinda.",
+        "history": [
+          {
+            "role": "user",
+            "text": "Gimana Dorothy pulang?"
+          },
+          {
+            "role": "assistant",
+            "text": "Ia pulang dengan balon Oz."
+          }
+        ]
+      },
+      "context": [
+        {
+          "chapter": "Chapter XXIII Glinda The Good Witch Grants Dorothy’s Wish",
+          "paragraph": 24,
+          "hash": "28384096b68e23e52415374f03073e93599cb4b4c388232829a81c0e909dcef9",
+          "excerpt": "“Your Silver Shoes will carry you over the desert,” replied Glinda. “If you had known their power you could have gone back to your Aunt Em the very first day you came to this country.”"
+        },
+        {
+          "chapter": "Chapter XXIII Glinda The Good Witch Grants Dorothy’s Wish",
+          "paragraph": 29,
+          "hash": "7eef7839bc830ecee6c14a465d7a01a026832ab27ccf1f1e44dce4e528c1675c",
+          "excerpt": "“The Silver Shoes,” said the Good Witch, “have wonderful powers. And one of the most curious things about them is that they can carry you to any place in the world in three steps, and each step will be made in the wink of an eye. All you have to do is to knock the heels together three times and command the shoes to carry you wherever you wish to go.”"
+        }
+      ],
+      "gold": {
+        "expectations": [
+          "Ikuti koreksi ke sepatu perak, ketuk tumit dan perintah tujuan; jangan pertahankan penjelasan balon."
+        ]
+      },
+      "contextPolicy": "Manual oracle passages for answer-only diagnosis, not retrieval output. Incomplete book context must not be represented as full-book coverage."
+    },
+    {
+      "id": "RV09",
+      "book": "wizard-of-oz",
+      "split": "validation",
+      "category": "global_gap",
+      "input": {
+        "question": "Jelaskan seluruh buku ini dari awal hingga akhir dengan semua konflik penting.",
+        "history": []
+      },
+      "context": [
+        {
+          "chapter": "Chapter XXIII Glinda The Good Witch Grants Dorothy’s Wish",
+          "paragraph": 24,
+          "hash": "28384096b68e23e52415374f03073e93599cb4b4c388232829a81c0e909dcef9",
+          "excerpt": "“Your Silver Shoes will carry you over the desert,” replied Glinda. “If you had known their power you could have gone back to your Aunt Em the very first day you came to this country.”"
+        },
+        {
+          "chapter": "Chapter XXIII Glinda The Good Witch Grants Dorothy’s Wish",
+          "paragraph": 28,
+          "hash": "d8beb839e67136f77e43f26734af219fde1ea4d4c3b0fd73c5b182b0e8c0d513",
+          "excerpt": "“This is all true,” said Dorothy, “and I am glad I was of use to these good friends. But now that each of them has had what he most desired, and each is happy in having a kingdom to rule besides, I think I should like to go back to Kansas.”"
+        },
+        {
+          "chapter": "Chapter XXIII Glinda The Good Witch Grants Dorothy’s Wish",
+          "paragraph": 29,
+          "hash": "7eef7839bc830ecee6c14a465d7a01a026832ab27ccf1f1e44dce4e528c1675c",
+          "excerpt": "“The Silver Shoes,” said the Good Witch, “have wonderful powers. And one of the most curious things about them is that they can carry you to any place in the world in three steps, and each step will be made in the wink of an eye. All you have to do is to knock the heels together three times and command the shoes to carry you wherever you wish to go.”"
+        }
+      ],
+      "gold": {
+        "expectations": [
+          "Cuplikan akhir saja tidak mendukung seluruh alur; nyatakan batas, jangan mengisi detail dari memori sebagai bukti yang sudah diperiksa."
+        ]
+      },
+      "contextPolicy": "Manual oracle passages for answer-only diagnosis, not retrieval output. Incomplete book context must not be represented as full-book coverage."
+    },
+    {
+      "id": "RV10",
+      "book": "wizard-of-oz",
+      "split": "validation",
+      "category": "off_topic",
+      "input": {
+        "question": "Bikinin itinerary Jepang lima hari.",
+        "history": []
+      },
+      "context": [
+        {
+          "chapter": "Chapter XXIII Glinda The Good Witch Grants Dorothy’s Wish",
+          "paragraph": 29,
+          "hash": "7eef7839bc830ecee6c14a465d7a01a026832ab27ccf1f1e44dce4e528c1675c",
+          "excerpt": "“The Silver Shoes,” said the Good Witch, “have wonderful powers. And one of the most curious things about them is that they can carry you to any place in the world in three steps, and each step will be made in the wink of an eye. All you have to do is to knock the heels together three times and command the shoes to carry you wherever you wish to go.”"
+        }
+      ],
+      "gold": {
+        "expectations": [
+          "Tolak singkat karena tidak terkait buku."
+        ]
+      },
+      "contextPolicy": "Manual oracle passages for answer-only diagnosis, not retrieval output. Incomplete book context must not be represented as full-book coverage."
+    }
+  ]
+}

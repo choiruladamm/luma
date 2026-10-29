@@ -474,8 +474,68 @@ void main() {
       saved.answer!.blocks.single.sources.single.anchors.single.snapshot,
       original,
     );
-    expect(saved.trustedHistory, isFalse);
+    expect(saved.trustedHistory, isTrue);
     expect((await raw(t)).sources, contains('paragraphHash'));
+  });
+
+  test('legacy session accepts natural replies and hydrates both formats without rewriting old answers', () async {
+    final old = await first();
+    final s = source();
+    await repo.prepareSources(old.attemptRef, [s]);
+    await repo.finalize(
+      old.attemptRef,
+      phase: ChatPhase.done,
+      answer: answer(s),
+    );
+    final oldRaw = (await raw(old)).answer;
+    final next = await repo.appendTurn(
+      book,
+      old.sessionId,
+      question: 'Coba terapkan ke situasi gua.',
+      model: 'test/model',
+      promptVersion: chatPromptVersion,
+    );
+    await repo.prepareSources(next.attemptRef, [s]);
+    final reply = ChatAnswer(
+      status: ChatAnswerStatus.partial,
+      formatVersion: 2,
+      blocks: [
+        ChatAnswerBlock(text: 'Gagasan dalam buku.', sources: [s]),
+        ChatAnswerBlock(
+          text: 'Saran penerapan gua.',
+          sources: [s],
+          kind: ChatAnswerKind.interpretation,
+        ),
+        ChatAnswerBlock(
+          text: 'Tambahan di luar buku.',
+          sources: [],
+          kind: ChatAnswerKind.external,
+        ),
+        ChatAnswerBlock(
+          text: 'Bukti untuk bagian terakhir belum ketemu.',
+          sources: [],
+          kind: ChatAnswerKind.conversation,
+        ),
+      ],
+    );
+    expect(
+      await repo.finalize(
+        next.attemptRef,
+        phase: ChatPhase.done,
+        answer: reply,
+      ),
+      isTrue,
+    );
+    final restored = await turns(next);
+    expect(restored.first.answer!.formatVersion, 1);
+    expect((await raw(old)).answer, oldRaw);
+    expect(restored.last.answer!.formatVersion, 2);
+    expect(
+      restored.last.answer!.blocks.map((b) => b.kind),
+      ChatAnswerKind.values,
+    );
+    expect(restored.last.answer!.note, isEmpty);
+    expect(restored.last.trustedHistory, isTrue);
   });
 
   test('restart interrupts once, preserves partial and sources, explicit retry clears generation', () async {
@@ -810,7 +870,7 @@ void main() {
     final saved = (await turns(t)).last;
     expect(saved.answer!.note, noSource.note);
     expect(saved.answer!.blocks, isEmpty);
-    expect(saved.trustedHistory, isFalse);
+    expect(saved.trustedHistory, isTrue);
     await expectLater(
       repo.retry(saved.attemptRef, model: 'm', promptVersion: 1),
       throwsStateError,

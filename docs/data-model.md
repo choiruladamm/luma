@@ -247,3 +247,14 @@ Index lengkap dan partial ikut backup sebagai data turunan yang bisa dibuat ulan
 Perubahan isi melalui contentChanged menghapus cache buku; hapus buku cascade.
 Hapus sesi tidak menghapus cache. Index building menyimpan prefix batch sukses;
 ready hanya setelah semua vektor tersimpan. Tidak ada transaksi selama network.
+
+### Format jawaban chat v2 (#137)
+
+Schema DB tetap9; kolom answer tetap JSON. Payload lama tanpa formatVersion memakai
+claims/sourceIds dan batas2klaim. Payload baru memakai formatVersion2, status
+answered/partial/clarify/off_topic, serta parts text/kind/sourceIds. Mapper membaca
+keduanya tanpa menulis ulang data lama. Paragraf book memerlukan sumber; external
+dan conversation tidak memakai sitasi buku, interpretation dapat merujuk gagasan
+asal. Versi/jenis/ID tidak dikenal dan key duplikat ditolak. Finalize tetap mengecek
+exact frozen sources untuk setiap referensi. Binary lama tidak dijanjikan membaca
+format2; tidak ada downgrade data.

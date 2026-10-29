@@ -255,3 +255,14 @@ Index in-memory memakai bookId+revision+manifest, sehingga append/reorder atau
 replace panjang sama tetap reindex pada send berikutnya. Jika isi
 sudah berubah sebelum cancel/flush, guard repository menolak late write; arsip tetap
 readOnly. Jangan melemahkan guard untuk memfinalisasi ke revision lain.
+
+### Percakapan natural (#137)
+
+Chat tetap memakai repository/ViewModel/provider/renderer yang sama. Domain
+ChatAnswer menyimpan formatVersion dan setiap ChatAnswerBlock memiliki kind; UI
+merender teks dan sumber yang tersedia, tanpa cabang format layar baru. V2 tidak
+memakai fixed note partial/not_found v1. Completed partial/clarify/off_topic dan
+legacy no-source menjadi konteks dialog, bukan bukti buku. Raw checkpoint tetap
+bukan teks UI. No-source tidak memotong stream sebelum model dapat menjawab atau
+meminta klarifikasi; validation owner/attempt/revision/sources dan cancellation
+sebelum/sesudah network tetap berjalan.

@@ -135,10 +135,14 @@ class ChatQuote {
 enum ChatAnswerStatus {
   answered,
   partial,
-  notFound;
+  notFound,
+  clarify,
+  offTopic;
 
   String get wireValue => switch (this) {
     notFound => 'not_found',
+    clarify => 'clarify',
+    offTopic => 'off_topic',
     _ => name,
   };
 
@@ -146,40 +150,81 @@ enum ChatAnswerStatus {
     'answered' => answered,
     'partial' => partial,
     'not_found' => notFound,
+    'clarify' => clarify,
+    'off_topic' => offTopic,
     _ => throw const FormatException('Status jawaban tidak dikenal'),
   };
 }
 
+enum ChatAnswerKind {
+  book,
+  interpretation,
+  external,
+  conversation;
+
+  static ChatAnswerKind parse(Object? value) => switch (value) {
+    'book' => book,
+    'interpretation' => interpretation,
+    'external' => external,
+    'conversation' => conversation,
+    _ => throw const FormatException('Jenis paragraf tidak dikenal'),
+  };
+}
+
 class ChatAnswerBlock {
-  ChatAnswerBlock({required this.text, required List<ChatSource> sources})
-    : sources = List.unmodifiable(sources);
+  ChatAnswerBlock({
+    required this.text,
+    required List<ChatSource> sources,
+    this.kind = ChatAnswerKind.book,
+  }) : sources = List.unmodifiable(sources);
   final String text;
   final List<ChatSource> sources;
+  final ChatAnswerKind kind;
 }
 
 class ChatAnswer {
-  ChatAnswer({required this.status, required List<ChatAnswerBlock> blocks})
-    : blocks = List.unmodifiable(blocks) {
-    if (blocks.length > 2 ||
-        (status == ChatAnswerStatus.notFound) != blocks.isEmpty ||
+  ChatAnswer({
+    required this.status,
+    required List<ChatAnswerBlock> blocks,
+    this.formatVersion = 1,
+  }) : blocks = List.unmodifiable(blocks) {
+    if (![1, 2].contains(formatVersion) ||
+        formatVersion == 1 &&
+            (blocks.length > 2 ||
+                (status == ChatAnswerStatus.notFound) != blocks.isEmpty ||
+                status == ChatAnswerStatus.clarify ||
+                status == ChatAnswerStatus.offTopic) ||
+        formatVersion == 2 &&
+            (blocks.isEmpty ||
+                blocks.length > 32 ||
+                status == ChatAnswerStatus.notFound) ||
         blocks.any(
           (b) =>
               b.text.trim().isEmpty ||
               !chatValidUnicode(b.text) ||
-              b.sources.isEmpty,
+              b.kind == ChatAnswerKind.book && b.sources.isEmpty ||
+              formatVersion == 1 && b.kind != ChatAnswerKind.book ||
+              (b.kind == ChatAnswerKind.external ||
+                      b.kind == ChatAnswerKind.conversation) &&
+                  b.sources.isNotEmpty,
         )) {
       throw const FormatException('Jawaban tidak konsisten');
     }
   }
   final ChatAnswerStatus status;
   final List<ChatAnswerBlock> blocks;
+  final int formatVersion;
 
-  String get note => switch (status) {
-    ChatAnswerStatus.answered => '',
-    ChatAnswerStatus.partial =>
-      'Sebagian pertanyaan belum punya bukti yang cukup di sumber ini.',
-    ChatAnswerStatus.notFound => 'Belum ada sumber yang cukup untuk menjawab itu. Coba tunjukkan kutipan atau perjelas pertanyaannya.',
-  };
+  String get note {
+    if (formatVersion == 2) return '';
+    return switch (status) {
+      ChatAnswerStatus.answered => '',
+      ChatAnswerStatus.partial =>
+        'Sebagian pertanyaan belum punya bukti yang cukup di sumber ini.',
+      ChatAnswerStatus.notFound => 'Belum ada sumber yang cukup untuk menjawab itu. Coba tunjukkan kutipan atau perjelas pertanyaannya.',
+      ChatAnswerStatus.clarify || ChatAnswerStatus.offTopic => '',
+    };
+  }
 }
 
 enum ChatPhase {
@@ -241,9 +286,7 @@ class ChatTurn {
   bool accepts(ChatAttemptRef ref, ChatBookRef current) =>
       phase.isRunning && current == book && ref == attemptRef;
   bool get trustedHistory =>
-      phase == ChatPhase.done &&
-      error == null &&
-      answer?.status == ChatAnswerStatus.answered;
+      phase == ChatPhase.done && error == null && answer != null;
 
   ChatTurn interrupt(DateTime at, {bool cancelled = false}) {
     if (!phase.isRunning) return this;

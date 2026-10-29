@@ -147,7 +147,7 @@ class Phone {
     await storage.cover('$hash.png').writeAsString('cover of $title');
   }
 
-  Future<void> addChats() async {
+  Future<void> addChats({bool natural = false}) async {
     final repo = ChatRepository(db);
     for (final book in await db.select(db.books).get()) {
       final chapter = await (db.select(
@@ -187,9 +187,22 @@ class Phone {
           draft: i == 0 ? 'finished' : '{partial',
           answer: i == 0
               ? ChatAnswer(
+                  formatVersion: natural ? 2 : 1,
                   status: ChatAnswerStatus.answered,
                   blocks: [
                     ChatAnswerBlock(text: 'Sapaan.', sources: [source]),
+                    if (natural)
+                      ChatAnswerBlock(
+                        text: 'Contoh penerapan gua.',
+                        sources: [],
+                        kind: ChatAnswerKind.interpretation,
+                      ),
+                    if (natural)
+                      ChatAnswerBlock(
+                        text: 'Pengetahuan tambahan.',
+                        sources: [],
+                        kind: ChatAnswerKind.external,
+                      ),
                   ],
                 )
               : null,
@@ -257,6 +270,35 @@ void main() {
     addTearDown(backup.dispose);
     return backup.file;
   }
+
+  test(
+    'backup restore preserves mixed legacy and natural chat answers',
+    () async {
+      await a.addChats(natural: true);
+      final zip = await backupOf(a);
+      final service = RestoreService(b.db, b.storage);
+      await service.apply(await service.inspect(zip));
+      b.reopen();
+      expect(await b.dump(), await a.dump());
+      final repo = ChatRepository(b.db);
+      addTearDown(repo.dispose);
+      final book = (await b.db.select(b.db.books).get()).first;
+      final sessions = await repo.watchSessions(book.id).first;
+      final answers = <ChatAnswer>[];
+      for (final session in sessions) {
+        answers.addAll(
+          (await repo.watchTurns(book.id, session.id).first)
+              .map((t) => t.answer)
+              .whereType<ChatAnswer>(),
+        );
+      }
+      expect(answers.map((a) => a.formatVersion).toSet(), {1, 2});
+      expect(
+        answers.firstWhere((a) => a.formatVersion == 2).blocks.last.kind,
+        ChatAnswerKind.external,
+      );
+    },
+  );
 
   test('round trip: export, restore onto another phone, same data', () async {
     final cachedBook = (await a.db.select(a.db.books).get()).first;

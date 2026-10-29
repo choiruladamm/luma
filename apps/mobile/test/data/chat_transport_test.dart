@@ -61,7 +61,7 @@ void main() {
         {'role': 'user', 'content': 'follow up'},
       ]);
       expect(data['stream'], true);
-      expect(data['max_tokens'], 800);
+      expect(data['max_tokens'], 3000);
       expect(data['response_format'], {'type': 'json_object'});
       expect(data['reasoning'], {'enabled': false});
     },

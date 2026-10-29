@@ -301,7 +301,6 @@ class ChatContextRepository {
         prompt,
         current,
         input.paragraphs,
-        plan.needsClarification || selected.isEmpty,
         () => !_disposed
             ? _chat.validatePrepared(input.turn.attemptRef, prompt.sources)
             : Future.value(false),
@@ -544,7 +543,6 @@ class PreparedChat {
     this.prompt,
     this.book,
     this._paragraphs,
-    this._noSource,
     this._validate,
   );
   final OpenRouterService _router;
@@ -552,7 +550,6 @@ class PreparedChat {
   final ChatPrompt prompt;
   final ChatBookRef book;
   final Map<ChatParagraphRef, ChatParagraph> _paragraphs;
-  final bool _noSource;
   final Future<bool> Function() _validate;
   bool _started = false;
 
@@ -563,13 +560,6 @@ class PreparedChat {
     try {
       if (!await _validate()) return;
       if (cancel?.isCancelled ?? false) throw cancel!.cancelError!;
-      if (_noSource) {
-        yield ChatStreamFrame(
-          '',
-          answer: ChatAnswer(status: ChatAnswerStatus.notFound, blocks: []),
-        );
-        return;
-      }
       final decoder = ChatAnswerDecoder(
         prompt: prompt,
         current: book,

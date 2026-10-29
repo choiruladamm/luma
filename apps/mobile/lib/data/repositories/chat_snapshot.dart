@@ -151,11 +151,13 @@ class ChatSnapshot {
   }
 
   static Map<String, Object> answerData(ChatAnswer answer) => {
+    if (answer.formatVersion == 2) 'formatVersion': 2,
     'status': answer.status.wireValue,
-    'claims': [
+    (answer.formatVersion == 2 ? 'parts' : 'claims'): [
       for (final b in answer.blocks)
         {
           'text': b.text,
+          if (answer.formatVersion == 2) 'kind': b.kind.name,
           'sourceIds': [for (final s in b.sources) s.id],
         },
     ],
@@ -163,15 +165,23 @@ class ChatSnapshot {
 
   static ChatAnswer? answer(String? raw, List<ChatSource> sources) {
     if (raw == null) return null;
-    final m = map(json(raw, maxBytes: chatPromptBytes));
-    final rows = list(m['claims']);
-    if (rows.length > 2) throw const FormatException('Terlalu banyak klaim');
+    final m = map(decodeChatAnswerJson(raw));
+    final version = m.containsKey('formatVersion')
+        ? integer(m['formatVersion'], min: 1)
+        : 1;
+    if (version != 1 && version != 2) {
+      throw const FormatException('Versi jawaban tidak dikenal');
+    }
+    final rows = list(m[version == 2 ? 'parts' : 'claims']);
+    if (version == 1 && rows.length > 2) {
+      throw const FormatException('Terlalu banyak klaim');
+    }
     final byId = {for (final s in sources) s.id: s};
     final blocks = <ChatAnswerBlock>[];
     for (final value in rows) {
       final claim = map(value);
       final ids = list(claim['sourceIds']);
-      if (ids.isEmpty ||
+      if (version == 1 && ids.isEmpty ||
           ids.toSet().length != ids.length ||
           ids.any((id) => id is! String || !byId.containsKey(id))) {
         throw const FormatException('Referensi klaim tidak cocok');
@@ -179,6 +189,9 @@ class ChatSnapshot {
       blocks.add(
         ChatAnswerBlock(
           text: text(claim['text']),
+          kind: version == 2
+              ? ChatAnswerKind.parse(claim['kind'])
+              : ChatAnswerKind.book,
           sources: [for (final id in ids) byId[id]!],
         ),
       );
@@ -186,6 +199,7 @@ class ChatSnapshot {
     return ChatAnswer(
       status: ChatAnswerStatus.parse(m['status']),
       blocks: blocks,
+      formatVersion: version,
     );
   }
 
