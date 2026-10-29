@@ -93,13 +93,19 @@ class _ChatHistoryState extends State<ChatHistory> {
     }
     if (oldWidget.turns.last.id != widget.turns.last.id) {
       _rendered.remove(oldWidget.turns.last.id);
+      if (widget.turns.length > oldWidget.turns.length &&
+          widget.turns.last.phase.isRunning) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _latest();
+        });
+      }
     }
   }
 
   void _latest([int remaining = 8]) {
     if (!_scroll.hasClients || widget.suspended) return;
     _scroll.jumpTo(_scroll.position.maxScrollExtent);
-    // Lazy slivers refine their extent after a jump; only an explicit jump retries.
+    // Lazy slivers refine their extent after a jump; only a requested jump retries.
     if (remaining > 0) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted && _scroll.hasClients && _scroll.position.extentAfter > 0) {

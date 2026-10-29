@@ -443,7 +443,8 @@ ViewModel memublikasikan preview bertanda attempt maksimal sekali per50ms, tanpa
 request AI tambahan. DB tetap memakai checkpoint500ms/1KiB
 existing; complete/Stop/error flush tail. Bubble dan anchor paragraf dipakai ulang,
 scroll tetap selama respons tumbuh, termasuk saat user di bawah. “Ke terbaru”
-adalah aksi eksplisit; anchor resume/kembali sumber tetap dipakai. Status “Lagi nulis…” live-region;
+adalah aksi eksplisit; kirim pertanyaan baru langsung pindah ke turn terbaru
+sekali, lalu streaming tetap diam. Anchor resume/kembali sumber tetap dipakai. Status “Lagi nulis…” live-region;
 teks yang tumbuh bukan live-region. Jawaban done mengganti preview di tempat.
 
 Stop/network/invalid final mempertahankan teks, status terminal dan retry eksplisit.

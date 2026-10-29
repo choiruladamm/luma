@@ -324,6 +324,54 @@ void main() {
   }
 
   testWidgets(
+    'new sent question jumps to latest once, then streaming stays put',
+    (t) async {
+      await open(
+        t,
+        size: const Size(390, 844),
+        state: ChatState(
+          book: book,
+          loading: false,
+          activeSession: session(1),
+          turns: [for (var i = 1; i <= 30; i++) turn(i, answer: answer)],
+        ),
+      );
+      await t.drag(find.byType(CustomScrollView), const Offset(0, 600));
+      await t.pumpAndSettle();
+      final scroll = t
+          .state<ScrollableState>(find.byType(Scrollable).first)
+          .position;
+      final before = scroll.pixels;
+      final sent = turn(31, phase: ChatPhase.waiting);
+      vm.push(
+        vm.current.copyWith(
+          turns: [...vm.current.turns, sent],
+          phase: ChatPhase.waiting,
+        ),
+      );
+      await t.pumpAndSettle();
+      expect(find.text('Pertanyaan 31'), findsOneWidget);
+      expect(scroll.pixels, greaterThan(before));
+      expect(scroll.extentAfter, closeTo(0, 1));
+      final afterSend = scroll.pixels;
+      vm.push(
+        vm.current.copyWith(
+          phase: ChatPhase.writing,
+          preview: (
+            attempt: sent.attemptRef,
+            blocks: [
+              ChatAnswerBlock(text: 'Jawaban panjang ' * 300, sources: []),
+            ],
+          ),
+        ),
+      );
+      await t.pumpAndSettle();
+      expect(scroll.pixels, afterSend);
+      expect(find.text('Ke terbaru'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
     'growth from bottom never follows, including chip and final drain',
     (t) async {
       final writing = turn(1, phase: ChatPhase.writing);
