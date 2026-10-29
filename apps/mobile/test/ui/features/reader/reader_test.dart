@@ -15,6 +15,9 @@ import 'package:luma/domain/models/book.dart';
 import 'package:luma/domain/models/book_chat.dart';
 import 'package:luma/ui/features/chat/view_models/chat_view_model.dart';
 import 'package:luma/ui/features/chat/views/chat_view.dart';
+import 'package:luma/ui/features/chat/views/chat_history.dart';
+import 'package:luma/ui/features/chat/views/chat_source_sheet.dart';
+import 'package:luma/ui/features/chat/views/chat_source_visit_view.dart';
 import 'package:luma/ui/features/chat/views/chat_composer.dart';
 import 'package:luma/main.dart';
 import 'package:luma/ui/core/theme/reader_typography.dart';
@@ -188,6 +191,10 @@ class EntryChat extends ChatViewModel {
   EntryChat(super.bookId);
   static EntryChat? live;
   ChatLaunchContext? entry;
+  void push(ChatState next) => state = next;
+  @override
+  void setScrollAnchor(ChatScrollAnchor anchor) =>
+      state = state.copyWith(scrollAnchor: anchor);
   @override
   ChatState build() {
     live = this;
@@ -240,6 +247,7 @@ void main() {
     ReaderPrefs prefs = const ReaderPrefs(),
     DateTime Function()? now,
     FakeProgress? progressOverride,
+    ChatSource? visitSource,
   }) async {
     progress = progressOverride ?? FakeProgress(saved);
     settings = FakeSettings(prefs);
@@ -251,6 +259,13 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          chatSourceProvider.overrideWith(
+            (ref, request) => Stream.value(
+              visitSource == null
+                  ? null
+                  : ChatSourceLocation(source: visitSource, available: true),
+            ),
+          ),
           readerNowProvider.overrideWithValue(now ?? DateTime.now),
           chatViewModelProvider.overrideWith2(EntryChat.new),
           groupAiStreamProvider.overrideWith2(FakeAiStream.new),
@@ -304,6 +319,124 @@ void main() {
     await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
   }
+
+  testWidgets(
+    'source visit preserves exact reader/chat positions and excludes covered reading time',
+    (t) async {
+      var now = DateTime(2026, 10, 30, 9);
+      final text = paragraphs[10]![1].text;
+      final source = ChatSource(
+        id: 'S1',
+        chapterTitle: 'I',
+        anchors: [
+          SourceAnchor(
+            book: (bookId: 1, contentRevision: 1),
+            chapterId: 10,
+            paragraphIndex: 1,
+            start: 0,
+            end: text.length,
+            paragraphHash: chatTextHash(text),
+            snapshot: text,
+          ),
+        ],
+      );
+      await openBook(
+        t,
+        now: () => now,
+        visitSource: source,
+        readerBook: tallBook,
+        saved: (chapterId: 13, paragraphIndex: 15, paragraphOffset: .4),
+      );
+      final beforeReader = t.getTopLeft(find.text(tall[15].text));
+      now = now.add(const Duration(seconds: 9));
+      await t.tap(find.text('Ngobrol'));
+      await t.pumpAndSettle();
+      final vm = EntryChat.live!;
+      final turns = [
+        for (var i = 1; i <= 12; i++)
+          ChatTurn(
+            id: i,
+            sessionId: 1,
+            book: (bookId: 1, contentRevision: 1),
+            sequence: i,
+            question: 'Pertanyaan $i',
+            createdAt: now,
+            updatedAt: now,
+            phase: ChatPhase.done,
+            model: 'fake',
+            promptVersion: 3,
+            answer: ChatAnswer(
+              status: ChatAnswerStatus.answered,
+              blocks: [
+                ChatAnswerBlock(
+                  text: 'Jawaban $i: ${'gagasan ' * 25}',
+                  sources: [source],
+                ),
+              ],
+            ),
+          ),
+      ];
+      vm.push(
+        ChatState(
+          book: (bookId: 1, contentRevision: 1),
+          loading: false,
+          turns: turns,
+        ),
+      );
+      await t.pumpAndSettle();
+      await t.drag(find.byType(CustomScrollView), const Offset(0, 700));
+      await t.pumpAndSettle();
+      final scroll = t.state<ScrollableState>(
+        find
+            .descendant(
+              of: find.byType(ChatHistory),
+              matching: find.byType(Scrollable),
+            )
+            .first,
+      );
+      final chatPixels = scroll.position.pixels;
+      final saves = progress.saves.toList();
+      final seconds = progress.readingSeconds;
+      final opens = progress.opened.toList();
+      final chip = find.byType(ChatSourceChip).hitTestable().first;
+      await t.tap(chip);
+      await t.pumpAndSettle();
+      expect(find.byType(ChatSourceSheet), findsOneWidget);
+      await t.tap(find.text('Buka di buku'));
+      await t.pumpAndSettle();
+      expect(find.byType(ChatSourceVisitView), findsOneWidget);
+      now = now.add(const Duration(minutes: 4));
+      t.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      await t.pump();
+      t.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+      t.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      t.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await t.pumpAndSettle();
+      expect(progress.saves, saves);
+      expect(progress.readingSeconds, seconds);
+      expect(progress.opened, opens);
+      await t.tap(find.text('Balik ke obrolan'));
+      await t.pumpAndSettle();
+      expect(scroll.position.pixels, closeTo(chatPixels, .01));
+      await t.tap(find.byType(ChatSourceChip).hitTestable().first);
+      await t.pumpAndSettle();
+      await t.tap(find.text('Buka di buku'));
+      await t.pumpAndSettle();
+      await t.tap(find.text('Lanjut baca semula'));
+      await t.pumpAndSettle();
+      expect(find.byType(ChatView), findsNothing);
+      expect(find.byType(ReaderView), findsOneWidget);
+      expect(t.getTopLeft(find.text(tall[15].text)), beforeReader);
+      expect(progress.saves, saves);
+      expect(progress.readingSeconds, seconds);
+      expect(progress.finished, isEmpty);
+      now = now.add(const Duration(seconds: 6));
+      await leave(t);
+      expect(progress.readingSeconds, seconds + 6);
+      expect(progress.saves.last, saves.last);
+      expect(t.takeException(), isNull);
+    },
+  );
 
   testWidgets('Ngobrol stays disabled for a chapter without imported text', (
     t,

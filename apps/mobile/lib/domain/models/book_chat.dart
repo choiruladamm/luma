@@ -412,6 +412,28 @@ class ChatLaunchContext {
   bool get startsNewSession => quote != null;
 }
 
+/// Only IDs cross the route boundary; every visit resolves the frozen evidence.
+typedef ChatSourceRef = ({
+  int bookId,
+  int sessionId,
+  int turnId,
+  int attempt,
+  String sourceId,
+});
+
+class ChatSourceLocation {
+  const ChatSourceLocation({
+    required this.source,
+    required this.available,
+    this.generation,
+  });
+  final ChatSource source;
+  final bool available;
+
+  /// Repository lifetime changes across restore, even if numeric IDs match.
+  final Object? generation;
+}
+
 class SourceVisitRequest {
   const SourceVisitRequest({
     required this.sessionId,

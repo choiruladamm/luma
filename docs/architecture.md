@@ -291,3 +291,31 @@ bukan kolom DB. `ChatState.preview` berisi attemptRef+blok runtime; timer50ms
 terpisah dari timer timeout dan dibatalkan saat terminal/dispose. Finalize yang
 ditolak tidak mempertahankan sitasi. Renderer memakai anchor/SelectableText sama,
 cache turn lain selama delta, dan live-region hanya untuk status.
+
+### Intip dan kunjungan sumber (#122)
+
+`ChatSourceChip` membuka `ChatSourceSheet` lokal (pola A5), lalu
+`Routes.chatSource(ChatSourceRef)` di bawah route chat:
+`/reader/:bookId/chat/source/:sessionId/:turnId/:attempt/:sourceId`.
+URL hanya ID; `ChatRepository.resolveSource/watchSource` memeriksa kepemilikan,
+attempt, sumber frozen yang benar-benar disitasi, revision, chapter.id, range,
+snapshot dan hash terhadap teks saat ini dalam transaksi baca. Sumber provisional
+harus sudah menjadi blok lengkap pada checkpoint; sumber final hanya dari jawaban
+trusted. Sumber gagal/arsip berubah tetap dapat diintip sebagai snapshot, tanpa jump.
+Resolver tidak menjalankan recovery/markOpened, indexing, atau request AI.
+
+`ChatSourceVisitView` memantau pencabutan sumber dan pergantian repository saat
+restore, termasuk ID yang dipakai ulang. Renderer `ReaderView(sourceVisit: ...)`
+yang sama dipakai: `_save`, `_flushReading`, markOpened/markFinished, interaksi jam
+baca, debounce, lifecycle dan dispose tidak mencatat aktivitas kunjungan. TOC/next
+hanya mengubah tampilan lokal. Tap Artinya dan entry chat tidak aktif di mode ini.
+Range UTF-16 disorot dengan token Stabilo; posisi awal mengikuti kotak teks range,
+dan kutipan panjang disejajarkan di bawah kapsul atas. Aa tetap memakai preferensi
+reader; identity sumber tidak berasal dari nomor urut bab.
+
+Reader utama tetap mounted dan jam bacanya paused lewat `_pushOffReader` selama
+chat/visit. Intip/visit menahan auto-follow history supaya delta tidak menggeser
+posisi chat yang ditinggal. Balik ke obrolan mem-pop visit; Lanjut baca semula
+mengembalikan `ReaderReturn.reading` melalui chat dan overlay Artinya/Bedahin ke
+reader asli beserta posisi yang dicapture saat masuk. Tidak ada adopsi posisi sumber
+menjadi progres baru. Revisi pacing/no-auto-scroll menyeluruh tetap di #123.
