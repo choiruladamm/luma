@@ -243,6 +243,151 @@ void main() {
   });
 
   for (final theme in [ThemeMode.light, ThemeMode.dark]) {
+    testWidgets(
+      'streaming paragraph, citations, final and failed draft in $theme',
+      (t) async {
+        final writing = turn(1, phase: ChatPhase.writing);
+        await open(
+          t,
+          themeMode: theme,
+          state: ChatState(
+            book: book,
+            loading: false,
+            activeSession: session(1),
+            turns: [writing],
+            phase: ChatPhase.writing,
+            preview: (
+              attempt: writing.attemptRef,
+              blocks: [ChatAnswerBlock(text: 'Jawaban tumbuh', sources: [])],
+            ),
+          ),
+        );
+        expect(find.text('Jawaban tumbuh'), findsOneWidget);
+        expect(find.text('Lagi nulis…'), findsOneWidget);
+        expect(find.text('Bab I'), findsNothing);
+        expect(find.textContaining('secret raw JSON'), findsNothing);
+        vm.push(
+          vm.current.copyWith(
+            preview: (
+              attempt: writing.attemptRef,
+              blocks: [
+                ChatAnswerBlock(
+                  text: 'Jawaban tumbuh lengkap.',
+                  sources: [source],
+                ),
+              ],
+            ),
+          ),
+        );
+        await t.pump();
+        expect(find.text('Jawaban tumbuh lengkap.'), findsOneWidget);
+        expect(find.text('Bab I'), findsOneWidget);
+        final complete = ChatAnswer(
+          status: ChatAnswerStatus.answered,
+          formatVersion: 2,
+          blocks: [
+            ChatAnswerBlock(text: 'Jawaban tumbuh lengkap.', sources: [source]),
+          ],
+        );
+        vm.push(
+          vm.current.copyWith(
+            turns: [turn(1, answer: complete)],
+            phase: ChatPhase.done,
+            preview: null,
+          ),
+        );
+        await t.pump();
+        expect(find.text('Jawaban tumbuh lengkap.'), findsOneWidget);
+        expect(find.text('Lagi nulis…'), findsNothing);
+        expect(find.text('Bab I'), findsOneWidget);
+        vm.push(
+          vm.current.copyWith(
+            turns: [turn(1, phase: ChatPhase.cut)],
+            phase: ChatPhase.cut,
+            error: const AiException(AiError.invalidResponse),
+            preview: (
+              attempt: writing.attemptRef,
+              blocks: [
+                ChatAnswerBlock(text: 'Jawaban tumbuh lengkap.', sources: []),
+              ],
+            ),
+          ),
+        );
+        await t.pump();
+        expect(find.text('Jawaban tumbuh lengkap.'), findsOneWidget);
+        expect(find.text('Bab I'), findsNothing);
+        expect(find.text('Coba lagi'), findsOneWidget);
+        expect(t.takeException(), isNull);
+      },
+    );
+  }
+
+  testWidgets(
+    'streaming growth and final citation keep scroll-up position stable',
+    (t) async {
+      final writing = turn(1, phase: ChatPhase.writing);
+      final long = List.filled(100, 'Teks yang sedang tumbuh.').join('\n');
+      await open(
+        t,
+        size: const Size(390, 844),
+        state: ChatState(
+          book: book,
+          loading: false,
+          activeSession: session(1),
+          turns: [writing],
+          phase: ChatPhase.writing,
+          preview: (
+            attempt: writing.attemptRef,
+            blocks: [ChatAnswerBlock(text: long, sources: [])],
+          ),
+        ),
+      );
+      final scroll = t
+          .widget<CustomScrollView>(find.byType(CustomScrollView))
+          .controller!;
+      await t.drag(find.byType(CustomScrollView), const Offset(0, 400));
+      await t.pumpAndSettle();
+      final away = scroll.offset;
+      expect(find.text('Ke terbaru'), findsOneWidget);
+      vm.push(
+        vm.current.copyWith(
+          preview: (
+            attempt: writing.attemptRef,
+            blocks: [
+              ChatAnswerBlock(text: '$long\nTambahan', sources: [source]),
+            ],
+          ),
+        ),
+      );
+      await t.pumpAndSettle();
+      expect(scroll.offset, closeTo(away, 1));
+      vm.push(
+        vm.current.copyWith(
+          phase: ChatPhase.done,
+          turns: [
+            turn(
+              1,
+              answer: ChatAnswer(
+                status: ChatAnswerStatus.answered,
+                blocks: [
+                  ChatAnswerBlock(text: '$long\nTambahan', sources: [source]),
+                ],
+              ),
+            ),
+          ],
+          preview: null,
+        ),
+      );
+      await t.pumpAndSettle();
+      expect(scroll.offset, closeTo(away, 1));
+      await t.tap(find.text('Ke terbaru'));
+      await t.pumpAndSettle();
+      expect(scroll.offset, greaterThan(away));
+      expect(t.takeException(), isNull);
+    },
+  );
+
+  for (final theme in [ThemeMode.light, ThemeMode.dark]) {
     testWidgets('global progress, Stop and explicit Continue in $theme', (
       t,
     ) async {

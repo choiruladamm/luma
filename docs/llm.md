@@ -412,9 +412,13 @@ menjalankan evaluasi berbayar baru untuk port produksi ini.
 `prepare` memanggil `ChatRepository.prepareSources` sebelum mengembalikan
 `PreparedChat`. Null berarti attempt stale/terminal/deleted dan harus dibuang.
 `PreparedChat.stream(cancel:)` hanya dapat dipakai sekali. `ChatStreamFrame.draft`
-adalah JSON mentah kumulatif untuk checkpoint, **bukan teks UI**. Decoder menahan
-JSON parsial; hanya frame terakhir setelah SSE DONE dan validasi final memiliki
-`answer` beserta sources. Tidak ada marker mentah, HTML, tautan eksternal, atau
+adalah JSON mentah kumulatif untuk checkpoint, **bukan teks UI**. `ChatPreviewDecoder` (#141) membaca struktur JSON incremental, hanya memproyeksikan
+`parts[].text` ke `frame.preview`, menunda escape/Unicode yang belum lengkap.
+Objek paragraf lengkap memakai validator blok yang sama dengan final; ID sumber
+hanya dari snapshot frozen dan dicek live sebelum chip tampil. Preview tetap
+provisional; hanya frame terakhir setelah SSE DONE dan validasi final memiliki
+`answer`. Duplicate key/struktur invalid menghentikan preview dan mencabut sitasi;
+validasi final tetap wajib untuk seluruh JSON. Tidak ada marker mentah, HTML, tautan eksternal, atau
 instruksi buku yang dijadikan aksi. #120 merender teks klaim sebagai teks biasa;
 action sumber hanya dari objek `ChatSource` yang dipetakan aplikasi.
 
@@ -432,3 +436,19 @@ aktif menyimpan `replayOf` + hash arsip dan hash transport produksi yang diperlu
 seluruh hash helper/prompt/gold tetap sama. Tes parity memeriksa teks/range chunk
 pada kedua buku validation3, sistem prompt beku, dan integritas manifest/arsip.
 Batas kualitas spike tetap berlaku; Qwen hybrid dan performa perangkat belum dibuktikan.
+
+### UX streaming Ngobrolin buku (#141)
+
+ViewModel memublikasikan preview bertanda attempt maksimal sekali per50ms, tanpa
+pacing buatan atau request AI tambahan. DB tetap memakai checkpoint500ms/1KiB
+existing; complete/Stop/error flush tail. Bubble dan anchor paragraf dipakai ulang,
+scroll mengikuti hanya saat user di bawah. Status “Lagi nulis…” live-region;
+teks yang tumbuh bukan live-region. Jawaban done mengganti preview di tempat.
+
+Stop/network/invalid final mempertahankan teks, status terminal dan retry eksplisit.
+Semua sitasi provisional dicabut saat terminal gagal/terputus. `ChatSnapshot`
+merekonstruksi teks draf secara defensif dari raw checkpoint saat reopen/restore,
+tanpa sitasi dan tanpa menjadikannya answer/history. Legacy v1 menunggu final,
+tidak dipaksa memakai preview v2. Schema tetap10; process kill dapat kehilangan
+tail di bawah ambang checkpoint, sedangkan stop/background menunggu flush.
+Pengecekan struktur/sumber bukan jaminan semua klaim model benar.

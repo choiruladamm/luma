@@ -880,11 +880,12 @@ class _ChatRetrievalBudget {
   }
 }
 
-/// Draft is raw checkpoint data; only the final frame exposes an answer/sources.
+/// Raw draft is durable transport data; preview is provisional, answer is final.
 class ChatStreamFrame {
-  const ChatStreamFrame(this.draft, {this.answer});
+  const ChatStreamFrame(this.draft, {this.answer, this.preview = const []});
   final String draft;
   final ChatAnswer? answer;
+  final List<ChatAnswerBlock> preview;
 }
 
 class PreparedChat {
@@ -919,6 +920,7 @@ class PreparedChat {
         current: book,
         paragraphs: _paragraphs,
       );
+      var validatedParts = 0;
       await for (final delta in _router.chatStream(
         apiKey: _key,
         model: model,
@@ -927,7 +929,14 @@ class PreparedChat {
         cancel: cancel,
       )) {
         decoder.add(delta);
-        yield ChatStreamFrame(decoder.raw);
+        final preview = decoder.preview.blocks;
+        final citedParts = preview.where((b) => b.sources.isNotEmpty).length;
+        if (citedParts > validatedParts) {
+          if (!await _validate()) return;
+          if (cancel?.isCancelled ?? false) throw cancel!.cancelError!;
+        }
+        validatedParts = citedParts;
+        yield ChatStreamFrame(decoder.raw, preview: preview);
       }
       if (cancel?.isCancelled ?? false) throw cancel!.cancelError!;
       if (!await _validate()) return;

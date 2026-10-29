@@ -7,7 +7,7 @@ extension ChatPhaseCopy on ChatPhase {
     ChatPhase.preparing => 'Bentar, lagi siapin obrolan…',
     ChatPhase.retrieving => 'Lagi nyari sumber di buku…',
     ChatPhase.waiting => 'Bentar, lagi mikir…',
-    ChatPhase.writing => 'Lagi nulis dan ngecek sumber…',
+    ChatPhase.writing => 'Lagi nulis…',
     ChatPhase.slow => 'Agak lama nih, masih diproses…',
     ChatPhase.done => 'Jawaban selesai',
     ChatPhase.failed => 'Yah, gagal nih',
@@ -72,5 +72,14 @@ extension ChatIndexCopy on ChatState {
       return null;
     }
     return 'Lagi nyiapin buku… ${progress.completed}/${progress.total} potongan';
+  }
+}
+
+extension ChatDraftCopy on ChatTurn {
+  String draftLabel(ChatPhase phase) {
+    if (error == AiError.invalidResponse && !phase.isRunning) {
+      return 'Draf ini belum lolos pengecekan jawaban.';
+    }
+    return phase.label;
   }
 }

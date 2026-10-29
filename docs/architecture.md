@@ -222,8 +222,10 @@ sedang navigasi. Insert yang gagal menyisakan draft untuk dikirim ulang eksplisi
 | Owner/attempt hilang atau callback false | interrupted/discard; tidak menjadi not_found |
 | Revision berubah/buku dihapus | cancel, archive/readOnly atau state buku hilang |
 
-Raw JSON dari #117 hanya untuk checkpoint, bukan preview/rich text. UI tidak boleh
-menganggap raw partial sebagai jawaban atau source action. Hanya final frame yang
+Raw JSON dari #117 hanya untuk checkpoint. #141 mengirim proyeksi terstruktur
+`frame.preview`, dipagari attempt dan diperbarui maksimal20Hz. Objek paragraf
+lengkap baru boleh memiliki chip sumber setelah validasi frozen + live sources;
+preview tetap provisional dan sitasinya dicabut saat gagal/terputus. Hanya final frame yang
 tervalidasi diteruskan ke finalize done. Clock memakai 15/30/20s yang sama dengan
 Artinya; retrieval memakai deadline total3menit terpisah karena dapat mencakup
 indexing buku. Nilai ini batas produksi konservatif, bukan hasil benchmark device.
@@ -279,3 +281,13 @@ ViewModel memasang guard sebelum await sehingga double-tap tidak menggandakan ru
 UI memakai status/progress dan Stop existing, serta Lanjutkan saat ada checkpoint
 terminal belum selesai. Tidak ada request saat rebuild/hydrate/resume/settings.
 Budget dan batas sintesis ada di [llm.md](llm.md). Source visit tetap #122.
+
+### Preview jawaban (#141)
+
+`chat_preview.dart` memiliki reader incremental dengan batas48KB/32blok/depth32,
+penanganan escape/surrogate dan duplicate-key guard; validator blok dipakai ulang
+oleh parse final. `ChatTurn.preview` adalah proyeksi baca dari raw checkpoint,
+bukan kolom DB. `ChatState.preview` berisi attemptRef+blok runtime; timer50ms
+terpisah dari timer timeout dan dibatalkan saat terminal/dispose. Finalize yang
+ditolak tidak mempertahankan sitasi. Renderer memakai anchor/SelectableText sama,
+cache turn lain selama delta, dan live-region hanya untuk status.

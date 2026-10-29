@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'models/book_chat.dart';
+import 'chat_preview.dart';
 
 const chatPromptVersion = 3;
 const chatQuestionBytes = 2000;
@@ -273,25 +274,9 @@ ChatAnswer parseChatAnswer(
   validateChatSources(sources, current, paragraphs);
   final Object? value = decodeChatAnswerJson(raw);
   if (value is Map && value['parts'] is List) {
-    final byId = {for (final s in sources) s.id: s};
-    final blocks = <ChatAnswerBlock>[];
-    for (final row in value['parts'] as List) {
-      if (row is! Map || row['text'] is! String || row['source_ids'] is! List) {
-        throw const FormatException('Paragraf tidak valid');
-      }
-      final ids = row['source_ids'] as List;
-      if (ids.toSet().length != ids.length ||
-          ids.any((id) => id is! String || !byId.containsKey(id))) {
-        throw const FormatException('Sumber paragraf tidak valid');
-      }
-      blocks.add(
-        ChatAnswerBlock(
-          text: (row['text'] as String).trim(),
-          kind: ChatAnswerKind.parse(row['kind']),
-          sources: [for (final id in ids) byId[id]!],
-        ),
-      );
-    }
+    final blocks = [
+      for (final row in value['parts'] as List) chatAnswerPart(row, sources),
+    ];
     return ChatAnswer(
       status: ChatAnswerStatus.parse(value['status']),
       blocks: blocks,
@@ -358,14 +343,14 @@ ChatQueryPlan parseChatQueryPlan(String raw) {
   );
 }
 
-/// Raw JSON is checkpoint data, never rich text or an actionable source preview.
-/// The accepted spike protocol holds incomplete JSON until SSE has completed.
+/// Raw checkpoints and provisional text have separate trust contracts.
 class ChatAnswerDecoder {
   ChatAnswerDecoder({
     required this.prompt,
     required this.current,
     required this.paragraphs,
-  });
+  }) : preview = ChatPreviewDecoder(sources: prompt.sources);
+  final ChatPreviewDecoder preview;
   final ChatPrompt prompt;
   final ChatBookRef current;
   final Map<ChatParagraphRef, ChatParagraph> paragraphs;
@@ -379,6 +364,7 @@ class ChatAnswerDecoder {
       throw const FormatException('Jawaban melebihi batas');
     }
     _raw += delta;
+    preview.add(delta);
   }
 
   ChatAnswer finish() => parseChatAnswer(

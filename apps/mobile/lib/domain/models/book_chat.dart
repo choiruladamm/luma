@@ -266,6 +266,7 @@ class ChatTurn {
     this.attempt = 1,
     this.quote,
     this.draft = '',
+    this.preview = const [],
     this.answer,
     this.error,
     this.httpStatus,
@@ -280,6 +281,7 @@ class ChatTurn {
   final DateTime createdAt, updatedAt;
   final ChatPhase phase;
   final ChatAnswer? answer;
+  final List<ChatAnswerBlock> preview;
   final AiError? error;
   final int? httpStatus;
 

@@ -699,6 +699,16 @@ void main() {
       isTrue,
     );
     expect(frames.last.answer!.blocks.single.sources.single.text, text);
+    final previews = frames
+        .where(
+          (f) => f.answer == null && f.preview.any((b) => b.text.isNotEmpty),
+        )
+        .toList();
+    expect(previews, isNotEmpty);
+    expect(previews.first.preview.single.text, 'P');
+    expect(previews.first.preview.single.sources, isEmpty);
+    expect(previews.last.preview.single.sources, isNotEmpty);
+    expect(previews.last.preview.single.text, 'Penjaganya 🌿.');
     expect(
       await chat.finalize(
         turn.attemptRef,
