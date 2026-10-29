@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../domain/models/book_chat.dart';
@@ -8,6 +7,7 @@ import '../../../core/theme/stabilo_type.dart';
 import '../../../core/widgets/buttons.dart';
 import '../../../core/widgets/edge_fade.dart';
 import 'chat_copy.dart';
+import 'chat_response.dart';
 
 class ChatHistory extends StatefulWidget {
   const ChatHistory({
@@ -50,6 +50,7 @@ class _ChatHistoryState extends State<ChatHistory> {
       >{};
   late final int _centerId;
   bool _away = false;
+  ChatScrollAnchor? _lastAnchor;
   bool _restoring = true;
   @override
   void initState() {
@@ -68,7 +69,7 @@ class _ChatHistoryState extends State<ChatHistory> {
           target,
           alignment: anchor!.alignment.clamp(0, 1),
         );
-      } else {
+      } else if (!widget.turns.last.phase.isRunning) {
         _latest();
       }
       _restoring = false;
@@ -85,28 +86,27 @@ class _ChatHistoryState extends State<ChatHistory> {
   @override
   void didUpdateWidget(ChatHistory oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.suspended && !widget.suspended) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _position();
+      });
+    }
     if (oldWidget.turns.last.id != widget.turns.last.id) {
       _rendered.remove(oldWidget.turns.last.id);
     }
-    if (oldWidget.suspended && !widget.suspended && _scroll.hasClients) {
-      _away = _scroll.position.extentAfter > Layout.chatFollowDistance;
-    }
-    if (!widget.suspended &&
-        !_away &&
-        (!listEquals(oldWidget.turns, widget.turns) ||
-            oldWidget.phase != widget.phase ||
-            oldWidget.preview != widget.preview)) {
+  }
+
+  void _latest([int remaining = 8]) {
+    if (!_scroll.hasClients || widget.suspended) return;
+    _scroll.jumpTo(_scroll.position.maxScrollExtent);
+    // Lazy slivers refine their extent after a jump; only an explicit jump retries.
+    if (remaining > 0) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && !_away && !_scroll.position.isScrollingNotifier.value) {
-          _latest();
+        if (mounted && _scroll.hasClients && _scroll.position.extentAfter > 0) {
+          _latest(remaining - 1);
         }
       });
     }
-  }
-
-  void _latest() {
-    if (!_scroll.hasClients || widget.suspended) return;
-    _scroll.jumpTo(_scroll.position.maxScrollExtent);
   }
 
   void _position() {
@@ -121,11 +121,15 @@ class _ChatHistoryState extends State<ChatHistory> {
       if (box == null || !box.attached || !box.hasSize) continue;
       final y = box.localToGlobal(Offset.zero).dy - top;
       if (y + box.size.height > 0 && y < viewport.size.height) {
-        widget.onAnchor((
+        final ChatScrollAnchor anchor = (
           turnId: entry.key.turnId,
           blockIndex: entry.key.blockIndex,
           alignment: (y / viewport.size.height).clamp(0, 1),
-        ));
+        );
+        if (anchor != _lastAnchor) {
+          _lastAnchor = anchor;
+          widget.onAnchor(anchor);
+        }
         break;
       }
     }
@@ -164,79 +168,95 @@ class _ChatHistoryState extends State<ChatHistory> {
         cached.label == label) {
       return cached.child;
     }
-    final child = Padding(
+    final child = Center(
       key: ValueKey(turn.id),
-      padding: const EdgeInsets.only(bottom: Space.s6),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        spacing: Space.s4,
-        children: [
-          anchor(
-            0,
-            Container(
-              padding: const EdgeInsets.all(Space.s4),
-              decoration: BoxDecoration(
-                color: context.stabilo.muted,
-                borderRadius: BorderRadius.circular(Radii.lg),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: Space.s2,
-                children: [
-                  if (turn.quote != null)
-                    Text(turn.quote!.text, style: StabiloType.caption),
-                  Text(
-                    turn.question,
-                    style: StabiloType.body.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          for (var i = 0; i < blocks.length; i++)
-            if (blocks[i].text.isNotEmpty)
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: Layout.chatTextWidth),
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: Space.s6),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            spacing: Space.s4,
+            children: [
               anchor(
-                i + 1,
-                Column(
+                0,
+                Container(
+                  padding: const EdgeInsets.all(Space.s4),
+                  decoration: BoxDecoration(
+                    color: context.stabilo.muted,
+                    borderRadius: BorderRadius.circular(Radii.lg),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    spacing: Space.s2,
+                    children: [
+                      if (turn.quote != null)
+                        Text(turn.quote!.text, style: StabiloType.caption),
+                      Text(
+                        turn.question,
+                        style: StabiloType.body.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              ChatResponse(
+                key: ValueKey(turn.attemptRef),
+                blocks: blocks,
+                phase: phase,
+                builder: (context, visible) => Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
-                  spacing: Space.s3,
+                  spacing: Space.s5,
                   children: [
-                    SelectableText(
-                      blocks[i].text,
-                      style: StabiloType.forBrightness(
-                        StabiloType.reading,
-                        Theme.of(context).brightness,
-                      ),
-                    ),
-                    for (final source in blocks[i].sources)
-                      ChatSourceChip(
-                        source: source,
-                        onPressed: widget.onSource == null
-                            ? null
-                            : () => widget.onSource!(turn, source),
-                      ),
+                    for (var i = 0; i < visible.length; i++)
+                      if (visible[i].text.isNotEmpty)
+                        anchor(
+                          i + 1,
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            spacing: Space.s3,
+                            children: [
+                              SelectableText(
+                                visible[i].text,
+                                style: StabiloType.forBrightness(
+                                  StabiloType.reading,
+                                  Theme.of(context).brightness,
+                                ),
+                              ),
+                              for (final source in visible[i].sources)
+                                ChatSourceChip(
+                                  source: source,
+                                  onPressed: widget.onSource == null
+                                      ? null
+                                      : () => widget.onSource!(turn, source),
+                                ),
+                            ],
+                          ),
+                        ),
                   ],
                 ),
               ),
-          if (answer != null && answer.note.isNotEmpty)
-            Text(
-              answer.note,
-              style: StabiloType.body.copyWith(color: context.stabilo.ink2),
-            ),
-          if (phase == ChatPhase.done && turn.id == widget.turns.last.id)
-            Semantics(
-              liveRegion: true,
-              label: phase.label,
-              child: const SizedBox.shrink(),
-            ),
-          if (phase != ChatPhase.done)
-            Semantics(
-              liveRegion: true,
-              child: Text(label, style: StabiloType.caption),
-            ),
-        ],
+              if (answer != null && answer.note.isNotEmpty)
+                Text(
+                  answer.note,
+                  style: StabiloType.body.copyWith(color: context.stabilo.ink2),
+                ),
+              if (phase == ChatPhase.done && turn.id == widget.turns.last.id)
+                Semantics(
+                  liveRegion: true,
+                  label: phase.label,
+                  child: const SizedBox.shrink(),
+                ),
+              if (phase != ChatPhase.done)
+                Semantics(
+                  liveRegion: true,
+                  child: Text(label, style: StabiloType.caption),
+                ),
+            ],
+          ),
+        ),
       ),
     );
     _rendered[turn.id] = (
@@ -267,17 +287,9 @@ class _ChatHistoryState extends State<ChatHistory> {
               onNotification: (notification) {
                 if (!widget.suspended &&
                     !_restoring &&
-                    !_away &&
-                    // Metric updates also arrive during a drag; never cancel it.
-                    !_scroll.position.isScrollingNotifier.value &&
-                    notification.depth == 0 &&
-                    notification.metrics.extentAfter > 0) {
+                    notification.depth == 0) {
                   WidgetsBinding.instance.addPostFrameCallback((_) {
-                    if (mounted &&
-                        !_away &&
-                        !_scroll.position.isScrollingNotifier.value) {
-                      _latest();
-                    }
+                    if (mounted) _position();
                   });
                 }
                 return false;
@@ -311,7 +323,7 @@ class _ChatHistoryState extends State<ChatHistory> {
             child: AppButton.secondary(
               label: 'Ke terbaru',
               icon: AppIcons.down,
-              onPressed: _latest,
+              onPressed: () => _latest(),
             ),
           ),
       ],

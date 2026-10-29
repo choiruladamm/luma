@@ -262,6 +262,7 @@ void main() {
             ),
           ),
         );
+        await t.pumpAndSettle();
         expect(find.text('Jawaban tumbuh'), findsOneWidget);
         expect(find.text('Lagi nulis…'), findsOneWidget);
         expect(find.text('Bab I'), findsNothing);
@@ -279,7 +280,7 @@ void main() {
             ),
           ),
         );
-        await t.pump();
+        await t.pumpAndSettle();
         expect(find.text('Jawaban tumbuh lengkap.'), findsOneWidget);
         expect(find.text('Bab I'), findsOneWidget);
         final complete = ChatAnswer(
@@ -296,7 +297,7 @@ void main() {
             preview: null,
           ),
         );
-        await t.pump();
+        await t.pumpAndSettle();
         expect(find.text('Jawaban tumbuh lengkap.'), findsOneWidget);
         expect(find.text('Lagi nulis…'), findsNothing);
         expect(find.text('Bab I'), findsOneWidget);
@@ -313,7 +314,7 @@ void main() {
             ),
           ),
         );
-        await t.pump();
+        await t.pumpAndSettle();
         expect(find.text('Jawaban tumbuh lengkap.'), findsOneWidget);
         expect(find.text('Bab I'), findsNothing);
         expect(find.text('Coba lagi'), findsOneWidget);
@@ -321,6 +322,66 @@ void main() {
       },
     );
   }
+
+  testWidgets(
+    'growth from bottom never follows, including chip and final drain',
+    (t) async {
+      final writing = turn(1, phase: ChatPhase.writing);
+      final text = 'Paragraf panjang. ' * 200;
+      await open(
+        t,
+        size: const Size(390, 844),
+        state: ChatState(
+          book: book,
+          loading: false,
+          activeSession: session(1),
+          turns: [writing],
+          phase: ChatPhase.writing,
+        ),
+      );
+      final scroll = t
+          .state<ScrollableState>(find.byType(Scrollable).first)
+          .position;
+      final before = scroll.pixels;
+      vm.push(
+        vm.current.copyWith(
+          preview: (
+            attempt: writing.attemptRef,
+            blocks: [
+              ChatAnswerBlock(text: text, sources: [source]),
+            ],
+          ),
+        ),
+      );
+      await t.pump();
+      await t.pump(const Duration(milliseconds: 100));
+      expect(scroll.pixels, before);
+      await t.pumpAndSettle();
+      expect(scroll.pixels, before);
+      vm.push(
+        vm.current.copyWith(
+          phase: ChatPhase.done,
+          preview: null,
+          turns: [
+            turn(
+              1,
+              answer: ChatAnswer(
+                status: ChatAnswerStatus.answered,
+                blocks: [
+                  ChatAnswerBlock(text: '$text Akhir.', sources: [source]),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+      await t.pumpAndSettle();
+      expect(scroll.pixels, before);
+      await t.tap(find.text('Ke terbaru'));
+      await t.pumpAndSettle();
+      expect(scroll.pixels, greaterThan(before));
+    },
+  );
 
   testWidgets(
     'streaming growth and final citation keep scroll-up position stable',
@@ -562,7 +623,9 @@ void main() {
     expect(t.getSize(button('Kirim pertanyaan')), const Size(44, 44));
   });
 
-  testWidgets('keyboard keeps latest answer above composer', (t) async {
+  testWidgets('keyboard preserves offset until explicit latest action', (
+    t,
+  ) async {
     await open(
       t,
       size: const Size(390, 844),
@@ -573,7 +636,14 @@ void main() {
         turns: [for (var i = 1; i <= 20; i++) turn(i, answer: answer)],
       ),
     );
+    final scroll = t
+        .state<ScrollableState>(find.byType(Scrollable).first)
+        .position;
+    final before = scroll.pixels;
     t.view.viewInsets = const FakeViewPadding(bottom: 300);
+    await t.pumpAndSettle();
+    expect(scroll.pixels, before);
+    await t.tap(find.text('Ke terbaru'));
     await t.pumpAndSettle();
     expect(
       t.getBottomLeft(find.text('Bab I').last).dy,
@@ -885,7 +955,7 @@ void main() {
           book: book,
           loading: false,
           activeSession: session(1),
-          turns: [for (var i = 1; i <= 100; i++) turn(i, answer: answer)],
+          turns: [for (var i = 1; i <= 1000; i++) turn(i, answer: answer)],
           scrollAnchor: (turnId: 50, blockIndex: 0, alignment: 0),
         ),
       );
@@ -895,13 +965,13 @@ void main() {
       await t.pumpAndSettle();
       expect(find.text('Ke terbaru'), findsOneWidget);
       final before = vm.current.scrollAnchor;
-      vm.push(vm.current.copyWith(turns: [...vm.current.turns, turn(101)]));
+      vm.push(vm.current.copyWith(turns: [...vm.current.turns, turn(1001)]));
       await t.pumpAndSettle();
       expect(find.text('Ke terbaru'), findsOneWidget);
       expect(vm.current.scrollAnchor, before);
       await t.tap(find.text('Ke terbaru'));
       await t.pumpAndSettle();
-      expect(find.text('Pertanyaan 101'), findsOneWidget);
+      expect(find.text('Pertanyaan 1001'), findsOneWidget);
     },
   );
 

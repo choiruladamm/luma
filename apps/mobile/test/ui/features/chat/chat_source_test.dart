@@ -244,6 +244,8 @@ void main() {
 
       await pump(suspended: false, words: 1000);
       final scroll = t.state<ScrollableState>(find.byType(Scrollable).first);
+      await t.tap(find.text('Ke terbaru'));
+      await t.pumpAndSettle();
       final before = scroll.position.pixels;
       expect(before, greaterThan(0));
       await pump(suspended: true, words: 1500);
