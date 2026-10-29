@@ -2,7 +2,7 @@ APP := apps/mobile
 FLUTTER := cd $(APP) && fvm flutter
 DART := cd $(APP) && fvm dart
 
-.PHONY: help get gen brand live chat-spike chat-spike-live chat-oracle-live chat-retrieval chat-dense-live chat-dense-replay chat-heldout-live chat-refine-live chat-validation2-live chat-recovery-live chat-validation3-live watch run release dev run-android release-android dev-android apk profile test analyze format check clean
+.PHONY: help get gen brand live chat-spike chat-spike-live chat-oracle-live chat-discussion-live chat-retrieval chat-dense-live chat-dense-replay chat-heldout-live chat-refine-live chat-validation2-live chat-recovery-live chat-validation3-live watch run release dev run-android release-android dev-android apk profile test analyze format check clean
 
 help: ## list commands
 	@grep -E '^[a-z0-9-]+:.*## ' $(MAKEFILE_LIST) | awk -F ':.*## ' '{printf "  %-16s %s\n", $$1, $$2}'
@@ -85,6 +85,9 @@ chat-spike-live: ## #113 paid corpus, local .env; m=<model>, BOOK_CHAT_CASE=E01 
 
 chat-oracle-live: ## #113 paid DEVELOPMENT oracle A/B; held-out is never queried
 	@set -a; . ./.env; set +a; cd $(APP) && BOOK_CHAT_ORACLE_LIVE=1 OPENROUTER_MODEL=$(m) fvm flutter test test/data/book_chat_oracle_live_test.dart
+
+chat-discussion-live: ## #136 bounded paid DEVELOPMENT answer pilot, two cases; m=<model> optional
+	@set -a; . ./.env; set +a; cd $(APP) && BOOK_CHAT_DISCUSSION_LIVE=1 $(if $(m),OPENROUTER_MODEL=$(m)) fvm flutter test --timeout 30s test/data/book_chat_discussion_live_test.dart
 
 analyze: ## static analysis
 	$(FLUTTER) analyze
