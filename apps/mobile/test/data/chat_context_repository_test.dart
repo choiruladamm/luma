@@ -93,15 +93,26 @@ class ChatAdapter implements HttpClientAdapter {
         'selected': emptySelection ? [] : [1, 2],
       });
     } else {
+      final hasSources =
+          ((jsonDecode((messages.last as Map)['content'] as String)
+                      as Map)['sources']
+                  as List)
+              .isNotEmpty;
       raw = jsonEncode({
-        'status': 'answered',
-        'claims': [
+        'status': clarification
+            ? 'clarify'
+            : hasSources
+            ? 'answered'
+            : 'partial',
+        'parts': [
           {
-            'text': 'Penjaganya 🌿.',
-            'source_ids': [answerId],
+            'text': hasSources
+                ? 'Penjaganya 🌿.'
+                : 'Bukti buku belum ketemu. Bagian mana yang lo maksud?',
+            'kind': hasSources ? 'book' : 'conversation',
+            'source_ids': hasSources ? [answerId] : [],
           },
         ],
-        'note': '',
       });
     }
     return sse([
@@ -450,7 +461,7 @@ void main() {
         turn.sessionId,
         question: 'Dia nanam apa?',
         model: model,
-        promptVersion: 1,
+        promptVersion: chatPromptVersion,
       );
       final firstPrepared = (await context.prepare(next))!;
       expect(firstPrepared.prompt.historyTurnIds, [turn.id]);
@@ -483,7 +494,7 @@ void main() {
       (bookId: book.bookId, contentRevision: 2),
       question: 'Siapa?',
       model: model,
-      promptVersion: 1,
+      promptVersion: chatPromptVersion,
     );
     final prepared = (await context.prepare(next))!;
     expect(
@@ -518,26 +529,27 @@ void main() {
     },
   );
 
-  test('clarification and empty valid selection skip answer, unlike rewrite failures', () async {
+  test('clarification and empty selection get conversational answers without invented sources', () async {
     adapter.clarification = true;
     var prepared = (await context.prepare(turn))!;
     expect(
-      (await prepared.stream().single).answer!.status,
-      ChatAnswerStatus.notFound,
+      (await prepared.stream().last).answer!.status,
+      ChatAnswerStatus.clarify,
     );
-    expect(adapter.requests, hasLength(1));
+    expect(adapter.requests, hasLength(2));
+    expect(adapter.embeddingModels, isEmpty);
     await chat.finalize(turn.attemptRef, phase: ChatPhase.stopped);
     turn = await first();
     adapter.clarification = false;
     adapter.badRewrite = true;
     await expectLater(context.prepare(turn), fails(AiError.invalidResponse));
-    expect(adapter.requests, hasLength(2));
+    expect(adapter.requests, hasLength(3));
     adapter.badRewrite = false;
     adapter.emptySelection = true;
     prepared = (await context.prepare(turn))!;
     expect(
-      (await prepared.stream().single).answer!.status,
-      ChatAnswerStatus.notFound,
+      (await prepared.stream().last).answer!.status,
+      ChatAnswerStatus.partial,
     );
     expect(
       adapter.requests.where(
@@ -545,7 +557,7 @@ void main() {
             ((r.data as Map)['messages'] as List?)?.first['content'] ==
             chatAnswerSystemPrompt,
       ),
-      isEmpty,
+      hasLength(2),
     );
   });
 
@@ -680,7 +692,7 @@ void main() {
         book,
         question: 'Tanyain ini',
         model: model,
-        promptVersion: 1,
+        promptVersion: chatPromptVersion,
         quote: quote,
       );
       final prepared = (await context.prepare(quoted))!;
@@ -767,7 +779,7 @@ void main() {
       current,
       question: 'Siapa?',
       model: model,
-      promptVersion: 1,
+      promptVersion: chatPromptVersion,
     );
     expect(await context.prepare(fresh), isNotNull);
     expect(adapter.embeddingModels, hasLength(4));

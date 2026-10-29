@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:luma/domain/chat_prompt.dart';
 import 'package:luma/domain/models/ai_reply.dart';
 
 import '../support/book_chat_discussion.dart';
@@ -100,7 +99,7 @@ void main() {
           'embeddingsRequests': 0,
           'review': 'pending',
           'comparison': 'Baseline answer contract800 tokens vs natural contract3000 tokens on identical oracle passages; NOT a prompt-only or end-to-end retrieval comparison.',
-          'baselineSystem': chatAnswerSystemPrompt,
+          'baselineSystem': discussionBaselineSystem,
           'candidateSystem': discussionNaturalSystem,
           if (env['BOOK_CHAT_DISCUSSION_AUDIT'] == '1')
             'auditSystem': discussionAuditSystem,
@@ -223,7 +222,7 @@ void main() {
                     ? discussionAuditSystem
                     : natural
                     ? discussionNaturalSystem
-                    : chatAnswerSystemPrompt,
+                    : discussionBaselineSystem,
                 user: requestUser,
                 maxTokens: natural ? 3000 : 800,
                 client: client,

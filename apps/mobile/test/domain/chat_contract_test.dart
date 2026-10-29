@@ -122,13 +122,6 @@ void main() {
         paragraphs: paragraphs,
       );
 
-  test('answer prompt retains the exact accepted spike instructions', () {
-    expect(
-      chatTextHash(chatAnswerSystemPrompt),
-      '6fc066f599a0d046078e612a1c4ae38cdb801a12383fe5eba62d4a38d3b5e040',
-    );
-  });
-
   test('anchors enforce book/revision/hash, range and UTF-16 boundaries', () {
     anchor().validate(paragraph, book);
     anchor(start: 1, end: 3, snapshot: '😀').validate(paragraph, book);
@@ -152,6 +145,100 @@ void main() {
         paragraphIndex: 3,
         text: original,
       ), book),
+      throwsFormatException,
+    );
+  });
+
+  test('natural replies preserve book references without forcing every paragraph into a claim', () {
+    final result = parse(
+      jsonEncode({
+        'status': 'answered',
+        'parts': [
+          {
+            'text': 'Dari buku.',
+            'kind': 'book',
+            'source_ids': ['S1'],
+          },
+          {
+            'text': 'Kalau diterapkan, saran gua begini.',
+            'kind': 'interpretation',
+            'source_ids': ['S1'],
+          },
+          {
+            'text': 'Sebagai pengetahuan tambahan.',
+            'kind': 'external',
+            'source_ids': [],
+          },
+          {
+            'text': 'Ada bagian yang perlu lo perjelas?',
+            'kind': 'conversation',
+            'source_ids': [],
+          },
+        ],
+      }),
+    );
+    expect(result.formatVersion, 2);
+    expect(result.blocks, hasLength(4));
+    expect(result.blocks.map((b) => b.kind), ChatAnswerKind.values);
+    expect(identical(result.blocks.first.sources.single, s), isTrue);
+    expect(result.note, isEmpty);
+    expect(chatPromptVersion, 2);
+  });
+
+  test('partial, clarification and off-topic responses can explain themselves without book evidence', () {
+    for (final status in ['partial', 'clarify', 'off_topic']) {
+      final result = parse(
+        jsonEncode({
+          'status': status,
+          'parts': [
+            {
+              'text': 'Penjelasan atau pertanyaan lanjutan.',
+              'kind': 'conversation',
+              'source_ids': [],
+            },
+          ],
+        }),
+        sources: [],
+      );
+      expect(result.note, isEmpty);
+      expect(turn(reply: result).trustedHistory, isTrue);
+    }
+  });
+
+  test('natural answers reject invented citations, false provenance and duplicate keys', () {
+    for (final part in [
+      {'text': 'X', 'kind': 'book', 'source_ids': []},
+      {
+        'text': 'X',
+        'kind': 'book',
+        'source_ids': ['S99'],
+      },
+      {
+        'text': 'X',
+        'kind': 'book',
+        'source_ids': ['S1', 'S1'],
+      },
+      {
+        'text': 'X',
+        'kind': 'external',
+        'source_ids': ['S1'],
+      },
+      {'text': 'X', 'kind': 'unknown', 'source_ids': []},
+    ]) {
+      expect(
+        () => parse(
+          jsonEncode({
+            'status': 'answered',
+            'parts': [part],
+          }),
+        ),
+        throwsFormatException,
+      );
+    }
+    expect(
+      () => parse(
+        r'{"status":"partial","parts":[],"pa\u0072ts":[{"text":"Lost caveat","kind":"conversation","source_ids":[]}]}',
+      ),
       throwsFormatException,
     );
   });
@@ -213,47 +300,50 @@ void main() {
     },
   );
 
-  test(
-    'history excludes other sessions/books, nonfinal/partial and later turns',
-    () {
-      final built = prompt(
-        history: [
-          turn(id: 1, sequence: 1),
-          turn(id: 2, sequence: 2),
-          turn(id: 3, sessionId: 11),
-          turn(id: 4, owner: foreign),
-          turn(id: 5, owner: changed),
-          turn(id: 6, phase: ChatPhase.stopped, draft: 'UNTRUSTED'),
-          turn(id: 7, reply: answer(status: ChatAnswerStatus.partial)),
-          turn(id: 8, phase: ChatPhase.writing),
-          turn(id: 9, error: AiError.invalidResponse),
-          turn(id: 10, sequence: 100),
-          turn(id: 11, reply: answer(status: ChatAnswerStatus.notFound)),
-        ],
-      );
-      expect(built.historyTurnIds, [1, 2]);
-      expect(built.user.contains('UNTRUSTED'), isFalse);
-      final large = answer(text: 'x' * 3000);
-      final bounded = prompt(
-        history: [
-          turn(id: 1, sequence: 1, reply: large),
-          turn(id: 2, sequence: 2, reply: large),
-        ],
-      );
-      expect(bounded.historyTurnIds, [2]);
-      final perClaimCopies = ChatAnswer(
-        status: ChatAnswerStatus.answered,
-        blocks: [
-          ChatAnswerBlock(text: 'One', sources: [source()]),
-          ChatAnswerBlock(text: 'Two', sources: [source()]),
-        ],
-      );
-      expect(prompt(history: [turn(reply: perClaimCopies)]).historyTurnIds, [
-        1,
-      ]);
-      expect(() => prompt(current: changed), throwsFormatException);
-    },
-  );
+  test('history keeps completed conversation but excludes other sessions, nonfinal and later turns', () {
+    final built = prompt(
+      history: [
+        turn(id: 1, sequence: 1),
+        turn(id: 2, sequence: 2),
+        turn(id: 3, sessionId: 11),
+        turn(id: 4, owner: foreign),
+        turn(id: 5, owner: changed),
+        turn(id: 6, phase: ChatPhase.stopped, draft: 'UNTRUSTED'),
+        turn(
+          id: 7,
+          sequence: 3,
+          reply: answer(status: ChatAnswerStatus.partial),
+        ),
+        turn(id: 8, phase: ChatPhase.writing),
+        turn(id: 9, error: AiError.invalidResponse),
+        turn(id: 10, sequence: 100),
+        turn(
+          id: 11,
+          sequence: 4,
+          reply: answer(status: ChatAnswerStatus.notFound),
+        ),
+      ],
+    );
+    expect(built.historyTurnIds, [1, 2, 7, 11]);
+    expect(built.user.contains('UNTRUSTED'), isFalse);
+    final large = answer(text: 'x' * (chatHistoryBytes ~/ 2 + 1));
+    final bounded = prompt(
+      history: [
+        turn(id: 1, sequence: 1, reply: large),
+        turn(id: 2, sequence: 2, reply: large),
+      ],
+    );
+    expect(bounded.historyTurnIds, [2]);
+    final perClaimCopies = ChatAnswer(
+      status: ChatAnswerStatus.answered,
+      blocks: [
+        ChatAnswerBlock(text: 'One', sources: [source()]),
+        ChatAnswerBlock(text: 'Two', sources: [source()]),
+      ],
+    );
+    expect(prompt(history: [turn(reply: perClaimCopies)]).historyTurnIds, [1]);
+    expect(() => prompt(current: changed), throwsFormatException);
+  });
 
   test(
     'JSON IDs are bound to sent snapshots; model notes never become facts',

@@ -230,6 +230,55 @@ void main() {
   });
 
   for (final theme in [ThemeMode.light, ThemeMode.dark]) {
+    testWidgets('natural paragraphs and optional citations render in $theme', (
+      tester,
+    ) async {
+      final natural = ChatAnswer(
+        status: ChatAnswerStatus.partial,
+        formatVersion: 2,
+        blocks: [
+          ChatAnswerBlock(text: 'Gagasan dalam buku.', sources: [source]),
+          ChatAnswerBlock(
+            text: 'Kalau diterapkan, saran gua begini.',
+            sources: [source],
+            kind: ChatAnswerKind.interpretation,
+          ),
+          ChatAnswerBlock(
+            text: 'Ini pengetahuan tambahan.',
+            sources: [],
+            kind: ChatAnswerKind.external,
+          ),
+          ChatAnswerBlock(
+            text: 'Bagian terakhir belum punya bukti.',
+            sources: [],
+            kind: ChatAnswerKind.conversation,
+          ),
+        ],
+      );
+      await open(
+        tester,
+        themeMode: theme,
+        state: ChatState(
+          book: book,
+          loading: false,
+          activeSession: session(1),
+          turns: [turn(1, answer: natural)],
+        ),
+      );
+      for (final block in natural.blocks) {
+        expect(find.text(block.text), findsOneWidget);
+      }
+      expect(find.text('Bab I'), findsNWidgets(2));
+      expect(
+        find.text(
+          'Sebagian pertanyaan belum punya bukti yang cukup di sumber ini.',
+        ),
+        findsNothing,
+      );
+      expect(vm.sends, 0);
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('index progress and Stop remain available in $theme', (
       tester,
     ) async {

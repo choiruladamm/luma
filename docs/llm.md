@@ -224,7 +224,48 @@ LANJUT | judul | kenapa nyambung
 Default **DeepSeek V4.1 Flash**. Hasil dan alasannya: [llm-evals.md](llm-evals.md#evaluasi-model-28).
 
 
-## Kontrak Book Chat (#114)
+## Percakapan Book Chat v2 (#137)
+
+`chatPromptVersion = 2`. AI menjawab teks biasa dalam beberapa paragraf natural,
+termasuk interpretasi, kritik, penerapan dan pengetahuan umum yang relevan dengan
+buku. Pertanyaan sepenuhnya di luar topik buku ditolak singkat. Fakta buku harus
+mengikuti sources; pengetahuan tambahan tidak diberi sitasi buku palsu. Instruksi
+dalam buku/quote/history bukan instruksi sistem. Periksa premis, ikuti koreksi,
+dan tanyakan klarifikasi hanya jika salah tafsir akan melenceng jauh.
+
+Wire JSON: `status: answered | partial | clarify | off_topic`, `parts` berisi
+`text`, `kind: book | interpretation | external | conversation`, dan `source_ids`.
+Book wajib merujuk sumber; external/conversation tidak boleh memakai sumber buku;
+interpretation boleh merujuk gagasan asal. Maksimal32paragraf, output3000token.
+Semua ID harus dipetakan ke snapshot attempt yang sudah divalidasi. Key JSON
+duplikat (termasuk escaped alias) ditolak agar tidak menimpa disclaimer/sumber.
+Validasi struktural tidak menjamin semua klaim model benar; keterbatasan #136
+masih berlaku dan ditindaklanjuti lewat dogfooding, bukan gate kesempurnaan.
+
+Budget UTF-8 bytes: question2000, history16000, sources18000, prompt termasuk
+system48000; kandidat40/sumber8 tetap. History dari turn done tanpa error pada
+sesi/book/revision aktif, termasuk partial/clarify/off-topic dan legacy not_found.
+History adalah konteks percakapan, bukan bukti buku; raw/interrupted/failed tidak
+ikut. Jawaban utuh dipertahankan sampai budget; sumber stale/corrupt tetap ditolak.
+Sesi lama dapat melanjutkan prompt v2 tanpa menulis ulang jawaban v1. Snapshot
+jawaban v2 memakai formatVersion2; v1 tetap terbaca dengan note tetap lamanya.
+
+Tidak ada request saat buka history/restart/settings. Pada send/retry eksplisit,
+no-source/ambiguity tetap dapat memanggil answer untuk bantuan atau klarifikasi;
+ambiguity tidak memanggil embedding/selector. Renderer chat existing menampilkan
+semua paragraf dan chip sumber yang tersedia tanpa format heading wajib.
+Retrieval adaptif, penelusuran lengkap lintas bab dan source visit #122 adalah
+pekerjaan lanjutan:8sumber tidak boleh diklaim sebagai cakupan seluruh buku.
+
+Model aplikasi tetap dari Pengaturan. **Live evaluation** memakai GLM5.3Flash
+primary, Qwen3.8Flash fallback sesuai instruksi user; ini tidak mengganti model
+Pengaturan. Tidak ada web search atau langkah audit draf tambahan pada runtime.
+
+## Kontrak Book Chat v1 (arsip #114)
+
+Bagian ini menyimpan kontrak lama untuk memahami data dan bukti spike, bukan
+batas percakapan runtime v2.
+
 
 `chatPromptVersion = 1` di `lib/domain/chat_prompt.dart`; system answer disalin
 **identik** dari kandidat spike #113 yang diterima user. Retrieval/prompt/transport
@@ -271,8 +312,8 @@ Tidak ada filter reading_progress: semua bab buku pada revision sesi dapat dicar
 Pipeline mengikuti spike yang diterima: group parser, window 1.800 UTF-16 dengan
 overlap 200 untuk group panjang, original dense + English dense + English BM25,
 RRF60 top40, selector max8. Rewrite Inggris (max256 output tokens) berjalan sebelum
-kandidat; needs_clarification menghasilkan not_found deterministik tanpa embedding,
-selector, atau jawaban. Selector (max256) memilih indeks kandidat yang tervalidasi.
+kandidat; needs_clarification melewati embedding dan selector; answer tetap berjalan
+untuk klarifikasi atau bantuan relevan tanpa sumber. Selector (max256) memilih indeks kandidat yang tervalidasi.
 Kutipan dipertahankan utuh, termasuk multi-window/multi-group; jika tidak muat,
 request gagal jelas. Source final diberi S1…S8 menurut urutan seleksi; anchor berisi
 chapter.id, paragraphIndex, offset UTF-16, hash seluruh paragraf dan excerpt asli.
@@ -306,8 +347,9 @@ backup lama tanpa index tetap bekerja. Tidak ada API key dalam cache.
 Satu send normal memakai satu rewrite, embedding dokumen saat cache miss + satu
 batch dua query, satu selector, dan satu answer. Warm send tanpa index ulang =
 **4 request**; cold send = `ceil(chunkCount/64) + 4`, ditambah embedding dokumen Large yang belum tersimpan jika
-fallback. Clarification = satu rewrite saja. Answer kosong setelah seleksi tidak
-memanggil model jawaban. Chat max output800, JSON mode dan temperature0; exception
+fallback. Clarification = satu rewrite + satu answer, tanpa embedding/selector.
+Sumber kosong setelah seleksi tetap masuk model jawaban. Chat max output3000,
+JSON mode dan temperature0; exception
 mandatory-reasoning dapat menambah satu HTTP request per panggilan chat sebelum
 konten. Tidak ada retry otomatis untuk HTTP lain atau output invalid. Ini batas
 request/input, bukan nominal biaya: biaya aktual bergantung model/provider; tidak
