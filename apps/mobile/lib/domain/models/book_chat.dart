@@ -269,11 +269,13 @@ class ChatTurn {
     this.answer,
     this.error,
     this.httpStatus,
+    this.exploration,
   });
 
   final int id, sessionId, sequence, attempt, promptVersion;
   final ChatBookRef book;
   final String question, model, draft;
+  final String? exploration;
   final ChatQuote? quote;
   final DateTime createdAt, updatedAt;
   final ChatPhase phase;
@@ -348,16 +350,25 @@ class ChatTurn {
     draft: draft,
     model: model,
     promptVersion: promptVersion,
+    exploration: model == this.model && promptVersion == this.promptVersion
+        ? exploration
+        : null,
   );
 }
+
+enum ChatSearchStrategy { specific, crossChapter, global, correction, offTopic }
 
 class ChatQueryPlan {
   const ChatQueryPlan({
     required this.englishQuery,
     required this.needsClarification,
+    this.strategy = ChatSearchStrategy.specific,
+    this.queries = const [],
   });
   final String englishQuery;
   final bool needsClarification;
+  final ChatSearchStrategy strategy;
+  final List<String> queries;
 }
 
 enum ChatEmbeddingModel {

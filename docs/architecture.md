@@ -172,7 +172,7 @@ wajib menangkap instance repository asal, bukan mencari provider baru (#118/#119
 
 `chatContextRepositoryProvider` non-autoDispose memakai DB, `ChatRepository`,
 `OpenRouterService`, dan `ApiKeyStore`. Domain retrieval di `chat_retrieval.dart`;
-tidak ada framework agent atau index persist. #118 mengambil `model()`, membuat
+memakai index persist #134 tanpa framework agent baru. #118 mengambil `model()`, membuat
 turn dengan `chatPromptVersion`, lalu `prepare(turn,cancel:)` → `stream(cancel:)`.
 Simpan `frame.draft` dengan checkpoint writing, dan finalize done hanya untuk
 `frame.answer` terakhir yang tervalidasi. Stream tanpa frame final berarti attempt
@@ -266,3 +266,16 @@ legacy no-source menjadi konteks dialog, bukan bukti buku. Raw checkpoint tetap
 bukan teks UI. No-source tidak memotong stream sebelum model dapat menjawab atau
 meminta klarifikasi; validation owner/attempt/revision/sources dan cancellation
 sebelum/sesudah network tetap berjalan.
+
+### Penelusuran adaptif (#138)
+
+`chat_exploration.dart` mengatur window global, catatan/range bersumber, manifest
+dan checkpoint policy1. `ChatContextRepository.prepare` memperluas rewrite existing,
+menjalankan pencarian berbatas atau scan batch urut, lalu freeze sumber lewat
+ChatRepository seperti sebelumnya. Catatan tidak dipakai sebagai kutipan asli.
+`ChatRepository` menyimpan progres dalam kolom exploration schema10, dengan guard
+attempt/revision/dispose yang sama. `continueExploration` membuat turn baru;
+ViewModel memasang guard sebelum await sehingga double-tap tidak menggandakan run.
+UI memakai status/progress dan Stop existing, serta Lanjutkan saat ada checkpoint
+terminal belum selesai. Tidak ada request saat rebuild/hydrate/resume/settings.
+Budget dan batas sintesis ada di [llm.md](llm.md). Source visit tetap #122.

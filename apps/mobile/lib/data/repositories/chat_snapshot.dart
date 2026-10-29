@@ -304,6 +304,7 @@ class ChatSnapshot {
         answer: result,
         error: error,
         httpStatus: row.httpStatus,
+        exploration: row.exploration,
       );
     } on FormatException {
       if (strict) rethrow;

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:luma/domain/models/ai_reply.dart';
+import 'package:luma/domain/chat_exploration.dart';
 import 'package:luma/ui/features/chat/views/chat_copy.dart';
 import 'package:luma/domain/models/book_chat.dart';
 import 'package:luma/routing/router.dart';
@@ -27,21 +28,26 @@ ChatSession session(int id, {int bookId = 1, int revision = 1}) => ChatSession(
   updatedAt: now,
   preview: 'Pertanyaan $id',
 );
-ChatTurn turn(int id, {ChatPhase phase = ChatPhase.done, ChatAnswer? answer}) =>
-    ChatTurn(
-      id: id,
-      sessionId: 1,
-      book: book,
-      sequence: id,
-      question: 'Pertanyaan $id',
-      createdAt: now,
-      updatedAt: now,
-      phase: phase,
-      model: 'test',
-      promptVersion: 1,
-      draft: '{"secret raw JSON": true}',
-      answer: answer,
-    );
+ChatTurn turn(
+  int id, {
+  ChatPhase phase = ChatPhase.done,
+  ChatAnswer? answer,
+  String? exploration,
+}) => ChatTurn(
+  id: id,
+  sessionId: 1,
+  book: book,
+  sequence: id,
+  question: 'Pertanyaan $id',
+  createdAt: now,
+  updatedAt: now,
+  phase: phase,
+  model: 'test',
+  promptVersion: 1,
+  draft: '{"secret raw JSON": true}',
+  answer: answer,
+  exploration: exploration,
+);
 final source = ChatSource(
   id: 'S1',
   chapterTitle: 'Bab I',
@@ -67,7 +73,7 @@ final answer = ChatAnswer(
 class FakeChat extends ChatViewModel {
   FakeChat(super.bookId, this.initial);
   final ChatState initial;
-  int sends = 0, stops = 0, creates = 0, launches = 0;
+  int sends = 0, stops = 0, creates = 0, launches = 0, continuations = 0;
   final opened = <int>[], deleted = <int>[];
   final renamed = <String>[];
   Completer<void>? stopGate;
@@ -88,6 +94,13 @@ class FakeChat extends ChatViewModel {
       sends++;
       state = state.copyWith(draft: '', phase: ChatPhase.waiting);
     }
+  }
+
+  @override
+  Future<void> continueExploration() async {
+    if (!state.canContinue) return;
+    continuations++;
+    state = state.copyWith(phase: ChatPhase.retrieving);
   }
 
   @override
@@ -230,6 +243,58 @@ void main() {
   });
 
   for (final theme in [ThemeMode.light, ThemeMode.dark]) {
+    testWidgets('global progress, Stop and explicit Continue in $theme', (
+      t,
+    ) async {
+      final checkpoint = ChatExploration(
+        book: book,
+        sessionId: 1,
+        turnId: 1,
+        question: 'Pertanyaan 1',
+        model: 'test',
+        manifest: 'a' * 64,
+        query: 'question',
+        cursor: 8,
+        total: 20,
+        notes: [],
+      ).encode();
+      final partial = turn(1, answer: answer, exploration: checkpoint);
+      await open(
+        t,
+        themeMode: theme,
+        state: ChatState(
+          book: book,
+          loading: false,
+          activeSession: session(1),
+          turns: [partial],
+          phase: ChatPhase.done,
+        ),
+      );
+      expect(find.text('Lanjutkan'), findsOneWidget);
+      expect(vm.continuations, 0);
+      await t.tap(find.text('Lanjutkan'));
+      await t.pump();
+      expect(vm.continuations, 1);
+      expect(find.text('Lanjutkan'), findsNothing);
+      vm.push(
+        vm.current.copyWith(
+          explorationProgress: (completed: 8, total: 20),
+          turns: [
+            partial,
+            turn(2, phase: ChatPhase.retrieving),
+          ],
+        ),
+      );
+      await t.pump();
+      expect(find.text('Lagi meriksa isi buku… 8/20 potongan'), findsOneWidget);
+      // A running continuation receives its own turn; prior answer remains visible.
+      expect(find.text('Jawaban tervalidasi.'), findsOneWidget);
+      expect(t.takeException(), isNull);
+      await t.tap(button('Hentikan jawaban'));
+      await t.pumpAndSettle();
+      expect(vm.stops, 1);
+    });
+
     testWidgets('natural paragraphs and optional citations render in $theme', (
       tester,
     ) async {

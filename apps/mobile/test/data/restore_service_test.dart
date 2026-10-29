@@ -13,6 +13,7 @@ import 'package:luma/data/repositories/chat_repository.dart';
 import 'package:luma/data/repositories/book_repository.dart';
 import 'package:luma/domain/models/book_chat.dart';
 import 'package:luma/domain/chat_prompt.dart';
+import 'package:luma/domain/chat_exploration.dart';
 import 'package:luma/data/services/file_storage.dart';
 import 'package:luma/data/services/restore_service.dart';
 import 'package:luma/domain/models/ai_reply.dart';
@@ -299,6 +300,61 @@ void main() {
       );
     },
   );
+
+  test('durable exploration survives file reopen and backup/restore without sending', () async {
+    final repo = ChatRepository(a.db);
+    final book = (await a.db.select(a.db.books).get()).first;
+    final ref = (bookId: book.id, contentRevision: book.contentRevision);
+    final turn = await repo.createFirstTurn(
+      ref,
+      question: 'Whole book?',
+      model: 'model',
+      promptVersion: chatPromptVersion,
+    );
+    final checkpoint = ChatExploration(
+      book: ref,
+      sessionId: turn.sessionId,
+      turnId: turn.id,
+      question: turn.question,
+      model: turn.model,
+      manifest: 'a' * 64,
+      query: 'Whole book?',
+      cursor: 1,
+      total: 4,
+      notes: [
+        (text: 'Original idea', sourceIds: ['S1']),
+      ],
+    );
+    expect(await repo.saveExploration(turn.attemptRef, checkpoint), isTrue);
+    await repo.finalize(turn.attemptRef, phase: ChatPhase.stopped);
+    repo.dispose();
+    await a.db.close();
+    a.reopen();
+    final saved = await (a.db.select(
+      a.db.chatTurns,
+    )..where((t) => t.id.equals(turn.id))).getSingle();
+    expect(saved.exploration, checkpoint.encode());
+    final zip = await backupOf(a);
+    final service = RestoreService(b.db, b.storage);
+    await service.apply(await service.inspect(zip));
+    b.reopen();
+    final restoredRepo = ChatRepository(b.db);
+    final restored =
+        (await restoredRepo.watchTurns(book.id, turn.sessionId).first).single;
+    expect(ChatExploration.parse(restored.exploration!).cursor, 1);
+    expect(chatCanContinue(restored), isTrue);
+    expect(restored.phase, ChatPhase.stopped);
+    // Disposed repositories cannot write through callbacks after a restore.
+    expect(await repo.saveExploration(turn.attemptRef, checkpoint), isFalse);
+    await restoredRepo.deleteSession(book.id, turn.sessionId);
+    expect(
+      await (b.db.select(
+        b.db.chatTurns,
+      )..where((t) => t.id.equals(turn.id))).getSingleOrNull(),
+      isNull,
+    );
+    restoredRepo.dispose();
+  });
 
   test('round trip: export, restore onto another phone, same data', () async {
     final cachedBook = (await a.db.select(a.db.books).get()).first;

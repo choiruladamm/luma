@@ -33,9 +33,10 @@ void main() {
   ChatSource source(String id) =>
       ChatSource(id: id, chapterTitle: 'IV', anchors: [anchor()]);
 
-  test('accepted rewrite and selector systems remain frozen', () {
-    expect(chatRewriteSystem, spike.searchRewriteSystem);
-    expect(chatSelectionSystem, spike.recoverySelectionSystem);
+  test('adaptive planner extends archived retrieval contracts', () {
+    expect(chatRewriteSystem, contains('strategy'));
+    expect(chatSelectionSystem, contains('missing_queries'));
+    expect(spike.searchRewriteSystem, isNot(chatRewriteSystem));
     expect(fixture.verifyValidation3(), isNotEmpty);
   });
 
