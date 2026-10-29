@@ -87,7 +87,7 @@ chat-oracle-live: ## #113 paid DEVELOPMENT oracle A/B; held-out is never queried
 	@set -a; . ./.env; set +a; cd $(APP) && BOOK_CHAT_ORACLE_LIVE=1 OPENROUTER_MODEL=$(m) fvm flutter test test/data/book_chat_oracle_live_test.dart
 
 chat-discussion-live: ## #136 bounded paid DEVELOPMENT answer pilot, two cases; m=<model> optional
-	@set -a; . ./.env; set +a; cd $(APP) && BOOK_CHAT_DISCUSSION_LIVE=1 $(if $(m),OPENROUTER_MODEL=$(m)) fvm flutter test --timeout 30s test/data/book_chat_discussion_live_test.dart
+	@set -a; . ./.env; set +a; cd $(APP) && BOOK_CHAT_DISCUSSION_LIVE=1 OPENROUTER_MODEL=$(or $(m),z-ai/glm-5.3-flash) fvm flutter test --timeout 30s test/data/book_chat_discussion_live_test.dart
 
 analyze: ## static analysis
 	$(FLUTTER) analyze

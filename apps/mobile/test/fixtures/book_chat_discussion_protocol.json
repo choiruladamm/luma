@@ -1,7 +1,7 @@
 {
   "version": 1,
   "issue": 136,
-  "state": "offline_design_only",
+  "state": "development_revise",
   "corpusSha256": "16bf06012b9adf6ff217f4d04947d045f46c43a5ab40b312e528d04b60bcbdba",
   "modelRuns": 0,
   "paidRequests": 0,
@@ -100,6 +100,39 @@
     "sha256": "ee285d747fdbf9c3a05d108446a17c9bb1431f83e3435abf6e77304a86ae8c89",
     "requests": 8,
     "actualCostUsd": 0.003330208,
+    "verdict": "revise",
+    "validationModelRuns": 0
+  },
+  "sourceBoundaryRevision": {
+    "report": "book_chat_discussion_revision_result.json",
+    "sha256": "485cadbd7780a55e28fc0e4ea2232b9e454faec8cef39ad5ad3ac07f4513235f",
+    "requests": 39,
+    "knownCostUsd": 0.009910846,
+    "unknownUsageRequests": 1,
+    "unknownReservedUpperBoundUsd": 2.03,
+    "verdict": "revise",
+    "validationModelRuns": 0
+  },
+  "liveModelPolicy": {
+    "primary": "z-ai/glm-5.3-flash",
+    "fallback": "qwen/qwen3.8-flash",
+    "source": "Explicit user instruction, 29 October 2026",
+    "appliesTo": "live evaluation only; app model setting unchanged",
+    "reasoning": "Mandatory: lowest advertised supported effort. Otherwise disabled. No automatic extra dispatch.",
+    "priceCapsUsdPerMillion": {
+      "prompt": 0.5,
+      "completion": 2,
+      "request": 0
+    },
+    "unknownReservationPolicy": "Retain historical bounds without reducing them when new tariff caps are lower."
+  },
+  "glmPriorityPilot": {
+    "report": "book_chat_discussion_glm_result.json",
+    "sha256": "b62662d131906074fd2652c8475083ddb9a3895cf5e49498b59f8eae0e37d41d",
+    "requests": 11,
+    "knownCostUsd": 0.0010790574,
+    "unknownUsageRequests": 1,
+    "unknownReservedUpperBoundUsd": 0.525888,
     "verdict": "revise",
     "validationModelRuns": 0
   }

@@ -5,7 +5,7 @@ import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:luma/domain/chat_prompt.dart';
-import 'package:luma/domain/models/ai_model.dart';
+import 'package:luma/domain/models/ai_reply.dart';
 
 import '../support/book_chat_discussion.dart';
 import '../support/book_chat_refinement.dart';
@@ -52,7 +52,7 @@ void main() {
       if (cases.length != selected.length) {
         throw StateError('Unknown or wrong-split case ID');
       }
-      final model = env['OPENROUTER_MODEL'] ?? defaultAiModel;
+      final model = env['OPENROUTER_MODEL'] ?? 'z-ai/glm-5.3-flash';
       final report = File(
         env['BOOK_CHAT_DISCUSSION_REPORT'] ??
             '/tmp/luma-discussion-${DateTime.now().microsecondsSinceEpoch}.json',
@@ -84,6 +84,7 @@ void main() {
         if (contextLength is! int || contextLength <= 0) {
           throw StateError('Missing model context ceiling');
         }
+        final reasoning = discussionReasoning(modelInfo as Map);
         final rows = <Map<String, dynamic>>[];
         final result = <String, Object?>{
           'issue': 136,
@@ -93,6 +94,7 @@ void main() {
           'model': model,
           'providerCaps': discussionProvider,
           'modelMetadata': modelInfo,
+          'reasoning': reasoning,
           'budgetLedger': '/tmp/luma-discussion-budget.json',
           'retrievalEvaluated': false,
           'embeddingsRequests': 0,
@@ -100,6 +102,8 @@ void main() {
           'comparison': 'Baseline answer contract800 tokens vs natural contract3000 tokens on identical oracle passages; NOT a prompt-only or end-to-end retrieval comparison.',
           'baselineSystem': chatAnswerSystemPrompt,
           'candidateSystem': discussionNaturalSystem,
+          if (env['BOOK_CHAT_DISCUSSION_AUDIT'] == '1')
+            'auditSystem': discussionAuditSystem,
           'hashes': {
             for (final path in [
               fixture.path,
@@ -146,13 +150,31 @@ void main() {
                 hash: textHash(s['text'] as String),
               ),
           ];
-          for (final natural in [false, true]) {
+          String? validDraft;
+          for (final arm in [
+            'oracle_answer_baseline',
+            'oracle_natural',
+            if (env['BOOK_CHAT_DISCUSSION_AUDIT'] == '1')
+              'oracle_natural_reviewed',
+          ]) {
+            final natural = arm != 'oracle_answer_baseline';
+            final reviewing = arm == 'oracle_natural_reviewed';
+            final requestUser = reviewing && validDraft != null
+                ? discussionUser(
+                    row,
+                    book['title'] as String,
+                    sources,
+                    draftToReview: validDraft,
+                  )
+                : user;
             final output = <String, dynamic>{
               'id': row['id'],
               'book': row['book'],
-              'arm': natural ? 'oracle_natural' : 'oracle_answer_baseline',
-              'user': jsonDecode(user),
+              'arm': arm,
+              'user': jsonDecode(requestUser),
               'maxTokens': natural ? 3000 : 800,
+              if (reviewing) 'dependsOnArm': 'oracle_natural',
+              if (reviewing) 'measurementScope': 'Review request only; add draft request for pipeline cost and time.',
               'status': 'dispatch_pending',
               'validationPotentiallyConsumed': split == 'validation',
               'raw': '',
@@ -160,6 +182,11 @@ void main() {
               'review': null,
             };
             rows.add(output);
+            if (reviewing && validDraft == null) {
+              output['status'] = 'skipped_missing_valid_draft';
+              checkpoint();
+              continue;
+            }
             checkpoint(); // Mark validation potentially consumed BEFORE any dispatch.
             final client = Dio(
               BaseOptions(
@@ -181,6 +208,7 @@ void main() {
                 onRequest: (options, handler) {
                   final body = Map<String, dynamic>.from(options.data as Map);
                   body['provider'] = discussionProvider;
+                  body['reasoning'] = reasoning;
                   body['stream_options'] = {'include_usage': true};
                   options.data = body;
                   handler.next(options);
@@ -191,10 +219,12 @@ void main() {
               final reply = await evalStream(
                 key: key,
                 model: model,
-                system: natural
+                system: reviewing
+                    ? discussionAuditSystem
+                    : natural
                     ? discussionNaturalSystem
                     : chatAnswerSystemPrompt,
-                user: user,
+                user: requestUser,
                 maxTokens: natural ? 3000 : 800,
                 client: client,
                 jsonOutput: true,
@@ -246,10 +276,21 @@ void main() {
               output['firstUsefulOutputMs'] =
                   reply.totalMs; // Validated only after final parse.
               output['status'] = 'parsed_pending_manual_review';
+              if (arm == 'oracle_natural') validDraft = reply.text;
+            } on FormatException {
+              // Invalid output is an evaluation result, not a retry of this job.
+              output['status'] = 'invalid_format';
+              output['errorType'] = 'FormatException';
+              output['heldUsd'] = budget.heldUsd;
+              output['reservation'] = guarded.reservation;
             } catch (error) {
               // Exception strings may contain HTTP headers; record only the type.
               output['status'] = 'stopped';
               output['errorType'] = error.runtimeType.toString();
+              if (error is AiException) {
+                output['aiError'] = error.error.name;
+                output['httpStatus'] = error.status;
+              }
               output['heldUsd'] = budget.heldUsd;
               output['reservation'] = guarded.reservation;
               result['status'] = 'stopped_no_automatic_retry';
@@ -263,7 +304,9 @@ void main() {
             }
           }
         }
-        result['status'] = 'answers_collected_review_pending';
+        result['status'] = rows.any((r) => r['status'] == 'invalid_format')
+            ? 'collected_with_format_failures_review_pending'
+            : 'answers_collected_review_pending';
         checkpoint();
       } finally {
         metadataClient.close(force: true);
