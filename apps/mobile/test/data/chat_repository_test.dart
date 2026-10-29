@@ -120,6 +120,136 @@ void main() {
     expect(await repo.finalize(t.attemptRef, phase: ChatPhase.stopped), isTrue);
   }
 
+  ChatSourceRef sourceRef(ChatTurn t, {String id = 'S1'}) => (
+    bookId: t.book.bookId,
+    sessionId: t.sessionId,
+    turnId: t.id,
+    attempt: t.attempt,
+    sourceId: id,
+  );
+
+  test('source resolver is read only and rejects forged ownership and stale sources', () async {
+    final t = await first();
+    final s = source();
+    await repo.prepareSources(t.attemptRef, [s]);
+    await repo.finalize(t.attemptRef, phase: ChatPhase.done, answer: answer(s));
+    final before = await db.customSelect('SELECT * FROM books').get();
+    final beforeTurn = await raw(t);
+    expect((await repo.resolveSource(sourceRef(t)))!.available, isTrue);
+    expect(await repo.resolveSource(sourceRef(t, id: 'fake')), isNull);
+    expect(
+      await repo.resolveSource((
+        bookId: other.bookId,
+        sessionId: t.sessionId,
+        turnId: t.id,
+        attempt: t.attempt,
+        sourceId: 'S1',
+      )),
+      isNull,
+    );
+    expect(
+      await repo.resolveSource((
+        bookId: book.bookId,
+        sessionId: 99999,
+        turnId: t.id,
+        attempt: t.attempt,
+        sourceId: 'S1',
+      )),
+      isNull,
+    );
+    expect(
+      await repo.resolveSource((
+        bookId: book.bookId,
+        sessionId: t.sessionId,
+        turnId: 99999,
+        attempt: t.attempt,
+        sourceId: 'S1',
+      )),
+      isNull,
+    );
+    expect(
+      await repo.resolveSource((
+        bookId: book.bookId,
+        sessionId: t.sessionId,
+        turnId: t.id,
+        attempt: 2,
+        sourceId: 'S1',
+      )),
+      isNull,
+    );
+    expect((await raw(t)).toJson(), beforeTurn.toJson());
+    expect(
+      (await db.customSelect('SELECT * FROM books').get()).map((r) => r.data),
+      before.map((r) => r.data),
+    );
+    expect(await db.select(db.readingProgress).get(), isEmpty);
+    expect(await db.select(db.readingSessions).get(), isEmpty);
+    await (db.update(db.paragraphs)..where((p) => p.chapterId.equals(chapter)))
+        .write(const ParagraphsCompanion(content: Value('Changed')));
+    final stale = await repo.resolveSource(sourceRef(t));
+    expect(stale!.available, isFalse);
+    expect(stale.source.text, original);
+    await (db.update(db.books)..where((b) => b.id.equals(book.bookId))).write(
+      const BooksCompanion(contentRevision: Value(2)),
+    );
+    expect((await repo.resolveSource(sourceRef(t)))!.available, isFalse);
+  });
+
+  test('source resolver rejects foreign chapters, changed ranges, hashes and missing paragraphs', () async {
+    final t = await first();
+    await repo.prepareSources(t.attemptRef, [source()]);
+    await repo.finalize(
+      t.attemptRef,
+      phase: ChatPhase.done,
+      answer: answer(source()),
+    );
+    for (final mutation in <Map<String, Object>>[
+      {'chapterId': otherChapter},
+      {'paragraphIndex': 999},
+      {'paragraphHash': chatTextHash('wrong')},
+      {'start': 1},
+      {'end': original.length + 1},
+    ]) {
+      final data = ChatSnapshot.sourcesData([source()]);
+      final anchors = data.single['anchors'] as List;
+      (anchors.single as Map).addAll(mutation);
+      await (db.update(db.chatTurns)..where((r) => r.id.equals(t.id))).write(
+        ChatTurnsCompanion(sources: Value(jsonEncode(data))),
+      );
+      expect(
+        (await repo.resolveSource(sourceRef(t)))?.available ?? false,
+        isFalse,
+      );
+    }
+  });
+
+  test('source resolver allows complete provisional blocks, revokes failed and deleted turns', () async {
+    final t = await first();
+    await repo.prepareSources(t.attemptRef, [source()]);
+    expect((await repo.resolveSource(sourceRef(t)))!.available, isFalse);
+    const draft =
+        '{"parts":[{"text":"Keeper","kind":"book","source_ids":["S1"]}';
+    await repo.checkpoint(t.attemptRef, draft: draft, phase: ChatPhase.writing);
+    expect((await repo.resolveSource(sourceRef(t)))!.available, isTrue);
+    final seen = <bool?>[];
+    final sub = repo
+        .watchSource(sourceRef(t))
+        .listen((s) => seen.add(s?.available));
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+    await repo.finalize(
+      t.attemptRef,
+      phase: ChatPhase.failed,
+      error: AiError.invalidResponse,
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+    expect((await repo.resolveSource(sourceRef(t)))!.available, isFalse);
+    await repo.deleteSession(book.bookId, t.sessionId);
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+    expect(await repo.resolveSource(sourceRef(t)), isNull);
+    expect(seen, containsAllInOrder([true, false, null]));
+    await sub.cancel();
+  });
+
   test('first send is atomic, normalized, deterministic, and no empty draft session', () async {
     expect(await sessions(), isEmpty);
     await expectLater(first(question: '  '), throwsFormatException);

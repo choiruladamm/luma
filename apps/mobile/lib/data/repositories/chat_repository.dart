@@ -4,6 +4,7 @@ import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/chat_prompt.dart';
+import '../../domain/chat_preview.dart';
 import '../../domain/chat_exploration.dart';
 import '../../domain/models/ai_reply.dart';
 import '../../domain/models/book_chat.dart';
@@ -117,6 +118,81 @@ class ChatRepository {
                 : (bookId: b.id, contentRevision: b.contentRevision),
           )
           .distinct();
+
+  /// Local read only: no recovery, timestamps, progress, or network side effects.
+  Stream<ChatSourceLocation?> watchSource(ChatSourceRef request) => _db
+      .customSelect(
+        'SELECT 1',
+        readsFrom: {
+          _db.books,
+          _db.chapters,
+          _db.paragraphs,
+          _db.chatSessions,
+          _db.chatTurns,
+        },
+      )
+      .watch()
+      .asyncMap((_) => resolveSource(request));
+
+  Future<ChatSourceLocation?> resolveSource(ChatSourceRef request) async {
+    _open();
+    return _db.transaction(() async {
+      final session =
+          await (_db.select(_db.chatSessions)..where(
+                (s) =>
+                    s.id.equals(request.sessionId) &
+                    s.bookId.equals(request.bookId),
+              ))
+              .getSingleOrNull();
+      final row =
+          await (_db.select(_db.chatTurns)..where(
+                (t) =>
+                    t.id.equals(request.turnId) &
+                    t.sessionId.equals(request.sessionId),
+              ))
+              .getSingleOrNull();
+      if (session == null || row == null || row.attempt != request.attempt) {
+        return null;
+      }
+      try {
+        final turn = ChatSnapshot.turn(row, session, strict: true);
+        final sources = ChatSnapshot.sources(row.sources, turn.book);
+        final source = sources
+            .where((s) => s.id == request.sourceId)
+            .firstOrNull;
+        if (source == null) return null;
+        var blocks = <ChatAnswerBlock>[];
+        if (turn.trustedHistory) {
+          blocks = turn.answer!.blocks;
+        } else if (turn.phase.isRunning) {
+          blocks = (ChatPreviewDecoder(
+            sources: sources,
+          )..add(row.draft)).blocks;
+        }
+        var available = blocks.any(
+          (b) => b.sources.any((s) => s.id == source.id),
+        );
+        try {
+          await _book(turn.book);
+          validateChatSources(
+            [source],
+            turn.book,
+            await _paragraphs(turn.book, source.anchors),
+          );
+        } catch (_) {
+          available = false;
+        }
+        _open();
+        return ChatSourceLocation(
+          source: source,
+          available: available,
+          generation: this,
+        );
+      } on FormatException {
+        return null;
+      }
+    });
+  }
 
   Future<ChatSession?> session(int bookId, int sessionId) async {
     await _ready();

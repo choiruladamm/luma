@@ -18,12 +18,16 @@ class ChatHistory extends StatefulWidget {
     this.phase,
     this.preview,
     this.indexLabel,
+    this.onSource,
+    this.suspended = false,
   });
   final List<ChatTurn> turns;
+  final bool suspended;
   final ChatScrollAnchor? anchor;
   final ChatPhase? phase;
   final ({ChatAttemptRef attempt, List<ChatAnswerBlock> blocks})? preview;
   final String? indexLabel;
+  final void Function(ChatTurn, ChatSource)? onSource;
   final ValueChanged<ChatScrollAnchor> onAnchor;
   @override
   State<ChatHistory> createState() => _ChatHistoryState();
@@ -84,7 +88,11 @@ class _ChatHistoryState extends State<ChatHistory> {
     if (oldWidget.turns.last.id != widget.turns.last.id) {
       _rendered.remove(oldWidget.turns.last.id);
     }
-    if (!_away &&
+    if (oldWidget.suspended && !widget.suspended && _scroll.hasClients) {
+      _away = _scroll.position.extentAfter > Layout.chatFollowDistance;
+    }
+    if (!widget.suspended &&
+        !_away &&
         (!listEquals(oldWidget.turns, widget.turns) ||
             oldWidget.phase != widget.phase ||
             oldWidget.preview != widget.preview)) {
@@ -97,12 +105,12 @@ class _ChatHistoryState extends State<ChatHistory> {
   }
 
   void _latest() {
-    if (!_scroll.hasClients) return;
+    if (!_scroll.hasClients || widget.suspended) return;
     _scroll.jumpTo(_scroll.position.maxScrollExtent);
   }
 
   void _position() {
-    if (!_scroll.hasClients) return;
+    if (!_scroll.hasClients || widget.suspended) return;
     final away = _scroll.position.extentAfter > Layout.chatFollowDistance;
     if (away != _away) setState(() => _away = away);
     final viewport = _viewport.currentContext?.findRenderObject() as RenderBox?;
@@ -203,7 +211,12 @@ class _ChatHistoryState extends State<ChatHistory> {
                       ),
                     ),
                     for (final source in blocks[i].sources)
-                      ChatSourceChip(source: source),
+                      ChatSourceChip(
+                        source: source,
+                        onPressed: widget.onSource == null
+                            ? null
+                            : () => widget.onSource!(turn, source),
+                      ),
                   ],
                 ),
               ),
@@ -252,7 +265,8 @@ class _ChatHistoryState extends State<ChatHistory> {
           child: EdgeFadeScroll(
             child: NotificationListener<ScrollMetricsNotification>(
               onNotification: (notification) {
-                if (!_restoring &&
+                if (!widget.suspended &&
+                    !_restoring &&
                     !_away &&
                     // Metric updates also arrive during a drag; never cancel it.
                     !_scroll.position.isScrollingNotifier.value &&
@@ -305,24 +319,31 @@ class _ChatHistoryState extends State<ChatHistory> {
   }
 }
 
-/// Snapshot label only; verified preview/reader navigation belongs to #122.
+/// Only verified complete blocks can supply a source action.
 class ChatSourceChip extends StatelessWidget {
-  const ChatSourceChip({super.key, required this.source});
+  const ChatSourceChip({super.key, required this.source, this.onPressed});
   final ChatSource source;
+  final VoidCallback? onPressed;
   @override
-  Widget build(BuildContext context) => Container(
-    constraints: const BoxConstraints(minHeight: Layout.touch),
-    padding: const EdgeInsets.all(Space.s3),
-    decoration: BoxDecoration(
-      color: context.stabilo.muted,
-      borderRadius: BorderRadius.circular(Radii.sm),
-    ),
-    child: Row(
-      spacing: Space.s2,
-      children: [
-        const AppIcon(AppIcons.book),
-        Expanded(child: Text(source.chapterTitle, style: StabiloType.caption)),
-      ],
+  Widget build(BuildContext context) => InkWell(
+    onTap: onPressed,
+    borderRadius: BorderRadius.circular(Radii.sm),
+    child: Container(
+      constraints: const BoxConstraints(minHeight: Layout.touch),
+      padding: const EdgeInsets.all(Space.s3),
+      decoration: BoxDecoration(
+        color: context.stabilo.muted,
+        borderRadius: BorderRadius.circular(Radii.sm),
+      ),
+      child: Row(
+        spacing: Space.s2,
+        children: [
+          const AppIcon(AppIcons.book),
+          Expanded(
+            child: Text(source.chapterTitle, style: StabiloType.caption),
+          ),
+        ],
+      ),
     ),
   );
 }

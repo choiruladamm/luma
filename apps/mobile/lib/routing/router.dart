@@ -6,6 +6,7 @@ import '../ui/core/theme/stabilo_tokens.dart';
 import '../domain/models/book_chat.dart';
 import '../ui/features/chat/view_models/chat_view_model.dart';
 import '../ui/features/chat/views/chat_view.dart';
+import '../ui/features/chat/views/chat_source_visit_view.dart';
 import '../ui/features/chat/views/chat_sessions_view.dart';
 import '../ui/features/bookshelf/views/bookshelf_view.dart';
 import '../ui/features/breakdown/views/breakdown_view.dart';
@@ -16,6 +17,8 @@ abstract final class Routes {
   static const home = '/';
   static const settings = '/settings';
   static String chat(int bookId) => '/reader/$bookId/chat';
+  static String chatSource(ChatSourceRef source) =>
+      '${chat(source.bookId)}/source/${source.sessionId}/${source.turnId}/${source.attempt}/${Uri.encodeComponent(source.sourceId)}';
   static String chatSessions(int bookId) => '${chat(bookId)}/sessions';
   static String reader(int bookId) => '/reader/$bookId';
 
@@ -82,6 +85,39 @@ final routerProvider = Provider<GoRouter>((ref) {
           return ChatView(key: ValueKey(id), bookId: id, launch: launch);
         },
         routes: [
+          GoRoute(
+            path: 'source/:sessionId/:turnId/:attempt/:sourceId',
+            builder: (_, state) {
+              int? id(String key) =>
+                  int.tryParse(state.pathParameters[key] ?? '');
+              final book = id('bookId'),
+                  session = id('sessionId'),
+                  turn = id('turnId'),
+                  attempt = id('attempt');
+              final source = state.pathParameters['sourceId'];
+              if (book == null ||
+                  book <= 0 ||
+                  session == null ||
+                  session <= 0 ||
+                  turn == null ||
+                  turn <= 0 ||
+                  attempt == null ||
+                  attempt <= 0 ||
+                  source == null ||
+                  source.isEmpty) {
+                return const _InvalidChatRoute();
+              }
+              return ChatSourceVisitView(
+                request: (
+                  bookId: book,
+                  sessionId: session,
+                  turnId: turn,
+                  attempt: attempt,
+                  sourceId: source,
+                ),
+              );
+            },
+          ),
           GoRoute(
             path: 'sessions',
             builder: (_, state) {

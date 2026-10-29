@@ -35,9 +35,12 @@ import 'toc_sheet.dart';
 /// layar; ujung chapter ada kartu lanjut ke chapter berikutnya, ujung bab
 /// terakhir ke layar akhir buku.
 class ReaderView extends ConsumerStatefulWidget {
-  const ReaderView({super.key, required this.bookId});
+  const ReaderView({super.key, required this.bookId, this.sourceVisit});
 
   final int bookId;
+
+  /// Verified source visit: rendering/navigation only, never reading activity.
+  final ChatSource? sourceVisit;
 
   @override
   ConsumerState<ReaderView> createState() => _ReaderViewState();
@@ -97,12 +100,14 @@ class _ReaderViewState extends ConsumerState<ReaderView>
   void initState() {
     super.initState();
     _progress = ref.read(readingProgressRepositoryProvider);
-    _clock.resume(_now());
+    if (widget.sourceVisit == null) _clock.resume(_now());
     WidgetsBinding.instance.addObserver(this);
-    _progress.markOpened(widget.bookId).ignore();
+    if (widget.sourceVisit == null) {
+      _progress.markOpened(widget.bookId).ignore();
+    }
     _chrome.visible.addListener(_syncStatusBar);
     _fraction.addListener(_anchor);
-    if (_android) {
+    if (_android && widget.sourceVisit == null) {
       // Bar yang kebuka swipe tepi ngumpet lagi sesudah jeda, kalau memang
       // harusnya ngumpet.
       SystemChrome.setSystemUIChangeCallback((visible) async {
@@ -155,7 +160,7 @@ class _ReaderViewState extends ConsumerState<ReaderView>
         if (WidgetsBinding.instance.lifecycleState == null ||
             WidgetsBinding.instance.lifecycleState ==
                 AppLifecycleState.resumed) {
-          _clock.resume(_now());
+          if (widget.sourceVisit == null) _clock.resume(_now());
         }
         _syncStatusBar();
       }
@@ -179,7 +184,7 @@ class _ReaderViewState extends ConsumerState<ReaderView>
     GroupRef? group,
     String? translation,
   }) async {
-    if (_openingChat) return null;
+    if (_openingChat || widget.sourceVisit != null) return null;
     if (group == null) _text.currentState?.stopAndReportPosition();
     final initial = _chatContext();
     if (initial == null) return null;
@@ -225,7 +230,7 @@ class _ReaderViewState extends ConsumerState<ReaderView>
   /// (immersive sticky, muncul sebentar kalau di-swipe). iOS: bar bawah
   /// (home indicator) dibiarin.
   void _syncStatusBar() {
-    if (_offReader > 0) {
+    if (_offReader > 0 || widget.sourceVisit != null) {
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
       return;
     }
@@ -245,7 +250,7 @@ class _ReaderViewState extends ConsumerState<ReaderView>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      if (_offReader == 0) _clock.resume(_now());
+      if (_offReader == 0 && widget.sourceVisit == null) _clock.resume(_now());
       return;
     }
     _clock.pause(_now());
@@ -258,7 +263,9 @@ class _ReaderViewState extends ConsumerState<ReaderView>
   void dispose() {
     _saveLater?.cancel();
     _rehide?.cancel();
-    if (_android) SystemChrome.setSystemUIChangeCallback(null);
+    if (_android && widget.sourceVisit == null) {
+      SystemChrome.setSystemUIChangeCallback(null);
+    }
     _save().ignore();
     WidgetsBinding.instance.removeObserver(this);
     if (_android) {
@@ -279,6 +286,7 @@ class _ReaderViewState extends ConsumerState<ReaderView>
   /// bab diganti, biar potongannya masuk ke bab yang bener dan lompatan lewat
   /// daftar isi gak ikut keitung sebagai karakter terbaca.
   Future<void> _flushReading() async {
+    if (widget.sourceVisit != null) return;
     final now = _now();
     final seconds = _clock.take(now);
     if (seconds <= 0) return;
@@ -291,7 +299,9 @@ class _ReaderViewState extends ConsumerState<ReaderView>
   }
 
   Future<void> _save({bool force = false}) {
-    if (_offReader > 0 && !force) return Future.value();
+    if (widget.sourceVisit != null || _offReader > 0 && !force) {
+      return Future.value();
+    }
     final chapterId = _chapterId;
     final position = (
       chapterId: chapterId ?? 0,
@@ -346,6 +356,7 @@ class _ReaderViewState extends ConsumerState<ReaderView>
   /// barengan sheet. Ditutup: kalau udah pake "Lanjut", halaman diem di grup
   /// terakhir; kalau cuma satu grup, balik ke posisi sebelum sheet dibuka.
   Future<void> _openMeaning(ReaderParagraph p) async {
+    if (widget.sourceVisit != null) return;
     final g = p.groupIndex;
     final text = _text.currentState;
     final chapterId = _chapterId;
@@ -438,9 +449,17 @@ class _ReaderViewState extends ConsumerState<ReaderView>
 
   /// Sekali aja: buka di chapter & paragraf tersimpan (atau bab 1).
   void _start(ReaderBook book, ReadingPosition? saved) {
+    final source = widget.sourceVisit?.anchors.first;
+    if (source != null) {
+      saved = (
+        chapterId: source.chapterId,
+        paragraphIndex: source.paragraphIndex,
+        paragraphOffset: 0,
+      );
+    }
     final i = saved == null
         ? -1
-        : book.chapters.indexWhere((c) => c.id == saved.chapterId);
+        : book.chapters.indexWhere((c) => c.id == saved!.chapterId);
     _chapter = i < 0 ? 0 : i;
     _chapterId = book.chapters[_chapter!].id;
     if (i < 0) return;
@@ -458,12 +477,27 @@ class _ReaderViewState extends ConsumerState<ReaderView>
     return Scaffold(
       body: Listener(
         // Scroll & tap sama-sama mulai dari sini.
-        onPointerDown: (_) => _clock.interact(_now()),
+        onPointerDown: (_) {
+          if (widget.sourceVisit == null) _clock.interact(_now());
+        },
         child: switch ((book, saved)) {
           (AsyncData(value: final b?), AsyncData(value: final pos))
               when b.chapters.isNotEmpty =>
             () {
               _book = b;
+              final source = widget.sourceVisit;
+              if (source != null &&
+                  source.anchors.any(
+                    (a) =>
+                        a.book !=
+                            (
+                              bookId: b.id,
+                              contentRevision: b.contentRevision,
+                            ) ||
+                        !b.chapters.any((c) => c.id == a.chapterId),
+                  )) {
+                return _bare('Sumber ini udah gak tersedia.');
+              }
               if (_chapter == null) _start(b, pos);
               final i = _chapter!;
               if (_finished) {
@@ -498,16 +532,26 @@ class _ReaderViewState extends ConsumerState<ReaderView>
                       chrome: _chrome,
                       prefs: _prefs,
                       restoreTo: _restoreTo,
+                      sourceVisit: widget.sourceVisit,
                       onPosition: (spot) {
                         _spot = spot;
-                        _saveLater?.cancel();
-                        _saveLater = Timer(_saveDelay, () => _save().ignore());
+                        if (widget.sourceVisit == null) {
+                          _saveLater?.cancel();
+                          _saveLater = Timer(
+                            _saveDelay,
+                            () => _save().ignore(),
+                          );
+                        }
                       },
                       onParagraphTap: _openMeaning,
                       openGroup: _openGroup,
                       onNext: i + 1 < b.chapters.length
                           ? () => _goTo(b, i + 1)
                           : () {
+                              if (widget.sourceVisit != null) {
+                                context.pop();
+                                return;
+                              }
                               // Posisi tersimpan = ujung buku, rak: "Kelar!".
                               final last =
                                   _text.currentState?._paras.lastOrNull;
@@ -568,17 +612,28 @@ class _ReaderViewState extends ConsumerState<ReaderView>
                                       _sheetOpen && _lastSheet == _Sheet.toc,
                                   aaOpen: _sheetOpen && _lastSheet == _Sheet.aa,
                                 ),
-                                bottom: ReaderChatDock(
-                                  progress: progress,
-                                  onChat: _openingChat || !chatReady
-                                      ? null
-                                      : () => _openChat(),
-                                  label: f >= 0.999
-                                      ? 'Bab ${i + 1} beres'
-                                      : '±${readingMinutes(left)} mnt lagi',
-                                ),
+                                bottom: widget.sourceVisit != null
+                                    ? null
+                                    : ReaderChatDock(
+                                        progress: progress,
+                                        onChat: _openingChat || !chatReady
+                                            ? null
+                                            : () => _openChat(),
+                                        label: f >= 0.999
+                                            ? 'Bab ${i + 1} beres'
+                                            : '±${readingMinutes(left)} mnt lagi',
+                                      ),
                               ),
                             ),
+                            if (widget.sourceVisit != null)
+                              Positioned(
+                                left: Layout.margin,
+                                right: Layout.margin,
+                                bottom:
+                                    MediaQuery.paddingOf(context).bottom +
+                                    Space.s3,
+                                child: _visitActions(),
+                              ),
                             if (_prefs.showProgressLine)
                               ReaderProgressLine(progress: progress),
                           ],
@@ -595,6 +650,21 @@ class _ReaderViewState extends ConsumerState<ReaderView>
       ),
     );
   }
+
+  Widget _visitActions() => Column(
+    mainAxisSize: MainAxisSize.min,
+    spacing: Space.s2,
+    children: [
+      AppButton.primary(
+        label: 'Balik ke obrolan',
+        onPressed: () => context.pop(),
+      ),
+      AppButton.secondary(
+        label: 'Lanjut baca semula',
+        onPressed: () => context.pop(ReaderReturn.reading),
+      ),
+    ],
+  );
 
   /// Belum ada buku buat ditampilin: kapsul atas buat balik doang.
   Widget _bare([String? message]) => Stack(
@@ -629,6 +699,7 @@ class _ChapterText extends ConsumerStatefulWidget {
     required this.onParagraphTap,
     required this.onNext,
     this.openGroup,
+    this.sourceVisit,
   });
 
   final ReaderBook book;
@@ -649,6 +720,7 @@ class _ChapterText extends ConsumerStatefulWidget {
   /// Grup yang lagi dibuka di sheet Artinya: distabilo, scrim dibolongin di
   /// situ.
   final int? openGroup;
+  final ChatSource? sourceVisit;
   final VoidCallback onNext;
 
   @override
@@ -826,8 +898,30 @@ class _ChapterTextState extends ConsumerState<_ChapterText>
   /// Taruh titik tersimpan di ±⅓ tinggi layar, biar ada konteks di atasnya.
   void _restore(List<ReaderParagraph> paras) {
     final spot = widget.restoreTo;
-    if (spot != null && _place(spot, MediaQuery.sizeOf(context).height / 3)) {
-      _greet(paras, spot);
+    if (spot != null) {
+      final source = widget.sourceVisit;
+      var target = spot;
+      var y = MediaQuery.sizeOf(context).height / 3;
+      if (source != null) {
+        final anchor = source.anchors.first;
+        final box = _box(spot.index);
+        if (box is RenderParagraph && box.size.height > 0) {
+          final rects = box.getBoxesForSelection(
+            TextSelection(baseOffset: anchor.start, extentOffset: anchor.end),
+          );
+          if (rects.isNotEmpty) {
+            target = (
+              index: spot.index,
+              offset: rects.first.top / box.size.height,
+            );
+            if (rects.last.bottom - rects.first.top >
+                MediaQuery.sizeOf(context).height / 2) {
+              y = MediaQuery.paddingOf(context).top + Layout.touch + Space.s5;
+            }
+          }
+        }
+      }
+      if (_place(target, y) && source == null) _greet(paras, spot);
     }
     if (_scroll.hasClients) _track();
     // Baru keliatan setelah di posisi yang bener (lihat AnimatedOpacity).
@@ -1084,9 +1178,35 @@ class _ChapterTextState extends ConsumerState<_ChapterText>
     final pad = MediaQuery.paddingOf(context);
     final loaded = paragraphs is AsyncData;
     final paras = switch (paragraphs) {
-      AsyncData(:final value) => _withoutTitleHeading(value, chapter.title),
+      AsyncData(:final value) =>
+        widget.sourceVisit == null
+            ? _withoutTitleHeading(value, chapter.title)
+            : value,
       _ => const <ReaderParagraph>[],
     };
+    if (loaded && widget.sourceVisit != null) {
+      try {
+        for (final anchor in widget.sourceVisit!.anchors.where(
+          (a) => a.chapterId == chapter.id,
+        )) {
+          final paragraph = paras
+              .where((p) => p.index == anchor.paragraphIndex)
+              .firstOrNull;
+          if (paragraph == null) throw const FormatException('Sumber hilang');
+          anchor.validate((
+            book: (
+              bookId: widget.book.id,
+              contentRevision: widget.book.contentRevision,
+            ),
+            chapterId: chapter.id,
+            paragraphIndex: paragraph.index,
+            text: paragraph.text,
+          ), anchor.book);
+        }
+      } on FormatException {
+        return const Center(child: Text('Sumber ini udah gak tersedia.'));
+      }
+    }
     _paras = paras;
     final translated =
         ref.watch(translatedGroupsProvider(chapter.id)).value ?? const {};
@@ -1169,7 +1289,10 @@ class _ChapterTextState extends ConsumerState<_ChapterText>
                       pad.bottom +
                           readerTextBottom +
                           readerDockHeight(context) -
-                          capsuleBottomHeight,
+                          capsuleBottomHeight +
+                          (widget.sourceVisit == null
+                              ? 0
+                              : Layout.touch * 2 + Space.s5),
                     ),
                     child: Stack(
                       key: _contentKey,
@@ -1237,18 +1360,17 @@ class _ChapterTextState extends ConsumerState<_ChapterText>
                                   child: switch (p.type) {
                                     // Kotak paragraf selebar kolom, termasuk sisa baris
                                     // pendek. Sela antar paragraf & margin = area kosong.
-                                    ParagraphType.paragraph => Text(
-                                      p.text,
-                                      style:
-                                          p.groupIndex == open && open != null
+                                    ParagraphType.paragraph => _paragraphText(
+                                      p,
+                                      p.groupIndex == open && open != null
                                           ? onOpen
                                           : reading,
                                     ),
                                     ParagraphType.heading => Semantics(
                                       header: true,
-                                      child: Text(
-                                        p.text,
-                                        style: StabiloType.titleSm.copyWith(
+                                      child: _paragraphText(
+                                        p,
+                                        StabiloType.titleSm.copyWith(
                                           color: c.ink,
                                         ),
                                       ),
@@ -1359,6 +1481,46 @@ class _ChapterTextState extends ConsumerState<_ChapterText>
             ),
           ),
       ],
+    );
+  }
+
+  Widget _paragraphText(ReaderParagraph paragraph, TextStyle style) {
+    final ranges =
+        widget.sourceVisit?.anchors
+            .where(
+              (a) =>
+                  a.chapterId == widget.book.chapters[widget.index].id &&
+                  a.paragraphIndex == paragraph.index,
+            )
+            .toList() ??
+        [];
+    if (ranges.isEmpty) return Text(paragraph.text, style: style);
+    ranges.sort((a, b) => a.start.compareTo(b.start));
+    final spans = <TextSpan>[];
+    var end = 0;
+    for (final range in ranges) {
+      if (range.start < end ||
+          range.end > paragraph.text.length ||
+          chatTextHash(paragraph.text) != range.paragraphHash) {
+        continue;
+      }
+      spans.add(TextSpan(text: paragraph.text.substring(end, range.start)));
+      spans.add(
+        TextSpan(
+          text: paragraph.text.substring(range.start, range.end),
+          style: TextStyle(
+            backgroundColor: context.stabilo.highlight,
+            color: context.stabilo.onHighlight,
+          ),
+        ),
+      );
+      end = range.end;
+    }
+    spans.add(TextSpan(text: paragraph.text.substring(end)));
+    return Text.rich(
+      TextSpan(children: spans),
+      style: style,
+      key: ValueKey('source-paragraph-${paragraph.index}'),
     );
   }
 

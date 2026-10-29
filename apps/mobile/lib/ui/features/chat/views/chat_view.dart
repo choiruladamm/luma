@@ -14,6 +14,7 @@ import '../view_models/chat_view_model.dart';
 import 'chat_composer.dart';
 import 'chat_copy.dart';
 import 'chat_history.dart';
+import 'chat_source_sheet.dart';
 import 'chat_session_menu.dart';
 import 'chat_sessions_view.dart';
 
@@ -27,6 +28,7 @@ class ChatView extends ConsumerStatefulWidget {
 
 class _ChatViewState extends ConsumerState<ChatView> {
   bool _leaving = false;
+  bool _sourceOpen = false;
   ChatViewModel get _vm =>
       ref.read(chatViewModelProvider(widget.bookId).notifier);
   @override
@@ -46,6 +48,40 @@ class _ChatViewState extends ConsumerState<ChatView> {
     if (!mounted) return;
     action();
     if (mounted) setState(() => _leaving = false);
+  }
+
+  Future<void> _source(ChatTurn turn, ChatSource source) async {
+    if (_sourceOpen) return;
+    setState(() => _sourceOpen = true);
+    try {
+      final request = (
+        bookId: widget.bookId,
+        sessionId: turn.sessionId,
+        turnId: turn.id,
+        attempt: turn.attempt,
+        sourceId: source.id,
+      );
+      final open = await showChatSourceSheet(
+        context,
+        request: request,
+        snapshot: source,
+      );
+      if (open != true || !mounted) return;
+      final result = await context.push<ReaderReturn>(
+        Routes.chatSource(request),
+      );
+      if (result == ReaderReturn.reading && mounted) {
+        await _navigate(() {
+          if (context.canPop()) {
+            context.pop(ReaderReturn.reading);
+          } else {
+            context.go(Routes.reader(widget.bookId));
+          }
+        });
+      }
+    } finally {
+      if (mounted) setState(() => _sourceOpen = false);
+    }
   }
 
   @override
@@ -195,6 +231,8 @@ class _ChatViewState extends ConsumerState<ChatView> {
         anchor: state.scrollAnchor,
         phase: state.phase,
         onAnchor: _vm.setScrollAnchor,
+        onSource: _source,
+        suspended: _sourceOpen,
       );
     }
     if (state.book == null) {
