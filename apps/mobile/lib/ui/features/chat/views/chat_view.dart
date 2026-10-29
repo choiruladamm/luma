@@ -150,7 +150,12 @@ class _ChatViewState extends ConsumerState<ChatView> {
                   onPressed: () =>
                       _navigate(() => context.push(Routes.settings)),
                 ),
-              if (state.canRetry)
+              if (state.canContinue)
+                AppButton.secondary(
+                  label: 'Lanjutkan',
+                  onPressed: () => unawaited(_vm.continueExploration()),
+                ),
+              if (state.canRetry && !state.canContinue)
                 AppButton.secondary(
                   label: 'Coba lagi',
                   onPressed: () => unawaited(_vm.retry()),

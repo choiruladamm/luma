@@ -2,14 +2,14 @@ import 'dart:convert';
 
 import 'models/book_chat.dart';
 
-const chatPromptVersion = 2;
+const chatPromptVersion = 3;
 const chatQuestionBytes = 2000;
 const chatHistoryBytes = 16000;
 const chatSourceBytes = 18000;
 const chatPromptBytes = 48000;
 const chatSelectorBytes = 90000;
 const chatMaxCandidates = 40;
-const chatMaxSources = 8;
+const chatMaxSources = 12;
 const chatAnswerMaxTokens = 3000;
 const chatTitleCodePoints = 120;
 
@@ -20,7 +20,7 @@ Untuk setiap kalimat yang diatasnamakan buku, semua klausanya harus didukung sou
 Periksa premis; jika salah, koreksi langsung tanpa berspekulasi bahwa bab lain membenarkannya. Cuplikan tidak mewakili seluruh buku. Jika bukti belum ditemukan, sebut batas sumber yang tersedia sambil tetap membantu. Jangan mengarang fakta buku, klaim ketiadaan seluruh buku, atau mengaku web search. Tanya balik hanya ketika salah tafsir akan melenceng jauh.
 Balas satu JSON dengan setiap key hanya sekali: {"status":"answered|partial|clarify|off_topic","parts":[{"text":"paragraf natural","kind":"book|interpretation|external|conversation","source_ids":[]}]}.
 book = fakta/parafrasa setia, wajib ID sumber. interpretation = analisismu/penerapan, boleh merujuk gagasan buku tanpa mengaku contoh ada di buku. external = pengetahuan tambahan, tanpa sitasi buku. conversation = klarifikasi/penolakan/batas cakupan. Pisahkan penjelasan konsep luar dari klaim buku; jangan menempelkan sitasi buku pada paragraf yang menjelaskan konsep luar. Semua ID harus dari sources.
-answered jika seluruh permintaan terjawab, termasuk kritik atau contoh yang diminta. partial jika masih ada bagian belum terjawab: jelaskan gap dalam conversation. Tidak perlu heading wajib atau disclaimer berulang.''';
+answered jika seluruh permintaan terjawab, termasuk kritik atau contoh yang diminta. partial jika masih ada bagian belum terjawab: jelaskan gap dalam conversation. exploration bila ada berisi catatan generatif dan cakupan yang diperiksa, BUKAN kutipan asli. Pakai sources sebagai bukti sitasi. Bila exploration.complete false, status wajib partial dan jelaskan cakupan atau kebutuhan pencarian yang masih tersisa sesuai field yang tersedia, tanpa mengarang jumlah. Jangan mengaku memeriksa bab utuh bila baru sebagian potongannya. Catatan bisa kehilangan detail; jangan menganggap semua detail buku terwakili. Tidak perlu heading wajib atau disclaimer berulang.''';
 
 int _bytes(String text) => utf8.encode(text).length;
 String chatQuestion(String text) {
@@ -117,6 +117,7 @@ ChatPrompt buildChatPrompt({
   required String title,
   String? author,
   ChatQuote? quote,
+  Map<String, Object?>? exploration,
 }) {
   if (session.id <= 0 ||
       session.book.bookId <= 0 ||
@@ -178,6 +179,19 @@ ChatPrompt buildChatPrompt({
           )
           .toList()
         ..sort((a, b) => b.sequence.compareTo(a.sequence));
+  final data = <String, Object?>{
+    'book': {'title': title, 'author': author ?? ''},
+    'question': q,
+    'history': <Map<String, String>>[],
+    if (quote != null) 'selectedQuote': quote.text,
+    if (quote != null) 'selectedSourceIds': selectedIds.toList(),
+    'sources': [for (final s in sources) _sourceData(s)],
+    'exploration': ?exploration,
+  };
+  final availableHistory =
+      chatPromptBytes -
+      _bytes(chatAnswerSystemPrompt) -
+      _bytes(jsonEncode(data));
   final kept = <ChatTurn>[];
   var used = 0;
   for (final t in turns) {
@@ -190,19 +204,16 @@ ChatPrompt buildChatPrompt({
       continue; // Corrupt/stale history is readable as an error, never trusted context.
     }
     final size = _bytes(jsonEncode(_historyData(t)));
-    if (used + size > chatHistoryBytes) break;
+    if (used + size > chatHistoryBytes ||
+        used + size + kept.length > availableHistory) {
+      break;
+    }
     kept.add(t);
     used += size;
   }
   final chronological = kept.reversed.toList();
-  final user = jsonEncode({
-    'book': {'title': title, 'author': author ?? ''},
-    'question': q,
-    'history': [for (final t in chronological) _historyData(t)],
-    if (quote != null) 'selectedQuote': quote.text,
-    if (quote != null) 'selectedSourceIds': selectedIds.toList(),
-    'sources': [for (final s in sources) _sourceData(s)],
-  });
+  data['history'] = [for (final t in chronological) _historyData(t)];
+  final user = jsonEncode(data);
   if (_bytes(user) + _bytes(chatAnswerSystemPrompt) > chatPromptBytes) {
     throw const FormatException('Prompt melebihi batas');
   }
@@ -320,13 +331,28 @@ ChatQueryPlan parseChatQueryPlan(String raw) {
   if (_bytes(raw) > chatPromptBytes) {
     throw const FormatException('Query plan melebihi batas');
   }
-  final Object? value = jsonDecode(raw);
+  final Object? value = decodeChatAnswerJson(raw);
   if (value is! Map ||
       value['query'] is! String ||
       value['needs_clarification'] is! bool) {
     throw const FormatException('Query plan tidak valid');
   }
+  final strategy = value['strategy'] == null
+      ? ChatSearchStrategy.specific
+      : ChatSearchStrategy.values
+            .where((s) => s.name == value['strategy'])
+            .firstOrNull;
+  final queries = value['queries'] ?? <Object?>[];
+  if (strategy == null ||
+      queries is! List ||
+      queries.length > 3 ||
+      queries.any((q) => q is! String) ||
+      queries.toSet().length != queries.length) {
+    throw const FormatException('Strategi/query tidak valid');
+  }
   return ChatQueryPlan(
+    strategy: strategy,
+    queries: [for (final q in queries) chatQuestion(q as String)],
     englishQuery: chatQuestion(value['query'] as String),
     needsClarification: value['needs_clarification'] as bool,
   );

@@ -226,7 +226,7 @@ Default **DeepSeek V4.1 Flash**. Hasil dan alasannya: [llm-evals.md](llm-evals.m
 
 ## Percakapan Book Chat v2 (#137)
 
-`chatPromptVersion = 2`. AI menjawab teks biasa dalam beberapa paragraf natural,
+`chatPromptVersion = 3` (#138), format jawaban tetap v2. AI menjawab teks biasa dalam beberapa paragraf natural,
 termasuk interpretasi, kritik, penerapan dan pengetahuan umum yang relevan dengan
 buku. Pertanyaan sepenuhnya di luar topik buku ditolak singkat. Fakta buku harus
 mengikuti sources; pengetahuan tambahan tidak diberi sitasi buku palsu. Instruksi
@@ -243,23 +243,77 @@ Validasi struktural tidak menjamin semua klaim model benar; keterbatasan #136
 masih berlaku dan ditindaklanjuti lewat dogfooding, bukan gate kesempurnaan.
 
 Budget UTF-8 bytes: question2000, history16000, sources18000, prompt termasuk
-system48000; kandidat40/sumber8 tetap. History dari turn done tanpa error pada
+system48000; kandidat40; selector8, snapshot akhir maksimal12 sumber dalam18000bytes. History dari turn done tanpa error pada
 sesi/book/revision aktif, termasuk partial/clarify/off-topic dan legacy not_found.
 History adalah konteks percakapan, bukan bukti buku; raw/interrupted/failed tidak
 ikut. Jawaban utuh dipertahankan sampai budget; sumber stale/corrupt tetap ditolak.
-Sesi lama dapat melanjutkan prompt v2 tanpa menulis ulang jawaban v1. Snapshot
+Sesi lama dapat melanjutkan prompt terbaru tanpa menulis ulang jawaban v1. Snapshot
 jawaban v2 memakai formatVersion2; v1 tetap terbaca dengan note tetap lamanya.
 
 Tidak ada request saat buka history/restart/settings. Pada send/retry eksplisit,
 no-source/ambiguity tetap dapat memanggil answer untuk bantuan atau klarifikasi;
 ambiguity tidak memanggil embedding/selector. Renderer chat existing menampilkan
 semua paragraf dan chip sumber yang tersedia tanpa format heading wajib.
-Retrieval adaptif, penelusuran lengkap lintas bab dan source visit #122 adalah
-pekerjaan lanjutan:8sumber tidak boleh diklaim sebagai cakupan seluruh buku.
+Retrieval adaptif memakai jalur #138 di bawah. Source visit tetap #122; sumber terpilih tidak berarti seluruh buku sudah diperiksa.
 
 Model aplikasi tetap dari Pengaturan. **Live evaluation** memakai GLM5.3Flash
 primary, Qwen3.8Flash fallback sesuai instruksi user; ini tidak mengganti model
 Pengaturan. Tidak ada web search atau langkah audit draf tambahan pada runtime.
+
+## Penelusuran adaptif (#138)
+
+Rewrite existing sekaligus memilih specific/crossChapter/global/correction/offTopic,
+query utama dan maksimal3subquery Inggris. Tidak ada request classifier terpisah.
+Ambiguity/off-topic melewati embedding dan selector. Spesifik/koreksi/lintas bab
+memakai index durable #134, dense original + setiap subquery + BM25, RRF ke40kandidat,
+selector maksimal8 dan penambahan window tetangga bab yang sama bila masih muat.
+Kutipan aktif tetap wajib tercakup utuh. Selector dapat mengembalikan maksimal2
+missing_queries, tanpa retry output/HTTP invalid. Awal + maksimal2putaran tambahan,
+maksimal3subquery baru per kiriman. Pending query dan pilihan berhasil disimpan;
+Lanjutkan mencari kebutuhan tersisa. Original question tetap di-embed bersama
+subquery baru pada tiap putaran; belum ada cache embedding query. Batas keseluruhan
+64subquery per rangkaian; setelah itu kirim pertanyaan baru untuk penelusuran baru.
+
+Global tidak memakai embedding/top8sebagai proxy buku. Semua teks asli, termasuk
+paragraf tanpa groupIndex, diurutkan sesuai bab/paragraf, dipecah menjadi window
+tanpa overlap ≤1200UTF-16units (surrogate aman). Setiap batch ≤8window dan12000bytes
+teks+metadata, maksimal3batch per kiriman. Model memperbarui catatan kumulatif
+≤8catatan/1200karakter/6000bytes dengan ≤64ID window asli. Catatan adalah ringkasan
+generatif yang bisa kehilangan detail, bukan kutipan atau jaminan factuality.
+Bukti window digabung per chapter.id dengan range asli; overlap dideduplikasi,
+gap tetap berupa anchor terpisah. Sumber akhir tetap ≤12/18000bytes; source_ids
+catatan dipetakan ulang ke snapshot akhir. Batch yang melampaui kontrak/sumber
+berhenti tanpa retry dan tanpa memajukan cursor, bukan memotong sitasi diam-diam.
+
+Budget per kiriman: maksimal7completion logis termasuk answer, total ceiling
+8000outputtoken,280000inputbytes kumulatif. Planner/selector600token, catatan1400,
+answer3000. Maksimal70request embedding dan3200000inputbytes kumulatif termasuk
+fallback model-space existing. Seluruh buku tetap dibatasi1500000bytes; batch
+dokumen64. Stop mengambil putaran baru setelah100detik; pre-dispatch ceiling150detik,
+ViewModel membatalkan retrieval setelah3menit. Answer memakai waiting30s/stall20s
+existing. In-flight request ikut cancel/timer; ceiling waktu bukan jaminan billing.
+Compatibility mandatory-reasoning existing bisa menambah satu HTTP400+fallback
+per completion (maksimal14HTTP chat); bukan retry jawaban invalid atau HTTP umum.
+Model aplikasi tetap dari Pengaturan, tidak auto-switch GLM/Qwen untuk mempercantik
+hasil. Live harness mengirim reasoning yang didukung metadata sejak awal.
+
+Checkpoint `chat_turns.exploration` policy1 memuat book/revision/session/turn,
+question/model, manifest seluruh window, strategi/query, cursor/total/catatan atau
+searched/pending/selected IDs. Commit setelah batch tervalidasi, di luar transaksi
+network; owner/attempt/phase/revision/hash diperiksa sebelum network dan commit.
+Lanjutkan eksplisit membuat turn baru dan rebind checkpoint ke ID baru dalam
+transaksi, mempertahankan jawaban/sumber turn lama. Complete global berarti semua
+window diproses, bukan setiap detail dipertahankan dalam catatan. Partial global
+selalu diberi status partial serta hitungan cakupan dari aplikasi; pencarian
+partial menyebut kebutuhan yang belum diperiksa. Restart/settings/hydrate tidak
+mengirim request. Stop/error menyimpan batch durable terakhir; crash setelah
+provider sukses sebelum commit masih bisa mengulang biaya batch itu.
+
+`make chat-adaptive-live` adalah diagnostic produksi global+continuation pada buku
+sintetis asli4bab, GLM primary; `m=qwen/qwen3.8-flash` fallback eksplisit. Guard
+memakai ledger berbayar #136 tanpa menghapus reservasi lama, menolak duplicate
+request/embedding pada diagnostic ini. Live tersebut tidak mengukur retrieval
+buku nyata, cold/warm embedding billing, atau performa device.
 
 ## Kontrak Book Chat v1 (arsip #114)
 

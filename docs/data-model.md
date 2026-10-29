@@ -152,6 +152,7 @@ Log append-only request LLM, terpisah dari cache `ai_results` (`createdAt`-nya k
 | 7 | `books.originalTitle`, `originalAuthor`, `useDefaultCover` (ubah judul + penulis, #69). Baris lama: `null`, `null`, `false` |
 | 8 | `books.contentRevision` default 1, `chat_sessions`, `chat_turns` (#115). Tabel chat kosong saat upgrade; semua data lama dipertahankan |
 | 9 | `chat_indexes` dan `chat_vectors` (#134), kosong saat upgrade; seluruh data user dipertahankan |
+| 10 | `chat_turns.exploration` nullable JSON (#138); baris lama null, history dan index dipertahankan |
 
 Tiap ubah tabel: naikkan `schemaVersion`, tambah langkah di `onUpgrade`, dan test migrasi dari versi sebelumnya (data tetap utuh, schema hasil migrasi sama dengan install baru). Restore backup dari schema lama ikut dimigrasi saat database dibuka ([backup.md](backup.md)).
 
@@ -205,6 +206,7 @@ Arsip tetap terbaca, tetapi tidak boleh dipakai untuk prompt baru atau jump yang
 | quote | text? | JSON ChatQuote: anchors + translation opsional (UI saja) |
 | answer | text? | JSON jawaban tervalidasi: status + claims `{text,sourceIds}`; note diturunkan dari status, tidak mempercayai note model |
 | sources | text default `[]` | JSON daftar sumber attempt: id/chapterTitle/anchors, termasuk snapshot asli |
+| exploration | text? | Checkpoint penelusuran policy1; identitas turn/sesi/buku/revision/model, manifest, rencana/cursor/catatan atau pending query. Null pada history lama; bukan jawaban atau sumber asli |
 | draft | text default kosong | Respons mentah/parsial, dipertahankan saat stop/cut/restart; tidak menjadi history terpercaya |
 | phase | text | Nama ChatPhase; teks mentah agar enum rusak ditangani mapper, bukan textEnum yang melempar saat query |
 | attempt | int default 1 | Generation retry pada turn yang sama |
@@ -258,3 +260,14 @@ dan conversation tidak memakai sitasi buku, interpretation dapat merujuk gagasan
 asal. Versi/jenis/ID tidak dikenal dan key duplikat ditolak. Finalize tetap mengecek
 exact frozen sources untuk setiap referensi. Binary lama tidak dijanjikan membaca
 format2; tidak ada downgrade data.
+
+### Checkpoint penelusuran (#138)
+
+Schema10 menambah satu kolom nullable, tanpa tabel/layanan baru. FK sesi/buku existing
+menghapus checkpoint bersama turn. Payload diperiksa sebelum dipakai, terikat ke
+ID turn dan question asli, model/policy/prompt dan manifest seluruh window; payload
+rusak tidak memulai request atau menghapus jawaban lama. Lanjutkan menyalin progres
+ke turn baru dan mengganti owner turnId secara atomik; finished answer/source lama
+tidak ditulis ulang. Retry interrupted tetap satu turn; pergantian model/prompt
+pada retry eksplisit memulai checkpoint baru. Jangan downgrade binary schema9;
+gunakan backup sebelum upgrade sebagai rollback data.

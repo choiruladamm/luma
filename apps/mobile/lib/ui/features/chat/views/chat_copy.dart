@@ -60,6 +60,11 @@ String chatTimeGroup(DateTime at, DateTime now) {
 
 extension ChatIndexCopy on ChatState {
   String? get indexLabel {
+    final examined = explorationProgress;
+    if ((phase == ChatPhase.retrieving || phase == ChatPhase.slow) &&
+        examined != null) {
+      return 'Lagi meriksa isi buku… ${examined.completed}/${examined.total} potongan';
+    }
     final progress = indexProgress;
     if ((phase != ChatPhase.retrieving && phase != ChatPhase.slow) ||
         progress == null ||

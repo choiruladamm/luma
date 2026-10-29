@@ -10,6 +10,7 @@ import 'package:luma/data/repositories/chat_repository.dart';
 import 'package:luma/data/services/api_key_store.dart';
 import 'package:luma/data/services/openrouter_service.dart';
 import 'package:luma/domain/chat_prompt.dart';
+import 'package:luma/domain/chat_exploration.dart';
 import 'package:luma/domain/chat_retrieval.dart';
 import 'package:luma/domain/models/ai_reply.dart';
 import 'package:luma/domain/models/book.dart';
@@ -36,6 +37,13 @@ class ChatAdapter implements HttpClientAdapter {
   bool clarification = false;
   bool emptySelection = false;
   bool badRewrite = false;
+  String strategy = 'specific';
+  List<String> queries = [];
+  List<String> missingQueries = [];
+  final batches = <List<String>>[];
+  int? badBatch;
+  Future<void> Function()? onBatch;
+
   String answerId = 'S1';
   Future<void> Function()? onSelect;
   Future<void> Function()? onEmbedding;
@@ -85,12 +93,29 @@ class ChatAdapter implements HttpClientAdapter {
           : jsonEncode({
               'query': 'Who keeps the garden?',
               'needs_clarification': clarification,
+              'strategy': strategy,
+              'queries': queries,
             });
+    } else if (system == chatGlobalSystem) {
+      final user =
+          jsonDecode((messages.last as Map)['content'] as String) as Map;
+      final batch = (user['newWindowIds'] as List).cast<String>();
+      batches.add(batch);
+      await onBatch?.call();
+      raw = jsonEncode({
+        'notes': [
+          {
+            'text': 'Gagasan diperiksa.',
+            'source_ids': [badBatch == batches.length ? 'S99999' : batch.first],
+          },
+        ],
+      });
     } else if (system == chatSelectionSystem) {
       await onSelect?.call();
       raw = jsonEncode({
         'resolved_question': 'Who keeps it?',
         'selected': emptySelection ? [] : [1, 2],
+        'missing_queries': missingQueries,
       });
     } else {
       final hasSources =
@@ -256,6 +281,257 @@ void main() {
     ),
     keys,
   );
+
+  Future<void> largeBook() async {
+    for (var i = 1; i <= 32; i++) {
+      await db
+          .into(db.paragraphs)
+          .insert(
+            ParagraphsCompanion.insert(
+              chapterId: chapter,
+              paragraphIndex: i,
+              type: ParagraphType.paragraph,
+              content: 'Ordered paragraph $i about the garden.',
+              groupIndex: const Value(null),
+            ),
+          );
+    }
+  }
+
+  Future<ChatTurn> latest() async =>
+      (await chat.watchTurns(book.bookId, turn.sessionId).first).last;
+
+  test('global scans actual ordered content, persists partial, continues without repeating or changing prior answer', () async {
+    await largeBook();
+    adapter.strategy = 'global';
+    final progress = <int>[];
+    final prepared = (await context.prepare(
+      turn,
+      onExplorationProgress: (n, _) => progress.add(n),
+    ))!;
+    expect(adapter.embeddingModels, isEmpty);
+    expect(adapter.batches, hasLength(3));
+    expect(progress, [0, 8, 16, 24]);
+    final frame = (await prepared.stream().toList()).last;
+    expect(frame.answer!.status, ChatAnswerStatus.partial);
+    expect(frame.answer!.blocks.last.text, contains('24/34'));
+    await chat.finalize(
+      turn.attemptRef,
+      phase: ChatPhase.done,
+      draft: frame.draft,
+      answer: frame.answer,
+    );
+    final frozen = await (db.select(
+      db.chatTurns,
+    )..where((t) => t.id.equals(turn.id))).getSingle();
+    final previous = await latest();
+    expect(chatCanContinue(previous), isTrue);
+    context.dispose();
+    context = reopenContext();
+    final count = adapter.requests.length;
+    expect((await latest()).exploration, previous.exploration);
+    expect(adapter.requests.length, count); // hydration never sends
+    final continuation = await chat.continueExploration(previous, model: model);
+    final next = (await context.prepare(continuation))!;
+    final finalFrame = (await next.stream().toList()).last;
+    await chat.finalize(
+      continuation.attemptRef,
+      phase: ChatPhase.done,
+      draft: finalFrame.draft,
+      answer: finalFrame.answer,
+    );
+    final all = adapter.batches.expand((b) => b).toList();
+    expect(all, [for (var i = 1; i <= 34; i++) 'S$i']);
+    expect(all.toSet(), hasLength(34));
+    expect(
+      ChatExploration.parse((await latest()).exploration!).complete,
+      isTrue,
+    );
+    expect(chatCanContinue(await latest()), isFalse);
+    expect(
+      await (db.select(
+        db.chatTurns,
+      )..where((t) => t.id.equals(turn.id))).getSingle(),
+      frozen,
+    );
+    expect(await db.select(db.readingProgress).get(), isEmpty);
+    expect(await db.select(db.readingSessions).get(), isEmpty);
+    expect(
+      (await db.select(db.books).get()).every(
+        (b) => b.readingSeconds == 0 && b.finishedAt == null,
+      ),
+      isTrue,
+    );
+  });
+
+  test('bad batch is not retried; durable earlier batch survives explicit continuation', () async {
+    await largeBook();
+    adapter.strategy = 'global';
+    adapter.badBatch = 2;
+    await expectLater(context.prepare(turn), fails(AiError.invalidResponse));
+    expect(adapter.batches.length, 2);
+    await chat.finalize(
+      turn.attemptRef,
+      phase: ChatPhase.failed,
+      error: AiError.invalidResponse,
+    );
+    final saved = await latest();
+    expect(ChatExploration.parse(saved.exploration!).cursor, 8);
+    adapter.badBatch = null;
+    final continued = await chat.continueExploration(saved, model: model);
+    await context.prepare(continued);
+    expect(adapter.batches[2].first, 'S9');
+  });
+
+  test(
+    'cancelled global response cannot commit coverage or freeze sources',
+    () async {
+      await largeBook();
+      adapter.strategy = 'global';
+      final cancel = CancelToken();
+      adapter.onBatch = () async {
+        cancel.cancel();
+        await chat.finalize(turn.attemptRef, phase: ChatPhase.stopped);
+      };
+      await expectLater(
+        context.prepare(turn, cancel: cancel),
+        throwsA(anything),
+      );
+      expect(ChatExploration.parse((await latest()).exploration!).cursor, 0);
+      expect((await latest()).answer, isNull);
+      expect(adapter.batches, hasLength(1));
+    },
+  );
+
+  test('checkpoint rejects changed content, foreign identity and changed model before paid work', () async {
+    await largeBook();
+    adapter.strategy = 'global';
+    await context.prepare(turn);
+    await chat.finalize(turn.attemptRef, phase: ChatPhase.stopped);
+    final saved = await latest();
+    await expectLater(
+      chat.continueExploration(saved, model: 'different/model'),
+      throwsFormatException,
+    );
+    final continued = await chat.continueExploration(saved, model: model);
+    await (db.update(db.paragraphs)..where(
+          (p) => p.chapterId.equals(chapter) & p.paragraphIndex.equals(1),
+        ))
+        .write(const ParagraphsCompanion(content: Value('changed')));
+    final count = adapter.requests.length;
+    await expectLater(
+      context.prepare(continued),
+      fails(AiError.invalidResponse),
+    );
+    expect(adapter.requests.length, count);
+  });
+
+  test('off-topic and clarification skip indexing; cross-chapter queries share one query embedding request', () async {
+    adapter.strategy = 'offTopic';
+    await context.prepare(turn);
+    expect(adapter.embeddingModels, isEmpty);
+    adapter.strategy = 'crossChapter';
+    adapter.queries = ['early garden', 'late roses'];
+    await context.prepare(await first());
+    final query =
+        adapter.requests.where((r) => r.path == '/embeddings').last.data as Map;
+    expect(query['input'], hasLength(3));
+    expect((query['input'] as List)[1], contains('early garden'));
+    expect((query['input'] as List)[2], contains('late roses'));
+    expect(documentRequests(), 1);
+  });
+
+  test('missing evidence triggers bounded fresh searches and reuses document index', () async {
+    adapter.missingQueries = ['other evidence'];
+    await context.prepare(turn);
+    expect(
+      adapter.requests.where((r) => r.path == '/embeddings'),
+      hasLength(3),
+    ); // docs plus two query batches
+    expect(documentRequests(), 1);
+    expect(
+      adapter.requests.where((r) => r.path != '/embeddings'),
+      hasLength(3),
+    ); // plan and two selectors
+  });
+
+  test('search cap yields a durable continuation and does not repeat completed subqueries', () async {
+    var selections = 0;
+    adapter.onSelect = () async {
+      selections++;
+      adapter.missingQueries = ['Missing part $selections'];
+    };
+    final prepared = (await context.prepare(turn))!;
+    final frame = (await prepared.stream().toList()).last;
+    expect(frame.answer!.status, ChatAnswerStatus.partial);
+    expect(frame.answer!.blocks.last.text, contains('kebutuhan pencarian'));
+    await chat.finalize(
+      turn.attemptRef,
+      phase: ChatPhase.done,
+      draft: frame.draft,
+      answer: frame.answer,
+    );
+    final previous = await latest();
+    final work = ChatExploration.parse(previous.exploration!);
+    expect(work.searchedQueries, hasLength(3));
+    expect(work.pendingQueries, ['Missing part 3']);
+    final attempts = await Future.wait([
+      for (var i = 0; i < 2; i++)
+        chat
+            .continueExploration(previous, model: model)
+            .then<ChatTurn?>((t) => t)
+            .catchError((Object _) => null),
+    ]);
+    expect(attempts.whereType<ChatTurn>(), hasLength(1));
+    final continuation = attempts.whereType<ChatTurn>().single;
+    adapter.onSelect = () async {
+      adapter.missingQueries = [];
+    };
+    final resumed = (await context.prepare(continuation))!;
+    expect(resumed.prompt.sources, isNotEmpty);
+    final saved = ChatExploration.parse((await latest()).exploration!);
+    expect(saved.searchedQueries, [...work.searchedQueries, 'Missing part 3']);
+    expect(saved.complete, isTrue);
+    expect(documentRequests(), 1);
+  });
+
+  test('long valid conversation history resolves in planner without overflowing query embeddings', () async {
+    expect(await chat.prepareSources(turn.attemptRef, []), isTrue);
+    await chat.finalize(
+      turn.attemptRef,
+      phase: ChatPhase.done,
+      answer: ChatAnswer(
+        formatVersion: 2,
+        status: ChatAnswerStatus.answered,
+        blocks: [
+          ChatAnswerBlock(
+            text: 'Context ' * 1400,
+            kind: ChatAnswerKind.conversation,
+            sources: [],
+          ),
+        ],
+      ),
+    );
+    final next = await chat.appendTurn(
+      book,
+      turn.sessionId,
+      question: 'Lalu siapa yang menjaga taman itu?',
+      model: model,
+      promptVersion: chatPromptVersion,
+    );
+    final prepared = (await context.prepare(next))!;
+    expect(prepared.prompt.historyTurnIds, [turn.id]);
+    final queryRequest =
+        adapter.requests.where((r) => r.path == '/embeddings').last.data as Map;
+    expect(
+      (queryRequest['input'] as List).every(
+        (q) => utf8.encode(q as String).length <= 8000,
+      ),
+      isTrue,
+    );
+    final planRequest = adapter.requests.first.data as Map;
+    expect(jsonEncode(planRequest), contains('Context Context'));
+  });
 
   test('concurrent preparation shares document indexing work', () async {
     final second = await first();

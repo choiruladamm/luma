@@ -325,6 +325,7 @@ class LifecycleContext implements ChatContextRepository {
     ChatTurn target, {
     CancelToken? cancel,
     void Function(int, int)? onIndexProgress,
+    void Function(int, int)? onExplorationProgress,
   }) async {
     calls++;
     cancels.add(cancel);

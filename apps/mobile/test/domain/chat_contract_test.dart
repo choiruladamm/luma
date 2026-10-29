@@ -182,7 +182,7 @@ void main() {
     expect(result.blocks.map((b) => b.kind), ChatAnswerKind.values);
     expect(identical(result.blocks.first.sources.single, s), isTrue);
     expect(result.note, isEmpty);
-    expect(chatPromptVersion, 2);
+    expect(chatPromptVersion, 3);
   });
 
   test('partial, clarification and off-topic responses can explain themselves without book evidence', () {
@@ -511,7 +511,12 @@ void main() {
     expect(() => chatTitle('  '), throwsFormatException);
     expect(() => prompt(title: 'x' * chatPromptBytes), throwsFormatException);
     expect(
-      () => prompt(sources: List.generate(9, (i) => source(id: 'S${i + 1}'))),
+      () => prompt(
+        sources: List.generate(
+          chatMaxSources + 1,
+          (i) => source(id: 'S${i + 1}'),
+        ),
+      ),
       throwsFormatException,
     );
     final huge = ChatSource(
@@ -522,8 +527,10 @@ void main() {
     expect(fitChatSources([huge, s]), [s]);
     expect(() => prompt(sources: [huge]), throwsFormatException);
     expect(
-      fitChatSources(List.generate(10, (i) => source(id: 'S${i + 1}'))).length,
-      8,
+      fitChatSources(
+        List.generate(chatMaxSources + 2, (i) => source(id: 'S${i + 1}')),
+      ).length,
+      chatMaxSources,
     );
   });
 

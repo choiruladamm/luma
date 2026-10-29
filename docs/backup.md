@@ -105,7 +105,7 @@ luma-backup-20261006-2130.zip
 
 Snapshot `VACUUM INTO` ikut membawa `chat_sessions`, `chat_turns`, revision isi,
 judul manual, anchor scroll dan snapshot sumber. Format backup tetap1; manifest
-mengikuti schema DB (sekarang9), tanpa model/key atau isi percakapan. Model attempt
+mengikuti schema DB (sekarang10), tanpa model/key atau isi percakapan. Model attempt
 tersimpan di DB sebagaimana sebelumnya; API key tetap hanya di secure storage.
 
 Backup saat streaming menangkap checkpoint durable terakhir yang konsisten,
@@ -136,6 +136,16 @@ pekerjaan lama sebelum DB ditutup. Cache tidak menyimpan API key.
 
 Snapshot SQLite membawa jawaban v1 maupun formatVersion2 apa adanya. Restore
 mempertahankan teks, jenis paragraf dan source snapshots; decoder baru membaca
-keduanya. Tidak ada transformasi atau penghapusan jawaban lama. Schema tetap9;
+keduanya. Tidak ada transformasi atau penghapusan jawaban lama. Perubahan #137 dahulu tetap schema9;
 format JSON baru tidak menjanjikan dukungan pada binary aplikasi lama. Round-trip
 backup/restore campuran kedua format dibuktikan dengan database file asli.
+
+### Progres penelusuran (#138)
+
+Snapshot schema10 menyertakan JSON exploration per turn beserta cursor/catatan atau
+query tersisa. Schema9dan sebelumnya dimigrasi dengan kolom nullable tanpa mengubah
+history/index/progres baca. Restore/hydrate tidak melakukan resume otomatis; user
+memilih Lanjutkan, lalu checkpoint divalidasi lagi terhadap isi buku/model/policy.
+Barrier lifecycle existing juga meliputi batch scan dan continuation. Repository
+asal disposed sebelum swap, sehingga callback lama tidak dapat menulis checkpoint
+ke database pengganti. Manifest ZIP tetap format1 dan tidak mengandung isi catatan.

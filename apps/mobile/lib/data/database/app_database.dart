@@ -262,6 +262,7 @@ class ChatTurns extends Table {
   TextColumn get answer => text().nullable()();
   TextColumn get sources => text().withDefault(const Constant('[]'))();
   TextColumn get draft => text().withDefault(const Constant(''))();
+  TextColumn get exploration => text().nullable()();
 
   /// Teks mentah supaya mapper #116 bisa menangani enum backup yang rusak.
   TextColumn get phase => text()();
@@ -348,7 +349,7 @@ class AppDatabase extends _$AppDatabase {
   // test/data/migration_test.dart. Backup dari versi lama ikut dimigrasi pas
   // di-restore.
   @override
-  int get schemaVersion => 9;
+  int get schemaVersion => 10;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -385,6 +386,9 @@ class AppDatabase extends _$AppDatabase {
         await m.createTable(chatSessions);
         await m.createIndex(chatSessionsBookOpened);
         await m.createTable(chatTurns);
+      }
+      if (from >= 8 && from < 10) {
+        await m.addColumn(chatTurns, chatTurns.exploration);
       }
       if (from < 9) {
         await m.createTable(chatIndexes);

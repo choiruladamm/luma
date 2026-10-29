@@ -88,6 +88,13 @@ final v8 = [
   '''CREATE TABLE chat_turns (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, session_id INTEGER NOT NULL REFERENCES chat_sessions(id) ON DELETE CASCADE, sequence INTEGER NOT NULL, question TEXT NOT NULL, quote TEXT NULL, answer TEXT NULL, sources TEXT NOT NULL DEFAULT '[]', draft TEXT NOT NULL DEFAULT '', phase TEXT NOT NULL, attempt INTEGER NOT NULL DEFAULT 1, model TEXT NOT NULL, prompt_version INTEGER NOT NULL, error TEXT NULL, http_status INTEGER NULL, created_at INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)), updated_at INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)), UNIQUE(session_id,sequence))''',
 ];
 
+// Frozen schema 9, before exploration checkpoints.
+final v9 = [
+  ...v8,
+  'CREATE TABLE chat_indexes (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, book_id INTEGER NOT NULL REFERENCES books(id) ON DELETE CASCADE, identity TEXT NOT NULL UNIQUE, manifest TEXT NOT NULL, chunk_count INTEGER NOT NULL, ready INTEGER NOT NULL DEFAULT 0 CHECK (ready IN (0,1)))',
+  'CREATE TABLE chat_vectors (index_id INTEGER NOT NULL REFERENCES chat_indexes(id) ON DELETE CASCADE, ordinal INTEGER NOT NULL, vector BLOB NOT NULL, checksum TEXT NOT NULL, PRIMARY KEY(index_id,ordinal))',
+];
+
 AppDatabase _open([void Function(dynamic raw)? setup]) => AppDatabase(
   DatabaseConnection(
     NativeDatabase.memory(setup: setup),
@@ -183,6 +190,7 @@ void main() {
     (6, v6),
     (7, v7),
     (8, v8),
+    (9, v9),
   ]) {
     test(
       'v$version → now: same schema as a fresh install, data kept',
@@ -224,10 +232,10 @@ void main() {
   }
 
   test(
-    'v8 migration preserves paid chat and adds empty index tables',
+    'v9 migration preserves paid chat and adds nullable exploration',
     () async {
       final db = _open((raw) {
-        for (final sql in v8) {
+        for (final sql in v9) {
           raw.execute(sql);
         }
         raw.execute(
@@ -239,10 +247,12 @@ void main() {
         raw.execute(
           "INSERT INTO chat_turns(id,session_id,sequence,question,phase,model,prompt_version,draft) VALUES (12,9,0,'Question','stopped','model',1,'paid partial')",
         );
-        raw.execute('PRAGMA user_version = 8');
+        raw.execute('PRAGMA user_version = 9');
       });
       addTearDown(db.close);
-      expect((await db.select(db.chatTurns).getSingle()).draft, 'paid partial');
+      final saved = await db.select(db.chatTurns).getSingle();
+      expect(saved.draft, 'paid partial');
+      expect(saved.exploration, isNull);
       expect((await db.select(db.chatSessions).getSingle()).title, 'Saved');
       expect(await db.select(db.chatIndexes).get(), isEmpty);
       expect(await db.select(db.chatVectors).get(), isEmpty);

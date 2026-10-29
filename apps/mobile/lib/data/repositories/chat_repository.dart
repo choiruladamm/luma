@@ -4,6 +4,7 @@ import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/chat_prompt.dart';
+import '../../domain/chat_exploration.dart';
 import '../../domain/models/ai_reply.dart';
 import '../../domain/models/book_chat.dart';
 import '../database/app_database.dart';
@@ -350,6 +351,130 @@ class ChatRepository {
     });
   }
 
+  /// Explicit continuation creates a new turn; paid answers remain immutable.
+  Future<ChatTurn> continueExploration(
+    ChatTurn previous, {
+    required String model,
+  }) async {
+    await _ready();
+    return _db.transaction(() async {
+      final session = await _writable(previous.book, previous.sessionId);
+      await _noPending(session.id);
+      final last =
+          await (_db.select(_db.chatTurns)
+                ..where((t) => t.sessionId.equals(session.id))
+                ..orderBy([(t) => OrderingTerm.desc(t.sequence)])
+                ..limit(1))
+              .getSingle();
+      final current = ChatSnapshot.turn(last, session, strict: true);
+      if (current.id != previous.id ||
+          !chatCanContinue(current) ||
+          current.model != model ||
+          current.promptVersion != chatPromptVersion) {
+        throw const FormatException(
+          'Checkpoint kedaluwarsa. Kirim pertanyaan baru untuk mulai ulang.',
+        );
+      }
+      final turn = await _insert(
+        session,
+        current.question,
+        await _quote(current.quote, current.book),
+        sequence: current.sequence + 1,
+        model: model,
+        promptVersion: chatPromptVersion,
+      );
+      await (_db.update(
+        _db.chatTurns,
+      )..where((t) => t.id.equals(turn.id))).write(
+        ChatTurnsCompanion(
+          exploration: Value(
+            ChatExploration.parse(current.exploration!)
+                .forTurn(turn.id)
+                .encode(),
+          ),
+        ),
+      );
+      return ChatSnapshot.turn(
+        await (_db.select(
+          _db.chatTurns,
+        )..where((t) => t.id.equals(turn.id))).getSingle(),
+        session,
+        strict: true,
+      );
+    });
+  }
+
+  Future<bool> validateRetrieval(
+    ChatAttemptRef ref,
+    List<ChatSource> sources,
+  ) async {
+    if (!await _callbackReady()) return false;
+    return _db.transaction(() async {
+      final owned = await _guard(ref);
+      if (owned == null ||
+          ![
+            ChatPhase.preparing.name,
+            ChatPhase.retrieving.name,
+          ].contains(owned.turn.phase)) {
+        return false;
+      }
+      validateChatSources(
+        sources,
+        ref.book,
+        await _paragraphs(ref.book, sources.expand((s) => s.anchors)),
+      );
+      return !_disposed;
+    });
+  }
+
+  Future<bool> saveExploration(
+    ChatAttemptRef ref,
+    ChatExploration exploration, {
+    List<ChatSource> evidence = const [],
+  }) async {
+    if (!await _callbackReady()) return false;
+    return _db.transaction(() async {
+      final owned = await _guard(ref);
+      if (owned == null ||
+          ![
+            ChatPhase.preparing.name,
+            ChatPhase.retrieving.name,
+          ].contains(owned.turn.phase)) {
+        return false;
+      }
+      if (exploration.book != ref.book ||
+          exploration.sessionId != ref.sessionId ||
+          exploration.turnId != ref.turnId ||
+          exploration.question != owned.turn.question ||
+          exploration.model != owned.turn.model) {
+        throw const FormatException('Checkpoint bukan milik attempt ini');
+      }
+      validateChatSources(
+        evidence,
+        ref.book,
+        await _paragraphs(ref.book, evidence.expand((s) => s.anchors)),
+      );
+      if (owned.turn.exploration != null) {
+        final before = ChatExploration.parse(owned.turn.exploration!);
+        if (before.manifest != exploration.manifest ||
+            before.cursor > exploration.cursor) {
+          throw const FormatException(
+            'Checkpoint tidak boleh mundur/berganti isi',
+          );
+        }
+      }
+      final raw = exploration.encode();
+      ChatExploration.parse(raw);
+      if (_disposed) return false;
+      await (_db.update(
+        _db.chatTurns,
+      )..where((t) => t.id.equals(ref.turnId))).write(
+        ChatTurnsCompanion(exploration: Value(raw), updatedAt: Value(_now())),
+      );
+      return true;
+    });
+  }
+
   Future<void> rename(ChatBookRef book, int sessionId, String title) async {
     await _ready();
     final value = chatTitle(title);
@@ -459,6 +584,11 @@ class ChatRepository {
           draft: const Value(''),
           answer: const Value(null),
           sources: const Value('[]'),
+          exploration: Value(
+            row.model == model && row.promptVersion == promptVersion
+                ? row.exploration
+                : null,
+          ),
           error: const Value(null),
           httpStatus: const Value(null),
         ),

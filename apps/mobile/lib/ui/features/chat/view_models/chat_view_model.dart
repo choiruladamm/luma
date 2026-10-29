@@ -8,6 +8,7 @@ import '../../../../data/repositories/chat_context_repository.dart';
 import '../../../../data/repositories/chat_repository.dart';
 import '../../../../data/services/chat_lifecycle.dart';
 import '../../../../domain/chat_prompt.dart';
+import '../../../../domain/chat_exploration.dart';
 import '../../../../domain/models/ai_reply.dart';
 import '../../../../domain/models/book_chat.dart';
 import '../../reader/view_models/reader_view_model.dart' show GroupAiStream;
@@ -28,9 +29,16 @@ class ChatState {
     this.changingSession = false,
     this.scrollAnchor,
     this.indexProgress,
+    this.explorationProgress,
   }) : turns = List.unmodifiable(turns);
 
-  final ({int completed, int total})? indexProgress;
+  final ({int completed, int total})? indexProgress, explorationProgress;
+  bool get canContinue =>
+      !loading &&
+      !busy &&
+      !readOnly &&
+      turns.isNotEmpty &&
+      chatCanContinue(turns.last);
   final ChatBookRef? book;
   final ChatSession? activeSession;
   final String draft;
@@ -72,7 +80,11 @@ class ChatState {
     bool? changingSession,
     Object? scrollAnchor = _unchanged,
     Object? indexProgress = _unchanged,
+    Object? explorationProgress = _unchanged,
   }) => ChatState(
+    explorationProgress: identical(explorationProgress, _unchanged)
+        ? this.explorationProgress
+        : explorationProgress as ({int completed, int total})?,
     indexProgress: identical(indexProgress, _unchanged)
         ? this.indexProgress
         : indexProgress as ({int completed, int total})?,
@@ -356,6 +368,11 @@ class ChatViewModel extends Notifier<ChatState> {
     return _start(_life, question: question, quote: state.selectedQuote);
   }
 
+  Future<void> continueExploration() {
+    if (!state.canContinue || _life.run != null) return Future.value();
+    return _start(_life, continuation: state.turns.last);
+  }
+
   Future<void> retry() {
     if (!state.canRetry || _life.run != null) return Future.value();
     return _start(_life, retry: state.turns.last);
@@ -366,6 +383,7 @@ class ChatViewModel extends Notifier<ChatState> {
     String? question,
     ChatQuote? quote,
     ChatTurn? retry,
+    ChatTurn? continuation,
   }) {
     if (!ref.read(chatLifecycleProvider).canStart(bookId)) {
       return Future.value();
@@ -379,7 +397,16 @@ class ChatViewModel extends Notifier<ChatState> {
       problem: null,
     );
     _arm(life, run, retrievalTimeout);
-    return _request(life, run, book, session, question, quote, retry);
+    return _request(
+      life,
+      run,
+      book,
+      session,
+      question,
+      quote,
+      retry,
+      continuation,
+    );
   }
 
   void _arm(_ChatLifetime life, _ChatRun run, Duration timeout) {
@@ -411,11 +438,14 @@ class ChatViewModel extends Notifier<ChatState> {
     String? question,
     ChatQuote? quote,
     ChatTurn? retry,
+    ChatTurn? continuation,
   ) async {
     try {
       final model = await life.context.model();
       if (!run.live) return;
-      final turn = retry != null
+      final turn = continuation != null
+          ? await life.repo.continueExploration(continuation, model: model)
+          : retry != null
           ? await life.repo.retry(
               retry.attemptRef,
               model: model,
@@ -451,6 +481,7 @@ class ChatViewModel extends Notifier<ChatState> {
         selectedQuote: null,
         phase: ChatPhase.retrieving,
         indexProgress: null,
+        explorationProgress: null,
       );
       if (!await life.repo.checkpoint(
         turn.attemptRef,
@@ -464,6 +495,13 @@ class ChatViewModel extends Notifier<ChatState> {
       final prepared = await life.context.prepare(
         turn,
         cancel: run.cancel,
+        onExplorationProgress: (completed, total) {
+          if (_running(life, run)) {
+            state = state.copyWith(
+              explorationProgress: (completed: completed, total: total),
+            );
+          }
+        },
         onIndexProgress: (completed, total) {
           if (_running(life, run)) {
             state = state.copyWith(
@@ -518,6 +556,17 @@ class ChatViewModel extends Notifier<ChatState> {
         await _finish(life, run, phase: ChatPhase.interrupted);
       }
     } catch (e) {
+      if (e is AiException &&
+          e.error == AiError.invalidResponse &&
+          e.detail?.startsWith('Checkpoint') == true &&
+          _live(life)) {
+        state = state.copyWith(
+          problem: 'Progres penelusuran sudah tidak cocok. Kirim pertanyaan baru buat mulai ulang.',
+        );
+      }
+      if (e is FormatException && _live(life)) {
+        state = state.copyWith(problem: e.message);
+      }
       if (!run.created.isCompleted) run.created.complete();
       if (run.live) {
         await _finish(
