@@ -64,7 +64,6 @@ class SheetFrame extends StatelessWidget {
     this.title,
     this.leading,
     this.closeLabel = 'Tutup',
-    this.spacing = Space.s4,
     required this.children,
     this.actions = const [],
   });
@@ -75,9 +74,8 @@ class SheetFrame extends StatelessWidget {
   /// Di kiri judul, mis. titik "lagi mikir".
   final Widget? leading;
   final String closeLabel;
-  final double spacing;
 
-  /// Section isi, jaraknya mengikuti [spacing] (default 16).
+  /// Section isi, jaraknya 16.
   final List<Widget> children;
 
   /// Tombol di bawah. Bungkus pake [Expanded] buat yang flex 1.
@@ -96,7 +94,7 @@ class SheetFrame extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        spacing: spacing,
+        spacing: Space.s4,
         children: [
           const SheetGrabber(),
           if (title != null)
@@ -128,7 +126,7 @@ class SheetFrame extends StatelessWidget {
                     : null,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
-                  spacing: spacing,
+                  spacing: Space.s4,
                   children: children,
                 ),
               ),

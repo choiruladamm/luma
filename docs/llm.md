@@ -469,11 +469,13 @@ Teks tetap selectable, paragraf berjarak token `Space.s5`, kolom maksimum
 `Layout.chatTextWidth` dengan typography bacaan Stabilo dan jarak baris dark.
 Output kontrak v2 tetap teks biasa; tidak ditambah renderer Markdown atau protocol baru.
 
-Sheet intip sitasi chat memakai teks selebar area isi SheetFrame, tanpa kartu
-kutipan atau header tetap. Nama bab, nomor paragraf dan tutup ikut scroll;
-aksi Buka di buku tetap di bawah dan mengikuti validasi lokasi sumber.
+Sheet intip sitasi chat memakai pola overlay Artinya, tanpa kartu kutipan atau
+header tetap. Scroll viewport memenuhi tinggi sheet;
+nama bab, nomor paragraf dan tutup ikut scroll. Grabber dan Buka di buku di atas
+scroll, dengan validasi lokasi sumber tetap berlaku.
 
-Padding sheet sitasi dibandingkan lewat render widget dengan Artinya: margin
-kiri/kanan 24, grabber atas 10, tombol bawah 34; jarak metadata→teks 8 dan
-scroll viewport→tombol 16 logical pixels, sama dengan ritme Artinya. SheetFrame
-lain tetap memakai spacing default 16; sitasi memakai Space.s2 agar lebih rapat.
+Geometri scroll mengikuti Artinya: margin kiri/kanan 24, grabber atas 10,
+tombol bawah 34. Fade atas 20 mulai setelah zona grabber 12; fade bawah 20 tepat
+di atas tombol (clear 86), tanpa tambahan celah layout di atas tombol. Padding
+akhir scroll 102 menjaga isi terakhir 16 di atas tombol saat mentok bawah.
+Jarak metadata→teks 8. SheetFrame umum tidak diubah untuk kebutuhan sitasi.

@@ -12,6 +12,7 @@ import 'package:luma/domain/models/reader_prefs.dart';
 import 'package:luma/ui/core/theme/stabilo_theme.dart';
 import 'package:luma/ui/core/widgets/buttons.dart';
 import 'package:luma/ui/core/widgets/sheet.dart';
+import 'package:luma/ui/core/widgets/edge_fade.dart';
 import 'package:luma/ui/features/chat/views/chat_source_sheet.dart';
 import 'package:luma/ui/features/chat/views/chat_history.dart';
 import 'package:luma/ui/features/chat/views/chat_source_visit_view.dart';
@@ -312,16 +313,42 @@ void main() {
         expect(sheetRect.right - textRect.right, 24);
         expect(textRect.top - paragraphRect.bottom, 8);
         final button = find.byType(AppButton);
-        expect(t.getRect(button).top - t.getRect(scroll).bottom, 16);
+        expect(t.getRect(scroll), sheetRect);
+        final fade = t.widget<EdgeFadeScroll>(find.byType(EdgeFadeScroll));
+        expect(fade.top, const EdgeFadeSide(20, clear: 12));
+        expect(fade.bottom, const EdgeFadeSide(20, clear: 86));
+        expect(t.getRect(button).top, sheetRect.bottom - fade.bottom.clear);
+        final padding =
+            t.widget<SingleChildScrollView>(scroll).padding! as EdgeInsets;
+        expect(padding.bottom - 52 - 34, 16);
         expect(t.getRect(find.byType(SheetGrabber)).top - sheetRect.top, 10);
         expect(sheetRect.bottom - t.getRect(button).bottom, 34);
-        expect(t.getSize(text).width, t.getSize(scroll).width);
+        expect(t.getSize(text).width, t.getSize(scroll).width - 48);
         final chapterY = t.getTopLeft(chapter).dy;
         final buttonY = t.getTopLeft(find.text('Buka di buku')).dy;
         await t.drag(scroll, const Offset(0, -300));
         await t.pumpAndSettle();
         expect(t.getTopLeft(chapter).dy, lessThan(chapterY - 100));
         expect(t.getTopLeft(find.text('Buka di buku')).dy, buttonY);
+        final edges = t.state<EdgeFadeScrollState>(find.byType(EdgeFadeScroll));
+        expect(edges.debugEdges, (top: true, bottom: true));
+        final position = t
+            .state<ScrollableState>(
+              find
+                  .descendant(of: scroll, matching: find.byType(Scrollable))
+                  .first,
+            )
+            .position;
+        position.jumpTo(position.maxScrollExtent);
+        await t.pumpAndSettle();
+        expect(edges.debugEdges, (top: true, bottom: false));
+        final message = find.text(
+          'Cek teks aslinya tanpa mengubah posisi baca lo.',
+        );
+        expect(
+          t.getRect(button).top - t.getRect(message).bottom,
+          closeTo(16, .1),
+        );
         expect(t.takeException(), isNull);
         unchanged();
       },
