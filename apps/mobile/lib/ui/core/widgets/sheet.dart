@@ -64,6 +64,7 @@ class SheetFrame extends StatelessWidget {
     this.title,
     this.leading,
     this.closeLabel = 'Tutup',
+    this.showClose = true,
     required this.children,
     this.actions = const [],
   });
@@ -74,6 +75,7 @@ class SheetFrame extends StatelessWidget {
   /// Di kiri judul, mis. titik "lagi mikir".
   final Widget? leading;
   final String closeLabel;
+  final bool showClose;
 
   /// Section isi, jaraknya 16.
   final List<Widget> children;
@@ -108,11 +110,12 @@ class SheetFrame extends StatelessWidget {
                     child: Text(title!, style: StabiloType.titleMd),
                   ),
                 ),
-                CircleButton(
-                  semanticLabel: closeLabel,
-                  icon: AppIcons.close,
-                  onPressed: () => Navigator.of(context).pop(),
-                ),
+                if (showClose)
+                  CircleButton(
+                    semanticLabel: closeLabel,
+                    icon: AppIcons.close,
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
               ],
             ),
           Flexible(

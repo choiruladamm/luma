@@ -880,10 +880,12 @@ void main() {
         sessions: [session(2)],
         path: '/reader/1/chat/sessions',
       );
-      await t.tap(button('Menu Topik 2'));
+      await t.tap(find.byTooltip('Menu Topik 2'));
       await t.pumpAndSettle();
       await t.tap(find.text('Ubah judul'));
       await t.pumpAndSettle();
+      expect(find.bySemanticsLabel('Tutup'), findsNothing);
+      expect(find.text('Maksimal 120 karakter'), findsNothing);
       await t.enterText(find.byType(TextField).last, '   ');
       await t.pump();
       expect(find.text('Judul belum diisi'), findsOneWidget);
@@ -892,17 +894,17 @@ void main() {
       expect(find.text('Judul maksimal 120 karakter'), findsOneWidget);
       await t.enterText(find.byType(TextField).last, '  Judul baru  ');
       await t.pump();
-      await t.tap(find.text('Simpan judul'));
+      await t.tap(find.text('Simpan'));
       await t.pumpAndSettle();
       expect(vm.renamed, ['Judul baru']);
-      await t.tap(button('Menu Topik 2'));
+      await t.tap(find.byTooltip('Menu Topik 2'));
       await t.pumpAndSettle();
       await t.tap(find.text('Hapus obrolan ini'));
       await t.pumpAndSettle();
       await t.tap(find.text('Batal'));
       await t.pumpAndSettle();
       expect(vm.deleted, isEmpty);
-      await t.tap(button('Menu Topik 2'));
+      await t.tap(find.byTooltip('Menu Topik 2'));
       await t.pumpAndSettle();
       await t.tap(find.text('Hapus obrolan ini'));
       await t.pumpAndSettle();
@@ -921,13 +923,13 @@ void main() {
         sessions: [session(1), session(2)],
         path: '/reader/1/chat/sessions',
       );
-      await t.tap(button('Menu Topik 2'));
+      await t.tap(find.byTooltip('Menu Topik 2'));
       await t.pumpAndSettle();
       await t.tap(find.text('Ubah judul'));
       await t.pumpAndSettle();
       await t.enterText(find.byType(TextField).last, 'Sesi kedua');
       await t.pump();
-      await t.tap(find.text('Simpan judul'));
+      await t.tap(find.text('Simpan'));
       await t.pumpAndSettle();
       expect(vm.renamedIds, [2]);
       expect(vm.opened, isEmpty);
@@ -957,6 +959,26 @@ void main() {
       expect(vm.sends, 0);
     },
   );
+
+  testWidgets('history header does not overlap the list at large text', (
+    t,
+  ) async {
+    t.platformDispatcher.textScaleFactorTestValue = 2;
+    addTearDown(t.platformDispatcher.clearTextScaleFactorTestValue);
+    await open(
+      t,
+      size: const Size(390, 844),
+      path: '/reader/1/chat/sessions',
+      sessions: [session(1)],
+      state: ChatState(book: book, loading: false, activeSession: session(1)),
+    );
+    expect(
+      t.getTopLeft(find.byType(SessionRow)).dy,
+      greaterThanOrEqualTo(t.getBottomLeft(find.text('Buku ini')).dy),
+    );
+    expect(find.text('Lagi dibuka'), findsOneWidget);
+    expect(t.takeException(), isNull);
+  });
 
   testWidgets('archived sessions are read only with new chat recovery', (
     t,

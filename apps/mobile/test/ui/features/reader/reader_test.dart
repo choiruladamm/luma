@@ -268,9 +268,10 @@ void main() {
     DateTime Function()? now,
     FakeProgress? progressOverride,
     ChatSource? visitSource,
+    bool showChatHint = false,
   }) async {
     progress = progressOverride ?? FakeProgress(saved);
-    settings = FakeSettings(prefs);
+    settings = FakeSettings(prefs)..seenChatHint = !showChatHint;
     tester.view.physicalSize = const Size(900, 1600);
     tester.view.devicePixelRatio = 1;
     tester.platformDispatcher.platformBrightnessTestValue = b;
@@ -426,6 +427,12 @@ void main() {
       await t.tap(chip);
       await t.pumpAndSettle();
       expect(find.byType(ChatSourceSheet), findsOneWidget);
+      expect(
+        t
+            .widgetList<ChatSourceChip>(find.byType(ChatSourceChip))
+            .any((chip) => chip.selected),
+        isTrue,
+      );
       await t.tap(find.text('Buka di buku'));
       await t.pumpAndSettle();
       expect(find.byType(ChatSourceVisitView), findsOneWidget);
@@ -466,6 +473,15 @@ void main() {
       expect(t.takeException(), isNull);
     },
   );
+
+  testWidgets('reader shows the chat hint once and records it', (t) async {
+    await openBook(t, showChatHint: true);
+    expect(settings.seenChatHint, isTrue);
+    expect(find.text('Ngobrol soal bukunya'), findsOneWidget);
+    await t.pump(Motion.capsuleIntro);
+    await t.pump();
+    expect(find.text('Ngobrol soal bukunya'), findsNothing);
+  });
 
   testWidgets('Ngobrol stays disabled for a chapter without imported text', (
     t,

@@ -65,22 +65,42 @@ class ChatRepository {
     await _ready();
     yield* _db
         .customSelect(
-          'SELECT s.*, (SELECT question FROM chat_turns t WHERE t.session_id = s.id '
-          'ORDER BY sequence DESC LIMIT 1) AS preview FROM chat_sessions s '
+          'SELECT s.*, t.question AS preview, t.answer AS preview_answer, '
+          't.sources AS preview_sources, t.phase AS preview_phase, t.error AS preview_error '
+          'FROM chat_sessions s LEFT JOIN chat_turns t ON t.id = '
+          '(SELECT id FROM chat_turns WHERE session_id = s.id ORDER BY sequence DESC LIMIT 1) '
           'WHERE s.book_id = ? ORDER BY s.updated_at DESC, s.id DESC',
           variables: [Variable.withInt(bookId)],
           readsFrom: {_db.chatSessions, _db.chatTurns},
         )
         .watch()
         .map(
-          (rows) => List.unmodifiable([
-            for (final r in rows)
-              ChatSnapshot.session(
-                _db.chatSessions.map(r.data),
-                preview: r.read<String?>('preview'),
-              ),
-          ]),
+          (rows) =>
+              List.unmodifiable([for (final row in rows) _sessionPreview(row)]),
         );
+  }
+
+  ChatSession _sessionPreview(QueryRow row) {
+    final sessionRow = _db.chatSessions.map(row.data);
+    final session = ChatSnapshot.session(sessionRow);
+    var preview = row.read<String?>('preview');
+    if (row.read<String?>('preview_phase') == ChatPhase.done.name &&
+        row.read<String?>('preview_error') == null) {
+      try {
+        final sources = ChatSnapshot.sources(
+          row.read<String?>('preview_sources') ?? '[]',
+          session.book,
+        );
+        final answer = ChatSnapshot.answer(
+          row.read<String?>('preview_answer'),
+          sources,
+        );
+        preview = answer?.blocks.firstOrNull?.text ?? preview;
+      } on FormatException {
+        // Corrupt history stays readable without showing its raw JSON.
+      }
+    }
+    return ChatSnapshot.session(sessionRow, preview: preview);
   }
 
   Stream<List<ChatTurn>> watchTurns(int bookId, int sessionId) async* {

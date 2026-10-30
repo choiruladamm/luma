@@ -495,24 +495,28 @@ Lanjutkan tetap memakai state ViewModel existing.
 
 Sheet sitasi memiliki viewport penuh, grabber, metadata/konteks yang ikut scroll,
 kutipan dalam blok muted, serta close dan Buka di buku satu baris di bawah.
-Geometri mengikuti overlay Artinya: margin24, grabber atas10, tombol bawah34,
-fade atas20 clear12; fade bawah20 clear86; padding akhir102. Konteks sebelum/sesudah
+Geometri mengikuti overlay Artinya: isi margin24, grabber atas10, tombol bawah34,
+fade atas20 clear12; fade bawah20 clear86; padding akhir102. Sesuai screen #146,
+teks kutipan mulai pada margin24, latar kutipan melebar 12 di kedua sisi dan
+padding vertikal10; aksi bawah memakai margin16 dan jarak10. Konteks sebelum/sesudah
 serta label posisi dibaca lokal hanya untuk lokasi valid. Membuka sheet/reader
 kunjungan tetap tanpa penulisan progres maupun waktu baca.
 
 Reader kunjungan hanya memiliki label intip dan kapsul Balik ke ngobrol / Lanjut
-baca. Balik memulihkan anchor chat. Lanjut baca memvalidasi ulang sumber dan menulis
+baca. Label intip mengambil progres tersimpan terbaru lewat provider terpisah,
+tanpa mereset viewport reader yang masih terbuka di belakang. Balik memulihkan
+anchor chat. Lanjut baca memvalidasi ulang sumber dan menulis
 posisi awal kutipan dalam satu transaksi; kemudian kembali ke reader biasa di
 posisi baru. Revision, ownership, attempt dan validitas teks harus tetap cocok.
 Pembatalan/kegagalan tidak memindahkan progres. Reader asli memuat posisi tersimpan
 sebelum melanjutkan clock; posisi lamanya tidak boleh menimpa hasil aksi eksplisit.
-Kapsul progres reader biasa kini satu objek dengan tombol Ngobrol bulat di ujung.
+Kapsul progres reader biasa kini satu objek dengan tombol Ngobrol bulat di ujung. Petunjuk pertama disimpan sebagai key `reader.chatHintSeen` pada settings; tidak ada perubahan schema.
 
 Riwayat per buku dikelompokkan Hari ini/Kemarin/7 hari terakhir/Lebih lama, memiliki
 penanda aktif/arsip, menu rename/hapus per sesi dan CTA baru di bawah. Rename sesi
 nonaktif tidak mengaktifkan sesi itu; repository tetap memeriksa buku/revision.
 Arsip tidak bisa diubah judulnya/dilanjutkan; hapus tetap membutuhkan konfirmasi.
-Draft kosong belum membuat sesi. Preview existing tetap pertanyaan terakhir.
+Draft kosong belum membuat sesi. Preview menampilkan jawaban valid terakhir; fallback pertanyaan ketika belum tersedia.
 
 Tanyain ini berada pada baris aksi Artinya: Salin ikon, Tanyain ini muted, Lanjut
 kuning. Isi sheet lain tidak didesain ulang. Entry membuka composer kosong dan

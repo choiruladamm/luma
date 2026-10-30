@@ -36,6 +36,7 @@ abstract final class Layout {
   static const readerChatWidth = 120.0;
   static const readerProgressWidth = 210.0;
   static const readerProgressTrack = 40.0;
+  static const readerChatProgressTrack = 72.0;
   static const chatFollowDistance = 80.0;
   static const chatHeader = 52.0;
   static const chatComposer = 52.0;

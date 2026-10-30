@@ -44,6 +44,7 @@ class AppButton extends StatelessWidget {
     this.iconAfter = false,
     this.height = 52,
     this.loading = false,
+    this.pill = false,
   }) : _tone = _Tone.primary,
        destructive = false;
 
@@ -56,7 +57,8 @@ class AppButton extends StatelessWidget {
     this.height = 52,
     this.destructive = false,
     this.loading = false,
-  }) : _tone = _Tone.secondary;
+  }) : _tone = _Tone.secondary,
+       pill = false;
 
   const AppButton.danger({
     super.key,
@@ -67,7 +69,8 @@ class AppButton extends StatelessWidget {
     this.height = 48,
     this.loading = false,
   }) : _tone = _Tone.danger,
-       destructive = true;
+       destructive = true,
+       pill = false;
 
   final String label;
   final VoidCallback? onPressed;
@@ -77,6 +80,7 @@ class AppButton extends StatelessWidget {
   final bool iconAfter;
   final double height;
   final bool destructive;
+  final bool pill;
 
   /// Spinner gantiin teks, lebar tetap, gak bisa di-tap.
   final bool loading;
@@ -87,7 +91,9 @@ class AppButton extends StatelessWidget {
     final c = context.stabilo;
     final enabled = onPressed != null && !loading;
     final primary = _tone == _Tone.primary;
-    final radius = BorderRadius.circular(height >= 56 ? Radii.lg : Radii.full);
+    final radius = BorderRadius.circular(
+      height >= 56 && !pill ? Radii.lg : Radii.full,
+    );
 
     final (bg, fg) = switch (_tone) {
       _ when !enabled => (primary ? c.track : c.muted, c.ink3),
@@ -189,6 +195,7 @@ class CircleButton extends StatelessWidget {
     this.text,
     this.active = false,
     this.primary = false,
+    this.inverse = false,
     this.size = Layout.touch,
   }) : assert((icon == null) != (text == null));
 
@@ -198,15 +205,18 @@ class CircleButton extends StatelessWidget {
   final String? text;
   final bool active;
   final bool primary;
+  final bool inverse;
   final double size;
 
   @override
   Widget build(BuildContext context) {
     final c = context.stabilo;
     final accent = active || primary;
-    final fg = onPressed == null ? c.ink3 : (accent ? c.onAccent : c.ink);
+    final fg = onPressed == null
+        ? c.ink3
+        : (inverse ? c.canvas : (accent ? c.onAccent : c.ink));
     final button = Material(
-      color: accent ? c.accent : c.muted,
+      color: inverse ? c.ink : (accent ? c.accent : c.muted),
       shape: primary
           ? CircleBorder(
               side: BorderSide(color: c.accentBorder, width: Layout.outline),

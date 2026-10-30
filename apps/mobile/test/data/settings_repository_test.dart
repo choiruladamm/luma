@@ -78,4 +78,11 @@ void main() {
       DateTime(2026, 10, 12, 8),
     );
   });
+  test('chat entry hint is shown once across repository instances', () async {
+    final repo = SettingsRepository(db);
+    expect(await repo.chatHintSeen(), isFalse);
+    await repo.markChatHintSeen();
+    expect(await SettingsRepository(db).chatHintSeen(), isTrue);
+    expect(await repo.watchReaderPrefs().first, const ReaderPrefs());
+  });
 }

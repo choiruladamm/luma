@@ -10,14 +10,14 @@ class ChatNotice extends StatelessWidget {
   const ChatNotice({super.key});
   @override
   Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(Space.s3),
+    padding: const EdgeInsets.fromLTRB(12, 10, 14, 10),
     decoration: BoxDecoration(
       color: context.stabilo.muted,
       borderRadius: BorderRadius.circular(Radii.md),
     ),
     child: Row(
       crossAxisAlignment: CrossAxisAlignment.start,
-      spacing: Space.s2,
+      spacing: 10,
       children: [
         const AppIcon(AppIcons.info),
         Expanded(
@@ -58,14 +58,18 @@ class _ChatContextCardState extends State<ChatContextCard> {
 
   @override
   Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(Space.s3),
+    padding: const EdgeInsets.fromLTRB(16, 8, 8, 14),
     decoration: BoxDecoration(
-      color: context.stabilo.muted,
-      borderRadius: BorderRadius.circular(Radii.md),
+      color: context.stabilo.sheet,
+      border: Border.all(
+        color: context.stabilo.fieldLine,
+        width: Layout.outline,
+      ),
+      borderRadius: BorderRadius.circular(Radii.lg),
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      spacing: Space.s2,
+      spacing: 6,
       children: [
         Wrap(
           crossAxisAlignment: WrapCrossAlignment.center,
@@ -79,12 +83,46 @@ class _ChatContextCardState extends State<ChatContextCard> {
             if (widget.onRead != null)
               TextButton(
                 onPressed: widget.onRead,
-                child: const Text('Baca di buku'),
+                style: TextButton.styleFrom(
+                  padding: EdgeInsets.zero,
+                  minimumSize: const Size(0, Layout.touch),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: Container(
+                  height: 32,
+                  padding: const EdgeInsets.fromLTRB(9, 0, 12, 0),
+                  decoration: BoxDecoration(
+                    color: context.stabilo.muted,
+                    borderRadius: BorderRadius.circular(Radii.full),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    spacing: 6,
+                    children: [
+                      const AppIcon(AppIcons.book, size: 16),
+                      Text(
+                        'Baca di buku',
+                        style: StabiloType.label.copyWith(
+                          fontSize: 12.5,
+                          color: context.stabilo.ink,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            CircleButton(
-              semanticLabel: _expanded ? 'Ciutkan konteks' : 'Perluas konteks',
-              icon: _expanded ? AppIcons.collapse : AppIcons.expand,
+            IconButton(
+              tooltip: _expanded ? 'Ciutkan konteks' : 'Perluas konteks',
+              constraints: const BoxConstraints(
+                minWidth: Layout.touch,
+                minHeight: Layout.touch,
+              ),
+              padding: EdgeInsets.zero,
               onPressed: () => setState(() => _expanded = !_expanded),
+              icon: AppIcon(
+                _expanded ? AppIcons.collapse : AppIcons.expand,
+                color: context.stabilo.ink2,
+              ),
             ),
             if (widget.onRemove != null)
               CircleButton(
@@ -98,7 +136,11 @@ class _ChatContextCardState extends State<ChatContextCard> {
           widget.quote.text,
           maxLines: _expanded ? null : 2,
           overflow: _expanded ? TextOverflow.visible : TextOverflow.ellipsis,
-          style: StabiloType.readingSheet,
+          style: StabiloType.readingSheet.copyWith(
+            fontSize: 14.5,
+            height: 21 / 14.5,
+            color: context.stabilo.ink2,
+          ),
         ),
         if (_expanded && widget.quote.translation != null) ...[
           const Text('Terjemahan', style: StabiloType.caption),

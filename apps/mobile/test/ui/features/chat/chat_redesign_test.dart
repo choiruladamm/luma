@@ -9,6 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:luma/domain/models/book_chat.dart';
 import 'package:luma/ui/core/theme/stabilo_theme.dart';
 import 'package:luma/ui/core/theme/stabilo_tokens.dart';
+import 'package:luma/ui/core/widgets/buttons.dart';
 import 'package:luma/ui/features/bookshelf/view_models/bookshelf_view_model.dart';
 import 'package:luma/ui/features/chat/view_models/chat_view_model.dart';
 import 'package:luma/ui/features/chat/views/chat_composer.dart';
@@ -92,6 +93,13 @@ void main() {
           brightness: brightness,
         );
         expect(find.text('Coba lagi'), findsOneWidget);
+        final retry = find.widgetWithText(AppButton, 'Coba lagi');
+        expect(t.getSize(retry).height, 36);
+        await t.tapAt(
+          t.getTopLeft(retry) + Offset(t.getSize(retry).width / 2, -3),
+        );
+        await t.pump();
+        expect(vm.sends, 1);
         expect(find.byType(ChatComposer), findsOneWidget);
         final scroll = find.byType(CustomScrollView);
         expect(t.getRect(scroll), const Rect.fromLTWH(0, 0, 390, 844));
@@ -220,7 +228,7 @@ void main() {
       expect(find.byType(ChatContextCard), findsOneWidget);
       expect(find.text(quote.translation!), findsNothing);
       expect(vm.sends, 0);
-      await t.tap(button('Perluas konteks'));
+      await t.tap(find.byTooltip('Perluas konteks'));
       await t.pumpAndSettle();
       expect(find.text(quote.translation!), findsOneWidget);
       expect(vm.sends, 0);

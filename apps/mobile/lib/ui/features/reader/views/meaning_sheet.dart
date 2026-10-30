@@ -904,12 +904,10 @@ class _AnswerState extends State<_Answer> with TickerProviderStateMixin {
                 size: Layout.chatComposer,
                 onPressed: widget.onCopy,
               ),
-              Expanded(
-                child: AppButton.secondary(
-                  label: 'Tanyain ini',
-                  icon: AppIcons.chat,
-                  onPressed: widget.onChat,
-                ),
+              AppButton.secondary(
+                label: 'Tanyain ini',
+                icon: AppIcons.chat,
+                onPressed: widget.onChat,
               ),
             ] else
               AnimatedSwitcher(

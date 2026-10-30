@@ -8,6 +8,7 @@ import '../../../core/widgets/toast.dart';
 import '../../../core/theme/stabilo_tokens.dart';
 import '../../../core/widgets/buttons.dart';
 import '../../reader/views/reader_view.dart';
+import '../../../../data/repositories/reading_progress_repository.dart';
 import 'chat_source_sheet.dart';
 
 /// The resolver stays subscribed so deletes, restore and content changes revoke
@@ -15,6 +16,12 @@ import 'chat_source_sheet.dart';
 final chatQuoteSourceProvider = StreamProvider.autoDispose
     .family<ChatSourceLocation?, ChatQuote>(
       (ref, quote) => ref.watch(chatRepositoryProvider).watchQuote(quote),
+    );
+
+final _visitProgressProvider = FutureProvider.autoDispose
+    .family<ReadingPosition?, int>(
+      (ref, bookId) =>
+          ref.watch(readingProgressRepositoryProvider).load(bookId),
     );
 
 class ChatSourceVisitView extends ConsumerStatefulWidget {
@@ -65,10 +72,17 @@ class _ChatSourceVisitState extends ConsumerState<ChatSourceVisitView> {
       _revoked = true;
     }
     if (!_revoked && location?.available == true) {
+      final progress = ref.watch(
+        _visitProgressProvider(location!.source.anchors.first.book.bookId),
+      );
+      if (progress.isLoading) {
+        return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      }
       return ReaderView(
         key: ValueKey(widget.request ?? widget.quote),
-        bookId: location!.source.anchors.first.book.bookId,
+        bookId: location.source.anchors.first.book.bookId,
         sourceVisit: location.source,
+        sourceOriginalPosition: progress.asData?.value,
         onContinueReading: _saving ? null : _continue,
       );
     }

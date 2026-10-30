@@ -54,7 +54,7 @@ class ChatSession {
   final DateTime? lastOpenedAt;
   final ChatScrollAnchor? scrollAnchor;
 
-  /// Pertanyaan terakhir sesi ini, bukan jawaban atau konteks lintas sesi.
+  /// Jawaban terakhir yang valid; fallback pertanyaan jika belum tersedia.
   final String? preview;
   final bool invalid;
 

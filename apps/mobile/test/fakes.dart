@@ -61,6 +61,14 @@ class FakeSettings implements SettingsRepository {
   FakeSettings([this.prefs = const ReaderPrefs()]);
 
   ReaderPrefs prefs;
+  bool seenChatHint = true;
+  @override
+  Future<bool> chatHintSeen() async => seenChatHint;
+  @override
+  Future<void> markChatHintSeen() async {
+    seenChatHint = true;
+  }
+
   final _saves = StreamController<ReaderPrefs>.broadcast();
 
   @override

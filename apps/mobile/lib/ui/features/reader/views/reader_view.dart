@@ -39,6 +39,7 @@ class ReaderView extends ConsumerStatefulWidget {
     super.key,
     required this.bookId,
     this.sourceVisit,
+    this.sourceOriginalPosition,
     this.onContinueReading,
   });
 
@@ -46,6 +47,7 @@ class ReaderView extends ConsumerStatefulWidget {
 
   /// Verified source visit: rendering/navigation only, never reading activity.
   final ChatSource? sourceVisit;
+  final ReadingPosition? sourceOriginalPosition;
   final VoidCallback? onContinueReading;
 
   @override
@@ -128,6 +130,28 @@ class _ReaderViewState extends ConsumerState<ReaderView>
   bool _openingChat = false;
   Future<void> _pendingSave = Future.value();
   Timer? _rehide;
+  Timer? _chatHintTimer;
+  bool _chatHintChecked = false, _chatHintVisible = false;
+
+  void _showChatHintOnce() {
+    if (_chatHintChecked || widget.sourceVisit != null) return;
+    _chatHintChecked = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      try {
+        final settings = ref.read(settingsRepositoryProvider);
+        if (await settings.chatHintSeen() || !mounted || _offReader > 0) return;
+        await settings.markChatHintSeen();
+        if (!mounted || _offReader > 0) return;
+        setState(() => _chatHintVisible = true);
+        _chatHintTimer = Timer(Motion.capsuleIntro, () {
+          if (mounted) setState(() => _chatHintVisible = false);
+        });
+      } catch (_) {
+        // A failed hint must not prevent the book from opening.
+      }
+    });
+  }
 
   static bool get _android => defaultTargetPlatform == TargetPlatform.android;
 
@@ -294,6 +318,7 @@ class _ReaderViewState extends ConsumerState<ReaderView>
   void dispose() {
     _saveLater?.cancel();
     _rehide?.cancel();
+    _chatHintTimer?.cancel();
     if (_android && widget.sourceVisit == null) {
       SystemChrome.setSystemUIChangeCallback(null);
     }
@@ -550,8 +575,20 @@ class _ReaderViewState extends ConsumerState<ReaderView>
                 );
               }
               final ch = b.chapters[i];
+              final original = widget.sourceVisit == null
+                  ? pos
+                  : widget.sourceOriginalPosition;
+              final savedChapter = original == null
+                  ? null
+                  : b.chapters
+                        .where((chapter) => chapter.id == original.chapterId)
+                        .firstOrNull;
+              final savedLabel = savedChapter == null
+                  ? 'Lagi ngintip · belum ada progres baca'
+                  : 'Lagi ngintip · progres masih ${savedChapter.title} · Paragraf ${(original?.paragraphIndex ?? 0) + 1}';
               final content = ref.watch(chapterParagraphsProvider(ch.id));
               final chatReady = content.asData?.value.isNotEmpty ?? false;
+              if (chatReady) _showChatHintOnce();
               return Stack(
                 children: [
                   Positioned.fill(
@@ -658,22 +695,101 @@ class _ReaderViewState extends ConsumerState<ReaderView>
                                         ),
                                 ),
                               ),
-                            if (widget.sourceVisit != null)
+                            if (_chatHintVisible &&
+                                widget.sourceVisit == null &&
+                                !_sheetOpen)
                               Positioned(
-                                left: Layout.margin,
                                 right: Layout.margin,
-                                top:
-                                    MediaQuery.paddingOf(context).top +
-                                    Space.s3,
-                                child: Text(
-                                  'Lagi ngintip · progres baca belum berubah',
-                                  style: StabiloType.caption,
+                                bottom:
+                                    MediaQuery.paddingOf(context).bottom + 70,
+                                child: IgnorePointer(
+                                  child: Stack(
+                                    clipBehavior: Clip.none,
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: Space.s3,
+                                          vertical: Space.s2,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: context.stabilo.toastBg,
+                                          borderRadius: BorderRadius.circular(
+                                            Radii.sm,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          'Ngobrol soal bukunya',
+                                          style: StabiloType.caption.copyWith(
+                                            color: context.stabilo.toastInk,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ),
+                                      Positioned(
+                                        right: 61,
+                                        bottom: -5,
+                                        child: Transform.rotate(
+                                          angle: math.pi / 4,
+                                          child: Container(
+                                            width: 10,
+                                            height: 10,
+                                            color: context.stabilo.toastBg,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             if (widget.sourceVisit != null)
                               Positioned(
-                                left: Layout.margin,
-                                right: Layout.margin,
+                                left: Space.s4,
+                                right: Space.s4,
+                                top: MediaQuery.paddingOf(context).top + 7,
+                                child: Center(
+                                  child: Container(
+                                    padding: const EdgeInsets.fromLTRB(
+                                      10,
+                                      Space.s2,
+                                      14,
+                                      Space.s2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: context.stabilo.muted,
+                                      borderRadius: BorderRadius.circular(
+                                        Radii.full,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      spacing: 7,
+                                      children: [
+                                        AppIcon(
+                                          AppIcons.show,
+                                          size: 16,
+                                          color: context.stabilo.ink2,
+                                        ),
+                                        Flexible(
+                                          child: Text(
+                                            savedLabel,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: StabiloType.caption.copyWith(
+                                              fontSize: 12.5,
+                                              fontWeight: FontWeight.w700,
+                                              color: context.stabilo.ink2,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            if (widget.sourceVisit != null)
+                              Positioned(
+                                left: Space.s4,
+                                right: Space.s4,
                                 bottom:
                                     MediaQuery.paddingOf(context).bottom +
                                     Space.s3,
@@ -724,9 +840,9 @@ class _ReaderViewState extends ConsumerState<ReaderView>
           ),
         ),
         Expanded(
-          child: AppButton.secondary(
+          child: AppButton.primary(
             label: 'Lanjut baca',
-            height: Layout.touch,
+            height: 48,
             onPressed: widget.onContinueReading,
           ),
         ),
@@ -1244,6 +1360,11 @@ class _ChapterTextState extends ConsumerState<_ChapterText>
     ).style.copyWith(color: c.ink);
     final gap = reading.fontSize!; // 1em antar paragraf
     final pad = MediaQuery.paddingOf(context);
+    final labelHeight = math.max(
+      32.0,
+      MediaQuery.textScalerOf(context).scale(12.5) * (18 / 13) + Space.s4,
+    );
+    final visitTop = math.max(Layout.chatHeader, 7 + labelHeight + Space.s2);
     final loaded = paragraphs is AsyncData;
     final paras = switch (paragraphs) {
       AsyncData(:final value) =>
@@ -1323,7 +1444,10 @@ class _ChapterTextState extends ConsumerState<_ChapterText>
                 return EdgeFadeScroll(
                   top: widget.sourceVisit == null
                       ? edges.top
-                      : EdgeFadeSide(Space.s5, clear: pad.top + Space.s8),
+                      : EdgeFadeSide(
+                          Space.s5,
+                          clear: pad.top + visitTop - Space.s5,
+                        ),
                   bottom: widget.sourceVisit == null
                       ? edges.bottom
                       : EdgeFadeSide(
@@ -1362,7 +1486,7 @@ class _ChapterTextState extends ConsumerState<_ChapterText>
                       pad.top +
                           (widget.sourceVisit == null
                               ? readerTextTop
-                              : Layout.chatHeader),
+                              : visitTop),
                       widget.prefs.marginWidth,
                       pad.bottom +
                           readerTextBottom +

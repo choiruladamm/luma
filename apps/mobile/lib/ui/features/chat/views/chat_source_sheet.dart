@@ -5,7 +5,6 @@ import '../../../../data/repositories/chat_repository.dart';
 import '../../../../domain/models/book_chat.dart';
 import '../../../core/theme/stabilo_type.dart';
 import '../../../core/theme/stabilo_theme.dart';
-import '../../../core/widgets/tag.dart';
 import '../../../core/theme/stabilo_tokens.dart';
 import '../../../core/widgets/buttons.dart';
 import '../../../core/widgets/sheet.dart';
@@ -55,26 +54,47 @@ class ChatSourceSheet extends ConsumerWidget {
               child: SingleChildScrollView(
                 padding: EdgeInsets.fromLTRB(
                   pad.left,
-                  Space.s6,
+                  30,
                   pad.right,
                   Layout.artinyaActions,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
-                  spacing: Space.s2,
+                  spacing: 14,
                   children: [
-                    Wrap(children: [Tag.section(source.chapterTitle)]),
-                    Text(
-                      source.anchors
-                          .map((a) => 'Paragraf ${a.paragraphIndex + 1}')
-                          .join(' · '),
-                      style: StabiloType.caption,
+                    Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: Space.s2,
+                      runSpacing: Space.s2,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: context.stabilo.accent,
+                            borderRadius: BorderRadius.circular(Radii.full),
+                          ),
+                          child: Text(
+                            '${source.chapterTitle} · ${source.anchors.map((a) => 'Paragraf ${a.paragraphIndex + 1}').join(' · ')}',
+                            style: StabiloType.caption.copyWith(
+                              fontSize: 13,
+                              height: 16 / 13,
+                              fontWeight: FontWeight.w700,
+                              color: context.stabilo.onAccent,
+                            ),
+                          ),
+                        ),
+                        if (location?.positionLabel != null)
+                          Text(
+                            location!.positionLabel!,
+                            style: StabiloType.caption.copyWith(
+                              color: context.stabilo.ink2,
+                            ),
+                          ),
+                      ],
                     ),
-                    if (location?.positionLabel != null)
-                      Text(
-                        location!.positionLabel!,
-                        style: StabiloType.caption,
-                      ),
                     if (location?.before != null)
                       SelectableText(
                         location!.before!,
@@ -82,19 +102,33 @@ class ChatSourceSheet extends ConsumerWidget {
                           color: context.stabilo.ink2,
                         ),
                       ),
-                    Container(
-                      padding: const EdgeInsets.all(Space.s4),
-                      decoration: BoxDecoration(
-                        color: context.stabilo.muted,
-                        borderRadius: BorderRadius.circular(Radii.md),
-                      ),
-                      child: SelectableText(
-                        source.text,
-                        style: StabiloType.forBrightness(
-                          StabiloType.reading,
-                          Theme.of(context).brightness,
+                    Stack(
+                      key: const ValueKey('source-quote'),
+                      clipBehavior: Clip.none,
+                      children: [
+                        Positioned(
+                          left: -12,
+                          right: -12,
+                          top: 0,
+                          bottom: 0,
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              color: context.stabilo.muted,
+                              borderRadius: BorderRadius.circular(Radii.md),
+                            ),
+                          ),
                         ),
-                      ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          child: SelectableText(
+                            source.text,
+                            style: StabiloType.forBrightness(
+                              StabiloType.reading,
+                              Theme.of(context).brightness,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     if (location?.after != null)
                       SelectableText(
@@ -103,7 +137,8 @@ class ChatSourceSheet extends ConsumerWidget {
                           color: context.stabilo.ink2,
                         ),
                       ),
-                    Text(state.sourceMessage, style: StabiloType.caption),
+                    if (state.isLoading || !available)
+                      Text(state.sourceMessage, style: StabiloType.caption),
                   ],
                 ),
               ),
@@ -116,11 +151,11 @@ class ChatSourceSheet extends ConsumerWidget {
             child: const SheetGrabber(),
           ),
           Positioned(
-            left: pad.left,
-            right: pad.right,
+            left: Space.s4,
+            right: Space.s4,
             bottom: pad.bottom,
             child: Row(
-              spacing: Space.s3,
+              spacing: 10,
               children: [
                 CircleButton(
                   semanticLabel: 'Tutup',

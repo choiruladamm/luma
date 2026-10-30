@@ -219,6 +219,25 @@ void main() {
     },
   );
 
+  test(
+    'history previews a valid answer and safely falls back for broken data',
+    () async {
+      final t = await first();
+      final s = source();
+      await repo.prepareSources(t.attemptRef, [s]);
+      await repo.finalize(
+        t.attemptRef,
+        phase: ChatPhase.done,
+        answer: answer(s),
+      );
+      expect((await sessions()).single.preview, 'Taman itu milik penjaganya.');
+      await (db.update(db.chatTurns)..where((r) => r.id.equals(t.id))).write(
+        const ChatTurnsCompanion(answer: Value('{broken')),
+      );
+      expect((await sessions()).single.preview, t.question);
+    },
+  );
+
   test('source resolver is read only and rejects forged ownership and stale sources', () async {
     final t = await first();
     final s = source();

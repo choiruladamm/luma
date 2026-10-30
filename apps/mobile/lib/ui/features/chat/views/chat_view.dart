@@ -101,6 +101,7 @@ class _ChatViewState extends ConsumerState<ChatView>
 
   bool _leaving = false;
   bool _sourceOpen = false;
+  ({int turnId, String sourceId})? _selectedSource;
   ChatViewModel get _vm =>
       ref.read(chatViewModelProvider(widget.bookId).notifier);
   @override
@@ -124,7 +125,10 @@ class _ChatViewState extends ConsumerState<ChatView>
 
   Future<void> _source(ChatTurn turn, ChatSource source) async {
     if (_sourceOpen) return;
-    setState(() => _sourceOpen = true);
+    setState(() {
+      _sourceOpen = true;
+      _selectedSource = (turnId: turn.id, sourceId: source.id);
+    });
     try {
       final request = (
         bookId: widget.bookId,
@@ -152,7 +156,12 @@ class _ChatViewState extends ConsumerState<ChatView>
         });
       }
     } finally {
-      if (mounted) setState(() => _sourceOpen = false);
+      if (mounted) {
+        setState(() {
+          _sourceOpen = false;
+          _selectedSource = null;
+        });
+      }
     }
   }
 
@@ -229,9 +238,11 @@ class _ChatViewState extends ConsumerState<ChatView>
                                   mainAxisSize: MainAxisSize.min,
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Text(
+                                    Text(
                                       'Ngobrolin buku',
-                                      style: StabiloType.titleXs,
+                                      style: StabiloType.titleXs.copyWith(
+                                        fontSize: 15,
+                                      ),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                     ),
@@ -293,15 +304,42 @@ class _ChatViewState extends ConsumerState<ChatView>
                         children: [
                           if (state.archived ||
                               state.activeSession?.invalid == true) ...[
-                            Text(
-                              state.archived
-                                  ? 'Arsip · cuma bisa dibaca'
-                                  : 'Riwayat ini gak bisa dilanjutkan.',
-                              style: StabiloType.caption,
-                            ),
-                            AppButton.primary(
-                              label: 'Obrolan baru',
-                              onPressed: () => unawaited(_vm.newSession()),
+                            Container(
+                              padding: const EdgeInsets.all(Space.s1),
+                              decoration: BoxDecoration(
+                                color: context.stabilo.sheet,
+                                borderRadius: BorderRadius.circular(Radii.full),
+                                border: Border.all(
+                                  color: context.stabilo.capsuleLine,
+                                  width: Layout.outline,
+                                ),
+                              ),
+                              child: Row(
+                                spacing: Space.s2,
+                                children: [
+                                  Expanded(
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(
+                                        left: Space.s3,
+                                      ),
+                                      child: Text(
+                                        state.archived
+                                            ? 'Arsip · cuma bisa dibaca'
+                                            : 'Riwayat ini gak bisa dilanjutkan.',
+                                        style: StabiloType.caption,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ),
+                                  AppButton.primary(
+                                    label: 'Obrolan baru',
+                                    height: Layout.touch,
+                                    onPressed: () =>
+                                        unawaited(_vm.newSession()),
+                                  ),
+                                ],
+                              ),
                             ),
                           ] else if (!state.readOnly)
                             ChatComposer(
@@ -372,11 +410,22 @@ class _ChatViewState extends ConsumerState<ChatView>
                 onPressed: () => unawaited(_vm.continueExploration()),
               ),
             if (state.canRetry && !state.canContinue)
-              AppButton.secondary(
-                label: 'Coba lagi',
-                icon: AppIcons.retry,
-                height: Layout.touch,
-                onPressed: () => unawaited(_vm.retry()),
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                excludeFromSemantics: true,
+                onTap: () => unawaited(_vm.retry()),
+                child: SizedBox(
+                  height: Layout.touch,
+                  child: Center(
+                    widthFactor: 1,
+                    child: AppButton.secondary(
+                      label: 'Coba lagi',
+                      icon: AppIcons.retry,
+                      height: 36,
+                      onPressed: () => unawaited(_vm.retry()),
+                    ),
+                  ),
+                ),
               ),
           ],
         ),
@@ -415,6 +464,7 @@ class _ChatViewState extends ConsumerState<ChatView>
         onAnchor: _vm.setScrollAnchor,
         onSource: _source,
         suspended: _sourceOpen,
+        selectedSource: _selectedSource,
         padding: padding,
         topFade: topFade,
         bottomFade: bottomFade,
@@ -422,6 +472,12 @@ class _ChatViewState extends ConsumerState<ChatView>
         lastActions: _actions(state),
         reserveAnswerSpace: true,
       );
+    }
+    var prompt = 'Mau ngobrolin apa soal bukunya?';
+    if (state.book == null) {
+      prompt = 'Buku ini gak tersedia.';
+    } else if (quote != null) {
+      prompt = 'Mau tanya apa soal kutipan ini?';
     }
     return EdgeFadeScroll(
       top: topFade,
@@ -435,15 +491,17 @@ class _ChatViewState extends ConsumerState<ChatView>
             const ChatNotice(),
             ?card,
             Text(
-              state.book == null
-                  ? 'Buku ini gak tersedia.'
-                  : 'Mau ngobrolin apa soal bukunya?',
-              style: StabiloType.titleLg,
+              prompt,
+              style: StabiloType.titleLg.copyWith(fontSize: 22, height: 1.2),
             ),
             if (quote != null)
-              const Text(
+              Text(
                 'Tulis pertanyaan lo di bawah. Kutipan sama terjemahannya ikut kebaca sebagai konteks.',
-                style: StabiloType.body,
+                style: StabiloType.body.copyWith(
+                  fontSize: 14.5,
+                  height: 1.45,
+                  color: context.stabilo.ink2,
+                ),
               )
             else if (state.book != null)
               for (final question in [

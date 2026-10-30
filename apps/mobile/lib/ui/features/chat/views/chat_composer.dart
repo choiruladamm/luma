@@ -109,6 +109,7 @@ class _ChatComposerState extends State<ChatComposer> {
                     : 'Kirim pertanyaan',
                 icon: widget.running ? AppIcons.stop : AppIcons.send,
                 primary: widget.canSend,
+                inverse: widget.running,
                 onPressed: widget.running
                     ? widget.onStop
                     : (widget.canSend ? widget.onSend : null),

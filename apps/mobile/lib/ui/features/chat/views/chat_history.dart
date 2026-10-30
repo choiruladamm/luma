@@ -22,6 +22,7 @@ class ChatHistory extends StatefulWidget {
     this.indexLabel,
     this.onSource,
     this.suspended = false,
+    this.selectedSource,
     this.padding = EdgeInsets.zero,
     this.topFade = EdgeFadeSide.standard,
     this.bottomFade = EdgeFadeSide.standard,
@@ -30,6 +31,7 @@ class ChatHistory extends StatefulWidget {
     this.reserveAnswerSpace = false,
   });
   final List<ChatTurn> turns;
+  final ({int turnId, String sourceId})? selectedSource;
   final EdgeInsets padding;
   final EdgeFadeSide topFade, bottomFade;
   final Widget? contextCard, lastActions;
@@ -103,6 +105,7 @@ class _ChatHistoryState extends State<ChatHistory> {
   void didUpdateWidget(ChatHistory oldWidget) {
     super.didUpdateWidget(oldWidget);
     _rendered.remove(widget.turns.last.id);
+    if (oldWidget.selectedSource != widget.selectedSource) _rendered.clear();
     if (oldWidget.suspended && !widget.suspended) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _position();
@@ -313,6 +316,12 @@ class _ChatHistoryState extends State<ChatHistory> {
                                                 PlaceholderAlignment.middle,
                                             child: ChatSourceChip(
                                               source: source,
+                                              selected:
+                                                  widget.selectedSource ==
+                                                  (
+                                                    turnId: turn.id,
+                                                    sourceId: source.id,
+                                                  ),
                                               onPressed: widget.onSource == null
                                                   ? null
                                                   : () => widget.onSource!(
@@ -472,12 +481,15 @@ class _ChatHistoryState extends State<ChatHistory> {
             ),
             if (_away)
               Positioned(
-                right: widget.padding.right,
+                left: 0,
+                right: 0,
                 bottom: widget.padding.bottom,
-                child: CircleButton(
-                  semanticLabel: 'Ke terbaru',
-                  icon: AppIcons.down,
-                  onPressed: () => _latest(),
+                child: Center(
+                  child: CircleButton(
+                    semanticLabel: 'Ke terbaru',
+                    icon: AppIcons.down,
+                    onPressed: () => _latest(),
+                  ),
                 ),
               ),
           ],
@@ -508,9 +520,15 @@ class _ChatHistoryState extends State<ChatHistory> {
 
 /// Only verified complete blocks can supply a source action.
 class ChatSourceChip extends StatelessWidget {
-  const ChatSourceChip({super.key, required this.source, this.onPressed});
+  const ChatSourceChip({
+    super.key,
+    required this.source,
+    this.onPressed,
+    this.selected = false,
+  });
   final ChatSource source;
   final VoidCallback? onPressed;
+  final bool selected;
   @override
   Widget build(BuildContext context) => Semantics(
     button: true,
@@ -528,16 +546,23 @@ class ChatSourceChip extends StatelessWidget {
           widthFactor: 1,
           child: Container(
             padding: const EdgeInsets.symmetric(
-              horizontal: Space.s2,
+              horizontal: 6,
               vertical: Space.s1,
             ),
             decoration: BoxDecoration(
-              color: context.stabilo.muted,
+              color: selected ? context.stabilo.accent : context.stabilo.muted,
               borderRadius: BorderRadius.circular(Radii.full),
             ),
             child: Text(
               source.chapterTitle,
-              style: StabiloType.caption.copyWith(fontSize: 12, height: 1),
+              style: StabiloType.caption.copyWith(
+                fontSize: 12,
+                height: 1,
+                fontWeight: FontWeight.w700,
+                color: selected
+                    ? context.stabilo.onAccent
+                    : context.stabilo.ink,
+              ),
             ),
           ),
         ),

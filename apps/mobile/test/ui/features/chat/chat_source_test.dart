@@ -266,6 +266,19 @@ void main() {
     },
   );
 
+  testWidgets('large text leaves room for the source-visit header', (t) async {
+    t.platformDispatcher.textScaleFactorTestValue = 2;
+    addTearDown(t.platformDispatcher.clearTextScaleFactorTestValue);
+    await open(t);
+    final fade = t.widget<EdgeFadeScroll>(find.byType(EdgeFadeScroll).first);
+    expect(fade.top.clear, greaterThan(32));
+    expect(
+      find.text('Lagi ngintip · progres masih I · Paragraf 3'),
+      findsOneWidget,
+    );
+    expect(t.takeException(), isNull);
+  });
+
   testWidgets(
     'Aa and chapter navigation keep source identity without writing reading data',
     (t) async {
@@ -278,7 +291,7 @@ void main() {
       expect(find.bySemanticsLabel('Daftar isi'), findsNothing);
       expect(find.bySemanticsLabel('Atur tampilan teks'), findsNothing);
       expect(
-        find.text('Lagi ngintip · progres baca belum berubah'),
+        find.text('Lagi ngintip · progres masih I · Paragraf 3'),
         findsOneWidget,
       );
       unchanged();
@@ -295,7 +308,7 @@ void main() {
       'source sheet scrolls metadata with full-width text in $brightness',
       (t) async {
         await open(t, sheet: true, brightness: brightness);
-        final chapter = find.text(source.chapterTitle);
+        final chapter = find.text('III · Paragraf 5 · Paragraf 6');
         final scroll = find.ancestor(
           of: chapter,
           matching: find.byType(SingleChildScrollView),
@@ -311,9 +324,12 @@ void main() {
         final text = find.byType(SelectableText);
         final sheetRect = t.getRect(find.byType(BottomSheet));
         final textRect = t.getRect(text);
-        final paragraphRect = t.getRect(find.text('Paragraf 5 · Paragraf 6'));
-        expect(textRect.left - sheetRect.left, 40);
-        expect(sheetRect.right - textRect.right, 40);
+        final paragraphRect = t.getRect(
+          find.ancestor(of: chapter, matching: find.byType(Container)).first,
+        );
+        expect(paragraphRect.height, 26);
+        expect(textRect.left - sheetRect.left, 24);
+        expect(sheetRect.right - textRect.right, 24);
         expect(textRect.top - paragraphRect.bottom, 24);
         final button = find.byType(AppButton);
         expect(t.getRect(scroll), sheetRect);
@@ -326,7 +342,7 @@ void main() {
         expect(padding.bottom - 52 - 34, 16);
         expect(t.getRect(find.byType(SheetGrabber)).top - sheetRect.top, 10);
         expect(sheetRect.bottom - t.getRect(button).bottom, 34);
-        expect(t.getSize(text).width, t.getSize(scroll).width - 80);
+        expect(t.getSize(text).width, t.getSize(scroll).width - 48);
         final chapterY = t.getTopLeft(chapter).dy;
         final buttonY = t.getTopLeft(find.text('Buka di buku')).dy;
         await t.drag(scroll, const Offset(0, -300));
@@ -345,9 +361,7 @@ void main() {
         position.jumpTo(position.maxScrollExtent);
         await t.pumpAndSettle();
         expect(edges.debugEdges, (top: true, bottom: false));
-        final message = find.text(
-          'Cek teks aslinya tanpa mengubah posisi baca lo.',
-        );
+        final message = find.byKey(const ValueKey('source-quote'));
         expect(
           t.getRect(button).top - t.getRect(message).bottom,
           closeTo(16, .1),

@@ -379,7 +379,11 @@ class ReaderChatDock extends StatelessWidget {
         children: [
           Text('${(progress * 100).floor()}%', style: StabiloType.label),
           SizedBox(
-            width: Layout.readerProgressTrack,
+            width:
+                MediaQuery.textScalerOf(context).scale(1) > 1.3 ||
+                    MediaQuery.sizeOf(context).width < 350
+                ? Layout.readerProgressTrack
+                : Layout.readerChatProgressTrack,
             child: LinearProgressIndicator(
               value: progress.clamp(0, 1),
               backgroundColor: context.stabilo.track,

@@ -14,6 +14,7 @@ class AppField extends StatefulWidget {
     required this.label,
     required this.controller,
     this.helper,
+    this.showLabel = true,
     this.hint,
     this.error,
     this.mono = true,
@@ -29,6 +30,7 @@ class AppField extends StatefulWidget {
   final String label;
   final TextEditingController controller;
   final String? helper;
+  final bool showLabel;
 
   /// Placeholder waktu kosong.
   final String? hint;
@@ -62,13 +64,14 @@ class _AppFieldState extends State<AppField> {
       crossAxisAlignment: CrossAxisAlignment.start,
       spacing: Space.s2,
       children: [
-        Text(
-          widget.label,
-          style: StabiloType.caption.copyWith(
-            fontWeight: FontWeight.w600,
-            color: c.ink2,
+        if (widget.showLabel)
+          Text(
+            widget.label,
+            style: StabiloType.caption.copyWith(
+              fontWeight: FontWeight.w600,
+              color: c.ink2,
+            ),
           ),
-        ),
         Container(
           height: 52,
           padding: const EdgeInsets.only(left: Space.s3, right: Space.s1),

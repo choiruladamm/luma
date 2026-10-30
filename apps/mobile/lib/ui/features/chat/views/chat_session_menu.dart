@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 import '../../../../domain/chat_prompt.dart';
 import '../../../../domain/models/book_chat.dart';
 import '../../../core/theme/stabilo_tokens.dart';
+import '../../../core/theme/stabilo_theme.dart';
+import '../../../core/theme/stabilo_type.dart';
 import '../../../core/widgets/buttons.dart';
-import '../../../core/widgets/dialog.dart';
 import '../../../core/widgets/field.dart';
 import '../../../core/widgets/sheet.dart';
 import '../view_models/chat_view_model.dart';
@@ -21,32 +22,93 @@ Future<void> showChatSessionMenu(
   if (session == null) return;
   final action = await showAppSheet<_SessionAction>(
     context,
-    builder: (sheet) => SheetFrame(
-      title: 'Obrolan ini',
-      children: [
-        Text(session.title),
-        if (session.invalid ||
-            state.book == null ||
-            session.isArchived(state.book!))
-          const Text('Arsip cuma bisa dibaca. Judulnya gak bisa diubah.'),
-        AppButton.secondary(
-          label: 'Ubah judul',
-          icon: AppIcons.edit,
-          onPressed:
-              session.invalid ||
-                  state.book == null ||
-                  session.isArchived(state.book!)
-              ? null
-              : () => Navigator.pop(sheet, _SessionAction.rename),
+    builder: (sheet) {
+      final readOnly =
+          session.invalid ||
+          state.book == null ||
+          session.isArchived(state.book!);
+      Widget action(
+        String label,
+        List<List<dynamic>> icon,
+        VoidCallback? onTap, {
+        bool destructive = false,
+      }) => Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(Radii.field),
+          child: SizedBox(
+            height: 56,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: Space.s2),
+              child: Row(
+                spacing: 14,
+                children: [
+                  AppIcon(
+                    icon,
+                    color: destructive
+                        ? context.stabilo.danger
+                        : context.stabilo.ink,
+                  ),
+                  Expanded(
+                    child: Text(
+                      label,
+                      style: StabiloType.body.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: destructive
+                            ? context.stabilo.danger
+                            : context.stabilo.ink,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
-        AppButton.secondary(
-          label: 'Hapus obrolan ini',
-          destructive: true,
-          icon: AppIcons.delete,
-          onPressed: () => Navigator.pop(sheet, _SessionAction.delete),
+      );
+      return Padding(
+        padding: EdgeInsets.fromLTRB(
+          16,
+          22,
+          16,
+          MediaQuery.paddingOf(sheet).bottom + 16,
         ),
-      ],
-    ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+              child: Text(
+                session.title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: StabiloType.caption.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: context.stabilo.ink2,
+                ),
+              ),
+            ),
+            if (readOnly)
+              const Text('Arsip cuma bisa dibaca. Judulnya gak bisa diubah.'),
+            action(
+              'Ubah judul',
+              AppIcons.edit,
+              readOnly
+                  ? null
+                  : () => Navigator.pop(sheet, _SessionAction.rename),
+            ),
+            action(
+              'Hapus obrolan ini',
+              AppIcons.delete,
+              () => Navigator.pop(sheet, _SessionAction.delete),
+              destructive: true,
+            ),
+          ],
+        ),
+      );
+    },
   );
   if (!context.mounted || action == null) return;
   switch (action) {
@@ -57,14 +119,64 @@ Future<void> showChatSessionMenu(
         builder: (_) => _RenameSession(vm: vm, session: session),
       );
     case _SessionAction.delete:
-      final confirmed = await showConfirmDialog(
-        context,
-        title: 'Hapus obrolan ini?',
-        message:
-            '“${session.title}”\n\nPertanyaan dan jawaban di sesi ini akan dihapus. Obrolan lain, buku, dan posisi baca tetap tersimpan.',
-        confirmLabel: 'Hapus',
-        icon: AppIcons.delete,
-      );
+      final confirmed =
+          await showDialog<bool>(
+            context: context,
+            builder: (dialog) => Dialog(
+              insetPadding: const EdgeInsets.symmetric(horizontal: Space.s8),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(Radii.xl),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(22, 24, 22, 20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  spacing: 10,
+                  children: [
+                    Text(
+                      'Hapus obrolan ini?',
+                      style: StabiloType.titleMd.copyWith(
+                        fontSize: 20,
+                        height: 1.25,
+                      ),
+                    ),
+                    Text(
+                      '“${session.title}” bakal dihapus permanen. Bukunya, progres baca, dan obrolan lain gak ikut kehapus.',
+                      style: StabiloType.body.copyWith(
+                        fontSize: 14.5,
+                        height: 1.5,
+                        color: context.stabilo.ink2,
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 10),
+                      child: Row(
+                        spacing: 10,
+                        children: [
+                          Expanded(
+                            child: AppButton.secondary(
+                              label: 'Batal',
+                              height: 48,
+                              onPressed: () => Navigator.pop(dialog, false),
+                            ),
+                          ),
+                          Expanded(
+                            child: AppButton.danger(
+                              label: 'Hapus',
+                              height: 48,
+                              onPressed: () => Navigator.pop(dialog, true),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ) ??
+          false;
       if (confirmed && context.mounted) await vm.deleteSession(session.id);
   }
 }
@@ -120,27 +232,34 @@ class _RenameSessionState extends State<_RenameSession> {
   Widget build(BuildContext context) => Padding(
     padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
     child: SheetFrame(
-      title: 'Ubah judul obrolan',
+      title: 'Ubah judul',
+      showClose: false,
+      actions: [
+        Expanded(
+          child: AppButton.secondary(
+            label: 'Batal',
+            onPressed: _saving ? null : () => Navigator.pop(context),
+          ),
+        ),
+        Expanded(
+          child: AppButton.primary(
+            label: 'Simpan',
+            loading: _saving,
+            onPressed: _error == null && !_saving ? _save : null,
+          ),
+        ),
+      ],
       children: [
         AppField(
-          label: 'Judul',
+          label: 'Judul obrolan',
+          showLabel: false,
           controller: _text,
           mono: false,
-          helper: 'Maksimal $chatTitleCodePoints karakter',
+          hint: 'Judul obrolan',
           error: _error,
           onChanged: _validate,
           onSubmitted: (_) => _save(),
         ),
-        AppButton.primary(
-          label: 'Simpan judul',
-          loading: _saving,
-          onPressed: _error == null && !_saving ? _save : null,
-        ),
-        AppButton.secondary(
-          label: 'Batal',
-          onPressed: _saving ? null : () => Navigator.pop(context),
-        ),
-        const SizedBox(height: Space.s2),
       ],
     ),
   );
