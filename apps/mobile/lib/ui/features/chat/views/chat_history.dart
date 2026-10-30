@@ -5,9 +5,11 @@ import '../../../core/theme/stabilo_theme.dart';
 import '../../../core/theme/stabilo_tokens.dart';
 import '../../../core/theme/stabilo_type.dart';
 import '../../../core/widgets/buttons.dart';
+import '../../../core/widgets/ai_status.dart';
 import '../../../core/widgets/edge_fade.dart';
 import 'chat_copy.dart';
 import 'chat_response.dart';
+import 'chat_context_card.dart';
 
 class ChatHistory extends StatefulWidget {
   const ChatHistory({
@@ -20,8 +22,18 @@ class ChatHistory extends StatefulWidget {
     this.indexLabel,
     this.onSource,
     this.suspended = false,
+    this.padding = EdgeInsets.zero,
+    this.topFade = EdgeFadeSide.standard,
+    this.bottomFade = EdgeFadeSide.standard,
+    this.contextCard,
+    this.lastActions,
+    this.reserveAnswerSpace = false,
   });
   final List<ChatTurn> turns;
+  final EdgeInsets padding;
+  final EdgeFadeSide topFade, bottomFade;
+  final Widget? contextCard, lastActions;
+  final bool reserveAnswerSpace;
   final bool suspended;
   final ChatScrollAnchor? anchor;
   final ChatPhase? phase;
@@ -50,6 +62,7 @@ class _ChatHistoryState extends State<ChatHistory> {
       >{};
   late final int _centerId;
   bool _away = false;
+  double _turnHeight = 0;
   ChatScrollAnchor? _lastAnchor;
   bool _restoring = true;
   @override
@@ -69,6 +82,9 @@ class _ChatHistoryState extends State<ChatHistory> {
           target,
           alignment: anchor!.alignment.clamp(0, 1),
         );
+      } else if (widget.reserveAnswerSpace &&
+          widget.turns.last.phase.isRunning) {
+        _question();
       } else if (!widget.turns.last.phase.isRunning) {
         _latest();
       }
@@ -86,6 +102,7 @@ class _ChatHistoryState extends State<ChatHistory> {
   @override
   void didUpdateWidget(ChatHistory oldWidget) {
     super.didUpdateWidget(oldWidget);
+    _rendered.remove(widget.turns.last.id);
     if (oldWidget.suspended && !widget.suspended) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _position();
@@ -96,9 +113,43 @@ class _ChatHistoryState extends State<ChatHistory> {
       if (widget.turns.length > oldWidget.turns.length &&
           widget.turns.last.phase.isRunning) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) _latest();
+          if (mounted) _question();
         });
       }
+    }
+  }
+
+  void _question([int remaining = 8]) {
+    if (!_scroll.hasClients || widget.suspended) return;
+    final target =
+        _blocks[(turnId: widget.turns.last.id, blockIndex: 0)]?.currentContext;
+    if (target == null) {
+      _scroll.jumpTo(_scroll.position.maxScrollExtent);
+      if (remaining > 0) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _question(remaining - 1);
+        });
+      }
+      return;
+    }
+    final box = target.findRenderObject() as RenderBox;
+    final root = _viewport.currentContext!.findRenderObject() as RenderBox;
+    final offset =
+        _scroll.offset +
+        box.localToGlobal(Offset.zero, ancestor: root).dy -
+        widget.padding.top;
+    final destination = offset.clamp(
+      _scroll.position.minScrollExtent,
+      _scroll.position.maxScrollExtent,
+    );
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _scroll.jumpTo(destination);
+    } else {
+      _scroll.animateTo(
+        destination,
+        duration: Motion.jump,
+        curve: Curves.easeOutCubic,
+      );
     }
   }
 
@@ -179,88 +230,147 @@ class _ChatHistoryState extends State<ChatHistory> {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: Layout.chatTextWidth),
         child: Padding(
-          padding: const EdgeInsets.only(bottom: Space.s6),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            spacing: Space.s4,
-            children: [
-              anchor(
-                0,
-                Container(
-                  padding: const EdgeInsets.all(Space.s4),
-                  decoration: BoxDecoration(
-                    color: context.stabilo.muted,
-                    borderRadius: BorderRadius.circular(Radii.lg),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    spacing: Space.s2,
-                    children: [
-                      if (turn.quote != null)
-                        Text(turn.quote!.text, style: StabiloType.caption),
-                      Text(
-                        turn.question,
-                        style: StabiloType.body.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              ChatResponse(
-                key: ValueKey(turn.attemptRef),
-                blocks: blocks,
-                phase: phase,
-                builder: (context, visible) => Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  spacing: Space.s5,
-                  children: [
-                    for (var i = 0; i < visible.length; i++)
-                      if (visible[i].text.isNotEmpty)
-                        anchor(
-                          i + 1,
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            spacing: Space.s3,
+          padding: const EdgeInsets.only(bottom: Space.s8),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: turn.id == widget.turns.last.id ? _turnHeight : 0,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              spacing: Space.s4,
+              children: [
+                anchor(
+                  0,
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: FractionallySizedBox(
+                      widthFactor: Layout.chatBubbleFraction,
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: Container(
+                          padding: Layout.chatBubblePadding,
+                          decoration: BoxDecoration(
+                            color: context.stabilo.muted,
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(Radii.lg),
+                              topRight: Radius.circular(Radii.lg),
+                              bottomLeft: Radius.circular(Radii.lg),
+                              bottomRight: Radius.circular(Radii.chatTail),
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            spacing: Space.s2,
                             children: [
-                              SelectableText(
-                                visible[i].text,
-                                style: StabiloType.forBrightness(
-                                  StabiloType.reading,
-                                  Theme.of(context).brightness,
+                              Text(
+                                turn.question,
+                                style: StabiloType.body.copyWith(
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
-                              for (final source in visible[i].sources)
-                                ChatSourceChip(
-                                  source: source,
-                                  onPressed: widget.onSource == null
-                                      ? null
-                                      : () => widget.onSource!(turn, source),
-                                ),
                             ],
                           ),
                         ),
-                  ],
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-              if (answer != null && answer.note.isNotEmpty)
-                Text(
-                  answer.note,
-                  style: StabiloType.body.copyWith(color: context.stabilo.ink2),
-                ),
-              if (phase == ChatPhase.done && turn.id == widget.turns.last.id)
-                Semantics(
-                  liveRegion: true,
-                  label: phase.label,
-                  child: const SizedBox.shrink(),
-                ),
-              if (phase != ChatPhase.done)
-                Semantics(
-                  liveRegion: true,
-                  child: Text(label, style: StabiloType.caption),
-                ),
-            ],
+                if (blocks.isNotEmpty || phase.isRunning)
+                  ChatResponse(
+                    key: ValueKey(turn.attemptRef),
+                    blocks: blocks,
+                    phase: phase,
+                    builder: (context, visible) => Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      spacing: Space.s3,
+                      children: [
+                        if (phase.isRunning &&
+                            visible.every((b) => b.text.isEmpty))
+                          Row(
+                            spacing: Space.s2,
+                            children: [
+                              WritingDots(color: context.stabilo.ink2),
+                              Flexible(
+                                child: Text(label, style: StabiloType.caption),
+                              ),
+                            ],
+                          ),
+                        for (var i = 0; i < visible.length; i++)
+                          if (visible[i].text.isNotEmpty)
+                            anchor(
+                              i + 1,
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                spacing: Space.s3,
+                                children: [
+                                  SelectableText.rich(
+                                    TextSpan(
+                                      children: [
+                                        TextSpan(text: visible[i].text),
+                                        for (final source in visible[i].sources)
+                                          WidgetSpan(
+                                            alignment:
+                                                PlaceholderAlignment.middle,
+                                            child: ChatSourceChip(
+                                              source: source,
+                                              onPressed: widget.onSource == null
+                                                  ? null
+                                                  : () => widget.onSource!(
+                                                      turn,
+                                                      source,
+                                                    ),
+                                            ),
+                                          ),
+                                        if (phase.isRunning &&
+                                            i ==
+                                                visible.lastIndexWhere(
+                                                  (b) => b.text.isNotEmpty,
+                                                ))
+                                          const WidgetSpan(
+                                            alignment:
+                                                PlaceholderAlignment.middle,
+                                            child: ChatCaret(),
+                                          ),
+                                      ],
+                                    ),
+                                    style: StabiloType.forBrightness(
+                                      StabiloType.readingSheet,
+                                      Theme.of(context).brightness,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                      ],
+                    ),
+                  ),
+                if (answer != null && answer.note.isNotEmpty)
+                  Text(
+                    answer.note,
+                    style: StabiloType.body.copyWith(
+                      color: context.stabilo.ink2,
+                    ),
+                  ),
+                if (phase == ChatPhase.done && turn.id == widget.turns.last.id)
+                  Semantics(
+                    liveRegion: true,
+                    label: phase.label,
+                    child: const SizedBox.shrink(),
+                  ),
+                if (phase != ChatPhase.done &&
+                    (phase.isRunning ||
+                        turn.id != widget.turns.last.id ||
+                        widget.lastActions == null) &&
+                    !(phase.isRunning && blocks.every((b) => b.text.isEmpty)))
+                  Semantics(
+                    liveRegion: true,
+                    child: Text(label, style: StabiloType.caption),
+                  ),
+                if (turn.id == widget.turns.last.id &&
+                    widget.lastActions != null)
+                  widget.lastActions!,
+              ],
+            ),
           ),
         ),
       ),
@@ -280,61 +390,120 @@ class _ChatHistoryState extends State<ChatHistory> {
     final found = widget.turns.indexWhere((t) => t.id == _centerId);
     final center = found < 0 ? 0 : found;
     const centerKey = ValueKey('chat-history-center');
-    return Stack(
-      key: _viewport,
-      children: [
-        NotificationListener<ScrollEndNotification>(
-          onNotification: (_) {
-            _position();
-            return false;
-          },
-          child: EdgeFadeScroll(
-            child: NotificationListener<ScrollMetricsNotification>(
-              onNotification: (notification) {
-                if (!widget.suspended &&
-                    !_restoring &&
-                    notification.depth == 0) {
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    if (mounted) _position();
-                  });
-                }
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final height = widget.reserveAnswerSpace
+            ? (constraints.maxHeight - widget.padding.vertical - Space.s8)
+                  .clamp(0.0, double.infinity)
+            : 0.0;
+        if (height != _turnHeight) {
+          _turnHeight = height;
+          _rendered.clear();
+        }
+        return Stack(
+          key: _viewport,
+          children: [
+            NotificationListener<ScrollEndNotification>(
+              onNotification: (_) {
+                _position();
                 return false;
               },
-              child: CustomScrollView(
-                controller: _scroll,
-                center: centerKey,
-                slivers: [
-                  SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (_, i) => _turn(widget.turns[center - i - 1]),
-                      childCount: center,
-                    ),
+              child: EdgeFadeScroll(
+                top: widget.topFade,
+                bottom: widget.bottomFade,
+                child: NotificationListener<ScrollMetricsNotification>(
+                  onNotification: (notification) {
+                    if (!widget.suspended &&
+                        !_restoring &&
+                        notification.depth == 0) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (mounted) _position();
+                      });
+                    }
+                    return false;
+                  },
+                  child: CustomScrollView(
+                    controller: _scroll,
+                    center: centerKey,
+                    slivers: [
+                      if (center > 0) SliverToBoxAdapter(child: _intro()),
+                      SliverPadding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: widget.padding.left,
+                        ),
+                        sliver: SliverList(
+                          delegate: SliverChildBuilderDelegate(
+                            (_, i) => _turn(widget.turns[center - i - 1]),
+                            childCount: center,
+                          ),
+                        ),
+                      ),
+                      SliverPadding(
+                        key: centerKey,
+                        padding: EdgeInsets.fromLTRB(
+                          widget.padding.left,
+                          center == 0 ? widget.padding.top : 0,
+                          widget.padding.right,
+                          widget.padding.bottom,
+                        ),
+                        sliver: SliverList(
+                          delegate: SliverChildBuilderDelegate(
+                            (_, i) {
+                              if (center == 0 && i == 0) {
+                                return _intro(padded: false);
+                              }
+                              return _turn(
+                                widget.turns[center +
+                                    i -
+                                    (center == 0 ? 1 : 0)],
+                              );
+                            },
+                            childCount:
+                                widget.turns.length -
+                                center +
+                                (center == 0 ? 1 : 0),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  SliverList(
-                    key: centerKey,
-                    delegate: SliverChildBuilderDelegate(
-                      (_, i) => _turn(widget.turns[center + i]),
-                      childCount: widget.turns.length - center,
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
-          ),
-        ),
-        if (_away)
-          Positioned(
-            right: 0,
-            bottom: Space.s2,
-            child: AppButton.secondary(
-              label: 'Ke terbaru',
-              icon: AppIcons.down,
-              onPressed: () => _latest(),
-            ),
-          ),
-      ],
+            if (_away)
+              Positioned(
+                right: widget.padding.right,
+                bottom: widget.padding.bottom,
+                child: CircleButton(
+                  semanticLabel: 'Ke terbaru',
+                  icon: AppIcons.down,
+                  onPressed: () => _latest(),
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
+
+  Widget _intro({bool padded = true}) => Padding(
+    padding: padded
+        ? EdgeInsets.fromLTRB(
+            widget.padding.left,
+            widget.padding.top,
+            widget.padding.right,
+            Space.s8,
+          )
+        : const EdgeInsets.only(bottom: Space.s8),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      spacing: Space.s4,
+      children: [
+        const ChatNotice(),
+        if (widget.contextCard != null) widget.contextCard!,
+      ],
+    ),
+  );
 }
 
 /// Only verified complete blocks can supply a source action.
@@ -343,24 +512,35 @@ class ChatSourceChip extends StatelessWidget {
   final ChatSource source;
   final VoidCallback? onPressed;
   @override
-  Widget build(BuildContext context) => InkWell(
-    onTap: onPressed,
-    borderRadius: BorderRadius.circular(Radii.sm),
-    child: Container(
-      constraints: const BoxConstraints(minHeight: Layout.touch),
-      padding: const EdgeInsets.all(Space.s3),
-      decoration: BoxDecoration(
-        color: context.stabilo.muted,
-        borderRadius: BorderRadius.circular(Radii.sm),
-      ),
-      child: Row(
-        spacing: Space.s2,
-        children: [
-          const AppIcon(AppIcons.book),
-          Expanded(
-            child: Text(source.chapterTitle, style: StabiloType.caption),
+  Widget build(BuildContext context) => Semantics(
+    button: true,
+    label:
+        '${source.chapterTitle}, paragraf ${source.anchors.first.paragraphIndex + 1}',
+    child: InkWell(
+      onTap: onPressed,
+      borderRadius: BorderRadius.circular(Radii.full),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(
+          minHeight: Layout.touch,
+          minWidth: Layout.touch,
+        ),
+        child: Center(
+          widthFactor: 1,
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: Space.s2,
+              vertical: Space.s1,
+            ),
+            decoration: BoxDecoration(
+              color: context.stabilo.muted,
+              borderRadius: BorderRadius.circular(Radii.full),
+            ),
+            child: Text(
+              source.chapterTitle,
+              style: StabiloType.caption.copyWith(fontSize: 12, height: 1),
+            ),
           ),
-        ],
+        ),
       ),
     ),
   );

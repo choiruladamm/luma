@@ -120,15 +120,18 @@ class ChatSource {
 }
 
 class ChatQuote {
-  ChatQuote({required List<SourceAnchor> anchors, this.translation})
-    : anchors = List.unmodifiable(anchors) {
+  ChatQuote({
+    required List<SourceAnchor> anchors,
+    this.translation,
+    this.chapterTitle,
+  }) : anchors = List.unmodifiable(anchors) {
     if (anchors.isEmpty) throw const FormatException('Kutipan kosong');
   }
 
   final List<SourceAnchor> anchors;
 
   /// Pendamping UI saja; bukan bukti dan tidak dikirim sebagai selectedQuote.
-  final String? translation;
+  final String? translation, chapterTitle;
   String get text => anchors.map((a) => a.snapshot).join('\n\n');
 }
 
@@ -426,7 +429,11 @@ class ChatSourceLocation {
     required this.source,
     required this.available,
     this.generation,
+    this.positionLabel,
+    this.before,
+    this.after,
   });
+  final String? positionLabel, before, after;
   final ChatSource source;
   final bool available;
 

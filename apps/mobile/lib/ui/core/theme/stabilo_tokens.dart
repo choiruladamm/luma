@@ -24,6 +24,7 @@ abstract final class Radii {
   static const xl = 28.0; // sudut atas sheet
   static const full = 999.0; // icon button, pill, segmented
   // Di luar skala Ruang, dipake board Komponen 04.
+  static const chatTail = 6.0;
   static const field = 16.0; // field input
   static const menu = 18.0; // menu, list pengaturan
   static const dialog = 24.0;
@@ -35,7 +36,15 @@ abstract final class Layout {
   static const readerChatWidth = 120.0;
   static const readerProgressWidth = 210.0;
   static const readerProgressTrack = 40.0;
-  static const chatFollowDistance = 96.0;
+  static const chatFollowDistance = 80.0;
+  static const chatHeader = 52.0;
+  static const chatComposer = 52.0;
+  static const chatBubbleFraction = 0.82;
+  static const chatBubblePadding = EdgeInsets.symmetric(
+    horizontal: 14,
+    vertical: 10,
+  );
+  static const chatSheetHeight = 1 - 120 / 844;
   static const chatTextWidth = 680.0;
   static const margin = Space.s6;
   static const topBar = 60.0;

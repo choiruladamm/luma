@@ -469,13 +469,59 @@ Teks tetap selectable, paragraf berjarak token `Space.s5`, kolom maksimum
 `Layout.chatTextWidth` dengan typography bacaan Stabilo dan jarak baris dark.
 Output kontrak v2 tetap teks biasa; tidak ditambah renderer Markdown atau protocol baru.
 
-Sheet intip sitasi chat memakai pola overlay Artinya, tanpa kartu kutipan atau
-header tetap. Scroll viewport memenuhi tinggi sheet;
-nama bab, nomor paragraf dan tutup ikut scroll. Grabber dan Buka di buku di atas
-scroll, dengan validasi lokasi sumber tetap berlaku.
+### Redesign Ngobrolin Buku (#146)
 
-Geometri scroll mengikuti Artinya: margin kiri/kanan 24, grabber atas 10,
-tombol bawah 34. Fade atas 20 mulai setelah zona grabber 12; fade bawah 20 tepat
-di atas tombol (clear 86), tanpa tambahan celah layout di atas tombol. Padding
-akhir scroll 102 menjaga isi terakhir 16 di atas tombol saat mentok bawah.
-Jarak metadata→teks 8. SheetFrame umum tidak diubah untuk kebutuhan sitasi.
+Acuan screen: `design/references/ngobrolin-buku.html`. Export statis cukup untuk
+implementasi; catatan naratif yang tertinggal tidak menggantikan screen dan
+kontrak aplikasi. Tema gelap mengikuti token Stabilo existing.
+
+Chat menggunakan viewport penuh dengan header overlay 52pt yang menghilang saat
+scroll turun dan kembali saat naik (ReaderChrome), serta composer kapsul 52pt
+minimum yang tumbuh sampai lima baris. Tinggi header/composer diukur supaya teks
+besar dan keyboard tetap menyisakan padding scroll yang benar. Notice fitur ikut
+scroll. Jawaban memakai readingSheet 15,5/1,5 (dark mengikuti forBrightness),
+paragraf berjarak12, turn32; bubble pertanyaan rata kanan maksimal82% lebar.
+Sumber tampil sebagai chip inline dengan target sentuh44. Label memakai nama bab
+asli yang tersedia, tidak mengarang nomor bagian dari ID aplikasi.
+
+Kirim menempatkan pertanyaan baru di bawah header sekali dengan animasi; reduced
+motion memakai jump. Turn terbaru diberi ruang minimum untuk pertumbuhan jawaban.
+Streaming/final, munculnya chip dan keyboard tidak memaksa scroll. Tombol turun
+muncul saat jarak ke bawah lebih80pt. Pacing/source guards tetap memakai #123/#141;
+kursor visual dan titik tunggu tidak mengumumkan setiap karakter ke screen reader.
+Hanya turn terakhir yang dapat diulang/diteruskan memiliki aksi kecil dalam isi
+scroll; status lama tidak menumpuk tombol di atas composer. Settings, error dan
+Lanjutkan tetap memakai state ViewModel existing.
+
+Sheet sitasi memiliki viewport penuh, grabber, metadata/konteks yang ikut scroll,
+kutipan dalam blok muted, serta close dan Buka di buku satu baris di bawah.
+Geometri mengikuti overlay Artinya: margin24, grabber atas10, tombol bawah34,
+fade atas20 clear12; fade bawah20 clear86; padding akhir102. Konteks sebelum/sesudah
+serta label posisi dibaca lokal hanya untuk lokasi valid. Membuka sheet/reader
+kunjungan tetap tanpa penulisan progres maupun waktu baca.
+
+Reader kunjungan hanya memiliki label intip dan kapsul Balik ke ngobrol / Lanjut
+baca. Balik memulihkan anchor chat. Lanjut baca memvalidasi ulang sumber dan menulis
+posisi awal kutipan dalam satu transaksi; kemudian kembali ke reader biasa di
+posisi baru. Revision, ownership, attempt dan validitas teks harus tetap cocok.
+Pembatalan/kegagalan tidak memindahkan progres. Reader asli memuat posisi tersimpan
+sebelum melanjutkan clock; posisi lamanya tidak boleh menimpa hasil aksi eksplisit.
+Kapsul progres reader biasa kini satu objek dengan tombol Ngobrol bulat di ujung.
+
+Riwayat per buku dikelompokkan Hari ini/Kemarin/7 hari terakhir/Lebih lama, memiliki
+penanda aktif/arsip, menu rename/hapus per sesi dan CTA baru di bawah. Rename sesi
+nonaktif tidak mengaktifkan sesi itu; repository tetap memeriksa buku/revision.
+Arsip tidak bisa diubah judulnya/dilanjutkan; hapus tetap membutuhkan konfirmasi.
+Draft kosong belum membuat sesi. Preview existing tetap pertanyaan terakhir.
+
+Tanyain ini berada pada baris aksi Artinya: Salin ikon, Tanyain ini muted, Lanjut
+kuning. Isi sheet lain tidak didesain ulang. Entry membuka composer kosong dan
+kartu konteks ciut (dua baris) yang bisa memperlihatkan kutipan + terjemahan, tanpa
+auto-send. Konteks pertama tampil sekali di awal history; kiriman baru menciutkan
+kartu. Baca di buku membuka kunjungan tervalidasi, progres baru pindah pada Lanjut
+baca. Header menyediakan kembali satu lapis dan akses ringkas langsung Balik baca.
+Entry kutipan yang sama melanjutkan sesi yang cocok pada buku/revision sama;
+pencocokan lokal tidak mengirim request AI. Nama bab opsional ikut snapshot quote
+JSON untuk UI, kompatibel dengan snapshot lama tanpa perubahan schema. Terjemahan
+pendamping UI tetap bukan bukti model. Import/hydrate/history tidak menambah paid
+request. #143 tetap menangani kualitas konteks/retrieval, bukan redesign ini.

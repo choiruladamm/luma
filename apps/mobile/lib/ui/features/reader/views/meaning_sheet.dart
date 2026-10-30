@@ -268,6 +268,9 @@ class _MeaningSheetState extends ConsumerState<MeaningSheet> {
         onProgress: widget.onProgress,
         onClose: _close,
         onRetry: retry,
+        onChat: widget.onChat == null
+            ? null
+            : () => widget.onChat!(ai.draft.translations.join('\n\n')),
         breakdown: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           spacing: Space.s3,
@@ -277,13 +280,6 @@ class _MeaningSheetState extends ConsumerState<MeaningSheet> {
               fade: !ai.cached,
               onTap: widget.onBreakdown,
             ),
-            if (widget.onChat != null && ai.phase == AiPhase.done)
-              AppButton.secondary(
-                label: 'Tanyain ini',
-                icon: AppIcons.chat,
-                onPressed: () =>
-                    widget.onChat!(ai.draft.translations.join('\n\n')),
-              ),
           ],
         ),
       ),
@@ -622,6 +618,7 @@ class _Answer extends StatefulWidget {
     required this.onClose,
     required this.onRetry,
     required this.breakdown,
+    this.onChat,
   });
 
   final ReaderTypography typo;
@@ -635,6 +632,7 @@ class _Answer extends StatefulWidget {
 
   /// Entri Bedahin, item terakhir isi; cuma pas jawabannya lengkap.
   final Widget breakdown;
+  final VoidCallback? onChat;
 
   @override
   State<_Answer> createState() => _AnswerState();
@@ -899,20 +897,35 @@ class _AnswerState extends State<_Answer> with TickerProviderStateMixin {
             if (_finished) widget.breakdown,
           ],
           actions: [
-            AnimatedSwitcher(
-              duration: reduced ? Duration.zero : Motion.statusSwap,
-              child: writing && !_cut && _ai.phase != AiPhase.slow
-                  ? StatusButton(
-                      key: ValueKey(thinking),
-                      label: thinking ? 'Lagi mikir' : 'Lagi nulis',
-                    )
-                  : AppButton.secondary(
-                      key: const ValueKey('copy'),
-                      label: widget.copied ? 'Disalin' : 'Salin',
-                      icon: widget.copied ? AppIcons.check : AppIcons.copy,
-                      onPressed: _finished ? widget.onCopy : null,
-                    ),
-            ),
+            if (_finished && widget.onChat != null) ...[
+              CircleButton(
+                semanticLabel: widget.copied ? 'Disalin' : 'Salin',
+                icon: widget.copied ? AppIcons.check : AppIcons.copy,
+                size: Layout.chatComposer,
+                onPressed: widget.onCopy,
+              ),
+              Expanded(
+                child: AppButton.secondary(
+                  label: 'Tanyain ini',
+                  icon: AppIcons.chat,
+                  onPressed: widget.onChat,
+                ),
+              ),
+            ] else
+              AnimatedSwitcher(
+                duration: reduced ? Duration.zero : Motion.statusSwap,
+                child: writing && !_cut && _ai.phase != AiPhase.slow
+                    ? StatusButton(
+                        key: ValueKey(thinking),
+                        label: thinking ? 'Lagi mikir' : 'Lagi nulis',
+                      )
+                    : AppButton.secondary(
+                        key: const ValueKey('copy'),
+                        label: widget.copied ? 'Disalin' : 'Salin',
+                        icon: widget.copied ? AppIcons.check : AppIcons.copy,
+                        onPressed: _finished ? widget.onCopy : null,
+                      ),
+              ),
             Expanded(
               // Mati selama masih diproses; aktif lagi pas selesai / kepotong.
               child: AppButton.primary(

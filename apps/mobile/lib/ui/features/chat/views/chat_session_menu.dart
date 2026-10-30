@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../domain/chat_prompt.dart';
+import '../../../../domain/models/book_chat.dart';
 import '../../../core/theme/stabilo_tokens.dart';
 import '../../../core/widgets/buttons.dart';
 import '../../../core/widgets/dialog.dart';
@@ -8,14 +9,15 @@ import '../../../core/widgets/field.dart';
 import '../../../core/widgets/sheet.dart';
 import '../view_models/chat_view_model.dart';
 
-enum _SessionAction { rename, create, delete }
+enum _SessionAction { rename, delete }
 
 Future<void> showChatSessionMenu(
   BuildContext context,
   ChatViewModel vm,
-  ChatState state,
-) async {
-  final session = state.activeSession;
+  ChatState state, {
+  ChatSession? target,
+}) async {
+  final session = target ?? state.activeSession;
   if (session == null) return;
   final action = await showAppSheet<_SessionAction>(
     context,
@@ -23,16 +25,19 @@ Future<void> showChatSessionMenu(
       title: 'Obrolan ini',
       children: [
         Text(session.title),
-        if (!state.readOnly)
-          AppButton.secondary(
-            label: 'Ubah judul',
-            icon: AppIcons.edit,
-            onPressed: () => Navigator.pop(sheet, _SessionAction.rename),
-          ),
+        if (session.invalid ||
+            state.book == null ||
+            session.isArchived(state.book!))
+          const Text('Arsip cuma bisa dibaca. Judulnya gak bisa diubah.'),
         AppButton.secondary(
-          label: 'Obrolan baru',
-          icon: AppIcons.add,
-          onPressed: () => Navigator.pop(sheet, _SessionAction.create),
+          label: 'Ubah judul',
+          icon: AppIcons.edit,
+          onPressed:
+              session.invalid ||
+                  state.book == null ||
+                  session.isArchived(state.book!)
+              ? null
+              : () => Navigator.pop(sheet, _SessionAction.rename),
         ),
         AppButton.secondary(
           label: 'Hapus obrolan ini',
@@ -45,13 +50,11 @@ Future<void> showChatSessionMenu(
   );
   if (!context.mounted || action == null) return;
   switch (action) {
-    case _SessionAction.create:
-      await vm.newSession();
     case _SessionAction.rename:
       await showAppSheet<void>(
         context,
         maxHeight: 1,
-        builder: (_) => _RenameSession(vm: vm, title: session.title),
+        builder: (_) => _RenameSession(vm: vm, session: session),
       );
     case _SessionAction.delete:
       final confirmed = await showConfirmDialog(
@@ -67,15 +70,15 @@ Future<void> showChatSessionMenu(
 }
 
 class _RenameSession extends StatefulWidget {
-  const _RenameSession({required this.vm, required this.title});
+  const _RenameSession({required this.vm, required this.session});
   final ChatViewModel vm;
-  final String title;
+  final ChatSession session;
   @override
   State<_RenameSession> createState() => _RenameSessionState();
 }
 
 class _RenameSessionState extends State<_RenameSession> {
-  late final _text = TextEditingController(text: widget.title);
+  late final _text = TextEditingController(text: widget.session.title);
   String? _error;
   bool _saving = false;
   @override
@@ -98,8 +101,19 @@ class _RenameSessionState extends State<_RenameSession> {
     _validate(_text.text);
     if (_error != null || _saving) return;
     setState(() => _saving = true);
-    await widget.vm.rename(chatTitle(_text.text));
-    if (mounted) Navigator.pop(context);
+    final saved = await widget.vm.renameSession(
+      widget.session,
+      chatTitle(_text.text),
+    );
+    if (!mounted) return;
+    if (saved) {
+      Navigator.pop(context);
+    } else {
+      setState(() {
+        _saving = false;
+        _error = 'Judul belum tersimpan. Coba lagi.';
+      });
+    }
   }
 
   @override

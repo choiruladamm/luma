@@ -128,6 +128,97 @@ void main() {
     sourceId: id,
   );
 
+  test('explicit continue commits a verified source only, stale requests preserve progress', () async {
+    final t = await first();
+    final s = source();
+    await repo.prepareSources(t.attemptRef, [s]);
+    await repo.finalize(t.attemptRef, phase: ChatPhase.done, answer: answer(s));
+    expect((await repo.resolveSource(sourceRef(t)))!.available, true);
+    expect(await db.select(db.readingProgress).get(), isEmpty);
+    await repo.continueReading(request: sourceRef(t));
+    final saved = await db.select(db.readingProgress).getSingle();
+    expect(
+      (
+        saved.bookId,
+        saved.chapterId,
+        saved.paragraphIndex,
+        saved.paragraphOffset,
+      ),
+      (book.bookId, chapter, 2, 0),
+    );
+    final books = await db.select(db.books).get();
+    expect(books.every((b) => b.readingSeconds == 0), true);
+    final forged = (
+      bookId: other.bookId,
+      sessionId: t.sessionId,
+      turnId: t.id,
+      attempt: t.attempt,
+      sourceId: 'S1',
+    );
+    await expectLater(repo.continueReading(request: forged), throwsStateError);
+    await (db.update(db.books)..where((b) => b.id.equals(book.bookId))).write(
+      const BooksCompanion(contentRevision: Value(2)),
+    );
+    await expectLater(
+      repo.continueReading(request: sourceRef(t)),
+      throwsStateError,
+    );
+    final unchanged = await db.select(db.readingProgress).getSingle();
+    expect(unchanged, saved);
+  });
+
+  test(
+    'entry quote visit validates imported text and continue remains explicit',
+    () async {
+      final quote = ChatQuote(
+        anchors: [anchor()],
+        chapterTitle: 'IX',
+        translation: 'Terjemahan',
+      );
+      expect((await repo.resolveQuote(quote))!.source.chapterTitle, 'IX');
+      expect(await db.select(db.readingProgress).get(), isEmpty);
+      await repo.continueReading(quote: quote);
+      final saved = await db.select(db.readingProgress).getSingle();
+      await (db.update(db.paragraphs)
+            ..where((p) => p.chapterId.equals(chapter)))
+          .write(const ParagraphsCompanion(content: Value('Berubah')));
+      expect(await repo.resolveQuote(quote), isNull);
+      await expectLater(repo.continueReading(quote: quote), throwsStateError);
+      expect(await db.select(db.readingProgress).getSingle(), saved);
+    },
+  );
+
+  test(
+    'reopening a quote finds its own session without creating or mixing books',
+    () async {
+      final quote = ChatQuote(anchors: [anchor()], chapterTitle: 'IX');
+      expect(await repo.sessionForQuote(quote), isNull);
+      final t = await first(quote: quote);
+      await stop(t);
+      final unrelated = await first(question: 'Topik lain');
+      await stop(unrelated);
+      expect(
+        (await repo.sessionForQuote(
+          ChatQuote(anchors: [anchor()], translation: 'Versi UI baru'),
+        ))!.id,
+        t.sessionId,
+      );
+      expect((await turns(t)).single.quote!.chapterTitle, 'IX');
+      expect(
+        await repo.sessionForQuote(
+          ChatQuote(
+            anchors: [anchor(ref: other, chapterId: otherChapter)],
+          ),
+        ),
+        isNull,
+      );
+      await (db.update(db.books)..where((b) => b.id.equals(book.bookId))).write(
+        const BooksCompanion(contentRevision: Value(2)),
+      );
+      await expectLater(repo.sessionForQuote(quote), throwsStateError);
+    },
+  );
+
   test('source resolver is read only and rejects forged ownership and stale sources', () async {
     final t = await first();
     final s = source();

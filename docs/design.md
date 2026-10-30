@@ -1,3 +1,9 @@
+> **Ngobrolin Buku (#146):** screen terbaru untuk chat/history/sitasi/reader dan
+> aksi Tanyain ini ada di [HTML acuan](../design/references/ngobrolin-buku.html).
+> Screen per screen menjadi acuan implementasi; catatan naratif export yang
+> berbeda dari screen/perilaku yang disepakati bukan blocker. Sheet Terjemahin
+> hanya berubah pada baris aksi. Detail perilaku: [llm.md](llm.md).
+
 # Desain: Stabilo
 
 Referensi lengkap (layar, komponen, token): https://claude.ai/artifact/EBwv9zJBLZQJa5WWYiaJ7F

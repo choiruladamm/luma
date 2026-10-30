@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../data/repositories/chat_repository.dart';
 import '../../../../domain/models/book_chat.dart';
 import '../../../core/theme/stabilo_type.dart';
+import '../../../core/theme/stabilo_theme.dart';
+import '../../../core/widgets/tag.dart';
 import '../../../core/theme/stabilo_tokens.dart';
 import '../../../core/widgets/buttons.dart';
 import '../../../core/widgets/sheet.dart';
@@ -20,6 +22,7 @@ Future<bool?> showChatSourceSheet(
   required ChatSource snapshot,
 }) => showAppSheet<bool>(
   context,
+  maxHeight: Layout.chatSheetHeight,
   builder: (_) => ChatSourceSheet(request: request, snapshot: snapshot),
 );
 
@@ -60,34 +63,46 @@ class ChatSourceSheet extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   spacing: Space.s2,
                   children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            source.chapterTitle,
-                            style: StabiloType.caption,
-                          ),
-                        ),
-                        CircleButton(
-                          semanticLabel: 'Tutup',
-                          icon: AppIcons.close,
-                          onPressed: () => Navigator.of(context).pop(),
-                        ),
-                      ],
-                    ),
+                    Wrap(children: [Tag.section(source.chapterTitle)]),
                     Text(
                       source.anchors
                           .map((a) => 'Paragraf ${a.paragraphIndex + 1}')
                           .join(' · '),
                       style: StabiloType.caption,
                     ),
-                    SelectableText(
-                      source.text,
-                      style: StabiloType.forBrightness(
-                        StabiloType.reading,
-                        Theme.of(context).brightness,
+                    if (location?.positionLabel != null)
+                      Text(
+                        location!.positionLabel!,
+                        style: StabiloType.caption,
+                      ),
+                    if (location?.before != null)
+                      SelectableText(
+                        location!.before!,
+                        style: StabiloType.readingSheet.copyWith(
+                          color: context.stabilo.ink2,
+                        ),
+                      ),
+                    Container(
+                      padding: const EdgeInsets.all(Space.s4),
+                      decoration: BoxDecoration(
+                        color: context.stabilo.muted,
+                        borderRadius: BorderRadius.circular(Radii.md),
+                      ),
+                      child: SelectableText(
+                        source.text,
+                        style: StabiloType.forBrightness(
+                          StabiloType.reading,
+                          Theme.of(context).brightness,
+                        ),
                       ),
                     ),
+                    if (location?.after != null)
+                      SelectableText(
+                        location!.after!,
+                        style: StabiloType.readingSheet.copyWith(
+                          color: context.stabilo.ink2,
+                        ),
+                      ),
                     Text(state.sourceMessage, style: StabiloType.caption),
                   ],
                 ),
@@ -104,11 +119,24 @@ class ChatSourceSheet extends ConsumerWidget {
             left: pad.left,
             right: pad.right,
             bottom: pad.bottom,
-            child: AppButton.primary(
-              label: 'Buka di buku',
-              onPressed: available
-                  ? () => Navigator.of(context).pop(true)
-                  : null,
+            child: Row(
+              spacing: Space.s3,
+              children: [
+                CircleButton(
+                  semanticLabel: 'Tutup',
+                  icon: AppIcons.close,
+                  size: Layout.chatComposer,
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+                Expanded(
+                  child: AppButton.primary(
+                    label: 'Buka di buku',
+                    onPressed: available
+                        ? () => Navigator.of(context).pop(true)
+                        : null,
+                  ),
+                ),
+              ],
             ),
           ),
         ],

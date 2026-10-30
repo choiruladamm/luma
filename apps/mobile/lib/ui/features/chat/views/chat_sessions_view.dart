@@ -8,9 +8,13 @@ import '../../../core/theme/stabilo_theme.dart';
 import '../../../core/theme/stabilo_tokens.dart';
 import '../../../core/theme/stabilo_type.dart';
 import '../../../core/widgets/buttons.dart';
+import '../../../core/widgets/ai_status.dart';
 import '../../bookshelf/view_models/bookshelf_view_model.dart';
 import '../view_models/chat_view_model.dart';
 import 'chat_copy.dart';
+import 'chat_session_menu.dart';
+import '../../../core/widgets/tag.dart';
+import '../../../core/widgets/edge_fade.dart';
 
 String chatBookTitle(WidgetRef ref, int bookId) =>
     ref
@@ -80,17 +84,15 @@ class ChatSessionsView extends ConsumerWidget {
                 title,
                 style: StabiloType.body.copyWith(color: context.stabilo.ink2),
               ),
-              AppButton.primary(
-                label: 'Obrolan baru',
-                onPressed:
-                    state.loading || state.changingSession || state.book == null
-                    ? null
-                    : () => select(null),
-              ),
               Expanded(
                 child: sessions.when(
-                  loading: () =>
-                      const Center(child: CircularProgressIndicator()),
+                  loading: () => const Padding(
+                    padding: EdgeInsets.only(top: Space.s4),
+                    child: Skeleton(
+                      widths: [0.6, 0.85, 0.4, 0.7, 0.9, 0.4],
+                      lineExtent: Space.s8,
+                    ),
+                  ),
                   error: (_, _) => Center(
                     child: AppButton.secondary(
                       label: 'Muat ulang riwayat',
@@ -110,51 +112,79 @@ class ChatSessionsView extends ConsumerWidget {
                       );
                     }
                     final now = DateTime.now();
-                    return ListView.builder(
-                      padding: EdgeInsets.only(
-                        bottom: MediaQuery.paddingOf(context).bottom + Space.s6,
-                      ),
-                      itemCount: own.length + 1,
-                      itemBuilder: (context, i) {
-                        if (i == own.length) {
-                          return const Padding(
-                            padding: EdgeInsets.symmetric(vertical: Space.s6),
-                            child: Text(
-                              'Setiap obrolan punya konteks percakapan sendiri.',
-                              style: StabiloType.caption,
-                            ),
-                          );
-                        }
-                        final s = own[i],
-                            group = chatTimeGroup(own[i].updatedAt, now);
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            if (i == 0 ||
-                                group !=
-                                    chatTimeGroup(own[i - 1].updatedAt, now))
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: Space.s3,
-                                ),
-                                child: Text(group, style: StabiloType.caption),
+                    return EdgeFadeScroll(
+                      child: ListView.builder(
+                        padding: EdgeInsets.only(
+                          bottom:
+                              MediaQuery.paddingOf(context).bottom + Space.s6,
+                        ),
+                        itemCount: own.length + 1,
+                        itemBuilder: (context, i) {
+                          if (i == own.length) {
+                            return const Padding(
+                              padding: EdgeInsets.symmetric(vertical: Space.s6),
+                              child: Text(
+                                'Setiap obrolan punya konteks percakapan sendiri.',
+                                style: StabiloType.caption,
                               ),
-                            SessionRow(
-                              key: ValueKey(s.id),
-                              session: s,
-                              active: s.id == state.activeSession?.id,
-                              archived:
-                                  state.book != null &&
-                                  s.isArchived(state.book!),
-                              onTap: state.changingSession
-                                  ? null
-                                  : () => select(s.id),
-                            ),
-                          ],
-                        );
-                      },
+                            );
+                          }
+                          final s = own[i],
+                              group = chatTimeGroup(own[i].updatedAt, now);
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              if (i == 0 ||
+                                  group !=
+                                      chatTimeGroup(own[i - 1].updatedAt, now))
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: Space.s3,
+                                  ),
+                                  child: Text(
+                                    group,
+                                    style: StabiloType.caption,
+                                  ),
+                                ),
+                              SessionRow(
+                                key: ValueKey(s.id),
+                                session: s,
+                                active: s.id == state.activeSession?.id,
+                                archived:
+                                    state.book != null &&
+                                    s.isArchived(state.book!),
+                                onMenu: state.changingSession
+                                    ? null
+                                    : () => showChatSessionMenu(
+                                        context,
+                                        vm,
+                                        state,
+                                        target: s,
+                                      ),
+                                onTap: state.changingSession
+                                    ? null
+                                    : () => select(s.id),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
                     );
                   },
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.only(
+                  bottom: MediaQuery.paddingOf(context).bottom + Space.s3,
+                ),
+                child: AppButton.primary(
+                  label: 'Obrolan baru',
+                  onPressed:
+                      state.loading ||
+                          state.changingSession ||
+                          state.book == null
+                      ? null
+                      : () => select(null),
                 ),
               ),
             ],
@@ -172,10 +202,11 @@ class SessionRow extends StatelessWidget {
     required this.active,
     required this.archived,
     required this.onTap,
+    this.onMenu,
   });
   final ChatSession session;
   final bool active, archived;
-  final VoidCallback? onTap;
+  final VoidCallback? onTap, onMenu;
   @override
   Widget build(BuildContext context) {
     final c = context.stabilo, at = session.updatedAt.toLocal();
@@ -208,21 +239,28 @@ class SessionRow extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    if (active) const AppIcon(AppIcons.check),
+                    CircleButton(
+                      semanticLabel: 'Menu ${session.title}',
+                      icon: AppIcons.more,
+                      onPressed: onMenu,
+                    ),
+                  ],
+                ),
+                Wrap(
+                  spacing: Space.s2,
+                  children: [
+                    if (active) const Tag.section('Lagi dibuka'),
+                    if (archived) const Tag.status('Arsip'),
                   ],
                 ),
                 Text(
-                  [
-                    if (active) 'Lagi dibuka',
-                    if (archived) 'Arsip',
-                    time,
-                  ].join(' · '),
+                  ['Diperbarui $time'].join(' · '),
                   style: StabiloType.caption.copyWith(color: c.ink2),
                 ),
                 if (session.preview != null)
                   Text(
                     session.preview!,
-                    maxLines: 2,
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: StabiloType.caption.copyWith(color: c.ink2),
                   ),

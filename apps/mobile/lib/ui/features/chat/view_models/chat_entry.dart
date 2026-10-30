@@ -24,6 +24,9 @@ final chatEntryQuoteProvider = FutureProvider.autoDispose
             .toList();
         if (own.isEmpty) throw const FormatException('Kutipan gak tersedia');
         return ChatQuote(
+          chapterTitle: book.chapters
+              .firstWhere((c) => c.id == request.group.chapterId)
+              .title,
           anchors: [
             for (final p in own)
               SourceAnchor(

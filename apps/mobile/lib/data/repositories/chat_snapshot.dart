@@ -140,6 +140,7 @@ class ChatSnapshot {
   static Map<String, Object> quoteData(ChatQuote quote) => {
     'anchors': [for (final a in quote.anchors) anchorData(a)],
     if (quote.translation != null) 'translation': quote.translation!,
+    if (quote.chapterTitle != null) 'chapterTitle': quote.chapterTitle!,
   };
 
   static ChatQuote? quote(String? raw, ChatBookRef book) {
@@ -148,6 +149,7 @@ class ChatSnapshot {
     return ChatQuote(
       anchors: anchors(m['anchors'], book),
       translation: m['translation'] == null ? null : text(m['translation']),
+      chapterTitle: m['chapterTitle'] == null ? null : text(m['chapterTitle']),
     );
   }
 

@@ -76,6 +76,7 @@ class FakeChat extends ChatViewModel {
   int sends = 0, stops = 0, creates = 0, launches = 0, continuations = 0;
   final opened = <int>[], deleted = <int>[];
   final renamed = <String>[];
+  final renamedIds = <int>[];
   Completer<void>? stopGate;
   @override
   ChatState build() => initial;
@@ -136,6 +137,13 @@ class FakeChat extends ChatViewModel {
   @override
   Future<void> rename(String title) async {
     renamed.add(title);
+  }
+
+  @override
+  Future<bool> renameSession(ChatSession session, String title) async {
+    renamedIds.add(session.id);
+    renamed.add(title);
+    return true;
   }
 
   @override
@@ -207,6 +215,10 @@ void main() {
       UncontrolledProviderScope(
         container: container,
         child: MaterialApp.router(
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(context).copyWith(disableAnimations: true),
+            child: child!,
+          ),
           theme: stabiloTheme(Brightness.light),
           darkTheme: stabiloTheme(Brightness.dark),
           routerConfig: router,
@@ -263,7 +275,7 @@ void main() {
           ),
         );
         await t.pumpAndSettle();
-        expect(find.text('Jawaban tumbuh'), findsOneWidget);
+        expect(find.textContaining('Jawaban tumbuh'), findsOneWidget);
         expect(find.text('Lagi nulis…'), findsOneWidget);
         expect(find.text('Bab I'), findsNothing);
         expect(find.textContaining('secret raw JSON'), findsNothing);
@@ -281,7 +293,7 @@ void main() {
           ),
         );
         await t.pumpAndSettle();
-        expect(find.text('Jawaban tumbuh lengkap.'), findsOneWidget);
+        expect(find.textContaining('Jawaban tumbuh lengkap.'), findsOneWidget);
         expect(find.text('Bab I'), findsOneWidget);
         final complete = ChatAnswer(
           status: ChatAnswerStatus.answered,
@@ -298,7 +310,7 @@ void main() {
           ),
         );
         await t.pumpAndSettle();
-        expect(find.text('Jawaban tumbuh lengkap.'), findsOneWidget);
+        expect(find.textContaining('Jawaban tumbuh lengkap.'), findsOneWidget);
         expect(find.text('Lagi nulis…'), findsNothing);
         expect(find.text('Bab I'), findsOneWidget);
         vm.push(
@@ -315,7 +327,7 @@ void main() {
           ),
         );
         await t.pumpAndSettle();
-        expect(find.text('Jawaban tumbuh lengkap.'), findsOneWidget);
+        expect(find.textContaining('Jawaban tumbuh lengkap.'), findsOneWidget);
         expect(find.text('Bab I'), findsNothing);
         expect(find.text('Coba lagi'), findsOneWidget);
         expect(t.takeException(), isNull);
@@ -367,7 +379,7 @@ void main() {
       );
       await t.pumpAndSettle();
       expect(scroll.pixels, afterSend);
-      expect(find.text('Ke terbaru'), findsOneWidget);
+      expect(button('Ke terbaru'), findsOneWidget);
     },
   );
 
@@ -425,7 +437,7 @@ void main() {
       );
       await t.pumpAndSettle();
       expect(scroll.pixels, before);
-      await t.tap(find.text('Ke terbaru'));
+      await t.tap(button('Ke terbaru'));
       await t.pumpAndSettle();
       expect(scroll.pixels, greaterThan(before));
     },
@@ -457,7 +469,7 @@ void main() {
       await t.drag(find.byType(CustomScrollView), const Offset(0, 400));
       await t.pumpAndSettle();
       final away = scroll.offset;
-      expect(find.text('Ke terbaru'), findsOneWidget);
+      expect(button('Ke terbaru'), findsOneWidget);
       vm.push(
         vm.current.copyWith(
           preview: (
@@ -489,7 +501,7 @@ void main() {
       );
       await t.pumpAndSettle();
       expect(scroll.offset, closeTo(away, 1));
-      await t.tap(find.text('Ke terbaru'));
+      await t.tap(button('Ke terbaru'));
       await t.pumpAndSettle();
       expect(scroll.offset, greaterThan(away));
       expect(t.takeException(), isNull);
@@ -542,7 +554,7 @@ void main() {
       await t.pump();
       expect(find.text('Lagi meriksa isi buku… 8/20 potongan'), findsOneWidget);
       // A running continuation receives its own turn; prior answer remains visible.
-      expect(find.text('Jawaban tervalidasi.'), findsOneWidget);
+      expect(find.textContaining('Jawaban tervalidasi.'), findsOneWidget);
       expect(t.takeException(), isNull);
       await t.tap(button('Hentikan jawaban'));
       await t.pumpAndSettle();
@@ -585,7 +597,7 @@ void main() {
         ),
       );
       for (final block in natural.blocks) {
-        expect(find.text(block.text), findsOneWidget);
+        expect(find.textContaining(block.text), findsOneWidget);
       }
       expect(find.text('Bab I'), findsNWidgets(2));
       expect(
@@ -634,7 +646,7 @@ void main() {
       await tester.tap(button('Hentikan jawaban'));
       await tester.pumpAndSettle();
       expect(vm.stops, 1);
-      expect(find.text('Jawaban dihentikan'), findsOneWidget);
+      expect(find.text('Dihentiin.'), findsOneWidget);
     });
   }
 
@@ -687,11 +699,13 @@ void main() {
     final scroll = t
         .state<ScrollableState>(find.byType(Scrollable).first)
         .position;
+    scroll.jumpTo(scroll.pixels - 400);
+    await t.pumpAndSettle();
     final before = scroll.pixels;
     t.view.viewInsets = const FakeViewPadding(bottom: 300);
     await t.pumpAndSettle();
     expect(scroll.pixels, before);
-    await t.tap(find.text('Ke terbaru'));
+    await t.tap(button('Ke terbaru'));
     await t.pumpAndSettle();
     expect(
       t.getBottomLeft(find.text('Bab I').last).dy,
@@ -737,7 +751,7 @@ void main() {
     );
     expect(
       chatTimeGroup(now.subtract(const Duration(days: 3)), now),
-      'Sebelumnya',
+      '7 hari terakhir',
     );
   });
 
@@ -822,10 +836,10 @@ void main() {
           phase: ChatPhase.cut,
         ),
       );
-      expect(find.text('Jawaban tervalidasi.'), findsOneWidget);
+      expect(find.textContaining('Jawaban tervalidasi.'), findsOneWidget);
       expect(find.text('Bab I'), findsOneWidget);
       expect(find.textContaining('secret raw'), findsNothing);
-      expect(find.text('Jawabannya kepotong'), findsOneWidget);
+      expect(find.text('Jawabannya keputus.'), findsOneWidget);
       await t.tap(find.text('Coba lagi'));
       expect(vm.sends, 1);
     },
@@ -863,8 +877,10 @@ void main() {
       await open(
         t,
         state: ChatState(book: book, loading: false, activeSession: session(2)),
+        sessions: [session(2)],
+        path: '/reader/1/chat/sessions',
       );
-      await t.tap(button('Menu sesi'));
+      await t.tap(button('Menu Topik 2'));
       await t.pumpAndSettle();
       await t.tap(find.text('Ubah judul'));
       await t.pumpAndSettle();
@@ -879,20 +895,43 @@ void main() {
       await t.tap(find.text('Simpan judul'));
       await t.pumpAndSettle();
       expect(vm.renamed, ['Judul baru']);
-      await t.tap(button('Menu sesi'));
+      await t.tap(button('Menu Topik 2'));
       await t.pumpAndSettle();
       await t.tap(find.text('Hapus obrolan ini'));
       await t.pumpAndSettle();
       await t.tap(find.text('Batal'));
       await t.pumpAndSettle();
       expect(vm.deleted, isEmpty);
-      await t.tap(button('Menu sesi'));
+      await t.tap(button('Menu Topik 2'));
       await t.pumpAndSettle();
       await t.tap(find.text('Hapus obrolan ini'));
       await t.pumpAndSettle();
       await t.tap(find.text('Hapus'));
       await t.pumpAndSettle();
       expect(vm.deleted, [2]);
+    },
+  );
+
+  testWidgets(
+    'history rename targets an unopened session without changing the active one',
+    (t) async {
+      await open(
+        t,
+        state: ChatState(book: book, loading: false, activeSession: session(1)),
+        sessions: [session(1), session(2)],
+        path: '/reader/1/chat/sessions',
+      );
+      await t.tap(button('Menu Topik 2'));
+      await t.pumpAndSettle();
+      await t.tap(find.text('Ubah judul'));
+      await t.pumpAndSettle();
+      await t.enterText(find.byType(TextField).last, 'Sesi kedua');
+      await t.pump();
+      await t.tap(find.text('Simpan judul'));
+      await t.pumpAndSettle();
+      expect(vm.renamedIds, [2]);
+      expect(vm.opened, isEmpty);
+      expect(vm.current.activeSession!.id, 1);
     },
   );
 
@@ -986,7 +1025,7 @@ void main() {
       await gesture.up();
       await t.pumpAndSettle();
       expect(scroll.offset, lessThan(bottom - 150));
-      expect(find.text('Ke terbaru'), findsOneWidget);
+      expect(button('Ke terbaru'), findsOneWidget);
       final away = scroll.offset;
       vm.push(vm.current.copyWith(turns: [...vm.current.turns]));
       await t.pumpAndSettle();
@@ -1011,13 +1050,13 @@ void main() {
       expect(find.text('Pertanyaan 1'), findsNothing);
       await t.drag(find.byType(CustomScrollView), const Offset(0, 300));
       await t.pumpAndSettle();
-      expect(find.text('Ke terbaru'), findsOneWidget);
+      expect(button('Ke terbaru'), findsOneWidget);
       final before = vm.current.scrollAnchor;
       vm.push(vm.current.copyWith(turns: [...vm.current.turns, turn(1001)]));
       await t.pumpAndSettle();
-      expect(find.text('Ke terbaru'), findsOneWidget);
+      expect(button('Ke terbaru'), findsOneWidget);
       expect(vm.current.scrollAnchor, before);
-      await t.tap(find.text('Ke terbaru'));
+      await t.tap(button('Ke terbaru'));
       await t.pumpAndSettle();
       expect(find.text('Pertanyaan 1001'), findsOneWidget);
     },

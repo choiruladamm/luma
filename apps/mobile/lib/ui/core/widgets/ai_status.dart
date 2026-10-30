@@ -40,7 +40,7 @@ class StatusButton extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           spacing: 9,
           children: [
-            _WritingDots(color: c.ink2),
+            WritingDots(color: c.ink2),
             Text(
               label,
               style: StabiloType.label.copyWith(
@@ -58,16 +58,16 @@ class StatusButton extends StatelessWidget {
 
 /// Tiga titik 4pt, opasitas 30 ↔ 85% tiap [Motion.writingDots], bergiliran.
 /// Kurangi gerakan: diem.
-class _WritingDots extends StatefulWidget {
-  const _WritingDots({required this.color});
+class WritingDots extends StatefulWidget {
+  const WritingDots({super.key, required this.color});
 
   final Color color;
 
   @override
-  State<_WritingDots> createState() => _WritingDotsState();
+  State<WritingDots> createState() => WritingDotsState();
 }
 
-class _WritingDotsState extends State<_WritingDots>
+class WritingDotsState extends State<WritingDots>
     with SingleTickerProviderStateMixin {
   late final _pulse = AnimationController(
     vsync: this,

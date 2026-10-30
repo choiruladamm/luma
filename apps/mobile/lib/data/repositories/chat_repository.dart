@@ -129,6 +129,7 @@ class ChatRepository {
           _db.paragraphs,
           _db.chatSessions,
           _db.chatTurns,
+          _db.readingProgress,
         },
       )
       .watch()
@@ -182,16 +183,184 @@ class ChatRepository {
         } catch (_) {
           available = false;
         }
+        final first = source.anchors.first, last = source.anchors.last;
+        String? before, after, positionLabel;
+        if (available) {
+          final neighbors =
+              await (_db.select(_db.paragraphs)..where(
+                    (p) =>
+                        p.chapterId.equals(first.chapterId) &
+                        p.paragraphIndex.isIn([
+                          first.paragraphIndex - 1,
+                          last.paragraphIndex + 1,
+                        ]),
+                  ))
+                  .get();
+          before = neighbors
+              .where((p) => p.paragraphIndex == first.paragraphIndex - 1)
+              .firstOrNull
+              ?.content;
+          after = neighbors
+              .where((p) => p.paragraphIndex == last.paragraphIndex + 1)
+              .firstOrNull
+              ?.content;
+          final progress = await (_db.select(
+            _db.readingProgress,
+          )..where((p) => p.bookId.equals(request.bookId))).getSingleOrNull();
+          if (progress != null) {
+            final chapters = await (_db.select(
+              _db.chapters,
+            )..where((c) => c.bookId.equals(request.bookId))).get();
+            final current = chapters
+                .where((c) => c.id == progress.chapterId)
+                .firstOrNull;
+            final cited = chapters
+                .where((c) => c.id == first.chapterId)
+                .firstOrNull;
+            if (current != null && cited != null) {
+              if (current.id == cited.id &&
+                  progress.paragraphIndex >= first.paragraphIndex &&
+                  progress.paragraphIndex <= last.paragraphIndex) {
+                positionLabel = 'Posisi baca lo sekarang';
+              } else if (current.sortOrder > cited.sortOrder ||
+                  current.id == cited.id &&
+                      progress.paragraphIndex > last.paragraphIndex) {
+                positionLabel = 'Udah lo baca';
+              } else {
+                positionLabel = 'Belum lo baca';
+              }
+            }
+          }
+        }
         _open();
         return ChatSourceLocation(
           source: source,
           available: available,
           generation: this,
+          before: before,
+          after: after,
+          positionLabel: positionLabel,
         );
       } on FormatException {
         return null;
       }
     });
+  }
+
+  Stream<ChatSourceLocation?> watchQuote(ChatQuote quote) => _db
+      .customSelect(
+        'SELECT 1',
+        readsFrom: {_db.books, _db.chapters, _db.paragraphs},
+      )
+      .watch()
+      .asyncMap((_) => resolveQuote(quote));
+
+  Future<ChatSourceLocation?> resolveQuote(ChatQuote quote) =>
+      _db.transaction(() async {
+        _open();
+        try {
+          final book = quote.anchors.first.book;
+          await _book(book);
+          final chapter =
+              await (_db.select(_db.chapters)..where(
+                    (c) =>
+                        c.id.equals(quote.anchors.first.chapterId) &
+                        c.bookId.equals(book.bookId),
+                  ))
+                  .getSingleOrNull();
+          if (chapter == null) return null;
+          final source = ChatSource(
+            id: 'S1',
+            chapterTitle: chapter.title,
+            anchors: quote.anchors,
+          );
+          validateChatSources(
+            [source],
+            book,
+            await _paragraphs(book, quote.anchors),
+          );
+          return ChatSourceLocation(
+            source: source,
+            available: true,
+            generation: this,
+          );
+        } on FormatException {
+          return null;
+        } on StateError {
+          return null;
+        }
+      });
+
+  /// Validation and the explicit progress write share one transaction.
+  Future<void> continueReading({ChatSourceRef? request, ChatQuote? quote}) =>
+      _db.transaction(() async {
+        if ((request == null) == (quote == null)) {
+          throw ArgumentError('Satu sumber diperlukan');
+        }
+        final location = request != null
+            ? await resolveSource(request)
+            : await resolveQuote(quote!);
+        if (location?.available != true) {
+          throw StateError('Sumber ini udah gak tersedia');
+        }
+        _open();
+        final anchor = location!.source.anchors.first;
+        await _db
+            .into(_db.readingProgress)
+            .insertOnConflictUpdate(
+              ReadingProgressCompanion.insert(
+                bookId: Value(anchor.book.bookId),
+                chapterId: anchor.chapterId,
+                paragraphIndex: anchor.paragraphIndex,
+                paragraphOffset: const Value(0),
+                updatedAt: Value(_now()),
+              ),
+            );
+      });
+
+  Future<ChatSession?> sessionForQuote(ChatQuote quote) async {
+    await _ready();
+    final book = quote.anchors.first.book;
+    await _book(book);
+    final rows =
+        await (_db.select(_db.chatTurns).join([
+                innerJoin(
+                  _db.chatSessions,
+                  _db.chatSessions.id.equalsExp(_db.chatTurns.sessionId),
+                ),
+              ])
+              ..where(
+                _db.chatSessions.bookId.equals(book.bookId) &
+                    _db.chatSessions.contentRevision.equals(
+                      book.contentRevision,
+                    ) &
+                    _db.chatTurns.quote.isNotNull(),
+              )
+              ..orderBy([OrderingTerm.desc(_db.chatSessions.updatedAt)]))
+            .get();
+    final signature = jsonEncode([
+      for (final a in quote.anchors) ChatSnapshot.anchorData(a),
+    ]);
+    for (final row in rows) {
+      final session = row.readTable(_db.chatSessions);
+      if (ChatSnapshot.session(session).invalid) continue;
+      try {
+        final saved = ChatSnapshot.quote(
+          row.readTable(_db.chatTurns).quote,
+          book,
+        );
+        if (saved != null &&
+            jsonEncode([
+                  for (final a in saved.anchors) ChatSnapshot.anchorData(a),
+                ]) ==
+                signature) {
+          return ChatSnapshot.session(session);
+        }
+      } on FormatException {
+        continue;
+      }
+    }
+    return null;
   }
 
   Future<ChatSession?> session(int bookId, int sessionId) async {

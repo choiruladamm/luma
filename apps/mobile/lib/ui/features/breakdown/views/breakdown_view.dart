@@ -123,6 +123,7 @@ class _BreakdownViewState extends ConsumerState<BreakdownView> {
         book: book,
         quote: ChatQuote(
           anchors: quote.anchors,
+          chapterTitle: quote.chapterTitle,
           translation: state.input!.translations.join('\n\n'),
         ),
         origin: ChatLaunchOrigin.breakdown,

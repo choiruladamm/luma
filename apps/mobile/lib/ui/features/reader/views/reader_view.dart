@@ -35,12 +35,18 @@ import 'toc_sheet.dart';
 /// layar; ujung chapter ada kartu lanjut ke chapter berikutnya, ujung bab
 /// terakhir ke layar akhir buku.
 class ReaderView extends ConsumerStatefulWidget {
-  const ReaderView({super.key, required this.bookId, this.sourceVisit});
+  const ReaderView({
+    super.key,
+    required this.bookId,
+    this.sourceVisit,
+    this.onContinueReading,
+  });
 
   final int bookId;
 
   /// Verified source visit: rendering/navigation only, never reading activity.
   final ChatSource? sourceVisit;
+  final VoidCallback? onContinueReading;
 
   @override
   ConsumerState<ReaderView> createState() => _ReaderViewState();
@@ -151,7 +157,28 @@ class _ReaderViewState extends ConsumerState<ReaderView>
       await _save(force: true);
       if (!mounted) return null;
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-      return await context.push<T>(route, extra: extra);
+      final result = await context.push<T>(route, extra: extra);
+      if (result == ReaderReturn.reading &&
+          mounted &&
+          widget.sourceVisit == null) {
+        final saved = await _progress.load(widget.bookId);
+        if (saved != null &&
+            mounted &&
+            _book != null &&
+            (saved.chapterId != _chapterId ||
+                saved.paragraphIndex != _spot.index ||
+                saved.paragraphOffset != _spot.offset)) {
+          setState(() {
+            _chapter = null;
+            _start(_book!, saved);
+            _text = GlobalKey();
+            _lastChar = null;
+            _finished = false;
+            _chrome.show();
+          });
+        }
+      }
+      return result;
     } finally {
       // Wait for the router to remove the outgoing page before unwinding a sheet.
       await WidgetsBinding.instance.endOfFrame;
@@ -198,7 +225,11 @@ class _ReaderViewState extends ConsumerState<ReaderView>
         if (source.anchors.any((a) => a.book != initial.book)) {
           throw const FormatException('Isi buku berubah');
         }
-        quote = ChatQuote(anchors: source.anchors, translation: translation);
+        quote = ChatQuote(
+          anchors: source.anchors,
+          translation: translation,
+          chapterTitle: source.chapterTitle,
+        );
       }
       if (!mounted) return null;
       final launch = ChatLaunchContext(
@@ -596,35 +627,49 @@ class _ReaderViewState extends ConsumerState<ReaderView>
                                 ),
                               ),
                             ),
-                            Positioned.fill(
-                              child: ReaderCapsules(
-                                chrome: _chrome,
-                                top: ReaderTopCapsule(
-                                  title: b.title,
-                                  subtitle: 'Bab ${i + 1} · ${ch.title}',
-                                  onBack: () => context.pop(),
-                                  onToc: () => _openToc(b),
-                                  onAa: () => _withSheet(
-                                    _Sheet.aa,
-                                    () => showAaSheet(context),
+                            if (widget.sourceVisit == null)
+                              Positioned.fill(
+                                child: ReaderCapsules(
+                                  chrome: _chrome,
+                                  top: ReaderTopCapsule(
+                                    title: b.title,
+                                    subtitle: 'Bab ${i + 1} · ${ch.title}',
+                                    onBack: () => context.pop(),
+                                    onToc: () => _openToc(b),
+                                    onAa: () => _withSheet(
+                                      _Sheet.aa,
+                                      () => showAaSheet(context),
+                                    ),
+                                    tocOpen:
+                                        _sheetOpen && _lastSheet == _Sheet.toc,
+                                    aaOpen:
+                                        _sheetOpen && _lastSheet == _Sheet.aa,
                                   ),
-                                  tocOpen:
-                                      _sheetOpen && _lastSheet == _Sheet.toc,
-                                  aaOpen: _sheetOpen && _lastSheet == _Sheet.aa,
+                                  bottom: widget.sourceVisit != null
+                                      ? null
+                                      : ReaderChatDock(
+                                          progress: progress,
+                                          onChat: _openingChat || !chatReady
+                                              ? null
+                                              : () => _openChat(),
+                                          label: f >= 0.999
+                                              ? 'Bab ${i + 1} beres'
+                                              : '±${readingMinutes(left)} mnt lagi',
+                                        ),
                                 ),
-                                bottom: widget.sourceVisit != null
-                                    ? null
-                                    : ReaderChatDock(
-                                        progress: progress,
-                                        onChat: _openingChat || !chatReady
-                                            ? null
-                                            : () => _openChat(),
-                                        label: f >= 0.999
-                                            ? 'Bab ${i + 1} beres'
-                                            : '±${readingMinutes(left)} mnt lagi',
-                                      ),
                               ),
-                            ),
+                            if (widget.sourceVisit != null)
+                              Positioned(
+                                left: Layout.margin,
+                                right: Layout.margin,
+                                top:
+                                    MediaQuery.paddingOf(context).top +
+                                    Space.s3,
+                                child: Text(
+                                  'Lagi ngintip · progres baca belum berubah',
+                                  style: StabiloType.caption,
+                                ),
+                              ),
                             if (widget.sourceVisit != null)
                               Positioned(
                                 left: Layout.margin,
@@ -651,19 +696,42 @@ class _ReaderViewState extends ConsumerState<ReaderView>
     );
   }
 
-  Widget _visitActions() => Column(
-    mainAxisSize: MainAxisSize.min,
-    spacing: Space.s2,
-    children: [
-      AppButton.primary(
-        label: 'Balik ke obrolan',
-        onPressed: () => context.pop(),
+  Widget _visitActions() => Container(
+    padding: const EdgeInsets.all(Space.s1),
+    decoration: BoxDecoration(
+      color: context.stabilo.sheet,
+      borderRadius: BorderRadius.circular(Radii.full),
+      border: Border.all(
+        color: context.stabilo.capsuleLine,
+        width: Layout.outline,
       ),
-      AppButton.secondary(
-        label: 'Lanjut baca semula',
-        onPressed: () => context.pop(ReaderReturn.reading),
+      boxShadow: Elevation.capsule(
+        context.stabilo,
+        Theme.of(context).brightness,
       ),
-    ],
+    ),
+    child: Row(
+      spacing: Space.s2,
+      children: [
+        Expanded(
+          child: TextButton(
+            onPressed: () => context.pop(),
+            child: const Text(
+              'Balik ke ngobrol',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ),
+        Expanded(
+          child: AppButton.secondary(
+            label: 'Lanjut baca',
+            height: Layout.touch,
+            onPressed: widget.onContinueReading,
+          ),
+        ),
+      ],
+    ),
   );
 
   /// Belum ada buku buat ditampilin: kapsul atas buat balik doang.
@@ -1253,8 +1321,15 @@ class _ChapterTextState extends ConsumerState<_ChapterText>
                   bottomHeight: readerDockHeight(context),
                 );
                 return EdgeFadeScroll(
-                  top: edges.top,
-                  bottom: edges.bottom,
+                  top: widget.sourceVisit == null
+                      ? edges.top
+                      : EdgeFadeSide(Space.s5, clear: pad.top + Space.s8),
+                  bottom: widget.sourceVisit == null
+                      ? edges.bottom
+                      : EdgeFadeSide(
+                          Space.s5,
+                          clear: pad.bottom + Layout.chatHeader + Space.s3,
+                        ),
                   child: child!,
                 );
               },
@@ -1284,15 +1359,15 @@ class _ChapterTextState extends ConsumerState<_ChapterText>
                     controller: _scroll,
                     padding: EdgeInsets.fromLTRB(
                       widget.prefs.marginWidth,
-                      pad.top + readerTextTop,
+                      pad.top +
+                          (widget.sourceVisit == null
+                              ? readerTextTop
+                              : Layout.chatHeader),
                       widget.prefs.marginWidth,
                       pad.bottom +
                           readerTextBottom +
                           readerDockHeight(context) -
-                          capsuleBottomHeight +
-                          (widget.sourceVisit == null
-                              ? 0
-                              : Layout.touch * 2 + Space.s5),
+                          capsuleBottomHeight,
                     ),
                     child: Stack(
                       key: _contentKey,

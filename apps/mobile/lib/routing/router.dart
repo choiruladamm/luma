@@ -19,6 +19,7 @@ abstract final class Routes {
   static String chat(int bookId) => '/reader/$bookId/chat';
   static String chatSource(ChatSourceRef source) =>
       '${chat(source.bookId)}/source/${source.sessionId}/${source.turnId}/${source.attempt}/${Uri.encodeComponent(source.sourceId)}';
+  static String chatQuote(int bookId) => '${chat(bookId)}/quote';
   static String chatSessions(int bookId) => '${chat(bookId)}/sessions';
   static String reader(int bookId) => '/reader/$bookId';
 
@@ -116,6 +117,18 @@ final routerProvider = Provider<GoRouter>((ref) {
                   sourceId: source,
                 ),
               );
+            },
+          ),
+          GoRoute(
+            path: 'quote',
+            builder: (_, state) {
+              final quote = state.extra;
+              final bookId = int.tryParse(state.pathParameters['bookId'] ?? '');
+              if (quote is! ChatQuote ||
+                  quote.anchors.any((a) => a.book.bookId != bookId)) {
+                return const _InvalidChatRoute();
+              }
+              return ChatSourceVisitView(quote: quote);
             },
           ),
           GoRoute(

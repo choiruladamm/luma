@@ -138,6 +138,10 @@ void main() {
           chapterTranslatedProvider.overrideWith((ref, id) async => 0),
         ],
         child: MaterialApp.router(
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(context).copyWith(disableAnimations: true),
+            child: child!,
+          ),
           theme: stabiloTheme(brightness),
           routerConfig: router,
         ),
@@ -231,6 +235,10 @@ void main() {
       Future<void> pump({required bool suspended, required int words}) async {
         await t.pumpWidget(
           MaterialApp(
+            builder: (context, child) => MediaQuery(
+              data: MediaQuery.of(context).copyWith(disableAnimations: true),
+              child: child!,
+            ),
             theme: stabiloTheme(Brightness.light),
             home: Scaffold(
               body: ChatHistory(
@@ -246,7 +254,7 @@ void main() {
 
       await pump(suspended: false, words: 1000);
       final scroll = t.state<ScrollableState>(find.byType(Scrollable).first);
-      await t.tap(find.text('Ke terbaru'));
+      await t.tap(find.bySemanticsLabel('Ke terbaru'));
       await t.pumpAndSettle();
       final before = scroll.position.pixels;
       expect(before, greaterThan(0));
@@ -254,7 +262,7 @@ void main() {
       expect(scroll.position.pixels, before);
       await pump(suspended: false, words: 1500);
       expect(scroll.position.pixels, before);
-      expect(find.text('Ke terbaru'), findsOneWidget);
+      expect(find.bySemanticsLabel('Ke terbaru'), findsOneWidget);
     },
   );
 
@@ -267,17 +275,12 @@ void main() {
       );
       await t.pumpAndSettle();
       expect(find.byKey(const ValueKey('source-paragraph-4')), findsOneWidget);
-      await t.tap(find.bySemanticsLabel('Daftar isi'));
-      await t.pumpAndSettle();
-      await t.tap(find.text('I').last);
-      await t.pumpAndSettle();
-      expect(find.byKey(const ValueKey('source-paragraph-4')), findsNothing);
-      final next = find.text('Lanjut, gas');
-      await t.ensureVisible(next);
-      await t.pumpAndSettle();
-      await t.tap(next);
-      await t.pumpAndSettle();
-      expect(find.byKey(const ValueKey('source-paragraph-4')), findsOneWidget);
+      expect(find.bySemanticsLabel('Daftar isi'), findsNothing);
+      expect(find.bySemanticsLabel('Atur tampilan teks'), findsNothing);
+      expect(
+        find.text('Lagi ngintip · progres baca belum berubah'),
+        findsOneWidget,
+      );
       unchanged();
       // System/swipe-back uses the same pop path without committing the visit.
       await t.binding.handlePopRoute();
@@ -303,15 +306,15 @@ void main() {
             of: find.bySemanticsLabel('Tutup'),
             matching: find.byType(SingleChildScrollView),
           ),
-          findsOneWidget,
+          findsNothing,
         );
         final text = find.byType(SelectableText);
         final sheetRect = t.getRect(find.byType(BottomSheet));
         final textRect = t.getRect(text);
         final paragraphRect = t.getRect(find.text('Paragraf 5 · Paragraf 6'));
-        expect(textRect.left - sheetRect.left, 24);
-        expect(sheetRect.right - textRect.right, 24);
-        expect(textRect.top - paragraphRect.bottom, 8);
+        expect(textRect.left - sheetRect.left, 40);
+        expect(sheetRect.right - textRect.right, 40);
+        expect(textRect.top - paragraphRect.bottom, 24);
         final button = find.byType(AppButton);
         expect(t.getRect(scroll), sheetRect);
         final fade = t.widget<EdgeFadeScroll>(find.byType(EdgeFadeScroll));
@@ -323,7 +326,7 @@ void main() {
         expect(padding.bottom - 52 - 34, 16);
         expect(t.getRect(find.byType(SheetGrabber)).top - sheetRect.top, 10);
         expect(sheetRect.bottom - t.getRect(button).bottom, 34);
-        expect(t.getSize(text).width, t.getSize(scroll).width - 48);
+        expect(t.getSize(text).width, t.getSize(scroll).width - 80);
         final chapterY = t.getTopLeft(chapter).dy;
         final buttonY = t.getTopLeft(find.text('Buka di buku')).dy;
         await t.drag(scroll, const Offset(0, -300));
