@@ -468,3 +468,7 @@ dipersist oleh ViewModel sebelum pacing visual selesai; tidak ada DB write per f
 Teks tetap selectable, paragraf berjarak token `Space.s5`, kolom maksimum
 `Layout.chatTextWidth` dengan typography bacaan Stabilo dan jarak baris dark.
 Output kontrak v2 tetap teks biasa; tidak ditambah renderer Markdown atau protocol baru.
+
+Sheet intip sitasi chat memakai teks selebar area isi SheetFrame, tanpa kartu
+kutipan atau header tetap. Nama bab, nomor paragraf dan tutup ikut scroll;
+aksi Buka di buku tetap di bawah dan mengikuti validasi lokasi sumber.

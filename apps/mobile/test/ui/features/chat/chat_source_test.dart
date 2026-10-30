@@ -285,6 +285,38 @@ void main() {
     },
   );
 
+  for (final brightness in Brightness.values) {
+    testWidgets(
+      'source sheet scrolls metadata with full-width text in $brightness',
+      (t) async {
+        await open(t, sheet: true, brightness: brightness);
+        final chapter = find.text(source.chapterTitle);
+        final scroll = find.ancestor(
+          of: chapter,
+          matching: find.byType(SingleChildScrollView),
+        );
+        expect(scroll, findsOneWidget);
+        expect(
+          find.ancestor(
+            of: find.bySemanticsLabel('Tutup'),
+            matching: find.byType(SingleChildScrollView),
+          ),
+          findsOneWidget,
+        );
+        final text = find.byType(SelectableText);
+        expect(t.getSize(text).width, t.getSize(scroll).width);
+        final chapterY = t.getTopLeft(chapter).dy;
+        final buttonY = t.getTopLeft(find.text('Buka di buku')).dy;
+        await t.drag(scroll, const Offset(0, -300));
+        await t.pumpAndSettle();
+        expect(t.getTopLeft(chapter).dy, lessThan(chapterY - 100));
+        expect(t.getTopLeft(find.text('Buka di buku')).dy, buttonY);
+        expect(t.takeException(), isNull);
+        unchanged();
+      },
+    );
+  }
+
   testWidgets('snapshot remains visible when stale; open action revoked', (
     t,
   ) async {

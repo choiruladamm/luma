@@ -3,8 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../data/repositories/chat_repository.dart';
 import '../../../../domain/models/book_chat.dart';
-import '../../../core/theme/stabilo_theme.dart';
-import '../../../core/theme/stabilo_tokens.dart';
 import '../../../core/theme/stabilo_type.dart';
 import '../../../core/widgets/buttons.dart';
 import '../../../core/widgets/sheet.dart';
@@ -39,7 +37,6 @@ class ChatSourceSheet extends ConsumerWidget {
     final source = location?.source ?? snapshot;
     final available = location?.available ?? false;
     return SheetFrame(
-      title: source.chapterTitle,
       actions: [
         Expanded(
           child: AppButton.primary(
@@ -49,24 +46,29 @@ class ChatSourceSheet extends ConsumerWidget {
         ),
       ],
       children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(source.chapterTitle, style: StabiloType.caption),
+            ),
+            CircleButton(
+              semanticLabel: 'Tutup',
+              icon: AppIcons.close,
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+          ],
+        ),
         Text(
           source.anchors
               .map((a) => 'Paragraf ${a.paragraphIndex + 1}')
               .join(' · '),
           style: StabiloType.caption,
         ),
-        Container(
-          padding: const EdgeInsets.all(Space.s4),
-          decoration: BoxDecoration(
-            color: context.stabilo.muted,
-            borderRadius: BorderRadius.circular(Radii.md),
-          ),
-          child: SelectableText(
-            source.text,
-            style: StabiloType.forBrightness(
-              StabiloType.reading,
-              Theme.of(context).brightness,
-            ),
+        SelectableText(
+          source.text,
+          style: StabiloType.forBrightness(
+            StabiloType.reading,
+            Theme.of(context).brightness,
           ),
         ),
         Text(state.sourceMessage, style: StabiloType.caption),
