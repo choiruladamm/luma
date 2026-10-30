@@ -440,9 +440,11 @@ Batas kualitas spike tetap berlaku; Qwen hybrid dan performa perangkat belum dib
 ### UX streaming Ngobrolin buku (#141)
 
 ViewModel memublikasikan preview bertanda attempt maksimal sekali per50ms, tanpa
-pacing buatan atau request AI tambahan. DB tetap memakai checkpoint500ms/1KiB
+request AI tambahan. DB tetap memakai checkpoint500ms/1KiB
 existing; complete/Stop/error flush tail. Bubble dan anchor paragraf dipakai ulang,
-scroll mengikuti hanya saat user di bawah. Status “Lagi nulis…” live-region;
+scroll tetap selama respons tumbuh, termasuk saat user di bawah. “Ke terbaru”
+adalah aksi eksplisit; kirim pertanyaan baru langsung pindah ke turn terbaru
+sekali, lalu streaming tetap diam. Anchor resume/kembali sumber tetap dipakai. Status “Lagi nulis…” live-region;
 teks yang tumbuh bukan live-region. Jawaban done mengganti preview di tempat.
 
 Stop/network/invalid final mempertahankan teks, status terminal dan retry eksplisit.
@@ -452,3 +454,28 @@ tanpa sitasi dan tanpa menjadikannya answer/history. Legacy v1 menunggu final,
 tidak dipaksa memakai preview v2. Schema tetap10; process kill dapat kehilangan
 tail di bawah ambang checkpoint, sedangkan stop/background menunggu flush.
 Pengecekan struktur/sumber bukan jaminan semua klaim model benar.
+
+
+### Pacing tampilan chat (#123)
+
+`ChatResponse` memakai `Pacer` Terjemahin hanya untuk teks preview aman, per
+attempt dan per frame pada respons aktif. Panjang dihitung dalam grapheme agar
+emoji/aksen tidak terpotong. Chip sumber menunggu seluruh teks paragraf tampil;
+source guards dan pencabutan sitasi saat terminal gagal tetap milik jalur #141.
+History/cache langsung tampil; reduced motion langsung mengungkap teks aman.
+Stop/error/background mengungkap sisa teks tanpa menunggu drain. Final tetap
+dipersist oleh ViewModel sebelum pacing visual selesai; tidak ada DB write per frame.
+Teks tetap selectable, paragraf berjarak token `Space.s5`, kolom maksimum
+`Layout.chatTextWidth` dengan typography bacaan Stabilo dan jarak baris dark.
+Output kontrak v2 tetap teks biasa; tidak ditambah renderer Markdown atau protocol baru.
+
+Sheet intip sitasi chat memakai pola overlay Artinya, tanpa kartu kutipan atau
+header tetap. Scroll viewport memenuhi tinggi sheet;
+nama bab, nomor paragraf dan tutup ikut scroll. Grabber dan Buka di buku di atas
+scroll, dengan validasi lokasi sumber tetap berlaku.
+
+Geometri scroll mengikuti Artinya: margin kiri/kanan 24, grabber atas 10,
+tombol bawah 34. Fade atas 20 mulai setelah zona grabber 12; fade bawah 20 tepat
+di atas tombol (clear 86), tanpa tambahan celah layout di atas tombol. Padding
+akhir scroll 102 menjaga isi terakhir 16 di atas tombol saat mentok bawah.
+Jarak metadata→teks 8. SheetFrame umum tidak diubah untuk kebutuhan sitasi.

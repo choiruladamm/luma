@@ -1730,6 +1730,24 @@ void main() {
         .position
         .pixels;
 
+    testWidgets('translation sheet reading padding in pixels', (tester) async {
+      await openTall(tester);
+      await tapGroup(tester, 13);
+      final sheet = tester.getRect(sheetBox);
+      final text = tester.getRect(find.textContaining('ID Tall 13:'));
+      final tag = tester.getRect(
+        find.ancestor(of: find.text('TERJEMAHAN'), matching: find.byType(Tag)),
+      );
+      expect(text.left - sheet.left, 24);
+      expect(sheet.right - text.right, 24);
+      expect(text.top - tag.bottom, 8);
+      final actions = find.ancestor(
+        of: find.text('Lanjut'),
+        matching: find.byType(AppButton),
+      );
+      expect(sheet.bottom - tester.getRect(actions).bottom, 34);
+    });
+
     testWidgets('loading, then the translation and meaning', (tester) async {
       final pending = Completer<AiReply>();
       answer = (_) => pending.future;

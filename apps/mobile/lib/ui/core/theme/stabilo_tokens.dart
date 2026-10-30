@@ -36,6 +36,7 @@ abstract final class Layout {
   static const readerProgressWidth = 210.0;
   static const readerProgressTrack = 40.0;
   static const chatFollowDistance = 96.0;
+  static const chatTextWidth = 680.0;
   static const margin = Space.s6;
   static const topBar = 60.0;
   static const touch = 44.0; // target sentuh minimal
