@@ -472,3 +472,8 @@ Output kontrak v2 tetap teks biasa; tidak ditambah renderer Markdown atau protoc
 Sheet intip sitasi chat memakai teks selebar area isi SheetFrame, tanpa kartu
 kutipan atau header tetap. Nama bab, nomor paragraf dan tutup ikut scroll;
 aksi Buka di buku tetap di bawah dan mengikuti validasi lokasi sumber.
+
+Padding sheet sitasi dibandingkan lewat render widget dengan Artinya: margin
+kiri/kanan 24, grabber atas 10, tombol bawah 34; jarak metadata→teks 8 dan
+scroll viewport→tombol 16 logical pixels, sama dengan ritme Artinya. SheetFrame
+lain tetap memakai spacing default 16; sitasi memakai Space.s2 agar lebih rapat.

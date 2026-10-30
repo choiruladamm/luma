@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../data/repositories/chat_repository.dart';
 import '../../../../domain/models/book_chat.dart';
 import '../../../core/theme/stabilo_type.dart';
+import '../../../core/theme/stabilo_tokens.dart';
 import '../../../core/widgets/buttons.dart';
 import '../../../core/widgets/sheet.dart';
 
@@ -37,6 +38,7 @@ class ChatSourceSheet extends ConsumerWidget {
     final source = location?.source ?? snapshot;
     final available = location?.available ?? false;
     return SheetFrame(
+      spacing: Space.s2,
       actions: [
         Expanded(
           child: AppButton.primary(

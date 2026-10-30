@@ -11,6 +11,7 @@ import 'package:luma/domain/models/book_chat.dart';
 import 'package:luma/domain/models/reader_prefs.dart';
 import 'package:luma/ui/core/theme/stabilo_theme.dart';
 import 'package:luma/ui/core/widgets/buttons.dart';
+import 'package:luma/ui/core/widgets/sheet.dart';
 import 'package:luma/ui/features/chat/views/chat_source_sheet.dart';
 import 'package:luma/ui/features/chat/views/chat_history.dart';
 import 'package:luma/ui/features/chat/views/chat_source_visit_view.dart';
@@ -304,6 +305,16 @@ void main() {
           findsOneWidget,
         );
         final text = find.byType(SelectableText);
+        final sheetRect = t.getRect(find.byType(BottomSheet));
+        final textRect = t.getRect(text);
+        final paragraphRect = t.getRect(find.text('Paragraf 5 · Paragraf 6'));
+        expect(textRect.left - sheetRect.left, 24);
+        expect(sheetRect.right - textRect.right, 24);
+        expect(textRect.top - paragraphRect.bottom, 8);
+        final button = find.byType(AppButton);
+        expect(t.getRect(button).top - t.getRect(scroll).bottom, 16);
+        expect(t.getRect(find.byType(SheetGrabber)).top - sheetRect.top, 10);
+        expect(sheetRect.bottom - t.getRect(button).bottom, 34);
         expect(t.getSize(text).width, t.getSize(scroll).width);
         final chapterY = t.getTopLeft(chapter).dy;
         final buttonY = t.getTopLeft(find.text('Buka di buku')).dy;
