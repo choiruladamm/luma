@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../../domain/models/book_chat.dart';
@@ -70,6 +72,12 @@ class _ChatHistoryState extends State<ChatHistory> {
   double _turnHeight = 0;
   ChatScrollAnchor? _lastAnchor;
   bool _restoring = true;
+
+  /// Isi baru keliatan setelah posisi awal kepasang *dan* fade tepi atas udah
+  /// nyala: fade-nya cuma hidup kalau udah di-scroll, jadi tanpa ini teks di
+  /// belakang status bar/header keliatan sebentar pas layar baru kebuka.
+  bool _revealed = false;
+  Timer? _reveal;
   @override
   void initState() {
     super.initState();
@@ -93,8 +101,11 @@ class _ChatHistoryState extends State<ChatHistory> {
       } else if (!widget.turns.last.phase.isRunning) {
         _latest();
       }
+      _restoring = false;
       _position();
-      setState(() => _restoring = false);
+      _reveal = Timer(Motion.edgeFade * 2, () {
+        if (mounted) setState(() => _revealed = true);
+      });
     });
   }
 
@@ -203,6 +214,7 @@ class _ChatHistoryState extends State<ChatHistory> {
 
   @override
   void dispose() {
+    _reveal?.cancel();
     _scroll.dispose();
     super.dispose();
   }
@@ -428,8 +440,9 @@ class _ChatHistoryState extends State<ChatHistory> {
                 return false;
               },
               // Disembunyiin sampai posisi awal kepasang, biar gak keliatan loncat.
-              child: Opacity(
-                opacity: _restoring ? 0 : 1,
+              child: AnimatedOpacity(
+                opacity: _revealed ? 1 : 0,
+                duration: Motion.edgeFade,
                 child: EdgeFadeScroll(
                   top: widget.topFade,
                   bottom: widget.bottomFade,

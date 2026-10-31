@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart' show CupertinoPage;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -76,19 +77,25 @@ final routerProvider = Provider<GoRouter>((ref) {
           }
           return true;
         },
-        builder: (_, state) {
+        pageBuilder: (context, state) {
           final id = int.tryParse(state.pathParameters['bookId'] ?? '');
-          if (id == null || id <= 0) return const _InvalidChatRoute();
+          if (id == null || id <= 0) {
+            return _slidePage(context, state, const _InvalidChatRoute());
+          }
           final extra = state.extra;
           final launch = extra is ChatLaunchContext && extra.book.bookId == id
               ? extra
               : null;
-          return ChatView(key: ValueKey(id), bookId: id, launch: launch);
+          return _slidePage(
+            context,
+            state,
+            ChatView(key: ValueKey(id), bookId: id, launch: launch),
+          );
         },
         routes: [
           GoRoute(
             path: 'source/:sessionId/:turnId/:attempt/:sourceId',
-            builder: (_, state) {
+            pageBuilder: (context, state) {
               int? id(String key) =>
                   int.tryParse(state.pathParameters[key] ?? '');
               final book = id('bookId'),
@@ -106,37 +113,47 @@ final routerProvider = Provider<GoRouter>((ref) {
                   attempt <= 0 ||
                   source == null ||
                   source.isEmpty) {
-                return const _InvalidChatRoute();
+                return _slidePage(context, state, const _InvalidChatRoute());
               }
-              return ChatSourceVisitView(
-                request: (
-                  bookId: book,
-                  sessionId: session,
-                  turnId: turn,
-                  attempt: attempt,
-                  sourceId: source,
+              return _slidePage(
+                context,
+                state,
+                ChatSourceVisitView(
+                  request: (
+                    bookId: book,
+                    sessionId: session,
+                    turnId: turn,
+                    attempt: attempt,
+                    sourceId: source,
+                  ),
                 ),
               );
             },
           ),
           GoRoute(
             path: 'quote',
-            builder: (_, state) {
+            pageBuilder: (context, state) {
               final quote = state.extra;
               final bookId = int.tryParse(state.pathParameters['bookId'] ?? '');
               if (quote is! ChatQuote ||
                   quote.anchors.any((a) => a.book.bookId != bookId)) {
-                return const _InvalidChatRoute();
+                return _slidePage(context, state, const _InvalidChatRoute());
               }
-              return ChatSourceVisitView(quote: quote);
+              return _slidePage(
+                context,
+                state,
+                ChatSourceVisitView(quote: quote),
+              );
             },
           ),
           GoRoute(
             path: 'sessions',
-            builder: (_, state) {
+            pageBuilder: (context, state) {
               final id = int.tryParse(state.pathParameters['bookId'] ?? '');
-              if (id == null || id <= 0) return const _InvalidChatRoute();
-              return ChatSessionsView(bookId: id);
+              if (id == null || id <= 0) {
+                return _slidePage(context, state, const _InvalidChatRoute());
+              }
+              return _slidePage(context, state, ChatSessionsView(bookId: id));
             },
           ),
         ],
@@ -147,6 +164,22 @@ final routerProvider = Provider<GoRouter>((ref) {
   ref.onDispose(router.dispose);
   return router;
 });
+
+/// Geser ala iOS di semua platform (opaque, ada parallax + swipe-back), biar
+/// header dua layar gak numpuk transparan pas pindah. Kurangi gerakan: fade.
+Page<void> _slidePage(BuildContext context, GoRouterState state, Widget child) {
+  if (!MediaQuery.disableAnimationsOf(context)) {
+    return CupertinoPage<void>(key: state.pageKey, child: child);
+  }
+  return CustomTransitionPage<void>(
+    key: state.pageKey,
+    transitionDuration: Motion.reducedFade,
+    reverseTransitionDuration: Motion.reducedFade,
+    transitionsBuilder: (_, animation, _, child) =>
+        FadeTransition(opacity: animation, child: child),
+    child: child,
+  );
+}
 
 class _InvalidChatRoute extends StatelessWidget {
   const _InvalidChatRoute();
