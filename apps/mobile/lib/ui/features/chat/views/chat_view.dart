@@ -11,7 +11,6 @@ import '../../../core/theme/stabilo_tokens.dart';
 import '../../../core/theme/stabilo_type.dart';
 import '../../../core/widgets/buttons.dart';
 import '../../../core/widgets/edge_fade.dart';
-import '../../reader/views/reader_capsule.dart';
 import 'chat_context_card.dart';
 import '../view_models/chat_view_model.dart';
 import 'chat_composer.dart';
@@ -29,20 +28,12 @@ class ChatView extends ConsumerStatefulWidget {
   ConsumerState<ChatView> createState() => _ChatViewState();
 }
 
-class _ChatViewState extends ConsumerState<ChatView>
-    with SingleTickerProviderStateMixin {
-  late final _chrome = ReaderChrome(vsync: this);
+class _ChatViewState extends ConsumerState<ChatView> {
   final _footerKey = GlobalKey();
   final _headerKey = GlobalKey();
   double _headerHeight = Layout.chatHeader;
   double _footerHeight = Layout.chatComposer;
   bool _scrolled = false;
-
-  @override
-  void dispose() {
-    _chrome.dispose();
-    super.dispose();
-  }
 
   void _measureFooter() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -65,19 +56,13 @@ class _ChatViewState extends ConsumerState<ChatView>
     });
   }
 
+  /// Header selalu ada; pas konten udah ke-scroll, nama buku ngeringkas.
   bool _scroll(ScrollNotification n) {
-    if (n.depth != 0 || MediaQuery.accessibleNavigationOf(context)) {
-      return false;
-    }
+    if (n.depth != 0) return false;
     if (n is ScrollUpdateNotification || n is ScrollEndNotification) {
       final scrolled = n.metrics.pixels > n.metrics.minScrollExtent + 4;
       if (scrolled != _scrolled) setState(() => _scrolled = scrolled);
     }
-    if (n is ScrollUpdateNotification && n.dragDetails != null) {
-      _chrome.scrolled(n.scrollDelta ?? 0, dragging: true);
-      if (n.metrics.pixels <= n.metrics.minScrollExtent) _chrome.show();
-    }
-    if (n is ScrollEndNotification) _chrome.release();
     return false;
   }
 
@@ -176,17 +161,12 @@ class _ChatViewState extends ConsumerState<ChatView>
     final state = ref.watch(chatViewModelProvider(widget.bookId));
     final title = chatBookTitle(ref, widget.bookId);
     final pad = MediaQuery.paddingOf(context);
-    _chrome.reduceMotion = MediaQuery.disableAnimationsOf(context);
     _measureFooter();
     return Scaffold(
       body: NotificationListener<ScrollNotification>(
         onNotification: _scroll,
-        child: AnimatedBuilder(
-          animation: _chrome.hidden,
-          builder: (context, _) {
-            final hidden = MediaQuery.accessibleNavigationOf(context)
-                ? 0.0
-                : _chrome.hidden.value;
+        child: Builder(
+          builder: (context) {
             final top = pad.top + _headerHeight + Space.s3;
             final bottom = pad.bottom + _footerHeight + Space.s4;
             return Stack(
@@ -203,7 +183,7 @@ class _ChatViewState extends ConsumerState<ChatView>
                     topFade: EdgeFadeSide(
                       Space.s5,
                       clear: pad.top,
-                      hold: _headerHeight * (1 - hidden),
+                      hold: _headerHeight,
                     ),
                     bottomFade: EdgeFadeSide(
                       Space.s5,
@@ -212,55 +192,53 @@ class _ChatViewState extends ConsumerState<ChatView>
                   ),
                 ),
                 Positioned(
-                  left: Space.s3,
-                  right: Space.s3,
+                  left: 0,
+                  right: 0,
                   top: pad.top,
-                  child: IgnorePointer(
-                    ignoring: hidden > 0.5,
-                    child: ExcludeSemantics(
-                      excluding: hidden > 0.5,
-                      child: Transform.translate(
-                        offset: Offset(0, -(pad.top + _headerHeight) * hidden),
-                        child: Container(
-                          key: _headerKey,
-                          constraints: const BoxConstraints(
-                            minHeight: Layout.chatHeader,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: context.stabilo.canvas,
+                      boxShadow: [
+                        if (_scrolled)
+                          BoxShadow(
+                            color: context.stabilo.track,
+                            offset: const Offset(0, 1),
                           ),
-                          decoration: BoxDecoration(
-                            color: context.stabilo.canvas,
-                            boxShadow: [
-                              if (_scrolled && hidden < 0.5)
-                                BoxShadow(
-                                  color: context.stabilo.track,
-                                  offset: const Offset(0, 1),
-                                ),
-                            ],
-                          ),
-                          child: Row(
-                            spacing: Space.s2,
-                            children: [
-                              CircleButton(
-                                semanticLabel:
-                                    widget.launch?.origin.backLabel ??
-                                    'Balik baca',
-                                icon: AppIcons.back,
-                                onPressed: _leaving
-                                    ? null
-                                    : () => _navigate(() => _back()),
-                              ),
-                              Expanded(
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      'Ngobrolin buku',
-                                      style: StabiloType.titleXs.copyWith(
-                                        fontSize: 15,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
+                      ],
+                    ),
+                    child: Padding(
+                      key: _headerKey,
+                      padding: const EdgeInsets.symmetric(horizontal: Space.s3),
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(
+                          minHeight: Layout.chatHeader,
+                        ),
+                        child: Row(
+                          spacing: Space.s2,
+                          children: [
+                            CircleButton(
+                              semanticLabel:
+                                  widget.launch?.origin.backLabel ??
+                                  'Balik baca',
+                              icon: AppIcons.back,
+                              onPressed: _leaving
+                                  ? null
+                                  : () => _navigate(() => _back()),
+                            ),
+                            Expanded(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    'Ngobrolin buku',
+                                    style: StabiloType.titleXs.copyWith(
+                                      fontSize: 15,
                                     ),
+                                    textAlign: TextAlign.center,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  if (!_scrolled)
                                     Text(
                                       title,
                                       style: StabiloType.caption.copyWith(
@@ -270,34 +248,32 @@ class _ChatViewState extends ConsumerState<ChatView>
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                     ),
-                                  ],
-                                ),
+                                ],
                               ),
-                              if (widget.launch != null &&
-                                  widget.launch!.origin !=
-                                      ChatLaunchOrigin.reader)
-                                CircleButton(
-                                  semanticLabel: 'Balik baca',
-                                  icon: AppIcons.book,
-                                  onPressed: _leaving
-                                      ? null
-                                      : () => _navigate(
-                                          () => _back(reading: true),
-                                        ),
-                                ),
+                            ),
+                            if (widget.launch != null &&
+                                widget.launch!.origin !=
+                                    ChatLaunchOrigin.reader)
                               CircleButton(
-                                semanticLabel: 'Riwayat obrolan',
-                                icon: AppIcons.history,
+                                semanticLabel: 'Balik baca',
+                                icon: AppIcons.book,
                                 onPressed: _leaving
                                     ? null
-                                    : () => _navigate(
-                                        () => context.push(
-                                          Routes.chatSessions(widget.bookId),
-                                        ),
-                                      ),
+                                    : () =>
+                                          _navigate(() => _back(reading: true)),
                               ),
-                            ],
-                          ),
+                            CircleButton(
+                              semanticLabel: 'Riwayat obrolan',
+                              icon: AppIcons.history,
+                              onPressed: _leaving
+                                  ? null
+                                  : () => _navigate(
+                                      () => context.push(
+                                        Routes.chatSessions(widget.bookId),
+                                      ),
+                                    ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -367,10 +343,7 @@ class _ChatViewState extends ConsumerState<ChatView>
                               running: state.phase?.isRunning ?? false,
                               enabled: !state.loading && !state.busy,
                               onChanged: _vm.setDraft,
-                              onSend: () {
-                                _chrome.show();
-                                unawaited(_vm.send());
-                              },
+                              onSend: () => unawaited(_vm.send()),
                               onStop: () => unawaited(_vm.stop()),
                             ),
                         ],
