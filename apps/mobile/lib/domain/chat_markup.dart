@@ -101,14 +101,26 @@ String _plain(String raw) {
   return text.replaceFirst(_marker, '');
 }
 
-/// Layout yang dipakai buat tampil, sesudah dibersihin dari salah label model:
-/// - kalimat pengantar daftar (berakhir ":" misal "berikut contohnya:") bukan
-///   butir, jadi balik jadi paragraf;
-/// - daftar cuma satu butir bukan daftar, jadi balik jadi paragraf.
+/// Layout yang dipakai buat tampil, sesudah dibersihin dari salah label model.
 /// Data jawaban yang tersimpan gak diubah.
-List<ChatAnswerLayout> chatDisplayLayouts(List<ChatAnswerBlock> blocks) {
+/// - Kalimat pengantar daftar yang berakhir ":" bukan butir.
+/// - Butir pertama yang gak diawali **tebal** sementara semua butir sesudahnya
+///   iya (aturan prompt) adalah pengantar, bukan butir.
+/// - Daftar cuma satu butir bukan daftar.
+/// - [streaming]: blok terakhir yang pertama di daftarnya belum tentu butir
+///   (bisa pengantar yang lagi ditulis), jadi tampil paragraf dulu.
+/// Semuanya balik jadi paragraf.
+List<ChatAnswerLayout> chatDisplayLayouts(
+  List<ChatAnswerBlock> blocks, {
+  bool streaming = false,
+}) {
   bool listy(ChatAnswerLayout l) =>
       l == ChatAnswerLayout.item || l == ChatAnswerLayout.bullet;
+  bool bold(String text) {
+    final spans = parseChatMarkup(text);
+    return spans.isNotEmpty && spans.first.bold;
+  }
+
   final layouts = [
     for (final b in blocks)
       listy(b.layout) && chatPlainText(b.text).trimRight().endsWith(':')
@@ -118,15 +130,32 @@ List<ChatAnswerLayout> chatDisplayLayouts(List<ChatAnswerBlock> blocks) {
   var start = 0;
   while (start < layouts.length) {
     var end = start + 1;
-    while (end < layouts.length &&
-        listy(layouts[start]) &&
-        layouts[end] == layouts[start]) {
-      end++;
-    }
-    if (listy(layouts[start]) && end - start < 2) {
-      layouts[start] = ChatAnswerLayout.paragraph;
+    if (listy(layouts[start])) {
+      while (end < layouts.length && layouts[end] == layouts[start]) {
+        end++;
+      }
+      if (end - start >= 2 &&
+          !bold(blocks[start].text) &&
+          [for (var i = start + 1; i < end; i++) i]
+              .every((i) => bold(blocks[i].text))) {
+        layouts[start] = ChatAnswerLayout.paragraph;
+        start++;
+      }
+      if (end - start < 2) {
+        for (var i = start; i < end; i++) {
+          layouts[i] = ChatAnswerLayout.paragraph;
+        }
+      }
     }
     start = end;
+  }
+  if (streaming) {
+    final last = blocks.lastIndexWhere((b) => b.text.isNotEmpty);
+    if (last >= 0 &&
+        listy(layouts[last]) &&
+        (last == 0 || layouts[last - 1] != layouts[last])) {
+      layouts[last] = ChatAnswerLayout.paragraph;
+    }
   }
   return layouts;
 }

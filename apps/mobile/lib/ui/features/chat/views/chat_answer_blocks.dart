@@ -37,7 +37,7 @@ class ChatAnswerBlocks extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final last = blocks.lastIndexWhere((b) => b.text.isNotEmpty);
-    final layouts = chatDisplayLayouts(blocks);
+    final layouts = chatDisplayLayouts(blocks, streaming: running);
     final children = <Widget>[];
     ChatAnswerBlock? previous;
     var number = 0;

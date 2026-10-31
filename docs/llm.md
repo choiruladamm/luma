@@ -448,7 +448,7 @@ Tiap `parts[]` punya `layout` opsional selain `kind`, `text`, `source_ids` (urut
 | `bullet` | 3+ ciri/contoh tanpa urutan | titik 5pt, jarak sama dengan butir |
 | `quote` | kutipan langsung persis sumber, cuma `kind=book`, maks 2 kalimat | blok muted radius 14 + garis kiri kuning 3pt |
 
-Di luar `quote` + `book`, layout `quote` jatuh ke `paragraph`. `interpretation` dan `external` dapet label kecil (Tafsiran / Di luar buku) di awal tiap grup berturut-turut; `conversation` tampil sebagai kartu catatan muted dengan ikon info.
+Di luar `quote` + `book`, layout `quote` jatuh ke `paragraph`. Butir `item` dan `bullet` dua-duanya diawali **frasa tebal**. Dari situ aplikasi bersihin salah label model waktu render (data tersimpan gak diubah, `chatDisplayLayouts`): pengantar yang berakhir `:` jadi paragraf; butir pertama yang gak diawali tebal sementara semua butir sesudahnya iya = pengantar, jadi paragraf; daftar satu butir jadi paragraf; selagi streaming, blok terakhir yang pertama di daftarnya tampil paragraf dulu (belum tentu butir), nomor / titik muncul pas butir berikutnya mulai. `interpretation` dan `external` dapet label kecil (Tafsiran / Di luar buku) di awal tiap grup berturut-turut; `conversation` tampil sebagai kartu catatan muted dengan ikon info.
 
 Inline cuma `**tebal**` dan `*miring*` (`lib/domain/chat_markup.dart`): tebal buat istilah kunci pertama kali muncul dan awal butir, 1–3 per paragraf; miring buat judul buku, kata asing, penekanan ringan. Parser toleran buat stream (penanda yang belum ketutup gak pernah tampil sebagai bintang) dan membuang markdown lain (heading, link, backtick, tanda daftar di awal). Font italic asli: Atkinson Italic + Bold Italic, Literata Italic (variable, dipakai di 400).
 

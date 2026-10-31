@@ -112,6 +112,66 @@ void main() {
       );
     });
 
+    test('an intro without colon is a paragraph when every other item leads with bold', () {
+      expect(
+        chatDisplayLayouts([
+          b('Ini beberapa contohnya.', item),
+          b('**Rutinitas pagi.** a', item),
+          b('**Jeda.** b', item),
+        ]),
+        [paragraph, item, item],
+      );
+      expect(
+        chatDisplayLayouts([
+          b('Ciri-cirinya begini.', bullet),
+          b('**Tenang.** a', bullet),
+          b('**Konsisten.** b', bullet),
+        ]),
+        [paragraph, bullet, bullet],
+      );
+    });
+
+    test('mixed or bold-led runs are left alone', () {
+      expect(
+        chatDisplayLayouts([
+          b('intro', item),
+          b('**A.** x', item),
+          b('tanpa tebal', item),
+        ]),
+        [item, item, item],
+      );
+      expect(
+        chatDisplayLayouts([
+          b('**Contoh.** Berikut ini', item),
+          b('**A.** x', item),
+          b('**B.** y', item),
+        ]),
+        [item, item, item],
+      );
+    });
+
+    test('while streaming the first block of a list shows no marker yet', () {
+      expect(
+        chatDisplayLayouts([b('Ini beberapa conto', item)], streaming: true),
+        [paragraph],
+      );
+      expect(
+        chatDisplayLayouts([
+          b('Ini beberapa contohnya.', item),
+          b('**Rutin', item),
+        ], streaming: true),
+        [paragraph, paragraph],
+      );
+      expect(
+        chatDisplayLayouts([
+          b('Ini beberapa contohnya.', item),
+          b('**Rutinitas pagi.** a', item),
+          b('**Jeda', item),
+        ], streaming: true),
+        [paragraph, item, item],
+      );
+    });
+
     test('item and bullet runs are separate lists', () {
       expect(chatDisplayLayouts([b('a', item), b('b', item), b('c', bullet)]), [
         item,

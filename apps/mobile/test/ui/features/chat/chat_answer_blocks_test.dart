@@ -166,4 +166,19 @@ void main() {
     expect(find.text('2'), findsOneWidget);
     expect(find.text('3'), findsNothing);
   });
+
+  testWidgets('streaming: first list block waits, later ones get numbers', (
+    t,
+  ) async {
+    await pump(t, [
+      block('**Rutin', layout: ChatAnswerLayout.item),
+    ], running: true);
+    expect(find.text('1'), findsNothing);
+    await pump(t, [
+      block('**Rutinitas.** a', layout: ChatAnswerLayout.item),
+      block('**Jeda', layout: ChatAnswerLayout.item),
+    ], running: true);
+    expect(find.text('1'), findsOneWidget);
+    expect(find.text('2'), findsOneWidget);
+  });
 }
