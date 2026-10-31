@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../domain/catalog/catalog_query.dart';
 import '../../domain/catalog/catalog_row.dart';
 import '../database/app_database.dart';
 
@@ -13,15 +14,16 @@ typedef CatalogShelf = ({String name, int count});
 typedef CatalogStats = ({int count, DateTime? syncedAt, String? lastModified});
 
 /// Katalog lokal Gutenberg di tabel `catalog_books` (docs/discover.md).
-/// Query LIKE di ±62k baris masih < 50 ms; FTS5 kalau kerasa lambat.
+/// [search] lewat FTS5 `catalog_fts` (prefix per kata, urut bm25, judul
+/// bobot 10× penulis); [byAuthor] / [byBookshelf] cocokin token JSON.
 class CatalogRepository {
   CatalogRepository(this._db);
 
   final AppDatabase _db;
   static const pageSize = 25;
 
-  /// Ganti seluruh isi dalam satu transaksi: gagal di tengah = tabel lama
-  /// utuh. Meta ([saveMeta]) ditulis service setelah ini sukses.
+  /// Ganti seluruh isi + index FTS dalam satu transaksi: gagal di tengah =
+  /// tabel lama utuh. Meta ([saveMeta]) ditulis service setelah ini sukses.
   Future<void> replaceAll(List<CatalogRow> rows) => _db.transaction(() async {
     await _db.delete(_db.catalogBooks).go();
     // Per 2.000 baris biar satu statement gak nahan 62k variabel di memori.
@@ -42,6 +44,7 @@ class CatalogRepository {
         ]),
       );
     }
+    await _db.rebuildCatalogFts();
   });
 
   /// Satu buku by Text#; null kalau gak ada di katalog.
@@ -52,23 +55,42 @@ class CatalogRepository {
     return row == null ? null : _toRow(row);
   }
 
-  /// Judul atau penulis mengandung [query] (case-insensitive), urut judul.
-  /// Query kosong = kosong: daftar populer bukan urusan katalog lokal.
-  Future<List<CatalogRow>> search(String query, {int page = 1}) {
-    final where = _searchWhere(query);
-    return where == null ? Future.value(const []) : _page(where, page);
+  /// Tiap kata [query] jadi prefix (`jane au` → Jane Austen), semua kata
+  /// harus ketemu di judul atau penulis. Urut relevansi bm25 (judul 10×
+  /// penulis), seri → judul. Query tanpa kata = kosong: daftar populer bukan
+  /// urusan katalog lokal.
+  Future<List<CatalogRow>> search(String query, {int page = 1}) async {
+    final match = catalogMatchQuery(query);
+    if (match == null) return const [];
+    final rows = await _db
+        .customSelect(
+          'SELECT b.* FROM catalog_fts f '
+          'JOIN catalog_books b ON b.id = f.rowid '
+          'WHERE catalog_fts MATCH ? '
+          'ORDER BY bm25(catalog_fts, 10.0, 1.0), b.title LIMIT ? OFFSET ?',
+          variables: [
+            Variable(match),
+            Variable(pageSize),
+            Variable((page - 1) * pageSize),
+          ],
+          readsFrom: {_db.catalogBooks},
+        )
+        .get();
+    return [for (final r in rows) _toRow(_db.catalogBooks.map(r.data))];
   }
 
   /// Total hasil [search], buat "N hasil" dan tahu masih ada halaman.
-  Future<int> searchCount(String query) {
-    final where = _searchWhere(query);
-    return where == null ? Future.value(0) : _total(where);
-  }
-
-  _Where? _searchWhere(String query) {
-    final q = query.trim();
-    if (q.isEmpty) return null;
-    return (b) => _has(b.title, q) | _has(b.authorsText, q);
+  Future<int> searchCount(String query) async {
+    final match = catalogMatchQuery(query);
+    if (match == null) return 0;
+    final row = await _db
+        .customSelect(
+          'SELECT COUNT(*) AS n FROM catalog_fts WHERE catalog_fts MATCH ?',
+          variables: [Variable(match)],
+          readsFrom: {_db.catalogBooks},
+        )
+        .getSingle();
+    return row.read<int>('n');
   }
 
   /// Buku dari [name] persis (nama kayak di `authors`), urut judul.
@@ -91,9 +113,8 @@ class CatalogRepository {
     return value is Map ? s.substring(1, s.length - 1) : s;
   }
 
-  /// `instr(lower(col), lower(q)) > 0`: substring polos, `%` dan `_` di
-  /// query bukan wildcard (LIKE butuh ESCAPE). Case-insensitive ASCII,
-  /// sama kayak LIKE SQLite.
+  /// `instr(lower(col), lower(q)) > 0`: substring polos buat token JSON,
+  /// `%` dan `_` bukan wildcard (LIKE butuh ESCAPE).
   static Expression<bool> _has(Expression<String> column, String q) =>
       FunctionCallExpression<int>('instr', [
         column.lower(),

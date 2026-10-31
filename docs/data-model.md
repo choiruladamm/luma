@@ -148,13 +148,15 @@ Katalog Project Gutenberg dari dump `pg_catalog.csv` ([discover.md](discover.md)
 |-------|------|-----------|
 | `id` | int PK | `Text#` Gutenberg; URL EPUB & cover dirakit dari sini |
 | `title` | text | index `catalog_books_title` |
-| `authorsText` | text | nama penulis dipisah `; `, buat LIKE + tampil; index `catalog_books_authors` |
+| `authorsText` | text | nama penulis dipisah `; `, buat tampil; index `catalog_books_authors` |
 | `authorsJson` | text | JSON `[{"name","birth"?,"death"?}]` |
 | `subjectsJson` | text | JSON array string |
 | `bookshelvesJson` | text | JSON array string, dicari pakai `json_each` |
 | `issued` | text? | `YYYY-MM-DD` tanggal rilis di Gutenberg |
 
 Meta sync di `settings`: `catalog.lastModified`, `catalog.syncedAt`, `catalog.count`.
+
+`catalog_fts` (v15): virtual table FTS5 external-content (`title`, `authors_text`, `content='catalog_books'`, `content_rowid='id'`, `tokenize='unicode61 remove_diacritics 2'`) + tabel shadow `catalog_fts_*`. Bukan tabel Drift: dibuat lewat `AppDatabase.createCatalogFts`, isinya di-`rebuild` tiap `catalog_books` diganti. Pencarian: [discover.md](discover.md).
 
 ## Versi schema & migrasi
 
@@ -174,6 +176,7 @@ Meta sync di `settings`: `catalog.lastModified`, `catalog.syncedAt`, `catalog.co
 | 12 | `chat_chapter_notes` (#151), kosong saat upgrade |
 | 13 | `chat_turns.steps` nullable JSON (#153); baris lama null, baris tidak tampil di UI |
 | 14 | Tabel `catalog_books` + index `title`, `authorsText` (#169), kosong saat upgrade; diisi lewat sync di Pengaturan. Data user gak disentuh |
+| 15 | Virtual table FTS5 `catalog_fts` di atas `catalog_books` (#169), langsung di-rebuild dari isi katalog yang ada. Data user gak disentuh |
 
 Tiap ubah tabel: naikkan `schemaVersion`, tambah langkah di `onUpgrade`, dan test migrasi dari versi sebelumnya (data tetap utuh, schema hasil migrasi sama dengan install baru). Restore backup dari schema lama ikut dimigrasi saat database dibuka ([backup.md](backup.md)).
 

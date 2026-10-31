@@ -235,7 +235,9 @@ class Settings extends Table {
 
 /// Katalog Project Gutenberg dari dump `pg_catalog.csv` (docs/discover.md,
 /// Katalog lokal). Bukan data user: diganti utuh tiap sync, gak ikut backup.
-/// List disimpen JSON; `authorsText` buat LIKE + tampil.
+/// List disimpen JSON; `authorsText` buat tampil + index FTS. Pencarian
+/// lewat virtual table `catalog_fts` ([AppDatabase.createCatalogFts]), yang
+/// gak bisa dideklarasiin sebagai tabel Drift.
 @TableIndex(name: 'catalog_books_title', columns: {#title})
 @TableIndex(name: 'catalog_books_authors', columns: {#authorsText})
 class CatalogBooks extends Table {
@@ -408,10 +410,26 @@ class AppDatabase extends _$AppDatabase {
   // test/data/migration_test.dart. Backup dari versi lama ikut dimigrasi pas
   // di-restore.
   @override
-  int get schemaVersion => 14;
+  int get schemaVersion => 15;
+
+  /// FTS5 external-content di atas `catalog_books` (teks gak dobel). Isinya
+  /// gak otomatis ikut: [rebuildCatalogFts] tiap `catalog_books` diganti.
+  /// `remove_diacritics 2`: "bronte" ketemu "Brontë".
+  Future<void> createCatalogFts() => customStatement(
+    'CREATE VIRTUAL TABLE IF NOT EXISTS catalog_fts USING fts5('
+    "title, authors_text, content='catalog_books', content_rowid='id', "
+    "tokenize='unicode61 remove_diacritics 2')",
+  );
+
+  Future<void> rebuildCatalogFts() =>
+      customStatement("INSERT INTO catalog_fts(catalog_fts) VALUES('rebuild')");
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
+    onCreate: (m) async {
+      await m.createAll();
+      await createCatalogFts();
+    },
     onUpgrade: (m, from, to) async {
       if (from < 2) {
         await m.addColumn(books, books.firstOpenedAt);
@@ -466,6 +484,10 @@ class AppDatabase extends _$AppDatabase {
         await m.createTable(catalogBooks);
         await m.createIndex(catalogBooksTitle);
         await m.createIndex(catalogBooksAuthors);
+      }
+      if (from < 15) {
+        await createCatalogFts();
+        await rebuildCatalogFts(); // v14 bisa udah punya isi katalog
       }
     },
     // SQLite matiin foreign key secara default; cascade butuh ini.

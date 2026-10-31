@@ -134,6 +134,14 @@ final v13 = [
         : sql,
 ];
 
+// Frozen schema 14: catalog_books, before the catalog_fts virtual table.
+final v14 = [
+  ...v13,
+  '''CREATE TABLE "catalog_books" ("id" INTEGER NOT NULL, "title" TEXT NOT NULL, "authors_text" TEXT NOT NULL, "authors_json" TEXT NOT NULL, "subjects_json" TEXT NOT NULL, "bookshelves_json" TEXT NOT NULL, "issued" TEXT NULL, PRIMARY KEY ("id"))''',
+  'CREATE INDEX catalog_books_title ON catalog_books (title)',
+  'CREATE INDEX catalog_books_authors ON catalog_books (authors_text)',
+];
+
 AppDatabase _open([void Function(dynamic raw)? setup]) => AppDatabase(
   DatabaseConnection(
     NativeDatabase.memory(setup: setup),
@@ -321,6 +329,30 @@ void main() {
     final turn = await db.select(db.chatTurns).getSingle();
     expect(turn.exploration, '{}');
     expect(turn.steps, isNull);
+    final fresh = _open();
+    addTearDown(fresh.close);
+    expect(await _shape(db), await _shape(fresh));
+  });
+
+  test('v14 → v15 adds catalog_fts and indexes the existing catalog', () async {
+    final db = _open((raw) {
+      for (final sql in v14) {
+        raw.execute(sql);
+      }
+      raw.execute(
+        "INSERT INTO catalog_books VALUES (1342,'Pride and Prejudice','Austen, Jane','[{\"name\":\"Austen, Jane\"}]','[]','[]','1998-06-01')",
+      );
+      raw.execute("INSERT INTO settings VALUES ('catalog.count','1')");
+      raw.execute('PRAGMA user_version = 14');
+    });
+    addTearDown(db.close);
+    final hit = await db
+        .customSelect(
+          "SELECT rowid FROM catalog_fts WHERE catalog_fts MATCH '\"austen\"*'",
+        )
+        .getSingle();
+    expect(hit.read<int>('rowid'), 1342);
+    expect((await db.select(db.settings).getSingle()).value, '1');
     final fresh = _open();
     addTearDown(fresh.close);
     expect(await _shape(db), await _shape(fresh));

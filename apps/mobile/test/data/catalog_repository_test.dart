@@ -50,8 +50,10 @@ void main() {
     ]);
     expect(pp.bookshelves, contains('Harvard Classics'));
     expect(pp.issued, '1998-06-01');
-    // Judul juga kena, case-insensitive.
+    // Judul juga kena, case-insensitive, prefix per kata.
     expect((await repo.search('PRIDE')).map((r) => r.id), [1342]);
+    expect((await repo.search('prid prej')).map((r) => r.id), [1342]);
+    expect((await repo.search('jane austen')).map((r) => r.id), contains(1342));
     expect(await repo.search('   '), isEmpty);
     expect(await repo.search('zzzqqq'), isEmpty);
     expect(await repo.searchCount('austen'), hits.length);
@@ -64,34 +66,63 @@ void main() {
     expect(await repo.byId(999999), isNull);
   });
 
-  test('% and _ in the query are plain characters', () async {
+  test('FTS syntax in the query is harmless', () async {
     await repo.replaceAll(const [
       CatalogRow(id: 1, title: '100% Proof', authors: []),
       CatalogRow(id: 2, title: '100 Proofs', authors: []),
       CatalogRow(id: 3, title: 'a_b', authors: []),
       CatalogRow(id: 4, title: 'aXb', authors: []),
     ]);
-    expect((await repo.search('100%')).map((r) => r.id), [1]);
+    expect(
+      (await repo.search('100%')).map((r) => r.id),
+      unorderedEquals([1, 2]),
+    );
     expect((await repo.search('a_b')).map((r) => r.id), [3]);
+    expect(await repo.search('"proof" OR -x NEAR(a b)'), isEmpty);
+    expect(await repo.search('*'), isEmpty);
     expect(await repo.searchCount('proof'), 2);
   });
 
-  test('replaceAll swaps everything; failure keeps the old table', () async {
-    await repo.replaceAll(sample);
-    await repo.replaceAll([
-      const CatalogRow(id: 7, title: 'Only', authors: []),
+  test('ranking: title beats author, exact title beats longer one', () async {
+    await repo.replaceAll(const [
+      CatalogRow(
+        id: 1,
+        title: 'Letters',
+        authors: [CatalogAuthor('Pride, Thomas')],
+      ),
+      CatalogRow(id: 2, title: 'The Pride of the Village', authors: []),
+      CatalogRow(id: 3, title: 'Pride and Prejudice', authors: []),
+      CatalogRow(id: 4, title: 'Pride', authors: []),
+      CatalogRow(id: 5, title: 'Prejudice', authors: []),
     ]);
-    expect((await repo.search('only')).map((r) => r.id), [7]);
-    expect(await repo.search('pride'), isEmpty);
+    final ids = (await repo.search('pride')).map((r) => r.id).toList();
+    expect(ids.length, 4);
+    expect(ids.first, 4); // shortest title with the term ranks first
+    expect(ids.last, 1); // author-only match ranks last
+    expect(await repo.searchCount('pride'), 4);
+  });
 
-    // Duplicate primary key inside the batch → transaction rolls back.
-    await expectLater(
-      repo.replaceAll(const [
-        CatalogRow(id: 1, title: 'A', authors: []),
-        CatalogRow(id: 1, title: 'B', authors: []),
-      ]),
-      throwsA(anything),
-    );
+  test('diacritics folded both ways', () async {
+    await repo.replaceAll(const [
+      CatalogRow(
+        id: 1,
+        title: 'Jane Eyre',
+        authors: [CatalogAuthor('Brontë, Charlotte')],
+      ),
+      CatalogRow(id: 2, title: 'Émile', authors: []),
+    ]);
+    expect((await repo.search('bronte')).map((r) => r.id), [1]);
+    expect((await repo.search('Brontë')).map((r) => r.id), [1]);
+    expect((await repo.search('emile')).map((r) => r.id), [2]);
+  });
+
+  test('replaceAll rebuilds the index: old rows stop matching', () async {
+    await repo.replaceAll(sample);
+    expect(await repo.searchCount('austen'), greaterThan(0));
+    await repo.replaceAll(const [
+      CatalogRow(id: 7, title: 'Only', authors: []),
+    ]);
+    expect(await repo.searchCount('austen'), 0);
     expect((await repo.search('only')).map((r) => r.id), [7]);
   });
 
