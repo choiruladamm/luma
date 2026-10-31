@@ -87,6 +87,47 @@ void main() {
     expect(await storage.book(book.fileName!).readAsBytes(), epub);
   });
 
+  test('EPUB sections are stored, and backfilled for schema 10 books', () async {
+    final discourses = File('test/fixtures/discourses.epub').readAsBytesSync();
+    final result = await repo.importEpub(discourses, fileName: 'd.epub');
+    Future<List<Chapter>> chapters() =>
+        (db.select(db.chapters)
+              ..where((c) => c.bookId.equals(result.bookId))
+              ..orderBy([(c) => OrderingTerm.asc(c.sortOrder)]))
+            .get();
+    final fresh = await chapters();
+    expect(fresh.first.section, ''); // Imprint, top level
+    final third = fresh.where((c) => c.title.startsWith('III:')).toList();
+    expect(third.map((c) => c.section), [
+      'Discourses › Book I',
+      'Discourses › Book II',
+      'Discourses › Book III',
+      'Discourses › Book IV',
+    ]);
+
+    // Simulate a schema 10 import: old short titles, no section.
+    await db.customStatement(
+      "UPDATE chapters SET section = NULL, title = substr(title, 1, instr(title || ':', ':') - 1) WHERE book_id = ${result.bookId}",
+    );
+    expect((await chapters()).where((c) => c.title == 'III'), hasLength(4));
+    await repo.backfillSections(result.bookId);
+    final filled = await chapters();
+    expect(filled.map((c) => c.section), fresh.map((c) => c.section));
+    expect(filled.map((c) => c.title), fresh.map((c) => c.title));
+    expect(filled.map((c) => c.id), fresh.map((c) => c.id));
+  });
+
+  test('backfill marks sections empty when the file is gone', () async {
+    final result = await repo.importEpub(epub, fileName: 'a.epub');
+    await db.customStatement('UPDATE chapters SET section = NULL');
+    await storage
+        .book((await db.select(db.books).getSingle()).fileName!)
+        .delete();
+    await repo.backfillSections(result.bookId);
+    final rows = await db.select(db.chapters).get();
+    expect(rows.every((c) => c.section == ''), isTrue);
+  });
+
   test('the same file twice is a duplicate, nothing new written', () async {
     final first = await repo.importEpub(epub, fileName: 'a.epub');
     final again = await repo.importEpub(epub, fileName: 'renamed.epub');

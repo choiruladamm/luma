@@ -6,6 +6,7 @@ import 'package:flutter/widgets.dart';
 
 import '../../../../data/repositories/chat_context_repository.dart';
 import '../../../../data/repositories/chat_repository.dart';
+import '../../../../data/repositories/import_repository.dart';
 import '../../../../data/services/chat_lifecycle.dart';
 import '../../../../domain/chat_prompt.dart';
 import '../../../../domain/chat_exploration.dart';
@@ -169,6 +170,13 @@ class ChatViewModel extends Notifier<ChatState> {
   Future<void> _hydrate(_ChatLifetime life) async {
     try {
       await life.repo.recoverInterrupted();
+      if (!_live(life)) return;
+      try {
+        // Lokal, gratis, sekali per buku lama; chat tetap jalan tanpa section.
+        await ref.read(chapterSectionBackfillProvider)(bookId);
+      } catch (_) {
+        /* Tests without a DB and unreadable files fall back to titles. */
+      }
       if (!_live(life)) return;
       life.books = life.repo.watchBook(bookId).listen((book) {
         if (!_live(life)) return;

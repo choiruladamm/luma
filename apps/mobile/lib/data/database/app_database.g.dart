@@ -1172,6 +1172,17 @@ class $ChaptersTable extends Chapters with TableInfo<$ChaptersTable, Chapter> {
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _sectionMeta = const VerificationMeta(
+    'section',
+  );
+  @override
+  late final GeneratedColumn<String> section = GeneratedColumn<String>(
+    'section',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _charOffsetMeta = const VerificationMeta(
     'charOffset',
   );
@@ -1190,6 +1201,7 @@ class $ChaptersTable extends Chapters with TableInfo<$ChaptersTable, Chapter> {
     sortOrder,
     chapterNumber,
     title,
+    section,
     charOffset,
   ];
   @override
@@ -1240,6 +1252,12 @@ class $ChaptersTable extends Chapters with TableInfo<$ChaptersTable, Chapter> {
     } else if (isInserting) {
       context.missing(_titleMeta);
     }
+    if (data.containsKey('section')) {
+      context.handle(
+        _sectionMeta,
+        section.isAcceptableOrUnknown(data['section']!, _sectionMeta),
+      );
+    }
     if (data.containsKey('char_offset')) {
       context.handle(
         _charOffsetMeta,
@@ -1277,6 +1295,10 @@ class $ChaptersTable extends Chapters with TableInfo<$ChaptersTable, Chapter> {
         DriftSqlType.string,
         data['${effectivePrefix}title'],
       )!,
+      section: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}section'],
+      ),
       charOffset: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}char_offset'],
@@ -1299,6 +1321,10 @@ class Chapter extends DataClass implements Insertable<Chapter> {
   final int? chapterNumber;
   final String title;
 
+  /// Label induk TOC EPUB ("Discourses › Book I"), buat resolusi "bab III"
+  /// di Ngobrol. Null = belum diperiksa (buku lama), '' = diperiksa, gak ada.
+  final String? section;
+
   /// Jumlah karakter sebelum chapter ini, buat persentase baca.
   final int charOffset;
   const Chapter({
@@ -1307,6 +1333,7 @@ class Chapter extends DataClass implements Insertable<Chapter> {
     required this.sortOrder,
     this.chapterNumber,
     required this.title,
+    this.section,
     required this.charOffset,
   });
   @override
@@ -1319,6 +1346,9 @@ class Chapter extends DataClass implements Insertable<Chapter> {
       map['chapter_number'] = Variable<int>(chapterNumber);
     }
     map['title'] = Variable<String>(title);
+    if (!nullToAbsent || section != null) {
+      map['section'] = Variable<String>(section);
+    }
     map['char_offset'] = Variable<int>(charOffset);
     return map;
   }
@@ -1332,6 +1362,9 @@ class Chapter extends DataClass implements Insertable<Chapter> {
           ? const Value.absent()
           : Value(chapterNumber),
       title: Value(title),
+      section: section == null && nullToAbsent
+          ? const Value.absent()
+          : Value(section),
       charOffset: Value(charOffset),
     );
   }
@@ -1347,6 +1380,7 @@ class Chapter extends DataClass implements Insertable<Chapter> {
       sortOrder: serializer.fromJson<int>(json['sortOrder']),
       chapterNumber: serializer.fromJson<int?>(json['chapterNumber']),
       title: serializer.fromJson<String>(json['title']),
+      section: serializer.fromJson<String?>(json['section']),
       charOffset: serializer.fromJson<int>(json['charOffset']),
     );
   }
@@ -1359,6 +1393,7 @@ class Chapter extends DataClass implements Insertable<Chapter> {
       'sortOrder': serializer.toJson<int>(sortOrder),
       'chapterNumber': serializer.toJson<int?>(chapterNumber),
       'title': serializer.toJson<String>(title),
+      'section': serializer.toJson<String?>(section),
       'charOffset': serializer.toJson<int>(charOffset),
     };
   }
@@ -1369,6 +1404,7 @@ class Chapter extends DataClass implements Insertable<Chapter> {
     int? sortOrder,
     Value<int?> chapterNumber = const Value.absent(),
     String? title,
+    Value<String?> section = const Value.absent(),
     int? charOffset,
   }) => Chapter(
     id: id ?? this.id,
@@ -1378,6 +1414,7 @@ class Chapter extends DataClass implements Insertable<Chapter> {
         ? chapterNumber.value
         : this.chapterNumber,
     title: title ?? this.title,
+    section: section.present ? section.value : this.section,
     charOffset: charOffset ?? this.charOffset,
   );
   Chapter copyWithCompanion(ChaptersCompanion data) {
@@ -1389,6 +1426,7 @@ class Chapter extends DataClass implements Insertable<Chapter> {
           ? data.chapterNumber.value
           : this.chapterNumber,
       title: data.title.present ? data.title.value : this.title,
+      section: data.section.present ? data.section.value : this.section,
       charOffset: data.charOffset.present
           ? data.charOffset.value
           : this.charOffset,
@@ -1403,14 +1441,22 @@ class Chapter extends DataClass implements Insertable<Chapter> {
           ..write('sortOrder: $sortOrder, ')
           ..write('chapterNumber: $chapterNumber, ')
           ..write('title: $title, ')
+          ..write('section: $section, ')
           ..write('charOffset: $charOffset')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, bookId, sortOrder, chapterNumber, title, charOffset);
+  int get hashCode => Object.hash(
+    id,
+    bookId,
+    sortOrder,
+    chapterNumber,
+    title,
+    section,
+    charOffset,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1420,6 +1466,7 @@ class Chapter extends DataClass implements Insertable<Chapter> {
           other.sortOrder == this.sortOrder &&
           other.chapterNumber == this.chapterNumber &&
           other.title == this.title &&
+          other.section == this.section &&
           other.charOffset == this.charOffset);
 }
 
@@ -1429,6 +1476,7 @@ class ChaptersCompanion extends UpdateCompanion<Chapter> {
   final Value<int> sortOrder;
   final Value<int?> chapterNumber;
   final Value<String> title;
+  final Value<String?> section;
   final Value<int> charOffset;
   const ChaptersCompanion({
     this.id = const Value.absent(),
@@ -1436,6 +1484,7 @@ class ChaptersCompanion extends UpdateCompanion<Chapter> {
     this.sortOrder = const Value.absent(),
     this.chapterNumber = const Value.absent(),
     this.title = const Value.absent(),
+    this.section = const Value.absent(),
     this.charOffset = const Value.absent(),
   });
   ChaptersCompanion.insert({
@@ -1444,6 +1493,7 @@ class ChaptersCompanion extends UpdateCompanion<Chapter> {
     required int sortOrder,
     this.chapterNumber = const Value.absent(),
     required String title,
+    this.section = const Value.absent(),
     required int charOffset,
   }) : bookId = Value(bookId),
        sortOrder = Value(sortOrder),
@@ -1455,6 +1505,7 @@ class ChaptersCompanion extends UpdateCompanion<Chapter> {
     Expression<int>? sortOrder,
     Expression<int>? chapterNumber,
     Expression<String>? title,
+    Expression<String>? section,
     Expression<int>? charOffset,
   }) {
     return RawValuesInsertable({
@@ -1463,6 +1514,7 @@ class ChaptersCompanion extends UpdateCompanion<Chapter> {
       if (sortOrder != null) 'sort_order': sortOrder,
       if (chapterNumber != null) 'chapter_number': chapterNumber,
       if (title != null) 'title': title,
+      if (section != null) 'section': section,
       if (charOffset != null) 'char_offset': charOffset,
     });
   }
@@ -1473,6 +1525,7 @@ class ChaptersCompanion extends UpdateCompanion<Chapter> {
     Value<int>? sortOrder,
     Value<int?>? chapterNumber,
     Value<String>? title,
+    Value<String?>? section,
     Value<int>? charOffset,
   }) {
     return ChaptersCompanion(
@@ -1481,6 +1534,7 @@ class ChaptersCompanion extends UpdateCompanion<Chapter> {
       sortOrder: sortOrder ?? this.sortOrder,
       chapterNumber: chapterNumber ?? this.chapterNumber,
       title: title ?? this.title,
+      section: section ?? this.section,
       charOffset: charOffset ?? this.charOffset,
     );
   }
@@ -1503,6 +1557,9 @@ class ChaptersCompanion extends UpdateCompanion<Chapter> {
     if (title.present) {
       map['title'] = Variable<String>(title.value);
     }
+    if (section.present) {
+      map['section'] = Variable<String>(section.value);
+    }
     if (charOffset.present) {
       map['char_offset'] = Variable<int>(charOffset.value);
     }
@@ -1517,6 +1574,7 @@ class ChaptersCompanion extends UpdateCompanion<Chapter> {
           ..write('sortOrder: $sortOrder, ')
           ..write('chapterNumber: $chapterNumber, ')
           ..write('title: $title, ')
+          ..write('section: $section, ')
           ..write('charOffset: $charOffset')
           ..write(')'))
         .toString();
@@ -8352,6 +8410,7 @@ typedef $$ChaptersTableCreateCompanionBuilder = ChaptersCompanion Function({
   required int sortOrder,
   Value<int?> chapterNumber,
   required String title,
+  Value<String?> section,
   required int charOffset,
 });
 typedef $$ChaptersTableUpdateCompanionBuilder = ChaptersCompanion Function({
@@ -8360,6 +8419,7 @@ typedef $$ChaptersTableUpdateCompanionBuilder = ChaptersCompanion Function({
   Value<int> sortOrder,
   Value<int?> chapterNumber,
   Value<String> title,
+  Value<String?> section,
   Value<int> charOffset,
 });
 
@@ -8524,6 +8584,11 @@ class $$ChaptersTableFilterComposer
 
   ColumnFilters<String> get title => $composableBuilder(
     column: $table.title,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get section => $composableBuilder(
+    column: $table.section,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -8735,6 +8800,11 @@ class $$ChaptersTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get section => $composableBuilder(
+    column: $table.section,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get charOffset => $composableBuilder(
     column: $table.charOffset,
     builder: (column) => ColumnOrderings(column),
@@ -8786,6 +8856,9 @@ class $$ChaptersTableAnnotationComposer
 
   GeneratedColumn<String> get title =>
       $composableBuilder(column: $table.title, builder: (column) => column);
+
+  GeneratedColumn<String> get section =>
+      $composableBuilder(column: $table.section, builder: (column) => column);
 
   GeneratedColumn<int> get charOffset => $composableBuilder(
     column: $table.charOffset,
@@ -9007,6 +9080,7 @@ class $$ChaptersTableTableManager
                 Value<int> sortOrder = const Value.absent(),
                 Value<int?> chapterNumber = const Value.absent(),
                 Value<String> title = const Value.absent(),
+                Value<String?> section = const Value.absent(),
                 Value<int> charOffset = const Value.absent(),
               }) => ChaptersCompanion(
                 id: id,
@@ -9014,6 +9088,7 @@ class $$ChaptersTableTableManager
                 sortOrder: sortOrder,
                 chapterNumber: chapterNumber,
                 title: title,
+                section: section,
                 charOffset: charOffset,
               ),
           createCompanionCallback:
@@ -9023,6 +9098,7 @@ class $$ChaptersTableTableManager
                 required int sortOrder,
                 Value<int?> chapterNumber = const Value.absent(),
                 required String title,
+                Value<String?> section = const Value.absent(),
                 required int charOffset,
               }) => ChaptersCompanion.insert(
                 id: id,
@@ -9030,6 +9106,7 @@ class $$ChaptersTableTableManager
                 sortOrder: sortOrder,
                 chapterNumber: chapterNumber,
                 title: title,
+                section: section,
                 charOffset: charOffset,
               ),
           withReferenceMapper: (p0) => p0

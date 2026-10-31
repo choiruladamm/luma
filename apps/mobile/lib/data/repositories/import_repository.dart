@@ -136,6 +136,59 @@ class ImportRepository {
   })
   parse;
 
+  /// Buku EPUB dari schema < 11 belum punya `chapters.section`. Parse ulang
+  /// file yang masih tersimpan (lokal, gratis), cocokkan jumlah + judul bab,
+  /// lalu isi section dan judul TOC yang lebih lengkap. Gak cocok atau file
+  /// hilang → semua '' biar gak diulang tiap buka. Paragraf gak disentuh.
+  Future<void> backfillSections(int bookId) async {
+    final rows =
+        await (_db.select(_db.chapters)
+              ..where((c) => c.bookId.equals(bookId))
+              ..orderBy([(c) => OrderingTerm.asc(c.sortOrder)]))
+            .get();
+    if (rows.isEmpty || rows.every((c) => c.section != null)) return;
+    final book = await (_db.select(
+      _db.books,
+    )..where((b) => b.id.equals(bookId))).getSingleOrNull();
+    List<ParsedChapter>? parsed;
+    if (book != null &&
+        book.sourceType == SourceType.epub &&
+        book.fileName != null &&
+        book.parserVersion == parserVersion) {
+      final file = _storage.book(book.fileName!);
+      if (await file.exists()) {
+        try {
+          parsed = (await parse(await file.readAsBytes())).chapters;
+        } on Exception {
+          parsed = null;
+        }
+      }
+    }
+    bool aligned(ParsedChapter c, Chapter row) =>
+        c.title == row.title ||
+        c.title.toLowerCase().startsWith(row.title.toLowerCase());
+    final ok =
+        parsed != null &&
+        parsed.length == rows.length &&
+        [for (final (i, c) in parsed.indexed) aligned(c, rows[i])]
+            .every((m) => m);
+    await _db.transaction(() async {
+      for (final (i, row) in rows.indexed) {
+        final c = ok ? parsed![i] : null;
+        await (_db.update(
+          _db.chapters,
+        )..where((x) => x.id.equals(row.id))).write(
+          ChaptersCompanion(
+            section: Value(c?.section ?? ''),
+            title: c != null && c.title != row.title
+                ? Value(c.title)
+                : const Value.absent(),
+          ),
+        );
+      }
+    });
+  }
+
   /// Lempar [EpubException] kalau file bukan EPUB, rusak, atau ada DRM, dan
   /// [ImportCancelled] kalau [isCancelled] nyala sebelum tahap nyimpen.
   /// [onProgress] = 0–1 asli dari tahapnya, cuma naik, gak pernah sampe 1.
@@ -415,6 +468,7 @@ class ImportRepository {
               bookId: bookId,
               sortOrder: order,
               title: chapter.title,
+              section: Value(chapter.section ?? ''),
               charOffset: chapter.charOffset,
             ),
           );
@@ -445,4 +499,10 @@ final importRepositoryProvider = Provider<ImportRepository>(
     ref.watch(fileStorageProvider),
     chatLifecycle: ref.watch(chatLifecycleProvider),
   ),
+);
+
+/// Dipanggil saat chat buku dibuka; test tanpa DB meng-override ini.
+final chapterSectionBackfillProvider = Provider<Future<void> Function(int)>(
+  (ref) =>
+      (bookId) => ref.read(importRepositoryProvider).backfillSections(bookId),
 );
