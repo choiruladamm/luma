@@ -1,3 +1,5 @@
+import 'models/book_chat.dart';
+
 /// Potongan teks jawaban dengan gaya inline-nya.
 class ChatSpan {
   const ChatSpan(this.text, {this.bold = false, this.italic = false});
@@ -97,4 +99,34 @@ String _plain(String raw) {
       .replaceAll(_heading, '');
   // Tanda daftar di awal teks: aplikasi yang nomorin, bukan model.
   return text.replaceFirst(_marker, '');
+}
+
+/// Layout yang dipakai buat tampil, sesudah dibersihin dari salah label model:
+/// - kalimat pengantar daftar (berakhir ":" misal "berikut contohnya:") bukan
+///   butir, jadi balik jadi paragraf;
+/// - daftar cuma satu butir bukan daftar, jadi balik jadi paragraf.
+/// Data jawaban yang tersimpan gak diubah.
+List<ChatAnswerLayout> chatDisplayLayouts(List<ChatAnswerBlock> blocks) {
+  bool listy(ChatAnswerLayout l) =>
+      l == ChatAnswerLayout.item || l == ChatAnswerLayout.bullet;
+  final layouts = [
+    for (final b in blocks)
+      listy(b.layout) && chatPlainText(b.text).trimRight().endsWith(':')
+          ? ChatAnswerLayout.paragraph
+          : b.layout,
+  ];
+  var start = 0;
+  while (start < layouts.length) {
+    var end = start + 1;
+    while (end < layouts.length &&
+        listy(layouts[start]) &&
+        layouts[end] == layouts[start]) {
+      end++;
+    }
+    if (listy(layouts[start]) && end - start < 2) {
+      layouts[start] = ChatAnswerLayout.paragraph;
+    }
+    start = end;
+  }
+  return layouts;
 }

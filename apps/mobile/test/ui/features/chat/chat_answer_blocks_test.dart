@@ -86,9 +86,10 @@ void main() {
       block('**Tiga.** c', layout: ChatAnswerLayout.item),
       block('Penutup.'),
       block('**Lagi.** d', layout: ChatAnswerLayout.item),
+      block('**Juga.** e', layout: ChatAnswerLayout.item),
     ]);
     expect(find.text('1'), findsNWidgets(2));
-    expect(find.text('2'), findsOneWidget);
+    expect(find.text('2'), findsNWidgets(2));
     expect(find.text('3'), findsOneWidget);
     final all = find.byType(SelectableText);
     double gap(int a, int b) =>
@@ -147,5 +148,22 @@ void main() {
   testWidgets('citation chips render after the text of their block', (t) async {
     await pump(t, [block('Ada sumbernya.', cited: true)]);
     expect(find.byKey(const ValueKey('chip')), findsOneWidget);
+  });
+
+  testWidgets('a colon intro labelled as a point renders as a paragraph', (
+    t,
+  ) async {
+    await pump(t, [
+      block(
+        'Buat nerapin konsep ini, berikut beberapa contoh:',
+        layout: ChatAnswerLayout.item,
+      ),
+      block('**Satu.** a', layout: ChatAnswerLayout.item),
+      block('**Dua.** b', layout: ChatAnswerLayout.item),
+    ]);
+    // Nomor mulai dari butir pertama yang beneran daftar.
+    expect(find.text('1'), findsOneWidget);
+    expect(find.text('2'), findsOneWidget);
+    expect(find.text('3'), findsNothing);
   });
 }

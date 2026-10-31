@@ -37,18 +37,20 @@ class ChatAnswerBlocks extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final last = blocks.lastIndexWhere((b) => b.text.isNotEmpty);
+    final layouts = chatDisplayLayouts(blocks);
     final children = <Widget>[];
     ChatAnswerBlock? previous;
     var number = 0;
     for (var i = 0; i < blocks.length; i++) {
       final block = blocks[i];
       if (block.text.isEmpty) continue;
+      final layout = layouts[i];
       final sameList =
           previous != null &&
-          previous.layout == block.layout &&
-          (block.layout == ChatAnswerLayout.item ||
-              block.layout == ChatAnswerLayout.bullet);
-      number = block.layout == ChatAnswerLayout.item
+          layouts[blocks.indexOf(previous)] == layout &&
+          (layout == ChatAnswerLayout.item ||
+              layout == ChatAnswerLayout.bullet);
+      number = layout == ChatAnswerLayout.item
           ? (sameList ? number + 1 : 1)
           : 0;
       final label = _label(block, previous);
@@ -67,7 +69,13 @@ class ChatAnswerBlocks extends StatelessWidget {
       children.add(
         anchor(
           i + 1,
-          _block(context, block, number: number, caret: running && i == last),
+          _block(
+            context,
+            block,
+            layout,
+            number: number,
+            caret: running && i == last,
+          ),
         ),
       );
       previous = block;
@@ -96,7 +104,8 @@ class ChatAnswerBlocks extends StatelessWidget {
 
   Widget _block(
     BuildContext context,
-    ChatAnswerBlock block, {
+    ChatAnswerBlock block,
+    ChatAnswerLayout layout, {
     required int number,
     required bool caret,
   }) {
@@ -104,7 +113,7 @@ class ChatAnswerBlocks extends StatelessWidget {
     final text = _text(block, caret: caret);
     final line = typo.style.fontSize! * typo.style.height!;
     if (block.kind == ChatAnswerKind.conversation &&
-        block.layout == ChatAnswerLayout.paragraph) {
+        layout == ChatAnswerLayout.paragraph) {
       return Container(
         padding: const EdgeInsets.fromLTRB(12, 10, 14, 10),
         decoration: BoxDecoration(
@@ -124,7 +133,7 @@ class ChatAnswerBlocks extends StatelessWidget {
         ),
       );
     }
-    return switch (block.layout) {
+    return switch (layout) {
       ChatAnswerLayout.paragraph => text,
       ChatAnswerLayout.item => Row(
         crossAxisAlignment: CrossAxisAlignment.start,

@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:luma/domain/chat_markup.dart';
+import 'package:luma/domain/models/book_chat.dart';
 
 void main() {
   List<ChatSpan> parse(String s) => parseChatMarkup(s);
@@ -63,5 +64,60 @@ void main() {
       final partial = chatPlainText(full.substring(0, n));
       expect(plain.startsWith(partial), isTrue, reason: 'n=$n "$partial"');
     }
+  });
+
+  group('chatDisplayLayouts', () {
+    ChatAnswerBlock b(String text, ChatAnswerLayout layout) =>
+        ChatAnswerBlock(text: text, sources: [], layout: layout);
+    const item = ChatAnswerLayout.item, bullet = ChatAnswerLayout.bullet;
+    const paragraph = ChatAnswerLayout.paragraph;
+
+    test(
+      'an intro sentence ending with a colon is a paragraph, not a point',
+      () {
+        final layouts = chatDisplayLayouts([
+          b('Untuk menerapkan konsep ini, berikut beberapa contoh:', bullet),
+          b('**Satu.** a', bullet),
+          b('**Dua.** b', bullet),
+        ]);
+        expect(layouts, [paragraph, bullet, bullet]);
+        expect(
+          chatDisplayLayouts([
+            b('Berikut contoh: ', item),
+            b('a', item),
+            b('b', item),
+          ]),
+          [paragraph, item, item],
+        );
+      },
+    );
+
+    test('a list with one item is just a paragraph', () {
+      expect(chatDisplayLayouts([b('Intro.', paragraph), b('sendiri', item)]), [
+        paragraph,
+        paragraph,
+      ]);
+    });
+
+    test('real lists and other layouts are left alone', () {
+      expect(
+        chatDisplayLayouts([
+          b('a', item),
+          b('b', item),
+          b('c', item),
+          b('penutup', paragraph),
+          b('q', ChatAnswerLayout.quote),
+        ]),
+        [item, item, item, paragraph, ChatAnswerLayout.quote],
+      );
+    });
+
+    test('item and bullet runs are separate lists', () {
+      expect(chatDisplayLayouts([b('a', item), b('b', item), b('c', bullet)]), [
+        item,
+        item,
+        paragraph,
+      ]);
+    });
   });
 }
