@@ -7185,6 +7185,564 @@ class ChatVectorsCompanion extends UpdateCompanion<ChatVectorRow> {
   }
 }
 
+class $ChatChapterNotesTable extends ChatChapterNotes
+    with TableInfo<$ChatChapterNotesTable, ChatChapterNoteRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ChatChapterNotesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _bookIdMeta = const VerificationMeta('bookId');
+  @override
+  late final GeneratedColumn<int> bookId = GeneratedColumn<int>(
+    'book_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES books (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _contentRevisionMeta = const VerificationMeta(
+    'contentRevision',
+  );
+  @override
+  late final GeneratedColumn<int> contentRevision = GeneratedColumn<int>(
+    'content_revision',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _chapterIdMeta = const VerificationMeta(
+    'chapterId',
+  );
+  @override
+  late final GeneratedColumn<int> chapterId = GeneratedColumn<int>(
+    'chapter_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES chapters (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _manifestMeta = const VerificationMeta(
+    'manifest',
+  );
+  @override
+  late final GeneratedColumn<String> manifest = GeneratedColumn<String>(
+    'manifest',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _policyMeta = const VerificationMeta('policy');
+  @override
+  late final GeneratedColumn<int> policy = GeneratedColumn<int>(
+    'policy',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _modelMeta = const VerificationMeta('model');
+  @override
+  late final GeneratedColumn<String> model = GeneratedColumn<String>(
+    'model',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _notesMeta = const VerificationMeta('notes');
+  @override
+  late final GeneratedColumn<String> notes = GeneratedColumn<String>(
+    'notes',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    bookId,
+    contentRevision,
+    chapterId,
+    manifest,
+    policy,
+    model,
+    notes,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'chat_chapter_notes';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ChatChapterNoteRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('book_id')) {
+      context.handle(
+        _bookIdMeta,
+        bookId.isAcceptableOrUnknown(data['book_id']!, _bookIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_bookIdMeta);
+    }
+    if (data.containsKey('content_revision')) {
+      context.handle(
+        _contentRevisionMeta,
+        contentRevision.isAcceptableOrUnknown(
+          data['content_revision']!,
+          _contentRevisionMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_contentRevisionMeta);
+    }
+    if (data.containsKey('chapter_id')) {
+      context.handle(
+        _chapterIdMeta,
+        chapterId.isAcceptableOrUnknown(data['chapter_id']!, _chapterIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_chapterIdMeta);
+    }
+    if (data.containsKey('manifest')) {
+      context.handle(
+        _manifestMeta,
+        manifest.isAcceptableOrUnknown(data['manifest']!, _manifestMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_manifestMeta);
+    }
+    if (data.containsKey('policy')) {
+      context.handle(
+        _policyMeta,
+        policy.isAcceptableOrUnknown(data['policy']!, _policyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_policyMeta);
+    }
+    if (data.containsKey('model')) {
+      context.handle(
+        _modelMeta,
+        model.isAcceptableOrUnknown(data['model']!, _modelMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_modelMeta);
+    }
+    if (data.containsKey('notes')) {
+      context.handle(
+        _notesMeta,
+        notes.isAcceptableOrUnknown(data['notes']!, _notesMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_notesMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+    {chapterId, policy},
+  ];
+  @override
+  ChatChapterNoteRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ChatChapterNoteRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      bookId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}book_id'],
+      )!,
+      contentRevision: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}content_revision'],
+      )!,
+      chapterId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}chapter_id'],
+      )!,
+      manifest: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}manifest'],
+      )!,
+      policy: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}policy'],
+      )!,
+      model: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}model'],
+      )!,
+      notes: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}notes'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $ChatChapterNotesTable createAlias(String alias) {
+    return $ChatChapterNotesTable(attachedDatabase, alias);
+  }
+}
+
+class ChatChapterNoteRow extends DataClass
+    implements Insertable<ChatChapterNoteRow> {
+  final int id;
+  final int bookId;
+  final int contentRevision;
+  final int chapterId;
+  final String manifest;
+  final int policy;
+  final String model;
+
+  /// JSON `[{"text":…,"anchors":[[paragraphIndex,start,end],…]}]`.
+  final String notes;
+  final DateTime createdAt;
+  const ChatChapterNoteRow({
+    required this.id,
+    required this.bookId,
+    required this.contentRevision,
+    required this.chapterId,
+    required this.manifest,
+    required this.policy,
+    required this.model,
+    required this.notes,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['book_id'] = Variable<int>(bookId);
+    map['content_revision'] = Variable<int>(contentRevision);
+    map['chapter_id'] = Variable<int>(chapterId);
+    map['manifest'] = Variable<String>(manifest);
+    map['policy'] = Variable<int>(policy);
+    map['model'] = Variable<String>(model);
+    map['notes'] = Variable<String>(notes);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  ChatChapterNotesCompanion toCompanion(bool nullToAbsent) {
+    return ChatChapterNotesCompanion(
+      id: Value(id),
+      bookId: Value(bookId),
+      contentRevision: Value(contentRevision),
+      chapterId: Value(chapterId),
+      manifest: Value(manifest),
+      policy: Value(policy),
+      model: Value(model),
+      notes: Value(notes),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory ChatChapterNoteRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ChatChapterNoteRow(
+      id: serializer.fromJson<int>(json['id']),
+      bookId: serializer.fromJson<int>(json['bookId']),
+      contentRevision: serializer.fromJson<int>(json['contentRevision']),
+      chapterId: serializer.fromJson<int>(json['chapterId']),
+      manifest: serializer.fromJson<String>(json['manifest']),
+      policy: serializer.fromJson<int>(json['policy']),
+      model: serializer.fromJson<String>(json['model']),
+      notes: serializer.fromJson<String>(json['notes']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'bookId': serializer.toJson<int>(bookId),
+      'contentRevision': serializer.toJson<int>(contentRevision),
+      'chapterId': serializer.toJson<int>(chapterId),
+      'manifest': serializer.toJson<String>(manifest),
+      'policy': serializer.toJson<int>(policy),
+      'model': serializer.toJson<String>(model),
+      'notes': serializer.toJson<String>(notes),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  ChatChapterNoteRow copyWith({
+    int? id,
+    int? bookId,
+    int? contentRevision,
+    int? chapterId,
+    String? manifest,
+    int? policy,
+    String? model,
+    String? notes,
+    DateTime? createdAt,
+  }) => ChatChapterNoteRow(
+    id: id ?? this.id,
+    bookId: bookId ?? this.bookId,
+    contentRevision: contentRevision ?? this.contentRevision,
+    chapterId: chapterId ?? this.chapterId,
+    manifest: manifest ?? this.manifest,
+    policy: policy ?? this.policy,
+    model: model ?? this.model,
+    notes: notes ?? this.notes,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  ChatChapterNoteRow copyWithCompanion(ChatChapterNotesCompanion data) {
+    return ChatChapterNoteRow(
+      id: data.id.present ? data.id.value : this.id,
+      bookId: data.bookId.present ? data.bookId.value : this.bookId,
+      contentRevision: data.contentRevision.present
+          ? data.contentRevision.value
+          : this.contentRevision,
+      chapterId: data.chapterId.present ? data.chapterId.value : this.chapterId,
+      manifest: data.manifest.present ? data.manifest.value : this.manifest,
+      policy: data.policy.present ? data.policy.value : this.policy,
+      model: data.model.present ? data.model.value : this.model,
+      notes: data.notes.present ? data.notes.value : this.notes,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ChatChapterNoteRow(')
+          ..write('id: $id, ')
+          ..write('bookId: $bookId, ')
+          ..write('contentRevision: $contentRevision, ')
+          ..write('chapterId: $chapterId, ')
+          ..write('manifest: $manifest, ')
+          ..write('policy: $policy, ')
+          ..write('model: $model, ')
+          ..write('notes: $notes, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    bookId,
+    contentRevision,
+    chapterId,
+    manifest,
+    policy,
+    model,
+    notes,
+    createdAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ChatChapterNoteRow &&
+          other.id == this.id &&
+          other.bookId == this.bookId &&
+          other.contentRevision == this.contentRevision &&
+          other.chapterId == this.chapterId &&
+          other.manifest == this.manifest &&
+          other.policy == this.policy &&
+          other.model == this.model &&
+          other.notes == this.notes &&
+          other.createdAt == this.createdAt);
+}
+
+class ChatChapterNotesCompanion extends UpdateCompanion<ChatChapterNoteRow> {
+  final Value<int> id;
+  final Value<int> bookId;
+  final Value<int> contentRevision;
+  final Value<int> chapterId;
+  final Value<String> manifest;
+  final Value<int> policy;
+  final Value<String> model;
+  final Value<String> notes;
+  final Value<DateTime> createdAt;
+  const ChatChapterNotesCompanion({
+    this.id = const Value.absent(),
+    this.bookId = const Value.absent(),
+    this.contentRevision = const Value.absent(),
+    this.chapterId = const Value.absent(),
+    this.manifest = const Value.absent(),
+    this.policy = const Value.absent(),
+    this.model = const Value.absent(),
+    this.notes = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  });
+  ChatChapterNotesCompanion.insert({
+    this.id = const Value.absent(),
+    required int bookId,
+    required int contentRevision,
+    required int chapterId,
+    required String manifest,
+    required int policy,
+    required String model,
+    required String notes,
+    this.createdAt = const Value.absent(),
+  }) : bookId = Value(bookId),
+       contentRevision = Value(contentRevision),
+       chapterId = Value(chapterId),
+       manifest = Value(manifest),
+       policy = Value(policy),
+       model = Value(model),
+       notes = Value(notes);
+  static Insertable<ChatChapterNoteRow> custom({
+    Expression<int>? id,
+    Expression<int>? bookId,
+    Expression<int>? contentRevision,
+    Expression<int>? chapterId,
+    Expression<String>? manifest,
+    Expression<int>? policy,
+    Expression<String>? model,
+    Expression<String>? notes,
+    Expression<DateTime>? createdAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (bookId != null) 'book_id': bookId,
+      if (contentRevision != null) 'content_revision': contentRevision,
+      if (chapterId != null) 'chapter_id': chapterId,
+      if (manifest != null) 'manifest': manifest,
+      if (policy != null) 'policy': policy,
+      if (model != null) 'model': model,
+      if (notes != null) 'notes': notes,
+      if (createdAt != null) 'created_at': createdAt,
+    });
+  }
+
+  ChatChapterNotesCompanion copyWith({
+    Value<int>? id,
+    Value<int>? bookId,
+    Value<int>? contentRevision,
+    Value<int>? chapterId,
+    Value<String>? manifest,
+    Value<int>? policy,
+    Value<String>? model,
+    Value<String>? notes,
+    Value<DateTime>? createdAt,
+  }) {
+    return ChatChapterNotesCompanion(
+      id: id ?? this.id,
+      bookId: bookId ?? this.bookId,
+      contentRevision: contentRevision ?? this.contentRevision,
+      chapterId: chapterId ?? this.chapterId,
+      manifest: manifest ?? this.manifest,
+      policy: policy ?? this.policy,
+      model: model ?? this.model,
+      notes: notes ?? this.notes,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (bookId.present) {
+      map['book_id'] = Variable<int>(bookId.value);
+    }
+    if (contentRevision.present) {
+      map['content_revision'] = Variable<int>(contentRevision.value);
+    }
+    if (chapterId.present) {
+      map['chapter_id'] = Variable<int>(chapterId.value);
+    }
+    if (manifest.present) {
+      map['manifest'] = Variable<String>(manifest.value);
+    }
+    if (policy.present) {
+      map['policy'] = Variable<int>(policy.value);
+    }
+    if (model.present) {
+      map['model'] = Variable<String>(model.value);
+    }
+    if (notes.present) {
+      map['notes'] = Variable<String>(notes.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ChatChapterNotesCompanion(')
+          ..write('id: $id, ')
+          ..write('bookId: $bookId, ')
+          ..write('contentRevision: $contentRevision, ')
+          ..write('chapterId: $chapterId, ')
+          ..write('manifest: $manifest, ')
+          ..write('policy: $policy, ')
+          ..write('model: $model, ')
+          ..write('notes: $notes, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -7205,6 +7763,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $ChatTurnsTable chatTurns = $ChatTurnsTable(this);
   late final $ChatIndexesTable chatIndexes = $ChatIndexesTable(this);
   late final $ChatVectorsTable chatVectors = $ChatVectorsTable(this);
+  late final $ChatChapterNotesTable chatChapterNotes = $ChatChapterNotesTable(
+    this,
+  );
   late final Index chaptersBookOrder = Index(
     'chapters_book_order',
     'CREATE INDEX chapters_book_order ON chapters (book_id, sort_order)',
@@ -7243,6 +7804,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     chatTurns,
     chatIndexes,
     chatVectors,
+    chatChapterNotes,
     chaptersBookOrder,
     paragraphsChapterGroup,
     readingSessionsBookTime,
@@ -7348,6 +7910,20 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('chat_vectors', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'books',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('chat_chapter_notes', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'chapters',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('chat_chapter_notes', kind: UpdateKind.delete)],
     ),
   ]);
 }
@@ -7508,6 +8084,26 @@ final class $$BooksTableReferences
     ).filter((f) => f.bookId.id.sqlEquals($_itemColumn<int>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_chatIndexesRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$ChatChapterNotesTable, List<ChatChapterNoteRow>>
+  _chatChapterNotesRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.chatChapterNotes,
+    aliasName: 'books__id__chat_chapter_notes__book_id',
+  );
+
+  $$ChatChapterNotesTableProcessedTableManager get chatChapterNotesRefs {
+    final manager = $$ChatChapterNotesTableTableManager(
+      $_db,
+      $_db.chatChapterNotes,
+    ).filter((f) => f.bookId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _chatChapterNotesRefsTable($_db),
+    );
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -7759,6 +8355,31 @@ class $$BooksTableFilterComposer extends Composer<_$AppDatabase, $BooksTable> {
           }) => $$ChatIndexesTableFilterComposer(
             $db: $db,
             $table: $db.chatIndexes,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> chatChapterNotesRefs(
+    Expression<bool> Function($$ChatChapterNotesTableFilterComposer f) f,
+  ) {
+    final $$ChatChapterNotesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.chatChapterNotes,
+      getReferencedColumn: (t) => t.bookId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ChatChapterNotesTableFilterComposer(
+            $db: $db,
+            $table: $db.chatChapterNotes,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -8112,6 +8733,31 @@ class $$BooksTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> chatChapterNotesRefs<T extends Object>(
+    Expression<T> Function($$ChatChapterNotesTableAnnotationComposer a) f,
+  ) {
+    final $$ChatChapterNotesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.chatChapterNotes,
+      getReferencedColumn: (t) => t.bookId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ChatChapterNotesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.chatChapterNotes,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$BooksTableTableManager
@@ -8134,6 +8780,7 @@ class $$BooksTableTableManager
             bool aiCallsRefs,
             bool chatSessionsRefs,
             bool chatIndexesRefs,
+            bool chatChapterNotesRefs,
           })
         > {
   $$BooksTableTableManager(_$AppDatabase db, $BooksTable table)
@@ -8247,6 +8894,7 @@ class $$BooksTableTableManager
                 aiCallsRefs = false,
                 chatSessionsRefs = false,
                 chatIndexesRefs = false,
+                chatChapterNotesRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
@@ -8257,6 +8905,7 @@ class $$BooksTableTableManager
                     if (aiCallsRefs) db.aiCalls,
                     if (chatSessionsRefs) db.chatSessions,
                     if (chatIndexesRefs) db.chatIndexes,
+                    if (chatChapterNotesRefs) db.chatChapterNotes,
                   ],
                   addJoins: null,
                   getPrefetchedDataCallback: (items) async {
@@ -8375,6 +9024,27 @@ class $$BooksTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (chatChapterNotesRefs)
+                        await $_getPrefetchedData<
+                          Book,
+                          $BooksTable,
+                          ChatChapterNoteRow
+                        >(
+                          currentTable: table,
+                          referencedTable: $$BooksTableReferences
+                              ._chatChapterNotesRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$BooksTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).chatChapterNotesRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.bookId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -8402,6 +9072,7 @@ typedef $$BooksTableProcessedTableManager =
         bool aiCallsRefs,
         bool chatSessionsRefs,
         bool chatIndexesRefs,
+        bool chatChapterNotesRefs,
       })
     >;
 typedef $$ChaptersTableCreateCompanionBuilder = ChaptersCompanion Function({
@@ -8552,6 +9223,26 @@ final class $$ChaptersTableReferences
     ).filter((f) => f.chapterId.id.sqlEquals($_itemColumn<int>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_aiCallsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$ChatChapterNotesTable, List<ChatChapterNoteRow>>
+  _chatChapterNotesRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.chatChapterNotes,
+    aliasName: 'chapters__id__chat_chapter_notes__chapter_id',
+  );
+
+  $$ChatChapterNotesTableProcessedTableManager get chatChapterNotesRefs {
+    final manager = $$ChatChapterNotesTableTableManager(
+      $_db,
+      $_db.chatChapterNotes,
+    ).filter((f) => f.chapterId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _chatChapterNotesRefsTable($_db),
+    );
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -8761,6 +9452,31 @@ class $$ChaptersTableFilterComposer
           }) => $$AiCallsTableFilterComposer(
             $db: $db,
             $table: $db.aiCalls,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> chatChapterNotesRefs(
+    Expression<bool> Function($$ChatChapterNotesTableFilterComposer f) f,
+  ) {
+    final $$ChatChapterNotesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.chatChapterNotes,
+      getReferencedColumn: (t) => t.chapterId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ChatChapterNotesTableFilterComposer(
+            $db: $db,
+            $table: $db.chatChapterNotes,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -9037,6 +9753,31 @@ class $$ChaptersTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> chatChapterNotesRefs<T extends Object>(
+    Expression<T> Function($$ChatChapterNotesTableAnnotationComposer a) f,
+  ) {
+    final $$ChatChapterNotesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.chatChapterNotes,
+      getReferencedColumn: (t) => t.chapterId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ChatChapterNotesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.chatChapterNotes,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$ChaptersTableTableManager
@@ -9060,6 +9801,7 @@ class $$ChaptersTableTableManager
             bool aiBreakdownsRefs,
             bool readingSessionsRefs,
             bool aiCallsRefs,
+            bool chatChapterNotesRefs,
           })
         > {
   $$ChaptersTableTableManager(_$AppDatabase db, $ChaptersTable table)
@@ -9126,6 +9868,7 @@ class $$ChaptersTableTableManager
                 aiBreakdownsRefs = false,
                 readingSessionsRefs = false,
                 aiCallsRefs = false,
+                chatChapterNotesRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
@@ -9136,6 +9879,7 @@ class $$ChaptersTableTableManager
                     if (aiBreakdownsRefs) db.aiBreakdowns,
                     if (readingSessionsRefs) db.readingSessions,
                     if (aiCallsRefs) db.aiCalls,
+                    if (chatChapterNotesRefs) db.chatChapterNotes,
                   ],
                   addJoins:
                       <
@@ -9295,6 +10039,27 @@ class $$ChaptersTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (chatChapterNotesRefs)
+                        await $_getPrefetchedData<
+                          Chapter,
+                          $ChaptersTable,
+                          ChatChapterNoteRow
+                        >(
+                          currentTable: table,
+                          referencedTable: $$ChaptersTableReferences
+                              ._chatChapterNotesRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$ChaptersTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).chatChapterNotesRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.chapterId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -9323,6 +10088,7 @@ typedef $$ChaptersTableProcessedTableManager =
         bool aiBreakdownsRefs,
         bool readingSessionsRefs,
         bool aiCallsRefs,
+        bool chatChapterNotesRefs,
       })
     >;
 typedef $$ParagraphsTableCreateCompanionBuilder = ParagraphsCompanion Function({
@@ -13710,6 +14476,490 @@ typedef $$ChatVectorsTableProcessedTableManager =
       ChatVectorRow,
       PrefetchHooks Function({bool indexId})
     >;
+typedef $$ChatChapterNotesTableCreateCompanionBuilder =
+    ChatChapterNotesCompanion Function({
+      Value<int> id,
+      required int bookId,
+      required int contentRevision,
+      required int chapterId,
+      required String manifest,
+      required int policy,
+      required String model,
+      required String notes,
+      Value<DateTime> createdAt,
+    });
+typedef $$ChatChapterNotesTableUpdateCompanionBuilder =
+    ChatChapterNotesCompanion Function({
+      Value<int> id,
+      Value<int> bookId,
+      Value<int> contentRevision,
+      Value<int> chapterId,
+      Value<String> manifest,
+      Value<int> policy,
+      Value<String> model,
+      Value<String> notes,
+      Value<DateTime> createdAt,
+    });
+
+final class $$ChatChapterNotesTableReferences
+    extends
+        BaseReferences<
+          _$AppDatabase,
+          $ChatChapterNotesTable,
+          ChatChapterNoteRow
+        > {
+  $$ChatChapterNotesTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $BooksTable _bookIdTable(_$AppDatabase db) =>
+      db.books.createAlias('chat_chapter_notes__book_id__books__id');
+
+  $$BooksTableProcessedTableManager get bookId {
+    final $_column = $_itemColumn<int>('book_id')!;
+
+    final manager = $$BooksTableTableManager(
+      $_db,
+      $_db.books,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_bookIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $ChaptersTable _chapterIdTable(_$AppDatabase db) =>
+      db.chapters.createAlias('chat_chapter_notes__chapter_id__chapters__id');
+
+  $$ChaptersTableProcessedTableManager get chapterId {
+    final $_column = $_itemColumn<int>('chapter_id')!;
+
+    final manager = $$ChaptersTableTableManager(
+      $_db,
+      $_db.chapters,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_chapterIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$ChatChapterNotesTableFilterComposer
+    extends Composer<_$AppDatabase, $ChatChapterNotesTable> {
+  $$ChatChapterNotesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get contentRevision => $composableBuilder(
+    column: $table.contentRevision,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get manifest => $composableBuilder(
+    column: $table.manifest,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get policy => $composableBuilder(
+    column: $table.policy,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get model => $composableBuilder(
+    column: $table.model,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get notes => $composableBuilder(
+    column: $table.notes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$BooksTableFilterComposer get bookId {
+    final $$BooksTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.bookId,
+      referencedTable: $db.books,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BooksTableFilterComposer(
+            $db: $db,
+            $table: $db.books,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$ChaptersTableFilterComposer get chapterId {
+    final $$ChaptersTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.chapterId,
+      referencedTable: $db.chapters,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ChaptersTableFilterComposer(
+            $db: $db,
+            $table: $db.chapters,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ChatChapterNotesTableOrderingComposer
+    extends Composer<_$AppDatabase, $ChatChapterNotesTable> {
+  $$ChatChapterNotesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get contentRevision => $composableBuilder(
+    column: $table.contentRevision,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get manifest => $composableBuilder(
+    column: $table.manifest,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get policy => $composableBuilder(
+    column: $table.policy,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get model => $composableBuilder(
+    column: $table.model,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get notes => $composableBuilder(
+    column: $table.notes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$BooksTableOrderingComposer get bookId {
+    final $$BooksTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.bookId,
+      referencedTable: $db.books,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BooksTableOrderingComposer(
+            $db: $db,
+            $table: $db.books,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$ChaptersTableOrderingComposer get chapterId {
+    final $$ChaptersTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.chapterId,
+      referencedTable: $db.chapters,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ChaptersTableOrderingComposer(
+            $db: $db,
+            $table: $db.chapters,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ChatChapterNotesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ChatChapterNotesTable> {
+  $$ChatChapterNotesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get contentRevision => $composableBuilder(
+    column: $table.contentRevision,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get manifest =>
+      $composableBuilder(column: $table.manifest, builder: (column) => column);
+
+  GeneratedColumn<int> get policy =>
+      $composableBuilder(column: $table.policy, builder: (column) => column);
+
+  GeneratedColumn<String> get model =>
+      $composableBuilder(column: $table.model, builder: (column) => column);
+
+  GeneratedColumn<String> get notes =>
+      $composableBuilder(column: $table.notes, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  $$BooksTableAnnotationComposer get bookId {
+    final $$BooksTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.bookId,
+      referencedTable: $db.books,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BooksTableAnnotationComposer(
+            $db: $db,
+            $table: $db.books,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$ChaptersTableAnnotationComposer get chapterId {
+    final $$ChaptersTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.chapterId,
+      referencedTable: $db.chapters,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ChaptersTableAnnotationComposer(
+            $db: $db,
+            $table: $db.chapters,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ChatChapterNotesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ChatChapterNotesTable,
+          ChatChapterNoteRow,
+          $$ChatChapterNotesTableFilterComposer,
+          $$ChatChapterNotesTableOrderingComposer,
+          $$ChatChapterNotesTableAnnotationComposer,
+          $$ChatChapterNotesTableCreateCompanionBuilder,
+          $$ChatChapterNotesTableUpdateCompanionBuilder,
+          (ChatChapterNoteRow, $$ChatChapterNotesTableReferences),
+          ChatChapterNoteRow,
+          PrefetchHooks Function({bool bookId, bool chapterId})
+        > {
+  $$ChatChapterNotesTableTableManager(
+    _$AppDatabase db,
+    $ChatChapterNotesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ChatChapterNotesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ChatChapterNotesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ChatChapterNotesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> bookId = const Value.absent(),
+                Value<int> contentRevision = const Value.absent(),
+                Value<int> chapterId = const Value.absent(),
+                Value<String> manifest = const Value.absent(),
+                Value<int> policy = const Value.absent(),
+                Value<String> model = const Value.absent(),
+                Value<String> notes = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => ChatChapterNotesCompanion(
+                id: id,
+                bookId: bookId,
+                contentRevision: contentRevision,
+                chapterId: chapterId,
+                manifest: manifest,
+                policy: policy,
+                model: model,
+                notes: notes,
+                createdAt: createdAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int bookId,
+                required int contentRevision,
+                required int chapterId,
+                required String manifest,
+                required int policy,
+                required String model,
+                required String notes,
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => ChatChapterNotesCompanion.insert(
+                id: id,
+                bookId: bookId,
+                contentRevision: contentRevision,
+                chapterId: chapterId,
+                manifest: manifest,
+                policy: policy,
+                model: model,
+                notes: notes,
+                createdAt: createdAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$ChatChapterNotesTable, ChatChapterNoteRow>(
+                    table,
+                  ),
+                  $$ChatChapterNotesTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({bookId = false, chapterId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (bookId) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.bookId,
+                        referencedTable: $$ChatChapterNotesTableReferences
+                            ._bookIdTable(db),
+                        referencedColumn: $$ChatChapterNotesTableReferences
+                            ._bookIdTable(db)
+                            .id,
+                      ) as T;
+                    }
+                    if (chapterId) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.chapterId,
+                        referencedTable: $$ChatChapterNotesTableReferences
+                            ._chapterIdTable(db),
+                        referencedColumn: $$ChatChapterNotesTableReferences
+                            ._chapterIdTable(db)
+                            .id,
+                      ) as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$ChatChapterNotesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ChatChapterNotesTable,
+      ChatChapterNoteRow,
+      $$ChatChapterNotesTableFilterComposer,
+      $$ChatChapterNotesTableOrderingComposer,
+      $$ChatChapterNotesTableAnnotationComposer,
+      $$ChatChapterNotesTableCreateCompanionBuilder,
+      $$ChatChapterNotesTableUpdateCompanionBuilder,
+      (ChatChapterNoteRow, $$ChatChapterNotesTableReferences),
+      ChatChapterNoteRow,
+      PrefetchHooks Function({bool bookId, bool chapterId})
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -13740,4 +14990,6 @@ class $AppDatabaseManager {
       $$ChatIndexesTableTableManager(_db, _db.chatIndexes);
   $$ChatVectorsTableTableManager get chatVectors =>
       $$ChatVectorsTableTableManager(_db, _db.chatVectors);
+  $$ChatChapterNotesTableTableManager get chatChapterNotes =>
+      $$ChatChapterNotesTableTableManager(_db, _db.chatChapterNotes);
 }

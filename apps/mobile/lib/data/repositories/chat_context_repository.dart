@@ -19,6 +19,7 @@ import '../services/api_key_store.dart';
 import '../services/openrouter_service.dart';
 import 'chat_repository.dart';
 import 'chat_index_repository.dart';
+import 'chat_notes_repository.dart';
 import 'chat_snapshot.dart';
 
 /// Token + waktu yang disisakan untuk jawaban akhir sebelum putaran baru.
@@ -46,6 +47,7 @@ class ChatContextRepository {
   final ChatRepository _chat;
   final OpenRouterService _router;
   final ApiKeyStore _keys;
+  late final _notes = ChatNotesRepository(_db);
   Future<void> _indexTail = Future.value();
   ChatIndexKey? _indexKey;
   String? _manifest;
@@ -291,11 +293,12 @@ class ChatContextRepository {
       final saved = input.turn.exploration == null
           ? null
           : ChatExploration.parse(input.turn.exploration!);
+      // Urutan [ids] = urutan baca (bab dari cache di depan, #151).
       List<ChatSource> scopedWindows(List<int> ids) {
-        final set = ids.toSet();
         final scoped = [
-          for (final w in input.windows)
-            if (set.contains(w.anchors.first.chapterId)) w,
+          for (final id in ids)
+            for (final w in input.windows)
+              if (w.anchors.first.chapterId == id) w,
         ];
         return [
           for (final (i, w) in scoped.indexed)
@@ -356,14 +359,51 @@ class ChatContextRepository {
       var selected = input.quoted;
       ChatExploration? exploration;
       var noteSourceIds = <String, String>{};
-      final chapterIds =
+      var cachedChapterCount = 0;
+      final requested =
           plan.strategy == ChatSearchStrategy.global && plan.chapterIds.isEmpty
           ? [for (final c in toc) c.id]
           : plan.chapterIds;
       if (!plan.needsClarification &&
           plan.strategy.reads &&
-          scopedWindows(chapterIds).isNotEmpty) {
+          scopedWindows(requested).isNotEmpty) {
+        // Seluruh buku: bab yang catatannya masih cocok di cache tidak dibaca
+        // ulang; urutan baca menaruh bab cache di depan supaya cursor tetap
+        // prefix. Continuation memakai urutan yang tersimpan di checkpoint.
+        final chapterManifests = <int, String>{
+          for (final id in requested)
+            id: chatWindowManifest(scopedWindows([id])),
+        };
+        final cache =
+            saved == null && plan.strategy == ChatSearchStrategy.global
+            ? await _notes.load(current, chapterManifests)
+            : const <int, List<ChatCachedNote>>{};
+        _check(cancel);
+        final chapterIds =
+            saved?.chapterIds ??
+            [
+              for (final id in requested)
+                if (cache.containsKey(id)) id,
+              for (final id in requested)
+                if (!cache.containsKey(id)) id,
+            ];
         final windows = scopedWindows(chapterIds);
+        final cachedNotes = <ChatExplorationNote>[];
+        var cachedWindows = 0;
+        for (final id in chapterIds) {
+          final notes = cache[id];
+          if (notes == null) continue;
+          cachedChapterCount++;
+          cachedWindows += windows
+              .where((w) => w.anchors.first.chapterId == id)
+              .length;
+          cachedNotes.addAll(chatNotesFromCache(id, notes, windows));
+        }
+        final cachedIds = cache.keys.toSet();
+        final windowsById = {for (final w in windows) w.id: w};
+        final chapterLastIndex = <int, int>{
+          for (final (i, w) in windows.indexed) w.anchors.first.chapterId: i,
+        };
         final globalQuotes = <ChatSource>[];
         for (final (i, source) in input.quoted.indexed) {
           final matches = windows.where(
@@ -398,7 +438,11 @@ class ChatContextRepository {
           chapterIds: chapterIds,
           stopReason: stopReason,
         );
-        var work = saved ?? checkpoint(cursor: 0, notes: []);
+        var work =
+            saved ?? checkpoint(cursor: cachedWindows, notes: cachedNotes);
+        final notesSystem = plan.strategy == ChatSearchStrategy.global
+            ? chatOverviewSystem
+            : chatGlobalSystem;
         String? labelOf(List<ChatSource> batch) {
           final c = tocById[batch.first.anchors.first.chapterId];
           return c == null ? null : chatChapterLabel(c);
@@ -455,7 +499,7 @@ class ChatContextRepository {
               chatGlobalBatchBytes,
               budget.inputBytesFor(chatNotesMaxTokens) -
                   utf8.encode(previousNotes).length -
-                  utf8.encode(chatGlobalSystem).length -
+                  utf8.encode(notesSystem).length -
                   4000,
             ].reduce((a, b) => a < b ? a : b);
             if (answerNow?.call() ?? false) {
@@ -490,7 +534,8 @@ class ChatContextRepository {
               }
               final user = chatRetrievalUser(
                 {
-                  'question': target.question,
+                  if (plan.strategy != ChatSearchStrategy.global)
+                    'question': target.question,
                   'book': input.book.title,
                   'examinedBefore': cursor,
                   'totalWindows': work.total,
@@ -498,13 +543,12 @@ class ChatContextRepository {
                   'sources': [for (final w in batch) _source(w)],
                   'newWindowIds': batch.map((w) => w.id).toList(),
                 },
-                chatGlobalSystem,
+                notesSystem,
                 chatPromptBytes + chatGlobalBatchBytes,
               );
               if (batch.isEmpty ||
                   !budget.fits(
-                    utf8.encode(user).length +
-                        utf8.encode(chatGlobalSystem).length,
+                    utf8.encode(user).length + utf8.encode(notesSystem).length,
                     chatNotesMaxTokens + chatAnswerReserveTokens,
                   )) {
                 stop = 'budget';
@@ -533,7 +577,7 @@ class ChatContextRepository {
                 _complete(
                   key,
                   target.model,
-                  chatGlobalSystem,
+                  notesSystem,
                   g.user,
                   chatNotesMaxTokens,
                   cancel,
@@ -561,14 +605,14 @@ class ChatContextRepository {
                   await _complete(
                     key,
                     target.model,
-                    chatGlobalSystem,
+                    notesSystem,
                     chatRetrievalUser(
                       {
                         ...jsonDecode(g.user) as Map<String, Object?>,
                         'repair':
                             'Output sebelumnya ditolak: ${e.message}. Tulis jauh lebih ringkas: maksimal 5 catatan pendek, total di bawah 900 karakter, hanya ID dari sources batch ini, JSON lengkap.',
                       },
-                      chatGlobalSystem,
+                      notesSystem,
                       chatPromptBytes + chatGlobalBatchBytes,
                     ),
                     chatNotesMaxTokens,
@@ -602,6 +646,25 @@ class ChatContextRepository {
                 return null;
               }
               work = next;
+              // Bab yang baru selesai dibaca masuk cache (seluruh buku saja).
+              if (plan.strategy == ChatSearchStrategy.global) {
+                for (final entry in chapterLastIndex.entries) {
+                  if (entry.value < work.cursor && cachedIds.add(entry.key)) {
+                    await _notes.save(
+                      current,
+                      chapterId: entry.key,
+                      manifest: chapterManifests[entry.key]!,
+                      model: target.model,
+                      notes: chatCachedNotesFor(
+                        entry.key,
+                        work.notes,
+                        windowsById,
+                      ),
+                    );
+                    _check(cancel);
+                  }
+                }
+              }
               progress(
                 work,
                 label: i + 1 < group.length
@@ -676,6 +739,7 @@ class ChatContextRepository {
           total: input.chunks.length,
           notes: [],
           strategy: plan.strategy,
+          chapterIds: plan.chapterIds,
           searchedQueries: searched.toList(),
           pendingQueries: pending,
           selectedIds: selected.map((s) => s.id).toList(),
@@ -716,7 +780,16 @@ class ChatContextRepository {
             onIndexProgress,
             budget,
           );
-          final found = chatFuseRanks(rankings, quoteSources: input.quoted);
+          // Front/back matter (Endnotes, Imprint) keluar dari kandidat kalau
+          // planner membatasi bab isi; index embedding tetap seluruh buku.
+          final allowed = plan.chapterIds.toSet();
+          final found = [
+            for (final s in chatFuseRanks(rankings, quoteSources: input.quoted))
+              if (allowed.isEmpty ||
+                  allowed.contains(s.anchors.first.chapterId) ||
+                  input.quoted.contains(s))
+                s,
+          ];
           candidates = _uniqueSources([
             ...input.quoted,
             ...selected,
@@ -859,6 +932,8 @@ class ChatContextRepository {
                   if (work.strategy.reads) ...{
                     'examinedChapters': labels.take(60).toList(),
                     'chapterCount': labels.length,
+                    if (cachedChapterCount > 0)
+                      'notesFromCache': cachedChapterCount,
                     'examinedWindows': work.cursor,
                     'totalWindows': work.total,
                   } else ...{

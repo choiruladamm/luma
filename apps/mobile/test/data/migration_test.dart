@@ -106,6 +106,17 @@ final v10 = [
         : sql,
 ];
 
+// Frozen schema 11: chapters.section, before chat_chapter_notes.
+final v11 = [
+  for (final sql in v10)
+    sql.startsWith('CREATE TABLE "chapters"')
+        ? sql.replaceFirst(
+            '"title" TEXT NOT NULL,',
+            '"title" TEXT NOT NULL, "section" TEXT NULL,',
+          )
+        : sql,
+];
+
 AppDatabase _open([void Function(dynamic raw)? setup]) => AppDatabase(
   DatabaseConnection(
     NativeDatabase.memory(setup: setup),
@@ -272,6 +283,27 @@ void main() {
       expect(await _shape(db), await _shape(fresh));
     },
   );
+
+  test('v11 → v12 adds chat_chapter_notes and keeps sections', () async {
+    final db = _open((raw) {
+      for (final sql in v11) {
+        raw.execute(sql);
+      }
+      raw.execute(
+        "INSERT INTO books(id,source_type,title,parser_version,total_chars) VALUES (1,'epub','Book',1,10)",
+      );
+      raw.execute(
+        "INSERT INTO chapters(id,book_id,sort_order,title,section,char_offset) VALUES (3,1,0,'III','Book I',0)",
+      );
+      raw.execute('PRAGMA user_version = 11');
+    });
+    addTearDown(db.close);
+    expect((await db.select(db.chapters).getSingle()).section, 'Book I');
+    expect(await db.select(db.chatChapterNotes).get(), isEmpty);
+    final fresh = _open();
+    addTearDown(fresh.close);
+    expect(await _shape(db), await _shape(fresh));
+  });
 
   test('v10 → v11 keeps chapters and adds nullable section', () async {
     final db = _open((raw) {

@@ -6,6 +6,7 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:luma/data/database/app_database.dart';
 import 'package:luma/data/repositories/chat_context_repository.dart';
+import 'package:luma/data/repositories/chat_notes_repository.dart';
 import 'package:luma/data/repositories/chat_repository.dart';
 import 'package:luma/data/services/api_key_store.dart';
 import 'package:luma/data/services/openrouter_service.dart';
@@ -52,6 +53,7 @@ class ChatAdapter implements HttpClientAdapter {
   int contextLength = 32000;
   bool modelsFail = false;
   bool longNotesOnce = false;
+  final overviewSystems = <bool>[];
   bool alwaysBadBatch = false;
   List<int> chapterIds = const [];
   String? clarificationText;
@@ -114,7 +116,8 @@ class ChatAdapter implements HttpClientAdapter {
               'chapter_ids': chapterIds,
               'queries': queries,
             });
-    } else if (system == chatGlobalSystem) {
+    } else if (system == chatGlobalSystem || system == chatOverviewSystem) {
+      overviewSystems.add(system == chatOverviewSystem);
       final user =
           jsonDecode((messages.last as Map)['content'] as String) as Map;
       final batch = (user['newWindowIds'] as List).cast<String>();
@@ -149,9 +152,16 @@ class ChatAdapter implements HttpClientAdapter {
       });
     } else if (system == chatSelectionSystem) {
       await onSelect?.call();
+      final offered =
+          ((jsonDecode((messages.last as Map)['content'] as String)
+                      as Map)['candidates']
+                  as List)
+              .length;
       raw = jsonEncode({
         'resolved_question': 'Who keeps it?',
-        'selected': emptySelection ? [] : [1, 2],
+        'selected': emptySelection
+            ? []
+            : [for (var i = 1; i <= (offered < 2 ? offered : 2); i++) i],
         'missing_queries': missingQueries,
       });
     } else {
@@ -448,6 +458,7 @@ void main() {
 
     adapter.badBatch = null;
     adapter.alwaysBadBatch = true;
+    await db.delete(db.chatChapterNotes).go(); // force a fresh read
     final again = await first();
     await expectLater(context.prepare(again), fails(AiError.invalidResponse));
     final saved = ChatExploration.parse(
@@ -719,6 +730,146 @@ void main() {
     },
   );
 
+  test(
+    'whole-book notes are cached per chapter and reused on the next send',
+    () async {
+      await largeBook();
+      adapter.contextLength = 40000;
+      final other =
+          await (db.select(db.chapters)..where(
+                (c) =>
+                    c.bookId.equals(book.bookId) & c.id.equals(chapter).not(),
+              ))
+              .getSingle();
+      adapter.strategy = 'global';
+      adapter.chapterIds = [chapter, other.id];
+      final first = (await context.prepare(turn))!;
+      expect(adapter.batches, isNotEmpty);
+      expect(
+        adapter.overviewSystems,
+        everyElement(isTrue),
+      ); // question-agnostic
+      final notesRepo = ChatNotesRepository(db);
+      expect(await notesRepo.count(book.bookId), 2);
+      final frame = (await first.stream().toList()).last;
+      await chat.finalize(
+        turn.attemptRef,
+        phase: ChatPhase.done,
+        draft: frame.draft,
+        answer: frame.answer,
+      );
+      final before = adapter.batches.length;
+      final again = await chat.appendTurn(
+        book,
+        turn.sessionId,
+        question: 'Tema kematian di buku ini?',
+        model: model,
+        promptVersion: chatPromptVersion,
+      );
+      final second = (await context.prepare(again))!;
+      expect(adapter.batches.length, before); // no notes request at all
+      final work = ChatExploration.parse((await latest()).exploration!);
+      expect(work.complete, isTrue);
+      expect(work.notes, isNotEmpty);
+      final user = jsonDecode(second.prompt.user) as Map;
+      expect((user['exploration'] as Map)['notesFromCache'], 2);
+      expect((user['exploration'] as Map)['notes'], isNotEmpty);
+      expect(second.prompt.sources, isNotEmpty);
+      final frame2 = (await second.stream().toList()).last;
+      expect(frame2.answer, isNotNull);
+      await chat.finalize(
+        again.attemptRef,
+        phase: ChatPhase.done,
+        draft: frame2.draft,
+        answer: frame2.answer,
+      );
+
+      // Changed content invalidates the cache; the chapter is read again.
+      await db.contentChanged(book.bookId);
+      expect(await notesRepo.count(book.bookId), 0);
+    },
+  );
+
+  test('a changed chapter manifest rereads only that chapter', () async {
+    await largeBook();
+    adapter.contextLength = 40000;
+    final other =
+        await (db.select(db.chapters)..where(
+              (c) => c.bookId.equals(book.bookId) & c.id.equals(chapter).not(),
+            ))
+            .getSingle();
+    adapter.strategy = 'global';
+    adapter.chapterIds = [chapter, other.id];
+    await context.prepare(turn);
+    await chat.finalize(turn.attemptRef, phase: ChatPhase.stopped);
+    // Simulate a stale cached row for the small chapter.
+    await (db.update(db.chatChapterNotes)
+          ..where((n) => n.chapterId.equals(other.id)))
+        .write(const ChatChapterNotesCompanion(manifest: Value('stale')));
+    adapter.batches.clear();
+    await context.prepare(await first());
+    expect(adapter.batches, hasLength(1));
+    expect(adapter.batches.single.every((id) => id.startsWith('S')), isTrue);
+    final work = ChatExploration.parse(
+      (await chat
+              .watchTurns(
+                book.bookId,
+                (await db.select(db.chatSessions).get()).last.id,
+              )
+              .first)
+          .last
+          .exploration!,
+    );
+    expect(work.chapterIds.first, chapter); // cached chapter read first
+    expect(work.complete, isTrue);
+  });
+
+  test(
+    'stopping mid-read keeps the notes of chapters already finished',
+    () async {
+      await largeBook();
+      final other =
+          await (db.select(db.chapters)..where(
+                (c) =>
+                    c.bookId.equals(book.bookId) & c.id.equals(chapter).not(),
+              ))
+              .getSingle();
+      adapter.strategy = 'global';
+      adapter.chapterIds = [other.id, chapter];
+      var groups = 0;
+      adapter.onBatch = () async {
+        groups++;
+      };
+      context.dispose();
+      context = limitedContext();
+      await context.prepare(turn, answerNow: () => groups >= 1);
+      final notesRepo = ChatNotesRepository(db);
+      final cached = await (db.select(db.chatChapterNotes)).get();
+      expect(
+        cached.map((n) => n.chapterId),
+        contains(other.id),
+      ); // small, finished first
+      expect(await notesRepo.count(book.bookId), lessThan(2));
+    },
+  );
+
+  test(
+    'search candidates skip chapters outside the planner\'s content list',
+    () async {
+      adapter.strategy = 'specific';
+      adapter.chapterIds = [chapter];
+      final prepared = (await context.prepare(turn))!;
+      expect(
+        prepared.prompt.sources.every(
+          (s) => s.anchors.first.chapterId == chapter,
+        ),
+        isTrue,
+      );
+      final work = ChatExploration.parse((await latest()).exploration!);
+      expect(work.chapterIds, [chapter]);
+    },
+  );
+
   test('global reads only the planner\'s content chapters', () async {
     await largeBook();
     adapter.strategy = 'global';
@@ -729,7 +880,7 @@ void main() {
     expect(work.total, 33);
     expect(work.complete, isTrue);
     for (final batch in adapter.batches) {
-      final user = lastUserJson(chatGlobalSystem);
+      final user = lastUserJson(chatOverviewSystem);
       expect(user['examinedBefore'], isA<int>());
       expect(batch, isNotEmpty);
     }
@@ -825,8 +976,10 @@ void main() {
     final notes = adapter.requests.where(
       (r) =>
           r.path == '/chat/completions' &&
-          ((r.data as Map)['messages'] as List).first['content'] ==
-              chatGlobalSystem,
+          [
+            chatGlobalSystem,
+            chatOverviewSystem,
+          ].contains(((r.data as Map)['messages'] as List).first['content']),
     );
     expect(notes.length, adapter.batches.length + 1);
     final repairRequest = notes.singleWhere(

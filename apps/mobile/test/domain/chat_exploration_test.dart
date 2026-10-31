@@ -370,4 +370,54 @@ void main() {
     ]);
     expect(chatSplitLargeSources([big], 10000).single.anchors, hasLength(6));
   });
+
+  test('cached chapter notes round-trip through anchors, not window ids', () {
+    const book = (bookId: 1, contentRevision: 1);
+    ChatSource window(String id, int chapter, int paragraph) => ChatSource(
+      id: id,
+      chapterTitle: 'C$chapter',
+      anchors: [
+        SourceAnchor(
+          book: book,
+          chapterId: chapter,
+          paragraphIndex: paragraph,
+          start: 0,
+          end: 4,
+          paragraphHash: chatTextHash('text'),
+          snapshot: 'text',
+        ),
+      ],
+    );
+    final windows = [
+      window('S1', 7, 0),
+      window('S2', 7, 1),
+      window('S3', 8, 0),
+    ];
+    final byId = {for (final w in windows) w.id: w};
+    final notes = <ChatExplorationNote>[
+      (text: 'Bab tujuh', sourceIds: ['S1', 'S2']),
+      (text: 'Lintas bab', sourceIds: ['S2', 'S3']),
+      (text: 'Bab delapan', sourceIds: ['S3']),
+    ];
+    final cached = chatCachedNotesFor(7, notes, byId);
+    expect(cached.map((n) => n.text), ['Bab tujuh']); // cross-chapter dropped
+    expect(cached.single.anchors, [(0, 0, 4), (1, 0, 4)]);
+    final raw = jsonEncode(encodeChatCachedNotes(cached));
+    expect(jsonEncode(encodeChatCachedNotes(decodeChatCachedNotes(raw))), raw);
+    // Reread with a different window order: ids are remapped by anchor.
+    final reordered = [
+      window('S1', 8, 0),
+      window('S2', 7, 0),
+      window('S3', 7, 1),
+    ];
+    final remapped = chatNotesFromCache(7, cached, reordered);
+    expect(remapped.single.text, 'Bab tujuh');
+    expect(remapped.single.sourceIds, ['S2', 'S3']);
+    expect(chatNotesFromCache(7, cached, [window('S1', 7, 0)]), isEmpty);
+    expect(
+      () => decodeChatCachedNotes('[{"text":"x"}]'),
+      throwsFormatException,
+    );
+    expect(() => decodeChatCachedNotes('{"notes":[]}'), throwsFormatException);
+  });
 }

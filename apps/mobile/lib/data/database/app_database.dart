@@ -295,6 +295,30 @@ class ChatIndexes extends Table {
   BoolColumn get ready => boolean().withDefault(const Constant(false))();
 }
 
+/// Catatan generatif per bab untuk pertanyaan seluruh buku (#151): dipakai
+/// ulang lintas pertanyaan selama revision + manifest window bab sama. Data
+/// turunan: ikut backup, dihapus saat isi berubah atau buku dihapus.
+@DataClassName('ChatChapterNoteRow')
+class ChatChapterNotes extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get bookId =>
+      integer().references(Books, #id, onDelete: KeyAction.cascade)();
+  IntColumn get contentRevision => integer()();
+  IntColumn get chapterId =>
+      integer().references(Chapters, #id, onDelete: KeyAction.cascade)();
+  TextColumn get manifest => text()();
+  IntColumn get policy => integer()();
+  TextColumn get model => text()();
+
+  /// JSON `[{"text":…,"anchors":[[paragraphIndex,start,end],…]}]`.
+  TextColumn get notes => text()();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+  @override
+  List<Set<Column>> get uniqueKeys => [
+    {chapterId, policy},
+  ];
+}
+
 @DataClassName('ChatVectorRow')
 class ChatVectors extends Table {
   IntColumn get indexId =>
@@ -321,6 +345,7 @@ class ChatVectors extends Table {
     ChatTurns,
     ChatIndexes,
     ChatVectors,
+    ChatChapterNotes,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -331,6 +356,9 @@ class AppDatabase extends _$AppDatabase {
   /// Snapshots survive paragraph replacement; old attempts become read-only.
   Future<void> contentChanged(int bookId) => transaction(() async {
     await (delete(chatIndexes)..where((i) => i.bookId.equals(bookId))).go();
+    await (delete(
+      chatChapterNotes,
+    )..where((n) => n.bookId.equals(bookId))).go();
     await customUpdate(
       'UPDATE chat_turns SET phase = ?, updated_at = ? '
       'WHERE session_id IN (SELECT id FROM chat_sessions WHERE book_id = ?) '
@@ -353,7 +381,7 @@ class AppDatabase extends _$AppDatabase {
   // test/data/migration_test.dart. Backup dari versi lama ikut dimigrasi pas
   // di-restore.
   @override
-  int get schemaVersion => 11;
+  int get schemaVersion => 12;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -400,6 +428,9 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 11) {
         await m.addColumn(chapters, chapters.section);
+      }
+      if (from < 12) {
+        await m.createTable(chatChapterNotes);
       }
     },
     // SQLite matiin foreign key secara default; cascade butuh ini.
