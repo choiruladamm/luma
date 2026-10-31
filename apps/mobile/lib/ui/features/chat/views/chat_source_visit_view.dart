@@ -10,6 +10,7 @@ import '../../../core/theme/stabilo_tokens.dart';
 import '../../../core/widgets/buttons.dart';
 import '../../reader/views/reader_view.dart';
 import '../../../../data/repositories/reading_progress_repository.dart';
+import '../view_models/chat_view_model.dart';
 import 'chat_source_sheet.dart';
 
 /// The resolver stays subscribed so deletes, restore and content changes revoke
@@ -44,9 +45,14 @@ class _ChatSourceVisitState extends ConsumerState<ChatSourceVisitView> {
     if (_saving || _revoked) return;
     setState(() => _saving = true);
     try {
+      final bookId =
+          widget.request?.bookId ?? widget.quote!.anchors.first.book.bookId;
       await ref
           .read(chatRepositoryProvider)
           .continueReading(request: widget.request, quote: widget.quote);
+      // Chat nahan pop-nya (onExit nunggu stop) kalau masih nyimpen jawaban;
+      // tuntasin dulu biar dua pop di bawah jalan di frame yang sama.
+      await ref.read(chatViewModelProvider(bookId).notifier).stop();
       if (!mounted) return;
       showToast(context, 'Posisi baca pindah ke kutipan ini.');
       // Intip + chat kebuang barengan dan langsung ilang (tanpa geser), hasilnya
@@ -60,11 +66,7 @@ class _ChatSourceVisitState extends ConsumerState<ChatSourceVisitView> {
       if (context.canPop()) {
         context.pop(ReaderReturn.reading);
       } else {
-        context.go(
-          Routes.reader(
-            widget.request?.bookId ?? widget.quote!.anchors.first.book.bookId,
-          ),
-        );
+        context.go(Routes.reader(bookId));
       }
     } catch (_) {
       if (mounted) showToast(context, 'Posisi baca belum dipindah. Coba lagi.');

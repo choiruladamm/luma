@@ -127,6 +127,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                     sourceId: source,
                   ),
                 ),
+                holdOnInstantExit: true,
               );
             },
           ),
@@ -143,6 +144,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                 context,
                 state,
                 ChatSourceVisitView(quote: quote),
+                holdOnInstantExit: true,
               );
             },
           ),
@@ -174,8 +176,9 @@ final instantRouteExit = ValueNotifier<bool>(false);
 Page<void> _instantExitPage(
   BuildContext context,
   GoRouterState state,
-  Widget child,
-) {
+  Widget child, {
+  bool holdOnInstantExit = false,
+}) {
   if (MediaQuery.disableAnimationsOf(context)) {
     return _slidePage(context, state, child);
   }
@@ -192,7 +195,11 @@ Page<void> _instantExitPage(
       child: child,
       builder: (_, child) =>
           animation.status == AnimationStatus.reverse && instantRouteExit.value
-          ? const SizedBox.shrink()
+          // Layar intip tetep nutup (diam) sampai chat di bawahnya beres
+          // kebuang, kalau gak chat sempat kedip: pop chat telat 1-2 frame.
+          ? (holdOnInstantExit && animation.value > 0.5
+                ? child!
+                : const SizedBox.shrink())
           : SlideTransition(position: animation.drive(slide), child: child),
     ),
     child: child,
