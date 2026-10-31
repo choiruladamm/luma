@@ -49,6 +49,11 @@ void main() {
         env['BOOK_CHAT_AGENT_TAG'] ??
         'run-${DateTime.now().millisecondsSinceEpoch}';
     final maxContinue = int.parse(env['BOOK_CHAT_AGENT_CONTINUE'] ?? '2');
+    // BOOK_CHAT_AGENT_QUESTIONS="q1|q2" replaces the case list (Meditations).
+    final custom = env['BOOK_CHAT_AGENT_QUESTIONS'];
+    final questions = custom == null || custom.isEmpty
+        ? cases
+        : custom.split('|');
     final selected = (env['BOOK_CHAT_AGENT_CASES'] ?? '0,1')
         .split(',')
         .map(int.parse)
@@ -152,7 +157,7 @@ void main() {
       );
       final ref = (bookId: book.id, contentRevision: book.contentRevision);
       for (final index in selected) {
-        final question = cases[index];
+        final question = questions[index];
         final row = <String, Object?>{
           'case': index,
           'question': question,

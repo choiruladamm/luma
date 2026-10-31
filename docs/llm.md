@@ -315,6 +315,74 @@ memakai ledger berbayar #136 tanpa menghapus reservasi lama, menolak duplicate
 request/embedding pada diagnostic ini. Live tersebut tidak mengukur retrieval
 buku nyata, cold/warm embedding billing, atau performa device.
 
+## Pembacaan mandiri buku (#143)
+
+`chatPromptVersion = 5`, checkpoint `exploration` policy 2. Planner
+(`chatPlanSystem`) menerima question, history, kutipan, `book`, **`toc`** (tiap
+`chapters.id` dengan `section` induk TOC, `title` asli, `number` dari Romawi/Arab,
+`chars`) dan `readingPosition` dari entry reader. Keluarannya `strategy`:
+`chapters` (baca bab/bagian yang dirujuk; `chapter_ids` wajib dari toc, atau
+`needs_clarification` + `clarification` singkat bila "bab III" ambigu antar Book),
+`global` (seluruh bab isi; front/back matter seperti Endnotes/Imprint tidak masuk
+`chapter_ids`), `specific`/`crossChapter`/`correction` (pencarian konsep #138),
+`offTopic`. ID bab dari model divalidasi terhadap toc; ID asing = invalid, tanpa
+request lanjutan. Bab lama tanpa `section` di-backfill lokal dari EPUB tersimpan
+saat chat buku dibuka ([data-model.md](data-model.md)).
+
+`chapters`: window bab yang diminta dikirim utuh sebagai sources (teks asli, tanpa
+catatan) bila muat budget sumber; bab panjang/Book utuh diolah lewat loop catatan
+di bawah. `global`: loop catatan atas window bab isi berurutan. Loop catatan
+(`chatGlobalSystem`): batch ≤ `chatGlobalBatchBytes` 48000 / 40 window, turun
+mengikuti context model; `chatGlobalConcurrency` 3 batch dikirim bersamaan
+(catatan per batch independen), checkpoint tetap commit urut cursor. Model hanya
+menulis catatan **baru** per batch (≤ 14 catatan / 4800 karakter / 80 ID,
+`max_tokens` 2500 termasuk reasoning GLM; GLM ≈ 50 token/detik, jadi output per
+batch harus pendek; batch invalid diulang sekali, `chatMaxBatchRetries` 8 per
+kiriman sebagai langkah baca, bukan jatah perbaikan jawaban), aplikasi
+mengakumulasi ke checkpoint (≤ 400 catatan / 120000 karakter / 800 ID; Discourses
+±24 batch × 2300 karakter);
+teks bukti catatan lama tidak dikirim ulang. Catatan batch yang
+kepanjangan/terpotong/ID asing diperbaiki sekali lewat pesan assistant + user
+(jatah `chatMaxRepairs` bersama). Tidak ada batas putaran
+tetap: berhenti saat selesai, budget/tenggat, atau cancel; `stopReason` tersimpan
+(`budget | deadline | stagnant`). Pencarian: putaran lanjut selama selector minta
+`missing_queries`, budget cukup, ≤ 9 subquery per kiriman dan pilihan berubah
+(pilihan identik dua putaran = `stagnant`). Sumber akhir: window yang paling sering
+dikutip catatan, digabung per bab (`chatPackGlobalSources`), dipecah bila besar
+(`chatSplitLargeSources`), dimuat sampai budget sumber; ID catatan yang tidak muat
+dibuang dari catatan itu, teksnya tetap. Jawaban menerima `exploration.scope`
+(`chapters | book | search`), `examinedChapters`, cakupan, `stopReason`,
+`clarification`; `complete false` tetap `partial` + trailer Lanjutkan.
+
+**Ledger per kiriman** (`chat_budget.dart`): 2.000.000 token input+output dan 5
+menit lintas semua request, termasuk perbaikan. Reservasi sebelum dispatch:
+`bytes/2` input + `max_tokens`; usage asli dari SSE (`stream_options.include_usage`)
+menggantikan reservasi, unknown tetap dihitung reservasi (tidak pernah 0).
+Context per request dari `GET /models` (`context_length`, gratis, cache per
+repository); gagal → 128000 konservatif, tercatat `contextFromProvider=false`.
+Batas praktis input per request 240000 bytes. Sumber dan history jawaban dibatasi
+context model (`buildChatPrompt(maxBytes:)`). Embedding dicatat terpisah (≤ 90
+request / 3,2 MB per kiriman); cap buku 1,5 MB hanya untuk jalur embedding.
+Putaran baru disisakan 40000 token + 45 detik untuk jawaban. Batas lama
+7 completion / 3 putaran / 3 batch / 150 detik dihapus; `chatPromptBytes` 120000,
+`chatSourceBytes` 40000, `chatMaxSources` 24. Lanjutkan = ledger baru, melanjutkan
+cursor/catatan/pending durable. Model tetap dari Pengaturan.
+
+**Perbaikan otomatis**: output jawaban yang gagal validasi format/sumber dikirim
+ulang maksimal 2 kali per kiriman (`chatMaxRepairs`), dalam ledger yang sama,
+dengan output lama sebagai pesan assistant + alasan penolakan. HTTP/saldo/kunci
+tidak diulang. Draft durable hanya bertambah: output lama tetap di depan, perbaikan
+ditambahkan di belakang. ViewModel menampilkan "Lagi benerin format jawaban… (n/2)"
+pada turn yang sama; preview lama tetap sampai teks baru masuk. Gagal setelah 2
+perbaikan = `failed/invalidResponse` dengan draf terbaca + Coba lagi.
+
+Bukti live: `make chat-agent-live` (`tag=`, `cases=`, `cont=`, `book=`, `m=`)
+menjalankan pipeline produksi pada `test/fixtures/discourses.epub` (Standard
+Ebooks, terjemahan Long, nav Book I–IV › bab) dan menulis
+`test/fixtures/book_chat_agent_<tag>.json` (jawaban, cakupan, request, usage,
+biaya). `baseline` = pipeline sebelum #143; `v1` = hasil pertama #143. Gutenberg
+hanya punya *selection* Discourses (#10661) tanpa TOC bab, tidak dipakai.
+
 ## Kontrak Book Chat v1 (arsip #114)
 
 Bagian ini menyimpan kontrak lama untuk memahami data dan bukti spike, bukan

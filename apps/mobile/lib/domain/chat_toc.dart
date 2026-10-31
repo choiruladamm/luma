@@ -72,3 +72,53 @@ String chatChapterLabel(ChatChapterInfo c) {
   final last = section.split(' › ').last;
   return '$last › ${c.title}';
 }
+
+const _romanLiterals = {
+  1: 'i', 2: 'ii', 3: 'iii', 4: 'iv', 5: 'v', 6: 'vi', 7: 'vii', 8: 'viii', //
+  9: 'ix', 10: 'x', 11: 'xi', 12: 'xii', 13: 'xiii', 14: 'xiv', 15: 'xv',
+  16: 'xvi', 17: 'xvii', 18: 'xviii', 19: 'xix', 20: 'xx', 21: 'xxi',
+  22: 'xxii', 23: 'xxiii', 24: 'xxiv', 25: 'xxv', 26: 'xxvi', 27: 'xxvii',
+  28: 'xxviii', 29: 'xxix', 30: 'xxx',
+};
+
+/// "bab III"/"chapter 3" tanpa Book/bagian, sementara nomor itu ada di beberapa
+/// section dan posisi baca tidak menentukan: kembalikan label section kandidat
+/// supaya aplikasi bertanya, bukan menebak. Kosong = tidak ambigu.
+List<String> chatAmbiguousSections(
+  String question,
+  List<int> chosenIds,
+  List<ChatChapterInfo> toc, {
+  int? readingChapterId,
+}) {
+  final byId = {for (final c in toc) c.id: c};
+  final chosen = [for (final id in chosenIds) ?byId[id]];
+  if (chosen.isEmpty) return const [];
+  final numbers = chosen.map((c) => chatChapterNumber(c.title)).toSet();
+  if (numbers.length != 1 || numbers.single == null) return const [];
+  final number = numbers.single!;
+  final q = question.toLowerCase();
+  final roman = _romanLiterals[number];
+  final bare = RegExp(
+    r'\b(bab|chapter|ch\.?)\s*(' +
+        number.toString() +
+        (roman == null ? '' : '|$roman') +
+        r')\b',
+  );
+  if (!bare.hasMatch(q)) return const [];
+  if (RegExp(r'\b(book|buku|part|bagian|jilid)\s*[ivx\d]+').hasMatch(q)) {
+    return const [];
+  }
+  final sections = <String>{};
+  for (final c in toc) {
+    if (chatChapterNumber(c.title) == number) sections.add(c.section ?? '');
+  }
+  if (sections.length <= 1) return const [];
+  final reading = readingChapterId == null ? null : byId[readingChapterId];
+  if (reading != null && chosen.every((c) => c.section == reading.section)) {
+    return const [];
+  }
+  return [
+    for (final s in sections)
+      s.isEmpty ? '(tanpa bagian)' : s.split(' › ').last,
+  ];
+}

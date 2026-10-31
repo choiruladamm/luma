@@ -51,6 +51,8 @@ class ChatAdapter implements HttpClientAdapter {
   /// Context window kecil supaya pembacaan terbagi beberapa batch.
   int contextLength = 32000;
   bool modelsFail = false;
+  bool longNotesOnce = false;
+  bool alwaysBadBatch = false;
   List<int> chapterIds = const [];
   String? clarificationText;
   @override
@@ -116,13 +118,32 @@ class ChatAdapter implements HttpClientAdapter {
       final user =
           jsonDecode((messages.last as Map)['content'] as String) as Map;
       final batch = (user['newWindowIds'] as List).cast<String>();
-      batches.add(batch);
+      if (user['repair'] == null) batches.add(batch);
       await onBatch?.call();
+      if (longNotesOnce && user['repair'] == null) {
+        longNotesOnce = false;
+        raw = jsonEncode({
+          'notes': [
+            {
+              'text': 'x' * (chatBatchNotesChars + 1),
+              'source_ids': [batch.first],
+            },
+          ],
+        });
+        return sse([
+          for (final rune in raw.runes) event(String.fromCharCode(rune)),
+          'data: [DONE]\n\n',
+        ]);
+      }
       raw = jsonEncode({
         'notes': [
           {
             'text': 'Gagasan diperiksa.',
-            'source_ids': [badBatch == batches.length ? 'S99999' : batch.first],
+            'source_ids': [
+              alwaysBadBatch || badBatch == batches.length
+                  ? 'S99999'
+                  : batch.first,
+            ],
           },
         ],
       });
@@ -404,24 +425,38 @@ void main() {
     );
   });
 
-  test('bad batch is not retried; durable earlier batch survives explicit continuation', () async {
+  test('invalid batch notes are repaired once; exhausted repairs fail without losing durable batches', () async {
     await largeBook();
     adapter.strategy = 'global';
     adapter.badBatch = 2;
-    await expectLater(context.prepare(turn), fails(AiError.invalidResponse));
-    expect(adapter.batches.length, 2);
-    await chat.finalize(
-      turn.attemptRef,
-      phase: ChatPhase.failed,
-      error: AiError.invalidResponse,
+    await context.prepare(turn);
+    final repairs = adapter.requests.where(
+      (r) =>
+          r.path == '/chat/completions' &&
+          ((r.data as Map)['messages'] as List).length == 4,
     );
-    final saved = await latest();
-    final cursor = ChatExploration.parse(saved.exploration!).cursor;
-    expect(cursor, adapter.batches.first.length);
+    expect(repairs, hasLength(1));
+    expect(
+      ((repairs.single.data as Map)['messages'] as List)[1]['content'],
+      contains('S99999'),
+    );
+    expect(
+      ChatExploration.parse((await latest()).exploration!).complete,
+      isTrue,
+    );
+    await chat.finalize(turn.attemptRef, phase: ChatPhase.stopped);
+
     adapter.badBatch = null;
-    final continued = await chat.continueExploration(saved, model: model);
-    await context.prepare(continued);
-    expect(adapter.batches[2].first, 'S${cursor + 1}');
+    adapter.alwaysBadBatch = true;
+    final again = await first();
+    await expectLater(context.prepare(again), fails(AiError.invalidResponse));
+    final saved = ChatExploration.parse(
+      (await chat.watchTurns(book.bookId, again.sessionId).first)
+          .last
+          .exploration!,
+    );
+    expect(saved.cursor, 0);
+    expect(saved.chapterIds, isNotEmpty);
   });
 
   test(
@@ -618,6 +653,91 @@ void main() {
     expect((await latest()).exploration, isNull);
     final frame = (await prepared.stream().toList()).last;
     expect(frame.answer!.status, ChatAnswerStatus.clarify);
+  });
+
+  test(
+    'a bare chapter number shared across books asks instead of guessing',
+    () async {
+      final other =
+          await (db.select(db.chapters)..where(
+                (c) =>
+                    c.bookId.equals(book.bookId) & c.id.equals(chapter).not(),
+              ))
+              .getSingle();
+      await (db.update(db.chapters)..where((c) => c.id.equals(chapter))).write(
+        const ChaptersCompanion(
+          title: Value('III: Of the garden'),
+          section: Value('Discourses › Book I'),
+        ),
+      );
+      await (db.update(db.chapters)..where((c) => c.id.equals(other.id))).write(
+        const ChaptersCompanion(
+          title: Value('III: Of roses'),
+          section: Value('Discourses › Book II'),
+        ),
+      );
+      final asked = await chat.createFirstTurn(
+        book,
+        question: 'bab III bahas apa?',
+        model: model,
+        promptVersion: chatPromptVersion,
+      );
+      adapter.strategy = 'chapters';
+      adapter.chapterIds = [chapter];
+      final prepared = (await context.prepare(asked))!;
+      expect(prepared.prompt.sources, isEmpty);
+      final user = jsonDecode(prepared.prompt.user) as Map;
+      expect(
+        (user['exploration'] as Map)['clarification'],
+        'Maksud lo bab yang di Book I, Book II yang mana?',
+      );
+      expect((await latest()).exploration, isNull);
+      // The reading position inside Book I settles it without asking.
+      expect(
+        await chat.finalize(asked.attemptRef, phase: ChatPhase.stopped),
+        isTrue,
+      );
+      final settled = await chat.appendTurn(
+        book,
+        asked.sessionId,
+        question: 'bab III bahas apa?',
+        model: model,
+        promptVersion: chatPromptVersion,
+      );
+      final direct = (await context.prepare(
+        settled,
+        readingChapterId: chapter,
+      ))!;
+      expect(direct.prompt.sources.single.text, text);
+    },
+  );
+
+  test('oversized notes are repaired once within the shared ledger', () async {
+    await largeBook();
+    adapter.strategy = 'global';
+    adapter.chapterIds = [chapter];
+    adapter.longNotesOnce = true;
+    adapter.contextLength = 40000; // retry resends the long output as history
+    await context.prepare(turn);
+    final notes = adapter.requests.where(
+      (r) =>
+          r.path == '/chat/completions' &&
+          ((r.data as Map)['messages'] as List).first['content'] ==
+              chatGlobalSystem,
+    );
+    expect(notes.length, adapter.batches.length + 1);
+    final repairRequest = notes.singleWhere(
+      (r) => ((r.data as Map)['messages'] as List).length == 4,
+    );
+    final repair = jsonDecode(
+      ((repairRequest.data as Map)['messages'] as List).last['content']
+          as String,
+    ) as Map;
+    expect(repair['repair'], contains('Catatan melebihi budget'));
+    expect(
+      ChatExploration.parse((await latest()).exploration!).complete,
+      isTrue,
+    );
   });
 
   test('chapter ids outside the toc fail before any retrieval', () async {

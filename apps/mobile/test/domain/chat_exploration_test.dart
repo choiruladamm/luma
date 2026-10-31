@@ -202,6 +202,20 @@ void main() {
         throwsFormatException,
       );
     }
+    // One batch's output is capped tighter than the accumulated checkpoint.
+    final long = jsonEncode({
+      'notes': [
+        {
+          'text': 'a' * (chatBatchNotesChars + 1),
+          'source_ids': ['S1'],
+        },
+      ],
+    });
+    expect(parseChatGlobalNotes(long, allowed: {'S1'}), hasLength(1));
+    expect(
+      () => parseChatGlobalNotes(long, allowed: {'S1'}, batch: true),
+      throwsFormatException,
+    );
   });
 
   test('planner strategies and follow-up query counts are bounded and old plans remain readable', () {

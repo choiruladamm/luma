@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:luma/domain/chat_toc.dart';
 
 void main() {
+  ambiguity();
   test('chapter numbers from roman, arabic and prefixed labels', () {
     expect(chatChapterNumber('III: Of Providence'), 3);
     expect(chatChapterNumber('XXIX.'), 29);
@@ -56,5 +57,58 @@ void main() {
     expect(() => chatChapterIds([1, 1], [1, 2]), throwsFormatException);
     expect(() => chatChapterIds(['1'], [1, 2]), throwsFormatException);
     expect(() => chatChapterIds([1, 2], [1, 2], max: 1), throwsFormatException);
+  });
+}
+
+void ambiguity() {
+  const toc = <ChatChapterInfo>[
+    (id: 1, title: 'Introduction', section: '', chars: 10),
+    (
+      id: 2,
+      title: 'III: Of Providence',
+      section: 'Discourses › Book I',
+      chars: 10,
+    ),
+    (
+      id: 3,
+      title: 'III: On Tranquillity',
+      section: 'Discourses › Book II',
+      chars: 10,
+    ),
+    (
+      id: 4,
+      title: 'IV: Of Progress',
+      section: 'Discourses › Book I',
+      chars: 10,
+    ),
+  ];
+  test('bare chapter numbers shared across books need a clarification', () {
+    expect(chatAmbiguousSections('bab III bahas apa?', [2], toc), [
+      'Book I',
+      'Book II',
+    ]);
+    expect(chatAmbiguousSections('chapter 3 intinya apa', [3], toc), [
+      'Book I',
+      'Book II',
+    ]);
+    expect(chatAmbiguousSections('bab 4 bahas apa', [4], toc), isEmpty);
+    expect(
+      chatAmbiguousSections('Book II bab III bahas apa', [3], toc),
+      isEmpty,
+    );
+    expect(
+      chatAmbiguousSections('bab III bahas apa', [2], toc, readingChapterId: 4),
+      isEmpty,
+    );
+    expect(
+      chatAmbiguousSections('bab III bahas apa', [3], toc, readingChapterId: 4),
+      ['Book I', 'Book II'],
+    );
+    expect(chatAmbiguousSections('apa gagasan utamanya', [2], toc), isEmpty);
+    expect(chatAmbiguousSections('bab III', [2, 3], toc), [
+      'Book I',
+      'Book II',
+    ]);
+    expect(chatAmbiguousSections('bab III', [], toc), isEmpty);
   });
 }

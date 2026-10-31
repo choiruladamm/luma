@@ -182,6 +182,16 @@ unknown agar tidak memicu fallback; #118 menangani ini bersama AiException. Semu
 tahap memakai cancel yang sama. Keluar/pindah sesi/background tetap harus cancel dan finalize; repository konteks tidak memiliki lifecycle
 UI atau auto-retry. Detail budget, cache dan protocol: [llm.md](llm.md).
 
+#143: `prepare(turn, readingChapterId:)` membangun TOC dari `chapters`
+(`chat_toc.dart`), mengambil context model lewat `OpenRouterService.modelInfo`
+(gratis, cache per repository, fallback konservatif), lalu satu `ChatBudget`
+(`chat_budget.dart`) dipakai planner, loop baca/cari, jawaban dan perbaikan
+otomatis (`PreparedChat.stream`, maksimal 2). `ChatStreamFrame.repair` > 0 =
+perbaikan berjalan; ViewModel menampilkan status dan menahan preview lama.
+`ChatViewModel.launch` menyimpan `returnPosition.chapterId` untuk resolusi
+"bab ini"; `chapterSectionBackfillProvider` dipanggil saat hydrate (lokal,
+gratis) dan di-override di test tanpa DB.
+
 
 ### ViewModel dan lifecycle Ngobrolin buku (#118)
 

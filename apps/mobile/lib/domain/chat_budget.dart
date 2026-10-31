@@ -68,6 +68,9 @@ class ChatBudget {
   final _held = <int>[];
   final _settled = <int, ChatUsage>{};
   int completions = 0, embeddings = 0, embeddingBytes = 0, repairs = 0;
+
+  /// Pengulangan langkah baca (catatan batch invalid); bukan perbaikan jawaban.
+  int batchRetries = 0;
   double? _cost;
 
   Duration get elapsed => _clock.elapsed;
@@ -155,6 +158,7 @@ class ChatBudget {
     'embeddings': embeddings,
     'embeddingBytes': embeddingBytes,
     'repairs': repairs,
+    'batchRetries': batchRetries,
     'unknownUsage': unknownUsage,
     'cost': cost,
     'elapsedMs': elapsed.inMilliseconds,
