@@ -437,6 +437,21 @@ seluruh hash helper/prompt/gold tetap sama. Tes parity memeriksa teks/range chun
 pada kedua buku validation3, sistem prompt beku, dan integritas manifest/arsip.
 Batas kualitas spike tetap berlaku; Qwen hybrid dan performa perangkat belum dibuktikan.
 
+### Bentuk jawaban Ngobrolin buku (prompt v4)
+
+Tiap `parts[]` punya `layout` opsional selain `kind`, `text`, `source_ids` (urutan key: layout, kind, text, source_ids, biar layout udah ada pas teks di-stream). Nilai gak dikenal / kosong dibaca `paragraph`, jadi jawaban lama dan backup lama tetap kebaca (tersimpan di snapshot jawaban, tanpa migrasi Drift).
+
+| layout | Dipakai buat | Tampilan |
+|---|---|---|
+| `paragraph` | penjelasan, maks 3–4 kalimat; paragraf pertama langsung jawab | teks Aa, jarak antar blok 1em |
+| `item` | 3+ hal berurutan/paralel, maks 6 berturut-turut, diawali **frasa tebal** | nomor dihitung aplikasi (Bricolage 15/700), jarak antar butir 0,5em |
+| `bullet` | 3+ ciri/contoh tanpa urutan | titik 5pt, jarak sama dengan butir |
+| `quote` | kutipan langsung persis sumber, cuma `kind=book`, maks 2 kalimat | blok muted radius 14 + garis kiri kuning 3pt |
+
+Di luar `quote` + `book`, layout `quote` jatuh ke `paragraph`. `interpretation` dan `external` dapet label kecil (Tafsiran / Di luar buku) di awal tiap grup berturut-turut; `conversation` tampil sebagai kartu catatan muted dengan ikon info.
+
+Inline cuma `**tebal**` dan `*miring*` (`lib/domain/chat_markup.dart`): tebal buat istilah kunci pertama kali muncul dan awal butir, 1–3 per paragraf; miring buat judul buku, kata asing, penekanan ringan. Parser toleran buat stream (penanda yang belum ketutup gak pernah tampil sebagai bintang) dan membuang markdown lain (heading, link, backtick, tanda daftar di awal). Font italic asli: Atkinson Italic + Bold Italic, Literata Italic (variable, dipakai di 400).
+
 ### UX streaming Ngobrolin buku (#141)
 
 ViewModel memublikasikan preview bertanda attempt maksimal sekali per50ms, tanpa

@@ -11,6 +11,7 @@ import '../../../core/theme/stabilo_type.dart';
 import '../../../core/widgets/buttons.dart';
 import '../../../core/widgets/ai_status.dart';
 import '../../../core/widgets/edge_fade.dart';
+import 'chat_answer_blocks.dart';
 import 'chat_copy.dart';
 import 'chat_response.dart';
 import 'chat_context_card.dart';
@@ -326,60 +327,25 @@ class _ChatHistoryState extends State<ChatHistory> {
                               ),
                             ],
                           ),
-                        for (var i = 0; i < visible.length; i++)
-                          if (visible[i].text.isNotEmpty)
-                            anchor(
-                              i + 1,
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                spacing: Space.s3,
-                                children: [
-                                  SelectableText.rich(
-                                    TextSpan(
-                                      children: [
-                                        TextSpan(text: visible[i].text),
-                                        for (final source in visible[i].sources)
-                                          WidgetSpan(
-                                            alignment:
-                                                PlaceholderAlignment.baseline,
-                                            baseline: TextBaseline.alphabetic,
-                                            child: ChatSourceChip(
-                                              source: source,
-                                              label: chatSourceLabel(
-                                                source,
-                                                widget.chapterNumbers,
-                                              ),
-                                              selected:
-                                                  widget.selectedSource ==
-                                                  (
-                                                    turnId: turn.id,
-                                                    sourceId: source.id,
-                                                  ),
-                                              onPressed: widget.onSource == null
-                                                  ? null
-                                                  : () => widget.onSource!(
-                                                      turn,
-                                                      source,
-                                                    ),
-                                            ),
-                                          ),
-                                        if (phase.isRunning &&
-                                            i ==
-                                                visible.lastIndexWhere(
-                                                  (b) => b.text.isNotEmpty,
-                                                ))
-                                          const WidgetSpan(
-                                            alignment:
-                                                PlaceholderAlignment.middle,
-                                            child: ChatCaret(),
-                                          ),
-                                      ],
-                                    ),
-                                    style: typo.style,
-                                  ),
-                                ],
-                              ),
+                        ChatAnswerBlocks(
+                          blocks: visible,
+                          typo: typo,
+                          running: phase.isRunning,
+                          anchor: anchor,
+                          chip: (source) => ChatSourceChip(
+                            source: source,
+                            label: chatSourceLabel(
+                              source,
+                              widget.chapterNumbers,
                             ),
+                            selected:
+                                widget.selectedSource ==
+                                (turnId: turn.id, sourceId: source.id),
+                            onPressed: widget.onSource == null
+                                ? null
+                                : () => widget.onSource!(turn, source),
+                          ),
+                        ),
                       ],
                     ),
                   ),
