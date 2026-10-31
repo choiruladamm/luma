@@ -714,6 +714,22 @@ void main() {
   );
 
   test(
+    'stop twice writes the scroll anchor once so route exit is not delayed',
+    () => fakeAsync((time) {
+      open(time);
+      send(time);
+      done(time);
+      vm().setScrollAnchor((turnId: 1, blockIndex: 0, alignment: .5));
+      unawaited(vm().stop());
+      pump(time);
+      unawaited(vm().stop());
+      pump(time);
+      expect(repo.anchorSaves, 1);
+      close(time);
+    }),
+  );
+
+  test(
     'delete active during stream cancels and falls back without ghost sessions',
     () => fakeAsync((time) {
       open(time);

@@ -285,12 +285,15 @@ class LifecycleRepo implements ChatRepository {
     changes.add(null);
   }
 
+  int anchorSaves = 0;
+
   @override
   Future<void> saveScrollAnchor(
     int bookId,
     int sessionId,
     ChatScrollAnchor? anchor,
   ) async {
+    anchorSaves++;
     final s = sessions[sessionId]!;
     sessions[sessionId] = ChatSession(
       id: s.id,

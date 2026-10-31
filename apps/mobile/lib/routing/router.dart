@@ -127,6 +127,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                     sourceId: source,
                   ),
                 ),
+                holdOnInstantExit: true,
               );
             },
           ),
@@ -143,6 +144,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                 context,
                 state,
                 ChatSourceVisitView(quote: quote),
+                holdOnInstantExit: true,
               );
             },
           ),
@@ -174,8 +176,9 @@ final instantRouteExit = ValueNotifier<bool>(false);
 Page<void> _instantExitPage(
   BuildContext context,
   GoRouterState state,
-  Widget child,
-) {
+  Widget child, {
+  bool holdOnInstantExit = false,
+}) {
   if (MediaQuery.disableAnimationsOf(context)) {
     return _slidePage(context, state, child);
   }
@@ -187,13 +190,33 @@ Page<void> _instantExitPage(
     key: state.pageKey,
     transitionDuration: Motion.sheetOpen,
     reverseTransitionDuration: Motion.sheetClose,
-    transitionsBuilder: (_, animation, _, child) => AnimatedBuilder(
-      animation: animation,
+    transitionsBuilder: (ctx, animation, _, child) => AnimatedBuilder(
+      animation: Listenable.merge([animation, instantRouteExit]),
       child: child,
-      builder: (_, child) =>
-          animation.status == AnimationStatus.reverse && instantRouteExit.value
-          ? const SizedBox.shrink()
-          : SlideTransition(position: animation.drive(slide), child: child),
+      builder: (_, child) {
+        if (!instantRouteExit.value) {
+          return SlideTransition(
+            position: animation.drive(slide),
+            child: child,
+          );
+        }
+        // "Lanjut baca": rute chat dicabut go_router 1-2 frame setelah layar
+        // intip, jadi chat dikosongin begitu flag nyala (masih ketutup intip)
+        // biar gak kedip. Intip tetap nutup diam sampai animasi baliknya lewat
+        // setengah, baru ilang.
+        final reversing = animation.status == AnimationStatus.reverse;
+        if (holdOnInstantExit) {
+          return reversing && animation.value <= 0.5
+              ? const SizedBox.shrink()
+              : child!;
+        }
+        return reversing
+            ? const SizedBox.shrink()
+            : ColoredBox(
+                color: Theme.of(ctx).scaffoldBackgroundColor,
+                child: const SizedBox.expand(),
+              );
+      },
     ),
     child: child,
   );
