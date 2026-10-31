@@ -8,6 +8,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:luma/data/repositories/ai_breakdowns_repository.dart';
 import 'package:luma/data/repositories/ai_results_repository.dart';
+import 'package:luma/data/repositories/catalog_repository.dart';
+import 'package:luma/data/services/catalog_sync_service.dart';
 import 'package:luma/data/repositories/settings_repository.dart';
 import 'package:luma/data/services/api_key_store.dart';
 import 'package:luma/data/services/restore_service.dart';
@@ -138,6 +140,24 @@ class FakeRestore extends Fake implements RestoreService {
   }
 }
 
+/// Catalog sync frozen at [initial]; records calls, never touches the DB.
+class FakeCatalogSync extends CatalogSyncController {
+  FakeCatalogSync(this.initial);
+
+  final CatalogSyncState initial;
+  static int syncs = 0;
+  static int cancels = 0;
+
+  @override
+  CatalogSyncState build() => initial;
+
+  @override
+  Future<void> sync({bool force = false}) async => syncs++;
+
+  @override
+  void cancel() => cancels++;
+}
+
 class FakePicker implements FilePickerService {
   final picks = <File?>[];
 
@@ -163,7 +183,18 @@ void main() {
     bool? keyOk = true,
     Completer<void>? gate,
     LastBackup? lastBackup,
+    CatalogSyncState catalog = const CatalogSyncIdle(),
+
+    /// false kalau layar punya spinner abadi (pumpAndSettle gak bakal kelar).
+    bool settle = true,
+    CatalogStats? catalogStats = (
+      count: 61900,
+      syncedAt: null,
+      lastModified: null,
+    ),
   }) async {
+    FakeCatalogSync.syncs = 0;
+    FakeCatalogSync.cancels = 0;
     openRouter = FakeOpenRouter()
       ..keyOk = keyOk
       ..gate = gate;
@@ -186,13 +217,24 @@ void main() {
           openRouterServiceProvider.overrideWithValue(openRouter),
           backupServiceProvider.overrideWithValue(backup),
           shareServiceProvider.overrideWithValue(share),
+          catalogSyncProvider.overrideWith(() => FakeCatalogSync(catalog)),
+          catalogStatsProvider.overrideWith(
+            (ref) => catalogStats == null
+                ? const Stream.empty()
+                : Stream.value(catalogStats),
+          ),
         ],
         child: MaterialApp(theme: stabiloTheme(b), home: const SettingsView()),
       ),
     );
     await tester.pump();
     cache.stats.add(stats);
-    await tester.pumpAndSettle();
+    if (settle) {
+      await tester.pumpAndSettle();
+    } else {
+      await tester.pump();
+      await tester.pump();
+    }
   }
 
   setUp(
@@ -748,6 +790,103 @@ void main() {
       expect(find.text('Yah, gagal mulihin'), findsOneWidget);
       expect(find.text('RAK'), findsNothing);
       expect(restore.preview.discarded, isTrue);
+    });
+  });
+
+  group('Katalog buku', () {
+    testWidgets('never downloaded: size hint + Unduh calls sync', (
+      tester,
+    ) async {
+      await open(
+        tester,
+        catalogStats: (count: 0, syncedAt: null, lastModified: null),
+      );
+      expect(find.text('Katalog Gutenberg'), findsOneWidget);
+      expect(find.text('Belum diunduh · 5,6 MB'), findsOneWidget);
+      await tester.ensureVisible(find.text('Unduh'));
+      await tester.tap(find.text('Unduh'));
+      expect(FakeCatalogSync.syncs, 1);
+    });
+
+    testWidgets('synced: date + count + Perbarui', (tester) async {
+      await open(
+        tester,
+        catalogStats: (
+          count: 61900,
+          syncedAt: DateTime(2026, 10, 25),
+          lastModified: 'x',
+        ),
+      );
+      expect(find.text('Diperbarui 25 Okt 2026 · 61.900 buku'), findsOneWidget);
+      await tester.ensureVisible(find.text('Perbarui'));
+      await tester.tap(find.text('Perbarui'));
+      expect(FakeCatalogSync.syncs, 1);
+    });
+
+    testWidgets('stats not loaded yet: button disabled', (tester) async {
+      await open(tester, catalogStats: null);
+      final button = tester.widget<TextButton>(
+        find.ancestor(
+          of: find.text('Perbarui'),
+          matching: find.byType(TextButton),
+        ),
+      );
+      expect(button.onPressed, isNull);
+    });
+
+    testWidgets('checking and importing show a spinner, no button', (
+      tester,
+    ) async {
+      await open(tester, catalog: const CatalogSyncChecking(), settle: false);
+      expect(find.text('Ngecek versi terbaru…'), findsOneWidget);
+      expect(find.text('Perbarui'), findsNothing);
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      await tester.pump(const Duration(seconds: 1)); // spinner animates
+    });
+
+    testWidgets('importing shows a spinner', (tester) async {
+      await open(tester, catalog: const CatalogSyncImporting(), settle: false);
+      expect(find.text('Nyusun katalog…'), findsOneWidget);
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      await tester.pump(const Duration(seconds: 1));
+    });
+
+    testWidgets('downloading: percent + Batal cancels', (tester) async {
+      await open(tester, catalog: const CatalogSyncDownloading(0.43));
+      expect(find.text('Ngunduh 43%'), findsOneWidget);
+      await tester.ensureVisible(find.text('Batal'));
+      await tester.tap(find.text('Batal'));
+      expect(FakeCatalogSync.cancels, 1);
+      expect(FakeCatalogSync.syncs, 0);
+    });
+
+    testWidgets('downloading without a length: no percent', (tester) async {
+      await open(tester, catalog: const CatalogSyncDownloading(-1));
+      expect(find.text('Ngunduh…'), findsOneWidget);
+    });
+
+    testWidgets('failed: old catalog stays, Coba lagi syncs', (tester) async {
+      await open(tester, catalog: const CatalogSyncFailed('HTTP 503'));
+      expect(find.text('Gagal, katalog lama tetep dipakai'), findsOneWidget);
+      await tester.ensureVisible(find.text('Coba lagi'));
+      await tester.tap(find.text('Coba lagi'));
+      expect(FakeCatalogSync.syncs, 1);
+    });
+
+    testWidgets('304 shows the up-to-date toast once', (tester) async {
+      await open(tester, catalog: const CatalogSyncUpToDate());
+      // Listener fires on change: push a new up-to-date state.
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(SettingsView)),
+      );
+      await tester.pump();
+      final notifier = container.read(catalogSyncProvider.notifier);
+      notifier.state = const CatalogSyncIdle();
+      await tester.pump();
+      notifier.state = const CatalogSyncUpToDate();
+      await tester.pump();
+      expect(find.text('Katalognya udah yang terbaru'), findsOneWidget);
+      await tester.pumpAndSettle(const Duration(seconds: 5));
     });
   });
 }

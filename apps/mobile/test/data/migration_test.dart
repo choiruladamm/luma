@@ -123,6 +123,17 @@ final v12 = [
   '''CREATE TABLE "chat_chapter_notes" ("id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, "book_id" INTEGER NOT NULL REFERENCES books (id) ON DELETE CASCADE, "content_revision" INTEGER NOT NULL, "chapter_id" INTEGER NOT NULL REFERENCES chapters (id) ON DELETE CASCADE, "manifest" TEXT NOT NULL, "policy" INTEGER NOT NULL, "model" TEXT NOT NULL, "notes" TEXT NOT NULL, "created_at" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)), UNIQUE ("chapter_id", "policy"))''',
 ];
 
+// Frozen schema 13: chat_turns.steps, before catalog_books.
+final v13 = [
+  for (final sql in v12)
+    sql.startsWith('CREATE TABLE chat_turns')
+        ? sql.replaceFirst(
+            'exploration TEXT NULL,',
+            'exploration TEXT NULL, steps TEXT NULL,',
+          )
+        : sql,
+];
+
 AppDatabase _open([void Function(dynamic raw)? setup]) => AppDatabase(
   DatabaseConnection(
     NativeDatabase.memory(setup: setup),
@@ -310,6 +321,32 @@ void main() {
     final turn = await db.select(db.chatTurns).getSingle();
     expect(turn.exploration, '{}');
     expect(turn.steps, isNull);
+    final fresh = _open();
+    addTearDown(fresh.close);
+    expect(await _shape(db), await _shape(fresh));
+  });
+
+  test('v13 → v14 adds empty catalog_books and keeps user data', () async {
+    final db = _open((raw) {
+      for (final sql in v13) {
+        raw.execute(sql);
+      }
+      raw.execute(
+        "INSERT INTO books(id,source_type,title,parser_version,total_chars) VALUES (1,'epub','Book',1,10)",
+      );
+      raw.execute(
+        "INSERT INTO chat_sessions(id,book_id,content_revision,title,manual_title) VALUES (9,1,1,'T',0)",
+      );
+      raw.execute(
+        "INSERT INTO chat_turns(id,session_id,sequence,question,phase,model,prompt_version,draft,exploration,steps) VALUES (12,9,0,'Q','done','m',6,'','{}','[]')",
+      );
+      raw.execute("INSERT INTO settings VALUES ('reader.font','literata')");
+      raw.execute('PRAGMA user_version = 13');
+    });
+    addTearDown(db.close);
+    expect((await db.select(db.chatTurns).getSingle()).steps, '[]');
+    expect((await db.select(db.settings).getSingle()).value, 'literata');
+    expect(await db.select(db.catalogBooks).get(), isEmpty);
     final fresh = _open();
     addTearDown(fresh.close);
     expect(await _shape(db), await _shape(fresh));

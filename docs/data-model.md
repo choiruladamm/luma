@@ -140,6 +140,22 @@ Log append-only request LLM, terpisah dari cache `ai_results` (`createdAt`-nya k
 
 > ⚠️ **Indeks paragraf dan grup harus stabil.** Logika parsing dan grouping jangan diubah sembarangan setelah ada data. Kalau harus berubah, naikkan `parserVersion`, re-import buku, dan hapus `ai_results` buku tersebut.
 
+## `catalog_books`
+
+Katalog Project Gutenberg dari dump `pg_catalog.csv` ([discover.md](discover.md), Katalog lokal). Bukan data user: diganti utuh tiap sync, gak ikut backup, gak dirujuk tabel lain.
+
+| Kolom | Tipe | Keterangan |
+|-------|------|-----------|
+| `id` | int PK | `Text#` Gutenberg; URL EPUB & cover dirakit dari sini |
+| `title` | text | index `catalog_books_title` |
+| `authorsText` | text | nama penulis dipisah `; `, buat LIKE + tampil; index `catalog_books_authors` |
+| `authorsJson` | text | JSON `[{"name","birth"?,"death"?}]` |
+| `subjectsJson` | text | JSON array string |
+| `bookshelvesJson` | text | JSON array string, dicari pakai `json_each` |
+| `issued` | text? | `YYYY-MM-DD` tanggal rilis di Gutenberg |
+
+Meta sync di `settings`: `catalog.lastModified`, `catalog.syncedAt`, `catalog.count`.
+
 ## Versi schema & migrasi
 
 | Versi | Perubahan |
@@ -157,6 +173,7 @@ Log append-only request LLM, terpisah dari cache `ai_results` (`createdAt`-nya k
 | 11 | `chapters.section` nullable (#143); diisi ulang lokal dari EPUB tersimpan saat chat dibuka |
 | 12 | `chat_chapter_notes` (#151), kosong saat upgrade |
 | 13 | `chat_turns.steps` nullable JSON (#153); baris lama null, baris tidak tampil di UI |
+| 14 | Tabel `catalog_books` + index `title`, `authorsText` (#169), kosong saat upgrade; diisi lewat sync di Pengaturan. Data user gak disentuh |
 
 Tiap ubah tabel: naikkan `schemaVersion`, tambah langkah di `onUpgrade`, dan test migrasi dari versi sebelumnya (data tetap utuh, schema hasil migrasi sama dengan install baru). Restore backup dari schema lama ikut dimigrasi saat database dibuka ([backup.md](backup.md)).
 

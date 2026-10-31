@@ -9,8 +9,10 @@ import 'package:path/path.dart' as p;
 import '../../../../data/database/app_database.dart';
 import '../../../../data/repositories/ai_breakdowns_repository.dart';
 import '../../../../data/repositories/ai_results_repository.dart';
+import '../../../../data/repositories/catalog_repository.dart';
 import '../../../../data/repositories/settings_repository.dart';
 import '../../../../data/services/api_key_store.dart';
+import '../../../../data/services/catalog_sync_service.dart';
 import '../../../../data/services/file_picker_service.dart';
 import '../../../../data/services/restore_service.dart';
 import '../../../../domain/models/ai_model.dart';
@@ -180,6 +182,12 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
   Widget build(BuildContext context) {
     final model = ref.watch(aiModelProvider).value ?? defaultAiModel;
     final cache = ref.watch(aiCacheStatsProvider).value;
+    ref.listen(catalogSyncProvider, (_, state) {
+      if (state is! CatalogSyncUpToDate) return;
+      showToast(context, 'Katalognya udah yang terbaru');
+      ref.read(catalogSyncProvider.notifier).dismiss();
+    });
+    final catalogSync = ref.read(catalogSyncProvider.notifier);
     return BackupListener(
       child: Scaffold(
         body: SafeArea(
@@ -257,6 +265,19 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                           loaded: ref.watch(lastBackupProvider).hasValue,
                           onBackup: _backup.start,
                           onRestore: _restore,
+                        ),
+                      ),
+                      const SizedBox(height: 22),
+                      _Section(
+                        label: 'Katalog buku',
+                        note:
+                            'Daftar ±62.000 buku Project Gutenberg buat nyari '
+                            'judul tanpa internet. Diperbarui mingguan.',
+                        child: _CatalogRow(
+                          stats: ref.watch(catalogStatsProvider).value,
+                          state: ref.watch(catalogSyncProvider),
+                          onSync: () => catalogSync.sync(force: true),
+                          onCancel: catalogSync.cancel,
                         ),
                       ),
                       const SizedBox(height: 22),
@@ -721,20 +742,151 @@ class _CacheRow extends StatelessWidget {
               ],
             ),
           ),
-          TextButton(
+          _RowButton(
+            label: 'Hapus cache',
+            danger: true,
             onPressed: empty ? null : onClear,
-            style: TextButton.styleFrom(
-              minimumSize: const Size(0, Layout.touch),
-              padding: const EdgeInsets.symmetric(horizontal: Space.s4),
-              backgroundColor: c.muted,
-              foregroundColor: c.danger,
-              disabledForegroundColor: c.ink3,
-              disabledBackgroundColor: c.muted,
-              shape: const StadiumBorder(),
-              textStyle: StabiloType.label.copyWith(fontSize: 14),
-            ),
-            child: const Text('Hapus cache'),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Tombol pil di ujung kanan SettingsRow.
+class _RowButton extends StatelessWidget {
+  const _RowButton({
+    required this.label,
+    required this.onPressed,
+    this.danger = false,
+  });
+
+  final String label;
+  final VoidCallback? onPressed;
+  final bool danger;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.stabilo;
+    return TextButton(
+      onPressed: onPressed,
+      style: TextButton.styleFrom(
+        minimumSize: const Size(0, Layout.touch),
+        padding: const EdgeInsets.symmetric(horizontal: Space.s4),
+        backgroundColor: c.muted,
+        foregroundColor: danger ? c.danger : c.ink,
+        disabledForegroundColor: c.ink3,
+        disabledBackgroundColor: c.muted,
+        shape: const StadiumBorder(),
+        textStyle: StabiloType.label.copyWith(fontSize: 14),
+      ),
+      child: Text(label),
+    );
+  }
+}
+
+/// SettingsRow katalog Gutenberg (#169): status sync + satu tombol yang
+/// ikut keadaannya (Unduh / Perbarui / Batal / Coba lagi). Board belum ada,
+/// ikut pola `_CacheRow`.
+class _CatalogRow extends StatelessWidget {
+  const _CatalogRow({
+    required this.stats,
+    required this.state,
+    required this.onSync,
+    required this.onCancel,
+  });
+
+  /// Null = belum kebaca dari DB.
+  final CatalogStats? stats;
+  final CatalogSyncState state;
+  final VoidCallback onSync;
+  final VoidCallback onCancel;
+
+  bool get _never => stats != null && stats!.count == 0;
+
+  String get _idleText {
+    final s = stats;
+    if (s == null) return ' ';
+    if (s.count == 0) return 'Belum diunduh · 5,6 MB';
+    final when = s.syncedAt == null ? '' : 'Diperbarui ${date(s.syncedAt!)} · ';
+    return '$when${thousands(s.count)} buku';
+  }
+
+  String get _subtitle => switch (state) {
+    CatalogSyncIdle() || CatalogSyncUpToDate() => _idleText,
+    CatalogSyncChecking() => 'Ngecek versi terbaru…',
+    CatalogSyncDownloading(:final progress) =>
+      progress < 0 ? 'Ngunduh…' : 'Ngunduh ${(progress * 100).round()}%',
+    CatalogSyncImporting() => 'Nyusun katalog…',
+    CatalogSyncFailed() => 'Gagal, katalog lama tetep dipakai',
+  };
+
+  /// Null = lagi kerja tanpa bisa dibatalin → spinner.
+  (String, VoidCallback)? get _button => switch (state) {
+    CatalogSyncIdle() ||
+    CatalogSyncUpToDate() => (_never ? 'Unduh' : 'Perbarui', onSync),
+    CatalogSyncFailed() => ('Coba lagi', onSync),
+    CatalogSyncDownloading() => ('Batal', onCancel),
+    CatalogSyncChecking() || CatalogSyncImporting() => null,
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.stabilo;
+    final button = _button;
+    return Container(
+      constraints: const BoxConstraints(minHeight: 64),
+      padding: const EdgeInsets.fromLTRB(Space.s4, 10, 10, 10),
+      decoration: BoxDecoration(
+        color: c.sheet,
+        borderRadius: BorderRadius.circular(Radii.menu),
+      ),
+      child: Row(
+        spacing: Space.s3,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: 2,
+              children: [
+                Text(
+                  'Katalog Gutenberg',
+                  style: StabiloType.label.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: c.ink,
+                  ),
+                ),
+                Text(
+                  _subtitle,
+                  style: StabiloType.caption.copyWith(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w400,
+                    color: state is CatalogSyncFailed ? c.danger : c.ink2,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (button case (final label, final onPressed))
+            _RowButton(
+              label: label,
+              onPressed: stats == null ? null : onPressed,
+            )
+          else
+            SizedBox(
+              width: Layout.touch,
+              height: Layout.touch,
+              child: Center(
+                child: SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: c.ink2,
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );

@@ -75,14 +75,21 @@ Model freezed di `domain/models/`:
 
 ## Katalog lokal ([#169](https://github.com/choiruladamm/luma/issues/169))
 
-Service mandiri buat ngolah `pg_catalog.csv.gz`, gak tergantung `BookSource` atau layar cari.
+Service mandiri buat ngolah `pg_catalog.csv.gz`, gak tergantung `BookSource` atau layar cari. Dump: 5,6 MB gz / 21 MB raw, 79k baris → 61.900 teks Inggris, parse ±0,6 detik di isolate.
 
-- `domain/catalog/pg_catalog_parser.dart`: pure, CSV → `CatalogRow` (id, judul, penulis + tahun hidup, subjek, bookshelves, tahun). Filter `Type=Text`, `Language=en`. Parser CSV ditulis sendiri.
-- Tabel `catalog_books` (schema v14), index `title` + `authorsText`. Meta di `settings`: `catalog.lastModified`, `catalog.syncedAt`, `catalog.count`.
-- `CatalogRepository`: `replaceAll` dalam satu transaksi (gagal = tabel lama utuh), `search` LIKE judul/penulis 25/halaman, `byAuthor`, `byBookshelf`, `bookshelves`, `stats`.
-- `CatalogSyncService` + `catalogSyncProvider`: `sync({force})`. Otomatis kalau > 7 hari (dipanggil layar cari nanti), manual lewat tombol Perbarui di Pengaturan. `If-Modified-Since` → `304` = cuma update `syncedAt`; `200` = download streaming (progress, bisa batal) → gunzip + parse di isolate → `replaceAll`. State: idle / checking / downloading / importing / failed. Satu sync jalan, sisanya no-op.
-- Sync pertama ngeblok layar cari ("Nyiapin katalog…"), berikutnya diam-diam. Gagal = katalog lama tetep dipakai.
-- Gak dibikin: diff per baris, FTS5 (LIKE di 62k baris < 50 ms), sinopsis/download count (gak ada di CSV).
+**Parser** `domain/catalog/pg_catalog_parser.dart`: pure, CSV → `CatalogRow` (freezed: `id`, `title`, `authors[]`, `subjects[]`, `bookshelves[]`, `issued`). Parser CSV RFC 4180 ditulis sendiri (quote, `""`, koma + newline di dalam quote). Filter `Type=Text` dan `Language=en`; baris rusak (kolom kurang, id bukan angka) dilewatin. `Authors` dipecah `;`, tag peran `[Illustrator]` / `[Translator]` dibuang tapi orangnya tetep ikut; tahun = bagian terakhir setelah koma yang bentuknya `1775-1817` / `1900-` / `-1468` (`?` diabaikan), selain itu nama utuh tanpa tahun. `Bookshelves` ikut apa adanya termasuk entri `Category: …`.
+
+**Tabel `catalog_books`** (schema v14, [data-model.md](data-model.md)): `id` = Text#, `title`, `authorsText` (nama dipisah `; `, buat LIKE + tampil), `authorsJson`, `subjectsJson`, `bookshelvesJson`, `issued` nullable. Index `title` + `authorsText`. Bukan data user: gak ikut backup, diganti utuh tiap sync. Meta di `settings`: `catalog.lastModified` (header `Last-Modified` dump, dikirim balik sebagai `If-Modified-Since`), `catalog.syncedAt` (ISO 8601), `catalog.count`.
+
+**`CatalogRepository`** (`catalogRepositoryProvider`): `replaceAll` satu transaksi, batch per 2.000 baris (gagal = tabel lama utuh); `search(query, {page})` LIKE `%q%` di judul OR penulis, urut judul, 25/halaman, query kosong = kosong; `byAuthor(name)` dan `byBookshelf(name)` cocokin token JSON persis (`"name":"Austen, Jane"`, `"Harvard Classics"`) lewat LIKE di kolom JSON, tanpa tabel pivot; `bookshelves()` pakai `json_each` (distinct + jumlah); `stats()` / `watchStats()` dari `settings`; `isSynced` = count > 0. `catalogStatsProvider` = stream stats buat UI.
+
+**`CatalogSyncService`** (`catalogSyncServiceProvider`): `sync({force})` → `skipped` (count > 0 dan `syncedAt` < 7 hari, tanpa `force`) / `notModified` (304, cuma `syncedAt` maju) / `updated`. Dio: UA `Luma/<versi> (+mailto:…)`, connect 15 s, receive 120 s, retry 3× cuma 429/503 (jeda 2 s × n). `If-Modified-Since` cuma dikirim kalau tabel udah ada isinya. 200 → `dio.download` streaming ke folder temp (progress 0–1; −1 kalau gak ada `Content-Length`), gunzip (`archive`) + parse di `Isolate.run`, `replaceAll`, simpen meta, hapus temp. Katalog kosong = `FormatException`. Gagal apa pun = tabel lama tetep.
+
+**`catalogSyncProvider`** (`Notifier<CatalogSyncState>`, tanpa autoDispose, di file service): `idle` / `checking` / `downloading(progress)` / `importing` / `upToDate` (304, toast sekali lalu `dismiss()`) / `failed(reason)`. Satu sync jalan, `sync()` lagi = no-op; `cancel()` cuma pas `downloading` (`CancelToken` → balik `idle`). Teks tanggal + jumlah di idle dari `catalogStatsProvider`, bukan dari state.
+
+**Pengaturan**, bagian "Katalog buku", baris `Katalog Gutenberg` pola `_CacheRow`: belum pernah → "Belum diunduh · 5,6 MB" + Unduh; idle → "Diperbarui 25 Okt 2026 · 61.900 buku" + Perbarui; checking / importing → spinner ("Ngecek versi terbaru…" / "Nyusun katalog…"); downloading → "Ngunduh 43%" + Batal; failed → "Gagal, katalog lama tetep dipakai" + Coba lagi; 304 → toast "Katalognya udah yang terbaru". Tombol selalu `force: true`. Sync pertama dari layar cari ("Nyiapin katalog…") dan sync otomatis > 7 hari dipasang pas layar cari ada, cuma manggil `sync()`.
+
+Gak dibikin: diff per baris, FTS5 (LIKE di 62k baris < 50 ms), sinopsis/download count (gak ada di CSV), notifikasi, escape `%`/`_` di query LIKE.
 
 ## Kebijakan jaringan
 

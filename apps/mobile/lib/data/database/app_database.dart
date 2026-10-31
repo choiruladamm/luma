@@ -233,6 +233,29 @@ class Settings extends Table {
   Set<Column> get primaryKey => {key};
 }
 
+/// Katalog Project Gutenberg dari dump `pg_catalog.csv` (docs/discover.md,
+/// Katalog lokal). Bukan data user: diganti utuh tiap sync, gak ikut backup.
+/// List disimpen JSON; `authorsText` buat LIKE + tampil.
+@TableIndex(name: 'catalog_books_title', columns: {#title})
+@TableIndex(name: 'catalog_books_authors', columns: {#authorsText})
+class CatalogBooks extends Table {
+  /// `Text#` Gutenberg.
+  IntColumn get id => integer()();
+  TextColumn get title => text()();
+  TextColumn get authorsText => text()();
+
+  /// JSON `[{"name":…,"birth":…,"death":…}]` ([CatalogAuthor]).
+  TextColumn get authorsJson => text()();
+  TextColumn get subjectsJson => text()();
+  TextColumn get bookshelvesJson => text()();
+
+  /// `YYYY-MM-DD`, null kalau kosong di dump.
+  TextColumn get issued => text().nullable()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 @TableIndex(
   name: 'chat_sessions_book_opened',
   columns: {#bookId, #lastOpenedAt, #id},
@@ -349,6 +372,7 @@ class ChatVectors extends Table {
     ChatIndexes,
     ChatVectors,
     ChatChapterNotes,
+    CatalogBooks,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -384,7 +408,7 @@ class AppDatabase extends _$AppDatabase {
   // test/data/migration_test.dart. Backup dari versi lama ikut dimigrasi pas
   // di-restore.
   @override
-  int get schemaVersion => 13;
+  int get schemaVersion => 14;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -437,6 +461,11 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from >= 8 && from < 13) {
         await m.addColumn(chatTurns, chatTurns.steps);
+      }
+      if (from < 14) {
+        await m.createTable(catalogBooks);
+        await m.createIndex(catalogBooksTitle);
+        await m.createIndex(catalogBooksAuthors);
       }
     },
     // SQLite matiin foreign key secara default; cascade butuh ini.

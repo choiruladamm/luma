@@ -7792,6 +7792,478 @@ class ChatChapterNotesCompanion extends UpdateCompanion<ChatChapterNoteRow> {
   }
 }
 
+class $CatalogBooksTable extends CatalogBooks
+    with TableInfo<$CatalogBooksTable, CatalogBook> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CatalogBooksTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _titleMeta = const VerificationMeta('title');
+  @override
+  late final GeneratedColumn<String> title = GeneratedColumn<String>(
+    'title',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _authorsTextMeta = const VerificationMeta(
+    'authorsText',
+  );
+  @override
+  late final GeneratedColumn<String> authorsText = GeneratedColumn<String>(
+    'authors_text',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _authorsJsonMeta = const VerificationMeta(
+    'authorsJson',
+  );
+  @override
+  late final GeneratedColumn<String> authorsJson = GeneratedColumn<String>(
+    'authors_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _subjectsJsonMeta = const VerificationMeta(
+    'subjectsJson',
+  );
+  @override
+  late final GeneratedColumn<String> subjectsJson = GeneratedColumn<String>(
+    'subjects_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _bookshelvesJsonMeta = const VerificationMeta(
+    'bookshelvesJson',
+  );
+  @override
+  late final GeneratedColumn<String> bookshelvesJson = GeneratedColumn<String>(
+    'bookshelves_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _issuedMeta = const VerificationMeta('issued');
+  @override
+  late final GeneratedColumn<String> issued = GeneratedColumn<String>(
+    'issued',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    title,
+    authorsText,
+    authorsJson,
+    subjectsJson,
+    bookshelvesJson,
+    issued,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'catalog_books';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<CatalogBook> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('title')) {
+      context.handle(
+        _titleMeta,
+        title.isAcceptableOrUnknown(data['title']!, _titleMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_titleMeta);
+    }
+    if (data.containsKey('authors_text')) {
+      context.handle(
+        _authorsTextMeta,
+        authorsText.isAcceptableOrUnknown(
+          data['authors_text']!,
+          _authorsTextMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_authorsTextMeta);
+    }
+    if (data.containsKey('authors_json')) {
+      context.handle(
+        _authorsJsonMeta,
+        authorsJson.isAcceptableOrUnknown(
+          data['authors_json']!,
+          _authorsJsonMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_authorsJsonMeta);
+    }
+    if (data.containsKey('subjects_json')) {
+      context.handle(
+        _subjectsJsonMeta,
+        subjectsJson.isAcceptableOrUnknown(
+          data['subjects_json']!,
+          _subjectsJsonMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_subjectsJsonMeta);
+    }
+    if (data.containsKey('bookshelves_json')) {
+      context.handle(
+        _bookshelvesJsonMeta,
+        bookshelvesJson.isAcceptableOrUnknown(
+          data['bookshelves_json']!,
+          _bookshelvesJsonMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_bookshelvesJsonMeta);
+    }
+    if (data.containsKey('issued')) {
+      context.handle(
+        _issuedMeta,
+        issued.isAcceptableOrUnknown(data['issued']!, _issuedMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  CatalogBook map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CatalogBook(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      title: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}title'],
+      )!,
+      authorsText: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}authors_text'],
+      )!,
+      authorsJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}authors_json'],
+      )!,
+      subjectsJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}subjects_json'],
+      )!,
+      bookshelvesJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}bookshelves_json'],
+      )!,
+      issued: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}issued'],
+      ),
+    );
+  }
+
+  @override
+  $CatalogBooksTable createAlias(String alias) {
+    return $CatalogBooksTable(attachedDatabase, alias);
+  }
+}
+
+class CatalogBook extends DataClass implements Insertable<CatalogBook> {
+  /// `Text#` Gutenberg.
+  final int id;
+  final String title;
+  final String authorsText;
+
+  /// JSON `[{"name":…,"birth":…,"death":…}]` ([CatalogAuthor]).
+  final String authorsJson;
+  final String subjectsJson;
+  final String bookshelvesJson;
+
+  /// `YYYY-MM-DD`, null kalau kosong di dump.
+  final String? issued;
+  const CatalogBook({
+    required this.id,
+    required this.title,
+    required this.authorsText,
+    required this.authorsJson,
+    required this.subjectsJson,
+    required this.bookshelvesJson,
+    this.issued,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['title'] = Variable<String>(title);
+    map['authors_text'] = Variable<String>(authorsText);
+    map['authors_json'] = Variable<String>(authorsJson);
+    map['subjects_json'] = Variable<String>(subjectsJson);
+    map['bookshelves_json'] = Variable<String>(bookshelvesJson);
+    if (!nullToAbsent || issued != null) {
+      map['issued'] = Variable<String>(issued);
+    }
+    return map;
+  }
+
+  CatalogBooksCompanion toCompanion(bool nullToAbsent) {
+    return CatalogBooksCompanion(
+      id: Value(id),
+      title: Value(title),
+      authorsText: Value(authorsText),
+      authorsJson: Value(authorsJson),
+      subjectsJson: Value(subjectsJson),
+      bookshelvesJson: Value(bookshelvesJson),
+      issued: issued == null && nullToAbsent
+          ? const Value.absent()
+          : Value(issued),
+    );
+  }
+
+  factory CatalogBook.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CatalogBook(
+      id: serializer.fromJson<int>(json['id']),
+      title: serializer.fromJson<String>(json['title']),
+      authorsText: serializer.fromJson<String>(json['authorsText']),
+      authorsJson: serializer.fromJson<String>(json['authorsJson']),
+      subjectsJson: serializer.fromJson<String>(json['subjectsJson']),
+      bookshelvesJson: serializer.fromJson<String>(json['bookshelvesJson']),
+      issued: serializer.fromJson<String?>(json['issued']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'title': serializer.toJson<String>(title),
+      'authorsText': serializer.toJson<String>(authorsText),
+      'authorsJson': serializer.toJson<String>(authorsJson),
+      'subjectsJson': serializer.toJson<String>(subjectsJson),
+      'bookshelvesJson': serializer.toJson<String>(bookshelvesJson),
+      'issued': serializer.toJson<String?>(issued),
+    };
+  }
+
+  CatalogBook copyWith({
+    int? id,
+    String? title,
+    String? authorsText,
+    String? authorsJson,
+    String? subjectsJson,
+    String? bookshelvesJson,
+    Value<String?> issued = const Value.absent(),
+  }) => CatalogBook(
+    id: id ?? this.id,
+    title: title ?? this.title,
+    authorsText: authorsText ?? this.authorsText,
+    authorsJson: authorsJson ?? this.authorsJson,
+    subjectsJson: subjectsJson ?? this.subjectsJson,
+    bookshelvesJson: bookshelvesJson ?? this.bookshelvesJson,
+    issued: issued.present ? issued.value : this.issued,
+  );
+  CatalogBook copyWithCompanion(CatalogBooksCompanion data) {
+    return CatalogBook(
+      id: data.id.present ? data.id.value : this.id,
+      title: data.title.present ? data.title.value : this.title,
+      authorsText: data.authorsText.present
+          ? data.authorsText.value
+          : this.authorsText,
+      authorsJson: data.authorsJson.present
+          ? data.authorsJson.value
+          : this.authorsJson,
+      subjectsJson: data.subjectsJson.present
+          ? data.subjectsJson.value
+          : this.subjectsJson,
+      bookshelvesJson: data.bookshelvesJson.present
+          ? data.bookshelvesJson.value
+          : this.bookshelvesJson,
+      issued: data.issued.present ? data.issued.value : this.issued,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CatalogBook(')
+          ..write('id: $id, ')
+          ..write('title: $title, ')
+          ..write('authorsText: $authorsText, ')
+          ..write('authorsJson: $authorsJson, ')
+          ..write('subjectsJson: $subjectsJson, ')
+          ..write('bookshelvesJson: $bookshelvesJson, ')
+          ..write('issued: $issued')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    title,
+    authorsText,
+    authorsJson,
+    subjectsJson,
+    bookshelvesJson,
+    issued,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CatalogBook &&
+          other.id == this.id &&
+          other.title == this.title &&
+          other.authorsText == this.authorsText &&
+          other.authorsJson == this.authorsJson &&
+          other.subjectsJson == this.subjectsJson &&
+          other.bookshelvesJson == this.bookshelvesJson &&
+          other.issued == this.issued);
+}
+
+class CatalogBooksCompanion extends UpdateCompanion<CatalogBook> {
+  final Value<int> id;
+  final Value<String> title;
+  final Value<String> authorsText;
+  final Value<String> authorsJson;
+  final Value<String> subjectsJson;
+  final Value<String> bookshelvesJson;
+  final Value<String?> issued;
+  const CatalogBooksCompanion({
+    this.id = const Value.absent(),
+    this.title = const Value.absent(),
+    this.authorsText = const Value.absent(),
+    this.authorsJson = const Value.absent(),
+    this.subjectsJson = const Value.absent(),
+    this.bookshelvesJson = const Value.absent(),
+    this.issued = const Value.absent(),
+  });
+  CatalogBooksCompanion.insert({
+    this.id = const Value.absent(),
+    required String title,
+    required String authorsText,
+    required String authorsJson,
+    required String subjectsJson,
+    required String bookshelvesJson,
+    this.issued = const Value.absent(),
+  }) : title = Value(title),
+       authorsText = Value(authorsText),
+       authorsJson = Value(authorsJson),
+       subjectsJson = Value(subjectsJson),
+       bookshelvesJson = Value(bookshelvesJson);
+  static Insertable<CatalogBook> custom({
+    Expression<int>? id,
+    Expression<String>? title,
+    Expression<String>? authorsText,
+    Expression<String>? authorsJson,
+    Expression<String>? subjectsJson,
+    Expression<String>? bookshelvesJson,
+    Expression<String>? issued,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (title != null) 'title': title,
+      if (authorsText != null) 'authors_text': authorsText,
+      if (authorsJson != null) 'authors_json': authorsJson,
+      if (subjectsJson != null) 'subjects_json': subjectsJson,
+      if (bookshelvesJson != null) 'bookshelves_json': bookshelvesJson,
+      if (issued != null) 'issued': issued,
+    });
+  }
+
+  CatalogBooksCompanion copyWith({
+    Value<int>? id,
+    Value<String>? title,
+    Value<String>? authorsText,
+    Value<String>? authorsJson,
+    Value<String>? subjectsJson,
+    Value<String>? bookshelvesJson,
+    Value<String?>? issued,
+  }) {
+    return CatalogBooksCompanion(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      authorsText: authorsText ?? this.authorsText,
+      authorsJson: authorsJson ?? this.authorsJson,
+      subjectsJson: subjectsJson ?? this.subjectsJson,
+      bookshelvesJson: bookshelvesJson ?? this.bookshelvesJson,
+      issued: issued ?? this.issued,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (title.present) {
+      map['title'] = Variable<String>(title.value);
+    }
+    if (authorsText.present) {
+      map['authors_text'] = Variable<String>(authorsText.value);
+    }
+    if (authorsJson.present) {
+      map['authors_json'] = Variable<String>(authorsJson.value);
+    }
+    if (subjectsJson.present) {
+      map['subjects_json'] = Variable<String>(subjectsJson.value);
+    }
+    if (bookshelvesJson.present) {
+      map['bookshelves_json'] = Variable<String>(bookshelvesJson.value);
+    }
+    if (issued.present) {
+      map['issued'] = Variable<String>(issued.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CatalogBooksCompanion(')
+          ..write('id: $id, ')
+          ..write('title: $title, ')
+          ..write('authorsText: $authorsText, ')
+          ..write('authorsJson: $authorsJson, ')
+          ..write('subjectsJson: $subjectsJson, ')
+          ..write('bookshelvesJson: $bookshelvesJson, ')
+          ..write('issued: $issued')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -7815,6 +8287,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $ChatChapterNotesTable chatChapterNotes = $ChatChapterNotesTable(
     this,
   );
+  late final $CatalogBooksTable catalogBooks = $CatalogBooksTable(this);
   late final Index chaptersBookOrder = Index(
     'chapters_book_order',
     'CREATE INDEX chapters_book_order ON chapters (book_id, sort_order)',
@@ -7835,6 +8308,14 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     'chat_sessions_book_opened',
     'CREATE INDEX chat_sessions_book_opened ON chat_sessions (book_id, last_opened_at, id)',
   );
+  late final Index catalogBooksTitle = Index(
+    'catalog_books_title',
+    'CREATE INDEX catalog_books_title ON catalog_books (title)',
+  );
+  late final Index catalogBooksAuthors = Index(
+    'catalog_books_authors',
+    'CREATE INDEX catalog_books_authors ON catalog_books (authors_text)',
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -7854,11 +8335,14 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     chatIndexes,
     chatVectors,
     chatChapterNotes,
+    catalogBooks,
     chaptersBookOrder,
     paragraphsChapterGroup,
     readingSessionsBookTime,
     readingSessionsTime,
     chatSessionsBookOpened,
+    catalogBooksTitle,
+    catalogBooksAuthors,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -15028,6 +15512,255 @@ typedef $$ChatChapterNotesTableProcessedTableManager =
       ChatChapterNoteRow,
       PrefetchHooks Function({bool bookId, bool chapterId})
     >;
+typedef $$CatalogBooksTableCreateCompanionBuilder =
+    CatalogBooksCompanion Function({
+      Value<int> id,
+      required String title,
+      required String authorsText,
+      required String authorsJson,
+      required String subjectsJson,
+      required String bookshelvesJson,
+      Value<String?> issued,
+    });
+typedef $$CatalogBooksTableUpdateCompanionBuilder =
+    CatalogBooksCompanion Function({
+      Value<int> id,
+      Value<String> title,
+      Value<String> authorsText,
+      Value<String> authorsJson,
+      Value<String> subjectsJson,
+      Value<String> bookshelvesJson,
+      Value<String?> issued,
+    });
+
+class $$CatalogBooksTableFilterComposer
+    extends Composer<_$AppDatabase, $CatalogBooksTable> {
+  $$CatalogBooksTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get authorsText => $composableBuilder(
+    column: $table.authorsText,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get authorsJson => $composableBuilder(
+    column: $table.authorsJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get subjectsJson => $composableBuilder(
+    column: $table.subjectsJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get bookshelvesJson => $composableBuilder(
+    column: $table.bookshelvesJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get issued => $composableBuilder(
+    column: $table.issued,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$CatalogBooksTableOrderingComposer
+    extends Composer<_$AppDatabase, $CatalogBooksTable> {
+  $$CatalogBooksTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get authorsText => $composableBuilder(
+    column: $table.authorsText,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get authorsJson => $composableBuilder(
+    column: $table.authorsJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get subjectsJson => $composableBuilder(
+    column: $table.subjectsJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get bookshelvesJson => $composableBuilder(
+    column: $table.bookshelvesJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get issued => $composableBuilder(
+    column: $table.issued,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$CatalogBooksTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CatalogBooksTable> {
+  $$CatalogBooksTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get title =>
+      $composableBuilder(column: $table.title, builder: (column) => column);
+
+  GeneratedColumn<String> get authorsText => $composableBuilder(
+    column: $table.authorsText,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get authorsJson => $composableBuilder(
+    column: $table.authorsJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get subjectsJson => $composableBuilder(
+    column: $table.subjectsJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get bookshelvesJson => $composableBuilder(
+    column: $table.bookshelvesJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get issued =>
+      $composableBuilder(column: $table.issued, builder: (column) => column);
+}
+
+class $$CatalogBooksTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $CatalogBooksTable,
+          CatalogBook,
+          $$CatalogBooksTableFilterComposer,
+          $$CatalogBooksTableOrderingComposer,
+          $$CatalogBooksTableAnnotationComposer,
+          $$CatalogBooksTableCreateCompanionBuilder,
+          $$CatalogBooksTableUpdateCompanionBuilder,
+          (
+            CatalogBook,
+            BaseReferences<_$AppDatabase, $CatalogBooksTable, CatalogBook>,
+          ),
+          CatalogBook,
+          PrefetchHooks Function()
+        > {
+  $$CatalogBooksTableTableManager(_$AppDatabase db, $CatalogBooksTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CatalogBooksTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CatalogBooksTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CatalogBooksTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> title = const Value.absent(),
+                Value<String> authorsText = const Value.absent(),
+                Value<String> authorsJson = const Value.absent(),
+                Value<String> subjectsJson = const Value.absent(),
+                Value<String> bookshelvesJson = const Value.absent(),
+                Value<String?> issued = const Value.absent(),
+              }) => CatalogBooksCompanion(
+                id: id,
+                title: title,
+                authorsText: authorsText,
+                authorsJson: authorsJson,
+                subjectsJson: subjectsJson,
+                bookshelvesJson: bookshelvesJson,
+                issued: issued,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String title,
+                required String authorsText,
+                required String authorsJson,
+                required String subjectsJson,
+                required String bookshelvesJson,
+                Value<String?> issued = const Value.absent(),
+              }) => CatalogBooksCompanion.insert(
+                id: id,
+                title: title,
+                authorsText: authorsText,
+                authorsJson: authorsJson,
+                subjectsJson: subjectsJson,
+                bookshelvesJson: bookshelvesJson,
+                issued: issued,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$CatalogBooksTable, CatalogBook>(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $CatalogBooksTable,
+                    CatalogBook
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$CatalogBooksTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $CatalogBooksTable,
+      CatalogBook,
+      $$CatalogBooksTableFilterComposer,
+      $$CatalogBooksTableOrderingComposer,
+      $$CatalogBooksTableAnnotationComposer,
+      $$CatalogBooksTableCreateCompanionBuilder,
+      $$CatalogBooksTableUpdateCompanionBuilder,
+      (
+        CatalogBook,
+        BaseReferences<_$AppDatabase, $CatalogBooksTable, CatalogBook>,
+      ),
+      CatalogBook,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -15060,4 +15793,6 @@ class $AppDatabaseManager {
       $$ChatVectorsTableTableManager(_db, _db.chatVectors);
   $$ChatChapterNotesTableTableManager get chatChapterNotes =>
       $$ChatChapterNotesTableTableManager(_db, _db.chatChapterNotes);
+  $$CatalogBooksTableTableManager get catalogBooks =>
+      $$CatalogBooksTableTableManager(_db, _db.catalogBooks);
 }
