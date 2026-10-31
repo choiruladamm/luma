@@ -376,6 +376,9 @@ ditambahkan di belakang. ViewModel menampilkan "Lagi benerin format jawaban… (
 pada turn yang sama; preview lama tetap sampai teks baru masuk. Gagal setelah 2
 perbaikan = `failed/invalidResponse` dengan draf terbaca + Coba lagi.
 
+Lanjutan: progres baca yang ngomong + Jawab sekarang + index paralel (#150), cache
+catatan bab lintas pertanyaan + pengecualian front/back matter di pencarian (#151).
+
 Bukti live: `make chat-agent-live` (`tag=`, `cases=`, `cont=`, `book=`, `m=`)
 menjalankan pipeline produksi pada `test/fixtures/discourses.epub` (Standard
 Ebooks, terjemahan Long, nav Book I–IV › bab) dan menulis
