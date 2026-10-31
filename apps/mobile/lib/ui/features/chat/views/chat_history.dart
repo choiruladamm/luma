@@ -341,7 +341,8 @@ class _ChatHistoryState extends State<ChatHistory> {
                                         for (final source in visible[i].sources)
                                           WidgetSpan(
                                             alignment:
-                                                PlaceholderAlignment.middle,
+                                                PlaceholderAlignment.baseline,
+                                            baseline: TextBaseline.alphabetic,
                                             child: ChatSourceChip(
                                               source: source,
                                               label: chatSourceLabel(
@@ -565,36 +566,40 @@ class ChatSourceChip extends StatelessWidget {
   final VoidCallback? onPressed;
   final bool selected;
   @override
-  Widget build(BuildContext context) => Semantics(
-    button: true,
-    label:
-        '${source.chapterTitle}, paragraf ${source.anchors.first.paragraphIndex + 1}',
-    excludeSemantics: true,
-    child: GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onPressed,
-      // Area tap melebar ke samping; tinggi dijaga 20 biar baris teks gak melar.
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 6),
-        child: Container(
-          height: 20,
-          padding: const EdgeInsets.symmetric(horizontal: 6),
-          decoration: BoxDecoration(
-            color: selected ? context.stabilo.accent : context.stabilo.muted,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          // widthFactor: Container beralignment ngisi lebar penuh di WidgetSpan.
-          child: Center(
-            widthFactor: 1,
-            child: Text(
-              label,
-              style: StabiloType.caption.copyWith(
-                fontSize: 12,
-                height: 1,
-                fontWeight: FontWeight.w700,
-                color: selected
-                    ? context.stabilo.onAccent
-                    : context.stabilo.ink,
+  Widget build(BuildContext context) => Transform.translate(
+    // Naik 2pt dari garis dasar teks, seperti di board.
+    offset: const Offset(0, -2),
+    child: Semantics(
+      button: true,
+      label:
+          '${source.chapterTitle}, paragraf ${source.anchors.first.paragraphIndex + 1}',
+      excludeSemantics: true,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onPressed,
+        // Area tap melebar 2pt ke samping; tinggi dijaga 20 biar baris teks gak melar.
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 2),
+          child: Container(
+            height: 20,
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+            decoration: BoxDecoration(
+              color: selected ? context.stabilo.accent : context.stabilo.muted,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            // widthFactor: Container beralignment ngisi lebar penuh di WidgetSpan.
+            child: Center(
+              widthFactor: 1,
+              child: Text(
+                label,
+                style: StabiloType.caption.copyWith(
+                  fontSize: 12,
+                  height: 1,
+                  fontWeight: FontWeight.w700,
+                  color: selected
+                      ? context.stabilo.onAccent
+                      : context.stabilo.ink,
+                ),
               ),
             ),
           ),

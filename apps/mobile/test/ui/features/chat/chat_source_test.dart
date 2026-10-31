@@ -421,6 +421,35 @@ void main() {
     });
   }
 
+  for (final (brightness, wantInk2) in [
+    (Brightness.light, true),
+    (Brightness.dark, false),
+  ]) {
+    testWidgets('context around the quote is readable in $brightness', (
+      t,
+    ) async {
+      await open(t, sheet: true, brightness: brightness);
+      locations.add(
+        ChatSourceLocation(
+          source: source,
+          available: true,
+          before: 'Teks sebelum kutipan.',
+          after: 'Teks sesudah kutipan.',
+        ),
+      );
+      await t.pumpAndSettle();
+      final c = brightness == Brightness.light
+          ? StabiloColors.light
+          : StabiloColors.dark;
+      for (final text in ['Teks sebelum kutipan.', 'Teks sesudah kutipan.']) {
+        final style = t
+            .widget<SelectableText>(find.widgetWithText(SelectableText, text))
+            .style!;
+        expect(style.color, wantInk2 ? c.ink2 : c.ink);
+      }
+    });
+  }
+
   testWidgets('deletion and restore cannot reactivate an existing visit', (
     t,
   ) async {

@@ -49,6 +49,11 @@ class ChatSourceSheet extends ConsumerWidget {
       ref.watch(readerPrefsProvider).value ?? const ReaderPrefs(),
       Theme.of(context).brightness,
     );
+    // Konteks di luar blok kutipan: abu di terang, teks penuh di gelap (ink2
+    // kebaca terlalu pudar di latar sheet gelap).
+    final surround = Theme.of(context).brightness == Brightness.dark
+        ? context.stabilo.ink
+        : context.stabilo.ink2;
     return SizedBox.expand(
       child: Stack(
         children: [
@@ -106,7 +111,7 @@ class ChatSourceSheet extends ConsumerWidget {
                     if (location?.before != null)
                       SelectableText(
                         location!.before!,
-                        style: typo.style.copyWith(color: context.stabilo.ink2),
+                        style: typo.style.copyWith(color: surround),
                       ),
                     Stack(
                       key: const ValueKey('source-quote'),
@@ -133,7 +138,7 @@ class ChatSourceSheet extends ConsumerWidget {
                     if (location?.after != null)
                       SelectableText(
                         location!.after!,
-                        style: typo.style.copyWith(color: context.stabilo.ink2),
+                        style: typo.style.copyWith(color: surround),
                       ),
                     if (state.isLoading || !available)
                       Text(state.sourceMessage, style: StabiloType.caption),
