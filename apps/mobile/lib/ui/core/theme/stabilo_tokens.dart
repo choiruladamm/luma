@@ -68,6 +68,13 @@ abstract final class Layout {
   static const barMin = 44.0; // header rak pas nyusut (maks = topBar)
   static const barShrink = 52.0; // jarak scroll buat nyusut penuh
   static const coverAspect = 2 / 3;
+  // Awal bab (board 03 Baca + "awal bab, judul panjang").
+  static const chapterOpenerTop = 40.0;
+  static const chapterOpenerBottom = 28.0;
+  static const chapterOpenerGap = 14.0;
+  static const chapterStrokeWidth = 56.0; // coretan kuning miring
+  static const chapterStrokeHeight = 8.0;
+  static const chapterStrokeTilt = -4 * math.pi / 180;
 
   /// Kolom rak: max(3, floor((lebar − 2×margin + gap) / (96 + gap))). [width]
   /// = lebar area isi (layar − 2×margin). Rumus yang sama buat landscape/iPad.

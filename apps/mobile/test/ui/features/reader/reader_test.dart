@@ -768,8 +768,12 @@ void main() {
         await openBook(tester, b: b);
         expect(find.byType(ReaderView), findsOneWidget);
         expect(find.text('The Enchiridion'), findsOneWidget); // top bar
-        expect(find.text('Bab 1'), findsOneWidget);
-        expect(find.text('I'), findsOneWidget); // title shown once, not twice
+        expect(find.text('I'), findsNWidgets(2)); // capsule + pill, no "Bab 1"
+        expect(
+          find.text('Bab 1 dari 2 · ±1 mnt'),
+          findsOneWidget,
+        ); // opener meta
+        expect(find.text('Bab 1'), findsNothing);
         expect(
           find.text('There are things which are within our power.'),
           findsOneWidget,
@@ -785,16 +789,37 @@ void main() {
     );
   }
 
+  testWidgets('a long chapter title wraps in the chapter opener', (
+    tester,
+  ) async {
+    const long =
+        'Of the things which are under our control and not under our control';
+    const longBook = ReaderBook(
+      id: 1,
+      title: 'The Enchiridion',
+      totalChars: 300,
+      chapters: [
+        ChapterInfo(id: 10, title: long, charOffset: 0, chars: 100),
+        ChapterInfo(id: 11, title: 'II', charOffset: 100, chars: 200),
+      ],
+    );
+    await openBook(tester, readerBook: longBook);
+    expect(find.text(long), findsNWidgets(2)); // capsule + opener title
+    expect(find.text('Bab 1 dari 2 · ±1 mnt'), findsOneWidget);
+    expect(find.text('$long kelar'), findsNWidgets(2)); // chip + dock
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('chapter end card moves on to the next chapter', (tester) async {
     await openBook(tester);
-    expect(find.text('Bab 1 kelar'), findsOneWidget);
+    expect(find.text('I kelar'), findsNWidgets(2)); // end card chip + dock
     expect(find.text('3 paragraf diterjemahin'), findsOneWidget);
     expect(find.text('Lanjut ke II?'), findsOneWidget);
-    expect(find.text('Bab 2 dari 2 · ±1 menit'), findsOneWidget);
+    expect(find.text('Bab 2 dari 2 · ±1 mnt'), findsOneWidget);
 
     await tester.tap(find.text('Lanjut, gas'));
     await tester.pumpAndSettle();
-    expect(find.text('Bab 2'), findsOneWidget);
+    expect(find.text('II'), findsWidgets);
     expect(
       find.text('Never say of anything, "I have lost it."'),
       findsOneWidget,
@@ -878,7 +903,7 @@ void main() {
 
     await tester.tap(find.text('Baca ulang dari awal'));
     await tester.pumpAndSettle();
-    expect(find.text('Bab 1'), findsOneWidget);
+    expect(find.text('I'), findsWidgets);
     expect(progress.saves.last, (
       chapterId: 10,
       paragraphIndex: 0,
@@ -1144,13 +1169,14 @@ void main() {
     await openToc(tester);
     expect(find.text('Daftar isi'), findsOneWidget);
     expect(find.textContaining('The Enchiridion · 2 bab · '), findsOneWidget);
-    expect(find.text('01'), findsOneWidget);
-    expect(find.text('Lagi dibaca'), findsOneWidget);
+    expect(find.text('01'), findsNothing); // no number column
+    expect(find.text('Lagi dibaca · ±1 mnt'), findsOneWidget);
+    expect(find.text('±1 mnt'), findsOneWidget); // chapter II, 200 chars
 
     await tester.tap(find.text('II').last);
     await tester.pumpAndSettle();
     expect(find.text('Daftar isi'), findsNothing);
-    expect(find.text('Bab 2'), findsOneWidget);
+    expect(find.text('II'), findsWidgets);
     expect(progress.saves.last, (
       chapterId: 11,
       paragraphIndex: 0,
@@ -1164,7 +1190,7 @@ void main() {
     progress.saves.clear();
     await tester.tap(find.bySemanticsLabel('Tutup'));
     await tester.pumpAndSettle();
-    expect(find.text('Bab 1'), findsOneWidget);
+    expect(find.text('I'), findsWidgets);
     expect(progress.saves, isEmpty);
   });
 
@@ -1189,7 +1215,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(BottomSheet), findsNothing);
     expect(tester.widget<CircleButton>(button).active, isFalse);
-    expect(find.text('Bab 1'), findsOneWidget);
+    expect(find.text('I'), findsWidgets);
   });
 
   testWidgets('a long contents list scrolls to the current chapter', (
@@ -1216,7 +1242,7 @@ void main() {
       saved: (chapterId: 140, paragraphIndex: 0, paragraphOffset: 0.0),
     );
     await openToc(tester);
-    final badge = find.text('Lagi dibaca');
+    final badge = find.text('Lagi dibaca · ±1 mnt');
     expect(badge, findsOneWidget);
     final sheet = tester.getRect(find.byType(BottomSheet));
     final row = tester.getRect(badge);
@@ -1246,7 +1272,7 @@ void main() {
       ),
     );
     await tester.pump();
-    expect(find.text('Bab 1'), findsOneWidget);
+    expect(find.text('I'), findsWidgets);
     expect(find.text('Lanjut, gas'), findsNothing);
 
     double opacity() => tester
@@ -1280,7 +1306,7 @@ void main() {
   ) async {
     await openBook(tester);
     expect(progress.opened, [1]);
-    expect(find.text('Bab 1'), findsOneWidget);
+    expect(find.text('I'), findsWidgets);
   });
 
   testWidgets('reopens at the saved chapter and paragraph', (tester) async {
@@ -1289,7 +1315,7 @@ void main() {
       readerBook: longBook,
       saved: (chapterId: 12, paragraphIndex: 20, paragraphOffset: 0.0),
     );
-    expect(find.text('Bab 2'), findsOneWidget);
+    expect(find.text('XXXIII'), findsWidgets);
     // A third down the screen, so there's context above it.
     final line = tester.getTopLeft(find.text('Line 20 of a long chapter.')).dy;
     expect(line, closeTo(1600 / 3, 1));
@@ -1404,7 +1430,7 @@ void main() {
       tester,
       saved: (chapterId: 999, paragraphIndex: 3, paragraphOffset: 0.0),
     );
-    expect(find.text('Bab 1'), findsOneWidget);
+    expect(find.text('I'), findsWidgets);
   });
 
   testWidgets('scrolling saves the top paragraph once it stops', (
@@ -1529,7 +1555,7 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(capsuleTop(tester), 6);
-      expect(find.text('Bab 2 beres'), findsOneWidget);
+      expect(find.text('Tall kelar'), findsNWidgets(2)); // chip + dock
     });
 
     testWidgets('the text does not move when they hide', (tester) async {
