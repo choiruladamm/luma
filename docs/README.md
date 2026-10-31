@@ -54,7 +54,7 @@ Mengubah alur di atas menjadi **satu tap**: tap paragraf → langsung muncul ter
 | 1 | Import EPUB | Tombol import via `file_picker`. File di-copy ke penyimpanan app, lalu **diparse sekali** ke format internal (chapter → paragraf → grup). |
 | 2 | Rak buku | Grid buku dengan cover (atau cover default), judul, progres. Kartu "Lanjut baca yuk" untuk buku terakhir. Urut terakhir dibuka. |
 | 3 | Halaman baca | Teks per paragraf, nyaman dibaca lama. Pengaturan Aa (font, ukuran, jarak baris, tema). |
-| 4 | Daftar isi | Pindah antar chapter dari halaman baca. |
+| 4 | Daftar isi | Pindah antar chapter dari halaman baca. Buku bersection (grup per Book, nomor asli): [#159](https://github.com/choiruladamm/luma/issues/159). |
 | 5 | Tap → terjemahan + makna | Tap paragraf mana pun → **seluruh grup paragrafnya** distabilo dan dikirim ke LLM. Bottom sheet: terjemahan per paragraf + satu penjelasan makna. Ada state loading, hasil, error. |
 | 6 | Cache hasil AI | Disimpan di Drift per grup. Grup yang sudah pernah di-tap tidak memanggil LLM lagi. |
 | 7 | Simpan posisi baca | Saat buku dibuka lagi, langsung lanjut ke posisi terakhir. |
