@@ -6,16 +6,21 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../domain/models/book_chat.dart';
 import '../../../../routing/router.dart';
+import '../../../../data/repositories/settings_repository.dart';
+import '../../../../domain/models/reader_prefs.dart';
+import '../../../core/theme/reader_typography.dart';
 import '../../../core/theme/stabilo_theme.dart';
 import '../../../core/theme/stabilo_tokens.dart';
 import '../../../core/theme/stabilo_type.dart';
 import '../../../core/widgets/buttons.dart';
+import '../../../core/widgets/edge_fade.dart';
+import 'chat_context_card.dart';
 import '../view_models/chat_view_model.dart';
 import 'chat_composer.dart';
 import 'chat_copy.dart';
 import 'chat_history.dart';
+import 'chat_source_label.dart';
 import 'chat_source_sheet.dart';
-import 'chat_session_menu.dart';
 import 'chat_sessions_view.dart';
 
 class ChatView extends ConsumerStatefulWidget {
@@ -26,9 +31,72 @@ class ChatView extends ConsumerStatefulWidget {
   ConsumerState<ChatView> createState() => _ChatViewState();
 }
 
+/// Margin kiri-kanan kolom ngobrol = Aa Sempit.
+const _chatMargin = 16.0;
+
 class _ChatViewState extends ConsumerState<ChatView> {
+  final _footerKey = GlobalKey();
+  final _headerKey = GlobalKey();
+  double _headerHeight = Layout.chatHeader;
+  double _footerHeight = Layout.chatComposer;
+  bool _scrolled = false;
+
+  void _measureFooter() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final box = _footerKey.currentContext?.findRenderObject() as RenderBox?;
+      if (box == null || !box.hasSize) return;
+      final height = box.size.height;
+      final header =
+          _headerKey.currentContext?.findRenderObject() as RenderBox?;
+      final headerHeight = header != null && header.hasSize
+          ? header.size.height
+          : _headerHeight;
+      if ((height - _footerHeight).abs() > 0.5 ||
+          (headerHeight - _headerHeight).abs() > 0.5) {
+        setState(() {
+          _footerHeight = height;
+          _headerHeight = headerHeight;
+        });
+      }
+    });
+  }
+
+  /// Header selalu lengkap; pas konten udah ke-scroll cuma garis bawahnya muncul.
+  bool _scroll(ScrollNotification n) {
+    if (n.depth != 0) return false;
+    if (n is ScrollUpdateNotification || n is ScrollEndNotification) {
+      final scrolled = n.metrics.pixels > n.metrics.minScrollExtent + 4;
+      if (scrolled != _scrolled) setState(() => _scrolled = scrolled);
+    }
+    return false;
+  }
+
+  Future<void> _readQuote(ChatQuote quote) async {
+    if (_sourceOpen) return;
+    setState(() => _sourceOpen = true);
+    try {
+      // "Lanjut baca" di layar intip nutup chat sendiri (lihat ChatSourceVisitView).
+      await context.push<ReaderReturn>(
+        Routes.chatQuote(widget.bookId),
+        extra: quote,
+      );
+    } finally {
+      if (mounted) setState(() => _sourceOpen = false);
+    }
+  }
+
+  void _back({bool reading = false}) {
+    if (context.canPop()) {
+      context.pop(reading ? ReaderReturn.reading : null);
+    } else {
+      context.go(Routes.reader(widget.bookId));
+    }
+  }
+
   bool _leaving = false;
   bool _sourceOpen = false;
+  ({int turnId, String sourceId})? _selectedSource;
   ChatViewModel get _vm =>
       ref.read(chatViewModelProvider(widget.bookId).notifier);
   @override
@@ -41,18 +109,22 @@ class _ChatViewState extends ConsumerState<ChatView> {
     }
   }
 
+  /// Guard tanpa rebuild: tombol header gak boleh kedip abu pas pindah layar.
   Future<void> _navigate(VoidCallback action) async {
     if (_leaving) return;
-    setState(() => _leaving = true);
+    _leaving = true;
     await _vm.stop();
     if (!mounted) return;
     action();
-    if (mounted) setState(() => _leaving = false);
+    _leaving = false;
   }
 
   Future<void> _source(ChatTurn turn, ChatSource source) async {
     if (_sourceOpen) return;
-    setState(() => _sourceOpen = true);
+    setState(() {
+      _sourceOpen = true;
+      _selectedSource = (turnId: turn.id, sourceId: source.id);
+    });
     try {
       final request = (
         bookId: widget.bookId,
@@ -67,20 +139,14 @@ class _ChatViewState extends ConsumerState<ChatView> {
         snapshot: source,
       );
       if (open != true || !mounted) return;
-      final result = await context.push<ReaderReturn>(
-        Routes.chatSource(request),
-      );
-      if (result == ReaderReturn.reading && mounted) {
-        await _navigate(() {
-          if (context.canPop()) {
-            context.pop(ReaderReturn.reading);
-          } else {
-            context.go(Routes.reader(widget.bookId));
-          }
+      await context.push<ReaderReturn>(Routes.chatSource(request));
+    } finally {
+      if (mounted) {
+        setState(() {
+          _sourceOpen = false;
+          _selectedSource = null;
         });
       }
-    } finally {
-      if (mounted) setState(() => _sourceOpen = false);
     }
   }
 
@@ -88,140 +154,312 @@ class _ChatViewState extends ConsumerState<ChatView> {
   Widget build(BuildContext context) {
     final state = ref.watch(chatViewModelProvider(widget.bookId));
     final title = chatBookTitle(ref, widget.bookId);
-    final error = state.error;
+    final pad = MediaQuery.paddingOf(context);
+    // Teks isi ikut Aa; ganti pengaturan di reader langsung kebawa.
+    final typo = ReaderTypography(
+      ref.watch(readerPrefsProvider).value ?? const ReaderPrefs(),
+      Theme.of(context).brightness,
+    );
+    // Kolom ngobrol selalu margin Aa "Sempit" (16), gak ikut pilihan margin Aa.
+    const side = _chatMargin;
+    _measureFooter();
     return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-            Layout.margin,
-            Space.s3,
-            Layout.margin,
-            Space.s3,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            spacing: Space.s5,
-            children: [
-              Row(
-                spacing: Space.s2,
-                children: [
-                  CircleButton(
-                    semanticLabel: 'Kembali',
-                    icon: AppIcons.back,
-                    onPressed: _leaving
-                        ? null
-                        : () => _navigate(() {
-                            if (context.canPop()) {
-                              context.pop();
-                            } else {
-                              context.go(Routes.home);
-                            }
-                          }),
+      body: NotificationListener<ScrollNotification>(
+        onNotification: _scroll,
+        child: Builder(
+          builder: (context) {
+            final top = pad.top + _headerHeight + Space.s3;
+            final bottom = pad.bottom + _footerHeight + Space.s4;
+            return Stack(
+              children: [
+                Positioned.fill(
+                  child: _body(
+                    state,
+                    typo: typo,
+                    padding: EdgeInsets.fromLTRB(side, top, side, bottom),
+                    topFade: EdgeFadeSide(
+                      Space.s5,
+                      clear: pad.top,
+                      hold: _headerHeight,
+                    ),
+                    bottomFade: EdgeFadeSide(
+                      Space.s5,
+                      clear: bottom - Space.s2,
+                    ),
                   ),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          state.activeSession?.title ?? 'Obrolan baru',
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: StabiloType.titleXs,
-                        ),
-                        Text(
-                          title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: StabiloType.caption.copyWith(
-                            color: context.stabilo.ink2,
+                ),
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  top: pad.top,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: context.stabilo.canvas,
+                      boxShadow: [
+                        if (_scrolled)
+                          BoxShadow(
+                            color: context.stabilo.track,
+                            offset: const Offset(0, 1),
                           ),
-                        ),
                       ],
                     ),
-                  ),
-                  CircleButton(
-                    semanticLabel: 'Riwayat obrolan',
-                    icon: AppIcons.history,
-                    onPressed: _leaving
-                        ? null
-                        : () => _navigate(
-                            () => context.push(
-                              Routes.chatSessions(widget.bookId),
+                    child: Padding(
+                      key: _headerKey,
+                      padding: const EdgeInsets.symmetric(horizontal: Space.s3),
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(
+                          minHeight: Layout.chatHeader,
+                        ),
+                        child: Row(
+                          spacing: Space.s2,
+                          children: [
+                            CircleButton(
+                              semanticLabel:
+                                  widget.launch?.origin.backLabel ??
+                                  'Balik baca',
+                              icon: AppIcons.back,
+                              onPressed: () => _navigate(() => _back()),
                             ),
-                          ),
-                  ),
-                  if (state.activeSession != null)
-                    CircleButton(
-                      semanticLabel: 'Menu sesi',
-                      icon: AppIcons.more,
-                      onPressed: state.changingSession
-                          ? null
-                          : () => showChatSessionMenu(context, _vm, state),
+                            Expanded(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    'Ngobrolin buku',
+                                    style: StabiloType.titleXs.copyWith(
+                                      fontSize: 15,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  Text(
+                                    title,
+                                    style: StabiloType.caption.copyWith(
+                                      color: context.stabilo.ink2,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            if (widget.launch != null &&
+                                widget.launch!.origin !=
+                                    ChatLaunchOrigin.reader)
+                              CircleButton(
+                                semanticLabel: 'Balik baca',
+                                icon: AppIcons.book,
+                                onPressed: () =>
+                                    _navigate(() => _back(reading: true)),
+                              ),
+                            CircleButton(
+                              semanticLabel: 'Riwayat obrolan',
+                              icon: AppIcons.history,
+                              onPressed: () => _navigate(
+                                () => context.push(
+                                  Routes.chatSessions(widget.bookId),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
-                ],
-              ),
-              Expanded(child: _body(state)),
-              if (widget.launch != null &&
-                  widget.launch!.origin != ChatLaunchOrigin.reader)
-                AppButton.secondary(
-                  label: 'Balik baca',
-                  onPressed: () =>
-                      _navigate(() => context.pop(ReaderReturn.reading)),
+                  ),
                 ),
-              if (state.archived)
-                const Text(
-                  'Isi buku berubah. Obrolan ini jadi arsip dan gak bisa dilanjutkan.',
-                  style: StabiloType.caption,
+                Positioned(
+                  left: Layout.margin,
+                  right: Layout.margin,
+                  bottom: pad.bottom + Space.s2,
+                  child: NotificationListener<SizeChangedLayoutNotification>(
+                    onNotification: (_) {
+                      _measureFooter();
+                      return false;
+                    },
+                    child: SizeChangedLayoutNotifier(
+                      child: Column(
+                        key: _footerKey,
+                        mainAxisSize: MainAxisSize.min,
+                        spacing: Space.s2,
+                        children: [
+                          if (state.archived ||
+                              state.activeSession?.invalid == true) ...[
+                            Container(
+                              padding: const EdgeInsets.all(Space.s1),
+                              decoration: BoxDecoration(
+                                color: context.stabilo.sheet,
+                                borderRadius: BorderRadius.circular(Radii.full),
+                                border: Border.all(
+                                  color: context.stabilo.capsuleLine,
+                                  width: Layout.outline,
+                                ),
+                              ),
+                              child: Row(
+                                spacing: Space.s2,
+                                children: [
+                                  Expanded(
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(
+                                        left: Space.s3,
+                                      ),
+                                      child: Text(
+                                        state.archived
+                                            ? 'Arsip · cuma bisa dibaca'
+                                            : 'Riwayat ini gak bisa dilanjutkan.',
+                                        style: StabiloType.caption,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ),
+                                  AppButton.primary(
+                                    label: 'Obrolan baru',
+                                    height: Layout.touch,
+                                    onPressed: () =>
+                                        unawaited(_vm.newSession()),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ] else if (!state.readOnly)
+                            ChatComposer(
+                              draft: state.draft,
+                              hint: state.selectedQuote == null
+                                  ? 'Tanya soal buku ini…'
+                                  : 'Tanya soal kutipan ini…',
+                              canSend: state.canSend,
+                              running: state.phase?.isRunning ?? false,
+                              enabled: !state.loading && !state.busy,
+                              onChanged: _vm.setDraft,
+                              onSend: () => unawaited(_vm.send()),
+                              onStop: () => unawaited(_vm.stop()),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
-              if (state.problem != null)
-                Text(state.problem!, style: StabiloType.caption),
-              if (error != null)
-                Semantics(
-                  liveRegion: true,
-                  child: Text(error.chatMessage, style: StabiloType.caption),
-                ),
-              if (error?.needsSettings ?? false)
-                AppButton.secondary(
-                  label: 'Buka Pengaturan',
-                  onPressed: () =>
-                      _navigate(() => context.push(Routes.settings)),
-                ),
-              if (state.canContinue)
-                AppButton.secondary(
-                  label: 'Lanjutkan',
-                  onPressed: () => unawaited(_vm.continueExploration()),
-                ),
-              if (state.canRetry && !state.canContinue)
-                AppButton.secondary(
-                  label: 'Coba lagi',
-                  onPressed: () => unawaited(_vm.retry()),
-                ),
-              if (state.archived || state.activeSession?.invalid == true)
-                AppButton.primary(
-                  label: 'Obrolan baru',
-                  onPressed: () => unawaited(_vm.newSession()),
-                )
-              else if (!state.readOnly)
-                ChatComposer(
-                  draft: state.draft,
-                  quote: state.selectedQuote,
-                  canSend: state.canSend,
-                  running: state.phase?.isRunning ?? false,
-                  enabled: !state.loading && !state.busy,
-                  onChanged: _vm.setDraft,
-                  onSend: () => unawaited(_vm.send()),
-                  onStop: () => unawaited(_vm.stop()),
-                  onRemoveQuote: _vm.removeQuote,
-                ),
-            ],
-          ),
+              ],
+            );
+          },
         ),
       ),
     );
   }
 
-  Widget _body(ChatState state) {
-    if (state.loading) return const Center(child: CircularProgressIndicator());
+  Widget _actions(ChatState state) {
+    final phase = state.phase ?? state.turns.lastOrNull?.phase;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      spacing: Space.s2,
+      children: [
+        if (state.problem != null)
+          Text(state.problem!, style: StabiloType.caption),
+        if (state.error != null)
+          Semantics(
+            liveRegion: true,
+            child: Text(state.error!.chatMessage, style: StabiloType.caption),
+          ),
+        Wrap(
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: Space.s2,
+          runSpacing: Space.s2,
+          children: [
+            if (phase != null && !phase.isRunning && phase != ChatPhase.done)
+              Semantics(
+                liveRegion: true,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  spacing: 10,
+                  children: [
+                    if (phase.isFailure)
+                      Container(
+                        width: 24,
+                        height: 24,
+                        decoration: BoxDecoration(
+                          color: context.stabilo.pink,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: AppIcon(
+                            AppIcons.alertCircle,
+                            size: 14,
+                            color: context.stabilo.onPink,
+                          ),
+                        ),
+                      ),
+                    Flexible(
+                      child: Text(
+                        state.turns.lastOrNull?.draftLabel(phase) ??
+                            phase.label,
+                        style: StabiloType.caption.copyWith(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w600,
+                          color: context.stabilo.ink2,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            if (state.error?.needsSettings ?? false)
+              AppButton.secondary(
+                label: 'Buka Pengaturan',
+                height: Layout.touch,
+                onPressed: () => _navigate(() => context.push(Routes.settings)),
+              ),
+            if (state.canContinue)
+              AppButton.secondary(
+                label: 'Lanjutkan',
+                height: Layout.touch,
+                onPressed: () => unawaited(_vm.continueExploration()),
+              ),
+            if (state.canRetry && !state.canContinue)
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                excludeFromSemantics: true,
+                onTap: () => unawaited(_vm.retry()),
+                child: SizedBox(
+                  height: Layout.touch,
+                  child: Center(
+                    widthFactor: 1,
+                    child: AppButton.secondary(
+                      label: 'Coba lagi',
+                      icon: AppIcons.retry,
+                      height: 36,
+                      onPressed: () => unawaited(_vm.retry()),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _body(
+    ChatState state, {
+    required ReaderTypography typo,
+    required EdgeInsets padding,
+    required EdgeFadeSide topFade,
+    required EdgeFadeSide bottomFade,
+  }) {
+    // Kosong dulu, bukan spinner: sepersekian detik muat gak perlu kedip.
+    if (state.loading) return const SizedBox.shrink();
+    final quote = state.selectedQuote ?? state.turns.firstOrNull?.quote;
+    final card = quote == null
+        ? null
+        : ChatContextCard(
+            key: ValueKey(quote.anchors.first.paragraphHash),
+            quote: quote,
+            typo: typo,
+            collapseOn: state.turns.length,
+            onRead: state.archived ? null : () => _readQuote(quote),
+          );
     if (state.turns.isNotEmpty) {
       return ChatHistory(
         preview: state.preview,
@@ -233,32 +471,70 @@ class _ChatViewState extends ConsumerState<ChatView> {
         onAnchor: _vm.setScrollAnchor,
         onSource: _source,
         suspended: _sourceOpen,
+        selectedSource: _selectedSource,
+        padding: padding,
+        topFade: topFade,
+        bottomFade: bottomFade,
+        contextCard: card,
+        typo: typo,
+        lastActions: _actions(state),
+        reserveAnswerSpace: true,
+        chapterNumbers: ref
+            .watch(chatChapterNumbersProvider(widget.bookId))
+            .asData
+            ?.value,
       );
     }
+    final plain = state.book != null && quote == null;
+    var prompt = 'Mau ngobrolin apa soal bukunya?';
     if (state.book == null) {
-      return const Center(child: Text('Buku ini gak tersedia.'));
+      prompt = 'Buku ini gak tersedia.';
+    } else if (quote != null) {
+      prompt = 'Mau tanya apa soal kutipan ini?';
     }
-    return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.only(top: Space.s10),
+    final hint = switch ((quote != null, state.book != null)) {
+      (true, _) => 'Tulis pertanyaan lo di bawah. Kutipan sama terjemahannya ikut kebaca sebagai konteks.',
+      (_, true) =>
+        'Tanya apa aja soal ${chatBookName(ref, widget.bookId)}. Jawabannya selalu ada sitasi ke bagian bukunya.',
+      _ => null,
+    };
+    return EdgeFadeScroll(
+      top: topFade,
+      bottom: bottomFade,
+      child: SingleChildScrollView(
+        padding: padding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
-          spacing: Space.s4,
+          spacing: Space.s6,
           children: [
-            const Text('Lagi kepikiran apa?', style: StabiloType.titleLg),
-            const Text(
-              'Tanyain yang bikin lo penasaran. Jawabannya bisa lo cek langsung di bukunya.',
-              style: StabiloType.body,
-            ),
-            for (final question in [
-              'Apa gagasan utama buku ini?',
-              'Jelasin bagian ini lebih sederhana',
-              'Apa hubungan gagasan antar bab?',
-            ])
-              AppButton.secondary(
-                label: question,
-                onPressed: state.busy ? null : () => _vm.setDraft(question),
+            const ChatNotice(),
+            ?card,
+            Padding(
+              padding: EdgeInsets.only(top: plain ? Space.s8 : 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                spacing: 6,
+                children: [
+                  Text(
+                    prompt,
+                    style: StabiloType.titleLg.copyWith(
+                      fontSize: plain ? 24 : 22,
+                      height: 1.2,
+                    ),
+                  ),
+                  if (hint != null)
+                    Text(
+                      hint,
+                      style: StabiloType.body.copyWith(
+                        fontSize: plain ? 15 : 14.5,
+                        height: 1.45,
+                        color: context.stabilo.ink2,
+                      ),
+                    ),
+                ],
               ),
+            ),
+            _actions(state),
           ],
         ),
       ),

@@ -50,4 +50,11 @@ void main() {
     debugDefaultTargetPlatformOverride = TargetPlatform.android;
     expect(readingFamily(ReadingFont.system), 'Roboto');
   });
+
+  test('paragraph gap is 1em of the Aa size, like the reader', () {
+    for (final step in [0, ReaderPrefs.defaultSizeStep, 6]) {
+      final t = ReaderTypography(ReaderPrefs(sizeStep: step), Brightness.light);
+      expect(t.paragraphGap, ReaderPrefs.sizes[step]);
+    }
+  });
 }

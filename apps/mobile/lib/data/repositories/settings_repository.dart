@@ -34,6 +34,18 @@ class SettingsRepository {
 
   static const _model = 'ai.model';
 
+  static const _chatHint = 'reader.chatHintSeen';
+  Future<bool> chatHintSeen() async =>
+      (await (_db.select(
+        _db.settings,
+      )..where((s) => s.key.equals(_chatHint))).getSingleOrNull())?.value ==
+      '1';
+  Future<void> markChatHintSeen() => _db
+      .into(_db.settings)
+      .insertOnConflictUpdate(
+        SettingsCompanion.insert(key: _chatHint, value: '1'),
+      );
+
   /// Urutan rak; default terakhir dibuka.
   Stream<ShelfSort> watchShelfSort() =>
       (_db.select(_db.settings)..where((s) => s.key.equals(_shelfSort)))

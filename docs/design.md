@@ -1,3 +1,9 @@
+> **Ngobrolin Buku (#146):** screen terbaru untuk chat/history/sitasi/reader dan
+> aksi Tanyain ini ada di [HTML acuan](../design/references/ngobrolin-buku.html).
+> Screen per screen menjadi acuan implementasi; catatan naratif export yang
+> berbeda dari screen/perilaku yang disepakati bukan blocker. Sheet Terjemahin
+> hanya berubah pada baris aksi. Detail perilaku: [llm.md](llm.md).
+
 # Desain: Stabilo
 
 Referensi lengkap (layar, komponen, token): https://claude.ai/artifact/EBwv9zJBLZQJa5WWYiaJ7F
@@ -141,6 +147,13 @@ menjadi handoff implementasi; belum ada screen chat produksi. Reader entry membu
 sesi terakhir, Tanyain ini membuat draft baru dengan quote removable. Draft baru
 belum masuk riwayat sampai send pertama. Sesi revision lama menjadi arsip read-only,
 dengan aksi obrolan baru. Semua sumber berasal dari seluruh buku yang diimport.
+
+**Teks ikut Aa:** isi layar ngobrol dan sheet sitasi pakai `ReaderTypography`, sumber yang sama dengan halaman baca dan sheet Artinya. Ganti Aa di reader langsung kebawa (provider yang sama).
+- Kutipan di sheet sitasi: font, ukuran, jarak baris persis Aa.
+- Jawaban AI, kartu konteks, kutipan, dan konteks sebelum/sesudah sitasi: font, ukuran, dan jarak baris persis Aa (`ReaderTypography.style`, termasuk +0,05 di gelap), sama dengan halaman baca. Di Aa default ukurannya 18,5, bukan 15,5 seperti spek board lama.
+- Jarak antar paragraf jawaban = 1em ukuran Aa (`ReaderTypography.paragraphGap`), sama dengan halaman baca.
+- Margin kiri-kanan sheet sitasi persis `ReaderPrefs.marginWidth` (Sempit 16, Pas 24, Lega 32), sama dengan halaman baca. Kolom layar ngobrol selalu 16 (= Aa Sempit), gak ikut pilihan margin Aa (font, ukuran, dan jarak baris tetap ikut). Composer dan header tetap margin UI.
+- Tetap ukuran UI (Bricolage): bubble pesan, notice, chip sitasi, label, tombol, header, composer.
 
 Kontrak menetapkan input ringkas min1/max5 baris, rename wajib judul terisi (maks120
 Unicode code points), dan target entry tetap44pt saat dock menyusut. Daftar kosong,

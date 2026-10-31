@@ -21,15 +21,19 @@ String readingFamily(ReadingFont font) => switch (font) {
 @immutable
 class ReaderTypography {
   ReaderTypography(ReaderPrefs prefs, Brightness brightness)
-    : style = StabiloType.forBrightness(
-        StabiloType.reading.copyWith(
-          fontFamily: readingFamily(prefs.font),
-          fontSize: prefs.fontSize,
-          height: prefs.lineHeight,
+    : this._(
+        StabiloType.forBrightness(
+          StabiloType.reading.copyWith(
+            fontFamily: readingFamily(prefs.font),
+            fontSize: prefs.fontSize,
+            height: prefs.lineHeight,
+          ),
+          brightness,
         ),
-        brightness,
-      ),
-      margin = prefs.marginWidth;
+        prefs.marginWidth,
+      );
+
+  const ReaderTypography._(this.style, this.margin);
 
   /// Tanpa warna: pemakai nambahin `ink` / `onHighlight` sendiri.
   final TextStyle style;
@@ -37,6 +41,18 @@ class ReaderTypography {
   /// Margin kiri-kanan teks.
   final double margin;
 
+  /// Jarak antar paragraf: 1em ukuran Aa, sama kayak halaman baca.
+  double get paragraphGap => style.fontSize!;
+
   /// Tinggi satu baris teks.
   double get lineExtent => style.fontSize! * style.height!;
+
+  @override
+  bool operator ==(Object other) =>
+      other is ReaderTypography &&
+      other.style == style &&
+      other.margin == margin;
+
+  @override
+  int get hashCode => Object.hash(style, margin);
 }

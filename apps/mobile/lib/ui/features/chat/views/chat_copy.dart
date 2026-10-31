@@ -11,9 +11,25 @@ extension ChatPhaseCopy on ChatPhase {
     ChatPhase.slow => 'Agak lama nih, masih diproses…',
     ChatPhase.done => 'Jawaban selesai',
     ChatPhase.failed => 'Yah, gagal nih',
-    ChatPhase.cut => 'Jawabannya kepotong',
-    ChatPhase.stopped => 'Jawaban dihentikan',
+    ChatPhase.cut => 'Jawabannya keputus.',
+    ChatPhase.stopped => 'Dihentiin.',
     ChatPhase.interrupted => 'Obrolan sempat terputus',
+  };
+}
+
+extension ChatPhaseKind on ChatPhase {
+  /// Gagal beneran (bukan dihentiin user): dapet ikon pink di atas label.
+  bool get isFailure => switch (this) {
+    ChatPhase.failed || ChatPhase.cut || ChatPhase.interrupted => true,
+    _ => false,
+  };
+}
+
+extension ChatLaunchCopy on ChatLaunchOrigin {
+  String get backLabel => switch (this) {
+    ChatLaunchOrigin.meaning => 'Balik ke Terjemahin',
+    ChatLaunchOrigin.breakdown => 'Kembali',
+    ChatLaunchOrigin.reader => 'Balik baca',
   };
 }
 
@@ -55,7 +71,10 @@ String chatTimeGroup(DateTime at, DateTime now) {
   if (date == DateTime(start.year, start.month, start.day - 1)) {
     return 'Kemarin';
   }
-  return 'Sebelumnya';
+  if (date.isAfter(start.subtract(const Duration(days: 7)))) {
+    return '7 hari terakhir';
+  }
+  return 'Lebih lama';
 }
 
 extension ChatIndexCopy on ChatState {

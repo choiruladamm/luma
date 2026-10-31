@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart' show CupertinoPage;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -19,6 +20,7 @@ abstract final class Routes {
   static String chat(int bookId) => '/reader/$bookId/chat';
   static String chatSource(ChatSourceRef source) =>
       '${chat(source.bookId)}/source/${source.sessionId}/${source.turnId}/${source.attempt}/${Uri.encodeComponent(source.sourceId)}';
+  static String chatQuote(int bookId) => '${chat(bookId)}/quote';
   static String chatSessions(int bookId) => '${chat(bookId)}/sessions';
   static String reader(int bookId) => '/reader/$bookId';
 
@@ -75,19 +77,25 @@ final routerProvider = Provider<GoRouter>((ref) {
           }
           return true;
         },
-        builder: (_, state) {
+        pageBuilder: (context, state) {
           final id = int.tryParse(state.pathParameters['bookId'] ?? '');
-          if (id == null || id <= 0) return const _InvalidChatRoute();
+          if (id == null || id <= 0) {
+            return _slidePage(context, state, const _InvalidChatRoute());
+          }
           final extra = state.extra;
           final launch = extra is ChatLaunchContext && extra.book.bookId == id
               ? extra
               : null;
-          return ChatView(key: ValueKey(id), bookId: id, launch: launch);
+          return _instantExitPage(
+            context,
+            state,
+            ChatView(key: ValueKey(id), bookId: id, launch: launch),
+          );
         },
         routes: [
           GoRoute(
             path: 'source/:sessionId/:turnId/:attempt/:sourceId',
-            builder: (_, state) {
+            pageBuilder: (context, state) {
               int? id(String key) =>
                   int.tryParse(state.pathParameters[key] ?? '');
               final book = id('bookId'),
@@ -105,25 +113,47 @@ final routerProvider = Provider<GoRouter>((ref) {
                   attempt <= 0 ||
                   source == null ||
                   source.isEmpty) {
-                return const _InvalidChatRoute();
+                return _slidePage(context, state, const _InvalidChatRoute());
               }
-              return ChatSourceVisitView(
-                request: (
-                  bookId: book,
-                  sessionId: session,
-                  turnId: turn,
-                  attempt: attempt,
-                  sourceId: source,
+              return _instantExitPage(
+                context,
+                state,
+                ChatSourceVisitView(
+                  request: (
+                    bookId: book,
+                    sessionId: session,
+                    turnId: turn,
+                    attempt: attempt,
+                    sourceId: source,
+                  ),
                 ),
               );
             },
           ),
           GoRoute(
+            path: 'quote',
+            pageBuilder: (context, state) {
+              final quote = state.extra;
+              final bookId = int.tryParse(state.pathParameters['bookId'] ?? '');
+              if (quote is! ChatQuote ||
+                  quote.anchors.any((a) => a.book.bookId != bookId)) {
+                return _slidePage(context, state, const _InvalidChatRoute());
+              }
+              return _instantExitPage(
+                context,
+                state,
+                ChatSourceVisitView(quote: quote),
+              );
+            },
+          ),
+          GoRoute(
             path: 'sessions',
-            builder: (_, state) {
+            pageBuilder: (context, state) {
               final id = int.tryParse(state.pathParameters['bookId'] ?? '');
-              if (id == null || id <= 0) return const _InvalidChatRoute();
-              return ChatSessionsView(bookId: id);
+              if (id == null || id <= 0) {
+                return _slidePage(context, state, const _InvalidChatRoute());
+              }
+              return _slidePage(context, state, ChatSessionsView(bookId: id));
             },
           ),
         ],
@@ -134,6 +164,56 @@ final routerProvider = Provider<GoRouter>((ref) {
   ref.onDispose(router.dispose);
   return router;
 });
+
+/// Nyala sebentar pas "Lanjut baca" di layar intip: halaman yang keluar langsung
+/// ilang (tanpa animasi geser) biar pindah ke reader terasa mulus.
+final instantRouteExit = ValueNotifier<bool>(false);
+
+/// Layar chat + intip sumber: geser masuk seperti [_slidePage], tapi keluarnya
+/// bisa instan lewat [instantRouteExit] ("Lanjut baca"). Kurangi gerakan: fade.
+Page<void> _instantExitPage(
+  BuildContext context,
+  GoRouterState state,
+  Widget child,
+) {
+  if (MediaQuery.disableAnimationsOf(context)) {
+    return _slidePage(context, state, child);
+  }
+  final slide = Tween(
+    begin: const Offset(1, 0),
+    end: Offset.zero,
+  ).chain(CurveTween(curve: Motion.sheetOpenCurve));
+  return CustomTransitionPage<void>(
+    key: state.pageKey,
+    transitionDuration: Motion.sheetOpen,
+    reverseTransitionDuration: Motion.sheetClose,
+    transitionsBuilder: (_, animation, _, child) => AnimatedBuilder(
+      animation: animation,
+      child: child,
+      builder: (_, child) =>
+          animation.status == AnimationStatus.reverse && instantRouteExit.value
+          ? const SizedBox.shrink()
+          : SlideTransition(position: animation.drive(slide), child: child),
+    ),
+    child: child,
+  );
+}
+
+/// Geser ala iOS di semua platform (opaque, ada parallax + swipe-back), biar
+/// header dua layar gak numpuk transparan pas pindah. Kurangi gerakan: fade.
+Page<void> _slidePage(BuildContext context, GoRouterState state, Widget child) {
+  if (!MediaQuery.disableAnimationsOf(context)) {
+    return CupertinoPage<void>(key: state.pageKey, child: child);
+  }
+  return CustomTransitionPage<void>(
+    key: state.pageKey,
+    transitionDuration: Motion.reducedFade,
+    reverseTransitionDuration: Motion.reducedFade,
+    transitionsBuilder: (_, animation, _, child) =>
+        FadeTransition(opacity: animation, child: child),
+    child: child,
+  );
+}
 
 class _InvalidChatRoute extends StatelessWidget {
   const _InvalidChatRoute();

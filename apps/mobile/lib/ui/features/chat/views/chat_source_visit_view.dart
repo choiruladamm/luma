@@ -3,16 +3,33 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../domain/models/book_chat.dart';
+import '../../../../routing/router.dart';
+import '../../../../data/repositories/chat_repository.dart';
+import '../../../core/widgets/toast.dart';
 import '../../../core/theme/stabilo_tokens.dart';
 import '../../../core/widgets/buttons.dart';
 import '../../reader/views/reader_view.dart';
+import '../../../../data/repositories/reading_progress_repository.dart';
 import 'chat_source_sheet.dart';
 
 /// The resolver stays subscribed so deletes, restore and content changes revoke
 /// the renderer instead of leaving a stale paragraph at the same index.
+final chatQuoteSourceProvider = StreamProvider.autoDispose
+    .family<ChatSourceLocation?, ChatQuote>(
+      (ref, quote) => ref.watch(chatRepositoryProvider).watchQuote(quote),
+    );
+
+final _visitProgressProvider = FutureProvider.autoDispose
+    .family<ReadingPosition?, int>(
+      (ref, bookId) =>
+          ref.watch(readingProgressRepositoryProvider).load(bookId),
+    );
+
 class ChatSourceVisitView extends ConsumerStatefulWidget {
-  const ChatSourceVisitView({super.key, required this.request});
-  final ChatSourceRef request;
+  const ChatSourceVisitView({super.key, this.request, this.quote})
+    : assert((request == null) != (quote == null));
+  final ChatSourceRef? request;
+  final ChatQuote? quote;
 
   @override
   ConsumerState<ChatSourceVisitView> createState() => _ChatSourceVisitState();
@@ -21,9 +38,46 @@ class ChatSourceVisitView extends ConsumerStatefulWidget {
 class _ChatSourceVisitState extends ConsumerState<ChatSourceVisitView> {
   ChatSourceLocation? _initial;
   bool _revoked = false;
+  bool _saving = false;
+
+  Future<void> _continue() async {
+    if (_saving || _revoked) return;
+    setState(() => _saving = true);
+    try {
+      await ref
+          .read(chatRepositoryProvider)
+          .continueReading(request: widget.request, quote: widget.quote);
+      if (!mounted) return;
+      showToast(context, 'Posisi baca pindah ke kutipan ini.');
+      // Intip + chat kebuang barengan dan langsung ilang (tanpa geser), hasilnya
+      // sampe ke reader lewat pop biasa jadi dia muat posisi baru.
+      instantRouteExit.value = true;
+      Future<void>.delayed(
+        const Duration(seconds: 1),
+        () => instantRouteExit.value = false,
+      );
+      context.pop(ReaderReturn.reading);
+      if (context.canPop()) {
+        context.pop(ReaderReturn.reading);
+      } else {
+        context.go(
+          Routes.reader(
+            widget.request?.bookId ?? widget.quote!.anchors.first.book.bookId,
+          ),
+        );
+      }
+    } catch (_) {
+      if (mounted) showToast(context, 'Posisi baca belum dipindah. Coba lagi.');
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(chatSourceProvider(widget.request));
+    final state = widget.request != null
+        ? ref.watch(chatSourceProvider(widget.request!))
+        : ref.watch(chatQuoteSourceProvider(widget.quote!));
     final location = state.asData?.value;
     if (location != null && !state.isLoading) {
       _initial ??= location;
@@ -35,10 +89,18 @@ class _ChatSourceVisitState extends ConsumerState<ChatSourceVisitView> {
       _revoked = true;
     }
     if (!_revoked && location?.available == true) {
+      final progress = ref.watch(
+        _visitProgressProvider(location!.source.anchors.first.book.bookId),
+      );
+      if (progress.isLoading) {
+        return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      }
       return ReaderView(
-        key: ValueKey(widget.request),
-        bookId: widget.request.bookId,
-        sourceVisit: location!.source,
+        key: ValueKey(widget.request ?? widget.quote),
+        bookId: location.source.anchors.first.book.bookId,
+        sourceVisit: location.source,
+        sourceOriginalPosition: progress.asData?.value,
+        onContinueReading: _saving ? null : _continue,
       );
     }
     return Scaffold(

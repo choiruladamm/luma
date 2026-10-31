@@ -9,6 +9,7 @@ import 'package:luma/data/repositories/settings_repository.dart';
 import 'package:luma/domain/models/book.dart';
 import 'package:luma/domain/models/book_chat.dart';
 import 'package:luma/domain/models/reader_prefs.dart';
+import 'package:luma/ui/core/theme/reader_typography.dart';
 import 'package:luma/ui/core/theme/stabilo_theme.dart';
 import 'package:luma/ui/core/widgets/buttons.dart';
 import 'package:luma/ui/core/widgets/sheet.dart';
@@ -82,13 +83,14 @@ void main() {
     bool sheet = false,
     Brightness brightness = Brightness.light,
     bool available = true,
+    ReaderPrefs prefs = const ReaderPrefs(),
   }) async {
     progress = FakeProgress((
       chapterId: 10,
       paragraphIndex: 2,
       paragraphOffset: .4,
     ));
-    settings = FakeSettings();
+    settings = FakeSettings(prefs);
     locations = StreamController<ChatSourceLocation?>.broadcast();
     addTearDown(() => unawaited(locations.close()));
     router = GoRouter(
@@ -138,6 +140,10 @@ void main() {
           chapterTranslatedProvider.overrideWith((ref, id) async => 0),
         ],
         child: MaterialApp.router(
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(context).copyWith(disableAnimations: true),
+            child: child!,
+          ),
           theme: stabiloTheme(brightness),
           routerConfig: router,
         ),
@@ -231,6 +237,10 @@ void main() {
       Future<void> pump({required bool suspended, required int words}) async {
         await t.pumpWidget(
           MaterialApp(
+            builder: (context, child) => MediaQuery(
+              data: MediaQuery.of(context).copyWith(disableAnimations: true),
+              child: child!,
+            ),
             theme: stabiloTheme(Brightness.light),
             home: Scaffold(
               body: ChatHistory(
@@ -246,7 +256,7 @@ void main() {
 
       await pump(suspended: false, words: 1000);
       final scroll = t.state<ScrollableState>(find.byType(Scrollable).first);
-      await t.tap(find.text('Ke terbaru'));
+      await t.tap(find.bySemanticsLabel('Ke terbaru'));
       await t.pumpAndSettle();
       final before = scroll.position.pixels;
       expect(before, greaterThan(0));
@@ -254,9 +264,22 @@ void main() {
       expect(scroll.position.pixels, before);
       await pump(suspended: false, words: 1500);
       expect(scroll.position.pixels, before);
-      expect(find.text('Ke terbaru'), findsOneWidget);
+      expect(find.bySemanticsLabel('Ke terbaru'), findsOneWidget);
     },
   );
+
+  testWidgets('large text leaves room for the source-visit header', (t) async {
+    t.platformDispatcher.textScaleFactorTestValue = 2;
+    addTearDown(t.platformDispatcher.clearTextScaleFactorTestValue);
+    await open(t);
+    final fade = t.widget<EdgeFadeScroll>(find.byType(EdgeFadeScroll).first);
+    expect(fade.top.clear, greaterThan(32));
+    expect(
+      find.text('Lagi ngintip · progres masih I · Paragraf 3'),
+      findsOneWidget,
+    );
+    expect(t.takeException(), isNull);
+  });
 
   testWidgets(
     'Aa and chapter navigation keep source identity without writing reading data',
@@ -267,17 +290,12 @@ void main() {
       );
       await t.pumpAndSettle();
       expect(find.byKey(const ValueKey('source-paragraph-4')), findsOneWidget);
-      await t.tap(find.bySemanticsLabel('Daftar isi'));
-      await t.pumpAndSettle();
-      await t.tap(find.text('I').last);
-      await t.pumpAndSettle();
-      expect(find.byKey(const ValueKey('source-paragraph-4')), findsNothing);
-      final next = find.text('Lanjut, gas');
-      await t.ensureVisible(next);
-      await t.pumpAndSettle();
-      await t.tap(next);
-      await t.pumpAndSettle();
-      expect(find.byKey(const ValueKey('source-paragraph-4')), findsOneWidget);
+      expect(find.bySemanticsLabel('Daftar isi'), findsNothing);
+      expect(find.bySemanticsLabel('Atur tampilan teks'), findsNothing);
+      expect(
+        find.text('Lagi ngintip · progres masih I · Paragraf 3'),
+        findsOneWidget,
+      );
       unchanged();
       // System/swipe-back uses the same pop path without committing the visit.
       await t.binding.handlePopRoute();
@@ -292,7 +310,7 @@ void main() {
       'source sheet scrolls metadata with full-width text in $brightness',
       (t) async {
         await open(t, sheet: true, brightness: brightness);
-        final chapter = find.text(source.chapterTitle);
+        final chapter = find.text('III · bagian 5 · bagian 6');
         final scroll = find.ancestor(
           of: chapter,
           matching: find.byType(SingleChildScrollView),
@@ -303,15 +321,18 @@ void main() {
             of: find.bySemanticsLabel('Tutup'),
             matching: find.byType(SingleChildScrollView),
           ),
-          findsOneWidget,
+          findsNothing,
         );
         final text = find.byType(SelectableText);
         final sheetRect = t.getRect(find.byType(BottomSheet));
         final textRect = t.getRect(text);
-        final paragraphRect = t.getRect(find.text('Paragraf 5 · Paragraf 6'));
+        final paragraphRect = t.getRect(
+          find.ancestor(of: chapter, matching: find.byType(Container)).first,
+        );
+        expect(paragraphRect.height, 26);
         expect(textRect.left - sheetRect.left, 24);
         expect(sheetRect.right - textRect.right, 24);
-        expect(textRect.top - paragraphRect.bottom, 8);
+        expect(textRect.top - paragraphRect.bottom, 24);
         final button = find.byType(AppButton);
         expect(t.getRect(scroll), sheetRect);
         final fade = t.widget<EdgeFadeScroll>(find.byType(EdgeFadeScroll));
@@ -342,9 +363,7 @@ void main() {
         position.jumpTo(position.maxScrollExtent);
         await t.pumpAndSettle();
         expect(edges.debugEdges, (top: true, bottom: false));
-        final message = find.text(
-          'Cek teks aslinya tanpa mengubah posisi baca lo.',
-        );
+        final message = find.byKey(const ValueKey('source-quote'));
         expect(
           t.getRect(button).top - t.getRect(message).bottom,
           closeTo(16, .1),
@@ -364,13 +383,72 @@ void main() {
     locations.add(ChatSourceLocation(source: source, available: false));
     await t.pumpAndSettle();
     expect(find.textContaining('Sumber ini udah gak tersedia'), findsOneWidget);
-    expect(t.widget<AppButton>(find.byType(AppButton)).onPressed, isNull);
+    expect(find.byType(AppButton), findsNothing);
+    expect(find.text('Bukunya udah berubah'), findsOneWidget);
+    expect(find.text('Buka di buku'), findsNothing);
     expect(find.byType(SelectableText), findsOneWidget);
     unchanged();
     await t.tap(find.bySemanticsLabel('Tutup'));
     await t.pumpAndSettle();
     expect(find.text('Open source'), findsOneWidget);
   });
+
+  testWidgets('source quote follows the Aa prefs', (t) async {
+    const prefs = ReaderPrefs(font: ReadingFont.book, sizeStep: 6);
+    await open(t, sheet: true, prefs: prefs);
+    final quote = t.widget<SelectableText>(
+      find.descendant(
+        of: find.byKey(const ValueKey('source-quote')),
+        matching: find.byType(SelectableText),
+      ),
+    );
+    expect(quote.style!.fontFamily, readingFamily(ReadingFont.book));
+    expect(quote.style!.fontSize, ReaderPrefs.sizes[6]);
+  });
+
+  for (final margin in TextMargin.values) {
+    testWidgets('source sheet margin matches the reader for $margin', (
+      t,
+    ) async {
+      final prefs = ReaderPrefs(margin: margin);
+      await open(t, sheet: true, prefs: prefs);
+      final sheetLeft = t.getTopLeft(find.byType(ChatSourceSheet)).dx;
+      final quote = find.descendant(
+        of: find.byKey(const ValueKey('source-quote')),
+        matching: find.byType(SelectableText),
+      );
+      expect(t.getTopLeft(quote).dx - sheetLeft, prefs.marginWidth);
+    });
+  }
+
+  for (final (brightness, wantInk2) in [
+    (Brightness.light, true),
+    (Brightness.dark, false),
+  ]) {
+    testWidgets('context around the quote is readable in $brightness', (
+      t,
+    ) async {
+      await open(t, sheet: true, brightness: brightness);
+      locations.add(
+        ChatSourceLocation(
+          source: source,
+          available: true,
+          before: 'Teks sebelum kutipan.',
+          after: 'Teks sesudah kutipan.',
+        ),
+      );
+      await t.pumpAndSettle();
+      final c = brightness == Brightness.light
+          ? StabiloColors.light
+          : StabiloColors.dark;
+      for (final text in ['Teks sebelum kutipan.', 'Teks sesudah kutipan.']) {
+        final style = t
+            .widget<SelectableText>(find.widgetWithText(SelectableText, text))
+            .style!;
+        expect(style.color, wantInk2 ? c.ink2 : c.ink);
+      }
+    });
+  }
 
   testWidgets('deletion and restore cannot reactivate an existing visit', (
     t,

@@ -3,7 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../data/repositories/chat_repository.dart';
 import '../../../../domain/models/book_chat.dart';
+import '../../../../data/repositories/settings_repository.dart';
+import '../../../../domain/models/reader_prefs.dart';
+import '../../../core/theme/reader_typography.dart';
 import '../../../core/theme/stabilo_type.dart';
+import '../../../core/theme/stabilo_theme.dart';
 import '../../../core/theme/stabilo_tokens.dart';
 import '../../../core/widgets/buttons.dart';
 import '../../../core/widgets/sheet.dart';
@@ -20,6 +24,7 @@ Future<bool?> showChatSourceSheet(
   required ChatSource snapshot,
 }) => showAppSheet<bool>(
   context,
+  maxHeight: Layout.chatSheetHeight,
   builder: (_) => ChatSourceSheet(request: request, snapshot: snapshot),
 );
 
@@ -39,6 +44,16 @@ class ChatSourceSheet extends ConsumerWidget {
     final source = location?.source ?? snapshot;
     final available = location?.available ?? false;
     final pad = Layout.sheetPadding;
+    // Kutipan + konteks ikut Aa, termasuk margin kiri-kanan persis Aa.
+    final typo = ReaderTypography(
+      ref.watch(readerPrefsProvider).value ?? const ReaderPrefs(),
+      Theme.of(context).brightness,
+    );
+    // Konteks di luar blok kutipan: abu di terang, teks penuh di gelap (ink2
+    // kebaca terlalu pudar di latar sheet gelap).
+    final surround = Theme.of(context).brightness == Brightness.dark
+        ? context.stabilo.ink
+        : context.stabilo.ink2;
     return SizedBox.expand(
       child: Stack(
         children: [
@@ -51,44 +66,82 @@ class ChatSourceSheet extends ConsumerWidget {
               ),
               child: SingleChildScrollView(
                 padding: EdgeInsets.fromLTRB(
-                  pad.left,
-                  Space.s6,
-                  pad.right,
+                  typo.margin,
+                  30,
+                  typo.margin,
                   Layout.artinyaActions,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
-                  spacing: Space.s2,
+                  spacing: 14,
                   children: [
-                    Row(
+                    Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: Space.s2,
+                      runSpacing: Space.s2,
                       children: [
-                        Expanded(
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: context.stabilo.accent,
+                            borderRadius: BorderRadius.circular(Radii.full),
+                          ),
                           child: Text(
-                            source.chapterTitle,
-                            style: StabiloType.caption,
+                            '${source.chapterTitle} · ${source.anchors.map((a) => 'bagian ${a.paragraphIndex + 1}').join(' · ')}',
+                            style: StabiloType.caption.copyWith(
+                              fontSize: 13,
+                              height: 16 / 13,
+                              fontWeight: FontWeight.w700,
+                              color: context.stabilo.onAccent,
+                            ),
                           ),
                         ),
-                        CircleButton(
-                          semanticLabel: 'Tutup',
-                          icon: AppIcons.close,
-                          onPressed: () => Navigator.of(context).pop(),
+                        if (location?.positionLabel != null)
+                          Text(
+                            location!.positionLabel!,
+                            style: StabiloType.caption.copyWith(
+                              color: context.stabilo.ink2,
+                            ),
+                          ),
+                      ],
+                    ),
+                    if (location?.before != null)
+                      SelectableText(
+                        location!.before!,
+                        style: typo.style.copyWith(color: surround),
+                      ),
+                    Stack(
+                      key: const ValueKey('source-quote'),
+                      clipBehavior: Clip.none,
+                      children: [
+                        Positioned(
+                          left: -12,
+                          right: -12,
+                          top: 0,
+                          bottom: 0,
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              color: context.stabilo.muted,
+                              borderRadius: BorderRadius.circular(Radii.md),
+                            ),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          child: SelectableText(source.text, style: typo.style),
                         ),
                       ],
                     ),
-                    Text(
-                      source.anchors
-                          .map((a) => 'Paragraf ${a.paragraphIndex + 1}')
-                          .join(' · '),
-                      style: StabiloType.caption,
-                    ),
-                    SelectableText(
-                      source.text,
-                      style: StabiloType.forBrightness(
-                        StabiloType.reading,
-                        Theme.of(context).brightness,
+                    if (location?.after != null)
+                      SelectableText(
+                        location!.after!,
+                        style: typo.style.copyWith(color: surround),
                       ),
-                    ),
-                    Text(state.sourceMessage, style: StabiloType.caption),
+                    if (state.isLoading || !available)
+                      Text(state.sourceMessage, style: StabiloType.caption),
                   ],
                 ),
               ),
@@ -101,14 +154,43 @@ class ChatSourceSheet extends ConsumerWidget {
             child: const SheetGrabber(),
           ),
           Positioned(
-            left: pad.left,
-            right: pad.right,
+            left: Space.s4,
+            right: Space.s4,
             bottom: pad.bottom,
-            child: AppButton.primary(
-              label: 'Buka di buku',
-              onPressed: available
-                  ? () => Navigator.of(context).pop(true)
-                  : null,
+            child: Row(
+              spacing: 10,
+              children: [
+                CircleButton(
+                  semanticLabel: 'Tutup',
+                  icon: AppIcons.close,
+                  size: Layout.chatComposer,
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+                Expanded(
+                  child: !state.isLoading && !available
+                      ? Container(
+                          height: Layout.chatComposer,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: context.stabilo.muted,
+                            borderRadius: BorderRadius.circular(Radii.full),
+                          ),
+                          child: Text(
+                            'Bukunya udah berubah',
+                            style: StabiloType.label.copyWith(
+                              color: context.stabilo.ink3,
+                            ),
+                          ),
+                        )
+                      : AppButton.primary(
+                          label: 'Buka di buku',
+                          icon: AppIcons.book,
+                          onPressed: available
+                              ? () => Navigator.of(context).pop(true)
+                              : null,
+                        ),
+                ),
+              ],
             ),
           ),
         ],

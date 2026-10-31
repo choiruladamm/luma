@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:luma/data/repositories/reading_progress_repository.dart';
+import 'package:luma/data/repositories/chat_repository.dart';
 import 'package:luma/data/repositories/settings_repository.dart';
 import 'package:luma/domain/ai_prompt.dart';
 import 'package:luma/domain/models/reader_prefs.dart';
@@ -216,6 +217,25 @@ class EntryChat extends ChatViewModel {
   void removeQuote() => state = state.copyWith(selectedQuote: null);
 }
 
+class VisitProgressRepo extends Fake implements ChatRepository {
+  VisitProgressRepo(this.progress, this.source);
+  final FakeProgress progress;
+  final ChatSource source;
+  @override
+  Future<void> continueReading({
+    ChatSourceRef? request,
+    ChatQuote? quote,
+  }) async {
+    final a = source.anchors.first;
+    progress.saved = (
+      chapterId: a.chapterId,
+      paragraphIndex: a.paragraphIndex,
+      paragraphOffset: 0,
+    );
+    await progress.save(a.book.bookId, progress.saved!);
+  }
+}
+
 class EntryProgress extends FakeProgress {
   EntryProgress(super.saved);
   Completer<void>? gate;
@@ -248,9 +268,10 @@ void main() {
     DateTime Function()? now,
     FakeProgress? progressOverride,
     ChatSource? visitSource,
+    bool showChatHint = false,
   }) async {
     progress = progressOverride ?? FakeProgress(saved);
-    settings = FakeSettings(prefs);
+    settings = FakeSettings(prefs)..seenChatHint = !showChatHint;
     tester.view.physicalSize = const Size(900, 1600);
     tester.view.devicePixelRatio = 1;
     tester.platformDispatcher.platformBrightnessTestValue = b;
@@ -259,6 +280,10 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          if (visitSource != null)
+            chatRepositoryProvider.overrideWithValue(
+              VisitProgressRepo(progress, visitSource),
+            ),
           chatSourceProvider.overrideWith(
             (ref, request) => Stream.value(
               visitSource == null
@@ -347,9 +372,9 @@ void main() {
         readerBook: tallBook,
         saved: (chapterId: 13, paragraphIndex: 15, paragraphOffset: .4),
       );
-      final beforeReader = t.getTopLeft(find.text(tall[15].text));
+      expect(find.text(tall[15].text), findsOneWidget);
       now = now.add(const Duration(seconds: 9));
-      await t.tap(find.text('Ngobrol'));
+      await t.tap(find.bySemanticsLabel('Ngobrolin buku'));
       await t.pumpAndSettle();
       final vm = EntryChat.live!;
       final turns = [
@@ -402,6 +427,12 @@ void main() {
       await t.tap(chip);
       await t.pumpAndSettle();
       expect(find.byType(ChatSourceSheet), findsOneWidget);
+      expect(
+        t
+            .widgetList<ChatSourceChip>(find.byType(ChatSourceChip))
+            .any((chip) => chip.selected),
+        isTrue,
+      );
       await t.tap(find.text('Buka di buku'));
       await t.pumpAndSettle();
       expect(find.byType(ChatSourceVisitView), findsOneWidget);
@@ -415,28 +446,42 @@ void main() {
       expect(progress.saves, saves);
       expect(progress.readingSeconds, seconds);
       expect(progress.opened, opens);
-      await t.tap(find.text('Balik ke obrolan'));
+      await t.tap(find.text('Balik ke ngobrol'));
       await t.pumpAndSettle();
       expect(scroll.position.pixels, closeTo(chatPixels, .01));
       await t.tap(find.byType(ChatSourceChip).hitTestable().first);
       await t.pumpAndSettle();
       await t.tap(find.text('Buka di buku'));
       await t.pumpAndSettle();
-      await t.tap(find.text('Lanjut baca semula'));
+      await t.tap(find.text('Lanjut baca'));
       await t.pumpAndSettle();
       expect(find.byType(ChatView), findsNothing);
       expect(find.byType(ReaderView), findsOneWidget);
-      expect(t.getTopLeft(find.text(tall[15].text)), beforeReader);
-      expect(progress.saves, saves);
+      expect(find.text(paragraphs[10]![1].text), findsOneWidget);
+      expect(progress.saves.length, saves.length + 1);
+      expect(progress.saves.last, (
+        chapterId: 10,
+        paragraphIndex: 1,
+        paragraphOffset: 0.0,
+      ));
       expect(progress.readingSeconds, seconds);
       expect(progress.finished, isEmpty);
       now = now.add(const Duration(seconds: 6));
       await leave(t);
       expect(progress.readingSeconds, seconds + 6);
-      expect(progress.saves.last, saves.last);
+      expect(progress.saves.last.chapterId, 10);
       expect(t.takeException(), isNull);
     },
   );
+
+  testWidgets('reader shows the chat hint once and records it', (t) async {
+    await openBook(t, showChatHint: true);
+    expect(settings.seenChatHint, isTrue);
+    expect(find.text('Ngobrol soal bukunya'), findsOneWidget);
+    await t.pump(Motion.capsuleIntro);
+    await t.pump();
+    expect(find.text('Ngobrol soal bukunya'), findsNothing);
+  });
 
   testWidgets('Ngobrol stays disabled for a chapter without imported text', (
     t,
@@ -445,8 +490,10 @@ void main() {
     paragraphs[10] = [];
     addTearDown(() => paragraphs[10] = original);
     await openBook(t);
-    final entry = t.widget<AppButton>(
-      find.byWidgetPredicate((w) => w is AppButton && w.label == 'Ngobrol'),
+    final entry = t.widget<CircleButton>(
+      find.byWidgetPredicate(
+        (w) => w is CircleButton && w.semanticLabel == 'Ngobrolin buku',
+      ),
     );
     expect(entry.onPressed, isNull);
     expect(find.byType(ChatView), findsNothing);
@@ -464,7 +511,7 @@ void main() {
       await openBook(t, now: () => now, progressOverride: repo);
       now = now.add(const Duration(seconds: 10));
       repo.gate = Completer<void>();
-      await t.tap(find.text('Ngobrol'));
+      await t.tap(find.bySemanticsLabel('Ngobrolin buku'));
       await t.pump();
       expect(find.byType(ChatView), findsNothing);
       repo.gate!.complete();
@@ -555,7 +602,7 @@ void main() {
     await t.pumpAndSettle();
     await t.tap(find.text('Tanyain ini'));
     await t.pumpAndSettle();
-    await t.tap(find.text('Balik baca'));
+    await t.tap(find.bySemanticsLabel('Balik baca'));
     await t.pumpAndSettle();
     expect(find.byType(ReaderView), findsOneWidget);
     expect(find.byKey(const ValueKey('meaning-sheet')), findsNothing);
@@ -622,7 +669,7 @@ void main() {
       expect(find.byType(BreakdownView), findsOneWidget);
       await t.tap(find.text('Tanyain ini'));
       await t.pumpAndSettle();
-      await t.tap(find.text('Balik baca'));
+      await t.tap(find.bySemanticsLabel('Balik baca'));
       await t.pumpAndSettle();
       expect(find.byType(ChatView), findsNothing);
       expect(find.byType(BreakdownView), findsNothing);
@@ -657,7 +704,7 @@ void main() {
         ),
       );
       await openBook(t);
-      await t.tap(find.text('Ngobrol'));
+      await t.tap(find.bySemanticsLabel('Ngobrolin buku'));
       await t.pumpAndSettle();
       expect(modes.last, 'SystemUiMode.edgeToEdge');
       await leave(t);
@@ -699,13 +746,13 @@ void main() {
             ),
           ),
         );
-        expect(find.text('Ngobrol'), findsOneWidget);
+        expect(find.bySemanticsLabel('Ngobrolin buku'), findsOneWidget);
         expect(
           t.getSize(find.byType(ReaderChatDock)).height,
           readerDockHeight(t.element(find.byType(ReaderChatDock))),
         );
         final button = find.byWidgetPredicate(
-          (w) => w is AppButton && w.label == 'Ngobrol',
+          (w) => w is CircleButton && w.semanticLabel == 'Ngobrolin buku',
         );
         expect(t.getSize(button).height, 44);
         expect(t.getSize(button).width, greaterThanOrEqualTo(44));
@@ -1688,7 +1735,7 @@ void main() {
       // No empty band under the progress line: 18% right down to the edge.
       expect(
         fade(tester).bottom,
-        const EdgeFadeSide(48, hold: 34 + 14 + 44, floor: 0.18),
+        const EdgeFadeSide(48, hold: 34 + 14 + 52, floor: 0.18),
       );
       expect(mask(tester).first, 0); // status bar
       expect(mask(tester).last, closeTo(0.18, 1e-9)); // bottom edge
@@ -2482,11 +2529,11 @@ void main() {
       );
       await openTall(tester);
       await tapGroup(tester, 13);
-      await tester.tap(find.text('Salin'));
+      await tester.tap(find.bySemanticsLabel('Salin'));
       await tester.pump();
       await tester.pump();
       expect(copied, startsWith('ID Tall 13:'));
-      expect(find.text('Disalin'), findsOneWidget);
+      expect(find.bySemanticsLabel('Disalin'), findsOneWidget);
       expect(find.text('Udah disalin, tinggal paste'), findsOneWidget);
       await tester.pump(const Duration(seconds: 3));
       expect(find.text('Udah disalin, tinggal paste'), findsNothing);
@@ -2699,7 +2746,16 @@ void main() {
         final done = translation(tester, 'Halo');
         expect(done.data, full); // solid, no faded spans
         expect(find.text('Gitu maknanya.'), findsOneWidget);
-        expect(button(tester, 'Salin').onPressed, isNotNull);
+        expect(
+          tester
+              .widget<CircleButton>(
+                find.byWidgetPredicate(
+                  (w) => w is CircleButton && w.semanticLabel == 'Salin',
+                ),
+              )
+              .onPressed,
+          isNotNull,
+        );
         expect(find.bySemanticsLabel('Tutup'), findsOneWidget);
       });
 
@@ -2887,7 +2943,16 @@ void main() {
         s.push(state(AiPhase.done, translations: [long], meaning: 'Makna.'));
         await frames(tester, 60);
         expect(sheetPixels(tester), before);
-        expect(button(tester, 'Salin').onPressed, isNotNull);
+        expect(
+          tester
+              .widget<CircleButton>(
+                find.byWidgetPredicate(
+                  (w) => w is CircleButton && w.semanticLabel == 'Salin',
+                ),
+              )
+              .onPressed,
+          isNotNull,
+        );
       });
     });
   });

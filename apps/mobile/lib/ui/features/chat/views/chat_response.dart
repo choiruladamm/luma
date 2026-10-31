@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../../domain/models/book_chat.dart';
 import '../../../../domain/pacing.dart';
+import '../../../core/theme/stabilo_tokens.dart';
+import '../../../core/theme/stabilo_theme.dart';
 
 /// Paces only safe text; transport completion and persistence remain independent.
 class ChatResponse extends StatefulWidget {
@@ -117,4 +119,53 @@ class _ChatResponseState extends State<ChatResponse>
     }
     return widget.builder(context, visible);
   }
+}
+
+/// A visual cursor only; streamed text is never announced character by character.
+class ChatCaret extends StatefulWidget {
+  const ChatCaret({super.key});
+  @override
+  State<ChatCaret> createState() => _ChatCaretState();
+}
+
+class _ChatCaretState extends State<ChatCaret>
+    with SingleTickerProviderStateMixin {
+  late final _blink = AnimationController(
+    vsync: this,
+    duration: Motion.cursorBlink,
+  );
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _blink.stop();
+    } else {
+      _blink.repeat();
+    }
+  }
+
+  @override
+  void dispose() {
+    _blink.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => ExcludeSemantics(
+    child: AnimatedBuilder(
+      animation: _blink,
+      builder: (context, _) => Opacity(
+        opacity: _blink.value < 0.5 ? 1 : 0,
+        child: Container(
+          width: Space.s2,
+          height: Space.s4,
+          margin: const EdgeInsets.only(left: Space.s1),
+          decoration: BoxDecoration(
+            color: context.stabilo.ink,
+            borderRadius: BorderRadius.circular(Radii.xs),
+          ),
+        ),
+      ),
+    ),
+  );
 }

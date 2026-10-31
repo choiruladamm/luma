@@ -335,8 +335,13 @@ class ChatViewModel extends Notifier<ChatState> {
         throw const FormatException('Entry buku berubah');
       }
       if (context.startsNewSession) {
-        await _activate(life, null);
-        if (_live(life)) state = state.copyWith(selectedQuote: context.quote);
+        final existing = await life.repo.sessionForQuote(context.quote!);
+        if (!_live(life)) return;
+        if (existing != null) await life.repo.markOpened(bookId, existing.id);
+        await _activate(life, existing);
+        if (_live(life) && existing == null) {
+          state = state.copyWith(selectedQuote: context.quote);
+        }
       } else {
         await _activate(life, await life.repo.lastOpenedSession(bookId));
       }
@@ -352,12 +357,24 @@ class ChatViewModel extends Notifier<ChatState> {
   }
 
   Future<void> rename(String title) async {
-    final life = _life, session = life.session;
-    if (session == null || state.readOnly) return;
+    final session = state.activeSession;
+    if (session != null) await renameSession(session, title);
+  }
+
+  Future<bool> renameSession(ChatSession session, String title) async {
+    final life = _life;
+    if (session.book.bookId != bookId ||
+        session.book != state.book ||
+        session.invalid ||
+        state.changingSession) {
+      return false;
+    }
     try {
       await life.repo.rename(session.book, session.id, title);
+      return true;
     } catch (e) {
       _problem(life, e);
+      return false;
     }
   }
 

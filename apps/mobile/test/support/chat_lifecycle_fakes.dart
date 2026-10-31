@@ -61,6 +61,8 @@ class LifecycleRepo implements ChatRepository {
   Future<ChatSession?> session(int bookId, int sessionId) async =>
       sessions[sessionId]?.book.bookId == bookId ? sessions[sessionId] : null;
   @override
+  Future<ChatSession?> sessionForQuote(ChatQuote quote) async => null;
+  @override
   Future<ChatSession?> lastOpenedSession(int bookId) async =>
       last == null ? null : session(bookId, last!);
   @override

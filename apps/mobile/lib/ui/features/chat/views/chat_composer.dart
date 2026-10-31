@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../../domain/models/book_chat.dart';
 import '../../../core/theme/stabilo_theme.dart';
 import '../../../core/theme/stabilo_tokens.dart';
 import '../../../core/theme/stabilo_type.dart';
@@ -16,14 +15,13 @@ class ChatComposer extends StatefulWidget {
     required this.onChanged,
     required this.onSend,
     required this.onStop,
-    required this.onRemoveQuote,
-    this.quote,
+    this.hint = 'Tanyain isi buku ini…',
   });
   final String draft;
   final bool canSend, running, enabled;
-  final ChatQuote? quote;
+  final String hint;
   final ValueChanged<String> onChanged;
-  final VoidCallback onSend, onStop, onRemoveQuote;
+  final VoidCallback onSend, onStop;
 
   @override
   State<ChatComposer> createState() => _ChatComposerState();
@@ -61,65 +59,69 @@ class _ChatComposerState extends State<ChatComposer> {
   Widget build(BuildContext context) {
     final c = context.stabilo;
     return Container(
-      padding: const EdgeInsets.all(Space.s3),
+      padding: const EdgeInsets.fromLTRB(18, 4, 4, 4),
       decoration: BoxDecoration(
         color: c.sheet,
-        borderRadius: BorderRadius.circular(Radii.lg),
+        borderRadius: BorderRadius.circular(Radii.chatComposer),
         border: Border.all(
-          color: _focus.hasFocus ? c.outline : c.fieldLine,
+          color: _focus.hasFocus ? c.outline : c.capsuleLine,
           width: Layout.outline,
         ),
+        boxShadow: Elevation.capsule(c, Theme.of(context).brightness),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         spacing: Space.s3,
         children: [
-          if (widget.quote != null)
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    widget.quote!.text,
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                    style: StabiloType.caption,
-                  ),
-                ),
-                CircleButton(
-                  semanticLabel: 'Lepas kutipan',
-                  icon: AppIcons.close,
-                  onPressed: widget.enabled ? widget.onRemoveQuote : null,
-                ),
-              ],
-            ),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
-            spacing: Space.s3,
+            spacing: Space.s2,
             children: [
               Expanded(
-                child: TextField(
-                  controller: _text,
-                  focusNode: _focus,
-                  enabled: widget.enabled,
-                  minLines: 1,
-                  maxLines: 5,
-                  keyboardType: TextInputType.multiline,
-                  textInputAction: TextInputAction.newline,
-                  style: StabiloType.body.copyWith(color: c.ink),
-                  cursorColor: c.ink,
-                  decoration: InputDecoration.collapsed(
-                    hintText: 'Tanyain isi buku ini…',
-                    hintStyle: StabiloType.body.copyWith(color: c.ink2),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 11),
+                  child: TextField(
+                    controller: _text,
+                    focusNode: _focus,
+                    enabled: widget.enabled,
+                    minLines: 1,
+                    maxLines: 5,
+                    keyboardType: TextInputType.multiline,
+                    textInputAction: TextInputAction.newline,
+                    style: StabiloType.body.copyWith(
+                      height: 22 / 16,
+                      color: c.ink,
+                    ),
+                    cursorColor: c.ink,
+                    decoration: InputDecoration.collapsed(
+                      hintText: widget.hint,
+                      hintStyle: StabiloType.body.copyWith(
+                        height: 22 / 16,
+                        color: c.ink3,
+                      ),
+                    ),
+                    onChanged: widget.onChanged,
                   ),
-                  onChanged: widget.onChanged,
                 ),
               ),
               CircleButton(
                 semanticLabel: widget.running
                     ? 'Hentikan jawaban'
                     : 'Kirim pertanyaan',
-                icon: widget.running ? AppIcons.stop : AppIcons.send,
-                primary: widget.canSend,
+                icon: widget.running ? null : AppIcons.send,
+                glyph: widget.running
+                    ? Container(
+                        width: 13,
+                        height: 13,
+                        decoration: BoxDecoration(
+                          color: c.canvas,
+                          borderRadius: BorderRadius.circular(3),
+                        ),
+                      )
+                    : null,
+                size: Layout.chatSend,
+                active: widget.canSend,
+                inverse: widget.running,
                 onPressed: widget.running
                     ? widget.onStop
                     : (widget.canSend ? widget.onSend : null),
