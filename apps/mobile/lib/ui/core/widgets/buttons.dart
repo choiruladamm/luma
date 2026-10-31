@@ -259,6 +259,7 @@ class CircleButton extends StatelessWidget {
 abstract final class AppIcons {
   static const chat = HugeIcons.strokeRoundedBubbleChat;
   static const history = HugeIcons.strokeRoundedClock01;
+  static const message = HugeIcons.strokeRoundedMessage01;
   static const more = HugeIcons.strokeRoundedMoreHorizontal;
   static const send = HugeIcons.strokeRoundedArrowUp02;
   static const stop = HugeIcons.strokeRoundedStop;

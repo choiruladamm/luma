@@ -84,52 +84,37 @@ class ChatSessionsView extends ConsumerWidget {
           lineExtent: Space.s8,
         ),
       ),
-      error: (_, _) => Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          spacing: Space.s3,
-          children: [
-            AppIcon(AppIcons.alertCircle, color: context.stabilo.danger),
-            const Text('Riwayatnya gak kebuka.', style: StabiloType.titleXs),
-            Text(
-              'Obrolan lo aman kok. Coba muat ulang bentar lagi.',
-              textAlign: TextAlign.center,
-              style: StabiloType.caption.copyWith(color: context.stabilo.ink2),
-            ),
-            AppButton.secondary(
-              label: 'Muat ulang',
-              height: Layout.touch,
-              onPressed: () => ref.invalidate(chatSessionsProvider(bookId)),
-            ),
-          ],
+      error: (_, _) => _SessionsState(
+        icon: AppIcons.alertCircle,
+        iconColor: context.stabilo.onPink,
+        tile: context.stabilo.pink,
+        title: 'Riwayatnya gak kebuka.',
+        body: 'Obrolan lo aman kok. Coba muat ulang bentar lagi.',
+        action: AppButton.secondary(
+          label: 'Muat ulang',
+          icon: AppIcons.retry,
+          height: Layout.touch,
+          onPressed: () => ref.invalidate(chatSessionsProvider(bookId)),
         ),
       ),
       data: (items) {
         final own = items.where((s) => s.book.bookId == bookId).toList();
         if (own.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              spacing: Space.s2,
-              children: [
-                const Text('Belum ada obrolan.', style: StabiloType.titleXs),
-                Text(
-                  'Obrolan yang lo mulai bakal muncul di sini, dipisah per sesi.',
-                  textAlign: TextAlign.center,
-                  style: StabiloType.caption.copyWith(
-                    color: context.stabilo.ink2,
-                  ),
-                ),
-              ],
-            ),
+          return _SessionsState(
+            icon: AppIcons.message,
+            iconColor: context.stabilo.ink2,
+            tile: context.stabilo.muted,
+            title: 'Belum ada obrolan.',
+            body:
+                'Obrolan yang lo mulai bakal muncul di sini, dipisah per sesi.',
           );
         }
         final now = DateTime.now();
         return ListView.builder(
           padding: EdgeInsets.fromLTRB(
-            Space.s4,
+            Space.s3,
             pad.top + headerHeight + Space.s2,
-            Space.s4,
+            Space.s3,
             pad.bottom + 100,
           ),
           itemCount: own.length,
@@ -142,9 +127,9 @@ class ChatSessionsView extends ConsumerWidget {
                 if (i == 0 || group != chatTimeGroup(own[i - 1].updatedAt, now))
                   Padding(
                     padding: EdgeInsets.fromLTRB(
-                      Space.s2,
+                      Space.s3,
                       i == 0 ? Space.s2 : 22,
-                      Space.s2,
+                      Space.s3,
                       6,
                     ),
                     child: Text(
@@ -190,8 +175,8 @@ class ChatSessionsView extends ConsumerWidget {
             ),
           ),
           Positioned(
-            left: Space.s4,
-            right: Space.s4,
+            left: Space.s3,
+            right: Space.s3,
             top: pad.top,
             child: Container(
               color: context.stabilo.canvas,
@@ -207,14 +192,15 @@ class ChatSessionsView extends ConsumerWidget {
                   Expanded(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           'Riwayat obrolan',
+                          textAlign: TextAlign.center,
                           style: StabiloType.titleXs.copyWith(fontSize: 15),
                         ),
                         Text(
                           title,
+                          textAlign: TextAlign.center,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: StabiloType.caption.copyWith(
@@ -224,6 +210,7 @@ class ChatSessionsView extends ConsumerWidget {
                       ],
                     ),
                   ),
+                  const SizedBox(width: Layout.touch),
                 ],
               ),
             ),
@@ -234,6 +221,7 @@ class ChatSessionsView extends ConsumerWidget {
             bottom: footerBottom,
             child: AppButton.primary(
               label: 'Obrolan baru',
+              icon: AppIcons.add,
               height: 56,
               pill: true,
               onPressed:
@@ -268,7 +256,7 @@ class SessionRow extends StatelessWidget {
     Widget badge(String label, {bool active = false}) => Container(
       padding: const EdgeInsets.symmetric(horizontal: Space.s2, vertical: 2),
       decoration: BoxDecoration(
-        color: active ? c.accent : c.muted,
+        color: active ? c.accent : c.track,
         borderRadius: BorderRadius.circular(Radii.full),
       ),
       child: Text(
@@ -285,10 +273,10 @@ class SessionRow extends StatelessWidget {
       selected: active,
       child: Material(
         color: active ? c.muted : Colors.transparent,
-        borderRadius: BorderRadius.circular(Radii.md),
+        borderRadius: BorderRadius.circular(Radii.field),
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(Radii.md),
+          borderRadius: BorderRadius.circular(Radii.field),
           child: Padding(
             padding: const EdgeInsets.only(
               left: Space.s3,
@@ -306,7 +294,7 @@ class SessionRow extends StatelessWidget {
                       Text(
                         session.title,
                         style: StabiloType.titleXs.copyWith(fontSize: 15.5),
-                        maxLines: 2,
+                        maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                       if (session.preview != null)
@@ -314,7 +302,11 @@ class SessionRow extends StatelessWidget {
                           session.preview!,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: StabiloType.caption.copyWith(color: c.ink2),
+                          style: StabiloType.caption.copyWith(
+                            fontSize: 13.5,
+                            height: 1.35,
+                            color: c.ink2,
+                          ),
                         ),
                       Wrap(
                         crossAxisAlignment: WrapCrossAlignment.center,
@@ -322,7 +314,11 @@ class SessionRow extends StatelessWidget {
                         children: [
                           Text(
                             'Diperbarui $time',
-                            style: StabiloType.caption.copyWith(color: c.ink2),
+                            style: StabiloType.caption.copyWith(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w600,
+                              color: c.ink3,
+                            ),
                           ),
                           if (active) badge('Lagi dibuka', active: true),
                           if (archived) badge('Arsip'),
@@ -348,4 +344,60 @@ class SessionRow extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Kosong / gagal muat: ikon 48, judul, keterangan, aksi opsional.
+class _SessionsState extends StatelessWidget {
+  const _SessionsState({
+    required this.icon,
+    required this.iconColor,
+    required this.tile,
+    required this.title,
+    required this.body,
+    this.action,
+  });
+  final List<List<dynamic>> icon;
+  final Color iconColor, tile;
+  final String title, body;
+  final Widget? action;
+
+  @override
+  Widget build(BuildContext context) => Align(
+    alignment: Alignment.topCenter,
+    child: Padding(
+      padding: const EdgeInsets.fromLTRB(40, 84, 40, 0),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        spacing: Space.s2,
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            margin: const EdgeInsets.only(bottom: 6),
+            decoration: BoxDecoration(color: tile, shape: BoxShape.circle),
+            child: Center(child: AppIcon(icon, color: iconColor)),
+          ),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: StabiloType.titleXs.copyWith(fontSize: 20),
+          ),
+          Text(
+            body,
+            textAlign: TextAlign.center,
+            style: StabiloType.body.copyWith(
+              fontSize: 14.5,
+              height: 1.45,
+              color: context.stabilo.ink2,
+            ),
+          ),
+          if (action != null)
+            Padding(
+              padding: const EdgeInsets.only(top: Space.s3),
+              child: action,
+            ),
+        ],
+      ),
+    ),
+  );
 }

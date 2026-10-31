@@ -759,25 +759,6 @@ void main() {
     );
   });
 
-  testWidgets('selected quote can be removed without creating a session', (
-    t,
-  ) async {
-    await open(
-      t,
-      state: ChatState(
-        book: book,
-        loading: false,
-        selectedQuote: ChatQuote(anchors: source.anchors),
-      ),
-    );
-    expect(find.text('Bukti'), findsOneWidget);
-    await t.tap(button('Lepas kutipan'));
-    await t.pump();
-    expect(find.text('Bukti'), findsNothing);
-    expect(vm.creates, 0);
-    expect(vm.sends, 0);
-  });
-
   for (final status in [ChatAnswerStatus.partial, ChatAnswerStatus.notFound]) {
     testWidgets('${status.name} shows fixed limitation note', (t) async {
       final response = ChatAnswer(

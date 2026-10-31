@@ -212,8 +212,8 @@ class _ChatViewState extends ConsumerState<ChatView>
                   ),
                 ),
                 Positioned(
-                  left: Layout.margin,
-                  right: Layout.margin,
+                  left: Space.s3,
+                  right: Space.s3,
                   top: pad.top,
                   child: IgnorePointer(
                     ignoring: hidden > 0.5,
@@ -251,13 +251,13 @@ class _ChatViewState extends ConsumerState<ChatView>
                               Expanded(
                                 child: Column(
                                   mainAxisSize: MainAxisSize.min,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
                                       'Ngobrolin buku',
                                       style: StabiloType.titleXs.copyWith(
                                         fontSize: 15,
                                       ),
+                                      textAlign: TextAlign.center,
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                     ),
@@ -266,6 +266,7 @@ class _ChatViewState extends ConsumerState<ChatView>
                                       style: StabiloType.caption.copyWith(
                                         color: context.stabilo.ink2,
                                       ),
+                                      textAlign: TextAlign.center,
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                     ),
@@ -490,12 +491,8 @@ class _ChatViewState extends ConsumerState<ChatView>
         : ChatContextCard(
             key: ValueKey(quote.anchors.first.paragraphHash),
             quote: quote,
-            chapterTitle: quote.chapterTitle,
             collapseOn: state.turns.length,
             onRead: state.archived ? null : () => _readQuote(quote),
-            onRemove: state.turns.isEmpty && !state.busy
-                ? _vm.removeQuote
-                : null,
           );
     if (state.turns.isNotEmpty) {
       return ChatHistory(
