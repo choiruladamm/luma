@@ -406,6 +406,21 @@ void main() {
     expect(quote.style!.fontSize, ReaderPrefs.sizes[6]);
   });
 
+  for (final margin in TextMargin.values) {
+    testWidgets('source sheet margin matches the reader for $margin', (
+      t,
+    ) async {
+      final prefs = ReaderPrefs(margin: margin);
+      await open(t, sheet: true, prefs: prefs);
+      final sheetLeft = t.getTopLeft(find.byType(ChatSourceSheet)).dx;
+      final quote = find.descendant(
+        of: find.byKey(const ValueKey('source-quote')),
+        matching: find.byType(SelectableText),
+      );
+      expect(t.getTopLeft(quote).dx - sheetLeft, prefs.marginWidth);
+    });
+  }
+
   testWidgets('deletion and restore cannot reactivate an existing visit', (
     t,
   ) async {

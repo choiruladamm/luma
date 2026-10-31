@@ -152,7 +152,7 @@ dengan aksi obrolan baru. Semua sumber berasal dari seluruh buku yang diimport.
 - Kutipan di sheet sitasi: font, ukuran, jarak baris persis Aa.
 - Jawaban AI, kartu konteks, kutipan, dan konteks sebelum/sesudah sitasi: font, ukuran, dan jarak baris persis Aa (`ReaderTypography.style`, termasuk +0,05 di gelap), sama dengan halaman baca. Di Aa default ukurannya 18,5, bukan 15,5 seperti spek board lama.
 - Jarak antar paragraf jawaban = 1em ukuran Aa (`ReaderTypography.paragraphGap`), sama dengan halaman baca.
-- Margin: padding dasar 24 jadi batas bawah; Lega (32) nambah 8 di kiri-kanan isi layar dan isi sheet.
+- Margin kiri-kanan isi layar ngobrol dan isi sheet sitasi persis `ReaderPrefs.marginWidth` (Sempit 16, Pas 24, Lega 32), sama dengan halaman baca. Composer dan header tetap margin UI 24.
 - Tetap ukuran UI (Bricolage): bubble pesan, notice, chip sitasi, label, tombol, header, composer.
 
 Kontrak menetapkan input ringkas min1/max5 baris, rename wajib judul terisi (maks120

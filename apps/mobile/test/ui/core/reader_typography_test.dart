@@ -57,12 +57,4 @@ void main() {
       expect(t.paragraphGap, ReaderPrefs.sizes[step]);
     }
   });
-
-  test('inset only grows past the base padding', () {
-    double inset(TextMargin m) =>
-        ReaderTypography(ReaderPrefs(margin: m), Brightness.light).inset(24);
-    expect(inset(TextMargin.narrow), 0);
-    expect(inset(TextMargin.normal), 0);
-    expect(inset(TextMargin.wide), 8);
-  });
 }

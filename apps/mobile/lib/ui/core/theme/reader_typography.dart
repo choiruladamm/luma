@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
@@ -45,10 +43,6 @@ class ReaderTypography {
 
   /// Jarak antar paragraf: 1em ukuran Aa, sama kayak halaman baca.
   double get paragraphGap => style.fontSize!;
-
-  /// Tambahan margin di atas padding dasar layar ([base]); Lega (32) nambah 8,
-  /// Sempit sama kayak Pas.
-  double inset(double base) => math.max(0.0, margin - base);
 
   /// Tinggi satu baris teks.
   double get lineExtent => style.fontSize! * style.height!;

@@ -170,7 +170,8 @@ class _ChatViewState extends ConsumerState<ChatView> {
       ref.watch(readerPrefsProvider).value ?? const ReaderPrefs(),
       Theme.of(context).brightness,
     );
-    final side = Layout.margin + typo.inset(Layout.margin);
+    // Margin teks persis Aa (16 / 24 / 32), sama kayak halaman baca.
+    final side = typo.margin;
     _measureFooter();
     return Scaffold(
       body: NotificationListener<ScrollNotification>(

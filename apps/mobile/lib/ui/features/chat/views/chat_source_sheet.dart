@@ -44,12 +44,11 @@ class ChatSourceSheet extends ConsumerWidget {
     final source = location?.source ?? snapshot;
     final available = location?.available ?? false;
     final pad = Layout.sheetPadding;
-    // Kutipan + konteks ikut Aa, termasuk margin (Lega nambah di kiri-kanan).
+    // Kutipan + konteks ikut Aa, termasuk margin kiri-kanan persis Aa.
     final typo = ReaderTypography(
       ref.watch(readerPrefsProvider).value ?? const ReaderPrefs(),
       Theme.of(context).brightness,
     );
-    final side = typo.inset(pad.left);
     return SizedBox.expand(
       child: Stack(
         children: [
@@ -62,9 +61,9 @@ class ChatSourceSheet extends ConsumerWidget {
               ),
               child: SingleChildScrollView(
                 padding: EdgeInsets.fromLTRB(
-                  pad.left + side,
+                  typo.margin,
                   30,
-                  pad.right + side,
+                  typo.margin,
                   Layout.artinyaActions,
                 ),
                 child: Column(
