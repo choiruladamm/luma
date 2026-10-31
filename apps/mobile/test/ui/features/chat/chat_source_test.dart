@@ -308,7 +308,7 @@ void main() {
       'source sheet scrolls metadata with full-width text in $brightness',
       (t) async {
         await open(t, sheet: true, brightness: brightness);
-        final chapter = find.text('III · Paragraf 5 · Paragraf 6');
+        final chapter = find.text('III · bagian 5 · bagian 6');
         final scroll = find.ancestor(
           of: chapter,
           matching: find.byType(SingleChildScrollView),
@@ -381,7 +381,9 @@ void main() {
     locations.add(ChatSourceLocation(source: source, available: false));
     await t.pumpAndSettle();
     expect(find.textContaining('Sumber ini udah gak tersedia'), findsOneWidget);
-    expect(t.widget<AppButton>(find.byType(AppButton)).onPressed, isNull);
+    expect(find.byType(AppButton), findsNothing);
+    expect(find.text('Bukunya udah berubah'), findsOneWidget);
+    expect(find.text('Buka di buku'), findsNothing);
     expect(find.byType(SelectableText), findsOneWidget);
     unchanged();
     await t.tap(find.bySemanticsLabel('Tutup'));

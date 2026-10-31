@@ -40,6 +40,7 @@ abstract final class Layout {
   static const chatFollowDistance = 80.0;
   static const chatHeader = 52.0;
   static const chatComposer = 52.0;
+  static const chatSend = 42.0;
   static const chatBubbleFraction = 0.82;
   static const chatBubblePadding = EdgeInsets.symmetric(
     horizontal: 14,

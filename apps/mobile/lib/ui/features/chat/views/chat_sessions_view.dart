@@ -29,6 +29,17 @@ String chatBookTitle(WidgetRef ref, int bookId) {
       : '${book.title} · $author';
 }
 
+/// Judul buku tanpa penulis, buat kalimat di tengah teks.
+String chatBookName(WidgetRef ref, int bookId) =>
+    ref
+        .watch(booksStreamProvider)
+        .asData
+        ?.value
+        .where((b) => b.id == bookId)
+        .firstOrNull
+        ?.title ??
+    'buku ini';
+
 class ChatSessionsView extends ConsumerWidget {
   const ChatSessionsView({super.key, required this.bookId});
   final int bookId;

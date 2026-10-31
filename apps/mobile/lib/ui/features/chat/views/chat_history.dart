@@ -10,6 +10,7 @@ import '../../../core/widgets/edge_fade.dart';
 import 'chat_copy.dart';
 import 'chat_response.dart';
 import 'chat_context_card.dart';
+import 'chat_source_label.dart';
 
 class ChatHistory extends StatefulWidget {
   const ChatHistory({
@@ -29,6 +30,7 @@ class ChatHistory extends StatefulWidget {
     this.contextCard,
     this.lastActions,
     this.reserveAnswerSpace = false,
+    this.chapterNumbers,
   });
   final List<ChatTurn> turns;
   final ({int turnId, String sourceId})? selectedSource;
@@ -36,6 +38,7 @@ class ChatHistory extends StatefulWidget {
   final EdgeFadeSide topFade, bottomFade;
   final Widget? contextCard, lastActions;
   final bool reserveAnswerSpace;
+  final Map<int, int>? chapterNumbers;
   final bool suspended;
   final ChatScrollAnchor? anchor;
   final ChatPhase? phase;
@@ -105,7 +108,10 @@ class _ChatHistoryState extends State<ChatHistory> {
   void didUpdateWidget(ChatHistory oldWidget) {
     super.didUpdateWidget(oldWidget);
     _rendered.remove(widget.turns.last.id);
-    if (oldWidget.selectedSource != widget.selectedSource) _rendered.clear();
+    if (oldWidget.selectedSource != widget.selectedSource ||
+        oldWidget.chapterNumbers != widget.chapterNumbers) {
+      _rendered.clear();
+    }
     if (oldWidget.suspended && !widget.suspended) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _position();
@@ -268,7 +274,7 @@ class _ChatHistoryState extends State<ChatHistory> {
                               Text(
                                 turn.question,
                                 style: StabiloType.body.copyWith(
-                                  fontWeight: FontWeight.w600,
+                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
                             ],
@@ -316,6 +322,10 @@ class _ChatHistoryState extends State<ChatHistory> {
                                                 PlaceholderAlignment.middle,
                                             child: ChatSourceChip(
                                               source: source,
+                                              label: chatSourceLabel(
+                                                source,
+                                                widget.chapterNumbers,
+                                              ),
                                               selected:
                                                   widget.selectedSource ==
                                                   (
@@ -485,9 +495,8 @@ class _ChatHistoryState extends State<ChatHistory> {
                 right: 0,
                 bottom: widget.padding.bottom,
                 child: Center(
-                  child: CircleButton(
-                    semanticLabel: 'Ke terbaru',
-                    icon: AppIcons.down,
+                  child: ChatJumpButton(
+                    writing: widget.turns.last.phase.isRunning,
                     onPressed: () => _latest(),
                   ),
                 ),
@@ -523,10 +532,12 @@ class ChatSourceChip extends StatelessWidget {
   const ChatSourceChip({
     super.key,
     required this.source,
+    required this.label,
     this.onPressed,
     this.selected = false,
   });
   final ChatSource source;
+  final String label;
   final VoidCallback? onPressed;
   final bool selected;
   @override
@@ -534,39 +545,84 @@ class ChatSourceChip extends StatelessWidget {
     button: true,
     label:
         '${source.chapterTitle}, paragraf ${source.anchors.first.paragraphIndex + 1}',
-    child: InkWell(
+    excludeSemantics: true,
+    child: GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: onPressed,
-      borderRadius: BorderRadius.circular(Radii.full),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(
-          minHeight: Layout.touch,
-          minWidth: Layout.touch,
-        ),
-        child: Center(
-          widthFactor: 1,
-          child: Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 6,
-              vertical: Space.s1,
-            ),
-            decoration: BoxDecoration(
-              color: selected ? context.stabilo.accent : context.stabilo.muted,
-              borderRadius: BorderRadius.circular(Radii.full),
-            ),
-            child: Text(
-              source.chapterTitle,
-              style: StabiloType.caption.copyWith(
-                fontSize: 12,
-                height: 1,
-                fontWeight: FontWeight.w700,
-                color: selected
-                    ? context.stabilo.onAccent
-                    : context.stabilo.ink,
-              ),
+      // Area tap melebar ke samping; tinggi dijaga 20 biar baris teks gak melar.
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 6),
+        child: Container(
+          height: 20,
+          padding: const EdgeInsets.symmetric(horizontal: 6),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: selected ? context.stabilo.accent : context.stabilo.muted,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Text(
+            label,
+            style: StabiloType.caption.copyWith(
+              fontSize: 12,
+              height: 1,
+              fontWeight: FontWeight.w700,
+              color: selected ? context.stabilo.onAccent : context.stabilo.ink,
             ),
           ),
         ),
       ),
     ),
   );
+}
+
+/// Kapsul ↓ di atas composer; titik kuning = jawaban lagi ditulis.
+class ChatJumpButton extends StatelessWidget {
+  const ChatJumpButton({
+    super.key,
+    required this.writing,
+    required this.onPressed,
+  });
+  final bool writing;
+  final VoidCallback onPressed;
+  @override
+  Widget build(BuildContext context) {
+    final c = context.stabilo;
+    return Semantics(
+      button: true,
+      label: 'Ke terbaru',
+      child: GestureDetector(
+        onTap: onPressed,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              width: Layout.touch,
+              height: Layout.touch,
+              decoration: BoxDecoration(
+                color: c.sheet,
+                shape: BoxShape.circle,
+                border: Border.all(color: c.outline, width: Layout.outline),
+                boxShadow: Elevation.capsule(c, Theme.of(context).brightness),
+              ),
+              child: Center(child: AppIcon(AppIcons.down, color: c.ink)),
+            ),
+            if (writing)
+              Positioned(
+                right: -2,
+                top: -2,
+                child: Container(
+                  width: 12,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    color: c.accent,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: c.outline, width: Layout.outline),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
 }

@@ -77,7 +77,7 @@ class ChatSourceSheet extends ConsumerWidget {
                             borderRadius: BorderRadius.circular(Radii.full),
                           ),
                           child: Text(
-                            '${source.chapterTitle} · ${source.anchors.map((a) => 'Paragraf ${a.paragraphIndex + 1}').join(' · ')}',
+                            '${source.chapterTitle} · ${source.anchors.map((a) => 'bagian ${a.paragraphIndex + 1}').join(' · ')}',
                             style: StabiloType.caption.copyWith(
                               fontSize: 13,
                               height: 16 / 13,
@@ -164,12 +164,27 @@ class ChatSourceSheet extends ConsumerWidget {
                   onPressed: () => Navigator.of(context).pop(),
                 ),
                 Expanded(
-                  child: AppButton.primary(
-                    label: 'Buka di buku',
-                    onPressed: available
-                        ? () => Navigator.of(context).pop(true)
-                        : null,
-                  ),
+                  child: !state.isLoading && !available
+                      ? Container(
+                          height: Layout.chatComposer,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: context.stabilo.muted,
+                            borderRadius: BorderRadius.circular(Radii.full),
+                          ),
+                          child: Text(
+                            'Bukunya udah berubah',
+                            style: StabiloType.label.copyWith(
+                              color: context.stabilo.ink3,
+                            ),
+                          ),
+                        )
+                      : AppButton.primary(
+                          label: 'Buka di buku',
+                          onPressed: available
+                              ? () => Navigator.of(context).pop(true)
+                              : null,
+                        ),
                 ),
               ],
             ),

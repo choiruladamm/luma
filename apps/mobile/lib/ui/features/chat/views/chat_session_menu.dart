@@ -32,6 +32,7 @@ Future<void> showChatSessionMenu(
         List<List<dynamic>> icon,
         VoidCallback? onTap, {
         bool destructive = false,
+        String? hint,
       }) => Material(
         color: Colors.transparent,
         child: InkWell(
@@ -51,14 +52,27 @@ Future<void> showChatSessionMenu(
                         : context.stabilo.ink,
                   ),
                   Expanded(
-                    child: Text(
-                      label,
-                      style: StabiloType.body.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: destructive
-                            ? context.stabilo.danger
-                            : context.stabilo.ink,
-                      ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          label,
+                          style: StabiloType.body.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: destructive
+                                ? context.stabilo.danger
+                                : context.stabilo.ink,
+                          ),
+                        ),
+                        if (hint != null)
+                          Text(
+                            hint,
+                            style: StabiloType.caption.copyWith(
+                              color: context.stabilo.ink2,
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                 ],
@@ -90,17 +104,16 @@ Future<void> showChatSessionMenu(
                 ),
               ),
             ),
-            if (readOnly)
-              const Text('Arsip cuma bisa dibaca. Judulnya gak bisa diubah.'),
             action(
               'Ubah judul',
               AppIcons.edit,
               readOnly
                   ? null
                   : () => Navigator.pop(sheet, _SessionAction.rename),
+              hint: readOnly ? 'Gak bisa buat obrolan arsip' : null,
             ),
             action(
-              'Hapus obrolan ini',
+              'Hapus obrolan',
               AppIcons.delete,
               () => Navigator.pop(sheet, _SessionAction.delete),
               destructive: true,

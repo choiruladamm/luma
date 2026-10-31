@@ -15,6 +15,8 @@ import 'package:luma/ui/features/bookshelf/view_models/bookshelf_view_model.dart
 import 'package:luma/ui/features/chat/view_models/chat_view_model.dart';
 import 'package:luma/ui/features/chat/views/chat_composer.dart';
 import 'package:luma/ui/features/chat/views/chat_sessions_view.dart';
+import 'package:luma/ui/features/chat/views/chat_history.dart'
+    show ChatJumpButton;
 import 'package:luma/ui/features/chat/views/chat_view.dart';
 
 const book = (bookId: 1, contentRevision: 1);
@@ -153,7 +155,9 @@ class FakeChat extends ChatViewModel {
 }
 
 Finder button(String label) => find.byWidgetPredicate(
-  (w) => w is CircleButton && w.semanticLabel == label,
+  (w) =>
+      w is CircleButton && w.semanticLabel == label ||
+      w is ChatJumpButton && label == 'Ke terbaru',
 );
 
 void main() {
@@ -680,7 +684,7 @@ void main() {
     addTearDown(t.platformDispatcher.clearTextScaleFactorTestValue);
     await t.pumpAndSettle();
     expect(t.takeException(), isNull);
-    expect(t.getSize(button('Kirim pertanyaan')), const Size(44, 44));
+    expect(t.getSize(button('Kirim pertanyaan')), const Size(42, 42));
   });
 
   testWidgets('keyboard preserves offset until explicit latest action', (
@@ -794,24 +798,18 @@ void main() {
     });
   }
 
-  testWidgets('empty composer, examples and growing input never auto send', (
-    t,
-  ) async {
+  testWidgets('empty composer and growing input never auto send', (t) async {
     await open(t);
     expect(vm.sends, 0);
     await t.enterText(find.byType(TextField), '   ');
     await t.tap(button('Kirim pertanyaan'));
     expect(vm.sends, 0);
-    await t.tap(find.text('Apa gagasan utama buku ini?'));
-    await t.pump();
-    expect(vm.sends, 0);
-    expect(find.text('Apa gagasan utama buku ini?'), findsNWidgets(2));
     await t.enterText(find.byType(TextField), 'a\nb\nc\nd\ne\nf\ng');
     await t.pump();
     final field = t.widget<TextField>(find.byType(TextField));
     expect(field.minLines, 1);
     expect(field.maxLines, 5);
-    expect(t.getSize(button('Kirim pertanyaan')), const Size(44, 44));
+    expect(t.getSize(button('Kirim pertanyaan')), const Size(42, 42));
     await t.tap(button('Kirim pertanyaan'));
     await t.pump();
     expect(vm.sends, 1);
@@ -899,14 +897,14 @@ void main() {
       expect(vm.renamed, ['Judul baru']);
       await t.tap(find.byTooltip('Menu Topik 2'));
       await t.pumpAndSettle();
-      await t.tap(find.text('Hapus obrolan ini'));
+      await t.tap(find.text('Hapus obrolan'));
       await t.pumpAndSettle();
       await t.tap(find.text('Batal'));
       await t.pumpAndSettle();
       expect(vm.deleted, isEmpty);
       await t.tap(find.byTooltip('Menu Topik 2'));
       await t.pumpAndSettle();
-      await t.tap(find.text('Hapus obrolan ini'));
+      await t.tap(find.text('Hapus obrolan'));
       await t.pumpAndSettle();
       await t.tap(find.text('Hapus'));
       await t.pumpAndSettle();

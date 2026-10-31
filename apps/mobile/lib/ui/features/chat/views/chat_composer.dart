@@ -60,7 +60,7 @@ class _ChatComposerState extends State<ChatComposer> {
     final c = context.stabilo;
     return Container(
       padding: const EdgeInsets.all(
-        (Layout.chatComposer - Layout.touch - 2 * Layout.outline) / 2,
+        (Layout.chatComposer - Layout.chatSend - 2 * Layout.outline) / 2,
       ),
       decoration: BoxDecoration(
         color: c.sheet,
@@ -108,6 +108,7 @@ class _ChatComposerState extends State<ChatComposer> {
                     ? 'Hentikan jawaban'
                     : 'Kirim pertanyaan',
                 icon: widget.running ? AppIcons.stop : AppIcons.send,
+                size: Layout.chatSend,
                 primary: widget.canSend,
                 inverse: widget.running,
                 onPressed: widget.running

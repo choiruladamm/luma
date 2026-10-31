@@ -17,6 +17,7 @@ import '../view_models/chat_view_model.dart';
 import 'chat_composer.dart';
 import 'chat_copy.dart';
 import 'chat_history.dart';
+import 'chat_source_label.dart';
 import 'chat_source_sheet.dart';
 import 'chat_sessions_view.dart';
 
@@ -35,6 +36,7 @@ class _ChatViewState extends ConsumerState<ChatView>
   final _headerKey = GlobalKey();
   double _headerHeight = Layout.chatHeader;
   double _footerHeight = Layout.chatComposer;
+  bool _scrolled = false;
 
   @override
   void dispose() {
@@ -66,6 +68,10 @@ class _ChatViewState extends ConsumerState<ChatView>
   bool _scroll(ScrollNotification n) {
     if (n.depth != 0 || MediaQuery.accessibleNavigationOf(context)) {
       return false;
+    }
+    if (n is ScrollUpdateNotification || n is ScrollEndNotification) {
+      final scrolled = n.metrics.pixels > n.metrics.minScrollExtent + 4;
+      if (scrolled != _scrolled) setState(() => _scrolled = scrolled);
     }
     if (n is ScrollUpdateNotification && n.dragDetails != null) {
       _chrome.scrolled(n.scrollDelta ?? 0, dragging: true);
@@ -220,7 +226,16 @@ class _ChatViewState extends ConsumerState<ChatView>
                           constraints: const BoxConstraints(
                             minHeight: Layout.chatHeader,
                           ),
-                          color: context.stabilo.canvas,
+                          decoration: BoxDecoration(
+                            color: context.stabilo.canvas,
+                            boxShadow: [
+                              if (_scrolled && hidden < 0.5)
+                                BoxShadow(
+                                  color: context.stabilo.track,
+                                  offset: const Offset(0, 1),
+                                ),
+                            ],
+                          ),
                           child: Row(
                             spacing: Space.s2,
                             children: [
@@ -345,7 +360,7 @@ class _ChatViewState extends ConsumerState<ChatView>
                             ChatComposer(
                               draft: state.draft,
                               hint: state.selectedQuote == null
-                                  ? 'Pesan buat Luma…'
+                                  ? 'Tanya soal buku ini…'
                                   : 'Tanya soal kutipan ini…',
                               canSend: state.canSend,
                               running: state.phase?.isRunning ?? false,
@@ -392,9 +407,38 @@ class _ChatViewState extends ConsumerState<ChatView>
             if (phase != null && !phase.isRunning && phase != ChatPhase.done)
               Semantics(
                 liveRegion: true,
-                child: Text(
-                  state.turns.lastOrNull?.draftLabel(phase) ?? phase.label,
-                  style: StabiloType.caption,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  spacing: 10,
+                  children: [
+                    if (phase.isFailure)
+                      Container(
+                        width: 24,
+                        height: 24,
+                        decoration: BoxDecoration(
+                          color: context.stabilo.pink,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: AppIcon(
+                            AppIcons.alertCircle,
+                            size: 14,
+                            color: context.stabilo.onPink,
+                          ),
+                        ),
+                      ),
+                    Flexible(
+                      child: Text(
+                        state.turns.lastOrNull?.draftLabel(phase) ??
+                            phase.label,
+                        style: StabiloType.caption.copyWith(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w600,
+                          color: context.stabilo.ink2,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             if (state.error?.needsSettings ?? false)
@@ -471,14 +515,25 @@ class _ChatViewState extends ConsumerState<ChatView>
         contextCard: card,
         lastActions: _actions(state),
         reserveAnswerSpace: true,
+        chapterNumbers: ref
+            .watch(chatChapterNumbersProvider(widget.bookId))
+            .asData
+            ?.value,
       );
     }
+    final plain = state.book != null && quote == null;
     var prompt = 'Mau ngobrolin apa soal bukunya?';
     if (state.book == null) {
       prompt = 'Buku ini gak tersedia.';
     } else if (quote != null) {
       prompt = 'Mau tanya apa soal kutipan ini?';
     }
+    final hint = switch ((quote != null, state.book != null)) {
+      (true, _) => 'Tulis pertanyaan lo di bawah. Kutipan sama terjemahannya ikut kebaca sebagai konteks.',
+      (_, true) =>
+        'Tanya apa aja soal ${chatBookName(ref, widget.bookId)}. Jawabannya selalu ada sitasi ke bagian bukunya.',
+      _ => null,
+    };
     return EdgeFadeScroll(
       top: topFade,
       bottom: bottomFade,
@@ -490,29 +545,31 @@ class _ChatViewState extends ConsumerState<ChatView>
           children: [
             const ChatNotice(),
             ?card,
-            Text(
-              prompt,
-              style: StabiloType.titleLg.copyWith(fontSize: 22, height: 1.2),
+            Padding(
+              padding: EdgeInsets.only(top: plain ? Space.s8 : 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                spacing: 6,
+                children: [
+                  Text(
+                    prompt,
+                    style: StabiloType.titleLg.copyWith(
+                      fontSize: plain ? 24 : 22,
+                      height: 1.2,
+                    ),
+                  ),
+                  if (hint != null)
+                    Text(
+                      hint,
+                      style: StabiloType.body.copyWith(
+                        fontSize: plain ? 15 : 14.5,
+                        height: 1.45,
+                        color: context.stabilo.ink2,
+                      ),
+                    ),
+                ],
+              ),
             ),
-            if (quote != null)
-              Text(
-                'Tulis pertanyaan lo di bawah. Kutipan sama terjemahannya ikut kebaca sebagai konteks.',
-                style: StabiloType.body.copyWith(
-                  fontSize: 14.5,
-                  height: 1.45,
-                  color: context.stabilo.ink2,
-                ),
-              )
-            else if (state.book != null)
-              for (final question in [
-                'Apa gagasan utama buku ini?',
-                'Jelasin bagian ini lebih sederhana',
-                'Apa hubungan gagasan antar bab?',
-              ])
-                TextButton(
-                  onPressed: state.busy ? null : () => _vm.setDraft(question),
-                  child: Text(question),
-                ),
             _actions(state),
           ],
         ),

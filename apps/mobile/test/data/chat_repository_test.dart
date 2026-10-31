@@ -305,6 +305,22 @@ void main() {
     expect((await repo.resolveSource(sourceRef(t)))!.available, isFalse);
   });
 
+  test('chapterNumbers ranks chapters by sortOrder, per book', () async {
+    final first = await db
+        .into(db.chapters)
+        .insert(
+          ChaptersCompanion.insert(
+            bookId: book.bookId,
+            sortOrder: 3,
+            title: 'III',
+            charOffset: 0,
+          ),
+        );
+    final numbers = await repo.chapterNumbers(book.bookId);
+    expect(numbers, {first: 1, chapter: 2});
+    expect(await repo.chapterNumbers(other.bookId), {otherChapter: 1});
+  });
+
   test('source resolver rejects foreign chapters, changed ranges, hashes and missing paragraphs', () async {
     final t = await first();
     await repo.prepareSources(t.attemptRef, [source()]);

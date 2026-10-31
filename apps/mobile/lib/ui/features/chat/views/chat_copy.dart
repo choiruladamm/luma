@@ -17,6 +17,14 @@ extension ChatPhaseCopy on ChatPhase {
   };
 }
 
+extension ChatPhaseKind on ChatPhase {
+  /// Gagal beneran (bukan dihentiin user): dapet ikon pink di atas label.
+  bool get isFailure => switch (this) {
+    ChatPhase.failed || ChatPhase.cut || ChatPhase.interrupted => true,
+    _ => false,
+  };
+}
+
 extension ChatLaunchCopy on ChatLaunchOrigin {
   String get backLabel => switch (this) {
     ChatLaunchOrigin.meaning => 'Balik ke Terjemahin',

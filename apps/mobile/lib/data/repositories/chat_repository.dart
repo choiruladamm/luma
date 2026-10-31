@@ -267,6 +267,16 @@ class ChatRepository {
     });
   }
 
+  /// Nomor bab (urutan 1..n lewat sortOrder) per chapter id, buat chip sitasi.
+  Future<Map<int, int>> chapterNumbers(int bookId) async {
+    final rows =
+        await (_db.select(_db.chapters)
+              ..where((c) => c.bookId.equals(bookId))
+              ..orderBy([(c) => OrderingTerm.asc(c.sortOrder)]))
+            .get();
+    return {for (var i = 0; i < rows.length; i++) rows[i].id: i + 1};
+  }
+
   Stream<ChatSourceLocation?> watchQuote(ChatQuote quote) => _db
       .customSelect(
         'SELECT 1',
