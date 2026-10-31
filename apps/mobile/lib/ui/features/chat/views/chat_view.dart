@@ -73,13 +73,11 @@ class _ChatViewState extends ConsumerState<ChatView> {
     if (_sourceOpen) return;
     setState(() => _sourceOpen = true);
     try {
-      final result = await context.push<ReaderReturn>(
+      // "Lanjut baca" di layar intip nutup chat sendiri (lihat ChatSourceVisitView).
+      await context.push<ReaderReturn>(
         Routes.chatQuote(widget.bookId),
         extra: quote,
       );
-      if (result == ReaderReturn.reading && mounted) {
-        await _navigate(() => _back(reading: true));
-      }
     } finally {
       if (mounted) setState(() => _sourceOpen = false);
     }
@@ -138,18 +136,7 @@ class _ChatViewState extends ConsumerState<ChatView> {
         snapshot: source,
       );
       if (open != true || !mounted) return;
-      final result = await context.push<ReaderReturn>(
-        Routes.chatSource(request),
-      );
-      if (result == ReaderReturn.reading && mounted) {
-        await _navigate(() {
-          if (context.canPop()) {
-            context.pop(ReaderReturn.reading);
-          } else {
-            context.go(Routes.reader(widget.bookId));
-          }
-        });
-      }
+      await context.push<ReaderReturn>(Routes.chatSource(request));
     } finally {
       if (mounted) {
         setState(() {

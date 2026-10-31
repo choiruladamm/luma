@@ -86,7 +86,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           final launch = extra is ChatLaunchContext && extra.book.bookId == id
               ? extra
               : null;
-          return _slidePage(
+          return _instantExitPage(
             context,
             state,
             ChatView(key: ValueKey(id), bookId: id, launch: launch),
@@ -115,7 +115,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                   source.isEmpty) {
                 return _slidePage(context, state, const _InvalidChatRoute());
               }
-              return _slidePage(
+              return _instantExitPage(
                 context,
                 state,
                 ChatSourceVisitView(
@@ -139,7 +139,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                   quote.anchors.any((a) => a.book.bookId != bookId)) {
                 return _slidePage(context, state, const _InvalidChatRoute());
               }
-              return _slidePage(
+              return _instantExitPage(
                 context,
                 state,
                 ChatSourceVisitView(quote: quote),
@@ -164,6 +164,40 @@ final routerProvider = Provider<GoRouter>((ref) {
   ref.onDispose(router.dispose);
   return router;
 });
+
+/// Nyala sebentar pas "Lanjut baca" di layar intip: halaman yang keluar langsung
+/// ilang (tanpa animasi geser) biar pindah ke reader terasa mulus.
+final instantRouteExit = ValueNotifier<bool>(false);
+
+/// Layar chat + intip sumber: geser masuk seperti [_slidePage], tapi keluarnya
+/// bisa instan lewat [instantRouteExit] ("Lanjut baca"). Kurangi gerakan: fade.
+Page<void> _instantExitPage(
+  BuildContext context,
+  GoRouterState state,
+  Widget child,
+) {
+  if (MediaQuery.disableAnimationsOf(context)) {
+    return _slidePage(context, state, child);
+  }
+  final slide = Tween(
+    begin: const Offset(1, 0),
+    end: Offset.zero,
+  ).chain(CurveTween(curve: Motion.sheetOpenCurve));
+  return CustomTransitionPage<void>(
+    key: state.pageKey,
+    transitionDuration: Motion.sheetOpen,
+    reverseTransitionDuration: Motion.sheetClose,
+    transitionsBuilder: (_, animation, _, child) => AnimatedBuilder(
+      animation: animation,
+      child: child,
+      builder: (_, child) =>
+          animation.status == AnimationStatus.reverse && instantRouteExit.value
+          ? const SizedBox.shrink()
+          : SlideTransition(position: animation.drive(slide), child: child),
+    ),
+    child: child,
+  );
+}
 
 /// Geser ala iOS di semua platform (opaque, ada parallax + swipe-back), biar
 /// header dua layar gak numpuk transparan pas pindah. Kurangi gerakan: fade.

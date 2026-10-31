@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../domain/models/book_chat.dart';
+import '../../../../routing/router.dart';
 import '../../../../data/repositories/chat_repository.dart';
 import '../../../core/widgets/toast.dart';
 import '../../../core/theme/stabilo_tokens.dart';
@@ -48,7 +49,23 @@ class _ChatSourceVisitState extends ConsumerState<ChatSourceVisitView> {
           .continueReading(request: widget.request, quote: widget.quote);
       if (!mounted) return;
       showToast(context, 'Posisi baca pindah ke kutipan ini.');
+      // Intip + chat kebuang barengan dan langsung ilang (tanpa geser), hasilnya
+      // sampe ke reader lewat pop biasa jadi dia muat posisi baru.
+      instantRouteExit.value = true;
+      Future<void>.delayed(
+        const Duration(seconds: 1),
+        () => instantRouteExit.value = false,
+      );
       context.pop(ReaderReturn.reading);
+      if (context.canPop()) {
+        context.pop(ReaderReturn.reading);
+      } else {
+        context.go(
+          Routes.reader(
+            widget.request?.bookId ?? widget.quote!.anchors.first.book.bookId,
+          ),
+        );
+      }
     } catch (_) {
       if (mounted) showToast(context, 'Posisi baca belum dipindah. Coba lagi.');
     } finally {
