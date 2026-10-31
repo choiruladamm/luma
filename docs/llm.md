@@ -396,9 +396,13 @@ memuat bab yang cocok tanpa request: urutan baca menaruh bab cache di depan,
 Jawaban menerima `notesFromCache` (jumlah bab dari cache). Stop/Jawab sekarang di
 tengah tetap menyimpan bab yang sudah selesai; `contentChanged` dan hapus buku
 membuang cache; strategi `chapters` tetap question-specific dan tidak di-cache.
-Pencarian: planner mengisi `chapter_ids` bab isi juga untuk strategi cari; kandidat
-dari bab di luar daftar (Endnotes, Imprint) dibuang setelah ranking, index embedding
-tetap seluruh buku; `chapter_ids` kosong hanya kalau pertanyaannya soal bagian itu.
+Front/back matter: planner mengisi `skip_ids` (Endnotes, Imprint, Colophon…)
+untuk `global` dan pencarian; bab isi = TOC minus `skip_ids` (ID numerik dalam
+string diterima, ID asing ditolak). Kandidat pencarian dari bab di luar daftar isi
+dibuang setelah ranking, index embedding tetap seluruh buku; `skip_ids` kosong kalau
+pertanyaannya soal bagian itu. Daftar bab yang boleh tersimpan di `chapterIds`
+checkpoint pencarian. Pilihan selector di-union lintas putaran: query lanjutan yang
+tidak menemukan apa pun tidak membuang bukti putaran sebelumnya.
 `chatPromptVersion = 6`.
 
 Bukti live: `make chat-agent-live` (`tag=`, `cases=`, `cont=`, `book=`, `m=`)

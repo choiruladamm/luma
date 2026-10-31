@@ -53,16 +53,26 @@ List<Map<String, Object?>> chatTocData(List<ChatChapterInfo> toc) => [
 ];
 
 /// ID bab dari model: harus ada di TOC, unik, maksimal [max].
+/// Angka dalam string ("4") diterima; ID di luar TOC atau ganda ditolak.
 List<int> chatChapterIds(Object? raw, Iterable<int> known, {int max = 64}) {
   if (raw == null) return const [];
   final ids = known.toSet();
-  if (raw is! List ||
-      raw.length > max ||
-      raw.any((id) => id is! int || !ids.contains(id)) ||
-      raw.toSet().length != raw.length) {
+  if (raw is! List || raw.length > max) {
     throw const FormatException('ID bab dari model tidak valid');
   }
-  return raw.cast<int>();
+  final parsed = [
+    for (final id in raw)
+      switch (id) {
+        int n => n,
+        String s when int.tryParse(s.trim()) != null => int.parse(s.trim()),
+        _ => throw const FormatException('ID bab dari model tidak valid'),
+      },
+  ];
+  if (parsed.any((id) => !ids.contains(id)) ||
+      parsed.toSet().length != parsed.length) {
+    throw const FormatException('ID bab dari model tidak valid');
+  }
+  return parsed;
 }
 
 /// Label bab untuk prompt/sitasi: "Book I › III: Of Providence".

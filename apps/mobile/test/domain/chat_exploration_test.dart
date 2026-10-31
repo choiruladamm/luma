@@ -263,6 +263,12 @@ void main() {
     );
     expect(clarify.clarification, 'Book I bab III atau Book III?');
     expect(clarify.chapterIds, isEmpty);
+    final skipping = parseChatQueryPlan(
+      '{"query":"b?","needs_clarification":false,"strategy":"global","skip_ids":["8"]}',
+      knownChapterIds: [7, 8],
+    );
+    expect(skipping.skipIds, [8]);
+    expect(skipping.chapterIds, isEmpty);
     expect(
       parseChatQueryPlan(
         '{"query":"b?","needs_clarification":false,"clarification":""}',

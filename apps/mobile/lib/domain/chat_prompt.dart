@@ -355,6 +355,11 @@ ChatQueryPlan parseChatQueryPlan(
     knownChapterIds,
     max: knownChapterIds.length,
   );
+  final skip = chatChapterIds(
+    value['skip_ids'],
+    knownChapterIds,
+    max: knownChapterIds.length,
+  );
   if (strategy == ChatSearchStrategy.chapters &&
       ids.isEmpty &&
       value['needs_clarification'] != true) {
@@ -367,6 +372,7 @@ ChatQueryPlan parseChatQueryPlan(
     englishQuery: chatQuestion(value['query'] as String),
     needsClarification: value['needs_clarification'] as bool,
     chapterIds: ids,
+    skipIds: skip,
     clarification: text == null || text.isEmpty || !chatValidUnicode(text)
         ? null
         : chatQuestion(text),

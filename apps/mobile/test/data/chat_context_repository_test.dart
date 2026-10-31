@@ -53,9 +53,12 @@ class ChatAdapter implements HttpClientAdapter {
   int contextLength = 32000;
   bool modelsFail = false;
   bool longNotesOnce = false;
+  int selections = 0;
   final overviewSystems = <bool>[];
   bool alwaysBadBatch = false;
   List<int> chapterIds = const [];
+  List<Object> skipIds = const [];
+  List<List<int>>? selectionsByRound;
   String? clarificationText;
   @override
   Future<ResponseBody> fetch(
@@ -114,6 +117,7 @@ class ChatAdapter implements HttpClientAdapter {
               if (clarificationText != null) 'clarification': clarificationText,
               'strategy': strategy,
               'chapter_ids': chapterIds,
+              'skip_ids': skipIds,
               'queries': queries,
             });
     } else if (system == chatGlobalSystem || system == chatOverviewSystem) {
@@ -157,9 +161,12 @@ class ChatAdapter implements HttpClientAdapter {
                       as Map)['candidates']
                   as List)
               .length;
+      selections++;
       raw = jsonEncode({
         'resolved_question': 'Who keeps it?',
-        'selected': emptySelection
+        'selected': selectionsByRound != null
+            ? selectionsByRound![selections - 1]
+            : emptySelection
             ? []
             : [for (var i = 1; i <= (offered < 2 ? offered : 2); i++) i],
         'missing_queries': missingQueries,
@@ -867,6 +874,55 @@ void main() {
       );
       final work = ChatExploration.parse((await latest()).exploration!);
       expect(work.chapterIds, [chapter]);
+    },
+  );
+
+  test('skip_ids keep front/back matter out of whole-book reads and search; string ids are accepted', () async {
+    await largeBook();
+    adapter.contextLength = 40000;
+    final other =
+        await (db.select(db.chapters)..where(
+              (c) => c.bookId.equals(book.bookId) & c.id.equals(chapter).not(),
+            ))
+            .getSingle();
+    adapter.strategy = 'global';
+    adapter.skipIds = ['${other.id}'];
+    await context.prepare(turn);
+    final work = ChatExploration.parse((await latest()).exploration!);
+    expect(work.chapterIds, [chapter]);
+    await chat.finalize(turn.attemptRef, phase: ChatPhase.stopped);
+
+    adapter.strategy = 'specific';
+    adapter.skipIds = [chapter];
+    final searched = await first();
+    final prepared = (await context.prepare(searched))!;
+    expect(
+      prepared.prompt.sources.every(
+        (s) => s.anchors.first.chapterId == other.id,
+      ),
+      isTrue,
+    );
+    expect(
+      ChatExploration.parse(
+        (await chat.watchTurns(book.bookId, searched.sessionId).first)
+            .last
+            .exploration!,
+      ).chapterIds,
+      [other.id],
+    );
+  });
+
+  test(
+    'later search rounds add evidence without dropping earlier picks',
+    () async {
+      adapter.selectionsByRound = [
+        [1],
+        [],
+      ];
+      adapter.missingQueries = ['another angle'];
+      final prepared = (await context.prepare(turn))!;
+      expect(prepared.prompt.sources, isNotEmpty);
+      expect(adapter.selections, 2);
     },
   );
 

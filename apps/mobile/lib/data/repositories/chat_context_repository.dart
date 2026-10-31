@@ -360,9 +360,15 @@ class ChatContextRepository {
       ChatExploration? exploration;
       var noteSourceIds = <String, String>{};
       var cachedChapterCount = 0;
+      // Bab isi = semua bab minus front/back matter dari planner (skip_ids);
+      // subset chapter_ids eksplisit tetap dihormati.
+      final content = [
+        for (final c in toc)
+          if (!plan.skipIds.contains(c.id)) c.id,
+      ];
       final requested =
           plan.strategy == ChatSearchStrategy.global && plan.chapterIds.isEmpty
-          ? [for (final c in toc) c.id]
+          ? content
           : plan.chapterIds;
       if (!plan.needsClarification &&
           plan.strategy.reads &&
@@ -712,6 +718,10 @@ class ChatContextRepository {
           plan.strategy != ChatSearchStrategy.offTopic &&
           input.chunks.isNotEmpty) {
         final searched = <String>{...?saved?.searchedQueries};
+        // Bab yang boleh jadi kandidat; tersimpan di checkpoint untuk Lanjutkan.
+        final allowedChapters = plan.chapterIds.isEmpty
+            ? content
+            : plan.chapterIds;
         if (saved != null) {
           selected = _uniqueSources([
             ...input.quoted,
@@ -739,7 +749,7 @@ class ChatContextRepository {
           total: input.chunks.length,
           notes: [],
           strategy: plan.strategy,
-          chapterIds: plan.chapterIds,
+          chapterIds: allowedChapters,
           searchedQueries: searched.toList(),
           pendingQueries: pending,
           selectedIds: selected.map((s) => s.id).toList(),
@@ -782,11 +792,10 @@ class ChatContextRepository {
           );
           // Front/back matter (Endnotes, Imprint) keluar dari kandidat kalau
           // planner membatasi bab isi; index embedding tetap seluruh buku.
-          final allowed = plan.chapterIds.toSet();
+          final allowed = allowedChapters.toSet();
           final found = [
             for (final s in chatFuseRanks(rankings, quoteSources: input.quoted))
-              if (allowed.isEmpty ||
-                  allowed.contains(s.anchors.first.chapterId) ||
+              if (allowed.contains(s.anchors.first.chapterId) ||
                   input.quoted.contains(s))
                 s,
           ];
@@ -843,7 +852,15 @@ class ChatContextRepository {
             budget,
             guard,
           );
-          selected = parseChatSelection(raw, candidates, input.quoted);
+          // Putaran lanjutan menambah bukti; pilihan putaran sebelumnya tidak
+          // hilang hanya karena query baru tidak menemukan apa pun.
+          selected = fitChatSources(
+            _uniqueSources([
+              ...parseChatSelection(raw, candidates, input.quoted),
+              ...selected,
+            ]),
+            maxBytes: sourceBudget,
+          );
           searched.addAll(fresh);
           searchedThisTurn += fresh.length;
           queries = chatMissingQueries(raw)
