@@ -45,7 +45,7 @@ Pas baca, layar isinya cuma teks + garis progres tipis. Menu nongol sebagai dua 
 
 - **Kapsul atas**: tinggi 58, radius penuh, 6pt di bawah safe area atas, kiri-kanan 24. Isi: balik · judul buku + judul bab ("Chapter I"; "Bab N" cuma kalau bukunya emang gak punya judul bab) · daftar isi · Aa. Tombol 44 bulet muted; tombol yang sheet-nya lagi kebuka (Daftar isi / Aa) jadi kuning.
 - **Kapsul bawah**: tinggi 40, 14pt di atas safe area bawah, di tengah. Persen + bar 88 + "±N mnt lagi" (atau "Chapter I kelar"). Cuma info.
-- **Awal bab** (board 03 Baca + "awal bab, judul panjang"): judul yang muat satu baris di pil → satu pil kuning 26 isi judul, tanpa judul dobel. Kalimat panjang → pembuka ala buku: rata tengah, coretan kuning 56×8 miring −4°, judul font baca 23/1,35 bold, meta "Bab 4 dari 102 · ±14 mnt" 12,5 ink2; padding 40 atas · 28 bawah, gap 14. Batasnya diukur (lebar kolom + skala teks), bukan jumlah karakter.
+- **Awal bab** (board 03 Baca + "awal bab, judul panjang"): satu pembuka bab buat semua judul, pendek maupun panjang: rata tengah, coretan kuning 56×8 miring −4°, judul font baca 23/1,35 bold, meta "Bab 4 dari 102 · ±14 mnt" 12,5 ink2; padding 40 atas · 28 bawah, gap 14.
 - **Daftar isi**: tanpa kolom nomor; tiap baris "±N mnt" di kanan (12,5/600 ink2), bab aktif latar kuning + "Lagi dibaca · ±N mnt". **Akhir bab**: chip "Chapter I kelar", meta "Bab 2 dari 61 · ±6 mnt".
 - **Gaya kapsul**: latar sheet. Terang: garis 1,5 ink + bayangan tekan 2 + bayangan lembut. Gelap: garis `#46423A` + bayangan lembut.
 - Teks yang lewat di belakang kapsul dimudarin pake **EdgeFade** (lihat di bawah), bukan gradien warna latar.

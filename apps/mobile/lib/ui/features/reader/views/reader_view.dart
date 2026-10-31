@@ -1802,11 +1802,9 @@ class _ScrimHole extends CustomPainter {
 /// Titik di chapter: indeks paragraf + bagiannya yang udah lewat garis atas.
 typedef _Spot = ({int index, double offset});
 
-/// Judul bab di awal teks (board 03 Baca + "awal bab, judul panjang"). Judul
-/// yang muat satu baris di pil ("Chapter I", "Bab 3") = satu pil kuning.
-/// Kalimat panjang = pembuka ala buku: rata tengah, coretan kuning miring,
-/// judul font baca, meta "Bab 4 dari 102 · ±14 mnt". Batasnya diukur, bukan
-/// jumlah karakter, biar ikut Aa & Dynamic Type.
+/// Pembuka bab di awal teks (board 03 Baca + "awal bab, judul panjang"):
+/// rata tengah, coretan kuning miring, judul font baca, meta
+/// "Bab 4 dari 102 · ±14 mnt". Dipakai buat semua judul, pendek maupun panjang.
 class _ChapterHeading extends StatelessWidget {
   const _ChapterHeading({
     required this.title,
@@ -1827,90 +1825,52 @@ class _ChapterHeading extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.stabilo;
-    final pill = StabiloType.caption.copyWith(
-      fontWeight: FontWeight.w700,
-      color: c.onAccent,
-    );
-    return LayoutBuilder(
-      builder: (context, box) {
-        final fits =
-            (TextPainter(
-                  text: TextSpan(text: title, style: pill),
-                  maxLines: 1,
-                  textDirection: TextDirection.ltr,
-                  textScaler: MediaQuery.textScalerOf(context),
-                )..layout(maxWidth: box.maxWidth - 2 * Layout.chapterPillPad))
-                .didExceedMaxLines ==
-            false;
-        if (!fits) return _opener(c);
-        return Align(
-          alignment: Alignment.centerLeft,
-          child: Semantics(
-            header: true,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        Space.s2,
+        Layout.chapterOpenerTop,
+        Space.s2,
+        Layout.chapterOpenerBottom,
+      ),
+      child: Column(
+        spacing: Layout.chapterOpenerGap,
+        children: [
+          Transform.rotate(
+            angle: Layout.chapterStrokeTilt,
             child: Container(
-              height: Layout.chapterPill,
-              padding: const EdgeInsets.symmetric(
-                horizontal: Layout.chapterPillPad,
-              ),
+              width: Layout.chapterStrokeWidth,
+              height: Layout.chapterStrokeHeight,
               decoration: BoxDecoration(
                 color: c.accent,
                 borderRadius: BorderRadius.circular(Radii.full),
               ),
-              // Container beralignment melar selebar kolom; Center
-              // widthFactor 1 jaga pil seukuran judulnya.
-              child: Center(widthFactor: 1, child: Text(title, style: pill)),
             ),
           ),
-        );
-      },
+          Semantics(
+            header: true,
+            child: Text(
+              title,
+              textAlign: TextAlign.center,
+              style: reading.copyWith(
+                fontSize: 23,
+                height: 1.35,
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.23,
+              ),
+            ),
+          ),
+          Text(
+            'Bab $number dari $total · ±$minutes mnt',
+            style: StabiloType.caption.copyWith(
+              fontSize: 12.5,
+              fontWeight: FontWeight.w600,
+              color: c.ink2,
+            ),
+          ),
+        ],
+      ),
     );
   }
-
-  Widget _opener(StabiloColors c) => Padding(
-    padding: const EdgeInsets.fromLTRB(
-      Space.s2,
-      Layout.chapterOpenerTop,
-      Space.s2,
-      Layout.chapterOpenerBottom,
-    ),
-    child: Column(
-      spacing: Layout.chapterOpenerGap,
-      children: [
-        Transform.rotate(
-          angle: Layout.chapterStrokeTilt,
-          child: Container(
-            width: Layout.chapterStrokeWidth,
-            height: Layout.chapterStrokeHeight,
-            decoration: BoxDecoration(
-              color: c.accent,
-              borderRadius: BorderRadius.circular(Radii.full),
-            ),
-          ),
-        ),
-        Semantics(
-          header: true,
-          child: Text(
-            title,
-            textAlign: TextAlign.center,
-            style: reading.copyWith(
-              fontSize: 23,
-              height: 1.35,
-              fontWeight: FontWeight.w700,
-              letterSpacing: -0.23,
-            ),
-          ),
-        ),
-        Text(
-          'Bab $number dari $total · ±$minutes mnt',
-          style: StabiloType.caption.copyWith(
-            fontSize: 12.5,
-            fontWeight: FontWeight.w600,
-            color: c.ink2,
-          ),
-        ),
-      ],
-    ),
-  );
 }
 
 class _ChapterEnd extends ConsumerWidget {

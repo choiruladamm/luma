@@ -69,8 +69,6 @@ abstract final class Layout {
   static const barShrink = 52.0; // jarak scroll buat nyusut penuh
   static const coverAspect = 2 / 3;
   // Awal bab (board 03 Baca + "awal bab, judul panjang").
-  static const chapterPill = 26.0;
-  static const chapterPillPad = 10.0;
   static const chapterOpenerTop = 40.0;
   static const chapterOpenerBottom = 28.0;
   static const chapterOpenerGap = 14.0;
