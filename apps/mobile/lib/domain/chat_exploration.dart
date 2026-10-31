@@ -84,6 +84,15 @@ String chatWindowManifest(List<ChatSource> windows) => chatTextHash(
 
 typedef ChatExplorationNote = ({String text, List<String> sourceIds});
 
+/// Progres pembacaan untuk UI: [label] = bab yang sedang dibaca, [notes] =
+/// catatan sementara yang sudah tersimpan (generatif, bukan jawaban).
+typedef ChatExplorationProgress = ({
+  int completed,
+  int total,
+  String? label,
+  List<ChatExplorationNote> notes,
+});
+
 class ChatExploration {
   ChatExploration({
     required this.book,

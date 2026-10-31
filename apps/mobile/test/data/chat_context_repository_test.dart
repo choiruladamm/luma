@@ -361,7 +361,7 @@ void main() {
     context = limitedContext();
     final prepared = (await context.prepare(
       turn,
-      onExplorationProgress: (n, _) => progress.add(n),
+      onExplorationProgress: (p) => progress.add(p.completed),
     ))!;
     expect(adapter.embeddingModels, isEmpty);
     expect(adapter.batches.length, greaterThanOrEqualTo(2));
@@ -613,6 +613,109 @@ void main() {
       for (final note in (user['exploration'] as Map)['notes'] as List) {
         expect(ids.containsAll((note as Map)['source_ids'] as List), isTrue);
       }
+    },
+  );
+
+  test('progress names the chapter being read, carries saved notes, and Jawab sekarang stops after the running group', () async {
+    for (var i = 1; i <= 120; i++) {
+      await db
+          .into(db.paragraphs)
+          .insert(
+            ParagraphsCompanion.insert(
+              chapterId: chapter,
+              paragraphIndex: i,
+              type: ParagraphType.paragraph,
+              content:
+                  'Ordered paragraph $i. ${'The keeper tends the beds. ' * 36}',
+              groupIndex: const Value(null),
+            ),
+          );
+    }
+    adapter.contextLength = 20000; // ~19 windows per batch, several groups
+    final other =
+        await (db.select(db.chapters)..where(
+              (c) => c.bookId.equals(book.bookId) & c.id.equals(chapter).not(),
+            ))
+            .getSingle();
+    await (db.update(db.chapters)..where((c) => c.id.equals(chapter))).write(
+      const ChaptersCompanion(
+        title: Value('IV: Of Progress'),
+        section: Value('Discourses › Book I'),
+      ),
+    );
+    adapter.strategy = 'global';
+    adapter.chapterIds = [chapter, other.id];
+    final seen = <ChatExplorationProgress>[];
+    var groups = 0;
+    adapter.onBatch = () async {
+      groups++;
+    };
+    final prepared = (await context.prepare(
+      turn,
+      onExplorationProgress: seen.add,
+      answerNow: () => groups >= 1,
+    ))!;
+    expect(seen.first.completed, 0);
+    expect(seen.first.notes, isEmpty);
+    expect(
+      seen.map((p) => p.label).whereType<String>().first,
+      'Book I › IV: Of Progress',
+    );
+    final saved = seen.where((p) => p.notes.isNotEmpty).toList();
+    expect(saved, isNotEmpty);
+    expect(
+      saved.last.notes.length,
+      saved.last.completed == 0 ? 0 : greaterThan(0),
+    );
+    final work = ChatExploration.parse((await latest()).exploration!);
+    expect(work.complete, isFalse);
+    expect(work.stopReason, 'user');
+    expect(work.cursor, seen.last.completed);
+    final frame = (await prepared.stream().toList()).last;
+    expect(frame.answer!.status, ChatAnswerStatus.partial);
+    await chat.finalize(
+      turn.attemptRef,
+      phase: ChatPhase.done,
+      draft: frame.draft,
+      answer: frame.answer,
+    );
+    expect(chatCanContinue(await latest()), isTrue);
+    // Batches split at the chapter boundary once they are mostly full.
+    for (final batch in adapter.batches) {
+      expect(batch, isNotEmpty);
+    }
+  });
+
+  test(
+    'document embeddings are requested in parallel and stored in order',
+    () async {
+      for (var i = 1; i <= 200; i++) {
+        await db
+            .into(db.paragraphs)
+            .insert(
+              ParagraphsCompanion.insert(
+                chapterId: chapter,
+                paragraphIndex: i,
+                type: ParagraphType.paragraph,
+                content: 'Garden paragraph $i.',
+                groupIndex: Value(i),
+              ),
+            );
+      }
+      var inFlight = 0, peak = 0;
+      adapter.onEmbedding = () async {
+        inFlight++;
+        if (inFlight > peak) peak = inFlight;
+        await Future<void>.delayed(const Duration(milliseconds: 5));
+        inFlight--;
+      };
+      await context.prepare(turn);
+      expect(peak, greaterThan(1));
+      expect(documentRequests(), 4); // 202 chunks / 64
+      final vectors = await (db.select(
+        db.chatVectors,
+      )..orderBy([(v) => OrderingTerm.asc(v.ordinal)])).get();
+      expect(vectors.map((v) => v.ordinal), List.generate(202, (i) => i));
     },
   );
 

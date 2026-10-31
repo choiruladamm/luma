@@ -77,6 +77,7 @@ class FakeChat extends ChatViewModel {
   FakeChat(super.bookId, this.initial);
   final ChatState initial;
   int sends = 0, stops = 0, creates = 0, launches = 0, continuations = 0;
+  int answerNows = 0;
   final opened = <int>[], deleted = <int>[];
   final renamed = <String>[];
   final renamedIds = <int>[];
@@ -98,6 +99,13 @@ class FakeChat extends ChatViewModel {
       sends++;
       state = state.copyWith(draft: '', phase: ChatPhase.waiting);
     }
+  }
+
+  @override
+  void answerNow() {
+    if (!state.canAnswerNow) return;
+    answerNows++;
+    state = state.copyWith(answerRequested: true);
   }
 
   @override
@@ -258,6 +266,46 @@ void main() {
       isNull,
     );
   });
+
+  testWidgets(
+    'saved notes render as a tagged provisional draft while reading',
+    (t) async {
+      final running = turn(1, phase: ChatPhase.retrieving);
+      await open(
+        t,
+        state: ChatState(
+          book: book,
+          loading: false,
+          turns: [running],
+          phase: ChatPhase.retrieving,
+          explorationProgress: const (
+            completed: 3,
+            total: 9,
+            label: 'Book I › II',
+            notes: <ChatExplorationNote>[],
+          ) as ChatExplorationProgress,
+          preview: (
+            attempt: running.attemptRef,
+            blocks: [ChatAnswerBlock(text: 'Catatan satu', sources: [])],
+          ),
+        ),
+      );
+      await t.pump(const Duration(seconds: 3)); // pacer reveals the draft
+      expect(find.text('CATATAN SEMENTARA'), findsOneWidget);
+      expect(find.textContaining('Catatan satu'), findsOneWidget);
+      expect(find.text('Jawab sekarang'), findsOneWidget);
+      expect(find.text('Lagi baca Book I › II… 3/9 potongan'), findsOneWidget);
+      vm.push(
+        vm.current.copyWith(
+          phase: ChatPhase.writing,
+          explorationProgress: null,
+        ),
+      );
+      await t.pump();
+      expect(find.text('CATATAN SEMENTARA'), findsNothing);
+      expect(find.text('Jawab sekarang'), findsNothing);
+    },
+  );
 
   test('repair status replaces the phase label only while running', () {
     final running = ChatState(phase: ChatPhase.waiting, repairAttempt: 1);
@@ -568,7 +616,12 @@ void main() {
       expect(find.text('Lanjutkan'), findsNothing);
       vm.push(
         vm.current.copyWith(
-          explorationProgress: (completed: 8, total: 20),
+          explorationProgress: const (
+            completed: 8,
+            total: 20,
+            label: 'Book II › IV: Of Progress',
+            notes: <ChatExplorationNote>[],
+          ) as ChatExplorationProgress,
           turns: [
             partial,
             turn(2, phase: ChatPhase.retrieving),
@@ -576,7 +629,14 @@ void main() {
         ),
       );
       await t.pump();
-      expect(find.text('Lagi meriksa isi buku… 8/20 potongan'), findsOneWidget);
+      expect(
+        find.text('Lagi baca Book II › IV: Of Progress… 8/20 potongan'),
+        findsOneWidget,
+      );
+      expect(find.text('Jawab sekarang'), findsOneWidget);
+      await t.tap(find.text('Jawab sekarang'));
+      await t.pump();
+      expect(vm.answerNows, 1);
       // A running continuation receives its own turn; prior answer remains visible.
       expect(find.textContaining('Jawaban tervalidasi.'), findsOneWidget);
       expect(t.takeException(), isNull);

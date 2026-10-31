@@ -8,6 +8,7 @@ import '../../../core/theme/reader_typography.dart';
 import '../../../core/theme/stabilo_theme.dart';
 import '../../../core/theme/stabilo_tokens.dart';
 import '../../../core/theme/stabilo_type.dart';
+import '../../../core/widgets/tag.dart';
 import '../../../core/widgets/buttons.dart';
 import '../../../core/widgets/ai_status.dart';
 import '../../../core/widgets/edge_fade.dart';
@@ -316,6 +317,14 @@ class _ChatHistoryState extends State<ChatHistory> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       spacing: typo.paragraphGap,
                       children: [
+                        if (answer == null &&
+                            (phase == ChatPhase.retrieving ||
+                                phase == ChatPhase.slow) &&
+                            visible.any((b) => b.text.isNotEmpty))
+                          const Align(
+                            alignment: Alignment.centerLeft,
+                            child: Tag.section('Catatan sementara'),
+                          ),
                         if (phase.isRunning &&
                             visible.every((b) => b.text.isEmpty))
                           Row(

@@ -99,7 +99,8 @@ class ChatContextRepository {
     CancelToken? cancel,
     int? readingChapterId,
     void Function(int completed, int total)? onIndexProgress,
-    void Function(int completed, int total)? onExplorationProgress,
+    void Function(ChatExplorationProgress progress)? onExplorationProgress,
+    bool Function()? answerNow,
   }) async {
     _check(cancel);
     final key = await _keys.read();
@@ -398,6 +399,18 @@ class ChatContextRepository {
           stopReason: stopReason,
         );
         var work = saved ?? checkpoint(cursor: 0, notes: []);
+        String? labelOf(List<ChatSource> batch) {
+          final c = tocById[batch.first.anchors.first.chapterId];
+          return c == null ? null : chatChapterLabel(c);
+        }
+
+        void progress(ChatExploration state, {String? label}) =>
+            onExplorationProgress?.call((
+              completed: state.cursor,
+              total: state.total,
+              label: label,
+              notes: state.notes,
+            ));
         // Direct read: a requested chapter that fits the answer budget is sent
         // as original text, without lossy notes.
         final direct =
@@ -418,14 +431,14 @@ class ChatContextRepository {
           )) {
             return null;
           }
-          onExplorationProgress?.call(work.cursor, work.total);
+          progress(work);
           selected = direct;
           exploration = work;
         } else {
           if (!await _chat.saveExploration(target.attemptRef, work)) {
             return null;
           }
-          onExplorationProgress?.call(work.cursor, work.total);
+          progress(work);
           // Batches are independent (append-only notes), so a few run in
           // parallel; checkpoints still commit in cursor order.
           while (!work.complete) {
@@ -445,6 +458,14 @@ class ChatContextRepository {
                   utf8.encode(chatGlobalSystem).length -
                   4000,
             ].reduce((a, b) => a < b ? a : b);
+            if (answerNow?.call() ?? false) {
+              work = checkpoint(
+                cursor: work.cursor,
+                notes: work.notes,
+                stopReason: 'user',
+              );
+              break;
+            }
             final group = <({List<ChatSource> batch, String user})>[];
             var cursor = work.cursor;
             String? stop;
@@ -454,9 +475,14 @@ class ChatContextRepository {
               var bytes = 0;
               for (final window in windows.skip(cursor)) {
                 final size = utf8.encode(jsonEncode(_source(window))).length;
+                // Batch berhenti di batas bab begitu cukup penuh: satu label
+                // per batch dan catatan rapi per bab.
                 if (batch.isNotEmpty &&
                     (bytes + size > batchBytes ||
-                        batch.length == chatGlobalBatchWindows)) {
+                        batch.length == chatGlobalBatchWindows ||
+                        bytes * 10 >= batchBytes * 6 &&
+                            window.anchors.first.chapterId !=
+                                batch.last.anchors.first.chapterId)) {
                   break;
                 }
                 batch.add(window);
@@ -501,6 +527,7 @@ class ChatContextRepository {
               }
             }
             _check(cancel);
+            progress(work, label: labelOf(group.first.batch));
             final raws = await Future.wait([
               for (final g in group)
                 _complete(
@@ -575,8 +602,19 @@ class ChatContextRepository {
                 return null;
               }
               work = next;
-              onExplorationProgress?.call(work.cursor, work.total);
+              progress(
+                work,
+                label: i + 1 < group.length
+                    ? labelOf(group[i + 1].batch)
+                    : labelOf(g.batch),
+              );
             }
+          }
+          // Alasan berhenti ikut tersimpan supaya Lanjutkan/UI membacanya.
+          if (!work.complete &&
+              work.stopReason != null &&
+              !await _chat.saveExploration(target.attemptRef, work)) {
+            return null;
           }
           exploration = work;
           // Most-cited windows first; whatever does not fit stays uncited
@@ -1041,26 +1079,39 @@ class ChatContextRepository {
         );
         final vectors = cached.vectors;
         onProgress?.call(vectors.length, documents.length);
+        // Sampai tiga batch dokumen dikirim bersamaan; disimpan urut ordinal
+        // supaya prefix index tetap valid saat cancel/gagal di tengah.
         while (vectors.length < documents.length) {
           await guard();
-          budget.reserveEmbedding(
-            documents.skip(vectors.length).take(64).toList(),
-          );
-          final batch = await _router.embeddings(
-            apiKey: key,
-            model: embedding,
-            input: documents.skip(vectors.length).take(64).toList(),
-            cancel: cancel,
-          );
-          await store.saveBatch(
-            cached.id,
-            vectors.length,
-            batch,
-            embedding.dimensions,
-            guard,
-          );
-          vectors.addAll(batch);
-          onProgress?.call(vectors.length, documents.length);
+          final inputs = <List<String>>[];
+          var offset = vectors.length;
+          while (inputs.length < chatGlobalConcurrency &&
+              offset < documents.length) {
+            final input = documents.skip(offset).take(64).toList();
+            budget.reserveEmbedding(input);
+            inputs.add(input);
+            offset += input.length;
+          }
+          final batches = await Future.wait([
+            for (final input in inputs)
+              _router.embeddings(
+                apiKey: key,
+                model: embedding,
+                input: input,
+                cancel: cancel,
+              ),
+          ]);
+          for (final batch in batches) {
+            await store.saveBatch(
+              cached.id,
+              vectors.length,
+              batch,
+              embedding.dimensions,
+              guard,
+            );
+            vectors.addAll(batch);
+            onProgress?.call(vectors.length, documents.length);
+          }
         }
         await guard();
         _indexKey = indexKey;

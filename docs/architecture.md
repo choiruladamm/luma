@@ -190,7 +190,10 @@ otomatis (`PreparedChat.stream`, maksimal 2). `ChatStreamFrame.repair` > 0 =
 perbaikan berjalan; ViewModel menampilkan status dan menahan preview lama.
 `ChatViewModel.launch` menyimpan `returnPosition.chapterId` untuk resolusi
 "bab ini"; `chapterSectionBackfillProvider` dipanggil saat hydrate (lokal,
-gratis) dan di-override di test tanpa DB.
+gratis) dan di-override di test tanpa DB. #150: `ChatState.explorationProgress`
+(`ChatExplorationProgress`) membawa label bab + catatan; catatan dipublish lewat
+`preview` existing; `answerNow()` menandai `_ChatRun` dan `canAnswerNow`
+menampilkan tombol "Jawab sekarang" selama `retrieving/slow`.
 
 
 ### ViewModel dan lifecycle Ngobrolin buku (#118)
