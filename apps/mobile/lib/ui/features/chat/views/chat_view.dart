@@ -31,6 +31,9 @@ class ChatView extends ConsumerStatefulWidget {
   ConsumerState<ChatView> createState() => _ChatViewState();
 }
 
+/// Margin kiri-kanan kolom ngobrol = Aa Sempit.
+const _chatMargin = 16.0;
+
 class _ChatViewState extends ConsumerState<ChatView> {
   final _footerKey = GlobalKey();
   final _headerKey = GlobalKey();
@@ -157,8 +160,8 @@ class _ChatViewState extends ConsumerState<ChatView> {
       ref.watch(readerPrefsProvider).value ?? const ReaderPrefs(),
       Theme.of(context).brightness,
     );
-    // Margin teks persis Aa (16 / 24 / 32), sama kayak halaman baca.
-    final side = typo.margin;
+    // Kolom ngobrol selalu margin Aa "Sempit" (16), gak ikut pilihan margin Aa.
+    const side = _chatMargin;
     _measureFooter();
     return Scaffold(
       body: NotificationListener<ScrollNotification>(

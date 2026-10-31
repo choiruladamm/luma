@@ -315,29 +315,32 @@ void main() {
   });
 
   for (final margin in TextMargin.values) {
-    testWidgets('text margin matches the reader for $margin', (t) async {
-      final prefs = ReaderPrefs(margin: margin);
-      final answer = ChatAnswer(
-        formatVersion: 2,
-        status: ChatAnswerStatus.answered,
-        blocks: [
-          ChatAnswerBlock(text: 'Satu paragraf.', sources: [source]),
-        ],
-      );
-      await open(
-        t,
-        ChatState(
-          book: book,
-          activeSession: session(1),
-          loading: false,
-          turns: [turn(1, answer: answer)],
-        ),
-        prefs: prefs,
-      );
-      final reply = find.byType(SelectableText).first;
-      expect(t.getTopLeft(reply).dx, prefs.marginWidth);
-      expect(t.getSize(reply).width, 390 - 2 * prefs.marginWidth);
-    });
+    testWidgets(
+      'chat column keeps the Sempit margin whatever Aa says ($margin)',
+      (t) async {
+        final prefs = ReaderPrefs(margin: margin);
+        final answer = ChatAnswer(
+          formatVersion: 2,
+          status: ChatAnswerStatus.answered,
+          blocks: [
+            ChatAnswerBlock(text: 'Satu paragraf.', sources: [source]),
+          ],
+        );
+        await open(
+          t,
+          ChatState(
+            book: book,
+            activeSession: session(1),
+            loading: false,
+            turns: [turn(1, answer: answer)],
+          ),
+          prefs: prefs,
+        );
+        final reply = find.byType(SelectableText).first;
+        expect(t.getTopLeft(reply).dx, 16);
+        expect(t.getSize(reply).width, 390 - 2 * 16);
+      },
+    );
   }
 
   testWidgets(
