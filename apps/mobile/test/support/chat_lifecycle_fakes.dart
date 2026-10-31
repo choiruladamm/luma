@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:luma/data/repositories/chat_context_repository.dart';
 import 'package:luma/data/repositories/chat_repository.dart';
+import 'package:luma/domain/chat_budget.dart';
 import 'package:luma/domain/chat_prompt.dart';
 import 'package:luma/domain/models/ai_reply.dart';
 import 'package:luma/domain/models/book_chat.dart';
@@ -310,11 +311,16 @@ class LifecyclePrepared implements PreparedChat {
 class LifecycleContext implements ChatContextRepository {
   LifecycleContext(this.repo);
   final LifecycleRepo repo;
+  @override
+  final tokenBudget = chatQuestionTokens;
+  @override
+  final deadline = chatQuestionDeadline;
   Completer<void>? modelGate, prepareGate;
   AiException? error;
   int calls = 0, models = 0;
   final prepared = <LifecyclePrepared>[];
   final cancels = <CancelToken?>[];
+  final readingChapters = <int?>[];
   @override
   Future<String> model() async {
     models++;
@@ -326,10 +332,12 @@ class LifecycleContext implements ChatContextRepository {
   Future<PreparedChat?> prepare(
     ChatTurn target, {
     CancelToken? cancel,
+    int? readingChapterId,
     void Function(int, int)? onIndexProgress,
     void Function(int, int)? onExplorationProgress,
   }) async {
     calls++;
+    readingChapters.add(readingChapterId);
     cancels.add(cancel);
     await prepareGate?.future;
     if (error != null) throw error!;

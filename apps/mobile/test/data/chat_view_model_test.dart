@@ -129,6 +129,88 @@ void main() {
   });
 
   test(
+    'repair frames show a status, keep the old preview until new text, and reset per send',
+    () => fakeAsync((time) {
+      open(time);
+      send(time);
+      final attempt = context.prepared.last;
+      attempt.frames.add(
+        ChatStreamFrame(
+          '{"parts":[{"text":"Draf',
+          preview: [ChatAnswerBlock(text: 'Draf', sources: [])],
+        ),
+      );
+      pump(time);
+      time.elapse(const Duration(milliseconds: 50));
+      expect(state().preview!.blocks.single.text, 'Draf');
+      expect(state().repairAttempt, 0);
+      attempt.frames.add(
+        ChatStreamFrame(
+          '{"parts":[{"text":"Draf\n',
+          preview: [ChatAnswerBlock(text: 'Draf', sources: [])],
+          repair: 1,
+          repairReason: 'ID sumber tidak valid',
+        ),
+      );
+      pump(time);
+      expect(state().repairAttempt, 1);
+      expect(state().phase, ChatPhase.waiting);
+      expect(state().preview!.blocks.single.text, 'Draf');
+      // The repaired stream appends to the durable draft; no empty flash.
+      attempt.frames.add(
+        const ChatStreamFrame('{"parts":[{"text":"Draf\n{', repair: 1),
+      );
+      pump(time);
+      time.elapse(const Duration(milliseconds: 50));
+      expect(state().preview!.blocks.single.text, 'Draf');
+      attempt.frames.add(
+        ChatStreamFrame(
+          '{"parts":[{"text":"Draf\n{"parts":[{"text":"Draf baru',
+          preview: [ChatAnswerBlock(text: 'Draf baru', sources: [])],
+          repair: 1,
+        ),
+      );
+      pump(time);
+      time.elapse(const Duration(milliseconds: 50));
+      expect(state().preview!.blocks.single.text, 'Draf baru');
+      expect(state().phase, ChatPhase.writing);
+      done(time);
+      expect(state().phase, ChatPhase.done);
+      expect(state().repairAttempt, 1); // visible until the next send
+      send(time, 'Lagi?');
+      expect(state().repairAttempt, 0);
+      close(time);
+    }),
+  );
+
+  test(
+    'reading position from launch reaches preparation',
+    () => fakeAsync((time) {
+      open(time);
+      send(time);
+      expect(context.readingChapters, [null]);
+      done(time);
+      unawaited(
+        vm().launch(
+          ChatLaunchContext(
+            book: lifecycleBook,
+            returnPosition: (
+              chapterId: 7,
+              paragraphIndex: 2,
+              paragraphOffset: 0,
+            ),
+          ),
+        ),
+      );
+      pump(time);
+      send(time, 'Bab ini bahas apa?');
+      expect(context.readingChapters, [null, 7]);
+      done(time);
+      close(time);
+    }),
+  );
+
+  test(
     'throttled preview flushes on Stop, revokes sources, and rejects late frames/retry leakage',
     () => fakeAsync((time) {
       open(time);

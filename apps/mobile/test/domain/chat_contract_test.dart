@@ -182,7 +182,7 @@ void main() {
     expect(result.blocks.map((b) => b.kind), ChatAnswerKind.values);
     expect(identical(result.blocks.first.sources.single, s), isTrue);
     expect(result.note, isEmpty);
-    expect(chatPromptVersion, 4);
+    expect(chatPromptVersion, 5);
   });
 
   test('layout is optional, unknown values read as paragraph and quote needs a book part', () {

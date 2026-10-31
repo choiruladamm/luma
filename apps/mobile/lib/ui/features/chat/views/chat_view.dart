@@ -393,8 +393,7 @@ class _ChatViewState extends ConsumerState<ChatView> {
                       ),
                     Flexible(
                       child: Text(
-                        state.turns.lastOrNull?.draftLabel(phase) ??
-                            phase.label,
+                        state.statusLabel(phase),
                         style: StabiloType.caption.copyWith(
                           fontSize: 13.5,
                           fontWeight: FontWeight.w600,

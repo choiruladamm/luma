@@ -47,12 +47,26 @@ class ChatAdapter implements HttpClientAdapter {
   String answerId = 'S1';
   Future<void> Function()? onSelect;
   Future<void> Function()? onEmbedding;
+
+  /// Context window kecil supaya pembacaan terbagi beberapa batch.
+  int contextLength = 32000;
+  bool modelsFail = false;
+  List<int> chapterIds = const [];
+  String? clarificationText;
   @override
   Future<ResponseBody> fetch(
     RequestOptions options,
     Stream<Uint8List>? requestStream,
     Future<void>? cancelFuture,
   ) async {
+    if (options.path == '/models') {
+      if (modelsFail) return json({'error': 'down'}, 503);
+      return json({
+        'data': [
+          {'id': 'chosen/model', 'context_length': contextLength},
+        ],
+      });
+    }
     requests.add(options);
     final data = options.data as Map;
     if (options.path == '/embeddings') {
@@ -87,13 +101,15 @@ class ChatAdapter implements HttpClientAdapter {
     final messages = data['messages'] as List;
     final system = (messages.first as Map)['content'];
     String raw;
-    if (system == chatRewriteSystem) {
+    if (system == chatPlanSystem) {
       raw = badRewrite
           ? 'invalid'
           : jsonEncode({
               'query': 'Who keeps the garden?',
               'needs_clarification': clarification,
+              if (clarificationText != null) 'clarification': clarificationText,
               'strategy': strategy,
+              'chapter_ids': chapterIds,
               'queries': queries,
             });
     } else if (system == chatGlobalSystem) {
@@ -282,7 +298,21 @@ void main() {
     keys,
   );
 
+  /// Context kecil memecah 34 window jadi beberapa batch; budget token kecil
+  /// memaksa berhenti sebelum selesai (partial + Lanjutkan).
+  ChatContextRepository limitedContext() => ChatContextRepository(
+    db,
+    chat,
+    OpenRouterService(
+      Dio(BaseOptions(baseUrl: 'https://openrouter.ai/api/v1'))
+        ..httpClientAdapter = adapter,
+    ),
+    keys,
+    tokenBudget: 60000,
+  );
+
   Future<void> largeBook() async {
+    adapter.contextLength = 14000;
     for (var i = 1; i <= 32; i++) {
       await db
           .into(db.paragraphs)
@@ -291,7 +321,8 @@ void main() {
               chapterId: chapter,
               paragraphIndex: i,
               type: ParagraphType.paragraph,
-              content: 'Ordered paragraph $i about the garden.',
+              content:
+                  'Ordered paragraph $i about the garden. ${'The keeper tends the beds daily. ' * 28}',
               groupIndex: const Value(null),
             ),
           );
@@ -305,16 +336,25 @@ void main() {
     await largeBook();
     adapter.strategy = 'global';
     final progress = <int>[];
+    context.dispose();
+    context = limitedContext();
     final prepared = (await context.prepare(
       turn,
       onExplorationProgress: (n, _) => progress.add(n),
     ))!;
     expect(adapter.embeddingModels, isEmpty);
-    expect(adapter.batches, hasLength(3));
-    expect(progress, [0, 8, 16, 24]);
+    expect(adapter.batches.length, greaterThanOrEqualTo(2));
+    final examined = adapter.batches.fold<int>(0, (n, b) => n + b.length);
+    expect(examined, lessThan(34));
+    expect(progress.first, 0);
+    expect(progress.last, examined);
     final frame = (await prepared.stream().toList()).last;
     expect(frame.answer!.status, ChatAnswerStatus.partial);
-    expect(frame.answer!.blocks.last.text, contains('24/34'));
+    expect(frame.answer!.blocks.last.text, contains('$examined/34'));
+    expect(
+      ChatExploration.parse((await latest()).exploration!).stopReason,
+      'budget',
+    );
     await chat.finalize(
       turn.attemptRef,
       phase: ChatPhase.done,
@@ -376,11 +416,12 @@ void main() {
       error: AiError.invalidResponse,
     );
     final saved = await latest();
-    expect(ChatExploration.parse(saved.exploration!).cursor, 8);
+    final cursor = ChatExploration.parse(saved.exploration!).cursor;
+    expect(cursor, adapter.batches.first.length);
     adapter.badBatch = null;
     final continued = await chat.continueExploration(saved, model: model);
     await context.prepare(continued);
-    expect(adapter.batches[2].first, 'S9');
+    expect(adapter.batches[2].first, 'S${cursor + 1}');
   });
 
   test(
@@ -406,6 +447,8 @@ void main() {
   test('checkpoint rejects changed content, foreign identity and changed model before paid work', () async {
     await largeBook();
     adapter.strategy = 'global';
+    context.dispose();
+    context = limitedContext();
     await context.prepare(turn);
     await chat.finalize(turn.attemptRef, phase: ChatPhase.stopped);
     final saved = await latest();
@@ -424,6 +467,179 @@ void main() {
       fails(AiError.invalidResponse),
     );
     expect(adapter.requests.length, count);
+  });
+
+  Map<String, Object?> lastUserJson(String system) => jsonDecode(
+    ((adapter.requests
+                        .where(
+                          (r) =>
+                              r.path == '/chat/completions' &&
+                              ((r.data as Map)['messages'] as List)
+                                      .first['content'] ==
+                                  system,
+                        )
+                        .last
+                        .data
+                    as Map)['messages']
+                as List)
+            .last['content']
+        as String,
+  ) as Map<String, Object?>;
+
+  test(
+    'planner sees the original toc, sections and reading position',
+    () async {
+      await (db.update(db.chapters)..where((c) => c.id.equals(chapter))).write(
+        const ChaptersCompanion(
+          title: Value('III: Of the garden'),
+          section: Value('Discourses › Book I'),
+        ),
+      );
+      adapter.strategy = 'chapters';
+      adapter.chapterIds = [chapter];
+      await context.prepare(turn, readingChapterId: chapter);
+      final plan = lastUserJson(chatPlanSystem);
+      final toc = plan['toc'] as List;
+      expect(toc, hasLength(2));
+      expect(toc.first, {
+        'id': chapter,
+        'section': 'Discourses › Book I',
+        'title': 'III: Of the garden',
+        'number': 3,
+        'chars': text.length,
+      });
+      expect((toc.last as Map).containsKey('section'), isFalse);
+      expect(plan['readingPosition'], {
+        'chapterId': chapter,
+        'label': 'Book I › III: Of the garden',
+      });
+      expect(plan['book'], {'title': 'Garden', 'author': ''});
+      expect(plan['history'], isEmpty);
+    },
+  );
+
+  test('chapters strategy reads the requested chapter directly, without embeddings or notes', () async {
+    adapter.strategy = 'chapters';
+    adapter.chapterIds = [chapter];
+    final prepared = (await context.prepare(turn))!;
+    expect(adapter.embeddingModels, isEmpty);
+    expect(adapter.batches, isEmpty);
+    expect(
+      adapter.requests.where((r) => r.path == '/chat/completions'),
+      hasLength(1),
+    ); // planner only; the answer is not sent yet
+    expect(prepared.prompt.sources.single.text, text);
+    expect(prepared.prompt.sources.single.chapterTitle, 'Chapter 0');
+    final user = jsonDecode(prepared.prompt.user) as Map;
+    expect(user['exploration'], {
+      'scope': 'chapters',
+      'complete': true,
+      'examinedChapters': ['Chapter 0'],
+      'chapterCount': 1,
+      'examinedWindows': 1,
+      'totalWindows': 1,
+      'notesAreGenerated': true,
+      'notes': [],
+    });
+    final work = ChatExploration.parse((await latest()).exploration!);
+    expect(work.strategy, ChatSearchStrategy.chapters);
+    expect(work.chapterIds, [chapter]);
+    expect(work.complete, isTrue);
+    final frame = (await prepared.stream().toList()).last;
+    expect(frame.answer!.status, ChatAnswerStatus.answered);
+    expect(frame.answer!.blocks.single.sources.single.text, text);
+  });
+
+  test(
+    'a long requested chapter is read in batches within the shared budget',
+    () async {
+      await largeBook();
+      adapter.strategy = 'chapters';
+      adapter.chapterIds = [chapter];
+      context.dispose();
+      context = limitedContext();
+      final prepared = (await context.prepare(turn))!;
+      expect(adapter.embeddingModels, isEmpty);
+      expect(adapter.batches.length, greaterThanOrEqualTo(2));
+      expect(
+        adapter.batches.expand((b) => b).every((id) => id.startsWith('S')),
+        isTrue,
+      );
+      final examined = adapter.batches.fold<int>(0, (n, b) => n + b.length);
+      final frame = (await prepared.stream().toList()).last;
+      expect(frame.answer!.status, ChatAnswerStatus.partial);
+      expect(frame.answer!.blocks.last.text, contains('dari bab yang diminta'));
+      expect(frame.answer!.blocks.last.text, contains('$examined/33'));
+      final user = jsonDecode(prepared.prompt.user) as Map;
+      expect((user['exploration'] as Map)['scope'], 'chapters');
+      expect((user['exploration'] as Map)['stopReason'], 'budget');
+      // Notes cite windows that were packed into the final sources only.
+      final ids = prepared.prompt.sources.map((s) => s.id).toSet();
+      for (final note in (user['exploration'] as Map)['notes'] as List) {
+        expect(ids.containsAll((note as Map)['source_ids'] as List), isTrue);
+      }
+    },
+  );
+
+  test('global reads only the planner\'s content chapters', () async {
+    await largeBook();
+    adapter.strategy = 'global';
+    adapter.chapterIds = [chapter];
+    await context.prepare(turn);
+    final work = ChatExploration.parse((await latest()).exploration!);
+    expect(work.chapterIds, [chapter]);
+    expect(work.total, 33);
+    expect(work.complete, isTrue);
+    for (final batch in adapter.batches) {
+      final user = lastUserJson(chatGlobalSystem);
+      expect(user['examinedBefore'], isA<int>());
+      expect(batch, isNotEmpty);
+    }
+    expect(
+      adapter.requests
+          .where((r) => r.path == '/chat/completions')
+          .map((r) => (r.data as Map)['stream_options']),
+      everyElement({'include_usage': true}),
+    );
+  });
+
+  test('clarification from the planner reaches the answer prompt without any retrieval', () async {
+    adapter.strategy = 'chapters';
+    adapter.clarification = true;
+    adapter.clarificationText = 'Book I bab III atau Book III?';
+    final prepared = (await context.prepare(turn))!;
+    expect(adapter.embeddingModels, isEmpty);
+    expect(adapter.batches, isEmpty);
+    expect(prepared.prompt.sources, isEmpty);
+    final user = jsonDecode(prepared.prompt.user) as Map;
+    expect(user['exploration'], {
+      'clarification': 'Book I bab III atau Book III?',
+    });
+    expect((await latest()).exploration, isNull);
+    final frame = (await prepared.stream().toList()).last;
+    expect(frame.answer!.status, ChatAnswerStatus.clarify);
+  });
+
+  test('chapter ids outside the toc fail before any retrieval', () async {
+    adapter.strategy = 'chapters';
+    adapter.chapterIds = [999999];
+    await expectLater(context.prepare(turn), fails(AiError.invalidResponse));
+    expect(adapter.embeddingModels, isEmpty);
+    expect(
+      adapter.requests.where((r) => r.path == '/chat/completions'),
+      hasLength(1),
+    );
+    expect((await latest()).exploration, isNull);
+  });
+
+  test('model metadata failure falls back to a conservative context and still answers', () async {
+    adapter.modelsFail = true;
+    adapter.strategy = 'chapters';
+    adapter.chapterIds = [chapter];
+    final prepared = (await context.prepare(turn))!;
+    expect(prepared.prompt.sources.single.text, text);
+    final frame = (await prepared.stream().toList()).last;
+    expect(frame.answer, isNotNull);
   });
 
   test('off-topic and clarification skip indexing; cross-chapter queries share one query embedding request', () async {
@@ -473,8 +689,10 @@ void main() {
     );
     final previous = await latest();
     final work = ChatExploration.parse(previous.exploration!);
-    expect(work.searchedQueries, hasLength(3));
-    expect(work.pendingQueries, ['Missing part 3']);
+    // Round two selected the same evidence again: stagnant, stop early.
+    expect(work.searchedQueries, hasLength(2));
+    expect(work.pendingQueries, ['Missing part 2']);
+    expect(work.stopReason, 'stagnant');
     final attempts = await Future.wait([
       for (var i = 0; i < 2; i++)
         chat
@@ -490,7 +708,7 @@ void main() {
     final resumed = (await context.prepare(continuation))!;
     expect(resumed.prompt.sources, isNotEmpty);
     final saved = ChatExploration.parse((await latest()).exploration!);
-    expect(saved.searchedQueries, [...work.searchedQueries, 'Missing part 3']);
+    expect(saved.searchedQueries, [...work.searchedQueries, 'Missing part 2']);
     expect(saved.complete, isTrue);
     expect(documentRequests(), 1);
   });
@@ -923,7 +1141,7 @@ void main() {
     );
   });
   test(
-    'invalid citation never becomes a source action and is not retried',
+    'invalid citation never becomes a source action; repaired at most twice',
     () async {
       final prepared = (await context.prepare(turn))!;
       adapter.answerId = 'S999';
@@ -933,9 +1151,23 @@ void main() {
         fails(AiError.invalidResponse),
       );
       expect(frames.every((f) => f.answer == null), isTrue);
+      expect(frames.map((f) => f.repair).toSet(), {0, 1, 2});
+      expect(frames.where((f) => f.repairReason != null), isNotEmpty);
+      // plan + selector + answer + two repairs, never a fourth answer.
+      final answers = adapter.requests.where(
+        (r) =>
+            r.path == '/chat/completions' &&
+            ((r.data as Map)['messages'] as List).first['content'] ==
+                chatAnswerSystemPrompt,
+      );
+      expect(answers, hasLength(3));
+      expect(
+        ((answers.last.data as Map)['messages'] as List).length,
+        4,
+      ); // system, user, previous assistant output, repair instruction
       expect(
         adapter.requests.where((r) => r.path == '/chat/completions'),
-        hasLength(3),
+        hasLength(5),
       );
     },
   );
@@ -1007,7 +1239,7 @@ void main() {
             ..where((p) => p.chapterId.equals(chapter)))
           .write(ParagraphsCompanion(content: Value('word ' * 310000)));
       await expectLater(context.prepare(turn), fails(AiError.invalidResponse));
-      expect(adapter.requests, isEmpty);
+      expect(adapter.requests.where((r) => r.path == '/embeddings'), isEmpty);
     },
   );
 

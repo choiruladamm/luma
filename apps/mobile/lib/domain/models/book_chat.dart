@@ -381,7 +381,18 @@ class ChatTurn {
   );
 }
 
-enum ChatSearchStrategy { specific, crossChapter, global, correction, offTopic }
+/// chapters = baca bab/bagian yang dirujuk langsung; global = seluruh isi.
+enum ChatSearchStrategy {
+  specific,
+  crossChapter,
+  global,
+  correction,
+  offTopic,
+  chapters;
+
+  /// Membaca window teks berurutan (bukan pencarian semantik).
+  bool get reads => this == global || this == chapters;
+}
 
 class ChatQueryPlan {
   const ChatQueryPlan({
@@ -389,11 +400,19 @@ class ChatQueryPlan {
     required this.needsClarification,
     this.strategy = ChatSearchStrategy.specific,
     this.queries = const [],
+    this.chapterIds = const [],
+    this.clarification,
   });
   final String englishQuery;
   final bool needsClarification;
   final ChatSearchStrategy strategy;
   final List<String> queries;
+
+  /// Bab asli (chapters.id) yang dibaca untuk chapters/global; sudah divalidasi.
+  final List<int> chapterIds;
+
+  /// Pertanyaan klarifikasi singkat dari planner ("Book I bab III atau Book III?").
+  final String? clarification;
 }
 
 enum ChatEmbeddingModel {

@@ -1,3 +1,4 @@
+import '../../../../data/repositories/chat_context_repository.dart';
 import '../view_models/chat_view_model.dart';
 import '../../../../domain/models/ai_reply.dart';
 import '../../../../domain/models/book_chat.dart';
@@ -100,5 +101,15 @@ extension ChatDraftCopy on ChatTurn {
       return 'Draf ini belum lolos pengecekan jawaban.';
     }
     return phase.label;
+  }
+}
+
+extension ChatStatusCopy on ChatState {
+  /// Label status di bawah jawaban yang sedang berjalan/berhenti.
+  String statusLabel(ChatPhase phase) {
+    if (repairAttempt > 0 && phase.isRunning) {
+      return 'Lagi benerin format jawaban… ($repairAttempt/$chatMaxRepairs)';
+    }
+    return turns.lastOrNull?.draftLabel(phase) ?? phase.label;
   }
 }
