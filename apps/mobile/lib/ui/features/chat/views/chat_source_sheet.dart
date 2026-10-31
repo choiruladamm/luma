@@ -181,6 +181,7 @@ class ChatSourceSheet extends ConsumerWidget {
                         )
                       : AppButton.primary(
                           label: 'Buka di buku',
+                          icon: AppIcons.book,
                           onPressed: available
                               ? () => Navigator.of(context).pop(true)
                               : null,

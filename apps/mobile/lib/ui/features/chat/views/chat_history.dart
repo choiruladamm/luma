@@ -555,18 +555,23 @@ class ChatSourceChip extends StatelessWidget {
         child: Container(
           height: 20,
           padding: const EdgeInsets.symmetric(horizontal: 6),
-          alignment: Alignment.center,
           decoration: BoxDecoration(
             color: selected ? context.stabilo.accent : context.stabilo.muted,
             borderRadius: BorderRadius.circular(10),
           ),
-          child: Text(
-            label,
-            style: StabiloType.caption.copyWith(
-              fontSize: 12,
-              height: 1,
-              fontWeight: FontWeight.w700,
-              color: selected ? context.stabilo.onAccent : context.stabilo.ink,
+          // widthFactor: Container beralignment ngisi lebar penuh di WidgetSpan.
+          child: Center(
+            widthFactor: 1,
+            child: Text(
+              label,
+              style: StabiloType.caption.copyWith(
+                fontSize: 12,
+                height: 1,
+                fontWeight: FontWeight.w700,
+                color: selected
+                    ? context.stabilo.onAccent
+                    : context.stabilo.ink,
+              ),
             ),
           ),
         ),

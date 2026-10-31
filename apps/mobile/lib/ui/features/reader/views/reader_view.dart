@@ -830,18 +830,17 @@ class _ReaderViewState extends ConsumerState<ReaderView>
       spacing: Space.s2,
       children: [
         Expanded(
-          child: TextButton(
+          child: AppButton.secondary(
+            label: 'Balik ke ngobrol',
+            icon: AppIcons.back,
+            height: 48,
             onPressed: () => context.pop(),
-            child: const Text(
-              'Balik ke ngobrol',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
           ),
         ),
         Expanded(
           child: AppButton.primary(
             label: 'Lanjut baca',
+            icon: AppIcons.check,
             height: 48,
             onPressed: widget.onContinueReading,
           ),
