@@ -59,7 +59,7 @@ class _ChatViewState extends ConsumerState<ChatView> {
     });
   }
 
-  /// Header selalu ada; pas konten udah ke-scroll, nama buku ngeringkas.
+  /// Header selalu lengkap; pas konten udah ke-scroll cuma garis bawahnya muncul.
   bool _scroll(ScrollNotification n) {
     if (n.depth != 0) return false;
     if (n is ScrollUpdateNotification || n is ScrollEndNotification) {
@@ -243,16 +243,15 @@ class _ChatViewState extends ConsumerState<ChatView> {
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
-                                  if (!_scrolled)
-                                    Text(
-                                      title,
-                                      style: StabiloType.caption.copyWith(
-                                        color: context.stabilo.ink2,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
+                                  Text(
+                                    title,
+                                    style: StabiloType.caption.copyWith(
+                                      color: context.stabilo.ink2,
                                     ),
+                                    textAlign: TextAlign.center,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 ],
                               ),
                             ),

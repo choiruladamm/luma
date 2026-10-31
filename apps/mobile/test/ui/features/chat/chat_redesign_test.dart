@@ -125,19 +125,15 @@ void main() {
         await t.pumpAndSettle();
         expect(find.byType(ChatNotice), findsOneWidget);
         final originalTop = t.getTopLeft(button('Balik baca')).dy;
-        // Header selalu ada: pas di-scroll cuma nama buku yang ngeringkas.
+        // Header selalu lengkap, gak ngeringkas pas di-scroll.
         expect(find.text('Ngobrolin buku'), findsOneWidget);
         expect(find.text('Buku ini'), findsOneWidget);
         await t.drag(scroll, const Offset(0, -200));
         await t.pumpAndSettle();
         expect(find.text('Ngobrolin buku'), findsOneWidget);
-        expect(find.text('Buku ini'), findsNothing);
-        expect(t.getTopLeft(button('Balik baca')).dy, originalTop);
-        expect(t.getTopLeft(button('Riwayat obrolan')).dy, originalTop);
-        await t.drag(scroll, const Offset(0, 400));
-        await t.pumpAndSettle();
         expect(find.text('Buku ini'), findsOneWidget);
         expect(t.getTopLeft(button('Balik baca')).dy, originalTop);
+        expect(t.getTopLeft(button('Riwayat obrolan')).dy, originalTop);
         expect(t.takeException(), isNull);
         if (const bool.fromEnvironment('LUMA_DESIGN_CAPTURE')) {
           position.jumpTo(position.minScrollExtent);

@@ -10,6 +10,7 @@ import 'package:luma/ui/features/chat/views/chat_copy.dart';
 import 'package:luma/domain/models/book_chat.dart';
 import 'package:luma/routing/router.dart';
 import 'package:luma/ui/core/theme/stabilo_theme.dart';
+import 'package:luma/ui/core/theme/stabilo_tokens.dart';
 import 'package:luma/ui/core/widgets/buttons.dart';
 import 'package:luma/ui/features/bookshelf/view_models/bookshelf_view_model.dart';
 import 'package:luma/ui/features/chat/view_models/chat_view_model.dart';
@@ -756,6 +757,15 @@ void main() {
     expect(
       chatTimeGroup(now.subtract(const Duration(days: 3)), now),
       '7 hari terakhir',
+    );
+  });
+
+  testWidgets('empty history state starts below the header', (t) async {
+    await open(t, path: '/reader/1/chat/sessions');
+    expect(find.text('Belum ada obrolan.'), findsOneWidget);
+    expect(
+      t.getTopLeft(find.text('Belum ada obrolan.')).dy,
+      greaterThanOrEqualTo(Layout.chatHeader),
     );
   });
 

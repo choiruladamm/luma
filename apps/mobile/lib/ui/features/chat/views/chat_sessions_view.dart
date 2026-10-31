@@ -76,15 +76,18 @@ class ChatSessionsView extends ConsumerWidget {
     final footerBottom = pad.bottom > Space.s1
         ? pad.bottom - Space.s1
         : Space.s2;
+    // Isi mulai di bawah header (board: scroll area padding atas 107).
+    final listTop = pad.top + headerHeight + Space.s2;
     Widget content() => sessions.when(
-      loading: () => const Padding(
-        padding: EdgeInsets.only(top: Space.s4),
-        child: Skeleton(
+      loading: () => Padding(
+        padding: EdgeInsets.fromLTRB(Space.s6, listTop + Space.s2, Space.s6, 0),
+        child: const Skeleton(
           widths: [0.6, 0.85, 0.4, 0.7, 0.9, 0.4],
           lineExtent: Space.s8,
         ),
       ),
       error: (_, _) => _SessionsState(
+        top: listTop + 84,
         icon: AppIcons.alertCircle,
         iconColor: context.stabilo.onPink,
         tile: context.stabilo.pink,
@@ -101,6 +104,7 @@ class ChatSessionsView extends ConsumerWidget {
         final own = items.where((s) => s.book.bookId == bookId).toList();
         if (own.isEmpty) {
           return _SessionsState(
+            top: listTop + 84,
             icon: AppIcons.message,
             iconColor: context.stabilo.ink2,
             tile: context.stabilo.muted,
@@ -349,6 +353,7 @@ class SessionRow extends StatelessWidget {
 /// Kosong / gagal muat: ikon 48, judul, keterangan, aksi opsional.
 class _SessionsState extends StatelessWidget {
   const _SessionsState({
+    required this.top,
     required this.icon,
     required this.iconColor,
     required this.tile,
@@ -356,6 +361,7 @@ class _SessionsState extends StatelessWidget {
     required this.body,
     this.action,
   });
+  final double top;
   final List<List<dynamic>> icon;
   final Color iconColor, tile;
   final String title, body;
@@ -365,7 +371,7 @@ class _SessionsState extends StatelessWidget {
   Widget build(BuildContext context) => Align(
     alignment: Alignment.topCenter,
     child: Padding(
-      padding: const EdgeInsets.fromLTRB(40, 84, 40, 0),
+      padding: EdgeInsets.fromLTRB(40, top, 40, 0),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         spacing: Space.s2,
