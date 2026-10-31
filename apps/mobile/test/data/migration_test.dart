@@ -117,6 +117,12 @@ final v11 = [
         : sql,
 ];
 
+// Frozen schema 12: chat_chapter_notes, before chat_turns.steps.
+final v12 = [
+  ...v11,
+  '''CREATE TABLE "chat_chapter_notes" ("id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, "book_id" INTEGER NOT NULL REFERENCES books (id) ON DELETE CASCADE, "content_revision" INTEGER NOT NULL, "chapter_id" INTEGER NOT NULL REFERENCES chapters (id) ON DELETE CASCADE, "manifest" TEXT NOT NULL, "policy" INTEGER NOT NULL, "model" TEXT NOT NULL, "notes" TEXT NOT NULL, "created_at" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)), UNIQUE ("chapter_id", "policy"))''',
+];
+
 AppDatabase _open([void Function(dynamic raw)? setup]) => AppDatabase(
   DatabaseConnection(
     NativeDatabase.memory(setup: setup),
@@ -283,6 +289,31 @@ void main() {
       expect(await _shape(db), await _shape(fresh));
     },
   );
+
+  test('v12 → v13 adds nullable chat_turns.steps and keeps turns', () async {
+    final db = _open((raw) {
+      for (final sql in v12) {
+        raw.execute(sql);
+      }
+      raw.execute(
+        "INSERT INTO books(id,source_type,title,parser_version,total_chars) VALUES (1,'epub','Book',1,10)",
+      );
+      raw.execute(
+        "INSERT INTO chat_sessions(id,book_id,content_revision,title,manual_title) VALUES (9,1,1,'T',0)",
+      );
+      raw.execute(
+        "INSERT INTO chat_turns(id,session_id,sequence,question,phase,model,prompt_version,draft,exploration) VALUES (12,9,0,'Q','done','m',6,'','{}')",
+      );
+      raw.execute('PRAGMA user_version = 12');
+    });
+    addTearDown(db.close);
+    final turn = await db.select(db.chatTurns).getSingle();
+    expect(turn.exploration, '{}');
+    expect(turn.steps, isNull);
+    final fresh = _open();
+    addTearDown(fresh.close);
+    expect(await _shape(db), await _shape(fresh));
+  });
 
   test('v11 → v12 adds chat_chapter_notes and keeps sections', () async {
     final db = _open((raw) {

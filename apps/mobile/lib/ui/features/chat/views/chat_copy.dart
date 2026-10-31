@@ -1,5 +1,6 @@
 import '../../../../data/repositories/chat_context_repository.dart';
 import '../view_models/chat_view_model.dart';
+import '../../../../domain/chat_steps.dart';
 import '../../../../domain/models/ai_reply.dart';
 import '../../../../domain/models/book_chat.dart';
 
@@ -96,6 +97,20 @@ extension ChatIndexCopy on ChatState {
     }
     return 'Lagi nyiapin buku… ${progress.completed}/${progress.total} potongan';
   }
+}
+
+extension ChatStepCopy on ChatStep {
+  /// Teks baris status saat langkah ini yang lagi jalan ("Lagi baca Book II › IV").
+  String get statusLabel => switch (kind) {
+    ChatStepKind.plan => 'Lagi nyusun rencana',
+    ChatStepKind.cache => 'Lagi ambil catatan tersimpan',
+    ChatStepKind.answer => 'Lagi nulis jawaban',
+    ChatStepKind.read ||
+    ChatStepKind.search ||
+    ChatStepKind.repair ||
+    ChatStepKind.retry => 'Lagi ${label[0].toLowerCase()}${label.substring(1)}',
+    ChatStepKind.skip || ChatStepKind.stop => label,
+  };
 }
 
 extension ChatDraftCopy on ChatTurn {

@@ -410,12 +410,6 @@ class _ChatViewState extends ConsumerState<ChatView> {
                 height: Layout.touch,
                 onPressed: () => _navigate(() => context.push(Routes.settings)),
               ),
-            if (state.canAnswerNow)
-              AppButton.secondary(
-                label: 'Jawab sekarang',
-                height: Layout.touch,
-                onPressed: _vm.answerNow,
-              ),
             if (state.canContinue)
               AppButton.secondary(
                 label: 'Lanjutkan',
@@ -483,6 +477,13 @@ class _ChatViewState extends ConsumerState<ChatView> {
         contextCard: card,
         typo: typo,
         lastActions: _actions(state),
+        steps: state.steps,
+        answerNow: state.canAnswerNow
+            ? (
+                notes: state.explorationProgress?.notes.length ?? 0,
+                onPressed: _vm.answerNow,
+              )
+            : null,
         reserveAnswerSpace: true,
         chapterNumbers: ref
             .watch(chatChapterNumbersProvider(widget.bookId))

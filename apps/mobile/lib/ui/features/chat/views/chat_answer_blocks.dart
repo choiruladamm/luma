@@ -21,7 +21,11 @@ class ChatAnswerBlocks extends StatelessWidget {
     required this.running,
     required this.chip,
     required this.anchor,
+    this.provisional = false,
   });
+
+  /// Catatan sementara (#153): teks polos ink2 tanpa kartu, bukan jawaban.
+  final bool provisional;
 
   /// Blok yang lagi keliatan; yang teksnya kosong dilewati.
   final List<ChatAnswerBlock> blocks;
@@ -110,10 +114,11 @@ class ChatAnswerBlocks extends StatelessWidget {
     required bool caret,
   }) {
     final c = context.stabilo;
-    final text = _text(block, caret: caret);
+    final text = _text(block, caret: caret, color: provisional ? c.ink2 : null);
     final line = typo.style.fontSize! * typo.style.height!;
     if (block.kind == ChatAnswerKind.conversation &&
-        layout == ChatAnswerLayout.paragraph) {
+        layout == ChatAnswerLayout.paragraph &&
+        !provisional) {
       return Container(
         padding: const EdgeInsets.fromLTRB(12, 10, 14, 10),
         decoration: BoxDecoration(
@@ -199,7 +204,7 @@ class ChatAnswerBlocks extends StatelessWidget {
     };
   }
 
-  Widget _text(ChatAnswerBlock block, {required bool caret}) {
+  Widget _text(ChatAnswerBlock block, {required bool caret, Color? color}) {
     return SelectableText.rich(
       TextSpan(
         children: [
@@ -224,7 +229,7 @@ class ChatAnswerBlocks extends StatelessWidget {
             ),
         ],
       ),
-      style: typo.style,
+      style: color == null ? typo.style : typo.style.copyWith(color: color),
     );
   }
 }

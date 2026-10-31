@@ -154,6 +154,9 @@ Log append-only request LLM, terpisah dari cache `ai_results` (`createdAt`-nya k
 | 8 | `books.contentRevision` default 1, `chat_sessions`, `chat_turns` (#115). Tabel chat kosong saat upgrade; semua data lama dipertahankan |
 | 9 | `chat_indexes` dan `chat_vectors` (#134), kosong saat upgrade; seluruh data user dipertahankan |
 | 10 | `chat_turns.exploration` nullable JSON (#138); baris lama null, history dan index dipertahankan |
+| 11 | `chapters.section` nullable (#143); diisi ulang lokal dari EPUB tersimpan saat chat dibuka |
+| 12 | `chat_chapter_notes` (#151), kosong saat upgrade |
+| 13 | `chat_turns.steps` nullable JSON (#153); baris lama null, baris tidak tampil di UI |
 
 Tiap ubah tabel: naikkan `schemaVersion`, tambah langkah di `onUpgrade`, dan test migrasi dari versi sebelumnya (data tetap utuh, schema hasil migrasi sama dengan install baru). Restore backup dari schema lama ikut dimigrasi saat database dibuka ([backup.md](backup.md)).
 
@@ -208,6 +211,7 @@ Arsip tetap terbaca, tetapi tidak boleh dipakai untuk prompt baru atau jump yang
 | answer | text? | JSON jawaban tervalidasi: status + claims `{text,sourceIds}`; note diturunkan dari status, tidak mempercayai note model |
 | sources | text default `[]` | JSON daftar sumber attempt: id/chapterTitle/anchors, termasuk snapshot asli |
 | exploration | text? | Checkpoint penelusuran policy1; identitas turn/sesi/buku/revision/model, manifest, rencana/cursor/catatan atau pending query. Null pada history lama; bukan jawaban atau sumber asli |
+| steps | text? | Langkah AI (#153): JSON `[{kind, label, detail?, status}]`, ditulis sekali di `finalize`; dibaca defensif (rusak → null, turn tetap terbaca). Null pada turn lama/attempt yang belum selesai |
 | draft | text default kosong | Respons mentah/parsial, dipertahankan saat stop/cut/restart; tidak menjadi history terpercaya |
 | phase | text | Nama ChatPhase; teks mentah agar enum rusak ditangani mapper, bukan textEnum yang melempar saat query |
 | attempt | int default 1 | Generation retry pada turn yang sama |

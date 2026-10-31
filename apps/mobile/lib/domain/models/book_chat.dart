@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:crypto/crypto.dart';
 
+import '../chat_steps.dart';
 import 'ai_reply.dart';
 
 /// Revision isi/urutan; perubahan metadata tidak membuat snapshot baru.
@@ -294,8 +295,11 @@ class ChatTurn {
     this.error,
     this.httpStatus,
     this.exploration,
+    this.steps,
   });
 
+  /// Langkah AI attempt ini (#153); null = turn lama / belum selesai.
+  final List<ChatStep>? steps;
   final int id, sessionId, sequence, attempt, promptVersion;
   final ChatBookRef book;
   final String question, model, draft;
@@ -378,6 +382,7 @@ class ChatTurn {
     exploration: model == this.model && promptVersion == this.promptVersion
         ? exploration
         : null,
+    steps: attempt == this.attempt ? steps : null,
   );
 }
 

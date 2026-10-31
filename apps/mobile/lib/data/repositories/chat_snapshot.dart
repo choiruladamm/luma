@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import '../../domain/chat_steps.dart';
 import '../../domain/chat_prompt.dart';
 import '../../domain/chat_preview.dart';
 import '../../domain/models/ai_reply.dart';
@@ -9,6 +10,16 @@ import '../database/app_database.dart';
 // Decoder arsip memeriksa struktur/ownership, bukan keberadaan paragraf terbaru.
 // Validasi hash/range terhadap buku aktif dilakukan lagi sebelum prompt/jump.
 class ChatSnapshot {
+  /// Langkah AI (#153): rusak → null, turn tetap terbaca.
+  static List<ChatStep>? steps(String? raw) {
+    if (raw == null) return null;
+    try {
+      return decodeChatSteps(raw);
+    } on FormatException {
+      return null;
+    }
+  }
+
   static Object? json(String raw, {int maxBytes = chatSelectorBytes}) {
     text(raw, maxBytes: maxBytes);
     return jsonDecode(raw);
@@ -315,6 +326,7 @@ class ChatSnapshot {
         error: error,
         httpStatus: row.httpStatus,
         exploration: row.exploration,
+        steps: steps(row.steps),
       );
     } on FormatException {
       if (strict) rethrow;

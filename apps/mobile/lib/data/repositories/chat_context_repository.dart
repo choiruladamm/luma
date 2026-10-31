@@ -6,6 +6,7 @@ import 'package:dio/dio.dart';
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../domain/chat_steps.dart';
 import '../../domain/chat_budget.dart';
 import '../../domain/chat_prompt.dart';
 import '../../domain/chat_exploration.dart';
@@ -103,6 +104,7 @@ class ChatContextRepository {
     void Function(int completed, int total)? onIndexProgress,
     void Function(ChatExplorationProgress progress)? onExplorationProgress,
     bool Function()? answerNow,
+    void Function(ChatStep step)? onStep,
   }) async {
     _check(cancel);
     final key = await _keys.read();
@@ -370,6 +372,39 @@ class ChatContextRepository {
           plan.strategy == ChatSearchStrategy.global && plan.chapterIds.isEmpty
           ? content
           : plan.chapterIds;
+      String labelOfId(int id) {
+        final c = tocById[id];
+        return c == null ? 'bab $id' : chatChapterLabel(c);
+      }
+
+      String labelsOf(List<int> ids) => [
+        ...ids.take(4).map(labelOfId),
+        if (ids.length > 4) '+${ids.length - 4} lagi',
+      ].join(', ');
+      // Langkah AI (#153): dicatat tanpa request tambahan.
+      if (plan.needsClarification) {
+        onStep?.call(ChatStep.plan('tanya balik dulu'));
+      } else if (plan.strategy == ChatSearchStrategy.offTopic) {
+        onStep?.call(ChatStep.plan('ngobrol tanpa buka buku'));
+      } else if (plan.strategy.reads) {
+        onStep?.call(
+          requested.length == content.length &&
+                  plan.strategy == ChatSearchStrategy.global
+              ? ChatStep.plan('baca seluruh buku, ${requested.length} bab')
+              : ChatStep.plan(
+                  'baca ${requested.length} bab',
+                  detail: labelsOf(requested),
+                ),
+        );
+      } else {
+        onStep?.call(ChatStep.plan('cari di buku'));
+      }
+      if (!plan.needsClarification &&
+          plan.strategy != ChatSearchStrategy.chapters &&
+          plan.strategy != ChatSearchStrategy.offTopic &&
+          plan.skipIds.isNotEmpty) {
+        onStep?.call(ChatStep.skip(labelsOf(plan.skipIds)));
+      }
       if (!plan.needsClarification &&
           plan.strategy.reads &&
           scopedWindows(requested).isNotEmpty) {
@@ -404,6 +439,9 @@ class ChatContextRepository {
               .where((w) => w.anchors.first.chapterId == id)
               .length;
           cachedNotes.addAll(chatNotesFromCache(id, notes, windows));
+        }
+        if (cachedChapterCount > 0) {
+          onStep?.call(ChatStep.cache(cachedChapterCount));
         }
         final cachedIds = cache.keys.toSet();
         final windowsById = {for (final w in windows) w.id: w};
@@ -482,6 +520,9 @@ class ChatContextRepository {
             return null;
           }
           progress(work);
+          for (final id in chapterIds) {
+            onStep?.call(ChatStep.read(labelOfId(id), detail: 'teks asli'));
+          }
           selected = direct;
           exploration = work;
         } else {
@@ -578,6 +619,12 @@ class ChatContextRepository {
             }
             _check(cancel);
             progress(work, label: labelOf(group.first.batch));
+            onStep?.call(
+              ChatStep.read(
+                labelOf(group.first.batch) ?? 'bab berikutnya',
+                status: ChatStepStatus.running,
+              ),
+            );
             final raws = await Future.wait([
               for (final g in group)
                 _complete(
@@ -606,6 +653,7 @@ class ChatContextRepository {
                 // perbaikan jawaban.
                 if (budget.batchRetries >= chatMaxBatchRetries) rethrow;
                 budget.batchRetries++;
+                onStep?.call(ChatStep.retry(labelOf(g.batch) ?? 'bab'));
                 _check(cancel);
                 fresh = parseChatGlobalNotes(
                   await _complete(
@@ -652,6 +700,12 @@ class ChatContextRepository {
                 return null;
               }
               work = next;
+              onStep?.call(
+                ChatStep.read(
+                  labelOf(g.batch) ?? 'bab',
+                  detail: '${fresh.length} catatan',
+                ),
+              );
               // Bab yang baru selesai dibaca masuk cache (seluruh buku saja).
               if (plan.strategy == ChatSearchStrategy.global) {
                 for (final entry in chapterLastIndex.entries) {
@@ -684,6 +738,14 @@ class ChatContextRepository {
               work.stopReason != null &&
               !await _chat.saveExploration(target.attemptRef, work)) {
             return null;
+          }
+          if (!work.complete && work.stopReason != null) {
+            onStep?.call(
+              ChatStep.stop(
+                chatStopLabel(work.stopReason!),
+                detail: '${work.cursor}/${work.total} potongan',
+              ),
+            );
           }
           exploration = work;
           // Most-cited windows first; whatever does not fit stays uncited
@@ -777,6 +839,9 @@ class ChatContextRepository {
               .take(capacity < 3 ? capacity : 3)
               .toList();
           if (fresh.isEmpty) break;
+          onStep?.call(
+            ChatStep.search(fresh.join(' · '), status: ChatStepStatus.running),
+          );
           final rankings = await _rank(
             input.chunks,
             current,
@@ -863,6 +928,12 @@ class ChatContextRepository {
           );
           searched.addAll(fresh);
           searchedThisTurn += fresh.length;
+          onStep?.call(
+            ChatStep.search(
+              fresh.join(' · '),
+              detail: '${selected.length} sumber',
+            ),
+          );
           queries = chatMissingQueries(raw)
               .where((q) => !searched.contains(q))
               .take(2)
@@ -883,6 +954,14 @@ class ChatContextRepository {
             return null;
           }
           if (queries.isEmpty || stagnant) break;
+        }
+        if (searchWork.stopReason != null) {
+          onStep?.call(
+            ChatStep.stop(
+              chatStopLabel(searchWork.stopReason!),
+              detail: '${searched.length} query',
+            ),
+          );
         }
         exploration = searchWork;
         // Add adjacent windows after the direct evidence, without losing forced quotes.
@@ -1329,7 +1408,10 @@ class PreparedChat {
   final ChatBudget _budget;
   bool _started = false;
 
-  Stream<ChatStreamFrame> stream({CancelToken? cancel}) async* {
+  Stream<ChatStreamFrame> stream({
+    CancelToken? cancel,
+    void Function(ChatStep step)? onStep,
+  }) async* {
     if (_started) throw StateError('Request chat sudah dipakai');
     _started = true;
     if (cancel?.isCancelled ?? false) throw cancel!.cancelError!;
@@ -1342,6 +1424,7 @@ class PreparedChat {
       // output attempt sebelumnya tetap di depan, perbaikan ditambahkan.
       var prefix = '';
       for (var attempt = 0; ; attempt++) {
+        onStep?.call(ChatStep.answer(status: ChatStepStatus.running));
         final decoder = ChatAnswerDecoder(
           prompt: prompt,
           current: book,
@@ -1389,6 +1472,7 @@ class PreparedChat {
           // yang sama. HTTP/saldo/kunci tidak pernah diulang otomatis.
           if (attempt >= chatMaxRepairs || _budget.expired) rethrow;
           _budget.repairs++;
+          onStep?.call(ChatStep.repair(attempt + 1, chatMaxRepairs));
           reason = e.message;
           history = [
             {'role': 'assistant', 'content': decoder.raw},
@@ -1431,6 +1515,7 @@ class PreparedChat {
             ],
           );
         }
+        onStep?.call(ChatStep.answer());
         yield ChatStreamFrame(
           '$prefix${decoder.raw}',
           answer: answer,

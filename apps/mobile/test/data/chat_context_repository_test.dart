@@ -13,6 +13,7 @@ import 'package:luma/data/services/openrouter_service.dart';
 import 'package:luma/domain/chat_prompt.dart';
 import 'package:luma/domain/chat_exploration.dart';
 import 'package:luma/domain/chat_retrieval.dart';
+import 'package:luma/domain/chat_steps.dart';
 import 'package:luma/domain/models/ai_reply.dart';
 import 'package:luma/domain/models/book.dart';
 import 'package:luma/domain/models/book_chat.dart';
@@ -446,7 +447,13 @@ void main() {
     await largeBook();
     adapter.strategy = 'global';
     adapter.badBatch = 2;
-    await context.prepare(turn);
+    final steps = <ChatStep>[];
+    await context.prepare(turn, onStep: steps.add);
+    expect(steps.where((s) => s.kind == ChatStepKind.retry), hasLength(1));
+    expect(
+      steps.singleWhere((s) => s.kind == ChatStepKind.retry).detail,
+      'catatan ditolak',
+    );
     final repairs = adapter.requests.where(
       (r) =>
           r.path == '/chat/completions' &&
@@ -604,6 +611,92 @@ void main() {
   });
 
   test(
+    'steps record plan, direct read, repair and answer without extra requests',
+    () async {
+      adapter.strategy = 'chapters';
+      adapter.chapterIds = [chapter];
+      final steps = <ChatStep>[];
+      final prepared = (await context.prepare(turn, onStep: steps.add))!;
+      final requests = adapter.requests.length;
+      expect(steps.map((s) => (s.kind, s.status, s.label)), [
+        (ChatStepKind.plan, ChatStepStatus.done, 'Rencana: baca 1 bab'),
+        (ChatStepKind.read, ChatStepStatus.done, 'Baca Chapter 0'),
+      ]);
+      expect(steps.first.detail, 'Chapter 0');
+      expect(steps.last.detail, 'teks asli');
+      adapter.answerId = 'S999';
+      await expectLater(
+        prepared.stream(onStep: steps.add).forEach((_) {}),
+        fails(AiError.invalidResponse),
+      );
+      expect(steps.skip(2).map((s) => (s.kind, s.status)), [
+        (ChatStepKind.answer, ChatStepStatus.running),
+        (ChatStepKind.repair, ChatStepStatus.done),
+        (ChatStepKind.answer, ChatStepStatus.running),
+        (ChatStepKind.repair, ChatStepStatus.done),
+        (ChatStepKind.answer, ChatStepStatus.running),
+      ]);
+      expect(steps[3].label, 'Benerin format jawaban (1/2)');
+      expect(steps[5].label, 'Benerin format jawaban (2/2)');
+      expect(
+        adapter.requests.length - requests,
+        3,
+      ); // answer + 2 repairs: steps cost nothing
+    },
+  );
+
+  test('steps record skip, batch reads and cache', () async {
+    await largeBook();
+    adapter.strategy = 'global';
+    adapter.skipIds = [chapter];
+    final steps = <ChatStep>[];
+    final prepared = (await context.prepare(turn, onStep: steps.add))!;
+    expect(steps.first.label, startsWith('Rencana: baca seluruh buku, '));
+    expect(steps.first.label, endsWith(' bab'));
+    expect(steps.first.detail, isNull);
+    expect(steps[1].kind, ChatStepKind.skip);
+    expect(steps[1].label, 'Dilewati: Chapter 0');
+    expect(steps[1].status, ChatStepStatus.skipped);
+    expect(
+      steps.where((s) => s.kind == ChatStepKind.read).map((s) => s.status),
+      containsAll([ChatStepStatus.running, ChatStepStatus.done]),
+    );
+    expect(
+      steps.where((s) => s.kind == ChatStepKind.read && !s.status.isRunning),
+      everyElement(predicate<ChatStep>((s) => s.detail!.endsWith('catatan'))),
+    );
+    expect(steps.where((s) => s.kind == ChatStepKind.stop), isEmpty);
+    final frame = (await prepared.stream(onStep: steps.add).toList()).last;
+    expect(steps.last, ChatStep.answer());
+    await chat.finalize(
+      turn.attemptRef,
+      phase: ChatPhase.done,
+      draft: frame.draft,
+      answer: frame.answer,
+      steps: steps,
+    );
+    expect((await latest()).steps, steps);
+
+    // Second send: cached chapters become one cache step, no reads.
+    final again = await chat.appendTurn(
+      book,
+      turn.sessionId,
+      question: 'Tema kematian di buku ini?',
+      model: model,
+      promptVersion: chatPromptVersion,
+    );
+    final cachedSteps = <ChatStep>[];
+    await context.prepare(again, onStep: cachedSteps.add);
+    expect(cachedSteps.map((s) => s.kind), [
+      ChatStepKind.plan,
+      ChatStepKind.skip,
+      ChatStepKind.cache,
+    ]);
+    expect(cachedSteps.last.detail, endsWith(' bab'));
+    await chat.finalize(again.attemptRef, phase: ChatPhase.stopped);
+  });
+
+  test(
     'a long requested chapter is read in batches within the shared budget',
     () async {
       await largeBook();
@@ -668,11 +761,16 @@ void main() {
     adapter.onBatch = () async {
       groups++;
     };
+    final steps = <ChatStep>[];
     final prepared = (await context.prepare(
       turn,
       onExplorationProgress: seen.add,
       answerNow: () => groups >= 1,
+      onStep: steps.add,
     ))!;
+    final stop = steps.singleWhere((s) => s.kind == ChatStepKind.stop);
+    expect(stop.label, 'Berhenti: Jawab sekarang');
+    expect(stop.detail, matches(RegExp(r'^\d+/\d+ potongan$')));
     expect(seen.first.completed, 0);
     expect(seen.first.notes, isEmpty);
     expect(

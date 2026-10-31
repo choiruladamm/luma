@@ -6,6 +6,7 @@ import 'package:luma/data/repositories/chat_repository.dart';
 import 'package:luma/domain/chat_budget.dart';
 import 'package:luma/domain/chat_exploration.dart';
 import 'package:luma/domain/chat_prompt.dart';
+import 'package:luma/domain/chat_steps.dart';
 import 'package:luma/domain/models/ai_reply.dart';
 import 'package:luma/domain/models/book_chat.dart';
 
@@ -23,7 +24,15 @@ class LifecycleRepo implements ChatRepository {
   Completer<void>? finalizeGate;
   int creates = 0, retries = 0, opened = 0;
   int? last;
-  final finalized = <({ChatAttemptRef ref, ChatPhase phase, String draft})>[];
+  final finalized =
+      <
+        ({
+          ChatAttemptRef ref,
+          ChatPhase phase,
+          String draft,
+          List<ChatStep>? steps,
+        })
+      >[];
   bool disposed = false;
   final at = DateTime.utc(2026, 10, 28);
 
@@ -154,6 +163,7 @@ class LifecycleRepo implements ChatRepository {
     ChatAnswer? answer,
     AiError? error,
     int? httpStatus,
+    List<ChatStep>? steps,
   }) => ChatTurn(
     id: t.id,
     sessionId: t.sessionId,
@@ -171,6 +181,7 @@ class LifecycleRepo implements ChatRepository {
     answer: answer,
     error: error,
     httpStatus: httpStatus,
+    steps: steps,
   );
   @override
   Future<bool> prepareSources(
@@ -205,12 +216,18 @@ class LifecycleRepo implements ChatRepository {
     ChatAnswer? answer,
     AiError? error,
     int? httpStatus,
+    List<ChatStep>? steps,
   }) async {
     await finalizeGate?.future;
     if (finalizeError != null) throw finalizeError!;
     final t = owned(ref);
     if (t == null) return false;
-    finalized.add((ref: ref, phase: phase, draft: draft ?? t.draft));
+    finalized.add((
+      ref: ref,
+      phase: phase,
+      draft: draft ?? t.draft,
+      steps: steps,
+    ));
     turns[t.id] = update(
       t,
       phase: phase,
@@ -218,6 +235,7 @@ class LifecycleRepo implements ChatRepository {
       answer: answer,
       error: error,
       httpStatus: httpStatus,
+      steps: steps,
     );
     changes.add(null);
     return true;
@@ -299,6 +317,7 @@ class LifecycleRepo implements ChatRepository {
 
 class LifecyclePrepared implements PreparedChat {
   final frames = StreamController<ChatStreamFrame>();
+  void Function(ChatStep)? onStep;
   @override
   final book = lifecycleBook;
   @override
@@ -306,7 +325,13 @@ class LifecyclePrepared implements PreparedChat {
   @override
   final prompt = ChatPrompt(user: '{}', sources: [], historyTurnIds: []);
   @override
-  Stream<ChatStreamFrame> stream({CancelToken? cancel}) => frames.stream;
+  Stream<ChatStreamFrame> stream({
+    CancelToken? cancel,
+    void Function(ChatStep step)? onStep,
+  }) {
+    this.onStep = onStep;
+    return frames.stream;
+  }
 }
 
 class LifecycleContext implements ChatContextRepository {
@@ -324,6 +349,7 @@ class LifecycleContext implements ChatContextRepository {
   final readingChapters = <int?>[];
   final progressSinks = <void Function(ChatExplorationProgress)?>[];
   final answerNowChecks = <bool Function()?>[];
+  final stepSinks = <void Function(ChatStep)?>[];
   @override
   Future<String> model() async {
     models++;
@@ -339,8 +365,10 @@ class LifecycleContext implements ChatContextRepository {
     void Function(int, int)? onIndexProgress,
     void Function(ChatExplorationProgress)? onExplorationProgress,
     bool Function()? answerNow,
+    void Function(ChatStep)? onStep,
   }) async {
     calls++;
+    stepSinks.add(onStep);
     progressSinks.add(onExplorationProgress);
     answerNowChecks.add(answerNow);
     readingChapters.add(readingChapterId);

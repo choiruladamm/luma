@@ -193,7 +193,18 @@ perbaikan berjalan; ViewModel menampilkan status dan menahan preview lama.
 gratis) dan di-override di test tanpa DB. #150: `ChatState.explorationProgress`
 (`ChatExplorationProgress`) membawa label bab + catatan; catatan dipublish lewat
 `preview` existing; `answerNow()` menandai `_ChatRun` dan `canAnswerNow`
-menampilkan tombol "Jawab sekarang" selama `retrieving/slow`.
+menampilkan "Jawab sekarang" selama `retrieving/slow`. #153 (Langkah AI):
+`prepare(onStep:)`/`stream(onStep:)` memanggil `ChatStep` (`chat_steps.dart`:
+plan/cache/read/search/skip/repair/retry/stop/answer, status done/running/skipped)
+tanpa request tambahan. ViewModel menumpuk lewat `chatAppendStep` (langkah
+`running` selalu terakhir, ditutup oleh langkah selesai berlabel sama) ke
+`ChatState.steps` (attempt-scoped), `chatSettleSteps` menandai sisa running
+sebagai skipped saat attempt berakhir tanpa jawaban, dan menyimpannya sekali
+lewat `finalize(steps:)`. UI `chat_steps_row.dart` (`ChatStepsRow`, `ChatAnswerNow`)
+dipasang `ChatHistory` di atas `ChatResponse`: baris status 40pt + daftar (maks 6,
+"lihat N lagi"), terbuka saat jalan, tertutup setelah selesai, toggle per turn;
+turn lama tanpa `steps` tidak menampilkan baris. Blok "Catatan sementara" memuat
+tombol teks "Jawab sekarang →" + caption menggantikan tombol sekunder #150.
 
 
 ### ViewModel dan lifecycle Ngobrolin buku (#118)

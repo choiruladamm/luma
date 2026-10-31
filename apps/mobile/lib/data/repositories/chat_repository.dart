@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../domain/chat_steps.dart';
 import '../../domain/chat_prompt.dart';
 import '../../domain/chat_preview.dart';
 import '../../domain/chat_exploration.dart';
@@ -1054,6 +1055,7 @@ class ChatRepository {
     ChatAnswer? answer,
     AiError? error,
     int? httpStatus,
+    List<ChatStep>? steps,
   }) async {
     if (!await _callbackReady()) return false;
     if (phase.isRunning) throw ArgumentError('Terminal state wajib');
@@ -1104,6 +1106,9 @@ class ChatRepository {
           answer: Value(raw),
           error: Value(error?.name),
           httpStatus: Value(httpStatus),
+          steps: Value(
+            steps == null || steps.isEmpty ? null : encodeChatSteps(steps),
+          ),
           updatedAt: Value(at),
         ),
       );

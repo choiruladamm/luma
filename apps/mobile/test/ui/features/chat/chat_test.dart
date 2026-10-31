@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:luma/domain/models/ai_reply.dart';
 import 'package:luma/domain/chat_exploration.dart';
+import 'package:luma/domain/chat_steps.dart';
 import 'package:luma/ui/features/chat/views/chat_copy.dart';
 import 'package:luma/domain/models/book_chat.dart';
 import 'package:luma/routing/router.dart';
@@ -36,6 +37,7 @@ ChatTurn turn(
   ChatPhase phase = ChatPhase.done,
   ChatAnswer? answer,
   String? exploration,
+  List<ChatStep>? steps,
 }) => ChatTurn(
   id: id,
   sessionId: 1,
@@ -50,6 +52,7 @@ ChatTurn turn(
   draft: '{"secret raw JSON": true}',
   answer: answer,
   exploration: exploration,
+  steps: steps,
 );
 final source = ChatSource(
   id: 'S1',
@@ -163,6 +166,16 @@ class FakeChat extends ChatViewModel {
   }
 }
 
+/// Label bab dengan ikon chevron: " › " jadi satu placeholder di teks.
+Finder labelText(String text) => find.text(text.replaceAll(' › ', '\uFFFC'));
+
+Finder labelContaining(String text) =>
+    find.textContaining(text.replaceAll(' › ', '\uFFFC'));
+
+final checkIcons = find.byWidgetPredicate(
+  (w) => w is AppIcon && w.icon == AppIcons.check,
+);
+
 Finder button(String label) => find.byWidgetPredicate(
   (w) =>
       w is CircleButton && w.semanticLabel == label ||
@@ -267,6 +280,128 @@ void main() {
     );
   });
 
+  for (final theme in [ThemeMode.light, ThemeMode.dark]) {
+    testWidgets('Langkah AI row: running, done closed, done open ($theme)', (
+      t,
+    ) async {
+      final running = turn(1, phase: ChatPhase.retrieving);
+      final steps = [
+        ChatStep.plan('baca seluruh buku, 102 bab'),
+        for (var i = 1; i <= 6; i++)
+          ChatStep.read('Book I › $i', detail: '$i catatan'),
+        ChatStep.read('Book II › IV', status: ChatStepStatus.running),
+      ];
+      await open(
+        t,
+        themeMode: theme,
+        state: ChatState(
+          book: book,
+          loading: false,
+          turns: [running],
+          phase: ChatPhase.retrieving,
+          steps: (attempt: running.attemptRef, steps: steps),
+          explorationProgress: const (
+            completed: 3,
+            total: 9,
+            label: 'Book II › IV',
+            notes: <ChatExplorationNote>[],
+          ) as ChatExplorationProgress,
+          preview: (
+            attempt: running.attemptRef,
+            blocks: [ChatAnswerBlock(text: 'Catatan satu', sources: [])],
+          ),
+        ),
+      );
+      await t.pump(const Duration(seconds: 3));
+      // Running: status row names the running step, list open by default.
+      expect(labelText('Lagi baca Book II › IV'), findsOneWidget);
+      expect(find.text('Langkah 8'), findsOneWidget);
+      expect(find.textContaining('Rencana: baca seluruh buku'), findsOneWidget);
+      expect(labelContaining('Baca Book I › 6'), findsNothing);
+      expect(find.text('lihat 2 lagi'), findsOneWidget);
+      await t.tap(find.text('lihat 2 lagi'));
+      await t.pump();
+      expect(labelContaining('Baca Book II › IV'), findsOneWidget);
+      expect(find.text('lihat 2 lagi'), findsNothing);
+      // Catatan sementara block with the text button and caption.
+      expect(find.text('CATATAN SEMENTARA'), findsOneWidget);
+      expect(find.text('Jawab sekarang'), findsOneWidget);
+      expect(
+        find.text('Pakai 0 catatan yang udah masuk, sisa buku gak dibaca.'),
+        findsOneWidget,
+      );
+      await t.tap(find.text('Jawab sekarang'));
+      await t.pump();
+      expect(vm.answerNows, 1);
+      // Collapse while running: toggle wins over the default.
+      await t.tap(labelText('Lagi baca Book II › IV'));
+      await t.pump();
+      expect(find.textContaining('Rencana: baca seluruh buku'), findsNothing);
+
+      // Done: the turn carries its own steps; closed by default.
+      final finished = [
+        ...steps.take(7),
+        ChatStep.read('Book II › IV', detail: '2 catatan'),
+        ChatStep.answer(),
+      ];
+      vm.push(
+        ChatState(
+          book: book,
+          loading: false,
+          turns: [turn(1, answer: answer, steps: finished)],
+          phase: ChatPhase.done,
+        ),
+      );
+      await t.pump(const Duration(seconds: 3));
+      expect(find.text('9 langkah selesai'), findsOneWidget);
+      expect(find.text('Langkah 9'), findsNothing);
+      expect(find.text('Jawab sekarang'), findsNothing);
+      expect(find.text('CATATAN SEMENTARA'), findsNothing);
+      expect(find.textContaining('Rencana: baca seluruh buku'), findsNothing);
+      await t.tap(find.text('9 langkah selesai'));
+      await t.pump();
+      expect(find.textContaining('Rencana: baca seluruh buku'), findsOneWidget);
+      // "lihat N lagi" was already opened on this turn; the full list stays.
+      expect(find.text('lihat 3 lagi'), findsNothing);
+      expect(find.textContaining('Jawaban'), findsWidgets);
+      expect(t.takeException(), isNull);
+    });
+  }
+
+  testWidgets(
+    'old turns without steps show no status row; skipped lines are muted',
+    (t) async {
+      await open(
+        t,
+        state: ChatState(
+          book: book,
+          loading: false,
+          turns: [
+            turn(1, answer: answer),
+            turn(
+              2,
+              phase: ChatPhase.stopped,
+              steps: [
+                ChatStep.plan('cari di buku'),
+                ChatStep.skip('Endnotes'),
+                ChatStep.search('q', status: ChatStepStatus.skipped),
+              ],
+            ),
+          ],
+          phase: ChatPhase.stopped,
+        ),
+      );
+      await t.pump(const Duration(seconds: 3));
+      expect(find.text('3 langkah selesai'), findsOneWidget);
+      expect(find.textContaining('langkah selesai'), findsOneWidget);
+      await t.tap(find.text('3 langkah selesai'));
+      await t.pump();
+      expect(find.text('–'), findsNWidgets(2));
+      expect(checkIcons, findsNWidgets(2)); // status row + the one done step
+      expect(find.textContaining('Dilewati: Endnotes'), findsOneWidget);
+    },
+  );
+
   testWidgets(
     'saved notes render as a tagged provisional draft while reading',
     (t) async {
@@ -294,7 +429,7 @@ void main() {
       expect(find.text('CATATAN SEMENTARA'), findsOneWidget);
       expect(find.textContaining('Catatan satu'), findsOneWidget);
       expect(find.text('Jawab sekarang'), findsOneWidget);
-      expect(find.text('Lagi baca Book I › II… 3/9 potongan'), findsOneWidget);
+      expect(labelText('Lagi baca Book I › II… 3/9 potongan'), findsOneWidget);
       vm.push(
         vm.current.copyWith(
           phase: ChatPhase.writing,
@@ -630,7 +765,7 @@ void main() {
       );
       await t.pump();
       expect(
-        find.text('Lagi baca Book II › IV: Of Progress… 8/20 potongan'),
+        labelText('Lagi baca Book II › IV: Of Progress… 8/20 potongan'),
         findsOneWidget,
       );
       expect(find.text('Jawab sekarang'), findsOneWidget);

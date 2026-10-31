@@ -268,6 +268,9 @@ class ChatTurns extends Table {
   TextColumn get draft => text().withDefault(const Constant(''))();
   TextColumn get exploration => text().nullable()();
 
+  /// Langkah AI (#153), JSON; ditulis sekali di finalize, null pada turn lama.
+  TextColumn get steps => text().nullable()();
+
   /// Teks mentah supaya mapper #116 bisa menangani enum backup yang rusak.
   TextColumn get phase => text()();
   IntColumn get attempt => integer().withDefault(const Constant(1))();
@@ -381,7 +384,7 @@ class AppDatabase extends _$AppDatabase {
   // test/data/migration_test.dart. Backup dari versi lama ikut dimigrasi pas
   // di-restore.
   @override
-  int get schemaVersion => 12;
+  int get schemaVersion => 13;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -431,6 +434,9 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 12) {
         await m.createTable(chatChapterNotes);
+      }
+      if (from >= 8 && from < 13) {
+        await m.addColumn(chatTurns, chatTurns.steps);
       }
     },
     // SQLite matiin foreign key secara default; cascade butuh ini.
