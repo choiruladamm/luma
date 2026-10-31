@@ -44,23 +44,45 @@ class CatalogRepository {
     }
   });
 
+  /// Satu buku by Text#; null kalau gak ada di katalog.
+  Future<CatalogRow?> byId(int id) async {
+    final row = await (_db.select(
+      _db.catalogBooks,
+    )..where((b) => b.id.equals(id))).getSingleOrNull();
+    return row == null ? null : _toRow(row);
+  }
+
   /// Judul atau penulis mengandung [query] (case-insensitive), urut judul.
   /// Query kosong = kosong: daftar populer bukan urusan katalog lokal.
   Future<List<CatalogRow>> search(String query, {int page = 1}) {
-    final q = query.trim();
-    if (q.isEmpty) return Future.value(const []);
-    return _page(
-      (b) => b.title.like('%$q%') | b.authorsText.like('%$q%'),
-      page,
-    );
+    final where = _searchWhere(query);
+    return where == null ? Future.value(const []) : _page(where, page);
   }
 
-  /// Buku lain dari [name] persis (nama kayak di `authors`).
+  /// Total hasil [search], buat "N hasil" dan tahu masih ada halaman.
+  Future<int> searchCount(String query) {
+    final where = _searchWhere(query);
+    return where == null ? Future.value(0) : _total(where);
+  }
+
+  _Where? _searchWhere(String query) {
+    final q = query.trim();
+    if (q.isEmpty) return null;
+    return (b) => _has(b.title, q) | _has(b.authorsText, q);
+  }
+
+  /// Buku dari [name] persis (nama kayak di `authors`), urut judul.
   Future<List<CatalogRow>> byAuthor(String name, {int page = 1}) =>
-      _page((b) => b.authorsJson.like('%${_json({'name': name})}%'), page);
+      _page(_authorWhere(name), page);
+
+  /// Jumlah buku [name] di katalog, buat "N buku lain".
+  Future<int> countByAuthor(String name) => _total(_authorWhere(name));
 
   Future<List<CatalogRow>> byBookshelf(String name, {int page = 1}) =>
-      _page((b) => b.bookshelvesJson.like('%${_json(name)}%'), page);
+      _page((b) => _has(b.bookshelvesJson, _json(name)), page);
+
+  _Where _authorWhere(String name) =>
+      (b) => _has(b.authorsJson, _json({'name': name}));
 
   /// `"name":"Austen, Jane"` / `"Harvard Classics"`: cocokin token JSON
   /// persis, tanpa kolom pivot.
@@ -69,10 +91,16 @@ class CatalogRepository {
     return value is Map ? s.substring(1, s.length - 1) : s;
   }
 
-  Future<List<CatalogRow>> _page(
-    Expression<bool> Function($CatalogBooksTable b) where,
-    int page,
-  ) async {
+  /// `instr(lower(col), lower(q)) > 0`: substring polos, `%` dan `_` di
+  /// query bukan wildcard (LIKE butuh ESCAPE). Case-insensitive ASCII,
+  /// sama kayak LIKE SQLite.
+  static Expression<bool> _has(Expression<String> column, String q) =>
+      FunctionCallExpression<int>('instr', [
+        column.lower(),
+        Constant(q.toLowerCase()),
+      ]).isBiggerThanValue(0);
+
+  Future<List<CatalogRow>> _page(_Where where, int page) async {
     final rows =
         await (_db.select(_db.catalogBooks)
               ..where(where)
@@ -80,6 +108,16 @@ class CatalogRepository {
               ..limit(pageSize, offset: (page - 1) * pageSize))
             .get();
     return rows.map(_toRow).toList();
+  }
+
+  Future<int> _total(_Where where) async {
+    final n = countAll();
+    final row =
+        await (_db.selectOnly(_db.catalogBooks)
+              ..addColumns([n])
+              ..where(where(_db.catalogBooks)))
+            .getSingle();
+    return row.read(n)!;
   }
 
   /// Semua bookshelf + jumlah buku, terbanyak dulu.
@@ -150,6 +188,8 @@ class CatalogRepository {
     issued: b.issued,
   );
 }
+
+typedef _Where = Expression<bool> Function($CatalogBooksTable b);
 
 final catalogRepositoryProvider = Provider<CatalogRepository>(
   (ref) => CatalogRepository(ref.watch(appDatabaseProvider)),

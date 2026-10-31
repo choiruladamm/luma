@@ -54,6 +54,26 @@ void main() {
     expect((await repo.search('PRIDE')).map((r) => r.id), [1342]);
     expect(await repo.search('   '), isEmpty);
     expect(await repo.search('zzzqqq'), isEmpty);
+    expect(await repo.searchCount('austen'), hits.length);
+    expect(await repo.searchCount(''), 0);
+  });
+
+  test('byId returns the row or null', () async {
+    await repo.replaceAll(sample);
+    expect((await repo.byId(1342))?.title, 'Pride and Prejudice');
+    expect(await repo.byId(999999), isNull);
+  });
+
+  test('% and _ in the query are plain characters', () async {
+    await repo.replaceAll(const [
+      CatalogRow(id: 1, title: '100% Proof', authors: []),
+      CatalogRow(id: 2, title: '100 Proofs', authors: []),
+      CatalogRow(id: 3, title: 'a_b', authors: []),
+      CatalogRow(id: 4, title: 'aXb', authors: []),
+    ]);
+    expect((await repo.search('100%')).map((r) => r.id), [1]);
+    expect((await repo.search('a_b')).map((r) => r.id), [3]);
+    expect(await repo.searchCount('proof'), 2);
   });
 
   test('replaceAll swaps everything; failure keeps the old table', () async {
@@ -96,7 +116,10 @@ void main() {
       'Book 29',
     ]);
     expect(await repo.search('book', page: 3), isEmpty);
+    expect(await repo.searchCount('book'), 30);
     expect((await repo.byAuthor('Same, Author')).length, 25);
+    expect(await repo.countByAuthor('Same, Author'), 30);
+    expect(await repo.countByAuthor('Nobody'), 0);
   });
 
   test('byAuthor is exact, byBookshelf matches the shelf name', () async {

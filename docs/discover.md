@@ -81,7 +81,7 @@ Service mandiri buat ngolah `pg_catalog.csv.gz`, gak tergantung `BookSource` ata
 
 **Tabel `catalog_books`** (schema v14, [data-model.md](data-model.md)): `id` = Text#, `title`, `authorsText` (nama dipisah `; `, buat LIKE + tampil), `authorsJson`, `subjectsJson`, `bookshelvesJson`, `issued` nullable. Index `title` + `authorsText`. Bukan data user: gak ikut backup, diganti utuh tiap sync. Meta di `settings`: `catalog.lastModified` (header `Last-Modified` dump, dikirim balik sebagai `If-Modified-Since`), `catalog.syncedAt` (ISO 8601), `catalog.count`.
 
-**`CatalogRepository`** (`catalogRepositoryProvider`): `replaceAll` satu transaksi, batch per 2.000 baris (gagal = tabel lama utuh); `search(query, {page})` LIKE `%q%` di judul OR penulis, urut judul, 25/halaman, query kosong = kosong; `byAuthor(name)` dan `byBookshelf(name)` cocokin token JSON persis (`"name":"Austen, Jane"`, `"Harvard Classics"`) lewat LIKE di kolom JSON, tanpa tabel pivot; `bookshelves()` pakai `json_each` (distinct + jumlah); `stats()` / `watchStats()` dari `settings`; `isSynced` = count > 0. `catalogStatsProvider` = stream stats buat UI.
+**`CatalogRepository`** (`catalogRepositoryProvider`): `replaceAll` satu transaksi, batch per 2.000 baris (gagal = tabel lama utuh); `byId(id)`; `search(query, {page})` + `searchCount(query)`: substring `instr(lower(col), q)` di judul OR penulis (bukan LIKE, jadi `%`/`_` bukan wildcard), urut judul, 25/halaman, query kosong = kosong; `byAuthor(name)` + `countByAuthor(name)` (buat "N buku lain") dan `byBookshelf(name)` cocokin token JSON persis (`"name":"Austen, Jane"`, `"Harvard Classics"`) di kolom JSON, tanpa tabel pivot; `bookshelves()` pakai `json_each` (distinct + jumlah); `stats()` / `watchStats()` dari `settings`; `isSynced` = count > 0. `catalogStatsProvider` = stream stats buat UI.
 
 **`CatalogSyncService`** (`catalogSyncServiceProvider`): `sync({force})` → `skipped` (count > 0 dan `syncedAt` < 7 hari, tanpa `force`) / `notModified` (304, cuma `syncedAt` maju) / `updated`. Dio: UA `Luma/<versi> (+mailto:…)`, connect 15 s, receive 120 s, retry 3× cuma 429/503 (jeda 2 s × n). `If-Modified-Since` cuma dikirim kalau tabel udah ada isinya. 200 → `dio.download` streaming ke folder temp (progress 0–1; −1 kalau gak ada `Content-Length`), gunzip (`archive`) + parse di `Isolate.run`, `replaceAll`, simpen meta, hapus temp. Katalog kosong = `FormatException`. Gagal apa pun = tabel lama tetep.
 
@@ -89,7 +89,7 @@ Service mandiri buat ngolah `pg_catalog.csv.gz`, gak tergantung `BookSource` ata
 
 **Pengaturan**, bagian "Katalog buku", baris `Katalog Gutenberg` pola `_CacheRow`: belum pernah → "Belum diunduh · 5,6 MB" + Unduh; idle → "Diperbarui 25 Okt 2026 · 61.900 buku" + Perbarui; checking / importing → spinner ("Ngecek versi terbaru…" / "Nyusun katalog…"); downloading → "Ngunduh 43%" + Batal; failed → "Gagal, katalog lama tetep dipakai" + Coba lagi; 304 → toast "Katalognya udah yang terbaru". Tombol selalu `force: true`. Sync pertama dari layar cari ("Nyiapin katalog…") dan sync otomatis > 7 hari dipasang pas layar cari ada, cuma manggil `sync()`.
 
-Gak dibikin: diff per baris, FTS5 (LIKE di 62k baris < 50 ms), sinopsis/download count (gak ada di CSV), notifikasi, escape `%`/`_` di query LIKE.
+Gak dibikin: diff per baris, FTS5 (LIKE di 62k baris < 50 ms), sinopsis/download count (gak ada di CSV), notifikasi.
 
 ## Kebijakan jaringan
 
