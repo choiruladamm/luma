@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../domain/models/book.dart';
+import '../../../../domain/reading.dart';
 import '../../../core/theme/stabilo_theme.dart';
 import '../../../core/theme/stabilo_tokens.dart';
 import '../../../core/theme/stabilo_type.dart';
@@ -65,7 +66,6 @@ class _TocSheetState extends State<_TocSheet> {
   Widget build(BuildContext context) {
     final c = context.stabilo;
     final chapters = widget.book.chapters;
-    final digits = chapters.length.toString().length.clamp(2, 4);
     return Padding(
       padding: const EdgeInsets.fromLTRB(Space.s4, 10, Space.s4, 0),
       child: Column(
@@ -122,8 +122,8 @@ class _TocSheetState extends State<_TocSheet> {
                     for (final (i, ch) in chapters.indexed)
                       _TocRow(
                         key: i == widget.current ? _currentKey : null,
-                        number: (i + 1).toString().padLeft(digits, '0'),
                         title: ch.title,
+                        minutes: readingMinutes(ch.chars),
                         current: i == widget.current,
                         onTap: () => Navigator.of(context).pop(i),
                       ),
@@ -141,14 +141,14 @@ class _TocSheetState extends State<_TocSheet> {
 class _TocRow extends StatelessWidget {
   const _TocRow({
     super.key,
-    required this.number,
     required this.title,
+    required this.minutes,
     required this.current,
     required this.onTap,
   });
 
-  final String number;
   final String title;
+  final int minutes;
   final bool current;
   final VoidCallback onTap;
 
@@ -175,17 +175,6 @@ class _TocRow extends StatelessWidget {
               child: Row(
                 spacing: Space.s3,
                 children: [
-                  SizedBox(
-                    width: 28,
-                    child: Text(
-                      number,
-                      style: StabiloType.caption.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: current ? c.onAccent : c.ink2,
-                        fontFeatures: const [FontFeature.tabularFigures()],
-                      ),
-                    ),
-                  ),
                   Expanded(
                     child: Text(
                       title,
@@ -195,14 +184,14 @@ class _TocRow extends StatelessWidget {
                       ),
                     ),
                   ),
-                  if (current)
-                    Text(
-                      'Lagi dibaca',
-                      style: StabiloType.micro.copyWith(
-                        fontSize: 12,
-                        color: fg,
-                      ),
+                  Text(
+                    current ? 'Lagi dibaca · ±$minutes mnt' : '±$minutes mnt',
+                    style: StabiloType.caption.copyWith(
+                      fontSize: 12.5,
+                      fontWeight: current ? FontWeight.w700 : FontWeight.w600,
+                      color: current ? fg : c.ink2,
                     ),
+                  ),
                 ],
               ),
             ),

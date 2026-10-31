@@ -671,7 +671,7 @@ class _ReaderViewState extends ConsumerState<ReaderView>
                                   chrome: _chrome,
                                   top: ReaderTopCapsule(
                                     title: b.title,
-                                    subtitle: 'Bab ${i + 1} · ${ch.title}',
+                                    subtitle: ch.title,
                                     onBack: () => context.pop(),
                                     onToc: () => _openToc(b),
                                     onAa: () => _withSheet(
@@ -691,7 +691,7 @@ class _ReaderViewState extends ConsumerState<ReaderView>
                                               ? () => _openChat()
                                               : null,
                                           label: f >= 0.999
-                                              ? 'Bab ${i + 1} beres'
+                                              ? '${ch.title} kelar'
                                               : '±${readingMinutes(left)} mnt lagi',
                                         ),
                                 ),
@@ -1542,8 +1542,11 @@ class _ChapterTextState extends ConsumerState<_ChapterText>
                             Padding(
                               padding: EdgeInsets.only(bottom: gap),
                               child: _ChapterHeading(
-                                number: widget.index + 1,
                                 title: chapter.title,
+                                number: widget.index + 1,
+                                total: widget.book.chapters.length,
+                                minutes: readingMinutes(chapter.chars),
+                                reading: reading,
                               ),
                             ),
                             for (final p in paras)
@@ -1593,7 +1596,7 @@ class _ChapterTextState extends ConsumerState<_ChapterText>
                                 padding: const EdgeInsets.only(top: 14),
                                 child: _ChapterEnd(
                                   chapterId: chapter.id,
-                                  number: widget.index + 1,
+                                  title: chapter.title,
                                   next: next,
                                   nextNumber: widget.index + 2,
                                   total: widget.book.chapters.length,
@@ -1799,54 +1802,120 @@ class _ScrimHole extends CustomPainter {
 /// Titik di chapter: indeks paragraf + bagiannya yang udah lewat garis atas.
 typedef _Spot = ({int index, double offset});
 
+/// Judul bab di awal teks (board 03 Baca + "awal bab, judul panjang"). Judul
+/// yang muat satu baris di pil ("Chapter I", "Bab 3") = satu pil kuning.
+/// Kalimat panjang = pembuka ala buku: rata tengah, coretan kuning miring,
+/// judul font baca, meta "Bab 4 dari 102 · ±14 mnt". Batasnya diukur, bukan
+/// jumlah karakter, biar ikut Aa & Dynamic Type.
 class _ChapterHeading extends StatelessWidget {
-  const _ChapterHeading({required this.number, required this.title});
+  const _ChapterHeading({
+    required this.title,
+    required this.number,
+    required this.total,
+    required this.minutes,
+    required this.reading,
+  });
 
-  final int number;
   final String title;
+  final int number;
+  final int total;
+  final int minutes;
+
+  /// Gaya teks baca sekarang (font dari Aa).
+  final TextStyle reading;
 
   @override
   Widget build(BuildContext context) {
     final c = context.stabilo;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      spacing: 10,
-      children: [
-        Container(
-          height: 26,
-          margin: const EdgeInsets.only(top: 1),
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: c.accent,
-            borderRadius: BorderRadius.circular(Radii.full),
+    final pill = StabiloType.caption.copyWith(
+      fontWeight: FontWeight.w700,
+      color: c.onAccent,
+    );
+    return LayoutBuilder(
+      builder: (context, box) {
+        final fits =
+            (TextPainter(
+                  text: TextSpan(text: title, style: pill),
+                  maxLines: 1,
+                  textDirection: TextDirection.ltr,
+                  textScaler: MediaQuery.textScalerOf(context),
+                )..layout(maxWidth: box.maxWidth - 2 * Layout.chapterPillPad))
+                .didExceedMaxLines ==
+            false;
+        if (!fits) return _opener(c);
+        return Align(
+          alignment: Alignment.centerLeft,
+          child: Semantics(
+            header: true,
+            child: Container(
+              height: Layout.chapterPill,
+              padding: const EdgeInsets.symmetric(
+                horizontal: Layout.chapterPillPad,
+              ),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: c.accent,
+                borderRadius: BorderRadius.circular(Radii.full),
+              ),
+              child: Text(title, style: pill),
+            ),
           ),
-          child: Text(
-            'Bab $number',
-            style: StabiloType.caption.copyWith(
-              fontWeight: FontWeight.w700,
-              color: c.onAccent,
+        );
+      },
+    );
+  }
+
+  Widget _opener(StabiloColors c) => Padding(
+    padding: const EdgeInsets.fromLTRB(
+      Space.s2,
+      Layout.chapterOpenerTop,
+      Space.s2,
+      Layout.chapterOpenerBottom,
+    ),
+    child: Column(
+      spacing: Layout.chapterOpenerGap,
+      children: [
+        Transform.rotate(
+          angle: Layout.chapterStrokeTilt,
+          child: Container(
+            width: Layout.chapterStrokeWidth,
+            height: Layout.chapterStrokeHeight,
+            decoration: BoxDecoration(
+              color: c.accent,
+              borderRadius: BorderRadius.circular(Radii.full),
             ),
           ),
         ),
-        Expanded(
-          child: Semantics(
-            header: true,
-            child: Text(
-              title,
-              style: StabiloType.titleMd.copyWith(color: c.ink),
+        Semantics(
+          header: true,
+          child: Text(
+            title,
+            textAlign: TextAlign.center,
+            style: reading.copyWith(
+              fontSize: 23,
+              height: 1.35,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.23,
             ),
+          ),
+        ),
+        Text(
+          'Bab $number dari $total · ±$minutes mnt',
+          style: StabiloType.caption.copyWith(
+            fontSize: 12.5,
+            fontWeight: FontWeight.w600,
+            color: c.ink2,
           ),
         ),
       ],
-    );
-  }
+    ),
+  );
 }
 
 class _ChapterEnd extends ConsumerWidget {
   const _ChapterEnd({
     required this.chapterId,
-    required this.number,
+    required this.title,
     required this.next,
     required this.nextNumber,
     required this.total,
@@ -1854,7 +1923,7 @@ class _ChapterEnd extends ConsumerWidget {
   });
 
   final int chapterId;
-  final int number;
+  final String title;
 
   /// Null = ini bab terakhir; tombolnya ke layar akhir buku.
   final ChapterInfo? next;
@@ -1885,26 +1954,33 @@ class _ChapterEnd extends ConsumerWidget {
             Row(
               spacing: Space.s2,
               children: [
-                Container(
-                  height: 24,
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  decoration: BoxDecoration(
-                    color: c.muted,
-                    borderRadius: BorderRadius.circular(Radii.full),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    spacing: 6,
-                    children: [
-                      AppIcon(AppIcons.check, size: 12, color: c.ink),
-                      Text(
-                        'Bab $number kelar',
-                        style: StabiloType.tag.copyWith(
-                          color: c.ink,
-                          height: 1,
+                // Judul bab bisa kalimat panjang: chip dipotong "…".
+                Flexible(
+                  child: Container(
+                    height: 24,
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    decoration: BoxDecoration(
+                      color: c.muted,
+                      borderRadius: BorderRadius.circular(Radii.full),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      spacing: 6,
+                      children: [
+                        AppIcon(AppIcons.check, size: 12, color: c.ink),
+                        Flexible(
+                          child: Text(
+                            '$title kelar',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: StabiloType.tag.copyWith(
+                              color: c.ink,
+                              height: 1,
+                            ),
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
                 if (translated != null && translated > 0)
@@ -1927,7 +2003,7 @@ class _ChapterEnd extends ConsumerWidget {
                 Text(
                   next == null
                       ? 'Bukunya kelar, tinggal satu tap lagi'
-                      : 'Bab $nextNumber dari $total · ±${readingMinutes(next.chars)} menit',
+                      : 'Bab $nextNumber dari $total · ±${readingMinutes(next.chars)} mnt',
                   style: StabiloType.caption.copyWith(
                     fontSize: 14,
                     color: c.ink2,
