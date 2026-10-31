@@ -294,3 +294,20 @@ Policy 1 lama tidak bisa dilanjutkan (`chatCanContinue` false, "kirim pertanyaan
 baru"); jawaban/sumber turn lama tetap terbaca. Draft turn yang diperbaiki
 otomatis memuat output lama diikuti output perbaikan; preview dari draft berhenti
 di teks terbaca pertama.
+
+### Schema 12: `chat_chapter_notes` (#151)
+
+| Kolom | Tipe | Catatan |
+|-------|------|---------|
+| id | int PK | |
+| bookId | int FK books cascade | Hapus buku ikut menghapus |
+| contentRevision | int | Revision isi saat catatan dibuat |
+| chapterId | int FK chapters cascade | Unique `(chapterId, policy)` |
+| manifest | text | Hash window bab (`chatWindowManifest`); beda = bab dibaca ulang |
+| policy | int | `chatChapterNotesPolicy` (format/isi catatan) |
+| model | text | Model yang menulis catatan; cache tetap dipakai model lain |
+| notes | text | JSON `[{text, anchors:[[paragraphIndex,start,end]]}]`, catatan generatif, bukan kutipan |
+| createdAt | datetime | |
+
+Data turunan: ikut backup (snapshot DB), dihapus `contentChanged`, tidak dihapus
+saat sesi dihapus. Migrasi `CREATE TABLE`; baris rusak diabaikan saat dibaca.

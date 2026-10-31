@@ -401,14 +401,20 @@ class ChatQueryPlan {
     this.strategy = ChatSearchStrategy.specific,
     this.queries = const [],
     this.chapterIds = const [],
+    this.skipIds = const [],
     this.clarification,
   });
+
+  /// Bab non-isi (front/back matter) yang dikecualikan dari baca seluruh
+  /// buku dan pencarian; sudah divalidasi ke TOC.
+  final List<int> skipIds;
   final String englishQuery;
   final bool needsClarification;
   final ChatSearchStrategy strategy;
   final List<String> queries;
 
-  /// Bab asli (chapters.id) yang dibaca untuk chapters/global; sudah divalidasi.
+  /// Bab asli (chapters.id) yang dibaca untuk chapters (atau subset global);
+  /// sudah divalidasi.
   final List<int> chapterIds;
 
   /// Pertanyaan klarifikasi singkat dari planner ("Book I bab III atau Book III?").

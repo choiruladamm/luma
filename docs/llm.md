@@ -386,8 +386,24 @@ Batch berhenti di batas bab begitu ≥ 60% kuota terisi. **Jawab sekarang**
 (`answerNow`): loop berhenti setelah group yang jalan tersimpan, `stopReason: user`
 ikut disimpan, jawaban `partial` dari catatan yang ada, Lanjutkan tetap tersedia.
 Index embedding dokumen dikirim 3 batch bersamaan dan disimpan urut ordinal
-(prefix tetap valid). Lanjutan: cache catatan bab lintas pertanyaan + pengecualian
-front/back matter di pencarian (#151).
+(prefix tetap valid). **Cache catatan bab (#151).** Strategi `global` memakai `chatOverviewSystem`:
+catatan per batch question-agnostic (gagasan, argumen, contoh, istilah bab) dan
+disimpan per bab di `chat_chapter_notes` begitu semua window bab itu selesai
+dibaca (`ChatNotesRepository`, kunci buku + revision + bab + manifest window bab +
+`chatChapterNotesPolicy`; anchor paragraf, bukan ID window). Send berikutnya
+memuat bab yang cocok tanpa request: urutan baca menaruh bab cache di depan,
+`cursor` mulai dari jumlah window-nya, `chapterIds` checkpoint = urutan baca itu.
+Jawaban menerima `notesFromCache` (jumlah bab dari cache). Stop/Jawab sekarang di
+tengah tetap menyimpan bab yang sudah selesai; `contentChanged` dan hapus buku
+membuang cache; strategi `chapters` tetap question-specific dan tidak di-cache.
+Front/back matter: planner mengisi `skip_ids` (Endnotes, Imprint, Colophon…)
+untuk `global` dan pencarian; bab isi = TOC minus `skip_ids` (ID numerik dalam
+string diterima, ID asing ditolak). Kandidat pencarian dari bab di luar daftar isi
+dibuang setelah ranking, index embedding tetap seluruh buku; `skip_ids` kosong kalau
+pertanyaannya soal bagian itu. Daftar bab yang boleh tersimpan di `chapterIds`
+checkpoint pencarian. Pilihan selector di-union lintas putaran: query lanjutan yang
+tidak menemukan apa pun tidak membuang bukti putaran sebelumnya.
+`chatPromptVersion = 6`.
 
 Bukti live: `make chat-agent-live` (`tag=`, `cases=`, `cont=`, `book=`, `m=`)
 menjalankan pipeline produksi pada `test/fixtures/discourses.epub` (Standard

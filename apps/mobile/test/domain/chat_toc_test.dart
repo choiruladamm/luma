@@ -53,9 +53,10 @@ void main() {
   test('model chapter ids are validated against the toc', () {
     expect(chatChapterIds(null, [1, 2]), isEmpty);
     expect(chatChapterIds([2, 1], [1, 2]), [2, 1]);
+    expect(chatChapterIds(['2', ' 1'], [1, 2]), [2, 1]); // numeric strings
     expect(() => chatChapterIds([3], [1, 2]), throwsFormatException);
     expect(() => chatChapterIds([1, 1], [1, 2]), throwsFormatException);
-    expect(() => chatChapterIds(['1'], [1, 2]), throwsFormatException);
+    expect(() => chatChapterIds(['one'], [1, 2]), throwsFormatException);
     expect(() => chatChapterIds([1, 2], [1, 2], max: 1), throwsFormatException);
   });
 }
