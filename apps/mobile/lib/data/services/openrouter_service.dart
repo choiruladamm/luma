@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/ai_prompt.dart';
 import '../../domain/breakdown_prompt.dart';
+import '../../domain/chat_budget.dart';
 import '../../domain/chat_prompt.dart';
 import '../../domain/chat_retrieval.dart';
 import '../../domain/models/book_chat.dart';
@@ -93,6 +94,9 @@ class OpenRouterService {
 
   /// Chat/rewrite/selector share SSE and bounded pre-content reasoning fallback.
   /// History can be supplied as native user/assistant messages by other callers.
+  /// [inputBytes] = batas byte messages untuk request ini (dari ledger #143;
+  /// default batas selector lama). [onUsage] menerima usage asli dari event
+  /// SSE terakhir bila provider mengirimnya.
   Stream<String> chatStream({
     required String? apiKey,
     required String model,
@@ -100,6 +104,8 @@ class OpenRouterService {
     required String user,
     List<Map<String, String>> history = const [],
     int maxTokens = chatAnswerMaxTokens,
+    int inputBytes = chatSelectorBytes,
+    void Function(ChatUsage usage)? onUsage,
     CancelToken? cancel,
   }) {
     final messages = [
@@ -114,7 +120,10 @@ class OpenRouterService {
               !['user', 'assistant'].contains(m['role']) ||
               m['content'] == null,
         ) ||
-        utf8.encode(jsonEncode(messages)).length > chatSelectorBytes) {
+        utf8.encode(jsonEncode(messages)).length >
+            (inputBytes > chatRequestInputBytes
+                ? chatRequestInputBytes
+                : inputBytes)) {
       throw const AiException(
         AiError.invalidResponse,
         detail: 'chat input budget',
@@ -129,13 +138,33 @@ class OpenRouterService {
       messages: messages,
       maxTokens: maxTokens,
       jsonOutput: true,
+      onUsage: onUsage,
     );
+  }
+
+  /// Metadata model dari provider (gratis, tanpa kunci): context window untuk
+  /// ukuran batch #143. Gagal → null, pemanggil memakai fallback konservatif.
+  Future<ChatModelInfo?> modelInfo(String model, {CancelToken? cancel}) async {
+    try {
+      final res = await _dio.get<Object?>('/models', cancelToken: cancel);
+      final rows = (res.data as Map)['data'] as List;
+      final info = rows.firstWhere((m) => m is Map && m['id'] == model) as Map;
+      final context = info['context_length'];
+      if (context is! int || context <= 0) return null;
+      return (id: model, contextTokens: context, fromProvider: true);
+    } on DioException catch (e) {
+      if (e.type == DioExceptionType.cancel) rethrow;
+      return null;
+    } on Object {
+      return null;
+    }
   }
 
   Future<List<Float32List>> embeddings({
     required String? apiKey,
     required ChatEmbeddingModel model,
     required List<String> input,
+    void Function(ChatUsage usage)? onUsage,
     CancelToken? cancel,
   }) async {
     if (apiKey == null || apiKey.trim().isEmpty) {
@@ -159,6 +188,10 @@ class OpenRouterService {
         options: _auth(apiKey),
         data: {'model': model.id, 'input': input, 'encoding_format': 'float'},
       );
+      final usage = res.data is Map
+          ? parseChatUsage((res.data as Map)['usage'])
+          : null;
+      if (usage != null) onUsage?.call(usage);
       return parseChatEmbeddings(res.data, input.length, model);
     } on DioException catch (e) {
       // Preserve cancel/certificate/unknown so these never trigger provider fallback.
@@ -182,6 +215,7 @@ class OpenRouterService {
     List<Map<String, String>>? messages,
     int? maxTokens,
     bool jsonOutput = false,
+    void Function(ChatUsage usage)? onUsage,
   }) async* {
     if (apiKey == null || apiKey.trim().isEmpty) {
       throw const AiException(AiError.noApiKey);
@@ -196,6 +230,7 @@ class OpenRouterService {
       messages: messages,
       maxTokens: maxTokens,
       jsonOutput: jsonOutput,
+      includeUsage: onUsage != null,
     );
     final sse = SseDecoder();
     try {
@@ -203,8 +238,9 @@ class OpenRouterService {
         for (final data in sse.add(chunk)) {
           if (cancel?.isCancelled ?? false) throw cancel!.cancelError!;
           if (data == '[DONE]') return;
-          final delta = _delta(data);
-          if (delta.isNotEmpty) yield delta;
+          final event = _event(data);
+          if (event.usage != null) onUsage?.call(event.usage!);
+          if (event.delta.isNotEmpty) yield event.delta;
         }
       }
     } on DioException catch (e) {
@@ -254,6 +290,7 @@ class OpenRouterService {
     List<Map<String, String>>? messages,
     int? maxTokens,
     bool jsonOutput = false,
+    bool includeUsage = false,
   }) async {
     try {
       return await _dio.post<T>(
@@ -275,6 +312,7 @@ class OpenRouterService {
               ? {'enabled': false}
               : {'effort': 'minimal', 'exclude': true},
           if (stream) 'stream': true,
+          if (stream && includeUsage) 'stream_options': {'include_usage': true},
           'max_tokens': ?maxTokens,
           if (jsonOutput) 'temperature': 0,
           if (!stream || jsonOutput) 'response_format': {'type': 'json_object'},
@@ -294,6 +332,7 @@ class OpenRouterService {
           messages: messages,
           maxTokens: maxTokens,
           jsonOutput: jsonOutput,
+          includeUsage: includeUsage,
         );
       }
       throw failure;
@@ -301,14 +340,14 @@ class OpenRouterService {
   }
 
   /// Isi `delta.content` satu event SSE; event error → [AiError.http].
-  static String _delta(String data) {
+  static ({String delta, ChatUsage? usage}) _event(String data) {
     final Object? json;
     try {
       json = jsonDecode(data);
     } on FormatException {
-      return '';
+      return (delta: '', usage: null);
     }
-    return switch (json) {
+    final delta = switch (json) {
       {'error': final Object error} => throw AiException(
         AiError.http,
         status: switch (error) {
@@ -320,6 +359,10 @@ class OpenRouterService {
       {'choices': [{'delta': {'content': final String c}}, ...]} => c,
       _ => '',
     };
+    return (
+      delta: delta,
+      usage: json is Map ? parseChatUsage(json['usage']) : null,
+    );
   }
 
   /// Sebagian model (mis. GLM 5.3 Flash) nolak reasoning dimatiin: 400

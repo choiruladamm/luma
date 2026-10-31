@@ -2,7 +2,7 @@ APP := apps/mobile
 FLUTTER := cd $(APP) && fvm flutter
 DART := cd $(APP) && fvm dart
 
-.PHONY: help get gen brand live chat-spike chat-spike-live chat-oracle-live chat-discussion-live chat-adaptive-live chat-retrieval chat-dense-live chat-dense-replay chat-heldout-live chat-refine-live chat-validation2-live chat-recovery-live chat-validation3-live watch run release dev run-android release-android dev-android apk profile test analyze format check clean
+.PHONY: help get gen brand live chat-agent-live chat-spike chat-spike-live chat-oracle-live chat-discussion-live chat-adaptive-live chat-retrieval chat-dense-live chat-dense-replay chat-heldout-live chat-refine-live chat-validation2-live chat-recovery-live chat-validation3-live watch run release dev run-android release-android dev-android apk profile test analyze format check clean
 
 help: ## list commands
 	@grep -E '^[a-z0-9-]+:.*## ' $(MAKEFILE_LIST) | awk -F ':.*## ' '{printf "  %-16s %s\n", $$1, $$2}'
@@ -88,6 +88,9 @@ chat-oracle-live: ## #113 paid DEVELOPMENT oracle A/B; held-out is never queried
 
 chat-adaptive-live: ## #138 paid global scan + continuation; GLM primary, m=qwen/qwen3.8-flash fallback
 	@set -a; . ./.env; set +a; cd $(APP) && BOOK_CHAT_ADAPTIVE_LIVE=1 OPENROUTER_MODEL=$(or $(m),z-ai/glm-5.3-flash) fvm flutter test --timeout 30s test/data/book_chat_adaptive_live_test.dart
+
+chat-agent-live: ## #143 paid real-book run through production pipeline; m=<model> tag=<name> cases=0,1 cont=2 book=discourses.epub q="q1|q2" (custom questions)
+	@set -a; . ./.env; set +a; cd $(APP) && BOOK_CHAT_AGENT_LIVE=1 OPENROUTER_MODEL=$(or $(m),z-ai/glm-5.3-flash) BOOK_CHAT_AGENT_TAG=$(or $(tag),run) BOOK_CHAT_AGENT_CASES=$(or $(cases),0,1) BOOK_CHAT_AGENT_CONTINUE=$(or $(cont),2) BOOK_CHAT_AGENT_BOOK=$(or $(book),discourses.epub) BOOK_CHAT_AGENT_QUESTIONS="$(q)" fvm flutter test --timeout 40m test/data/book_chat_agent_live_test.dart
 
 chat-discussion-live: ## #136 bounded paid DEVELOPMENT answer pilot, two cases; m=<model> optional
 	@set -a; . ./.env; set +a; cd $(APP) && BOOK_CHAT_DISCUSSION_LIVE=1 OPENROUTER_MODEL=$(or $(m),z-ai/glm-5.3-flash) fvm flutter test --timeout 30s test/data/book_chat_discussion_live_test.dart

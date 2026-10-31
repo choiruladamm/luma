@@ -70,6 +70,10 @@ class Chapters extends Table {
   IntColumn get chapterNumber => integer().nullable()();
   TextColumn get title => text()();
 
+  /// Label induk TOC EPUB ("Discourses › Book I"), buat resolusi "bab III"
+  /// di Ngobrol. Null = belum diperiksa (buku lama), '' = diperiksa, gak ada.
+  TextColumn get section => text().nullable()();
+
   /// Jumlah karakter sebelum chapter ini, buat persentase baca.
   IntColumn get charOffset => integer()();
 }
@@ -349,7 +353,7 @@ class AppDatabase extends _$AppDatabase {
   // test/data/migration_test.dart. Backup dari versi lama ikut dimigrasi pas
   // di-restore.
   @override
-  int get schemaVersion => 10;
+  int get schemaVersion => 11;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -393,6 +397,9 @@ class AppDatabase extends _$AppDatabase {
       if (from < 9) {
         await m.createTable(chatIndexes);
         await m.createTable(chatVectors);
+      }
+      if (from < 11) {
+        await m.addColumn(chapters, chapters.section);
       }
     },
     // SQLite matiin foreign key secara default; cascade butuh ini.

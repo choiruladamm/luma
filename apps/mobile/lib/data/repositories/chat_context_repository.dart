@@ -6,9 +6,11 @@ import 'package:dio/dio.dart';
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../domain/chat_budget.dart';
 import '../../domain/chat_prompt.dart';
 import '../../domain/chat_exploration.dart';
 import '../../domain/chat_retrieval.dart';
+import '../../domain/chat_toc.dart';
 import '../../domain/models/ai_model.dart';
 import '../../domain/models/ai_reply.dart';
 import '../../domain/models/book_chat.dart';
@@ -19,9 +21,27 @@ import 'chat_repository.dart';
 import 'chat_index_repository.dart';
 import 'chat_snapshot.dart';
 
+/// Token + waktu yang disisakan untuk jawaban akhir sebelum putaran baru.
+const chatAnswerReserveTokens = 40000;
+const chatAnswerReserveTime = Duration(seconds: 45);
+
+/// Perbaikan otomatis maksimal per kiriman untuk output jawaban yang invalid.
+const chatMaxRepairs = 2;
+
 /// Each send reads credentials afresh. Document vectors survive in the local DB.
 class ChatContextRepository {
-  ChatContextRepository(this._db, this._chat, this._router, this._keys);
+  ChatContextRepository(
+    this._db,
+    this._chat,
+    this._router,
+    this._keys, {
+    this.tokenBudget = chatQuestionTokens,
+    this.deadline = chatQuestionDeadline,
+  });
+
+  /// Budget per kiriman; test memakai angka kecil untuk memaksa partial.
+  final int tokenBudget;
+  final Duration deadline;
   final AppDatabase _db;
   final ChatRepository _chat;
   final OpenRouterService _router;
@@ -30,6 +50,7 @@ class ChatContextRepository {
   ChatIndexKey? _indexKey;
   String? _manifest;
   List<Float32List>? _documents;
+  final _models = <String, ChatModelInfo>{};
   bool _disposed = false;
 
   void dispose() {
@@ -52,11 +73,31 @@ class ChatContextRepository {
     return row?.value ?? defaultAiModel;
   }
 
+  /// Context window dari provider (gratis), di-cache per model selama hidup
+  /// repository; gagal → fallback konservatif yang tercatat di ledger.
+  Future<ChatModelInfo> _modelInfo(String model, CancelToken? cancel) async {
+    final cached = _models[model];
+    if (cached != null) return cached;
+    final info = await _router.modelInfo(model, cancel: cancel);
+    _check(cancel);
+    if (info == null) {
+      return (
+        id: model,
+        contextTokens: chatFallbackContextTokens,
+        fromProvider: false,
+      );
+    }
+    return _models[model] = info;
+  }
+
   /// Document batches may be cached before evidence is frozen. A stale attempt
   /// never sends an answer. Caller owns checkpoint/finalize and stop lifecycle.
+  /// [readingChapterId] = bab yang sedang dibaca saat masuk chat, hanya untuk
+  /// menyelesaikan rujukan "bab ini"/"bab III"; bukan sumber fakta.
   Future<PreparedChat?> prepare(
     ChatTurn target, {
     CancelToken? cancel,
+    int? readingChapterId,
     void Function(int completed, int total)? onIndexProgress,
     void Function(int completed, int total)? onExplorationProgress,
   }) async {
@@ -69,7 +110,6 @@ class ChatContextRepository {
     await _chat.recoverInterrupted();
     _check(cancel);
     try {
-      final budget = _ChatRetrievalBudget();
       final input = await _db.transaction(() async {
         final sessionRow =
             await (_db.select(_db.chatSessions)..where(
@@ -113,6 +153,14 @@ class ChatContextRepository {
             'Model/prompt berubah; mulai ulang attempt secara eksplisit',
           );
         }
+        final chapterRows =
+            await (_db.select(_db.chapters)
+                  ..where((c) => c.bookId.equals(b.id))
+                  ..orderBy([
+                    (c) => OrderingTerm.asc(c.sortOrder),
+                    (c) => OrderingTerm.asc(c.id),
+                  ]))
+                .get();
         final query =
             _db.select(_db.paragraphs).join([
                 innerJoin(
@@ -128,6 +176,7 @@ class ChatContextRepository {
               ]);
         final indexed = <ChatIndexedParagraph>[];
         final paragraphs = <ChatParagraphRef, ChatParagraph>{};
+        final chars = <int, int>{};
         for (final row in await query.get()) {
           final p = row.readTable(_db.paragraphs),
               c = row.readTable(_db.chapters);
@@ -139,19 +188,23 @@ class ChatContextRepository {
           );
           paragraphs[(chapterId: c.id, paragraphIndex: p.paragraphIndex)] =
               paragraph;
+          chars[c.id] = (chars[c.id] ?? 0) + p.content.length;
           indexed.add((
             paragraph: paragraph,
             chapterTitle: c.title,
             groupIndex: p.groupIndex,
           ));
         }
-        if (indexed.fold<int>(
-              0,
-              (n, r) => n + utf8.encode(r.paragraph.text).length,
-            ) >
-            chatEmbeddingInputBytes) {
-          throw const FormatException('Buku melebihi budget embedding');
-        }
+        final toc = <ChatChapterInfo>[
+          for (final c in chapterRows)
+            if (chars.containsKey(c.id))
+              (
+                id: c.id,
+                title: c.title,
+                section: c.section,
+                chars: chars[c.id]!,
+              ),
+        ];
         final chunks = chatChunks(indexed, session.book);
         final quoted = chatQuoteSources(chunks, turn.quote);
         // Validate quote coverage, question, history and actual system budget
@@ -172,6 +225,7 @@ class ChatContextRepository {
           session: session,
           turn: turn,
           book: b,
+          toc: toc,
           chunks: chunks,
           windows: chatGlobalWindows(indexed),
           paragraphs: paragraphs,
@@ -182,21 +236,49 @@ class ChatContextRepository {
       });
       _check(cancel);
       if (input == null) return null;
-      budget.guard = () => _chat.validateRetrieval(target.attemptRef, []);
+      final budget = ChatBudget(
+        model: await _modelInfo(input.turn.model, cancel),
+        tokens: tokenBudget,
+        deadline: deadline,
+      );
+      Future<bool> guard() => _chat.validateRetrieval(target.attemptRef, []);
       final current = input.session.book;
+      final toc = input.toc;
+      // Jawaban akhir harus muat context model: sumber dan history mengikuti.
+      final answerInput = [
+        chatPromptBytes,
+        budget.inputBytesFor(chatAnswerMaxTokens),
+      ].reduce((a, b) => a < b ? a : b);
+      final sourceBudget =
+          (answerInput - utf8.encode(chatAnswerSystemPrompt).length - 6000)
+              .clamp(0, chatSourceBytes);
+      final tocById = {for (final c in toc) c.id: c};
       final history =
           ((jsonDecode(input.preflight.user) as Map)['history'] as List)
               .map((h) => Map<String, String>.from(h as Map))
               .toList();
       final quote = input.turn.quote;
-      final rewriteUser = chatRetrievalUser(
+      final reading = readingChapterId == null
+          ? null
+          : tocById[readingChapterId];
+      final planUser = chatRetrievalUser(
         {
           'question': input.turn.question,
           'history': history,
           if (quote != null) 'selectedQuote': quote.text,
+          'book': {
+            'title': input.book.title,
+            'author': input.book.author ?? '',
+          },
+          'toc': chatTocData(toc),
+          if (reading != null)
+            'readingPosition': {
+              'chapterId': reading.id,
+              'label': chatChapterLabel(reading),
+            },
         },
-        chatRewriteSystem,
-        chatPromptBytes,
+        chatPlanSystem,
+        budget.inputBytesFor(600),
       );
       // English subqueries resolve history/quote; keep the original query small.
       final original = chatEmbeddingQuery(
@@ -208,174 +290,324 @@ class ChatContextRepository {
       final saved = input.turn.exploration == null
           ? null
           : ChatExploration.parse(input.turn.exploration!);
-      saved?.validate(
-        input.turn,
-        saved.strategy == ChatSearchStrategy.global
-            ? input.windows
-            : input.chunks,
-      );
-      final plan = saved == null
+      List<ChatSource> scopedWindows(List<int> ids) {
+        final set = ids.toSet();
+        final scoped = [
+          for (final w in input.windows)
+            if (set.contains(w.anchors.first.chapterId)) w,
+        ];
+        return [
+          for (final (i, w) in scoped.indexed)
+            ChatSource(
+              id: 'S${i + 1}',
+              chapterTitle: w.chapterTitle,
+              anchors: w.anchors,
+            ),
+        ];
+      }
+
+      if (saved != null) {
+        saved.validate(
+          input.turn,
+          saved.strategy.reads ? scopedWindows(saved.chapterIds) : input.chunks,
+        );
+      }
+      final rawPlan = saved == null
           ? parseChatQueryPlan(
               await _complete(
                 key,
                 input.turn.model,
-                chatRewriteSystem,
-                rewriteUser,
+                chatPlanSystem,
+                planUser,
                 600,
                 cancel,
                 budget,
+                guard,
               ),
+              knownChapterIds: tocById.keys,
             )
           : ChatQueryPlan(
               englishQuery: saved.query,
               needsClarification: false,
               strategy: saved.strategy,
               queries: saved.pendingQueries,
+              chapterIds: saved.chapterIds,
             );
       _check(cancel);
+      // Nomor bab yang ada di beberapa Book tidak boleh ditebak model.
+      final ambiguous = rawPlan.strategy == ChatSearchStrategy.chapters
+          ? chatAmbiguousSections(
+              input.turn.question,
+              rawPlan.chapterIds,
+              toc,
+              readingChapterId: reading?.id,
+            )
+          : const <String>[];
+      final plan = ambiguous.isEmpty
+          ? rawPlan
+          : ChatQueryPlan(
+              englishQuery: rawPlan.englishQuery,
+              needsClarification: true,
+              strategy: ChatSearchStrategy.chapters,
+              clarification:
+                  'Maksud lo bab yang di ${ambiguous.join(', ')} yang mana?',
+            );
       var selected = input.quoted;
       ChatExploration? exploration;
       var noteSourceIds = <String, String>{};
+      final chapterIds =
+          plan.strategy == ChatSearchStrategy.global && plan.chapterIds.isEmpty
+          ? [for (final c in toc) c.id]
+          : plan.chapterIds;
       if (!plan.needsClarification &&
-          plan.strategy == ChatSearchStrategy.global &&
-          input.windows.isNotEmpty) {
+          plan.strategy.reads &&
+          scopedWindows(chapterIds).isNotEmpty) {
+        final windows = scopedWindows(chapterIds);
         final globalQuotes = <ChatSource>[];
         for (final (i, source) in input.quoted.indexed) {
-          final matches = input.windows.where(
+          final matches = windows.where(
             (w) => _rangeKey(w) == _rangeKey(source),
           );
           globalQuotes.add(
             matches.isNotEmpty
                 ? matches.first
                 : ChatSource(
-                    id: 'S${input.windows.length + i + 1}',
+                    id: 'S${windows.length + i + 1}',
                     chapterTitle: source.chapterTitle,
                     anchors: source.anchors,
                   ),
           );
         }
-        var work =
-            saved ??
-            ChatExploration(
-              book: current,
-              sessionId: target.sessionId,
-              turnId: target.id,
-              question: target.question,
-              model: target.model,
-              manifest: chatWindowManifest(input.windows),
-              query: plan.englishQuery,
-              cursor: 0,
-              total: input.windows.length,
-              notes: [],
-            );
-        if (!await _chat.saveExploration(target.attemptRef, work)) return null;
-        onExplorationProgress?.call(work.cursor, work.total);
-        for (
-          var round = 0;
-          round < chatGlobalRounds && !work.complete;
-          round++
-        ) {
-          if (budget.elapsed.elapsed > const Duration(seconds: 100)) break;
-          final batch = <ChatSource>[];
-          var bytes = 0;
-          for (final window in input.windows.skip(work.cursor)) {
-            final size = utf8.encode(jsonEncode(_source(window))).length;
-            if (batch.isNotEmpty &&
-                (bytes + size > chatGlobalBatchBytes || batch.length == 8)) {
-              break;
-            }
-            batch.add(window);
-            bytes += size;
-          }
-          final previousIds = work.notes.expand((n) => n.sourceIds).toSet();
-          final evidence = [
-            for (final w in input.windows)
-              if (previousIds.contains(w.id)) w,
-            ...batch,
-          ];
-          validateChatSources(evidence, current, input.paragraphs);
-          final user = chatRetrievalUser(
-            {
-              'question': target.question,
-              'book': input.book.title,
-              'examinedBefore': work.cursor,
-              'totalWindows': work.total,
-              'previousNotes': work.promptData['notes'],
-              'sources': [for (final w in evidence) _source(w)],
-              'newWindowIds': batch.map((w) => w.id).toList(),
-            },
-            chatGlobalSystem,
-            chatPromptBytes,
-          );
-          if (!await _chat.validateRetrieval(target.attemptRef, evidence)) {
-            return null;
-          }
-          _check(cancel);
-          final notes = parseChatGlobalNotes(
-            await _complete(
-              key,
-              target.model,
-              chatGlobalSystem,
-              user,
-              1400,
-              cancel,
-              budget,
-            ),
-            allowed: evidence.map((s) => s.id).toSet(),
-          );
-          final next = ChatExploration(
-            book: current,
-            sessionId: target.sessionId,
-            turnId: target.id,
-            question: target.question,
-            model: target.model,
-            manifest: work.manifest,
-            query: work.query,
-            cursor: work.cursor + batch.length,
-            total: work.total,
-            notes: notes,
-          );
-          next.validate(target, input.windows);
-          // Ensure every note's evidence fits the eventual frozen source budget.
-          final requiredIds = notes.expand((n) => n.sourceIds).toSet();
-          final requiredSources = chatPackGlobalSources([
-            ...globalQuotes,
-            for (final w in input.windows)
-              if (requiredIds.contains(w.id)) w,
-          ]);
-          if (fitChatSources(requiredSources).length !=
-              requiredSources.length) {
-            throw const FormatException('Bukti catatan melebihi budget sumber');
-          }
-          _check(cancel);
+        ChatExploration checkpoint({
+          required int cursor,
+          required List<ChatExplorationNote> notes,
+          String? stopReason,
+        }) => ChatExploration(
+          book: current,
+          sessionId: target.sessionId,
+          turnId: target.id,
+          question: target.question,
+          model: target.model,
+          manifest: chatWindowManifest(windows),
+          query: plan.englishQuery,
+          cursor: cursor,
+          total: windows.length,
+          notes: notes,
+          strategy: plan.strategy,
+          chapterIds: chapterIds,
+          stopReason: stopReason,
+        );
+        var work = saved ?? checkpoint(cursor: 0, notes: []);
+        // Direct read: a requested chapter that fits the answer budget is sent
+        // as original text, without lossy notes.
+        final direct =
+            saved == null && plan.strategy == ChatSearchStrategy.chapters
+            ? chatSplitLargeSources(
+                chatPackGlobalSources([...globalQuotes, ...windows]),
+                sourceBudget ~/ 3,
+              )
+            : null;
+        if (direct != null &&
+            fitChatSources(direct, maxBytes: sourceBudget).length ==
+                direct.length) {
+          work = checkpoint(cursor: windows.length, notes: []);
           if (!await _chat.saveExploration(
             target.attemptRef,
-            next,
-            evidence: evidence,
+            work,
+            evidence: windows,
           )) {
             return null;
           }
-          work = next;
           onExplorationProgress?.call(work.cursor, work.total);
+          selected = direct;
+          exploration = work;
+        } else {
+          if (!await _chat.saveExploration(target.attemptRef, work)) {
+            return null;
+          }
+          onExplorationProgress?.call(work.cursor, work.total);
+          // Batches are independent (append-only notes), so a few run in
+          // parallel; checkpoints still commit in cursor order.
+          while (!work.complete) {
+            if (budget.remaining < chatAnswerReserveTime) {
+              work = checkpoint(
+                cursor: work.cursor,
+                notes: work.notes,
+                stopReason: 'deadline',
+              );
+              break;
+            }
+            final previousNotes = jsonEncode(work.promptData['notes']);
+            final batchBytes = [
+              chatGlobalBatchBytes,
+              budget.inputBytesFor(chatNotesMaxTokens) -
+                  utf8.encode(previousNotes).length -
+                  utf8.encode(chatGlobalSystem).length -
+                  4000,
+            ].reduce((a, b) => a < b ? a : b);
+            final group = <({List<ChatSource> batch, String user})>[];
+            var cursor = work.cursor;
+            String? stop;
+            while (group.length < chatGlobalConcurrency &&
+                cursor < windows.length) {
+              final batch = <ChatSource>[];
+              var bytes = 0;
+              for (final window in windows.skip(cursor)) {
+                final size = utf8.encode(jsonEncode(_source(window))).length;
+                if (batch.isNotEmpty &&
+                    (bytes + size > batchBytes ||
+                        batch.length == chatGlobalBatchWindows)) {
+                  break;
+                }
+                batch.add(window);
+                bytes += size;
+              }
+              final user = chatRetrievalUser(
+                {
+                  'question': target.question,
+                  'book': input.book.title,
+                  'examinedBefore': cursor,
+                  'totalWindows': work.total,
+                  'previousNotes': work.promptData['notes'],
+                  'sources': [for (final w in batch) _source(w)],
+                  'newWindowIds': batch.map((w) => w.id).toList(),
+                },
+                chatGlobalSystem,
+                chatPromptBytes + chatGlobalBatchBytes,
+              );
+              if (batch.isEmpty ||
+                  !budget.fits(
+                    utf8.encode(user).length +
+                        utf8.encode(chatGlobalSystem).length,
+                    chatNotesMaxTokens + chatAnswerReserveTokens,
+                  )) {
+                stop = 'budget';
+                break;
+              }
+              group.add((batch: batch, user: user));
+              cursor += batch.length;
+            }
+            if (group.isEmpty) {
+              work = checkpoint(
+                cursor: work.cursor,
+                notes: work.notes,
+                stopReason: stop ?? 'budget',
+              );
+              break;
+            }
+            for (final g in group) {
+              if (!await _chat.validateRetrieval(target.attemptRef, g.batch)) {
+                return null;
+              }
+            }
+            _check(cancel);
+            final raws = await Future.wait([
+              for (final g in group)
+                _complete(
+                  key,
+                  target.model,
+                  chatGlobalSystem,
+                  g.user,
+                  chatNotesMaxTokens,
+                  cancel,
+                  budget,
+                  guard,
+                ),
+            ]);
+            for (final (i, g) in group.indexed) {
+              final allowed = g.batch.map((w) => w.id).toSet();
+              List<ChatExplorationNote> fresh;
+              try {
+                fresh = parseChatGlobalNotes(
+                  raws[i],
+                  allowed: allowed,
+                  batch: true,
+                );
+              } on FormatException catch (e) {
+                // Catatan kepanjangan/terpotong/ID asing: ulang sekali per
+                // batch dalam ledger yang sama; ini langkah baca, bukan jatah
+                // perbaikan jawaban.
+                if (budget.batchRetries >= chatMaxBatchRetries) rethrow;
+                budget.batchRetries++;
+                _check(cancel);
+                fresh = parseChatGlobalNotes(
+                  await _complete(
+                    key,
+                    target.model,
+                    chatGlobalSystem,
+                    chatRetrievalUser(
+                      {
+                        ...jsonDecode(g.user) as Map<String, Object?>,
+                        'repair':
+                            'Output sebelumnya ditolak: ${e.message}. Tulis jauh lebih ringkas: maksimal 5 catatan pendek, total di bawah 900 karakter, hanya ID dari sources batch ini, JSON lengkap.',
+                      },
+                      chatGlobalSystem,
+                      chatPromptBytes + chatGlobalBatchBytes,
+                    ),
+                    chatNotesMaxTokens,
+                    cancel,
+                    budget,
+                    guard,
+                    history: [
+                      {'role': 'assistant', 'content': raws[i]},
+                      {
+                        'role': 'user',
+                        'content':
+                            'Output di atas ditolak: ${e.message}. Ulangi untuk batch yang sama, jauh lebih ringkas (maksimal 5 catatan pendek, total di bawah 900 karakter), JSON lengkap, hanya source_ids dari sources.',
+                      },
+                    ],
+                  ),
+                  allowed: allowed,
+                  batch: true,
+                );
+              }
+              final next = checkpoint(
+                cursor: work.cursor + g.batch.length,
+                notes: [...work.notes, ...fresh],
+              );
+              next.validate(target, windows);
+              _check(cancel);
+              if (!await _chat.saveExploration(
+                target.attemptRef,
+                next,
+                evidence: g.batch,
+              )) {
+                return null;
+              }
+              work = next;
+              onExplorationProgress?.call(work.cursor, work.total);
+            }
+          }
+          exploration = work;
+          // Most-cited windows first; whatever does not fit stays uncited
+          // in the notes rather than failing the answer.
+          final citations = <String, int>{};
+          for (final n in work.notes) {
+            for (final id in n.sourceIds) {
+              citations[id] = (citations[id] ?? 0) + 1;
+            }
+          }
+          final cited = [
+            for (final w in windows)
+              if (citations.containsKey(w.id)) w,
+          ]..sort((a, b) => citations[b.id]!.compareTo(citations[a.id]!));
+          final packed = chatSplitLargeSources(
+            chatPackGlobalSources([...globalQuotes, ...cited]),
+            sourceBudget ~/ 3,
+          );
+          selected = fitChatSources([
+            ...packed.where((s) => globalQuotes.any((q) => _overlaps(q, s))),
+            ...packed.where((s) => !globalQuotes.any((q) => _overlaps(q, s))),
+          ], maxBytes: sourceBudget);
+          noteSourceIds = {
+            for (final w in cited)
+              if (selected.where((s) => _contains(s, w)).firstOrNull
+                  case final s?)
+                w.id: s.id,
+          };
         }
-        exploration = work;
-        final ids = work.notes.expand((n) => n.sourceIds).toSet();
-        selected = chatPackGlobalSources([
-          ...globalQuotes,
-          for (final w in input.windows)
-            if (ids.contains(w.id)) w,
-        ]);
-        noteSourceIds = {
-          for (final w in input.windows)
-            if (ids.contains(w.id))
-              w.id: selected
-                  .firstWhere(
-                    (s) =>
-                        s.anchors.first.chapterId == w.anchors.first.chapterId,
-                  )
-                  .id,
-        };
       } else if (!plan.needsClarification &&
+          !plan.strategy.reads &&
           plan.strategy != ChatSearchStrategy.offTopic &&
           input.chunks.isNotEmpty) {
         final searched = <String>{...?saved?.searchedQueries};
@@ -391,23 +623,26 @@ class ChatContextRepository {
             saved?.pendingQueries ??
             (plan.queries.isEmpty ? [plan.englishQuery] : plan.queries);
         var candidates = <ChatSource>[];
-        ChatExploration searchCheckpoint(List<String> pending) =>
-            ChatExploration(
-              book: current,
-              sessionId: target.sessionId,
-              turnId: target.id,
-              question: target.question,
-              model: target.model,
-              manifest: chatWindowManifest(input.chunks),
-              query: plan.englishQuery,
-              cursor: 0,
-              total: input.chunks.length,
-              notes: [],
-              strategy: plan.strategy,
-              searchedQueries: searched.toList(),
-              pendingQueries: pending,
-              selectedIds: selected.map((s) => s.id).toList(),
-            );
+        ChatExploration searchCheckpoint(
+          List<String> pending, {
+          String? stopReason,
+        }) => ChatExploration(
+          book: current,
+          sessionId: target.sessionId,
+          turnId: target.id,
+          question: target.question,
+          model: target.model,
+          manifest: chatWindowManifest(input.chunks),
+          query: plan.englishQuery,
+          cursor: 0,
+          total: input.chunks.length,
+          notes: [],
+          strategy: plan.strategy,
+          searchedQueries: searched.toList(),
+          pendingQueries: pending,
+          selectedIds: selected.map((s) => s.id).toList(),
+          stopReason: stopReason,
+        );
         var searchWork = searchCheckpoint(queries);
         if (!await _chat.saveExploration(
           target.attemptRef,
@@ -416,17 +651,18 @@ class ChatContextRepository {
         )) {
           return null;
         }
-        // Initial search plus at most two requested follow-up rounds.
-        for (var round = 0; round < 3; round++) {
-          if (round > 0 && budget.bytes > 120000) break;
+        // Rounds continue while the selector asks for more and the shared
+        // ledger still leaves room for the answer; identical rounds stop.
+        var previousSelection = '';
+        for (var round = 0; searchedThisTurn < 9; round++) {
+          if (round > 0 && budget.remaining < chatAnswerReserveTime) {
+            searchWork = searchCheckpoint(queries, stopReason: 'deadline');
+            break;
+          }
           final capacity = 64 - searched.length;
           final fresh = queries
               .where((q) => !searched.contains(q))
-              .take(
-                capacity < 3 - searchedThisTurn
-                    ? capacity
-                    : 3 - searchedThisTurn,
-              )
+              .take(capacity < 3 ? capacity : 3)
               .toList();
           if (fresh.isEmpty) break;
           final rankings = await _rank(
@@ -476,6 +712,13 @@ class ChatContextRepository {
             chatSelectionSystem,
             chatSelectorBytes,
           );
+          if (!budget.fits(
+            utf8.encode(selectorUser).length,
+            600 + chatAnswerReserveTokens,
+          )) {
+            searchWork = searchCheckpoint(queries, stopReason: 'budget');
+            break;
+          }
           if (!await _chat.validateRetrieval(target.attemptRef, candidates)) {
             return null;
           }
@@ -487,6 +730,7 @@ class ChatContextRepository {
             600,
             cancel,
             budget,
+            guard,
           );
           selected = parseChatSelection(raw, candidates, input.quoted);
           searched.addAll(fresh);
@@ -496,7 +740,13 @@ class ChatContextRepository {
               .take(2)
               .toList();
           if (searched.length >= 64) queries = [];
-          searchWork = searchCheckpoint(queries);
+          final selection = selected.map((s) => s.id).join(',');
+          final stagnant = queries.isNotEmpty && selection == previousSelection;
+          previousSelection = selection;
+          searchWork = searchCheckpoint(
+            queries,
+            stopReason: stagnant ? 'stagnant' : null,
+          );
           if (!await _chat.saveExploration(
             target.attemptRef,
             searchWork,
@@ -504,11 +754,7 @@ class ChatContextRepository {
           )) {
             return null;
           }
-          if (queries.isEmpty ||
-              searchedThisTurn == 3 ||
-              budget.elapsed.elapsed > const Duration(seconds: 100)) {
-            break;
-          }
+          if (queries.isEmpty || stagnant) break;
         }
         exploration = searchWork;
         // Add adjacent windows after the direct evidence, without losing forced quotes.
@@ -525,7 +771,10 @@ class ChatContextRepository {
             }
           }
         }
-        selected = fitChatSources(_uniqueSources([...selected, ...neighbors]));
+        selected = fitChatSources(
+          _uniqueSources([...selected, ...neighbors]),
+          maxBytes: sourceBudget,
+        );
       }
       _check(cancel);
       final sourceIds = {
@@ -539,6 +788,11 @@ class ChatContextRepository {
             anchors: source.anchors,
           ),
       ];
+      final work = exploration;
+      final labels = [
+        for (final id in work?.chapterIds ?? const <int>[])
+          if (tocById[id] case final c?) chatChapterLabel(c),
+      ];
       final prompt = buildChatPrompt(
         session: input.session,
         current: current,
@@ -550,30 +804,44 @@ class ChatContextRepository {
         title: input.book.title,
         author: input.book.author,
         quote: quote,
-        exploration: exploration == null
+        maxBytes: answerInput,
+        exploration: work == null && plan.clarification == null
             ? null
             : {
-                ...(exploration.strategy == ChatSearchStrategy.global
-                    ? exploration.promptData
-                    : {
-                        'complete': exploration.complete,
-                        'searchedQueries': exploration.searchedQueries,
-                        'pendingQueries': exploration.pendingQueries,
-                        'wholeBookExamined': false,
-                      }),
-                'notes': [
-                  for (final n in exploration.notes)
-                    {
-                      'text': n.text,
-                      'source_ids': {
-                        for (final id in n.sourceIds)
-                          sourceIds[noteSourceIds[id] ?? id]!,
-                      }.toList(),
-                    },
-                ],
+                if (plan.needsClarification && plan.clarification != null)
+                  'clarification': plan.clarification,
+                if (work != null) ...{
+                  'scope': switch (work.strategy) {
+                    ChatSearchStrategy.chapters => 'chapters',
+                    ChatSearchStrategy.global => 'book',
+                    _ => 'search',
+                  },
+                  'complete': work.complete,
+                  if (work.stopReason != null) 'stopReason': work.stopReason,
+                  if (work.strategy.reads) ...{
+                    'examinedChapters': labels.take(60).toList(),
+                    'chapterCount': labels.length,
+                    'examinedWindows': work.cursor,
+                    'totalWindows': work.total,
+                  } else ...{
+                    'searchedQueries': work.searchedQueries,
+                    'pendingQueries': work.pendingQueries,
+                    'wholeBookExamined': false,
+                  },
+                  'notesAreGenerated': true,
+                  'notes': [
+                    for (final n in work.notes)
+                      {
+                        'text': n.text,
+                        'source_ids': {
+                          for (final id in n.sourceIds)
+                            ?sourceIds[noteSourceIds[id] ?? id],
+                        }.toList(),
+                      },
+                  ],
+                },
               },
       );
-      budget.answer(prompt);
       // Repository rechecks live revision/hash/owner and freezes the exact set.
       if (!await _chat.prepareSources(input.turn.attemptRef, prompt.sources)) {
         return null;
@@ -587,6 +855,7 @@ class ChatContextRepository {
         current,
         input.paragraphs,
         exploration,
+        budget,
         () => !_disposed
             ? _chat.validatePrepared(input.turn.attemptRef, prompt.sources)
             : Future.value(false),
@@ -603,14 +872,18 @@ class ChatContextRepository {
     String user,
     int tokens,
     CancelToken? cancel,
-    _ChatRetrievalBudget budget,
-  ) async {
+    ChatBudget budget,
+    Future<bool> Function() guard, {
+    List<Map<String, String>> history = const [],
+  }) async {
     _check(cancel);
-    if (budget.guard != null && !await budget.guard!()) {
-      throw StateError('Attempt penelusuran sudah berhenti');
-    }
+    if (!await guard()) throw StateError('Attempt penelusuran sudah berhenti');
     _check(cancel);
-    budget.completion(system, user, tokens);
+    final reservation = budget.reserveCompletion(
+      system,
+      [user, ...history.map((m) => m['content']!)].join(),
+      tokens,
+    );
     var result = '';
     var bytes = 0;
     await for (final delta in _router.chatStream(
@@ -618,7 +891,10 @@ class ChatContextRepository {
       model: model,
       system: system,
       user: user,
+      history: history,
       maxTokens: tokens,
+      inputBytes: chatRequestInputBytes,
+      onUsage: (usage) => budget.settle(reservation, usage),
       cancel: cancel,
     )) {
       _check(cancel);
@@ -650,7 +926,7 @@ class ChatContextRepository {
     CancelToken? cancel,
     ChatTurn target,
     void Function(int, int)? onProgress,
-    _ChatRetrievalBudget budget,
+    ChatBudget budget,
   ) async {
     final previous = _indexTail;
     final done = Completer<void>();
@@ -687,7 +963,7 @@ class ChatContextRepository {
     CancelToken? cancel,
     ChatTurn target,
     void Function(int, int)? onProgress,
-    _ChatRetrievalBudget budget,
+    ChatBudget budget,
   ) async {
     Future<void> guard() async {
       _check(cancel);
@@ -767,7 +1043,9 @@ class ChatContextRepository {
         onProgress?.call(vectors.length, documents.length);
         while (vectors.length < documents.length) {
           await guard();
-          budget.embedding(documents.skip(vectors.length).take(64).toList());
+          budget.reserveEmbedding(
+            documents.skip(vectors.length).take(64).toList(),
+          );
           final batch = await _router.embeddings(
             apiKey: key,
             model: embedding,
@@ -791,7 +1069,7 @@ class ChatContextRepository {
       }
       final vectors = _documents!;
       await guard();
-      budget.embedding(queries);
+      budget.reserveEmbedding(queries);
       final q = await _router.embeddings(
         apiKey: key,
         model: embedding,
@@ -841,6 +1119,25 @@ String _rangeKey(ChatSource s) => jsonEncode([
     [a.chapterId, a.paragraphIndex, a.start, a.end, a.paragraphHash],
 ]);
 
+String _anchorKey(SourceAnchor a) =>
+    '${a.chapterId}:${a.paragraphIndex}:${a.start}:${a.end}';
+
+/// [outer] memuat seluruh range [inner] (window asli yang dikutip catatan).
+bool _contains(ChatSource outer, ChatSource inner) => inner.anchors.every(
+  (a) => outer.anchors.any(
+    (o) =>
+        o.chapterId == a.chapterId &&
+        o.paragraphIndex == a.paragraphIndex &&
+        o.start <= a.start &&
+        o.end >= a.end,
+  ),
+);
+
+bool _overlaps(ChatSource a, ChatSource b) {
+  final keys = a.anchors.map(_anchorKey).toSet();
+  return b.anchors.any((x) => keys.contains(_anchorKey(x))) || _contains(b, a);
+}
+
 List<ChatSource> _uniqueSources(List<ChatSource> sources) {
   final ranges = <String>{};
   return [
@@ -849,43 +1146,22 @@ List<ChatSource> _uniqueSources(List<ChatSource> sources) {
   ];
 }
 
-class _ChatRetrievalBudget {
-  final elapsed = Stopwatch()..start();
-  Future<bool> Function()? guard;
-  int calls = 0, tokens = 0, bytes = 0, embeddings = 0, embeddingBytes = 0;
-  void completion(String system, String user, int output) {
-    calls++;
-    tokens += output;
-    bytes += utf8.encode(system).length + utf8.encode(user).length;
-    if (calls > 7 ||
-        tokens > 8000 ||
-        bytes > 280000 ||
-        elapsed.elapsed > const Duration(seconds: 150)) {
-      throw const FormatException('Budget penelusuran habis');
-    }
-  }
-
-  void answer(ChatPrompt prompt) =>
-      completion(prompt.system, prompt.user, chatAnswerMaxTokens);
-  void embedding(List<String> inputs) {
-    embeddings++;
-    embeddingBytes += inputs.fold(0, (n, s) => n + utf8.encode(s).length);
-    if (embeddings > 70 ||
-        embeddingBytes > 3200000 ||
-        elapsed.elapsed > const Duration(seconds: 150)) {
-      throw const FormatException(
-        'Budget index/query habis; lanjutkan secara eksplisit',
-      );
-    }
-  }
-}
-
 /// Raw draft is durable transport data; preview is provisional, answer is final.
+/// [repair] > 0 berarti output sebelumnya invalid dan jawaban dikirim ulang;
+/// [repairReason] menjelaskan kegagalan yang sedang diperbaiki.
 class ChatStreamFrame {
-  const ChatStreamFrame(this.draft, {this.answer, this.preview = const []});
+  const ChatStreamFrame(
+    this.draft, {
+    this.answer,
+    this.preview = const [],
+    this.repair = 0,
+    this.repairReason,
+  });
   final String draft;
   final ChatAnswer? answer;
   final List<ChatAnswerBlock> preview;
+  final int repair;
+  final String? repairReason;
 }
 
 class PreparedChat {
@@ -897,6 +1173,7 @@ class PreparedChat {
     this.book,
     this._paragraphs,
     this._exploration,
+    this._budget,
     this._validate,
   );
   final OpenRouterService _router;
@@ -906,6 +1183,7 @@ class PreparedChat {
   final Map<ChatParagraphRef, ChatParagraph> _paragraphs;
   final Future<bool> Function() _validate;
   final ChatExploration? _exploration;
+  final ChatBudget _budget;
   bool _started = false;
 
   Stream<ChatStreamFrame> stream({CancelToken? cancel}) async* {
@@ -915,56 +1193,108 @@ class PreparedChat {
     try {
       if (!await _validate()) return;
       if (cancel?.isCancelled ?? false) throw cancel!.cancelError!;
-      final decoder = ChatAnswerDecoder(
-        prompt: prompt,
-        current: book,
-        paragraphs: _paragraphs,
-      );
-      var validatedParts = 0;
-      await for (final delta in _router.chatStream(
-        apiKey: _key,
-        model: model,
-        system: prompt.system,
-        user: prompt.user,
-        cancel: cancel,
-      )) {
-        decoder.add(delta);
-        final preview = decoder.preview.blocks;
-        final citedParts = preview.where((b) => b.sources.isNotEmpty).length;
-        if (citedParts > validatedParts) {
-          if (!await _validate()) return;
-          if (cancel?.isCancelled ?? false) throw cancel!.cancelError!;
-        }
-        validatedParts = citedParts;
-        yield ChatStreamFrame(decoder.raw, preview: preview);
-      }
-      if (cancel?.isCancelled ?? false) throw cancel!.cancelError!;
-      if (!await _validate()) return;
-      if (cancel?.isCancelled ?? false) throw cancel!.cancelError!;
-      var answer = decoder.finish();
-      final work = _exploration;
-      if (work != null && !work.complete) {
-        if (answer.blocks.length >= 32) {
-          throw const FormatException(
-            'Jawaban terlalu panjang untuk catatan cakupan',
+      var history = const <Map<String, String>>[];
+      String? reason;
+      // Draft durable hanya boleh bertambah (checkpoint memeriksa prefix):
+      // output attempt sebelumnya tetap di depan, perbaikan ditambahkan.
+      var prefix = '';
+      for (var attempt = 0; ; attempt++) {
+        final decoder = ChatAnswerDecoder(
+          prompt: prompt,
+          current: book,
+          paragraphs: _paragraphs,
+        );
+        final reservation = _budget.reserveCompletion(
+          prompt.system,
+          [prompt.user, ...history.map((m) => m['content']!)].join(),
+          chatAnswerMaxTokens,
+        );
+        var validatedParts = 0;
+        await for (final delta in _router.chatStream(
+          apiKey: _key,
+          model: model,
+          system: prompt.system,
+          user: prompt.user,
+          history: history,
+          inputBytes: chatRequestInputBytes,
+          onUsage: (usage) => _budget.settle(reservation, usage),
+          cancel: cancel,
+        )) {
+          decoder.add(delta);
+          final preview = decoder.preview.blocks;
+          final citedParts = preview.where((b) => b.sources.isNotEmpty).length;
+          if (citedParts > validatedParts) {
+            if (!await _validate()) return;
+            if (cancel?.isCancelled ?? false) throw cancel!.cancelError!;
+          }
+          validatedParts = citedParts;
+          yield ChatStreamFrame(
+            '$prefix${decoder.raw}',
+            preview: preview,
+            repair: attempt,
+            repairReason: reason,
           );
         }
-        answer = ChatAnswer(
-          status: ChatAnswerStatus.partial,
-          formatVersion: 2,
-          blocks: [
-            ...answer.blocks,
-            ChatAnswerBlock(
-              text: work.strategy == ChatSearchStrategy.global
-                  ? 'Udah diperiksa ${work.cursor}/${work.total} potongan isi buku. Masih ada ${work.total - work.cursor} potongan yang belum diperiksa. Pakai Lanjutkan buat meneruskan penelusuran.'
-                  : 'Masih ada ${work.pendingQueries.length} kebutuhan pencarian yang belum diperiksa. Pakai Lanjutkan buat meneruskan penelusuran.',
-              kind: ChatAnswerKind.conversation,
-              sources: [],
-            ),
-          ],
+        if (cancel?.isCancelled ?? false) throw cancel!.cancelError!;
+        if (!await _validate()) return;
+        if (cancel?.isCancelled ?? false) throw cancel!.cancelError!;
+        ChatAnswer answer;
+        try {
+          answer = decoder.finish();
+        } on FormatException catch (e) {
+          // Format/sumber invalid: perbaiki maksimal dua kali dalam ledger
+          // yang sama. HTTP/saldo/kunci tidak pernah diulang otomatis.
+          if (attempt >= chatMaxRepairs || _budget.expired) rethrow;
+          _budget.repairs++;
+          reason = e.message;
+          history = [
+            {'role': 'assistant', 'content': decoder.raw},
+            {
+              'role': 'user',
+              'content': jsonEncode({
+                'repair': reason,
+                'instruction': 'Output sebelumnya ditolak aplikasi karena alasan di repair. Kirim ulang SELURUH jawaban sebagai satu JSON valid sesuai skema sistem, dengan isi yang sama, perbaiki hanya masalah itu. Semua source_ids harus dari sources.',
+              }),
+            },
+          ];
+          prefix = '$prefix${decoder.raw}\n';
+          yield ChatStreamFrame(
+            prefix,
+            preview: decoder.preview.blocks,
+            repair: attempt + 1,
+            repairReason: reason,
+          );
+          continue;
+        }
+        final work = _exploration;
+        if (work != null && !work.complete) {
+          if (answer.blocks.length >= 32) {
+            throw const FormatException(
+              'Jawaban terlalu panjang untuk catatan cakupan',
+            );
+          }
+          answer = ChatAnswer(
+            status: ChatAnswerStatus.partial,
+            formatVersion: 2,
+            blocks: [
+              ...answer.blocks,
+              ChatAnswerBlock(
+                text: work.strategy.reads
+                    ? 'Udah diperiksa ${work.cursor}/${work.total} potongan${work.strategy == ChatSearchStrategy.chapters ? ' dari bab yang diminta' : ' isi buku'}. Masih ada ${work.total - work.cursor} potongan yang belum diperiksa. Pakai Lanjutkan buat meneruskan penelusuran.'
+                    : 'Masih ada ${work.pendingQueries.length} kebutuhan pencarian yang belum diperiksa. Pakai Lanjutkan buat meneruskan penelusuran.',
+                kind: ChatAnswerKind.conversation,
+                sources: [],
+              ),
+            ],
+          );
+        }
+        yield ChatStreamFrame(
+          '$prefix${decoder.raw}',
+          answer: answer,
+          repair: attempt,
         );
+        return;
       }
-      yield ChatStreamFrame(decoder.raw, answer: answer);
     } on FormatException catch (e) {
       throw AiException(AiError.invalidResponse, detail: e.message);
     }

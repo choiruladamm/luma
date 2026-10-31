@@ -186,7 +186,7 @@ void main() {
       jsonEncode({
         'notes': [
           {
-            'text': 'a' * 1201,
+            'text': 'a' * (chatGlobalNotesChars + 1),
             'source_ids': ['S1'],
           },
         ],
@@ -202,6 +202,20 @@ void main() {
         throwsFormatException,
       );
     }
+    // One batch's output is capped tighter than the accumulated checkpoint.
+    final long = jsonEncode({
+      'notes': [
+        {
+          'text': 'a' * (chatBatchNotesChars + 1),
+          'source_ids': ['S1'],
+        },
+      ],
+    });
+    expect(parseChatGlobalNotes(long, allowed: {'S1'}), hasLength(1));
+    expect(
+      () => parseChatGlobalNotes(long, allowed: {'S1'}, batch: true),
+      throwsFormatException,
+    );
   });
 
   test('planner strategies and follow-up query counts are bounded and old plans remain readable', () {
@@ -212,11 +226,49 @@ void main() {
           'needs_clarification': false,
           'strategy': strategy.name,
           'queries': ['first?', 'last?'],
+          'chapter_ids': [7],
         }),
+        knownChapterIds: [7, 8],
       );
       expect(plan.strategy, strategy);
       expect(plan.queries, ['first?', 'last?']);
+      expect(plan.chapterIds, [7]);
     }
+    // chapters needs real ids unless it asks for clarification; unknown or
+    // duplicate ids from the model are never trusted.
+    expect(
+      () => parseChatQueryPlan(
+        '{"query":"b?","needs_clarification":false,"strategy":"chapters"}',
+        knownChapterIds: [7],
+      ),
+      throwsFormatException,
+    );
+    expect(
+      () => parseChatQueryPlan(
+        '{"query":"b?","needs_clarification":false,"strategy":"chapters","chapter_ids":[9]}',
+        knownChapterIds: [7],
+      ),
+      throwsFormatException,
+    );
+    expect(
+      () => parseChatQueryPlan(
+        '{"query":"b?","needs_clarification":false,"strategy":"global","chapter_ids":[7,7]}',
+        knownChapterIds: [7],
+      ),
+      throwsFormatException,
+    );
+    final clarify = parseChatQueryPlan(
+      '{"query":"b?","needs_clarification":true,"clarification":" Book I bab III atau Book III? ","strategy":"chapters","chapter_ids":[]}',
+      knownChapterIds: [7],
+    );
+    expect(clarify.clarification, 'Book I bab III atau Book III?');
+    expect(clarify.chapterIds, isEmpty);
+    expect(
+      parseChatQueryPlan(
+        '{"query":"b?","needs_clarification":false,"clarification":""}',
+      ).clarification,
+      isNull,
+    );
     expect(
       parseChatQueryPlan('{"query":"book?","needs_clarification":false}')
           .strategy,
@@ -232,5 +284,90 @@ void main() {
       () => chatMissingQueries('{"missing_queries":["a","b","c"]}'),
       throwsFormatException,
     );
+  });
+
+  test('checkpoint policy 2 carries chapter ids and stop reason; policy 1 is stale', () {
+    final work = ChatExploration(
+      book: (bookId: 1, contentRevision: 1),
+      sessionId: 2,
+      turnId: 3,
+      question: 'q?',
+      model: 'm',
+      manifest: 'a' * 64,
+      query: 'q',
+      cursor: 1,
+      total: 4,
+      notes: const [],
+      strategy: ChatSearchStrategy.chapters,
+      chapterIds: const [12, 15],
+      stopReason: 'deadline',
+    );
+    final parsed = ChatExploration.parse(work.encode());
+    expect(parsed.chapterIds, [12, 15]);
+    expect(parsed.stopReason, 'deadline');
+    expect(parsed.strategy, ChatSearchStrategy.chapters);
+    expect(parsed.complete, isFalse);
+    final complete = ChatExploration.parse(
+      ChatExploration(
+        book: work.book,
+        sessionId: 2,
+        turnId: 3,
+        question: 'q?',
+        model: 'm',
+        manifest: work.manifest,
+        query: 'q',
+        cursor: 4,
+        total: 4,
+        notes: const [],
+        strategy: ChatSearchStrategy.chapters,
+        chapterIds: const [12],
+        stopReason: 'budget',
+      ).encode(),
+    );
+    expect(complete.stopReason, isNull); // complete wins over an old reason
+    expect(
+      () => ChatExploration.parse(
+        jsonEncode({
+          ...work.data,
+          'chapterIds': [12, 12],
+        }),
+      ),
+      throwsFormatException,
+    );
+    expect(
+      () => ChatExploration.parse(jsonEncode({...work.data, 'policy': 1})),
+      throwsFormatException,
+    );
+  });
+
+  test('large packed sources split per anchor run and keep every range', () {
+    const book = (bookId: 1, contentRevision: 1);
+    final text = 'x' * 500;
+    SourceAnchor anchor(int paragraph) => SourceAnchor(
+      book: book,
+      chapterId: 9,
+      paragraphIndex: paragraph,
+      start: 0,
+      end: text.length,
+      paragraphHash: chatTextHash(text),
+      snapshot: text,
+    );
+    final big = ChatSource(
+      id: 'S1',
+      chapterTitle: 'III',
+      anchors: [for (var i = 0; i < 6; i++) anchor(i)],
+    );
+    final split = chatSplitLargeSources([big], 1100);
+    expect(split.map((s) => s.anchors.length), [2, 2, 2]);
+    expect(split.map((s) => s.id), ['S1', 'S2', 'S3']);
+    expect(split.expand((s) => s.anchors).map((a) => a.paragraphIndex), [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+    ]);
+    expect(chatSplitLargeSources([big], 10000).single.anchors, hasLength(6));
   });
 }

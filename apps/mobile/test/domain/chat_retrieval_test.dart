@@ -55,10 +55,17 @@ void main() {
       final field = current.containsKey('sourceHashes')
           ? 'sourceHashes'
           : 'sha256';
+      // Transport and parser files may move on (#143 adds TOC sections);
+      // the chunk/range test below proves the frozen corpus is unchanged.
+      const mutable = [
+        'lib/data/services/openrouter_service.dart',
+        'lib/data/services/epub_parser.dart',
+        'lib/data/services/chapter_extractor.dart',
+      ];
       final originalHashes = Map.of(original[field] as Map)
-        ..remove('lib/data/services/openrouter_service.dart');
+        ..removeWhere((k, _) => mutable.contains(k));
       final currentHashes = Map.of(current[field] as Map)
-        ..remove('lib/data/services/openrouter_service.dart');
+        ..removeWhere((k, _) => mutable.contains(k));
       expect(currentHashes, originalHashes);
       expect(
         current['thresholds'] ?? current['thresholdsPerRun'],

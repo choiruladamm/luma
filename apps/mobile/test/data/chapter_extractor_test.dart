@@ -133,6 +133,21 @@ void main() {
     expect(c.title, 'XXIX');
   });
 
+  test('TOC label that starts with the heading keeps the fuller label', () {
+    final [c] = extract(
+      {'a': '<h3>III</h3><p>text</p>'},
+      [
+        ChapterSource(
+          title: 'III: Of Providence',
+          section: 'Book I',
+          files: const ['a'],
+        ),
+      ],
+    );
+    expect(c.title, 'III: Of Providence');
+    expect(c.section, 'Book I');
+  });
+
   test('non-content chapters are dropped', () {
     final chapters = extract(
       {

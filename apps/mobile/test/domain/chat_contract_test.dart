@@ -149,6 +149,38 @@ void main() {
     );
   });
 
+  test(
+    'a part without source_ids is uncited; a book part still needs real ids',
+    () {
+      final answer = parse(
+        jsonEncode({
+          'status': 'answered',
+          'parts': [
+            {'kind': 'conversation', 'text': 'Tanpa sitasi.'},
+            {
+              'kind': 'book',
+              'text': 'Dari buku.',
+              'source_ids': ['S1'],
+            },
+          ],
+        }),
+      );
+      expect(answer.blocks.first.sources, isEmpty);
+      expect(answer.blocks.last.sources, hasLength(1));
+      expect(
+        () => parse(
+          jsonEncode({
+            'status': 'answered',
+            'parts': [
+              {'kind': 'book', 'text': 'Dari buku.'},
+            ],
+          }),
+        ),
+        throwsFormatException,
+      );
+    },
+  );
+
   test('natural replies preserve book references without forcing every paragraph into a claim', () {
     final result = parse(
       jsonEncode({
@@ -182,7 +214,7 @@ void main() {
     expect(result.blocks.map((b) => b.kind), ChatAnswerKind.values);
     expect(identical(result.blocks.first.sources.single, s), isTrue);
     expect(result.note, isEmpty);
-    expect(chatPromptVersion, 4);
+    expect(chatPromptVersion, 5);
   });
 
   test('layout is optional, unknown values read as paragraph and quote needs a book part', () {

@@ -41,9 +41,9 @@
     "test/support/book_chat_retrieval.dart": "926dd868bd6925e88b7bd48cc021aa01e3b4e1b226cb82595c6d41b9ecbe3935",
     "test/support/book_chat_spike.dart": "d80198306a284b4db2f493997b217277fe566d927689f87858e5f03f320951eb",
     "test/data/book_chat_heldout_live_test.dart": "7697fd67688fa7b2fb0545746088c594fb28ecc069c6e8f80dd37f89f50dc11b",
-    "lib/data/services/openrouter_service.dart": "25b40e8d6441cdaab0074c2d3c766dac2f418ca62544c02fe6ee658a364e62c6",
-    "lib/data/services/epub_parser.dart": "b974c6b22e57726a694ad1a1b45d68da2d7980034876ecda03074b339d601a9f",
-    "lib/data/services/chapter_extractor.dart": "959a9751ee7a6592ad5dba8d93cb64254271a3a1308995b4927de94046a38b88",
+    "lib/data/services/openrouter_service.dart": "a97c139e5fb1e86db3f36f8eeacb1cdd6971ae9a10c5101422105f05c15b1be0",
+    "lib/data/services/epub_parser.dart": "77678a03d5475181896cc0e6f61a6244890b482648c438d6a698b668d3b3404d",
+    "lib/data/services/chapter_extractor.dart": "fe6d8ab2f9f4ebbe7ed85855ec49d5f3e5c515696496aa6a96d5d9d9d465f9b2",
     "lib/domain/grouping.dart": "f05b72b647b4030bbc122d29291ad3f70fc716ad9cb4509a4886c2ddbea13c7e",
     "lib/domain/luma_markdown.dart": "6ca17d92a05852da73ab491c108ae15f6395516632ec023d083b313332a75b63",
     "pubspec.lock": "445de7039b418d08f7ce92f50623a276245949014d7a4060a63b312510368b5d"

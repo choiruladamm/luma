@@ -16,9 +16,13 @@ class ParsedChapter {
     required this.paragraphs,
     required this.groups,
     required this.charOffset,
+    this.section,
   });
 
   final String title;
+
+  /// Label induk TOC (lihat [ChapterSource.section]).
+  final String? section;
   final List<RawParagraph> paragraphs;
 
   /// `groupIndex` per paragraf, dari [assignGroups].
@@ -66,6 +70,7 @@ class ParsedChapter {
 
     final chapter = ParsedChapter(
       title: _title(source.title, paragraphs),
+      section: source.section,
       paragraphs: paragraphs,
       groups: assignGroups(paragraphs),
       charOffset: offset,
@@ -287,7 +292,9 @@ List<RawParagraph> _tidy(List<RawParagraph> blocks) {
 
 /// Judul TOC tanpa penanda catatan kaki. Kalau TOC-nya ketempelan teks lain
 /// (caption gambar Gutenberg: "I hope Mr. Bingley will like it. CHAPTER II."),
-/// pake heading pertama chapter yang ada di dalemnya.
+/// pake heading pertama chapter yang ada di dalemnya. Label TOC yang justru
+/// *dimulai* dengan heading-nya ("III: Of Providence" vs heading "III") lebih
+/// lengkap, jadi dipertahanin.
 String _title(String toc, List<RawParagraph> paragraphs) {
   String clean(String s) => s
       .replaceAll(RegExp(r'\[\w{1,4}\]'), '')
@@ -302,7 +309,8 @@ String _title(String toc, List<RawParagraph> paragraphs) {
   if (heading != null &&
       heading.isNotEmpty &&
       heading.length < title.length &&
-      title.toLowerCase().contains(heading.toLowerCase())) {
+      title.toLowerCase().contains(heading.toLowerCase()) &&
+      !title.toLowerCase().startsWith(heading.toLowerCase())) {
     return heading;
   }
   return title.isEmpty ? toc : title;

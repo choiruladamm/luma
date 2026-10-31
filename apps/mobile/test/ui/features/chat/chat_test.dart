@@ -259,6 +259,25 @@ void main() {
     );
   });
 
+  test('repair status replaces the phase label only while running', () {
+    final running = ChatState(phase: ChatPhase.waiting, repairAttempt: 1);
+    expect(
+      running.statusLabel(ChatPhase.waiting),
+      'Lagi benerin format jawaban… (1/2)',
+    );
+    expect(
+      ChatState(phase: ChatPhase.writing).statusLabel(ChatPhase.writing),
+      ChatPhase.writing.label,
+    );
+    expect(
+      ChatState(
+        phase: ChatPhase.failed,
+        repairAttempt: 2,
+      ).statusLabel(ChatPhase.failed),
+      ChatPhase.failed.label,
+    );
+  });
+
   for (final theme in [ThemeMode.light, ThemeMode.dark]) {
     testWidgets(
       'streaming paragraph, citations, final and failed draft in $theme',

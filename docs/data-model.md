@@ -40,6 +40,7 @@ Prinsip: **file diparse sekali saat import** ke format internal. Reader, AI, dan
 | bookId | int (FK) | |
 | sortOrder | int | Urutan tampil. EPUB: urutan TOC. Markdown: dari nomor chapter |
 | chapterNumber | int? | Nomor bab asli dari buku (untuk Markdown / daftar isi) |
+| section | text? | Label induk TOC EPUB bersarang, luar → dalam, dipisah ` › ` ("Discourses › Book I"). Null = belum diperiksa (buku dari schema ≤ 10), `''` = diperiksa, level teratas. Diisi saat import; buku lama di-backfill dari EPUB tersimpan saat chat buku dibuka (`ImportRepository.backfillSections`): cocok jumlah + judul → isi section dan judul TOC lengkap, tidak cocok/file hilang → `''`. Paragraf tidak disentuh (#143) |
 | title | text | Dari TOC/nav EPUB, fallback "Bab N" |
 | charOffset | int | Jumlah karakter sebelum chapter ini (untuk persentase). Dihitung ulang kalau ada chapter disisipkan |
 
@@ -238,6 +239,13 @@ schema 8. Downgrade binary schema 7 tidak didukung: rollback data memakai backup
 sebelum upgrade, bukan menurunkan PRAGMA user_version atau menghapus app.
 
 
+### Schema 11: hierarki bab (#143)
+
+Satu kolom nullable `chapters.section`, migrasi `ADD COLUMN`, data lain utuh.
+Judul bab dari TOC yang dimulai dengan heading-nya ("III: Of Providence" vs
+heading "III") kini dipertahankan utuh; buku lama mendapat judul itu lewat
+backfill. Anchor/paragraf tidak dinomori ulang; `parserVersion` tetap 1.
+
 ## Cache index Ngobrol (#134)
 
 `chat_indexes`: id, bookId (FK cascade), identity unik (JSON versi format1,
@@ -277,3 +285,12 @@ secara defensif dari `draft` saat snapshot, tanpa sumber. Preview runtime dengan
 sumber provisional terikat attempt di ViewModel. Keduanya bukan `answer` dan
 selalu dikecualikan dari trustedHistory. Invalid/corrupt draft berhenti di teks
 terbaca terakhir tanpa mengubah paid answer lain.
+
+### Checkpoint policy 2 (#143)
+
+Checkpoint menambah `chapterIds` (bab yang dibaca; manifest = window bab itu),
+`stopReason` (`budget | deadline | stagnant | complete`) dan strategi `chapters`.
+Policy 1 lama tidak bisa dilanjutkan (`chatCanContinue` false, "kirim pertanyaan
+baru"); jawaban/sumber turn lama tetap terbaca. Draft turn yang diperbaiki
+otomatis memuat output lama diikuti output perbaikan; preview dari draft berhenti
+di teks terbaca pertama.

@@ -4,12 +4,14 @@ import 'models/book_chat.dart';
 
 /// Shared by complete-answer validation and completed provisional paragraphs.
 ChatAnswerBlock chatAnswerPart(Object? value, List<ChatSource> sources) {
+  // Part tanpa key source_ids (model sering melewatkannya untuk conversation/
+  // interpretation) = tanpa sitasi; ID asing tetap ditolak di bawah.
   if (value is! Map ||
       value['text'] is! String ||
-      value['source_ids'] is! List) {
+      value['source_ids'] is! List?) {
     throw const FormatException('Paragraf tidak valid');
   }
-  final ids = value['source_ids'] as List;
+  final ids = (value['source_ids'] as List?) ?? const [];
   final byId = {for (final s in sources) s.id: s};
   if (ids.toSet().length != ids.length ||
       ids.any((id) => id is! String || !byId.containsKey(id))) {

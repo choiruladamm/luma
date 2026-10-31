@@ -35,11 +35,16 @@ class ChapterSource {
   const ChapterSource({
     required this.title,
     required this.files,
+    this.section,
     this.startAnchor,
     this.endAnchor,
   });
 
   final String title;
+
+  /// Label induk di TOC bersarang, dari luar ke dalam, dipisah ` › `
+  /// ("Discourses › Book I"). Null kalau entri ini di level teratas.
+  final String? section;
   final List<String> files;
   final String? startAnchor;
   final String? endAnchor;
@@ -135,7 +140,12 @@ void _checkDrm(Archive zip, String? encryption) {
 }
 
 typedef _Item = ({String id, String path, String type, Set<String> props});
-typedef _TocEntry = ({String title, String file, String? anchor});
+typedef _TocEntry = ({
+  String title,
+  String? section,
+  String file,
+  String? anchor,
+});
 
 EpubOutline _parse(
   Archive zip,
@@ -198,11 +208,44 @@ EpubOutline _parse(
             .firstOrNull ??
         navs.firstOrNull;
     if (toc == null) return const [];
-    return [
-      for (final a in all(toc, 'a'))
-        if (a.getAttribute('href') case final href?)
-          _entry(clean(a.innerText), _path.dirname(nav!.path), href),
-    ];
+    final out = <_TocEntry>[];
+    // <ol><li><a>label</a><ol>…</ol></li></ol>: label induk jadi section.
+    void walk(XmlElement list, List<String> parents) {
+      for (final li in list.findElements('li', namespaceUri: '*')) {
+        final a = li.findElements('a', namespaceUri: '*').firstOrNull;
+        final label =
+            clean(a?.innerText) ??
+            clean(
+              li.findElements('span', namespaceUri: '*').firstOrNull?.innerText,
+            );
+        if (a?.getAttribute('href') case final href?) {
+          out.add(
+            _entry(
+              label,
+              parents.isEmpty ? null : parents.join(' › '),
+              _path.dirname(nav!.path),
+              href,
+            ),
+          );
+        }
+        for (final child in li.findElements('ol', namespaceUri: '*')) {
+          walk(child, [...parents, ?label]);
+        }
+      }
+    }
+
+    for (final list in toc.findElements('ol', namespaceUri: '*')) {
+      walk(list, const []);
+    }
+    if (out.isEmpty) {
+      // TOC tanpa <ol>/<li> yang rapi: ambil semua link, tanpa hierarki.
+      return [
+        for (final a in all(toc, 'a'))
+          if (a.getAttribute('href') case final href?)
+            _entry(clean(a.innerText), null, _path.dirname(nav!.path), href),
+      ];
+    }
+    return out;
   }
 
   List<_TocEntry> ncxToc() {
@@ -216,24 +259,35 @@ EpubOutline _parse(
     if (doc == null) return const [];
     final navMap = all(XmlDocument.parse(doc), 'navMap').firstOrNull;
     if (navMap == null) return const [];
-    return [
-      for (final point in all(navMap, 'navPoint'))
+    final out = <_TocEntry>[];
+    void walk(XmlElement parent, List<String> parents) {
+      for (final point in parent.findElements('navPoint', namespaceUri: '*')) {
+        final label = clean(
+          point
+              .findElements('navLabel', namespaceUri: '*')
+              .firstOrNull
+              ?.innerText,
+        );
         if (point
                 .findElements('content', namespaceUri: '*')
                 .firstOrNull
                 ?.getAttribute('src')
-            case final src?)
-          _entry(
-            clean(
-              point
-                  .findElements('navLabel', namespaceUri: '*')
-                  .firstOrNull
-                  ?.innerText,
+            case final src?) {
+          out.add(
+            _entry(
+              label,
+              parents.isEmpty ? null : parents.join(' › '),
+              _path.dirname(ncx!.path),
+              src,
             ),
-            _path.dirname(ncx!.path),
-            src,
-          ),
-    ];
+          );
+        }
+        walk(point, [...parents, ?label]);
+      }
+    }
+
+    walk(navMap, const []);
+    return out;
   }
 
   var toc = navToc();
@@ -276,6 +330,7 @@ EpubOutline _parse(
       chapters.add(
         ChapterSource(
           title: s.title.isEmpty ? 'Bab ${i + 1}' : s.title,
+          section: s.section,
           files: spine.sublist(from, to + 1),
           startAnchor: s.anchor,
           endAnchor: endAnchor,
@@ -298,12 +353,13 @@ EpubOutline _parse(
   );
 }
 
-_TocEntry _entry(String? title, String baseDir, String href) {
+_TocEntry _entry(String? title, String? section, String baseDir, String href) {
   final hash = href.indexOf('#');
   final file = hash == -1 ? href : href.substring(0, hash);
   final anchor = hash == -1 ? null : href.substring(hash + 1);
   return (
     title: title ?? '',
+    section: section,
     file: _resolve(baseDir, file),
     anchor: anchor == null || anchor.isEmpty ? null : anchor,
   );

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:typed_data';
 
+import 'package:luma/domain/chat_budget.dart';
 import 'package:luma/domain/chat_prompt.dart';
 import 'package:luma/domain/models/book_chat.dart';
 
@@ -170,14 +171,21 @@ class FakeOpenRouter implements OpenRouterService {
     required String user,
     List<Map<String, String>> history = const [],
     int maxTokens = chatAnswerMaxTokens,
+    int inputBytes = chatSelectorBytes,
+    void Function(ChatUsage usage)? onUsage,
     CancelToken? cancel,
   }) => throw UnimplementedError('Use the fake Dio chat transport');
+
+  @override
+  Future<ChatModelInfo?> modelInfo(String model, {CancelToken? cancel}) async =>
+      null;
 
   @override
   Future<List<Float32List>> embeddings({
     required String? apiKey,
     required ChatEmbeddingModel model,
     required List<String> input,
+    void Function(ChatUsage usage)? onUsage,
     CancelToken? cancel,
   }) => throw UnimplementedError('Use the fake Dio embedding transport');
 

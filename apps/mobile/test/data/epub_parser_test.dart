@@ -139,6 +139,32 @@ void main() {
       ('Economy', 'OEBPS/a.html'),
       ('Sounds', 'OEBPS/b.html'),
     ]);
+    expect(book.chapters.map((c) => c.section), [null, 'Economy']);
+  });
+
+  test('Discourses (Standard Ebooks, nav): Book › chapter hierarchy', () {
+    final book = parseEpub(
+      File('test/fixtures/discourses.epub').readAsBytesSync(),
+    );
+    expect(book.title, 'Discourses');
+    final first = book.chapters.firstWhere((c) => c.title.startsWith('I:'));
+    expect(first.section, 'Discourses › Book I');
+    expect(
+      book.chapters.where((c) => c.title == 'Book I').single.section,
+      'Discourses',
+    );
+    expect(
+      book.chapters
+          .where((c) => c.title.startsWith('III:'))
+          .map((c) => c.section),
+      [
+        'Discourses › Book I',
+        'Discourses › Book II',
+        'Discourses › Book III',
+        'Discourses › Book IV',
+      ],
+    );
+    expect(book.chapters.first.section, isNull);
   });
 
   test('The Enchiridion (Gutenberg): chapters in reading order', () {

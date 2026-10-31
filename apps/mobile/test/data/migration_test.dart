@@ -95,6 +95,17 @@ final v9 = [
   'CREATE TABLE chat_vectors (index_id INTEGER NOT NULL REFERENCES chat_indexes(id) ON DELETE CASCADE, ordinal INTEGER NOT NULL, vector BLOB NOT NULL, checksum TEXT NOT NULL, PRIMARY KEY(index_id,ordinal))',
 ];
 
+// Frozen schema 10: chat_turns.exploration, chapters without section.
+final v10 = [
+  for (final sql in v9)
+    sql.startsWith('CREATE TABLE chat_turns')
+        ? sql.replaceFirst(
+            'http_status INTEGER NULL,',
+            'http_status INTEGER NULL, exploration TEXT NULL,',
+          )
+        : sql,
+];
+
 AppDatabase _open([void Function(dynamic raw)? setup]) => AppDatabase(
   DatabaseConnection(
     NativeDatabase.memory(setup: setup),
@@ -262,6 +273,36 @@ void main() {
     },
   );
 
+  test('v10 → v11 keeps chapters and adds nullable section', () async {
+    final db = _open((raw) {
+      for (final sql in v10) {
+        raw.execute(sql);
+      }
+      raw.execute(
+        "INSERT INTO books(id,source_type,title,parser_version,total_chars) VALUES (1,'epub','Book',1,10)",
+      );
+      raw.execute(
+        "INSERT INTO chapters(id,book_id,sort_order,title,char_offset) VALUES (3,1,0,'III',0)",
+      );
+      raw.execute(
+        "INSERT INTO paragraphs(chapter_id,paragraph_index,type,text) VALUES (3,0,'paragraph','kept')",
+      );
+      raw.execute(
+        "INSERT INTO chat_turns(id,session_id,sequence,question,phase,model,prompt_version,draft,exploration) VALUES (12,9,0,'Q','done','m',4,'','{}')",
+      );
+      raw.execute('PRAGMA user_version = 10');
+    });
+    addTearDown(db.close);
+    final chapter = await db.select(db.chapters).getSingle();
+    expect(chapter.title, 'III');
+    expect(chapter.section, isNull);
+    expect((await db.select(db.paragraphs).getSingle()).content, 'kept');
+    expect((await db.select(db.chatTurns).getSingle()).exploration, '{}');
+    final fresh = _open();
+    addTearDown(fresh.close);
+    expect(await _shape(db), await _shape(fresh));
+  });
+
   test('v7 → v8 preserves populated user data byte for byte', () async {
     final db = _open((raw) {
       for (final sql in v7) {
@@ -306,7 +347,7 @@ void main() {
         300,
         1,
       ],
-      'chapters': [71, 42, 5, 6, 'VI', 400],
+      'chapters': [71, 42, 5, 6, 'VI', 400, null],
       'paragraphs': [71, 3, 0, 'paragraph', 'Original paragraph 🌿'],
       'reading_progress': [42, 71, 3, 0.75, 200],
       'ai_results': [

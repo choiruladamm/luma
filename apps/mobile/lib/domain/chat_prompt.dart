@@ -1,16 +1,17 @@
 import 'dart:convert';
 
+import 'chat_toc.dart';
 import 'models/book_chat.dart';
 import 'chat_preview.dart';
 
-const chatPromptVersion = 4;
+const chatPromptVersion = 5;
 const chatQuestionBytes = 2000;
 const chatHistoryBytes = 16000;
-const chatSourceBytes = 18000;
-const chatPromptBytes = 48000;
+const chatSourceBytes = 40000;
+const chatPromptBytes = 120000;
 const chatSelectorBytes = 90000;
 const chatMaxCandidates = 40;
-const chatMaxSources = 12;
+const chatMaxSources = 24;
 const chatAnswerMaxTokens = 3000;
 const chatTitleCodePoints = 120;
 
@@ -22,7 +23,7 @@ Periksa premis; jika salah, koreksi langsung tanpa berspekulasi bahwa bab lain m
 Balas satu JSON dengan setiap key hanya sekali: {"status":"answered|partial|clarify|off_topic","parts":[{"layout":"paragraph|item|bullet|quote","kind":"book|interpretation|external|conversation","text":"teks natural","source_ids":[]}]}. Urutan key tiap part: layout, kind, text, source_ids.
 book = fakta/parafrasa setia, wajib ID sumber. interpretation = analisismu/penerapan, boleh merujuk gagasan buku tanpa mengaku contoh ada di buku. external = pengetahuan tambahan, tanpa sitasi buku. conversation = klarifikasi/penolakan/batas cakupan. Pisahkan penjelasan konsep luar dari klaim buku; jangan menempelkan sitasi buku pada paragraf yang menjelaskan konsep luar. Semua ID harus dari sources.
 layout mengatur bentuk di layar. Paragraf pertama langsung menjawab dalam 1-2 kalimat, baru elaborasi. paragraph = default, maksimal 3-4 kalimat. item = butir bernomor (aplikasi yang menomori): pakai hanya untuk 3 hal atau lebih yang berurutan atau paralel (langkah, ide, daftar "apa saja"), maksimal 6 butir berturut-turut tanpa paragraf di tengah, tiap butir diawali **frasa tebal** 2-5 kata lalu penjelasan. Kalimat pengantar atau penutup daftar (mis. "berikut contohnya:") selalu paragraph, bukan item atau bullet; item dan bullet hanya untuk butir daftarnya sendiri. bullet = butir tanpa nomor untuk 3 ciri atau contoh atau lebih yang tidak berurutan, tiap butir juga diawali **frasa tebal** 2-5 kata lalu penjelasan. quote = kutipan langsung persis dari sources, hanya kind book, maksimal 2 kalimat, tanpa tanda kutip; terjemah atau penjelasannya di part berikutnya. Tebal untuk istilah kunci saat pertama muncul dan awal butir, 1-3 per paragraf, jangan menebalkan satu kalimat penuh. Miring untuk judul buku, kata asing, atau penekanan ringan, sesekali saja. Jawaban singkat cukup satu atau dua paragraf tanpa daftar.
-answered jika seluruh permintaan terjawab, termasuk kritik atau contoh yang diminta. partial jika masih ada bagian belum terjawab: jelaskan gap dalam conversation. exploration bila ada berisi catatan generatif dan cakupan yang diperiksa, BUKAN kutipan asli. Pakai sources sebagai bukti sitasi. Bila exploration.complete false, status wajib partial dan jelaskan cakupan atau kebutuhan pencarian yang masih tersisa sesuai field yang tersedia, tanpa mengarang jumlah. Jangan mengaku memeriksa bab utuh bila baru sebagian potongannya. Catatan bisa kehilangan detail; jangan menganggap semua detail buku terwakili. Tidak perlu heading wajib atau disclaimer berulang.''';
+answered jika seluruh permintaan terjawab, termasuk kritik atau contoh yang diminta. partial jika masih ada bagian belum terjawab: jelaskan gap dalam conversation. exploration bila ada menjelaskan cakupan yang sudah diperiksa aplikasi: scope chapters = sources adalah teks asli bab yang diminta (examinedChapters), scope book = seluruh bab isi dibaca bertahap dan notes adalah catatan generatif per bagian, BUKAN kutipan asli; scope search = hasil pencarian konsep. Pakai sources sebagai bukti sitasi; jawab substansinya langsung dari bahan itu, jangan minta pengguna menempel teks. Bila exploration.complete false, status wajib partial dan jelaskan cakupan atau kebutuhan pencarian yang masih tersisa sesuai field yang tersedia, tanpa mengarang jumlah. Jangan mengaku memeriksa bab utuh bila baru sebagian potongannya. Catatan bisa kehilangan detail; jangan menganggap semua detail buku terwakili. Bila exploration.clarification ada, status clarify dan tanyakan persis pilihan itu dalam satu kalimat singkat, tanpa menebak. Tidak perlu heading wajib atau disclaimer berulang.''';
 
 int _bytes(String text) => utf8.encode(text).length;
 String chatQuestion(String text) {
@@ -82,12 +83,15 @@ Map<String, String> _sourceData(ChatSource s) => {
 };
 
 /// Buang utuh sumber yang tidak muat; quote wajib dicek setelah pemilihan.
-List<ChatSource> fitChatSources(List<ChatSource> ranked) {
+List<ChatSource> fitChatSources(
+  List<ChatSource> ranked, {
+  int maxBytes = chatSourceBytes,
+}) {
   final result = <ChatSource>[];
   var used = 0;
   for (final s in ranked) {
     final size = _bytes(jsonEncode(_sourceData(s)));
-    if (used + size > chatSourceBytes) continue;
+    if (used + size > maxBytes) continue;
     result.add(s);
     used += size;
     if (result.length == chatMaxSources) break;
@@ -120,7 +124,11 @@ ChatPrompt buildChatPrompt({
   String? author,
   ChatQuote? quote,
   Map<String, Object?>? exploration,
+  int maxBytes = chatPromptBytes,
 }) {
+  if (maxBytes > chatPromptBytes) {
+    throw ArgumentError.value(maxBytes, 'maxBytes', 'melebihi chatPromptBytes');
+  }
   if (session.id <= 0 ||
       session.book.bookId <= 0 ||
       session.book.contentRevision <= 0 ||
@@ -191,9 +199,7 @@ ChatPrompt buildChatPrompt({
     'exploration': ?exploration,
   };
   final availableHistory =
-      chatPromptBytes -
-      _bytes(chatAnswerSystemPrompt) -
-      _bytes(jsonEncode(data));
+      maxBytes - _bytes(chatAnswerSystemPrompt) - _bytes(jsonEncode(data));
   final kept = <ChatTurn>[];
   var used = 0;
   for (final t in turns) {
@@ -216,7 +222,7 @@ ChatPrompt buildChatPrompt({
   final chronological = kept.reversed.toList();
   data['history'] = [for (final t in chronological) _historyData(t)];
   final user = jsonEncode(data);
-  if (_bytes(user) + _bytes(chatAnswerSystemPrompt) > chatPromptBytes) {
+  if (_bytes(user) + _bytes(chatAnswerSystemPrompt) > maxBytes) {
     throw const FormatException('Prompt melebihi batas');
   }
   return ChatPrompt(
@@ -313,7 +319,11 @@ ChatAnswer parseChatAnswer(
   return ChatAnswer(status: status, blocks: blocks);
 }
 
-ChatQueryPlan parseChatQueryPlan(String raw) {
+/// [chapterIds] dari model hanya diterima bila ada di [knownChapterIds].
+ChatQueryPlan parseChatQueryPlan(
+  String raw, {
+  Iterable<int> knownChapterIds = const [],
+}) {
   if (_bytes(raw) > chatPromptBytes) {
     throw const FormatException('Query plan melebihi batas');
   }
@@ -336,11 +346,30 @@ ChatQueryPlan parseChatQueryPlan(String raw) {
       queries.toSet().length != queries.length) {
     throw const FormatException('Strategi/query tidak valid');
   }
+  final clarification = value['clarification'];
+  if (clarification != null && clarification is! String) {
+    throw const FormatException('Klarifikasi tidak valid');
+  }
+  final ids = chatChapterIds(
+    value['chapter_ids'],
+    knownChapterIds,
+    max: knownChapterIds.length,
+  );
+  if (strategy == ChatSearchStrategy.chapters &&
+      ids.isEmpty &&
+      value['needs_clarification'] != true) {
+    throw const FormatException('Strategi chapters tanpa bab');
+  }
+  final text = (clarification as String?)?.trim();
   return ChatQueryPlan(
     strategy: strategy,
     queries: [for (final q in queries) chatQuestion(q as String)],
     englishQuery: chatQuestion(value['query'] as String),
     needsClarification: value['needs_clarification'] as bool,
+    chapterIds: ids,
+    clarification: text == null || text.isEmpty || !chatValidUnicode(text)
+        ? null
+        : chatQuestion(text),
   );
 }
 

@@ -6,6 +6,7 @@ import 'package:flutter/widgets.dart';
 
 import '../../../../data/repositories/chat_context_repository.dart';
 import '../../../../data/repositories/chat_repository.dart';
+import '../../../../data/repositories/import_repository.dart';
 import '../../../../data/services/chat_lifecycle.dart';
 import '../../../../domain/chat_prompt.dart';
 import '../../../../domain/chat_exploration.dart';
@@ -31,9 +32,13 @@ class ChatState {
     this.scrollAnchor,
     this.indexProgress,
     this.explorationProgress,
+    this.repairAttempt = 0,
   }) : turns = List.unmodifiable(turns);
 
   final ({int completed, int total})? indexProgress, explorationProgress;
+
+  /// Perbaikan otomatis ke-n (1..2) atas jawaban invalid pada attempt berjalan.
+  final int repairAttempt;
   bool get canContinue =>
       !loading &&
       !busy &&
@@ -84,7 +89,9 @@ class ChatState {
     Object? scrollAnchor = _unchanged,
     Object? indexProgress = _unchanged,
     Object? explorationProgress = _unchanged,
+    int? repairAttempt,
   }) => ChatState(
+    repairAttempt: repairAttempt ?? this.repairAttempt,
     explorationProgress: identical(explorationProgress, _unchanged)
         ? this.explorationProgress
         : explorationProgress as ({int completed, int total})?,
@@ -124,7 +131,10 @@ final chatSessionsProvider = StreamProvider.autoDispose
 class ChatViewModel extends Notifier<ChatState> {
   ChatViewModel(this.bookId);
   final int bookId;
-  static const retrievalTimeout = Duration(minutes: 3);
+
+  /// Ledger #143 menghentikan putaran pada 5 menit; ini pagar kalau request
+  /// terakhir menggantung.
+  static const retrievalTimeout = Duration(minutes: 6);
   late _ChatLifetime _life;
 
   bool _live(_ChatLifetime life) => life.alive && identical(life, _life);
@@ -169,6 +179,13 @@ class ChatViewModel extends Notifier<ChatState> {
   Future<void> _hydrate(_ChatLifetime life) async {
     try {
       await life.repo.recoverInterrupted();
+      if (!_live(life)) return;
+      try {
+        // Lokal, gratis, sekali per buku lama; chat tetap jalan tanpa section.
+        await ref.read(chapterSectionBackfillProvider)(bookId);
+      } catch (_) {
+        /* Tests without a DB and unreadable files fall back to titles. */
+      }
       if (!_live(life)) return;
       life.books = life.repo.watchBook(bookId).listen((book) {
         if (!_live(life)) return;
@@ -334,6 +351,7 @@ class ChatViewModel extends Notifier<ChatState> {
       if (context.book.bookId != bookId || context.book != state.book) {
         throw const FormatException('Entry buku berubah');
       }
+      life.readingChapterId = context.returnPosition.chapterId;
       if (context.startsNewSession) {
         final existing = await life.repo.sessionForQuote(context.quote!);
         if (!_live(life)) return;
@@ -419,6 +437,7 @@ class ChatViewModel extends Notifier<ChatState> {
       phase: ChatPhase.preparing,
       error: null,
       problem: null,
+      repairAttempt: 0,
     );
     _arm(life, run, retrievalTimeout);
     return _request(
@@ -520,6 +539,7 @@ class ChatViewModel extends Notifier<ChatState> {
       final prepared = await life.context.prepare(
         turn,
         cancel: run.cancel,
+        readingChapterId: life.readingChapterId,
         onExplorationProgress: (completed, total) {
           if (_running(life, run)) {
             state = state.copyWith(
@@ -553,7 +573,20 @@ class ChatViewModel extends Notifier<ChatState> {
           await _finish(life, run, phase: ChatPhase.done, answer: frame.answer);
           return;
         }
-        run.preview = frame.preview;
+        if (frame.repair > run.repair) {
+          // Jawaban invalid dikirim ulang: status singkat di turn yang sama,
+          // preview lama tetap tampil sampai teks baru masuk.
+          run.repair = frame.repair;
+          state = state.copyWith(
+            repairAttempt: frame.repair,
+            phase: ChatPhase.waiting,
+          );
+          _arm(life, run, GroupAiStream.timeoutAfter);
+          continue;
+        }
+        if (frame.preview.isNotEmpty || run.repair == 0) {
+          run.preview = frame.preview;
+        }
         if (run.raw.isEmpty) continue;
         run.clearTimers();
         if (state.phase != ChatPhase.writing) {
@@ -744,6 +777,7 @@ class _ChatRun {
   final cancel = CancelToken();
   final created = Completer<void>();
   ChatTurn? turn;
+  int repair = 0;
   String raw = '';
   List<ChatAnswerBlock> preview = const [];
   Timer? previewTimer;
@@ -766,6 +800,7 @@ class _ChatLifetime {
   Object? flushError;
   late Future<void> hydration;
   int selection = 0;
+  int? readingChapterId;
   ChatSession? session;
   ChatScrollAnchor? anchor;
   _ChatRun? run;
