@@ -5631,6 +5631,15 @@ class $ChatTurnsTable extends ChatTurns
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _stepsMeta = const VerificationMeta('steps');
+  @override
+  late final GeneratedColumn<String> steps = GeneratedColumn<String>(
+    'steps',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _phaseMeta = const VerificationMeta('phase');
   @override
   late final GeneratedColumn<String> phase = GeneratedColumn<String>(
@@ -5727,6 +5736,7 @@ class $ChatTurnsTable extends ChatTurns
     sources,
     draft,
     exploration,
+    steps,
     phase,
     attempt,
     model,
@@ -5806,6 +5816,12 @@ class $ChatTurnsTable extends ChatTurns
           data['exploration']!,
           _explorationMeta,
         ),
+      );
+    }
+    if (data.containsKey('steps')) {
+      context.handle(
+        _stepsMeta,
+        steps.isAcceptableOrUnknown(data['steps']!, _stepsMeta),
       );
     }
     if (data.containsKey('phase')) {
@@ -5914,6 +5930,10 @@ class $ChatTurnsTable extends ChatTurns
         DriftSqlType.string,
         data['${effectivePrefix}exploration'],
       ),
+      steps: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}steps'],
+      ),
       phase: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}phase'],
@@ -5968,6 +5988,9 @@ class ChatTurnRow extends DataClass implements Insertable<ChatTurnRow> {
   final String draft;
   final String? exploration;
 
+  /// Langkah AI (#153), JSON; ditulis sekali di finalize, null pada turn lama.
+  final String? steps;
+
   /// Teks mentah supaya mapper #116 bisa menangani enum backup yang rusak.
   final String phase;
   final int attempt;
@@ -5987,6 +6010,7 @@ class ChatTurnRow extends DataClass implements Insertable<ChatTurnRow> {
     required this.sources,
     required this.draft,
     this.exploration,
+    this.steps,
     required this.phase,
     required this.attempt,
     required this.model,
@@ -6013,6 +6037,9 @@ class ChatTurnRow extends DataClass implements Insertable<ChatTurnRow> {
     map['draft'] = Variable<String>(draft);
     if (!nullToAbsent || exploration != null) {
       map['exploration'] = Variable<String>(exploration);
+    }
+    if (!nullToAbsent || steps != null) {
+      map['steps'] = Variable<String>(steps);
     }
     map['phase'] = Variable<String>(phase);
     map['attempt'] = Variable<int>(attempt);
@@ -6046,6 +6073,9 @@ class ChatTurnRow extends DataClass implements Insertable<ChatTurnRow> {
       exploration: exploration == null && nullToAbsent
           ? const Value.absent()
           : Value(exploration),
+      steps: steps == null && nullToAbsent
+          ? const Value.absent()
+          : Value(steps),
       phase: Value(phase),
       attempt: Value(attempt),
       model: Value(model),
@@ -6076,6 +6106,7 @@ class ChatTurnRow extends DataClass implements Insertable<ChatTurnRow> {
       sources: serializer.fromJson<String>(json['sources']),
       draft: serializer.fromJson<String>(json['draft']),
       exploration: serializer.fromJson<String?>(json['exploration']),
+      steps: serializer.fromJson<String?>(json['steps']),
       phase: serializer.fromJson<String>(json['phase']),
       attempt: serializer.fromJson<int>(json['attempt']),
       model: serializer.fromJson<String>(json['model']),
@@ -6099,6 +6130,7 @@ class ChatTurnRow extends DataClass implements Insertable<ChatTurnRow> {
       'sources': serializer.toJson<String>(sources),
       'draft': serializer.toJson<String>(draft),
       'exploration': serializer.toJson<String?>(exploration),
+      'steps': serializer.toJson<String?>(steps),
       'phase': serializer.toJson<String>(phase),
       'attempt': serializer.toJson<int>(attempt),
       'model': serializer.toJson<String>(model),
@@ -6120,6 +6152,7 @@ class ChatTurnRow extends DataClass implements Insertable<ChatTurnRow> {
     String? sources,
     String? draft,
     Value<String?> exploration = const Value.absent(),
+    Value<String?> steps = const Value.absent(),
     String? phase,
     int? attempt,
     String? model,
@@ -6138,6 +6171,7 @@ class ChatTurnRow extends DataClass implements Insertable<ChatTurnRow> {
     sources: sources ?? this.sources,
     draft: draft ?? this.draft,
     exploration: exploration.present ? exploration.value : this.exploration,
+    steps: steps.present ? steps.value : this.steps,
     phase: phase ?? this.phase,
     attempt: attempt ?? this.attempt,
     model: model ?? this.model,
@@ -6160,6 +6194,7 @@ class ChatTurnRow extends DataClass implements Insertable<ChatTurnRow> {
       exploration: data.exploration.present
           ? data.exploration.value
           : this.exploration,
+      steps: data.steps.present ? data.steps.value : this.steps,
       phase: data.phase.present ? data.phase.value : this.phase,
       attempt: data.attempt.present ? data.attempt.value : this.attempt,
       model: data.model.present ? data.model.value : this.model,
@@ -6187,6 +6222,7 @@ class ChatTurnRow extends DataClass implements Insertable<ChatTurnRow> {
           ..write('sources: $sources, ')
           ..write('draft: $draft, ')
           ..write('exploration: $exploration, ')
+          ..write('steps: $steps, ')
           ..write('phase: $phase, ')
           ..write('attempt: $attempt, ')
           ..write('model: $model, ')
@@ -6210,6 +6246,7 @@ class ChatTurnRow extends DataClass implements Insertable<ChatTurnRow> {
     sources,
     draft,
     exploration,
+    steps,
     phase,
     attempt,
     model,
@@ -6232,6 +6269,7 @@ class ChatTurnRow extends DataClass implements Insertable<ChatTurnRow> {
           other.sources == this.sources &&
           other.draft == this.draft &&
           other.exploration == this.exploration &&
+          other.steps == this.steps &&
           other.phase == this.phase &&
           other.attempt == this.attempt &&
           other.model == this.model &&
@@ -6252,6 +6290,7 @@ class ChatTurnsCompanion extends UpdateCompanion<ChatTurnRow> {
   final Value<String> sources;
   final Value<String> draft;
   final Value<String?> exploration;
+  final Value<String?> steps;
   final Value<String> phase;
   final Value<int> attempt;
   final Value<String> model;
@@ -6270,6 +6309,7 @@ class ChatTurnsCompanion extends UpdateCompanion<ChatTurnRow> {
     this.sources = const Value.absent(),
     this.draft = const Value.absent(),
     this.exploration = const Value.absent(),
+    this.steps = const Value.absent(),
     this.phase = const Value.absent(),
     this.attempt = const Value.absent(),
     this.model = const Value.absent(),
@@ -6289,6 +6329,7 @@ class ChatTurnsCompanion extends UpdateCompanion<ChatTurnRow> {
     this.sources = const Value.absent(),
     this.draft = const Value.absent(),
     this.exploration = const Value.absent(),
+    this.steps = const Value.absent(),
     required String phase,
     this.attempt = const Value.absent(),
     required String model,
@@ -6313,6 +6354,7 @@ class ChatTurnsCompanion extends UpdateCompanion<ChatTurnRow> {
     Expression<String>? sources,
     Expression<String>? draft,
     Expression<String>? exploration,
+    Expression<String>? steps,
     Expression<String>? phase,
     Expression<int>? attempt,
     Expression<String>? model,
@@ -6332,6 +6374,7 @@ class ChatTurnsCompanion extends UpdateCompanion<ChatTurnRow> {
       if (sources != null) 'sources': sources,
       if (draft != null) 'draft': draft,
       if (exploration != null) 'exploration': exploration,
+      if (steps != null) 'steps': steps,
       if (phase != null) 'phase': phase,
       if (attempt != null) 'attempt': attempt,
       if (model != null) 'model': model,
@@ -6353,6 +6396,7 @@ class ChatTurnsCompanion extends UpdateCompanion<ChatTurnRow> {
     Value<String>? sources,
     Value<String>? draft,
     Value<String?>? exploration,
+    Value<String?>? steps,
     Value<String>? phase,
     Value<int>? attempt,
     Value<String>? model,
@@ -6372,6 +6416,7 @@ class ChatTurnsCompanion extends UpdateCompanion<ChatTurnRow> {
       sources: sources ?? this.sources,
       draft: draft ?? this.draft,
       exploration: exploration ?? this.exploration,
+      steps: steps ?? this.steps,
       phase: phase ?? this.phase,
       attempt: attempt ?? this.attempt,
       model: model ?? this.model,
@@ -6413,6 +6458,9 @@ class ChatTurnsCompanion extends UpdateCompanion<ChatTurnRow> {
     if (exploration.present) {
       map['exploration'] = Variable<String>(exploration.value);
     }
+    if (steps.present) {
+      map['steps'] = Variable<String>(steps.value);
+    }
     if (phase.present) {
       map['phase'] = Variable<String>(phase.value);
     }
@@ -6452,6 +6500,7 @@ class ChatTurnsCompanion extends UpdateCompanion<ChatTurnRow> {
           ..write('sources: $sources, ')
           ..write('draft: $draft, ')
           ..write('exploration: $exploration, ')
+          ..write('steps: $steps, ')
           ..write('phase: $phase, ')
           ..write('attempt: $attempt, ')
           ..write('model: $model, ')
@@ -13231,6 +13280,7 @@ typedef $$ChatTurnsTableCreateCompanionBuilder = ChatTurnsCompanion Function({
   Value<String> sources,
   Value<String> draft,
   Value<String?> exploration,
+  Value<String?> steps,
   required String phase,
   Value<int> attempt,
   required String model,
@@ -13250,6 +13300,7 @@ typedef $$ChatTurnsTableUpdateCompanionBuilder = ChatTurnsCompanion Function({
   Value<String> sources,
   Value<String> draft,
   Value<String?> exploration,
+  Value<String?> steps,
   Value<String> phase,
   Value<int> attempt,
   Value<String> model,
@@ -13328,6 +13379,11 @@ class $$ChatTurnsTableFilterComposer
 
   ColumnFilters<String> get exploration => $composableBuilder(
     column: $table.exploration,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get steps => $composableBuilder(
+    column: $table.steps,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -13444,6 +13500,11 @@ class $$ChatTurnsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get steps => $composableBuilder(
+    column: $table.steps,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get phase => $composableBuilder(
     column: $table.phase,
     builder: (column) => ColumnOrderings(column),
@@ -13543,6 +13604,9 @@ class $$ChatTurnsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<String> get steps =>
+      $composableBuilder(column: $table.steps, builder: (column) => column);
+
   GeneratedColumn<String> get phase =>
       $composableBuilder(column: $table.phase, builder: (column) => column);
 
@@ -13632,6 +13696,7 @@ class $$ChatTurnsTableTableManager
                 Value<String> sources = const Value.absent(),
                 Value<String> draft = const Value.absent(),
                 Value<String?> exploration = const Value.absent(),
+                Value<String?> steps = const Value.absent(),
                 Value<String> phase = const Value.absent(),
                 Value<int> attempt = const Value.absent(),
                 Value<String> model = const Value.absent(),
@@ -13650,6 +13715,7 @@ class $$ChatTurnsTableTableManager
                 sources: sources,
                 draft: draft,
                 exploration: exploration,
+                steps: steps,
                 phase: phase,
                 attempt: attempt,
                 model: model,
@@ -13670,6 +13736,7 @@ class $$ChatTurnsTableTableManager
                 Value<String> sources = const Value.absent(),
                 Value<String> draft = const Value.absent(),
                 Value<String?> exploration = const Value.absent(),
+                Value<String?> steps = const Value.absent(),
                 required String phase,
                 Value<int> attempt = const Value.absent(),
                 required String model,
@@ -13688,6 +13755,7 @@ class $$ChatTurnsTableTableManager
                 sources: sources,
                 draft: draft,
                 exploration: exploration,
+                steps: steps,
                 phase: phase,
                 attempt: attempt,
                 model: model,

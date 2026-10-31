@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:luma/data/repositories/chat_context_repository.dart';
 import 'package:luma/data/repositories/chat_repository.dart';
 import 'package:luma/data/services/chat_lifecycle.dart';
+import 'package:luma/domain/chat_steps.dart';
 import 'package:luma/domain/models/ai_reply.dart';
 import 'package:luma/domain/models/book_chat.dart';
 import 'package:luma/ui/features/chat/view_models/chat_view_model.dart';
@@ -221,6 +222,51 @@ void main() {
       time.elapse(const Duration(milliseconds: 50));
       expect(state().preview!.blocks.single.text, 'Jawaban');
       done(time);
+      close(time);
+    }),
+  );
+
+  test(
+    'steps accumulate per attempt, settle on stop, persist at finalize and reset per send',
+    () => fakeAsync((time) {
+      open(time);
+      send(time);
+      final sink = context.stepSinks.last!;
+      sink(ChatStep.plan('baca 2 bab'));
+      sink(ChatStep.read('Book I › II', status: ChatStepStatus.running));
+      pump(time);
+      final attempt = repo.turns.values.single.attemptRef;
+      expect(state().steps!.attempt, attempt);
+      expect(state().steps!.steps.map((s) => s.label), [
+        'Rencana: baca 2 bab',
+        'Baca Book I › II',
+      ]);
+      sink(ChatStep.read('Book I › II', detail: '3 catatan'));
+      pump(time);
+      expect(state().steps!.steps.last.status, ChatStepStatus.done);
+      context.prepared.last.onStep!(
+        ChatStep.answer(status: ChatStepStatus.running),
+      );
+      pump(time);
+      expect(
+        state().steps!.steps.last,
+        ChatStep.answer(status: ChatStepStatus.running),
+      );
+      unawaited(vm().stop());
+      pump(time);
+      expect(state().steps!.steps.last.status, ChatStepStatus.skipped);
+      expect(repo.finalized.single.steps, state().steps!.steps);
+      expect(repo.turns.values.single.steps, state().steps!.steps);
+      send(time, 'Lagi?');
+      expect(state().steps, isNull);
+      context.stepSinks.last!(ChatStep.plan('cari di buku'));
+      context.prepared.last.onStep!(ChatStep.answer());
+      done(time);
+      expect(repo.finalized.last.steps!.map((s) => s.kind), [
+        ChatStepKind.plan,
+        ChatStepKind.answer,
+      ]);
+      expect(repo.finalized.last.steps!.last.status, ChatStepStatus.done);
       close(time);
     }),
   );

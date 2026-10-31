@@ -10,6 +10,7 @@ import '../../../../data/repositories/import_repository.dart';
 import '../../../../data/services/chat_lifecycle.dart';
 import '../../../../domain/chat_prompt.dart';
 import '../../../../domain/chat_exploration.dart';
+import '../../../../domain/chat_steps.dart';
 import '../../../../domain/models/ai_reply.dart';
 import '../../../../domain/models/book_chat.dart';
 import '../../reader/view_models/reader_view_model.dart' show GroupAiStream;
@@ -34,7 +35,12 @@ class ChatState {
     this.explorationProgress,
     this.repairAttempt = 0,
     this.answerRequested = false,
+    this.steps,
   }) : turns = List.unmodifiable(turns);
+
+  /// Langkah AI attempt yang sedang/baru jalan (#153); turn lama membawa
+  /// langkahnya sendiri lewat `ChatTurn.steps`.
+  final ({ChatAttemptRef attempt, List<ChatStep> steps})? steps;
 
   final ({int completed, int total})? indexProgress;
 
@@ -104,7 +110,11 @@ class ChatState {
     Object? explorationProgress = _unchanged,
     int? repairAttempt,
     bool? answerRequested,
+    Object? steps = _unchanged,
   }) => ChatState(
+    steps: identical(steps, _unchanged)
+        ? this.steps
+        : steps as ({ChatAttemptRef attempt, List<ChatStep> steps})?,
     repairAttempt: repairAttempt ?? this.repairAttempt,
     answerRequested: answerRequested ?? this.answerRequested,
     explorationProgress: identical(explorationProgress, _unchanged)
@@ -462,6 +472,7 @@ class ChatViewModel extends Notifier<ChatState> {
       error: null,
       problem: null,
       repairAttempt: 0,
+      steps: null,
     );
     _arm(life, run, retrievalTimeout);
     return _request(
@@ -566,6 +577,7 @@ class ChatViewModel extends Notifier<ChatState> {
         cancel: run.cancel,
         readingChapterId: life.readingChapterId,
         answerNow: () => run.answerNow,
+        onStep: (step) => _step(life, run, step),
         onExplorationProgress: (progress) {
           if (!_running(life, run)) return;
           state = state.copyWith(explorationProgress: progress);
@@ -601,7 +613,10 @@ class ChatViewModel extends Notifier<ChatState> {
       state = state.copyWith(phase: ChatPhase.waiting);
       _arm(life, run, GroupAiStream.timeoutAfter);
       final iterator = run.iterator = StreamIterator(
-        prepared.stream(cancel: run.cancel),
+        prepared.stream(
+          cancel: run.cancel,
+          onStep: (step) => _step(life, run, step),
+        ),
       );
       while (await iterator.moveNext()) {
         if (!_running(life, run)) return;
@@ -691,6 +706,20 @@ class ChatViewModel extends Notifier<ChatState> {
     return const AiException(AiError.invalidResponse);
   }
 
+  void _step(_ChatLifetime life, _ChatRun run, ChatStep step) {
+    run.steps = chatAppendStep(run.steps, step);
+    if (_running(life, run)) _publishSteps(run);
+  }
+
+  void _publishSteps(_ChatRun run) {
+    final turn = run.turn;
+    if (turn != null) {
+      state = state.copyWith(
+        steps: (attempt: turn.attemptRef, steps: run.steps),
+      );
+    }
+  }
+
   void _publishPreview(_ChatRun run) {
     final turn = run.turn;
     if (turn != null) {
@@ -722,7 +751,11 @@ class ChatViewModel extends Notifier<ChatState> {
                 sources: [],
               ),
           ];
-    if (_live(life)) _publishPreview(run);
+    if (phase != ChatPhase.done) run.steps = chatSettleSteps(run.steps);
+    if (_live(life)) {
+      _publishPreview(run);
+      _publishSteps(run);
+    }
     run.cancel.cancel();
     run.clearTimers();
     unawaited(run.iterator?.cancel());
@@ -738,6 +771,7 @@ class ChatViewModel extends Notifier<ChatState> {
             answer: answer,
             error: error?.error,
             httpStatus: error?.status,
+            steps: run.steps,
           );
           if (accepted) {
             life.flushError = null;
@@ -816,6 +850,7 @@ class _ChatRun {
   ChatTurn? turn;
   int repair = 0;
   bool answerNow = false;
+  List<ChatStep> steps = const [];
   String raw = '';
   List<ChatAnswerBlock> preview = const [];
   Timer? previewTimer;

@@ -42,6 +42,7 @@ abstract final class Layout {
   static const chatHeader = 52.0;
   static const chatComposer = 52.0;
   static const chatSend = 42.0;
+  static const chatSteps = 40.0; // baris status Langkah AI + Jawab sekarang
   static const chatComposerBox = 55.0; // kapsul 52 + garis 1,5 × 2
   static const chatBubbleFraction = 0.82;
   static const chatBubblePadding = EdgeInsets.symmetric(
@@ -159,6 +160,9 @@ abstract final class Motion {
   static const flash = Duration(milliseconds: 1200); // stabilo 0 → 60% → 0
   static const flashReduced = Duration(seconds: 3); // garis kiri 4pt
   static const writingDots = Duration(milliseconds: 1600); // titik "Lagi nulis"
+  static const stepPulse = Duration(
+    milliseconds: 600,
+  ); // dot Langkah AI, bolak-balik
   static const tailFade = Duration(milliseconds: 300); // ujung teks jadi solid
   static const statusSwap = Duration(milliseconds: 150); // status → "Salin"
   static const jump = Duration(milliseconds: 300); // lompat ke bagian
