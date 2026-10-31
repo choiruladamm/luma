@@ -512,7 +512,7 @@ void main() {
   Map<String, Object> manifest({int schema = 1}) => {
     'format': 'luma-backup',
     'formatVersion': 1,
-    'appVersion': '0.3.0',
+    'appVersion': '9.0.0',
     'schemaVersion': schema,
     'createdAt': '2026-11-20T10:00:00+07:00',
     'counts': {'books': 1, 'aiResults': 0},
@@ -527,7 +527,7 @@ void main() {
       throwsA(
         isA<RestoreException>()
             .having((e) => e.error, 'error', RestoreError.tooNew)
-            .having((e) => e.manifest?.appVersion, 'version', '0.3.0'),
+            .having((e) => e.manifest?.appVersion, 'version', '9.0.0'),
       ),
     );
   });

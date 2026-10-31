@@ -717,7 +717,7 @@ void main() {
       restore.inspectError = RestoreException(
         RestoreError.tooNew,
         manifest: BackupManifest(
-          appVersion: '0.3.0',
+          appVersion: '9.0.0',
           schemaVersion: 9,
           createdAt: DateTime(2026, 11, 20),
           books: 1,
@@ -726,13 +726,13 @@ void main() {
       );
       await tapRestore(tester);
       expect(find.text('Backup-nya dari Luma yang lebih baru'), findsOneWidget);
-      expect(find.textContaining('dibikin pake Luma 0.3.0'), findsOneWidget);
+      expect(find.textContaining('dibikin pake Luma 9.0.0'), findsOneWidget);
       expect(
         find.textContaining('keinstall masih $appVersion'),
         findsOneWidget,
       );
       expect(
-        find.text('luma-backup-20261003-2140.zip · v0.3.0'),
+        find.text('luma-backup-20261003-2140.zip · v9.0.0'),
         findsOneWidget,
       );
     });
