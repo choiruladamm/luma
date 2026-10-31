@@ -769,6 +769,12 @@ void main() {
         expect(find.byType(ReaderView), findsOneWidget);
         expect(find.text('The Enchiridion'), findsOneWidget); // top bar
         expect(find.text('I'), findsNWidgets(2)); // capsule + pill, no "Bab 1"
+        // The pill hugs its title, not the whole column.
+        final pill = find.byWidgetPredicate(
+          (w) =>
+              w is Container && w.constraints?.maxHeight == Layout.chapterPill,
+        );
+        expect(tester.getSize(pill).width, lessThan(100));
         expect(find.text('Bab 1'), findsNothing);
         expect(
           find.text('There are things which are within our power.'),

@@ -1852,12 +1852,13 @@ class _ChapterHeading extends StatelessWidget {
               padding: const EdgeInsets.symmetric(
                 horizontal: Layout.chapterPillPad,
               ),
-              alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: c.accent,
                 borderRadius: BorderRadius.circular(Radii.full),
               ),
-              child: Text(title, style: pill),
+              // Container beralignment melar selebar kolom; Center
+              // widthFactor 1 jaga pil seukuran judulnya.
+              child: Center(widthFactor: 1, child: Text(title, style: pill)),
             ),
           ),
         );
