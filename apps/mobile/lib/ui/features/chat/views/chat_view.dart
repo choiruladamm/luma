@@ -6,6 +6,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../domain/models/book_chat.dart';
 import '../../../../routing/router.dart';
+import '../../../../data/repositories/settings_repository.dart';
+import '../../../../domain/models/reader_prefs.dart';
+import '../../../core/theme/reader_typography.dart';
 import '../../../core/theme/stabilo_theme.dart';
 import '../../../core/theme/stabilo_tokens.dart';
 import '../../../core/theme/stabilo_type.dart';
@@ -162,6 +165,12 @@ class _ChatViewState extends ConsumerState<ChatView> {
     final state = ref.watch(chatViewModelProvider(widget.bookId));
     final title = chatBookTitle(ref, widget.bookId);
     final pad = MediaQuery.paddingOf(context);
+    // Teks isi ikut Aa; ganti pengaturan di reader langsung kebawa.
+    final typo = ReaderTypography(
+      ref.watch(readerPrefsProvider).value ?? const ReaderPrefs(),
+      Theme.of(context).brightness,
+    );
+    final side = Layout.margin + typo.inset(Layout.margin);
     _measureFooter();
     return Scaffold(
       body: NotificationListener<ScrollNotification>(
@@ -175,12 +184,8 @@ class _ChatViewState extends ConsumerState<ChatView> {
                 Positioned.fill(
                   child: _body(
                     state,
-                    padding: EdgeInsets.fromLTRB(
-                      Layout.margin,
-                      top,
-                      Layout.margin,
-                      bottom,
-                    ),
+                    typo: typo,
+                    padding: EdgeInsets.fromLTRB(side, top, side, bottom),
                     topFade: EdgeFadeSide(
                       Space.s5,
                       clear: pad.top,
@@ -448,6 +453,7 @@ class _ChatViewState extends ConsumerState<ChatView> {
 
   Widget _body(
     ChatState state, {
+    required ReaderTypography typo,
     required EdgeInsets padding,
     required EdgeFadeSide topFade,
     required EdgeFadeSide bottomFade,
@@ -460,6 +466,7 @@ class _ChatViewState extends ConsumerState<ChatView> {
         : ChatContextCard(
             key: ValueKey(quote.anchors.first.paragraphHash),
             quote: quote,
+            typo: typo,
             collapseOn: state.turns.length,
             onRead: state.archived ? null : () => _readQuote(quote),
           );
@@ -479,6 +486,7 @@ class _ChatViewState extends ConsumerState<ChatView> {
         topFade: topFade,
         bottomFade: bottomFade,
         contextCard: card,
+        typo: typo,
         lastActions: _actions(state),
         reserveAnswerSpace: true,
         chapterNumbers: ref

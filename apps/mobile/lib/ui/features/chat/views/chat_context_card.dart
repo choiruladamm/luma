@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../domain/models/book_chat.dart';
+import '../../../../domain/models/reader_prefs.dart';
+import '../../../core/theme/reader_typography.dart';
 import '../../../core/theme/stabilo_theme.dart';
 import '../../../core/theme/stabilo_tokens.dart';
 import '../../../core/theme/stabilo_type.dart';
@@ -43,6 +45,7 @@ class ChatContextCard extends StatefulWidget {
     required this.quote,
     this.onRead,
     this.collapseOn = 0,
+    this.typo,
   });
   final ChatQuote quote;
 
@@ -54,6 +57,9 @@ class ChatContextCard extends StatefulWidget {
   }
 
   final VoidCallback? onRead;
+
+  /// Tipografi Aa; kosong = default Aa.
+  final ReaderTypography? typo;
   final int collapseOn;
   @override
   State<ChatContextCard> createState() => _ChatContextCardState();
@@ -68,123 +74,127 @@ class _ChatContextCardState extends State<ChatContextCard> {
   }
 
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.fromLTRB(16, 8, 8, 14),
-    decoration: BoxDecoration(
-      color: context.stabilo.sheet,
-      border: Border.all(
-        color: context.stabilo.fieldLine,
-        width: Layout.outline,
+  Widget build(BuildContext context) {
+    final typo =
+        widget.typo ??
+        ReaderTypography(const ReaderPrefs(), Theme.of(context).brightness);
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 8, 8, 14),
+      decoration: BoxDecoration(
+        color: context.stabilo.sheet,
+        border: Border.all(
+          color: context.stabilo.fieldLine,
+          width: Layout.outline,
+        ),
+        borderRadius: BorderRadius.circular(Radii.lg),
       ),
-      borderRadius: BorderRadius.circular(Radii.lg),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      spacing: 6,
-      children: [
-        ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: 40),
-          child: Row(
-            spacing: Space.s2,
-            children: [
-              Expanded(
-                child: Text(
-                  widget.where,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: StabiloType.caption.copyWith(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w700,
-                    color: context.stabilo.ink2,
-                  ),
-                ),
-              ),
-              if (widget.onRead != null)
-                GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: widget.onRead,
-                  child: Semantics(
-                    button: true,
-                    excludeSemantics: true,
-                    label: 'Baca di buku',
-                    child: Container(
-                      height: 32,
-                      padding: const EdgeInsets.fromLTRB(9, 0, 12, 0),
-                      decoration: BoxDecoration(
-                        color: context.stabilo.muted,
-                        borderRadius: BorderRadius.circular(Radii.full),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        spacing: 6,
-                        children: [
-                          const AppIcon(AppIcons.book, size: 16),
-                          Text(
-                            'Baca di buku',
-                            style: StabiloType.label.copyWith(
-                              fontSize: 12.5,
-                              color: context.stabilo.ink,
-                            ),
-                          ),
-                        ],
-                      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: 6,
+        children: [
+          ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 40),
+            child: Row(
+              spacing: Space.s2,
+              children: [
+                Expanded(
+                  child: Text(
+                    widget.where,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: StabiloType.caption.copyWith(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w700,
+                      color: context.stabilo.ink2,
                     ),
                   ),
                 ),
-              IconButton(
-                tooltip: _expanded ? 'Ciutkan konteks' : 'Perluas konteks',
-                constraints: const BoxConstraints.tightFor(
-                  width: 40,
-                  height: 40,
-                ),
-                padding: EdgeInsets.zero,
-                onPressed: () => setState(() => _expanded = !_expanded),
-                icon: AppIcon(
-                  _expanded ? AppIcons.collapse : AppIcons.expand,
-                  color: context.stabilo.ink2,
-                ),
-              ),
-            ],
-          ),
-        ),
-        if (!_expanded)
-          Padding(
-            padding: const EdgeInsets.only(right: Space.s2),
-            child: Text(
-              widget.quote.text,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: StabiloType.readingSheet.copyWith(
-                fontSize: 14.5,
-                height: 21 / 14.5,
-                color: context.stabilo.ink2,
-              ),
-            ),
-          )
-        else
-          Padding(
-            padding: const EdgeInsets.only(right: Space.s2),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              spacing: 14,
-              children: [
-                Text(widget.quote.text, style: StabiloType.readingSheet),
-                if (widget.quote.translation != null)
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    spacing: Space.s2,
-                    children: [
-                      const Tag.section('Terjemahan'),
-                      SelectableText(
-                        widget.quote.translation!,
-                        style: StabiloType.readingSheet,
+                if (widget.onRead != null)
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: widget.onRead,
+                    child: Semantics(
+                      button: true,
+                      excludeSemantics: true,
+                      label: 'Baca di buku',
+                      child: Container(
+                        height: 32,
+                        padding: const EdgeInsets.fromLTRB(9, 0, 12, 0),
+                        decoration: BoxDecoration(
+                          color: context.stabilo.muted,
+                          borderRadius: BorderRadius.circular(Radii.full),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          spacing: 6,
+                          children: [
+                            const AppIcon(AppIcons.book, size: 16),
+                            Text(
+                              'Baca di buku',
+                              style: StabiloType.label.copyWith(
+                                fontSize: 12.5,
+                                color: context.stabilo.ink,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ],
+                    ),
                   ),
+                IconButton(
+                  tooltip: _expanded ? 'Ciutkan konteks' : 'Perluas konteks',
+                  constraints: const BoxConstraints.tightFor(
+                    width: 40,
+                    height: 40,
+                  ),
+                  padding: EdgeInsets.zero,
+                  onPressed: () => setState(() => _expanded = !_expanded),
+                  icon: AppIcon(
+                    _expanded ? AppIcons.collapse : AppIcons.expand,
+                    color: context.stabilo.ink2,
+                  ),
+                ),
               ],
             ),
           ),
-      ],
-    ),
-  );
+          if (!_expanded)
+            Padding(
+              padding: const EdgeInsets.only(right: Space.s2),
+              child: Text(
+                widget.quote.text,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: typo.compact.copyWith(
+                  fontSize: typo.compact.fontSize! * (14.5 / 15.5),
+                  color: context.stabilo.ink2,
+                ),
+              ),
+            )
+          else
+            Padding(
+              padding: const EdgeInsets.only(right: Space.s2),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                spacing: 14,
+                children: [
+                  Text(widget.quote.text, style: typo.compact),
+                  if (widget.quote.translation != null)
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      spacing: Space.s2,
+                      children: [
+                        const Tag.section('Terjemahan'),
+                        SelectableText(
+                          widget.quote.translation!,
+                          style: typo.compact,
+                        ),
+                      ],
+                    ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
 }

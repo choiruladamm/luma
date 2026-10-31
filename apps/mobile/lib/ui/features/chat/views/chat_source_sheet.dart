@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../data/repositories/chat_repository.dart';
 import '../../../../domain/models/book_chat.dart';
+import '../../../../data/repositories/settings_repository.dart';
+import '../../../../domain/models/reader_prefs.dart';
+import '../../../core/theme/reader_typography.dart';
 import '../../../core/theme/stabilo_type.dart';
 import '../../../core/theme/stabilo_theme.dart';
 import '../../../core/theme/stabilo_tokens.dart';
@@ -41,6 +44,12 @@ class ChatSourceSheet extends ConsumerWidget {
     final source = location?.source ?? snapshot;
     final available = location?.available ?? false;
     final pad = Layout.sheetPadding;
+    // Kutipan + konteks ikut Aa, termasuk margin (Lega nambah di kiri-kanan).
+    final typo = ReaderTypography(
+      ref.watch(readerPrefsProvider).value ?? const ReaderPrefs(),
+      Theme.of(context).brightness,
+    );
+    final side = typo.inset(pad.left);
     return SizedBox.expand(
       child: Stack(
         children: [
@@ -53,9 +62,9 @@ class ChatSourceSheet extends ConsumerWidget {
               ),
               child: SingleChildScrollView(
                 padding: EdgeInsets.fromLTRB(
-                  pad.left,
+                  pad.left + side,
                   30,
-                  pad.right,
+                  pad.right + side,
                   Layout.artinyaActions,
                 ),
                 child: Column(
@@ -98,7 +107,7 @@ class ChatSourceSheet extends ConsumerWidget {
                     if (location?.before != null)
                       SelectableText(
                         location!.before!,
-                        style: StabiloType.readingSheet.copyWith(
+                        style: typo.compact.copyWith(
                           color: context.stabilo.ink2,
                         ),
                       ),
@@ -120,20 +129,14 @@ class ChatSourceSheet extends ConsumerWidget {
                         ),
                         Padding(
                           padding: const EdgeInsets.symmetric(vertical: 10),
-                          child: SelectableText(
-                            source.text,
-                            style: StabiloType.forBrightness(
-                              StabiloType.reading,
-                              Theme.of(context).brightness,
-                            ),
-                          ),
+                          child: SelectableText(source.text, style: typo.style),
                         ),
                       ],
                     ),
                     if (location?.after != null)
                       SelectableText(
                         location!.after!,
-                        style: StabiloType.readingSheet.copyWith(
+                        style: typo.compact.copyWith(
                           color: context.stabilo.ink2,
                         ),
                       ),

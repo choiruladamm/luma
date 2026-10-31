@@ -9,6 +9,7 @@ import 'package:luma/data/repositories/settings_repository.dart';
 import 'package:luma/domain/models/book.dart';
 import 'package:luma/domain/models/book_chat.dart';
 import 'package:luma/domain/models/reader_prefs.dart';
+import 'package:luma/ui/core/theme/reader_typography.dart';
 import 'package:luma/ui/core/theme/stabilo_theme.dart';
 import 'package:luma/ui/core/widgets/buttons.dart';
 import 'package:luma/ui/core/widgets/sheet.dart';
@@ -82,13 +83,14 @@ void main() {
     bool sheet = false,
     Brightness brightness = Brightness.light,
     bool available = true,
+    ReaderPrefs prefs = const ReaderPrefs(),
   }) async {
     progress = FakeProgress((
       chapterId: 10,
       paragraphIndex: 2,
       paragraphOffset: .4,
     ));
-    settings = FakeSettings();
+    settings = FakeSettings(prefs);
     locations = StreamController<ChatSourceLocation?>.broadcast();
     addTearDown(() => unawaited(locations.close()));
     router = GoRouter(
@@ -389,6 +391,19 @@ void main() {
     await t.tap(find.bySemanticsLabel('Tutup'));
     await t.pumpAndSettle();
     expect(find.text('Open source'), findsOneWidget);
+  });
+
+  testWidgets('source quote follows the Aa prefs', (t) async {
+    const prefs = ReaderPrefs(font: ReadingFont.book, sizeStep: 6);
+    await open(t, sheet: true, prefs: prefs);
+    final quote = t.widget<SelectableText>(
+      find.descendant(
+        of: find.byKey(const ValueKey('source-quote')),
+        matching: find.byType(SelectableText),
+      ),
+    );
+    expect(quote.style!.fontFamily, readingFamily(ReadingFont.book));
+    expect(quote.style!.fontSize, ReaderPrefs.sizes[6]);
   });
 
   testWidgets('deletion and restore cannot reactivate an existing visit', (

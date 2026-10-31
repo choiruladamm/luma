@@ -6,7 +6,10 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:luma/data/repositories/settings_repository.dart';
 import 'package:luma/domain/models/book_chat.dart';
+import 'package:luma/domain/models/reader_prefs.dart';
+import 'package:luma/ui/core/theme/reader_typography.dart';
 import 'package:luma/ui/core/theme/stabilo_theme.dart';
 import 'package:luma/ui/core/theme/stabilo_tokens.dart';
 import 'package:luma/ui/core/widgets/buttons.dart';
@@ -36,6 +39,7 @@ void main() {
     ChatState state, {
     Brightness brightness = Brightness.light,
     bool reduced = true,
+    ReaderPrefs? prefs,
   }) async {
     t.view.physicalSize = const Size(390, 844);
     t.view.devicePixelRatio = 1;
@@ -47,6 +51,8 @@ void main() {
         overrides: [
           chatViewModelProvider(1).overrideWith(() => vm),
           booksStreamProvider.overrideWith((ref) => Stream.value([])),
+          if (prefs != null)
+            readerPrefsProvider.overrideWith((ref) => Stream.value(prefs)),
         ],
         child: RepaintBoundary(
           key: const ValueKey('capture'),
@@ -253,4 +259,45 @@ void main() {
       expect(t.takeException(), isNull);
     },
   );
+
+  testWidgets('answer and context card text follow the Aa prefs', (t) async {
+    const prefs = ReaderPrefs(
+      font: ReadingFont.book,
+      sizeStep: 6,
+      spacing: LineSpacing.loose,
+    );
+    final typo = ReaderTypography(prefs, Brightness.light);
+    final answer = ChatAnswer(
+      formatVersion: 2,
+      status: ChatAnswerStatus.answered,
+      blocks: [
+        ChatAnswerBlock(text: 'Jawaban panjang.', sources: [source]),
+      ],
+    );
+    final quote = ChatQuote(
+      anchors: source.anchors,
+      chapterTitle: 'Buku II',
+      translation: 'Terjemahan lengkap untuk dibaca.',
+    );
+    await open(
+      t,
+      ChatState(
+        book: book,
+        activeSession: session(1),
+        loading: false,
+        selectedQuote: quote,
+        turns: [turn(1, answer: answer)],
+      ),
+      prefs: prefs,
+    );
+    final reply = t.widget<SelectableText>(find.byType(SelectableText).first);
+    expect(reply.style, typo.compact);
+    expect(reply.style!.fontFamily, readingFamily(ReadingFont.book));
+    await t.tap(find.byTooltip('Perluas konteks'));
+    await t.pumpAndSettle();
+    final translation = t.widget<SelectableText>(
+      find.widgetWithText(SelectableText, quote.translation!),
+    );
+    expect(translation.style, typo.compact);
+  });
 }

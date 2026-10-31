@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
@@ -21,15 +23,30 @@ String readingFamily(ReadingFont font) => switch (font) {
 @immutable
 class ReaderTypography {
   ReaderTypography(ReaderPrefs prefs, Brightness brightness)
-    : style = StabiloType.forBrightness(
-        StabiloType.reading.copyWith(
-          fontFamily: readingFamily(prefs.font),
-          fontSize: prefs.fontSize,
-          height: prefs.lineHeight,
+    : this._(
+        StabiloType.forBrightness(
+          StabiloType.reading.copyWith(
+            fontFamily: readingFamily(prefs.font),
+            fontSize: prefs.fontSize,
+            height: prefs.lineHeight,
+          ),
+          brightness,
         ),
-        brightness,
-      ),
-      margin = prefs.marginWidth;
+        prefs.marginWidth,
+      );
+
+  ReaderTypography._(this.style, this.margin)
+    : compact = style.copyWith(
+        fontSize: style.fontSize! * _compactSize,
+        height: style.height! * _compactLeading,
+      );
+
+  // readingSheet (15,5 / 1,5) dibanding reading (18,5 / 1,65): di Aa default
+  // `compact` persis readingSheet, naik-turun bareng pilihan Aa.
+  static final _compactSize =
+      StabiloType.readingSheet.fontSize! / StabiloType.reading.fontSize!;
+  static final _compactLeading =
+      StabiloType.readingSheet.height! / StabiloType.reading.height!;
 
   /// Tanpa warna: pemakai nambahin `ink` / `onHighlight` sendiri.
   final TextStyle style;
@@ -37,6 +54,23 @@ class ReaderTypography {
   /// Margin kiri-kanan teks.
   final double margin;
 
+  /// Versi lebih kecil buat isi layar ngobrol (jawaban, kartu konteks,
+  /// konteks sitasi): font, jarak baris, dan terang/gelap ikut Aa.
+  final TextStyle compact;
+
+  /// Tambahan margin di atas padding dasar layar ([base]); Lega (32) nambah 8,
+  /// Sempit sama kayak Pas.
+  double inset(double base) => math.max(0.0, margin - base);
+
   /// Tinggi satu baris teks.
   double get lineExtent => style.fontSize! * style.height!;
+
+  @override
+  bool operator ==(Object other) =>
+      other is ReaderTypography &&
+      other.style == style &&
+      other.margin == margin;
+
+  @override
+  int get hashCode => Object.hash(style, margin);
 }

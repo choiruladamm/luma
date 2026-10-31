@@ -148,6 +148,12 @@ sesi terakhir, Tanyain ini membuat draft baru dengan quote removable. Draft baru
 belum masuk riwayat sampai send pertama. Sesi revision lama menjadi arsip read-only,
 dengan aksi obrolan baru. Semua sumber berasal dari seluruh buku yang diimport.
 
+**Teks ikut Aa:** isi layar ngobrol dan sheet sitasi pakai `ReaderTypography`, sumber yang sama dengan halaman baca dan sheet Artinya. Ganti Aa di reader langsung kebawa (provider yang sama).
+- Kutipan di sheet sitasi: font, ukuran, jarak baris persis Aa.
+- Jawaban AI, kartu konteks, dan konteks sebelum/sesudah sitasi: `ReaderTypography.compact`, yaitu font dan jarak baris Aa dengan ukuran diskalakan 15,5/18,5. Di Aa default hasilnya persis `readingSheet` (15,5 / 1,5), jadi sesuai board.
+- Margin: padding dasar 24 jadi batas bawah; Lega (32) nambah 8 di kiri-kanan isi layar dan isi sheet.
+- Tetap ukuran UI (Bricolage): bubble pesan, notice, chip sitasi, label, tombol, header, composer.
+
 Kontrak menetapkan input ringkas min1/max5 baris, rename wajib judul terisi (maks120
 Unicode code points), dan target entry tetap44pt saat dock menyusut. Daftar kosong,
 keyboard/error rename, arsip, serta fallback layar sempit/teks besar dijelaskan di

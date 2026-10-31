@@ -50,4 +50,31 @@ void main() {
     debugDefaultTargetPlatformOverride = TargetPlatform.android;
     expect(readingFamily(ReadingFont.system), 'Roboto');
   });
+
+  test('compact is readingSheet at default Aa and follows font and size', () {
+    final base = ReaderTypography(const ReaderPrefs(), Brightness.light);
+    expect(
+      base.compact.fontSize,
+      closeTo(StabiloType.readingSheet.fontSize!, 1e-9),
+    );
+    expect(
+      base.compact.height,
+      closeTo(StabiloType.readingSheet.height!, 1e-9),
+    );
+    final big = ReaderTypography(
+      const ReaderPrefs(font: ReadingFont.book, sizeStep: 6),
+      Brightness.light,
+    );
+    expect(big.compact.fontFamily, readingFamily(ReadingFont.book));
+    expect(big.compact.fontSize, greaterThan(base.compact.fontSize!));
+    expect(big.compact.fontSize, lessThan(big.style.fontSize!));
+  });
+
+  test('inset only grows past the base padding', () {
+    double inset(TextMargin m) =>
+        ReaderTypography(ReaderPrefs(margin: m), Brightness.light).inset(24);
+    expect(inset(TextMargin.narrow), 0);
+    expect(inset(TextMargin.normal), 0);
+    expect(inset(TextMargin.wide), 8);
+  });
 }

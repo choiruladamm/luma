@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../../../domain/models/book_chat.dart';
+import '../../../../domain/models/reader_prefs.dart';
+import '../../../core/theme/reader_typography.dart';
 import '../../../core/theme/stabilo_theme.dart';
 import '../../../core/theme/stabilo_tokens.dart';
 import '../../../core/theme/stabilo_type.dart';
@@ -33,6 +35,7 @@ class ChatHistory extends StatefulWidget {
     this.lastActions,
     this.reserveAnswerSpace = false,
     this.chapterNumbers,
+    this.typo,
   });
   final List<ChatTurn> turns;
   final ({int turnId, String sourceId})? selectedSource;
@@ -41,6 +44,9 @@ class ChatHistory extends StatefulWidget {
   final Widget? contextCard, lastActions;
   final bool reserveAnswerSpace;
   final Map<int, int>? chapterNumbers;
+
+  /// Tipografi Aa; kosong = default Aa.
+  final ReaderTypography? typo;
   final bool suspended;
   final ChatScrollAnchor? anchor;
   final ChatPhase? phase;
@@ -120,7 +126,8 @@ class _ChatHistoryState extends State<ChatHistory> {
     super.didUpdateWidget(oldWidget);
     _rendered.remove(widget.turns.last.id);
     if (oldWidget.selectedSource != widget.selectedSource ||
-        oldWidget.chapterNumbers != widget.chapterNumbers) {
+        oldWidget.chapterNumbers != widget.chapterNumbers ||
+        oldWidget.typo != widget.typo) {
       _rendered.clear();
     }
     if (oldWidget.suspended && !widget.suspended) {
@@ -227,6 +234,9 @@ class _ChatHistoryState extends State<ChatHistory> {
       ), GlobalKey.new),
       child: child,
     );
+    final typo =
+        widget.typo ??
+        ReaderTypography(const ReaderPrefs(), Theme.of(context).brightness);
     final answer = turn.answer;
     final active = widget.preview;
     final blocks =
@@ -364,10 +374,7 @@ class _ChatHistoryState extends State<ChatHistory> {
                                           ),
                                       ],
                                     ),
-                                    style: StabiloType.forBrightness(
-                                      StabiloType.readingSheet,
-                                      Theme.of(context).brightness,
-                                    ),
+                                    style: typo.compact,
                                   ),
                                 ],
                               ),
