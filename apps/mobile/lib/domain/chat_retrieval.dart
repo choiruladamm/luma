@@ -17,6 +17,7 @@ Choose strategy:
 "specific" or "crossChapter": a concept, passage, fact, claim, advice, comparison or modern-life application to find by searching the text; crossChapter when it compares topics across the work. Give up to three standalone English search queries covering distinct requested parts, phrased in the book's own vocabulary; a modern term (burnout, anxiety, career) must also be searched as the book's nearest concepts.
 "correction": the user corrects a previous search.
 "offTopic": wholly unrelated to the book and to anything it discusses. Check the toc and subject first; when a connection is plausible, search instead of refusing.
+If the question is only a short reply to a clarification the assistant asked in the latest history turn (for example "Book I" after "Book I, II, III, atau IV?"), it answers THAT earlier question with the chosen option: combine them (chapter III of Book I, not the whole Book I) and keep the earlier request's intent in query.
 query = the overall standalone English question. Preserve names, chronology, uncertainty and EVERY requested part; do not answer, invent entities, add book facts or guesses. needs_clarification true ONLY when a referent or chapter reference cannot be resolved; unknown answers are not ambiguous referents. Never invent ids: chapter_ids must come from toc.
 Return only JSON {"query":"English question","needs_clarification":false,"clarification":"","strategy":"chapters|global|specific|crossChapter|correction|offTopic","chapter_ids":[],"queries":["search question"]}''';
 

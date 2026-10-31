@@ -35,6 +35,8 @@ void main() {
 
   test('adaptive planner extends archived retrieval contracts', () {
     expect(chatRewriteSystem, contains('strategy'));
+    expect(chatPlanSystem, contains('chapter_ids'));
+    expect(chatPlanSystem, contains('short reply to a clarification'));
     expect(chatSelectionSystem, contains('missing_queries'));
     expect(spike.searchRewriteSystem, isNot(chatRewriteSystem));
     expect(fixture.verifyValidation3(), isNotEmpty);
