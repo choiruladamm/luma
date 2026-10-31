@@ -93,8 +93,8 @@ class _ChatHistoryState extends State<ChatHistory> {
       } else if (!widget.turns.last.phase.isRunning) {
         _latest();
       }
-      _restoring = false;
       _position();
+      setState(() => _restoring = false);
     });
   }
 
@@ -427,64 +427,68 @@ class _ChatHistoryState extends State<ChatHistory> {
                 _position();
                 return false;
               },
-              child: EdgeFadeScroll(
-                top: widget.topFade,
-                bottom: widget.bottomFade,
-                child: NotificationListener<ScrollMetricsNotification>(
-                  onNotification: (notification) {
-                    if (!widget.suspended &&
-                        !_restoring &&
-                        notification.depth == 0) {
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        if (mounted) _position();
-                      });
-                    }
-                    return false;
-                  },
-                  child: CustomScrollView(
-                    controller: _scroll,
-                    center: centerKey,
-                    slivers: [
-                      if (center > 0) SliverToBoxAdapter(child: _intro()),
-                      SliverPadding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: widget.padding.left,
-                        ),
-                        sliver: SliverList(
-                          delegate: SliverChildBuilderDelegate(
-                            (_, i) => _turn(widget.turns[center - i - 1]),
-                            childCount: center,
+              // Disembunyiin sampai posisi awal kepasang, biar gak keliatan loncat.
+              child: Opacity(
+                opacity: _restoring ? 0 : 1,
+                child: EdgeFadeScroll(
+                  top: widget.topFade,
+                  bottom: widget.bottomFade,
+                  child: NotificationListener<ScrollMetricsNotification>(
+                    onNotification: (notification) {
+                      if (!widget.suspended &&
+                          !_restoring &&
+                          notification.depth == 0) {
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (mounted) _position();
+                        });
+                      }
+                      return false;
+                    },
+                    child: CustomScrollView(
+                      controller: _scroll,
+                      center: centerKey,
+                      slivers: [
+                        if (center > 0) SliverToBoxAdapter(child: _intro()),
+                        SliverPadding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: widget.padding.left,
+                          ),
+                          sliver: SliverList(
+                            delegate: SliverChildBuilderDelegate(
+                              (_, i) => _turn(widget.turns[center - i - 1]),
+                              childCount: center,
+                            ),
                           ),
                         ),
-                      ),
-                      SliverPadding(
-                        key: centerKey,
-                        padding: EdgeInsets.fromLTRB(
-                          widget.padding.left,
-                          center == 0 ? widget.padding.top : 0,
-                          widget.padding.right,
-                          widget.padding.bottom,
-                        ),
-                        sliver: SliverList(
-                          delegate: SliverChildBuilderDelegate(
-                            (_, i) {
-                              if (center == 0 && i == 0) {
-                                return _intro(padded: false);
-                              }
-                              return _turn(
-                                widget.turns[center +
-                                    i -
-                                    (center == 0 ? 1 : 0)],
-                              );
-                            },
-                            childCount:
-                                widget.turns.length -
-                                center +
-                                (center == 0 ? 1 : 0),
+                        SliverPadding(
+                          key: centerKey,
+                          padding: EdgeInsets.fromLTRB(
+                            widget.padding.left,
+                            center == 0 ? widget.padding.top : 0,
+                            widget.padding.right,
+                            widget.padding.bottom,
+                          ),
+                          sliver: SliverList(
+                            delegate: SliverChildBuilderDelegate(
+                              (_, i) {
+                                if (center == 0 && i == 0) {
+                                  return _intro(padded: false);
+                                }
+                                return _turn(
+                                  widget.turns[center +
+                                      i -
+                                      (center == 0 ? 1 : 0)],
+                                );
+                              },
+                              childCount:
+                                  widget.turns.length -
+                                  center +
+                                  (center == 0 ? 1 : 0),
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),

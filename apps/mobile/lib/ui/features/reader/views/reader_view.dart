@@ -239,7 +239,8 @@ class _ReaderViewState extends ConsumerState<ReaderView>
     if (group == null) _text.currentState?.stopAndReportPosition();
     final initial = _chatContext();
     if (initial == null) return null;
-    setState(() => _openingChat = true);
+    // Tanpa setState: tombol Ngobrol gak boleh kedip abu pas layar pindah.
+    _openingChat = true;
     try {
       ChatQuote? quote;
       if (group != null) {
@@ -277,7 +278,7 @@ class _ReaderViewState extends ConsumerState<ReaderView>
       }
       return null;
     } finally {
-      if (mounted) setState(() => _openingChat = false);
+      _openingChat = false;
     }
   }
 
@@ -686,9 +687,9 @@ class _ReaderViewState extends ConsumerState<ReaderView>
                                       ? null
                                       : ReaderChatDock(
                                           progress: progress,
-                                          onChat: _openingChat || !chatReady
-                                              ? null
-                                              : () => _openChat(),
+                                          onChat: chatReady
+                                              ? () => _openChat()
+                                              : null,
                                           label: f >= 0.999
                                               ? 'Bab ${i + 1} beres'
                                               : '±${readingMinutes(left)} mnt lagi',

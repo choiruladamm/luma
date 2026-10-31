@@ -105,13 +105,14 @@ class _ChatViewState extends ConsumerState<ChatView> {
     }
   }
 
+  /// Guard tanpa rebuild: tombol header gak boleh kedip abu pas pindah layar.
   Future<void> _navigate(VoidCallback action) async {
     if (_leaving) return;
-    setState(() => _leaving = true);
+    _leaving = true;
     await _vm.stop();
     if (!mounted) return;
     action();
-    if (mounted) setState(() => _leaving = false);
+    _leaving = false;
   }
 
   Future<void> _source(ChatTurn turn, ChatSource source) async {
@@ -221,9 +222,7 @@ class _ChatViewState extends ConsumerState<ChatView> {
                                   widget.launch?.origin.backLabel ??
                                   'Balik baca',
                               icon: AppIcons.back,
-                              onPressed: _leaving
-                                  ? null
-                                  : () => _navigate(() => _back()),
+                              onPressed: () => _navigate(() => _back()),
                             ),
                             Expanded(
                               child: Column(
@@ -257,21 +256,17 @@ class _ChatViewState extends ConsumerState<ChatView> {
                               CircleButton(
                                 semanticLabel: 'Balik baca',
                                 icon: AppIcons.book,
-                                onPressed: _leaving
-                                    ? null
-                                    : () =>
-                                          _navigate(() => _back(reading: true)),
+                                onPressed: () =>
+                                    _navigate(() => _back(reading: true)),
                               ),
                             CircleButton(
                               semanticLabel: 'Riwayat obrolan',
                               icon: AppIcons.history,
-                              onPressed: _leaving
-                                  ? null
-                                  : () => _navigate(
-                                      () => context.push(
-                                        Routes.chatSessions(widget.bookId),
-                                      ),
-                                    ),
+                              onPressed: () => _navigate(
+                                () => context.push(
+                                  Routes.chatSessions(widget.bookId),
+                                ),
+                              ),
                             ),
                           ],
                         ),
@@ -457,7 +452,8 @@ class _ChatViewState extends ConsumerState<ChatView> {
     required EdgeFadeSide topFade,
     required EdgeFadeSide bottomFade,
   }) {
-    if (state.loading) return const Center(child: CircularProgressIndicator());
+    // Kosong dulu, bukan spinner: sepersekian detik muat gak perlu kedip.
+    if (state.loading) return const SizedBox.shrink();
     final quote = state.selectedQuote ?? state.turns.firstOrNull?.quote;
     final card = quote == null
         ? null
