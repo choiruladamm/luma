@@ -277,6 +277,7 @@ class ChatViewModel extends Notifier<ChatState> {
     unawaited(life.turns?.cancel());
     life.session = session;
     life.anchor = session?.scrollAnchor;
+    life.savedAnchor = life.anchor;
     state = state.copyWith(
       activeSession: session,
       turns: [],
@@ -324,8 +325,11 @@ class ChatViewModel extends Notifier<ChatState> {
 
   Future<void> _saveAnchor(_ChatLifetime life) async {
     final session = life.session, anchor = life.anchor;
-    if (session != null && anchor != null) {
+    // Skip kalau udah tersimpan: stop() dipanggil lagi pas rute chat keluar
+    // (onExit), dan tulis DB di situ nahan pop chat beberapa frame.
+    if (session != null && anchor != null && anchor != life.savedAnchor) {
       await life.repo.saveScrollAnchor(bookId, session.id, anchor);
+      if (identical(life.session, session)) life.savedAnchor = anchor;
     }
   }
 
@@ -876,6 +880,7 @@ class _ChatLifetime {
   int? readingChapterId;
   ChatSession? session;
   ChatScrollAnchor? anchor;
+  ChatScrollAnchor? savedAnchor;
   _ChatRun? run;
   Future<void>? transition;
   StreamSubscription<ChatBookRef?>? books;
