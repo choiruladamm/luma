@@ -193,16 +193,26 @@ class CircleButton extends StatelessWidget {
     required this.onPressed,
     this.icon,
     this.text,
+    this.glyph,
     this.active = false,
     this.primary = false,
     this.inverse = false,
     this.size = Layout.touch,
-  }) : assert((icon == null) != (text == null));
+  }) : assert(
+         (icon != null ? 1 : 0) +
+                 (text != null ? 1 : 0) +
+                 (glyph != null ? 1 : 0) ==
+             1,
+         'Isi tepat satu: icon, text, atau glyph',
+       );
 
   final String semanticLabel;
   final VoidCallback? onPressed;
   final List<List<dynamic>>? icon;
   final String? text;
+
+  /// Isi gambar sendiri (mis. kotak stop), buat yang bukan ikon atau teks.
+  final Widget? glyph;
   final bool active;
   final bool primary;
   final bool inverse;
@@ -230,10 +240,14 @@ class CircleButton extends StatelessWidget {
           child: Center(
             child: icon != null
                 ? AppIcon(icon!, color: fg)
-                : Text(
-                    text!,
-                    style: StabiloType.label.copyWith(fontSize: 16, color: fg),
-                  ),
+                : glyph ??
+                      Text(
+                        text!,
+                        style: StabiloType.label.copyWith(
+                          fontSize: 16,
+                          color: fg,
+                        ),
+                      ),
           ),
         ),
       ),

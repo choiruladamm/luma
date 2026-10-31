@@ -112,7 +112,7 @@ void main() {
         expect(t.getRect(find.byType(ChatComposer)).bottom, 844 - 34 - 8);
         expect(
           t.getSize(find.byType(ChatComposer)).height,
-          Layout.chatComposer,
+          Layout.chatComposerBox,
         );
         final position = t
             .state<ScrollableState>(
@@ -339,4 +339,34 @@ void main() {
       expect(t.getSize(reply).width, 390 - 2 * prefs.marginWidth);
     });
   }
+
+  testWidgets(
+    'composer: 42 send, flat yellow when ready, stop square while running',
+    (t) async {
+      await open(t, ChatState(book: book, loading: false, draft: 'Halo'));
+      var send = t.widget<CircleButton>(button('Kirim pertanyaan'));
+      expect(send.size, 42);
+      expect(send.active, isTrue);
+      expect(send.primary, isFalse);
+      expect(t.getSize(button('Kirim pertanyaan')), const Size(42, 42));
+      vm.push(
+        vm.current.copyWith(
+          turns: [turn(1, phase: ChatPhase.waiting)],
+          phase: ChatPhase.waiting,
+        ),
+      );
+      await t.pumpAndSettle();
+      final stop = t.widget<CircleButton>(button('Hentikan jawaban'));
+      expect(stop.inverse, isTrue);
+      expect(
+        find.descendant(
+          of: button('Hentikan jawaban'),
+          matching: find.byWidgetPredicate(
+            (w) => w is Container && w.constraints?.maxWidth == 13,
+          ),
+        ),
+        findsOneWidget,
+      );
+    },
+  );
 }

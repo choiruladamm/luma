@@ -59,12 +59,10 @@ class _ChatComposerState extends State<ChatComposer> {
   Widget build(BuildContext context) {
     final c = context.stabilo;
     return Container(
-      padding: const EdgeInsets.all(
-        (Layout.chatComposer - Layout.chatSend - 2 * Layout.outline) / 2,
-      ),
+      padding: const EdgeInsets.fromLTRB(18, 4, 4, 4),
       decoration: BoxDecoration(
         color: c.sheet,
-        borderRadius: BorderRadius.circular(Radii.xl),
+        borderRadius: BorderRadius.circular(Radii.chatComposer),
         border: Border.all(
           color: _focus.hasFocus ? c.outline : c.capsuleLine,
           width: Layout.outline,
@@ -77,14 +75,11 @@ class _ChatComposerState extends State<ChatComposer> {
         children: [
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
-            spacing: Space.s3,
+            spacing: Space.s2,
             children: [
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.only(
-                    left: Space.s3,
-                    bottom: Space.s3,
-                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 11),
                   child: TextField(
                     controller: _text,
                     focusNode: _focus,
@@ -93,11 +88,17 @@ class _ChatComposerState extends State<ChatComposer> {
                     maxLines: 5,
                     keyboardType: TextInputType.multiline,
                     textInputAction: TextInputAction.newline,
-                    style: StabiloType.body.copyWith(color: c.ink),
+                    style: StabiloType.body.copyWith(
+                      height: 22 / 16,
+                      color: c.ink,
+                    ),
                     cursorColor: c.ink,
                     decoration: InputDecoration.collapsed(
                       hintText: widget.hint,
-                      hintStyle: StabiloType.body.copyWith(color: c.ink2),
+                      hintStyle: StabiloType.body.copyWith(
+                        height: 22 / 16,
+                        color: c.ink3,
+                      ),
                     ),
                     onChanged: widget.onChanged,
                   ),
@@ -107,9 +108,19 @@ class _ChatComposerState extends State<ChatComposer> {
                 semanticLabel: widget.running
                     ? 'Hentikan jawaban'
                     : 'Kirim pertanyaan',
-                icon: widget.running ? AppIcons.stop : AppIcons.send,
+                icon: widget.running ? null : AppIcons.send,
+                glyph: widget.running
+                    ? Container(
+                        width: 13,
+                        height: 13,
+                        decoration: BoxDecoration(
+                          color: c.canvas,
+                          borderRadius: BorderRadius.circular(3),
+                        ),
+                      )
+                    : null,
                 size: Layout.chatSend,
-                primary: widget.canSend,
+                active: widget.canSend,
                 inverse: widget.running,
                 onPressed: widget.running
                     ? widget.onStop

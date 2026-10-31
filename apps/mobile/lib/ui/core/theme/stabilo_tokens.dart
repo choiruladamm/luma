@@ -25,6 +25,7 @@ abstract final class Radii {
   static const full = 999.0; // icon button, pill, segmented
   // Di luar skala Ruang, dipake board Komponen 04.
   static const chatTail = 6.0;
+  static const chatComposer = 26.0; // kapsul input ngobrol
   static const field = 16.0; // field input
   static const menu = 18.0; // menu, list pengaturan
   static const dialog = 24.0;
@@ -41,6 +42,7 @@ abstract final class Layout {
   static const chatHeader = 52.0;
   static const chatComposer = 52.0;
   static const chatSend = 42.0;
+  static const chatComposerBox = 55.0; // kapsul 52 + garis 1,5 × 2
   static const chatBubbleFraction = 0.82;
   static const chatBubblePadding = EdgeInsets.symmetric(
     horizontal: 14,
