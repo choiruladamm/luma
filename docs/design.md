@@ -150,7 +150,8 @@ dengan aksi obrolan baru. Semua sumber berasal dari seluruh buku yang diimport.
 
 **Teks ikut Aa:** isi layar ngobrol dan sheet sitasi pakai `ReaderTypography`, sumber yang sama dengan halaman baca dan sheet Artinya. Ganti Aa di reader langsung kebawa (provider yang sama).
 - Kutipan di sheet sitasi: font, ukuran, jarak baris persis Aa.
-- Jawaban AI, kartu konteks, dan konteks sebelum/sesudah sitasi: `ReaderTypography.compact`, yaitu font dan jarak baris Aa dengan ukuran diskalakan 15,5/18,5. Di Aa default hasilnya persis `readingSheet` (15,5 / 1,5), jadi sesuai board.
+- Jawaban AI, kartu konteks, kutipan, dan konteks sebelum/sesudah sitasi: font, ukuran, dan jarak baris persis Aa (`ReaderTypography.style`, termasuk +0,05 di gelap), sama dengan halaman baca. Di Aa default ukurannya 18,5, bukan 15,5 seperti spek board lama.
+- Jarak antar paragraf jawaban = 1em ukuran Aa (`ReaderTypography.paragraphGap`), sama dengan halaman baca.
 - Margin: padding dasar 24 jadi batas bawah; Lega (32) nambah 8 di kiri-kanan isi layar dan isi sheet.
 - Tetap ukuran UI (Bricolage): bubble pesan, notice, chip sitasi, label, tombol, header, composer.
 

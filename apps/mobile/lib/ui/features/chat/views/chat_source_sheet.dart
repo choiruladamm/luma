@@ -107,9 +107,7 @@ class ChatSourceSheet extends ConsumerWidget {
                     if (location?.before != null)
                       SelectableText(
                         location!.before!,
-                        style: typo.compact.copyWith(
-                          color: context.stabilo.ink2,
-                        ),
+                        style: typo.style.copyWith(color: context.stabilo.ink2),
                       ),
                     Stack(
                       key: const ValueKey('source-quote'),
@@ -136,9 +134,7 @@ class ChatSourceSheet extends ConsumerWidget {
                     if (location?.after != null)
                       SelectableText(
                         location!.after!,
-                        style: typo.compact.copyWith(
-                          color: context.stabilo.ink2,
-                        ),
+                        style: typo.style.copyWith(color: context.stabilo.ink2),
                       ),
                     if (state.isLoading || !available)
                       Text(state.sourceMessage, style: StabiloType.caption),

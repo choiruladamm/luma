@@ -35,18 +35,7 @@ class ReaderTypography {
         prefs.marginWidth,
       );
 
-  ReaderTypography._(this.style, this.margin)
-    : compact = style.copyWith(
-        fontSize: style.fontSize! * _compactSize,
-        height: style.height! * _compactLeading,
-      );
-
-  // readingSheet (15,5 / 1,5) dibanding reading (18,5 / 1,65): di Aa default
-  // `compact` persis readingSheet, naik-turun bareng pilihan Aa.
-  static final _compactSize =
-      StabiloType.readingSheet.fontSize! / StabiloType.reading.fontSize!;
-  static final _compactLeading =
-      StabiloType.readingSheet.height! / StabiloType.reading.height!;
+  const ReaderTypography._(this.style, this.margin);
 
   /// Tanpa warna: pemakai nambahin `ink` / `onHighlight` sendiri.
   final TextStyle style;
@@ -54,9 +43,8 @@ class ReaderTypography {
   /// Margin kiri-kanan teks.
   final double margin;
 
-  /// Versi lebih kecil buat isi layar ngobrol (jawaban, kartu konteks,
-  /// konteks sitasi): font, jarak baris, dan terang/gelap ikut Aa.
-  final TextStyle compact;
+  /// Jarak antar paragraf: 1em ukuran Aa, sama kayak halaman baca.
+  double get paragraphGap => style.fontSize!;
 
   /// Tambahan margin di atas padding dasar layar ([base]); Lega (32) nambah 8,
   /// Sempit sama kayak Pas.

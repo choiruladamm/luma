@@ -164,8 +164,8 @@ class _ChatContextCardState extends State<ChatContextCard> {
                 widget.quote.text,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: typo.compact.copyWith(
-                  fontSize: typo.compact.fontSize! * (14.5 / 15.5),
+                style: typo.style.copyWith(
+                  fontSize: typo.style.fontSize! * (14.5 / 15.5),
                   color: context.stabilo.ink2,
                 ),
               ),
@@ -177,7 +177,7 @@ class _ChatContextCardState extends State<ChatContextCard> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 spacing: 14,
                 children: [
-                  Text(widget.quote.text, style: typo.compact),
+                  Text(widget.quote.text, style: typo.style),
                   if (widget.quote.translation != null)
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -186,7 +186,7 @@ class _ChatContextCardState extends State<ChatContextCard> {
                         const Tag.section('Terjemahan'),
                         SelectableText(
                           widget.quote.translation!,
-                          style: typo.compact,
+                          style: typo.style,
                         ),
                       ],
                     ),

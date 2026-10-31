@@ -51,23 +51,11 @@ void main() {
     expect(readingFamily(ReadingFont.system), 'Roboto');
   });
 
-  test('compact is readingSheet at default Aa and follows font and size', () {
-    final base = ReaderTypography(const ReaderPrefs(), Brightness.light);
-    expect(
-      base.compact.fontSize,
-      closeTo(StabiloType.readingSheet.fontSize!, 1e-9),
-    );
-    expect(
-      base.compact.height,
-      closeTo(StabiloType.readingSheet.height!, 1e-9),
-    );
-    final big = ReaderTypography(
-      const ReaderPrefs(font: ReadingFont.book, sizeStep: 6),
-      Brightness.light,
-    );
-    expect(big.compact.fontFamily, readingFamily(ReadingFont.book));
-    expect(big.compact.fontSize, greaterThan(base.compact.fontSize!));
-    expect(big.compact.fontSize, lessThan(big.style.fontSize!));
+  test('paragraph gap is 1em of the Aa size, like the reader', () {
+    for (final step in [0, ReaderPrefs.defaultSizeStep, 6]) {
+      final t = ReaderTypography(ReaderPrefs(sizeStep: step), Brightness.light);
+      expect(t.paragraphGap, ReaderPrefs.sizes[step]);
+    }
   });
 
   test('inset only grows past the base padding', () {

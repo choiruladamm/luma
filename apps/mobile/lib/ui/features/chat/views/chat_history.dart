@@ -313,7 +313,7 @@ class _ChatHistoryState extends State<ChatHistory> {
                     phase: phase,
                     builder: (context, visible) => Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
-                      spacing: Space.s3,
+                      spacing: typo.paragraphGap,
                       children: [
                         if (phase.isRunning &&
                             visible.every((b) => b.text.isEmpty))
@@ -374,7 +374,7 @@ class _ChatHistoryState extends State<ChatHistory> {
                                           ),
                                       ],
                                     ),
-                                    style: typo.compact,
+                                    style: typo.style,
                                   ),
                                 ],
                               ),

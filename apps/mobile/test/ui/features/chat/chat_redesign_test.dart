@@ -260,24 +260,21 @@ void main() {
     },
   );
 
-  testWidgets('answer and context card text follow the Aa prefs', (t) async {
-    const prefs = ReaderPrefs(
-      font: ReadingFont.book,
-      sizeStep: 6,
-      spacing: LineSpacing.loose,
-    );
-    final typo = ReaderTypography(prefs, Brightness.light);
+  const aaPrefs = ReaderPrefs(
+    font: ReadingFont.book,
+    sizeStep: 6,
+    spacing: LineSpacing.loose,
+  );
+
+  testWidgets('answer text and paragraph gap follow the Aa prefs', (t) async {
+    final typo = ReaderTypography(aaPrefs, Brightness.light);
     final answer = ChatAnswer(
       formatVersion: 2,
       status: ChatAnswerStatus.answered,
       blocks: [
-        ChatAnswerBlock(text: 'Jawaban panjang.', sources: [source]),
+        ChatAnswerBlock(text: 'Paragraf satu.', sources: [source]),
+        ChatAnswerBlock(text: 'Paragraf dua.', sources: [source]),
       ],
-    );
-    final quote = ChatQuote(
-      anchors: source.anchors,
-      chapterTitle: 'Buku II',
-      translation: 'Terjemahan lengkap untuk dibaca.',
     );
     await open(
       t,
@@ -285,19 +282,39 @@ void main() {
         book: book,
         activeSession: session(1),
         loading: false,
-        selectedQuote: quote,
         turns: [turn(1, answer: answer)],
       ),
-      prefs: prefs,
+      prefs: aaPrefs,
     );
-    final reply = t.widget<SelectableText>(find.byType(SelectableText).first);
-    expect(reply.style, typo.compact);
-    expect(reply.style!.fontFamily, readingFamily(ReadingFont.book));
+    final first = find.byType(SelectableText).at(0);
+    final second = find.byType(SelectableText).at(1);
+    expect(t.widget<SelectableText>(first).style, typo.style);
+    expect(
+      t.widget<SelectableText>(first).style!.fontFamily,
+      readingFamily(ReadingFont.book),
+    );
+    expect(t.widget<SelectableText>(first).style!.height, aaPrefs.lineHeight);
+    final gap = t.getTopLeft(second).dy - t.getBottomLeft(first).dy;
+    expect(gap, closeTo(typo.paragraphGap, 0.5));
+  });
+
+  testWidgets('context card text follows the Aa prefs', (t) async {
+    final typo = ReaderTypography(aaPrefs, Brightness.light);
+    final quote = ChatQuote(
+      anchors: source.anchors,
+      chapterTitle: 'Buku II',
+      translation: 'Terjemahan lengkap untuk dibaca.',
+    );
+    await open(
+      t,
+      ChatState(book: book, loading: false, selectedQuote: quote),
+      prefs: aaPrefs,
+    );
     await t.tap(find.byTooltip('Perluas konteks'));
     await t.pumpAndSettle();
     final translation = t.widget<SelectableText>(
       find.widgetWithText(SelectableText, quote.translation!),
     );
-    expect(translation.style, typo.compact);
+    expect(translation.style, typo.style);
   });
 }
