@@ -83,7 +83,10 @@ extension ChatIndexCopy on ChatState {
     final examined = explorationProgress;
     if ((phase == ChatPhase.retrieving || phase == ChatPhase.slow) &&
         examined != null) {
-      return 'Lagi meriksa isi buku… ${examined.completed}/${examined.total} potongan';
+      final where = examined.label == null
+          ? 'Lagi meriksa isi buku…'
+          : 'Lagi baca ${examined.label}…';
+      return '$where ${examined.completed}/${examined.total} potongan';
     }
     final progress = indexProgress;
     if ((phase != ChatPhase.retrieving && phase != ChatPhase.slow) ||

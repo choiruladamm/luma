@@ -184,6 +184,81 @@ void main() {
   );
 
   test(
+    'saved notes show as a provisional draft during reading; Jawab sekarang flags the run once',
+    () => fakeAsync((time) {
+      open(time);
+      send(time);
+      final sink = context.progressSinks.last!;
+      sink((completed: 0, total: 10, label: 'Book I › II', notes: const []));
+      pump(time);
+      expect(state().explorationProgress!.label, 'Book I › II');
+      expect(state().preview, isNull);
+      sink((
+        completed: 4,
+        total: 10,
+        label: 'Book I › III',
+        notes: const [
+          (text: 'Catatan satu', sourceIds: ['S1']),
+        ],
+      ));
+      pump(time);
+      time.elapse(const Duration(milliseconds: 50));
+      expect(state().preview!.blocks.single.text, 'Catatan satu');
+      expect(state().preview!.blocks.single.sources, isEmpty);
+      expect(state().preview!.blocks.single.kind, ChatAnswerKind.conversation);
+      // Empty answer frames keep the notes visible until real text arrives.
+      context.prepared.last.frames.add(const ChatStreamFrame('{'));
+      pump(time);
+      time.elapse(const Duration(milliseconds: 50));
+      expect(state().preview!.blocks.single.text, 'Catatan satu');
+      context.prepared.last.frames.add(
+        ChatStreamFrame(
+          '{"parts":[{"text":"Jawaban',
+          preview: [ChatAnswerBlock(text: 'Jawaban', sources: [])],
+        ),
+      );
+      pump(time);
+      time.elapse(const Duration(milliseconds: 50));
+      expect(state().preview!.blocks.single.text, 'Jawaban');
+      done(time);
+      close(time);
+    }),
+  );
+
+  test(
+    'answerNow only applies while reading and resets on the next send',
+    () => fakeAsync((time) {
+      open(time);
+      context.prepareGate = Completer();
+      send(time);
+      vm().answerNow(); // nothing being read yet
+      expect(context.answerNowChecks.last!(), isFalse);
+      expect(state().answerRequested, isFalse);
+      context.progressSinks.last!((
+        completed: 0,
+        total: 5,
+        label: null,
+        notes: const [],
+      ));
+      pump(time);
+      expect(state().canAnswerNow, isTrue);
+      vm().answerNow();
+      expect(context.answerNowChecks.last!(), isTrue);
+      expect(state().answerRequested, isTrue);
+      expect(state().canAnswerNow, isFalse);
+      context.prepareGate!.complete();
+      pump(time);
+      done(time);
+      context.prepareGate = null;
+      send(time, 'Lagi?');
+      expect(state().answerRequested, isFalse);
+      expect(context.answerNowChecks.last!(), isFalse);
+      done(time);
+      close(time);
+    }),
+  );
+
+  test(
     'reading position from launch reaches preparation',
     () => fakeAsync((time) {
       open(time);

@@ -33,9 +33,22 @@ class ChatState {
     this.indexProgress,
     this.explorationProgress,
     this.repairAttempt = 0,
+    this.answerRequested = false,
   }) : turns = List.unmodifiable(turns);
 
-  final ({int completed, int total})? indexProgress, explorationProgress;
+  final ({int completed, int total})? indexProgress;
+
+  /// Bab yang sedang dibaca + catatan sementara (#150).
+  final ChatExplorationProgress? explorationProgress;
+
+  /// Jawab sekarang sudah ditekan pada attempt berjalan.
+  final bool answerRequested;
+
+  /// Pembacaan sedang jalan dan belum diminta berhenti.
+  bool get canAnswerNow =>
+      (phase == ChatPhase.retrieving || phase == ChatPhase.slow) &&
+      explorationProgress != null &&
+      !answerRequested;
 
   /// Perbaikan otomatis ke-n (1..2) atas jawaban invalid pada attempt berjalan.
   final int repairAttempt;
@@ -90,11 +103,13 @@ class ChatState {
     Object? indexProgress = _unchanged,
     Object? explorationProgress = _unchanged,
     int? repairAttempt,
+    bool? answerRequested,
   }) => ChatState(
     repairAttempt: repairAttempt ?? this.repairAttempt,
+    answerRequested: answerRequested ?? this.answerRequested,
     explorationProgress: identical(explorationProgress, _unchanged)
         ? this.explorationProgress
-        : explorationProgress as ({int completed, int total})?,
+        : explorationProgress as ChatExplorationProgress?,
     indexProgress: identical(indexProgress, _unchanged)
         ? this.indexProgress
         : indexProgress as ({int completed, int total})?,
@@ -410,6 +425,15 @@ class ChatViewModel extends Notifier<ChatState> {
     return _start(_life, question: question, quote: state.selectedQuote);
   }
 
+  /// Hentikan pembacaan setelah batch berjalan tersimpan, lalu jawab dari
+  /// catatan yang ada (partial + Lanjutkan tetap tersedia).
+  void answerNow() {
+    final run = _life.run;
+    if (run == null || !state.canAnswerNow) return;
+    run.answerNow = true;
+    state = state.copyWith(answerRequested: true);
+  }
+
   Future<void> continueExploration() {
     if (!state.canContinue || _life.run != null) return Future.value();
     return _start(_life, continuation: state.turns.last);
@@ -526,6 +550,7 @@ class ChatViewModel extends Notifier<ChatState> {
         preview: null,
         indexProgress: null,
         explorationProgress: null,
+        answerRequested: false,
       );
       if (!await life.repo.checkpoint(
         turn.attemptRef,
@@ -540,11 +565,24 @@ class ChatViewModel extends Notifier<ChatState> {
         turn,
         cancel: run.cancel,
         readingChapterId: life.readingChapterId,
-        onExplorationProgress: (completed, total) {
-          if (_running(life, run)) {
-            state = state.copyWith(
-              explorationProgress: (completed: completed, total: total),
-            );
+        answerNow: () => run.answerNow,
+        onExplorationProgress: (progress) {
+          if (!_running(life, run)) return;
+          state = state.copyWith(explorationProgress: progress);
+          if (progress.notes.isNotEmpty) {
+            // Catatan sementara tampil sebagai draf provisional, tanpa sumber.
+            run.preview = [
+              for (final n in progress.notes)
+                ChatAnswerBlock(
+                  text: n.text,
+                  kind: ChatAnswerKind.conversation,
+                  sources: [],
+                ),
+            ];
+            run.previewTimer ??= Timer(const Duration(milliseconds: 50), () {
+              run.previewTimer = null;
+              if (_running(life, run)) _publishPreview(run);
+            });
           }
         },
         onIndexProgress: (completed, total) {
@@ -584,9 +622,8 @@ class ChatViewModel extends Notifier<ChatState> {
           _arm(life, run, GroupAiStream.timeoutAfter);
           continue;
         }
-        if (frame.preview.isNotEmpty || run.repair == 0) {
-          run.preview = frame.preview;
-        }
+        // Catatan sementara/preview lama tetap tampil sampai teks baru masuk.
+        if (frame.preview.isNotEmpty) run.preview = frame.preview;
         if (run.raw.isEmpty) continue;
         run.clearTimers();
         if (state.phase != ChatPhase.writing) {
@@ -778,6 +815,7 @@ class _ChatRun {
   final created = Completer<void>();
   ChatTurn? turn;
   int repair = 0;
+  bool answerNow = false;
   String raw = '';
   List<ChatAnswerBlock> preview = const [];
   Timer? previewTimer;

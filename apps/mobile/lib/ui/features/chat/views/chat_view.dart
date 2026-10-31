@@ -410,6 +410,12 @@ class _ChatViewState extends ConsumerState<ChatView> {
                 height: Layout.touch,
                 onPressed: () => _navigate(() => context.push(Routes.settings)),
               ),
+            if (state.canAnswerNow)
+              AppButton.secondary(
+                label: 'Jawab sekarang',
+                height: Layout.touch,
+                onPressed: _vm.answerNow,
+              ),
             if (state.canContinue)
               AppButton.secondary(
                 label: 'Lanjutkan',

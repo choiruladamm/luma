@@ -157,7 +157,10 @@ void main() {
       );
       final ref = (bookId: book.id, contentRevision: book.contentRevision);
       for (final index in selected) {
-        final question = questions[index];
+        // "pertanyaan>balasan" = turn lanjutan di sesi yang sama (klarifikasi).
+        final chain = questions[index].split('>');
+        final question = chain.first;
+        final answerAt = int.tryParse(env['BOOK_CHAT_AGENT_ANSWER_AT'] ?? '');
         final row = <String, Object?>{
           'case': index,
           'question': question,
@@ -172,12 +175,31 @@ void main() {
           model: model,
           promptVersion: chatPromptVersion,
         );
-        for (var step = 0; step <= maxContinue; step++) {
+        var followUp = 1;
+        for (var step = 0; step <= maxContinue + chain.length - 1; step++) {
           final time = Stopwatch()..start();
-          final entry = <String, Object?>{'step': step};
+          final entry = <String, Object?>{
+            'step': step,
+            'question': turn.question,
+          };
           turns.add(entry);
+          final progress = <Map<String, Object?>>[];
+          entry['progress'] = progress;
           try {
-            final prepared = await context.prepare(turn);
+            final prepared = await context.prepare(
+              turn,
+              answerNow: () =>
+                  answerAt != null &&
+                  progress.isNotEmpty &&
+                  (progress.last['completed'] as int) >= answerAt,
+              onExplorationProgress: (p) => progress.add({
+                'atMs': time.elapsedMilliseconds,
+                'completed': p.completed,
+                'total': p.total,
+                'label': p.label,
+                'notes': p.notes.length,
+              }),
+            );
             if (prepared == null) throw StateError('Preparation rejected');
             entry['prepareMs'] = time.elapsedMilliseconds;
             int? firstReadableMs;
@@ -253,9 +275,21 @@ void main() {
           entry['requests'] = ledger.rows.length - requestsBefore;
           entry['heldUsd'] = ledger.heldUsd;
           save();
-          if (!chatCanContinue(latest)) break;
-          if (step == maxContinue) break;
-          turn = await repo.continueExploration(latest, model: model);
+          if (chatCanContinue(latest) && step < maxContinue) {
+            turn = await repo.continueExploration(latest, model: model);
+            continue;
+          }
+          if (followUp < chain.length) {
+            turn = await repo.appendTurn(
+              ref,
+              turn.sessionId,
+              question: chain[followUp++],
+              model: model,
+              promptVersion: chatPromptVersion,
+            );
+            continue;
+          }
+          break;
         }
       }
       result['status'] = 'completed';

@@ -376,6 +376,19 @@ ditambahkan di belakang. ViewModel menampilkan "Lagi benerin format jawaban… (
 pada turn yang sama; preview lama tetap sampai teks baru masuk. Gagal setelah 2
 perbaikan = `failed/invalidResponse` dengan draf terbaca + Coba lagi.
 
+**Progres yang ngomong (#150).** `prepare(onExplorationProgress:)` mengirim
+`ChatExplorationProgress {completed, total, label, notes}`: `label` = bab window
+pertama pada group batch yang sedang jalan, `notes` = catatan yang sudah tersimpan
+di checkpoint. ViewModel menampilkan "Lagi baca Book II › IV: …" dan catatan sebagai
+preview provisional (blok `conversation` tanpa sumber, tag "Catatan sementara"),
+bukan history terpercaya; preview lama bertahan sampai teks jawaban pertama masuk.
+Batch berhenti di batas bab begitu ≥ 60% kuota terisi. **Jawab sekarang**
+(`answerNow`): loop berhenti setelah group yang jalan tersimpan, `stopReason: user`
+ikut disimpan, jawaban `partial` dari catatan yang ada, Lanjutkan tetap tersedia.
+Index embedding dokumen dikirim 3 batch bersamaan dan disimpan urut ordinal
+(prefix tetap valid). Lanjutan: cache catatan bab lintas pertanyaan + pengecualian
+front/back matter di pencarian (#151).
+
 Bukti live: `make chat-agent-live` (`tag=`, `cases=`, `cont=`, `book=`, `m=`)
 menjalankan pipeline produksi pada `test/fixtures/discourses.epub` (Standard
 Ebooks, terjemahan Long, nav Book I–IV › bab) dan menulis
