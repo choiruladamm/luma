@@ -151,4 +151,21 @@ void main() {
     expect(reader.invalid, true);
     expect(reader.blocks.single.text, 'ok');
   });
+
+  test('layout and kind that arrive before text shape the draft', () {
+    final reader = ChatPreviewDecoder()
+      ..add(
+        '{"parts":[{"layout":"item","kind":"interpretation","text":"**Satu',
+      );
+    expect(reader.blocks.single.layout, ChatAnswerLayout.item);
+    expect(reader.blocks.single.kind, ChatAnswerKind.interpretation);
+    reader.add('.** isi"},{"layout":"quote","kind":"external","text":"x');
+    // Kutipan bukan dari buku jatuh ke paragraf.
+    expect(reader.blocks.last.layout, ChatAnswerLayout.paragraph);
+    final odd = ChatPreviewDecoder()
+      ..add('{"parts":[{"layout":"huh","kind":"???","text":"ok');
+    expect(odd.invalid, isFalse);
+    expect(odd.blocks.single.layout, ChatAnswerLayout.paragraph);
+    expect(odd.blocks.single.kind, ChatAnswerKind.book);
+  });
 }

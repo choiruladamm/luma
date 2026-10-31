@@ -15,9 +15,16 @@ ChatAnswerBlock chatAnswerPart(Object? value, List<ChatSource> sources) {
       ids.any((id) => id is! String || !byId.containsKey(id))) {
     throw const FormatException('Sumber paragraf tidak valid');
   }
+  final kind = ChatAnswerKind.parse(value['kind']);
+  var layout = ChatAnswerLayout.parse(value['layout']);
+  // Kutipan langsung cuma buat isi buku.
+  if (layout == ChatAnswerLayout.quote && kind != ChatAnswerKind.book) {
+    layout = ChatAnswerLayout.paragraph;
+  }
   final block = ChatAnswerBlock(
     text: (value['text'] as String).trim(),
-    kind: ChatAnswerKind.parse(value['kind']),
+    kind: kind,
+    layout: layout,
     sources: [for (final id in ids) byId[id]!],
   );
   ChatAnswer(
@@ -46,7 +53,12 @@ class ChatPreviewDecoder {
   List<ChatAnswerBlock> get blocks => List.unmodifiable([
     for (final b in _blocks)
       if (invalid)
-        ChatAnswerBlock(text: b.text, kind: b.kind, sources: [])
+        ChatAnswerBlock(
+          text: b.text,
+          kind: b.kind,
+          layout: b.layout,
+          sources: [],
+        )
       else
         b,
   ]);
@@ -227,10 +239,23 @@ class ChatPreviewDecoder {
   void _project() {
     final index = _textIndex;
     if (index == null) return;
-    _blocks[index] = ChatAnswerBlock(
-      text: _token.toString().trim(),
-      sources: [],
-    );
+    _blocks[index] = _draft(_token.toString().trim(), _stack.last.map);
+  }
+
+  /// Draf belum tepercaya: layout/kind yang udah muncul sebelum `text` ikut
+  /// dipakai buat tampilan, nilai aneh jatuh ke default (validasi akhir terpisah).
+  ChatAnswerBlock _draft(String text, Map<String, Object?> part) {
+    ChatAnswerKind kind;
+    try {
+      kind = ChatAnswerKind.parse(part['kind']);
+    } on FormatException {
+      kind = ChatAnswerKind.book;
+    }
+    var layout = ChatAnswerLayout.parse(part['layout']);
+    if (layout == ChatAnswerLayout.quote && kind != ChatAnswerKind.book) {
+      layout = ChatAnswerLayout.paragraph;
+    }
+    return ChatAnswerBlock(text: text, sources: [], kind: kind, layout: layout);
   }
 
   void _value(Object? value) {
@@ -239,7 +264,7 @@ class ChatPreviewDecoder {
       frame.map[frame.key!] = value;
       if (frame.role == _Role.part && frame.key == 'text') {
         if (value is! String) _fail();
-        _blocks[frame.index!] = ChatAnswerBlock(text: value, sources: []);
+        _blocks[frame.index!] = _draft(value, frame.map);
       }
       if (frame.role == _Role.root && frame.key == 'parts' && value is! List) {
         _fail();
@@ -283,6 +308,7 @@ class _Frame {
 List<ChatAnswerBlock> chatDraftPreview(String raw) {
   final reader = ChatPreviewDecoder()..add(raw);
   return [
-    for (final b in reader.blocks) ChatAnswerBlock(text: b.text, sources: []),
+    for (final b in reader.blocks)
+      ChatAnswerBlock(text: b.text, layout: b.layout, sources: []),
   ];
 }
