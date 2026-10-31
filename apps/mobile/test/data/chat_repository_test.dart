@@ -756,11 +756,16 @@ void main() {
       status: ChatAnswerStatus.partial,
       formatVersion: 2,
       blocks: [
-        ChatAnswerBlock(text: 'Gagasan dalam buku.', sources: [s]),
+        ChatAnswerBlock(
+          text: 'Gagasan dalam buku.',
+          sources: [s],
+          layout: ChatAnswerLayout.quote,
+        ),
         ChatAnswerBlock(
           text: 'Saran penerapan gua.',
           sources: [s],
           kind: ChatAnswerKind.interpretation,
+          layout: ChatAnswerLayout.bullet,
         ),
         ChatAnswerBlock(
           text: 'Tambahan di luar buku.',
@@ -790,6 +795,12 @@ void main() {
       restored.last.answer!.blocks.map((b) => b.kind),
       ChatAnswerKind.values,
     );
+    expect(restored.last.answer!.blocks.map((b) => b.layout), [
+      ChatAnswerLayout.quote,
+      ChatAnswerLayout.bullet,
+      ChatAnswerLayout.paragraph,
+      ChatAnswerLayout.paragraph,
+    ]);
     expect(restored.last.answer!.note, isEmpty);
     expect(restored.last.trustedHistory, isTrue);
   });

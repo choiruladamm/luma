@@ -161,6 +161,9 @@ class ChatSnapshot {
         {
           'text': b.text,
           if (answer.formatVersion == 2) 'kind': b.kind.name,
+          if (answer.formatVersion == 2 &&
+              b.layout != ChatAnswerLayout.paragraph)
+            'layout': b.layout.name,
           'sourceIds': [for (final s in b.sources) s.id],
         },
     ],
@@ -195,6 +198,9 @@ class ChatSnapshot {
           kind: version == 2
               ? ChatAnswerKind.parse(claim['kind'])
               : ChatAnswerKind.book,
+          layout: version == 2
+              ? ChatAnswerLayout.parse(claim['layout'])
+              : ChatAnswerLayout.paragraph,
           sources: [for (final id in ids) byId[id]!],
         ),
       );

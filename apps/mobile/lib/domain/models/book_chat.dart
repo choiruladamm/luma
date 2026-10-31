@@ -174,15 +174,35 @@ enum ChatAnswerKind {
   };
 }
 
+/// Bentuk blok di layar: paragraf, butir bernomor (nomor dihitung aplikasi dari
+/// butir berurutan), butir tanpa nomor, atau kutipan langsung dari buku.
+enum ChatAnswerLayout {
+  paragraph,
+  item,
+  bullet,
+  quote;
+
+  /// Gak ada / gak dikenal = paragraf: jawaban lama dan output model yang
+  /// melenceng tetap kebaca.
+  static ChatAnswerLayout parse(Object? value) => switch (value) {
+    'item' => item,
+    'bullet' => bullet,
+    'quote' => quote,
+    _ => paragraph,
+  };
+}
+
 class ChatAnswerBlock {
   ChatAnswerBlock({
     required this.text,
     required List<ChatSource> sources,
     this.kind = ChatAnswerKind.book,
+    this.layout = ChatAnswerLayout.paragraph,
   }) : sources = List.unmodifiable(sources);
   final String text;
   final List<ChatSource> sources;
   final ChatAnswerKind kind;
+  final ChatAnswerLayout layout;
 }
 
 class ChatAnswer {

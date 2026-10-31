@@ -182,7 +182,56 @@ void main() {
     expect(result.blocks.map((b) => b.kind), ChatAnswerKind.values);
     expect(identical(result.blocks.first.sources.single, s), isTrue);
     expect(result.note, isEmpty);
-    expect(chatPromptVersion, 3);
+    expect(chatPromptVersion, 4);
+  });
+
+  test('layout is optional, unknown values read as paragraph and quote needs a book part', () {
+    final result = parse(
+      jsonEncode({
+        'status': 'answered',
+        'parts': [
+          {
+            'layout': 'item',
+            'kind': 'book',
+            'text': '**Satu.** a',
+            'source_ids': ['S1'],
+          },
+          {
+            'layout': 'bullet',
+            'kind': 'interpretation',
+            'text': 'b',
+            'source_ids': [],
+          },
+          {
+            'layout': 'quote',
+            'kind': 'book',
+            'text': 'q',
+            'source_ids': ['S1'],
+          },
+          {
+            'layout': 'quote',
+            'kind': 'external',
+            'text': 'x',
+            'source_ids': [],
+          },
+          {
+            'layout': 'heading',
+            'kind': 'conversation',
+            'text': 'y',
+            'source_ids': [],
+          },
+          {'kind': 'external', 'text': 'z', 'source_ids': []},
+        ],
+      }),
+    );
+    expect(result.blocks.map((b) => b.layout), [
+      ChatAnswerLayout.item,
+      ChatAnswerLayout.bullet,
+      ChatAnswerLayout.quote,
+      ChatAnswerLayout.paragraph,
+      ChatAnswerLayout.paragraph,
+      ChatAnswerLayout.paragraph,
+    ]);
   });
 
   test('partial, clarification and off-topic responses can explain themselves without book evidence', () {

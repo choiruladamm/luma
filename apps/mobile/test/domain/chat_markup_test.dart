@@ -1,0 +1,183 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:luma/domain/chat_markup.dart';
+import 'package:luma/domain/models/book_chat.dart';
+
+void main() {
+  List<ChatSpan> parse(String s) => parseChatMarkup(s);
+
+  test('plain text is a single span', () {
+    expect(parse('Halo dunia.'), [const ChatSpan('Halo dunia.')]);
+    expect(parse(''), isEmpty);
+  });
+
+  test('bold and italic', () {
+    expect(parse('Ini **penting** banget'), [
+      const ChatSpan('Ini '),
+      const ChatSpan('penting', bold: true),
+      const ChatSpan(' banget'),
+    ]);
+    expect(parse('Judul *Meditations* ya'), [
+      const ChatSpan('Judul '),
+      const ChatSpan('Meditations', italic: true),
+      const ChatSpan(' ya'),
+    ]);
+    expect(parse('***kuat***'), [
+      const ChatSpan('kuat', bold: true, italic: true),
+    ]);
+  });
+
+  test('bold can contain italic', () {
+    expect(parse('**a *b* c**'), [
+      const ChatSpan('a ', bold: true),
+      const ChatSpan('b', bold: true, italic: true),
+      const ChatSpan(' c', bold: true),
+    ]);
+  });
+
+  test('unclosed markers never show asterisks while streaming', () {
+    expect(parse('Ini **pent'), [
+      const ChatSpan('Ini '),
+      const ChatSpan('pent', bold: true),
+    ]);
+    expect(parse('Ini **'), [const ChatSpan('Ini ')]);
+    expect(parse('Ini *'), [const ChatSpan('Ini ')]);
+  });
+
+  test('stray asterisks around spaces stay literal', () {
+    expect(chatPlainText('2 * 3 = 6'), '2 * 3 = 6');
+    expect(chatPlainText('bintang * sendirian'), 'bintang * sendirian');
+  });
+
+  test('other markdown is dropped to plain text', () {
+    expect(chatPlainText('## Judul\nIsi'), 'Judul\nIsi');
+    expect(chatPlainText('Lihat [ini](http://x.y) dong'), 'Lihat ini dong');
+    expect(chatPlainText('pakai `kode` aja'), 'pakai kode aja');
+    expect(chatPlainText('- butir'), 'butir');
+    expect(chatPlainText('1. butir'), 'butir');
+    expect(chatPlainText('snake_case_name'), 'snake_case_name');
+  });
+
+  test('plain text is the same however far the stream got', () {
+    const full = '**Siapin mental.** Tiap pagi dia ngingetin *diri*.';
+    final plain = chatPlainText(full);
+    for (var n = 0; n <= full.length; n++) {
+      final partial = chatPlainText(full.substring(0, n));
+      expect(plain.startsWith(partial), isTrue, reason: 'n=$n "$partial"');
+    }
+  });
+
+  group('chatDisplayLayouts', () {
+    ChatAnswerBlock b(String text, ChatAnswerLayout layout) =>
+        ChatAnswerBlock(text: text, sources: [], layout: layout);
+    const item = ChatAnswerLayout.item, bullet = ChatAnswerLayout.bullet;
+    const paragraph = ChatAnswerLayout.paragraph;
+
+    test(
+      'an intro sentence ending with a colon is a paragraph, not a point',
+      () {
+        final layouts = chatDisplayLayouts([
+          b('Untuk menerapkan konsep ini, berikut beberapa contoh:', bullet),
+          b('**Satu.** a', bullet),
+          b('**Dua.** b', bullet),
+        ]);
+        expect(layouts, [paragraph, bullet, bullet]);
+        expect(
+          chatDisplayLayouts([
+            b('Berikut contoh: ', item),
+            b('a', item),
+            b('b', item),
+          ]),
+          [paragraph, item, item],
+        );
+      },
+    );
+
+    test('a list with one item is just a paragraph', () {
+      expect(chatDisplayLayouts([b('Intro.', paragraph), b('sendiri', item)]), [
+        paragraph,
+        paragraph,
+      ]);
+    });
+
+    test('real lists and other layouts are left alone', () {
+      expect(
+        chatDisplayLayouts([
+          b('a', item),
+          b('b', item),
+          b('c', item),
+          b('penutup', paragraph),
+          b('q', ChatAnswerLayout.quote),
+        ]),
+        [item, item, item, paragraph, ChatAnswerLayout.quote],
+      );
+    });
+
+    test('an intro without colon is a paragraph when every other item leads with bold', () {
+      expect(
+        chatDisplayLayouts([
+          b('Ini beberapa contohnya.', item),
+          b('**Rutinitas pagi.** a', item),
+          b('**Jeda.** b', item),
+        ]),
+        [paragraph, item, item],
+      );
+      expect(
+        chatDisplayLayouts([
+          b('Ciri-cirinya begini.', bullet),
+          b('**Tenang.** a', bullet),
+          b('**Konsisten.** b', bullet),
+        ]),
+        [paragraph, bullet, bullet],
+      );
+    });
+
+    test('mixed or bold-led runs are left alone', () {
+      expect(
+        chatDisplayLayouts([
+          b('intro', item),
+          b('**A.** x', item),
+          b('tanpa tebal', item),
+        ]),
+        [item, item, item],
+      );
+      expect(
+        chatDisplayLayouts([
+          b('**Contoh.** Berikut ini', item),
+          b('**A.** x', item),
+          b('**B.** y', item),
+        ]),
+        [item, item, item],
+      );
+    });
+
+    test('while streaming the first block of a list shows no marker yet', () {
+      expect(
+        chatDisplayLayouts([b('Ini beberapa conto', item)], streaming: true),
+        [paragraph],
+      );
+      expect(
+        chatDisplayLayouts([
+          b('Ini beberapa contohnya.', item),
+          b('**Rutin', item),
+        ], streaming: true),
+        [paragraph, paragraph],
+      );
+      expect(
+        chatDisplayLayouts([
+          b('Ini beberapa contohnya.', item),
+          b('**Rutinitas pagi.** a', item),
+          b('**Jeda', item),
+        ], streaming: true),
+        [paragraph, item, item],
+      );
+    });
+
+    test('item and bullet runs are separate lists', () {
+      expect(chatDisplayLayouts([b('a', item), b('b', item), b('c', bullet)]), [
+        item,
+        item,
+        paragraph,
+      ]);
+    });
+  });
+}

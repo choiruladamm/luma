@@ -112,6 +112,7 @@ class _ChatResponseState extends State<ChatResponse>
         ChatAnswerBlock(
           text: whole ? block.text : characters.take(remaining).join(),
           kind: block.kind,
+          layout: block.layout,
           sources: whole ? block.sources : const [],
         ),
       );

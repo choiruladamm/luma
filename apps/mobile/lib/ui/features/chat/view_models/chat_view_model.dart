@@ -645,7 +645,12 @@ class ChatViewModel extends Notifier<ChatState> {
         ? run.preview
         : [
             for (final b in run.preview)
-              ChatAnswerBlock(text: b.text, kind: b.kind, sources: []),
+              ChatAnswerBlock(
+                text: b.text,
+                kind: b.kind,
+                layout: b.layout,
+                sources: [],
+              ),
           ];
     if (_live(life)) _publishPreview(run);
     run.cancel.cancel();
@@ -686,7 +691,12 @@ class ChatViewModel extends Notifier<ChatState> {
           if (!accepted) {
             run.preview = [
               for (final b in run.preview)
-                ChatAnswerBlock(text: b.text, kind: b.kind, sources: []),
+                ChatAnswerBlock(
+                  text: b.text,
+                  kind: b.kind,
+                  layout: b.layout,
+                  sources: [],
+                ),
             ];
             if (_live(life)) _publishPreview(run);
             phase = ChatPhase.interrupted;
@@ -697,7 +707,12 @@ class ChatViewModel extends Notifier<ChatState> {
         life.flushError = e;
         run.preview = [
           for (final b in run.preview)
-            ChatAnswerBlock(text: b.text, kind: b.kind, sources: []),
+            ChatAnswerBlock(
+              text: b.text,
+              kind: b.kind,
+              layout: b.layout,
+              sources: [],
+            ),
         ];
         if (_live(life)) _publishPreview(run);
         phase = ChatPhase.failed;
