@@ -233,6 +233,31 @@ class Settings extends Table {
   Set<Column> get primaryKey => {key};
 }
 
+/// Katalog Project Gutenberg dari dump `pg_catalog.csv` (docs/discover.md,
+/// Katalog lokal). Bukan data user: diganti utuh tiap sync, gak ikut backup.
+/// List disimpen JSON; `authorsText` buat tampil + index FTS. Pencarian
+/// lewat virtual table `catalog_fts` ([AppDatabase.createCatalogFts]), yang
+/// gak bisa dideklarasiin sebagai tabel Drift.
+@TableIndex(name: 'catalog_books_title', columns: {#title})
+@TableIndex(name: 'catalog_books_authors', columns: {#authorsText})
+class CatalogBooks extends Table {
+  /// `Text#` Gutenberg.
+  IntColumn get id => integer()();
+  TextColumn get title => text()();
+  TextColumn get authorsText => text()();
+
+  /// JSON `[{"name":…,"birth":…,"death":…}]` ([CatalogAuthor]).
+  TextColumn get authorsJson => text()();
+  TextColumn get subjectsJson => text()();
+  TextColumn get bookshelvesJson => text()();
+
+  /// `YYYY-MM-DD`, null kalau kosong di dump.
+  TextColumn get issued => text().nullable()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 @TableIndex(
   name: 'chat_sessions_book_opened',
   columns: {#bookId, #lastOpenedAt, #id},
@@ -349,6 +374,7 @@ class ChatVectors extends Table {
     ChatIndexes,
     ChatVectors,
     ChatChapterNotes,
+    CatalogBooks,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -384,10 +410,26 @@ class AppDatabase extends _$AppDatabase {
   // test/data/migration_test.dart. Backup dari versi lama ikut dimigrasi pas
   // di-restore.
   @override
-  int get schemaVersion => 13;
+  int get schemaVersion => 15;
+
+  /// FTS5 external-content di atas `catalog_books` (teks gak dobel). Isinya
+  /// gak otomatis ikut: [rebuildCatalogFts] tiap `catalog_books` diganti.
+  /// `remove_diacritics 2`: "bronte" ketemu "Brontë".
+  Future<void> createCatalogFts() => customStatement(
+    'CREATE VIRTUAL TABLE IF NOT EXISTS catalog_fts USING fts5('
+    "title, authors_text, content='catalog_books', content_rowid='id', "
+    "tokenize='unicode61 remove_diacritics 2')",
+  );
+
+  Future<void> rebuildCatalogFts() =>
+      customStatement("INSERT INTO catalog_fts(catalog_fts) VALUES('rebuild')");
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
+    onCreate: (m) async {
+      await m.createAll();
+      await createCatalogFts();
+    },
     onUpgrade: (m, from, to) async {
       if (from < 2) {
         await m.addColumn(books, books.firstOpenedAt);
@@ -437,6 +479,15 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from >= 8 && from < 13) {
         await m.addColumn(chatTurns, chatTurns.steps);
+      }
+      if (from < 14) {
+        await m.createTable(catalogBooks);
+        await m.createIndex(catalogBooksTitle);
+        await m.createIndex(catalogBooksAuthors);
+      }
+      if (from < 15) {
+        await createCatalogFts();
+        await rebuildCatalogFts(); // v14 bisa udah punya isi katalog
       }
     },
     // SQLite matiin foreign key secara default; cascade butuh ini.
