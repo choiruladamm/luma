@@ -29,11 +29,12 @@ Gak ada aggregator gratis lintas sumber. OPDS satu-satunya protokol bersama, tap
 - **Langsung dari HP, tanpa backend.** Satu user gak nyentuh batas gutenberg.org (~100 download/hari). Backend/self-host baru masuk akal kalau ada user lain atau kena rate limit.
 - **Interface `BookSource` dari awal** (keputusan produk: multi-sumber), adapter per provider di `data/services/`. Registry `bookSourcesProvider` = `List<BookSource>`; nambah sumber = satu file adapter + satu baris.
 - **Bahasa dikunci Inggris di adapter.** Gak ada filter di interface maupun setting.
+- **Cari = katalog lokal, OPDS cuma populer / detail / download.** `search('')` → OPDS `sort_order=downloads`; `search('q')` → `CatalogRepository.search` (FTS5, instan, offline, [#169](https://github.com/choiruladamm/luma/issues/169)). Adapter Gutenberg yang ngeroute, UI cuma kenal `BookSource`.
 - **Bytes EPUB langsung ke `importEpub`** yang udah ada (dedup sha256). `SourceType` tetep `epub`. Metadata rak (judul, penulis, cover) dari parser EPUB, bukan dari katalog.
 - **Kolom baru `books.sourceId` + `books.externalId`** (migrasi + test) biar hasil cari bisa nunjukin "udah di rak" sebelum download.
 - **Download di Notifier level app** (tanpa `autoDispose`): satu download jalan, sisanya antri; pindah layar gak batal; selesai = toast + masuk rak. Cuma app kill yang motong. Gak pakai `background_downloader`.
 - **Cover hasil cari** pakai `cached_network_image` (dependensi baru). Cover rak tetep dari EPUB.
-- **Cache hasil search** in-memory per sesi di ViewModel, key `(sourceId, query, page)`.
+- **Cache halaman populer** in-memory per sesi di ViewModel, key `(sourceId, page)`. Hasil cari lokal gak di-cache (±6 ms).
 
 Ditunda (ditambah pas kebutuhannya nyata): cache abstrak lintas sumber, filter generik (subjek, penulis), rating.
 
@@ -44,7 +45,8 @@ abstract interface class BookSource {
   String get id;    // 'gutenberg', 'standard_ebooks', ...
   String get name;  // label UI
 
-  /// query '' = daftar populer (atau apa pun yang sumbernya bisa).
+  /// query '' = daftar populer, selain itu hasil cari.
+  /// Gutenberg: populer dari OPDS, cari dari katalog lokal.
   Future<CatalogPage> search(String query, {int page = 1});
 
   Future<CatalogBookDetail> fetchDetail(String externalId);
@@ -59,19 +61,20 @@ abstract interface class BookSource {
 
 Model freezed di `domain/models/`:
 
-- `CatalogPage`: `items`, `hasMore`.
-- `CatalogBook`: `sourceId`, `externalId`, `title`, `authors`, `coverUrl`, `downloadUrl`, `language`. `sourceId + externalId` = identitas lintas sumber.
-- `CatalogBookDetail`: `summary`, `subjects`, `bookshelves`, `fileSize`, `published`, `wikipediaUrl`. Sinopsis ada di `content` OPDS per buku (bagian `Summary:`), gak semua buku punya.
+- `CatalogPage`: `items`, `hasMore`, `total` (nullable: dari `searchCount` buat "7 hasil"; populer OPDS gak tau total).
+- `CatalogBook`: `sourceId`, `externalId`, `title`, `authors` (`List<CatalogAuthor>` dari `domain/catalog/`, bawa tahun hidup), `coverUrl`, `downloadUrl`. `sourceId + externalId` = identitas lintas sumber. Gak ada `language`: semua sumber dikunci Inggris.
+- `CatalogBookDetail`: `summary`, `subjects`, `bookshelves`, `fileSize`, `issued` (tanggal masuk Gutenberg, bukan tahun terbit asli), `wikipediaUrl`. Sinopsis ada di `content` OPDS per buku (bagian `Summary:`), gak semua buku punya. "N buku lain di katalog" bukan di sini: UI panggil `CatalogRepository.countByAuthor` langsung.
 
-## Adapter Gutenberg (OPDS)
+## Adapter Gutenberg (OPDS + katalog lokal)
 
-- Search: `GET /ebooks/search.opds/?query=<q>&sort_order=downloads&start_index=<n>`. Query kosong = populer. Feed search per entri cuma id, judul, penulis (`content`), thumbnail generik. Entri navigasi (Subjects, Authors, ...) dibuang.
+- Populer (`search('')`): `GET /ebooks/search.opds/?sort_order=downloads&start_index=<n>`, 25/halaman, link `next` → `hasMore`, `total` null. Per entri cuma id, judul, penulis (`content`), thumbnail generik. Entri navigasi (Subjects, Authors, ...) dibuang.
+- Cari (`search('q')`): `CatalogRepository.search` + `searchCount` → `CatalogRow` dipetain ke `CatalogBook` (URL dirakit dari id). Tanpa jaringan. Katalog belum sync = halaman kosong; yang nyuruh sync itu layar cari (lihat Katalog lokal).
 - URL dirakit dari id (konvensi stabil bertahun-tahun), tanpa request per item:
   - cover: `https://www.gutenberg.org/cache/epub/{id}/pg{id}.cover.medium.jpg`
   - EPUB: `https://www.gutenberg.org/ebooks/{id}.epub.noimages` (302 ke `/cache/epub/`, `followRedirects` cukup)
-- `fetchDetail`: `GET /ebooks/{id}.opds` → sinopsis (`Summary:` di `content`), link Wikipedia, subjek LCSH, bookshelves, ukuran file (`length` di link EPUB), tahun terbit. Bisa koreksi URL kalau beda dari rakitan. **Gak ada**: download count, tahun hidup penulis (dari katalog lokal).
-- Search dan "buku lain penulis ini" pindah ke katalog lokal begitu #169 masuk; OPDS tinggal buat populer, detail, download.
-- Parser XML pakai package `xml` yang udah ada, pure, dites pakai fixture.
+- `fetchDetail`: `GET /ebooks/{id}.opds` → sinopsis (`Summary:` di `content`), link Wikipedia, subjek LCSH, bookshelves, ukuran file (`length` di link EPUB), `issued`. Bisa koreksi URL kalau beda dari rakitan. **Gak ada**: download count, tahun hidup penulis (udah ada di `CatalogAuthor`).
+- Parser XML (feed populer + per buku) pakai package `xml` yang udah ada, pure, dites pakai fixture.
+- HTTP bersama: `userAgent` + retry 429/503 yang sekarang nempel di `CatalogSyncService` dipindah ke `data/services/http_client.dart` (`lumaDio({receiveTimeout})` + helper retry), dipakai sync katalog dan adapter.
 
 ## Katalog lokal ([#169](https://github.com/choiruladamm/luma/issues/169))
 
@@ -102,9 +105,9 @@ Aturan gutenberg.org ([robot_access](https://www.gutenberg.org/policy/robot_acce
 
 ## Test
 
-- `test/domain/`: parser feed search + per buku (fixture XML), rakit URL dari id.
-- `test/data/`: adapter dengan Dio fake (paging, retry 429/503, timeout), download → `importEpub` pakai EPUB kecil, migrasi kolom `sourceId`/`externalId`.
-- `test/ui/features/discover/`: widget test layar cari, `bookSourcesProvider` + download notifier di-override pakai sumber palsu.
+- `test/domain/`: parser feed populer + per buku (fixture XML), rakit URL dari id, `CatalogRow` → `CatalogBook`.
+- `test/data/`: adapter dengan Dio fake (paging populer, retry 429/503, timeout) + `CatalogRepository` in-memory buat `search('q')`, download → `importEpub` pakai EPUB kecil, migrasi kolom `sourceId`/`externalId`.
+- `test/ui/features/discover/`: widget test layar cari, `bookSourcesProvider`, download notifier, `catalogSyncProvider`, `catalogStatsProvider` di-override pakai data palsu.
 
 ## Catatan buat board (draft arah A, page 90 Drafting)
 
