@@ -122,6 +122,15 @@ class BookRepository {
     return row?.read(_db.books.id);
   }
 
+  /// Semua `externalId` dari [sourceId] yang udah di rak, live: badge "Udah di
+  /// rak" di daftar hasil cari tanpa query per baris.
+  Stream<Set<String>> watchExternalIds(String sourceId) =>
+      (_db.selectOnly(_db.books)
+            ..addColumns([_db.books.externalId])
+            ..where(_db.books.sourceId.equals(sourceId)))
+          .watch()
+          .map((rows) => {for (final r in rows) ?r.read(_db.books.externalId)});
+
   /// Buku + chapter-nya buat halaman baca. Null kalau bukunya udah dihapus.
   Future<ReaderBook?> readerBook(int id) async {
     final book = await (_db.select(

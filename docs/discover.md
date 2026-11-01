@@ -121,6 +121,8 @@ Aturan gutenberg.org ([robot_access](https://www.gutenberg.org/policy/robot_acce
 Keputusan implementasi yang gak ada di board:
 
 - Katalog pertama kali belum ada: layout layar 07 dengan copy "Nyiapin katalog buku… 43%" dari `catalogSyncProvider`; gagal = layar 08.
+- Tab Cari buku = `DiscoverView` + `discoverProvider` (`ui/features/discover/`): `PopularState` (loading / slow setelah 5 detik / ready Top 10 / failed offline · dead), `SearchResults` (query, items, total, hasMore, loadingMore, moreFailed) dari `search(q)` tiap ketikan tanpa debounce; `loadMore` pas sisa scroll < 200. Badge baris dari `shelfExternalIdsProvider` (stream `BookRepository.watchExternalIds`) + `downloadQueueProvider`. Cover jaringan lewat `CatalogCover` (muted pas belum kemuat, cover default kalau gagal). Kolom cari dimatiin sampai katalog ada.
+- Fixture evaluasi Ngobrolin buku ngunci hash `pubspec.lock`; nambah dependensi UI (`cached_network_image`) = perbarui hash di manifest aktif (heldout v1, validation2, validation3) dan `pubspec.lock` masuk daftar `mutable` di `chat_retrieval_test`. Arsip `spike113` dan `refined_protocol_v2` gak disentuh.
 - Offline (09) dideteksi dari error jaringan (`connectionError` / `SocketException`), dicoba lagi tiap tab dibuka; tanpa `connectivity_plus`.
 - "Lagi rame" di-cache in-memory per sesi; buka app baru = request lagi.
 - Kutipan layar 02 / 17 dari daftar kurasi hardcode (Pride and Prejudice, Emma, Alice); buku lain pakai kutipan Pride and Prejudice.
