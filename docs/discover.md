@@ -33,6 +33,8 @@ Gak ada aggregator gratis lintas sumber. OPDS satu-satunya protokol bersama, tap
 - **Bytes EPUB langsung ke `importEpub`** yang udah ada (dedup sha256). `SourceType` tetep `epub`. Metadata rak (judul, penulis, cover) dari parser EPUB, bukan dari katalog.
 - **Kolom baru `books.sourceId` + `books.externalId`** (migrasi + test) biar hasil cari bisa nunjukin "udah di rak" sebelum download.
 - **Download di Notifier level app** (tanpa `autoDispose`): satu download jalan, sisanya antri; pindah layar gak batal; selesai = toast + masuk rak. Cuma app kill yang motong. Gak pakai `background_downloader`.
+  - `downloadQueueProvider` (`ui/features/discover/view_models/download_queue_view_model.dart`, `Notifier<List<DownloadItem>>`): `enqueue(book)` (lagi antri / jalan = no-op, yang udah selesai diganti), `cancel(key)` (antri = hilang; jalan = berhenti di checkpoint berikutnya lalu hilang), `dismiss(key)` buat entri selesai / gagal. Status `queued → downloading(progress) → importing → done / duplicate / failed(error)`; `key` = `sourceId/externalId`. Import pakai `fileName` `pg{id}.epub`, bawa `sourceId` + `externalId`.
+  - `DownloadToasts` di `builder` MaterialApp (di atas router): tiap entri yang baru selesai → toast "Sip, udah masuk rak!" / "Udah ada di rak" (· Baca, push lewat `routerProvider`) / "Gagal ngunduh". Copy final nyusul board (#167).
 - **Cover hasil cari** pakai `cached_network_image` (dependensi baru). Cover rak tetep dari EPUB.
 - **Cache halaman populer** in-memory per sesi di ViewModel, key `(sourceId, page)`. Hasil cari lokal gak di-cache (±6 ms).
 
@@ -109,7 +111,8 @@ Aturan gutenberg.org ([robot_access](https://www.gutenberg.org/policy/robot_acce
 
 - `test/domain/`: parser feed populer + per buku (fixture XML), rakit URL dari id, `CatalogRow` → `CatalogBook`.
 - `test/data/`: adapter dengan Dio fake (paging populer, retry 429/503, timeout) + `CatalogRepository` in-memory buat `search('q')`, download → `importEpub` pakai EPUB kecil, migrasi kolom `sourceId`/`externalId`.
-- `test/ui/features/discover/`: widget test layar cari, `bookSourcesProvider`, download notifier, `catalogSyncProvider`, `catalogStatsProvider` di-override pakai data palsu.
+- `test/data/download_queue_test.dart`: antrian dengan sumber palsu (urutan, dobel, batal antri / jalan, gagal jaringan, EPUB rusak), download → import EPUB kecil masuk DB in-memory.
+- `test/ui/features/discover/`: widget test layar cari, `bookSourcesProvider`, download notifier, `catalogSyncProvider`, `catalogStatsProvider` di-override pakai data palsu. `download_toasts_test.dart`: toast cuma pas status berubah jadi selesai.
 
 ## Catatan buat board (draft arah A, page 90 Drafting)
 
