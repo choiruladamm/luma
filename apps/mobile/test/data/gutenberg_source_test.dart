@@ -4,7 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:drift/drift.dart' hide isNull, isNotNull;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:luma/data/database/app_database.dart' hide CatalogBook;
+import 'package:luma/data/database/app_database.dart';
 import 'package:luma/data/repositories/catalog_repository.dart';
 import 'package:luma/data/services/gutenberg_source.dart';
 import 'package:luma/data/services/http_client.dart';

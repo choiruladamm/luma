@@ -197,7 +197,7 @@ class CatalogRepository {
   static const _syncedAt = 'catalog.syncedAt';
   static const _lastModified = 'catalog.lastModified';
 
-  static CatalogRow _toRow(CatalogBook b) => CatalogRow(
+  static CatalogRow _toRow(CatalogBookRow b) => CatalogRow(
     id: b.id,
     title: b.title,
     authors: [

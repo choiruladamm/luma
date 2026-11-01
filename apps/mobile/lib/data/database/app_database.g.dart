@@ -7896,7 +7896,7 @@ class ChatChapterNotesCompanion extends UpdateCompanion<ChatChapterNoteRow> {
 }
 
 class $CatalogBooksTable extends CatalogBooks
-    with TableInfo<$CatalogBooksTable, CatalogBook> {
+    with TableInfo<$CatalogBooksTable, CatalogBookRow> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
@@ -7989,7 +7989,7 @@ class $CatalogBooksTable extends CatalogBooks
   static const String $name = 'catalog_books';
   @override
   VerificationContext validateIntegrity(
-    Insertable<CatalogBook> instance, {
+    Insertable<CatalogBookRow> instance, {
     bool isInserting = false,
   }) {
     final context = VerificationContext();
@@ -8061,9 +8061,9 @@ class $CatalogBooksTable extends CatalogBooks
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  CatalogBook map(Map<String, dynamic> data, {String? tablePrefix}) {
+  CatalogBookRow map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return CatalogBook(
+    return CatalogBookRow(
       id: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}id'],
@@ -8101,7 +8101,7 @@ class $CatalogBooksTable extends CatalogBooks
   }
 }
 
-class CatalogBook extends DataClass implements Insertable<CatalogBook> {
+class CatalogBookRow extends DataClass implements Insertable<CatalogBookRow> {
   /// `Text#` Gutenberg.
   final int id;
   final String title;
@@ -8114,7 +8114,7 @@ class CatalogBook extends DataClass implements Insertable<CatalogBook> {
 
   /// `YYYY-MM-DD`, null kalau kosong di dump.
   final String? issued;
-  const CatalogBook({
+  const CatalogBookRow({
     required this.id,
     required this.title,
     required this.authorsText,
@@ -8152,12 +8152,12 @@ class CatalogBook extends DataClass implements Insertable<CatalogBook> {
     );
   }
 
-  factory CatalogBook.fromJson(
+  factory CatalogBookRow.fromJson(
     Map<String, dynamic> json, {
     ValueSerializer? serializer,
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return CatalogBook(
+    return CatalogBookRow(
       id: serializer.fromJson<int>(json['id']),
       title: serializer.fromJson<String>(json['title']),
       authorsText: serializer.fromJson<String>(json['authorsText']),
@@ -8181,7 +8181,7 @@ class CatalogBook extends DataClass implements Insertable<CatalogBook> {
     };
   }
 
-  CatalogBook copyWith({
+  CatalogBookRow copyWith({
     int? id,
     String? title,
     String? authorsText,
@@ -8189,7 +8189,7 @@ class CatalogBook extends DataClass implements Insertable<CatalogBook> {
     String? subjectsJson,
     String? bookshelvesJson,
     Value<String?> issued = const Value.absent(),
-  }) => CatalogBook(
+  }) => CatalogBookRow(
     id: id ?? this.id,
     title: title ?? this.title,
     authorsText: authorsText ?? this.authorsText,
@@ -8198,8 +8198,8 @@ class CatalogBook extends DataClass implements Insertable<CatalogBook> {
     bookshelvesJson: bookshelvesJson ?? this.bookshelvesJson,
     issued: issued.present ? issued.value : this.issued,
   );
-  CatalogBook copyWithCompanion(CatalogBooksCompanion data) {
-    return CatalogBook(
+  CatalogBookRow copyWithCompanion(CatalogBooksCompanion data) {
+    return CatalogBookRow(
       id: data.id.present ? data.id.value : this.id,
       title: data.title.present ? data.title.value : this.title,
       authorsText: data.authorsText.present
@@ -8220,7 +8220,7 @@ class CatalogBook extends DataClass implements Insertable<CatalogBook> {
 
   @override
   String toString() {
-    return (StringBuffer('CatalogBook(')
+    return (StringBuffer('CatalogBookRow(')
           ..write('id: $id, ')
           ..write('title: $title, ')
           ..write('authorsText: $authorsText, ')
@@ -8245,7 +8245,7 @@ class CatalogBook extends DataClass implements Insertable<CatalogBook> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is CatalogBook &&
+      (other is CatalogBookRow &&
           other.id == this.id &&
           other.title == this.title &&
           other.authorsText == this.authorsText &&
@@ -8255,7 +8255,7 @@ class CatalogBook extends DataClass implements Insertable<CatalogBook> {
           other.issued == this.issued);
 }
 
-class CatalogBooksCompanion extends UpdateCompanion<CatalogBook> {
+class CatalogBooksCompanion extends UpdateCompanion<CatalogBookRow> {
   final Value<int> id;
   final Value<String> title;
   final Value<String> authorsText;
@@ -8285,7 +8285,7 @@ class CatalogBooksCompanion extends UpdateCompanion<CatalogBook> {
        authorsJson = Value(authorsJson),
        subjectsJson = Value(subjectsJson),
        bookshelvesJson = Value(bookshelvesJson);
-  static Insertable<CatalogBook> custom({
+  static Insertable<CatalogBookRow> custom({
     Expression<int>? id,
     Expression<String>? title,
     Expression<String>? authorsText,
@@ -15810,17 +15810,17 @@ class $$CatalogBooksTableTableManager
         RootTableManager<
           _$AppDatabase,
           $CatalogBooksTable,
-          CatalogBook,
+          CatalogBookRow,
           $$CatalogBooksTableFilterComposer,
           $$CatalogBooksTableOrderingComposer,
           $$CatalogBooksTableAnnotationComposer,
           $$CatalogBooksTableCreateCompanionBuilder,
           $$CatalogBooksTableUpdateCompanionBuilder,
           (
-            CatalogBook,
-            BaseReferences<_$AppDatabase, $CatalogBooksTable, CatalogBook>,
+            CatalogBookRow,
+            BaseReferences<_$AppDatabase, $CatalogBooksTable, CatalogBookRow>,
           ),
-          CatalogBook,
+          CatalogBookRow,
           PrefetchHooks Function()
         > {
   $$CatalogBooksTableTableManager(_$AppDatabase db, $CatalogBooksTable table)
@@ -15873,11 +15873,11 @@ class $$CatalogBooksTableTableManager
           withReferenceMapper: (p0) => p0
               .map(
                 (e) => (
-                  e.readTable<$CatalogBooksTable, CatalogBook>(table),
+                  e.readTable<$CatalogBooksTable, CatalogBookRow>(table),
                   BaseReferences<
                     _$AppDatabase,
                     $CatalogBooksTable,
-                    CatalogBook
+                    CatalogBookRow
                   >(db, table, e),
                 ),
               )
@@ -15891,17 +15891,17 @@ typedef $$CatalogBooksTableProcessedTableManager =
     ProcessedTableManager<
       _$AppDatabase,
       $CatalogBooksTable,
-      CatalogBook,
+      CatalogBookRow,
       $$CatalogBooksTableFilterComposer,
       $$CatalogBooksTableOrderingComposer,
       $$CatalogBooksTableAnnotationComposer,
       $$CatalogBooksTableCreateCompanionBuilder,
       $$CatalogBooksTableUpdateCompanionBuilder,
       (
-        CatalogBook,
-        BaseReferences<_$AppDatabase, $CatalogBooksTable, CatalogBook>,
+        CatalogBookRow,
+        BaseReferences<_$AppDatabase, $CatalogBooksTable, CatalogBookRow>,
       ),
-      CatalogBook,
+      CatalogBookRow,
       PrefetchHooks Function()
     >;
 

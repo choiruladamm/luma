@@ -245,6 +245,7 @@ class Settings extends Table {
 /// gak bisa dideklarasiin sebagai tabel Drift.
 @TableIndex(name: 'catalog_books_title', columns: {#title})
 @TableIndex(name: 'catalog_books_authors', columns: {#authorsText})
+@DataClassName('CatalogBookRow')
 class CatalogBooks extends Table {
   /// `Text#` Gutenberg.
   IntColumn get id => integer()();

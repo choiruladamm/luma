@@ -5,7 +5,7 @@ import 'package:drift/drift.dart' hide isNull, isNotNull;
 import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:luma/data/database/app_database.dart' hide CatalogBook;
+import 'package:luma/data/database/app_database.dart';
 import 'package:luma/data/repositories/import_repository.dart';
 import 'package:luma/data/services/book_source.dart';
 import 'package:luma/data/services/file_storage.dart';
