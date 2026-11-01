@@ -127,6 +127,7 @@ Keputusan implementasi yang gak ada di board:
 - "Lagi rame" di-cache in-memory per sesi; buka app baru = request lagi.
 - Kutipan layar 02 / 17 dari daftar kurasi hardcode (Pride and Prejudice, Emma, Alice); buku lain pakai kutipan Pride and Prejudice.
 - Penulis di detail (tap) = balik ke cari dengan query nama penulis (FTS), bukan `byAuthor` persis.
+- Detail buku = `BookDetailView` + `bookDetailProvider(book)` (route `/discover/book/:sourceId/:externalId`, `extra` = `CatalogBook`, di luar shell). `DetailState` loading / slow / ready / failed; kepala kuning langsung dari `CatalogBook`, judul 28 → 24 (> 24 huruf) → 21 (> 40 huruf). Subjek LCSH dipotong di ` -- `, bookshelves tanpa prefix `Category: `. "N buku lain" = `authorBookCountProvider` (`countByAuthor` − 1). Tombol bawah dari `downloadQueueProvider` + `shelfBookIdProvider` (+ progres dari `booksStreamProvider`); done / duplicate pakai `bookId` antrian dulu sebelum rak nyusul.
 - "App di latar: notifikasi lokal" (layar 15) ditunda ke [#175](https://github.com/choiruladamm/luma/issues/175): butuh dependensi + izin, iOS cuma ngasih ±30 detik di latar.
 
 ## Ditunda

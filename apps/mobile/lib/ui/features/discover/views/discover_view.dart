@@ -15,6 +15,7 @@ import '../../../core/widgets/tag.dart';
 import '../view_models/discover_view_model.dart';
 import '../view_models/download_queue_view_model.dart';
 import 'catalog_cover.dart';
+import 'discover_states.dart';
 
 /// Tab Cari buku (board 09 · Cari buku, layar 03–09). Katalog lokal belum ada
 /// = nyiapin dulu (layout layar 07); kolom kosong = Top chart; ketik = hasil.
@@ -54,6 +55,10 @@ class _DiscoverViewState extends ConsumerState<DiscoverView> {
 
   @override
   Widget build(BuildContext context) {
+    // Query bisa diisi dari luar (tap penulis di detail buku): kolomnya ikut.
+    ref.listen(discoverProvider.select((s) => s.query), (_, q) {
+      if (_field.text != q) _field.text = q;
+    });
     final state = ref.watch(discoverProvider);
     final stats = ref.watch(catalogStatsProvider).value;
     final sync = ref.watch(catalogSyncProvider);
@@ -223,20 +228,20 @@ class _CatalogSetup extends StatelessWidget {
       padding: EdgeInsets.only(bottom: bottom),
       children: [
         if (failed)
-          _Notice(
+          DiscoverNotice(
             icon: AppIcons.alert,
             title: 'Katalog lagi gak bisa dihubungin',
             body: 'Bukan salah lo kok. Coba lagi bentar lagi ya.',
             onRetry: onRetry,
           )
         else
-          _Notice(
+          DiscoverNotice(
             icon: AppIcons.loading,
             spinning: true,
             title: text,
             body: 'Sekali aja, abis itu nyari jalan tanpa internet.',
           ),
-        if (!failed) const _SkeletonRows(),
+        if (!failed) const SkeletonRows(),
       ],
     );
   }
@@ -267,7 +272,7 @@ class _TopChart extends ConsumerWidget {
       padding: EdgeInsets.only(bottom: bottom),
       children: [
         if (popular case PopularFailed(failure: NetworkFailure.offline))
-          _EmptyState(
+          DiscoverEmpty(
             icon: AppIcons.offline,
             title: 'Lo lagi offline',
             body:
@@ -305,19 +310,19 @@ class _TopChart extends ConsumerWidget {
           ),
           const SizedBox(height: Space.s4),
           switch (popular) {
-            PopularFailed() => _Notice(
+            PopularFailed() => DiscoverNotice(
               icon: AppIcons.alert,
               title: 'Katalog lagi gak bisa dihubungin',
               body: 'Bukan salah lo kok. Coba lagi bentar lagi ya.',
               onRetry: onRetry,
             ),
-            PopularLoading(slow: true) => _Notice(
+            PopularLoading(slow: true) => DiscoverNotice(
               icon: AppIcons.history,
               title: 'Katalognya lagi lemot nih',
               body: 'Udah 5 detik lebih. Tungguin bentar, atau coba lagi.',
               onRetry: onRetry,
             ),
-            PopularLoading() => const _SkeletonRows(),
+            PopularLoading() => const SkeletonRows(),
             PopularReady() => Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               spacing: Space.s4,
@@ -327,7 +332,7 @@ class _TopChart extends ConsumerWidget {
               ],
             ),
           },
-          if (popular case PopularLoading(slow: true)) const _SkeletonRows(),
+          if (popular case PopularLoading(slow: true)) const SkeletonRows(),
           const SizedBox(height: Space.s5),
           Text(
             'COBA CARI',
@@ -387,7 +392,7 @@ class _TopCard extends StatelessWidget {
       button: true,
       label: '#1 lagi rame, ${book.title}',
       child: GestureDetector(
-        onTap: () {}, // Detail buku: #173.
+        onTap: () => context.push(Routes.catalogBook(book), extra: book),
         child: Container(
           height: 168,
           clipBehavior: Clip.antiAlias,
@@ -482,7 +487,7 @@ class _RankRow extends StatelessWidget {
             button: true,
             label: '#${i + 2}, ${book.title}',
             child: GestureDetector(
-              onTap: () {}, // Detail buku: #173.
+              onTap: () => context.push(Routes.catalogBook(book), extra: book),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 spacing: 6,
@@ -583,7 +588,7 @@ class _Results extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final c = context.stabilo;
     if (results.items.isEmpty) {
-      return _EmptyState(
+      return DiscoverEmpty(
         icon: HugeIcons.strokeRoundedSearchRemove,
         title: 'Gak nemu “${results.query}”',
         body:
@@ -659,7 +664,7 @@ class _BestMatch extends StatelessWidget {
       button: true,
       label: 'Paling cocok, ${book.title}',
       child: GestureDetector(
-        onTap: () {}, // Detail buku: #173.
+        onTap: () => context.push(Routes.catalogBook(book), extra: book),
         child: Container(
           padding: const EdgeInsets.all(Space.s4),
           decoration: BoxDecoration(
@@ -732,7 +737,7 @@ class _ResultRow extends StatelessWidget {
       label: book.title,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTap: () {}, // Detail buku: #173.
+        onTap: () => context.push(Routes.catalogBook(book), extra: book),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 10),
           child: Row(
@@ -810,212 +815,6 @@ class _BookStatus extends ConsumerWidget {
     return Padding(
       padding: EdgeInsets.only(top: topGap),
       child: Align(alignment: Alignment.centerLeft, child: tag),
-    );
-  }
-}
-
-/// Kotak muted dengan ikon tile 36, judul, isi, tombol (board 07 / 08).
-class _Notice extends StatelessWidget {
-  const _Notice({
-    required this.icon,
-    required this.title,
-    required this.body,
-    this.onRetry,
-    this.spinning = false,
-  });
-
-  final List<List<dynamic>> icon;
-  final String title, body;
-  final VoidCallback? onRetry;
-  final bool spinning;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.stabilo;
-    return Semantics(
-      liveRegion: true,
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-        decoration: BoxDecoration(
-          color: c.muted,
-          borderRadius: BorderRadius.circular(Radii.lg),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          spacing: Space.s3,
-          children: [
-            Container(
-              width: 36,
-              height: 36,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: c.sheet,
-                borderRadius: BorderRadius.circular(Radii.sm),
-              ),
-              child: spinning
-                  ? SizedBox.square(
-                      dimension: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: c.ink,
-                      ),
-                    )
-                  : AppIcon(icon, size: 18, color: c.ink),
-            ),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: 2,
-                children: [
-                  Text(title, style: StabiloType.label),
-                  Text(
-                    body,
-                    style: StabiloType.caption.copyWith(
-                      fontSize: 13.5,
-                      height: 1.4,
-                      color: c.ink2,
-                    ),
-                  ),
-                  if (onRetry case final retry?)
-                    Padding(
-                      padding: const EdgeInsets.only(top: Space.s2),
-                      child: Semantics(
-                        button: true,
-                        child: GestureDetector(
-                          onTap: retry,
-                          child: Container(
-                            height: 40,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: Space.s4,
-                            ),
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              color: c.sheet,
-                              borderRadius: BorderRadius.circular(Radii.full),
-                            ),
-                            child: Text(
-                              'Coba lagi',
-                              style: StabiloType.label.copyWith(fontSize: 14),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Tiga baris skeleton (cover 52 muted + dua garis), tanpa animasi.
-class _SkeletonRows extends StatelessWidget {
-  const _SkeletonRows();
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.stabilo;
-    Widget bar(double fraction, double height) => FractionallySizedBox(
-      alignment: Alignment.centerLeft,
-      widthFactor: fraction,
-      child: Container(
-        height: height,
-        decoration: BoxDecoration(
-          color: c.muted,
-          borderRadius: BorderRadius.circular(6),
-        ),
-      ),
-    );
-    return ExcludeSemantics(
-      child: Column(
-        children: [
-          for (final (i, w) in [0.7, 0.5, 0.6].indexed) ...[
-            if (i > 0) Divider(height: 1, thickness: 1, color: c.track),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 9),
-              child: Row(
-                spacing: 14,
-                children: [
-                  Container(
-                    width: 52,
-                    height: 78,
-                    decoration: BoxDecoration(
-                      color: c.muted,
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: c.track, width: Layout.outline),
-                    ),
-                  ),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      spacing: 9,
-                      children: [bar(w, 14), bar(0.45, 12)],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-/// Ikon tile 64 + judul 19 + isi (board 06 / 09).
-class _EmptyState extends StatelessWidget {
-  const _EmptyState({
-    required this.icon,
-    required this.title,
-    required this.body,
-    this.action,
-  });
-
-  final List<List<dynamic>> icon;
-  final String title, body;
-  final Widget? action;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.stabilo;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 40, 12, 0),
-      child: Column(
-        spacing: 10,
-        children: [
-          Container(
-            width: 64,
-            height: 64,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: c.muted,
-              borderRadius: BorderRadius.circular(Radii.lg),
-            ),
-            child: AppIcon(icon, size: 28, color: c.ink),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: Text(
-              title,
-              textAlign: TextAlign.center,
-              style: StabiloType.titleSm,
-            ),
-          ),
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 290),
-            child: Text(
-              body,
-              textAlign: TextAlign.center,
-              style: StabiloType.body.copyWith(color: c.ink2),
-            ),
-          ),
-          if (action case final a?)
-            Padding(padding: const EdgeInsets.only(top: 6), child: a),
-        ],
-      ),
     );
   }
 }

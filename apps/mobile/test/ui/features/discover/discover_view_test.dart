@@ -24,6 +24,10 @@ class FakeSource implements BookSource {
   Completer<CatalogPage>? _popular;
   Completer<CatalogPage> get popular => _popular ??= Completer();
   set popular(Completer<CatalogPage> c) => _popular = c;
+  Completer<CatalogBookDetail>? _detail;
+  Completer<CatalogBookDetail> get detail => _detail ??= Completer();
+  set detail(Completer<CatalogBookDetail> c) => _detail = c;
+  final detailRequests = <String>[];
   final catalog = <CatalogBook>[];
   final queries = <String>[];
   Object? searchError;
@@ -51,14 +55,18 @@ class FakeSource implements BookSource {
   }
 
   @override
-  Future<CatalogBookDetail> fetchDetail(String externalId) =>
-      throw UnimplementedError();
+  Future<CatalogBookDetail> fetchDetail(String externalId) {
+    detailRequests.add(externalId);
+    return detail.future;
+  }
+
+  /// Gak pernah selesai: status antrian digerakin dari test.
   @override
   Future<Uint8List> download(
     CatalogBook book, {
     void Function(double progress)? onProgress,
     bool Function()? isCancelled,
-  }) => throw UnimplementedError();
+  }) => Completer<Uint8List>().future;
 }
 
 class FakeSync extends CatalogSyncController {

@@ -5,12 +5,14 @@ import 'package:go_router/go_router.dart';
 
 import '../ui/core/theme/stabilo_tokens.dart';
 import '../domain/models/book_chat.dart';
+import '../domain/models/catalog.dart';
 import '../ui/features/chat/view_models/chat_view_model.dart';
 import '../ui/features/chat/views/chat_view.dart';
 import '../ui/features/chat/views/chat_source_visit_view.dart';
 import '../ui/features/chat/views/chat_sessions_view.dart';
 import '../ui/features/bookshelf/views/bookshelf_view.dart';
 import '../ui/features/breakdown/views/breakdown_view.dart';
+import '../ui/features/discover/views/book_detail_view.dart';
 import '../ui/features/discover/views/discover_view.dart';
 import '../ui/features/reader/views/reader_view.dart';
 import '../ui/features/settings/views/settings_view.dart';
@@ -19,6 +21,11 @@ import '../ui/features/shell/views/app_shell.dart';
 abstract final class Routes {
   static const home = '/';
   static const discover = '/discover';
+
+  /// Detail buku katalog; `extra` = `CatalogBook` (kepala layar tanpa nunggu
+  /// jaringan). Di luar shell: bar tab ke-hide.
+  static String catalogBook(CatalogBook b) =>
+      '/discover/book/${b.sourceId}/${Uri.encodeComponent(b.externalId)}';
   static const settings = '/settings';
   static String chat(int bookId) => '/reader/$bookId/chat';
   static String chatSource(ChatSourceRef source) =>
@@ -66,6 +73,16 @@ final routerProvider = Provider<GoRouter>((ref) {
             ],
           ),
         ],
+      ),
+      GoRoute(
+        path: '/discover/book/:sourceId/:externalId',
+        pageBuilder: (context, state) {
+          final book = state.extra;
+          if (book is! CatalogBook) {
+            return _slidePage(context, state, const _InvalidChatRoute());
+          }
+          return _slidePage(context, state, BookDetailView(book: book));
+        },
       ),
       GoRoute(
         path: '/reader/:bookId',
