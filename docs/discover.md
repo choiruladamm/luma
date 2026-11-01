@@ -67,14 +67,16 @@ Model freezed di `domain/models/`:
 
 ## Adapter Gutenberg (OPDS + katalog lokal)
 
-- Populer (`search('')`): `GET /ebooks/search.opds/?sort_order=downloads&start_index=<n>`, 25/halaman, link `next` → `hasMore`, `total` null. Per entri cuma id, judul, penulis (`content`), thumbnail generik. Entri navigasi (Subjects, Authors, ...) dibuang.
+- Populer (`search('')`): `GET /ebooks/search.opds/?sort_order=downloads&start_index=<n>`, 25/halaman, link `next` → `hasMore`, `total` null. Per entri cuma id, judul, penulis (`content`, bentuk tampil "Jane Austen"; `content` "N downloads" = tanpa penulis), thumbnail generik. Entri navigasi (Subjects, Authors, ...) dibuang. Tiap id dicocokin ke katalog lokal (`byId`) biar penulis + tahun hidup konsisten sama hasil cari; gak ketemu = pakai judul + nama dari feed.
 - Cari (`search('q')`): `CatalogRepository.search` + `searchCount` → `CatalogRow` dipetain ke `CatalogBook` (URL dirakit dari id). Tanpa jaringan. Katalog belum sync = halaman kosong; yang nyuruh sync itu layar cari (lihat Katalog lokal).
 - URL dirakit dari id (konvensi stabil bertahun-tahun), tanpa request per item:
   - cover: `https://www.gutenberg.org/cache/epub/{id}/pg{id}.cover.medium.jpg`
   - EPUB: `https://www.gutenberg.org/ebooks/{id}.epub.noimages` (302 ke `/cache/epub/`, `followRedirects` cukup)
-- `fetchDetail`: `GET /ebooks/{id}.opds` → sinopsis (`Summary:` di `content`), link Wikipedia, subjek LCSH, bookshelves, ukuran file (`length` di link EPUB), `issued`. Bisa koreksi URL kalau beda dari rakitan. **Gak ada**: download count, tahun hidup penulis (udah ada di `CatalogAuthor`).
-- Parser XML (feed populer + per buku) pakai package `xml` yang udah ada, pure, dites pakai fixture.
-- HTTP bersama: `userAgent` + retry 429/503 yang sekarang nempel di `CatalogSyncService` dipindah ke `data/services/http_client.dart` (`lumaDio({receiveTimeout})` + helper retry), dipakai sync katalog dan adapter.
+- `fetchDetail`: `GET /ebooks/{id}.opds` → sinopsis (paragraf `Summary:` di `content`, kalimat "automatically generated summary" dibuang), link Wikipedia (paragraf `Note:`), subjek LCSH, bookshelves (link `related` `/ebooks/bookshelf/`, judul "In X…" → "X"), ukuran file (`length` di link `.epub.noimages`), `issued` (`published`). **Gak ada**: download count, tahun hidup penulis (udah ada di `CatalogAuthor`).
+- Parser XML `domain/catalog/opds_parser.dart` (`parseOpdsFeed`, `parseOpdsBook`) pakai package `xml`, pure, fixture asli di `test/fixtures/catalog/opds_*.xml`.
+- Download: `dio.get` bytes ke `downloadUrl`, `receiveTimeout` 60 s per request, progres 0–1 (−1 tanpa `Content-Length`); `isCancelled` dicek tiap chunk → `CancelToken` → `DioException` tipe `cancel` (sama kayak sync katalog).
+- HTTP bersama `data/services/http_client.dart`: `lumaUserAgent`, `lumaDio({receiveTimeout})` (connect 15 s), `retryOnBusy` (3× cuma 429/503, jeda 2 s × n). Dipakai `CatalogSyncService` dan `GutenbergSource`.
+- Registry: `bookSourcesProvider` = `[GutenbergSource(catalogRepository)]`.
 
 ## Katalog lokal ([#169](https://github.com/choiruladamm/luma/issues/169))
 

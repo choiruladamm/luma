@@ -3,6 +3,8 @@ import 'dart:typed_data';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/models/catalog.dart';
+import '../repositories/catalog_repository.dart';
+import 'gutenberg_source.dart';
 
 /// Satu sumber buku public domain (docs/discover.md). Adapter per sumber di
 /// `data/services/`, didaftarin lewat [bookSourcesProvider].
@@ -28,4 +30,6 @@ abstract interface class BookSource {
 }
 
 /// Registry sumber. Nambah sumber = satu file adapter + satu baris di sini.
-final bookSourcesProvider = Provider<List<BookSource>>((ref) => const []);
+final bookSourcesProvider = Provider<List<BookSource>>(
+  (ref) => [GutenbergSource(ref.watch(catalogRepositoryProvider))],
+);
