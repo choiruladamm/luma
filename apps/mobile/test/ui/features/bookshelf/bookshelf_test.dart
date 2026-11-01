@@ -18,6 +18,9 @@ import 'package:luma/ui/core/theme/stabilo_tokens.dart';
 import 'package:luma/data/repositories/import_repository.dart';
 import 'package:luma/ui/core/widgets/book_card.dart';
 import 'package:luma/ui/core/widgets/nav_bar.dart';
+import 'package:luma/data/services/book_source.dart';
+import 'package:luma/ui/features/discover/curated_books.dart';
+import 'package:luma/ui/features/discover/view_models/download_queue_view_model.dart';
 import 'package:luma/ui/core/widgets/buttons.dart';
 import 'package:luma/ui/core/widgets/book_row.dart';
 import 'package:luma/ui/features/bookshelf/views/shelf_header.dart';
@@ -29,6 +32,7 @@ import 'package:luma/ui/features/reader/views/reader_view.dart';
 import 'package:luma/ui/features/settings/views/settings_view.dart';
 
 import '../../../fakes.dart';
+import '../discover/discover_view_test.dart' show FakeSource;
 
 ShelfBook book(
   int id,
@@ -54,6 +58,10 @@ ShelfBook book(
 );
 
 /// Info + delete without a database or files.
+class FakeQueue extends DownloadQueue {
+  void emit(List<DownloadItem> items) => state = items;
+}
+
 class FakeBooks extends Fake implements BookRepository {
   BookInfo? info;
   final deleted = <int>[];
@@ -130,6 +138,11 @@ void main() {
           // Opening a book shows the reader: feed it too, never the real DB.
           readerBookProvider.overrideWith((ref, id) async => null),
           readingProgressRepositoryProvider.overrideWithValue(FakeProgress()),
+          downloadQueueProvider.overrideWith(FakeQueue.new),
+          // Ambil di rak kosong ngantri download: sumber palsu, bukan jaringan.
+          bookSourcesProvider.overrideWithValue([
+            FakeSource()..sourceId = 'gutenberg',
+          ]),
         ],
         child: const LumaApp(),
       ),
@@ -140,17 +153,62 @@ void main() {
   }
 
   for (final b in Brightness.values) {
-    testWidgets('empty shelf invites an import ($b)', (tester) async {
+    testWidgets('empty shelf: famous opening + Ambil + Cari buku gratis ($b)', (
+      tester,
+    ) async {
       await pump(tester, [], brightness: b);
       expect(find.text('Rak buku lo'), findsOneWidget);
-      expect(find.text('Import EPUB'), findsOneWidget);
+      expect(find.text('KALIMAT PEMBUKA PALING TERKENAL'), findsOneWidget);
+      expect(find.text('Pride and Prejudice'), findsWidgets);
+      expect(find.text('Cari buku gratis'), findsOneWidget);
       expect(
-        find.text('Ambil dari file manager, format .epub aja'),
+        find.text('atau import EPUB / Markdown dari Files'),
         findsOneWidget,
       );
       expect(find.byType(BookCard), findsNothing);
       expect(tester.takeException(), isNull);
+
+      // Ambil = masuk antrian download.
+      await tester.tap(find.text('Ambil'));
+      await tester.pump();
+      final container = ProviderScope.containerOf(
+        tester.element(find.text('Rak buku lo')),
+      );
+      expect(
+        container.read(downloadQueueProvider).single.book.externalId,
+        '1342',
+      );
     });
+
+    testWidgets(
+      'empty shelf with a download running: tips while waiting ($b)',
+      (tester) async {
+        await pump(tester, [], brightness: b);
+        final container = ProviderScope.containerOf(
+          tester.element(find.text('Rak buku lo')),
+        );
+        final queue =
+            container.read(downloadQueueProvider.notifier) as FakeQueue;
+        queue.emit([
+          DownloadItem(
+            book: curatedBooks[1].book, // Emma
+            status: DownloadStatus.downloading,
+            progress: 0.43,
+          ),
+        ]);
+        await tester.pump();
+        expect(find.text('Emma lagi diunduh'), findsOneWidget);
+        expect(find.text('43%'), findsOneWidget);
+        expect(find.text('SAMBIL NUNGGU · 1 DARI 3'), findsOneWidget);
+        expect(
+          find.text('Nanti tap paragraf yang bikin pusing'),
+          findsOneWidget,
+        );
+        expect(find.textContaining('Emma Woodhouse'), findsOneWidget);
+        expect(find.text('Cari buku gratis'), findsNothing);
+        expect(tester.takeException(), isNull);
+      },
+    );
   }
 
   testWidgets('a new book shows up as soon as the shelf stream emits', (

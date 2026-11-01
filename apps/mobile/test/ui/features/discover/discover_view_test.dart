@@ -32,8 +32,10 @@ class FakeSource implements BookSource {
   final queries = <String>[];
   Object? searchError;
 
+  var sourceId = 'fake';
+
   @override
-  String get id => 'fake';
+  String get id => sourceId;
   @override
   String get name => 'Fake';
 

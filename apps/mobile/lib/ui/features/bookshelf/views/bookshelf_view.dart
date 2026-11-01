@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hugeicons/hugeicons.dart';
 
 import '../../../../data/repositories/book_repository.dart';
 import '../../../../data/repositories/reading_progress_repository.dart';
@@ -33,6 +34,9 @@ import '../../settings/view_models/backup_view_model.dart';
 import '../../settings/views/backup_listener.dart';
 import '../../shell/view_models/tab_reselect.dart';
 import '../../../core/widgets/nav_bar.dart';
+import '../../discover/curated_books.dart';
+import '../../discover/view_models/download_queue_view_model.dart';
+import '../../discover/views/catalog_cover.dart';
 import '../view_models/bookshelf_view_model.dart';
 import 'backup_reminder.dart';
 import 'book_info_sheet.dart';
@@ -331,6 +335,11 @@ class _BookshelfViewState extends ConsumerState<BookshelfView> {
     );
     void onImport() => _import.pick();
     final header = ShelfHeader(onImport: onImport);
+    // Rak kosong + unduhan jalan = layar 17 (tips sambil nunggu).
+    final downloading = ref
+        .watch(downloadQueueProvider)
+        .where((i) => !i.finished)
+        .firstOrNull;
     final baseline = importing == null ? null : _importBaseline;
     final reminder = _reminder(switch (books) {
       AsyncData(value: final list) => list,
@@ -344,6 +353,9 @@ class _BookshelfViewState extends ConsumerState<BookshelfView> {
             // Urutan & tampilan belum kebaca: tahan dulu, biar rak gak sempet
             // nongol dalam urutan/tampilan default terus loncat.
             AsyncData() when sort == null || view == null => _pad(header),
+            AsyncData(value: final list)
+                when list.isEmpty && importing == null && downloading != null =>
+              _EmptyDownloading(header: header, item: downloading),
             AsyncData(value: final list)
                 when list.isEmpty && importing == null =>
               _Empty(header: header, onImport: onImport),
@@ -846,15 +858,19 @@ class _ViewToggle extends StatelessWidget {
   }
 }
 
-class _Empty extends StatelessWidget {
+/// Rak kosong (board Cari buku 02): kalimat pembuka terkenal + Ambil,
+/// "Rak lo masih kosong", Cari buku gratis, link import file.
+class _Empty extends ConsumerWidget {
   const _Empty({required this.header, required this.onImport});
 
   final Widget header;
   final VoidCallback onImport;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final c = context.stabilo;
+    final curated = curatedBooks.first;
+    final book = curated.book;
     return Padding(
       padding: EdgeInsets.fromLTRB(
         Layout.margin,
@@ -871,48 +887,135 @@ class _Empty extends StatelessWidget {
               child: SingleChildScrollView(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
-                  spacing: Space.s8,
+                  spacing: Space.s6,
                   children: [
-                    const _Example(),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      spacing: Space.s2,
+                      spacing: 14,
                       children: [
-                        Text.rich(
-                          TextSpan(
-                            children: [
-                              const TextSpan(text: 'Belum ada '),
-                              WidgetSpan(
-                                alignment: PlaceholderAlignment.baseline,
-                                baseline: TextBaseline.alphabetic,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 6,
+                        Text(
+                          'KALIMAT PEMBUKA PALING TERKENAL',
+                          style: StabiloType.caption.copyWith(
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.05 * 13,
+                            color: c.ink2,
+                          ),
+                        ),
+                        Text(
+                          '“${curated.quote}”',
+                          style: StabiloType.reading.copyWith(
+                            fontSize: 24,
+                            height: 1.45,
+                            color: c.ink,
+                          ),
+                        ),
+                        Row(
+                          spacing: Space.s3,
+                          children: [
+                            CatalogCover(book: book, width: 40),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                spacing: 1,
+                                children: [
+                                  Text(
+                                    book.title,
+                                    style: StabiloType.label.copyWith(
+                                      fontSize: 14.5,
+                                    ),
                                   ),
+                                  if (book.authorsLabel case final a?)
+                                    Text(
+                                      a,
+                                      style: StabiloType.caption.copyWith(
+                                        fontSize: 12.5,
+                                        color: c.ink2,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                            Semantics(
+                              button: true,
+                              label: 'Ambil ${book.title}',
+                              excludeSemantics: true,
+                              child: GestureDetector(
+                                onTap: () => ref
+                                    .read(downloadQueueProvider.notifier)
+                                    .enqueue(book),
+                                child: Container(
+                                  height: 40,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                  ),
+                                  alignment: Alignment.center,
                                   decoration: BoxDecoration(
-                                    color: c.accent,
-                                    borderRadius: BorderRadius.circular(6),
+                                    color: c.muted,
+                                    borderRadius: BorderRadius.circular(
+                                      Radii.full,
+                                    ),
                                   ),
                                   child: Text(
-                                    'buku',
-                                    style: StabiloType.display.copyWith(
-                                      color: c.onAccent,
+                                    'Ambil',
+                                    style: StabiloType.label.copyWith(
+                                      fontSize: 14,
                                     ),
                                   ),
                                 ),
                               ),
-                              const TextSpan(text: ' nih'),
-                            ],
-                          ),
-                          style: StabiloType.display.copyWith(color: c.ink),
-                        ),
-                        Text(
-                          'Import EPUB dulu gih. Abis itu tap paragraf mana aja '
-                          'yang bikin pusing, artinya langsung nongol kayak di '
-                          'atas.',
-                          style: StabiloType.body.copyWith(color: c.ink2),
+                            ),
+                          ],
                         ),
                       ],
+                    ),
+                    Container(
+                      padding: const EdgeInsets.only(top: 22),
+                      decoration: BoxDecoration(
+                        border: Border(
+                          top: BorderSide(
+                            color: c.track,
+                            width: Layout.outline,
+                          ),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        spacing: 6,
+                        children: [
+                          Text.rich(
+                            TextSpan(
+                              children: [
+                                const TextSpan(text: 'Rak lo masih '),
+                                WidgetSpan(
+                                  alignment: PlaceholderAlignment.baseline,
+                                  baseline: TextBaseline.alphabetic,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: c.accent,
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      'kosong',
+                                      style: StabiloType.display.copyWith(
+                                        color: c.onAccent,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            style: StabiloType.display.copyWith(color: c.ink),
+                          ),
+                          Text(
+                            'Ambil buku di atas, atau cari yang lain. '
+                            'Gratis semua.',
+                            style: StabiloType.body.copyWith(color: c.ink2),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -921,16 +1024,36 @@ class _Empty extends StatelessWidget {
           ),
           const SizedBox(height: Space.s4),
           AppButton.primary(
-            label: 'Import EPUB',
-            icon: AppIcons.add,
+            label: 'Cari buku gratis',
+            icon: HugeIcons.strokeRoundedSearch01,
             height: 56,
-            onPressed: onImport,
+            onPressed: () => context.go(Routes.discover),
           ),
-          const SizedBox(height: Space.s3),
-          Text(
-            'Ambil dari file manager, format .epub aja',
-            textAlign: TextAlign.center,
-            style: StabiloType.caption.copyWith(color: c.ink2),
+          const SizedBox(height: 10),
+          Semantics(
+            button: true,
+            child: GestureDetector(
+              onTap: onImport,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                spacing: 6,
+                children: [
+                  AppIcon(
+                    HugeIcons.strokeRoundedFile01,
+                    size: 16,
+                    color: c.ink2,
+                  ),
+                  Text(
+                    'atau import EPUB / Markdown dari Files',
+                    style: StabiloType.caption.copyWith(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w600,
+                      color: c.ink2,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),
@@ -938,9 +1061,209 @@ class _Empty extends StatelessWidget {
   }
 }
 
+/// Rak kosong, buku pertama lagi diunduh (board Cari buku 17): progres tipis
+/// + kartu tips geser, kartu pertama pakai kalimat pembuka buku yang diunduh.
+class _EmptyDownloading extends StatefulWidget {
+  const _EmptyDownloading({required this.header, required this.item});
+
+  final Widget header;
+  final DownloadItem item;
+
+  @override
+  State<_EmptyDownloading> createState() => _EmptyDownloadingState();
+}
+
+class _EmptyDownloadingState extends State<_EmptyDownloading> {
+  var _page = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.stabilo;
+    final item = widget.item;
+    final curated = curatedFor(item.book);
+    final progress = item.progress.clamp(0.0, 1.0);
+    final tips = [
+      (
+        'Nanti tap paragraf yang bikin pusing',
+        _Example(quote: curated.quote, meaning: curated.meaning),
+      ),
+      (
+        'Bingung sama satu kalimat? Bedahin',
+        _Tip(
+          'Dari sheet Artinya, tap Bedahin: kalimatnya dipecah bagian per '
+          'bagian, dijelasin satu-satu.',
+        ),
+      ),
+      (
+        'Ngobrolin bukunya kapan aja',
+        _Tip(
+          'Nanya soal tokoh, alur, atau kenapa gitu: jawabannya ngutip '
+          'halaman bukunya langsung.',
+        ),
+      ),
+    ];
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        Layout.margin,
+        0,
+        Layout.margin,
+        MediaQuery.paddingOf(context).bottom,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: Space.s4,
+        children: [
+          widget.header,
+          Semantics(
+            liveRegion: true,
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+              decoration: BoxDecoration(
+                color: c.muted,
+                borderRadius: BorderRadius.circular(Radii.menu),
+              ),
+              child: Row(
+                spacing: Space.s3,
+                children: [
+                  CatalogCover(book: item.book, width: 30),
+                  Expanded(
+                    child: Column(
+                      spacing: 6,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Flexible(
+                              child: Text(
+                                '${item.book.title} lagi diunduh',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: StabiloType.label.copyWith(
+                                  fontSize: 13.5,
+                                ),
+                              ),
+                            ),
+                            Text(
+                              '${(progress * 100).round()}%',
+                              style: StabiloType.label.copyWith(fontSize: 13.5),
+                            ),
+                          ],
+                        ),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(3),
+                          child: LinearProgressIndicator(
+                            value: progress,
+                            minHeight: 6,
+                            color: c.ink,
+                            backgroundColor: c.track,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              spacing: 22,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  spacing: 6,
+                  children: [
+                    Text(
+                      'SAMBIL NUNGGU · ${_page + 1} DARI ${tips.length}',
+                      style: StabiloType.caption.copyWith(
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.05 * 13,
+                        color: c.ink2,
+                      ),
+                    ),
+                    Text(
+                      tips[_page].$1,
+                      style: StabiloType.display.copyWith(color: c.ink),
+                    ),
+                  ],
+                ),
+                SizedBox(
+                  height: 220,
+                  child: PageView(
+                    onPageChanged: (i) => setState(() => _page = i),
+                    children: [
+                      for (final (_, card) in tips)
+                        Center(child: SingleChildScrollView(child: card)),
+                    ],
+                  ),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  spacing: 6,
+                  children: [
+                    for (var i = 0; i < tips.length; i++)
+                      AnimatedContainer(
+                        duration: Motion.highlight,
+                        width: i == _page ? 18 : 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: i == _page ? c.ink : c.track,
+                          borderRadius: BorderRadius.circular(3),
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Tip extends StatelessWidget {
+  const _Tip(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.stabilo;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 6),
+      child: Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: c.sheet,
+          border: Border.all(color: c.outline, width: Layout.outline),
+          borderRadius: BorderRadius.circular(Radii.lg),
+        ),
+        child: Text(
+          text,
+          style: StabiloType.reading.copyWith(
+            fontSize: 16,
+            height: 1.6,
+            color: c.ink,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// Contoh fitur di rak kosong: paragraf distabilo + gelembung artinya.
 class _Example extends StatelessWidget {
-  const _Example();
+  const _Example({
+    this.quote =
+        'It is a truth universally acknowledged, that a single man in '
+        'possession of a good fortune, must be in want of a wife.',
+    this.meaning =
+        'Udah jadi rahasia umum: cowok tajir pasti lagi nyari istri.',
+  });
+
+  final String quote, meaning;
 
   @override
   Widget build(BuildContext context) {
@@ -963,8 +1286,7 @@ class _Example extends StatelessWidget {
                 boxShadow: light ? Elevation.cover : null,
               ),
               child: Text(
-                'It is a truth universally acknowledged, that a single man in '
-                'possession of a good fortune, must be in want of a wife.',
+                quote,
                 style: StabiloType.reading.copyWith(
                   fontSize: 16,
                   height: 1.6,
@@ -1004,8 +1326,7 @@ class _Example extends StatelessWidget {
                         style: StabiloType.tag.copyWith(color: c.onPink),
                       ),
                       Text(
-                        'Udah jadi rahasia umum: cowok tajir pasti lagi nyari '
-                        'istri.',
+                        meaning,
                         style: StabiloType.label.copyWith(
                           fontWeight: FontWeight.w500,
                           height: 1.4,

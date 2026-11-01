@@ -116,8 +116,32 @@ void main() {
     await tester.tap(find.text('Ngunduh 2 buku · 43%'));
     await tester.pumpAndSettle();
     expect(find.text('Unduhan'), findsOneWidget);
-    expect(find.text('Emma · Lagi diunduh · 43%'), findsOneWidget);
-    expect(find.text('Persuasion · Antri'), findsOneWidget);
+    expect(find.text('Jalan terus walau lo pindah layar'), findsOneWidget);
+    expect(find.text('Lagi diunduh · 43%'), findsOneWidget);
+    expect(find.text('Antri, abis Emma'), findsOneWidget);
+    expect(find.bySemanticsLabel('Batalin'), findsOneWidget);
+    expect(find.bySemanticsLabel('Hapus dari antrian'), findsOneWidget);
+
+    // Hapus yang antri: hilang + toast.
+    await tester.tap(find.bySemanticsLabel('Hapus dari antrian'));
+    await tester.pump();
+    expect(find.text('Unduhan Persuasion dibatalin'), findsOneWidget);
+    expect(find.text('Antri, abis Emma'), findsNothing);
+
+    // Selesai: Baca; ditutup → entri selesai dibuang.
+    queue.emit([
+      const DownloadItem(book: book, status: DownloadStatus.done, bookId: 1),
+    ]);
+    await tester.pump();
+    expect(find.text('Udah masuk rak'), findsOneWidget);
+    expect(find.text('Baca'), findsWidgets); // baris sheet + toast
+    await tester.tap(find.bySemanticsLabel('Tutup'));
+    await tester.pumpAndSettle();
+    expect(queue.state, isEmpty);
+    queue.emit([
+      const DownloadItem(book: book, status: DownloadStatus.downloading),
+    ]);
+    await tester.pump();
 
     queue.emit([
       const DownloadItem(book: book, status: DownloadStatus.done, bookId: 1),
