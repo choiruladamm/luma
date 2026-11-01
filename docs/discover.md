@@ -114,20 +114,21 @@ Aturan gutenberg.org ([robot_access](https://www.gutenberg.org/policy/robot_acce
 - `test/data/download_queue_test.dart`: antrian dengan sumber palsu (urutan, dobel, batal antri / jalan, gagal jaringan, EPUB rusak), download → import EPUB kecil masuk DB in-memory.
 - `test/ui/features/discover/`: widget test layar cari, `bookSourcesProvider`, download notifier, `catalogSyncProvider`, `catalogStatsProvider` di-override pakai data palsu. `download_toasts_test.dart`: toast cuma pas status berubah jadi selesai.
 
-## Catatan buat board (draft arah A, page 90 Drafting)
+## Board (page "09 · Cari buku")
 
-Draft 17 layar udah nutup alur utama. Yang perlu disesuaikan sebelum #167 dibuka:
+17 layar terang + gelap, komponen NavBar, catatan alur di board "Draft · Cari & download buku · alur lengkap (arah A)". Urutan UI: [#172](https://github.com/choiruladamm/luma/issues/172) NavBar + shell routing → [#167](https://github.com/choiruladamm/luma/issues/167) tab Cari buku (03–09) → [#173](https://github.com/choiruladamm/luma/issues/173) detail buku (10–13) → [#174](https://github.com/choiruladamm/luma/issues/174) sheet Unduhan, toast, label Baru, rak kosong (01, 02, 14–17).
 
-- Versi gelap belum ada.
-- "Diunduh 9.400 kali bulan ini" dan "#1 minggu ini": Gutenberg cuma ngasih urutan populer, gak ada angka dan gak per minggu. Buang angkanya, copy jadi "Lagi rame".
-- Tahun hidup penulis dan "N buku lain": dari katalog lokal (#169), bukan OPDS.
-- Sinopsis: ada (OPDS `Summary`), fallback layar 12 tetep buat buku tanpa summary.
-- "App di latar: notifikasi lokal" bentrok sama keputusan download foreground; coret, atau buka lagi `background_downloader`.
-- Layar 17 (tips pakai kalimat pembuka buku yang lagi diunduh) cuma buat buku kurasi yang kalimatnya di-hardcode.
-- Bottom bar Rak · Cari buku · Atur = revamp navigasi seluruh app; issue sendiri, prasyarat #167.
-- Paging ikut OPDS: 25, bukan 20.
+Keputusan implementasi yang gak ada di board:
+
+- Katalog pertama kali belum ada: layout layar 07 dengan copy "Nyiapin katalog buku… 43%" dari `catalogSyncProvider`; gagal = layar 08.
+- Offline (09) dideteksi dari error jaringan (`connectionError` / `SocketException`), dicoba lagi tiap tab dibuka; tanpa `connectivity_plus`.
+- "Lagi rame" di-cache in-memory per sesi; buka app baru = request lagi.
+- Kutipan layar 02 / 17 dari daftar kurasi hardcode (Pride and Prejudice, Emma, Alice); buku lain pakai kutipan Pride and Prejudice.
+- Penulis di detail (tap) = balik ke cari dengan query nama penulis (FTS), bukan `byAuthor` persis.
+- "App di latar: notifikasi lokal" (layar 15) ditunda ke [#175](https://github.com/choiruladamm/luma/issues/175): butuh dependensi + izin, iOS cuma ngasih ±30 detik di latar.
 
 ## Ditunda
 
 - **Standard Ebooks** ([#168](https://github.com/choiruladamm/luma/issues/168)): adapter OPDS + Basic auth, kredensial di `flutter_secure_storage`. Dibuka kalau ikut Patrons Circle.
 - **Backend aggregator** ([#168](https://github.com/choiruladamm/luma/issues/168)): dibuka kalau ada user lain atau kena rate limit.
+- **Notifikasi lokal** ([#175](https://github.com/choiruladamm/luma/issues/175)): dibuka kalau #174 udah dipakai dan download kelar di latar pernah kelewat.
