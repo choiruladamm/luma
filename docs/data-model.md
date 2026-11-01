@@ -19,6 +19,8 @@ Prinsip: **file diparse sekali saat import** ke format internal. Reader, AI, dan
 | originalAuthor | text? | Penulis asli EPUB. Null + `originalTitle` terisi = aslinya tanpa penulis |
 | useDefaultCover | bool (default false) | true = cover EPUB disembunyiin (repository ngasih `coverName` null ke UI). `coverName` tetap utuh di DB + disk |
 | hash | text? (unique) | SHA-256 isi file EPUB, untuk cegah import dobel |
+| sourceId | text? | `BookSource.id` (`gutenberg`) kalau EPUB-nya hasil download dari katalog luar ([discover.md](discover.md)). Null = import manual |
+| externalId | text? | Id buku di sumbernya (Gutenberg: Text#). Bareng `sourceId` jadi identitas buat badge "udah di rak" |
 | parserVersion | int | Versi logika parsing + grouping. Naik → re-import & invalidasi cache buku itu |
 | contentRevision | int (default 1) | Snapshot isi/urutan untuk Book Chat. Metadata tidak menaikkan revision; append/replace/reorder Markdown menaikkan revision atomik lewat `AppDatabase.contentChanged` (#119) |
 | totalChars | int | Untuk hitung persentase baca (hanya bermakna untuk buku lengkap) |
@@ -177,6 +179,7 @@ Meta sync di `settings`: `catalog.lastModified`, `catalog.syncedAt`, `catalog.co
 | 13 | `chat_turns.steps` nullable JSON (#153); baris lama null, baris tidak tampil di UI |
 | 14 | Tabel `catalog_books` + index `title`, `authorsText` (#169), kosong saat upgrade; diisi lewat sync di Pengaturan. Data user gak disentuh |
 | 15 | Virtual table FTS5 `catalog_fts` di atas `catalog_books` (#169), langsung di-rebuild dari isi katalog yang ada. Data user gak disentuh |
+| 16 | `books.sourceId`, `externalId` nullable (#164); baris lama null |
 
 Tiap ubah tabel: naikkan `schemaVersion`, tambah langkah di `onUpgrade`, dan test migrasi dari versi sebelumnya (data tetap utuh, schema hasil migrasi sama dengan install baru). Restore backup dari schema lama ikut dimigrasi saat database dibuka ([backup.md](backup.md)).
 

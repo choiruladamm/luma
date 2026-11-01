@@ -39,6 +39,11 @@ class Books extends Table {
   /// SHA-256 isi file EPUB, cegah import dobel.
   TextColumn get hash => text().nullable().unique()();
 
+  /// Identitas di katalog luar (`BookSource.id` + id di sumbernya), buat
+  /// badge "udah di rak". Null = import manual (docs/discover.md).
+  TextColumn get sourceId => text().nullable()();
+  TextColumn get externalId => text().nullable()();
+
   /// Naik = re-import + hapus ai_results buku itu.
   IntColumn get parserVersion => integer()();
 
@@ -410,7 +415,7 @@ class AppDatabase extends _$AppDatabase {
   // test/data/migration_test.dart. Backup dari versi lama ikut dimigrasi pas
   // di-restore.
   @override
-  int get schemaVersion => 15;
+  int get schemaVersion => 16;
 
   /// FTS5 external-content di atas `catalog_books` (teks gak dobel). Isinya
   /// gak otomatis ikut: [rebuildCatalogFts] tiap `catalog_books` diganti.
@@ -488,6 +493,10 @@ class AppDatabase extends _$AppDatabase {
       if (from < 15) {
         await createCatalogFts();
         await rebuildCatalogFts(); // v14 bisa udah punya isi katalog
+      }
+      if (from < 16) {
+        await m.addColumn(books, books.sourceId);
+        await m.addColumn(books, books.externalId);
       }
     },
     // SQLite matiin foreign key secara default; cascade butuh ini.

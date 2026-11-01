@@ -34,6 +34,27 @@ void main() {
         ),
       );
 
+  test('idFromSource finds a downloaded book by catalog identity', () async {
+    final repo = BookRepository(db);
+    await add('Manual');
+    final id = await db
+        .into(db.books)
+        .insert(
+          BooksCompanion.insert(
+            sourceType: SourceType.epub,
+            title: 'Pride and Prejudice',
+            hash: const Value('pp'),
+            sourceId: const Value('gutenberg'),
+            externalId: const Value('1342'),
+            parserVersion: 1,
+            totalChars: 1,
+          ),
+        );
+    expect(await repo.idFromSource('gutenberg', '1342'), id);
+    expect(await repo.idFromSource('gutenberg', '1'), isNull);
+    expect(await repo.idFromSource('standard_ebooks', '1342'), isNull);
+  });
+
   test('reader book exposes content revision used by chat entry', () async {
     final id = await add('Revision');
     final repo = BookRepository(db);

@@ -108,6 +108,20 @@ class BookRepository {
           );
   }
 
+  /// Id buku di rak yang asalnya dari katalog luar (badge "udah di rak",
+  /// docs/discover.md). Null = belum ada.
+  Future<int?> idFromSource(String sourceId, String externalId) async {
+    final row =
+        await (_db.selectOnly(_db.books)
+              ..addColumns([_db.books.id])
+              ..where(
+                _db.books.sourceId.equals(sourceId) &
+                    _db.books.externalId.equals(externalId),
+              ))
+            .getSingleOrNull();
+    return row?.read(_db.books.id);
+  }
+
   /// Buku + chapter-nya buat halaman baca. Null kalau bukunya udah dihapus.
   Future<ReaderBook?> readerBook(int id) async {
     final book = await (_db.select(
