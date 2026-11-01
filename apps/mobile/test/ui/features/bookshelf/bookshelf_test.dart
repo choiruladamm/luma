@@ -17,6 +17,7 @@ import 'package:luma/ui/features/import_book/view_models/import_view_model.dart'
 import 'package:luma/ui/core/theme/stabilo_tokens.dart';
 import 'package:luma/data/repositories/import_repository.dart';
 import 'package:luma/ui/core/widgets/book_card.dart';
+import 'package:luma/ui/core/widgets/nav_bar.dart';
 import 'package:luma/ui/core/widgets/buttons.dart';
 import 'package:luma/ui/core/widgets/book_row.dart';
 import 'package:luma/ui/features/bookshelf/views/shelf_header.dart';
@@ -172,7 +173,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('tapping a book opens the reader; the gear opens settings', (
+  testWidgets('tapping a book opens the reader; tab Atur opens settings', (
     tester,
   ) async {
     await pump(tester, [book(1, 'Meditations')]);
@@ -183,9 +184,12 @@ void main() {
 
     await tester.tap(find.bySemanticsLabel('Balik ke rak'));
     await tester.pumpAndSettle();
-    await tester.tap(find.bySemanticsLabel('Pengaturan app'));
+    expect(find.byType(LumaNavBar), findsOneWidget);
+    await tester.tap(find.bySemanticsLabel('Atur'));
     await tester.pumpAndSettle();
     expect(find.byType(SettingsView), findsOneWidget);
+    // Tab, bukan push: gak ada tombol balik.
+    expect(find.bySemanticsLabel('Balik'), findsNothing);
   });
 
   group('continue card', () {
@@ -583,12 +587,13 @@ void main() {
       await pump(tester, many, width: 390);
       await tester.drag(find.byType(Scrollable).first, const Offset(0, -300));
       await tester.pumpAndSettle();
-      final gear = find.bySemanticsLabel('Pengaturan app');
+      final add = find.bySemanticsLabel('Import EPUB');
       expect(tester.getSize(find.byType(CircleButton).last).width, 40);
       // 21pt from the centre is outside the 40 circle, inside the 44 area.
-      await tester.tapAt(tester.getCenter(gear) + const Offset(21, 0));
-      await tester.pumpAndSettle();
-      expect(find.byType(SettingsView), findsOneWidget);
+      final hit = tester.hitTestOnBinding(
+        tester.getCenter(add) + const Offset(21, 0),
+      );
+      expect(hit.path.any((e) => e.target == tester.renderObject(add)), isTrue);
     });
 
     testWidgets('big text on a narrow phone: buttons stay, no overflow', (
@@ -598,7 +603,6 @@ void main() {
       addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
       await pump(tester, many, width: 375);
       expect(find.bySemanticsLabel('Import EPUB'), findsOneWidget);
-      expect(find.bySemanticsLabel('Pengaturan app'), findsOneWidget);
       expect(find.text('Rak buku lo'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });

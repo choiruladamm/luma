@@ -94,7 +94,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
 
   Future<void> _apply(RestoreService service, RestorePreview preview) async {
     final stage = ValueNotifier(1);
-    final nav = Navigator.of(context);
+    final nav = Navigator.of(context, rootNavigator: true);
     final router = GoRouter.of(context);
     // Pengaturan ilang pas balik ke Rak; toast-nya lewat navigator root yang
     // tetep ada (masih di bawah ScaffoldMessenger & Theme).
@@ -202,11 +202,14 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                   child: Row(
                     spacing: Space.s3,
                     children: [
-                      CircleButton(
-                        semanticLabel: 'Balik ke rak',
-                        icon: AppIcons.back,
-                        onPressed: () => context.pop(),
-                      ),
+                      // Tab Atur gak punya balik; cuma pas di-push dari
+                      // layar baca / chat.
+                      if (Navigator.canPop(context))
+                        CircleButton(
+                          semanticLabel: 'Balik',
+                          icon: AppIcons.back,
+                          onPressed: () => context.pop(),
+                        ),
                       Semantics(
                         header: true,
                         child: Text('Pengaturan', style: StabiloType.titleLg),

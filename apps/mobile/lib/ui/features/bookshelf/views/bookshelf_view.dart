@@ -31,6 +31,8 @@ import '../../import_book/views/import_markdown_sheet.dart';
 import '../../import_book/views/import_sheets.dart';
 import '../../settings/view_models/backup_view_model.dart';
 import '../../settings/views/backup_listener.dart';
+import '../../shell/view_models/tab_reselect.dart';
+import '../../../core/widgets/nav_bar.dart';
 import '../view_models/bookshelf_view_model.dart';
 import 'backup_reminder.dart';
 import 'book_info_sheet.dart';
@@ -62,15 +64,17 @@ class _BookshelfViewState extends ConsumerState<BookshelfView> {
   ImportController get _import => ref.read(importControllerProvider.notifier);
 
   void _onImport(ImportState? prev, ImportState next) {
+    // Sheet dibuka di navigator root (di atas bar tab), tutupnya juga dari sana.
+    final root = Navigator.of(context, rootNavigator: true);
     if (next is! ImportProcessing && _progressOpen) {
       _progressOpen = false;
-      Navigator.of(context).pop();
+      root.pop();
     }
     if (_markdownSheetOpen &&
         (next is ImportMarkdownDone || next is ImportMarkdownFailed)) {
       _markdownSheetOpen = false;
       // Sheet + dialog bab dobel (kalau ada) turun bareng.
-      Navigator.of(context).popUntil((r) => r is! PopupRoute);
+      root.popUntil((r) => r is! PopupRoute);
     }
     switch (next) {
       case ImportProcessing() when !_progressOpen:
@@ -465,6 +469,18 @@ class _ShelfState extends ConsumerState<_Shelf> {
 
   @override
   Widget build(BuildContext context) {
+    // Tab Rak ditap lagi = gulung ke atas (board NavBar).
+    ref.listen(tabReselectProvider, (_, _) {
+      if (ref.read(tabReselectProvider.notifier).last != LumaTab.rak) return;
+      if (!_scroll.hasClients) return;
+      _scroll.animateTo(
+        0,
+        duration: MediaQuery.disableAnimationsOf(context)
+            ? Duration.zero
+            : Motion.sheetOpen,
+        curve: Motion.sheetOpenCurve,
+      );
+    });
     final c = context.stabilo;
     final sorted = sortShelf(widget.books, widget.sort);
     final resume = _resume;

@@ -11,11 +11,14 @@ import '../ui/features/chat/views/chat_source_visit_view.dart';
 import '../ui/features/chat/views/chat_sessions_view.dart';
 import '../ui/features/bookshelf/views/bookshelf_view.dart';
 import '../ui/features/breakdown/views/breakdown_view.dart';
+import '../ui/features/discover/views/discover_view.dart';
 import '../ui/features/reader/views/reader_view.dart';
 import '../ui/features/settings/views/settings_view.dart';
+import '../ui/features/shell/views/app_shell.dart';
 
 abstract final class Routes {
   static const home = '/';
+  static const discover = '/discover';
   static const settings = '/settings';
   static String chat(int bookId) => '/reader/$bookId/chat';
   static String chatSource(ChatSourceRef source) =>
@@ -34,7 +37,36 @@ abstract final class Routes {
 final routerProvider = Provider<GoRouter>((ref) {
   final router = GoRouter(
     routes: [
-      GoRoute(path: Routes.home, builder: (_, _) => const BookshelfView()),
+      // Tab Rak · Cari buku · Atur, urutan = LumaTab.values.
+      StatefulShellRoute.indexedStack(
+        builder: (_, _, shell) => AppShell(shell: shell),
+        branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: Routes.home,
+                builder: (_, _) => const BookshelfView(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: Routes.discover,
+                builder: (_, _) => const DiscoverView(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: Routes.settings,
+                builder: (_, _) => const SettingsView(),
+              ),
+            ],
+          ),
+        ],
+      ),
       GoRoute(
         path: '/reader/:bookId',
         builder: (_, state) =>
@@ -160,7 +192,6 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
         ],
       ),
-      GoRoute(path: Routes.settings, builder: (_, _) => const SettingsView()),
     ],
   );
   ref.onDispose(router.dispose);
