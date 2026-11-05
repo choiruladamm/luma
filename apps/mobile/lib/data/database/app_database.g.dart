@@ -129,6 +129,28 @@ class $BooksTable extends Books with TableInfo<$BooksTable, Book> {
     requiredDuringInsert: false,
     defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'),
   );
+  static const VerificationMeta _sourceIdMeta = const VerificationMeta(
+    'sourceId',
+  );
+  @override
+  late final GeneratedColumn<String> sourceId = GeneratedColumn<String>(
+    'source_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _externalIdMeta = const VerificationMeta(
+    'externalId',
+  );
+  @override
+  late final GeneratedColumn<String> externalId = GeneratedColumn<String>(
+    'external_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _parserVersionMeta = const VerificationMeta(
     'parserVersion',
   );
@@ -234,6 +256,8 @@ class $BooksTable extends Books with TableInfo<$BooksTable, Book> {
     originalAuthor,
     useDefaultCover,
     hash,
+    sourceId,
+    externalId,
     parserVersion,
     contentRevision,
     totalChars,
@@ -321,6 +345,18 @@ class $BooksTable extends Books with TableInfo<$BooksTable, Book> {
       context.handle(
         _hashMeta,
         hash.isAcceptableOrUnknown(data['hash']!, _hashMeta),
+      );
+    }
+    if (data.containsKey('source_id')) {
+      context.handle(
+        _sourceIdMeta,
+        sourceId.isAcceptableOrUnknown(data['source_id']!, _sourceIdMeta),
+      );
+    }
+    if (data.containsKey('external_id')) {
+      context.handle(
+        _externalIdMeta,
+        externalId.isAcceptableOrUnknown(data['external_id']!, _externalIdMeta),
       );
     }
     if (data.containsKey('parser_version')) {
@@ -445,6 +481,14 @@ class $BooksTable extends Books with TableInfo<$BooksTable, Book> {
         DriftSqlType.string,
         data['${effectivePrefix}hash'],
       ),
+      sourceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source_id'],
+      ),
+      externalId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}external_id'],
+      ),
       parserVersion: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}parser_version'],
@@ -515,6 +559,11 @@ class Book extends DataClass implements Insertable<Book> {
   /// SHA-256 isi file EPUB, cegah import dobel.
   final String? hash;
 
+  /// Identitas di katalog luar (`BookSource.id` + id di sumbernya), buat
+  /// badge "udah di rak". Null = import manual (docs/discover.md).
+  final String? sourceId;
+  final String? externalId;
+
   /// Naik = re-import + hapus ai_results buku itu.
   final int parserVersion;
 
@@ -543,6 +592,8 @@ class Book extends DataClass implements Insertable<Book> {
     this.originalAuthor,
     required this.useDefaultCover,
     this.hash,
+    this.sourceId,
+    this.externalId,
     required this.parserVersion,
     required this.contentRevision,
     required this.totalChars,
@@ -583,6 +634,12 @@ class Book extends DataClass implements Insertable<Book> {
     map['use_default_cover'] = Variable<bool>(useDefaultCover);
     if (!nullToAbsent || hash != null) {
       map['hash'] = Variable<String>(hash);
+    }
+    if (!nullToAbsent || sourceId != null) {
+      map['source_id'] = Variable<String>(sourceId);
+    }
+    if (!nullToAbsent || externalId != null) {
+      map['external_id'] = Variable<String>(externalId);
     }
     map['parser_version'] = Variable<int>(parserVersion);
     map['content_revision'] = Variable<int>(contentRevision);
@@ -626,6 +683,12 @@ class Book extends DataClass implements Insertable<Book> {
           : Value(originalAuthor),
       useDefaultCover: Value(useDefaultCover),
       hash: hash == null && nullToAbsent ? const Value.absent() : Value(hash),
+      sourceId: sourceId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sourceId),
+      externalId: externalId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(externalId),
       parserVersion: Value(parserVersion),
       contentRevision: Value(contentRevision),
       totalChars: Value(totalChars),
@@ -662,6 +725,8 @@ class Book extends DataClass implements Insertable<Book> {
       originalAuthor: serializer.fromJson<String?>(json['originalAuthor']),
       useDefaultCover: serializer.fromJson<bool>(json['useDefaultCover']),
       hash: serializer.fromJson<String?>(json['hash']),
+      sourceId: serializer.fromJson<String?>(json['sourceId']),
+      externalId: serializer.fromJson<String?>(json['externalId']),
       parserVersion: serializer.fromJson<int>(json['parserVersion']),
       contentRevision: serializer.fromJson<int>(json['contentRevision']),
       totalChars: serializer.fromJson<int>(json['totalChars']),
@@ -689,6 +754,8 @@ class Book extends DataClass implements Insertable<Book> {
       'originalAuthor': serializer.toJson<String?>(originalAuthor),
       'useDefaultCover': serializer.toJson<bool>(useDefaultCover),
       'hash': serializer.toJson<String?>(hash),
+      'sourceId': serializer.toJson<String?>(sourceId),
+      'externalId': serializer.toJson<String?>(externalId),
       'parserVersion': serializer.toJson<int>(parserVersion),
       'contentRevision': serializer.toJson<int>(contentRevision),
       'totalChars': serializer.toJson<int>(totalChars),
@@ -712,6 +779,8 @@ class Book extends DataClass implements Insertable<Book> {
     Value<String?> originalAuthor = const Value.absent(),
     bool? useDefaultCover,
     Value<String?> hash = const Value.absent(),
+    Value<String?> sourceId = const Value.absent(),
+    Value<String?> externalId = const Value.absent(),
     int? parserVersion,
     int? contentRevision,
     int? totalChars,
@@ -736,6 +805,8 @@ class Book extends DataClass implements Insertable<Book> {
         : this.originalAuthor,
     useDefaultCover: useDefaultCover ?? this.useDefaultCover,
     hash: hash.present ? hash.value : this.hash,
+    sourceId: sourceId.present ? sourceId.value : this.sourceId,
+    externalId: externalId.present ? externalId.value : this.externalId,
     parserVersion: parserVersion ?? this.parserVersion,
     contentRevision: contentRevision ?? this.contentRevision,
     totalChars: totalChars ?? this.totalChars,
@@ -768,6 +839,10 @@ class Book extends DataClass implements Insertable<Book> {
           ? data.useDefaultCover.value
           : this.useDefaultCover,
       hash: data.hash.present ? data.hash.value : this.hash,
+      sourceId: data.sourceId.present ? data.sourceId.value : this.sourceId,
+      externalId: data.externalId.present
+          ? data.externalId.value
+          : this.externalId,
       parserVersion: data.parserVersion.present
           ? data.parserVersion.value
           : this.parserVersion,
@@ -807,6 +882,8 @@ class Book extends DataClass implements Insertable<Book> {
           ..write('originalAuthor: $originalAuthor, ')
           ..write('useDefaultCover: $useDefaultCover, ')
           ..write('hash: $hash, ')
+          ..write('sourceId: $sourceId, ')
+          ..write('externalId: $externalId, ')
           ..write('parserVersion: $parserVersion, ')
           ..write('contentRevision: $contentRevision, ')
           ..write('totalChars: $totalChars, ')
@@ -820,7 +897,7 @@ class Book extends DataClass implements Insertable<Book> {
   }
 
   @override
-  int get hashCode => Object.hash(
+  int get hashCode => Object.hashAll([
     id,
     sourceType,
     bookKey,
@@ -832,6 +909,8 @@ class Book extends DataClass implements Insertable<Book> {
     originalAuthor,
     useDefaultCover,
     hash,
+    sourceId,
+    externalId,
     parserVersion,
     contentRevision,
     totalChars,
@@ -840,7 +919,7 @@ class Book extends DataClass implements Insertable<Book> {
     firstOpenedAt,
     readingSeconds,
     finishedAt,
-  );
+  ]);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -856,6 +935,8 @@ class Book extends DataClass implements Insertable<Book> {
           other.originalAuthor == this.originalAuthor &&
           other.useDefaultCover == this.useDefaultCover &&
           other.hash == this.hash &&
+          other.sourceId == this.sourceId &&
+          other.externalId == this.externalId &&
           other.parserVersion == this.parserVersion &&
           other.contentRevision == this.contentRevision &&
           other.totalChars == this.totalChars &&
@@ -878,6 +959,8 @@ class BooksCompanion extends UpdateCompanion<Book> {
   final Value<String?> originalAuthor;
   final Value<bool> useDefaultCover;
   final Value<String?> hash;
+  final Value<String?> sourceId;
+  final Value<String?> externalId;
   final Value<int> parserVersion;
   final Value<int> contentRevision;
   final Value<int> totalChars;
@@ -898,6 +981,8 @@ class BooksCompanion extends UpdateCompanion<Book> {
     this.originalAuthor = const Value.absent(),
     this.useDefaultCover = const Value.absent(),
     this.hash = const Value.absent(),
+    this.sourceId = const Value.absent(),
+    this.externalId = const Value.absent(),
     this.parserVersion = const Value.absent(),
     this.contentRevision = const Value.absent(),
     this.totalChars = const Value.absent(),
@@ -919,6 +1004,8 @@ class BooksCompanion extends UpdateCompanion<Book> {
     this.originalAuthor = const Value.absent(),
     this.useDefaultCover = const Value.absent(),
     this.hash = const Value.absent(),
+    this.sourceId = const Value.absent(),
+    this.externalId = const Value.absent(),
     required int parserVersion,
     this.contentRevision = const Value.absent(),
     required int totalChars,
@@ -943,6 +1030,8 @@ class BooksCompanion extends UpdateCompanion<Book> {
     Expression<String>? originalAuthor,
     Expression<bool>? useDefaultCover,
     Expression<String>? hash,
+    Expression<String>? sourceId,
+    Expression<String>? externalId,
     Expression<int>? parserVersion,
     Expression<int>? contentRevision,
     Expression<int>? totalChars,
@@ -964,6 +1053,8 @@ class BooksCompanion extends UpdateCompanion<Book> {
       if (originalAuthor != null) 'original_author': originalAuthor,
       if (useDefaultCover != null) 'use_default_cover': useDefaultCover,
       if (hash != null) 'hash': hash,
+      if (sourceId != null) 'source_id': sourceId,
+      if (externalId != null) 'external_id': externalId,
       if (parserVersion != null) 'parser_version': parserVersion,
       if (contentRevision != null) 'content_revision': contentRevision,
       if (totalChars != null) 'total_chars': totalChars,
@@ -987,6 +1078,8 @@ class BooksCompanion extends UpdateCompanion<Book> {
     Value<String?>? originalAuthor,
     Value<bool>? useDefaultCover,
     Value<String?>? hash,
+    Value<String?>? sourceId,
+    Value<String?>? externalId,
     Value<int>? parserVersion,
     Value<int>? contentRevision,
     Value<int>? totalChars,
@@ -1008,6 +1101,8 @@ class BooksCompanion extends UpdateCompanion<Book> {
       originalAuthor: originalAuthor ?? this.originalAuthor,
       useDefaultCover: useDefaultCover ?? this.useDefaultCover,
       hash: hash ?? this.hash,
+      sourceId: sourceId ?? this.sourceId,
+      externalId: externalId ?? this.externalId,
       parserVersion: parserVersion ?? this.parserVersion,
       contentRevision: contentRevision ?? this.contentRevision,
       totalChars: totalChars ?? this.totalChars,
@@ -1057,6 +1152,12 @@ class BooksCompanion extends UpdateCompanion<Book> {
     if (hash.present) {
       map['hash'] = Variable<String>(hash.value);
     }
+    if (sourceId.present) {
+      map['source_id'] = Variable<String>(sourceId.value);
+    }
+    if (externalId.present) {
+      map['external_id'] = Variable<String>(externalId.value);
+    }
     if (parserVersion.present) {
       map['parser_version'] = Variable<int>(parserVersion.value);
     }
@@ -1098,6 +1199,8 @@ class BooksCompanion extends UpdateCompanion<Book> {
           ..write('originalAuthor: $originalAuthor, ')
           ..write('useDefaultCover: $useDefaultCover, ')
           ..write('hash: $hash, ')
+          ..write('sourceId: $sourceId, ')
+          ..write('externalId: $externalId, ')
           ..write('parserVersion: $parserVersion, ')
           ..write('contentRevision: $contentRevision, ')
           ..write('totalChars: $totalChars, ')
@@ -7793,7 +7896,7 @@ class ChatChapterNotesCompanion extends UpdateCompanion<ChatChapterNoteRow> {
 }
 
 class $CatalogBooksTable extends CatalogBooks
-    with TableInfo<$CatalogBooksTable, CatalogBook> {
+    with TableInfo<$CatalogBooksTable, CatalogBookRow> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
@@ -7886,7 +7989,7 @@ class $CatalogBooksTable extends CatalogBooks
   static const String $name = 'catalog_books';
   @override
   VerificationContext validateIntegrity(
-    Insertable<CatalogBook> instance, {
+    Insertable<CatalogBookRow> instance, {
     bool isInserting = false,
   }) {
     final context = VerificationContext();
@@ -7958,9 +8061,9 @@ class $CatalogBooksTable extends CatalogBooks
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  CatalogBook map(Map<String, dynamic> data, {String? tablePrefix}) {
+  CatalogBookRow map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return CatalogBook(
+    return CatalogBookRow(
       id: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}id'],
@@ -7998,7 +8101,7 @@ class $CatalogBooksTable extends CatalogBooks
   }
 }
 
-class CatalogBook extends DataClass implements Insertable<CatalogBook> {
+class CatalogBookRow extends DataClass implements Insertable<CatalogBookRow> {
   /// `Text#` Gutenberg.
   final int id;
   final String title;
@@ -8011,7 +8114,7 @@ class CatalogBook extends DataClass implements Insertable<CatalogBook> {
 
   /// `YYYY-MM-DD`, null kalau kosong di dump.
   final String? issued;
-  const CatalogBook({
+  const CatalogBookRow({
     required this.id,
     required this.title,
     required this.authorsText,
@@ -8049,12 +8152,12 @@ class CatalogBook extends DataClass implements Insertable<CatalogBook> {
     );
   }
 
-  factory CatalogBook.fromJson(
+  factory CatalogBookRow.fromJson(
     Map<String, dynamic> json, {
     ValueSerializer? serializer,
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return CatalogBook(
+    return CatalogBookRow(
       id: serializer.fromJson<int>(json['id']),
       title: serializer.fromJson<String>(json['title']),
       authorsText: serializer.fromJson<String>(json['authorsText']),
@@ -8078,7 +8181,7 @@ class CatalogBook extends DataClass implements Insertable<CatalogBook> {
     };
   }
 
-  CatalogBook copyWith({
+  CatalogBookRow copyWith({
     int? id,
     String? title,
     String? authorsText,
@@ -8086,7 +8189,7 @@ class CatalogBook extends DataClass implements Insertable<CatalogBook> {
     String? subjectsJson,
     String? bookshelvesJson,
     Value<String?> issued = const Value.absent(),
-  }) => CatalogBook(
+  }) => CatalogBookRow(
     id: id ?? this.id,
     title: title ?? this.title,
     authorsText: authorsText ?? this.authorsText,
@@ -8095,8 +8198,8 @@ class CatalogBook extends DataClass implements Insertable<CatalogBook> {
     bookshelvesJson: bookshelvesJson ?? this.bookshelvesJson,
     issued: issued.present ? issued.value : this.issued,
   );
-  CatalogBook copyWithCompanion(CatalogBooksCompanion data) {
-    return CatalogBook(
+  CatalogBookRow copyWithCompanion(CatalogBooksCompanion data) {
+    return CatalogBookRow(
       id: data.id.present ? data.id.value : this.id,
       title: data.title.present ? data.title.value : this.title,
       authorsText: data.authorsText.present
@@ -8117,7 +8220,7 @@ class CatalogBook extends DataClass implements Insertable<CatalogBook> {
 
   @override
   String toString() {
-    return (StringBuffer('CatalogBook(')
+    return (StringBuffer('CatalogBookRow(')
           ..write('id: $id, ')
           ..write('title: $title, ')
           ..write('authorsText: $authorsText, ')
@@ -8142,7 +8245,7 @@ class CatalogBook extends DataClass implements Insertable<CatalogBook> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is CatalogBook &&
+      (other is CatalogBookRow &&
           other.id == this.id &&
           other.title == this.title &&
           other.authorsText == this.authorsText &&
@@ -8152,7 +8255,7 @@ class CatalogBook extends DataClass implements Insertable<CatalogBook> {
           other.issued == this.issued);
 }
 
-class CatalogBooksCompanion extends UpdateCompanion<CatalogBook> {
+class CatalogBooksCompanion extends UpdateCompanion<CatalogBookRow> {
   final Value<int> id;
   final Value<String> title;
   final Value<String> authorsText;
@@ -8182,7 +8285,7 @@ class CatalogBooksCompanion extends UpdateCompanion<CatalogBook> {
        authorsJson = Value(authorsJson),
        subjectsJson = Value(subjectsJson),
        bookshelvesJson = Value(bookshelvesJson);
-  static Insertable<CatalogBook> custom({
+  static Insertable<CatalogBookRow> custom({
     Expression<int>? id,
     Expression<String>? title,
     Expression<String>? authorsText,
@@ -8473,6 +8576,8 @@ typedef $$BooksTableCreateCompanionBuilder = BooksCompanion Function({
   Value<String?> originalAuthor,
   Value<bool> useDefaultCover,
   Value<String?> hash,
+  Value<String?> sourceId,
+  Value<String?> externalId,
   required int parserVersion,
   Value<int> contentRevision,
   required int totalChars,
@@ -8494,6 +8599,8 @@ typedef $$BooksTableUpdateCompanionBuilder = BooksCompanion Function({
   Value<String?> originalAuthor,
   Value<bool> useDefaultCover,
   Value<String?> hash,
+  Value<String?> sourceId,
+  Value<String?> externalId,
   Value<int> parserVersion,
   Value<int> contentRevision,
   Value<int> totalChars,
@@ -8704,6 +8811,16 @@ class $$BooksTableFilterComposer extends Composer<_$AppDatabase, $BooksTable> {
 
   ColumnFilters<String> get hash => $composableBuilder(
     column: $table.hash,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get sourceId => $composableBuilder(
+    column: $table.sourceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get externalId => $composableBuilder(
+    column: $table.externalId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -8987,6 +9104,16 @@ class $$BooksTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get sourceId => $composableBuilder(
+    column: $table.sourceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get externalId => $composableBuilder(
+    column: $table.externalId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get parserVersion => $composableBuilder(
     column: $table.parserVersion,
     builder: (column) => ColumnOrderings(column),
@@ -9078,6 +9205,14 @@ class $$BooksTableAnnotationComposer
 
   GeneratedColumn<String> get hash =>
       $composableBuilder(column: $table.hash, builder: (column) => column);
+
+  GeneratedColumn<String> get sourceId =>
+      $composableBuilder(column: $table.sourceId, builder: (column) => column);
+
+  GeneratedColumn<String> get externalId => $composableBuilder(
+    column: $table.externalId,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<int> get parserVersion => $composableBuilder(
     column: $table.parserVersion,
@@ -9340,6 +9475,8 @@ class $$BooksTableTableManager
                 Value<String?> originalAuthor = const Value.absent(),
                 Value<bool> useDefaultCover = const Value.absent(),
                 Value<String?> hash = const Value.absent(),
+                Value<String?> sourceId = const Value.absent(),
+                Value<String?> externalId = const Value.absent(),
                 Value<int> parserVersion = const Value.absent(),
                 Value<int> contentRevision = const Value.absent(),
                 Value<int> totalChars = const Value.absent(),
@@ -9360,6 +9497,8 @@ class $$BooksTableTableManager
                 originalAuthor: originalAuthor,
                 useDefaultCover: useDefaultCover,
                 hash: hash,
+                sourceId: sourceId,
+                externalId: externalId,
                 parserVersion: parserVersion,
                 contentRevision: contentRevision,
                 totalChars: totalChars,
@@ -9382,6 +9521,8 @@ class $$BooksTableTableManager
                 Value<String?> originalAuthor = const Value.absent(),
                 Value<bool> useDefaultCover = const Value.absent(),
                 Value<String?> hash = const Value.absent(),
+                Value<String?> sourceId = const Value.absent(),
+                Value<String?> externalId = const Value.absent(),
                 required int parserVersion,
                 Value<int> contentRevision = const Value.absent(),
                 required int totalChars,
@@ -9402,6 +9543,8 @@ class $$BooksTableTableManager
                 originalAuthor: originalAuthor,
                 useDefaultCover: useDefaultCover,
                 hash: hash,
+                sourceId: sourceId,
+                externalId: externalId,
                 parserVersion: parserVersion,
                 contentRevision: contentRevision,
                 totalChars: totalChars,
@@ -15667,17 +15810,17 @@ class $$CatalogBooksTableTableManager
         RootTableManager<
           _$AppDatabase,
           $CatalogBooksTable,
-          CatalogBook,
+          CatalogBookRow,
           $$CatalogBooksTableFilterComposer,
           $$CatalogBooksTableOrderingComposer,
           $$CatalogBooksTableAnnotationComposer,
           $$CatalogBooksTableCreateCompanionBuilder,
           $$CatalogBooksTableUpdateCompanionBuilder,
           (
-            CatalogBook,
-            BaseReferences<_$AppDatabase, $CatalogBooksTable, CatalogBook>,
+            CatalogBookRow,
+            BaseReferences<_$AppDatabase, $CatalogBooksTable, CatalogBookRow>,
           ),
-          CatalogBook,
+          CatalogBookRow,
           PrefetchHooks Function()
         > {
   $$CatalogBooksTableTableManager(_$AppDatabase db, $CatalogBooksTable table)
@@ -15730,11 +15873,11 @@ class $$CatalogBooksTableTableManager
           withReferenceMapper: (p0) => p0
               .map(
                 (e) => (
-                  e.readTable<$CatalogBooksTable, CatalogBook>(table),
+                  e.readTable<$CatalogBooksTable, CatalogBookRow>(table),
                   BaseReferences<
                     _$AppDatabase,
                     $CatalogBooksTable,
-                    CatalogBook
+                    CatalogBookRow
                   >(db, table, e),
                 ),
               )
@@ -15748,17 +15891,17 @@ typedef $$CatalogBooksTableProcessedTableManager =
     ProcessedTableManager<
       _$AppDatabase,
       $CatalogBooksTable,
-      CatalogBook,
+      CatalogBookRow,
       $$CatalogBooksTableFilterComposer,
       $$CatalogBooksTableOrderingComposer,
       $$CatalogBooksTableAnnotationComposer,
       $$CatalogBooksTableCreateCompanionBuilder,
       $$CatalogBooksTableUpdateCompanionBuilder,
       (
-        CatalogBook,
-        BaseReferences<_$AppDatabase, $CatalogBooksTable, CatalogBook>,
+        CatalogBookRow,
+        BaseReferences<_$AppDatabase, $CatalogBooksTable, CatalogBookRow>,
       ),
-      CatalogBook,
+      CatalogBookRow,
       PrefetchHooks Function()
     >;
 

@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
-import '../../../../routing/router.dart';
 import '../../../core/theme/stabilo_theme.dart';
 import '../../../core/theme/stabilo_tokens.dart';
 import '../../../core/theme/stabilo_type.dart';
@@ -108,16 +106,6 @@ class ShelfHeader extends StatelessWidget {
                   primary: true,
                   size: button,
                   onPressed: onImport,
-                ),
-              ),
-              const SizedBox(width: Space.s2),
-              _Tap(
-                onTap: () => context.push(Routes.settings),
-                child: CircleButton(
-                  semanticLabel: 'Pengaturan app',
-                  icon: AppIcons.settings,
-                  size: button,
-                  onPressed: () => context.push(Routes.settings),
                 ),
               ),
             ],

@@ -6,6 +6,7 @@ import 'data/services/file_storage.dart';
 import 'domain/models/reader_prefs.dart';
 import 'routing/router.dart';
 import 'ui/core/theme/stabilo_theme.dart';
+import 'ui/features/discover/views/download_toasts.dart';
 import 'ui/features/splash/splash_overlay.dart';
 
 Future<void> main() async {
@@ -39,8 +40,10 @@ class LumaApp extends ConsumerWidget {
         AppTheme.dark => ThemeMode.dark,
         AppTheme.system || null => ThemeMode.system,
       },
-      builder: (context, child) =>
-          SplashGate(enabled: splash, child: child ?? const SizedBox.shrink()),
+      builder: (context, child) => SplashGate(
+        enabled: splash,
+        child: DownloadToasts(child: child ?? const SizedBox.shrink()),
+      ),
       routerConfig: ref.watch(routerProvider),
     );
   }

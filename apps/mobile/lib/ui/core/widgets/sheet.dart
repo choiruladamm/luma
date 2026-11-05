@@ -33,6 +33,8 @@ Future<T?> showAppSheet<T>(
   final reduced = MediaQuery.disableAnimationsOf(context);
   return showModalBottomSheet<T>(
     context: context,
+    // Di atas bar tab (AppShell), bukan di dalam branch-nya.
+    useRootNavigator: true,
     isScrollControlled: true,
     isDismissible: dismissible,
     barrierColor: barrierColor,

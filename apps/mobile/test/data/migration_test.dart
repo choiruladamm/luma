@@ -142,6 +142,12 @@ final v14 = [
   'CREATE INDEX catalog_books_authors ON catalog_books (authors_text)',
 ];
 
+// Frozen schema 15: catalog_fts virtual table (shadow tables ikut dibuat).
+final v15 = [
+  ...v14,
+  "CREATE VIRTUAL TABLE catalog_fts USING fts5(title, authors_text, content='catalog_books', content_rowid='id', tokenize='unicode61 remove_diacritics 2')",
+];
+
 AppDatabase _open([void Function(dynamic raw)? setup]) => AppDatabase(
   DatabaseConnection(
     NativeDatabase.memory(setup: setup),
@@ -334,6 +340,26 @@ void main() {
     expect(await _shape(db), await _shape(fresh));
   });
 
+  test('v15 → v16 adds nullable books.sourceId/externalId', () async {
+    final db = _open((raw) {
+      for (final sql in v15) {
+        raw.execute(sql);
+      }
+      raw.execute(
+        "INSERT INTO books(id,source_type,title,parser_version,total_chars) VALUES (1,'epub','Book',1,10)",
+      );
+      raw.execute("INSERT INTO settings VALUES ('reader.font','literata')");
+      raw.execute('PRAGMA user_version = 15');
+    });
+    addTearDown(db.close);
+    final book = await db.select(db.books).getSingle();
+    expect((book.title, book.sourceId, book.externalId), ('Book', null, null));
+    expect((await db.select(db.settings).getSingle()).value, 'literata');
+    final fresh = _open();
+    addTearDown(fresh.close);
+    expect(await _shape(db), await _shape(fresh));
+  });
+
   test('v14 → v15 adds catalog_fts and indexes the existing catalog', () async {
     final db = _open((raw) {
       for (final sql in v14) {
@@ -478,6 +504,8 @@ void main() {
         3600,
         300,
         1,
+        null, // source_id (v16)
+        null, // external_id (v16)
       ],
       'chapters': [71, 42, 5, 6, 'VI', 400, null],
       'paragraphs': [71, 3, 0, 'paragraph', 'Original paragraph 🌿'],

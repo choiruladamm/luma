@@ -136,6 +136,32 @@ void main() {
     expect(await storedFiles(), hasLength(2));
   });
 
+  test('source identity is stored and backfilled on a duplicate', () async {
+    final manual = await repo.importEpub(epub, fileName: 'a.epub');
+    var row = await db.select(db.books).getSingle();
+    expect((row.sourceId, row.externalId), (null, null));
+
+    final again = await repo.importEpub(
+      epub,
+      fileName: 'a.epub',
+      sourceId: 'gutenberg',
+      externalId: '45109',
+    );
+    expect(again, (bookId: manual.bookId, duplicate: true));
+    row = await db.select(db.books).getSingle();
+    expect((row.sourceId, row.externalId), ('gutenberg', '45109'));
+
+    final other = await repo.importEpub(
+      epub,
+      fileName: 'a.epub',
+      sourceId: 'standard_ebooks',
+      externalId: 'x',
+    );
+    expect(other.duplicate, isTrue);
+    row = await db.select(db.books).getSingle();
+    expect(row.sourceId, 'gutenberg', reason: 'first identity wins');
+  });
+
   test('a file that fails to parse leaves no rows and no files', () async {
     for (final (bytes, name, error) in [
       (Uint8List.fromList([1, 2, 3]), 'junk.epub', EpubError.notEpub),

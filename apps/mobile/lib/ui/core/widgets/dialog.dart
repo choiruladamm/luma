@@ -29,6 +29,7 @@ Future<bool> showConfirmDialog(
   var loading = false;
   final ok = await showDialog<bool>(
     context: context,
+    useRootNavigator: true,
     builder: (context) => StatefulBuilder(
       builder: (context, setState) {
         final c = context.stabilo;

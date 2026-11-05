@@ -192,9 +192,13 @@ class ImportRepository {
   /// Lempar [EpubException] kalau file bukan EPUB, rusak, atau ada DRM, dan
   /// [ImportCancelled] kalau [isCancelled] nyala sebelum tahap nyimpen.
   /// [onProgress] = 0–1 asli dari tahapnya, cuma naik, gak pernah sampe 1.
+  /// [sourceId] + [externalId]: identitas katalog luar kalau EPUB-nya hasil
+  /// download (docs/discover.md). Duplikat tanpa identitas ikut ditandain.
   Future<ImportResult> importEpub(
     Uint8List bytes, {
     required String fileName,
+    String? sourceId,
+    String? externalId,
     void Function(ImportStage stage)? onStage,
     void Function(double progress)? onProgress,
     bool Function()? isCancelled,
@@ -214,7 +218,19 @@ class ImportRepository {
     final existing = await (_db.select(
       _db.books,
     )..where((b) => b.hash.equals(hash))).getSingleOrNull();
-    if (existing != null) return (bookId: existing.id, duplicate: true);
+    if (existing != null) {
+      if (existing.sourceId == null && sourceId != null) {
+        await (_db.update(
+          _db.books,
+        )..where((b) => b.id.equals(existing.id))).write(
+          BooksCompanion(
+            sourceId: Value(sourceId),
+            externalId: Value(externalId),
+          ),
+        );
+      }
+      return (bookId: existing.id, duplicate: true);
+    }
 
     checkpoint();
     onStage?.call(ImportStage.outline);
@@ -253,6 +269,8 @@ class ImportRepository {
         fileName: fileName,
         bookFile: bookFile,
         coverFile: coverFile,
+        sourceId: sourceId,
+        externalId: externalId,
       );
       return (bookId: id, duplicate: false);
     } catch (_) {
@@ -445,6 +463,8 @@ class ImportRepository {
     required String fileName,
     required String bookFile,
     required String? coverFile,
+    String? sourceId,
+    String? externalId,
   }) => _db.transaction(() async {
     final bookId = await _db
         .into(_db.books)
@@ -456,6 +476,8 @@ class ImportRepository {
             fileName: Value(bookFile),
             coverName: Value(coverFile),
             hash: Value(hash),
+            sourceId: Value(sourceId),
+            externalId: Value(externalId),
             parserVersion: parserVersion,
             totalChars: book.totalChars,
           ),

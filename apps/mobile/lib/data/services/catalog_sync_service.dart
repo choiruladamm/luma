@@ -6,8 +6,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/catalog/pg_catalog_parser.dart';
-import '../../domain/models/backup.dart';
 import '../repositories/catalog_repository.dart';
+import 'http_client.dart';
 
 enum CatalogSyncResult {
   /// Masih segar (< 7 hari), gak ke server.
@@ -28,15 +28,7 @@ class CatalogSyncService {
     Dio? dio,
     this.retryDelay = const Duration(seconds: 2),
     DateTime Function()? now,
-  }) : _dio =
-           dio ??
-           Dio(
-             BaseOptions(
-               connectTimeout: const Duration(seconds: 15),
-               receiveTimeout: const Duration(seconds: 120),
-               headers: {'User-Agent': userAgent},
-             ),
-           ),
+  }) : _dio = dio ?? lumaDio(receiveTimeout: const Duration(seconds: 120)),
        _now = now ?? DateTime.now;
 
   final CatalogRepository _repo;
@@ -49,9 +41,6 @@ class CatalogSyncService {
   static const url =
       'https://www.gutenberg.org/cache/epub/feeds/pg_catalog.csv.gz';
   static const maxAge = Duration(days: 7);
-
-  /// Kebijakan gutenberg.org: UA tanpa kontak diblok IP.
-  static const userAgent = 'Luma/$appVersion (+mailto:work.adamm@gmail.com)';
 
   /// [onProgress] 0–1 selama unduh (−1 kalau server gak kasih panjang),
   /// [onImporting] pas unduhan selesai dan parse mulai. Batal lewat
@@ -112,27 +101,20 @@ class CatalogSyncService {
     String? since,
     void Function(double progress)? onProgress,
     CancelToken? cancel,
-  }) async {
-    for (var attempt = 1; ; attempt++) {
-      try {
-        return await _dio.download(
-          url,
-          path,
-          cancelToken: cancel,
-          onReceiveProgress: (received, total) =>
-              onProgress?.call(total > 0 ? received / total : -1),
-          options: Options(
-            headers: {'If-Modified-Since': ?since},
-            validateStatus: (s) => s == 200 || s == 304,
-          ),
-        );
-      } on DioException catch (e) {
-        final status = e.response?.statusCode;
-        if (attempt >= 3 || (status != 429 && status != 503)) rethrow;
-        await Future<void>.delayed(retryDelay * attempt);
-      }
-    }
-  }
+  }) => retryOnBusy(
+    delay: retryDelay,
+    () => _dio.download(
+      url,
+      path,
+      cancelToken: cancel,
+      onReceiveProgress: (received, total) =>
+          onProgress?.call(total > 0 ? received / total : -1),
+      options: Options(
+        headers: {'If-Modified-Since': ?since},
+        validateStatus: (s) => s == 200 || s == 304,
+      ),
+    ),
+  );
 }
 
 final catalogSyncServiceProvider = Provider<CatalogSyncService>(

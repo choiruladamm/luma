@@ -123,6 +123,16 @@ abstract final class Layout {
   static const bookMenuWidth = 250.0;
   static const bookMenuRow = 52.0;
   static const bookMenuBlur = 8.0; // sigma blur rak
+
+  // NavBar bottom bar (board Komponen · NavBar).
+  static const navBar = 60.0; // pill melayang
+  static const navTab = 48.0; // pill tab aktif / lingkaran tab diem
+  static const navBottom = 26.0; // jarak dari bawah layar (di atas home bar)
+  static const navSpace = 104.0; // ruang bawah konten di belakang bar
+  static const navBadge = 16.0; // lencana unduhan di tab Cari buku
+  static const navChip = 44.0; // chip "Ngunduh N buku"
+  static const navChipGap = 12.0; // chip → bar
+  static const navChipRing = 28.0;
 }
 
 /// Durasi & curve. Kalau iOS "Kurangi gerakan" nyala
@@ -149,6 +159,7 @@ abstract final class Motion {
   static const cursorBlink = Duration(milliseconds: 1000); // steps(1)
   static const thinkingDots = Duration(milliseconds: 1200); // easeInOut, loop
   static const reducedFade = Duration(milliseconds: 150);
+  static const navTab = Duration(milliseconds: 200); // pill geser + label
   static const progressStep = Duration(milliseconds: 150); // angka + bar import
   static const importMin = Duration(milliseconds: 1500); // loading import min.
   static const importSettle = Duration(milliseconds: 300); // jeda di 100%
