@@ -355,16 +355,19 @@ class _TopChart extends ConsumerWidget {
                     child: Container(
                       height: 36,
                       padding: const EdgeInsets.symmetric(horizontal: 14),
-                      alignment: Alignment.center,
                       decoration: BoxDecoration(
                         color: c.muted,
                         borderRadius: BorderRadius.circular(Radii.full),
                       ),
-                      child: Text(
-                        p,
-                        style: StabiloType.caption.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: c.ink,
+                      // widthFactor: 1 = selebar teks (alignment bikin melar).
+                      child: Center(
+                        widthFactor: 1,
+                        child: Text(
+                          p,
+                          style: StabiloType.caption.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: c.ink,
+                          ),
                         ),
                       ),
                     ),

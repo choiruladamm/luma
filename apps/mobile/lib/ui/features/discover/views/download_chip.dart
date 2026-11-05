@@ -252,12 +252,14 @@ class _Pill extends StatelessWidget {
         child: Container(
           height: 40,
           padding: const EdgeInsets.symmetric(horizontal: 14),
-          alignment: Alignment.center,
           decoration: BoxDecoration(
             color: c.muted,
             borderRadius: BorderRadius.circular(Radii.full),
           ),
-          child: Text(label, style: StabiloType.label.copyWith(fontSize: 14)),
+          child: Center(
+            widthFactor: 1,
+            child: Text(label, style: StabiloType.label.copyWith(fontSize: 14)),
+          ),
         ),
       ),
     );

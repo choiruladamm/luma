@@ -80,14 +80,17 @@ class DiscoverNotice extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(
                               horizontal: Space.s4,
                             ),
-                            alignment: Alignment.center,
                             decoration: BoxDecoration(
                               color: c.sheet,
                               borderRadius: BorderRadius.circular(Radii.full),
                             ),
-                            child: Text(
-                              'Coba lagi',
-                              style: StabiloType.label.copyWith(fontSize: 14),
+                            // widthFactor: 1 = selebar teks (alignment melar).
+                            child: Center(
+                              widthFactor: 1,
+                              child: Text(
+                                'Coba lagi',
+                                style: StabiloType.label.copyWith(fontSize: 14),
+                              ),
                             ),
                           ),
                         ),

@@ -54,22 +54,30 @@ class AppShell extends ConsumerWidget {
             left: 0,
             right: 0,
             bottom: bottom,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              spacing: Layout.navChipGap,
-              children: [
-                const DownloadChip(),
-                LumaNavBar(
-                  current: current,
-                  downloads: downloads,
-                  onTap: (tab) {
-                    if (tab == current) {
-                      ref.read(tabReselectProvider.notifier).bump(tab);
-                    }
-                    shell.goBranch(tab.index, initialLocation: tab == current);
-                  },
-                ),
-              ],
+            // Lapisan ini di atas semua Scaffold: tanpa Material, Text-nya
+            // jatuh ke gaya darurat Flutter (garis bawah kuning).
+            child: Material(
+              type: MaterialType.transparency,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                spacing: Layout.navChipGap,
+                children: [
+                  const DownloadChip(),
+                  LumaNavBar(
+                    current: current,
+                    downloads: downloads,
+                    onTap: (tab) {
+                      if (tab == current) {
+                        ref.read(tabReselectProvider.notifier).bump(tab);
+                      }
+                      shell.goBranch(
+                        tab.index,
+                        initialLocation: tab == current,
+                      );
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
       ],

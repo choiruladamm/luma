@@ -948,17 +948,19 @@ class _Empty extends ConsumerWidget {
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 14,
                                   ),
-                                  alignment: Alignment.center,
                                   decoration: BoxDecoration(
                                     color: c.muted,
                                     borderRadius: BorderRadius.circular(
                                       Radii.full,
                                     ),
                                   ),
-                                  child: Text(
-                                    'Ambil',
-                                    style: StabiloType.label.copyWith(
-                                      fontSize: 14,
+                                  child: Center(
+                                    widthFactor: 1,
+                                    child: Text(
+                                      'Ambil',
+                                      style: StabiloType.label.copyWith(
+                                        fontSize: 14,
+                                      ),
                                     ),
                                   ),
                                 ),

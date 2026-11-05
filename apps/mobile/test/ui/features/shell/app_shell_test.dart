@@ -150,6 +150,27 @@ void main() {
     expect(find.text('2'), findsNothing);
   });
 
+  testWidgets('bar and chip text have no fallback underline', (tester) async {
+    await pump(tester);
+    queue.emit([
+      const DownloadItem(
+        book: book,
+        status: DownloadStatus.downloading,
+        progress: 0.43,
+      ),
+    ]);
+    await tester.pump();
+    // Di luar Material, DefaultTextStyle jatuh ke garis bawah kuning ganda.
+    for (final text in ['Rak', 'Ngunduh 1 buku · 43%']) {
+      final style = DefaultTextStyle.of(tester.element(find.text(text)));
+      expect(
+        style.style.decoration,
+        isNot(TextDecoration.underline),
+        reason: text,
+      );
+    }
+  });
+
   testWidgets('keyboard up hides the bar', (tester) async {
     await pump(tester);
     expect(find.byType(LumaNavBar), findsOneWidget);

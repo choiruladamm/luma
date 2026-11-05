@@ -124,6 +124,15 @@ void main() {
     expect(find.text('Public domain di AS'), findsOneWidget);
     expect(find.text('#158'), findsOneWidget);
 
+    // Chip selebar isinya, bukan selebar layar (900 di test).
+    for (final label in ['Young women', 'Love stories', 'Best Books Ever']) {
+      final chip = find.ancestor(
+        of: find.text(label),
+        matching: find.byType(Container),
+      );
+      expect(tester.getSize(chip.first).width, lessThan(300), reason: label);
+    }
+
     await tester.tap(find.text('Baca selengkapnya'));
     await tester.pump();
     expect(find.text('Baca selengkapnya'), findsNothing);

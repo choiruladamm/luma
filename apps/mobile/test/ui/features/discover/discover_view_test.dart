@@ -170,6 +170,13 @@ void main() {
     expect(find.text('Frankenstein'), findsWidgets);
     expect(find.text('Moby Dick'), findsWidgets);
     expect(find.text('Sherlock Holmes'), findsOneWidget); // preset chip
+    for (final p in DiscoverViewModel.presets) {
+      final chip = find.ancestor(
+        of: find.text(p),
+        matching: find.byType(Container),
+      );
+      expect(tester.getSize(chip.first).width, lessThan(300), reason: p);
+    }
     expect(sync.calls, [false]);
     expect(tester.takeException(), isNull);
   });
@@ -195,6 +202,11 @@ void main() {
     );
     await tick(tester);
     expect(find.text('Katalog lagi gak bisa dihubungin'), findsOneWidget);
+    final retry = find.ancestor(
+      of: find.text('Coba lagi'),
+      matching: find.byType(Container),
+    );
+    expect(tester.getSize(retry.first).width, lessThan(300));
     source.popular = Completer();
     await tester.tap(find.text('Coba lagi'));
     await tick(tester);

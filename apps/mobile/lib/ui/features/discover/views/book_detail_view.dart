@@ -452,7 +452,6 @@ class _Chips extends StatelessWidget {
           Container(
             height: 30,
             padding: const EdgeInsets.symmetric(horizontal: 12),
-            alignment: Alignment.center,
             decoration: BoxDecoration(
               color: outline ? null : c.muted,
               borderRadius: BorderRadius.circular(15),
@@ -460,9 +459,16 @@ class _Chips extends StatelessWidget {
                   ? Border.all(color: c.track, width: Layout.outline)
                   : null,
             ),
-            child: Text(
-              l,
-              style: StabiloType.caption.copyWith(fontWeight: FontWeight.w600),
+            // Center(widthFactor: 1): Container beralignment tanpa lebar
+            // melar sepenuh ruang, chip jadi selebar layar.
+            child: Center(
+              widthFactor: 1,
+              child: Text(
+                l,
+                style: StabiloType.caption.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
           ),
       ],
@@ -757,14 +763,16 @@ class _Progress extends StatelessWidget {
                 child: Container(
                   height: Layout.touch,
                   padding: const EdgeInsets.symmetric(horizontal: 14),
-                  alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: c.muted,
                     borderRadius: BorderRadius.circular(Radii.full),
                   ),
-                  child: Text(
-                    'Batal',
-                    style: StabiloType.label.copyWith(fontSize: 14),
+                  child: Center(
+                    widthFactor: 1,
+                    child: Text(
+                      'Batal',
+                      style: StabiloType.label.copyWith(fontSize: 14),
+                    ),
                   ),
                 ),
               ),
