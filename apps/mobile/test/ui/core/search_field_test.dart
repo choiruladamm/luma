@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hugeicons/hugeicons.dart';
 import 'package:luma/ui/core/theme/stabilo_theme.dart';
 import 'package:luma/ui/core/theme/stabilo_tokens.dart';
 import 'package:luma/ui/core/widgets/search_field.dart';
@@ -76,6 +77,25 @@ void main() {
     await tester.enterText(find.byType(TextField), 'Netherfield');
     await tester.pump();
     expect(seen, ['Netherfield']);
+    // The board's ×: 22 circle, 12 icon at stroke 1.8.
+    expect(tester.getSize(find.bySemanticsLabel('Hapus isian')).width, 22);
+    final icon = tester.widget<HugeIcon>(
+      find.descendant(
+        of: find.bySemanticsLabel('Hapus isian'),
+        matching: find.byType(HugeIcon),
+      ),
+    );
+    expect((icon.size, icon.strokeWidth), (12, 1.8));
+    // The icon is really drawn at 12, not stretched to fill the 22 circle.
+    expect(
+      tester.getSize(
+        find.descendant(
+          of: find.bySemanticsLabel('Hapus isian'),
+          matching: find.byType(HugeIcon),
+        ),
+      ),
+      const Size(12, 12),
+    );
     await tester.tap(find.bySemanticsLabel('Hapus isian'));
     await tester.pump();
     expect(controller.text, isEmpty);

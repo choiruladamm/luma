@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hugeicons/hugeicons.dart';
 import 'package:luma/data/repositories/book_search_index.dart';
 import 'package:luma/data/repositories/book_search_repository.dart';
 import 'package:luma/data/repositories/reading_progress_repository.dart';
@@ -966,6 +967,17 @@ void main() {
       expect(find.bySemanticsLabel('Daftar isi'), findsOneWidget);
       expect(find.bySemanticsLabel('Atur tampilan teks'), findsNothing);
       expect(find.text('Aa'), findsNothing);
+      // The board's icons: chapter route and three solid dots.
+      HugeIcon iconIn(String label) => tester.widget<HugeIcon>(
+        find.descendant(
+          of: find.byWidgetPredicate(
+            (w) => w is CircleButton && w.semanticLabel == label,
+          ),
+          matching: find.byType(HugeIcon),
+        ),
+      );
+      expect(iconIn('Daftar isi').icon, AppIcons.toc);
+      expect(iconIn('Aksi lain').icon, AppIcons.readerMore);
     });
 
     testWidgets('menu: Cari kata + Atur tampilan, ⋯ yellow, 232 wide', (

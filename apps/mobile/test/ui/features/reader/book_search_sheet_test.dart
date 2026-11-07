@@ -161,6 +161,15 @@ void main() {
     expect(find.text('Chapter IV'), findsOneWidget);
     expect(find.text('2 hasil'), findsOneWidget);
     expect(find.text('1 hasil'), findsOneWidget);
+    // Board 3: the per-chapter count is justify-between, flush right (24 from
+    // the sheet edge = sheet 20 + header 4).
+    final sheetRight = tester.getRect(find.byType(BottomSheet)).right;
+    for (final label in ['2 hasil', '1 hasil']) {
+      expect(
+        tester.getTopRight(find.text(label)).dx,
+        closeTo(sheetRight - 24, 0.5),
+      );
+    }
     // Only the chapter being read gets the chip.
     expect(find.widgetWithText(Tag, 'Lagi dibaca'), findsOneWidget);
     // One highlighted word per hit.

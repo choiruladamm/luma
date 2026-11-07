@@ -295,7 +295,7 @@ class ReaderTopCapsule extends StatelessWidget {
               children: [
                 CircleButton(
                   semanticLabel: 'Aksi lain',
-                  icon: AppIcons.more,
+                  icon: AppIcons.readerMore,
                   active: moreOpen,
                   onPressed: onMore,
                 ),

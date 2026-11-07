@@ -7,18 +7,28 @@ import '../theme/stabilo_type.dart';
 
 /// Ikon Hugeicons Stroke Rounded. Warna ikut `IconTheme` / teks di sekitarnya.
 class AppIcon extends StatelessWidget {
-  const AppIcon(this.icon, {super.key, this.size = Layout.icon, this.color});
+  const AppIcon(
+    this.icon, {
+    super.key,
+    this.size = Layout.icon,
+    this.color,
+    this.strokeWidth,
+  });
 
   final List<List<dynamic>> icon;
   final double size;
   final Color? color;
+
+  /// Null = [Layout.iconStroke] (2.2 kalau ikon ≤ 14). Isi kalau board
+  /// nentuin lain, mis. × kecil di kolom cari (1,8 di 12–13pt).
+  final double? strokeWidth;
 
   @override
   Widget build(BuildContext context) => HugeIcon(
     icon: icon,
     size: size,
     color: color,
-    strokeWidth: size <= 14 ? 2.2 : Layout.iconStroke,
+    strokeWidth: strokeWidth ?? (size <= 14 ? 2.2 : Layout.iconStroke),
   );
 }
 
@@ -288,7 +298,89 @@ abstract final class AppIcons {
   static const settings = HugeIcons.strokeRoundedSettings01;
   static const next = HugeIcons.strokeRoundedArrowRight02;
   static const chevron = HugeIcons.strokeRoundedArrowRight01;
-  static const toc = HugeIcons.strokeRoundedLeftToRightListBullet;
+
+  /// Daftar isi di kapsul baca (board Cari kata, ChapterRoute): tiga titik
+  /// bab disambung garis (yang tengah = bab ini) + tiga baris judul.
+  static const toc = <List<dynamic>>[
+    [
+      'circle',
+      {
+        'key': '0',
+        'cx': '6',
+        'cy': '5',
+        'r': '2',
+        'stroke': 'currentColor',
+        'strokeWidth': '1.8',
+        'strokeLinecap': 'round',
+        'strokeLinejoin': 'round',
+      },
+    ],
+    [
+      'circle',
+      {
+        'key': '1',
+        'cx': '6',
+        'cy': '12',
+        'r': '2',
+        'fill': 'currentColor',
+        'stroke': 'currentColor',
+        'strokeWidth': '1.8',
+        'strokeLinecap': 'round',
+        'strokeLinejoin': 'round',
+      },
+    ],
+    [
+      'circle',
+      {
+        'key': '2',
+        'cx': '6',
+        'cy': '19',
+        'r': '2',
+        'stroke': 'currentColor',
+        'strokeWidth': '1.8',
+        'strokeLinecap': 'round',
+        'strokeLinejoin': 'round',
+      },
+    ],
+    [
+      'path',
+      {
+        'key': '3',
+        'd': 'M6 7V10M6 14V17',
+        'stroke': 'currentColor',
+        'strokeWidth': '1.8',
+        'strokeLinecap': 'round',
+        'strokeLinejoin': 'round',
+      },
+    ],
+    [
+      'path',
+      {
+        'key': '4',
+        'd': 'M11.5 5H20M11.5 12H20M11.5 19H17',
+        'stroke': 'currentColor',
+        'strokeWidth': '1.8',
+        'strokeLinecap': 'round',
+        'strokeLinejoin': 'round',
+      },
+    ],
+  ];
+
+  /// ⋯ di kapsul baca (board Cari kata): tiga titik penuh r1,6.
+  static const readerMore = <List<dynamic>>[
+    [
+      'circle',
+      {'key': '0', 'cx': '5', 'cy': '12', 'r': '1.6', 'fill': 'currentColor'},
+    ],
+    [
+      'circle',
+      {'key': '1', 'cx': '12', 'cy': '12', 'r': '1.6', 'fill': 'currentColor'},
+    ],
+    [
+      'circle',
+      {'key': '2', 'cx': '19', 'cy': '12', 'r': '1.6', 'fill': 'currentColor'},
+    ],
+  ];
   static const copy = HugeIcons.strokeRoundedCopy01;
   static const down = HugeIcons.strokeRoundedArrowDown02;
   static const expand = HugeIcons.strokeRoundedArrowDown01;

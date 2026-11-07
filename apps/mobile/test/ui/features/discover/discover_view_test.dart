@@ -6,6 +6,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hugeicons/hugeicons.dart';
 import 'package:luma/data/repositories/catalog_repository.dart';
 import 'package:luma/data/services/book_source.dart';
 import 'package:luma/data/services/catalog_sync_service.dart';
@@ -256,6 +257,14 @@ void main() {
     await tick(tester);
     expect(find.text('HASIL BUAT “E”'), findsOneWidget);
     expect(find.text('4 hasil · urut paling cocok'), findsOneWidget);
+    // Board 05: justify-between, the count sits flush with the right margin
+    // and the title flush with the left one.
+    final width = tester.view.physicalSize.width / tester.view.devicePixelRatio;
+    expect(
+      tester.getTopRight(find.text('4 hasil · urut paling cocok')).dx,
+      closeTo(width - 24, 0.5),
+    );
+    expect(tester.getTopLeft(find.text('HASIL BUAT “E”')).dx, closeTo(24, 0.5));
     expect(find.text('Paling cocok'), findsOneWidget);
     expect(find.text('Udah di rak'), findsOneWidget);
     expect(find.text('Lagi diunduh · 43%'), findsOneWidget);
@@ -264,8 +273,23 @@ void main() {
     expect(source.queries, ['@1', 'e@1']);
     expect(find.textContaining('Ngambil'), findsNothing);
 
+    // The × is the board's: 26 circle, 13 icon at stroke 1.8 (not the thicker
+    // default for small icons).
+    final clear = find.bySemanticsLabel('Hapus kata cari');
+    expect(tester.getSize(clear).width, 26);
+    final icon = tester.widget<HugeIcon>(
+      find.descendant(of: clear, matching: find.byType(HugeIcon)),
+    );
+    expect((icon.size, icon.strokeWidth), (13, 1.8));
+    expect(
+      tester.getSize(
+        find.descendant(of: clear, matching: find.byType(HugeIcon)),
+      ),
+      const Size(13, 13),
+    );
+
     // Clear → back to Top chart.
-    await tester.tap(find.bySemanticsLabel('Hapus kata cari'));
+    await tester.tap(clear);
     await tick(tester);
     expect(find.text('LAGI RAME'), findsOneWidget);
     expect(tester.takeException(), isNull);

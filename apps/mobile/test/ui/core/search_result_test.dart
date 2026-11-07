@@ -37,6 +37,40 @@ void main() {
       expect(find.text('Lagi dibaca'), findsOneWidget);
     });
 
+    testWidgets('the count is flush right at any width (justify-between)', (
+      tester,
+    ) async {
+      for (final w in [340.0, 800.0]) {
+        tester.view.physicalSize = Size(w, 1400);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.reset);
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: stabiloTheme(Brightness.light),
+            home: const Scaffold(
+              body: Column(
+                children: [
+                  SearchGroupHeader(
+                    title: 'Chapter I',
+                    count: 2,
+                    current: true,
+                  ),
+                  SearchGroupHeader(title: 'Chapter IV', count: 1),
+                ],
+              ),
+            ),
+          ),
+        );
+        for (final label in ['2 hasil', '1 hasil']) {
+          expect(
+            tester.getTopRight(find.text(label)).dx,
+            closeTo(w - 4, 0.5),
+            reason: '$label at $w',
+          );
+        }
+      }
+    });
+
     testWidgets('a long chapter title ellipsizes instead of overflowing', (
       tester,
     ) async {

@@ -122,10 +122,15 @@ class _SearchFieldState extends State<SearchField> {
                             color: c.track,
                             shape: BoxShape.circle,
                           ),
-                          child: AppIcon(
-                            AppIcons.close,
-                            size: 12,
-                            color: c.ink2,
+                          // Center: tanpa ini constraint ketat Container maksa
+                          // ikon sebesar lingkarannya.
+                          child: Center(
+                            child: AppIcon(
+                              AppIcons.close,
+                              size: 12,
+                              color: c.ink2,
+                              strokeWidth: Layout.iconStroke,
+                            ),
                           ),
                         ),
                       ),

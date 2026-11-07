@@ -29,19 +29,30 @@ class SearchGroupHeader extends StatelessWidget {
       child: Row(
         spacing: Space.s2,
         children: [
-          Flexible(
-            child: Semantics(
-              header: true,
-              child: Text(
-                title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: StabiloType.label.copyWith(fontSize: 14, color: c.ink),
-              ),
+          // Kiri makan sisa ruang (justify-between): jumlah hasil mentok
+          // kanan. Flexible + Spacer bagi sisa 50:50, jumlahnya gak nempel.
+          Expanded(
+            child: Row(
+              spacing: Space.s2,
+              children: [
+                Flexible(
+                  child: Semantics(
+                    header: true,
+                    child: Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: StabiloType.label.copyWith(
+                        fontSize: 14,
+                        color: c.ink,
+                      ),
+                    ),
+                  ),
+                ),
+                if (current) const Tag.status('Lagi dibaca'),
+              ],
             ),
           ),
-          if (current) const Tag.status('Lagi dibaca'),
-          const Spacer(),
           Text(
             '$count hasil',
             style: StabiloType.micro.copyWith(
