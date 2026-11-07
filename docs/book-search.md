@@ -22,8 +22,16 @@ Tabel `paragraph_fts` (schema 17): FTS5 external-content di atas `paragraphs` (t
 - **Restore backup:** index nempel ke rowid `paragraphs`, dan `VACUUM INTO` (backup) boleh nggeser rowid. `RestoreService.inspect` manggil `rebuildBookSearchIndex()` di salinan sementara sebelum dipasang, jadi hasil restore selalu konsisten, termasuk backup dari schema lama.
 - **Re-import / `parserVersion` naik:** paragraf diganti, trigger yang ngurus indexnya.
 
+## Query & repository (#178)
+
+- **`domain/book_search.dart`** (murni): `BookSearchQuery.parse(input)` → null kalau < 2 huruf/angka. Kata dipecah di non-huruf/angka dan dilipat (huruf kecil, tanpa aksen), semua kata jadi **satu frasa**, kata terakhir prefix: `netherfield par` → `MATCH '"netherfield par"*'`. Teks user gak pernah jadi sintaks FTS5 (`"`, `*`, `-`, `OR`, `NEAR` ikut dibuang). `ranges(text)` nyari kata yang sama di teks asli (kata utuh, kata terakhir boleh lanjut ke ujung kata) buat cuplikan sekarang dan stabilo inline di reader (#180). `bookSearchSnippet` motong ±60 huruf kiri-kanan dengan "…".
+- **`BookSearchRepository`** (`bookSearchRepositoryProvider`): `search(bookId, query)` join `paragraph_fts` → `paragraphs` → `chapters` (filter `book_id`), urut `chapters.sort_order` lalu `paragraph_index`, `LIMIT 501`. Hasil `BookSearchResult`: `chapters` (grup per bab, tiap hit bawa `chapterId`, `paragraphIndex`, `groupIndex`, `snippet`, `matchStart/End` di cuplikan), `total` + `chapterCount` sebenarnya (kalau > 500, dihitung lewat query `COUNT` terpisah), `truncated`.
+- **Riwayat:** `recentSearches` / `saveRecent` / `clearRecents`, JSON list di `settings` key `search.recent.<bookId>` (ikut backup), terbaru dulu, dedupe abaikan besar/kecil, maks 5, query < 2 huruf gak disimpan, nilai rusak dibaca kosong. Hapus buku (`BookRepository.delete`) ikut ngebuang key-nya.
+
 ## Test
 
 - `test/data/book_search_index_test.dart`: trigger, aksen/kutip, update/hapus/cascade, backfill per buku + progres, hapus baris belum ke-index gak ngerusak index, rebuild abis rowid geser.
 - `test/data/migration_test.dart`: v16 → v17 (data utuh, backfill, schema sama install baru).
+- `test/domain/book_search_test.dart`: parse, injeksi, lipat aksen/kutip, `ranges`, cuplikan.
+- `test/data/book_search_repository_test.dart`: urutan per bab, lingkup buku, frasa, cap 500, riwayat, hapus buku.
 - `test/data/import_*_test.dart`, `restore_service_test.dart`: index ikut import dan restore.
