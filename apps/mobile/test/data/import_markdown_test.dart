@@ -62,6 +62,23 @@ void main() {
     db.chapters,
   )..orderBy([(c) => OrderingTerm.asc(c.sortOrder)])).get();
 
+  test('Cari kata index follows import and replace of a chapter', () async {
+    Future<int> hits(String q) async =>
+        (await db
+                .customSelect(
+                  'SELECT rowid FROM paragraph_fts WHERE paragraph_fts MATCH ?',
+                  variables: [Variable(q)],
+                )
+                .get())
+            .length;
+    final r = await add('Bingley arrived.\n\nWickham too.', chapter: 1);
+    expect(await hits('"bingley"'), 1);
+    await add('Darcy only.', chapter: 1, replace: true, bookId: r.bookId);
+    expect(await hits('"bingley"'), 0);
+    expect(await hits('"darcy"'), 1);
+    expect(await hits('"wickham"'), 0);
+  });
+
   test(
     'new book: markdown source, no file, paragraphs + groups saved',
     () async {

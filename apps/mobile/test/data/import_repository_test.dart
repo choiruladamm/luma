@@ -4,6 +4,7 @@ import 'package:drift/drift.dart' hide isNull;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:luma/data/database/app_database.dart';
+import 'package:luma/data/repositories/book_search_index.dart';
 import 'package:luma/data/repositories/import_repository.dart';
 import 'package:luma/data/services/chapter_extractor.dart';
 import 'package:luma/data/services/epub_parser.dart';
@@ -85,6 +86,17 @@ void main() {
       unorderedEquals([book.fileName, book.coverName]),
     );
     expect(await storage.book(book.fileName!).readAsBytes(), epub);
+
+    // Cari kata: paragraf hasil import langsung ke-index, tanpa backfill.
+    final hit = await db
+        .customSelect(
+          'SELECT p.text FROM paragraph_fts f JOIN paragraphs p '
+          'ON p.rowid = f.rowid WHERE paragraph_fts MATCH ?',
+          variables: [Variable('"within"* "power"')],
+        )
+        .get();
+    expect(hit, isNotEmpty);
+    expect(await BookSearchIndex(db).isIndexed(book.id), isTrue);
   });
 
   test('EPUB sections are stored, and backfilled for schema 10 books', () async {
