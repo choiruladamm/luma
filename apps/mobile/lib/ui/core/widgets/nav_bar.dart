@@ -99,30 +99,28 @@ class _Tab extends StatelessWidget {
           duration: duration,
           curve: Curves.easeOut,
           height: Layout.navTab,
-          padding: active
-              ? const EdgeInsets.only(left: 14, right: 18)
-              : EdgeInsets.zero,
-          constraints: const BoxConstraints(minWidth: Layout.navTab),
+          // Padding tetap: ikon 20 + 14 kiri-kanan = lingkaran 48, jadi cuma
+          // label yang nambah lebar pas aktif. Warna & garis difade dengan
+          // rona yang sama (bukan ke Colors.transparent / border null): kalau
+          // enggak, kuning nyisa jadi coklat dan garisnya ngecil dulu.
+          padding: const EdgeInsets.symmetric(horizontal: 14),
           decoration: BoxDecoration(
-            color: active ? c.accent : Colors.transparent,
+            color: active ? c.accent : c.accent.withValues(alpha: 0),
             borderRadius: BorderRadius.circular(Layout.navTab / 2),
-            border: active
-                ? Border.all(color: c.accentBorder, width: Layout.outline)
-                : null,
+            border: Border.all(
+              color: active
+                  ? c.accentBorder
+                  : c.accentBorder.withValues(alpha: 0),
+              width: Layout.outline,
+            ),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            spacing: Space.s2,
             children: [
               Stack(
                 clipBehavior: Clip.none,
                 children: [
-                  AppIcon(
-                    tab.icon,
-                    size: active ? 21 : Layout.icon,
-                    color: active ? c.onAccent : c.ink2,
-                  ),
+                  AppIcon(tab.icon, color: active ? c.onAccent : c.ink2),
                   if (badge > 0)
                     Positioned(
                       right: -10,
@@ -131,14 +129,34 @@ class _Tab extends StatelessWidget {
                     ),
                 ],
               ),
-              if (active)
-                Text(
-                  tab.label,
-                  style: StabiloType.label.copyWith(
-                    fontSize: 14,
-                    color: c.onAccent,
+              // Label ikut melebar + muncul pas aktif, ngecil + pudar pas
+              // pindah, jadi gak ada kapsul kuning kosong yang nyusut.
+              TweenAnimationBuilder<double>(
+                tween: Tween(end: active ? 1 : 0),
+                duration: duration,
+                curve: Curves.easeOut,
+                builder: (_, t, child) => t == 0
+                    ? const SizedBox.shrink()
+                    : ClipRect(
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          widthFactor: t,
+                          child: Opacity(opacity: t, child: child),
+                        ),
+                      ),
+                child: Padding(
+                  padding: const EdgeInsets.only(left: Space.s2, right: 4),
+                  child: Text(
+                    tab.label,
+                    maxLines: 1,
+                    softWrap: false,
+                    style: StabiloType.label.copyWith(
+                      fontSize: 14,
+                      color: c.onAccent,
+                    ),
                   ),
                 ),
+              ),
             ],
           ),
         ),
