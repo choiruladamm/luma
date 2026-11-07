@@ -26,6 +26,8 @@ import '../../../core/widgets/buttons.dart';
 import '../../../core/widgets/edge_fade.dart';
 import '../view_models/reader_view_model.dart';
 import 'aa_sheet.dart';
+import 'book_search_sheet.dart';
+import 'reader_menu.dart';
 import 'book_end_view.dart';
 import 'meaning_sheet.dart';
 import 'reader_capsule.dart';
@@ -409,6 +411,28 @@ class _ReaderViewState extends ConsumerState<ReaderView>
     if (picked != null && picked != _chapter && mounted) _goTo(book, picked);
   }
 
+  /// Menu ⋯: Cari kata / Atur tampilan. Layar diredupin tipis, ⋯ kuning.
+  Future<void> _openMenu(ReaderBook book) async {
+    final action = await _withSheet(_Sheet.menu, () => showReaderMenu(context));
+    if (!mounted) return;
+    switch (action) {
+      case ReaderMenuAction.search:
+        await _openSearch(book);
+      case ReaderMenuAction.display:
+        await _withSheet(_Sheet.aa, () => showAaSheet(context));
+      case null:
+    }
+  }
+
+  /// Sheet Cari kata. Hasil yang di-tap dibalikin; lompat ke situ: #180.
+  Future<void> _openSearch(ReaderBook book) async {
+    await showBookSearchSheet(
+      context,
+      bookId: book.id,
+      currentChapterId: _chapterId,
+    );
+  }
+
   /// Tap paragraf → sheet Artinya buat grupnya. Kapsul ngumpet, halaman naik
   /// barengan sheet. Ditutup: kalau udah pake "Lanjut", halaman diem di grup
   /// terakhir; kalau cuma satu grup, balik ke posisi sebelum sheet dibuka.
@@ -658,7 +682,9 @@ class _ReaderViewState extends ConsumerState<ReaderView>
                                   child: ColoredBox(
                                     // Aa: tipis, teks tetep keliatan buat
                                     // preview setelan.
-                                    color: _lastSheet == _Sheet.aa
+                                    color:
+                                        _lastSheet == _Sheet.aa ||
+                                            _lastSheet == _Sheet.menu
                                         ? context.stabilo.scrimSoft
                                         : context.stabilo.scrim,
                                   ),
@@ -674,14 +700,13 @@ class _ReaderViewState extends ConsumerState<ReaderView>
                                     subtitle: ch.title,
                                     onBack: () => context.pop(),
                                     onToc: () => _openToc(b),
-                                    onAa: () => _withSheet(
-                                      _Sheet.aa,
-                                      () => showAaSheet(context),
-                                    ),
+                                    onMore: () => _openMenu(b),
                                     tocOpen:
                                         _sheetOpen && _lastSheet == _Sheet.toc,
-                                    aaOpen:
-                                        _sheetOpen && _lastSheet == _Sheet.aa,
+                                    moreOpen:
+                                        _sheetOpen &&
+                                        (_lastSheet == _Sheet.menu ||
+                                            _lastSheet == _Sheet.aa),
                                   ),
                                   bottom: widget.sourceVisit != null
                                       ? null
@@ -1771,7 +1796,7 @@ class _ChapterTextState extends ConsumerState<_ChapterText>
   }
 }
 
-enum _Sheet { toc, aa }
+enum _Sheet { toc, menu, aa }
 
 /// Scrim sheet Artinya yang bolong di blok grup.
 class _ScrimHole extends CustomPainter {

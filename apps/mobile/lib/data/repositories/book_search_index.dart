@@ -30,10 +30,10 @@ class BookSearchIndex {
   }
 
   /// Index paragraf yang belum masuk, per bab (aman diulang / dilanjut kalau
-  /// kepotong). [onProgress] dapet pecahan 0..1.
+  /// kepotong). [onProgress] dapet (bab selesai, jumlah bab).
   Future<void> ensureIndexed(
     int bookId, {
-    void Function(double fraction)? onProgress,
+    void Function(int done, int total)? onProgress,
   }) async {
     final ids =
         await (_db.selectOnly(_db.chapters)
@@ -42,7 +42,7 @@ class BookSearchIndex {
               ..orderBy([OrderingTerm.asc(_db.chapters.sortOrder)]))
             .map((r) => r.read(_db.chapters.id)!)
             .get();
-    onProgress?.call(0);
+    onProgress?.call(0, ids.length);
     for (final (i, id) in ids.indexed) {
       await _db.customStatement(
         'INSERT INTO paragraph_fts(rowid, text) '
@@ -50,7 +50,7 @@ class BookSearchIndex {
         'WHERE p.chapter_id = ? AND $_unindexed',
         [id],
       );
-      onProgress?.call((i + 1) / ids.length);
+      onProgress?.call(i + 1, ids.length);
     }
   }
 }

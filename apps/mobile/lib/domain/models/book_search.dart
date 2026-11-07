@@ -68,3 +68,16 @@ class BookSearchResult {
 
   bool get isEmpty => total == 0;
 }
+
+extension BookSearchResultLabel on BookSearchResult {
+  /// "68 hasil di 31 bab".
+  String get countLabel => '$total hasil di $chapterCount bab';
+}
+
+/// Hasil yang di-tap di sheet Cari kata: reader lompat ke [hit], dan nyimpen
+/// [result] buat navigator ↑ ↓ (#180).
+typedef BookSearchPick = ({
+  String query,
+  BookSearchResult result,
+  BookSearchHit hit,
+});

@@ -54,6 +54,9 @@ abstract final class Layout {
   static const margin = Space.s6;
   static const topBar = 60.0;
   static const touch = 44.0; // target sentuh minimal
+  static const searchField = 44.0; // SearchField sheet Cari kata
+  static const searchRing = 4.0; // cincin fokus SearchField
+  static const searchSheetTop = 54.0; // sheet Cari kata: jarak dari atas layar
   static const icon = 20.0; // ikon di tombol (18–20)
   static const iconStroke = 1.8; // 2.2 kalau ikon ≤14
   static const outline = 1.5; // cuma di objek yang bisa dipegang

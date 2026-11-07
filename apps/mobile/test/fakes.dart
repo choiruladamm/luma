@@ -7,7 +7,10 @@ import 'package:luma/domain/models/book_chat.dart';
 
 import 'package:dio/dio.dart';
 
+import 'package:luma/data/repositories/book_search_index.dart';
+import 'package:luma/data/repositories/book_search_repository.dart';
 import 'package:luma/data/repositories/settings_repository.dart';
+import 'package:luma/domain/models/book_search.dart';
 import 'package:luma/data/services/openrouter_service.dart';
 import 'package:luma/domain/ai_prompt.dart';
 import 'package:luma/domain/breakdown_prompt.dart';
@@ -321,4 +324,119 @@ class FakeBreakdown extends BreakdownStream {
   }
 
   void push(BreakdownState next) => state = next;
+}
+
+/// Cari kata without a database: serves [results] by trimmed, lower-cased
+/// input, keeps [recents] in memory, logs every [searches].
+class FakeBookSearch implements BookSearchRepository {
+  FakeBookSearch({
+    this.results = const {},
+    List<String> recents = const [],
+    this.failWith,
+  }) : recents = [...recents];
+
+  final Map<String, BookSearchResult> results;
+  final List<String> recents;
+  final searches = <String>[];
+
+  /// Thrown by [search] when set.
+  Object? failWith;
+
+  /// The first [search] waits for [releaseFirst] (a slow answer to an old
+  /// keystroke). The gate is made inside `search`, in the caller's zone.
+  bool slowFirst = false;
+  Completer<void>? _firstGate;
+
+  void releaseFirst() => _firstGate?.complete();
+
+  @override
+  Future<BookSearchResult> search(int bookId, String input) async {
+    searches.add(input);
+    if (failWith != null) throw failWith!;
+    if (slowFirst) {
+      slowFirst = false;
+      await (_firstGate = Completer<void>()).future;
+    }
+    return results[input.trim().toLowerCase()] ?? BookSearchResult.empty;
+  }
+
+  @override
+  Future<List<String>> recentSearches(int bookId) async => [...recents];
+
+  @override
+  Future<void> saveRecent(int bookId, String input) async {
+    recents.remove(input.trim());
+    recents.insert(0, input.trim());
+  }
+
+  @override
+  Future<void> clearRecents(int bookId) async => recents.clear();
+}
+
+/// Index state without a database. [hold] keeps `ensureIndexed` open (after
+/// its first progress steps) until [release], so a test can look at the
+/// "Nyiapin pencarian" screen. The gate is made inside `ensureIndexed`, in
+/// the caller's zone (fakeAsync).
+class FakeSearchIndex implements BookSearchIndex {
+  FakeSearchIndex({this.indexed = true, this.chapters = 4, this.hold = false});
+
+  bool indexed;
+  final int chapters;
+  final bool hold;
+  Completer<void>? _gate;
+
+  void release() => _gate?.complete();
+  final progress = <(int, int)>[];
+
+  @override
+  Future<bool> isIndexed(int bookId) async => indexed;
+
+  @override
+  Future<void> ensureIndexed(
+    int bookId, {
+    void Function(int done, int total)? onProgress,
+  }) async {
+    for (var i = 0; i <= chapters ~/ 2; i++) {
+      progress.add((i, chapters));
+      onProgress?.call(i, chapters);
+    }
+    if (hold) await (_gate = Completer<void>()).future;
+    progress.add((chapters, chapters));
+    onProgress?.call(chapters, chapters);
+    indexed = true;
+  }
+}
+
+/// One search hit for tests.
+BookSearchHit fakeHit(
+  int chapterId,
+  int paragraphIndex,
+  String snippet, {
+  String? match,
+}) {
+  final i = match == null ? -1 : snippet.indexOf(match);
+  return BookSearchHit(
+    chapterId: chapterId,
+    paragraphIndex: paragraphIndex,
+    groupIndex: paragraphIndex,
+    snippet: snippet,
+    matchStart: i < 0 ? 0 : i,
+    matchEnd: i < 0 ? 0 : i + match!.length,
+  );
+}
+
+/// [chapters] = (id, title, hits); totals derived unless given.
+BookSearchResult fakeResult(
+  List<(int, String, List<BookSearchHit>)> chapters, {
+  int? total,
+}) {
+  final built = [
+    for (final (i, c) in chapters.indexed)
+      BookSearchChapter(chapterId: c.$1, title: c.$2, sortOrder: i, hits: c.$3),
+  ];
+  return BookSearchResult(
+    chapters: built,
+    total: total ?? built.fold(0, (n, c) => n + c.hits.length),
+    chapterCount: built.length,
+  );
 }

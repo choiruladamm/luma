@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:luma/data/repositories/book_search_index.dart';
+import 'package:luma/data/repositories/book_search_repository.dart';
 import 'package:luma/data/repositories/reading_progress_repository.dart';
 import 'package:luma/data/repositories/chat_repository.dart';
 import 'package:luma/data/repositories/settings_repository.dart';
@@ -35,7 +37,9 @@ import 'package:luma/ui/features/bookshelf/views/bookshelf_view.dart';
 import 'package:luma/ui/core/widgets/tag.dart';
 import 'package:luma/ui/features/reader/view_models/breakdown_view_model.dart';
 import 'package:luma/ui/features/reader/view_models/reader_view_model.dart';
+import 'package:luma/ui/features/reader/views/book_search_sheet.dart';
 import 'package:luma/ui/features/reader/views/reader_capsule.dart';
+import 'package:luma/ui/features/reader/views/reader_menu.dart';
 import 'package:luma/ui/features/reader/views/reader_view.dart';
 import 'package:luma/ui/features/breakdown/views/breakdown_view.dart';
 import 'package:luma/domain/breakdown_prompt.dart';
@@ -257,6 +261,8 @@ void main() {
     answer = (g) async => replyFor(g);
   });
   late FakeSettings settings;
+  var search = FakeBookSearch();
+  var searchIndex = FakeSearchIndex();
 
   // Feeds the reader through its providers; no Drift in widget tests.
   Future<void> openBook(
@@ -299,6 +305,8 @@ void main() {
             (ref, g) async => brokenDown[g] ?? 0,
           ),
           settingsRepositoryProvider.overrideWithValue(settings),
+          bookSearchRepositoryProvider.overrideWithValue(search),
+          bookSearchIndexProvider.overrideWithValue(searchIndex),
           booksStreamProvider.overrideWith(
             (ref) => Stream.value([
               ShelfBook(
@@ -945,20 +953,78 @@ void main() {
     expect(find.byType(ReaderView), findsNothing);
   });
 
+  group('menu ⋯ (Cari kata)', () {
+    final more = find.byWidgetPredicate(
+      (w) => w is CircleButton && w.semanticLabel == 'Aksi lain',
+    );
+
+    testWidgets('capsule has Daftar isi and ⋯, no Aa button', (tester) async {
+      await openBook(tester);
+      expect(more, findsOneWidget);
+      expect(find.bySemanticsLabel('Daftar isi'), findsOneWidget);
+      expect(find.bySemanticsLabel('Atur tampilan teks'), findsNothing);
+      expect(find.text('Aa'), findsNothing);
+    });
+
+    testWidgets('menu: Cari kata + Atur tampilan, ⋯ yellow, 232 wide', (
+      tester,
+    ) async {
+      await openBook(tester);
+      await tester.tap(more);
+      await tester.pumpAndSettle();
+      expect(find.text('Cari kata'), findsOneWidget);
+      expect(find.text('Atur tampilan'), findsOneWidget);
+      expect(find.text('Ukuran, font, tema'), findsOneWidget);
+      expect(find.textContaining('Tandain'), findsNothing); // mockup only
+      expect(tester.widget<CircleButton>(more).active, isTrue);
+      expect(
+        tester.getSize(find.byType(Material).last).width,
+        lessThanOrEqualTo(readerMenuWidth + 1),
+      );
+      // Tap outside closes it.
+      await tester.tapAt(const Offset(40, 900));
+      await tester.pumpAndSettle();
+      expect(find.text('Cari kata'), findsNothing);
+      expect(tester.widget<CircleButton>(more).active, isFalse);
+    });
+
+    testWidgets('Cari kata opens the search sheet over the book', (
+      tester,
+    ) async {
+      search = FakeBookSearch(recents: ['Netherfield']);
+      searchIndex = FakeSearchIndex();
+      await openBook(tester);
+      await tester.tap(more);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Cari kata'));
+      await tester.pumpAndSettle();
+      expect(find.byType(BookSearchSheet), findsOneWidget);
+      expect(find.text('Cari kata di buku ini'), findsOneWidget);
+      expect(find.text('Netherfield'), findsOneWidget);
+      await tester.tap(find.text('Batal'));
+      await tester.pumpAndSettle();
+      expect(find.byType(BookSearchSheet), findsNothing);
+      expect(find.byType(ReaderView), findsOneWidget);
+    });
+  });
+
   group('Aa', () {
+    // Aa pindah ke menu ⋯ di kapsul (Cari kata #176).
     final aaButton = find.byWidgetPredicate(
-      (w) => w is CircleButton && w.semanticLabel == 'Atur tampilan teks',
+      (w) => w is CircleButton && w.semanticLabel == 'Aksi lain',
     );
 
     Future<void> openAa(WidgetTester tester) async {
       await tester.tap(aaButton);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Atur tampilan'));
       await tester.pumpAndSettle();
     }
 
     TextStyle styleOf(WidgetTester tester, String text) =>
         tester.widget<Text>(find.textContaining(text)).style!;
 
-    testWidgets('capsule stays above, Aa turns yellow, tap again closes', (
+    testWidgets('capsule stays above, ⋯ turns yellow, tap again closes', (
       tester,
     ) async {
       await openBook(tester);

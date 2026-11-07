@@ -28,10 +28,19 @@ Tabel `paragraph_fts` (schema 17): FTS5 external-content di atas `paragraphs` (t
 - **`BookSearchRepository`** (`bookSearchRepositoryProvider`): `search(bookId, query)` join `paragraph_fts` → `paragraphs` → `chapters` (filter `book_id`), urut `chapters.sort_order` lalu `paragraph_index`, `LIMIT 501`. Hasil `BookSearchResult`: `chapters` (grup per bab, tiap hit bawa `chapterId`, `paragraphIndex`, `groupIndex`, `snippet`, `matchStart/End` di cuplikan), `total` + `chapterCount` sebenarnya (kalau > 500, dihitung lewat query `COUNT` terpisah), `truncated`.
 - **Riwayat:** `recentSearches` / `saveRecent` / `clearRecents`, JSON list di `settings` key `search.recent.<bookId>` (ikut backup), terbaru dulu, dedupe abaikan besar/kecil, maks 5, query < 2 huruf gak disimpan, nilai rusak dibaca kosong. Hapus buku (`BookRepository.delete`) ikut ngebuang key-nya.
 
+## Menu ⋯ + sheet (#179)
+
+- **Kapsul atas:** `‹ · judul · Daftar isi · ⋯`. Tombol Aa dicopot; ⋯ (`CircleButton`, label "Aksi lain") kuning selama menu atau sheet dari menu (Aa) kebuka. Popover `showReaderMenu` (`reader_menu.dart`): 232 lebar, radius 20, garis kapsul 1,5, baris 50, rata kanan 10pt di bawah kapsul; isi **Cari kata** (ikon Search01) dan **Atur tampilan** (Aa + "Ukuran, font, tema"). Layar diredupin `scrimSoft`. "Tandain posisi nanti" di board cuma contoh isian UI, gak dibangun.
+- **Sheet** `showBookSearchSheet` (`book_search_sheet.dart`): `showAppSheet` detent penuh, top 54 (`Layout.searchSheetTop`), isi di-padding `viewInsets.bottom` jadi daftar mengecil di atas keyboard. Kolom cari `SearchField` fokus otomatis + "Batal".
+- **`BookSearchViewModel`** (`bookSearchProvider(bookId)`, `.autoDispose`): fase `checking` (tanpa tampilan) → `preparing` (buku belum ke-index: `ensureIndexed`, progres per bab, layar 5 "Nyiapin pencarian…" + "Bab N dari M") → `idle` (riwayat, layar 1) → `results` / `empty` (layar 2–4) / `failed`. Query berubah → cari 250 ms abis ketikan terakhir (`BookSearchViewModel.debounce`); kurang dari 2 huruf balik ke riwayat; jawaban lama yang telat gak nimpa yang baru (`_seq`). Tap riwayat = cari langsung. Query yang diketik pas `preparing` dicari begitu index siap.
+- **Tap hasil:** `remember()` nyimpen query ke riwayat, sheet nutup balikin `BookSearchPick` (query, hasil lengkap, hit). Lompat + navigator: #180.
+- **Komponen shared** (`ui/core/widgets/`): `SearchField` (pill 44, diam muted, fokus garis tinta 1,5 + cincin kuning 4, × 22 pas ada isi), `SearchGroupHeader` (judul bab + chip `Tag.status('Lagi dibaca')` + "N hasil"), `SearchHitTile` (cuplikan maks 3 baris, kata cocok di-stabilo inline, `Radii.xs`). Ikon baru di `AppIcons`: `search`, `searchOff`, `up01`, `down01`.
+
 ## Test
 
 - `test/data/book_search_index_test.dart`: trigger, aksen/kutip, update/hapus/cascade, backfill per buku + progres, hapus baris belum ke-index gak ngerusak index, rebuild abis rowid geser.
 - `test/data/migration_test.dart`: v16 → v17 (data utuh, backfill, schema sama install baru).
 - `test/domain/book_search_test.dart`: parse, injeksi, lipat aksen/kutip, `ranges`, cuplikan.
 - `test/data/book_search_repository_test.dart`: urutan per bab, lingkup buku, frasa, cap 500, riwayat, hapus buku.
+- `test/ui/features/reader/book_search_view_model_test.dart` (fakeAsync): debounce, fase, urutan jawaban, riwayat. `book_search_sheet_test.dart`: layar 1–5, chip, stabilo, tap hasil, Batal, keyboard. `reader_test.dart` grup "menu ⋯": kapsul, menu, buka sheet. `test/ui/core/search_field_test.dart`, `search_result_test.dart`.
 - `test/data/import_*_test.dart`, `restore_service_test.dart`: index ikut import dan restore.

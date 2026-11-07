@@ -136,9 +136,9 @@ void main() {
     expect(await index.isIndexed(a), isFalse);
     expect(await index.isIndexed(b), isFalse);
 
-    final progress = <double>[];
-    await index.ensureIndexed(a, onProgress: progress.add);
-    expect(progress, [0, 0.5, 1]);
+    final progress = <(int, int)>[];
+    await index.ensureIndexed(a, onProgress: (d, t) => progress.add((d, t)));
+    expect(progress, [(0, 2), (1, 2), (2, 2)]);
     expect(await index.isIndexed(a), isTrue);
     expect(await index.isIndexed(b), isFalse);
     expect(await hits('"wickham"'), hasLength(2));
