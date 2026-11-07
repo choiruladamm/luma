@@ -71,12 +71,13 @@ class _DiscoverViewState extends ConsumerState<DiscoverView> {
     return Scaffold(
       body: SafeArea(
         bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: Layout.margin),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            spacing: Space.s4,
-            children: [
+        // Tanpa inset di sini: baris rekomendasi harus mentok tepi layar pas
+        // digeser. Header, kolom cari, dan tiap blok isi nambah 24-nya sendiri.
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          spacing: Space.s4,
+          children: [
+            _inset(
               SizedBox(
                 height: Layout.topBar,
                 child: Align(
@@ -87,41 +88,48 @@ class _DiscoverViewState extends ConsumerState<DiscoverView> {
                   ),
                 ),
               ),
+            ),
+            _inset(
               _SearchField(
                 controller: _field,
                 enabled: ready,
                 onChanged: _setQuery,
               ),
-              Expanded(
-                child: switch ((ready, state.results)) {
-                  (false, _) => _CatalogSetup(
-                    state: sync,
-                    bottom: bottom,
-                    onRetry: () => ref
-                        .read(catalogSyncProvider.notifier)
-                        .sync(force: true),
-                  ),
-                  (true, null) => _TopChart(
-                    popular: state.popular,
-                    bottom: bottom,
-                    onRetry: ref.read(discoverProvider.notifier).loadPopular,
-                    onPreset: _setQuery,
-                  ),
-                  (true, final results?) => _Results(
-                    results: results,
-                    scroll: _scroll,
-                    bottom: bottom,
-                    onRetryMore: ref.read(discoverProvider.notifier).loadMore,
-                  ),
-                },
-              ),
-            ],
-          ),
+            ),
+            Expanded(
+              child: switch ((ready, state.results)) {
+                (false, _) => _CatalogSetup(
+                  state: sync,
+                  bottom: bottom,
+                  onRetry: () =>
+                      ref.read(catalogSyncProvider.notifier).sync(force: true),
+                ),
+                (true, null) => _TopChart(
+                  popular: state.popular,
+                  bottom: bottom,
+                  onRetry: ref.read(discoverProvider.notifier).loadPopular,
+                  onPreset: _setQuery,
+                ),
+                (true, final results?) => _Results(
+                  results: results,
+                  scroll: _scroll,
+                  bottom: bottom,
+                  onRetryMore: ref.read(discoverProvider.notifier).loadMore,
+                ),
+              },
+            ),
+          ],
         ),
       ),
     );
   }
 }
+
+/// Inset 24 di kiri-kanan satu blok isi layar Cari buku.
+Widget _inset(Widget child) => Padding(
+  padding: const EdgeInsets.symmetric(horizontal: Layout.margin),
+  child: child,
+);
 
 /// Kolom cari 56, kapsul outline (board 03). Tombol × 26 pas ada isi.
 class _SearchField extends StatelessWidget {
@@ -158,6 +166,11 @@ class _SearchField extends StatelessWidget {
               enabled: enabled,
               onChanged: onChanged,
               textInputAction: TextInputAction.search,
+              // Hasil udah muncul tiap ketikan: tombol Cari / ketuk di luar
+              // cukup nutup keyboard. (Di HP, TextField gak nutup sendiri.)
+              onSubmitted: (_) => FocusManager.instance.primaryFocus?.unfocus(),
+              onTapOutside: (_) =>
+                  FocusManager.instance.primaryFocus?.unfocus(),
               style: StabiloType.body.copyWith(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
@@ -225,7 +238,8 @@ class _CatalogSetup extends StatelessWidget {
       _ => 'Nyiapin katalog buku…',
     };
     return ListView(
-      padding: EdgeInsets.only(bottom: bottom),
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+      padding: EdgeInsets.fromLTRB(Layout.margin, 0, Layout.margin, bottom),
       children: [
         if (failed)
           DiscoverNotice(
@@ -269,111 +283,133 @@ class _TopChart extends ConsumerWidget {
       _ => const <CatalogBook>[],
     };
     return ListView(
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       padding: EdgeInsets.only(bottom: bottom),
       children: [
         if (popular case PopularFailed(failure: NetworkFailure.offline))
-          DiscoverEmpty(
-            icon: AppIcons.offline,
-            title: 'Lo lagi offline',
-            body:
-                'Nyari tetep jalan. Tapi daftar rame, detail buku, sama '
-                'unduhan butuh internet. Buku di rak tetap bisa lo baca kok.',
-            action: AppButton.primary(
-              label: 'Buka rak',
-              pill: true,
-              height: 48,
-              onPressed: () => context.go(Routes.home),
+          _inset(
+            DiscoverEmpty(
+              icon: AppIcons.offline,
+              title: 'Lo lagi offline',
+              body:
+                  'Nyari tetep jalan. Tapi daftar rame, detail buku, sama '
+                  'unduhan butuh internet. Buku di rak tetap bisa lo baca kok.',
+              action: AppButton.primary(
+                label: 'Buka rak',
+                pill: true,
+                height: 48,
+                onPressed: () => context.go(Routes.home),
+              ),
             ),
           )
         else ...[
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              Text(
-                'LAGI RAME',
-                style: StabiloType.caption.copyWith(
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.05 * 13,
-                  color: c.ink2,
-                ),
-              ),
-              Text(
-                'Top ${DiscoverViewModel.topCount}',
-                style: StabiloType.caption.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: c.ink2,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: Space.s4),
-          switch (popular) {
-            PopularFailed() => DiscoverNotice(
-              icon: AppIcons.alert,
-              title: 'Katalog lagi gak bisa dihubungin',
-              body: 'Bukan salah lo kok. Coba lagi bentar lagi ya.',
-              onRetry: onRetry,
-            ),
-            PopularLoading(slow: true) => DiscoverNotice(
-              icon: AppIcons.history,
-              title: 'Katalognya lagi lemot nih',
-              body: 'Udah 5 detik lebih. Tungguin bentar, atau coba lagi.',
-              onRetry: onRetry,
-            ),
-            PopularLoading() => const SkeletonRows(),
-            PopularReady() => Column(
+          _inset(
+            Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
-              spacing: Space.s4,
               children: [
-                if (items.isNotEmpty) _TopCard(book: items.first),
-                if (items.length > 1) _RankRow(books: items.skip(1).toList()),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    Text(
+                      'LAGI RAME',
+                      style: StabiloType.caption.copyWith(
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.05 * 13,
+                        color: c.ink2,
+                      ),
+                    ),
+                    Text(
+                      'Top ${DiscoverViewModel.topCount}',
+                      style: StabiloType.caption.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: c.ink2,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: Space.s4),
+                switch (popular) {
+                  PopularFailed() => DiscoverNotice(
+                    icon: AppIcons.alert,
+                    title: 'Katalog lagi gak bisa dihubungin',
+                    body: 'Bukan salah lo kok. Coba lagi bentar lagi ya.',
+                    onRetry: onRetry,
+                  ),
+                  PopularLoading(slow: true) => DiscoverNotice(
+                    icon: AppIcons.history,
+                    title: 'Katalognya lagi lemot nih',
+                    body:
+                        'Udah 5 detik lebih. Tungguin bentar, atau coba lagi.',
+                    onRetry: onRetry,
+                  ),
+                  PopularLoading() => const SkeletonRows(),
+                  PopularReady() =>
+                    items.isEmpty
+                        ? const SizedBox.shrink()
+                        : _TopCard(book: items.first),
+                },
+                if (popular case PopularLoading(slow: true))
+                  const SkeletonRows(),
               ],
             ),
-          },
-          if (popular case PopularLoading(slow: true)) const SkeletonRows(),
-          const SizedBox(height: Space.s5),
-          Text(
-            'COBA CARI',
-            style: StabiloType.caption.copyWith(
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.05 * 13,
-              color: c.ink2,
-            ),
           ),
-          const SizedBox(height: Space.s3),
-          Wrap(
-            spacing: Space.s2,
-            runSpacing: Space.s2,
-            children: [
-              for (final p in DiscoverViewModel.presets)
-                Semantics(
-                  button: true,
-                  child: GestureDetector(
-                    onTap: () => onPreset(p),
-                    child: Container(
-                      height: 36,
-                      padding: const EdgeInsets.symmetric(horizontal: 14),
-                      decoration: BoxDecoration(
-                        color: c.muted,
-                        borderRadius: BorderRadius.circular(Radii.full),
-                      ),
-                      // widthFactor: 1 = selebar teks (alignment bikin melar).
-                      child: Center(
-                        widthFactor: 1,
-                        child: Text(
-                          p,
-                          style: StabiloType.caption.copyWith(
-                            fontWeight: FontWeight.w700,
-                            color: c.ink,
+          // Baris #2… mentok tepi layar, 24 pertama ikut kegeser (bukan
+          // inset luar), jadi pas digeser kartunya nabrak tepi kiri.
+          if (popular case PopularReady() when items.length > 1)
+            Padding(
+              padding: const EdgeInsets.only(top: Space.s4),
+              child: _RankRow(books: items.skip(1).toList()),
+            ),
+          _inset(
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: Space.s5),
+                Text(
+                  'COBA CARI',
+                  style: StabiloType.caption.copyWith(
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.05 * 13,
+                    color: c.ink2,
+                  ),
+                ),
+                const SizedBox(height: Space.s3),
+                Wrap(
+                  spacing: Space.s2,
+                  runSpacing: Space.s2,
+                  children: [
+                    for (final p in DiscoverViewModel.presets)
+                      Semantics(
+                        button: true,
+                        child: GestureDetector(
+                          onTap: () => onPreset(p),
+                          child: Container(
+                            height: 36,
+                            padding: const EdgeInsets.symmetric(horizontal: 14),
+                            decoration: BoxDecoration(
+                              color: c.muted,
+                              borderRadius: BorderRadius.circular(Radii.full),
+                            ),
+                            // widthFactor: 1 = selebar teks (alignment bikin melar).
+                            child: Center(
+                              widthFactor: 1,
+                              child: Text(
+                                p,
+                                style: StabiloType.caption.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  color: c.ink,
+                                ),
+                              ),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ),
+                  ],
                 ),
-            ],
+              ],
+            ),
           ),
         ],
       ],
@@ -478,10 +514,12 @@ class _RankRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.stabilo;
     return SizedBox(
-      height: 132 + 6 + 30,
+      // Cover 132 + jarak 6 + judul 30, plus ruang buat bayangan cover (gak
+      // bisa lagi nimpa di luar kotak: list ini dipotong di tepinya).
+      height: 4 + 132 + 6 + 30 + 14,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        clipBehavior: Clip.none,
+        padding: const EdgeInsets.fromLTRB(Layout.margin, 4, Layout.margin, 14),
         itemCount: books.length,
         separatorBuilder: (_, _) => const SizedBox(width: 18),
         itemBuilder: (_, i) {
@@ -591,18 +629,21 @@ class _Results extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final c = context.stabilo;
     if (results.items.isEmpty) {
-      return DiscoverEmpty(
-        icon: HugeIcons.strokeRoundedSearchRemove,
-        title: 'Gak nemu “${results.query}”',
-        body:
-            'Pencarian cuma nyocokin judul sama nama penulis. Cek ejaannya, '
-            'atau coba kata yang lebih pendek.',
+      return _inset(
+        DiscoverEmpty(
+          icon: HugeIcons.strokeRoundedSearchRemove,
+          title: 'Gak nemu “${results.query}”',
+          body:
+              'Pencarian cuma nyocokin judul sama nama penulis. Cek ejaannya, '
+              'atau coba kata yang lebih pendek.',
+        ),
       );
     }
     final rest = results.items.skip(1).toList();
     return ListView(
       controller: scroll,
-      padding: EdgeInsets.only(bottom: bottom),
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+      padding: EdgeInsets.fromLTRB(Layout.margin, 0, Layout.margin, bottom),
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
