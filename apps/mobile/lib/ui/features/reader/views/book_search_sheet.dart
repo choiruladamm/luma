@@ -19,13 +19,23 @@ Future<BookSearchPick?> showBookSearchSheet(
   BuildContext context, {
   required int bookId,
   int? currentChapterId,
+
+  /// Kata + posisi daftar buat buka lagi dari navigator (mode cari).
+  String? initialQuery,
+  double initialScrollOffset = 0,
+  ValueChanged<double>? onScrollOffset,
 }) {
   final height = MediaQuery.sizeOf(context).height;
   return showAppSheet<BookSearchPick>(
     context,
     maxHeight: (height - Layout.searchSheetTop) / height,
-    builder: (_) =>
-        BookSearchSheet(bookId: bookId, currentChapterId: currentChapterId),
+    builder: (_) => BookSearchSheet(
+      bookId: bookId,
+      currentChapterId: currentChapterId,
+      initialQuery: initialQuery,
+      initialScrollOffset: initialScrollOffset,
+      onScrollOffset: onScrollOffset,
+    ),
   );
 }
 
@@ -34,6 +44,9 @@ class BookSearchSheet extends ConsumerStatefulWidget {
     super.key,
     required this.bookId,
     this.currentChapterId,
+    this.initialQuery,
+    this.initialScrollOffset = 0,
+    this.onScrollOffset,
   });
 
   final int bookId;
@@ -41,15 +54,42 @@ class BookSearchSheet extends ConsumerStatefulWidget {
   /// Bab yang lagi dibaca: dikasih chip "Lagi dibaca".
   final int? currentChapterId;
 
+  /// Kolom cari langsung keisi dan dicari (balik dari navigator).
+  final String? initialQuery;
+
+  /// Posisi scroll daftar hasil yang diinget.
+  final double initialScrollOffset;
+  final ValueChanged<double>? onScrollOffset;
+
   @override
   ConsumerState<BookSearchSheet> createState() => _BookSearchSheetState();
 }
 
 class _BookSearchSheetState extends ConsumerState<BookSearchSheet> {
   final _controller = TextEditingController();
+  late final _scroll = ScrollController(
+    initialScrollOffset: widget.initialScrollOffset,
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    final q = widget.initialQuery;
+    if (q != null) {
+      _controller.text = q;
+      // Provider baru dibikin pas build pertama; cari begitu siap.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _vm.searchNow(q);
+      });
+    }
+    _scroll.addListener(() {
+      if (_scroll.hasClients) widget.onScrollOffset?.call(_scroll.offset);
+    });
+  }
 
   @override
   void dispose() {
+    _scroll.dispose();
     _controller.dispose();
     super.dispose();
   }
@@ -133,6 +173,7 @@ class _BookSearchSheetState extends ConsumerState<BookSearchSheet> {
                   onClear: _vm.clearRecents,
                 ),
                 BookSearchPhase.results => _Results(
+                  controller: _scroll,
                   result: s.result,
                   currentChapterId: widget.currentChapterId,
                   bottomInset: media.viewInsets.bottom > 0
@@ -253,12 +294,14 @@ class _Recents extends StatelessWidget {
 /// Layar 2–3: jumlah, lalu hasil digrup per bab.
 class _Results extends StatelessWidget {
   const _Results({
+    required this.controller,
     required this.result,
     required this.currentChapterId,
     required this.bottomInset,
     required this.onTap,
   });
 
+  final ScrollController controller;
   final BookSearchResult result;
   final int? currentChapterId;
   final double bottomInset;
@@ -311,6 +354,7 @@ class _Results extends StatelessWidget {
     ];
     return EdgeFadeScroll(
       child: ListView(
+        controller: controller,
         padding: EdgeInsets.only(bottom: bottomInset + Space.s4),
         children: rows,
       ),

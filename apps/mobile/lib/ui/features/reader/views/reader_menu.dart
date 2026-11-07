@@ -6,15 +6,19 @@ import '../../../core/theme/stabilo_type.dart';
 import '../../../core/widgets/buttons.dart';
 import 'reader_capsule.dart';
 
-enum ReaderMenuAction { search, display }
+enum ReaderMenuAction { search, results, display }
 
 /// Lebar popover menu ⋯ (board Cari kata 0b).
 const readerMenuWidth = 232.0;
 
 /// Menu ⋯ di kapsul atas: Cari kata, Atur tampilan. Popover kapsul-style
 /// (garis 1,5, radius 20, baris 50), rata kanan, 10pt di bawah kapsul. Null
-/// kalau ditutup tanpa milih.
-Future<ReaderMenuAction?> showReaderMenu(BuildContext context) {
+/// kalau ditutup tanpa milih. Lagi mode cari ([resultsFor] = kata yang dicari)
+/// item pertamanya jadi "Lihat hasil “kata”" (balik ke daftar hasil).
+Future<ReaderMenuAction?> showReaderMenu(
+  BuildContext context, {
+  String? resultsFor,
+}) {
   final c = context.stabilo;
   final size = MediaQuery.sizeOf(context);
   final top =
@@ -44,8 +48,8 @@ Future<ReaderMenuAction?> showReaderMenu(BuildContext context) {
     items: [
       _item(
         context,
-        ReaderMenuAction.search,
-        'Cari kata',
+        resultsFor == null ? ReaderMenuAction.search : ReaderMenuAction.results,
+        resultsFor == null ? 'Cari kata' : 'Lihat hasil “$resultsFor”',
         icon: const AppIcon(AppIcons.search, size: 19),
         last: false,
       ),

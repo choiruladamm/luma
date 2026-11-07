@@ -25,6 +25,9 @@ import '../../../core/theme/stabilo_type.dart';
 import '../../../core/widgets/buttons.dart';
 import '../../../core/widgets/edge_fade.dart';
 import '../view_models/reader_view_model.dart';
+import '../../../../domain/book_search.dart';
+import '../../../../domain/models/book_search.dart';
+import '../../../core/widgets/search_navigator.dart';
 import 'aa_sheet.dart';
 import 'book_search_sheet.dart';
 import 'reader_menu.dart';
@@ -105,6 +108,22 @@ class _ReaderViewState extends ConsumerState<ReaderView>
 
   /// Grup yang lagi dibuka di sheet Artinya.
   int? _openGroup;
+
+  /// Mode Cari kata (docs/book-search.md): hasil yang dibuka lewat sheet.
+  /// Null = gak lagi nyari.
+  _SearchMode? _search;
+
+  /// Abis lompat dari hasil, posisi baca gak ikut pindah sampe user scroll
+  /// 1 layar dari situ ([_onSearchRead]).
+  bool _jumpHeld = false;
+
+  /// User lagi scroll: navigator hasil ngecil, balik penuh
+  /// [Motion.searchRegrow] abis berhenti.
+  final _scrolling = ValueNotifier<bool>(false);
+  Timer? _regrow;
+
+  /// Posisi scroll daftar hasil di sheet, diinget pas balik dari navigator.
+  double _listOffset = 0;
 
   @override
   void initState() {
@@ -322,6 +341,8 @@ class _ReaderViewState extends ConsumerState<ReaderView>
     _saveLater?.cancel();
     _rehide?.cancel();
     _chatHintTimer?.cancel();
+    _regrow?.cancel();
+    _scrolling.dispose();
     if (_android && widget.sourceVisit == null) {
       SystemChrome.setSystemUIChangeCallback(null);
     }
@@ -367,11 +388,15 @@ class _ReaderViewState extends ConsumerState<ReaderView>
       paragraphIndex: _spot.index,
       paragraphOffset: _spot.offset,
     );
+    // Abis lompat dari hasil cari: waktu baca tetep dicatat, posisi nggak.
+    final hold = _jumpHeld && !force;
     final previous = _pendingSave;
     final reading = _flushReading();
     return _pendingSave = () async {
       await Future.wait([previous, reading]);
-      if (chapterId != null) await _progress.save(widget.bookId, position);
+      if (chapterId != null && !hold) {
+        await _progress.save(widget.bookId, position);
+      }
     }();
   }
 
@@ -384,6 +409,7 @@ class _ReaderViewState extends ConsumerState<ReaderView>
       _chapter = chapter;
       _chapterId = book.chapters[chapter].id;
       _lastChar = book.chapters[chapter].charOffset;
+      _jumpHeld = false;
       _spot = (index: 0, offset: 0);
       _restoreTo = null;
       _fraction.value = 0;
@@ -411,12 +437,16 @@ class _ReaderViewState extends ConsumerState<ReaderView>
     if (picked != null && picked != _chapter && mounted) _goTo(book, picked);
   }
 
-  /// Menu ⋯: Cari kata / Atur tampilan. Layar diredupin tipis, ⋯ kuning.
+  /// Menu ⋯: Cari kata (atau "Lihat hasil" pas lagi mode cari) / Atur
+  /// tampilan. Layar diredupin tipis, ⋯ kuning.
   Future<void> _openMenu(ReaderBook book) async {
-    final action = await _withSheet(_Sheet.menu, () => showReaderMenu(context));
+    final action = await _withSheet(
+      _Sheet.menu,
+      () => showReaderMenu(context, resultsFor: _search?.raw),
+    );
     if (!mounted) return;
     switch (action) {
-      case ReaderMenuAction.search:
+      case ReaderMenuAction.search || ReaderMenuAction.results:
         await _openSearch(book);
       case ReaderMenuAction.display:
         await _withSheet(_Sheet.aa, () => showAaSheet(context));
@@ -424,13 +454,150 @@ class _ReaderViewState extends ConsumerState<ReaderView>
     }
   }
 
-  /// Sheet Cari kata. Hasil yang di-tap dibalikin; lompat ke situ: #180.
+  /// Sheet Cari kata. Pas lagi mode cari kebuka dengan kata + posisi daftar
+  /// yang sama. Hasil yang di-tap → [_enterSearch].
   Future<void> _openSearch(ReaderBook book) async {
-    await showBookSearchSheet(
+    final mode = _search;
+    if (mode == null) _listOffset = 0;
+    final pick = await showBookSearchSheet(
       context,
       bookId: book.id,
       currentChapterId: _chapterId,
+      initialQuery: mode?.raw,
+      initialScrollOffset: mode == null ? 0 : _listOffset,
+      onScrollOffset: (o) => _listOffset = o,
     );
+    if (pick != null && mounted) _enterSearch(book, pick);
+  }
+
+  /// Hasil di-tap: mode cari nyala, lompat ke situ. Posisi sebelum nyari
+  /// (buat "Balik ke posisi tadi?") dicatat sekali, bukan tiap ganti kata.
+  void _enterSearch(ReaderBook book, BookSearchPick pick) {
+    final query = BookSearchQuery.parse(pick.query);
+    final chapterId = _chapterId;
+    if (query == null || chapterId == null) return;
+    final hits = [
+      for (final c in pick.result.chapters)
+        for (final h in c.hits) (hit: h, chapter: c.title),
+    ];
+    final i = hits.indexWhere(
+      (e) =>
+          e.hit.chapterId == pick.hit.chapterId &&
+          e.hit.paragraphIndex == pick.hit.paragraphIndex,
+    );
+    if (i < 0) return;
+    final back =
+        _search?.back ??
+        (
+          chapterId: chapterId,
+          paragraphIndex: _spot.index,
+          paragraphOffset: _spot.offset,
+        );
+    _search = _SearchMode(
+      raw: pick.query,
+      query: query,
+      hits: hits,
+      truncated: pick.result.truncated,
+      back: back,
+    );
+    _jumpToHit(book, i);
+  }
+
+  /// Lompat ke hasil ke-[i]: paragrafnya ke ±⅓ tinggi layar, kedip, kata
+  /// cocok di-stabilo. Bab lain = pindah bab dulu. Posisi baca ditahan.
+  void _jumpToHit(ReaderBook book, int i) {
+    final mode = _search;
+    if (mode == null) return;
+    final hit = mode.hits[i].hit;
+    final target = book.chapters.indexWhere((c) => c.id == hit.chapterId);
+    if (target < 0) return;
+    _regrow?.cancel();
+    _scrolling.value = false;
+    _saveLater?.cancel();
+    _flushReading().ignore(); // waktu baca ke tempat lama, bukan loncatannya
+    _lastChar = null;
+    _jumpHeld = true;
+    setState(() {
+      mode.index = i;
+      if (target == _chapter) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _text.currentState?.jumpToParagraph(hit.paragraphIndex);
+        });
+      } else {
+        _text = GlobalKey();
+        _chapter = target;
+        _chapterId = hit.chapterId;
+        _spot = (index: hit.paragraphIndex, offset: 0);
+        _restoreTo = _spot;
+        _fraction.value = 0;
+        _finished = false;
+      }
+    });
+  }
+
+  void _stepSearch(ReaderBook book, int delta) {
+    final mode = _search;
+    if (mode == null) return;
+    final i = mode.index + delta;
+    if (i >= 0 && i < mode.hits.length) _jumpToHit(book, i);
+  }
+
+  /// × di navigator: keluar mode cari, tawarin balik ke posisi sebelum nyari.
+  void _closeSearch() {
+    final mode = _search;
+    if (mode == null) return;
+    _regrow?.cancel();
+    _scrolling.value = false;
+    setState(() => _search = null);
+    final back = mode.back;
+    if (back == null) return;
+    showToast(
+      context,
+      'Balik ke posisi tadi?',
+      actionLabel: 'Balik',
+      duration: Motion.searchToast,
+      onAction: () => _returnTo(back),
+    );
+  }
+
+  /// "Balik": ke posisi sebelum nyari, lanjut baca biasa dari situ.
+  void _returnTo(ReadingPosition back) {
+    final book = _book;
+    if (book == null || !mounted) return;
+    final i = book.chapters.indexWhere((c) => c.id == back.chapterId);
+    if (i < 0) return;
+    _flushReading().ignore();
+    setState(() {
+      _text = GlobalKey();
+      _chapter = i;
+      _chapterId = back.chapterId;
+      _spot = (index: back.paragraphIndex, offset: back.paragraphOffset);
+      _restoreTo = _spot;
+      _fraction.value = 0;
+      _lastChar = null;
+      _finished = false;
+      _jumpHeld = false;
+      _saveLater?.cancel();
+    });
+    _save().ignore();
+  }
+
+  /// Scroll jari mulai / berhenti: navigator ngecil / balik penuh.
+  void _onScrollActive(bool active) {
+    if (_search == null) return;
+    _regrow?.cancel();
+    if (active) {
+      _scrolling.value = true;
+    } else {
+      _regrow = Timer(Motion.searchRegrow, () => _scrolling.value = false);
+    }
+  }
+
+  /// User udah scroll 1 layar dari hasil: sekarang baru itu posisi bacanya.
+  void _onSearchRead() {
+    if (!_jumpHeld) return;
+    _jumpHeld = false;
+    _save().ignore();
   }
 
   /// Tap paragraf → sheet Artinya buat grupnya. Kapsul ngumpet, halaman naik
@@ -638,6 +805,20 @@ class _ReaderViewState extends ConsumerState<ReaderView>
                       },
                       onParagraphTap: _openMeaning,
                       openGroup: _openGroup,
+                      search: _search == null
+                          ? null
+                          : _SearchMarks(
+                              query: _search!.query,
+                              chapterId:
+                                  _search!.hits[_search!.index].hit.chapterId,
+                              paragraph: _search!
+                                  .hits[_search!.index]
+                                  .hit
+                                  .paragraphIndex,
+                            ),
+                      flashSearch: _search != null,
+                      onScrollActive: _onScrollActive,
+                      onSearchRead: _onSearchRead,
                       onNext: i + 1 < b.chapters.length
                           ? () => _goTo(b, i + 1)
                           : () {
@@ -701,6 +882,7 @@ class _ReaderViewState extends ConsumerState<ReaderView>
                                     onBack: () => context.pop(),
                                     onToc: () => _openToc(b),
                                     onMore: () => _openMenu(b),
+                                    searchActive: _search != null,
                                     tocOpen:
                                         _sheetOpen && _lastSheet == _Sheet.toc,
                                     moreOpen:
@@ -708,7 +890,9 @@ class _ReaderViewState extends ConsumerState<ReaderView>
                                         (_lastSheet == _Sheet.menu ||
                                             _lastSheet == _Sheet.aa),
                                   ),
-                                  bottom: widget.sourceVisit != null
+                                  bottom:
+                                      widget.sourceVisit != null ||
+                                          _search != null
                                       ? null
                                       : ReaderChatDock(
                                           progress: progress,
@@ -719,6 +903,41 @@ class _ReaderViewState extends ConsumerState<ReaderView>
                                               ? '${ch.title} kelar'
                                               : '±${readingMinutes(left)} mnt lagi',
                                         ),
+                                ),
+                              ),
+                            // Mode cari: navigator hasil gantiin pill progres,
+                            // gak ikut ngumpet bareng kapsul.
+                            if (_search case final mode?
+                                when widget.sourceVisit == null)
+                              Positioned(
+                                left: 0,
+                                right: 0,
+                                bottom:
+                                    MediaQuery.paddingOf(context).bottom +
+                                    capsuleBottomGap,
+                                child: Center(
+                                  child: ValueListenableBuilder<bool>(
+                                    valueListenable: _scrolling,
+                                    builder: (context, compact, _) =>
+                                        SearchNavigator(
+                                          word: mode.raw,
+                                          position: mode.index + 1,
+                                          total: mode.hits.length,
+                                          truncated: mode.truncated,
+                                          chapterTitle:
+                                              mode.hits[mode.index].chapter,
+                                          compact: compact,
+                                          onPrevious: mode.index > 0
+                                              ? () => _stepSearch(b, -1)
+                                              : null,
+                                          onNext:
+                                              mode.index + 1 < mode.hits.length
+                                              ? () => _stepSearch(b, 1)
+                                              : null,
+                                          onList: () => _openSearch(b),
+                                          onClose: _closeSearch,
+                                        ),
+                                  ),
                                 ),
                               ),
                             if (_chatHintVisible &&
@@ -909,6 +1128,10 @@ class _ChapterText extends ConsumerStatefulWidget {
     required this.onNext,
     this.openGroup,
     this.sourceVisit,
+    this.search,
+    this.flashSearch = false,
+    this.onScrollActive,
+    this.onSearchRead,
   });
 
   final ReaderBook book;
@@ -931,6 +1154,19 @@ class _ChapterText extends ConsumerStatefulWidget {
   final int? openGroup;
   final ChatSource? sourceVisit;
   final VoidCallback onNext;
+
+  /// Mode Cari kata: kata cocok di-stabilo di semua paragraf bab ini.
+  final _SearchMarks? search;
+
+  /// Lagi mode cari: kedatangan di [restoreTo] = lompat dari hasil (kedip
+  /// paragraf), bukan "Lanjut baca".
+  final bool flashSearch;
+
+  /// Scroll jari mulai (true) / berhenti (false).
+  final ValueChanged<bool>? onScrollActive;
+
+  /// User udah scroll 1 layar dari paragraf hasil.
+  final VoidCallback? onSearchRead;
 
   @override
   ConsumerState<_ChapterText> createState() => _ChapterTextState();
@@ -980,6 +1216,9 @@ class _ChapterTextState extends ConsumerState<_ChapterText>
 
   /// Scroll dari jari (bukan lompatan restore) yang belum dilaporin.
   bool _userScrolled = false;
+
+  /// Posisi scroll waktu lompat dari hasil cari; null = gak lagi nunggu.
+  double? _searchAnchor;
 
   @override
   void initState() {
@@ -1130,7 +1369,14 @@ class _ChapterTextState extends ConsumerState<_ChapterText>
           }
         }
       }
-      if (_place(target, y) && source == null) _greet(paras, spot);
+      if (_place(target, y) && source == null) {
+        if (widget.flashSearch) {
+          flashParagraph(spot.index);
+          _searchAnchor = _scroll.offset;
+        } else {
+          _greet(paras, spot);
+        }
+      }
     }
     if (_scroll.hasClients) _track();
     // Baru keliatan setelah di posisi yang bener (lihat AnimatedOpacity).
@@ -1357,8 +1603,48 @@ class _ChapterTextState extends ConsumerState<_ChapterText>
         if (mounted) setState(() => _mark = null);
       });
     } else {
+      _flash.duration = Motion.flash;
       _flash.forward(from: 0);
     }
+  }
+
+  /// Kedip muted di paragraf hasil cari ([Motion.searchFlash]); Kurangi
+  /// gerakan: garis kiri 4pt kayak "Lanjut baca".
+  void flashParagraph(int index) {
+    final content = _contentKey.currentContext?.findRenderObject();
+    final box = _box(index);
+    if (box == null || content is! RenderBox) return;
+    final r = box.localToGlobal(Offset.zero, ancestor: content) & box.size;
+    _markTimer?.cancel();
+    _mark = Rect.fromLTRB(
+      r.left - Space.s3,
+      r.top - Space.s2,
+      r.right + Space.s3,
+      r.bottom + Space.s2,
+    );
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _markTimer = Timer(Motion.flashReduced, () {
+        if (mounted) setState(() => _mark = null);
+      });
+    } else {
+      _flash.duration = Motion.searchFlash;
+      _flash.forward(from: 0);
+    }
+  }
+
+  /// Lompat dari hasil cari (bab ini): paragraf ke ±⅓ tinggi layar, kedip.
+  /// Paragraf gak ada (mis. judul bab yang gak dirender dobel) = ke awal bab.
+  void jumpToParagraph(int index) {
+    if (!_scroll.hasClients) return;
+    final placed = _place((
+      index: index,
+      offset: 0,
+    ), MediaQuery.sizeOf(context).height / 3);
+    if (!placed) _scroll.jumpTo(_scroll.position.minScrollExtent);
+    _userScrolled = false;
+    _track();
+    _searchAnchor = _scroll.offset;
+    setState(() => flashParagraph(index));
   }
 
   @override
@@ -1488,14 +1774,23 @@ class _ChapterTextState extends ConsumerState<_ChapterText>
                       n.direction != ScrollDirection.idle) {
                     _userScrolled = true;
                     _introTimer?.cancel(); // udah pegang kendali sendiri
+                    widget.onScrollActive?.call(true);
                   } else if (n is ScrollUpdateNotification &&
                       (_userScrolled || n.dragDetails != null)) {
                     _moveChrome(n, paras);
                   } else if (n is ScrollEndNotification && _userScrolled) {
                     _userScrolled = false;
                     widget.chrome.release();
+                    widget.onScrollActive?.call(false);
                     final spot = _topSpot(paras);
                     if (spot != null) widget.onPosition(spot);
+                    final anchor = _searchAnchor;
+                    if (anchor != null &&
+                        (_scroll.offset - anchor).abs() >=
+                            MediaQuery.sizeOf(context).height) {
+                      _searchAnchor = null;
+                      widget.onSearchRead?.call();
+                    }
                   }
                   return false;
                 },
@@ -1712,6 +2007,45 @@ class _ChapterTextState extends ConsumerState<_ChapterText>
   }
 
   Widget _paragraphText(ReaderParagraph paragraph, TextStyle style) {
+    final marks = widget.search;
+    if (marks != null && paragraph.type != ParagraphType.sceneBreak) {
+      final found = marks.query.ranges(paragraph.text);
+      if (found.isNotEmpty) {
+        final c = context.stabilo;
+        final active =
+            marks.chapterId == widget.book.chapters[widget.index].id &&
+            marks.paragraph == paragraph.index;
+        final spans = <TextSpan>[];
+        var end = 0;
+        for (final (i, r) in found.indexed) {
+          // Kata yang lagi dibuka: stabilo penuh + garis 1,5. Yang lain
+          // yang keliatan: stabilo setengah.
+          final current = active && i == 0;
+          spans.add(TextSpan(text: paragraph.text.substring(end, r.start)));
+          spans.add(
+            TextSpan(
+              text: paragraph.text.substring(r.start, r.end),
+              style: TextStyle(
+                backgroundColor: current
+                    ? c.highlight
+                    : c.highlight.withValues(alpha: 0.5),
+                color: current ? c.onHighlight : null,
+                decoration: current ? TextDecoration.underline : null,
+                decorationColor: c.onHighlight,
+                decorationThickness: Layout.outline,
+              ),
+            ),
+          );
+          end = r.end;
+        }
+        spans.add(TextSpan(text: paragraph.text.substring(end)));
+        return Text.rich(
+          TextSpan(children: spans),
+          style: style,
+          key: ValueKey('search-paragraph-${paragraph.index}'),
+        );
+      }
+    }
     final ranges =
         widget.sourceVisit?.anchors
             .where(
@@ -1797,6 +2131,40 @@ class _ChapterTextState extends ConsumerState<_ChapterText>
 }
 
 enum _Sheet { toc, menu, aa }
+
+/// Mode Cari kata di reader: hasil yang dibuka ([hits] urut baca, tiap hit
+/// bareng judul babnya), [index] hasil yang lagi tampil, [back] posisi baca
+/// sebelum nyari.
+class _SearchMode {
+  _SearchMode({
+    required this.raw,
+    required this.query,
+    required this.hits,
+    required this.truncated,
+    required this.back,
+  });
+
+  final String raw;
+  final BookSearchQuery query;
+  final List<({BookSearchHit hit, String chapter})> hits;
+  final bool truncated;
+  final ReadingPosition? back;
+  int index = 0;
+}
+
+/// Yang perlu diketahui [_ChapterText] soal mode cari: kata apa yang
+/// di-stabilo, dan paragraf mana yang lagi dibuka.
+class _SearchMarks {
+  const _SearchMarks({
+    required this.query,
+    required this.chapterId,
+    required this.paragraph,
+  });
+
+  final BookSearchQuery query;
+  final int chapterId;
+  final int paragraph;
+}
 
 /// Scrim sheet Artinya yang bolong di blok grup.
 class _ScrimHole extends CustomPainter {

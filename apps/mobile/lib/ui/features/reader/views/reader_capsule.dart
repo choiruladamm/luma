@@ -215,6 +215,7 @@ class ReaderTopCapsule extends StatelessWidget {
     this.onMore,
     this.tocOpen = false,
     this.moreOpen = false,
+    this.searchActive = false,
   });
 
   final String title;
@@ -231,6 +232,9 @@ class ReaderTopCapsule extends StatelessWidget {
   /// tombolnya kuning.
   final bool tocOpen;
   final bool moreOpen;
+
+  /// Lagi mode Cari kata: ⋯ dapet titik kuning kecil.
+  final bool searchActive;
 
   @override
   Widget build(BuildContext context) {
@@ -286,11 +290,33 @@ class ReaderTopCapsule extends StatelessWidget {
               active: tocOpen,
               onPressed: onToc,
             ),
-            CircleButton(
-              semanticLabel: 'Aksi lain',
-              icon: AppIcons.more,
-              active: moreOpen,
-              onPressed: onMore,
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                CircleButton(
+                  semanticLabel: 'Aksi lain',
+                  icon: AppIcons.more,
+                  active: moreOpen,
+                  onPressed: onMore,
+                ),
+                if (searchActive)
+                  Positioned(
+                    right: 5,
+                    top: 5,
+                    child: IgnorePointer(
+                      child: Container(
+                        key: const ValueKey('search-dot'),
+                        width: 10,
+                        height: 10,
+                        decoration: BoxDecoration(
+                          color: c.accent,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: c.ink, width: 1.5),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ],
         ),
