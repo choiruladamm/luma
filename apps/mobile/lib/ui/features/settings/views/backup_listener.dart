@@ -6,6 +6,7 @@ import '../../../core/theme/stabilo_theme.dart';
 import '../../../core/widgets/buttons.dart';
 import '../../../core/widgets/sheet.dart';
 import '../../../core/widgets/toast.dart';
+import '../../shell/views/app_shell.dart';
 import '../view_models/backup_view_model.dart';
 import 'backup_sheet.dart';
 
@@ -28,10 +29,15 @@ class _BackupListenerState extends ConsumerState<BackupListener> {
   void _onBackup(BackupState? prev, BackupState next) {
     if (next is! BackupRunning && _open) {
       _open = false;
-      Navigator.of(context).pop();
+      Navigator.of(context, rootNavigator: true).pop();
     }
-    // Rak ketumpuk Pengaturan: cuma layar paling atas yang ngurus.
-    if (!_open && !(ModalRoute.of(context)?.isCurrent ?? true)) return;
+    // Rak dan Pengaturan dua-duanya hidup di shell tab: cuma tab yang keliatan
+    // (atau layar paling atas) yang ngurus.
+    if (!_open &&
+        (!(ModalRoute.of(context)?.isCurrent ?? true) ||
+            !AppShell.isVisible(context))) {
+      return;
+    }
     final c = context.stabilo;
     final backup = ref.read(backupControllerProvider.notifier);
     switch (next) {

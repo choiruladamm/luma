@@ -108,6 +108,29 @@ class BookRepository {
           );
   }
 
+  /// Id buku di rak yang asalnya dari katalog luar (badge "udah di rak",
+  /// docs/discover.md). Null = belum ada.
+  Future<int?> idFromSource(String sourceId, String externalId) async {
+    final row =
+        await (_db.selectOnly(_db.books)
+              ..addColumns([_db.books.id])
+              ..where(
+                _db.books.sourceId.equals(sourceId) &
+                    _db.books.externalId.equals(externalId),
+              ))
+            .getSingleOrNull();
+    return row?.read(_db.books.id);
+  }
+
+  /// Semua `externalId` dari [sourceId] yang udah di rak, live: badge "Udah di
+  /// rak" di daftar hasil cari tanpa query per baris.
+  Stream<Set<String>> watchExternalIds(String sourceId) =>
+      (_db.selectOnly(_db.books)
+            ..addColumns([_db.books.externalId])
+            ..where(_db.books.sourceId.equals(sourceId)))
+          .watch()
+          .map((rows) => {for (final r in rows) ?r.read(_db.books.externalId)});
+
   /// Buku + chapter-nya buat halaman baca. Null kalau bukunya udah dihapus.
   Future<ReaderBook?> readerBook(int id) async {
     final book = await (_db.select(

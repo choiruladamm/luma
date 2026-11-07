@@ -33,6 +33,8 @@ Gak ada aggregator gratis lintas sumber. OPDS satu-satunya protokol bersama, tap
 - **Bytes EPUB langsung ke `importEpub`** yang udah ada (dedup sha256). `SourceType` tetep `epub`. Metadata rak (judul, penulis, cover) dari parser EPUB, bukan dari katalog.
 - **Kolom baru `books.sourceId` + `books.externalId`** (migrasi + test) biar hasil cari bisa nunjukin "udah di rak" sebelum download.
 - **Download di Notifier level app** (tanpa `autoDispose`): satu download jalan, sisanya antri; pindah layar gak batal; selesai = toast + masuk rak. Cuma app kill yang motong. Gak pakai `background_downloader`.
+  - `downloadQueueProvider` (`ui/features/discover/view_models/download_queue_view_model.dart`, `Notifier<List<DownloadItem>>`): `enqueue(book)` (lagi antri / jalan = no-op, yang udah selesai diganti), `cancel(key)` (antri = hilang; jalan = berhenti di checkpoint berikutnya lalu hilang), `dismiss(key)` buat entri selesai / gagal. Status `queued → downloading(progress) → importing → done / duplicate / failed(error)`; `key` = `sourceId/externalId`. Import pakai `fileName` `pg{id}.epub`, bawa `sourceId` + `externalId`.
+  - `DownloadToasts` di `builder` MaterialApp (di atas router): tiap entri yang baru selesai → toast "Sip, udah masuk rak!" / "Udah ada di rak" (· Baca, push lewat `routerProvider`) / "Gagal ngunduh". Copy final nyusul board (#167).
 - **Cover hasil cari** pakai `cached_network_image` (dependensi baru). Cover rak tetep dari EPUB.
 - **Cache halaman populer** in-memory per sesi di ViewModel, key `(sourceId, page)`. Hasil cari lokal gak di-cache (±6 ms).
 
@@ -67,14 +69,16 @@ Model freezed di `domain/models/`:
 
 ## Adapter Gutenberg (OPDS + katalog lokal)
 
-- Populer (`search('')`): `GET /ebooks/search.opds/?sort_order=downloads&start_index=<n>`, 25/halaman, link `next` → `hasMore`, `total` null. Per entri cuma id, judul, penulis (`content`), thumbnail generik. Entri navigasi (Subjects, Authors, ...) dibuang.
+- Populer (`search('')`): `GET /ebooks/search.opds/?sort_order=downloads&start_index=<n>`, 25/halaman, link `next` → `hasMore`, `total` null. Per entri cuma id, judul, penulis (`content`, bentuk tampil "Jane Austen"; `content` "N downloads" = tanpa penulis), thumbnail generik. Entri navigasi (Subjects, Authors, ...) dibuang. Tiap id dicocokin ke katalog lokal (`byId`) biar penulis + tahun hidup konsisten sama hasil cari; gak ketemu = pakai judul + nama dari feed.
 - Cari (`search('q')`): `CatalogRepository.search` + `searchCount` → `CatalogRow` dipetain ke `CatalogBook` (URL dirakit dari id). Tanpa jaringan. Katalog belum sync = halaman kosong; yang nyuruh sync itu layar cari (lihat Katalog lokal).
 - URL dirakit dari id (konvensi stabil bertahun-tahun), tanpa request per item:
   - cover: `https://www.gutenberg.org/cache/epub/{id}/pg{id}.cover.medium.jpg`
   - EPUB: `https://www.gutenberg.org/ebooks/{id}.epub.noimages` (302 ke `/cache/epub/`, `followRedirects` cukup)
-- `fetchDetail`: `GET /ebooks/{id}.opds` → sinopsis (`Summary:` di `content`), link Wikipedia, subjek LCSH, bookshelves, ukuran file (`length` di link EPUB), `issued`. Bisa koreksi URL kalau beda dari rakitan. **Gak ada**: download count, tahun hidup penulis (udah ada di `CatalogAuthor`).
-- Parser XML (feed populer + per buku) pakai package `xml` yang udah ada, pure, dites pakai fixture.
-- HTTP bersama: `userAgent` + retry 429/503 yang sekarang nempel di `CatalogSyncService` dipindah ke `data/services/http_client.dart` (`lumaDio({receiveTimeout})` + helper retry), dipakai sync katalog dan adapter.
+- `fetchDetail`: `GET /ebooks/{id}.opds` → sinopsis (paragraf `Summary:` di `content`, kalimat "automatically generated summary" dibuang), link Wikipedia (paragraf `Note:`), subjek LCSH, bookshelves (link `related` `/ebooks/bookshelf/`, judul "In X…" → "X"), ukuran file (`length` di link `.epub.noimages`), `issued` (`published`). **Gak ada**: download count, tahun hidup penulis (udah ada di `CatalogAuthor`).
+- Parser XML `domain/catalog/opds_parser.dart` (`parseOpdsFeed`, `parseOpdsBook`) pakai package `xml`, pure, fixture asli di `test/fixtures/catalog/opds_*.xml`.
+- Download: `dio.get` bytes ke `downloadUrl`, `receiveTimeout` 60 s per request, progres 0–1 (−1 tanpa `Content-Length`); `isCancelled` dicek tiap chunk → `CancelToken` → `DioException` tipe `cancel` (sama kayak sync katalog).
+- HTTP bersama `data/services/http_client.dart`: `lumaUserAgent`, `lumaDio({receiveTimeout})` (connect 15 s), `retryOnBusy` (3× cuma 429/503, jeda 2 s × n). Dipakai `CatalogSyncService` dan `GutenbergSource`.
+- Registry: `bookSourcesProvider` = `[GutenbergSource(catalogRepository)]`.
 
 ## Katalog lokal ([#169](https://github.com/choiruladamm/luma/issues/169))
 
@@ -107,20 +111,25 @@ Aturan gutenberg.org ([robot_access](https://www.gutenberg.org/policy/robot_acce
 
 - `test/domain/`: parser feed populer + per buku (fixture XML), rakit URL dari id, `CatalogRow` → `CatalogBook`.
 - `test/data/`: adapter dengan Dio fake (paging populer, retry 429/503, timeout) + `CatalogRepository` in-memory buat `search('q')`, download → `importEpub` pakai EPUB kecil, migrasi kolom `sourceId`/`externalId`.
-- `test/ui/features/discover/`: widget test layar cari, `bookSourcesProvider`, download notifier, `catalogSyncProvider`, `catalogStatsProvider` di-override pakai data palsu.
+- `test/data/download_queue_test.dart`: antrian dengan sumber palsu (urutan, dobel, batal antri / jalan, gagal jaringan, EPUB rusak), download → import EPUB kecil masuk DB in-memory.
+- `test/ui/features/discover/`: widget test layar cari, `bookSourcesProvider`, download notifier, `catalogSyncProvider`, `catalogStatsProvider` di-override pakai data palsu. `download_toasts_test.dart`: toast cuma pas status berubah jadi selesai.
 
-## Catatan buat board (draft arah A, page 90 Drafting)
+## Board (page "09 · Cari buku")
 
-Draft 17 layar udah nutup alur utama. Yang perlu disesuaikan sebelum #167 dibuka:
+17 layar terang + gelap, komponen NavBar, catatan alur di board "Draft · Cari & download buku · alur lengkap (arah A)". Urutan UI: [#172](https://github.com/choiruladamm/luma/issues/172) NavBar + shell routing → [#167](https://github.com/choiruladamm/luma/issues/167) tab Cari buku (03–09) → [#173](https://github.com/choiruladamm/luma/issues/173) detail buku (10–13) → [#174](https://github.com/choiruladamm/luma/issues/174) sheet Unduhan, toast, label Baru, rak kosong (01, 02, 14–17).
 
-- Versi gelap belum ada.
-- "Diunduh 9.400 kali bulan ini" dan "#1 minggu ini": Gutenberg cuma ngasih urutan populer, gak ada angka dan gak per minggu. Buang angkanya, copy jadi "Lagi rame".
-- Tahun hidup penulis dan "N buku lain": dari katalog lokal (#169), bukan OPDS.
-- Sinopsis: ada (OPDS `Summary`), fallback layar 12 tetep buat buku tanpa summary.
-- "App di latar: notifikasi lokal" bentrok sama keputusan download foreground; coret, atau buka lagi `background_downloader`.
-- Layar 17 (tips pakai kalimat pembuka buku yang lagi diunduh) cuma buat buku kurasi yang kalimatnya di-hardcode.
-- Bottom bar Rak · Cari buku · Atur = revamp navigasi seluruh app; issue sendiri, prasyarat #167.
-- Paging ikut OPDS: 25, bukan 20.
+Keputusan implementasi yang gak ada di board:
+
+- Katalog pertama kali belum ada: layout layar 07 dengan copy "Nyiapin katalog buku… 43%" dari `catalogSyncProvider`; gagal = layar 08.
+- Tab Cari buku = `DiscoverView` + `discoverProvider` (`ui/features/discover/`): `PopularState` (loading / slow setelah 5 detik / ready Top 10 / failed offline · dead), `SearchResults` (query, items, total, hasMore, loadingMore, moreFailed) dari `search(q)` tiap ketikan tanpa debounce; `loadMore` pas sisa scroll < 200. Badge baris dari `shelfExternalIdsProvider` (stream `BookRepository.watchExternalIds`) + `downloadQueueProvider`. Cover jaringan lewat `CatalogCover` (muted pas belum kemuat, cover default kalau gagal). Kolom cari dimatiin sampai katalog ada.
+- Fixture evaluasi Ngobrolin buku ngunci hash `pubspec.lock`; nambah dependensi UI (`cached_network_image`) = perbarui hash di manifest aktif (heldout v1, validation2, validation3) dan `pubspec.lock` masuk daftar `mutable` di `chat_retrieval_test`. Arsip `spike113` dan `refined_protocol_v2` gak disentuh.
+- Offline (09) dideteksi dari error jaringan (`connectionError` / `SocketException`), dicoba lagi tiap tab dibuka; tanpa `connectivity_plus`.
+- "Lagi rame" di-cache in-memory per sesi; buka app baru = request lagi.
+- Kutipan layar 02 / 17 dari daftar kurasi hardcode (Pride and Prejudice, Emma, Alice); buku lain pakai kutipan Pride and Prejudice. Daftarnya di `ui/features/discover/curated_books.dart` (`curatedBooks`, `curatedFor`). Rak kosong = `_Empty` (02: kutipan + Ambil = `enqueue`, Cari buku gratis = tab Cari, link import) / `_EmptyDownloading` (17: progres + 3 kartu tips, `PageView`) di `bookshelf_view.dart`, dipilih dari `downloadQueueProvider`. Label "Baru" udah ada di `BookCard` (belum pernah dibuka).
+- Sheet Unduhan (14) = `_DownloadsSheet` di `download_chip.dart`: baris per entri antrian (Batalin / Hapus dari antrian / Coba lagi / Baca), "Antri, abis <buku sebelumnya>", batal = toast "Unduhan X dibatalin", entri selesai / gagal di-`dismiss` pas sheet ditutup (ditunda satu microtask). Toast 15 / 16 (`DownloadToasts`): "X udah masuk rak" + Buka (di `/reader/`) / Baca, 5 detik; duplikat "X udah ada di rak"; gagal "Gagal ngunduh X".
+- Penulis di detail (tap) = balik ke cari dengan query nama penulis (FTS), bukan `byAuthor` persis.
+- Detail buku = `BookDetailView` + `bookDetailProvider(book)` (route `/discover/book/:sourceId/:externalId`, `extra` = `CatalogBook`, di luar shell). `DetailState` loading / slow / ready / failed; kepala kuning langsung dari `CatalogBook`, judul 28 → 24 (> 24 huruf) → 21 (> 40 huruf). Subjek LCSH dipotong di ` -- `, bookshelves tanpa prefix `Category: `. "N buku lain" = `authorBookCountProvider` (`countByAuthor` − 1). Tombol bawah dari `downloadQueueProvider` + `shelfBookIdProvider` (+ progres dari `booksStreamProvider`); done / duplicate pakai `bookId` antrian dulu sebelum rak nyusul.
+- "App di latar: notifikasi lokal" (layar 15, [#175](https://github.com/choiruladamm/luma/issues/175)): `NotificationService` (`flutter_local_notifications`, channel Android `unduhan`, Android butuh core library desugaring) dipanggil `DownloadToasts` pas app `paused` / `hidden` (`AppLifecycleListener`): judul sama kayak toast, payload = id buku, tap = buka reader (cuma pas app masih jalan; cold start dari notifikasi gak ditangani). Izin diminta sekali per sesi pas download pertama mulai. iOS cuma ngasih ±30 detik di latar: download yang lebih lama berhenti (tanpa `background_downloader`).
 
 ## Ditunda
 
