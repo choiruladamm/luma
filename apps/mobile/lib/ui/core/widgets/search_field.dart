@@ -116,8 +116,8 @@ class _SearchFieldState extends State<SearchField> {
                           widget.onChanged?.call('');
                         },
                         child: Container(
-                          width: 22,
-                          height: 22,
+                          width: Layout.searchClear,
+                          height: Layout.searchClear,
                           decoration: BoxDecoration(
                             color: c.track,
                             shape: BoxShape.circle,

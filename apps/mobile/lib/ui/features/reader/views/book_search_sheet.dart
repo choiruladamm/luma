@@ -382,8 +382,8 @@ class _Message extends StatelessWidget {
           spacing: Space.s3,
           children: [
             Container(
-              width: 64,
-              height: 64,
+              width: Layout.searchTile,
+              height: Layout.searchTile,
               decoration: BoxDecoration(
                 color: c.muted,
                 borderRadius: BorderRadius.circular(Radii.lg),

@@ -295,6 +295,24 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('huge text size and a short landscape screen do not overflow', (
+    tester,
+  ) async {
+    tester.platformDispatcher.textScaleFactorTestValue = 2;
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    tester.view.viewInsets = const FakeViewPadding(bottom: 160);
+    addTearDown(tester.view.resetViewInsets);
+    await open(tester);
+    tester.view.physicalSize = const Size(1688, 780);
+    await tester.pumpAndSettle();
+    await type(tester, 'Netherfield');
+    expect(tester.takeException(), isNull);
+    await tester.enterText(find.byType(TextField), 'Netherfeild');
+    await tester.pump(BookSearchViewModel.debounce);
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('a broken search says so instead of showing nothing', (
     tester,
   ) async {

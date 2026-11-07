@@ -52,6 +52,23 @@ class SearchNavigator extends StatelessWidget {
         ? Layout.searchNavCompactHeight
         : Layout.searchNavHeight;
     final count = truncated ? '$total+' : '$total';
+    // Tinggi pill tetap (kayak kapsul baca): teks dibatasin biar gak meluap.
+    final media = MediaQuery.of(context);
+    return MediaQuery(
+      data: media.copyWith(
+        textScaler: media.textScaler.clamp(maxScaleFactor: 1.2),
+      ),
+      child: _pill(context, c, reduce, height, count),
+    );
+  }
+
+  Widget _pill(
+    BuildContext context,
+    StabiloColors c,
+    bool reduce,
+    double height,
+    String count,
+  ) {
     return Semantics(
       container: true,
       label: 'Hasil cari',
@@ -149,7 +166,7 @@ class SearchNavigator extends StatelessWidget {
               ),
               Container(
                 width: 1,
-                height: 24,
+                height: Layout.searchNavDivider,
                 margin: const EdgeInsets.symmetric(horizontal: 2),
                 color: c.menuLine,
               ),
@@ -167,7 +184,7 @@ class SearchNavigator extends StatelessWidget {
   }
 }
 
-/// Tombol bulat 36 (area sentuh 44, bukan visual).
+/// Tombol bulat [Layout.searchNavButton] (area sentuh 44, bukan visual).
 class _NavButton extends StatelessWidget {
   const _NavButton({
     required this.label,
@@ -197,8 +214,8 @@ class _NavButton extends StatelessWidget {
           height: Layout.touch,
           child: Center(
             child: Container(
-              width: 36,
-              height: 36,
+              width: Layout.searchNavButton,
+              height: Layout.searchNavButton,
               decoration: BoxDecoration(color: c.muted, shape: BoxShape.circle),
               child: Center(
                 child: AppIcon(

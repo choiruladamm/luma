@@ -107,6 +107,7 @@ Integration test di luar scope MVP.
 - `paragraphIndex` & `groupIndex` harus stabil. Ubah logika parsing/grouping → naikkan `parserVersion`, re-import, hapus `ai_results` buku itu.
 - Data yang ikut backup disimpan di Drift (tabel `settings`). API key hanya di `flutter_secure_storage`, gak ikut backup.
 - Parsing EPUB dan zip backup jalan di isolate.
+- Index Cari kata (`paragraph_fts`, FTS5 external-content) nempel ke rowid `paragraphs` dan dijaga trigger. Jangan nulis ke `paragraphs` dengan trigger dimatiin, dan habis `VACUUM` / ganti file DB wajib `rebuildBookSearchIndex()` (restore udah). Detail: `docs/book-search.md`.
 - Model LLM dibaca dari Pengaturan, reasoning dimatikan, output JSON divalidasi (`docs/llm.md`).
 
 ## Copy

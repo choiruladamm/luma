@@ -47,6 +47,15 @@ Mode cari hidup di `_ReaderViewState` (`reader_view.dart`): `_SearchMode` (kata,
 - **Kapsul:** ⋯ dapet titik kuning (`ReaderTopCapsule.searchActive`); item pertama menu ⋯ jadi "Lihat hasil “kata”" (`ReaderMenuAction.results`), Atur tampilan tetap.
 - **Keluar (×):** `_search = null`, stabilo hilang, pill progres balik, toast "Balik ke posisi tadi?" + tombol "Balik" 6 detik (`Motion.searchToast`). "Balik" = `_returnTo`: bab + titik sebelum nyari lewat jalur restore ("Lanjut baca"), lanjut baca biasa dari situ. Posisi sebelum nyari dicatat sekali, bukan tiap ganti kata.
 
+## Performa & edge case (#181)
+
+- **Performa** (`test/data/book_search_perf_test.dart`, buku sintetis 150 bab × 100 paragraf = 15 000 paragraf): cari kata langka ≈ 9 ms, kata umum ("the", 12 542 hasil, kepotong 500 + `COUNT`) ≈ 14 ms, frasa ≈ 10 ms; backfill seluruh buku ≈ 35 ms. Batas test sengaja longgar (250 / 1000 / 500 ms) biar gak flaky di CI. Backfill ngasih giliran ke UI tiap bab (callback progres, 151 langkah) dan aman dijalanin dua kali barengan (`NOT EXISTS` di `paragraph_fts_docsize`, statement Drift ke-serial): gak ada baris dobel.
+- **Buku Markdown** dan **buku 1 bab**: sama persis jalurnya (trigger di `paragraphs`, bab tanpa hasil gak muncul di daftar).
+- **Hasil di paragraf yang gak digambar** (heading pertama yang sama kayak judul bab dibuang `_withoutTitleHeading`): `jumpToParagraph` gak nemu kotaknya → mendarat di awal bab, gak error. Navigator dan stabilo tetap jalan.
+- **Teks besar (Dynamic Type):** sheet ngalir (daftar scroll, baris tumbuh); navigator nge-clamp skala teks ke 1,2 karena tinggi pill tetap (kayak kapsul baca). **Landscape + keyboard:** sheet di-padding `viewInsets.bottom`, isi mengecil di atas keyboard.
+- **Sheet ditutup pas lagi nyiapin index:** `ensureIndexed` jalan terus (gak dibatalin); buka lagi = lanjut dari bab yang belum.
+- **Cache stabilo:** `BookSearchQuery.ranges` dihitung ulang per paragraf tiap `build` bab. Bab ≈ 100 KB masih murah; kalau ada bab raksasa yang kerasa berat, simpan hasilnya per (kata, paragraf).
+
 ## Test
 
 - `test/data/book_search_index_test.dart`: trigger, aksen/kutip, update/hapus/cascade, backfill per buku + progres, hapus baris belum ke-index gak ngerusak index, rebuild abis rowid geser.
@@ -55,4 +64,5 @@ Mode cari hidup di `_ReaderViewState` (`reader_view.dart`): `_SearchMode` (kata,
 - `test/data/book_search_repository_test.dart`: urutan per bab, lingkup buku, frasa, cap 500, riwayat, hapus buku.
 - `test/ui/features/reader/book_search_view_model_test.dart` (fakeAsync): debounce, fase, urutan jawaban, riwayat. `book_search_sheet_test.dart`: layar 1–5, chip, stabilo, tap hasil, Batal, keyboard. `reader_test.dart` grup "menu ⋯": kapsul, menu, buka sheet. `test/ui/core/search_field_test.dart`, `search_result_test.dart`.
 - `test/ui/features/reader/reader_test.dart` grup "Cari kata di reader": navigator gantiin dock + titik di ⋯, stabilo penuh/setengah, posisi ditahan sampai scroll 1 layar, ↑ ↓ lintas bab, × + "Balik", tap tengah buka sheet lagi + "Lihat hasil", ngecil pas scroll. `test/ui/core/search_navigator_test.dart`.
+- `test/data/book_search_perf_test.dart`: kecepatan cari + backfill di 15 000 paragraf, backfill ganda.
 - `test/data/import_*_test.dart`, `restore_service_test.dart`: index ikut import dan restore.

@@ -59,6 +59,13 @@ abstract final class Layout {
   static const searchSheetTop = 54.0; // sheet Cari kata: jarak dari atas layar
   static const searchNavHeight = 50.0; // navigator hasil, penuh
   static const searchNavCompactHeight = 46.0; // navigator ngecil pas scroll
+  static const searchNavButton = 36.0; // lingkaran tombol navigator (tap 44)
+  static const searchNavDivider = 24.0; // garis sebelum ×
+  static const searchClear = 22.0; // × di SearchField
+  static const searchTile = 64.0; // ikon layar "gak ketemu"
+  static const searchDot = 10.0; // titik kuning di ⋯ pas mode cari
+  static const readerMenuWidth = 232.0; // popover menu ⋯ di kapsul
+  static const readerMenuRow = 50.0; // baris menu ⋯
   static const icon = 20.0; // ikon di tombol (18–20)
   static const iconStroke = 1.8; // 2.2 kalau ikon ≤14
   static const outline = 1.5; // cuma di objek yang bisa dipegang

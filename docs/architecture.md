@@ -13,6 +13,7 @@
 - `booksStreamProvider` → `StreamProvider` dari query Drift, untuk grid rak.
 - `chapterParagraphsProvider(chapterId)` → paragraf satu chapter dari Drift.
 - `bookChaptersProvider(bookId)` → daftar chapter terurut `sortOrder` (untuk Daftar isi).
+- Cari kata ([book-search.md](book-search.md)): `bookSearchIndexProvider` (`BookSearchIndex`, backfill index FTS5 buku lama), `bookSearchRepositoryProvider` (`BookSearchRepository`: cari + riwayat), `bookSearchProvider(bookId)` → `NotifierProvider.autoDispose.family` (`BookSearchViewModel`, state `BookSearchState`: fase `checking`/`preparing`/`idle`/`results`/`empty`/`failed`). Mode cari di reader (`_SearchMode`) tinggal di `_ReaderViewState`, bukan provider: umurnya sama kayak halaman baca.
 - `groupAiProvider(GroupRef)` → `FutureProvider.autoDispose.family`:
   1. Cek `ai_results`
   2. Kalau belum ada: ambil paragraf grup + sampe 3 paragraf (bukan heading/pemisah) sebelum paragraf pertama grup di chapter yang sama sebagai konteks
@@ -57,6 +58,7 @@ Parsing buku besar bisa berat: jalankan di isolate (`compute` / `Isolate.run`) s
 - **Nyimpen**: cuma setelah scroll dari jari (lompatan restore gak dihitung), debounce ±500 ms setelah scroll berhenti. Langsung disimpen pas app ke background (`AppLifecycleState` selain `resumed`), pindah bab, dan keluar halaman baca. Gak pernah nulis ke DB tiap frame.
 - **Restore** (buka buku): lompat ke paragraf tersimpan, terus geser sesuai offset supaya titiknya ada di ±⅓ tinggi layar (ada konteks di atasnya). Tinggi paragraf baru ketahuan setelah layout, jadi dihitung di post-frame callback; isi bab disembunyiin sampe udah di posisi, terus fade in. Kepotong di ujung scroll kalau titiknya deket akhir chapter.
 - Satu chapter dirender utuh (bukan list lazy), jadi posisi semua paragraf ketahuan tanpa package tambahan.
+- **Lompat dari hasil Cari kata** gak nyimpen posisi: `_jumpHeld` nahan `reading_progress` (waktu baca tetap dicatat) sampe scroll jari berhenti ≥ 1 layar dari paragraf hasil; keluar reader sebelum itu = posisi lama utuh. Daftar isi, "Balik", dan `force` (mis. buka Bedahin) ngelepas tahanan. Detail: [book-search.md](book-search.md).
 
 ## Perilaku kapsul baca
 
@@ -64,7 +66,7 @@ Parsing buku besar bisa berat: jalankan di isolate (`compute` / `Isolate.run`) s
 - Awal bab (80pt pertama) dan akhir bab (paragraf terakhir keliatan) → kapsul muncul sendiri. Pindah bab → muncul.
 - Cuma scroll dari jari yang dihitung; lompatan restore posisi gak ngumpetin kapsul.
 - **Zona tap**: paragraf → sheet Artinya (kotak paragraf selebar kolom teks, termasuk sisa kosong di baris pendek). Area kosong (margin kiri-kanan, sela antar paragraf, di bawah teks terakhir, heading/pemisah adegan) → munculin/ngumpetin kapsul. Tengah layar gak punya fungsi khusus. Tap kosong pas sheet kebuka → nutup sheet (barrier sheet).
-- **Sheet dari kapsul (Daftar isi, Aa)**: kapsul atas tetep keliatan di atas scrim, tombol yang sheet-nya kebuka jadi kuning, tap tombol itu lagi = nutup sheet. Sheet mulai 12pt di bawah kapsul. Implementasinya: barrier sheet transparan, scrim digambar halaman baca di bawah kapsul; tap di area kapsul kena barrier → sheet ketutup.
+- **Sheet dari kapsul (Daftar isi, menu ⋯ → Aa)**: kapsul atas tetep keliatan di atas scrim, tombol yang sheet-nya kebuka jadi kuning, tap tombol itu lagi = nutup sheet. Sheet mulai 12pt di bawah kapsul. Implementasinya: barrier sheet transparan, scrim digambar halaman baca di bawah kapsul; tap di area kapsul kena barrier → sheet ketutup.
 - **Sheet Artinya** (dibuka dari teks): kapsul ngumpet; halaman di-scroll barengan sheet naik sampe bawah blok grup = atas sheet − 16pt, termasuk tiap tinggi sheet berubah (loading → hasil / error / API key kosong). Grup kepanjangan: atas blok = safe area + 16pt. "Lanjut" mindahin highlight ke grup berikutnya di bab itu (grup terakhir: tombolnya mati) dan nge-scroll grup itu ke atas sheet; pas ditutup halaman diem di grup terakhir dan posisinya disimpen. Cuma buka satu grup → halaman balik ke posisi sebelum sheet dibuka.
   - Grup yang dibuka: satu blok stabilo (`highlight`, radius 14) melebar setengah margin ke samping & 8pt atas-bawah, teksnya `onHighlight`. Scrim 38% digambar halaman baca dan **dibolongin** pas di blok itu, jadi grupnya kebaca di atas scrim; barrier sheet transparan, tap di luar sheet = nutup.
   - Tinggi sheet tetap 62,5% layar (528 di 844) di semua state, `DraggableScrollableSheet` (min 0, snap): tarik turun di isi pas offset 0 atau di grabber nutup sheet. Isi scroll setinggi sheet (EdgeFade 20pt), header ikut ke-scroll, grabber dan tombol (Salin / Lanjut) lapisan di atas isi, padding isi atas 91 / bawah 102. Error dan API key kosong juga 528 (tombol nempel di bawah).

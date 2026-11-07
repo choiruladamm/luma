@@ -8,9 +8,6 @@ import 'reader_capsule.dart';
 
 enum ReaderMenuAction { search, results, display }
 
-/// Lebar popover menu ⋯ (board Cari kata 0b).
-const readerMenuWidth = 232.0;
-
 /// Menu ⋯ di kapsul atas: Cari kata, Atur tampilan. Popover kapsul-style
 /// (garis 1,5, radius 20, baris 50), rata kanan, 10pt di bawah kapsul. Null
 /// kalau ditutup tanpa milih. Lagi mode cari ([resultsFor] = kata yang dicari)
@@ -30,7 +27,7 @@ Future<ReaderMenuAction?> showReaderMenu(
   return showMenu<ReaderMenuAction>(
     context: context,
     position: RelativeRect.fromLTRB(
-      size.width - Layout.margin - readerMenuWidth,
+      size.width - Layout.margin - Layout.readerMenuWidth,
       top,
       Layout.margin,
       size.height - top,
@@ -39,7 +36,7 @@ Future<ReaderMenuAction?> showReaderMenu(
     elevation: 6,
     shadowColor: c.ink.withValues(alpha: 0.10),
     menuPadding: EdgeInsets.zero,
-    constraints: const BoxConstraints.tightFor(width: readerMenuWidth),
+    constraints: const BoxConstraints.tightFor(width: Layout.readerMenuWidth),
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(Radii.lg),
       side: BorderSide(color: c.capsuleLine, width: Layout.outline),
@@ -79,10 +76,10 @@ PopupMenuItem<ReaderMenuAction> _item(
   final c = context.stabilo;
   return PopupMenuItem<ReaderMenuAction>(
     value: value,
-    height: 50,
+    height: Layout.readerMenuRow,
     padding: EdgeInsets.zero,
     child: Container(
-      constraints: const BoxConstraints(minHeight: 50),
+      constraints: const BoxConstraints(minHeight: Layout.readerMenuRow),
       padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
         border: last ? null : Border(bottom: BorderSide(color: c.menuLine)),

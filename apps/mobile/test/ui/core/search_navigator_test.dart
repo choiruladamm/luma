@@ -120,6 +120,18 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('huge text size is clamped, the pill does not overflow', (
+    tester,
+  ) async {
+    tester.platformDispatcher.textScaleFactorTestValue = 3;
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    await pump(tester);
+    expect(tester.takeException(), isNull);
+    expect(size(tester).height, Layout.searchNavHeight);
+    await pump(tester, compact: true);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('dark mode renders', (tester) async {
     await pump(tester, b: Brightness.dark);
     await pump(tester, b: Brightness.dark, compact: true);

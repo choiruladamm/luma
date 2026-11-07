@@ -306,8 +306,8 @@ class ReaderTopCapsule extends StatelessWidget {
                     child: IgnorePointer(
                       child: Container(
                         key: const ValueKey('search-dot'),
-                        width: 10,
-                        height: 10,
+                        width: Layout.searchDot,
+                        height: Layout.searchDot,
                         decoration: BoxDecoration(
                           color: c.accent,
                           shape: BoxShape.circle,

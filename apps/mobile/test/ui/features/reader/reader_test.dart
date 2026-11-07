@@ -42,7 +42,6 @@ import 'package:luma/ui/features/reader/view_models/breakdown_view_model.dart';
 import 'package:luma/ui/features/reader/view_models/reader_view_model.dart';
 import 'package:luma/ui/features/reader/views/book_search_sheet.dart';
 import 'package:luma/ui/features/reader/views/reader_capsule.dart';
-import 'package:luma/ui/features/reader/views/reader_menu.dart';
 import 'package:luma/ui/features/reader/views/reader_view.dart';
 import 'package:luma/ui/features/breakdown/views/breakdown_view.dart';
 import 'package:luma/domain/breakdown_prompt.dart';
@@ -982,7 +981,7 @@ void main() {
       expect(tester.widget<CircleButton>(more).active, isTrue);
       expect(
         tester.getSize(find.byType(Material).last).width,
-        lessThanOrEqualTo(readerMenuWidth + 1),
+        lessThanOrEqualTo(Layout.readerMenuWidth + 1),
       );
       // Tap outside closes it.
       await tester.tapAt(const Offset(40, 900));
@@ -1200,6 +1199,35 @@ void main() {
       expect(find.textContaining('Conduct me, Zeus'), findsOneWidget);
       expect(progress.saves.last.chapterId, 10);
       expect(progress.saves.last.paragraphIndex, 3);
+    });
+
+    testWidgets('a hit whose paragraph is not drawn (dropped title heading) '
+        'lands at the top of the chapter instead of failing', (tester) async {
+      search = FakeBookSearch(
+        results: {
+          'word': fakeResult([
+            (13, 'Tall', [fakeHit(13, 999, 'Tall 999: word', match: 'word')]),
+          ]),
+        },
+      );
+      await openBook(
+        tester,
+        readerBook: tallBook,
+        saved: (chapterId: 13, paragraphIndex: 25, paragraphOffset: 0),
+      );
+      expect(find.textContaining('Tall 25:'), findsWidgets);
+      await tester.tap(more);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Cari kata'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'word');
+      await tester.pump(BookSearchViewModel.debounce);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(SearchHitTile).first);
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(navigator, findsOneWidget);
+      expect(find.textContaining('Tall 0:'), findsWidgets); // top of chapter
     });
 
     testWidgets('the middle of the navigator reopens the sheet on the same '
