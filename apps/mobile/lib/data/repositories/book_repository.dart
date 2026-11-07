@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../domain/book_search.dart';
 import '../../domain/models/book.dart';
 import '../../domain/models/markdown_shelf.dart';
 import '../database/app_database.dart';
@@ -261,6 +262,10 @@ class BookRepository {
     )..where((b) => b.id.equals(id))).getSingleOrNull();
     if (book == null) return;
     await (_db.delete(_db.books)..where((b) => b.id.equals(id))).go();
+    // Riwayat Cari kata buku ini ikut dibuang.
+    await (_db.delete(
+      _db.settings,
+    )..where((s) => s.key.equals(bookSearchRecentKey(id)))).go();
     await files.deleteBookFiles(
       fileName: book.fileName,
       coverName: book.coverName,

@@ -2,6 +2,7 @@ import 'package:drift/drift.dart' hide isNull, isNotNull;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:luma/data/database/app_database.dart';
+import 'package:luma/data/repositories/book_search_index.dart';
 import 'package:luma/domain/models/ai_reply.dart';
 import 'package:luma/domain/models/book.dart';
 
@@ -146,6 +147,17 @@ final v14 = [
 final v15 = [
   ...v14,
   "CREATE VIRTUAL TABLE catalog_fts USING fts5(title, authors_text, content='catalog_books', content_rowid='id', tokenize='unicode61 remove_diacritics 2')",
+];
+
+// Frozen schema 16: books.source_id + external_id, before paragraph_fts.
+final v16 = [
+  for (final sql in v15)
+    sql.startsWith('CREATE TABLE "books"')
+        ? sql.replaceFirst(
+            RegExp(r'\)$'),
+            ', "source_id" TEXT NULL, "external_id" TEXT NULL)',
+          )
+        : sql,
 ];
 
 AppDatabase _open([void Function(dynamic raw)? setup]) => AppDatabase(
@@ -335,6 +347,51 @@ void main() {
     final turn = await db.select(db.chatTurns).getSingle();
     expect(turn.exploration, '{}');
     expect(turn.steps, isNull);
+    final fresh = _open();
+    addTearDown(fresh.close);
+    expect(await _shape(db), await _shape(fresh));
+  });
+
+  test('v16 → v17 adds paragraph_fts; old books index lazily', () async {
+    final db = _open((raw) {
+      for (final sql in v16) {
+        raw.execute(sql);
+      }
+      raw.execute(
+        "INSERT INTO books(id,source_type,title,parser_version,total_chars) VALUES (1,'epub','Book',1,10)",
+      );
+      raw.execute(
+        "INSERT INTO chapters(id,book_id,sort_order,title,char_offset) VALUES (1,1,0,'I',0)",
+      );
+      raw.execute(
+        "INSERT INTO paragraphs VALUES (1,0,0,'paragraph','Netherfield Park is let at last')",
+      );
+      raw.execute(
+        "INSERT INTO paragraphs VALUES (1,1,NULL,'sceneBreak','* * *')",
+      );
+      raw.execute('PRAGMA user_version = 16');
+    });
+    addTearDown(db.close);
+    final index = BookSearchIndex(db);
+    Future<int> hits(String q) async =>
+        (await db
+                .customSelect(
+                  'SELECT rowid FROM paragraph_fts WHERE paragraph_fts MATCH ?',
+                  variables: [Variable(q)],
+                )
+                .get())
+            .length;
+
+    // Baris lama belum ke-index, tapi datanya utuh.
+    expect(await hits('netherfield'), 0);
+    expect(await index.isIndexed(1), isFalse);
+    expect(await db.select(db.paragraphs).get(), hasLength(2));
+
+    await index.ensureIndexed(1);
+    expect(await index.isIndexed(1), isTrue);
+    expect(await hits('netherfield'), 1);
+    expect(await hits('"* * *"'), 0);
+
     final fresh = _open();
     addTearDown(fresh.close);
     expect(await _shape(db), await _shape(fresh));

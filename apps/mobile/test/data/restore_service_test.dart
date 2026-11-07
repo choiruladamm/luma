@@ -429,6 +429,32 @@ void main() {
     );
   });
 
+  test('restore rebuilds the Cari kata index (VACUUM can shift rowids)', () async {
+    // Gap di rowid `paragraphs`: VACUUM INTO nomerin ulang baris yang tersisa.
+    await (a.db.delete(
+      a.db.books,
+    )..where((x) => x.title.equals('Walden'))).go();
+    final zip = await backupOf(a);
+    final service = RestoreService(b.db, b.storage);
+    await service.apply(await service.inspect(zip));
+    b.reopen();
+    Future<List<String>> hits(String q) async => [
+      for (final r
+          in await b.db
+              .customSelect(
+                'SELECT p.text FROM paragraph_fts f '
+                'JOIN paragraphs p ON p.rowid = f.rowid '
+                'WHERE paragraph_fts MATCH ?',
+                variables: [Variable(q)],
+              )
+              .get())
+        r.read<String>('text'),
+    ];
+    expect(await hits('"emma"'), ['Hello Emma']);
+    expect(await hits('"walden"'), isEmpty);
+    expect(await hits('"hello"'), ['Hello Emma']);
+  });
+
   test('session deletion preserves book/cache/progress/files; book deletion cascades chat only for that book', () async {
     final before = await a.dump();
     final repo = ChatRepository(a.db);

@@ -416,7 +416,7 @@ class AppDatabase extends _$AppDatabase {
   // test/data/migration_test.dart. Backup dari versi lama ikut dimigrasi pas
   // di-restore.
   @override
-  int get schemaVersion => 16;
+  int get schemaVersion => 17;
 
   /// FTS5 external-content di atas `catalog_books` (teks gak dobel). Isinya
   /// gak otomatis ikut: [rebuildCatalogFts] tiap `catalog_books` diganti.
@@ -430,11 +430,53 @@ class AppDatabase extends _$AppDatabase {
   Future<void> rebuildCatalogFts() =>
       customStatement("INSERT INTO catalog_fts(catalog_fts) VALUES('rebuild')");
 
+  /// FTS5 external-content di atas `paragraphs` buat Cari kata
+  /// (docs/book-search.md). Trigger yang ngejaga isinya, jadi import dan
+  /// re-import otomatis ke-index; `scene_break` gak masuk. Baris lama
+  /// (sebelum v17) belum ke-index: [BookSearchIndex.ensureIndexed] ngisinya
+  /// lazy. Trigger hapus/ubah cuma ngirim `'delete'` buat baris yang
+  /// beneran ada di index (docsize), kalau nggak index FTS5 rusak.
+  /// Index nempel ke rowid `paragraphs`; `VACUUM INTO` (backup) bisa nggeser
+  /// rowid, jadi restore wajib [rebuildBookSearchIndex].
+  Future<void> createBookSearchFts() async {
+    await customStatement(
+      'CREATE VIRTUAL TABLE IF NOT EXISTS paragraph_fts USING fts5('
+      "text, content='paragraphs', content_rowid='rowid', "
+      "tokenize='unicode61 remove_diacritics 2')",
+    );
+    const drop =
+        "INSERT INTO paragraph_fts(paragraph_fts, rowid, text) "
+        "SELECT 'delete', old.rowid, old.text WHERE EXISTS "
+        '(SELECT 1 FROM paragraph_fts_docsize WHERE id = old.rowid);';
+    await customStatement(
+      'CREATE TRIGGER IF NOT EXISTS paragraph_fts_ai AFTER INSERT ON '
+      'paragraphs BEGIN '
+      'INSERT INTO paragraph_fts(rowid, text) SELECT new.rowid, new.text '
+      "WHERE new.type != 'sceneBreak'; END",
+    );
+    await customStatement(
+      'CREATE TRIGGER IF NOT EXISTS paragraph_fts_ad AFTER DELETE ON '
+      'paragraphs BEGIN $drop END',
+    );
+    await customStatement(
+      'CREATE TRIGGER IF NOT EXISTS paragraph_fts_au AFTER UPDATE OF text, '
+      'type ON paragraphs BEGIN $drop '
+      'INSERT INTO paragraph_fts(rowid, text) SELECT new.rowid, new.text '
+      "WHERE new.type != 'sceneBreak'; END",
+    );
+  }
+
+  /// Bangun ulang seluruh index dari `paragraphs` (satu statement).
+  Future<void> rebuildBookSearchIndex() => customStatement(
+    "INSERT INTO paragraph_fts(paragraph_fts) VALUES('rebuild')",
+  );
+
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) async {
       await m.createAll();
       await createCatalogFts();
+      await createBookSearchFts();
     },
     onUpgrade: (m, from, to) async {
       if (from < 2) {
@@ -498,6 +540,9 @@ class AppDatabase extends _$AppDatabase {
       if (from < 16) {
         await m.addColumn(books, books.sourceId);
         await m.addColumn(books, books.externalId);
+      }
+      if (from < 17) {
+        await createBookSearchFts(); // buku lama di-index lazy
       }
     },
     // SQLite matiin foreign key secara default; cascade butuh ini.

@@ -101,6 +101,9 @@ class RestoreService {
       final check = AppDatabase(NativeDatabase(db));
       try {
         await check.customSelect('SELECT COUNT(*) FROM books').get();
+        // VACUUM INTO bisa nggeser rowid `paragraphs`: index Cari kata
+        // dibangun ulang di salinan ini sebelum dipasang.
+        await check.rebuildBookSearchIndex();
       } catch (_) {
         throw RestoreException(RestoreError.corrupt, manifest: manifest);
       } finally {

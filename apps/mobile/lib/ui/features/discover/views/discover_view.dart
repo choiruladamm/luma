@@ -204,7 +204,16 @@ class _SearchField extends StatelessWidget {
                           color: c.muted,
                           shape: BoxShape.circle,
                         ),
-                        child: AppIcon(AppIcons.close, size: 14, color: c.ink),
+                        // Center: tanpa ini constraint ketat Container maksa
+                        // ikon sebesar lingkarannya.
+                        child: Center(
+                          child: AppIcon(
+                            AppIcons.close,
+                            size: 13,
+                            color: c.ink,
+                            strokeWidth: Layout.iconStroke,
+                          ),
+                        ),
                       ),
                     ),
                   ),

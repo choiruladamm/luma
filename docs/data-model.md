@@ -160,6 +160,8 @@ Meta sync di `settings`: `catalog.lastModified`, `catalog.syncedAt`, `catalog.co
 
 `catalog_fts` (v15): virtual table FTS5 external-content (`title`, `authors_text`, `content='catalog_books'`, `content_rowid='id'`, `tokenize='unicode61 remove_diacritics 2'`) + tabel shadow `catalog_fts_*`. Bukan tabel Drift: dibuat lewat `AppDatabase.createCatalogFts`, isinya di-`rebuild` tiap `catalog_books` diganti. Pencarian: [discover.md](discover.md).
 
+`paragraph_fts` (v17): virtual table FTS5 external-content di atas `paragraphs` (`text`, `content_rowid='rowid'`, `tokenize='unicode61 remove_diacritics 2'`) + shadow table `paragraph_fts_*`. Bukan tabel Drift: dibuat lewat `AppDatabase.createBookSearchFts` bareng tiga trigger di `paragraphs` yang ngejaga isinya. Buku lama di-index lazy, restore men-rebuild. Detail: [book-search.md](book-search.md).
+
 ## Versi schema & migrasi
 
 | Versi | Perubahan |
@@ -180,6 +182,7 @@ Meta sync di `settings`: `catalog.lastModified`, `catalog.syncedAt`, `catalog.co
 | 14 | Tabel `catalog_books` + index `title`, `authorsText` (#169), kosong saat upgrade; diisi lewat sync di Pengaturan. Data user gak disentuh |
 | 15 | Virtual table FTS5 `catalog_fts` di atas `catalog_books` (#169), langsung di-rebuild dari isi katalog yang ada. Data user gak disentuh |
 | 16 | `books.sourceId`, `externalId` nullable (#164); baris lama null |
+| 17 | Virtual table FTS5 `paragraph_fts` + trigger di `paragraphs` (#177, Cari kata). Kosong buat buku lama, di-index lazy pas pertama nyari. Data user gak disentuh |
 
 Tiap ubah tabel: naikkan `schemaVersion`, tambah langkah di `onUpgrade`, dan test migrasi dari versi sebelumnya (data tetap utuh, schema hasil migrasi sama dengan install baru). Restore backup dari schema lama ikut dimigrasi saat database dibuka ([backup.md](backup.md)).
 

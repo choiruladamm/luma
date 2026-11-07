@@ -18,6 +18,7 @@
 | [backup.md](backup.md) | Backup & restore |
 | [import-formats.md](import-formats.md) | Import Luma Markdown (foto buku fisik) & PDF lewat Markdown |
 | [discover.md](discover.md) | Cari & download buku public domain (Gutenberg OPDS, interface BookSource) |
+| [book-search.md](book-search.md) | Cari kata di dalam buku (index FTS5 paragraf, aturan pencarian, alur lompat) |
 | [ideas/recap.md](ideas/recap.md) | Iterasi 2: Recap bacaan |
 | [ideas/raw.md](ideas/raw.md) | Catatan & ide raw dari dogfooding |
 

@@ -6,6 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hugeicons/hugeicons.dart';
+import 'package:luma/data/repositories/book_search_index.dart';
+import 'package:luma/data/repositories/book_search_repository.dart';
 import 'package:luma/data/repositories/reading_progress_repository.dart';
 import 'package:luma/data/repositories/chat_repository.dart';
 import 'package:luma/data/repositories/settings_repository.dart';
@@ -29,12 +32,16 @@ import 'package:luma/ui/core/widgets/sheet.dart';
 import 'package:luma/ui/core/widgets/book_card.dart';
 import 'package:luma/ui/core/widgets/buttons.dart';
 import 'package:luma/ui/core/widgets/edge_fade.dart';
+import 'package:luma/ui/core/widgets/search_navigator.dart';
+import 'package:luma/ui/core/widgets/search_result.dart';
 import 'package:luma/ui/core/widgets/switch.dart';
+import 'package:luma/ui/features/reader/view_models/book_search_view_model.dart';
 import 'package:luma/ui/features/bookshelf/view_models/bookshelf_view_model.dart';
 import 'package:luma/ui/features/bookshelf/views/bookshelf_view.dart';
 import 'package:luma/ui/core/widgets/tag.dart';
 import 'package:luma/ui/features/reader/view_models/breakdown_view_model.dart';
 import 'package:luma/ui/features/reader/view_models/reader_view_model.dart';
+import 'package:luma/ui/features/reader/views/book_search_sheet.dart';
 import 'package:luma/ui/features/reader/views/reader_capsule.dart';
 import 'package:luma/ui/features/reader/views/reader_view.dart';
 import 'package:luma/ui/features/breakdown/views/breakdown_view.dart';
@@ -257,6 +264,8 @@ void main() {
     answer = (g) async => replyFor(g);
   });
   late FakeSettings settings;
+  var search = FakeBookSearch();
+  var searchIndex = FakeSearchIndex();
 
   // Feeds the reader through its providers; no Drift in widget tests.
   Future<void> openBook(
@@ -299,6 +308,8 @@ void main() {
             (ref, g) async => brokenDown[g] ?? 0,
           ),
           settingsRepositoryProvider.overrideWithValue(settings),
+          bookSearchRepositoryProvider.overrideWithValue(search),
+          bookSearchIndexProvider.overrideWithValue(searchIndex),
           booksStreamProvider.overrideWith(
             (ref) => Stream.value([
               ShelfBook(
@@ -945,20 +956,368 @@ void main() {
     expect(find.byType(ReaderView), findsNothing);
   });
 
+  group('menu ⋯ (Cari kata)', () {
+    final more = find.byWidgetPredicate(
+      (w) => w is CircleButton && w.semanticLabel == 'Aksi lain',
+    );
+
+    testWidgets('capsule has Daftar isi and ⋯, no Aa button', (tester) async {
+      await openBook(tester);
+      expect(more, findsOneWidget);
+      expect(find.bySemanticsLabel('Daftar isi'), findsOneWidget);
+      expect(find.bySemanticsLabel('Atur tampilan teks'), findsNothing);
+      expect(find.text('Aa'), findsNothing);
+      // The board's icons: chapter route and three solid dots.
+      HugeIcon iconIn(String label) => tester.widget<HugeIcon>(
+        find.descendant(
+          of: find.byWidgetPredicate(
+            (w) => w is CircleButton && w.semanticLabel == label,
+          ),
+          matching: find.byType(HugeIcon),
+        ),
+      );
+      expect(iconIn('Daftar isi').icon, AppIcons.toc);
+      expect(iconIn('Aksi lain').icon, AppIcons.readerMore);
+    });
+
+    testWidgets('menu: Cari kata + Atur tampilan, ⋯ yellow, 232 wide', (
+      tester,
+    ) async {
+      await openBook(tester);
+      await tester.tap(more);
+      await tester.pumpAndSettle();
+      expect(find.text('Cari kata'), findsOneWidget);
+      expect(find.text('Atur tampilan'), findsOneWidget);
+      expect(find.text('Ukuran, font, tema'), findsOneWidget);
+      expect(find.textContaining('Tandain'), findsNothing); // mockup only
+      expect(tester.widget<CircleButton>(more).active, isTrue);
+      expect(
+        tester.getSize(find.byType(Material).last).width,
+        lessThanOrEqualTo(Layout.readerMenuWidth + 1),
+      );
+      // Tap outside closes it.
+      await tester.tapAt(const Offset(40, 900));
+      await tester.pumpAndSettle();
+      expect(find.text('Cari kata'), findsNothing);
+      expect(tester.widget<CircleButton>(more).active, isFalse);
+    });
+
+    testWidgets('Cari kata opens the search sheet over the book', (
+      tester,
+    ) async {
+      search = FakeBookSearch(recents: ['Netherfield']);
+      searchIndex = FakeSearchIndex();
+      await openBook(tester);
+      await tester.tap(more);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Cari kata'));
+      await tester.pumpAndSettle();
+      expect(find.byType(BookSearchSheet), findsOneWidget);
+      expect(find.text('Cari kata di buku ini'), findsOneWidget);
+      expect(find.text('Netherfield'), findsOneWidget);
+      await tester.tap(find.text('Batal'));
+      await tester.pumpAndSettle();
+      expect(find.byType(BookSearchSheet), findsNothing);
+      expect(find.byType(ReaderView), findsOneWidget);
+    });
+  });
+
+  group('Cari kata di reader', () {
+    final more = find.byWidgetPredicate(
+      (w) => w is CircleButton && w.semanticLabel == 'Aksi lain',
+    );
+    final navigator = find.byType(SearchNavigator);
+
+    // "are" is in chapter I (twice) and in the extra paragraph of chapter II.
+    final areResult = fakeResult([
+      (
+        10,
+        'I',
+        [
+          fakeHit(
+            10,
+            1,
+            'There are things which are within our power.',
+            match: 'are',
+          ),
+        ],
+      ),
+      (
+        11,
+        'II',
+        [fakeHit(11, 1, 'We are what we repeatedly do.', match: 'are')],
+      ),
+    ]);
+
+    setUp(() {
+      final original = paragraphs[11];
+      paragraphs[11] = [
+        ...original!,
+        p(1, ParagraphType.paragraph, 'We are what we repeatedly do.', 1),
+      ];
+      addTearDown(() => paragraphs[11] = original);
+      search = FakeBookSearch(results: {'are': areResult});
+      searchIndex = FakeSearchIndex();
+    });
+
+    Future<void> pick(WidgetTester tester, {int hit = 0}) async {
+      await tester.tap(more);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Cari kata'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'are');
+      await tester.pump(BookSearchViewModel.debounce);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(SearchHitTile).at(hit));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('a tapped hit closes the sheet; the navigator takes the '
+        "progress pill's place and ⋯ gets the dot", (tester) async {
+      await openBook(tester);
+      expect(find.byType(ReaderChatDock), findsOneWidget);
+      expect(find.byKey(const ValueKey('search-dot')), findsNothing);
+      await pick(tester);
+      expect(find.byType(BookSearchSheet), findsNothing);
+      expect(navigator, findsOneWidget);
+      expect(find.byType(ReaderChatDock), findsNothing);
+      expect(find.byKey(const ValueKey('search-dot')), findsOneWidget);
+      expect(find.text('are'), findsOneWidget); // the word in the navigator
+      expect(find.text('1 dari 2 · I'), findsOneWidget);
+      expect(
+        tester.widget<SearchNavigator>(navigator).onPrevious,
+        isNull, // first hit
+      );
+    });
+
+    testWidgets('matching words are stabiloed: the open one in full and '
+        'underlined, the others half', (tester) async {
+      await openBook(tester);
+      await pick(tester);
+      final text = tester.widget<Text>(
+        find.byKey(const ValueKey('search-paragraph-1')),
+      );
+      final spans = [
+        for (final s in (text.textSpan! as TextSpan).children!) s as TextSpan,
+      ].where((s) => s.style?.backgroundColor != null).toList();
+      expect(spans.map((s) => s.text), ['are', 'are']);
+      final c = StabiloColors.light;
+      expect(spans[0].style!.backgroundColor, c.highlight);
+      expect(spans[0].style!.decoration, TextDecoration.underline);
+      expect(spans[0].style!.decorationThickness, 1.5);
+      expect(
+        spans[1].style!.backgroundColor,
+        c.highlight.withValues(alpha: 0.5),
+      );
+      expect(spans[1].style!.decoration, isNull);
+    });
+
+    testWidgets('the saved reading position stays put until the user has '
+        'scrolled a screen away from the hit', (tester) async {
+      search = FakeBookSearch(
+        results: {
+          'word': fakeResult([
+            (
+              13,
+              'Tall',
+              [fakeHit(13, 20, 'Tall 20: word word word', match: 'word')],
+            ),
+          ]),
+        },
+      );
+      await openBook(
+        tester,
+        readerBook: tallBook,
+        saved: (chapterId: 10, paragraphIndex: 1, paragraphOffset: 0),
+      );
+      final before = progress.saves.length;
+      await tester.tap(more);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Cari kata'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'word');
+      await tester.pump(BookSearchViewModel.debounce);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(SearchHitTile).first);
+      await tester.pumpAndSettle();
+      expect(find.text('Tall'), findsWidgets); // now in the other chapter
+      await tester.pump(const Duration(seconds: 2));
+      expect(progress.saves.length, before, reason: 'jump did not save');
+
+      // Just a nudge (the hit sits near the bottom, so back up): still the
+      // old position.
+      await tester.drag(
+        find.byType(SingleChildScrollView).first,
+        const Offset(0, 200),
+      );
+      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 2));
+      expect(progress.saves.length, before);
+
+      // A whole screen away: reading from here now.
+      await tester.drag(
+        find.byType(SingleChildScrollView).first,
+        const Offset(0, 1700),
+      );
+      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 2));
+      expect(progress.saves.length, greaterThan(before));
+      expect(progress.saves.last.chapterId, 13);
+    });
+
+    testWidgets('↓ goes to the next hit, even in another chapter; ends are '
+        'dimmed', (tester) async {
+      await openBook(tester);
+      await pick(tester);
+      expect(find.textContaining('Never say of anything'), findsNothing);
+      await tester.tap(find.bySemanticsLabel('Hasil berikutnya'));
+      await tester.pumpAndSettle();
+      expect(find.text('2 dari 2 · II'), findsOneWidget);
+      expect(
+        find.textContaining('We are what we repeatedly do.'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('There are things which'), findsNothing);
+      expect(tester.widget<SearchNavigator>(navigator).onNext, isNull);
+      await tester.tap(find.bySemanticsLabel('Hasil sebelumnya'));
+      await tester.pumpAndSettle();
+      expect(find.text('1 dari 2 · I'), findsOneWidget);
+      expect(find.textContaining('There are things which'), findsOneWidget);
+    });
+
+    testWidgets('× ends the search and offers to go back; Balik returns', (
+      tester,
+    ) async {
+      await openBook(
+        tester,
+        saved: (chapterId: 10, paragraphIndex: 3, paragraphOffset: 0),
+      );
+      await pick(tester, hit: 1); // chapter II
+      expect(
+        find.textContaining('We are what we repeatedly do.'),
+        findsOneWidget,
+      );
+      await tester.tap(find.bySemanticsLabel('Keluar dari cari'));
+      await tester.pumpAndSettle();
+      expect(navigator, findsNothing);
+      expect(find.byType(ReaderChatDock), findsOneWidget);
+      expect(find.byKey(const ValueKey('search-dot')), findsNothing);
+      // No stabilo left behind.
+      expect(find.byKey(const ValueKey('search-paragraph-1')), findsNothing);
+      expect(find.text('Balik ke posisi tadi?'), findsOneWidget);
+
+      await tester.tap(find.text('Balik'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Conduct me, Zeus'), findsOneWidget);
+      expect(progress.saves.last.chapterId, 10);
+      expect(progress.saves.last.paragraphIndex, 3);
+    });
+
+    testWidgets('a hit whose paragraph is not drawn (dropped title heading) '
+        'lands at the top of the chapter instead of failing', (tester) async {
+      search = FakeBookSearch(
+        results: {
+          'word': fakeResult([
+            (13, 'Tall', [fakeHit(13, 999, 'Tall 999: word', match: 'word')]),
+          ]),
+        },
+      );
+      await openBook(
+        tester,
+        readerBook: tallBook,
+        saved: (chapterId: 13, paragraphIndex: 25, paragraphOffset: 0),
+      );
+      expect(find.textContaining('Tall 25:'), findsWidgets);
+      await tester.tap(more);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Cari kata'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'word');
+      await tester.pump(BookSearchViewModel.debounce);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(SearchHitTile).first);
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(navigator, findsOneWidget);
+      expect(find.textContaining('Tall 0:'), findsWidgets); // top of chapter
+    });
+
+    testWidgets('the middle of the navigator reopens the sheet on the same '
+        'word; the menu says Lihat hasil', (tester) async {
+      await openBook(tester);
+      await pick(tester);
+      await tester.tap(find.bySemanticsLabel('Balik ke daftar hasil'));
+      await tester.pumpAndSettle();
+      expect(find.byType(BookSearchSheet), findsOneWidget);
+      expect(
+        tester.widget<TextField>(find.byType(TextField)).controller!.text,
+        'are',
+      );
+      expect(find.text('2 hasil di 2 bab'), findsOneWidget);
+      await tester.tap(find.text('Batal'));
+      await tester.pumpAndSettle();
+      expect(navigator, findsOneWidget); // still in search mode
+
+      await tester.tap(more);
+      await tester.pumpAndSettle();
+      expect(find.text('Lihat hasil “are”'), findsOneWidget);
+      expect(find.text('Cari kata'), findsNothing);
+      expect(find.text('Atur tampilan'), findsOneWidget);
+    });
+
+    testWidgets('the navigator shrinks while scrolling and grows back after', (
+      tester,
+    ) async {
+      search = FakeBookSearch(
+        results: {
+          'word': fakeResult([
+            (13, 'Tall', [fakeHit(13, 2, 'Tall 2: word', match: 'word')]),
+          ]),
+        },
+      );
+      await openBook(tester, readerBook: tallBook);
+      await tester.tap(more);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Cari kata'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'word');
+      await tester.pump(BookSearchViewModel.debounce);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(SearchHitTile).first);
+      await tester.pumpAndSettle();
+      expect(tester.widget<SearchNavigator>(navigator).compact, isFalse);
+
+      final gesture = await tester.startGesture(const Offset(450, 800));
+      await gesture.moveBy(const Offset(0, kTouchSlop + 1)); // slop first
+      await tester.pump();
+      await gesture.moveBy(const Offset(0, 120));
+      await tester.pump();
+      expect(tester.widget<SearchNavigator>(navigator).compact, isTrue);
+      expect(find.text('1/1'), findsOneWidget);
+      await gesture.up();
+      await tester.pumpAndSettle();
+      await tester.pump(Motion.searchRegrow + const Duration(milliseconds: 50));
+      expect(tester.widget<SearchNavigator>(navigator).compact, isFalse);
+    });
+  });
+
   group('Aa', () {
+    // Aa pindah ke menu ⋯ di kapsul (Cari kata #176).
     final aaButton = find.byWidgetPredicate(
-      (w) => w is CircleButton && w.semanticLabel == 'Atur tampilan teks',
+      (w) => w is CircleButton && w.semanticLabel == 'Aksi lain',
     );
 
     Future<void> openAa(WidgetTester tester) async {
       await tester.tap(aaButton);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Atur tampilan'));
       await tester.pumpAndSettle();
     }
 
     TextStyle styleOf(WidgetTester tester, String text) =>
         tester.widget<Text>(find.textContaining(text)).style!;
 
-    testWidgets('capsule stays above, Aa turns yellow, tap again closes', (
+    testWidgets('capsule stays above, ⋯ turns yellow, tap again closes', (
       tester,
     ) async {
       await openBook(tester);

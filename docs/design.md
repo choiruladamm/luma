@@ -39,11 +39,15 @@ Bundle font sebagai asset (jangan fetch runtime).
 
 Implementasi Flutter: `ThemeExtension` (`StabiloColors`) dengan satu set terang dan satu set gelap. Detail token lain (track, outline, scrim, highlight) ada di artifact.
 
+## Aturan highlight (`highlight`)
+
+`highlight` (stabilo kuning) buat: grup paragraf yang lagi dibuka di sheet Artinya (blok radius 14), dan **pengecualian Cari kata** ([book-search.md](book-search.md), board Warna): kata hasil cari, inline, radius `Radii.xs` (5). Di sheet cari kata cocok = kotak `highlight` + teks `onHighlight`. Di halaman baca kata yang lagi dibuka = `highlight` penuh + garis bawah 1,5 (`Layout.outline`), kata cocok lain yang keliatan = `highlight` alpha 0,5 (`TextSpan.backgroundColor`, jadi sudutnya gak bulat). Di luar dua kasus ini jangan pakai `highlight`.
+
 ## Halaman baca imersif (ReaderCapsule)
 
 Pas baca, layar isinya cuma teks + garis progres tipis. Menu nongol sebagai dua kapsul ngambang kalau dibutuhin. Top bar 60pt cuma buat Rak & Pengaturan. Spek lengkap di board "Baca imersif · ReaderCapsule" (+ layar 03 Baca, 03b imersif, 03c Lanjut baca).
 
-- **Kapsul atas**: tinggi 58, radius penuh, 6pt di bawah safe area atas, kiri-kanan 24. Isi: balik · judul buku + judul bab ("Chapter I"; "Bab N" cuma kalau bukunya emang gak punya judul bab) · daftar isi · Aa. Tombol 44 bulet muted; tombol yang sheet-nya lagi kebuka (Daftar isi / Aa) jadi kuning.
+- **Kapsul atas**: tinggi 58, radius penuh, 6pt di bawah safe area atas, kiri-kanan 24. Isi: balik · judul buku + judul bab ("Chapter I"; "Bab N" cuma kalau bukunya emang gak punya judul bab) · daftar isi · ⋯. Tombol 44 bulet muted; tombol yang sheet-nya lagi kebuka (Daftar isi, atau ⋯ buat menu dan sheet dari menu) jadi kuning. ⋯ buka popover Cari kata + Atur tampilan ([book-search.md](book-search.md)); pas mode cari ⋯ dapet titik kuning.
 - **Kapsul bawah**: tinggi 40, 14pt di atas safe area bawah, di tengah. Persen + bar 88 + "±N mnt lagi" (atau "Chapter I kelar"). Cuma info.
 - **Awal bab** (board 03 Baca + "awal bab, judul panjang"): satu pembuka bab buat semua judul, pendek maupun panjang: rata tengah, coretan kuning 56×8 miring −4°, judul font baca 23/1,35 bold, meta "Bab 4 dari 102 · ±14 mnt" 12,5 ink2; padding 40 atas · 28 bawah, gap 14.
 - **Daftar isi**: tanpa kolom nomor; tiap baris "±N mnt" di kanan (12,5/600 ink2), bab aktif latar kuning + "Lagi dibaca · ±N mnt". **Akhir bab**: chip "Chapter I kelar", meta "Bab 2 dari 61 · ±6 mnt".
@@ -71,7 +75,7 @@ Layar baca: kekuatan mask ngikutin `ReaderChrome.hidden` (controller kapsul yang
 
 ## Pengaturan Aa
 
-Sheet "Atur bacaan lo" (board 07), dibuka dari tombol Aa di kapsul. Tiap pilihan langsung disimpen dan langsung keliatan di teks; scrim-nya tipis (8% terang, 18% gelap) biar teks di belakang jadi preview. Posisi baca nempel: titik yang lagi di garis atas tetep di situ pas ukuran/font/jarak/margin diganti.
+Sheet "Atur bacaan lo" (board 07), dibuka dari menu ⋯ → Atur tampilan di kapsul (dulu tombol Aa). Tiap pilihan langsung disimpen dan langsung keliatan di teks; scrim-nya tipis (8% terang, 18% gelap) biar teks di belakang jadi preview. Posisi baca nempel: titik yang lagi di garis atas tetep di situ pas ukuran/font/jarak/margin diganti.
 
 - Ukuran huruf: 7 step 16 · 17 · 18 · **18,5** · 20 · 22 · 24 (tombol A kecil / A gede)
 - Font: **Jelas** (Atkinson Hyperlegible) / Kayak buku (Literata, jarak baris +0,05) / Bawaan sistem (SF di iOS, Roboto di Android)

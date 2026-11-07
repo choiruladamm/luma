@@ -27,7 +27,11 @@ App Flutter di `apps/mobile`, Flutter dikunci lewat `.fvmrc`. Perintah lewat `Ma
 
 - Setelah ubah tabel Drift atau model freezed: `make gen`. File `*.g.dart` / `*.freezed.dart` ikut di-commit.
 - Schema Drift: udah ada data di iPhone, jadi tiap ubah tabel wajib naikin `schemaVersion` + langkah di `onUpgrade` + test di `test/data/migration_test.dart` (fixture SQL versi lama, bandingin schema hasil migrasi sama install baru). Data user dipertahankan lewat migrasi, gak pernah lewat hapus app. `drift_dev make-migrations` gak bisa dipakai: kolom `paragraphs.text` bikin kode snapshot-nya gagal compile.
-- `make check` (format, analyze, test) harus bersih sebelum commit.
+- **Run only the tests relevant to what you changed.** The suite is large and slow (1200+ tests, ~2 min) and keeps growing. Do not run the whole suite by default.
+  - Small fixes, tweaks, and features that do not touch other features: run `dart format` and `dart analyze` on the touched files, plus only the tests that cover the changed code (`fvm flutter test <test files or dirs> --timeout 30s`, e.g. `test/ui/features/<feature>`, `test/ui/core/<widget>_test.dart`, `test/data/<repo>_test.dart`).
+  - Run full `make check` (format, analyze, all tests) only for major or wide changes: Drift schema/migrations, models/codegen, shared widgets used across features, routing/theme, or many features at once.
+  - Never re-run the full suite just to re-confirm a small follow-up fix.
+  - Commit only when the checks you ran exit 0 (never chain a commit behind `grep` or `;`). State in the hand-off which checks ran and that the full suite was not run.
 
 ### Build ke device
 
@@ -107,6 +111,7 @@ Integration test di luar scope MVP.
 - `paragraphIndex` & `groupIndex` harus stabil. Ubah logika parsing/grouping → naikkan `parserVersion`, re-import, hapus `ai_results` buku itu.
 - Data yang ikut backup disimpan di Drift (tabel `settings`). API key hanya di `flutter_secure_storage`, gak ikut backup.
 - Parsing EPUB dan zip backup jalan di isolate.
+- Index Cari kata (`paragraph_fts`, FTS5 external-content) nempel ke rowid `paragraphs` dan dijaga trigger. Jangan nulis ke `paragraphs` dengan trigger dimatiin, dan habis `VACUUM` / ganti file DB wajib `rebuildBookSearchIndex()` (restore udah). Detail: `docs/book-search.md`.
 - Model LLM dibaca dari Pengaturan, reasoning dimatikan, output JSON divalidasi (`docs/llm.md`).
 
 ## Copy

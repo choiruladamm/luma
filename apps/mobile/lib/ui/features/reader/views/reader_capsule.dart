@@ -203,7 +203,8 @@ class _Pill extends StatelessWidget {
   }
 }
 
-/// Kapsul atas: balik · judul + bab · daftar isi · Aa.
+/// Kapsul atas: balik · judul + bab · daftar isi · ⋯ (Cari kata, Atur
+/// tampilan).
 class ReaderTopCapsule extends StatelessWidget {
   const ReaderTopCapsule({
     super.key,
@@ -211,9 +212,10 @@ class ReaderTopCapsule extends StatelessWidget {
     this.subtitle,
     required this.onBack,
     this.onToc,
-    this.onAa,
+    this.onMore,
     this.tocOpen = false,
-    this.aaOpen = false,
+    this.moreOpen = false,
+    this.searchActive = false,
   });
 
   final String title;
@@ -224,11 +226,15 @@ class ReaderTopCapsule extends StatelessWidget {
   final VoidCallback? onToc;
 
   /// Null = buku belum kebaca.
-  final VoidCallback? onAa;
+  final VoidCallback? onMore;
 
-  /// Sheet daftar isi / Aa lagi kebuka: tombolnya kuning.
+  /// Sheet daftar isi / menu ⋯ (dan sheet dari menunya) lagi kebuka:
+  /// tombolnya kuning.
   final bool tocOpen;
-  final bool aaOpen;
+  final bool moreOpen;
+
+  /// Lagi mode Cari kata: ⋯ dapet titik kuning kecil.
+  final bool searchActive;
 
   @override
   Widget build(BuildContext context) {
@@ -284,11 +290,33 @@ class ReaderTopCapsule extends StatelessWidget {
               active: tocOpen,
               onPressed: onToc,
             ),
-            CircleButton(
-              semanticLabel: 'Atur tampilan teks',
-              text: 'Aa',
-              active: aaOpen,
-              onPressed: onAa,
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                CircleButton(
+                  semanticLabel: 'Aksi lain',
+                  icon: AppIcons.readerMore,
+                  active: moreOpen,
+                  onPressed: onMore,
+                ),
+                if (searchActive)
+                  Positioned(
+                    right: 5,
+                    top: 5,
+                    child: IgnorePointer(
+                      child: Container(
+                        key: const ValueKey('search-dot'),
+                        width: Layout.searchDot,
+                        height: Layout.searchDot,
+                        decoration: BoxDecoration(
+                          color: c.accent,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: c.ink, width: 1.5),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ],
         ),
