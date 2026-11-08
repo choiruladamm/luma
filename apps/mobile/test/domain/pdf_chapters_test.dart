@@ -554,4 +554,99 @@ void main() {
       expect(result.totalChars, sumChars);
     });
   });
+
+  group('real-book outline shapes', () {
+    String body(int n) => 'Body paragraph number $n. ' * 12;
+
+    test('unsorted bookmarks never crash and keep page order', () {
+      final blocks = [
+        for (var pg = 1; pg <= 6; pg++) block(body(pg), page: pg),
+      ];
+      final result = splitPdfChapters(
+        blocks,
+        outline: [
+          outline('C', page: 5),
+          outline('A', page: 1),
+          outline('B', page: 3),
+        ],
+        totalPages: 6,
+      );
+      expect(result.chapters.map((c) => c.title), ['A', 'B', 'C']);
+    });
+
+    test('a huge container entry is replaced by its children', () {
+      final blocks = [
+        for (var pg = 1; pg <= 100; pg++) block(body(pg), page: pg),
+      ];
+      final result = splitPdfChapters(
+        blocks,
+        outline: [
+          outline('Intro', page: 1),
+          outline(
+            'Letters',
+            page: 11,
+            children: [
+              for (var i = 0; i < 5; i++)
+                outline('Letter $i', page: 11 + i * 15),
+            ],
+          ),
+          outline('Notes', page: 91),
+        ],
+        totalPages: 100,
+      );
+      expect(result.chapters.map((c) => c.title), [
+        'Intro',
+        for (var i = 0; i < 5; i++) 'Letter $i',
+        'Notes',
+      ]);
+      expect(result.chapters[1].section, 'Letters');
+    });
+
+    test('a small chapter with subsections is not split', () {
+      final blocks = [
+        for (var pg = 1; pg <= 30; pg++) block(body(pg), page: pg),
+      ];
+      final result = splitPdfChapters(
+        blocks,
+        outline: [
+          outline(
+            'One',
+            page: 1,
+            children: [
+              for (var i = 0; i < 4; i++) outline('s$i', page: 1 + i * 3),
+            ],
+          ),
+          outline('Two', page: 16),
+        ],
+        totalPages: 30,
+      );
+      expect(result.chapters.map((c) => c.title), ['One', 'Two']);
+    });
+
+    test('substantial text before the first bookmark is kept', () {
+      final blocks = [
+        block(body(0), page: 1),
+        for (var pg = 2; pg <= 5; pg++) block(body(pg), page: pg),
+      ];
+      final result = splitPdfChapters(
+        blocks,
+        outline: [outline('A', page: 2), outline('B', page: 4)],
+        totalPages: 5,
+      );
+      expect(result.chapters.map((c) => c.title), ['Pembuka', 'A', 'B']);
+    });
+
+    test('a bare title page before the first bookmark is dropped', () {
+      final blocks = [
+        block('Title', page: 1),
+        for (var pg = 2; pg <= 5; pg++) block(body(pg), page: pg),
+      ];
+      final result = splitPdfChapters(
+        blocks,
+        outline: [outline('A', page: 2), outline('B', page: 4)],
+        totalPages: 5,
+      );
+      expect(result.chapters.map((c) => c.title), ['A', 'B']);
+    });
+  });
 }

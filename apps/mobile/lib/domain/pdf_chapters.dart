@@ -126,7 +126,11 @@ List<_Boundary> _boundariesFromOutline(
       : blocks.map((b) => b.pageNumber).reduce((a, b) => a > b ? a : b);
 
   // Flatten outline choosing the best level
-  final flat = _flattenOutline(outline, totalPages: totalPages);
+  final flat = _flattenOutline(
+    outline,
+    totalPages: totalPages,
+    endPage: totalPages + 1,
+  );
   if (flat.isEmpty) return const [];
 
   // Validate: at least 2 entries, page numbers in ascending order
@@ -150,10 +154,19 @@ List<_Boundary> _boundariesFromOutline(
 
   if (boundaries.isEmpty) return const [];
 
-  // Remove duplicate block indices (two bookmarks pointing to same block)
+  // Bookmarks are not always in page order; chapters are slices of the block
+  // list, so boundaries must be ascending (stable sort keeps outline order for
+  // equal targets). Duplicate block indices (two bookmarks, same block) keep
+  // the first.
+  // (List.sort is not stable, so the outline position breaks ties.)
+  final sorted = [for (final (i, b) in boundaries.indexed) (i, b)]
+    ..sort((a, b) {
+      final c = a.$2.blockIndex.compareTo(b.$2.blockIndex);
+      return c != 0 ? c : a.$1.compareTo(b.$1);
+    });
   final seen = <int>{};
   final deduped = <_Boundary>[];
-  for (final b in boundaries) {
+  for (final (_, b) in sorted) {
     if (seen.add(b.blockIndex)) deduped.add(b);
   }
 
@@ -161,11 +174,16 @@ List<_Boundary> _boundariesFromOutline(
   return deduped;
 }
 
+/// An outline entry spanning more pages than this, with children, is split
+/// into its children.
+const _containerPages = 60;
+
 /// Flattens the outline tree selecting the most useful level.
 /// Returns `List<({String title, int? pageNumber, String? section})>`
 List<({String title, int? pageNumber, String? section})> _flattenOutline(
   List<PdfOutlineEntry> nodes, {
   required int totalPages,
+  required int endPage,
   String? parentTitle,
   int depth = 0,
 }) {
@@ -181,17 +199,31 @@ List<({String title, int? pageNumber, String? section})> _flattenOutline(
 
   final result = <({String title, int? pageNumber, String? section})>[];
 
-  for (final node in nodes) {
+  for (final (i, node) in nodes.indexed) {
     final validDest =
         node.pageNumber != null &&
         node.pageNumber! >= 1 &&
         node.pageNumber! <= totalPages;
+    // Where this node's pages end: the next sibling's start, else the parent's.
+    final nextPage = nodes
+        .skip(i + 1)
+        .map((n) => n.pageNumber)
+        .firstWhere((p) => p != null && p >= 1, orElse: () => null);
+    final nodeEnd = nextPage ?? endPage;
+    // A top-level entry that swallows a big stretch of the book while having
+    // several children (e.g. "Letters" holding 124 letters) is a container:
+    // the children are the chapters.
+    final oversize =
+        validDest &&
+        node.children.length >= 3 &&
+        nodeEnd - node.pageNumber! > _containerPages;
 
-    if (allPartsOrBooks && node.children.isNotEmpty) {
+    if ((allPartsOrBooks || oversize) && node.children.isNotEmpty) {
       // Treat this node as a section and use children as actual chapters
       final childResults = _flattenOutline(
         node.children,
         totalPages: totalPages,
+        endPage: nodeEnd,
         parentTitle: node.title,
         depth: depth + 1,
       );
@@ -201,6 +233,7 @@ List<({String title, int? pageNumber, String? section})> _flattenOutline(
       final childResults = _flattenOutline(
         node.children,
         totalPages: totalPages,
+        endPage: nodeEnd,
         parentTitle: parentTitle,
         depth: depth + 1,
       );
@@ -328,6 +361,8 @@ List<_Boundary> _boundariesFromPageFallback(
 // Step 2 – assemble ParsedChapters from boundaries
 // ---------------------------------------------------------------------------
 
+const _minFrontMatterChars = 300;
+
 PdfParsedBook _assembleChapters(
   List<PdfLocatedBlock> blocks,
   List<_Boundary> boundaries,
@@ -335,6 +370,21 @@ PdfParsedBook _assembleChapters(
   if (boundaries.isEmpty) {
     // Everything in one chapter
     return _buildSingleChapter(blocks, 'Bagian 1');
+  }
+
+  // Text before the first boundary (preface, unbookmarked front matter) is
+  // kept as its own chapter when it is more than a title page.
+  final first = boundaries.first.blockIndex;
+  if (first > 0 &&
+      blocks
+              .take(first)
+              .where((b) => b.type == ParagraphType.paragraph)
+              .fold<int>(0, (n, b) => n + b.text.length) >=
+          _minFrontMatterChars) {
+    boundaries = [
+      const _Boundary(blockIndex: 0, title: 'Pembuka'),
+      ...boundaries,
+    ];
   }
 
   final chapters = <ParsedChapter>[];

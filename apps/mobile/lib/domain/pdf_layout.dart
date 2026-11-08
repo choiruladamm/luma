@@ -49,6 +49,8 @@ class PdfLine {
     required this.pageNumber,
     required this.fontHeight,
     this.hasSuperscript = false,
+    this.baselineY,
+    this.medianGlyphWidth,
   });
 
   final String text;
@@ -56,6 +58,17 @@ class PdfLine {
   final int pageNumber;
   final double fontHeight;
   final bool hasSuperscript;
+
+  /// Measured baseline / glyph width; null when the producer has none.
+  final double? baselineY, medianGlyphWidth;
+
+  /// Baseline y. Glyph boxes are tight (descenders push [bounds] bottom down),
+  /// so line spacing is measured baseline to baseline. Default: box bottom.
+  double get baseline => baselineY ?? bounds.bottom;
+
+  /// Median glyph width (≈ half an em): the unit for indents. Default: half
+  /// the font height.
+  double get charWidth => medianGlyphWidth ?? fontHeight * 0.5;
 
   @override
   String toString() => 'PdfLine(p$pageNumber: "$text")';
@@ -278,6 +291,124 @@ class PdfLayoutEngine {
   List<PdfLine> _assembleColumnLines(List<PdfGlyph> glyphs, int pageNumber) {
     if (glyphs.isEmpty) return const [];
 
+    // Stream-run mode: PDFium already cut its text into lines ('\n' glyphs
+    // from the service). Real PDFs give *tight* glyph boxes (a period is tiny,
+    // `h` is taller than `a`), so clustering by box top splits one printed line
+    // into many; PDFium's own line breaks don't have that problem.
+    final runMode = glyphs.any((g) => g.char == '\n');
+
+    final lineClusters = <List<PdfGlyph>>[];
+    if (runMode) {
+      var run = <PdfGlyph>[];
+      for (final g in glyphs) {
+        if (g.char == '\n') {
+          if (run.isNotEmpty) lineClusters.add(run);
+          run = <PdfGlyph>[];
+        } else {
+          run.add(g);
+        }
+      }
+      if (run.isNotEmpty) lineClusters.add(run);
+      // Scrambled streams: still read top to bottom.
+      lineClusters.sort((a, b) => _medianBottom(a).compareTo(_medianBottom(b)));
+    } else {
+      _clusterByTop(glyphs, lineClusters);
+    }
+
+    final lines = <PdfLine>[];
+    for (final cluster in lineClusters) {
+      if (!runMode) {
+        cluster.sort((a, b) => a.bounds.left.compareTo(b.bounds.left));
+      }
+
+      final sb = StringBuffer();
+      var minL = 1.0, minT = 1.0, maxR = 0.0, maxB = 0.0;
+      final medianH = _computeMedianHeight(cluster);
+      var hasSup = false;
+
+      for (var i = 0; i < cluster.length; i++) {
+        final g = cluster[i];
+        if (i > 0 && !runMode) {
+          final prev = cluster[i - 1];
+          final gap = g.bounds.left - prev.bounds.right;
+          // Insert space if there is a gap larger than 25% of character height and not already space
+          if (gap > (prev.effectiveFontHeight * 0.25) &&
+              !sb.toString().endsWith(' ') &&
+              g.char != ' ') {
+            sb.write(' ');
+          }
+        }
+        sb.write(g.char);
+        if (g.char.trim().isEmpty) continue; // spaces carry no real box
+        minL = math.min(minL, g.bounds.left);
+        minT = math.min(minT, g.bounds.top);
+        maxR = math.max(maxR, g.bounds.right);
+        maxB = math.max(maxB, g.bounds.bottom);
+
+        // Check superscript: significantly smaller and shifted upwards
+        if (g.effectiveFontHeight < medianH * 0.8 &&
+            g.bounds.bottom < (minT + medianH * 0.7)) {
+          hasSup = true;
+        }
+      }
+
+      final text = sb.toString().replaceAll(RegExp(r' {2,}'), ' ').trim();
+      if (text.isNotEmpty && maxR > minL) {
+        lines.add(
+          PdfLine(
+            text: text,
+            bounds: PdfRectNormalized(
+              left: minL,
+              top: minT,
+              width: math.max(0.0, maxR - minL),
+              height: math.max(0.0, maxB - minT),
+            ),
+            pageNumber: pageNumber,
+            fontHeight: _fontHeight(cluster),
+            hasSuperscript: hasSup,
+            baselineY: _medianBottom(cluster),
+            medianGlyphWidth: _medianWidth(cluster),
+          ),
+        );
+      }
+    }
+
+    return lines;
+  }
+
+  /// Font size proxy from *tight* boxes: the 80th percentile of letter/digit
+  /// heights. The median swings with how many tall letters a line happens to
+  /// have (so heading detection fired on ordinary lines); the upper
+  /// percentile is the ascender/cap height, which every line has.
+  static double _fontHeight(List<PdfGlyph> cluster) {
+    final h = [
+      for (final g in cluster)
+        if (_isLetterOrDigit(g.char)) g.effectiveFontHeight,
+    ]..sort();
+    if (h.isEmpty) return _computeMedianHeight(cluster);
+    return h[((h.length - 1) * 0.8).floor()];
+  }
+
+  static final _letterOrDigit = RegExp(r'[\p{L}\p{N}]', unicode: true);
+  static bool _isLetterOrDigit(String c) => _letterOrDigit.hasMatch(c);
+
+  static double _medianWidth(List<PdfGlyph> cluster) {
+    final w = [
+      for (final g in cluster)
+        if (g.char.trim().isNotEmpty && g.bounds.width > 0) g.bounds.width,
+    ]..sort();
+    return w.isEmpty ? 0 : w[w.length ~/ 2];
+  }
+
+  static double _medianBottom(List<PdfGlyph> cluster) {
+    final b = [
+      for (final g in cluster)
+        if (g.char.trim().isNotEmpty) g.bounds.bottom,
+    ]..sort();
+    return b.isEmpty ? 0 : b[b.length ~/ 2];
+  }
+
+  void _clusterByTop(List<PdfGlyph> glyphs, List<List<PdfGlyph>> lineClusters) {
     // Sort by approximate vertical position
     final sorted = List<PdfGlyph>.from(glyphs)
       ..sort((a, b) {
@@ -286,7 +417,6 @@ class PdfLayoutEngine {
         return a.bounds.left.compareTo(b.bounds.left);
       });
 
-    final lineClusters = <List<PdfGlyph>>[];
     for (final glyph in sorted) {
       var added = false;
       for (final cluster in lineClusters) {
@@ -309,67 +439,9 @@ class PdfLayoutEngine {
     lineClusters.sort(
       (a, b) => a.first.bounds.top.compareTo(b.first.bounds.top),
     );
-
-    final lines = <PdfLine>[];
-    for (final cluster in lineClusters) {
-      cluster.sort((a, b) => a.bounds.left.compareTo(b.bounds.left));
-
-      final sb = StringBuffer();
-      var minL = 1.0, minT = 1.0, maxR = 0.0, maxB = 0.0;
-      var totalH = 0.0;
-      var hasSup = false;
-
-      final medianH = _computeMedianHeight(cluster);
-
-      for (var i = 0; i < cluster.length; i++) {
-        final g = cluster[i];
-        if (i > 0) {
-          final prev = cluster[i - 1];
-          final gap = g.bounds.left - prev.bounds.right;
-          // Insert space if there is a gap larger than 25% of character height and not already space
-          if (gap > (prev.effectiveFontHeight * 0.25) &&
-              !sb.toString().endsWith(' ') &&
-              g.char != ' ') {
-            sb.write(' ');
-          }
-        }
-        sb.write(g.char);
-        minL = math.min(minL, g.bounds.left);
-        minT = math.min(minT, g.bounds.top);
-        maxR = math.max(maxR, g.bounds.right);
-        maxB = math.max(maxB, g.bounds.bottom);
-        totalH += g.effectiveFontHeight;
-
-        // Check superscript: significantly smaller and shifted upwards
-        if (g.effectiveFontHeight < medianH * 0.8 &&
-            g.bounds.bottom < (minT + medianH * 0.7)) {
-          hasSup = true;
-        }
-      }
-
-      final text = sb.toString().trim();
-      if (text.isNotEmpty) {
-        lines.add(
-          PdfLine(
-            text: text,
-            bounds: PdfRectNormalized(
-              left: minL,
-              top: minT,
-              width: math.max(0.0, maxR - minL),
-              height: math.max(0.0, maxB - minT),
-            ),
-            pageNumber: pageNumber,
-            fontHeight: totalH / cluster.length,
-            hasSuperscript: hasSup,
-          ),
-        );
-      }
-    }
-
-    return lines;
   }
 
-  double _computeMedianHeight(List<PdfGlyph> glyphs) {
+  static double _computeMedianHeight(List<PdfGlyph> glyphs) {
     if (glyphs.isEmpty) return 0.0;
     final heights = glyphs.map((g) => g.effectiveFontHeight).toList()..sort();
     return heights[heights.length ~/ 2];
@@ -503,6 +575,7 @@ class PdfLayoutEngine {
     if (lines.isEmpty) return const [];
 
     final blocks = <PdfLocatedBlock>[];
+    final stats = _FlowStats.of(lines);
 
     var currentLines = <PdfLine>[];
     ParagraphType currentType = ParagraphType.paragraph;
@@ -593,7 +666,7 @@ class PdfLayoutEngine {
       // 4. Paragraph boundary check against previous line in currentLines
       if (currentLines.isNotEmpty) {
         final prev = currentLines.last;
-        final isNewPara = _isParagraphBoundary(prev, line, bodyFontSize);
+        final isNewPara = _isParagraphBoundary(prev, line, bodyFontSize, stats);
 
         if (isNewPara) {
           flushCurrent();
@@ -656,7 +729,12 @@ class PdfLayoutEngine {
     return false;
   }
 
-  bool _isParagraphBoundary(PdfLine prev, PdfLine curr, double bodyFontSize) {
+  bool _isParagraphBoundary(
+    PdfLine prev,
+    PdfLine curr,
+    double bodyFontSize,
+    _FlowStats stats,
+  ) {
     // Different page
     if (curr.pageNumber != prev.pageNumber) {
       // Connect across pages if prev does not end with terminal punctuation
@@ -668,26 +746,31 @@ class PdfLayoutEngine {
       return true;
     }
 
-    // Significant vertical gap (> 1.5x normal spacing)
-    final lineSpacing = curr.bounds.top - prev.bounds.bottom;
-    if (lineSpacing > (bodyFontSize * paragraphGapScale * 0.05)) {
+    // Vertical gap bigger than the usual line pitch (baseline to baseline).
+    if (stats.pitch > 0 &&
+        curr.baseline - prev.baseline > stats.pitch * paragraphGapScale) {
       return true;
     }
 
-    // Indented first line
-    if (curr.bounds.left > (prev.bounds.left + bodyFontSize * 0.03)) {
+    // Clear blank space between boxes (several glyph heights).
+    if (curr.bounds.top - prev.bounds.bottom > curr.fontHeight * 3) {
       return true;
     }
 
-    // Previous line is short (< 80% column/line width) and ends with punctuation
-    if (prev.text.trim().endsWith('.') ||
-        prev.text.trim().endsWith('?') ||
-        prev.text.trim().endsWith('!') ||
-        prev.text.trim().endsWith('”') ||
-        prev.text.trim().endsWith('"')) {
-      if (prev.bounds.width < (curr.bounds.width * 0.82)) {
-        return true;
-      }
+    // Indented first line: starts clearly right of the previous line. Half an
+    // em (≈ one median glyph width) is well above side-bearing noise.
+    if (curr.bounds.left - prev.bounds.left > stats.charWidth * 1.0) {
+      return true;
+    }
+
+    // Previous line stops short of the column and ends a sentence.
+    final t = prev.text.trim();
+    if (t.endsWith('.') ||
+        t.endsWith('?') ||
+        t.endsWith('!') ||
+        t.endsWith('”') ||
+        t.endsWith('"')) {
+      if (prev.bounds.width < stats.columnWidth * 0.8) return true;
     }
 
     return false;
@@ -739,7 +822,10 @@ class PdfLayoutEngine {
       // Cross-page paragraph join check
       if (i + 1 < blocks.length &&
           current.type == ParagraphType.paragraph &&
-          blocks[i + 1].type == ParagraphType.paragraph) {
+          blocks[i + 1].type == ParagraphType.paragraph &&
+          // Only a page turn continues a paragraph; two blocks on the same
+          // page were split on purpose (blank line, indent).
+          blocks[i + 1].pageNumber > blocks[i].pageNumber) {
         final next = blocks[i + 1];
 
         // If current paragraph doesn't end with terminal punctuation
@@ -774,5 +860,44 @@ class PdfLayoutEngine {
     }
 
     return out;
+  }
+}
+
+/// Document-wide measures from the lines themselves, so thresholds follow the
+/// real font and page instead of constants.
+class _FlowStats {
+  _FlowStats(this.pitch, this.charWidth, this.columnWidth);
+
+  /// Median baseline-to-baseline distance of consecutive lines on a page.
+  final double pitch;
+
+  /// Median glyph width.
+  final double charWidth;
+
+  /// Typical full line width (90th percentile).
+  final double columnWidth;
+
+  factory _FlowStats.of(List<PdfLine> lines) {
+    double median(List<double> v) {
+      if (v.isEmpty) return 0;
+      v.sort();
+      return v[v.length ~/ 2];
+    }
+
+    final deltas = <double>[];
+    for (var i = 1; i < lines.length; i++) {
+      final d = lines[i].baseline - lines[i - 1].baseline;
+      if (lines[i].pageNumber == lines[i - 1].pageNumber && d > 0) {
+        deltas.add(d);
+      }
+    }
+    final widths = [for (final l in lines) l.bounds.width]..sort();
+    return _FlowStats(
+      median(deltas),
+      median([for (final l in lines) l.charWidth]),
+      widths.isEmpty
+          ? 0
+          : widths[(widths.length * 0.9).floor().clamp(0, widths.length - 1)],
+    );
   }
 }

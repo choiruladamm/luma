@@ -121,30 +121,57 @@ class PdfiumService implements PdfService {
 
   // ponytail: rect dianggap satu ruang dengan page.width/height (rotasi
   // dinormalisasi pdfrx). Spread 2-up / rotasi aneh dicek di korpus (#89).
+  //
+  // Kotak huruf dari PDFium itu *ketat* (titik kecil, `h` lebih tinggi dari
+  // `a`), jadi pengelompokan baris pakai geometri gagal. Pemisah baris PDFium
+  // sendiri ('\n' di fullText) dibawa sebagai glyph '\n', spasi juga: layout
+  // memakai keduanya apa adanya (`PdfLayoutEngine`, mode stream-run).
   Future<List<PdfGlyph>> _glyphs(pdfrx.PdfPage page) async {
     final text = await page.loadText();
     if (text == null || page.width <= 0 || page.height <= 0) return const [];
     final w = page.width, h = page.height;
     final out = <PdfGlyph>[];
+    PdfRectNormalized last = const PdfRectNormalized(
+      left: 0,
+      top: 0,
+      width: 0,
+      height: 0,
+    );
+    void whitespace(String ch) => out.add(
+      PdfGlyph(
+        char: ch,
+        pageNumber: page.pageNumber,
+        bounds: PdfRectNormalized(
+          left: last.right,
+          top: last.top,
+          width: 0,
+          height: last.height,
+        ),
+      ),
+    );
     final n = text.fullText.length < text.charRects.length
         ? text.fullText.length
         : text.charRects.length;
     for (var i = 0; i < n; i++) {
       final ch = text.fullText[i];
+      if (ch == '\r') continue;
+      if (ch == '\n') {
+        if (out.isNotEmpty && out.last.char != '\n') whitespace('\n');
+        continue;
+      }
+      if (ch.trim().isEmpty) {
+        if (out.isNotEmpty && out.last.char != '\n') whitespace(' ');
+        continue;
+      }
       final r = text.charRects[i];
-      if (ch == '\n' || ch == '\r' || r.height <= 0) continue;
-      out.add(
-        PdfGlyph(
-          char: ch,
-          pageNumber: page.pageNumber,
-          bounds: PdfRectNormalized(
-            left: r.left / w,
-            top: 1 - r.top / h,
-            width: r.width / w,
-            height: r.height / h,
-          ),
-        ),
+      if (r.height <= 0 || r.width < 0) continue;
+      last = PdfRectNormalized(
+        left: r.left / w,
+        top: 1 - r.top / h,
+        width: r.width / w,
+        height: r.height / h,
       );
+      out.add(PdfGlyph(char: ch, pageNumber: page.pageNumber, bounds: last));
     }
     return out;
   }

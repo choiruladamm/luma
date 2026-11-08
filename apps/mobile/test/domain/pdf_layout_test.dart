@@ -465,4 +465,88 @@ void main() {
       },
     );
   });
+
+  group('tight glyph boxes (real PDFium output)', () {
+    // PDFium boxes are tight: `h`/`l` are taller than `a`/`o`, a period is a
+    // tiny dot on the baseline. Boxes sit on a shared baseline (bottom).
+    List<PdfGlyph> printed(String text, double baseline, {double left = 0.1}) {
+      const tall = 'hlbdkftT';
+      var x = left;
+      final out = <PdfGlyph>[];
+      for (final c in text.split('')) {
+        if (c == ' ') {
+          out.add(g(' ', x, baseline, 0, 0));
+          x += 0.01;
+          continue;
+        }
+        final h = c == '.' || c == ','
+            ? 0.003
+            : tall.contains(c)
+            ? 0.014
+            : 0.009;
+        out.add(g(c, x, baseline - h, 0.008, h));
+        x += 0.01;
+      }
+      return out;
+    }
+
+    test('PDFium line breaks win over box geometry', () {
+      final glyphs = [
+        ...printed('the hall.', 0.30),
+        g('\n', 0.2, 0.3, 0, 0),
+        ...printed('old bell,', 0.33),
+      ];
+      final lines = engine.glyphsToLines(glyphs, pageNumber: 1);
+      expect(lines.map((l) => l.text), ['the hall.', 'old bell,']);
+      expect(lines[0].baseline, closeTo(0.30, 1e-9));
+      expect(lines[0].charWidth, closeTo(0.008, 1e-9));
+    });
+
+    test('scrambled stream order still reads top to bottom', () {
+      final glyphs = [
+        ...printed('second', 0.34),
+        g('\n', 0.2, 0.34, 0, 0),
+        ...printed('first', 0.30),
+      ];
+      final lines = engine.glyphsToLines(glyphs, pageNumber: 1);
+      expect(lines.map((l) => l.text), ['first', 'second']);
+    });
+
+    PdfLine line(String t, double base, double left) => PdfLine(
+      text: t,
+      bounds: PdfRectNormalized(
+        left: left,
+        top: base - 0.014,
+        width: 0.5,
+        height: 0.018,
+      ),
+      pageNumber: 1,
+      fontHeight: 0.009,
+      baselineY: base,
+      medianGlyphWidth: 0.008,
+    );
+
+    test('indent starts a paragraph, side-bearing jitter does not', () {
+      final blocks = engine.processToBlocks([
+        line('One line of text here', 0.30, 0.100),
+        line('another line of it', 0.32, 0.1015), // jitter
+        line('Indented new paragraph', 0.34, 0.120), // 2.5 glyph widths
+        line('and its second line', 0.36, 0.100),
+      ], bodyFontSize: 0.009);
+      expect(blocks.map((b) => b.text), [
+        'One line of text here another line of it',
+        'Indented new paragraph and its second line',
+      ]);
+    });
+
+    test('baseline gap larger than the line pitch splits', () {
+      final blocks = engine.processToBlocks([
+        line('a', 0.30, 0.1),
+        line('b', 0.32, 0.1),
+        line('c', 0.34, 0.1),
+        line('d after a blank line', 0.40, 0.1),
+      ], bodyFontSize: 0.009);
+      expect(blocks.map((b) => b.text), ['a b c', 'd after a blank line']);
+    });
+  });
 }
