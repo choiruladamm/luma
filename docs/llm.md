@@ -4,6 +4,8 @@
 
 OpenRouter (API OpenAI-compatible, base URL `https://openrouter.ai/api/v1`).
 
+Default aplikasi mengikuti `defaultAiModel` di `lib/domain/models/ai_model.dart`: DeepSeek V4.1 Flash. Model live/evaluasi GLM atau Qwen pada laporan historis tidak mengubah default; pilihan tersimpan di Pengaturan tetap dipakai. Angka biaya/latensi di dokumen ini adalah snapshot evaluasi, bukan tarif atau benchmark terbaru.
+
 ## Kandidat model (harga per 1 juta token, cek ulang di OpenRouter)
 
 | Model | Model ID | Input | Output | Catatan |

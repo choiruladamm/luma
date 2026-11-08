@@ -2,8 +2,8 @@
 
 > Nama app: **Luma**
 > Desain: **Stabilo** ([design.md](design.md))
-> Status: siap eksekusi MVP
-> Terakhir diupdate: Oktober 2026
+> Status: fitur inti tersedia; dogfooding MVP (#29) dan gate integrasi chat (#124) masih terbuka
+> Terakhir diupdate: 8 November 2026
 
 > **Untuk Claude Code:** folder `docs/` adalah sumber kebenaran untuk keputusan produk, data model, dan alur. File inti ada di tabel di bawah. `docs/ideas/` adalah rencana iterasi berikutnya dan ide kasar, **jangan dikerjakan** kecuali diminta.
 
@@ -13,7 +13,7 @@
 | [data-model.md](data-model.md) | Tabel Drift, versi schema & migrasi, kunci settings |
 | [grouping.md](grouping.md) | Pengelompokan paragraf jadi grup tap/AI |
 | [architecture.md](architecture.md) | Routing, provider Riverpod, alur import & baca |
-| [i18n.md](i18n.md) | Plan switch antarmuka Indonesia / English; AI tetap Indonesia (#184) |
+| [i18n.md](i18n.md) | Antarmuka Indonesia / English, implementasi dan batas validasi; AI tetap Indonesia (#184) |
 | [llm.md](llm.md) | OpenRouter, model, aturan implementasi, prompt, Bedahin |
 | [llm-evals.md](llm-evals.md) | Hasil spike & evaluasi (#34, #41, #28, #61) |
 | [backup.md](backup.md) | Backup & restore |
@@ -27,7 +27,7 @@
 
 # Latar Belakang
 
-Alur baca saat ini:
+Alur sebelum Luma:
 
 1. Download ebook EPUB
 2. Buka di app Books (iPhone)
@@ -64,9 +64,20 @@ Mengubah alur di atas menjadi **satu tap**: tap paragraf → langsung muncul ter
 | 8 | Pengaturan | API key OpenRouter, model ID, hapus cache. |
 | 9 | Backup & restore | Export semua data (buku, terjemahan, posisi baca, pengaturan) ke satu file `.zip`, simpan ke Files/AirDrop. Restore dari file itu. Pengingat kalau sudah lama belum backup. Detail di [backup.md](backup.md). |
 
+## Fitur tambahan yang sudah tersedia
+
+- Import Markdown: buat buku, tambah/ganti bab; PDF lewat konversi Markdown tersedia, uji PDF terbitan asli masih #78.
+- Bedahin: penjelasan bagian/istilah dan intip hubungan, memakai cache per grup (#60).
+- Ngobrolin buku: sesi, sitasi, pembacaan bab/seluruh buku, cache catatan dan Langkah AI; gate integrasi akhir #124 masih terbuka (induk #112).
+- Cari/download Gutenberg: katalog lokal, detail, antrean dan notifikasi; seluruh anak #163 closed, acceptance akhir induk belum tercatat lengkap. Lihat [discover.md](discover.md).
+- Cari kata dalam buku: index FTS5, cuplikan dan navigator lintas bab (#176); lihat [book-search.md](book-search.md).
+- UI Indonesia/English (#184), tanpa mengubah bahasa isi/AI/history; lihat [i18n.md](i18n.md).
+
+Implementasi tersedia tidak berarti seluruh alur sudah diuji di perangkat. Bukti dan batasnya ada di docs topik dan issue terkait.
+
 ## Di luar scope MVP (iterasi berikutnya)
 
-Semua item di sini dan di bagian "Ditunda" tiap file docs punya issue. Label status: `status:ready` (plan jelas), `status:deferred` (nunggu pemicu, lihat "Dibuka kalau" di issue), `status:idea` (belum diputusin).
+Semua item di sini dan di bagian "Ditunda" tiap file docs punya issue. Label status: `status:ready` (plan jelas, eksekusi menunggu dependensi closed), `status:deferred` (nunggu pemicu, lihat "Dibuka kalau" di issue), `status:idea` (belum diputusin).
 
 - **Recap bacaan**: terjemahan + makna semua yang sudah dibaca, plus overview "sejauh ini" → **Iterasi 2, lihat [recap.md](ideas/recap.md)** ([#104](https://github.com/choiruladamm/luma/issues/104))
 - Import **Luma Markdown** + PDF lewat Markdown sudah jalan setelah MVP → lihat [import-formats.md](import-formats.md). Import PDF langsung di app direncanakan ([#83](https://github.com/choiruladamm/luma/issues/83)). Format lain (TXT, HTML, MOBI) belum ([#100](https://github.com/choiruladamm/luma/issues/100)).
@@ -92,7 +103,7 @@ Mengikuti stack Mibu supaya pola dan boilerplate bisa dipakai ulang.
 | Pilih file | `file_picker` |
 | Path penyimpanan | `path_provider`, `path` |
 | Hash file (anti-duplikat) | `crypto` |
-| HTTP ke LLM | `dio` atau `http` |
+| HTTP ke LLM | `dio` |
 | Simpan API key | `flutter_secure_storage` |
 | Value object | `freezed` |
 | Zip backup | `archive` |
@@ -106,7 +117,9 @@ Mengikuti stack Mibu supaya pola dan boilerplate bisa dipakai ulang.
 
 ---
 
-# Urutan Pengerjaan
+# Urutan Pembangunan MVP (historis)
+
+Langkah 1–11 tersedia; langkah 12 masih #29. Pekerjaan aktif/ditunda mengikuti GitHub issues dan aturan dependensi di `CLAUDE.md`.
 
 1. Setup project: struktur dari Mibu, Drift, go_router, theme Stabilo (`ThemeExtension` + font asset)
 2. Schema Drift: `books`, `chapters`, `paragraphs`, `reading_progress`, `ai_results`, `settings` (pakai `chapters.id` sebagai kunci, lihat [data-model.md](data-model.md))

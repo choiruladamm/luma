@@ -41,6 +41,8 @@ luma-backup-20261006-2130.zip
 }
 ```
 
+Snapshot membawa seluruh DB, termasuk katalog Gutenberg, index `catalog_fts`, metadata sync, history chat, cache index/catatan dan preferensi bahasa. Katalog tetap dapat diganti lewat sync; belum ada pengecualian katalog dari ZIP. `paragraph_fts` dibangun ulang saat inspect restore karena rowid dapat berubah. Tes round-trip katalog/index/meta ada di `test/data/restore_service_test.dart`.
+
 ## Alur export (backup)
 
 1. Pengaturan → "Backup sekarang"
@@ -105,7 +107,7 @@ luma-backup-20261006-2130.zip
 
 Snapshot `VACUUM INTO` ikut membawa `chat_sessions`, `chat_turns`, revision isi,
 judul manual, anchor scroll dan snapshot sumber. Format backup tetap1; manifest
-mengikuti schema DB (sekarang10), tanpa model/key atau isi percakapan. Model attempt
+mengikuti schema DB aplikasi (schema 17 saat sinkronisasi 8 November 2026), tanpa key/model/isi percakapan di manifest. Model attempt
 tersimpan di DB sebagaimana sebelumnya; API key tetap hanya di secure storage.
 
 Backup saat streaming menangkap checkpoint durable terakhir yang konsisten,
