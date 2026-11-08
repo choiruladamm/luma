@@ -6,6 +6,7 @@ import 'package:hugeicons/hugeicons.dart';
 import '../../../../data/repositories/import_repository.dart';
 import '../../../../data/services/epub_parser.dart';
 import '../../../../data/services/file_storage.dart';
+import '../../../../data/services/pdf_service.dart';
 import '../../../../domain/luma_markdown.dart';
 import '../../../../domain/models/book.dart';
 import '../../../core/format.dart';
@@ -50,10 +51,10 @@ class ImportProgressSheet extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   spacing: 2,
                   children: [
-                    Text(
-                      context.l10n.importUnpackingEpub,
-                      style: StabiloType.titleMd,
-                    ),
+                    Text(switch (state.format) {
+                      ImportFormat.epub => context.l10n.importUnpackingEpub,
+                      ImportFormat.pdf => context.l10n.importUnpackingPdf,
+                    }, style: StabiloType.titleMd),
                     Text(
                       '${state.fileName} · ${fileSize(state.size, locale: context.l10n.localeName)}',
                       maxLines: 1,
@@ -347,7 +348,6 @@ class ImportFailedSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.stabilo;
     final (icon, title, body, code) = switch (error) {
       EpubError.corrupt => (
         HugeIcons.strokeRoundedFileCorrupt,
@@ -368,6 +368,87 @@ class ImportFailedSheet extends StatelessWidget {
         '$fileName · DRM',
       ),
     };
+    return _FailedFrame(
+      icon: icon,
+      title: title,
+      body: body,
+      code: code,
+      onPickAnother: onPickAnother,
+    );
+  }
+}
+
+/// Gagal import PDF: password, scan / hampir tanpa teks, rusak, kosong, IO.
+/// Sheet-nya sama kayak [ImportFailedSheet]; cuma copy yang beda.
+class ImportPdfFailedSheet extends StatelessWidget {
+  const ImportPdfFailedSheet({
+    super.key,
+    required this.fileName,
+    required this.error,
+    required this.onPickAnother,
+  });
+
+  final String fileName;
+  final PdfImportError error;
+  final VoidCallback onPickAnother;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final (icon, title, body) = switch (error) {
+      PdfImportError.password => (
+        HugeIcons.strokeRoundedSquareLock02,
+        l10n.importPdfPasswordTitle,
+        l10n.importPdfPasswordBody,
+      ),
+      // Halaman kosong belum bukti pasti scan: copy-nya hati-hati.
+      PdfImportError.scan => (
+        HugeIcons.strokeRoundedFileRemove,
+        l10n.importPdfScanTitle,
+        l10n.importPdfScanBody,
+      ),
+      PdfImportError.empty => (
+        HugeIcons.strokeRoundedFileRemove,
+        l10n.importPdfEmptyTitle,
+        l10n.importPdfEmptyBody,
+      ),
+      PdfImportError.io => (
+        AppIcons.alert,
+        l10n.importPdfIoTitle,
+        l10n.importPdfIoBody,
+      ),
+      PdfImportError.corrupt || PdfImportError.notPdf => (
+        HugeIcons.strokeRoundedFileCorrupt,
+        l10n.importPdfDamagedTitle,
+        l10n.importPdfDamagedBody,
+      ),
+    };
+    return _FailedFrame(
+      icon: icon,
+      title: title,
+      body: body,
+      code: fileName,
+      onPickAnother: onPickAnother,
+    );
+  }
+}
+
+class _FailedFrame extends StatelessWidget {
+  const _FailedFrame({
+    required this.icon,
+    required this.title,
+    required this.body,
+    required this.code,
+    required this.onPickAnother,
+  });
+
+  final dynamic icon;
+  final String title, body, code;
+  final VoidCallback onPickAnother;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.stabilo;
     return Semantics(
       liveRegion: true,
       child: SheetFrame(

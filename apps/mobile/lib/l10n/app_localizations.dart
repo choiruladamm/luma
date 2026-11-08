@@ -1541,7 +1541,7 @@ abstract class AppLocalizations {
   /// Interface copy in ui/features/import_book/views/import_sheets.dart
   ///
   /// In id, this message translates to:
-  /// **'App ini cuma bisa baca .epub. Kalau bukunya PDF atau MOBI, convert dulu ke EPUB (misal pake Calibre), baru import lagi.'**
+  /// **'App ini cuma bisa baca .epub. Kalau bukunya MOBI, convert dulu ke EPUB (misal pake Calibre), baru import lagi.'**
   String get importThisImporterReadsEpubFilesConvert;
 
   /// Interface copy in ui/features/import_book/views/import_sheets.dart
@@ -3275,7 +3275,7 @@ abstract class AppLocalizations {
   /// Interface copy in ui/features/bookshelf/views/bookshelf_view.dart
   ///
   /// In id, this message translates to:
-  /// **'atau import EPUB / Markdown dari Files'**
+  /// **'atau import EPUB / PDF / Markdown dari Files'**
   String get bookshelfOrImportEpubMarkdownFromFiles;
 
   /// Interface copy in ui/features/bookshelf/views/bookshelf_view.dart
@@ -3745,6 +3745,78 @@ abstract class AppLocalizations {
   /// In id, this message translates to:
   /// **'Belum ada sumber yang cukup untuk menjawab itu. Coba tunjukkan kutipan atau perjelas pertanyaannya.'**
   String get chatNoEvidenceNote;
+
+  /// Interface copy in ui/features/import_book/views/import_sheets.dart
+  ///
+  /// In id, this message translates to:
+  /// **'Lagi ngebongkar PDF...'**
+  String get importUnpackingPdf;
+
+  /// Interface copy in ui/features/import_book/views/import_sheets.dart
+  ///
+  /// In id, this message translates to:
+  /// **'PDF-nya dikunci password'**
+  String get importPdfPasswordTitle;
+
+  /// Interface copy in ui/features/import_book/views/import_sheets.dart
+  ///
+  /// In id, this message translates to:
+  /// **'Luma belum bisa buka PDF yang pake password. Buka kuncinya dulu di app lain, simpen salinannya, terus import lagi.'**
+  String get importPdfPasswordBody;
+
+  /// Interface copy in ui/features/import_book/views/import_sheets.dart
+  ///
+  /// In id, this message translates to:
+  /// **'PDF ini hampir gak ada teksnya'**
+  String get importPdfScanTitle;
+
+  /// Interface copy in ui/features/import_book/views/import_sheets.dart
+  ///
+  /// In id, this message translates to:
+  /// **'Kebanyakan halamannya gak punya teks yang bisa dibaca, bisa jadi hasil scan. Buat PDF scan, pakai jalur foto atau Docling buat convert ke Markdown, terus import file .md-nya.'**
+  String get importPdfScanBody;
+
+  /// Interface copy in ui/features/import_book/views/import_sheets.dart
+  ///
+  /// In id, this message translates to:
+  /// **'PDF-nya gak bisa dibuka'**
+  String get importPdfDamagedTitle;
+
+  /// Interface copy in ui/features/import_book/views/import_sheets.dart
+  ///
+  /// In id, this message translates to:
+  /// **'Kayaknya rusak atau kedownload setengah. Coba download ulang, terus import lagi.'**
+  String get importPdfDamagedBody;
+
+  /// Interface copy in ui/features/import_book/views/import_sheets.dart
+  ///
+  /// In id, this message translates to:
+  /// **'Gak ada teks yang bisa dibaca'**
+  String get importPdfEmptyTitle;
+
+  /// Interface copy in ui/features/import_book/views/import_sheets.dart
+  ///
+  /// In id, this message translates to:
+  /// **'PDF-nya kebuka, tapi gak nemu teks buat dijadiin bab. Kalau isinya gambar doang, pakai jalur foto atau Docling.'**
+  String get importPdfEmptyBody;
+
+  /// Interface copy in ui/features/import_book/views/import_sheets.dart
+  ///
+  /// In id, this message translates to:
+  /// **'File-nya gak kebaca'**
+  String get importPdfIoTitle;
+
+  /// Interface copy in ui/features/import_book/views/import_sheets.dart
+  ///
+  /// In id, this message translates to:
+  /// **'Gagal baca atau nyalin file-nya. Cek ruang penyimpanan, terus coba lagi.'**
+  String get importPdfIoBody;
+
+  /// Interface copy in ui/features/import_book/views/import_sheets.dart
+  ///
+  /// In id, this message translates to:
+  /// **'{p0} halaman tanpa teks dilewati'**
+  String importPdfSkippedPages(int p0);
 }
 
 class _AppLocalizationsDelegate

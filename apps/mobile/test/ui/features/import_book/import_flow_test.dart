@@ -108,7 +108,7 @@ void main() {
   testWidgets('Import buttons start the picker', (tester) async {
     await pump(tester);
     // Rak kosong (board Cari buku 02): link import di bawah tombol cari.
-    await tester.tap(find.text('atau import EPUB / Markdown dari Files'));
+    await tester.tap(find.text('atau import EPUB / PDF / Markdown dari Files'));
     // The header button is inert (IgnorePointer); its tap target is the
     // GestureDetector around it.
     await tester.tap(

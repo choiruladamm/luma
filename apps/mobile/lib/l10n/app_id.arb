@@ -1189,7 +1189,7 @@
   "@importThisIsnTAnEpub": {
     "description": "Interface copy in ui/features/import_book/views/import_sheets.dart"
   },
-  "importThisImporterReadsEpubFilesConvert": "App ini cuma bisa baca .epub. Kalau bukunya PDF atau MOBI, convert dulu ke EPUB (misal pake Calibre), baru import lagi.",
+  "importThisImporterReadsEpubFilesConvert": "App ini cuma bisa baca .epub. Kalau bukunya MOBI, convert dulu ke EPUB (misal pake Calibre), baru import lagi.",
   "@importThisImporterReadsEpubFilesConvert": {
     "description": "Interface copy in ui/features/import_book/views/import_sheets.dart"
   },
@@ -2723,7 +2723,7 @@
   "@bookshelfFindFreeBooks": {
     "description": "Interface copy in ui/features/bookshelf/views/bookshelf_view.dart"
   },
-  "bookshelfOrImportEpubMarkdownFromFiles": "atau import EPUB / Markdown dari Files",
+  "bookshelfOrImportEpubMarkdownFromFiles": "atau import EPUB / PDF / Markdown dari Files",
   "@bookshelfOrImportEpubMarkdownFromFiles": {
     "description": "Interface copy in ui/features/bookshelf/views/bookshelf_view.dart"
   },
@@ -3151,5 +3151,58 @@
     }
   },
   "chatPartialNote": "Sebagian pertanyaan belum punya bukti yang cukup di sumber ini.",
-  "chatNoEvidenceNote": "Belum ada sumber yang cukup untuk menjawab itu. Coba tunjukkan kutipan atau perjelas pertanyaannya."
+  "chatNoEvidenceNote": "Belum ada sumber yang cukup untuk menjawab itu. Coba tunjukkan kutipan atau perjelas pertanyaannya.",
+  "importUnpackingPdf": "Lagi ngebongkar PDF...",
+  "@importUnpackingPdf": {
+    "description": "Interface copy in ui/features/import_book/views/import_sheets.dart"
+  },
+  "importPdfPasswordTitle": "PDF-nya dikunci password",
+  "@importPdfPasswordTitle": {
+    "description": "Interface copy in ui/features/import_book/views/import_sheets.dart"
+  },
+  "importPdfPasswordBody": "Luma belum bisa buka PDF yang pake password. Buka kuncinya dulu di app lain, simpen salinannya, terus import lagi.",
+  "@importPdfPasswordBody": {
+    "description": "Interface copy in ui/features/import_book/views/import_sheets.dart"
+  },
+  "importPdfScanTitle": "PDF ini hampir gak ada teksnya",
+  "@importPdfScanTitle": {
+    "description": "Interface copy in ui/features/import_book/views/import_sheets.dart"
+  },
+  "importPdfScanBody": "Kebanyakan halamannya gak punya teks yang bisa dibaca, bisa jadi hasil scan. Buat PDF scan, pakai jalur foto atau Docling buat convert ke Markdown, terus import file .md-nya.",
+  "@importPdfScanBody": {
+    "description": "Interface copy in ui/features/import_book/views/import_sheets.dart"
+  },
+  "importPdfDamagedTitle": "PDF-nya gak bisa dibuka",
+  "@importPdfDamagedTitle": {
+    "description": "Interface copy in ui/features/import_book/views/import_sheets.dart"
+  },
+  "importPdfDamagedBody": "Kayaknya rusak atau kedownload setengah. Coba download ulang, terus import lagi.",
+  "@importPdfDamagedBody": {
+    "description": "Interface copy in ui/features/import_book/views/import_sheets.dart"
+  },
+  "importPdfEmptyTitle": "Gak ada teks yang bisa dibaca",
+  "@importPdfEmptyTitle": {
+    "description": "Interface copy in ui/features/import_book/views/import_sheets.dart"
+  },
+  "importPdfEmptyBody": "PDF-nya kebuka, tapi gak nemu teks buat dijadiin bab. Kalau isinya gambar doang, pakai jalur foto atau Docling.",
+  "@importPdfEmptyBody": {
+    "description": "Interface copy in ui/features/import_book/views/import_sheets.dart"
+  },
+  "importPdfIoTitle": "File-nya gak kebaca",
+  "@importPdfIoTitle": {
+    "description": "Interface copy in ui/features/import_book/views/import_sheets.dart"
+  },
+  "importPdfIoBody": "Gagal baca atau nyalin file-nya. Cek ruang penyimpanan, terus coba lagi.",
+  "@importPdfIoBody": {
+    "description": "Interface copy in ui/features/import_book/views/import_sheets.dart"
+  },
+  "importPdfSkippedPages": "{p0} halaman tanpa teks dilewati",
+  "@importPdfSkippedPages": {
+    "description": "Interface copy in ui/features/import_book/views/import_sheets.dart",
+    "placeholders": {
+      "p0": {
+        "type": "int"
+      }
+    }
+  }
 }

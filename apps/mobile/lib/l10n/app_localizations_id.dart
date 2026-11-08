@@ -883,7 +883,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get importThisImporterReadsEpubFilesConvert =>
-      'App ini cuma bisa baca .epub. Kalau bukunya PDF atau MOBI, convert dulu ke EPUB (misal pake Calibre), baru import lagi.';
+      'App ini cuma bisa baca .epub. Kalau bukunya MOBI, convert dulu ke EPUB (misal pake Calibre), baru import lagi.';
 
   @override
   String get importThisBookIsDrmLocked => 'Bukunya dikunci DRM';
@@ -1932,7 +1932,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get bookshelfOrImportEpubMarkdownFromFiles =>
-      'atau import EPUB / Markdown dari Files';
+      'atau import EPUB / PDF / Markdown dari Files';
 
   @override
   String get bookshelfTapAParagraphWhenYouGet =>
@@ -2229,4 +2229,47 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get chatNoEvidenceNote =>
       'Belum ada sumber yang cukup untuk menjawab itu. Coba tunjukkan kutipan atau perjelas pertanyaannya.';
+
+  @override
+  String get importUnpackingPdf => 'Lagi ngebongkar PDF...';
+
+  @override
+  String get importPdfPasswordTitle => 'PDF-nya dikunci password';
+
+  @override
+  String get importPdfPasswordBody =>
+      'Luma belum bisa buka PDF yang pake password. Buka kuncinya dulu di app lain, simpen salinannya, terus import lagi.';
+
+  @override
+  String get importPdfScanTitle => 'PDF ini hampir gak ada teksnya';
+
+  @override
+  String get importPdfScanBody =>
+      'Kebanyakan halamannya gak punya teks yang bisa dibaca, bisa jadi hasil scan. Buat PDF scan, pakai jalur foto atau Docling buat convert ke Markdown, terus import file .md-nya.';
+
+  @override
+  String get importPdfDamagedTitle => 'PDF-nya gak bisa dibuka';
+
+  @override
+  String get importPdfDamagedBody =>
+      'Kayaknya rusak atau kedownload setengah. Coba download ulang, terus import lagi.';
+
+  @override
+  String get importPdfEmptyTitle => 'Gak ada teks yang bisa dibaca';
+
+  @override
+  String get importPdfEmptyBody =>
+      'PDF-nya kebuka, tapi gak nemu teks buat dijadiin bab. Kalau isinya gambar doang, pakai jalur foto atau Docling.';
+
+  @override
+  String get importPdfIoTitle => 'File-nya gak kebaca';
+
+  @override
+  String get importPdfIoBody =>
+      'Gagal baca atau nyalin file-nya. Cek ruang penyimpanan, terus coba lagi.';
+
+  @override
+  String importPdfSkippedPages(int p0) {
+    return '$p0 halaman tanpa teks dilewati';
+  }
 }

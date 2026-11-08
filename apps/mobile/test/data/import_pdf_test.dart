@@ -9,69 +9,13 @@ import 'package:luma/data/database/app_database.dart';
 import 'package:luma/data/repositories/import_repository.dart';
 import 'package:luma/data/repositories/reading_progress_repository.dart';
 import 'package:luma/data/services/backup_service.dart';
-import 'package:luma/data/services/epub_parser.dart';
 import 'package:luma/data/services/file_storage.dart';
 import 'package:luma/data/services/pdf_service.dart';
 import 'package:luma/data/services/restore_service.dart';
 import 'package:luma/domain/models/book.dart';
 import 'package:luma/domain/pdf_chapters.dart';
-import 'package:luma/domain/pdf_layout.dart';
 
-/// Glyphs for one body line of [text] at vertical position [top].
-List<PdfGlyph> _line(String text, double top, int page, {double h = 0.02}) => [
-  for (final (i, c) in text.split('').indexed)
-    PdfGlyph(
-      char: c,
-      pageNumber: page,
-      bounds: PdfRectNormalized(
-        left: 0.1 + i * 0.012,
-        top: top,
-        width: 0.01,
-        height: h,
-      ),
-    ),
-];
-
-/// Page with an optional big heading and three body lines.
-List<PdfGlyph> _page(int page, {String? heading, String body = 'Kata'}) => [
-  if (heading != null) ..._line(heading, 0.15, page, h: 0.04),
-  for (var i = 0; i < 3; i++)
-    ..._line('$body baris ke $i di halaman $page.', 0.3 + i * 0.03, page),
-];
-
-class FakePdf implements PdfService {
-  FakePdf(this.result);
-
-  PdfExtraction result;
-  Object? error;
-  int calls = 0;
-  void Function()? afterPages;
-
-  @override
-  Future<PdfExtraction> extract(
-    String path, {
-    void Function()? onOpened,
-    void Function(int done, int total)? onPage,
-  }) async {
-    calls++;
-    if (error != null) throw error!;
-    onOpened?.call();
-    for (var i = 1; i <= result.pageCount; i++) {
-      onPage?.call(i, result.pageCount);
-    }
-    afterPages?.call();
-    return result;
-  }
-}
-
-final _cover = EpubCover(Uint8List.fromList([1, 2, 3]), 'png');
-
-PdfExtraction _doc(List<List<PdfGlyph>> pages, {bool cover = true}) => (
-  pageCount: pages.length,
-  pages: pages,
-  outline: const [],
-  cover: cover ? _cover : null,
-);
+import '../support/fake_pdf.dart';
 
 void main() {
   late AppDatabase db;
@@ -92,11 +36,11 @@ void main() {
     storage = FileStorage(root);
     await storage.ensureDirs();
     fake = FakePdf(
-      _doc([
-        _page(1, heading: 'Chapter 1'),
-        _page(2),
-        _page(3, heading: 'Chapter 2'),
-        _page(4),
+      pdfDoc([
+        pdfPage(1, heading: 'Chapter 1'),
+        pdfPage(2),
+        pdfPage(3, heading: 'Chapter 2'),
+        pdfPage(4),
       ]),
     );
     repo = ImportRepository(db, storage, pdfService: fake);
@@ -185,7 +129,7 @@ void main() {
   });
 
   test('title falls back to the file name without a heading', () async {
-    fake.result = _doc([_page(1), _page(2)], cover: false);
+    fake.result = pdfDoc([pdfPage(1), pdfPage(2)], cover: false);
     await import();
     final book = await db.select(db.books).getSingle();
     expect(book.title, 'novel');
@@ -233,27 +177,32 @@ void main() {
     });
 
     test('scan-dominated: more than half the pages without text', () async {
-      fake.result = _doc([_page(1), const [], const [], const []]);
+      fake.result = pdfDoc([pdfPage(1), const [], const [], const []]);
       expect(await failure(import()), PdfImportError.scan);
       await expectNothing();
     });
 
     test('exactly half empty is a mixed PDF, not a scan', () async {
-      fake.result = _doc([_page(1), const [], _page(3), const []]);
+      fake.result = pdfDoc([pdfPage(1), const [], pdfPage(3), const []]);
       expect((await import()).skippedPages, 2);
     });
 
     test('no pages / no readable text is empty', () async {
-      fake.result = _doc(const []);
+      fake.result = pdfDoc(const []);
       expect(await failure(import()), PdfImportError.empty);
-      fake.result = _doc([_line('12', 0.94, 1), _line('13', 0.94, 2)]);
+      fake.result = pdfDoc([pdfLine('12', 0.94, 1), pdfLine('13', 0.94, 2)]);
       expect(await failure(import()), PdfImportError.empty);
       await expectNothing();
     });
   });
 
   test('mixed PDF counts skipped pages', () async {
-    fake.result = _doc([_page(1, heading: 'A'), const [], _page(3), _page(4)]);
+    fake.result = pdfDoc([
+      pdfPage(1, heading: 'A'),
+      const [],
+      pdfPage(3),
+      pdfPage(4),
+    ]);
     final r = await import();
     expect(r.skippedPages, 1);
     expect(await db.select(db.books).get(), hasLength(1));

@@ -10,9 +10,12 @@ import 'package:luma/data/repositories/import_repository.dart';
 import 'package:luma/data/services/epub_parser.dart';
 import 'package:luma/data/services/file_picker_service.dart';
 import 'package:luma/data/services/file_storage.dart';
+import 'package:luma/data/services/pdf_service.dart';
 import 'package:luma/domain/luma_markdown.dart';
 import 'package:luma/ui/core/theme/stabilo_tokens.dart';
 import 'package:luma/ui/features/import_book/view_models/import_view_model.dart';
+
+import '../../../support/fake_pdf.dart';
 
 class FakePicker extends FilePickerService {
   PickedFile? next;
@@ -206,7 +209,7 @@ void main() {
 
   test('bad files → failed with the right reason', () async {
     for (final (name, bytes, error) in [
-      ('notes.pdf', epub, EpubError.notEpub),
+      ('notes.txt', epub, EpubError.notEpub),
       ('junk.epub', Uint8List.fromList([1, 2, 3]), EpubError.notEpub),
       (
         'cut.epub',
@@ -324,6 +327,120 @@ void main() {
       ));
       expect(state(), isA<ImportIdle>());
       expect(await db.select(db.books).get(), isEmpty);
+    });
+  });
+
+  group('pdf', () {
+    late FakePdf pdf;
+    late File pdfFile;
+
+    setUp(() {
+      pdf = FakePdf(pdfDoc([pdfPage(1, heading: 'Chapter 1'), pdfPage(2)]));
+      pdfFile = File('${root.path}/novel.pdf')..writeAsBytesSync([37, 80, 68]);
+      container.dispose();
+      container = ProviderContainer(
+        overrides: [
+          appDatabaseProvider.overrideWithValue(db),
+          fileStorageProvider.overrideWithValue(FileStorage(root)),
+          filePickerServiceProvider.overrideWithValue(picker),
+          pdfServiceProvider.overrideWithValue(pdf),
+        ],
+      );
+    });
+
+    PickedFile pickedPdf({String? path, String name = 'novel.pdf'}) =>
+        PickedFile(
+          name: name,
+          size: 3,
+          // A PDF must never be loaded as bytes.
+          read: () async => throw StateError('PDF read as bytes'),
+          path: path ?? pdfFile.path,
+        );
+
+    test('pick → processing as PDF → success, bytes never read', () async {
+      final formats = <ImportFormat>{};
+      container.listen(importControllerProvider, (_, s) {
+        if (s is ImportProcessing) formats.add(s.format);
+      }, fireImmediately: true);
+      picker.next = pickedPdf();
+      await controller().pick();
+      expect(formats, {ImportFormat.pdf});
+      final s = state();
+      expect(s, isA<ImportSuccess>());
+      expect((s as ImportSuccess).book.title, 'Chapter 1');
+      expect(s.skippedPages, 0);
+    });
+
+    test('mixed PDF reports skipped pages on success', () async {
+      pdf.result = pdfDoc([pdfPage(1), const [], pdfPage(3)]);
+      await controller().importFile(pickedPdf());
+      expect((state() as ImportSuccess).skippedPages, 1);
+    });
+
+    test('same PDF twice → duplicate pointing at the first book', () async {
+      await controller().importFile(pickedPdf());
+      final first = (state() as ImportSuccess).book;
+      controller().dismiss();
+      await controller().importFile(pickedPdf());
+      expect((state() as ImportDuplicate).book.id, first.id);
+      expect(pdf.calls, 1);
+    });
+
+    for (final (name, error, setup)
+        in <(String, PdfImportError, void Function())>[
+          (
+            'password',
+            PdfImportError.password,
+            () => pdf.error = const PdfImportException(PdfImportError.password),
+          ),
+          (
+            'corrupt',
+            PdfImportError.corrupt,
+            () => pdf.error = const PdfImportException(PdfImportError.corrupt),
+          ),
+          (
+            'scan',
+            PdfImportError.scan,
+            () => pdf.result = pdfDoc([pdfPage(1), const [], const []]),
+          ),
+          ('empty', PdfImportError.empty, () => pdf.result = pdfDoc(const [])),
+        ]) {
+      test('$name → ImportPdfFailed', () async {
+        setup();
+        await controller().importFile(pickedPdf());
+        final s = state();
+        expect(s, isA<ImportPdfFailed>());
+        expect((s as ImportPdfFailed).error, error);
+        expect(s.fileName, 'novel.pdf');
+      });
+    }
+
+    test('missing file and missing path are io errors', () async {
+      await controller().importFile(pickedPdf(path: '${root.path}/nope.pdf'));
+      expect((state() as ImportPdfFailed).error, PdfImportError.io);
+      controller().dismiss();
+      await controller().importFile(
+        PickedFile(name: 'a.pdf', size: 1, read: () async => Uint8List(0)),
+      );
+      expect((state() as ImportPdfFailed).error, PdfImportError.io);
+    });
+
+    test('Batalin goes idle and nothing is imported', () async {
+      container.listen(importControllerProvider, (_, s) {
+        if (s is ImportProcessing) controller().cancel();
+      });
+      await controller().importFile(pickedPdf());
+      expect(state(), isA<ImportIdle>());
+      expect(await db.select(db.books).get(), isEmpty);
+    });
+
+    test('an old run cannot overwrite a newer one', () async {
+      final first = controller().importFile(pickedPdf());
+      controller().cancel();
+      pdf.error = const PdfImportException(PdfImportError.password);
+      await controller().importFile(pickedPdf(name: 'b.pdf'));
+      await first;
+      expect((state() as ImportPdfFailed).fileName, 'b.pdf');
     });
   });
 }
