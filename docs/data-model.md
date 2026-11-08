@@ -341,3 +341,9 @@ di teks terbaca pertama.
 
 Data turunan: ikut backup (snapshot DB), dihapus `contentChanged`, tidak dihapus
 saat sesi dihapus. Migrasi `CREATE TABLE`; baris rusak diabaikan saat dibaca.
+
+### Preferensi bahasa antarmuka (#184)
+
+Settings key `app.locale`: `id` / `en`, default dan fallback invalid = `id`. Ikut snapshot backup
+existing, tanpa perubahan schema. Locale hanya untuk UI; tidak menjadi dimensi cache AI,
+prompt atau parser version. Detail: [i18n.md](i18n.md).

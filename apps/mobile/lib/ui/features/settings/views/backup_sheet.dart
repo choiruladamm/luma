@@ -1,7 +1,7 @@
+import 'package:luma/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/format.dart';
 import '../../../core/theme/stabilo_theme.dart';
 import '../../../core/theme/stabilo_tokens.dart';
 import '../../../core/theme/stabilo_type.dart';
@@ -21,12 +21,12 @@ class BackupProgressSheet extends ConsumerWidget {
     final run = state is BackupRunning ? state : const BackupRunning();
     final m = run.manifest;
     final items = [
-      '${thousands(m?.books ?? 0)} buku + progres bacanya',
-      '${thousands(m?.aiResults ?? 0)} terjemahan',
-      'Pengaturan baca & model AI',
+      context.l10n.backupBooksReadingProgress(m?.books ?? 0),
+      context.l10n.backupTranslations(m?.aiResults ?? 0),
+      context.l10n.backupReadingSettingsAiModel,
     ];
     return Semantics(
-      label: 'Lagi backup',
+      label: context.l10n.backupBackingUp,
       child: Padding(
         padding: Layout.sheetPadding,
         child: Column(
@@ -57,7 +57,7 @@ class BackupProgressSheet extends ConsumerWidget {
                       Semantics(
                         header: true,
                         child: Text(
-                          'Lagi ngebungkus backup...',
+                          context.l10n.backupPackingYourBackup,
                           style: StabiloType.titleSm.copyWith(fontSize: 21),
                         ),
                       ),
@@ -110,8 +110,7 @@ class BackupProgressSheet extends ConsumerWidget {
               ],
             ),
             Text(
-              'Abis ini muncul menu share. Simpen ke Files / Drive terus '
-              'taruh di tempat aman biar gak ilang.',
+              context.l10n.backupTheShareMenuOpensNextSave,
               style: StabiloType.caption.copyWith(
                 fontWeight: FontWeight.w400,
                 height: 1.45,
@@ -119,7 +118,7 @@ class BackupProgressSheet extends ConsumerWidget {
               ),
             ),
             AppButton.secondary(
-              label: 'Batalin',
+              label: context.l10n.meaningCancel,
               onPressed: ref.read(backupControllerProvider.notifier).cancel,
             ),
           ],

@@ -1,3 +1,5 @@
+import 'package:luma/data/repositories/settings_repository.dart';
+
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -257,6 +259,8 @@ void main() {
         .update(a.db.books)
         .write(const BooksCompanion(contentRevision: Value(3)));
     await a.addChats();
+    await SettingsRepository(a.db).saveLocale('en');
+    await SettingsRepository(b.db).saveLocale('id');
     await b.addBook('Dracula'); // what's on the phone before restoring
     await b.addChats();
   });
@@ -280,6 +284,7 @@ void main() {
       final service = RestoreService(b.db, b.storage);
       await service.apply(await service.inspect(zip));
       b.reopen();
+      expect(await SettingsRepository(b.db).watchLocale().first, 'en');
       expect(await b.dump(), await a.dump());
       final repo = ChatRepository(b.db);
       addTearDown(repo.dispose);
