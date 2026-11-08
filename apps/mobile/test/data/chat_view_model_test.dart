@@ -783,7 +783,7 @@ void main() {
       repo.revision(null);
       pump(time);
       expect(state().readOnly, true);
-      expect(state().problem, contains('dihapus'));
+      expect(state().problem, ChatProblem.bookDeleted);
       expect(context.cancels.single!.isCancelled, true);
       close(time);
     }),
@@ -954,7 +954,7 @@ void main() {
       expect(repo.creates, 0);
       expect(context.models, 0);
       expect(context.calls, 0);
-      expect(state().problem, contains('panjang'));
+      expect(state().problem, ChatProblem.invalidQuestion);
       expect(state().draft, isNotEmpty);
       close(time);
     }),

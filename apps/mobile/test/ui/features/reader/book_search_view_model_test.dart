@@ -77,7 +77,6 @@ void main() {
       expect(state().phase, BookSearchPhase.preparing);
       expect((state().doneChapters, state().totalChapters), (2, 4));
       expect(state().prepareFraction, 0.5);
-      expect(state().prepareLabel, 'Bab 3 dari 4');
       index.release();
       async.flushMicrotasks();
       expect(state().phase, BookSearchPhase.idle);

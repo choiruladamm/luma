@@ -1,3 +1,5 @@
+import 'package:luma/l10n/l10n.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -259,8 +261,8 @@ class _ChatHistoryState extends State<ChatHistory> {
         ? widget.phase ?? turn.phase
         : turn.phase;
     final label = turn.id == widget.turns.last.id
-        ? widget.indexLabel ?? turn.draftLabel(phase)
-        : turn.draftLabel(phase);
+        ? widget.indexLabel ?? turn.draftLabel(context.l10n, phase)
+        : turn.draftLabel(context.l10n, phase);
     final isLast = turn.id == widget.turns.last.id;
     final steps =
         turn.steps ??
@@ -350,7 +352,7 @@ class _ChatHistoryState extends State<ChatHistory> {
                                 phase == ChatPhase.slow) &&
                             visible.any((b) => b.text.isNotEmpty))
                           Text(
-                            'CATATAN SEMENTARA',
+                            context.l10n.chatDraftNotes,
                             style: StabiloType.caption.copyWith(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
@@ -407,9 +409,10 @@ class _ChatHistoryState extends State<ChatHistory> {
                       onPressed: answerNow.onPressed,
                     ),
                   ),
-                if (answer != null && answer.note.isNotEmpty)
+                if (answer != null &&
+                    answer.displayNote(context.l10n).isNotEmpty)
                   Text(
-                    answer.note,
+                    answer.displayNote(context.l10n),
                     style: StabiloType.body.copyWith(
                       color: context.stabilo.ink2,
                     ),
@@ -417,7 +420,7 @@ class _ChatHistoryState extends State<ChatHistory> {
                 if (phase == ChatPhase.done && turn.id == widget.turns.last.id)
                   Semantics(
                     liveRegion: true,
-                    label: phase.label,
+                    label: phase.label(context.l10n),
                     child: const SizedBox.shrink(),
                   ),
                 if (phase != ChatPhase.done &&
@@ -600,8 +603,10 @@ class ChatSourceChip extends StatelessWidget {
     offset: const Offset(0, -2),
     child: Semantics(
       button: true,
-      label:
-          '${source.chapterTitle}, paragraf ${source.anchors.first.paragraphIndex + 1}',
+      label: context.l10n.chatParagraph2(
+        source.chapterTitle,
+        source.anchors.first.paragraphIndex + 1,
+      ),
       excludeSemantics: true,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
@@ -652,7 +657,7 @@ class ChatJumpButton extends StatelessWidget {
     final c = context.stabilo;
     return Semantics(
       button: true,
-      label: 'Ke terbaru',
+      label: context.l10n.chatJumpToLatest,
       child: GestureDetector(
         onTap: onPressed,
         child: Stack(

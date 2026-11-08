@@ -1,3 +1,5 @@
+import 'package:luma/l10n/l10n.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -86,7 +88,7 @@ class ReadMarkState extends State<ReadMark>
     return Positioned.fromRect(
       rect: rect,
       child: Semantics(
-        label: 'Terakhir lo baca di sini',
+        label: context.l10n.readYouLastReadHere,
         child: MediaQuery.disableAnimationsOf(context)
             ? Align(
                 alignment: Alignment.centerLeft,

@@ -1,3 +1,5 @@
+import 'package:luma/l10n/l10n.dart';
+
 import 'dart:async';
 import 'dart:math' as math;
 
@@ -484,7 +486,9 @@ class ChapterTextState extends ConsumerState<ChapterText> {
           final paragraph = paras
               .where((p) => p.index == anchor.paragraphIndex)
               .firstOrNull;
-          if (paragraph == null) throw const FormatException('Sumber hilang');
+          if (paragraph == null) {
+            throw FormatException(context.l10n.chapterSourceMissing);
+          }
           anchor.validate((
             book: (
               bookId: widget.book.id,
@@ -496,7 +500,9 @@ class ChapterTextState extends ConsumerState<ChapterText> {
           ), anchor.book);
         }
       } on FormatException {
-        return const Center(child: Text('Sumber ini udah gak tersedia.'));
+        return Center(
+          child: Text(context.l10n.readerThisSourceIsNoLongerAvailable),
+        );
       }
     }
     _paras = paras;
@@ -633,7 +639,9 @@ class ChapterTextState extends ConsumerState<ChapterText> {
                           Positioned.fromRect(
                             rect: _highlight(_groupRects[open]!),
                             child: Semantics(
-                              label: 'Grup paragraf yang lagi dibuka',
+                              label: context
+                                  .l10n
+                                  .chapterCurrentlyOpenParagraphGroup,
                               child: DecoratedBox(
                                 key: const ValueKey('open-group'),
                                 decoration: BoxDecoration(
@@ -688,7 +696,8 @@ class ChapterTextState extends ConsumerState<ChapterText> {
                                     ParagraphType.sceneBreak => Center(
                                       child: Text(
                                         '* * *',
-                                        semanticsLabel: 'Pemisah adegan',
+                                        semanticsLabel:
+                                            context.l10n.chapterSceneBreak,
                                         style: StabiloType.label.copyWith(
                                           color: c.ink2,
                                         ),

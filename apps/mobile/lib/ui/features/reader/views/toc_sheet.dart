@@ -1,3 +1,4 @@
+import 'package:luma/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../domain/models/book.dart';
@@ -87,11 +88,17 @@ class _TocSheetState extends State<_TocSheet> {
                     children: [
                       Semantics(
                         header: true,
-                        child: Text('Daftar isi', style: StabiloType.titleMd),
+                        child: Text(
+                          context.l10n.readerContents,
+                          style: StabiloType.titleMd,
+                        ),
                       ),
                       Text(
-                        '${widget.book.title} · ${chapters.length} bab · '
-                        '${widget.percent}% kebaca',
+                        context.l10n.tocChaptersRead(
+                          widget.book.title,
+                          chapters.length,
+                          widget.percent,
+                        ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: StabiloType.caption.copyWith(color: c.ink2),
@@ -100,7 +107,7 @@ class _TocSheetState extends State<_TocSheet> {
                   ),
                 ),
                 CircleButton(
-                  semanticLabel: 'Tutup',
+                  semanticLabel: context.l10n.sheetClose,
                   icon: AppIcons.close,
                   onPressed: () => Navigator.of(context).pop(),
                 ),
@@ -185,7 +192,9 @@ class _TocRow extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    current ? 'Lagi dibaca · ±$minutes mnt' : '±$minutes mnt',
+                    current
+                        ? context.l10n.tocCurrentlyReadingMin(minutes)
+                        : context.l10n.tocMin(minutes),
                     style: StabiloType.caption.copyWith(
                       fontSize: 12.5,
                       fontWeight: current ? FontWeight.w700 : FontWeight.w600,

@@ -1,3 +1,5 @@
+import 'package:luma/l10n/l10n.dart';
+
 import 'dart:math' as math;
 import 'dart:ui' show lerpDouble;
 
@@ -241,7 +243,7 @@ class ReaderTopCapsule extends StatelessWidget {
     final c = context.stabilo;
     return Semantics(
       container: true,
-      label: 'Menu baca',
+      label: context.l10n.readerReadingMenu,
       child: _Pill(
         height: capsuleHeight,
         // Tombol 44 pas di tengah tinggi 58 (dikurangi garis).
@@ -250,7 +252,7 @@ class ReaderTopCapsule extends StatelessWidget {
           spacing: 6,
           children: [
             CircleButton(
-              semanticLabel: 'Balik ke rak',
+              semanticLabel: context.l10n.readerBackToShelf,
               icon: AppIcons.back,
               onPressed: onBack,
             ),
@@ -285,7 +287,7 @@ class ReaderTopCapsule extends StatelessWidget {
               ),
             ),
             CircleButton(
-              semanticLabel: 'Daftar isi',
+              semanticLabel: context.l10n.readerContents,
               icon: AppIcons.toc,
               active: tocOpen,
               onPressed: onToc,
@@ -294,7 +296,7 @@ class ReaderTopCapsule extends StatelessWidget {
               clipBehavior: Clip.none,
               children: [
                 CircleButton(
-                  semanticLabel: 'Aksi lain',
+                  semanticLabel: context.l10n.readerMoreActions,
                   icon: AppIcons.readerMore,
                   active: moreOpen,
                   onPressed: onMore,
@@ -427,7 +429,7 @@ class ReaderChatDock extends StatelessWidget {
             ),
           ),
           CircleButton(
-            semanticLabel: 'Ngobrolin buku',
+            semanticLabel: context.l10n.readerBookChat,
             icon: AppIcons.chat,
             primary: onChat != null,
             onPressed: onChat,
@@ -453,7 +455,7 @@ class ReaderProgressLine extends StatelessWidget {
       bottom: MediaQuery.paddingOf(context).bottom,
       height: 2,
       child: Semantics(
-        label: 'Progres buku',
+        label: context.l10n.readerBookProgress,
         value: '${(progress * 100).floor()}%',
         child: ColoredBox(
           color: c.progressLineTrack,

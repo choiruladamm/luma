@@ -1,3 +1,4 @@
+import 'package:luma/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../domain/chat_markup.dart';
@@ -57,7 +58,7 @@ class ChatAnswerBlocks extends StatelessWidget {
       number = layout == ChatAnswerLayout.item
           ? (sameList ? number + 1 : 1)
           : 0;
-      final label = _label(block, previous);
+      final label = _label(context, block, previous);
       if (children.isNotEmpty) {
         // Butir sedaftar lebih rapat dari jarak antar paragraf.
         children.add(
@@ -91,16 +92,23 @@ class ChatAnswerBlocks extends StatelessWidget {
   }
 
   /// Label kecil di awal grup paragraf tafsiran / pengetahuan luar.
-  Widget? _label(ChatAnswerBlock block, ChatAnswerBlock? previous) {
+  Widget? _label(
+    BuildContext context,
+    ChatAnswerBlock block,
+    ChatAnswerBlock? previous,
+  ) {
     if (previous?.kind == block.kind) return null;
     return switch (block.kind) {
-      ChatAnswerKind.interpretation => const Align(
+      ChatAnswerKind.interpretation => Align(
         alignment: Alignment.centerLeft,
-        child: Tag.section('Tafsiran', tone: TagTone.pink),
+        child: Tag.section(context.l10n.chatInterpretation, tone: TagTone.pink),
       ),
-      ChatAnswerKind.external => const Align(
+      ChatAnswerKind.external => Align(
         alignment: Alignment.centerLeft,
-        child: Tag.section('Di luar buku', tone: TagTone.muted),
+        child: Tag.section(
+          context.l10n.chatOutsideTheBook,
+          tone: TagTone.muted,
+        ),
       ),
       _ => null,
     };

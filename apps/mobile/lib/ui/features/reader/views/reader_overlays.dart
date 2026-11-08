@@ -1,3 +1,5 @@
+import 'package:luma/l10n/l10n.dart';
+
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -27,7 +29,7 @@ class ChatHintBubble extends StatelessWidget {
               borderRadius: BorderRadius.circular(Radii.sm),
             ),
             child: Text(
-              'Ngobrol soal bukunya',
+              context.l10n.readerChatAboutTheBook,
               style: StabiloType.caption.copyWith(
                 color: context.stabilo.toastInk,
                 fontWeight: FontWeight.w600,
@@ -123,7 +125,7 @@ class SourceVisitActions extends StatelessWidget {
         children: [
           Expanded(
             child: AppButton.secondary(
-              label: 'Balik ke ngobrol',
+              label: context.l10n.readerBackToChat,
               icon: AppIcons.back,
               height: 48,
               onPressed: onBack,
@@ -131,7 +133,7 @@ class SourceVisitActions extends StatelessWidget {
           ),
           Expanded(
             child: AppButton.primary(
-              label: 'Lanjut baca',
+              label: context.l10n.readerKeepReading,
               icon: AppIcons.check,
               height: 48,
               onPressed: onContinue,

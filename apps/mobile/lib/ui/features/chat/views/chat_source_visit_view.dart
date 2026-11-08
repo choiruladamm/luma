@@ -1,3 +1,4 @@
+import 'package:luma/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -54,7 +55,7 @@ class _ChatSourceVisitState extends ConsumerState<ChatSourceVisitView> {
       // tuntasin dulu biar dua pop di bawah jalan di frame yang sama.
       await ref.read(chatViewModelProvider(bookId).notifier).stop();
       if (!mounted) return;
-      showToast(context, 'Posisi baca pindah ke kutipan ini.');
+      showToast(context, context.l10n.chatReadingPositionMovedToThisQuote);
       // Intip + chat kebuang barengan dan langsung ilang (tanpa geser), hasilnya
       // sampe ke reader lewat pop biasa jadi dia muat posisi baru.
       instantRouteExit.value = true;
@@ -69,7 +70,9 @@ class _ChatSourceVisitState extends ConsumerState<ChatSourceVisitView> {
         context.go(Routes.reader(bookId));
       }
     } catch (_) {
-      if (mounted) showToast(context, 'Posisi baca belum dipindah. Coba lagi.');
+      if (mounted) {
+        showToast(context, context.l10n.chatReadingPositionHasnTMovedTry);
+      }
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -117,11 +120,9 @@ class _ChatSourceVisitState extends ConsumerState<ChatSourceVisitView> {
               if (state.isLoading)
                 const Center(child: CircularProgressIndicator())
               else
-                const Text(
-                  'Sumber ini udah gak tersedia. Posisi baca lo tetap aman.',
-                ),
+                Text(context.l10n.chatThisSourceIsNoLongerAvailable),
               AppButton.primary(
-                label: 'Balik ke obrolan',
+                label: context.l10n.backToConversation,
                 onPressed: () => context.pop(),
               ),
             ],

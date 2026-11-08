@@ -17,6 +17,15 @@ import '../../reader/view_models/reader_view_model.dart' show GroupAiStream;
 
 const _unchanged = Object();
 
+enum ChatProblem {
+  bookDeleted,
+  bookChanged,
+  historyDamaged,
+  unavailable,
+  invalidQuestion,
+  invalidCheckpoint,
+}
+
 class ChatState {
   ChatState({
     this.book,
@@ -72,7 +81,7 @@ class ChatState {
   final ChatPhase? phase;
   final ({ChatAttemptRef attempt, List<ChatAnswerBlock> blocks})? preview;
   final AiException? error;
-  final String? problem;
+  final ChatProblem? problem;
   final bool loading, changingSession;
   final ChatScrollAnchor? scrollAnchor;
   bool get archived =>
@@ -137,7 +146,9 @@ class ChatState {
         : preview as ({ChatAttemptRef attempt, List<ChatAnswerBlock> blocks})?,
     phase: identical(phase, _unchanged) ? this.phase : phase as ChatPhase?,
     error: identical(error, _unchanged) ? this.error : error as AiException?,
-    problem: identical(problem, _unchanged) ? this.problem : problem as String?,
+    problem: identical(problem, _unchanged)
+        ? this.problem
+        : problem as ChatProblem?,
     loading: loading ?? this.loading,
     changingSession: changingSession ?? this.changingSession,
     scrollAnchor: identical(scrollAnchor, _unchanged)
@@ -221,8 +232,8 @@ class ChatViewModel extends Notifier<ChatState> {
           state = state.copyWith(
             selectedQuote: null,
             problem: book == null
-                ? 'Buku ini sudah dihapus.'
-                : 'Isi buku berubah. Mulai obrolan baru untuk lanjut.',
+                ? ChatProblem.bookDeleted
+                : ChatProblem.bookChanged,
           );
         }
       }, onError: (Object e) => _problem(life, e));
@@ -235,7 +246,7 @@ class ChatViewModel extends Notifier<ChatState> {
       if (!_live(life)) return;
       state = state.copyWith(
         loading: false,
-        problem: book == null ? 'Buku ini sudah dihapus.' : null,
+        problem: book == null ? ChatProblem.bookDeleted : null,
       );
       life.sessions = life.repo.watchSessions(bookId).listen((sessions) {
         if (!_live(life) || life.session == null) return;
@@ -245,7 +256,7 @@ class ChatViewModel extends Notifier<ChatState> {
           state = state.copyWith(
             activeSession: life.session,
             problem: life.session!.invalid
-                ? 'Riwayat sesi ini rusak. Lo bisa hapus sesi ini.'
+                ? ChatProblem.historyDamaged
                 : state.problem,
           );
         } else {
@@ -264,9 +275,7 @@ class ChatViewModel extends Notifier<ChatState> {
 
   void _problem(_ChatLifetime life, Object e) {
     if (_live(life)) {
-      state = state.copyWith(
-        problem: 'Obrolan belum bisa dibuka. Coba buka lagi.',
-      );
+      state = state.copyWith(problem: ChatProblem.unavailable);
     }
   }
 
@@ -286,9 +295,7 @@ class ChatViewModel extends Notifier<ChatState> {
       selectedQuote: null,
       phase: life.run == null ? null : state.phase,
       error: null,
-      problem: session?.invalid == true
-          ? 'Riwayat sesi ini rusak. Lo bisa hapus sesi ini.'
-          : null,
+      problem: session?.invalid == true ? ChatProblem.historyDamaged : null,
       scrollAnchor: life.anchor,
     );
     if (session == null) return;
@@ -431,9 +438,7 @@ class ChatViewModel extends Notifier<ChatState> {
     try {
       question = chatQuestion(state.draft);
     } on FormatException {
-      state = state.copyWith(
-        problem: 'Pertanyaan kosong atau terlalu panjang.',
-      );
+      state = state.copyWith(problem: ChatProblem.invalidQuestion);
       return Future.value();
     }
     return _start(_life, question: question, quote: state.selectedQuote);
@@ -681,12 +686,10 @@ class ChatViewModel extends Notifier<ChatState> {
           e.error == AiError.invalidResponse &&
           e.detail?.startsWith('Checkpoint') == true &&
           _live(life)) {
-        state = state.copyWith(
-          problem: 'Progres penelusuran sudah tidak cocok. Kirim pertanyaan baru buat mulai ulang.',
-        );
+        state = state.copyWith(problem: ChatProblem.invalidCheckpoint);
       }
       if (e is FormatException && _live(life)) {
-        state = state.copyWith(problem: e.message);
+        state = state.copyWith(problem: ChatProblem.unavailable);
       }
       if (!run.created.isCompleted) run.created.complete();
       if (run.live) {

@@ -1,3 +1,4 @@
+import 'package:luma/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -155,8 +156,10 @@ class _PeekSheetState extends ConsumerState<PeekSheet> {
                     children: [
                       Text(
                         (lanjutan
-                                ? '${widget.where} · grup berikutnya'
-                                : 'Nyambung ke · awal ${widget.where}')
+                                ? context.l10n.peekNextGroup(widget.where)
+                                : context.l10n.peekConnectsToStartOf(
+                                    widget.where,
+                                  ))
                             .toUpperCase(),
                         style: label,
                       ),
@@ -166,7 +169,7 @@ class _PeekSheetState extends ConsumerState<PeekSheet> {
                 ),
               ),
               CircleButton(
-                semanticLabel: 'Tutup',
+                semanticLabel: context.l10n.sheetClose,
                 icon: AppIcons.close,
                 onPressed: () => Navigator.of(context).pop(),
               ),
@@ -240,27 +243,27 @@ class _PeekSheetState extends ConsumerState<PeekSheet> {
                   Expanded(
                     child: streaming
                         ? StatusButton(
-                            action: 'Artiin',
+                            action: context.l10n.peekTranslate,
                             label: switch (ai?.phase) {
                               AiPhase.translating ||
-                              AiPhase.meaning => 'Lagi nulis',
-                              _ => 'Lagi mikir',
+                              AiPhase.meaning => context.l10n.meaningWriting,
+                              _ => context.l10n.meaningThinking,
                             },
                           )
                         : failed
                         ? AppButton.secondary(
-                            label: 'Coba artiin lagi',
+                            label: context.l10n.peekTryTranslatingAgain,
                             icon: AppIcons.retry,
                             onPressed: _artiin,
                           )
                         : AppButton.secondary(
-                            label: 'Artiin',
+                            label: context.l10n.peekTranslate,
                             onPressed: _artiin,
                           ),
                   ),
                 Expanded(
                   child: AppButton.secondary(
-                    label: 'Bedahin ini juga',
+                    label: context.l10n.peekBreakThisDownToo,
                     icon: translated ? AppIcons.list : null,
                     onPressed: translated
                         ? () => _breakdown(target)
@@ -333,30 +336,30 @@ class _ErrorRow extends StatelessWidget {
     final c = context.stabilo;
     final (title, body, settings) = switch (stream) {
       AiStream(phase: AiPhase.cut) => (
-        'Yah, kepotong di tengah',
-        'Yang udah masuk tetep di sini, tapi gak disimpen.',
+        context.l10n.meaningCutOffHalfway,
+        context.l10n.peekWhatCameThroughIsStillHere,
         false,
       ),
       AiStream(error: AiException(error: AiError.noApiKey)) => (
-        'Isi API key dulu yuk',
-        'Artiin butuh API key OpenRouter.',
+        context.l10n.meaningAddYourApiKeyFirst,
+        context.l10n.peekTranslationNeedsAnOpenrouterApiKey,
         true,
       ),
       AiStream(error: AiException(error: AiError.http, :final status))
           when status == 401 || status == 403 =>
         (
-          'API key-nya ditolak',
-          'OpenRouter gak nerima key lo. Cek lagi di Pengaturan.',
+          context.l10n.peekApiKeyRejected,
+          context.l10n.peekOpenrouterRejectedYourKeyCheckIt,
           true,
         ),
       AiStream(error: AiException(error: AiError.http, status: 402)) => (
-        'Saldo OpenRouter abis',
-        'Isi saldo dulu di openrouter.ai, abis itu coba lagi.',
+        context.l10n.peekOpenrouterCreditRanOut,
+        context.l10n.peekTopUpAtOpenrouterAiThen,
         true,
       ),
       _ => (
-        'Yah, gagal ngartiin',
-        'Koneksi lagi ngadat. Teks aslinya tetep bisa dibaca.',
+        context.l10n.peekCouldnTTranslate,
+        context.l10n.peekTheConnectionIsHavingTroubleYou,
         false,
       ),
     };
@@ -407,7 +410,7 @@ class _ErrorRow extends StatelessWidget {
                         child: Semantics(
                           link: true,
                           child: Text(
-                            'Buka Pengaturan',
+                            context.l10n.meaningOpenSettings,
                             style: StabiloType.label.copyWith(
                               fontSize: 14,
                               color: c.ink,

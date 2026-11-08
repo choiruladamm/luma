@@ -1,3 +1,4 @@
+import 'package:luma/l10n/l10n.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
@@ -122,8 +123,10 @@ class ReaderOverlay extends StatelessWidget {
                           progress: progress,
                           onChat: chatReady ? onChat : null,
                           label: f >= 0.999
-                              ? '${ch.title} kelar'
-                              : '±${readingMinutes(left)} mnt lagi',
+                              ? context.l10n.readerFinished(ch.title)
+                              : context.l10n.readerMinLeft(
+                                  readingMinutes(left),
+                                ),
                         ),
                 ),
               ),

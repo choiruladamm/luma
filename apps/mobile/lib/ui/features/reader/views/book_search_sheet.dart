@@ -1,3 +1,4 @@
+import 'package:luma/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -130,7 +131,7 @@ class _BookSearchSheetState extends ConsumerState<BookSearchSheet> {
                 Expanded(
                   child: SearchField(
                     controller: _controller,
-                    hint: 'Cari kata di buku ini',
+                    hint: context.l10n.bookSearchThisBook,
                     autofocus: true,
                     onChanged: _vm.setQuery,
                     onSubmitted: (_) =>
@@ -148,7 +149,7 @@ class _BookSearchSheetState extends ConsumerState<BookSearchSheet> {
                       ),
                       child: Center(
                         child: Text(
-                          'Batal',
+                          context.l10n.dialogCancel,
                           style: StabiloType.label.copyWith(color: c.ink),
                         ),
                       ),
@@ -183,13 +184,15 @@ class _BookSearchSheetState extends ConsumerState<BookSearchSheet> {
                 ),
                 BookSearchPhase.empty => _Message(
                   icon: AppIcons.searchOff,
-                  title: 'Gak ketemu “${s.query.trim()}” di buku ini',
-                  body: 'Cek ejaannya, atau coba kata lain.',
+                  title: context.l10n.bookNoMatchesForInThisBook(
+                    s.query.trim(),
+                  ),
+                  body: context.l10n.bookCheckTheSpellingOrTryAnother,
                 ),
-                BookSearchPhase.failed => const _Message(
+                BookSearchPhase.failed => _Message(
                   icon: AppIcons.alert,
-                  title: 'Pencariannya lagi macet',
-                  body: 'Tutup terus buka lagi ya.',
+                  title: context.l10n.bookSearchIsStuck,
+                  body: context.l10n.bookCloseItAndTryAgain,
                 ),
               },
             ),
@@ -225,7 +228,7 @@ class _Recents extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Terakhir dicari',
+                context.l10n.bookRecentSearches,
                 style: StabiloType.caption.copyWith(
                   fontWeight: FontWeight.w700,
                   color: c.ink2,
@@ -240,7 +243,7 @@ class _Recents extends StatelessWidget {
                     constraints: const BoxConstraints(minHeight: Layout.touch),
                     child: Center(
                       child: Text(
-                        'Hapus',
+                        context.l10n.bookClear,
                         style: StabiloType.caption.copyWith(
                           fontWeight: FontWeight.w700,
                           color: c.ink,
@@ -346,7 +349,7 @@ class _Results extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.all(Space.s4),
           child: Text(
-            'Kebanyakan, coba kata yang lebih spesifik',
+            context.l10n.bookTooManyResultsTryAMore,
             textAlign: TextAlign.center,
             style: StabiloType.caption.copyWith(color: c.ink2),
           ),
@@ -439,7 +442,7 @@ class _Preparing extends StatelessWidget {
             Semantics(
               liveRegion: true,
               child: Text(
-                'Nyiapin pencarian…',
+                context.l10n.bookPreparingSearch,
                 textAlign: TextAlign.center,
                 style: StabiloType.titleSm.copyWith(color: c.ink),
               ),
@@ -447,7 +450,7 @@ class _Preparing extends StatelessWidget {
             ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 290),
               child: Text(
-                'Cuma sekali buat buku ini. Abis ini nyarinya langsung kilat.',
+                context.l10n.bookJustOnceForThisBookSearches,
                 textAlign: TextAlign.center,
                 style: StabiloType.body.copyWith(
                   fontSize: 15,
@@ -490,7 +493,10 @@ class _Preparing extends StatelessWidget {
             ),
             if (state.totalChapters > 0)
               Text(
-                state.prepareLabel,
+                context.l10n.chapterPosition(
+                  (state.doneChapters + 1).clamp(1, state.totalChapters),
+                  state.totalChapters,
+                ),
                 style: StabiloType.caption.copyWith(
                   fontWeight: FontWeight.w500,
                   color: c.ink2,

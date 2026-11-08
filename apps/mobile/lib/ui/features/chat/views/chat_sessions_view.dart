@@ -1,3 +1,6 @@
+import '../../../core/format.dart';
+
+import 'package:luma/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -15,14 +18,14 @@ import 'chat_copy.dart';
 import 'chat_session_menu.dart';
 import '../../../core/widgets/edge_fade.dart';
 
-String chatBookTitle(WidgetRef ref, int bookId) {
+String chatBookTitle(BuildContext context, WidgetRef ref, int bookId) {
   final book = ref
       .watch(booksStreamProvider)
       .asData
       ?.value
       .where((b) => b.id == bookId)
       .firstOrNull;
-  if (book == null) return 'Buku ini';
+  if (book == null) return context.l10n.chatThisBook;
   final author = book.author?.trim();
   return author == null || author.isEmpty
       ? book.title
@@ -30,7 +33,7 @@ String chatBookTitle(WidgetRef ref, int bookId) {
 }
 
 /// Judul buku tanpa penulis, buat kalimat di tengah teks.
-String chatBookName(WidgetRef ref, int bookId) =>
+String chatBookName(BuildContext context, WidgetRef ref, int bookId) =>
     ref
         .watch(booksStreamProvider)
         .asData
@@ -38,7 +41,7 @@ String chatBookName(WidgetRef ref, int bookId) =>
         .where((b) => b.id == bookId)
         .firstOrNull
         ?.title ??
-    'buku ini';
+    context.l10n.chatThisBook2;
 
 class ChatSessionsView extends ConsumerWidget {
   const ChatSessionsView({super.key, required this.bookId});
@@ -48,7 +51,7 @@ class ChatSessionsView extends ConsumerWidget {
     final state = ref.watch(chatViewModelProvider(bookId));
     final vm = ref.read(chatViewModelProvider(bookId).notifier);
     final sessions = ref.watch(chatSessionsProvider(bookId));
-    final title = chatBookTitle(ref, bookId);
+    final title = chatBookTitle(context, ref, bookId);
     void back() {
       if (context.canPop()) {
         context.pop();
@@ -91,10 +94,10 @@ class ChatSessionsView extends ConsumerWidget {
         icon: AppIcons.alertCircle,
         iconColor: context.stabilo.onPink,
         tile: context.stabilo.pink,
-        title: 'Riwayatnya gak kebuka.',
-        body: 'Obrolan lo aman kok. Coba muat ulang bentar lagi.',
+        title: context.l10n.chatCouldnTOpenHistory,
+        body: context.l10n.chatYourChatsAreSafeTryReloading,
         action: AppButton.secondary(
-          label: 'Muat ulang',
+          label: context.l10n.chatReload,
           icon: AppIcons.retry,
           height: Layout.touch,
           onPressed: () => ref.invalidate(chatSessionsProvider(bookId)),
@@ -108,9 +111,8 @@ class ChatSessionsView extends ConsumerWidget {
             icon: AppIcons.message,
             iconColor: context.stabilo.ink2,
             tile: context.stabilo.muted,
-            title: 'Belum ada obrolan.',
-            body:
-                'Obrolan yang lo mulai bakal muncul di sini, dipisah per sesi.',
+            title: context.l10n.chatNoChatsYet,
+            body: context.l10n.chatYourChatsWillAppearHereOrganized,
           );
         }
         final now = DateTime.now();
@@ -124,11 +126,13 @@ class ChatSessionsView extends ConsumerWidget {
           itemCount: own.length,
           itemBuilder: (context, i) {
             final session = own[i],
-                group = chatTimeGroup(session.updatedAt, now);
+                group = chatTimeGroup(context.l10n, session.updatedAt, now);
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                if (i == 0 || group != chatTimeGroup(own[i - 1].updatedAt, now))
+                if (i == 0 ||
+                    group !=
+                        chatTimeGroup(context.l10n, own[i - 1].updatedAt, now))
                   Padding(
                     padding: EdgeInsets.fromLTRB(
                       Space.s3,
@@ -189,7 +193,7 @@ class ChatSessionsView extends ConsumerWidget {
                 spacing: Space.s2,
                 children: [
                   CircleButton(
-                    semanticLabel: 'Kembali ke obrolan',
+                    semanticLabel: context.l10n.chatBackToChat,
                     icon: AppIcons.back,
                     onPressed: back,
                   ),
@@ -198,7 +202,7 @@ class ChatSessionsView extends ConsumerWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          'Riwayat obrolan',
+                          context.l10n.chatChatHistory,
                           textAlign: TextAlign.center,
                           style: StabiloType.titleXs.copyWith(fontSize: 15),
                         ),
@@ -224,7 +228,7 @@ class ChatSessionsView extends ConsumerWidget {
             right: Space.s4,
             bottom: footerBottom,
             child: AppButton.primary(
-              label: 'Obrolan baru',
+              label: context.l10n.chatNewChat,
               icon: AppIcons.add,
               height: 56,
               pill: true,
@@ -255,8 +259,7 @@ class SessionRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.stabilo, at = session.updatedAt.toLocal();
-    final time =
-        '${at.day}/${at.month} · ${at.hour.toString().padLeft(2, '0')}.${at.minute.toString().padLeft(2, '0')}';
+    final time = dateTime(at, locale: context.l10n.localeName);
     Widget badge(String label, {bool active = false}) => Container(
       padding: const EdgeInsets.symmetric(horizontal: Space.s2, vertical: 2),
       decoration: BoxDecoration(
@@ -317,22 +320,23 @@ class SessionRow extends StatelessWidget {
                         spacing: Space.s2,
                         children: [
                           Text(
-                            'Diperbarui $time',
+                            context.l10n.chatUpdated(time),
                             style: StabiloType.caption.copyWith(
                               fontSize: 12.5,
                               fontWeight: FontWeight.w600,
                               color: c.ink3,
                             ),
                           ),
-                          if (active) badge('Lagi dibuka', active: true),
-                          if (archived) badge('Arsip'),
+                          if (active)
+                            badge(context.l10n.chatOpenNow, active: true),
+                          if (archived) badge(context.l10n.chatArchived),
                         ],
                       ),
                     ],
                   ),
                 ),
                 IconButton(
-                  tooltip: 'Menu ${session.title}',
+                  tooltip: context.l10n.chatMenuFor(session.title),
                   constraints: const BoxConstraints(
                     minWidth: 48,
                     minHeight: 48,
