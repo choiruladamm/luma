@@ -1,3 +1,4 @@
+import 'package:luma/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 
 import '../theme/stabilo_theme.dart';
@@ -16,7 +17,7 @@ class SearchField extends StatefulWidget {
     this.autofocus = false,
     this.onChanged,
     this.onSubmitted,
-    this.clearLabel = 'Hapus isian',
+    this.clearLabel,
   });
 
   final TextEditingController controller;
@@ -25,7 +26,7 @@ class SearchField extends StatefulWidget {
   final bool autofocus;
   final ValueChanged<String>? onChanged;
   final ValueChanged<String>? onSubmitted;
-  final String clearLabel;
+  final String? clearLabel;
 
   @override
   State<SearchField> createState() => _SearchFieldState();
@@ -108,7 +109,7 @@ class _SearchFieldState extends State<SearchField> {
                   ? const SizedBox.shrink()
                   : Semantics(
                       button: true,
-                      label: widget.clearLabel,
+                      label: widget.clearLabel ?? context.l10n.searchClearField,
                       child: GestureDetector(
                         behavior: HitTestBehavior.opaque,
                         onTap: () {

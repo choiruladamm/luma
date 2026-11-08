@@ -1,3 +1,4 @@
+import 'package:luma/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/stabilo_theme.dart';
@@ -27,22 +28,22 @@ class BackupReminder extends StatelessWidget {
     final c = context.stabilo;
     final (title, body) = neverBackedUp
         ? (
-            'Belum pernah backup nih',
-            'Data lo cuma ada di HP ini doang. Amanin dulu yuk.',
+            context.l10n.backupNoBackupsYet,
+            context.l10n.backupYourDataIsOnlyOnThis,
           )
         : days == 6
         ? (
-            'Udah 6 hari belum backup nih',
-            'Besok jatah install ulang. Amanin data lo dulu yuk.',
+            context.l10n.backupItSBeenDaysSinceYour,
+            context.l10n.backupYourReinstallIsDueTomorrowBack,
           )
         : (
-            'Udah $days hari belum backup nih',
-            'Amanin data lo dulu yuk, sebelum keburu install ulang.',
+            context.l10n.backupItSBeenDaysSinceYour2(days),
+            context.l10n.backupBackUpYourDataBeforeYour,
           );
     return Semantics(
       container: true,
       liveRegion: true,
-      label: 'Pengingat backup',
+      label: context.l10n.backupBackupReminder,
       child: Container(
         padding: const EdgeInsets.fromLTRB(14, Space.s3, 6, Space.s3),
         decoration: BoxDecoration(
@@ -112,7 +113,7 @@ class BackupReminder extends StatelessWidget {
                                 color: c.onBannerButton,
                               ),
                               Text(
-                                'Backup sekarang',
+                                context.l10n.settingsBackUpNow,
                                 style: StabiloType.label.copyWith(
                                   fontSize: 14,
                                   color: c.onBannerButton,
@@ -132,7 +133,7 @@ class BackupReminder extends StatelessWidget {
               child: Semantics(
                 container: true,
                 button: true,
-                label: 'Tutup pengingat',
+                label: context.l10n.backupDismissReminder,
                 excludeSemantics: true,
                 child: InkResponse(
                   onTap: onClose,

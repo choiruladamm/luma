@@ -1,3 +1,4 @@
+import 'package:luma/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 
 import '../theme/stabilo_theme.dart';
@@ -15,7 +16,7 @@ Future<bool> showConfirmDialog(
   required String title,
   required String message,
   required String confirmLabel,
-  String cancelLabel = 'Batal',
+  String? cancelLabel,
   bool destructive = true,
 
   /// Tile ikon di atas judul (board Konfirmasi hapus).
@@ -122,7 +123,7 @@ Future<bool> showConfirmDialog(
                       children: [
                         Expanded(
                           child: AppButton.secondary(
-                            label: cancelLabel,
+                            label: cancelLabel ?? context.l10n.dialogCancel,
                             height: buttonHeight,
                             onPressed: loading ? null : () => close(false),
                           ),

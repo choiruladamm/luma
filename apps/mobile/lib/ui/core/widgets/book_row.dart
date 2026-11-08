@@ -1,3 +1,6 @@
+import 'package:luma/ui/core/book_copy.dart';
+import 'package:luma/l10n/l10n.dart';
+
 import 'dart:io';
 
 import 'package:flutter/gestures.dart';
@@ -99,7 +102,7 @@ class BookRow extends StatelessWidget {
                   SizedBox(
                     height: 17,
                     child: Text(
-                      author ?? markdown?.label ?? '',
+                      author ?? markdown?.label(context.l10n) ?? '',
                       textScaler: TextScaler.noScaling,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -120,11 +123,11 @@ class BookRow extends StatelessWidget {
     );
 
     if (importing) {
-      return Semantics(label: 'Lagi diimport $title', child: row);
+      return Semantics(label: context.l10n.bookImporting(title), child: row);
     }
     return Semantics(
       button: true,
-      label: markdown?.semanticLabel(title) ?? title,
+      label: markdown?.semanticLabel(title, context.l10n) ?? title,
       // Buku Markdown: satu label utuh, strip + label gak dibaca terpisah.
       excludeSemantics: markdown != null,
       onTap: onTap,
@@ -162,7 +165,7 @@ class BookRow extends StatelessWidget {
         children: [
           AppIcon(AppIcons.loading, size: 13, color: c.ink2),
           Text(
-            'Lagi diproses',
+            context.l10n.bookProcessing,
             textScaler: TextScaler.noScaling,
             style: StabiloType.caption.copyWith(
               fontSize: 12,
@@ -177,12 +180,13 @@ class BookRow extends StatelessWidget {
     final md = markdown;
     if (md != null) return _markdownStatus(context, md);
     if (!opened && !finished) {
-      return const Align(
+      return Align(
         alignment: Alignment.centerRight,
-        child: Tag.status('Baru', tone: TagTone.pink),
+        child: Tag.status(context.l10n.bookNew, tone: TagTone.pink),
       );
     }
     final label = bookSticker(
+      l10n: context.l10n,
       progress: progress,
       opened: opened,
       finished: finished,
@@ -192,7 +196,11 @@ class BookRow extends StatelessWidget {
       children: [
         Expanded(child: _Bar(finished ? 1 : progress)),
         if (finished)
-          const Tag.status('Kelar!', tone: TagTone.accent, icon: AppIcons.check)
+          Tag.status(
+            context.l10n.bookFinished,
+            tone: TagTone.accent,
+            icon: AppIcons.check,
+          )
         else
           SizedBox(
             width: 34,
@@ -229,14 +237,14 @@ class BookRow extends StatelessWidget {
         ),
         if (opened)
           Text(
-            '${md.count} bab',
+            context.l10n.bookChapters(md.count),
             maxLines: 1,
             textAlign: TextAlign.right,
             textScaler: TextScaler.noScaling,
             style: StabiloType.micro.copyWith(color: c.ink, height: 1),
           )
         else
-          const Tag.status('Baru', tone: TagTone.pink),
+          Tag.status(context.l10n.bookNew, tone: TagTone.pink),
       ],
     );
   }

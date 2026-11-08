@@ -1,3 +1,4 @@
+import 'package:luma/l10n/app_localizations_id.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:luma/domain/models/markdown_shelf.dart';
@@ -9,7 +10,12 @@ import '../../app.dart';
 void main() {
   test('sticker label per state', () {
     String s(double p, {bool opened = true, bool finished = false}) =>
-        bookSticker(progress: p, opened: opened, finished: finished);
+        bookSticker(
+          l10n: AppLocalizationsId(),
+          progress: p,
+          opened: opened,
+          finished: finished,
+        );
     expect(s(0, opened: false), 'Baru');
     expect(s(0), '0%');
     expect(s(0.004), '1%'); // 0,4% still shows
@@ -23,6 +29,7 @@ void main() {
     'markdown sticker: "N bab" replaces the percent, "Baru" still first',
     () {
       String s({required bool opened, int? chapters}) => bookSticker(
+        l10n: AppLocalizationsId(),
         progress: 0.5,
         opened: opened,
         finished: false,

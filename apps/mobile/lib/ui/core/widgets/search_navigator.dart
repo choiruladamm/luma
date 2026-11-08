@@ -1,3 +1,4 @@
+import 'package:luma/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 
 import '../theme/stabilo_theme.dart';
@@ -71,7 +72,7 @@ class SearchNavigator extends StatelessWidget {
   ) {
     return Semantics(
       container: true,
-      label: 'Hasil cari',
+      label: context.l10n.searchSearchResults,
       child: Container(
         height: height,
         padding: const EdgeInsets.symmetric(horizontal: 3),
@@ -88,13 +89,13 @@ class SearchNavigator extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               _NavButton(
-                label: 'Hasil sebelumnya',
+                label: context.l10n.searchPreviousResult,
                 icon: AppIcons.up01,
                 onTap: onPrevious,
               ),
               Semantics(
                 button: true,
-                label: 'Balik ke daftar hasil',
+                label: context.l10n.searchBackToResults,
                 excludeSemantics: true,
                 child: GestureDetector(
                   behavior: HitTestBehavior.opaque,
@@ -139,8 +140,12 @@ class SearchNavigator extends StatelessWidget {
                                 ),
                                 child: Text(
                                   chapterTitle == null
-                                      ? '$position dari $count'
-                                      : '$position dari $count · $chapterTitle',
+                                      ? context.l10n.searchOf(position, count)
+                                      : context.l10n.searchOf2(
+                                          position,
+                                          count,
+                                          chapterTitle!,
+                                        ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: StabiloType.caption.copyWith(
@@ -160,7 +165,7 @@ class SearchNavigator extends StatelessWidget {
                 ),
               ),
               _NavButton(
-                label: 'Hasil berikutnya',
+                label: context.l10n.searchNextResult,
                 icon: AppIcons.down01,
                 onTap: onNext,
               ),
@@ -171,7 +176,7 @@ class SearchNavigator extends StatelessWidget {
                 color: c.menuLine,
               ),
               _NavButton(
-                label: 'Keluar dari cari',
+                label: context.l10n.searchExitSearch,
                 icon: AppIcons.close,
                 iconSize: 16,
                 onTap: onClose,

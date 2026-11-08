@@ -1,3 +1,6 @@
+import 'package:luma/ui/core/book_copy.dart';
+import 'package:luma/l10n/l10n.dart';
+
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -87,12 +90,16 @@ class _ImportMarkdownSheetState extends ConsumerState<ImportMarkdownSheet> {
 
   String? get _bookError {
     if (_picked != null || _book.text.trim().isNotEmpty) return null;
-    return _touched.contains('book') ? 'Judul buku gak boleh kosong' : null;
+    return _touched.contains('book')
+        ? context.l10n.importBookTitleCanTBeEmpty
+        : null;
   }
 
   String? get _numberError {
     if (_chapterNumber != null) return null;
-    return _touched.contains('number') ? 'Harus angka' : null;
+    return _touched.contains('number')
+        ? context.l10n.importMustBeANumber
+        : null;
   }
 
   bool get _valid =>
@@ -153,12 +160,12 @@ class _ImportMarkdownSheetState extends ConsumerState<ImportMarkdownSheet> {
       child: SheetFrame(
         actions: [
           AppButton.secondary(
-            label: 'Batal',
+            label: context.l10n.dialogCancel,
             onPressed: () => Navigator.of(context).pop(),
           ),
           Expanded(
             child: AppButton.primary(
-              label: 'Masukin',
+              label: context.l10n.importImport,
               onPressed: canSubmit ? _submit : null,
             ),
           ),
@@ -170,7 +177,10 @@ class _ImportMarkdownSheetState extends ConsumerState<ImportMarkdownSheet> {
             children: [
               Semantics(
                 header: true,
-                child: Text('Masuk ke buku mana?', style: StabiloType.titleMd),
+                child: Text(
+                  context.l10n.importWhichBookIsThisFor,
+                  style: StabiloType.titleMd,
+                ),
               ),
               Text(
                 widget.ask.fileName,
@@ -189,8 +199,8 @@ class _ImportMarkdownSheetState extends ConsumerState<ImportMarkdownSheet> {
           ),
           if (picked == null)
             AppField(
-              label: 'Judul buku',
-              hint: 'Judul buku',
+              label: context.l10n.importBookTitle,
+              hint: context.l10n.importBookTitle,
               controller: _book,
               focusNode: _bookFocus,
               mono: false,
@@ -198,13 +208,13 @@ class _ImportMarkdownSheetState extends ConsumerState<ImportMarkdownSheet> {
               onChanged: (_) => setState(() => _touched.add('book')),
             ),
           AppField(
-            label: 'Judul bab',
-            hint: 'Judul bab (opsional)',
+            label: context.l10n.importChapterTitle,
+            hint: context.l10n.importChapterTitleOptional,
             controller: _chapterTitle,
             mono: false,
           ),
           AppField(
-            label: 'Nomor bab',
+            label: context.l10n.importChapterNumber,
             controller: _number,
             focusNode: _numberFocus,
             mono: false,
@@ -212,7 +222,9 @@ class _ImportMarkdownSheetState extends ConsumerState<ImportMarkdownSheet> {
             error: _numberError,
             helper: picked?.lastChapter == null
                 ? null
-                : 'Bab terakhir di buku ini: ${picked!.lastChapter}',
+                : context.l10n.importLastChapterInThisBook(
+                    picked!.lastChapter ?? 0,
+                  ),
             onChanged: (_) => setState(() => _touched.add('number')),
           ),
           if (picked == null)
@@ -222,7 +234,7 @@ class _ImportMarkdownSheetState extends ConsumerState<ImportMarkdownSheet> {
                 AppIcon(AppIcons.info, size: 14, color: c.ink2),
                 Expanded(
                   child: Text(
-                    'Ditebak dari judul di file. Boleh diubah.',
+                    context.l10n.importGuessedFromTheFileTitleYou,
                     style: StabiloType.caption.copyWith(
                       fontSize: 12.5,
                       color: c.ink2,
@@ -257,8 +269,8 @@ class _BookList extends StatelessWidget {
     final rows = <Widget>[
       _PickRow(
         selected: picked == null,
-        title: 'Buku baru',
-        subtitle: 'Bikin buku dari file ini',
+        title: context.l10n.importNewBook,
+        subtitle: context.l10n.importCreateABookFromThisFile,
         leading: const _NewBookTile(),
         onTap: () => onPick(null),
       ),
@@ -266,7 +278,7 @@ class _BookList extends StatelessWidget {
         _PickRow(
           selected: picked?.book.id == b.book.id,
           title: b.book.title,
-          subtitle: b.chaptersLabel,
+          subtitle: localizedChapterRanges(b.chapters, context.l10n),
           leading: BookCover(
             title: b.book.title,
             width: Layout.pickCover * Layout.coverAspect,

@@ -1,3 +1,5 @@
+import 'package:luma/l10n/l10n.dart';
+
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -9,13 +11,17 @@ import '../theme/stabilo_type.dart';
 import 'buttons.dart';
 
 enum LumaTab {
-  rak('Rak', HugeIcons.strokeRoundedLibrary),
-  cari('Cari buku', HugeIcons.strokeRoundedSearch01),
-  atur('Atur', HugeIcons.strokeRoundedSettings01);
+  rak(HugeIcons.strokeRoundedLibrary),
+  cari(HugeIcons.strokeRoundedSearch01),
+  atur(HugeIcons.strokeRoundedSettings01);
 
-  const LumaTab(this.label, this.icon);
+  const LumaTab(this.icon);
 
-  final String label;
+  String label(AppLocalizations l10n) => switch (this) {
+    LumaTab.rak => l10n.navShelf,
+    LumaTab.cari => l10n.discoverDiscover,
+    LumaTab.atur => l10n.navSettings,
+  };
   final List<List<dynamic>> icon;
 }
 
@@ -40,7 +46,7 @@ class LumaNavBar extends StatelessWidget {
     final b = Theme.of(context).brightness;
     return Semantics(
       container: true,
-      label: 'Navigasi utama',
+      label: context.l10n.navMainNavigation,
       child: Container(
         height: Layout.navBar,
         padding: const EdgeInsets.symmetric(horizontal: 6),
@@ -86,7 +92,9 @@ class _Tab extends StatelessWidget {
     final c = context.stabilo;
     final reduced = MediaQuery.disableAnimationsOf(context);
     final duration = reduced ? Duration.zero : Motion.navTab;
-    final label = badge > 0 ? '${tab.label}, $badge unduhan jalan' : tab.label;
+    final label = badge > 0
+        ? context.l10n.navActiveDownloads(tab.label(context.l10n), badge)
+        : tab.label(context.l10n);
     return Semantics(
       button: true,
       selected: active,
@@ -147,7 +155,7 @@ class _Tab extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.only(left: Space.s2, right: 4),
                   child: Text(
-                    tab.label,
+                    tab.label(context.l10n),
                     maxLines: 1,
                     softWrap: false,
                     style: StabiloType.label.copyWith(

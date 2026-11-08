@@ -1,3 +1,4 @@
+import 'package:luma/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 
 import '../theme/stabilo_theme.dart';
@@ -49,12 +50,12 @@ class SearchGroupHeader extends StatelessWidget {
                     ),
                   ),
                 ),
-                if (current) const Tag.status('Lagi dibaca'),
+                if (current) Tag.status(context.l10n.searchCurrentlyReading),
               ],
             ),
           ),
           Text(
-            '$count hasil',
+            context.l10n.searchResults(count),
             style: StabiloType.micro.copyWith(
               fontSize: 12,
               color: c.ink2,

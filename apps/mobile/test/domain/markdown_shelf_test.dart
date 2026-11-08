@@ -1,5 +1,7 @@
+import 'package:luma/l10n/app_localizations_id.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:luma/domain/models/markdown_shelf.dart';
+import 'package:luma/ui/core/book_copy.dart';
 
 void main() {
   const read = SlotState.read,
@@ -74,11 +76,12 @@ void main() {
   test('semanticLabel', () {
     const m = MarkdownShelf(chapters: [1, 3, 7], current: 3, fraction: 0.4);
     expect(
-      m.semanticLabel('Atomic Habits'),
+      m.semanticLabel('Atomic Habits', AppLocalizationsId()),
       'Atomic Habits, 3 bab, bab 1 udah dibaca, lagi baca bab 3',
     );
     expect(
-      const MarkdownShelf(chapters: [1, 2]).semanticLabel('Deep Work'),
+      const MarkdownShelf(chapters: [1, 2])
+          .semanticLabel('Deep Work', AppLocalizationsId()),
       'Deep Work, 2 bab',
     );
   });

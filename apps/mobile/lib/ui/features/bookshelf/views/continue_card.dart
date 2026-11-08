@@ -1,3 +1,5 @@
+import 'package:luma/l10n/l10n.dart';
+
 import 'dart:io';
 import 'dart:math' as math;
 
@@ -31,13 +33,14 @@ class ContinueCard extends StatelessWidget {
     final light = Theme.of(context).brightness == Brightness.light;
     final ink = light ? c.onAccent : c.ink;
     final percent = bookSticker(
+      l10n: context.l10n,
       progress: book.progress,
       opened: true,
       finished: false,
     );
     return Semantics(
       button: true,
-      label: 'Lanjut baca ${book.title}, $percent',
+      label: context.l10n.continueContinueReading(book.title, percent),
       excludeSemantics: true,
       onTap: onTap,
       child: GestureDetector(
@@ -73,7 +76,7 @@ class ContinueCard extends StatelessWidget {
                         spacing: Space.s1,
                         children: [
                           Text(
-                            'Lanjut baca yuk →',
+                            context.l10n.continueLetSKeepReading,
                             style: StabiloType.caption.copyWith(
                               fontWeight: FontWeight.w600,
                               height: 1.2,
@@ -92,7 +95,10 @@ class ContinueCard extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            'Bab ${book.chapter} dari ${book.chapterCount}',
+                            context.l10n.continueChapterOf(
+                              book.chapter,
+                              book.chapterCount,
+                            ),
                             style: StabiloType.caption.copyWith(
                               fontSize: 14,
                               height: 1.2,

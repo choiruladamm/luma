@@ -1,3 +1,4 @@
+import 'package:luma/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hugeicons/hugeicons.dart';
@@ -29,7 +30,7 @@ class ImportProgressSheet extends ConsumerWidget {
     final outlineDone = state.stage.index > ImportStage.outline.index;
 
     return Semantics(
-      label: 'Lagi import',
+      label: context.l10n.importImporting,
       child: SheetFrame(
         children: [
           Row(
@@ -49,9 +50,12 @@ class ImportProgressSheet extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   spacing: 2,
                   children: [
-                    Text('Lagi ngebongkar EPUB...', style: StabiloType.titleMd),
                     Text(
-                      '${state.fileName} · ${fileSize(state.size)}',
+                      context.l10n.importUnpackingEpub,
+                      style: StabiloType.titleMd,
+                    ),
+                    Text(
+                      '${state.fileName} · ${fileSize(state.size, locale: context.l10n.localeName)}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: StabiloType.mono.copyWith(
@@ -104,13 +108,17 @@ class ImportProgressSheet extends ConsumerWidget {
             spacing: 10,
             children: [
               _Step(
-                'Baca judul & penulis',
+                context.l10n.importReadTitleAuthor,
                 done: outlineDone,
                 active: !outlineDone,
               ),
-              _Step('Ambil cover', done: outlineDone, active: false),
               _Step(
-                'Mecah per bab & paragraf',
+                context.l10n.importGetCover,
+                done: outlineDone,
+                active: false,
+              ),
+              _Step(
+                context.l10n.importSplitIntoChaptersParagraphs,
                 done: false,
                 active: outlineDone,
               ),
@@ -118,7 +126,7 @@ class ImportProgressSheet extends ConsumerWidget {
           ),
           const SizedBox(height: Space.s2),
           AppButton.secondary(
-            label: 'Batalin',
+            label: context.l10n.meaningCancel,
             onPressed: () =>
                 ref.read(importControllerProvider.notifier).cancel(),
           ),
@@ -248,13 +256,15 @@ class ImportDuplicateSheet extends ConsumerWidget {
     final c = context.stabilo;
     final meta = [
       ?book.author,
-      'ditambah ${ago(book.createdAt, DateTime.now())}',
+      context.l10n.importAdded(
+        ago(book.createdAt, DateTime.now(), locale: context.l10n.localeName),
+      ),
     ].join(' · ');
     return SheetFrame(
       children: [
         _Heading(
-          'Eh, buku ini udah ada di rak',
-          'Lo pernah import buku yang sama. Mau lanjutin yang lama aja?',
+          context.l10n.importThisBookIsAlreadyOnYour,
+          context.l10n.importYouVeImportedTheSameBook,
         ),
         Container(
           padding: const EdgeInsets.all(Space.s3),
@@ -289,20 +299,23 @@ class ImportDuplicateSheet extends ConsumerWidget {
             ],
           ),
         ),
-        AppButton.primary(label: 'Buka yang udah ada', onPressed: onOpen),
+        AppButton.primary(
+          label: context.l10n.importOpenExistingBook,
+          onPressed: onOpen,
+        ),
         Row(
           spacing: Space.s2,
           children: [
             Expanded(
               child: AppButton.secondary(
-                label: 'Ganti file-nya',
+                label: context.l10n.importReplaceFile,
                 height: 48,
                 onPressed: onPickAnother,
               ),
             ),
             Expanded(
               child: AppButton.secondary(
-                label: 'Batal',
+                label: context.l10n.dialogCancel,
                 height: 48,
                 onPressed: () => Navigator.of(context).pop(),
               ),
@@ -310,7 +323,7 @@ class ImportDuplicateSheet extends ConsumerWidget {
           ],
         ),
         Text(
-          'Ganti file = progres & terjemahan lama tetep aman.',
+          context.l10n.importReplacingTheFileKeepsYourProgress,
           textAlign: TextAlign.center,
           style: StabiloType.caption.copyWith(color: c.ink2),
         ),
@@ -338,23 +351,20 @@ class ImportFailedSheet extends StatelessWidget {
     final (icon, title, body, code) = switch (error) {
       EpubError.corrupt => (
         HugeIcons.strokeRoundedFileCorrupt,
-        'File-nya rusak nih',
-        'EPUB-nya gak bisa dibuka, kayaknya korup atau kedownload setengah. '
-            'Coba download ulang, terus import lagi.',
-        '$fileName · file rusak',
+        context.l10n.importThisFileIsDamaged,
+        context.l10n.importCouldnTOpenThisEpubIt,
+        context.l10n.importDamagedFile(fileName),
       ),
       EpubError.notEpub => (
         HugeIcons.strokeRoundedFileRemove,
-        'Ini bukan EPUB',
-        'App ini cuma bisa baca .epub. Kalau bukunya PDF atau MOBI, convert '
-            'dulu ke EPUB (misal pake Calibre), baru import lagi.',
+        context.l10n.importThisIsnTAnEpub,
+        context.l10n.importThisImporterReadsEpubFilesConvert,
         fileName,
       ),
       EpubError.drm => (
         HugeIcons.strokeRoundedSquareLock02,
-        'Bukunya dikunci DRM',
-        'EPUB ini dikunci sama tokonya, jadi cuma bisa dibaca di app toko itu. '
-            'Pake file EPUB yang bebas DRM ya.',
+        context.l10n.importThisBookIsDrmLocked,
+        context.l10n.importThisEpubIsLockedToIts,
         '$fileName · DRM',
       ),
     };
@@ -363,12 +373,12 @@ class ImportFailedSheet extends StatelessWidget {
       child: SheetFrame(
         actions: [
           AppButton.secondary(
-            label: 'Tutup',
+            label: context.l10n.sheetClose,
             onPressed: () => Navigator.of(context).pop(),
           ),
           Expanded(
             child: AppButton.primary(
-              label: 'Pilih file lain',
+              label: context.l10n.restoreChooseAnotherFile,
               onPressed: onPickAnother,
             ),
           ),
@@ -385,7 +395,7 @@ class ImportFailedSheet extends StatelessWidget {
               ),
               const Spacer(),
               CircleButton(
-                semanticLabel: 'Tutup',
+                semanticLabel: context.l10n.sheetClose,
                 icon: AppIcons.close,
                 onPressed: () => Navigator.of(context).pop(),
               ),
@@ -430,17 +440,20 @@ class ImportMarkdownFailedSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.stabilo;
-    final copy = failed.copy;
+    final copy = failed.copy(context.l10n);
     return Semantics(
       liveRegion: true,
       child: SheetFrame(
         actions: [
           AppButton.secondary(
-            label: 'Tutup',
+            label: context.l10n.sheetClose,
             onPressed: () => Navigator.of(context).pop(),
           ),
           Expanded(
-            child: AppButton.primary(label: 'Coba lagi', onPressed: onRetry),
+            child: AppButton.primary(
+              label: context.l10n.meaningTryAgain,
+              onPressed: onRetry,
+            ),
           ),
         ],
         children: [
@@ -464,7 +477,7 @@ class ImportMarkdownFailedSheet extends StatelessWidget {
               ),
               const Spacer(),
               CircleButton(
-                semanticLabel: 'Tutup',
+                semanticLabel: context.l10n.sheetClose,
                 icon: AppIcons.close,
                 onPressed: () => Navigator.of(context).pop(),
               ),
@@ -560,4 +573,47 @@ class _Tile extends StatelessWidget {
     ),
     child: child,
   );
+}
+
+/// Teks sheet error Markdown (board 6a–6d).
+extension ImportMarkdownFailedCopy on ImportMarkdownFailed {
+  /// [code] + [tail] nyambung di belakang [body] (contoh format, mono).
+  ({String title, String body, String chip, String? code, String? tail}) copy(
+    AppLocalizations l10n,
+  ) {
+    if (error == LumaMarkdownError.empty) {
+      return (
+        title: l10n.markdownThisFileIsEmpty,
+        body: l10n.markdownThereSNoReadingText,
+        chip: l10n.markdownPWords(fileName),
+        code: null,
+        tail: null,
+      );
+    }
+    if (error == LumaMarkdownError.badFrontmatter && detail == 'chapter') {
+      return (
+        title: l10n.markdownCouldnTReadTheChapter,
+        body: l10n.markdownTheChapterNumberAtThe,
+        chip: l10n.markdownPChapterNumberP(fileName, value ?? ''),
+        code: null,
+        tail: null,
+      );
+    }
+    if (error == LumaMarkdownError.badFrontmatter) {
+      return (
+        title: l10n.markdownInvalidBookName,
+        body: l10n.markdownTheBookNameAtThe,
+        chip: l10n.markdownPBookNameP(fileName, value ?? ''),
+        code: 'atomic-habits',
+        tail: l10n.markdownOrRemoveThatLineAnd,
+      );
+    }
+    return (
+      title: l10n.markdownCouldnTReadThisFile,
+      body: l10n.markdownLumaCanTReadThis,
+      chip: fileName,
+      code: null,
+      tail: null,
+    );
+  }
 }

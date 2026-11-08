@@ -28,14 +28,6 @@ double bookProgress({
           .clamp(0, 1)
           .toDouble();
 
-/// Durasi buat layar akhir buku: "6 jam 20 mnt", atau "45 mnt" di bawah 1 jam.
-String formatReadingTime(int seconds) {
-  final minutes = seconds ~/ 60;
-  final h = minutes ~/ 60;
-  final m = minutes % 60;
-  return h == 0 ? '$m mnt' : '$h jam $m mnt';
-}
-
 /// Ngitung waktu baca aktif: jalan selama halaman baca kebuka & app di depan,
 /// berhenti kalau [idle] gak ada scroll/tap, lanjut lagi pas ada interaksi.
 /// Waktu nunggu sampe idle ikut dihitung (lagi baca halaman yang sama).

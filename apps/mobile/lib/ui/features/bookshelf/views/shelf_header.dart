@@ -1,3 +1,4 @@
+import 'package:luma/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/stabilo_theme.dart';
@@ -5,8 +6,6 @@ import '../../../core/theme/stabilo_tokens.dart';
 import '../../../core/theme/stabilo_type.dart';
 import '../../../core/widgets/buttons.dart';
 import '../../../core/widgets/luma_logo.dart';
-
-const _title = 'Rak buku lo';
 
 /// Judul gak pernah lebih kecil dari ini gara-gara teks gede (board Layout
 /// rak · header rak gak boleh sesak).
@@ -58,7 +57,7 @@ class ShelfHeader extends StatelessWidget {
       color: context.stabilo.ink,
     );
     double measure(double size) => (TextPainter(
-      text: TextSpan(text: _title, style: style(size)),
+      text: TextSpan(text: context.l10n.shelfYourBookshelf, style: style(size)),
       textScaler: scaler,
       textDirection: TextDirection.ltr,
     )..layout()).width;
@@ -90,7 +89,7 @@ class ShelfHeader extends StatelessWidget {
                 child: Semantics(
                   header: true,
                   child: Text(
-                    _title,
+                    context.l10n.shelfYourBookshelf,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: style(fit.size),
@@ -101,7 +100,7 @@ class ShelfHeader extends StatelessWidget {
               _Tap(
                 onTap: onImport,
                 child: CircleButton(
-                  semanticLabel: 'Import EPUB',
+                  semanticLabel: context.l10n.shelfImportEpub,
                   icon: AppIcons.add,
                   primary: true,
                   size: button,

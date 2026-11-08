@@ -1,7 +1,23 @@
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:luma/ui/core/format.dart';
 
 void main() {
+  setUpAll(() => initializeDateFormatting());
+  test('English format and plural boundaries', () {
+    expect(thousands(1240, locale: 'en'), '1,240');
+    expect(fileSize((1.2 * 1024 * 1024).round(), locale: 'en'), '1.2 MB');
+    final now = DateTime(2026, 10, 7);
+    expect(ago(DateTime(2026, 10, 7), now, locale: 'en'), 'today');
+    expect(ago(DateTime(2026, 10, 6), now, locale: 'en'), 'yesterday');
+    expect(ago(DateTime(2026, 10, 5), now, locale: 'en'), '2 days ago');
+    expect(ago(DateTime(2026, 9, 30), now, locale: 'en'), '1 week ago');
+    expect(ago(DateTime(2026, 9, 23), now, locale: 'en'), '2 weeks ago');
+    expect(
+      dateTime(DateTime(2026, 10, 3, 21, 40), locale: 'en'),
+      '3 Oct 2026, 21:40',
+    );
+  });
   test('thousands', () {
     expect(thousands(0), '0');
     expect(thousands(999), '999');
