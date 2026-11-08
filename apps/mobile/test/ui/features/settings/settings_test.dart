@@ -1,3 +1,5 @@
+import 'package:luma/l10n/app_localizations.dart';
+
 import 'dart:async';
 import 'dart:io';
 
@@ -224,7 +226,13 @@ void main() {
                 : Stream.value(catalogStats),
           ),
         ],
-        child: MaterialApp(theme: stabiloTheme(b), home: const SettingsView()),
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('id'),
+          theme: stabiloTheme(b),
+          home: const SettingsView(),
+        ),
       ),
     );
     await tester.pump();
@@ -653,6 +661,9 @@ void main() {
             filePickerServiceProvider.overrideWithValue(picker),
           ],
           child: MaterialApp.router(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: const Locale('id'),
             theme: stabiloTheme(Brightness.light),
             routerConfig: router,
           ),

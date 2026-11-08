@@ -1,3 +1,5 @@
+import 'package:luma/l10n/app_localizations.dart';
+
 import 'dart:async';
 import 'dart:io';
 
@@ -90,6 +92,9 @@ void main() {
           booksStreamProvider.overrideWith((ref) => Stream.value(shelfBooks)),
         ],
         child: MaterialApp.router(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('id'),
           theme: stabiloTheme(brightness),
           routerConfig: router,
         ),

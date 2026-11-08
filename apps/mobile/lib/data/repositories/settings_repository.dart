@@ -21,6 +21,23 @@ class SettingsRepository {
       )
       .distinct();
 
+  Stream<String> watchLocale() =>
+      (_db.select(_db.settings)..where((s) => s.key.equals('app.locale')))
+          .watchSingleOrNull()
+          .map((row) => row?.value == 'en' ? 'en' : 'id')
+          .distinct();
+
+  Future<void> saveLocale(String language) {
+    if (language != 'id' && language != 'en') {
+      throw ArgumentError.value(language, 'language');
+    }
+    return _db
+        .into(_db.settings)
+        .insertOnConflictUpdate(
+          SettingsCompanion.insert(key: 'app.locale', value: language),
+        );
+  }
+
   /// Model LLM dari Pengaturan; default kalau belum dipilih.
   Stream<String> watchModel() =>
       (_db.select(_db.settings)..where((s) => s.key.equals(_model)))
@@ -166,4 +183,8 @@ final lastBackupProvider = StreamProvider<LastBackup?>(
 
 final reminderDismissedProvider = StreamProvider<DateTime?>(
   (ref) => ref.watch(settingsRepositoryProvider).watchReminderDismissed(),
+);
+
+final appLocaleProvider = StreamProvider<String>(
+  (ref) => ref.watch(settingsRepositoryProvider).watchLocale(),
 );

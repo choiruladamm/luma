@@ -1,3 +1,4 @@
+import 'package:luma/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:luma/ui/core/theme/stabilo_theme.dart';
@@ -8,6 +9,9 @@ import 'package:luma/ui/core/widgets/sheet.dart';
 void main() {
   Future<void> pump(WidgetTester tester, int items) => tester.pumpWidget(
     MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      locale: const Locale('id'),
       home: Center(
         child: SizedBox(
           height: 400,
@@ -136,6 +140,9 @@ void main() {
     testWidgets('SheetFrame bottom edge (button: $withButton)', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('id'),
           theme: stabiloTheme(Brightness.light),
           home: Scaffold(
             body: SheetFrame(

@@ -1,0 +1,6 @@
+{
+  "@@locale": "en",
+  "interfaceLanguage": "Interface language",
+  "interfaceLanguageNote": "This changes the interface language. Translations and AI responses stay in Indonesian.",
+  "languageSaveFailed": "Couldn’t save the language. Try again."
+}

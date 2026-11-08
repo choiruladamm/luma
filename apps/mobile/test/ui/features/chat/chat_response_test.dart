@@ -1,3 +1,4 @@
+import 'package:luma/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:luma/domain/models/book_chat.dart';
@@ -15,6 +16,9 @@ void main() {
       Future<void> show(ChatPhase phase, {Key? key, bool reduced = false}) =>
           t.pumpWidget(
             MaterialApp(
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              locale: const Locale('id'),
               home: MediaQuery(
                 data: MediaQueryData(disableAnimations: reduced),
                 child: ChatResponse(
@@ -70,6 +74,9 @@ void main() {
     Future<void> show(int attempt, ChatPhase phase, String text) =>
         t.pumpWidget(
           MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: const Locale('id'),
             home: ChatResponse(
               key: ValueKey(attempt),
               phase: phase,
@@ -112,6 +119,9 @@ void main() {
       List<ChatAnswerBlock> visible = [];
       Future<void> show(ChatPhase phase) => t.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('id'),
           home: ChatResponse(
             phase: phase,
             blocks: [ChatAnswerBlock(text: 'Teks aman ' * 100, sources: [])],

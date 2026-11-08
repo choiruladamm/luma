@@ -11,6 +11,7 @@ get: ## pub get
 	$(FLUTTER) pub get
 
 gen: ## codegen: drift, riverpod, freezed (build_runner)
+	$(FLUTTER) gen-l10n
 	$(DART) run build_runner build
 
 brand: ## re-render app icon, launch logo, wordmark from assets/brand/*.svg (Chrome + ImageMagick)

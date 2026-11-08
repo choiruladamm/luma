@@ -45,6 +45,23 @@ void main() {
     expect(rows.where((r) => r.key == 'reader.size'), hasLength(1));
   });
 
+  test('locale: defaults, streams updates, validates and persists', () async {
+    final repo = SettingsRepository(db);
+    expect(await repo.watchLocale().first, 'id');
+    final events = expectLater(repo.watchLocale(), emitsInOrder(['id', 'en']));
+    await pumpEventQueue();
+    await repo.saveLocale('en');
+    await events;
+    expect(await SettingsRepository(db).watchLocale().first, 'en');
+    expect(() => repo.saveLocale('xx'), throwsArgumentError);
+    await db.customStatement(
+      "UPDATE settings SET value = 'xx' WHERE key = 'app.locale'",
+    );
+    expect(await repo.watchLocale().first, 'id');
+    await repo.saveLocale('id');
+    expect(await repo.watchLocale().first, 'id');
+  });
+
   test('model: default until picked, then the pick', () async {
     final repo = SettingsRepository(db);
     expect(await repo.watchModel().first, defaultAiModel);

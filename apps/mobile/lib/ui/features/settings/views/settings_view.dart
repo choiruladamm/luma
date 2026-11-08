@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import '../../../../l10n/l10n.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -230,6 +232,8 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                       MediaQuery.paddingOf(context).bottom,
                     ),
                     children: [
+                      _LanguagePicker(),
+                      const SizedBox(height: 22),
                       AppField(
                         label: 'API key OpenRouter',
                         controller: _key,
@@ -889,6 +893,49 @@ class _CatalogRow extends StatelessWidget {
                   ),
                 ),
               ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LanguagePicker extends ConsumerStatefulWidget {
+  @override
+  ConsumerState<_LanguagePicker> createState() => _LanguagePickerState();
+}
+
+class _LanguagePickerState extends ConsumerState<_LanguagePicker> {
+  bool _saving = false;
+
+  Future<void> _select(String language) async {
+    setState(() => _saving = true);
+    try {
+      await ref.read(settingsRepositoryProvider).saveLocale(language);
+    } catch (_) {
+      if (mounted) showToast(context, context.l10n.languageSaveFailed);
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final language = ref.watch(appLocaleProvider).value ?? 'id';
+    return _Section(
+      label: context.l10n.interfaceLanguage,
+      note: context.l10n.interfaceLanguageNote,
+      child: Wrap(
+        spacing: Space.s2,
+        children: [
+          for (final option in const [
+            ('id', 'Bahasa Indonesia'),
+            ('en', 'English'),
+          ])
+            ChoiceChip(
+              label: Text(option.$2),
+              selected: language == option.$1,
+              onSelected: _saving ? null : (_) => _select(option.$1),
             ),
         ],
       ),

@@ -1,0 +1,6 @@
+{
+  "@@locale": "id",
+  "interfaceLanguage": "Bahasa antarmuka",
+  "interfaceLanguageNote": "Bahasa ini cuma buat tampilan. Terjemahan dan jawaban AI tetap Bahasa Indonesia.",
+  "languageSaveFailed": "Bahasanya gagal disimpen. Coba lagi, ya."
+}

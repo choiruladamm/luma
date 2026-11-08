@@ -1,3 +1,5 @@
+import 'package:luma/l10n/app_localizations.dart';
+
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -70,6 +72,9 @@ void main() {
           bookInfoProvider.overrideWith((ref, id) async => info),
         ],
         child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('id'),
           theme: stabiloTheme(Brightness.light),
           home: const _Gate(),
         ),
