@@ -409,11 +409,12 @@ PdfParsedBook _assembleChapters(
     if (_listsChapterTitles(paragraphs, titles, b.title)) continue;
 
     final title = _resolveTitle(b.title, paragraphs);
+    final body = _withoutTitleHeadings(paragraphs, title);
     final chapter = ParsedChapter(
       title: title,
       section: b.section,
-      paragraphs: paragraphs,
-      groups: assignGroups(paragraphs),
+      paragraphs: body,
+      groups: assignGroups(body),
       charOffset: offset,
     );
     chapters.add(chapter);
@@ -443,6 +444,31 @@ List<RawParagraph> _blocksToRawParagraphs(List<PdfLocatedBlock> blocks) {
   return [for (final b in blocks) b.toRawParagraph()];
 }
 
+/// The reader already shows the chapter title, so a heading at the top of the
+/// chapter that just repeats it ("1", "The Surprising Power…" under "1 The
+/// Surprising Power…") is dropped. Only the first 3 blocks, only headings
+/// contained in the title, and only if body text remains.
+List<RawParagraph> _withoutTitleHeadings(
+  List<RawParagraph> paragraphs,
+  String title,
+) {
+  String norm(String t) =>
+      t.toLowerCase().replaceAll(RegExp(r'[^\p{L}\p{N}]+', unicode: true), '');
+  final nt = norm(title);
+  if (nt.isEmpty) return paragraphs;
+  var drop = 0;
+  while (drop < 3 &&
+      drop < paragraphs.length &&
+      paragraphs[drop].type == ParagraphType.heading) {
+    final h = norm(paragraphs[drop].text);
+    if (h.isEmpty || !nt.contains(h)) break;
+    drop++;
+  }
+  if (drop == 0) return paragraphs;
+  final rest = paragraphs.sublist(drop);
+  return rest.any((p) => p.type == ParagraphType.paragraph) ? rest : paragraphs;
+}
+
 /// A table of contents with no page numbers: most of its short lines are the
 /// titles of the book's own chapters. Judged by structure (the lines quote the
 /// bookmarks), not by a "Contents" label.
@@ -455,12 +481,33 @@ bool _listsChapterTitles(
   final lines = paragraphs
       .where((p) => p.type == ParagraphType.paragraph)
       .toList();
+  // Bookmarks say "1 | Title", the printed contents "1 Title": compare words.
+  String norm(String t) => t
+      .toLowerCase()
+      .replaceAll(RegExp(r'[^\p{L}\p{N}]+', unicode: true), ' ')
+      .trim();
+  titles = [for (final t in titles) norm(t)];
+  final own = norm(ownTitle);
+
+  // Lines merged into one or two paragraphs: a short chapter whose text is
+  // mostly the titles of other chapters.
+  final all = norm(lines.map((p) => p.text).join(' '));
+  if (all.length <= 3000) {
+    final found = {
+      for (final c in titles)
+        if (c != own && all.contains(c)) c,
+    };
+    if (found.length >= 4 &&
+        found.fold<int>(0, (n, c) => n + c.length) >= all.length * 0.5) {
+      return true;
+    }
+  }
   if (lines.length < 4) return false;
-  final own = ownTitle.trim().toLowerCase();
   final hits = lines.where((p) {
     final t = p.text.trim().toLowerCase();
-    return t.length <= 120 &&
-        titles.any((c) => c != own && (t == c || t.endsWith(c)));
+    final n = norm(t);
+    return n.length <= 120 &&
+        titles.any((c) => c != own && (n == c || n.endsWith(c)));
   }).length;
   return hits >= lines.length * 0.6;
 }
@@ -532,6 +579,24 @@ typedef PdfLayoutResult = ({
   String? heading,
 });
 
+/// Short paragraph blocks that are not text: leftovers of figures and
+/// diagrams ("nn nn n", "r"), stray punctuation, bare page/list numbers.
+/// Only Latin-script text is judged by the vowel rule; other scripts are kept.
+bool _isJunkBlock(PdfLocatedBlock b) {
+  if (b.type != ParagraphType.paragraph) return false;
+  final t = b.text.trim();
+  if (t.length > 40) return false;
+  if (RegExp(r'^[\W_]*$').hasMatch(t)) return true; // punctuation only
+  if (RegExp(r'^\d{1,4}[.)]?$').hasMatch(t)) return true; // "20", "3."
+  final letters = RegExp(r'\p{L}', unicode: true).allMatches(t);
+  if (letters.any((m) => m.group(0)!.codeUnitAt(0) > 0x24F)) return false;
+  // Real short text has a word of 2+ letters with a vowel ("No.", "Yes").
+  return !RegExp(
+    r'\b[a-z]*[aeiouy][a-z]*\b',
+    caseSensitive: false,
+  ).allMatches(t).any((m) => m.group(0)!.length >= 2);
+}
+
 final _frontMatterLabel = RegExp(
   r'^(title page|half title|copyright|dedication|contents|table of contents|'
   r'acknowledg(e)?ments?|epigraph|about the author|also by|cover|halaman judul|'
@@ -539,22 +604,25 @@ final _frontMatterLabel = RegExp(
   caseSensitive: false,
 );
 
+/// [pages] = lines per page (index 0 = page 1; empty = no text). Lines, not
+/// glyphs: the service builds them page by page so the glyphs of a 1000-page
+/// book never sit in memory (or cross the isolate boundary) all at once.
 PdfLayoutResult layoutPdf(
-  List<List<PdfGlyph>> pages,
+  List<List<PdfLine>> pages,
   List<PdfOutlineEntry> outline, {
   PdfLayoutEngine engine = const PdfLayoutEngine(),
 }) {
-  final lines = [
-    for (final (i, glyphs) in pages.indexed)
-      ...engine.glyphsToLines(glyphs, pageNumber: i + 1),
-  ];
+  final lines = [for (final page in pages) ...page];
   final body = engine.computeBodyFontSize(lines);
   final kept = engine.filterHeadersFootersAndFootnotes(
     lines,
     totalPages: pages.length,
     bodyFontSize: body,
   );
-  final blocks = engine.processToBlocks(kept, bodyFontSize: body);
+  final blocks = [
+    for (final b in engine.processToBlocks(kept, bodyFontSize: body))
+      if (!_isJunkBlock(b)) b,
+  ];
   final book = splitPdfChapters(
     blocks,
     outline: outline,

@@ -57,17 +57,16 @@ void main() {
         return;
       }
       final extractMs = clock.elapsedMilliseconds;
+      final glyphs = raw.pages.fold<int>(0, (n, l) => n + l.length);
+      final rssExtract = ProcessInfo.currentRss ~/ (1 << 20);
       clock.reset();
 
       const engine = PdfLayoutEngine();
       final empty = [
-        for (final (i, g) in raw.pages.indexed)
-          if (g.every((x) => x.char.trim().isEmpty)) i + 1,
+        for (final (i, l) in raw.pages.indexed)
+          if (l.isEmpty) i + 1,
       ];
-      final lines = [
-        for (final (i, g) in raw.pages.indexed)
-          ...engine.glyphsToLines(g, pageNumber: i + 1),
-      ];
+      final lines = [for (final page in raw.pages) ...page];
       final body = engine.computeBodyFontSize(lines);
       final kept = engine.filterHeadersFootersAndFootnotes(
         lines,
@@ -88,7 +87,9 @@ void main() {
         '${empty.take(20).toList()}, cover ${raw.cover != null}',
       );
       say('outline top-level ${raw.outline.length}');
-      say('time: extract ${extractMs}ms, layout ${layoutMs}ms');
+      say(
+        'time: extract ${extractMs}ms, layout ${layoutMs}ms; lines $glyphs; rss after extract ${rssExtract}MB, after layout ${ProcessInfo.currentRss ~/ (1 << 20)}MB (peak ${ProcessInfo.maxRss ~/ (1 << 20)}MB)',
+      );
       say(
         'lines ${lines.length}, kept ${kept.length}, dropped ${dropped.length}, '
         'body font ${body.toStringAsFixed(4)}',

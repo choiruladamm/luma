@@ -41,11 +41,13 @@ class PdfImportException implements Exception {
       'PdfImportException(${error.name}${detail == null ? '' : ': $detail'})';
 }
 
-/// Hasil baca PDF mentah: huruf per halaman (indeks 0 = halaman 1; halaman
-/// tanpa teks = list kosong), outline, dan cover. Tanpa layout.
+/// Hasil baca PDF mentah: baris per halaman (indeks 0 = halaman 1; halaman
+/// tanpa teks = list kosong), outline, dan cover. Baris dibentuk per halaman
+/// di service, jadi huruf satu buku gak pernah numpuk di memori. Layout
+/// antar-halaman (header/footer, paragraf, bab) belum.
 typedef PdfExtraction = ({
   int pageCount,
-  List<List<PdfGlyph>> pages,
+  List<List<PdfLine>> pages,
   List<PdfOutlineEntry> outline,
   EpubCover? cover,
 });
@@ -72,6 +74,7 @@ class PdfiumService implements PdfService {
   const PdfiumService();
 
   static const _coverWidth = 600.0;
+  static const _engine = PdfLayoutEngine();
 
   @override
   Future<PdfExtraction> extract(
@@ -97,9 +100,15 @@ class PdfiumService implements PdfService {
       final cover = await _cover(doc);
       onOpened?.call();
       final total = doc.pages.length;
-      final pages = <List<PdfGlyph>>[];
+      final pages = <List<PdfLine>>[];
       for (final page in doc.pages) {
-        pages.add(await _glyphs(page));
+        // Glyphs of this page become lines right away and are dropped.
+        pages.add(
+          _engine.glyphsToLines(
+            await _glyphs(page),
+            pageNumber: page.pageNumber,
+          ),
+        );
         onPage?.call(page.pageNumber, total);
       }
       return (pageCount: total, pages: pages, outline: outline, cover: cover);

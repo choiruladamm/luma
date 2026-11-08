@@ -103,7 +103,7 @@ Future<ParsedBook> parseInIsolate(
 /// Top-level + terpisah dari importPdf: closure isolate gak boleh nangkep
 /// callback UI.
 Future<pdf.PdfLayoutResult> _layoutInIsolate(
-  List<List<PdfGlyph>> pages,
+  List<List<PdfLine>> pages,
   List<pdf.PdfOutlineEntry> outline,
 ) => Isolate.run(() => pdf.layoutPdf(pages, outline));
 
@@ -353,9 +353,7 @@ class ImportRepository {
         );
       },
     );
-    final empty = raw.pages
-        .where((g) => g.every((x) => x.char.trim().isEmpty))
-        .length;
+    final empty = raw.pages.where((lines) => lines.isEmpty).length;
     if (raw.pageCount == 0) {
       throw const PdfImportException(PdfImportError.empty, 'no pages');
     }
@@ -376,7 +374,7 @@ class ImportRepository {
     onStage?.call(ImportStage.saving);
 
     final book = (
-      title: laid.heading,
+      title: laid.heading ?? _titleFromFileName(fileName),
       author: null,
       cover: raw.cover,
       chapters: [
@@ -667,6 +665,24 @@ class ImportRepository {
     }
     return bookId;
   });
+}
+
+/// "my_book__v2 (z-lib).pdf" -> "my book v2". PDF tanpa judul kebaca dipakai
+/// nama file; underscore + spasi dobel + sufiks sumber unduhan dibuang.
+String _titleFromFileName(String fileName) {
+  final t = p
+      .basenameWithoutExtension(fileName)
+      .replaceAll('_', ' ')
+      .replaceAll(
+        RegExp(
+          r'\s*\((?:z-?lib(?:\.org)?|1lib|pdfdrive[^)]*)\)',
+          caseSensitive: false,
+        ),
+        '',
+      )
+      .replaceAll(RegExp(r'\s+'), ' ')
+      .trim();
+  return t.isEmpty ? p.basenameWithoutExtension(fileName) : t;
 }
 
 final importRepositoryProvider = Provider<ImportRepository>(

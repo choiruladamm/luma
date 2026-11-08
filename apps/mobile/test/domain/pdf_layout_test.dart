@@ -579,4 +579,83 @@ void main() {
       expect(one('a three-', 'character group'), 'a three-character group');
     });
   });
+
+  group('real-book text details (tight boxes)', () {
+    const tall = 'hlbdkftTHOF';
+    List<PdfGlyph> printed(
+      String text,
+      double baseline, {
+      double left = 0.1,
+      double step = 0.01,
+      double raise = 0,
+    }) {
+      var x = left;
+      final out = <PdfGlyph>[];
+      for (final c in text.split('')) {
+        if (c == ' ') {
+          out.add(g(' ', x, baseline, 0, 0));
+          x += step;
+          continue;
+        }
+        final h = c == '.' || c == ','
+            ? 0.003
+            : tall.contains(c)
+            ? 0.014
+            : 0.009;
+        out.add(g(c, x, baseline - h - raise, 0.008, h));
+        x += step;
+      }
+      return out;
+    }
+
+    test('raised footnote digits are dropped, baseline digits stay', () {
+      final base = printed('Died in 65 AD. Next', 0.30);
+      final mark = printed('3', 0.30, left: 0.1 + 14 * 0.01, raise: 0.006);
+      // Insert the raised "3" right after "AD." (index 14) in stream order.
+      final glyphs = [
+        ...base.take(14),
+        ...mark,
+        ...base.skip(14),
+        g('\n', 0.3, 0.3, 0, 0),
+      ];
+      final lines = engine.glyphsToLines(glyphs, pageNumber: 1);
+      expect(lines.single.text, 'Died in 65 AD. Next');
+    });
+
+    test('a line made only of a raised digit is kept (not emptied)', () {
+      final glyphs = [
+        ...printed('7', 0.30, raise: 0.006),
+        g('\n', 0.2, 0.3, 0, 0),
+      ];
+      expect(engine.glyphsToLines(glyphs, pageNumber: 1).single.text, '7');
+    });
+
+    test('a wide gap with no space glyph becomes a space, quotes do not', () {
+      final glyphs = [
+        ...printed('THE FATE OF', 0.30),
+        // The next run starts after a clear gap but PDFium emitted no space.
+        ...printed('British', 0.30, left: 0.1 + 11 * 0.01 + 0.006),
+        g('\n', 0.3, 0.3, 0, 0),
+        ...printed('it’', 0.32),
+        ...printed('s', 0.32, left: 0.1 + 3 * 0.01 + 0.006),
+        g('\n', 0.3, 0.3, 0, 0),
+      ];
+      final lines = engine.glyphsToLines(glyphs, pageNumber: 1);
+      expect(lines.map((l) => l.text), ['THE FATE OF British', 'it’s']);
+    });
+
+    test(
+      'without PDFium line breaks: baseline clustering still reads lines',
+      () {
+        // No '\n' glyphs at all (fallback path), tight boxes, ascenders vary.
+        final glyphs = [
+          ...printed('the hall.', 0.30),
+          ...printed('old bell,', 0.33),
+          ...printed('big dog', 0.36),
+        ];
+        final lines = engine.glyphsToLines(glyphs, pageNumber: 1);
+        expect(lines.map((l) => l.text), ['the hall.', 'old bell,', 'big dog']);
+      },
+    );
+  });
 }

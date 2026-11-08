@@ -212,6 +212,8 @@ Waktu (macOS, bukan benchmark): ekstraksi 0,5–1,6 dtk, layout 0,7 dtk untuk 25
 
 **Error nyata (PDFium asli, PDF buatan `gs`/`cupsfilter`, `tool/pdf_import_check.dart`):** scan (12/12 halaman tanpa teks) → `scan`; `-sUserPassword` → `password`; 3 KB byte acak `.pdf` → `corrupt`; separuh scan separuh teks → masuk dengan `skipped=12`.
 
+**Putaran perbaikan kedua (analisis menyeluruh).** Catatan kaki (digit naik dari baseline) dibuang dari baris; paragraf sampah dari gambar/diagram (`nn nn n`, satu huruf, angka halaman polos) dibuang (sampah pendek 80 → 11 per buku); heading di awal bab yang cuma mengulang judul bab dibuang; daftar isi tanpa nomor halaman dicocokkan per kata (`1 | Judul` vs `1 Judul`), termasuk yang barisnya menyatu; spasi hilang antar-run PDFium disisipkan (kutip/apostrof dikecualikan); tanpa pemisah baris PDFium, baris dikelompokkan per baseline; baris dibentuk per halaman di service (puncak RSS 334 → 275 MB di macOS, layout 1 dtk → 0,15 dtk); salinan sementara picker dibersihkan abis import; judul dari nama file dibersihkan (`_`, spasi dobel, `(z-lib.org)`).
+
 **Batas yang diketahui:** judul/penulis dari metadata PDF belum kebaca (pdfrx 2.12 tanpa API-nya; judul = heading pertama di 5 halaman awal yang bukan label front matter, lalu nama file, jadi PDF yang halaman judulnya bukan heading tampil sebagai nama file), halaman dengan kotak samping/3+ kolom (#94), tabel, huruf kecil kapital di awal bab, daftar isi yang barisnya tergabung jadi satu paragraf. Daftar isi tanpa nomor halaman dibuang kalau barisnya mengutip judul bab lain. Hyphen akhir baris dibuang, kecuali setelah kepala kata majemuk (`two-`, `three-`, `self-`, ...). Belum diuji: Android, rotasi/spread, tap Artinya di paragraf PDF (butuh panggilan AI).
 
 Pilih `.pdf` di picker, langsung jadi satu buku utuh, tanpa Docling.
@@ -234,7 +236,7 @@ Pilih `.pdf` di picker, langsung jadi satu buku utuh, tanpa Docling.
 picker (.pdf) ─► ImportRepository.importPdf
    1. hash → cek dobel
    2. PdfService (pdfrx, worker PDFium-nya sendiri)
-        → per halaman: baris {text, x, y, w, h}
+        → per halaman: huruf → baris langsung (huruf halaman dibuang; satu buku gak numpuk di memori)
         → outline (bookmark → halaman), metadata, render halaman 1 → cover
    3. Isolate.run(layout + pecah bab)   ← Dart murni, gak tau pdfrx
         → List<ParsedChapter> (paragraf + assignGroups)

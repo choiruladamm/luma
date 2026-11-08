@@ -316,18 +316,35 @@ class PdfLayoutEngine {
     }
 
     final lines = <PdfLine>[];
-    for (final cluster in lineClusters) {
+    for (var cluster in lineClusters) {
       if (!runMode) {
         cluster.sort((a, b) => a.bounds.left.compareTo(b.bounds.left));
+      } else {
+        cluster = _withoutFootnoteMarks(cluster);
+        if (cluster.isEmpty) continue;
       }
 
       final sb = StringBuffer();
       var minL = 1.0, minT = 1.0, maxR = 0.0, maxB = 0.0;
       final medianH = _computeMedianHeight(cluster);
+      final glyphWidth = _medianWidth(cluster);
       var hasSup = false;
 
       for (var i = 0; i < cluster.length; i++) {
         final g = cluster[i];
+        if (i > 0 && runMode) {
+          // PDFium joins runs of different font size without a space
+          // ("THE FATE OF" + "British"): a gap this wide is a space.
+          // Quotes/apostrophes have wide side bearings ("it’s"): exempt.
+          final prev = cluster[i - 1];
+          if (prev.char.trim().isNotEmpty &&
+              g.char.trim().isNotEmpty &&
+              !_quote.hasMatch(prev.char) &&
+              !_quote.hasMatch(g.char) &&
+              g.bounds.left - prev.bounds.right > _glueGap * glyphWidth) {
+            sb.write(' ');
+          }
+        }
         if (i > 0 && !runMode) {
           final prev = cluster[i - 1];
           final gap = g.bounds.left - prev.bounds.right;
@@ -367,7 +384,7 @@ class PdfLayoutEngine {
             fontHeight: _fontHeight(cluster),
             hasSuperscript: hasSup,
             baselineY: _medianBottom(cluster),
-            medianGlyphWidth: _medianWidth(cluster),
+            medianGlyphWidth: glyphWidth,
           ),
         );
       }
@@ -375,6 +392,34 @@ class PdfLayoutEngine {
 
     return lines;
   }
+
+  /// A gap wider than this many median glyph widths (≈ 0.2 em) between two
+  /// glyphs with no space glyph is a missing space.
+  static const _glueGap = 0.55;
+  static final _quote = RegExp(r'''[’'`‘“”"]''');
+
+  /// Footnote / endnote reference digits ("Christ.1"): small digits raised
+  /// above the baseline. They would end up glued to the word and in whatever
+  /// gets translated, so they are removed from the line.
+  static List<PdfGlyph> _withoutFootnoteMarks(List<PdfGlyph> cluster) {
+    final f = _fontHeight(cluster);
+    final base = _medianBottom(cluster);
+    final isMark = [
+      for (final g in cluster)
+        // Raised off the baseline. (Size is no guide: in real books a
+        // superscript digit's box is nearly as tall as an ascender.)
+        _digit.hasMatch(g.char) && g.bounds.bottom < base - f * 0.25,
+    ];
+    if (!isMark.contains(true)) return cluster;
+    final kept = [
+      for (final (i, g) in cluster.indexed)
+        if (!isMark[i]) g,
+    ];
+    // Nothing but marks on the line: leave it (a page number, a list index).
+    return kept.any((g) => g.char.trim().isNotEmpty) ? kept : cluster;
+  }
+
+  static final _digit = RegExp(r'^[0-9]$');
 
   /// Font size proxy from *tight* boxes: the 80th percentile of letter/digit
   /// heights. The median swings with how many tall letters a line happens to
@@ -408,37 +453,26 @@ class PdfLayoutEngine {
     return b.isEmpty ? 0 : b[b.length ~/ 2];
   }
 
+  /// Fallback when PDFium gave no line breaks: 1-D clustering on glyph
+  /// *bottoms* (the baseline; descenders and commas dip a little, tops vary
+  /// with the letter), splitting where the next bottom is far from the last.
   void _clusterByTop(List<PdfGlyph> glyphs, List<List<PdfGlyph>> lineClusters) {
-    // Sort by approximate vertical position
-    final sorted = List<PdfGlyph>.from(glyphs)
-      ..sort((a, b) {
-        final cmpY = a.bounds.top.compareTo(b.bounds.top);
-        if (cmpY != 0) return cmpY;
-        return a.bounds.left.compareTo(b.bounds.left);
-      });
-
-    for (final glyph in sorted) {
-      var added = false;
-      for (final cluster in lineClusters) {
-        final clusterY = cluster.first.bounds.top;
-        final clusterHeight = cluster.first.effectiveFontHeight;
-        final tolerance = clusterHeight * 0.45;
-
-        if ((glyph.bounds.top - clusterY).abs() <= tolerance) {
-          cluster.add(glyph);
-          added = true;
-          break;
-        }
+    final solid = [
+      for (final g in glyphs)
+        if (g.char.trim().isNotEmpty) g,
+    ]..sort((a, b) => a.bounds.bottom.compareTo(b.bounds.bottom));
+    if (solid.isEmpty) return;
+    final gap = _computeMedianHeight(solid) * 0.7;
+    var cluster = <PdfGlyph>[solid.first];
+    for (final g in solid.skip(1)) {
+      if (g.bounds.bottom - cluster.last.bounds.bottom > gap) {
+        lineClusters.add(cluster);
+        cluster = <PdfGlyph>[];
       }
-      if (!added) {
-        lineClusters.add([glyph]);
-      }
+      cluster.add(g);
     }
-
-    // Sort clusters from top to bottom
-    lineClusters.sort(
-      (a, b) => a.first.bounds.top.compareTo(b.first.bounds.top),
-    );
+    lineClusters.add(cluster);
+    lineClusters.sort((a, b) => _medianBottom(a).compareTo(_medianBottom(b)));
   }
 
   static double _computeMedianHeight(List<PdfGlyph> glyphs) {

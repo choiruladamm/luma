@@ -55,7 +55,11 @@ final pdfCover = EpubCover(Uint8List.fromList([1, 2, 3]), 'png');
 
 PdfExtraction pdfDoc(List<List<PdfGlyph>> pages, {bool cover = true}) => (
   pageCount: pages.length,
-  pages: pages,
+  // Same per-page line building as PdfiumService.
+  pages: [
+    for (final (i, g) in pages.indexed)
+      const PdfLayoutEngine().glyphsToLines(g, pageNumber: i + 1),
+  ],
   outline: const [],
   cover: cover ? pdfCover : null,
 );

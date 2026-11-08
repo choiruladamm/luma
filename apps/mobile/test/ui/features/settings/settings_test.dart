@@ -168,6 +168,9 @@ class FakePicker implements FilePickerService {
 
   @override
   Future<PickedFile?> pickBook() => throw UnimplementedError();
+
+  @override
+  Future<void> clearTemporaryFiles() async {}
 }
 
 void main() {

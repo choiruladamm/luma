@@ -137,6 +137,21 @@ void main() {
     expect(await stored(), ['${hashOf(pdf)}.pdf']); // cover gagal ≠ gagal
   });
 
+  test(
+    'file-name title: underscores, double spaces and mirror tags cleaned',
+    () async {
+      fake.result = pdfDoc([pdfPage(1), pdfPage(2)], cover: false);
+      await repo.importPdf(
+        pdf.path,
+        fileName: 'The_First__20_Hours (z-lib.org).pdf',
+      );
+      expect(
+        (await db.select(db.books).getSingle()).title,
+        'The First 20 Hours',
+      );
+    },
+  );
+
   test('same file twice: duplicate, no second parse, nothing new', () async {
     final first = await import();
     final files = await stored();

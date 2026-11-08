@@ -25,6 +25,16 @@ class PickedFile {
 class FilePickerService {
   const FilePickerService();
 
+  /// Picker nyalin file pilihan ke cache app (PDF bisa puluhan MB). Dipanggil
+  /// abis import beres / gagal; gagal hapus gak ngaruh ke apa-apa.
+  Future<void> clearTemporaryFiles() async {
+    try {
+      await FilePicker.clearTemporaryFiles();
+    } on Object {
+      // Platform tanpa cache picker, atau plugin belum nempel (test).
+    }
+  }
+
   /// File backup `.zip` (path lokal, dibaca streaming). Null = batal.
   Future<File?> pickBackup() async {
     final file = await FilePicker.pickFile(

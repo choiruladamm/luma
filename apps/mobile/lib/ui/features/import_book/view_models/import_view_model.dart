@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -324,6 +325,12 @@ class ImportController extends Notifier<ImportState> {
       // cancel() udah ngembaliin ke idle.
     } catch (e) {
       if (!cancelled()) state = failed(e);
+    } finally {
+      // Salinan sementara dari picker udah gak dipakai (file asli udah
+      // disalin ke storage app kalau import berhasil).
+      if (!cancelled()) {
+        unawaited(ref.read(filePickerServiceProvider).clearTemporaryFiles());
+      }
     }
   }
 

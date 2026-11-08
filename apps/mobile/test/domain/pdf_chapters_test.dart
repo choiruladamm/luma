@@ -67,7 +67,8 @@ void main() {
       final allParagraphs = result.chapters
           .expand((c) => c.paragraphs)
           .toList();
-      expect(allParagraphs.length, blocks.length);
+      // The two headings repeat the bookmark titles and are dropped.
+      expect(allParagraphs.length, blocks.length - 2);
     });
 
     test('nested outline: Part → Chapter uses child chapters', () {
@@ -446,10 +447,14 @@ void main() {
           .toList();
       // No duplicates
       expect(allTexts.toSet().length, allTexts.length);
-      // All content blocks accounted for
-      final blockTexts = blocks.map((b) => b.text).toSet();
-      final resultTexts = allTexts.toSet();
-      expect(resultTexts.containsAll(blockTexts), isTrue);
+      // All body blocks accounted for; a heading that only repeats the chapter
+      // title is dropped (the reader shows the title).
+      final blockTexts = blocks
+          .where((b) => b.type != ParagraphType.heading)
+          .map((b) => b.text)
+          .toSet();
+      expect(allTexts.toSet().containsAll(blockTexts), isTrue);
+      expect(allTexts, isNot(contains('Chapter 1')));
     });
 
     test('charOffset is strictly increasing and correctly calculated', () {
@@ -741,8 +746,160 @@ void main() {
           2,
         ),
       ];
-      final laid = layoutPdf([page1, page2], const []);
+      const engine = PdfLayoutEngine();
+      final laid = layoutPdf([
+        engine.glyphsToLines(page1, pageNumber: 1),
+        engine.glyphsToLines(page2, pageNumber: 2),
+      ], const []);
       expect(laid.heading, 'THE REAL TITLE');
+    });
+  });
+
+  group('title headings and junk', () {
+    String body(int n) => 'Body paragraph number $n. ' * 12;
+
+    test('digit + title headings under "1 Title" are dropped, others kept', () {
+      final blocks = [
+        heading('1', page: 1),
+        heading('The Surprising Power', page: 1),
+        heading('Something else entirely', page: 1),
+        block(body(1), page: 1),
+        heading('2', page: 3),
+        block(body(2), page: 3),
+        block(body(3), page: 4),
+      ];
+      final result = splitPdfChapters(
+        blocks,
+        outline: [
+          outline('1 The Surprising Power', page: 1),
+          outline('2 Another One', page: 3),
+        ],
+        totalPages: 4,
+      );
+      expect(result.chapters[0].paragraphs.map((p) => p.text), [
+        'Something else entirely',
+        body(1),
+      ]);
+    });
+
+    test('a chapter of only a repeated heading keeps it', () {
+      final blocks = [
+        heading('Epilogue', page: 1),
+        block(body(1), page: 1),
+        heading('Epilogue', page: 2),
+        block(body(2), page: 2),
+      ];
+      final result = splitPdfChapters(
+        blocks,
+        outline: [
+          outline('Epilogue', page: 1),
+          outline('Epilogue two', page: 2),
+        ],
+        totalPages: 2,
+      );
+      expect(result.chapters.every((c) => c.paragraphs.isNotEmpty), isTrue);
+    });
+
+    test('merged TOC paragraph (titles inside one paragraph) is dropped', () {
+      final blocks = [
+        heading('Contents', page: 1),
+        block(
+          'First Steps The Second Idea Third Thing Here Fourth Matter',
+          page: 1,
+        ),
+        block(body(2), page: 2),
+        block(body(3), page: 3),
+        block(body(4), page: 4),
+        block(body(5), page: 5),
+      ];
+      final result = splitPdfChapters(
+        blocks,
+        outline: [
+          outline('Contents', page: 1),
+          outline('First Steps', page: 2),
+          outline('The Second Idea', page: 3),
+          outline('Third Thing Here', page: 4),
+          outline('Fourth Matter', page: 5),
+        ],
+        totalPages: 5,
+      );
+      expect(result.chapters.map((c) => c.title), [
+        'First Steps',
+        'The Second Idea',
+        'Third Thing Here',
+        'Fourth Matter',
+      ]);
+    });
+
+    test('contents text "1 Title" matches bookmarks "1 | Title"', () {
+      final blocks = [
+        heading('Contents', page: 1),
+        block(
+          'Foreword 1 First Steps 2 The Second Idea 3 Third Thing Here',
+          page: 1,
+        ),
+        block(body(2), page: 2),
+        block(body(3), page: 3),
+        block(body(4), page: 4),
+        block(body(5), page: 5),
+      ];
+      final result = splitPdfChapters(
+        blocks,
+        outline: [
+          outline('Contents', page: 1),
+          outline('Foreword', page: 2),
+          outline('1 | First Steps', page: 3),
+          outline('2 | The Second Idea', page: 4),
+          outline('3 | Third Thing Here', page: 5),
+        ],
+        totalPages: 5,
+      );
+      expect(result.chapters.map((c) => c.title), [
+        'Foreword',
+        '1 | First Steps',
+        '2 | The Second Idea',
+        '3 | Third Thing Here',
+      ]);
+    });
+
+    test('figure junk and bare numbers are dropped, short real text stays', () {
+      PdfGlyph gl(String c, int i, double top, int page) => PdfGlyph(
+        char: c,
+        pageNumber: page,
+        bounds: PdfRectNormalized(
+          left: 0.1 + i * 0.012,
+          top: top,
+          width: 0.01,
+          height: 0.02,
+        ),
+      );
+      List<PdfGlyph> text(String t, double top) => [
+        for (final (i, c) in t.split('').indexed) gl(c, i, top, 1),
+        gl('\n', t.length, top, 1),
+      ];
+      final page = [
+        // Six ordinary lines set the line pitch; the rest sit far apart.
+        for (var n = 0; n < 6; n++)
+          ...text(
+            'A real sentence number $n that is long enough to read.',
+            0.10 + n * 0.02,
+          ),
+        ...text('nn nn n', 0.30),
+        ...text('r', 0.40),
+        ...text('20', 0.50),
+        ...text('No.', 0.60),
+        ...text('Yes', 0.70),
+      ];
+      final engine = const PdfLayoutEngine();
+      final laid = layoutPdf([
+        engine.glyphsToLines(page, pageNumber: 1),
+      ], const []);
+      final texts = laid.chapters
+          .expand((c) => c.paragraphs)
+          .map((p) => p.text);
+      expect(texts.join(' '), contains('A real sentence'));
+      expect(texts.join(' '), isNot(contains('nn nn')));
+      expect(texts.where((t) => t == 'r' || t == '20'), isEmpty);
     });
   });
 }
