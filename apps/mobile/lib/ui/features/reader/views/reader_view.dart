@@ -33,6 +33,7 @@ import 'meaning_sheet.dart';
 import 'reader_capsule.dart';
 import 'toc_sheet.dart';
 import 'chapter_end.dart';
+import 'meaning_pin_card.dart';
 import 'paragraph_text.dart';
 import 'reader_overlay.dart';
 import 'reader_system_ui.dart';
@@ -1191,16 +1192,10 @@ class _ChapterTextState extends ConsumerState<_ChapterText>
     await _animateTo(pixels + delta, Motion.rise(delta), Motion.riseCurve);
   }
 
-  /// Card kuning pas sheet Artinya kebuka: jendela tetap di posisi grup (atas
-  /// = safe area), isinya teks grup yang di-scroll ngikutin seberapa jauh
-  /// terjemahan kebaca. Halaman di belakangnya gak geser. Dipasang cuma kalau
-  /// grupnya kepanjangan (bawah teksnya ketutup sheet): yang muat gak ada yang
-  /// perlu di-scroll.
-  ({Rect rect, List<ReaderParagraph> paras})? _pin;
-  final _pinScroll = ScrollController();
-  final _pinView = GlobalKey();
-  final _pinKeys = <int, GlobalKey>{};
+  final _pinCard = GlobalKey<MeaningPinCardState>();
 
+  /// Card tetap buat grup kepanjangan (lihat [MeaningPinCard]): dipasang
+  /// cuma kalau teks grupnya ketutup sheet.
   void pinGroup(int group, double sheetTop) {
     // Sheet bisa udah ditutup pas halaman masih naik.
     if (!mounted || widget.openGroup != group) return;
@@ -1212,81 +1207,23 @@ class _ChapterTextState extends ConsumerState<_ChapterText>
     final sheetLocal = sheetTop - area.localToGlobal(Offset.zero).dy;
     // Teks (tanpa padding bawah blok) muat di atas sheet: gak ada yang di-scroll.
     if (block.bottom - Space.s2 <= sheetLocal - Layout.followGap) return;
-    setState(() {
-      // Kartu terus ke bawah sheet; yang kelihatan cuma sampe atas sheet.
-      _pin = (
-        rect: Rect.fromLTWH(
-          block.left,
-          block.top,
-          block.width,
-          math.max(0.0, sheetLocal - block.top),
-        ),
-        paras: paras,
-      );
-    });
-  }
-
-  Future<void>? _unpinning;
-
-  /// Tutup card tetap: isinya balik ke awal dulu biar gak loncat ke teks
-  /// halaman di bawahnya. Dipanggil dua kali (sheet mulai nutup, sheet udah
-  /// hilang) nunggu proses yang sama.
-  Future<void> unpinGroup({bool animate = true}) => _pin == null
-      ? Future.value()
-      : _unpinning ??= _unpin(animate).whenComplete(() => _unpinning = null);
-
-  Future<void> _unpin(bool animate) async {
-    if (animate && _pinScroll.hasClients && _pinScroll.offset > 0.5) {
-      await _pinScroll.animateTo(
-        0,
-        duration: MediaQuery.disableAnimationsOf(context)
-            ? Duration.zero
-            : Motion.sheetClose,
-        curve: Curves.easeOut,
-      );
-    }
-    if (mounted) setState(() => _pin = null);
-  }
-
-  /// Sinkron sheet → card: [progress] (0–1) = seberapa jauh terjemahan kebaca.
-  /// 0 = posisi awal, 1 = bawah teks grup tepat [Layout.followGap] di atas
-  /// sheet. Di antaranya linear, dikejar dengan animasi pendek.
-  void followProgress(double progress, double sheetTop) {
-    final view = _pinView.currentContext?.findRenderObject();
-    final pin = _pin;
-    final last = pin == null
-        ? null
-        : _pinKeys[pin.paras.last.index]?.currentContext?.findRenderObject();
-    if (view is! RenderBox || last is! RenderBox || !_pinScroll.hasClients) {
-      return;
-    }
-    final viewTop = view.localToGlobal(Offset.zero).dy;
-    final shown =
-        sheetTop - Layout.followGap - viewTop; // tinggi yang kelihatan
-    final textBottom =
-        last.localToGlobal(Offset.zero).dy -
-        viewTop +
-        _pinScroll.offset +
-        last.size.height;
-    final needed = math.max(0.0, textBottom - shown);
-    final target = (progress * needed).clamp(
-      0.0,
-      _pinScroll.position.maxScrollExtent,
-    );
-    if (MediaQuery.disableAnimationsOf(context)) {
-      _pinScroll.jumpTo(target);
-      return;
-    }
-    // Dikejar halus, bukan loncat: tiap update restart animasi pendek dari
-    // posisi sekarang, jadi fling di sheet gak bikin teks tersentak.
-    unawaited(
-      _pinScroll.animateTo(
-        target,
-        duration: Motion.follow,
-        curve: Curves.easeOut,
+    // Kartu terus ke bawah sheet; yang kelihatan cuma sampe atas sheet.
+    _pinCard.currentState?.show(
+      Rect.fromLTWH(
+        block.left,
+        block.top,
+        block.width,
+        math.max(0.0, sheetLocal - block.top),
       ),
+      paras,
     );
   }
+
+  Future<void> unpinGroup({bool animate = true}) =>
+      _pinCard.currentState?.unpin(animate: animate) ?? Future.value();
+
+  void followProgress(double progress, double sheetTop) =>
+      _pinCard.currentState?.follow(progress, sheetTop);
 
   /// Balik ke posisi sebelum sheet dibuka.
   Future<void> scrollBack(double to) =>
@@ -1404,7 +1341,6 @@ class _ChapterTextState extends ConsumerState<_ChapterText>
     _markTimer?.cancel();
     _flash.dispose();
     _scroll.dispose();
-    _pinScroll.dispose();
     super.dispose();
   }
 
@@ -1707,52 +1643,12 @@ class _ChapterTextState extends ConsumerState<_ChapterText>
           ),
         ),
         // Card kuning tetap (halaman gak geser): isinya yang di-scroll.
-        if (_pin case final pin?)
-          Positioned.fromRect(
-            key: const ValueKey('pinned-group'),
-            rect: pin.rect,
-            child: IgnorePointer(
-              child: ClipRRect(
-                key: _pinView,
-                // Bawahnya lurus: kartu terus ke bawah sheet, nyatu sama card
-                // halaman, bukan kotak yang berhenti di atas sheet.
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(Radii.md),
-                ),
-                // Canvas dulu: highlight gelap tembus pandang, tanpa ini teks
-                // halaman di belakangnya kelihatan dobel.
-                child: ColoredBox(
-                  color: c.canvas,
-                  child: ColoredBox(
-                    color: c.highlight,
-                    child: SingleChildScrollView(
-                      controller: _pinScroll,
-                      physics: const NeverScrollableScrollPhysics(),
-                      // Bawah selebar jarak ke sheet: paragraf terakhir bisa naik
-                      // sampe kelihatan penuh di atas sheet.
-                      padding: EdgeInsets.fromLTRB(
-                        widget.prefs.marginWidth / 2,
-                        Space.s2,
-                        widget.prefs.marginWidth / 2,
-                        Layout.followGap,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        spacing: gap,
-                        children: [
-                          for (final p in pin.paras)
-                            KeyedSubtree(
-                              key: _pinKeys.putIfAbsent(p.index, GlobalKey.new),
-                              child: Text(p.text, style: onOpen),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
+        MeaningPinCard(
+          key: _pinCard,
+          marginWidth: widget.prefs.marginWidth,
+          gap: gap,
+          style: onOpen,
+        ),
       ],
     );
   }
