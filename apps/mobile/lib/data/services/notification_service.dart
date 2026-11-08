@@ -11,14 +11,6 @@ class NotificationService {
   final FlutterLocalNotificationsPlugin _plugin;
   var _ready = false;
 
-  static const channel = AndroidNotificationDetails(
-    'unduhan',
-    'Unduhan buku',
-    channelDescription: 'Kabar pas buku yang diunduh udah masuk rak',
-    importance: Importance.high,
-    priority: Priority.high,
-  );
-
   /// [onTap] dapet payload notifikasi yang ditap pas app lagi jalan.
   Future<void> init(void Function(String payload) onTap) async {
     if (_ready) return;
@@ -57,15 +49,24 @@ class NotificationService {
   Future<void> show({
     required int id,
     required String title,
+    required String channelName,
+    required String channelDescription,
     String? body,
     String? payload,
   }) => _plugin.show(
     id: id,
     title: title,
     body: body,
-    notificationDetails: const NotificationDetails(
-      android: channel,
-      iOS: DarwinNotificationDetails(),
+    notificationDetails: NotificationDetails(
+      android: AndroidNotificationDetails(
+        'unduhan',
+        channelName,
+        channelDescription: channelDescription,
+        channelAction: AndroidNotificationChannelAction.update,
+        importance: Importance.high,
+        priority: Priority.high,
+      ),
+      iOS: const DarwinNotificationDetails(),
     ),
     payload: payload,
   );

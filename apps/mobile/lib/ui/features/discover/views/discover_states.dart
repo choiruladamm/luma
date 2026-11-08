@@ -1,3 +1,4 @@
+import 'package:luma/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/stabilo_theme.dart';
@@ -88,7 +89,7 @@ class DiscoverNotice extends StatelessWidget {
                             child: Center(
                               widthFactor: 1,
                               child: Text(
-                                'Coba lagi',
+                                context.l10n.meaningTryAgain,
                                 style: StabiloType.label.copyWith(fontSize: 14),
                               ),
                             ),

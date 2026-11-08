@@ -1,3 +1,4 @@
+import 'package:luma/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -69,15 +70,21 @@ class _BookDetailViewState extends ConsumerState<BookDetailView> {
                         children: [
                           _Fact(
                             value: _year(detail?.issued) ?? '–',
-                            label: 'Masuk Gutenberg',
+                            label: context.l10n.bookAddedToGutenberg,
                           ),
                           _Fact(
                             value: detail?.fileSize == null
                                 ? '–'
-                                : fileSize(detail!.fileSize!),
-                            label: 'Ukuran',
+                                : fileSize(
+                                    detail!.fileSize!,
+                                    locale: context.l10n.localeName,
+                                  ),
+                            label: context.l10n.bookSize,
                           ),
-                          const _Fact(value: 'Inggris', label: 'Bahasa'),
+                          _Fact(
+                            value: context.l10n.bookEnglish,
+                            label: context.l10n.bookLanguage,
+                          ),
                         ],
                       ),
                       const SizedBox(height: Space.s5),
@@ -85,10 +92,9 @@ class _BookDetailViewState extends ConsumerState<BookDetailView> {
                         DetailLoading(slow: true) => [
                           DiscoverNotice(
                             icon: AppIcons.history,
-                            title: 'Katalognya lagi lemot nih',
-                            body:
-                                'Udah 5 detik lebih. Tungguin bentar, atau '
-                                'coba lagi.',
+                            title:
+                                context.l10n.discoverTheCatalogIsTakingAWhile,
+                            body: context.l10n.discoverItSBeenOverSecondsGive,
                             onRetry: ref
                                 .read(bookDetailProvider(book).notifier)
                                 .load,
@@ -100,13 +106,12 @@ class _BookDetailViewState extends ConsumerState<BookDetailView> {
                         DetailFailed(failure: NetworkFailure.offline) => [
                           DiscoverEmpty(
                             icon: AppIcons.offline,
-                            title: 'Lo lagi offline',
-                            body:
-                                'Nyari tetep jalan. Tapi daftar rame, detail '
-                                'buku, sama unduhan butuh internet. Buku di '
-                                'rak tetap bisa lo baca kok.',
+                            title: context.l10n.discoverYouReOffline,
+                            body: context
+                                .l10n
+                                .discoverSearchStillWorksPopularBooksDetails,
                             action: AppButton.primary(
-                              label: 'Buka rak',
+                              label: context.l10n.discoverOpenShelf,
                               pill: true,
                               height: 48,
                               onPressed: () => context.go(Routes.home),
@@ -116,9 +121,8 @@ class _BookDetailViewState extends ConsumerState<BookDetailView> {
                         DetailFailed() => [
                           DiscoverNotice(
                             icon: AppIcons.alert,
-                            title: 'Katalog lagi gak bisa dihubungin',
-                            body:
-                                'Bukan salah lo kok. Coba lagi bentar lagi ya.',
+                            title: context.l10n.discoverCanTReachTheCatalog,
+                            body: context.l10n.discoverItSNotYourFaultGive,
                             onRetry: ref
                                 .read(bookDetailProvider(book).notifier)
                                 .load,
@@ -126,12 +130,11 @@ class _BookDetailViewState extends ConsumerState<BookDetailView> {
                         ],
                         DetailReady(:final detail) => [
                           _Section(
-                            title: 'Sinopsis',
+                            title: context.l10n.bookSynopsis,
                             gap: Space.s2,
                             child: detail.summary == null
                                 ? Text(
-                                    'Belum ada sinopsis buat buku ini. '
-                                    'Langsung buka bab 1 aja.',
+                                    context.l10n.bookNoSynopsisForThisBookYet,
                                     style: StabiloType.body.copyWith(
                                       color: c.ink2,
                                     ),
@@ -159,7 +162,7 @@ class _BookDetailViewState extends ConsumerState<BookDetailView> {
                                               () => _expanded = true,
                                             ),
                                             child: Text(
-                                              'Baca selengkapnya',
+                                              context.l10n.bookReadMore,
                                               style: StabiloType.label.copyWith(
                                                 fontSize: 14,
                                                 decoration:
@@ -173,7 +176,7 @@ class _BookDetailViewState extends ConsumerState<BookDetailView> {
                           ),
                           if (detail.subjects.isNotEmpty)
                             _Section(
-                              title: 'Tentang',
+                              title: context.l10n.bookAbout,
                               child: _Chips([
                                 for (final s in detail.subjects)
                                   s.split(' -- ').first,
@@ -181,7 +184,7 @@ class _BookDetailViewState extends ConsumerState<BookDetailView> {
                             ),
                           if (detail.bookshelves.isNotEmpty)
                             _Section(
-                              title: 'Masuk daftar',
+                              title: context.l10n.bookListedIn,
                               child: _Chips([
                                 for (final s in detail.bookshelves)
                                   s.replaceFirst('Category: ', ''),
@@ -191,24 +194,33 @@ class _BookDetailViewState extends ConsumerState<BookDetailView> {
                       },
                       if (author != null)
                         _Section(
-                          title: 'Penulis',
+                          title: context.l10n.bookAuthor,
                           child: _AuthorRow(author: author, book: book),
                         ),
                       _Section(
-                        title: 'Info file',
+                        title: context.l10n.bookFileInfo,
                         gap: 2,
                         child: Column(
                           children: [
                             for (final (i, (k, v)) in [
-                              ('Format', 'EPUB'),
+                              (context.l10n.bookFormat, 'EPUB'),
                               (
-                                'Ukuran',
+                                context.l10n.bookSize,
                                 detail?.fileSize == null
                                     ? '–'
-                                    : fileSize(detail!.fileSize!),
+                                    : fileSize(
+                                        detail!.fileSize!,
+                                        locale: context.l10n.localeName,
+                                      ),
                               ),
-                              ('Hak cipta', 'Public domain di AS'),
-                              ('ID katalog', '#${book.externalId}'),
+                              (
+                                context.l10n.bookCopyright,
+                                context.l10n.bookPublicDomainInTheUs,
+                              ),
+                              (
+                                context.l10n.bookCatalogId,
+                                '#${book.externalId}',
+                              ),
                             ].indexed)
                               Container(
                                 padding: const EdgeInsets.symmetric(
@@ -306,12 +318,12 @@ class _Header extends ConsumerWidget {
             spacing: 10,
             children: [
               CircleButton(
-                semanticLabel: 'Balik',
+                semanticLabel: context.l10n.settingsBack,
                 icon: AppIcons.back,
                 onPressed: () => context.pop(),
               ),
               Text(
-                'Detail buku',
+                context.l10n.bookBookDetails,
                 style: StabiloType.titleSm.copyWith(
                   fontSize: 20,
                   color: c.onAccent,
@@ -330,7 +342,10 @@ class _Header extends ConsumerWidget {
                   spacing: 6,
                   children: [
                     if (inShelf)
-                      Tag.status('Udah di rak', icon: AppIcons.check),
+                      Tag.status(
+                        context.l10n.discoverOnYourShelf,
+                        icon: AppIcons.check,
+                      ),
                     Semantics(
                       header: true,
                       child: Text(
@@ -497,11 +512,11 @@ class _AuthorRow extends ConsumerWidget {
         .join();
     final sub = [
       ?author.years,
-      if (others != null) '$others buku lain di katalog',
+      if (others != null) context.l10n.bookOtherBooksInTheCatalog(others),
     ].join(' · ');
     return Semantics(
       button: true,
-      label: 'Cari buku lain $name',
+      label: context.l10n.bookFindMoreBooksBy(name),
       excludeSemantics: true,
       child: GestureDetector(
         onTap: () {
@@ -619,7 +634,7 @@ class _Actions extends ConsumerWidget {
               AppIcon(AppIcons.alert, size: 18, color: c.onPink),
               Expanded(
                 child: Text(
-                  'Gagal ngunduh, koneksinya putus.',
+                  context.l10n.bookDownloadFailedConnectionLost,
                   style: StabiloType.caption.copyWith(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -631,7 +646,7 @@ class _Actions extends ConsumerWidget {
           ),
         ),
         AppButton.primary(
-          label: 'Coba lagi',
+          label: context.l10n.meaningTryAgain,
           icon: AppIcons.retry,
           height: 56,
           onPressed: () => queue.enqueue(book),
@@ -641,12 +656,12 @@ class _Actions extends ConsumerWidget {
       null when readId != null => [
         AppButton.primary(
           label: progress == null || progress == 0
-              ? 'Baca sekarang'
-              : 'Lanjut baca · ${(progress * 100).round()}%',
+              ? context.l10n.bookReadNow
+              : context.l10n.bookContinueReading((progress * 100).round()),
           height: 56,
           onPressed: () => context.push(Routes.reader(readId)),
         ),
-        note('Udah ada di rak lo, gak perlu diunduh lagi'),
+        note(context.l10n.bookAlreadyOnYourShelfNoNeed),
       ],
       DownloadItem(:final status, :final progress)
           when status == DownloadStatus.queued ||
@@ -655,25 +670,25 @@ class _Actions extends ConsumerWidget {
         [
           _Progress(
             label: switch (status) {
-              DownloadStatus.queued => 'Antri…',
-              DownloadStatus.importing => 'Nyusun buku…',
-              _ => 'Lagi diunduh…',
+              DownloadStatus.queued => context.l10n.bookQueued,
+              DownloadStatus.importing => context.l10n.downloadPreparingBook,
+              _ => context.l10n.bookDownloading,
             },
             progress: status == DownloadStatus.queued
                 ? 0
                 : progress.clamp(0.0, 1.0),
             onCancel: () => queue.cancel(item.key),
           ),
-          note('Boleh ditinggal, nanti gua kabarin pas udah masuk rak.'),
+          note(context.l10n.bookFeelFreeToBrowseILl),
         ],
       _ => [
         AppButton.primary(
-          label: 'Ambil buku',
+          label: context.l10n.bookGetBook,
           icon: HugeIcons.strokeRoundedDownload04,
           height: 56,
           onPressed: () => queue.enqueue(book),
         ),
-        note('Gratis, langsung masuk Rak buku lo'),
+        note(context.l10n.bookFreeStraightToYourShelf),
       ],
     };
     return Container(
@@ -770,7 +785,7 @@ class _Progress extends StatelessWidget {
                   child: Center(
                     widthFactor: 1,
                     child: Text(
-                      'Batal',
+                      context.l10n.dialogCancel,
                       style: StabiloType.label.copyWith(fontSize: 14),
                     ),
                   ),

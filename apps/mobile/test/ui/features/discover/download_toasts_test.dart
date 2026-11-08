@@ -16,6 +16,7 @@ class FakeQueue extends DownloadQueue {
 
 class FakeNotifications extends Fake implements NotificationService {
   final shown = <(String, String?)>[];
+  String? channel;
   var permissionAsked = 0;
   void Function(String payload)? onTap;
 
@@ -33,9 +34,14 @@ class FakeNotifications extends Fake implements NotificationService {
   Future<void> show({
     required int id,
     required String title,
+    required String channelName,
+    required String channelDescription,
     String? body,
     String? payload,
-  }) async => shown.add((title, payload));
+  }) async {
+    channel = channelName;
+    shown.add((title, payload));
+  }
 }
 
 const book = CatalogBook(
@@ -51,8 +57,11 @@ void main() {
   late FakeQueue queue;
   late FakeNotifications notifications;
   late GoRouter router;
+  late ValueNotifier<Locale> language;
 
   Future<void> pump(WidgetTester tester) async {
+    language = ValueNotifier(const Locale('id'));
+    addTearDown(language.dispose);
     queue = FakeQueue();
     notifications = FakeNotifications();
     router = GoRouter(
@@ -69,13 +78,16 @@ void main() {
           routerProvider.overrideWith((ref) => router),
           notificationServiceProvider.overrideWithValue(notifications),
         ],
-        child: MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          locale: const Locale('id'),
-          theme: stabiloTheme(Brightness.light),
-          builder: (context, child) => DownloadToasts(child: child!),
-          home: const Scaffold(body: SizedBox()),
+        child: ValueListenableBuilder<Locale>(
+          valueListenable: language,
+          builder: (context, locale, _) => MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: locale,
+            theme: stabiloTheme(Brightness.light),
+            builder: (context, child) => DownloadToasts(child: child!),
+            home: const Scaffold(body: SizedBox()),
+          ),
         ),
       ),
     );
@@ -170,4 +182,40 @@ void main() {
     expect(find.text('Gagal ngunduh Enchiridion'), findsOneWidget);
     expect(notifications.shown, hasLength(1));
   });
+  testWidgets(
+    'download completing after locale switch notifies once in English',
+    (tester) async {
+      await pump(tester);
+      queue.emit([
+        const DownloadItem(book: book, status: DownloadStatus.downloading),
+      ]);
+      await tester.pump();
+      language.value = const Locale('en');
+      await tester.pumpAndSettle();
+      for (final phase in [
+        AppLifecycleState.inactive,
+        AppLifecycleState.hidden,
+        AppLifecycleState.paused,
+      ]) {
+        tester.binding.handleAppLifecycleStateChanged(phase);
+      }
+      final done = [
+        const DownloadItem(book: book, status: DownloadStatus.done, bookId: 7),
+      ];
+      queue.emit(done);
+      await tester.pump();
+      queue.emit(done);
+      await tester.pump();
+      expect(notifications.shown, [('Enchiridion added to shelf', '7')]);
+      expect(notifications.channel, 'Book downloads');
+      expect(notifications.permissionAsked, 1);
+      for (final phase in [
+        AppLifecycleState.hidden,
+        AppLifecycleState.inactive,
+        AppLifecycleState.resumed,
+      ]) {
+        tester.binding.handleAppLifecycleStateChanged(phase);
+      }
+    },
+  );
 }
