@@ -194,7 +194,23 @@ PDF scan tanpa teks butuh OCR; hasilnya paling riskan salah. Untuk PDF scan atau
 
 ## Import PDF langsung
 
-> Status: **rencana** (induk [#83](https://github.com/choiruladamm/luma/issues/83), branch `feat/import-pdf`). Dimulai dari spike #84; hasil jelek = berhenti, jalur Docling di atas tetap jadi caranya.
+> Status: **jalan di Luma Dev iOS (simulator)**, branch `feat/import-pdf`, induk [#83](https://github.com/choiruladamm/luma/issues/83). Spike #84 lolos, pipeline #85–#88 dipasang, dituning terhadap 5 PDF asli (#89). Android belum diuji. Jalur Docling tetap jadi cadangan (scan, layout rumit).
+
+**Hasil korpus (#89, 8 Nov 2026, macOS `flutter test` via `tool/pdf_probe.dart`, bukan angka device).**
+
+| PDF | Halaman | Bab | Catatan |
+|---|---|---|---|
+| Novel nonfiksi 1 kolom (Atomic Habits) | 256 | 24, sesuai bookmark | Paragraf utuh, tanpa nomor halaman nyelip. Daftar isi ebook (tanpa nomor halaman) ikut jadi isi bab "Epigraph" |
+| Nonfiksi + catatan (The First 20 Hours) | 331 | 16, sesuai bookmark | 5 halaman tanpa teks (cover/ilustrasi) dilewati; hyphen akhir baris jadi gabung (`three-` + `character` → `threecharacter`) |
+| Buku besar dengan "Letters" sebagai satu bookmark (Letters from a Stoic) | 312 | 51 | Bookmark raksasa dipecah ke anak-anaknya; surat tanpa bookmark ikut surat sebelumnya |
+| Jurnal 2 kolom (systematic review) | 15 | 5 | Halaman 1 (kotak sitasi di samping) campur aduk; sisanya kebaca; header/footer berulang dibuang |
+| Dokumen teknis (system card) | 153 | 16 | Beberapa bookmark aneh jadi bab kecil; tabel jadi paragraf pendek |
+
+Waktu (macOS, bukan benchmark): ekstraksi 0,5–1,6 dtk, layout 0,7 dtk untuk 250–330 halaman. Simulator iPhone 17 (iOS 27, build debug Luma Dev): pilih PDF 331 halaman dari Files → progres → rak (cover, 17 bab) → baca bab → duplikat membuka sheet "udah ada di rak" → progres baca tersimpan.
+
+**Yang ditemukan dan diperbaiki dari korpus:** kotak huruf PDFium itu *ketat* (titik kecil, `h` lebih tinggi dari `a`), jadi pengelompokan baris pakai geometri memecah satu baris jadi banyak. Sekarang layout memakai pemisah baris + spasi dari PDFium sendiri; ukuran font = persentil 80 tinggi huruf; batas paragraf pakai jarak baseline, lebar huruf, dan lebar kolom, bukan konstanta.
+
+**Batas yang diketahui:** judul/penulis dari metadata PDF belum kebaca (pdfrx 2.12 tanpa API-nya; judul jatuh ke heading halaman 1 lalu nama file, jadi PDF bersampul gambar tampil sebagai nama file), halaman daftar isi tanpa nomor halaman tidak dibuang, halaman dengan kotak samping/3+ kolom (#94), tabel, ejaan span huruf kecil kapital di awal bab. Belum diuji: PDF scan, ber-password, rotasi/spread, Android.
 
 Pilih `.pdf` di picker, langsung jadi satu buku utuh, tanpa Docling.
 
