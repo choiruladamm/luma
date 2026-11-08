@@ -341,7 +341,8 @@ class PdfLayoutEngine {
               g.char.trim().isNotEmpty &&
               !_quote.hasMatch(prev.char) &&
               !_quote.hasMatch(g.char) &&
-              g.bounds.left - prev.bounds.right > _glueGap * glyphWidth) {
+              g.bounds.left - prev.bounds.right >
+                  _glueLimit(prev, g, glyphWidth)) {
             sb.write(' ');
           }
         }
@@ -393,6 +394,37 @@ class PdfLayoutEngine {
     return lines;
   }
 
+  /// How wide a gap between two glyphs (no space glyph between) may be before
+  /// it counts as a missing space. Between two letters/digits it follows the
+  /// *local* size, the smaller of the two glyph heights: a small-caps run next
+  /// to a capital ("OF" + "British") has a gap far below the line's median
+  /// glyph width, which swings with drop caps and capitals. Otherwise the
+  /// line's median glyph width.
+  static double _glueLimit(PdfGlyph prev, PdfGlyph g, double lineGlyphWidth) {
+    if (_isLetterOrDigit(prev.char) && _isLetterOrDigit(g.char)) {
+      final lo = math.min(prev.effectiveFontHeight, g.effectiveFontHeight);
+      final hi = math.max(prev.effectiveFontHeight, g.effectiveFontHeight);
+      // Only a real size jump (small caps -> capital, ratio ~0.4) switches to
+      // the local rule. Ordinary pairs differ by x-height vs ascender (~0.7);
+      // judging those locally split words ("Qu ic k") in wide-set fonts.
+      final small = prev.effectiveFontHeight <= g.effectiveFontHeight
+          ? prev
+          : g;
+      // The small side must itself be a capital or digit (small caps): `j`'s
+      // box is taller than `o`'s, which is a letter shape, not a font change.
+      if (hi > 0 && lo / hi < _sizeJump && _upperOrDigit.hasMatch(small.char)) {
+        return _glueLocal * lo;
+      }
+    }
+    return _glueGap * lineGlyphWidth;
+  }
+
+  /// Height ratio under which two neighbours are different font sizes.
+  static const _sizeJump = 0.6;
+
+  /// Fraction of the smaller glyph height (≈ a quarter em of a 0.7 em box).
+  static const _glueLocal = 0.35;
+
   /// A gap wider than this many median glyph widths (≈ 0.2 em) between two
   /// glyphs with no space glyph is a missing space.
   static const _glueGap = 0.55;
@@ -420,6 +452,7 @@ class PdfLayoutEngine {
   }
 
   static final _digit = RegExp(r'^[0-9]$');
+  static final _upperOrDigit = RegExp(r'^[\p{Lu}\p{N}]$', unicode: true);
 
   /// Font size proxy from *tight* boxes: the 80th percentile of letter/digit
   /// heights. The median swings with how many tall letters a line happens to

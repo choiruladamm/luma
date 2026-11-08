@@ -407,9 +407,18 @@ PdfParsedBook _assembleChapters(
     // Skip empty chapters and TOC/index pages
     if (!_isContentChapter(paragraphs, chapterBlocks)) continue;
     if (_listsChapterTitles(paragraphs, titles, b.title)) continue;
+    if (_dropLabel.hasMatch(b.title.trim()) &&
+        paragraphs.fold<int>(0, (n, p) => n + p.text.length) <
+            _tinyFrontMatterChars) {
+      continue;
+    }
 
     final title = _resolveTitle(b.title, paragraphs);
-    final body = _withoutTitleHeadings(paragraphs, title);
+    final body = _withoutTocRuns(
+      _withoutTitleHeadings(paragraphs, title),
+      titles,
+      title,
+    );
     final chapter = ParsedChapter(
       title: title,
       section: b.section,
@@ -442,6 +451,60 @@ PdfParsedBook _buildSingleChapter(List<PdfLocatedBlock> blocks, String title) {
 
 List<RawParagraph> _blocksToRawParagraphs(List<PdfLocatedBlock> blocks) {
   return [for (final b in blocks) b.toRawParagraph()];
+}
+
+/// A contents list sitting inside a chapter that has no bookmark of its own
+/// (ebook PDFs put it after the copyright page): a run of 4+ consecutive short
+/// blocks where most are titles of the book's chapters. The run goes; the text
+/// around it stays.
+List<RawParagraph> _withoutTocRuns(
+  List<RawParagraph> paragraphs,
+  List<String> titles,
+  String ownTitle,
+) {
+  if (titles.length < 4 || paragraphs.length < 4) return paragraphs;
+  String norm(String t) => t
+      .toLowerCase()
+      .replaceAll(RegExp(r'[^\p{L}\p{N}]+', unicode: true), ' ')
+      .trim();
+  final all = [for (final t in titles) norm(t)];
+  final own = norm(ownTitle);
+  bool short(RawParagraph p) =>
+      p.type != ParagraphType.sceneBreak &&
+      p.text.trim().length <= 100 &&
+      !RegExp(r'[.!?"”]$').hasMatch(p.text.trim());
+  bool isTitle(RawParagraph p) {
+    final n = norm(p.text);
+    return n.length >= 4 &&
+        all.any((c) => c.length >= 4 && c != own && (n == c || n.endsWith(c)));
+  }
+
+  final drop = <int>{};
+  var i = 0;
+  while (i < paragraphs.length) {
+    if (!short(paragraphs[i])) {
+      i++;
+      continue;
+    }
+    var j = i;
+    var hits = 0;
+    while (j < paragraphs.length && short(paragraphs[j])) {
+      if (isTitle(paragraphs[j])) hits++;
+      j++;
+    }
+    if (hits >= 4 && hits >= (j - i) * 0.4) {
+      for (var k = i; k < j; k++) {
+        drop.add(k);
+      }
+    }
+    i = j;
+  }
+  if (drop.isEmpty) return paragraphs;
+  final rest = [
+    for (final (k, p) in paragraphs.indexed)
+      if (!drop.contains(k)) p,
+  ];
+  return rest.any((p) => p.type == ParagraphType.paragraph) ? rest : paragraphs;
 }
 
 /// The reader already shows the chapter title, so a heading at the top of the
@@ -597,6 +660,32 @@ bool _isJunkBlock(PdfLocatedBlock b) {
   ).allMatches(t).any((m) => m.group(0)!.length >= 2);
 }
 
+/// A title page often prints the title in body size and all caps ("LETTERS
+/// FROM A STOIC"), so the heading found may be only its tail ("FROM A STOIC").
+/// When the first printed line of the book contains the heading and is itself
+/// a short all-caps line, that line is the full title. Needs a heading to
+/// start from: an all-caps first line alone ("AN IMPRINT OF …") proves nothing.
+String? _titleCandidate(String? heading, List<List<PdfLine>> pages) {
+  if (heading == null) return null;
+  final first = pages.where((p) => p.isNotEmpty).firstOrNull?.first.text.trim();
+  if (first == null ||
+      first.length > 60 ||
+      first.length <= heading.length ||
+      first != first.toUpperCase() ||
+      !first.toLowerCase().contains(heading.toLowerCase())) {
+    return heading;
+  }
+  return first;
+}
+
+/// Bookmarked front matter that is only a label page: dropped when tiny.
+final _dropLabel = RegExp(
+  r'^(cover|title page|half title|copyright( page)?|contents|table of contents|'
+  r'halaman judul|hak cipta|daftar isi)$',
+  caseSensitive: false,
+);
+const _tinyFrontMatterChars = 1500;
+
 final _frontMatterLabel = RegExp(
   r'^(title page|half title|copyright|dedication|contents|table of contents|'
   r'acknowledg(e)?ments?|epigraph|about the author|also by|cover|halaman judul|'
@@ -631,18 +720,21 @@ PdfLayoutResult layoutPdf(
   // ponytail: heading pertama di 5 halaman awal yang bukan label front matter
   // (sampul gambar = halaman 1 tanpa teks, judul ada di halaman judul), bukan
   // yang font-nya terbesar; cadangan sampai pdfrx punya API metadata.
-  final heading = blocks
-      .where(
-        (b) =>
-            b.pageNumber <= 5 &&
-            b.type == ParagraphType.heading &&
-            b.text.trim().length >= 3 &&
-            b.text.trim().length <= 120 &&
-            !_frontMatterLabel.hasMatch(b.text.trim()),
-      )
-      .firstOrNull
-      ?.text
-      .trim();
+  final heading = _titleCandidate(
+    blocks
+        .where(
+          (b) =>
+              b.pageNumber <= 5 &&
+              b.type == ParagraphType.heading &&
+              b.text.trim().length >= 3 &&
+              b.text.trim().length <= 120 &&
+              !_frontMatterLabel.hasMatch(b.text.trim()),
+        )
+        .firstOrNull
+        ?.text
+        .trim(),
+    pages,
+  );
   return (
     chapters: book.chapters,
     totalChars: book.totalChars,

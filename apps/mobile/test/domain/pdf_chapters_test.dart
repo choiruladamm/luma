@@ -902,4 +902,164 @@ void main() {
       expect(texts.where((t) => t == 'r' || t == '20'), isEmpty);
     });
   });
+
+  group('front matter, embedded contents, full title', () {
+    String body(int n) => 'Body paragraph number $n. ' * 12;
+
+    test('tiny label chapters are dropped, real short ones stay', () {
+      final blocks = [
+        block('Cover art', page: 1),
+        block('A Penguin Book. Copyright 2013.', page: 2),
+        block('For my wife.', page: 3),
+        for (var pg = 4; pg <= 8; pg++) block(body(pg), page: pg),
+      ];
+      final result = splitPdfChapters(
+        blocks,
+        outline: [
+          outline('Cover', page: 1),
+          outline('Copyright Page', page: 2),
+          outline('Dedication', page: 3),
+          outline('One', page: 4),
+          outline('Two', page: 6),
+        ],
+        totalPages: 8,
+      );
+      expect(result.chapters.map((c) => c.title), ['Dedication', 'One', 'Two']);
+    });
+
+    test(
+      'a contents run inside another chapter is removed, text around stays',
+      () {
+        final blocks = [
+          block('The lyf so short, the craft so longe to lerne.', page: 1),
+          block('Front Notes', page: 1),
+          block('First Steps', page: 1),
+          block('The Second Idea', page: 1),
+          block('Third Thing Here', page: 1),
+          block('Fourth Matter', page: 1),
+          block(body(1), page: 1),
+          block(body(2), page: 2),
+          block(body(3), page: 3),
+          block(body(4), page: 4),
+          block(body(5), page: 5),
+        ];
+        final result = splitPdfChapters(
+          blocks,
+          outline: [
+            outline('Front Matter', page: 1),
+            outline('First Steps', page: 2),
+            outline('The Second Idea', page: 3),
+            outline('Third Thing Here', page: 4),
+            outline('Fourth Matter', page: 5),
+          ],
+          totalPages: 5,
+        );
+        final first = result.chapters.first.paragraphs
+            .map((p) => p.text)
+            .toList();
+        expect(first, [
+          'The lyf so short, the craft so longe to lerne.',
+          body(1),
+        ]);
+      },
+    );
+
+    test('a few chapter titles quoted in prose are not a contents run', () {
+      final blocks = [
+        block('See First Steps and The Second Idea later', page: 1),
+        block('Third Thing Here', page: 1),
+        block(body(1), page: 1),
+        block(body(2), page: 2),
+        block(body(3), page: 3),
+        block(body(4), page: 4),
+        block(body(5), page: 5),
+      ];
+      final result = splitPdfChapters(
+        blocks,
+        outline: [
+          outline('Opening', page: 1),
+          outline('First Steps', page: 2),
+          outline('The Second Idea', page: 3),
+          outline('Third Thing Here', page: 4),
+          outline('Fourth Matter', page: 5),
+        ],
+        totalPages: 5,
+      );
+      expect(result.chapters.first.paragraphs.length, 3);
+    });
+
+    test(
+      'title = the full all-caps first line that contains the heading tail',
+      () {
+        PdfGlyph gl(String c, int i, double top, double h) => PdfGlyph(
+          char: c,
+          pageNumber: 1,
+          bounds: PdfRectNormalized(
+            left: 0.1 + i * 0.02,
+            top: top,
+            width: 0.015,
+            height: h,
+          ),
+        );
+        List<PdfGlyph> text(String t, double top, double h) => [
+          for (final (i, c) in t.split('').indexed) gl(c, i, top, h),
+          gl('\n', t.length, top, 0),
+        ];
+        const engine = PdfLayoutEngine();
+        List<PdfLine> page(List<PdfGlyph> g) =>
+            engine.glyphsToLines(g, pageNumber: 1);
+        final laid = layoutPdf([
+          page([
+            ...text('LETTERS FROM A STOIC', 0.10, 0.02),
+            ...text('FROM A STOIC', 0.20, 0.04),
+            ...text(
+              'Body text of the book goes here for a while and more.',
+              0.30,
+              0.02,
+            ),
+            ...text(
+              'Body text of the book goes here again and again more.',
+              0.34,
+              0.02,
+            ),
+          ]),
+        ], const []);
+        expect(laid.heading, 'LETTERS FROM A STOIC');
+      },
+    );
+
+    test('an all-caps first line alone (no heading) is not a title', () {
+      PdfGlyph gl(String c, int i, double top, double h) => PdfGlyph(
+        char: c,
+        pageNumber: 1,
+        bounds: PdfRectNormalized(
+          left: 0.1 + i * 0.02,
+          top: top,
+          width: 0.015,
+          height: h,
+        ),
+      );
+      List<PdfGlyph> text(String t, double top, double h) => [
+        for (final (i, c) in t.split('').indexed) gl(c, i, top, h),
+        gl('\n', t.length, top, 0),
+      ];
+      const engine = PdfLayoutEngine();
+      final laid = layoutPdf([
+        engine.glyphsToLines([
+          ...text('AN IMPRINT OF PENGUIN', 0.10, 0.02),
+          ...text(
+            'Body text of the book goes here for a while and more.',
+            0.30,
+            0.02,
+          ),
+          ...text(
+            'Body text of the book goes here again and again more.',
+            0.34,
+            0.02,
+          ),
+        ], pageNumber: 1),
+      ], const []);
+      expect(laid.heading, isNull);
+    });
+  });
 }

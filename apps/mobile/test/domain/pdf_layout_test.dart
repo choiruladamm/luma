@@ -658,4 +658,41 @@ void main() {
       },
     );
   });
+
+  group('mixed-size runs', () {
+    PdfGlyph tight(String c, double l, double r, double top, double h) =>
+        g(c, l, top, r - l, h);
+
+    test('small caps run + capital without a space glyph gets a space', () {
+      // Measured from Atomic Habits p.16: "OF" is small caps (h 0.0048), "B" a
+      // capital (h 0.0121), gap 0.0042, PDFium emitted no space.
+      final glyphs = [
+        tight('O', 0.1896, 0.1956, 0.3360, 0.0050),
+        tight('F', 0.1962, 0.2009, 0.3361, 0.0048),
+        tight('B', 0.2051, 0.2190, 0.3288, 0.0121),
+        tight('r', 0.2206, 0.2277, 0.3322, 0.0087),
+        tight('i', 0.2284, 0.2340, 0.3287, 0.0122),
+        tight('t', 0.2347, 0.2409, 0.3305, 0.0105),
+        tight('i', 0.2415, 0.2471, 0.3287, 0.0122),
+        tight('s', 0.2485, 0.2558, 0.3322, 0.0089),
+        tight('h', 0.2569, 0.2681, 0.3281, 0.0128),
+        g('\n', 0.27, 0.33, 0, 0),
+      ];
+      expect(
+        engine.glyphsToLines(glyphs, pageNumber: 1).single.text,
+        'OF British',
+      );
+    });
+
+    test('normal letter gaps are not split', () {
+      final glyphs = [
+        tight('r', 0.2206, 0.2277, 0.3322, 0.0087),
+        tight('i', 0.2284, 0.2340, 0.3287, 0.0122),
+        tight('t', 0.2347, 0.2409, 0.3305, 0.0105),
+        tight('i', 0.2415, 0.2471, 0.3287, 0.0122),
+        g('\n', 0.25, 0.33, 0, 0),
+      ];
+      expect(engine.glyphsToLines(glyphs, pageNumber: 1).single.text, 'riti');
+    });
+  });
 }
