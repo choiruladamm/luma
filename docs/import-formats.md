@@ -254,7 +254,7 @@ Lalu aturan non-isi yang sama kayak EPUB ([raw.md](ideas/raw.md)): bab kosong da
 | Ber-password | Error "PDF-nya dikunci password" (input password ditunda, #90) |
 | PDF scan (> 50% halaman tanpa teks) | Error "PDF ini hasil scan, gak ada teksnya" + arahan ke prompt foto / Docling |
 | Campuran scan + teks | Halaman tanpa teks dilewati, toast nyebut jumlahnya |
-| Rusak / bukan PDF | `PdfException`, pola `EpubException` |
+| Rusak / bukan PDF | `PdfImportException` (`PdfImportError`: password, scan, corrupt, notPdf, empty, io), pola `EpubException`. Cancel = `ImportCancelled` |
 | PDF yang sama | Cek hash → buka buku lama |
 | Besar (500+ halaman, 100MB+) | `openFile(path)`, bukan bytes; teks dilepas per halaman; progres per halaman; bisa dibatalin |
 | Dua kolom | Langkah 3. Tiga kolom ke atas gak dijamin (#94), arahkan ke Docling |
@@ -262,7 +262,7 @@ Lalu aturan non-isi yang sama kayak EPUB ([raw.md](ideas/raw.md)): bab kosong da
 | Puisi, dialog, list | Baris pendek bisa kepecah jadi banyak paragraf; diterima, grouping tetap gabung yang pendek |
 | Tabel, angka | Baris yang mayoritas angka/simbol dibuang; caption gambar tetap ikut |
 | RTL / CJK / teks vertikal | Di luar scope |
-| Judul / penulis | Judul: metadata → heading terbesar halaman 1 → nama file. Penulis: metadata atau null |
+| Judul / penulis | Judul: heading pertama halaman 1 → nama file. Penulis: null. **Deviasi:** pdfrx 2.12 gak punya API metadata, jadi judul/penulis metadata belum kebaca; tambah kalau pdfrx nyediain, bukan FFI langsung |
 | Cover | Render halaman 1; gagal = cover default |
 | Tuning nanti | Naikin `pdfParserVersion`, re-import dari file tersimpan, hapus `ai_results` buku itu |
 | `finishedAt` | `reading_progress_repository.dart` sekarang cuma `SourceType.epub`, tambah `pdf` |

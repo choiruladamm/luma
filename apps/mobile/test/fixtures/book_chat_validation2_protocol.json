@@ -30,7 +30,7 @@
     "test/support/book_chat_heldout.dart": "1835ae11825afd15b75e0a3d576984b562086a2603c740d54b1d5683197ad651",
     "test/data/book_chat_refinement_live_test.dart": "9265be93f14666c5ac29b16dc18aeab9e7cf90d1bc4421ad3170ab8fa43e405f",
     "lib/data/services/openrouter_service.dart": "a97c139e5fb1e86db3f36f8eeacb1cdd6971ae9a10c5101422105f05c15b1be0",
-    "pubspec.lock": "bdc304f15fb23c11da9efaa5f548a8a949da1f1d3b87045068f2b731c96d0d8b",
+    "pubspec.lock": "a78831217536d0664c118af45c3b62aab7a3bd2ee13fd8d4fc7045c38cae84f4",
     "test/support/book_chat_validation2.dart": "ac49e22357fdd6953d5583725ef1e66461b487f7b14c916d251823c84f806091",
     "test/data/book_chat_validation2_live_test.dart": "05b8cd09be0dad3e005d3b04bf8e02adef8c18477e2fafd57958de356f70e00e",
     "test/fixtures/book_chat_validation2_cases.json": "2136ef3b2d179c69920183a79186e67eabc6a2c1caf93ba563bac7e090023105",

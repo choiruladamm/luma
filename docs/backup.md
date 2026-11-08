@@ -24,7 +24,7 @@ Nama: `luma-backup-YYYYMMDD-HHmm.zip` (pakai ekstensi `.zip` biasa supaya tidak 
 luma-backup-20261006-2130.zip
 ├── manifest.json
 ├── luma.sqlite        ← snapshot database Drift
-├── books/             ← file EPUB asli ({hash}.epub)
+├── books/             ← file asli ({hash}.epub / {hash}.pdf)
 └── covers/            ← gambar cover ({hash}.png)
 ```
 
@@ -94,6 +94,7 @@ Snapshot membawa seluruh DB, termasuk katalog Gutenberg, index `catalog_fts`, me
 ## Catatan
 
 - Jangan bandingkan absolute path dari backup. Semua path di database sudah berupa nama file ([data-model.md](data-model.md)), jadi tetap valid setelah restore.
+- **Buku PDF:** `books/{hash}.pdf` ikut tanpa filter ekstensi (ada test round-trip). Schema DB gak berubah (`sourceType` = teks), jadi angka `schemaVersion` sama; tapi app versi sebelum import PDF gak ngenalin `pdf`. Jangan restore backup berisi buku PDF ke versi lama; downgrade gak didukung.
 - Ukuran backup kira-kira = total ukuran EPUB + sedikit untuk database. Tampilkan ukuran setelah backup selesai.
 - Unit test: round-trip export → restore ke database kosong menghasilkan data yang sama.
 

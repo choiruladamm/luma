@@ -9,7 +9,7 @@ Prinsip: **file diparse sekali saat import** ke format internal. Reader, AI, dan
 | Kolom | Tipe | Catatan |
 |-------|------|---------|
 | id | int (PK) | |
-| sourceType | text | `epub` / `markdown` |
+| sourceType | text | `epub` / `markdown` / `pdf` (nama enum; nambah nilai gak ngubah schema) |
 | bookKey | text? (unique) | Slug untuk mencocokkan import Markdown ke buku yang sama (mis. `atomic-habits`). Null untuk EPUB |
 | title | text | |
 | author | text? | |

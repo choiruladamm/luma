@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:isolate';
 
 import 'package:crypto/crypto.dart';
@@ -7,11 +8,14 @@ import 'package:path/path.dart' as p;
 
 import '../../domain/luma_markdown.dart';
 import '../../domain/models/book.dart';
+import '../../domain/pdf_chapters.dart' as pdf;
+import '../../domain/pdf_layout.dart';
 import '../database/app_database.dart';
 import '../services/chat_lifecycle.dart';
 import '../services/chapter_extractor.dart';
 import '../services/epub_parser.dart';
 import '../services/file_storage.dart';
+import '../services/pdf_service.dart';
 
 /// Buku hasil parse, tanpa HTML mentah (gak perlu dibawa balik dari isolate).
 typedef ParsedBook = ({
@@ -24,6 +28,9 @@ typedef ParsedBook = ({
 
 /// [duplicate] = file yang sama udah ada di rak; [bookId] nunjuk ke yang lama.
 typedef ImportResult = ({int bookId, bool duplicate});
+
+/// Hasil [ImportRepository.importPdf].
+typedef PdfImportResult = ({int bookId, bool duplicate, int skippedPages});
 
 /// Tahap import, buat checklist & progres di sheet "Lagi ngebongkar EPUB".
 enum ImportStage {
@@ -93,6 +100,13 @@ Future<ParsedBook> parseInIsolate(
   );
 }
 
+/// Top-level + terpisah dari importPdf: closure isolate gak boleh nangkep
+/// callback UI.
+Future<pdf.PdfLayoutResult> _layoutInIsolate(
+  List<List<PdfGlyph>> pages,
+  List<pdf.PdfOutlineEntry> outline,
+) => Isolate.run(() => pdf.layoutPdf(pages, outline));
+
 typedef ParsedChapters = ({List<ParsedChapter> chapters, int totalChars});
 
 // Dua fungsi ini sengaja terpisah: closure isolate nangkep seluruh scope
@@ -123,7 +137,10 @@ class ImportRepository {
     this._storage, {
     this.parse = parseInIsolate,
     this.chatLifecycle,
+    this.pdfService = const PdfiumService(),
   });
+
+  final PdfService pdfService;
 
   final ChatLifecycle? chatLifecycle;
 
@@ -275,6 +292,141 @@ class ImportRepository {
       return (bookId: id, duplicate: false);
     } catch (_) {
       await _storage.deleteBookFiles(fileName: bookFile, coverName: coverFile);
+      rethrow;
+    }
+  }
+
+  /// Import PDF langsung (docs/import-formats.md, Import PDF langsung). Pola
+  /// [importEpub]: layout dulu sebelum nyalin file, jadi PDF jelek gak ninggalin
+  /// apa-apa; gagal setelah nyalin = file yang baru ditulis dihapus lagi,
+  /// transaksi DB di-rollback. File [path] dibaca lewat path (gak masuk memori).
+  ///
+  /// Lempar [PdfImportException] (password, scan, rusak, bukan PDF, kosong, IO)
+  /// dan [ImportCancelled] kalau [isCancelled] nyala sebelum tahap nyimpen.
+  /// `skippedPages` = halaman tanpa teks di PDF campuran (dilewati).
+  Future<PdfImportResult> importPdf(
+    String path, {
+    required String fileName,
+    void Function(ImportStage stage)? onStage,
+    void Function(double progress)? onProgress,
+    bool Function()? isCancelled,
+  }) async {
+    void checkpoint() {
+      if (isCancelled?.call() ?? false) throw const ImportCancelled();
+    }
+
+    onStage?.call(ImportStage.reading);
+    if (p.extension(fileName).toLowerCase() != '.pdf') {
+      throw PdfImportException(PdfImportError.notPdf, fileName);
+    }
+    onProgress?.call(_afterRead);
+    final String hash;
+    try {
+      hash = (await sha256.bind(File(path).openRead()).first).toString();
+    } on FileSystemException catch (e) {
+      throw PdfImportException(PdfImportError.io, e.message);
+    }
+    onProgress?.call(_afterHash);
+    final existing = await (_db.select(
+      _db.books,
+    )..where((b) => b.hash.equals(hash))).getSingleOrNull();
+    if (existing != null) {
+      return (bookId: existing.id, duplicate: true, skippedPages: 0);
+    }
+
+    checkpoint();
+    onStage?.call(ImportStage.outline);
+    final raw = await pdfService.extract(
+      path,
+      onOpened: () {
+        checkpoint();
+        onStage?.call(ImportStage.chapters);
+        onProgress?.call(_afterOutline);
+      },
+      onPage: (done, total) {
+        checkpoint();
+        onProgress?.call(
+          _afterOutline +
+              (_afterChapters - _afterOutline) *
+                  0.5 *
+                  (total == 0 ? 1 : done / total),
+        );
+      },
+    );
+    final empty = raw.pages
+        .where((g) => g.every((x) => x.char.trim().isEmpty))
+        .length;
+    if (raw.pageCount == 0) {
+      throw const PdfImportException(PdfImportError.empty, 'no pages');
+    }
+    // Bukti kosong doang, bukan klaim pasti scan; copy-nya yang hati-hati.
+    if (empty * 2 > raw.pageCount) {
+      throw PdfImportException(
+        PdfImportError.scan,
+        '$empty/${raw.pageCount} pages without text',
+      );
+    }
+    checkpoint();
+    final laid = await _layoutInIsolate(raw.pages, raw.outline);
+    onProgress?.call(_afterChapters);
+    if (laid.chapters.isEmpty) {
+      throw const PdfImportException(PdfImportError.empty, 'no readable text');
+    }
+    checkpoint();
+    onStage?.call(ImportStage.saving);
+
+    final book = (
+      title: laid.heading,
+      author: null,
+      cover: raw.cover,
+      chapters: [
+        for (final c in laid.chapters)
+          ParsedChapter(
+            title: c.title,
+            section: c.section,
+            paragraphs: c.paragraphs,
+            groups: c.groups,
+            charOffset: c.charOffset,
+          ),
+      ],
+      totalChars: laid.totalChars,
+    );
+    final bookFile = '$hash.pdf';
+    final coverFile = raw.cover == null
+        ? null
+        : '$hash.${raw.cover!.extension}';
+    // File yang udah ada sebelum import ini bukan punya kita: rollback gak
+    // boleh ngehapusnya.
+    final hadBook = await _storage.book(bookFile).exists();
+    final hadCover =
+        coverFile != null && await _storage.cover(coverFile).exists();
+    try {
+      try {
+        await _storage.book(bookFile).parent.create(recursive: true);
+        await File(path).copy(_storage.book(bookFile).path);
+        if (coverFile != null) {
+          await _storage.writeCover(coverFile, raw.cover!.bytes);
+        }
+      } on FileSystemException catch (e) {
+        throw PdfImportException(PdfImportError.io, e.message);
+      }
+      onProgress?.call(_afterFiles);
+      final id = await _insert(
+        book,
+        onProgress: onProgress,
+        hash: hash,
+        fileName: fileName,
+        bookFile: bookFile,
+        coverFile: coverFile,
+        sourceType: SourceType.pdf,
+        version: pdf.pdfParserVersion,
+      );
+      return (bookId: id, duplicate: false, skippedPages: empty);
+    } catch (_) {
+      await _storage.deleteBookFiles(
+        fileName: hadBook ? null : bookFile,
+        coverName: hadCover ? null : coverFile,
+      );
       rethrow;
     }
   }
@@ -465,12 +617,14 @@ class ImportRepository {
     required String? coverFile,
     String? sourceId,
     String? externalId,
+    SourceType sourceType = SourceType.epub,
+    int version = parserVersion,
   }) => _db.transaction(() async {
     final bookId = await _db
         .into(_db.books)
         .insert(
           BooksCompanion.insert(
-            sourceType: SourceType.epub,
+            sourceType: sourceType,
             title: book.title ?? p.basenameWithoutExtension(fileName),
             author: Value(book.author),
             fileName: Value(bookFile),
@@ -478,7 +632,7 @@ class ImportRepository {
             hash: Value(hash),
             sourceId: Value(sourceId),
             externalId: Value(externalId),
-            parserVersion: parserVersion,
+            parserVersion: version,
             totalChars: book.totalChars,
           ),
         );
@@ -520,6 +674,7 @@ final importRepositoryProvider = Provider<ImportRepository>(
     ref.watch(appDatabaseProvider),
     ref.watch(fileStorageProvider),
     chatLifecycle: ref.watch(chatLifecycleProvider),
+    pdfService: ref.watch(pdfServiceProvider),
   ),
 );
 

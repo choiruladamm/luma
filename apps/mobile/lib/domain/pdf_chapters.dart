@@ -435,3 +435,55 @@ String _resolveTitle(String bookmarkTitle, List<RawParagraph> paragraphs) {
 
   return bookmarkTitle.trim();
 }
+
+// ---------------------------------------------------------------------------
+// Whole-document glue (runs in an isolate, pure Dart)
+// ---------------------------------------------------------------------------
+
+/// Versi logika layout + pecah bab PDF, disimpan di `books.parserVersion`.
+/// Naik = re-import dari `$hash.pdf` + hapus `ai_results` buku itu (indeks
+/// paragraf/grup bisa geser). Terpisah dari `parserVersion` EPUB, jadi tuning
+/// PDF gak maksa re-import EPUB. Re-import UI belum ada.
+const pdfParserVersion = 1;
+
+/// [pages] indeks 0 = halaman 1. [heading] = heading pertama di halaman 1
+/// (kandidat judul buku), null kalau gak ada.
+typedef PdfLayoutResult = ({
+  List<ParsedChapter> chapters,
+  int totalChars,
+  String? heading,
+});
+
+PdfLayoutResult layoutPdf(
+  List<List<PdfGlyph>> pages,
+  List<PdfOutlineEntry> outline, {
+  PdfLayoutEngine engine = const PdfLayoutEngine(),
+}) {
+  final lines = [
+    for (final (i, glyphs) in pages.indexed)
+      ...engine.glyphsToLines(glyphs, pageNumber: i + 1),
+  ];
+  final body = engine.computeBodyFontSize(lines);
+  final kept = engine.filterHeadersFootersAndFootnotes(
+    lines,
+    totalPages: pages.length,
+    bodyFontSize: body,
+  );
+  final blocks = engine.processToBlocks(kept, bodyFontSize: body);
+  final book = splitPdfChapters(
+    blocks,
+    outline: outline,
+    totalPages: pages.length,
+  );
+  // ponytail: heading pertama halaman 1, bukan yang font-nya terbesar; cukup
+  // buat judul cadangan, tuning di korpus (#89).
+  final heading = blocks
+      .where((b) => b.pageNumber == 1 && b.type == ParagraphType.heading)
+      .firstOrNull
+      ?.text;
+  return (
+    chapters: book.chapters,
+    totalChars: book.totalChars,
+    heading: heading,
+  );
+}
