@@ -1,4 +1,6 @@
 import 'package:luma/data/repositories/settings_repository.dart';
+import 'package:luma/data/repositories/catalog_repository.dart';
+import 'package:luma/domain/catalog/catalog_row.dart';
 
 import 'dart:convert';
 import 'dart:io';
@@ -433,6 +435,40 @@ void main() {
       unorderedEquals(['luma.sqlite', 'books', 'covers']),
     );
   });
+
+  test(
+    'backup and restore include catalog rows, search index and sync metadata',
+    () async {
+      final catalog = CatalogRepository(a.db);
+      await catalog.replaceAll(const [
+        CatalogRow(id: 1342, title: 'Pride and Prejudice', authors: []),
+      ]);
+      await catalog.saveMeta(
+        syncedAt: DateTime(2026, 11, 8),
+        lastModified: 'catalog-version',
+        count: 1,
+      );
+      final zip = await backupOf(a);
+      final service = RestoreService(b.db, b.storage);
+      final preview = await service.inspect(zip);
+      final snapshot = AppDatabase(
+        NativeDatabase(File('${preview.dir.path}/luma.sqlite')),
+      );
+      try {
+        expect(
+          (await CatalogRepository(snapshot).search('pride')).single.id,
+          1342,
+        );
+      } finally {
+        await snapshot.close();
+      }
+      await service.apply(preview);
+      b.reopen();
+      final restored = CatalogRepository(b.db);
+      expect((await restored.search('pride')).single.id, 1342);
+      expect(await restored.stats(), await catalog.stats());
+    },
+  );
 
   test('restore rebuilds the Cari kata index (VACUUM can shift rowids)', () async {
     // Gap di rowid `paragraphs`: VACUUM INTO nomerin ulang baris yang tersisa.

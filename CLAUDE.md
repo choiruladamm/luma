@@ -12,9 +12,10 @@ Reader buku iOS + Android (EPUB, Markdown; dipakai sendiri, dogfooding): tap par
 
 - **MVP** (milestone `MVP`): fase 1–8 selesai, sisa #29 dogfooding.
 - **Di luar MVP**, label status:
-  - `status:ready`: plan jelas, tinggal dikerjain.
+  - `status:ready`: plan jelas; mulai setelah semua dependensi closed.
   - `status:deferred`: nunggu pemicu (baris **Dibuka kalau** di issue). Pemicu kejadian → ganti ke `status:ready`.
   - `status:idea`: belum diputusin; bisa ditutup `wontfix`.
+- **Integrasi existing:** Ngobrolin buku (#112) tersisa gate akhir #124; Discover (#163) seluruh anak closed, acceptance akhir belum tercatat lengkap. Status closed/merged tidak menggantikan bukti device.
 - **Induk berurutan:**
   - Import PDF langsung (induk #83, `feat/import-pdf`): #84 spike (gerbang: hasil jelek = stop) → #85 → #86 → #87 → #88 → #89.
   - Import PDF lewat Markdown: sisa #78 (uji PDF asli).

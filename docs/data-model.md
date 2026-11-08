@@ -144,7 +144,7 @@ Log append-only request LLM, terpisah dari cache `ai_results` (`createdAt`-nya k
 
 ## `catalog_books`
 
-Katalog Project Gutenberg dari dump `pg_catalog.csv` ([discover.md](discover.md), Katalog lokal). Bukan data user: diganti utuh tiap sync, gak ikut backup, gak dirujuk tabel lain.
+Katalog Project Gutenberg dari dump `pg_catalog.csv` ([discover.md](discover.md), Katalog lokal). Bukan data user: diganti utuh tiap sync dan gak dirujuk tabel lain. Tetap ikut snapshot backup SQLite, termasuk index dan metadata sync; lihat [backup.md](backup.md).
 
 | Kolom | Tipe | Keterangan |
 |-------|------|-----------|
@@ -188,14 +188,14 @@ Tiap ubah tabel: naikkan `schemaVersion`, tambah langkah di `onUpgrade`, dan tes
 
 ## Pengaturan
 
-API key di `flutter_secure_storage` (Keychain di iOS, Keystore di Android). Model ID, preferensi Aa, dan backup terakhir di tabel `settings` sederhana (key-value) di Drift, supaya ikut ter-backup. Model LLM: `ai.model` (model ID OpenRouter, default `z-ai/glm-5.3-flash`; pilihan dari daftar kandidat di [llm.md](llm.md)). API key di Keychain / Keystore dengan kunci `openrouter_api_key`, cuma disimpen setelah lolos cek bentuk dan cek ke OpenRouter ([llm.md](llm.md)); kosong = dihapus. "Hapus cache" di Pengaturan = kosongin `ai_results` + `ai_breakdowns` setelah konfirmasi; Pengaturan nampilin jumlah paragraf yang udah diterjemahin + ukuran teksnya. Backup terakhir: `backup.lastAt` (ISO 8601), `backup.lastName`, `backup.lastSize` (byte). Kunci Aa: `reader.size` (indeks step 0–6), `reader.font`, `reader.spacing`, `reader.margin`, `theme` (nama enum), `reader.hideStatusBar`, `reader.showProgressLine` (`true`/`false`). Urutan rak: `shelf.sort` (`lastOpened` / `title` / `added`, default `lastOpened`). Tampilan rak: `shelf.view` (`grid` / `list`, default `grid`). Hindari `shared_preferences` untuk data yang perlu ikut backup.
+API key di `flutter_secure_storage` (Keychain di iOS, Keystore di Android). Model ID, preferensi Aa, dan backup terakhir di tabel `settings` sederhana (key-value) di Drift, supaya ikut ter-backup. Model LLM: `ai.model` (model ID OpenRouter, default `deepseek/deepseek-v4.1-flash`; pilihan dari daftar kandidat di [llm.md](llm.md)). API key di Keychain / Keystore dengan kunci `openrouter_api_key`, cuma disimpen setelah lolos cek bentuk dan cek ke OpenRouter ([llm.md](llm.md)); kosong = dihapus. "Hapus cache" di Pengaturan = kosongin `ai_results` + `ai_breakdowns` setelah konfirmasi; Pengaturan nampilin jumlah paragraf yang udah diterjemahin + ukuran teksnya. Backup terakhir: `backup.lastAt` (ISO 8601), `backup.lastName`, `backup.lastSize` (byte). Kunci Aa: `reader.size` (indeks step 0–6), `reader.font`, `reader.spacing`, `reader.margin`, `theme` (nama enum), `reader.hideStatusBar`, `reader.showProgressLine` (`true`/`false`). Urutan rak: `shelf.sort` (`lastOpened` / `title` / `added`, default `lastOpened`). Tampilan rak: `shelf.view` (`grid` / `list`, default `grid`). Hindari `shared_preferences` untuk data yang perlu ikut backup.
 
 
 ## Penyimpanan percakapan (#114/#115)
 
 Schema **8** menambah penyimpanan mengikuti kontrak final
 session/turn/quote/answer/source/index di `lib/domain/models/book_chat.dart`.
-Repository/mapper (#116) tersedia; UI/transport belum dihubungkan ke aplikasi.
+Repository/mapper (#116), transport, ViewModel dan UI sudah terintegrasi; bagian ini menjelaskan asal kontrak storage schema 8. Perubahan berikutnya ada di tabel versi dan bagian lanjutan; gate integrasi akhir #124 masih terbuka.
 Session menyimpan judul/manualTitle, revision dan timestamps; `lastOpenedAt`
 terpisah dari `updatedAt`. Turn memiliki sequence, attempt, model/promptVersion,
 phase, draft, answer/error/status dan quote snapshot. Retry mengganti attempt pada
