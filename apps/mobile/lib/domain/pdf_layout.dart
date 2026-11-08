@@ -776,6 +776,17 @@ class PdfLayoutEngine {
     return false;
   }
 
+  /// Words that are first halves of real compounds, so a line-end hyphen after
+  /// them is kept ("two-" + "thirds"). Everything else is a soft hyphen.
+  static final _compoundHead = RegExp(
+    r'(?:^|[\s(“"])(?:one|two|three|four|five|six|seven|eight|nine|ten|'
+    r'half|self|non|well|ill|long|short|high|low|full|multi|semi|ex|vice|'
+    r'all|cross|old|new|first|second|third|fifth|tenth|twenty|thirty|forty|'
+    r'fifty|state|world|user|real|part|full|open|so|e|x|co|re)-$',
+    caseSensitive: false,
+  );
+  static bool _keepsHyphen(String prev) => _compoundHead.hasMatch(prev);
+
   static String _joinLinesToParagraph(List<PdfLine> lines) {
     if (lines.isEmpty) return '';
 
@@ -791,10 +802,16 @@ class PdfLayoutEngine {
       if (i > 0) {
         final prev = sb.toString();
         // Check hyphenation: if prev ends with '-', and current starts with lowercase
-        if (prev.endsWith('-') && RegExp(r'^[a-z]').hasMatch(t)) {
+        if (prev.endsWith('-') &&
+            RegExp(r'^[a-z]').hasMatch(t) &&
+            !_keepsHyphen(prev)) {
           final stripped = prev.substring(0, prev.length - 1);
           sb.clear();
           sb.write(stripped);
+          sb.write(t);
+          continue;
+        } else if (prev.endsWith('-') && RegExp(r'^[a-z]').hasMatch(t)) {
+          // Real compound ("three-" + "character"): keep the hyphen, no space.
           sb.write(t);
           continue;
         } else {
@@ -836,8 +853,9 @@ class PdfLayoutEngine {
           String mergedText;
           if (current.text.endsWith('-') &&
               RegExp(r'^[a-z]').hasMatch(next.text.trim())) {
-            mergedText =
-                '${current.text.substring(0, current.text.length - 1)}${next.text}';
+            mergedText = _keepsHyphen(current.text)
+                ? '${current.text}${next.text}'
+                : '${current.text.substring(0, current.text.length - 1)}${next.text}';
           } else {
             mergedText = '${current.text} ${next.text}';
           }

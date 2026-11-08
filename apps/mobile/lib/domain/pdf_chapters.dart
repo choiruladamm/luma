@@ -387,6 +387,11 @@ PdfParsedBook _assembleChapters(
     ];
   }
 
+  final titles = [
+    for (final b in boundaries)
+      if (b.title.trim().length >= 4) b.title.trim().toLowerCase(),
+  ];
+
   final chapters = <ParsedChapter>[];
   int offset = 0;
 
@@ -401,6 +406,7 @@ PdfParsedBook _assembleChapters(
 
     // Skip empty chapters and TOC/index pages
     if (!_isContentChapter(paragraphs, chapterBlocks)) continue;
+    if (_listsChapterTitles(paragraphs, titles, b.title)) continue;
 
     final title = _resolveTitle(b.title, paragraphs);
     final chapter = ParsedChapter(
@@ -435,6 +441,28 @@ PdfParsedBook _buildSingleChapter(List<PdfLocatedBlock> blocks, String title) {
 
 List<RawParagraph> _blocksToRawParagraphs(List<PdfLocatedBlock> blocks) {
   return [for (final b in blocks) b.toRawParagraph()];
+}
+
+/// A table of contents with no page numbers: most of its short lines are the
+/// titles of the book's own chapters. Judged by structure (the lines quote the
+/// bookmarks), not by a "Contents" label.
+bool _listsChapterTitles(
+  List<RawParagraph> paragraphs,
+  List<String> titles,
+  String ownTitle,
+) {
+  if (titles.length < 4) return false;
+  final lines = paragraphs
+      .where((p) => p.type == ParagraphType.paragraph)
+      .toList();
+  if (lines.length < 4) return false;
+  final own = ownTitle.trim().toLowerCase();
+  final hits = lines.where((p) {
+    final t = p.text.trim().toLowerCase();
+    return t.length <= 120 &&
+        titles.any((c) => c != own && (t == c || t.endsWith(c)));
+  }).length;
+  return hits >= lines.length * 0.6;
 }
 
 /// Returns false for chapters that have no body text paragraphs or look like
@@ -504,6 +532,13 @@ typedef PdfLayoutResult = ({
   String? heading,
 });
 
+final _frontMatterLabel = RegExp(
+  r'^(title page|half title|copyright|dedication|contents|table of contents|'
+  r'acknowledg(e)?ments?|epigraph|about the author|also by|cover|halaman judul|'
+  r'daftar isi|hak cipta|kata pengantar|prakata|ebook isbn.*)\b',
+  caseSensitive: false,
+);
+
 PdfLayoutResult layoutPdf(
   List<List<PdfGlyph>> pages,
   List<PdfOutlineEntry> outline, {
@@ -525,12 +560,21 @@ PdfLayoutResult layoutPdf(
     outline: outline,
     totalPages: pages.length,
   );
-  // ponytail: heading pertama halaman 1, bukan yang font-nya terbesar; cukup
-  // buat judul cadangan, tuning di korpus (#89).
+  // ponytail: heading pertama di 5 halaman awal yang bukan label front matter
+  // (sampul gambar = halaman 1 tanpa teks, judul ada di halaman judul), bukan
+  // yang font-nya terbesar; cadangan sampai pdfrx punya API metadata.
   final heading = blocks
-      .where((b) => b.pageNumber == 1 && b.type == ParagraphType.heading)
+      .where(
+        (b) =>
+            b.pageNumber <= 5 &&
+            b.type == ParagraphType.heading &&
+            b.text.trim().length >= 3 &&
+            b.text.trim().length <= 120 &&
+            !_frontMatterLabel.hasMatch(b.text.trim()),
+      )
       .firstOrNull
-      ?.text;
+      ?.text
+      .trim();
   return (
     chapters: book.chapters,
     totalChars: book.totalChars,

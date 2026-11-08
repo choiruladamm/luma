@@ -649,4 +649,100 @@ void main() {
       expect(result.chapters.map((c) => c.title), ['A', 'B']);
     });
   });
+
+  group('table of contents without page numbers', () {
+    String body(int n) => 'Body paragraph number $n. ' * 12;
+
+    test('a chapter that just lists the other chapters is dropped', () {
+      final blocks = [
+        heading('Contents', page: 1),
+        block('First Steps', page: 1),
+        block('The Second Idea', page: 1),
+        block('Third Thing Here', page: 1),
+        block('Fourth Matter', page: 1),
+        block(body(2), page: 2),
+        block(body(3), page: 3),
+        block(body(4), page: 4),
+        block(body(5), page: 5),
+      ];
+      final result = splitPdfChapters(
+        blocks,
+        outline: [
+          outline('Contents', page: 1),
+          outline('First Steps', page: 2),
+          outline('The Second Idea', page: 3),
+          outline('Third Thing Here', page: 4),
+          outline('Fourth Matter', page: 5),
+        ],
+        totalPages: 5,
+      );
+      expect(result.chapters.map((c) => c.title), [
+        'First Steps',
+        'The Second Idea',
+        'Third Thing Here',
+        'Fourth Matter',
+      ]);
+    });
+
+    test('a normal chapter that mentions a title once is kept', () {
+      final blocks = [
+        for (var pg = 1; pg <= 4; pg++) ...[
+          heading('Chapter $pg', page: pg),
+          block('${body(pg)} See Chapter 2 for more.', page: pg),
+          block(body(pg + 10), page: pg),
+          block(body(pg + 20), page: pg),
+          block(body(pg + 30), page: pg),
+        ],
+      ];
+      final result = splitPdfChapters(
+        blocks,
+        outline: [
+          for (var pg = 1; pg <= 4; pg++) outline('Chapter $pg', page: pg),
+        ],
+        totalPages: 4,
+      );
+      expect(result.chapters, hasLength(4));
+    });
+  });
+
+  group('layoutPdf title candidate', () {
+    test('skips front-matter labels, takes a real heading on pages 1-5', () {
+      PdfGlyph gl(String c, int i, double top, double h, int page) => PdfGlyph(
+        char: c,
+        pageNumber: page,
+        bounds: PdfRectNormalized(
+          left: 0.1 + i * 0.02,
+          top: top,
+          width: 0.015,
+          height: h,
+        ),
+      );
+      List<PdfGlyph> text(String t, double top, double h, int page) => [
+        for (final (i, c) in t.split('').indexed) gl(c, i, top, h, page),
+        gl('\n', t.length, top, 0, page),
+      ];
+      final page1 = [
+        ...text('Copyright', 0.15, 0.04, 1),
+        ...text('Body text of the book goes here for a while.', 0.30, 0.02, 1),
+        ...text(
+          'Body text of the book goes here again and more.',
+          0.34,
+          0.02,
+          1,
+        ),
+      ];
+      final page2 = [
+        ...text('THE REAL TITLE', 0.15, 0.04, 2),
+        ...text('Body text of the book goes here for a while.', 0.30, 0.02, 2),
+        ...text(
+          'Body text of the book goes here again and more.',
+          0.34,
+          0.02,
+          2,
+        ),
+      ];
+      final laid = layoutPdf([page1, page2], const []);
+      expect(laid.heading, 'THE REAL TITLE');
+    });
+  });
 }

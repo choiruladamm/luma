@@ -210,7 +210,9 @@ Waktu (macOS, bukan benchmark): ekstraksi 0,5–1,6 dtk, layout 0,7 dtk untuk 25
 
 **Yang ditemukan dan diperbaiki dari korpus:** kotak huruf PDFium itu *ketat* (titik kecil, `h` lebih tinggi dari `a`), jadi pengelompokan baris pakai geometri memecah satu baris jadi banyak. Sekarang layout memakai pemisah baris + spasi dari PDFium sendiri; ukuran font = persentil 80 tinggi huruf; batas paragraf pakai jarak baseline, lebar huruf, dan lebar kolom, bukan konstanta.
 
-**Batas yang diketahui:** judul/penulis dari metadata PDF belum kebaca (pdfrx 2.12 tanpa API-nya; judul jatuh ke heading halaman 1 lalu nama file, jadi PDF bersampul gambar tampil sebagai nama file), halaman daftar isi tanpa nomor halaman tidak dibuang, halaman dengan kotak samping/3+ kolom (#94), tabel, ejaan span huruf kecil kapital di awal bab. Belum diuji: PDF scan, ber-password, rotasi/spread, Android.
+**Error nyata (PDFium asli, PDF buatan `gs`/`cupsfilter`, `tool/pdf_import_check.dart`):** scan (12/12 halaman tanpa teks) → `scan`; `-sUserPassword` → `password`; 3 KB byte acak `.pdf` → `corrupt`; separuh scan separuh teks → masuk dengan `skipped=12`.
+
+**Batas yang diketahui:** judul/penulis dari metadata PDF belum kebaca (pdfrx 2.12 tanpa API-nya; judul = heading pertama di 5 halaman awal yang bukan label front matter, lalu nama file, jadi PDF yang halaman judulnya bukan heading tampil sebagai nama file), halaman dengan kotak samping/3+ kolom (#94), tabel, huruf kecil kapital di awal bab, daftar isi yang barisnya tergabung jadi satu paragraf. Daftar isi tanpa nomor halaman dibuang kalau barisnya mengutip judul bab lain. Hyphen akhir baris dibuang, kecuali setelah kepala kata majemuk (`two-`, `three-`, `self-`, ...). Belum diuji: Android, rotasi/spread, tap Artinya di paragraf PDF (butuh panggilan AI).
 
 Pilih `.pdf` di picker, langsung jadi satu buku utuh, tanpa Docling.
 

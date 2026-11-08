@@ -549,4 +549,34 @@ void main() {
       expect(blocks.map((b) => b.text), ['a b c', 'd after a blank line']);
     });
   });
+
+  group('line-end hyphens', () {
+    PdfLine l(String t, double base) => PdfLine(
+      text: t,
+      bounds: PdfRectNormalized(
+        left: 0.1,
+        top: base - 0.014,
+        width: 0.5,
+        height: 0.018,
+      ),
+      pageNumber: 1,
+      fontHeight: 0.009,
+      baselineY: base,
+      medianGlyphWidth: 0.008,
+    );
+
+    String one(String a, String b) => engine
+        .processToBlocks([l(a, 0.30), l(b, 0.32)], bodyFontSize: 0.009)
+        .single
+        .text;
+
+    test('soft hyphen joins the word', () {
+      expect(one('a conti-', 'nuous line'), 'a continuous line');
+    });
+
+    test('compound heads keep the hyphen', () {
+      expect(one('about two-', 'thirds of it'), 'about two-thirds of it');
+      expect(one('a three-', 'character group'), 'a three-character group');
+    });
+  });
 }
