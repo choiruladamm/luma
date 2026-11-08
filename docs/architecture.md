@@ -345,3 +345,9 @@ posisi chat yang ditinggal. Balik ke obrolan mem-pop visit; Lanjut baca semula
 mengembalikan `ReaderReturn.reading` melalui chat dan overlay Artinya/Bedahin ke
 reader asli beserta posisi yang dicapture saat masuk. Tidak ada adopsi posisi sumber
 menjadi progres baru. Revisi pacing/no-auto-scroll menyeluruh tetap di #123.
+
+### Bahasa antarmuka (#184)
+
+`appLocaleProvider` membaca `app.locale` dari SettingsRepository. MaterialApp.router memakai
+locale dan delegates generated; router/ProviderScope tetap sama saat switch. Copy/mapping
+label berada di UI dan ARB, formatter menerima locale eksplisit. Kontrak dan validasi: [i18n.md](i18n.md).

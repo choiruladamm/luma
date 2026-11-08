@@ -7,7 +7,33 @@ import 'package:luma/ui/features/bookshelf/view_models/bookshelf_view_model.dart
 
 import 'fakes.dart';
 
+class UnreadableLocale extends FakeSettings {
+  @override
+  Stream<String> watchLocale() =>
+      Stream.error(StateError('unreadable preference'));
+}
+
 void main() {
+  testWidgets('unreadable language preference falls back to Indonesian', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          settingsRepositoryProvider.overrideWithValue(UnreadableLocale()),
+          booksStreamProvider.overrideWith((ref) => Stream.value([])),
+        ],
+        child: const LumaApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Rak buku lo'), findsOneWidget);
+    expect(
+      tester.widget<MaterialApp>(find.byType(MaterialApp)).locale,
+      const Locale('id'),
+    );
+  });
+
   testWidgets('saved English loads before content and switch preserves route', (
     tester,
   ) async {

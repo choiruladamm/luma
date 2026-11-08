@@ -2,7 +2,7 @@ APP := apps/mobile
 FLUTTER := cd $(APP) && fvm flutter
 DART := cd $(APP) && fvm dart
 
-.PHONY: help get gen brand live chat-agent-live chat-spike chat-spike-live chat-oracle-live chat-discussion-live chat-adaptive-live chat-retrieval chat-dense-live chat-dense-replay chat-heldout-live chat-refine-live chat-validation2-live chat-recovery-live chat-validation3-live watch run release dev run-android release-android dev-android apk profile test analyze format check clean
+.PHONY: help get l10n gen brand live chat-agent-live chat-spike chat-spike-live chat-oracle-live chat-discussion-live chat-adaptive-live chat-retrieval chat-dense-live chat-dense-replay chat-heldout-live chat-refine-live chat-validation2-live chat-recovery-live chat-validation3-live watch run release dev run-android release-android dev-android apk profile test analyze format check clean
 
 help: ## list commands
 	@grep -E '^[a-z0-9-]+:.*## ' $(MAKEFILE_LIST) | awk -F ':.*## ' '{printf "  %-16s %s\n", $$1, $$2}'
@@ -10,8 +10,10 @@ help: ## list commands
 get: ## pub get
 	$(FLUTTER) pub get
 
-gen: ## codegen: drift, riverpod, freezed (build_runner)
+l10n: ## generate ID/EN localizations
 	$(FLUTTER) gen-l10n
+
+gen: l10n ## codegen: drift, riverpod, freezed (build_runner)
 	$(DART) run build_runner build
 
 brand: ## re-render app icon, launch logo, wordmark from assets/brand/*.svg (Chrome + ImageMagick)
@@ -102,7 +104,7 @@ analyze: ## static analysis
 format: ## dart format lib + test
 	$(DART) format lib $(if $(wildcard $(APP)/test),test)
 
-check: format analyze test ## format, analyze, test
+check: l10n format analyze test ## format, analyze, test
 
 clean: ## flutter clean + pub get
 	$(FLUTTER) clean && fvm flutter pub get
