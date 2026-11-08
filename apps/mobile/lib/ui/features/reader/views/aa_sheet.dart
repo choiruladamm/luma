@@ -1,3 +1,4 @@
+import 'package:luma/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -52,11 +53,14 @@ class _AaSheet extends ConsumerWidget {
               Expanded(
                 child: Semantics(
                   header: true,
-                  child: Text('Atur bacaan lo', style: StabiloType.titleMd),
+                  child: Text(
+                    context.l10n.aaMakeItYours,
+                    style: StabiloType.titleMd,
+                  ),
                 ),
               ),
               CircleButton(
-                semanticLabel: 'Tutup',
+                semanticLabel: context.l10n.sheetClose,
                 icon: AppIcons.close,
                 onPressed: () => Navigator.of(context).pop(),
               ),
@@ -74,7 +78,7 @@ class _AaSheet extends ConsumerWidget {
                   spacing: Space.s4,
                   children: [
                     _Section(
-                      label: 'Ukuran huruf',
+                      label: context.l10n.aaTextSize,
                       value: _decimal(prefs.fontSize),
                       child: _SizeStepper(
                         step: prefs.sizeStep,
@@ -82,14 +86,14 @@ class _AaSheet extends ConsumerWidget {
                       ),
                     ),
                     _Section(
-                      label: 'Font',
+                      label: context.l10n.aaFont,
                       child: Row(
                         spacing: Space.s2,
                         children: [
-                          for (final (font, label) in const [
-                            (ReadingFont.clear, 'Jelas'),
-                            (ReadingFont.book, 'Kayak buku'),
-                            (ReadingFont.system, 'Bawaan sistem'),
+                          for (final (font, label) in [
+                            (ReadingFont.clear, context.l10n.aaClear),
+                            (ReadingFont.book, context.l10n.aaBookLike),
+                            (ReadingFont.system, context.l10n.aaSystemDefault),
                           ])
                             Expanded(
                               child: _FontTile(
@@ -103,32 +107,40 @@ class _AaSheet extends ConsumerWidget {
                       ),
                     ),
                     _Section(
-                      label: 'Jarak baris',
+                      label: context.l10n.aaLineSpacing,
                       child: _Segmented(
-                        options: const ['Rapat', 'Pas', 'Lega'],
+                        options: [
+                          context.l10n.aaTight,
+                          context.l10n.aaBalanced,
+                          context.l10n.aaRoomy,
+                        ],
                         selected: prefs.spacing.index,
                         onChanged: (i) =>
                             set(prefs.copyWith(spacing: LineSpacing.values[i])),
                       ),
                     ),
                     _Section(
-                      label: 'Margin',
+                      label: context.l10n.aaMargins,
                       child: _Segmented(
-                        options: const ['Sempit', 'Pas', 'Lega'],
+                        options: [
+                          context.l10n.aaNarrow,
+                          context.l10n.aaBalanced,
+                          context.l10n.aaRoomy,
+                        ],
                         selected: prefs.margin.index,
                         onChanged: (i) =>
                             set(prefs.copyWith(margin: TextMargin.values[i])),
                       ),
                     ),
                     _Section(
-                      label: 'Tema',
+                      label: context.l10n.aaTheme,
                       child: Row(
                         spacing: Space.s2,
                         children: [
-                          for (final (theme, label) in const [
-                            (AppTheme.light, 'Terang'),
-                            (AppTheme.dark, 'Gelap'),
-                            (AppTheme.system, 'Ikut sistem'),
+                          for (final (theme, label) in [
+                            (AppTheme.light, context.l10n.aaLight),
+                            (AppTheme.dark, context.l10n.aaDark),
+                            (AppTheme.system, context.l10n.aaSystem),
                           ])
                             Expanded(
                               child: _ThemePill(
@@ -142,7 +154,7 @@ class _AaSheet extends ConsumerWidget {
                       ),
                     ),
                     _Section(
-                      label: 'Tampilan layar',
+                      label: context.l10n.aaScreenDisplay,
                       child: Container(
                         decoration: BoxDecoration(
                           color: c.muted,
@@ -151,17 +163,16 @@ class _AaSheet extends ConsumerWidget {
                         child: Column(
                           children: [
                             _ToggleRow(
-                              title: 'Sembunyiin jam & baterai',
-                              subtitle: 'Status bar ngumpet bareng menu pas lagi baca',
+                              title: context.l10n.aaHideClockBattery,
+                              subtitle: context.l10n.aaHideTheStatusBarWithThe,
                               value: prefs.hideStatusBar,
                               onChanged: (v) =>
                                   set(prefs.copyWith(hideStatusBar: v)),
                             ),
                             Divider(height: 1, thickness: 1, color: c.track),
                             _ToggleRow(
-                              title: 'Tampilin garis progres',
-                              subtitle:
-                                  'Garis tipis di bawah layar pas menu ngumpet',
+                              title: context.l10n.aaShowProgressLine,
+                              subtitle: context.l10n.aaAThinLineAtTheBottom,
                               value: prefs.showProgressLine,
                               onChanged: (v) =>
                                   set(prefs.copyWith(showProgressLine: v)),
@@ -241,7 +252,7 @@ class _SizeStepper extends StatelessWidget {
       spacing: 10,
       children: [
         _LetterButton(
-          label: 'Kecilin huruf',
+          label: context.l10n.aaSmallerText,
           size: 14,
           onTap: step > 0 ? () => onChanged(step - 1) : null,
         ),
@@ -263,7 +274,7 @@ class _SizeStepper extends StatelessWidget {
           ),
         ),
         _LetterButton(
-          label: 'Gedein huruf',
+          label: context.l10n.aaLargerText,
           size: 21,
           onTap: step < last ? () => onChanged(step + 1) : null,
         ),
@@ -344,7 +355,7 @@ class _FontTile extends StatelessWidget {
     return Semantics(
       button: true,
       selected: selected,
-      label: 'Font $label',
+      label: context.l10n.aaFont2(label),
       excludeSemantics: true,
       child: GestureDetector(
         onTap: onTap,
@@ -458,7 +469,7 @@ class _ThemePill extends StatelessWidget {
     return Semantics(
       button: true,
       selected: selected,
-      label: 'Tema $label',
+      label: context.l10n.aaTheme2(label),
       excludeSemantics: true,
       child: GestureDetector(
         onTap: onTap,

@@ -5,6 +5,7 @@ import 'data/repositories/settings_repository.dart';
 import 'data/services/file_storage.dart';
 import 'domain/models/reader_prefs.dart';
 import 'routing/router.dart';
+import 'l10n/app_localizations.dart';
 import 'ui/core/theme/stabilo_theme.dart';
 import 'ui/features/discover/views/download_toasts.dart';
 import 'ui/features/splash/splash_overlay.dart';
@@ -29,7 +30,11 @@ class LumaApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final language = ref.watch(appLocaleProvider);
     return MaterialApp.router(
+      locale: Locale(language.value ?? 'id'),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       title: 'Luma',
       debugShowCheckedModeBanner: false,
       theme: stabiloTheme(Brightness.light),
@@ -42,7 +47,9 @@ class LumaApp extends ConsumerWidget {
       },
       builder: (context, child) => SplashGate(
         enabled: splash,
-        child: DownloadToasts(child: child ?? const SizedBox.shrink()),
+        child: language.isLoading && !language.hasValue
+            ? const SizedBox.expand()
+            : DownloadToasts(child: child ?? const SizedBox.shrink()),
       ),
       routerConfig: ref.watch(routerProvider),
     );

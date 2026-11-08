@@ -1,3 +1,4 @@
+import 'package:luma/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/stabilo_theme.dart';
@@ -46,15 +47,17 @@ Future<ReaderMenuAction?> showReaderMenu(
       _item(
         context,
         resultsFor == null ? ReaderMenuAction.search : ReaderMenuAction.results,
-        resultsFor == null ? 'Cari kata' : 'Lihat hasil “$resultsFor”',
+        resultsFor == null
+            ? context.l10n.readerSearchWords
+            : context.l10n.readerViewResultsFor(resultsFor),
         icon: const AppIcon(AppIcons.search, size: 19),
         last: false,
       ),
       _item(
         context,
         ReaderMenuAction.display,
-        'Atur tampilan',
-        subtitle: 'Ukuran, font, tema',
+        context.l10n.readerReadingAppearance,
+        subtitle: context.l10n.readerSizeFontTheme,
         icon: Text(
           'Aa',
           style: StabiloType.label.copyWith(fontSize: 16, color: c.ink),

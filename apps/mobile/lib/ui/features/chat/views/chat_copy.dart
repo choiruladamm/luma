@@ -1,3 +1,5 @@
+import 'package:luma/l10n/l10n.dart';
+
 import '../../../../data/repositories/chat_context_repository.dart';
 import '../view_models/chat_view_model.dart';
 import '../../../../domain/chat_steps.dart';
@@ -5,17 +7,17 @@ import '../../../../domain/models/ai_reply.dart';
 import '../../../../domain/models/book_chat.dart';
 
 extension ChatPhaseCopy on ChatPhase {
-  String get label => switch (this) {
-    ChatPhase.preparing => 'Bentar, lagi siapin obrolan…',
-    ChatPhase.retrieving => 'Lagi nyari sumber di buku…',
-    ChatPhase.waiting => 'Bentar, lagi mikir…',
-    ChatPhase.writing => 'Lagi nulis…',
-    ChatPhase.slow => 'Agak lama nih, masih diproses…',
-    ChatPhase.done => 'Jawaban selesai',
-    ChatPhase.failed => 'Yah, gagal nih',
-    ChatPhase.cut => 'Jawabannya keputus.',
-    ChatPhase.stopped => 'Dihentiin.',
-    ChatPhase.interrupted => 'Obrolan sempat terputus',
+  String label(AppLocalizations l10n) => switch (this) {
+    ChatPhase.preparing => l10n.chatHangOnPreparingTheChat,
+    ChatPhase.retrieving => l10n.chatLookingForSourcesInTheBook,
+    ChatPhase.waiting => l10n.chatHangOnThinking,
+    ChatPhase.writing => l10n.chatWriting,
+    ChatPhase.slow => l10n.chatTakingAWhileStillWorking,
+    ChatPhase.done => l10n.chatResponseComplete,
+    ChatPhase.failed => l10n.meaningSomethingWentWrong,
+    ChatPhase.cut => l10n.chatTheResponseWasCutOff,
+    ChatPhase.stopped => l10n.chatStopped,
+    ChatPhase.interrupted => l10n.chatTheChatWasInterrupted,
   };
 }
 
@@ -28,10 +30,10 @@ extension ChatPhaseKind on ChatPhase {
 }
 
 extension ChatLaunchCopy on ChatLaunchOrigin {
-  String get backLabel => switch (this) {
-    ChatLaunchOrigin.meaning => 'Balik ke Terjemahin',
-    ChatLaunchOrigin.breakdown => 'Kembali',
-    ChatLaunchOrigin.reader => 'Balik baca',
+  String backLabel(AppLocalizations l10n) => switch (this) {
+    ChatLaunchOrigin.meaning => l10n.chatBackToTranslation,
+    ChatLaunchOrigin.breakdown => l10n.chatBack,
+    ChatLaunchOrigin.reader => l10n.chatBackToReading,
   };
 }
 
@@ -39,55 +41,55 @@ extension ChatErrorCopy on AiException {
   bool get needsSettings =>
       error == AiError.noApiKey ||
       (error == AiError.http && [401, 402, 403].contains(status));
-  String get chatMessage {
+  String chatMessage(AppLocalizations l10n) {
     if (error == AiError.noApiKey) {
-      return 'API key belum diisi. Isi dulu di Pengaturan, lalu kirim lagi.';
+      return l10n.chatNoApiKeyYetAddIt;
     }
     if (error == AiError.network) {
-      return 'Koneksi lagi putus. Cek internet lo, lalu coba lagi.';
+      return l10n.chatConnectionLostCheckYourInternetAnd;
     }
     if (error == AiError.timeout) {
-      return 'Kelamaan nunggu jawaban. Lo bisa coba lagi.';
+      return l10n.chatTheResponseTookTooLongYou;
     }
     if (error == AiError.invalidResponse) {
-      return 'Jawabannya belum lolos pengecekan. Coba lagi, yuk.';
+      return l10n.chatTheResponseHasnTPassedValidation;
     }
     if (status == 401 || status == 403) {
-      return 'API key ditolak. Periksa key lo di Pengaturan.';
+      return l10n.chatApiKeyRejectedCheckYourKey;
     }
     if (status == 402) {
-      return 'Saldo OpenRouter habis. Cek akun lo, lalu coba lagi.';
+      return l10n.chatYourOpenrouterCreditHasRunOut;
     }
     if (status == 429) {
-      return 'Lagi kena batas request. Tunggu sebentar, lalu coba lagi.';
+      return l10n.chatRateLimitReachedWaitAMoment;
     }
-    return 'Layanan AI lagi bermasalah. Coba lagi nanti.';
+    return l10n.chatTheAiServiceIsHavingTrouble;
   }
 }
 
-String chatTimeGroup(DateTime at, DateTime now) {
+String chatTimeGroup(AppLocalizations l10n, DateTime at, DateTime now) {
   final local = at.toLocal(), today = now.toLocal();
   final date = DateTime(local.year, local.month, local.day);
   final start = DateTime(today.year, today.month, today.day);
-  if (date == start) return 'Hari ini';
+  if (date == start) return l10n.chatToday;
   if (date == DateTime(start.year, start.month, start.day - 1)) {
-    return 'Kemarin';
+    return l10n.chatYesterday;
   }
   if (date.isAfter(start.subtract(const Duration(days: 7)))) {
-    return '7 hari terakhir';
+    return l10n.chatLastDays;
   }
-  return 'Lebih lama';
+  return l10n.chatOlder;
 }
 
 extension ChatIndexCopy on ChatState {
-  String? get indexLabel {
+  String? indexLabel(AppLocalizations l10n) {
     final examined = explorationProgress;
     if ((phase == ChatPhase.retrieving || phase == ChatPhase.slow) &&
         examined != null) {
       final where = examined.label == null
-          ? 'Lagi meriksa isi buku…'
-          : 'Lagi baca ${examined.label}…';
-      return '$where ${examined.completed}/${examined.total} potongan';
+          ? l10n.chatCheckingTheBook
+          : l10n.chatReading(examined.label!);
+      return l10n.chatChunks(where, examined.completed, examined.total);
     }
     final progress = indexProgress;
     if ((phase != ChatPhase.retrieving && phase != ChatPhase.slow) ||
@@ -95,39 +97,64 @@ extension ChatIndexCopy on ChatState {
         progress.completed >= progress.total) {
       return null;
     }
-    return 'Lagi nyiapin buku… ${progress.completed}/${progress.total} potongan';
+    return l10n.chatPreparingTheBookChunks(progress.completed, progress.total);
   }
 }
 
 extension ChatStepCopy on ChatStep {
   /// Teks baris status saat langkah ini yang lagi jalan ("Lagi baca Book II › IV").
-  String get statusLabel => switch (kind) {
-    ChatStepKind.plan => 'Lagi nyusun rencana',
-    ChatStepKind.cache => 'Lagi ambil catatan tersimpan',
-    ChatStepKind.answer => 'Lagi nulis jawaban',
+  String statusLabel(AppLocalizations l10n) => switch (kind) {
+    ChatStepKind.plan => l10n.chatPlanning,
+    ChatStepKind.cache => l10n.chatLoadingSavedNotes,
+    ChatStepKind.answer => l10n.chatWritingTheResponse,
     ChatStepKind.read ||
     ChatStepKind.search ||
     ChatStepKind.repair ||
-    ChatStepKind.retry => 'Lagi ${label[0].toLowerCase()}${label.substring(1)}',
+    ChatStepKind.retry => l10n.chatWorking(
+      label[0].toLowerCase(),
+      label.substring(1),
+    ),
     ChatStepKind.skip || ChatStepKind.stop => label,
   };
 }
 
 extension ChatDraftCopy on ChatTurn {
-  String draftLabel(ChatPhase phase) {
+  String draftLabel(AppLocalizations l10n, ChatPhase phase) {
     if (error == AiError.invalidResponse && !phase.isRunning) {
-      return 'Draf ini belum lolos pengecekan jawaban.';
+      return l10n.chatThisDraftHasnTPassedResponse;
     }
-    return phase.label;
+    return phase.label(l10n);
   }
 }
 
 extension ChatStatusCopy on ChatState {
   /// Label status di bawah jawaban yang sedang berjalan/berhenti.
-  String statusLabel(ChatPhase phase) {
+  String statusLabel(AppLocalizations l10n, ChatPhase phase) {
     if (repairAttempt > 0 && phase.isRunning) {
-      return 'Lagi benerin format jawaban… ($repairAttempt/$chatMaxRepairs)';
+      return l10n.chatFixingTheResponseFormat(repairAttempt, chatMaxRepairs);
     }
-    return turns.lastOrNull?.draftLabel(phase) ?? phase.label;
+    return turns.lastOrNull?.draftLabel(l10n, phase) ?? phase.label(l10n);
+  }
+}
+
+extension ChatProblemCopy on ChatProblem {
+  String label(AppLocalizations l10n) => switch (this) {
+    ChatProblem.bookDeleted => l10n.bookDeleted,
+    ChatProblem.bookChanged => l10n.bookChanged,
+    ChatProblem.historyDamaged => l10n.chatHistoryDamaged,
+    ChatProblem.unavailable => l10n.chatUnavailable,
+    ChatProblem.invalidQuestion => l10n.questionInvalid,
+    ChatProblem.invalidCheckpoint => l10n.checkpointInvalid,
+  };
+}
+
+extension ChatAnswerDisplayCopy on ChatAnswer {
+  String displayNote(AppLocalizations l10n) {
+    if (formatVersion == 2) return '';
+    return switch (status) {
+      ChatAnswerStatus.partial => l10n.chatPartialNote,
+      ChatAnswerStatus.notFound => l10n.chatNoEvidenceNote,
+      _ => '',
+    };
   }
 }

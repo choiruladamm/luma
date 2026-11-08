@@ -1,3 +1,5 @@
+import 'package:luma/ui/core/book_copy.dart';
+import 'package:luma/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -48,23 +50,42 @@ class BookInfoSheet extends ConsumerWidget {
     final info = ref.watch(bookInfoProvider(book.id)).value;
     final now = DateTime.now();
     final percent = bookSticker(
+      l10n: context.l10n,
       progress: book.progress,
       opened: book.opened,
       finished: false,
     );
     final rows = [
-      ('Lagi di', book.progressLabel),
+      (context.l10n.bookReadingPosition, book.progressLabel(context.l10n)),
       (
-        'Terakhir dibuka',
-        info?.lastOpenedAt == null ? '—' : lastSeen(info!.lastOpenedAt!, now),
+        context.l10n.bookLastOpened,
+        info?.lastOpenedAt == null
+            ? '—'
+            : lastSeen(
+                info!.lastOpenedAt!,
+                now,
+                locale: context.l10n.localeName,
+              ),
       ),
-      ('Ditambah', info == null ? '—' : date(info.createdAt)),
-      ('Paragraf diartiin', info == null ? '—' : thousands(info.translated)),
       (
-        'Ukuran file',
-        info?.fileBytes == null ? '—' : fileSize(info!.fileBytes!),
+        context.l10n.bookAdded,
+        info == null
+            ? '—'
+            : date(info.createdAt, locale: context.l10n.localeName),
       ),
-      ('Nama file', info?.fileName ?? '—'),
+      (
+        context.l10n.bookParagraphsTranslated2,
+        info == null
+            ? '—'
+            : thousands(info.translated, locale: context.l10n.localeName),
+      ),
+      (
+        context.l10n.bookFileSize,
+        info?.fileBytes == null
+            ? '—'
+            : fileSize(info!.fileBytes!, locale: context.l10n.localeName),
+      ),
+      (context.l10n.bookFileName, info?.fileName ?? '—'),
     ];
 
     return SheetFrame(
@@ -98,7 +119,7 @@ class BookInfoSheet extends ConsumerWidget {
                       ),
                     ),
                     Text(
-                      book.author ?? 'Penulis gak ketemu',
+                      book.author ?? context.l10n.bookAuthorNotFound,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: StabiloType.body.copyWith(
@@ -127,7 +148,7 @@ class BookInfoSheet extends ConsumerWidget {
               ),
             ),
             CircleButton(
-              semanticLabel: 'Tutup',
+              semanticLabel: context.l10n.sheetClose,
               icon: AppIcons.close,
               onPressed: () => Navigator.of(context).pop(),
             ),
@@ -161,7 +182,7 @@ class BookInfoSheet extends ConsumerWidget {
                       AppIcon(AppIcons.edit, size: 18, color: c.ink),
                       Expanded(
                         child: Text(
-                          'Ubah judul & penulis',
+                          context.l10n.bookEditTitleAuthor,
                           style: StabiloType.label.copyWith(fontSize: 14.5),
                         ),
                       ),
@@ -208,7 +229,9 @@ class BookInfoSheet extends ConsumerWidget {
           spacing: 6,
           children: [
             AppButton.primary(
-              label: book.opened && !book.finished ? 'Lanjut baca' : 'Baca',
+              label: book.opened && !book.finished
+                  ? context.l10n.readerKeepReading
+                  : context.l10n.downloadRead,
               onPressed: onRead,
             ),
             Semantics(
@@ -220,7 +243,7 @@ class BookInfoSheet extends ConsumerWidget {
                   height: 48,
                   child: Center(
                     child: Text(
-                      'Hapus dari rak',
+                      context.l10n.bookshelfRemoveFromShelf,
                       style: StabiloType.label.copyWith(color: c.danger),
                     ),
                   ),

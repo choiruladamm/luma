@@ -1,3 +1,5 @@
+import 'package:luma/l10n/app_localizations.dart';
+
 import 'dart:async';
 import 'dart:io';
 
@@ -179,6 +181,8 @@ void main() {
   Future<void> open(
     WidgetTester tester, {
     Brightness b = Brightness.light,
+    String language = 'id',
+    bool failLocaleSave = false,
     AiCacheStats stats = (paragraphs: 1240, bytes: 3355443),
     bool? keyOk = true,
     Completer<void>? gate,
@@ -203,7 +207,10 @@ void main() {
     tester.view.physicalSize = const Size(900, 1600);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
-    settings = FakeSettings()..lastBackup = lastBackup;
+    settings = FakeSettings()
+      ..lastBackup = lastBackup
+      ..language = language
+      ..failLocaleSave = failLocaleSave;
     cache = FakeAiResults();
     breakdowns = FakeBreakdowns();
     await tester.pumpWidget(
@@ -224,7 +231,15 @@ void main() {
                 : Stream.value(catalogStats),
           ),
         ],
-        child: MaterialApp(theme: stabiloTheme(b), home: const SettingsView()),
+        child: Consumer(
+          builder: (context, ref, _) => MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: Locale(ref.watch(appLocaleProvider).value ?? language),
+            theme: stabiloTheme(b),
+            home: const SettingsView(),
+          ),
+        ),
       ),
     );
     await tester.pump();
@@ -653,6 +668,9 @@ void main() {
             filePickerServiceProvider.overrideWithValue(picker),
           ],
           child: MaterialApp.router(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: const Locale('id'),
             theme: stabiloTheme(Brightness.light),
             routerConfig: router,
           ),
@@ -888,5 +906,36 @@ void main() {
       expect(find.text('Katalognya udah yang terbaru'), findsOneWidget);
       await tester.pumpAndSettle(const Duration(seconds: 5));
     });
+  });
+  testWidgets(
+    'language switches copy and failed save keeps the saved language',
+    (tester) async {
+      await open(tester);
+      await tester.tap(find.text('English'));
+      await tester.pumpAndSettle();
+      expect(settings.language, 'en');
+      expect(find.text('Interface language'), findsOneWidget);
+      expect(find.text('Settings'), findsOneWidget);
+      expect(
+        find.textContaining('AI responses stay in Indonesian'),
+        findsOneWidget,
+      );
+      settings.failLocaleSave = true;
+      await tester.tap(find.text('Bahasa Indonesia'));
+      await tester.pumpAndSettle();
+      expect(settings.language, 'en');
+      expect(find.text('Interface language'), findsOneWidget);
+      expect(
+        find.text('Couldn’t save the language. Try again.'),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets('saved English renders Settings in English', (tester) async {
+    await open(tester, language: 'en');
+    expect(find.text('Interface language'), findsOneWidget);
+    expect(find.text('OpenRouter API key'), findsOneWidget);
+    expect(find.text('Bahasa antarmuka'), findsNothing);
   });
 }

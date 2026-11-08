@@ -1,3 +1,5 @@
+import 'package:luma/l10n/l10n.dart';
+
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -109,11 +111,11 @@ class _BreakdownViewState extends ConsumerState<BreakdownView> {
       final book = quote.anchors.first.book;
       final entry = widget.chatContext;
       if (entry != null && entry.book != book) {
-        throw const FormatException('Isi buku berubah');
+        throw const FormatException('Book content changed');
       }
       if (quote.anchors.map((a) => a.snapshot).join('\n\n') !=
           state.input!.original.join('\n\n')) {
-        throw const FormatException('Kutipan berubah');
+        throw const FormatException('Quote changed');
       }
       final position =
           entry?.returnPosition ??
@@ -145,10 +147,7 @@ class _BreakdownViewState extends ConsumerState<BreakdownView> {
       }
     } catch (_) {
       if (mounted) {
-        showToast(
-          context,
-          'Kutipannya belum bisa dibawa. Coba buka ulang bukunya.',
-        );
+        showToast(context, context.l10n.breakdownCouldnTBringTheQuoteOver);
       }
     } finally {
       _openingChat = false;
@@ -161,7 +160,7 @@ class _BreakdownViewState extends ConsumerState<BreakdownView> {
     setState(() => _copied = true);
     showOverlayToast(
       context,
-      'Udah disalin, tinggal paste',
+      context.l10n.meaningCopiedReadyToPaste,
       bottom: MediaQuery.paddingOf(context).bottom + 68,
     );
   }
@@ -463,7 +462,9 @@ class _ScreenState extends State<_Screen> with TickerProviderStateMixin {
     if (MediaQuery.accessibleNavigationOf(context)) {
       SemanticsService.sendAnnouncement(
         View.of(context),
-        'Bedahan udah lengkap, ${_countLabel(_s.draft.sections.length)}',
+        context.l10n.breakdownBreakdownComplete(
+          _countLabel(context, _s.draft.sections.length),
+        ),
         TextDirection.ltr,
       );
     }
@@ -634,8 +635,9 @@ class _ScreenState extends State<_Screen> with TickerProviderStateMixin {
     _sections = count;
     final blocks = [
       for (var i = 0; i < count; i++) '${i + 1}',
-      if (_interactive && shown.terms.isNotEmpty) 'Istilah',
-      if (_interactive && shown.practice != null) 'Praktek',
+      if (_interactive && shown.terms.isNotEmpty) context.l10n.breakdownTerms,
+      if (_interactive && shown.practice != null)
+        context.l10n.breakdownPractice,
     ];
     _blockCount = blocks.length;
     _grow(_blocks, _blockCount);
@@ -669,7 +671,9 @@ class _ScreenState extends State<_Screen> with TickerProviderStateMixin {
                 );
                 final child = _folded.value
                     ? _FoldedPanel(
-                        count: _finished || cut ? _countLabel(count) : null,
+                        count: _finished || cut
+                            ? _countLabel(context, count)
+                            : null,
                         onTap: () => _folded.value = false,
                       )
                     : text;
@@ -744,7 +748,7 @@ class _ScreenState extends State<_Screen> with TickerProviderStateMixin {
                   explanation,
                   if (_finished && !cut)
                     AppButton.secondary(
-                      label: 'Tanyain ini',
+                      label: context.l10n.meaningAskAboutThis,
                       icon: AppIcons.chat,
                       onPressed: widget.onChat,
                     ),
@@ -791,7 +795,7 @@ class _ScreenState extends State<_Screen> with TickerProviderStateMixin {
                       explanation,
                       if (_finished && !cut)
                         AppButton.secondary(
-                          label: 'Tanyain ini',
+                          label: context.l10n.meaningAskAboutThis,
                           icon: AppIcons.chat,
                           onPressed: widget.onChat,
                         ),
@@ -822,33 +826,36 @@ class _ScreenState extends State<_Screen> with TickerProviderStateMixin {
             explicitChildNodes: true,
             child: _Header(
               title: switch (phase) {
-                _ when failed => 'Bedahin',
-                BreakdownPhase.cut => 'Kepotong di tengah',
-                _ when _busy => 'Lagi ngebedah...',
-                _ => 'Udah dibedah nih',
+                _ when failed => context.l10n.breakdownBreakdown,
+                BreakdownPhase.cut => context.l10n.breakdownCutOffHalfway,
+                _ when _busy => context.l10n.breakdownBreakingItDown,
+                _ => context.l10n.breakdownHereSTheBreakdown,
               },
               subtitle: input == null
                   ? null
                   : [
                       input.book.title,
                       _chapterLabel(input),
-                      if (cut) '$count bagian masuk',
-                      if (_finished && !cut) _countLabel(count),
+                      if (cut) context.l10n.breakdownSectionsReceived(count),
+                      if (_finished && !cut) _countLabel(context, count),
                     ].join(' · '),
               semanticLabel: _busy
-                  ? 'Lagi ngebedah, tunggu ya'
+                  ? context.l10n.breakdownBreakingItDownHangOn
                   : input == null
-                  ? 'Bedahin'
+                  ? context.l10n.breakdownBreakdown
                   : [
-                      'Bedahin, ${input.book.title} ${_chapterLabel(input)}',
+                      context.l10n.breakdownBreakdown2(
+                        input.book.title,
+                        _chapterLabel(input),
+                      ),
                       if (_finished && !cut) ...[
-                        _countLabel(count),
-                        'udah lengkap',
+                        _countLabel(context, count),
+                        context.l10n.breakdownComplete,
                       ],
                     ].join(', '),
               backLabel: _busy
-                  ? 'Batalin, balik ke Artinya'
-                  : 'Balik ke Artinya',
+                  ? context.l10n.breakdownCancelBackToTranslation
+                  : context.l10n.breakdownBackToTranslation,
               onBack: widget.onBack,
             ),
           ),
@@ -932,19 +939,22 @@ class _ScreenState extends State<_Screen> with TickerProviderStateMixin {
     final s = _s;
     final reduced = _reduced;
     if (s.phase == BreakdownPhase.failed) {
-      final f = _failureCopy(s.error);
+      final f = _failureCopy(context, s.error);
       return [
-        AppButton.secondary(label: 'Balik baca', onPressed: widget.onDone),
+        AppButton.secondary(
+          label: context.l10n.chatBackToReading,
+          onPressed: widget.onDone,
+        ),
         Expanded(
           child: f.settings
               ? AppButton.primary(
-                  label: 'Buka Pengaturan',
+                  label: context.l10n.meaningOpenSettings,
                   icon: AppIcons.next,
                   iconAfter: true,
                   onPressed: widget.onSettings,
                 )
               : AppButton.primary(
-                  label: 'Coba lagi',
+                  label: context.l10n.meaningTryAgain,
                   icon: AppIcons.retry,
                   onPressed: widget.onRetry,
                 ),
@@ -959,11 +969,15 @@ class _ScreenState extends State<_Screen> with TickerProviderStateMixin {
         child: _busy && !cut
             ? StatusButton(
                 key: ValueKey(thinking),
-                label: thinking ? 'Lagi mikir' : 'Lagi nulis',
+                label: thinking
+                    ? context.l10n.meaningThinking
+                    : context.l10n.meaningWriting,
               )
             : AppButton.secondary(
                 key: const ValueKey('copy'),
-                label: widget.copied ? 'Disalin' : 'Salin',
+                label: widget.copied
+                    ? context.l10n.meaningCopied
+                    : context.l10n.aiCopy,
                 icon: widget.copied ? AppIcons.check : AppIcons.copy,
                 onPressed: _finished && !cut && input != null
                     ? () => widget.onCopy(input, s.draft)
@@ -972,8 +986,14 @@ class _ScreenState extends State<_Screen> with TickerProviderStateMixin {
       ),
       Expanded(
         child: cut
-            ? AppButton.secondary(label: 'Balik baca', onPressed: widget.onDone)
-            : AppButton.primary(label: 'Balik baca', onPressed: widget.onDone),
+            ? AppButton.secondary(
+                label: context.l10n.chatBackToReading,
+                onPressed: widget.onDone,
+              )
+            : AppButton.primary(
+                label: context.l10n.chatBackToReading,
+                onPressed: widget.onDone,
+              ),
       ),
     ];
   }
@@ -982,7 +1002,7 @@ class _ScreenState extends State<_Screen> with TickerProviderStateMixin {
   /// error / 10 API key kosong). Panel teks tetep ada.
   Widget _failure(StabiloColors c) {
     final noKey = _s.error?.error == AiError.noApiKey;
-    final f = _failureCopy(_s.error);
+    final f = _failureCopy(context, _s.error);
     return Semantics(
       liveRegion: true,
       child: Padding(
@@ -1001,15 +1021,13 @@ class _ScreenState extends State<_Screen> with TickerProviderStateMixin {
                 Semantics(
                   header: true,
                   child: Text(
-                    noKey ? 'Isi API key dulu yuk' : f.title,
+                    noKey ? context.l10n.meaningAddYourApiKeyFirst : f.title,
                     style: StabiloType.titleMd,
                   ),
                 ),
                 Text(
                   noKey
-                      ? 'Artinya udah kesimpen, tapi Bedahin butuh AI lewat '
-                            'OpenRouter. API key lo udah gak ada di '
-                            'Pengaturan, tempel lagi sekali aja.'
+                      ? context.l10n.breakdownYourTranslationIsSavedButBreakdown
                       : f.body,
                   style: StabiloType.body.copyWith(color: c.ink2),
                 ),
@@ -1019,7 +1037,7 @@ class _ScreenState extends State<_Screen> with TickerProviderStateMixin {
               Text.rich(
                 TextSpan(
                   children: [
-                    const TextSpan(text: 'Belum punya? Bikin dulu di '),
+                    TextSpan(text: context.l10n.meaningDonTHaveOneCreateIt),
                     TextSpan(
                       text: 'openrouter.ai/keys',
                       style: StabiloType.mono.copyWith(
@@ -1055,18 +1073,18 @@ class _ScreenState extends State<_Screen> with TickerProviderStateMixin {
   }
 }
 
-String _countLabel(int sections) =>
-    sections == 1 ? '1 gagasan' : '$sections bagian';
+String _countLabel(BuildContext context, int sections) => sections == 1
+    ? context.l10n.breakdownIdea
+    : context.l10n.breakdownSections(sections);
 
 /// Copy per jenis error (tabel di board state). [settings]: tombol kuningnya
 /// "Buka Pengaturan", bukan "Coba lagi". API key kosong punya layar sendiri.
 ({String title, String body, String code, bool settings}) _failureCopy(
+  BuildContext context,
   AiException? e,
 ) {
-  const title = 'Yah, gagal ngebedah';
-  const body =
-      'Kayaknya koneksi lagi ngadat, atau AI-nya lagi sibuk. Tinggal coba lagi '
-      'aja.';
+  final title = context.l10n.breakdownCouldnTBreakItDown;
+  final body = context.l10n.meaningTheConnectionMightBeDownOr;
   return switch (e) {
     AiException(error: AiError.noApiKey) => (
       title: '',
@@ -1075,43 +1093,35 @@ String _countLabel(int sections) =>
       settings: true,
     ),
     AiException(error: AiError.network) => (
-      title: 'Lagi offline nih',
-      body:
-          'Bedahin butuh internet. Nyalain dulu, abis itu coba lagi. Bedahan '
-          'yang udah kesimpen tetep bisa dibuka.',
+      title: context.l10n.breakdownYouReOffline,
+      body: context.l10n.breakdownBreakdownNeedsInternetConnectAndTry,
       code: 'offline',
       settings: false,
     ),
     AiException(error: AiError.http, :final status)
         when status == 401 || status == 403 =>
       (
-        title: 'API key-nya ditolak',
-        body:
-            'OpenRouter gak nerima key lo. Cek lagi di Pengaturan, siapa tau '
-            'kepotong pas ditempel.',
-        code: '$status · key ditolak',
+        title: context.l10n.peekApiKeyRejected,
+        body: context.l10n.breakdownOpenrouterRejectedYourKeyCheckIt,
+        code: context.l10n.breakdownKeyRejected(status ?? 0),
         settings: true,
       ),
     AiException(error: AiError.http, status: 402) => (
-      title: 'Saldo OpenRouter abis',
-      body:
-          'Isi saldo dulu di openrouter.ai, abis itu balik ke sini dan coba '
-          'lagi.',
-      code: '402 · saldo abis',
+      title: context.l10n.peekOpenrouterCreditRanOut,
+      body: context.l10n.breakdownTopUpAtOpenrouterAiThen,
+      code: context.l10n.breakdownNoCredit,
       settings: false,
     ),
     AiException(error: AiError.invalidResponse) => (
-      title: 'Jawabannya berantakan',
-      body:
-          'AI-nya ngasih jawaban yang gak bisa dibaca Luma. Coba sekali lagi, '
-          'biasanya beres.',
-      code: 'format gak valid',
+      title: context.l10n.breakdownTheResponseFormatIsInvalid,
+      body: context.l10n.breakdownTheAiReturnedSomethingLumaCan,
+      code: context.l10n.breakdownInvalidFormat,
       settings: false,
     ),
     AiException(error: AiError.timeout) => (
       title: title,
       body: body,
-      code: 'timeout · 30 detik',
+      code: context.l10n.meaningTimeoutSeconds,
       settings: false,
     ),
     AiException(error: AiError.http, :final status) => (
@@ -1278,7 +1288,7 @@ class _TextPanel extends StatelessWidget {
                                 n,
                                 size: badge,
                                 fontSize: badge * 0.6,
-                                label: 'Bagian $n',
+                                label: context.l10n.breakdownSection(n),
                                 onTap: onNumber == null
                                     ? null
                                     : () => onNumber!(n - 1),
@@ -1323,14 +1333,14 @@ class _TextPanel extends StatelessWidget {
       border: Border.all(color: c.track),
     );
     final label = sections.isEmpty
-        ? 'Teks terjemahan'
-        : 'Teks terjemahan, ${sections.length} bagian';
+        ? context.l10n.breakdownTranslatedText
+        : context.l10n.breakdownTranslatedTextSections(sections.length);
     // Ujung kotak: tanda bisa dilipet (seluruh kotak juga).
     final strip = onFold == null
         ? null
         : Semantics(
             button: true,
-            label: 'Lipet teks terjemahan',
+            label: context.l10n.breakdownCollapseTranslatedText,
             onTap: onFold,
             excludeSemantics: true,
             child: SizedBox(
@@ -1344,7 +1354,7 @@ class _TextPanel extends StatelessWidget {
       return Semantics(
         container: true,
         explicitChildNodes: true,
-        label: 'Teks yang dibedah',
+        label: context.l10n.breakdownTextBeingExplained,
         child: GestureDetector(
           onTap: onFold,
           child: Container(
@@ -1569,7 +1579,7 @@ class _Explanation extends StatelessWidget {
             if (numbered) ...[
               Semantics(
                 header: true,
-                label: 'Bagian ${i + 1} dari $count, ${s.title}',
+                label: context.l10n.breakdownSectionOf(i + 1, count, s.title),
                 excludeSemantics: true,
                 child: Row(
                   spacing: 10,
@@ -1578,7 +1588,7 @@ class _Explanation extends StatelessWidget {
                       i + 1,
                       size: Layout.breakdownNumber,
                       fontSize: 14,
-                      label: 'Bagian ${i + 1}',
+                      label: context.l10n.breakdownSection(i + 1),
                     ),
                     Expanded(
                       child: Text(
@@ -1593,11 +1603,11 @@ class _Explanation extends StatelessWidget {
                 Tag.section(range, tone: TagTone.muted),
             ],
             if (s.meaning.isNotEmpty) ...[
-              Text('MAKSUDNYA', style: label),
+              Text(context.l10n.breakdownMeaning, style: label),
               body(s.meaning, i * 3 + 1),
             ],
             if (s.logic.isNotEmpty) ...[
-              Text('LOGIKANYA', style: label),
+              Text(context.l10n.breakdownLogic, style: label),
               body(s.logic, i * 3 + 2),
             ],
           ],
@@ -1614,7 +1624,10 @@ class _Explanation extends StatelessWidget {
         if (b.terms.isNotEmpty)
           _Block(
             key: key(termsBlock),
-            tag: const Tag.section('Tokoh & istilah', tone: TagTone.muted),
+            tag: Tag.section(
+              context.l10n.breakdownPeopleTerms,
+              tone: TagTone.muted,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -1653,7 +1666,7 @@ class _Explanation extends StatelessWidget {
                                 if (_sectionOf(b.sections, t.sentence)
                                     case final n? when numbered)
                                   TextSpan(
-                                    text: ' · bagian $n',
+                                    text: context.l10n.breakdownSection2(n),
                                     style: TextStyle(
                                       fontWeight: FontWeight.w400,
                                       color: c.ink2,
@@ -1677,7 +1690,7 @@ class _Explanation extends StatelessWidget {
           ),
         if (b.links.isNotEmpty)
           _Block(
-            tag: Text('NYAMBUNG KE', style: label),
+            tag: Text(context.l10n.breakdownConnectsTo, style: label),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               spacing: 10,
@@ -1690,7 +1703,10 @@ class _Explanation extends StatelessWidget {
         if (b.practice case final practice?)
           _Block(
             key: key(practiceBlock),
-            tag: const Tag.section('Praktekinnya gini', tone: TagTone.pink),
+            tag: Tag.section(
+              context.l10n.breakdownPuttingItIntoPractice,
+              tone: TagTone.pink,
+            ),
             child: _PracticeText(
               practice,
               writing: writing && practiceAt == visible.tail,
@@ -1775,10 +1791,13 @@ class _LinkCard extends ConsumerWidget {
     final c = context.stabilo;
     final chapters = input?.chapters ?? const <String>[];
     final where = switch (link.chapter) {
-      null => input == null ? 'Lanjutan' : 'Lanjutan ${_chapterLabel(input!)}',
+      null =>
+        input == null
+            ? context.l10n.breakdownContinuation
+            : context.l10n.breakdownContinuationOf(_chapterLabel(input!)),
       final n when n <= chapters.length && chapters[n - 1].trim().isNotEmpty =>
         chapters[n - 1].trim(),
-      final n => 'Bab $n',
+      final n => context.l10n.breakdownChapter(n),
     };
     final found =
         ref
@@ -1804,14 +1823,17 @@ class _LinkCard extends ConsumerWidget {
     );
     if (!found) {
       return Semantics(
-        label: 'Nyambung ke $where, ${link.title}',
+        label: context.l10n.breakdownConnectsTo2(where, link.title),
         excludeSemantics: true,
         child: body,
       );
     }
     return Semantics(
       button: true,
-      label: 'Nyambung ke $where, ${link.title}. Ketuk dua kali buat ngintip.',
+      label: context.l10n.breakdownConnectsToDoubleTapToPreview(
+        where,
+        link.title,
+      ),
       excludeSemantics: true,
       child: Material(
         color: Colors.transparent,
@@ -1901,19 +1923,19 @@ class _SlowCard extends StatelessWidget {
         tile: c.muted,
         icon: AppIcons.clock,
         iconColor: c.ink,
-        title: 'Agak lama nih...',
-        body: 'AI-nya lagi rame. Tungguin bentar, atau coba minta ulang.',
+        title: context.l10n.meaningTakingALittleLonger,
+        body: context.l10n.breakdownTheAiIsBusyGiveIt,
         actions: [
           Expanded(
             child: AppButton.secondary(
-              label: 'Batal',
+              label: context.l10n.dialogCancel,
               height: 40,
               onPressed: onCancel,
             ),
           ),
           Expanded(
             child: AppButton.secondary(
-              label: 'Coba lagi',
+              label: context.l10n.meaningTryAgain,
               height: 40,
               onPressed: onRetry,
             ),
@@ -1942,17 +1964,18 @@ class _CutBanner extends StatelessWidget {
         tile: c.pink,
         icon: AppIcons.offline,
         iconColor: c.onPink,
-        title: 'Yah, kepotong di tengah',
+        title: context.l10n.meaningCutOffHalfway,
         body: switch (kept) {
-          0 => 'Koneksinya putus pas lagi ngebedah.',
-          1 => 'Koneksinya putus pas lagi ngebedah. Bagian 1 tetep di sini.',
-          _ =>
-            'Koneksinya putus pas lagi ngebedah. Bagian 1–$kept tetep di sini.',
+          0 => context.l10n.breakdownTheConnectionDroppedDuringTheBreakdown,
+          1 => context.l10n.breakdownTheConnectionDroppedDuringTheBreakdown2,
+          _ => context.l10n.breakdownTheConnectionDroppedDuringTheBreakdown3(
+            kept,
+          ),
         },
         actions: [
           Expanded(
             child: AppButton.primary(
-              label: 'Coba lagi dari awal',
+              label: context.l10n.breakdownTryAgainFromTheStart,
               icon: AppIcons.retry,
               height: 40,
               onPressed: onRetry,
@@ -1981,7 +2004,7 @@ class _TermTap extends StatelessWidget {
       ? child
       : Semantics(
           button: true,
-          hint: 'Sorot "$label" di teks',
+          hint: context.l10n.breakdownHighlightInTheText(label),
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: onTap,
@@ -2003,7 +2026,7 @@ class _FoldedPanel extends StatelessWidget {
     final c = context.stabilo;
     return Semantics(
       button: true,
-      label: ['Buka teks terjemahan', ?count].join(', '),
+      label: [context.l10n.breakdownOpenTranslatedText, ?count].join(', '),
       excludeSemantics: true,
       child: Material(
         color: c.sheet,
@@ -2024,7 +2047,7 @@ class _FoldedPanel extends StatelessWidget {
                   child: Text.rich(
                     TextSpan(
                       children: [
-                        const TextSpan(text: 'Teks terjemahan'),
+                        TextSpan(text: context.l10n.breakdownTranslatedText),
                         if (count != null)
                           TextSpan(
                             text: ' · $count',
@@ -2084,8 +2107,12 @@ class _Chips extends StatelessWidget {
               button: true,
               selected: on,
               label: number
-                  ? 'Lompat ke bagian ${i + 1} dari $sections'
-                  : 'Lompat ke ${labels[i] == 'Istilah' ? 'Tokoh & istilah' : 'Praktekinnya gini'}',
+                  ? context.l10n.breakdownJumpToSectionOf(i + 1, sections)
+                  : context.l10n.breakdownJumpTo(
+                      labels[i] == context.l10n.breakdownTerms
+                          ? context.l10n.breakdownPeopleTerms
+                          : context.l10n.breakdownPuttingItIntoPractice,
+                    ),
               excludeSemantics: true,
               child: Material(
                 color: on ? c.ink : c.muted,

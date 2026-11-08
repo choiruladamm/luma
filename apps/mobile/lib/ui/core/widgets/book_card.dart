@@ -1,3 +1,6 @@
+import 'package:luma/ui/core/book_copy.dart';
+import 'package:luma/l10n/l10n.dart';
+
 import 'dart:io';
 import 'dart:math' as math;
 
@@ -19,14 +22,15 @@ import 'buttons.dart';
 /// - [chapters] (buku Markdown) → "N bab" gantiin persen
 /// - selain itu → persen, dibulatin ke bawah, 0,4% tetep 1%, maks 99%
 String bookSticker({
+  required AppLocalizations l10n,
   required double progress,
   required bool opened,
   required bool finished,
   int? chapters,
 }) {
-  if (finished) return 'Kelar!';
-  if (!opened) return 'Baru';
-  if (chapters != null) return '$chapters bab';
+  if (finished) return l10n.bookFinished;
+  if (!opened) return l10n.bookNew;
+  if (chapters != null) return l10n.bookChapters(chapters);
   if (progress <= 0) return '0%';
   return '${math.min(99, math.max(1, (progress * 100).floor()))}%';
 }
@@ -142,11 +146,16 @@ class _BookCardState extends State<BookCard> {
         );
 
         if (widget.importing) {
-          return Semantics(label: 'Lagi diimport ${widget.title}', child: card);
+          return Semantics(
+            label: context.l10n.bookImporting(widget.title),
+            child: card,
+          );
         }
         return Semantics(
           button: true,
-          label: widget.markdown?.semanticLabel(widget.title) ?? widget.title,
+          label:
+              widget.markdown?.semanticLabel(widget.title, context.l10n) ??
+              widget.title,
           // Buku Markdown: satu label utuh, strip + chip gak dibaca terpisah.
           excludeSemantics: widget.markdown != null,
           onTap: widget.onTap,
@@ -262,14 +271,15 @@ class ProgressSticker extends StatelessWidget {
     final c = context.stabilo;
     final light = Theme.of(context).brightness == Brightness.light;
     final label = bookSticker(
+      l10n: context.l10n,
       progress: progress,
       opened: opened,
       finished: finished,
       chapters: chapters,
     );
-    final (bg, fg) = switch (label) {
-      'Kelar!' => (c.accent, c.onAccent),
-      'Baru' => (c.pink, c.onPink),
+    final (bg, fg) = switch ((finished, opened)) {
+      (true, _) => (c.accent, c.onAccent),
+      (_, false) => (c.pink, c.onPink),
       _ => (c.sheet, c.ink),
     };
     return _StickerBox(
@@ -354,7 +364,7 @@ class _ImportingCover extends StatelessWidget {
           children: [
             AppIcon(AppIcons.loading, color: c.ink2),
             Text(
-              'Lagi diproses',
+              context.l10n.bookProcessing,
               style: StabiloType.micro.copyWith(
                 fontWeight: FontWeight.w600,
                 color: c.ink2,

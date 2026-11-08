@@ -72,10 +72,6 @@ extension BookSearchStateLabel on BookSearchState {
   /// Progres nyiapin index 0..1.
   double get prepareFraction =>
       totalChapters == 0 ? 0 : doneChapters / totalChapters;
-
-  /// "Bab 26 dari 61" (bab yang lagi dikerjain, bukan yang selesai).
-  String get prepareLabel =>
-      'Bab ${(doneChapters + 1).clamp(1, totalChapters)} dari $totalChapters';
 }
 
 /// ViewModel sheet Cari kata satu buku: nyiapin index kalau perlu, nyari

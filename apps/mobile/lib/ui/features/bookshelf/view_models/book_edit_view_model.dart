@@ -25,7 +25,6 @@ class BookEditState {
   final String? epubCoverName;
 
   bool get titleEmpty => title.trim().isEmpty;
-  String? get titleError => titleEmpty ? 'Judul gak boleh kosong' : null;
 
   /// Penulis ter-trim; kosong = null.
   String? get authorOrNull {

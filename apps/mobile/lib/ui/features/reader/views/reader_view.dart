@@ -1,3 +1,5 @@
+import 'package:luma/l10n/l10n.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -260,7 +262,7 @@ class _ReaderViewState extends ConsumerState<ReaderView>
           chatEntryQuoteProvider((bookId: widget.bookId, group: group)).future,
         );
         if (source.anchors.any((a) => a.book != initial.book)) {
-          throw const FormatException('Isi buku berubah');
+          throw const FormatException('Book content changed');
         }
         quote = ChatQuote(
           anchors: source.anchors,
@@ -283,10 +285,7 @@ class _ReaderViewState extends ConsumerState<ReaderView>
       );
     } catch (_) {
       if (mounted) {
-        showToast(
-          context,
-          'Obrolan belum bisa dibuka. Coba buka ulang bukunya.',
-        );
+        showToast(context, context.l10n.readerCouldnTOpenTheChatTry);
       }
       return null;
     } finally {
@@ -512,8 +511,8 @@ class _ReaderViewState extends ConsumerState<ReaderView>
     if (back == null) return;
     showToast(
       context,
-      'Balik ke posisi tadi?',
-      actionLabel: 'Balik',
+      context.l10n.readerBackToYourPreviousPosition,
+      actionLabel: context.l10n.readerGoBack,
       duration: Motion.searchToast,
       onAction: () => _returnTo(back),
     );
@@ -706,7 +705,7 @@ class _ReaderViewState extends ConsumerState<ReaderView>
                             ) ||
                         !b.chapters.any((c) => c.id == a.chapterId),
                   )) {
-                return _bare('Sumber ini udah gak tersedia.');
+                return _bare(context.l10n.readerThisSourceIsNoLongerAvailable);
               }
               if (_chapter == null) _start(b, pos);
               final i = _chapter!;
@@ -738,8 +737,11 @@ class _ReaderViewState extends ConsumerState<ReaderView>
                         .where((chapter) => chapter.id == original.chapterId)
                         .firstOrNull;
               final savedLabel = savedChapter == null
-                  ? 'Lagi ngintip · belum ada progres baca'
-                  : 'Lagi ngintip · progres masih ${savedChapter.title} · Paragraf ${(original?.paragraphIndex ?? 0) + 1}';
+                  ? context.l10n.readerPreviewingNoReadingProgressYet
+                  : context.l10n.readerPreviewingSavedPositionParagraph(
+                      savedChapter.title,
+                      (original?.paragraphIndex ?? 0) + 1,
+                    );
               final content = ref.watch(chapterParagraphsProvider(ch.id));
               final chatReady = content.asData?.value.isNotEmpty ?? false;
               if (chatReady) _showChatHintOnce();
@@ -830,7 +832,7 @@ class _ReaderViewState extends ConsumerState<ReaderView>
               );
             }(),
           (AsyncLoading(), _) || (_, AsyncLoading()) => _bare(),
-          _ => _bare('Yah, bukunya gagal kebuka'),
+          _ => _bare(context.l10n.readerCouldnTOpenTheBook),
         },
       ),
     );

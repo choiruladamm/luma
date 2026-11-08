@@ -1,3 +1,6 @@
+import 'package:luma/ui/core/book_copy.dart';
+import 'package:luma/l10n/l10n.dart';
+
 import 'dart:io';
 import 'dart:math' as math;
 
@@ -96,14 +99,14 @@ class _BookshelfViewState extends ConsumerState<BookshelfView> {
         _import.dismiss();
         showToast(
           context,
-          'Sip, udah masuk rak!',
+          context.l10n.bookshelfAddedToYourShelf,
           subtitle: [book.title, ?book.author].join(' · '),
           leading: BookCover(
             title: book.title,
             width: 30,
             file: _cover(book.coverName),
           ),
-          actionLabel: 'Baca',
+          actionLabel: context.l10n.downloadRead,
           onAction: () => context.push(Routes.reader(book.id)),
         );
       case ImportDuplicate(:final book):
@@ -148,11 +151,11 @@ class _BookshelfViewState extends ConsumerState<BookshelfView> {
       case ImportMarkdownConflict(:final chapter):
         showConfirmDialog(
           context,
-          title: 'Bab $chapter udah ada',
-          message:
-              'Kalau diganti, terjemahan yang udah kesimpen di bab $chapter '
-              'yang lama ikut kehapus.',
-          confirmLabel: 'Ganti',
+          title: context.l10n.bookshelfChapterAlreadyExists(chapter),
+          message: context.l10n.bookshelfReplacingChapterWillAlsoDeleteIts(
+            chapter,
+          ),
+          confirmLabel: context.l10n.bookshelfReplace,
           icon: AppIcons.retry,
           onConfirm: _import.confirmReplace,
         ).then((ok) {
@@ -168,14 +171,14 @@ class _BookshelfViewState extends ConsumerState<BookshelfView> {
         showToast(
           context,
           created
-              ? '${book.title} masuk rak ✨'
-              : 'Bab $chapter masuk ke ${book.title} ✨',
+              ? context.l10n.bookshelfAddedToShelf(book.title)
+              : context.l10n.bookshelfChapterAddedTo(chapter, book.title),
           leading: BookCover(
             title: book.title,
             width: 30,
             file: _cover(book.coverName),
           ),
-          actionLabel: 'Baca',
+          actionLabel: context.l10n.downloadRead,
           duration: Motion.toastBaca,
           onAction: () => _readChapter(book.id, chapterId),
         );
@@ -249,11 +252,15 @@ class _BookshelfViewState extends ConsumerState<BookshelfView> {
       progress: book.progress,
       opened: book.opened,
       finished: book.finished,
-      items: const [
-        AppMenuItem('info', 'Info buku', icon: AppIcons.info),
+      items: [
+        AppMenuItem(
+          'info',
+          context.l10n.bookshelfBookInfo,
+          icon: AppIcons.info,
+        ),
         AppMenuItem(
           'delete',
-          'Hapus dari rak',
+          context.l10n.bookshelfRemoveFromShelf,
           icon: AppIcons.delete,
           destructive: true,
         ),
@@ -287,19 +294,20 @@ class _BookshelfViewState extends ConsumerState<BookshelfView> {
     final info = await ref.read(bookInfoProvider(book.id).future);
     if (!mounted) return;
     final lost = [
-      if (book.opened) 'Progres ${(book.progress * 100).floor()}%',
+      if (book.opened)
+        context.l10n.bookshelfProgress((book.progress * 100).floor()),
       if (info != null && info.translated > 0)
-        '${info.translated} paragraf yang udah diartiin',
-    ].join(' sama ');
+        context.l10n.bookshelfTranslatedParagraphs(info.translated),
+    ].join(context.l10n.bookshelfAnd);
     final ok = await showConfirmDialog(
       context,
       icon: AppIcons.delete,
-      title: 'Hapus "${book.title}" dari rak?',
-      message:
-          '${lost.isEmpty ? '' : '$lost ikut kehapus. '}'
-          'File aslinya tetep aman kok.',
-      cancelLabel: 'Gak jadi',
-      confirmLabel: 'Hapus',
+      title: context.l10n.bookshelfRemoveFromYourShelf(book.title),
+      message: context.l10n.bookshelfYourOriginalFileStaysSafe(
+        lost.isEmpty ? '' : context.l10n.deletedProgress(lost),
+      ),
+      cancelLabel: context.l10n.bookshelfNeverMind,
+      confirmLabel: context.l10n.bookClear,
     );
     if (!ok || !mounted) return;
     try {
@@ -307,15 +315,17 @@ class _BookshelfViewState extends ConsumerState<BookshelfView> {
           .read(bookRepositoryProvider)
           .delete(book.id, ref.read(fileStorageProvider));
     } on Object {
-      if (mounted) showToast(context, 'Yah, gagal ngehapus bukunya');
+      if (mounted) {
+        showToast(context, context.l10n.bookshelfCouldnTDeleteTheBook);
+      }
     }
   }
 
   Future<void> _pickSort(BuildContext anchor, ShelfSort current) async {
     final pick = await showAppMenu<ShelfSort>(anchor, [
       for (final s in ShelfSort.values)
-        AppMenuItem(s, s.label, selected: s == current),
-    ], title: 'Urutin pake');
+        AppMenuItem(s, s.label(context.l10n), selected: s == current),
+    ], title: context.l10n.bookshelfSortBy);
     if (pick != null && pick != current) {
       ref.read(settingsRepositoryProvider).saveShelfSort(pick).ignore();
     }
@@ -384,7 +394,7 @@ class _BookshelfViewState extends ConsumerState<BookshelfView> {
                 Expanded(
                   child: Center(
                     child: Text(
-                      'Yah, rak-nya gagal kebuka',
+                      context.l10n.bookshelfCouldnTOpenYourShelf,
                       style: StabiloType.body.copyWith(
                         color: context.stabilo.ink2,
                       ),
@@ -665,7 +675,9 @@ class _ShelfState extends ConsumerState<_Shelf> {
                   ),
                   sliver: SliverToBoxAdapter(
                     child: Text(
-                      'Udah mentok. ${widget.books.length} buku di rak lo.',
+                      context.l10n.bookshelfThatSEverythingBooksOnYour(
+                        widget.books.length,
+                      ),
                       textAlign: TextAlign.center,
                       style: StabiloType.caption.copyWith(
                         fontWeight: FontWeight.w600,
@@ -740,7 +752,7 @@ class _Toolbar extends StatelessWidget {
             child: Semantics(
               header: true,
               child: Text(
-                'Semua buku',
+                context.l10n.bookshelfAllBooks,
                 // Baris 44 dikunci: ikut teks gede sampe 1,3×.
                 textScaler: MediaQuery.textScalerOf(context)
                     .clamp(maxScaleFactor: 1.3),
@@ -753,7 +765,7 @@ class _Toolbar extends StatelessWidget {
           Builder(
             builder: (anchor) => Semantics(
               button: true,
-              label: 'Urutan rak: ${sort.label}',
+              label: context.l10n.bookshelfShelfOrder(sort.label(context.l10n)),
               excludeSemantics: true,
               child: InkWell(
                 onTap: () => onSort(anchor, sort),
@@ -765,7 +777,7 @@ class _Toolbar extends StatelessWidget {
                       spacing: 5,
                       children: [
                         Text(
-                          sort.label,
+                          sort.label(context.l10n),
                           textScaler: TextScaler.noScaling,
                           style: StabiloType.caption.copyWith(
                             fontWeight: FontWeight.w600,
@@ -848,8 +860,16 @@ class _ViewToggle extends StatelessWidget {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              item(ShelfView.grid, AppIcons.grid, 'Tampilan grid'),
-              item(ShelfView.list, AppIcons.list, 'Tampilan list'),
+              item(
+                ShelfView.grid,
+                AppIcons.grid,
+                context.l10n.bookshelfGridView,
+              ),
+              item(
+                ShelfView.list,
+                AppIcons.list,
+                context.l10n.bookshelfListView,
+              ),
             ],
           ),
         ],
@@ -894,7 +914,7 @@ class _Empty extends ConsumerWidget {
                       spacing: 14,
                       children: [
                         Text(
-                          'KALIMAT PEMBUKA PALING TERKENAL',
+                          context.l10n.bookshelfAFamousOpeningLine,
                           style: StabiloType.caption.copyWith(
                             fontWeight: FontWeight.w700,
                             letterSpacing: 0.05 * 13,
@@ -937,7 +957,7 @@ class _Empty extends ConsumerWidget {
                             ),
                             Semantics(
                               button: true,
-                              label: 'Ambil ${book.title}',
+                              label: context.l10n.bookshelfGet(book.title),
                               excludeSemantics: true,
                               child: GestureDetector(
                                 onTap: () => ref
@@ -957,7 +977,7 @@ class _Empty extends ConsumerWidget {
                                   child: Center(
                                     widthFactor: 1,
                                     child: Text(
-                                      'Ambil',
+                                      context.l10n.bookshelfGet2,
                                       style: StabiloType.label.copyWith(
                                         fontSize: 14,
                                       ),
@@ -987,7 +1007,9 @@ class _Empty extends ConsumerWidget {
                           Text.rich(
                             TextSpan(
                               children: [
-                                const TextSpan(text: 'Rak lo masih '),
+                                TextSpan(
+                                  text: context.l10n.bookshelfYourShelfIsStill,
+                                ),
                                 WidgetSpan(
                                   alignment: PlaceholderAlignment.baseline,
                                   baseline: TextBaseline.alphabetic,
@@ -1000,7 +1022,7 @@ class _Empty extends ConsumerWidget {
                                       borderRadius: BorderRadius.circular(6),
                                     ),
                                     child: Text(
-                                      'kosong',
+                                      context.l10n.bookshelfEmpty,
                                       style: StabiloType.display.copyWith(
                                         color: c.onAccent,
                                       ),
@@ -1012,8 +1034,7 @@ class _Empty extends ConsumerWidget {
                             style: StabiloType.display.copyWith(color: c.ink),
                           ),
                           Text(
-                            'Ambil buku di atas, atau cari yang lain. '
-                            'Gratis semua.',
+                            context.l10n.bookshelfGetTheBookAboveOrFind,
                             style: StabiloType.body.copyWith(color: c.ink2),
                           ),
                         ],
@@ -1026,7 +1047,7 @@ class _Empty extends ConsumerWidget {
           ),
           const SizedBox(height: Space.s4),
           AppButton.primary(
-            label: 'Cari buku gratis',
+            label: context.l10n.bookshelfFindFreeBooks,
             icon: HugeIcons.strokeRoundedSearch01,
             height: 56,
             onPressed: () => context.go(Routes.discover),
@@ -1045,12 +1066,15 @@ class _Empty extends ConsumerWidget {
                     size: 16,
                     color: c.ink2,
                   ),
-                  Text(
-                    'atau import EPUB / Markdown dari Files',
-                    style: StabiloType.caption.copyWith(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w600,
-                      color: c.ink2,
+                  Flexible(
+                    child: Text(
+                      textAlign: TextAlign.center,
+                      context.l10n.bookshelfOrImportEpubMarkdownFromFiles,
+                      style: StabiloType.caption.copyWith(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w600,
+                        color: c.ink2,
+                      ),
                     ),
                   ),
                 ],
@@ -1086,22 +1110,16 @@ class _EmptyDownloadingState extends State<_EmptyDownloading> {
     final progress = item.progress.clamp(0.0, 1.0);
     final tips = [
       (
-        'Nanti tap paragraf yang bikin pusing',
+        context.l10n.bookshelfTapAParagraphWhenYouGet,
         _Example(quote: curated.quote, meaning: curated.meaning),
       ),
       (
-        'Bingung sama satu kalimat? Bedahin',
-        _Tip(
-          'Dari sheet Artinya, tap Bedahin: kalimatnya dipecah bagian per '
-          'bagian, dijelasin satu-satu.',
-        ),
+        context.l10n.bookshelfPuzzledByASentenceBreakIt,
+        _Tip(context.l10n.bookshelfFromTheTranslationSheetTapBreakdown),
       ),
       (
-        'Ngobrolin bukunya kapan aja',
-        _Tip(
-          'Nanya soal tokoh, alur, atau kenapa gitu: jawabannya ngutip '
-          'halaman bukunya langsung.',
-        ),
+        context.l10n.bookshelfChatAboutTheBookAnytime,
+        _Tip(context.l10n.bookshelfAskAboutCharactersThePlotOr),
       ),
     ];
     return Padding(
@@ -1137,7 +1155,9 @@ class _EmptyDownloadingState extends State<_EmptyDownloading> {
                           children: [
                             Flexible(
                               child: Text(
-                                '${item.book.title} lagi diunduh',
+                                context.l10n.bookshelfDownloading(
+                                  item.book.title,
+                                ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: StabiloType.label.copyWith(
@@ -1177,7 +1197,10 @@ class _EmptyDownloadingState extends State<_EmptyDownloading> {
                   spacing: 6,
                   children: [
                     Text(
-                      'SAMBIL NUNGGU · ${_page + 1} DARI ${tips.length}',
+                      context.l10n.bookshelfWhileYouWaitOf(
+                        _page + 1,
+                        tips.length,
+                      ),
                       style: StabiloType.caption.copyWith(
                         fontWeight: FontWeight.w700,
                         letterSpacing: 0.05 * 13,
@@ -1324,7 +1347,7 @@ class _Example extends StatelessWidget {
                     spacing: Space.s1,
                     children: [
                       Text(
-                        'ARTINYA GINI NIH',
+                        context.l10n.bookshelfHereSWhatItMeans,
                         style: StabiloType.tag.copyWith(color: c.onPink),
                       ),
                       Text(

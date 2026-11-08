@@ -1,3 +1,6 @@
+import 'package:luma/l10n/app_localizations_id.dart';
+import 'package:luma/l10n/app_localizations.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -185,6 +188,7 @@ Finder button(String label) => find.byWidgetPredicate(
 void main() {
   late FakeChat vm;
   late GoRouter router;
+  late ValueNotifier<Locale> language;
   Future<void> open(
     WidgetTester tester, {
     ChatState? state,
@@ -198,6 +202,8 @@ void main() {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
+    language = ValueNotifier(const Locale('id'));
+    addTearDown(language.dispose);
     vm = FakeChat(1, state ?? ChatState(book: book, loading: false));
     final container = ProviderContainer(
       overrides: [
@@ -240,15 +246,21 @@ void main() {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: MaterialApp.router(
-          builder: (context, child) => MediaQuery(
-            data: MediaQuery.of(context).copyWith(disableAnimations: true),
-            child: child!,
+        child: ValueListenableBuilder<Locale>(
+          valueListenable: language,
+          builder: (context, locale, _) => MaterialApp.router(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: locale,
+            builder: (context, child) => MediaQuery(
+              data: MediaQuery.of(context).copyWith(disableAnimations: true),
+              child: child!,
+            ),
+            theme: stabiloTheme(Brightness.light),
+            darkTheme: stabiloTheme(Brightness.dark),
+            routerConfig: router,
+            themeMode: themeMode,
           ),
-          theme: stabiloTheme(Brightness.light),
-          darkTheme: stabiloTheme(Brightness.dark),
-          routerConfig: router,
-          themeMode: themeMode,
         ),
       ),
     );
@@ -267,7 +279,7 @@ void main() {
         ChatState(
           phase: phase,
           indexProgress: (completed: 64, total: 100),
-        ).indexLabel,
+        ).indexLabel(AppLocalizationsId()),
         isNull,
       );
     }
@@ -275,7 +287,7 @@ void main() {
       ChatState(
         phase: ChatPhase.slow,
         indexProgress: (completed: 100, total: 100),
-      ).indexLabel,
+      ).indexLabel(AppLocalizationsId()),
       isNull,
     );
   });
@@ -445,19 +457,20 @@ void main() {
   test('repair status replaces the phase label only while running', () {
     final running = ChatState(phase: ChatPhase.waiting, repairAttempt: 1);
     expect(
-      running.statusLabel(ChatPhase.waiting),
+      running.statusLabel(AppLocalizationsId(), ChatPhase.waiting),
       'Lagi benerin format jawaban… (1/2)',
     );
     expect(
-      ChatState(phase: ChatPhase.writing).statusLabel(ChatPhase.writing),
-      ChatPhase.writing.label,
+      ChatState(phase: ChatPhase.writing)
+          .statusLabel(AppLocalizationsId(), ChatPhase.writing),
+      ChatPhase.writing.label(AppLocalizationsId()),
     );
     expect(
       ChatState(
         phase: ChatPhase.failed,
         repairAttempt: 2,
-      ).statusLabel(ChatPhase.failed),
-      ChatPhase.failed.label,
+      ).statusLabel(AppLocalizationsId(), ChatPhase.failed),
+      ChatPhase.failed.label(AppLocalizationsId()),
     );
   });
 
@@ -958,18 +971,29 @@ void main() {
       for (final status in [401, 402, 403, 429, 500])
         AiException(AiError.http, status: status, detail: 'PRIVATE'),
     ]) {
-      expect(error.chatMessage, isNotEmpty);
-      expect(error.chatMessage, isNot(contains('PRIVATE')));
+      expect(error.chatMessage(AppLocalizationsId()), isNotEmpty);
+      expect(
+        error.chatMessage(AppLocalizationsId()),
+        isNot(contains('PRIVATE')),
+      );
     }
     expect(const AiException(AiError.http, status: 402).needsSettings, isTrue);
     expect(const AiException(AiError.http, status: 429).needsSettings, isFalse);
-    expect(chatTimeGroup(now, now), 'Hari ini');
+    expect(chatTimeGroup(AppLocalizationsId(), now, now), 'Hari ini');
     expect(
-      chatTimeGroup(now.subtract(const Duration(days: 1)), now),
+      chatTimeGroup(
+        AppLocalizationsId(),
+        now.subtract(const Duration(days: 1)),
+        now,
+      ),
       'Kemarin',
     );
     expect(
-      chatTimeGroup(now.subtract(const Duration(days: 3)), now),
+      chatTimeGroup(
+        AppLocalizationsId(),
+        now.subtract(const Duration(days: 3)),
+        now,
+      ),
       '7 hari terakhir',
     );
   });
@@ -1310,4 +1334,40 @@ void main() {
     expect(find.text('Alamat obrolan gak valid. Kembali'), findsOneWidget);
     expect(vm.stops, 1);
   });
+  testWidgets(
+    'switching language preserves active chat, draft and Indonesian history',
+    (tester) async {
+      final step = ChatStep.read('Bab I');
+      await open(
+        tester,
+        state: ChatState(
+          book: book,
+          loading: false,
+          activeSession: session(1),
+          draft: 'Pertanyaan belum dikirim',
+          turns: [
+            turn(1, answer: answer),
+            turn(2, phase: ChatPhase.waiting, steps: [step]),
+          ],
+          phase: ChatPhase.waiting,
+        ),
+      );
+      final current = vm.current;
+      final composer = tester.state(find.byType(ChatComposer));
+      final location = router.routeInformationProvider.value.uri;
+      language.value = const Locale('en');
+      await tester.pumpAndSettle();
+      expect(identical(vm.current, current), isTrue);
+      expect(tester.state(find.byType(ChatComposer)), same(composer));
+      expect(vm.current.draft, 'Pertanyaan belum dikirim');
+      expect(
+        vm.current.turns.first.answer!.blocks.first.text,
+        'Jawaban tervalidasi.',
+      );
+      expect(vm.current.turns.last.steps!.single.label, step.label);
+      expect(router.routeInformationProvider.value.uri, location);
+      expect((vm.sends, vm.stops, vm.creates), (0, 0, 0));
+      expect(find.bySemanticsLabel('Stop response'), findsOneWidget);
+    },
+  );
 }

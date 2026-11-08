@@ -91,7 +91,7 @@ void main() {
         child: const LumaApp(),
       ),
     );
-    await tester.pump();
+    await tester.pumpAndSettle();
   }
 
   // Not pumpAndSettle: the pulsing dot in the progress sheet never settles.

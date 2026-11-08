@@ -1,3 +1,4 @@
+import 'package:luma/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:luma/ui/core/theme/stabilo_theme.dart';
@@ -7,6 +8,9 @@ void main() {
   testWidgets('a tag is as wide as its text, not its parent', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('id'),
         theme: stabiloTheme(Brightness.dark),
         home: const Scaffold(
           body: SizedBox(
@@ -43,6 +47,9 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('id'),
         theme: stabiloTheme(Brightness.light),
         home: const Scaffold(
           body: SizedBox(

@@ -1,3 +1,5 @@
+import 'package:luma/l10n/app_localizations.dart';
+
 import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
@@ -131,6 +133,9 @@ void main() {
           ),
         ],
         child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('id'),
           theme: stabiloTheme(brightness),
           home: const DiscoverView(),
         ),

@@ -1,3 +1,4 @@
+import 'package:luma/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../domain/chat_steps.dart';
@@ -55,8 +56,8 @@ class _ChatStepsRowState extends State<ChatStepsRow> {
     final expanded = _expanded ?? widget.running;
     final last = steps.lastOrNull;
     final title = widget.running && last != null
-        ? last.statusLabel
-        : '${steps.length} langkah selesai';
+        ? last.statusLabel(context.l10n)
+        : context.l10n.chatStepsCompleted(steps.length);
     final hidden = steps.length - ChatStepsRow.visibleSteps;
     final shown = _all || hidden <= 0
         ? steps
@@ -99,7 +100,7 @@ class _ChatStepsRowState extends State<ChatStepsRow> {
                   ),
                   if (widget.running)
                     Text(
-                      'Langkah ${steps.length}',
+                      context.l10n.chatSteps(steps.length),
                       style: StabiloType.caption.copyWith(
                         fontSize: 13.5,
                         fontWeight: FontWeight.w500,
@@ -137,7 +138,7 @@ class _ChatStepsRowState extends State<ChatStepsRow> {
                             child: Align(
                               alignment: Alignment.centerLeft,
                               child: Text(
-                                'lihat $hidden lagi',
+                                context.l10n.chatShowMore(hidden),
                                 style: StabiloType.caption.copyWith(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w700,
@@ -282,7 +283,7 @@ class ChatAnswerNow extends StatelessWidget {
       children: [
         Semantics(
           button: true,
-          label: 'Jawab sekarang',
+          label: context.l10n.chatAnswerNow,
           excludeSemantics: true,
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
@@ -294,7 +295,7 @@ class ChatAnswerNow extends StatelessWidget {
                 spacing: 2,
                 children: [
                   Text(
-                    'Jawab sekarang',
+                    context.l10n.chatAnswerNow,
                     style: StabiloType.label.copyWith(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
@@ -309,7 +310,7 @@ class ChatAnswerNow extends StatelessWidget {
         ),
         const SizedBox(height: 2),
         Text(
-          'Pakai $notes catatan yang udah masuk, sisa buku gak dibaca.',
+          context.l10n.chatUseTheNotesReceivedSoFar(notes),
           style: StabiloType.caption.copyWith(
             fontSize: 12.5,
             fontWeight: FontWeight.w600,

@@ -1,3 +1,4 @@
+import 'package:luma/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -90,7 +91,16 @@ class ChatSourceSheet extends ConsumerWidget {
                             borderRadius: BorderRadius.circular(Radii.full),
                           ),
                           child: Text(
-                            '${source.chapterTitle} · ${source.anchors.map((a) => 'bagian ${a.paragraphIndex + 1}').join(' · ')}',
+                            context.l10n.chat(
+                              source.chapterTitle,
+                              source.anchors
+                                  .map(
+                                    (a) => context.l10n.sourceParagraph(
+                                      a.paragraphIndex + 1,
+                                    ),
+                                  )
+                                  .join(' · '),
+                            ),
                             style: StabiloType.caption.copyWith(
                               fontSize: 13,
                               height: 16 / 13,
@@ -141,7 +151,10 @@ class ChatSourceSheet extends ConsumerWidget {
                         style: typo.style.copyWith(color: surround),
                       ),
                     if (state.isLoading || !available)
-                      Text(state.sourceMessage, style: StabiloType.caption),
+                      Text(
+                        state.sourceMessage(context),
+                        style: StabiloType.caption,
+                      ),
                   ],
                 ),
               ),
@@ -161,7 +174,7 @@ class ChatSourceSheet extends ConsumerWidget {
               spacing: 10,
               children: [
                 CircleButton(
-                  semanticLabel: 'Tutup',
+                  semanticLabel: context.l10n.sheetClose,
                   icon: AppIcons.close,
                   size: Layout.chatComposer,
                   onPressed: () => Navigator.of(context).pop(),
@@ -176,14 +189,14 @@ class ChatSourceSheet extends ConsumerWidget {
                             borderRadius: BorderRadius.circular(Radii.full),
                           ),
                           child: Text(
-                            'Bukunya udah berubah',
+                            context.l10n.chatTheBookHasChanged,
                             style: StabiloType.label.copyWith(
                               color: context.stabilo.ink3,
                             ),
                           ),
                         )
                       : AppButton.primary(
-                          label: 'Buka di buku',
+                          label: context.l10n.chatOpenInBook,
                           icon: AppIcons.book,
                           onPressed: available
                               ? () => Navigator.of(context).pop(true)
@@ -200,11 +213,11 @@ class ChatSourceSheet extends ConsumerWidget {
 }
 
 extension on AsyncValue<ChatSourceLocation?> {
-  String get sourceMessage {
-    if (isLoading) return 'Lagi ngecek lokasi kutipan…';
+  String sourceMessage(BuildContext context) {
+    if (isLoading) return context.l10n.chatCheckingQuoteLocation;
     if (asData?.value?.available == true) {
-      return 'Cek teks aslinya tanpa mengubah posisi baca lo.';
+      return context.l10n.chatCheckTheOriginalTextWithoutChanging;
     }
-    return 'Sumber ini udah gak tersedia atau jawabannya belum lolos pengecekan. Kutipan lama tetap bisa lo baca.';
+    return context.l10n.chatThisSourceIsNoLongerAvailable2;
   }
 }

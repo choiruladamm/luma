@@ -1,49 +1,52 @@
-/// "1.240" (titik ribuan).
-String thousands(int n) =>
-    n.toString().replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (_) => '.');
+import 'package:flutter/widgets.dart';
+import 'package:intl/intl.dart';
 
-/// "850 KB", "1,2 MB" (koma desimal).
-String fileSize(int bytes) {
-  if (bytes < 1024 * 1024) return '${(bytes / 1024).ceil()} KB';
-  final mb = bytes / (1024 * 1024);
-  return '${mb.toStringAsFixed(1).replaceAll('.', ',')} MB';
+import '../../l10n/app_localizations.dart';
+
+String thousands(int n, {String locale = 'id'}) =>
+    NumberFormat.decimalPattern(locale).format(n);
+
+String fileSize(int bytes, {String locale = 'id'}) {
+  if (bytes < 1024 * 1024) {
+    return '${NumberFormat.decimalPattern(locale).format((bytes / 1024).ceil())} KB';
+  }
+  return '${NumberFormat('0.0', locale).format(bytes / (1024 * 1024))} MB';
 }
 
-/// "hari ini", "kemarin", "3 hari lalu", "2 minggu lalu", "5 bulan lalu",
-/// "1 tahun lalu", dihitung per tanggal kalender.
-String ago(DateTime then, DateTime now) {
+/// Calendar boundaries, matching the existing relative-time behavior.
+String ago(DateTime then, DateTime now, {String locale = 'id'}) {
+  final l10n = lookupAppLocalizations(Locale(locale));
   final days = DateTime(
     now.year,
     now.month,
     now.day,
   ).difference(DateTime(then.year, then.month, then.day)).inDays;
-  if (days <= 0) return 'hari ini';
-  if (days == 1) return 'kemarin';
-  if (days < 7) return '$days hari lalu';
-  if (days < 30) return '${days ~/ 7} minggu lalu';
-  if (days < 365) return '${days ~/ 30} bulan lalu';
-  return '${days ~/ 365} tahun lalu';
+  if (days <= 0) return l10n.relativeToday;
+  if (days == 1) return l10n.relativeYesterday;
+  if (days < 7) return l10n.relativeDays(days);
+  if (days < 30) return l10n.relativeWeeks(days ~/ 7);
+  if (days < 365) return l10n.relativeMonths(days ~/ 30);
+  return l10n.relativeYears(days ~/ 365);
 }
 
-const _months = [
-  'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', //
-  'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des',
-];
+String dateTime(DateTime t, {String locale = 'id'}) =>
+    '${date(t, locale: locale)}, ${_time(t, locale)}';
 
-/// "3 Okt 2026, 21.40".
-String dateTime(DateTime t) {
-  String two(int n) => n.toString().padLeft(2, '0');
-  return '${t.day} ${_months[t.month - 1]} ${t.year}, '
-      '${two(t.hour)}.${two(t.minute)}';
+String date(DateTime t, {String locale = 'id'}) =>
+    DateFormat('d MMM y', locale).format(t);
+
+String _time(DateTime t, String locale) =>
+    DateFormat(locale == 'id' ? 'HH.mm' : 'HH:mm', locale).format(t);
+
+String lastSeen(DateTime then, DateTime now, {String locale = 'id'}) {
+  final day = ago(then, now, locale: locale);
+  return '${day[0].toUpperCase()}${day.substring(1)}, ${_time(then, locale)}';
 }
 
-/// "3 Okt 2026".
-String date(DateTime t) => '${t.day} ${_months[t.month - 1]} ${t.year}';
-
-/// "Kemarin, 22.14" / "Hari ini, 08.05" / "3 hari lalu, 21.40".
-String lastSeen(DateTime then, DateTime now) {
-  final day = ago(then, now);
-  String two(int n) => n.toString().padLeft(2, '0');
-  return '${day[0].toUpperCase()}${day.substring(1)}, '
-      '${two(then.hour)}.${two(then.minute)}';
+String formatReadingTime(int seconds, {String locale = 'id'}) {
+  final minutes = seconds ~/ 60;
+  final h = minutes ~/ 60, m = minutes % 60;
+  final l10n = lookupAppLocalizations(Locale(locale));
+  if (h == 0) return l10n.readingDurationMinutes(m);
+  return l10n.readingDurationHours(h, m);
 }

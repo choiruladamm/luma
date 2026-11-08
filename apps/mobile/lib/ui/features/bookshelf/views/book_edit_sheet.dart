@@ -1,3 +1,4 @@
+import 'package:luma/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -46,9 +47,9 @@ class _BookEditSheetState extends ConsumerState<BookEditSheet> {
     if (!mounted) return;
     if (ok) {
       nav.pop();
-      showToast(context, 'Sip, judul & penulisnya udah diganti');
+      showToast(context, context.l10n.bookTitleAuthorUpdated);
     } else {
-      showToast(context, 'Yah, gagal nyimpen');
+      showToast(context, context.l10n.bookCouldnTSave);
     }
   }
 
@@ -69,16 +70,19 @@ class _BookEditSheetState extends ConsumerState<BookEditSheet> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               CircleButton(
-                semanticLabel: 'Batal',
+                semanticLabel: context.l10n.dialogCancel,
                 icon: AppIcons.close,
                 onPressed: () => Navigator.of(context).pop(),
               ),
               Semantics(
                 header: true,
-                child: Text('Ubah judul & penulis', style: StabiloType.titleXs),
+                child: Text(
+                  context.l10n.bookEditTitleAuthor,
+                  style: StabiloType.titleXs,
+                ),
               ),
               CircleButton(
-                semanticLabel: 'Simpan',
+                semanticLabel: context.l10n.chatSave,
                 icon: AppIcons.check,
                 primary: s.canSave,
                 onPressed: s.canSave ? _save : null,
@@ -99,7 +103,7 @@ class _BookEditSheetState extends ConsumerState<BookEditSheet> {
                 ),
                 if (epub == null)
                   Text(
-                    'Preview cover',
+                    context.l10n.bookCoverPreview,
                     style: StabiloType.caption.copyWith(
                       fontWeight: FontWeight.w700,
                       color: c.ink2,
@@ -107,23 +111,25 @@ class _BookEditSheetState extends ConsumerState<BookEditSheet> {
                   )
                 else
                   Tag.status(
-                    showEpub ? 'Cover asli EPUB' : 'Cover default',
+                    showEpub
+                        ? context.l10n.bookOriginalEpubCover
+                        : context.l10n.bookDefaultCover,
                     icon: AppIcons.image,
                   ),
               ],
             ),
           ),
           AppField(
-            label: 'Judul',
-            hint: 'Judul buku',
+            label: context.l10n.bookTitle,
+            hint: context.l10n.importBookTitle,
             controller: _title,
             mono: false,
-            error: s.titleError,
+            error: s.titleEmpty ? context.l10n.editTitleEmpty : null,
             onChanged: vm.setTitle,
           ),
           AppField(
-            label: 'Penulis (opsional)',
-            hint: 'Nama penulis',
+            label: context.l10n.bookAuthorOptional,
+            hint: context.l10n.bookAuthorName,
             controller: _author,
             mono: false,
             onChanged: vm.setAuthor,
@@ -151,8 +157,8 @@ class _BookEditSheetState extends ConsumerState<BookEditSheet> {
                       Expanded(
                         child: Text(
                           s.useDefaultCover
-                              ? 'Cover asli tetep disimpen, bisa dinyalain lagi kapan aja.'
-                              : 'Cover ini bawaan file EPUB, jadi gak ikut berubah pas judulnya lo ganti.',
+                              ? context.l10n.bookYourOriginalCoverIsSavedYou
+                              : context.l10n.bookThisCoverComesFromTheEpub,
                           style: StabiloType.caption.copyWith(color: c.ink2),
                         ),
                       ),
@@ -161,11 +167,14 @@ class _BookEditSheetState extends ConsumerState<BookEditSheet> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Pakai cover default', style: StabiloType.label),
+                      Text(
+                        context.l10n.bookUseDefaultCover,
+                        style: StabiloType.label,
+                      ),
                       AppSwitch(
                         value: s.useDefaultCover,
                         onChanged: vm.setUseDefaultCover,
-                        semanticLabel: 'Pakai cover default',
+                        semanticLabel: context.l10n.bookUseDefaultCover,
                       ),
                     ],
                   ),
@@ -177,7 +186,7 @@ class _BookEditSheetState extends ConsumerState<BookEditSheet> {
               spacing: Space.s3,
               children: [
                 AppButton.secondary(
-                  label: 'Balikin ke aslinya',
+                  label: context.l10n.bookRestoreOriginals,
                   icon: AppIcons.undo,
                   height: 40,
                   onPressed: () {
@@ -189,8 +198,10 @@ class _BookEditSheetState extends ConsumerState<BookEditSheet> {
                 ),
                 Expanded(
                   child: Text(
-                    'Dari EPUB: ${s.originalTitle} · '
-                    '${s.originalAuthor ?? 'tanpa penulis'}',
+                    context.l10n.bookFromEpub(
+                      s.originalTitle ?? '',
+                      s.originalAuthor ?? context.l10n.unknownAuthor,
+                    ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: StabiloType.caption.copyWith(color: c.ink2),

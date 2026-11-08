@@ -1,3 +1,4 @@
+import 'package:luma/ui/core/format.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:luma/domain/reading.dart';
 

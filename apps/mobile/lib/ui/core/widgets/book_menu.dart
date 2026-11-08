@@ -1,3 +1,5 @@
+import 'package:luma/l10n/l10n.dart';
+
 import 'dart:io';
 import 'dart:ui';
 
@@ -27,7 +29,7 @@ Future<T?> showBookMenu<T>(
   context: context,
   useRootNavigator: true,
   barrierDismissible: true,
-  barrierLabel: 'Tutup menu',
+  barrierLabel: context.l10n.bookCloseMenu,
   barrierColor: Colors.transparent,
   transitionDuration: Motion.highlight,
   pageBuilder: (context, animation, _) => _BookMenu<T>(

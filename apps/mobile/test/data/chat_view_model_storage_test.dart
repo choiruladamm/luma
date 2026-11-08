@@ -227,7 +227,7 @@ void main() {
           .write(const ChatSessionsCompanion(title: Value('')));
       await when((s) => s.activeSession?.invalid == true);
       expect(state().readOnly, true);
-      expect(state().problem, contains('rusak'));
+      expect(state().problem, ChatProblem.historyDamaged);
       await repo.deleteSession(book.bookId, turn.sessionId);
       await when((s) => s.activeSession == null && !s.changingSession);
       expect(adapter.requests, isEmpty);

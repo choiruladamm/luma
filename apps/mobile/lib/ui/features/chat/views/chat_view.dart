@@ -1,3 +1,5 @@
+import 'package:luma/l10n/l10n.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -153,7 +155,7 @@ class _ChatViewState extends ConsumerState<ChatView> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(chatViewModelProvider(widget.bookId));
-    final title = chatBookTitle(ref, widget.bookId);
+    final title = chatBookTitle(context, ref, widget.bookId);
     final pad = MediaQuery.paddingOf(context);
     // Teks isi ikut Aa; ganti pengaturan di reader langsung kebawa.
     final typo = ReaderTypography(
@@ -215,8 +217,10 @@ class _ChatViewState extends ConsumerState<ChatView> {
                           children: [
                             CircleButton(
                               semanticLabel:
-                                  widget.launch?.origin.backLabel ??
-                                  'Balik baca',
+                                  widget.launch?.origin.backLabel(
+                                    context.l10n,
+                                  ) ??
+                                  context.l10n.chatBackToReading,
                               icon: AppIcons.back,
                               onPressed: () => _navigate(() => _back()),
                             ),
@@ -225,7 +229,7 @@ class _ChatViewState extends ConsumerState<ChatView> {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
-                                    'Ngobrolin buku',
+                                    context.l10n.readerBookChat,
                                     style: StabiloType.titleXs.copyWith(
                                       fontSize: 15,
                                     ),
@@ -249,13 +253,13 @@ class _ChatViewState extends ConsumerState<ChatView> {
                                 widget.launch!.origin !=
                                     ChatLaunchOrigin.reader)
                               CircleButton(
-                                semanticLabel: 'Balik baca',
+                                semanticLabel: context.l10n.chatBackToReading,
                                 icon: AppIcons.book,
                                 onPressed: () =>
                                     _navigate(() => _back(reading: true)),
                               ),
                             CircleButton(
-                              semanticLabel: 'Riwayat obrolan',
+                              semanticLabel: context.l10n.chatChatHistory,
                               icon: AppIcons.history,
                               onPressed: () => _navigate(
                                 () => context.push(
@@ -306,8 +310,10 @@ class _ChatViewState extends ConsumerState<ChatView> {
                                       ),
                                       child: Text(
                                         state.archived
-                                            ? 'Arsip · cuma bisa dibaca'
-                                            : 'Riwayat ini gak bisa dilanjutkan.',
+                                            ? context.l10n.chatArchivedReadOnly
+                                            : context
+                                                  .l10n
+                                                  .chatThisHistoryCanTBeContinued,
                                         style: StabiloType.caption,
                                         maxLines: 2,
                                         overflow: TextOverflow.ellipsis,
@@ -315,7 +321,7 @@ class _ChatViewState extends ConsumerState<ChatView> {
                                     ),
                                   ),
                                   AppButton.primary(
-                                    label: 'Obrolan baru',
+                                    label: context.l10n.chatNewChat,
                                     height: Layout.touch,
                                     onPressed: () =>
                                         unawaited(_vm.newSession()),
@@ -327,8 +333,8 @@ class _ChatViewState extends ConsumerState<ChatView> {
                             ChatComposer(
                               draft: state.draft,
                               hint: state.selectedQuote == null
-                                  ? 'Tanya soal buku ini…'
-                                  : 'Tanya soal kutipan ini…',
+                                  ? context.l10n.chatAskAboutThisBook2
+                                  : context.l10n.chatAskAboutThisQuote,
                               canSend: state.canSend,
                               running: state.phase?.isRunning ?? false,
                               enabled: !state.loading && !state.busy,
@@ -357,11 +363,14 @@ class _ChatViewState extends ConsumerState<ChatView> {
       spacing: Space.s2,
       children: [
         if (state.problem != null)
-          Text(state.problem!, style: StabiloType.caption),
+          Text(state.problem!.label(context.l10n), style: StabiloType.caption),
         if (state.error != null)
           Semantics(
             liveRegion: true,
-            child: Text(state.error!.chatMessage, style: StabiloType.caption),
+            child: Text(
+              state.error!.chatMessage(context.l10n),
+              style: StabiloType.caption,
+            ),
           ),
         Wrap(
           crossAxisAlignment: WrapCrossAlignment.center,
@@ -393,7 +402,7 @@ class _ChatViewState extends ConsumerState<ChatView> {
                       ),
                     Flexible(
                       child: Text(
-                        state.statusLabel(phase),
+                        state.statusLabel(context.l10n, phase),
                         style: StabiloType.caption.copyWith(
                           fontSize: 13.5,
                           fontWeight: FontWeight.w600,
@@ -406,13 +415,13 @@ class _ChatViewState extends ConsumerState<ChatView> {
               ),
             if (state.error?.needsSettings ?? false)
               AppButton.secondary(
-                label: 'Buka Pengaturan',
+                label: context.l10n.meaningOpenSettings,
                 height: Layout.touch,
                 onPressed: () => _navigate(() => context.push(Routes.settings)),
               ),
             if (state.canContinue)
               AppButton.secondary(
-                label: 'Lanjutkan',
+                label: context.l10n.chatContinue,
                 height: Layout.touch,
                 onPressed: () => unawaited(_vm.continueExploration()),
               ),
@@ -426,7 +435,7 @@ class _ChatViewState extends ConsumerState<ChatView> {
                   child: Center(
                     widthFactor: 1,
                     child: AppButton.secondary(
-                      label: 'Coba lagi',
+                      label: context.l10n.meaningTryAgain,
                       icon: AppIcons.retry,
                       height: 36,
                       onPressed: () => unawaited(_vm.retry()),
@@ -462,7 +471,7 @@ class _ChatViewState extends ConsumerState<ChatView> {
     if (state.turns.isNotEmpty) {
       return ChatHistory(
         preview: state.preview,
-        indexLabel: state.indexLabel,
+        indexLabel: state.indexLabel(context.l10n),
         key: ValueKey(state.activeSession?.id),
         turns: state.turns,
         anchor: state.scrollAnchor,
@@ -492,16 +501,17 @@ class _ChatViewState extends ConsumerState<ChatView> {
       );
     }
     final plain = state.book != null && quote == null;
-    var prompt = 'Mau ngobrolin apa soal bukunya?';
+    var prompt = context.l10n.chatWhatWouldYouLikeToDiscuss;
     if (state.book == null) {
-      prompt = 'Buku ini gak tersedia.';
+      prompt = context.l10n.chatThisBookIsUnavailable;
     } else if (quote != null) {
-      prompt = 'Mau tanya apa soal kutipan ini?';
+      prompt = context.l10n.chatWhatWouldYouLikeToAsk;
     }
     final hint = switch ((quote != null, state.book != null)) {
-      (true, _) => 'Tulis pertanyaan lo di bawah. Kutipan sama terjemahannya ikut kebaca sebagai konteks.',
-      (_, true) =>
-        'Tanya apa aja soal ${chatBookName(ref, widget.bookId)}. Jawabannya selalu ada sitasi ke bagian bukunya.',
+      (true, _) => context.l10n.chatWriteYourQuestionBelowTheQuote,
+      (_, true) => context.l10n.chatAskAnythingAboutAnswersIncludeCitations(
+        chatBookName(context, ref, widget.bookId),
+      ),
       _ => null,
     };
     return EdgeFadeScroll(

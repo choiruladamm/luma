@@ -1,3 +1,5 @@
+import 'package:luma/l10n/app_localizations.dart';
+
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
@@ -738,6 +740,9 @@ void main() {
         addTearDown(t.view.reset);
         await t.pumpWidget(
           MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: const Locale('id'),
             theme: stabiloTheme(Brightness.light),
             home: MediaQuery(
               data: MediaQueryData(
@@ -1625,6 +1630,9 @@ void main() {
           chapterTranslatedProvider.overrideWith((ref, id) async => 0),
         ],
         child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('id'),
           theme: stabiloTheme(Brightness.light),
           home: const ReaderView(bookId: 1),
         ),
@@ -1744,6 +1752,9 @@ void main() {
             chapterTranslatedProvider.overrideWith((ref, id) async => 0),
           ],
           child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: const Locale('id'),
             theme: stabiloTheme(Brightness.light),
             builder: (context, child) => MediaQuery(
               data: MediaQuery.of(context)
@@ -2008,6 +2019,9 @@ void main() {
             chapterTranslatedProvider.overrideWith((ref, id) async => 0),
           ],
           child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: const Locale('id'),
             theme: stabiloTheme(Brightness.light),
             home: const ReaderView(bookId: 1),
           ),

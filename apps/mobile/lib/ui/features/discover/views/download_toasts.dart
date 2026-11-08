@@ -1,3 +1,4 @@
+import 'package:luma/l10n/l10n.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -62,9 +63,11 @@ class _DownloadToastsState extends ConsumerState<DownloadToasts> {
         if (!item.finished) continue;
         final title = item.book.title;
         final message = switch (item.status) {
-          DownloadStatus.done => '$title udah masuk rak',
-          DownloadStatus.duplicate => '$title udah ada di rak',
-          _ => 'Gagal ngunduh $title',
+          DownloadStatus.done => context.l10n.downloadAddedToShelf2(title),
+          DownloadStatus.duplicate => context.l10n.downloadIsAlreadyOnYourShelf(
+            title,
+          ),
+          _ => context.l10n.downloadCouldnTDownload(title),
         };
         final bookId = item.bookId;
         if (_background) {
@@ -72,7 +75,11 @@ class _DownloadToastsState extends ConsumerState<DownloadToasts> {
               .show(
                 id: item.key.hashCode,
                 title: message,
-                body: bookId == null ? null : 'Tap buat mulai baca',
+                channelName: context.l10n.notificationChannelName,
+                channelDescription: context.l10n.notificationChannelDescription,
+                body: bookId == null
+                    ? null
+                    : context.l10n.downloadTapToStartReading,
                 payload: bookId?.toString(),
               )
               .ignore();
@@ -84,7 +91,11 @@ class _DownloadToastsState extends ConsumerState<DownloadToasts> {
         showToast(
           context,
           message,
-          actionLabel: bookId == null ? null : (reading ? 'Buka' : 'Baca'),
+          actionLabel: bookId == null
+              ? null
+              : (reading
+                    ? context.l10n.downloadOpen
+                    : context.l10n.downloadRead),
           duration: Motion.toastBaca,
           onAction: bookId == null ? null : () => _open(bookId),
         );

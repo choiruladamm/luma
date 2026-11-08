@@ -1,3 +1,5 @@
+import 'package:luma/l10n/l10n.dart';
+
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -12,12 +14,12 @@ import 'buttons.dart';
 /// Salin yang lagi nunggu jawaban: tiga titik berdenyut + "Lagi mikir" /
 /// "Lagi nulis". Nonaktif, warna ink2 di atas muted.
 class StatusButton extends StatelessWidget {
-  const StatusButton({super.key, required this.label, this.action = 'Salin'});
+  const StatusButton({super.key, required this.label, this.action});
 
   final String label;
 
   /// Tombol yang lagi nunggu (VoiceOver: "Salin, belum bisa: lagi mikir").
-  final String action;
+  final String? action;
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +27,10 @@ class StatusButton extends StatelessWidget {
     return Semantics(
       button: true,
       enabled: false,
-      label: '$action, belum bisa: ${label.toLowerCase()}',
+      label: context.l10n.aiUnavailable(
+        action ?? context.l10n.aiCopy,
+        label.toLowerCase(),
+      ),
       excludeSemantics: true,
       child: Container(
         height: 52,

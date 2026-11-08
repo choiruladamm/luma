@@ -116,4 +116,4 @@ Integration test di luar scope MVP.
 
 ## Copy
 
-UI berbahasa Indonesia gaya Gen Z santai ("Rak buku lo", "Bentar, lagi mikir..."). Ambil teks persis dari board desain kalau ada.
+UI mendukung Indonesia / English lewat `lib/l10n/app_id.arb` (template) dan `app_en.arb`; akses dari UI lewat `context.l10n`. Copy Indonesia tetap gaya Gen Z santai ("Rak buku lo", "Bentar, lagi mikir...") dan mengikuti board desain; English santai dan natural. Tambah kalimat utuh dengan placeholder/plural, lalu `make l10n`; generated source ikut di-commit. Angka/tanggal pakai formatter dengan locale eksplisit. Bahasa AI, teks buku, input user, dan jejak chat tersimpan tetap bahasa asal. Detail: [docs/i18n.md](docs/i18n.md).

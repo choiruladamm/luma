@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import '../../../../l10n/l10n.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -135,14 +137,11 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
     final c = app.stabilo;
     showToast(
       app,
-      'Sip, data lo udah balik!',
-      subtitle:
-          '${thousands(m.books)} buku · ${thousands(m.aiResults)} terjemahan',
+      app.l10n.settingsYourDataIsBack,
+      subtitle: app.l10n.settingsBooksTranslations(m.books, m.aiResults),
       leading: ToastTile(icon: AppIcons.check, bg: c.accent, fg: c.onAccent),
-      note: noKey
-          ? 'API key gak ikut backup, isi ulang dulu biar bisa nerjemahin.'
-          : null,
-      actionLabel: noKey ? 'Isi key' : null,
+      note: noKey ? app.l10n.settingsApiKeysArenTIncludedIn : null,
+      actionLabel: noKey ? app.l10n.settingsAddKey : null,
       onAction: () => router.push(Routes.settings),
     );
   }
@@ -166,12 +165,9 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
   Future<void> _clearCache() async {
     final ok = await showConfirmDialog(
       context,
-      title: 'Hapus cache terjemahan?',
-      message:
-          'Semua terjemahan yang udah kesimpen bakal ilang. Paragraf yang '
-          'dibuka lagi manggil AI ulang dan motong saldo lagi. '
-          'Obrolan buku lo tetap kesimpen.',
-      confirmLabel: 'Hapus',
+      title: context.l10n.settingsDeleteTranslationCache,
+      message: context.l10n.settingsAllSavedTranslationsWillBeDeleted,
+      confirmLabel: context.l10n.bookClear,
     );
     if (!ok) return;
     await ref.read(aiResultsRepositoryProvider).clear();
@@ -184,7 +180,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
     final cache = ref.watch(aiCacheStatsProvider).value;
     ref.listen(catalogSyncProvider, (_, state) {
       if (state is! CatalogSyncUpToDate) return;
-      showToast(context, 'Katalognya udah yang terbaru');
+      showToast(context, context.l10n.settingsYourCatalogIsAlreadyUpTo);
       ref.read(catalogSyncProvider.notifier).dismiss();
     });
     final catalogSync = ref.read(catalogSyncProvider.notifier);
@@ -206,13 +202,16 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                       // layar baca / chat.
                       if (Navigator.canPop(context))
                         CircleButton(
-                          semanticLabel: 'Balik',
+                          semanticLabel: context.l10n.settingsBack,
                           icon: AppIcons.back,
                           onPressed: () => context.pop(),
                         ),
                       Semantics(
                         header: true,
-                        child: Text('Pengaturan', style: StabiloType.titleLg),
+                        child: Text(
+                          context.l10n.settingsSettings,
+                          style: StabiloType.titleLg,
+                        ),
                       ),
                     ],
                   ),
@@ -230,8 +229,10 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                       MediaQuery.paddingOf(context).bottom,
                     ),
                     children: [
+                      _LanguagePicker(),
+                      const SizedBox(height: 22),
                       AppField(
-                        label: 'API key OpenRouter',
+                        label: context.l10n.settingsOpenrouterApiKey,
                         controller: _key,
                         secret: true,
                         // Spasi / baris baru ikut ke-paste dari mana-mana:
@@ -249,9 +250,10 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                       _KeyStatus(status: ref.watch(apiKeyEntryProvider)),
                       const SizedBox(height: 22),
                       _Section(
-                        label: 'Model AI',
-                        note:
-                            'Biayanya kepotong dari saldo akun OpenRouter lo.',
+                        label: context.l10n.settingsAiModel,
+                        note: context
+                            .l10n
+                            .settingsChargesComeFromYourOpenrouterAccount,
                         child: _ModelPicker(
                           selected: model,
                           onSelect: (id) => ref
@@ -261,7 +263,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                       ),
                       const SizedBox(height: 22),
                       _Section(
-                        label: 'Backup & pulihin',
+                        label: context.l10n.settingsBackupRestore,
                         note: const _BackupNote(),
                         child: _BackupCard(
                           last: ref.watch(lastBackupProvider).value,
@@ -272,10 +274,10 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                       ),
                       const SizedBox(height: 22),
                       _Section(
-                        label: 'Katalog buku',
-                        note:
-                            'Daftar ±62.000 buku Project Gutenberg buat nyari '
-                            'judul tanpa internet. Diperbarui mingguan.',
+                        label: context.l10n.settingsBookCatalog,
+                        note: context
+                            .l10n
+                            .settingsAroundProjectGutenbergBooksToSearch,
                         child: _CatalogRow(
                           stats: ref.watch(catalogStatsProvider).value,
                           state: ref.watch(catalogSyncProvider),
@@ -285,7 +287,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                       ),
                       const SizedBox(height: 22),
                       _Section(
-                        label: 'Penyimpanan',
+                        label: context.l10n.settingsStorage,
                         child: _CacheRow(stats: cache, onClear: _clearCache),
                       ),
                     ],
@@ -321,23 +323,21 @@ class _KeyStatus extends StatelessWidget {
         Text(text, style: label.copyWith(color: c.danger));
     return switch (status) {
       KeyStatus.idle => Text(
-        'Disimpen aman di perangkat (Keychain / Keystore), gak dikirim ke '
-        'mana-mana selain OpenRouter.',
+        context.l10n.settingsStoredSecurelyOnYourDeviceKeychain,
         style: small,
       ),
       KeyStatus.badFormat => error(
-        'Itu bukan API key OpenRouter. Key-nya mulai dari sk-or-... '
-        'dan gak disimpen.',
+        context.l10n.settingsThatSNotAnOpenrouterApi,
       ),
       KeyStatus.refused => error(
-        'Key-nya ditolak OpenRouter, jadi gak disimpen. Cek lagi ya.',
+        context.l10n.settingsOpenrouterRejectedTheKeySoIt,
       ),
       KeyStatus.checking || KeyStatus.rejected || KeyStatus.valid => Row(
         children: [
           Expanded(
             child: switch (status) {
               KeyStatus.checking => Text(
-                'Bentar, lagi ngecek...',
+                context.l10n.settingsHangOnChecking,
                 style: small,
               ),
               KeyStatus.valid => Row(
@@ -353,13 +353,16 @@ class _KeyStatus extends StatelessWidget {
                     ),
                     child: AppIcon(AppIcons.check, size: 11, color: c.onAccent),
                   ),
-                  Text('Key-nya jalan', style: label.copyWith(color: c.ink)),
+                  Text(
+                    context.l10n.settingsYourKeyWorks,
+                    style: label.copyWith(color: c.ink),
+                  ),
                 ],
               ),
-              _ => error('Key-nya ditolak OpenRouter'),
+              _ => error(context.l10n.settingsOpenrouterRejectedYourKey),
             },
           ),
-          Text('Disimpen aman di perangkat', style: small),
+          Text(context.l10n.settingsStoredSecurelyOnYourDevice, style: small),
         ],
       ),
     };
@@ -415,18 +418,16 @@ class _BackupNote extends StatelessWidget {
     return Text.rich(
       TextSpan(
         children: [
-          const TextSpan(
-            text: 'Isinya buku, progres baca, terjemahan, sama pengaturan. ',
+          TextSpan(
+            text: context
+                .l10n
+                .settingsIncludesBooksReadingProgressTranslationsAnd,
           ),
           TextSpan(
-            text: 'API key gak ikut',
+            text: context.l10n.settingsApiKeysArenTIncluded,
             style: TextStyle(color: c.ink, fontWeight: FontWeight.w700),
           ),
-          const TextSpan(
-            text:
-                ', jadi abis pulihin isi ulang ya. Simpen file-nya di iCloud '
-                'Drive biar gak ikut kehapus pas install ulang.',
-          ),
+          TextSpan(text: context.l10n.settingsSoAddYoursAgainAfterRestoring),
         ],
       ),
       style: _noteStyle(c),
@@ -452,9 +453,11 @@ class _BackupCard extends StatelessWidget {
   final VoidCallback onRestore;
 
   /// "Barusan" (< 1 jam), "Hari ini", "Kemarin", "3 hari lalu", ...
-  static String when(DateTime at, DateTime now) {
-    if (now.difference(at) < const Duration(hours: 1)) return 'Barusan';
-    final s = ago(at, now);
+  static String when(BuildContext context, DateTime at, DateTime now) {
+    if (now.difference(at) < const Duration(hours: 1)) {
+      return context.l10n.settingsJustNow;
+    }
+    final s = ago(at, now, locale: context.l10n.localeName);
     return s[0].toUpperCase() + s.substring(1);
   }
 
@@ -498,14 +501,16 @@ class _BackupCard extends StatelessWidget {
                   spacing: 2,
                   children: [
                     Text(
-                      b == null ? 'Status backup' : 'Backup terakhir',
+                      b == null
+                          ? context.l10n.settingsBackupStatus
+                          : context.l10n.settingsLastBackup,
                       style: small,
                     ),
                     Text(
                       b != null
-                          ? when(b.at, DateTime.now())
+                          ? when(context, b.at, DateTime.now())
                           : never
-                          ? 'Belum pernah backup'
+                          ? context.l10n.settingsNoBackupsYet
                           : ' ',
                       style: StabiloType.titleSm.copyWith(
                         fontSize: 18,
@@ -515,9 +520,9 @@ class _BackupCard extends StatelessWidget {
                     ),
                     Text(
                       b != null
-                          ? '${b.name} · ${fileSize(b.size)}'
+                          ? '${b.name} · ${fileSize(b.size, locale: context.l10n.localeName)}'
                           : never
-                          ? 'Data lo cuma ada di HP ini doang'
+                          ? context.l10n.settingsYourDataIsOnlyOnThis
                           : ' ',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -529,12 +534,12 @@ class _BackupCard extends StatelessWidget {
             ],
           ),
           AppButton.primary(
-            label: 'Backup sekarang',
+            label: context.l10n.settingsBackUpNow,
             icon: AppIcons.backup,
             onPressed: onBackup,
           ),
           AppButton.secondary(
-            label: 'Pulihin dari backup',
+            label: context.l10n.settingsRestoreFromBackup,
             icon: AppIcons.restore,
             height: 48,
             onPressed: onRestore,
@@ -667,7 +672,7 @@ class _ModelRow extends StatelessWidget {
                               child: Align(
                                 widthFactor: 1,
                                 child: Text(
-                                  'Default · paling akurat',
+                                  context.l10n.settingsDefaultMostAccurate,
                                   style: StabiloType.micro.copyWith(
                                     height: 1,
                                     color: c.ink,
@@ -725,7 +730,7 @@ class _CacheRow extends StatelessWidget {
               spacing: 2,
               children: [
                 Text(
-                  'Cache terjemahan',
+                  context.l10n.settingsTranslationCache,
                   style: StabiloType.label.copyWith(
                     fontWeight: FontWeight.w600,
                     color: c.ink,
@@ -734,8 +739,13 @@ class _CacheRow extends StatelessWidget {
                 Text(
                   stats == null
                       ? ' '
-                      : '${thousands(stats!.paragraphs)} paragraf · '
-                            '${fileSize(stats!.bytes)}',
+                      : context.l10n.settingsParagraphs(
+                          stats!.paragraphs,
+                          fileSize(
+                            stats!.bytes,
+                            locale: context.l10n.localeName,
+                          ),
+                        ),
                   style: StabiloType.caption.copyWith(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w400,
@@ -746,7 +756,7 @@ class _CacheRow extends StatelessWidget {
             ),
           ),
           _RowButton(
-            label: 'Hapus cache',
+            label: context.l10n.settingsClearCache,
             danger: true,
             onPressed: empty ? null : onClear,
           ),
@@ -807,36 +817,44 @@ class _CatalogRow extends StatelessWidget {
 
   bool get _never => stats != null && stats!.count == 0;
 
-  String get _idleText {
+  String _idleText(BuildContext context) {
     final s = stats;
     if (s == null) return ' ';
-    if (s.count == 0) return 'Belum diunduh · 5,6 MB';
-    final when = s.syncedAt == null ? '' : 'Diperbarui ${date(s.syncedAt!)} · ';
-    return '$when${thousands(s.count)} buku';
+    if (s.count == 0) return context.l10n.settingsNotDownloadedMb;
+    final when = s.syncedAt == null
+        ? ''
+        : context.l10n.settingsUpdated(
+            date(s.syncedAt!, locale: context.l10n.localeName),
+          );
+    return context.l10n.settingsBooks(when, s.count);
   }
 
-  String get _subtitle => switch (state) {
-    CatalogSyncIdle() || CatalogSyncUpToDate() => _idleText,
-    CatalogSyncChecking() => 'Ngecek versi terbaru…',
+  String _subtitle(BuildContext context) => switch (state) {
+    CatalogSyncIdle() || CatalogSyncUpToDate() => _idleText(context),
+    CatalogSyncChecking() => context.l10n.settingsCheckingForUpdates,
     CatalogSyncDownloading(:final progress) =>
-      progress < 0 ? 'Ngunduh…' : 'Ngunduh ${(progress * 100).round()}%',
-    CatalogSyncImporting() => 'Nyusun katalog…',
-    CatalogSyncFailed() => 'Gagal, katalog lama tetep dipakai',
+      progress < 0
+          ? context.l10n.settingsDownloading
+          : context.l10n.settingsDownloading2((progress * 100).round()),
+    CatalogSyncImporting() => context.l10n.settingsPreparingCatalog,
+    CatalogSyncFailed() => context.l10n.settingsFailedKeepingThePreviousCatalog,
   };
 
   /// Null = lagi kerja tanpa bisa dibatalin → spinner.
-  (String, VoidCallback)? get _button => switch (state) {
-    CatalogSyncIdle() ||
-    CatalogSyncUpToDate() => (_never ? 'Unduh' : 'Perbarui', onSync),
-    CatalogSyncFailed() => ('Coba lagi', onSync),
-    CatalogSyncDownloading() => ('Batal', onCancel),
+  (String, VoidCallback)? _button(BuildContext context) => switch (state) {
+    CatalogSyncIdle() || CatalogSyncUpToDate() => (
+      _never ? context.l10n.settingsDownload : context.l10n.settingsUpdate,
+      onSync,
+    ),
+    CatalogSyncFailed() => (context.l10n.meaningTryAgain, onSync),
+    CatalogSyncDownloading() => (context.l10n.dialogCancel, onCancel),
     CatalogSyncChecking() || CatalogSyncImporting() => null,
   };
 
   @override
   Widget build(BuildContext context) {
     final c = context.stabilo;
-    final button = _button;
+    final button = _button(context);
     return Container(
       constraints: const BoxConstraints(minHeight: 64),
       padding: const EdgeInsets.fromLTRB(Space.s4, 10, 10, 10),
@@ -853,14 +871,14 @@ class _CatalogRow extends StatelessWidget {
               spacing: 2,
               children: [
                 Text(
-                  'Katalog Gutenberg',
+                  context.l10n.settingsGutenbergCatalog,
                   style: StabiloType.label.copyWith(
                     fontWeight: FontWeight.w600,
                     color: c.ink,
                   ),
                 ),
                 Text(
-                  _subtitle,
+                  _subtitle(context),
                   style: StabiloType.caption.copyWith(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w400,
@@ -889,6 +907,49 @@ class _CatalogRow extends StatelessWidget {
                   ),
                 ),
               ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LanguagePicker extends ConsumerStatefulWidget {
+  @override
+  ConsumerState<_LanguagePicker> createState() => _LanguagePickerState();
+}
+
+class _LanguagePickerState extends ConsumerState<_LanguagePicker> {
+  bool _saving = false;
+
+  Future<void> _select(String language) async {
+    setState(() => _saving = true);
+    try {
+      await ref.read(settingsRepositoryProvider).saveLocale(language);
+    } catch (_) {
+      if (mounted) showToast(context, context.l10n.languageSaveFailed);
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final language = ref.watch(appLocaleProvider).value ?? 'id';
+    return _Section(
+      label: context.l10n.interfaceLanguage,
+      note: context.l10n.interfaceLanguageNote,
+      child: Wrap(
+        spacing: Space.s2,
+        children: [
+          for (final option in const [
+            ('id', 'Bahasa Indonesia'),
+            ('en', 'English'),
+          ])
+            ChoiceChip(
+              label: Text(option.$2),
+              selected: language == option.$1,
+              onSelected: _saving ? null : (_) => _select(option.$1),
             ),
         ],
       ),

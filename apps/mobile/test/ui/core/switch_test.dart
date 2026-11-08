@@ -1,3 +1,4 @@
+import 'package:luma/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:luma/ui/core/theme/stabilo_theme.dart';
@@ -9,6 +10,9 @@ void main() {
       var value = true;
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('id'),
           theme: stabiloTheme(b),
           home: Scaffold(
             body: Center(

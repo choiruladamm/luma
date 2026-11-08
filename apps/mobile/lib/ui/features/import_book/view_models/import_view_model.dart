@@ -8,7 +8,6 @@ import '../../../../data/services/epub_parser.dart';
 import '../../../../data/services/file_picker_service.dart';
 import '../../../../domain/luma_markdown.dart';
 import '../../../../domain/models/book.dart';
-import '../../../../domain/models/markdown_shelf.dart';
 import '../../../core/theme/stabilo_tokens.dart';
 
 /// State alur import (board 13–18).
@@ -145,60 +144,9 @@ class ImportMarkdownFailed extends ImportState {
   final String? detail, value;
 }
 
-/// Teks sheet error Markdown (board 6a–6d).
-extension ImportMarkdownFailedCopy on ImportMarkdownFailed {
-  /// [code] + [tail] nyambung di belakang [body] (contoh format, mono).
-  ({String title, String body, String chip, String? code, String? tail})
-  get copy {
-    if (error == LumaMarkdownError.empty) {
-      return (
-        title: 'Filenya kosong nih',
-        body:
-            'Gak ada teks bacaan di dalamnya, jadi belum ada yang bisa '
-            'dimasukin. Cek lagi file-nya, atau pilih file bab yang lain.',
-        chip: '$fileName · 0 kata',
-        code: null,
-        tail: null,
-      );
-    }
-    if (error == LumaMarkdownError.badFrontmatter && detail == 'chapter') {
-      return (
-        title: 'Nomor babnya gak kebaca',
-        body:
-            'Di bagian atas file ada tulisan nomor bab, tapi bukan angka. '
-            'Ganti jadi angka, terus coba lagi. Atau pilih file lain.',
-        chip: '$fileName · nomor bab: “$value”',
-        code: null,
-        tail: null,
-      );
-    }
-    if (error == LumaMarkdownError.badFrontmatter) {
-      return (
-        title: 'Nama bukunya gak valid',
-        body:
-            'Nama buku di bagian atas file cuma boleh huruf kecil, angka, '
-            'sama strip. Ganti jadi kayak ',
-        chip: '$fileName · nama buku: “$value”',
-        code: 'atomic-habits',
-        tail: ', atau hapus baris itu biar Luma yang nebak.',
-      );
-    }
-    return (
-      title: 'Filenya gak kebaca',
-      body:
-          'Luma gak bisa baca isi file ini. Coba pilih file lain, atau '
-          'simpan ulang filenya dulu.',
-      chip: fileName,
-      code: null,
-      tail: null,
-    );
-  }
-}
-
 /// Teks + angka buat daftar buku di sheet "Masuk ke buku mana?".
 extension MarkdownBookLabels on MarkdownBook {
   /// "Bab 1, 3, 7" / "Bab 1–40".
-  String get chaptersLabel => chapterRanges(chapters);
 
   /// Bab terakhir + 1, nomor bawaan kalau file gak nyebut nomor.
   int get nextChapter => chapters.fold(0, (m, n) => n > m ? n : m) + 1;

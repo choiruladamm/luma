@@ -56,25 +56,10 @@ extension ShelfBookLabels on ShelfBook {
   /// Judul mirip nama file (tanpa spasi, panjang): tampil lebih kecil dan
   /// dipecah per karakter di sheet Info buku.
   bool get titleLooksLikeFileName => !title.contains(' ') && title.length >= 16;
-
-  /// Posisi baca buat sheet Info buku ("Lagi di").
-  String get progressLabel {
-    if (!opened) return 'Belum mulai';
-    if (finished) return 'Kelar dibaca';
-    return 'Bab $chapter dari $chapterCount';
-  }
 }
 
 /// Urutan rak (menu "Urutin pake"). Default [lastOpened].
-enum ShelfSort {
-  lastOpened('Terakhir dibuka'),
-  title('Judul (A–Z)'),
-  added('Baru ditambah');
-
-  const ShelfSort(this.label);
-
-  final String label;
-}
+enum ShelfSort { lastOpened, title, added }
 
 /// Tampilan rak: grid kartu atau daftar baris. Default [grid].
 enum ShelfView { grid, list }

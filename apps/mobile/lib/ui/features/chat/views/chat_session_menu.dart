@@ -1,3 +1,4 @@
+import 'package:luma/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../domain/chat_prompt.dart';
@@ -105,15 +106,17 @@ Future<void> showChatSessionMenu(
               ),
             ),
             action(
-              'Ubah judul',
+              context.l10n.chatRename,
               AppIcons.edit,
               readOnly
                   ? null
                   : () => Navigator.pop(sheet, _SessionAction.rename),
-              hint: readOnly ? 'Gak bisa buat obrolan arsip' : null,
+              hint: readOnly
+                  ? context.l10n.chatUnavailableForArchivedChats
+                  : null,
             ),
             action(
-              'Hapus obrolan',
+              context.l10n.chatDeleteChat,
               AppIcons.delete,
               () => Navigator.pop(sheet, _SessionAction.delete),
               destructive: true,
@@ -148,14 +151,16 @@ Future<void> showChatSessionMenu(
                   spacing: 10,
                   children: [
                     Text(
-                      'Hapus obrolan ini?',
+                      context.l10n.chatDeleteThisChat,
                       style: StabiloType.titleMd.copyWith(
                         fontSize: 20,
                         height: 1.25,
                       ),
                     ),
                     Text(
-                      '“${session.title}” bakal dihapus permanen. Bukunya, progres baca, dan obrolan lain gak ikut kehapus.',
+                      context.l10n.chatWillBePermanentlyDeletedYourBook(
+                        session.title,
+                      ),
                       style: StabiloType.body.copyWith(
                         fontSize: 14.5,
                         height: 1.5,
@@ -169,14 +174,14 @@ Future<void> showChatSessionMenu(
                         children: [
                           Expanded(
                             child: AppButton.secondary(
-                              label: 'Batal',
+                              label: context.l10n.dialogCancel,
                               height: 48,
                               onPressed: () => Navigator.pop(dialog, false),
                             ),
                           ),
                           Expanded(
                             child: AppButton.danger(
-                              label: 'Hapus',
+                              label: context.l10n.bookClear,
                               height: 48,
                               onPressed: () => Navigator.pop(dialog, true),
                             ),
@@ -236,7 +241,7 @@ class _RenameSessionState extends State<_RenameSession> {
     } else {
       setState(() {
         _saving = false;
-        _error = 'Judul belum tersimpan. Coba lagi.';
+        _error = context.l10n.chatCouldnTSaveTheTitleTry;
       });
     }
   }
@@ -245,18 +250,18 @@ class _RenameSessionState extends State<_RenameSession> {
   Widget build(BuildContext context) => Padding(
     padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
     child: SheetFrame(
-      title: 'Ubah judul',
+      title: context.l10n.chatRename,
       showClose: false,
       actions: [
         Expanded(
           child: AppButton.secondary(
-            label: 'Batal',
+            label: context.l10n.dialogCancel,
             onPressed: _saving ? null : () => Navigator.pop(context),
           ),
         ),
         Expanded(
           child: AppButton.primary(
-            label: 'Simpan',
+            label: context.l10n.chatSave,
             loading: _saving,
             onPressed: _error == null && !_saving ? _save : null,
           ),
@@ -264,11 +269,11 @@ class _RenameSessionState extends State<_RenameSession> {
       ],
       children: [
         AppField(
-          label: 'Judul obrolan',
+          label: context.l10n.chatChatTitle,
           showLabel: false,
           controller: _text,
           mono: false,
-          hint: 'Judul obrolan',
+          hint: context.l10n.chatChatTitle,
           error: _error,
           onChanged: _validate,
           onSubmitted: (_) => _save(),

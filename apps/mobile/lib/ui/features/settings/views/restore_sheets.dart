@@ -1,3 +1,4 @@
+import 'package:luma/l10n/l10n.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
@@ -58,13 +59,13 @@ class _SummaryState extends State<_Summary> {
                 child: Semantics(
                   header: true,
                   child: Text(
-                    'Pulihin dari backup ini?',
+                    context.l10n.restoreRestoreThisBackup,
                     style: StabiloType.titleMd,
                   ),
                 ),
               ),
               CircleButton(
-                semanticLabel: 'Tutup',
+                semanticLabel: context.l10n.sheetClose,
                 icon: AppIcons.close,
                 onPressed: () => close(false),
               ),
@@ -92,12 +93,12 @@ class _SummaryState extends State<_Summary> {
             spacing: 10,
             children: [
               AppButton.secondary(
-                label: 'Batal',
+                label: context.l10n.dialogCancel,
                 onPressed: () => close(false),
               ),
               Expanded(
                 child: AppButton.danger(
-                  label: 'Ganti & pulihin',
+                  label: context.l10n.restoreReplaceRestore,
                   height: 52,
                   onPressed: _understood ? () => close(true) : null,
                 ),
@@ -106,7 +107,7 @@ class _SummaryState extends State<_Summary> {
           ),
           Center(
             child: Text(
-              'API key lo gak kesentuh.',
+              context.l10n.restoreYourApiKeyWonTBe,
               style: StabiloType.caption.copyWith(
                 fontSize: 12.5,
                 fontWeight: FontWeight.w400,
@@ -141,7 +142,7 @@ class _BackupInfo extends StatelessWidget {
           spacing: 2,
           children: [
             Text(
-              thousands(n),
+              thousands(n, locale: context.l10n.localeName),
               style: StabiloType.titleMd.copyWith(
                 fontSize: 26,
                 letterSpacing: -0.52,
@@ -193,8 +194,13 @@ class _BackupInfo extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      'Dibikin ${dateTime(manifest.createdAt)} · '
-                      'Luma ${manifest.appVersion}',
+                      context.l10n.restoreCreatedLuma(
+                        dateTime(
+                          manifest.createdAt,
+                          locale: context.l10n.localeName,
+                        ),
+                        manifest.appVersion,
+                      ),
                       style: StabiloType.caption.copyWith(color: c.ink2),
                     ),
                   ],
@@ -205,9 +211,9 @@ class _BackupInfo extends StatelessWidget {
           Row(
             spacing: Space.s2,
             children: [
-              stat(manifest.books, 'buku di rak'),
+              stat(manifest.books, context.l10n.restoreBooksOnShelf),
               // Manifest ngitung grup yang udah diterjemahin.
-              stat(manifest.aiResults, 'terjemahan'),
+              stat(manifest.aiResults, context.l10n.restoreTranslations),
             ],
           ),
         ],
@@ -247,13 +253,13 @@ class _Warning extends StatelessWidget {
                 spacing: Space.s1,
                 children: [
                   Text(
-                    'Semua data di HP ini bakal diganti',
+                    context.l10n.restoreAllDataOnThisPhoneWill,
                     style: StabiloType.label.copyWith(color: c.dangerInk),
                   ),
                   Text(
-                    'Buku, progres, sama terjemahan yang ada sekarang '
-                    '(${thousands(currentBooks)} buku) diganti total sama isi '
-                    'backup. Yang sekarang gak bisa dibalikin.',
+                    context.l10n.restoreYourCurrentBooksProgressAndTranslations(
+                      currentBooks,
+                    ),
                     style: StabiloType.caption.copyWith(
                       fontSize: 13.5,
                       height: 1.45,
@@ -283,7 +289,7 @@ class _Check extends StatelessWidget {
     final c = context.stabilo;
     return Semantics(
       checked: value,
-      label: 'Iya, gua ngerti. Ganti aja semuanya.',
+      label: context.l10n.restoreYesIUnderstandReplaceEverything,
       excludeSemantics: true,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
@@ -315,7 +321,7 @@ class _Check extends StatelessWidget {
               ),
               Expanded(
                 child: Text(
-                  'Iya, gua ngerti. Ganti aja semuanya.',
+                  context.l10n.restoreYesIUnderstandReplaceEverything,
                   style: StabiloType.label.copyWith(
                     fontWeight: FontWeight.w600,
                     color: c.ink,
@@ -348,7 +354,7 @@ class RestoreProgressSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.stabilo;
     return Semantics(
-      label: 'Lagi mulihin',
+      label: context.l10n.restoreRestoring,
       child: Padding(
         padding: Layout.sheetPadding,
         child: ValueListenableBuilder(
@@ -381,7 +387,7 @@ class RestoreProgressSheet extends StatelessWidget {
                         Semantics(
                           header: true,
                           child: Text(
-                            'Lagi mulihin data lo...',
+                            context.l10n.restoreRestoringYourData,
                             style: StabiloType.titleSm.copyWith(fontSize: 21),
                           ),
                         ),
@@ -426,16 +432,16 @@ class RestoreProgressSheet extends StatelessWidget {
                 spacing: 10,
                 children: [
                   for (final (i, label) in [
-                    'Cek file backup',
-                    'Balikin ${thousands(books)} buku',
-                    'Balikin progres & terjemahan',
+                    context.l10n.restoreCheckBackupFile,
+                    context.l10n.restoreRestoreBooks(books),
+                    context.l10n.restoreRestoreProgressTranslations,
                   ].indexed)
                     SheetStep(label: label, done: s > i, current: s == i),
                 ],
               ),
               Center(
                 child: Text(
-                  'Jangan tutup Luma dulu ya, bentar doang kok.',
+                  context.l10n.restoreKeepLumaOpenThisWonT,
                   textAlign: TextAlign.center,
                   style: StabiloType.caption.copyWith(
                     fontWeight: FontWeight.w400,
@@ -479,43 +485,45 @@ class _Failed extends StatelessWidget {
     final (icon, title, body, code) = switch (error?.error) {
       RestoreError.notBackup => (
         AppIcons.fileRemove,
-        'Ini bukan backup Luma',
-        'File backup Luma itu yang namanya luma-backup-…zip, hasil dari '
-            'tombol "Backup sekarang". Coba cari lagi di file manager ya.',
+        context.l10n.restoreThisIsnTALumaBackup,
+        context.l10n.restoreLumaBackupFilesAreNamedLuma,
         fileName,
       ),
       RestoreError.tooNew => (
         AppIcons.alertCircle,
-        'Backup-nya dari Luma yang lebih baru',
-        'File ini dibikin pake Luma ${m?.appVersion}, sedangkan yang '
-            'keinstall masih $appVersion. Install Luma versi terbaru dulu, '
-            'baru pulihin.',
+        context.l10n.restoreThisBackupIsFromANewer,
+        context.l10n.restoreThisFileWasCreatedWithLuma(
+          m?.appVersion ?? '?',
+          appVersion,
+        ),
         '$fileName · v${m?.appVersion}',
       ),
       RestoreError.corrupt => (
         AppIcons.fileRemove,
-        'File backup-nya rusak',
-        'Isinya gak kebaca, mungkin kepotong pas disimpen. Coba file backup '
-            'yang lain.',
+        context.l10n.restoreTheBackupFileIsDamaged,
+        context.l10n.restoreCouldnTReadTheFileIt,
         fileName,
       ),
       null => (
         AppIcons.alertCircle,
-        'Yah, gagal mulihin',
-        'Ada yang error pas ganti data, semuanya udah dibalikin kayak semula.',
+        context.l10n.restoreCouldnTRestore,
+        context.l10n.restoreSomethingWentWrongWhileReplacingData,
         fileName,
       ),
     };
     void close(bool again) => Navigator.of(context).pop(again);
     return Semantics(
       liveRegion: true,
-      label: 'Gagal mulihin',
+      label: context.l10n.restoreRestoreFailed,
       child: SheetFrame(
         actions: [
-          AppButton.secondary(label: 'Tutup', onPressed: () => close(false)),
+          AppButton.secondary(
+            label: context.l10n.sheetClose,
+            onPressed: () => close(false),
+          ),
           Expanded(
             child: AppButton.primary(
-              label: 'Pilih file lain',
+              label: context.l10n.restoreChooseAnotherFile,
               onPressed: () => close(true),
             ),
           ),
@@ -535,7 +543,7 @@ class _Failed extends StatelessWidget {
                 child: Center(child: AppIcon(icon, size: 26, color: c.onPink)),
               ),
               CircleButton(
-                semanticLabel: 'Tutup',
+                semanticLabel: context.l10n.sheetClose,
                 icon: AppIcons.close,
                 onPressed: () => close(false),
               ),
@@ -574,7 +582,7 @@ class _Failed extends StatelessWidget {
             ),
           ),
           Text(
-            'Tenang, data yang sekarang gak diapa-apain.',
+            context.l10n.restoreYourCurrentDataHasnTBeen,
             style: StabiloType.caption.copyWith(
               fontWeight: FontWeight.w400,
               color: c.ink2,

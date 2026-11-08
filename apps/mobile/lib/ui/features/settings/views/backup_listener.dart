@@ -1,3 +1,4 @@
+import 'package:luma/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -52,8 +53,9 @@ class _BackupListenerState extends ConsumerState<BackupListener> {
         backup.dismiss();
         showToast(
           context,
-          'Backup kelar, aman!',
-          subtitle: '${fileSize(b.size)} · ${b.name}',
+          context.l10n.backupBackupCompleteAllSafe,
+          subtitle:
+              '${fileSize(b.size, locale: context.l10n.localeName)} · ${b.name}',
           leading: ToastTile(
             icon: AppIcons.check,
             bg: c.accent,
@@ -64,8 +66,8 @@ class _BackupListenerState extends ConsumerState<BackupListener> {
         backup.dismiss();
         showToast(
           context,
-          'Yah, backup gagal',
-          subtitle: 'Coba lagi bentar ya',
+          context.l10n.backupBackupFailed,
+          subtitle: context.l10n.backupTryAgainInAMoment,
           leading: ToastTile(icon: AppIcons.alert, bg: c.pink, fg: c.onPink),
         );
       default:

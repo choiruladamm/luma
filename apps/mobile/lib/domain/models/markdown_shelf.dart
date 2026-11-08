@@ -68,41 +68,4 @@ class MarkdownShelf {
     final reading = chapters.contains(current) ? fraction : 0;
     return ((read + reading) / count).clamp(0, 1).toDouble();
   }
-
-  /// "Bab 1, 3, 7" / "Bab 1–40".
-  String get label => chapterRanges(chapters);
-
-  /// "Atomic Habits, 3 bab, bab 1 udah dibaca, lagi baca bab 3".
-  String semanticLabel(String title) {
-    final parts = [title, '$count bab'];
-    final read = chapters.where(_isRead).toList();
-    if (read.isNotEmpty) {
-      parts.add('${chapterRanges(read, prefix: 'bab')} udah dibaca');
-    }
-    if (chapters.contains(current)) parts.add('lagi baca bab $current');
-    return parts.join(', ');
-  }
-}
-
-/// Nomor bab jadi teks: 3 nomor berurutan atau lebih diringkas jadi rentang.
-/// [1, 3, 7] → "Bab 1, 3, 7"; [1, 2] → "Bab 1, 2"; 1..40 → "Bab 1–40".
-String chapterRanges(List<int> chapters, {String prefix = 'Bab'}) {
-  if (chapters.isEmpty) return 'Belum ada bab';
-  final parts = <String>[];
-  var i = 0;
-  while (i < chapters.length) {
-    var j = i;
-    while (j + 1 < chapters.length && chapters[j + 1] == chapters[j] + 1) {
-      j++;
-    }
-    if (j - i >= 2) {
-      parts.add('${chapters[i]}–${chapters[j]}');
-    } else {
-      for (var k = i; k <= j; k++) {
-        parts.add('${chapters[k]}');
-      }
-    }
-    i = j + 1;
-  }
-  return '$prefix ${parts.join(', ')}';
 }

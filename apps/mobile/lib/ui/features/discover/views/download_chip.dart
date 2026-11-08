@@ -1,3 +1,5 @@
+import 'package:luma/l10n/l10n.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -31,10 +33,13 @@ class DownloadChip extends ConsumerWidget {
     final progress = (running?.progress ?? 0).clamp(0.0, 1.0);
     final c = context.stabilo;
     final b = Theme.of(context).brightness;
-    final text = 'Ngunduh ${active.length} buku · ${(progress * 100).round()}%';
+    final text = context.l10n.downloadDownloadingBooks(
+      active.length,
+      (progress * 100).round(),
+    );
     return Semantics(
       button: true,
-      label: 'Status unduhan, $text',
+      label: context.l10n.downloadDownloadStatus(text),
       child: GestureDetector(
         onTap: () => showAppSheet<void>(
           context,
@@ -124,12 +129,12 @@ class _DownloadsSheetState extends ConsumerState<_DownloadsSheet> {
     String? before(int i) =>
         items.take(i).where((x) => !x.finished).lastOrNull?.book.title;
     return SheetFrame(
-      title: 'Unduhan',
+      title: context.l10n.downloadDownloads,
       children: [
         Transform.translate(
           offset: const Offset(0, -Space.s3),
           child: Text(
-            'Jalan terus walau lo pindah layar',
+            context.l10n.downloadKeepsGoingWhileYouBrowse,
             style: StabiloType.caption.copyWith(
               fontSize: 13.5,
               fontWeight: FontWeight.w500,
@@ -139,7 +144,7 @@ class _DownloadsSheetState extends ConsumerState<_DownloadsSheet> {
         ),
         if (items.isEmpty)
           Text(
-            'Gak ada yang lagi diunduh.',
+            context.l10n.downloadNoActiveDownloads,
             style: StabiloType.body.copyWith(color: c.ink2),
           ),
         for (final (i, item) in items.indexed) ...[
@@ -152,7 +157,10 @@ class _DownloadsSheetState extends ConsumerState<_DownloadsSheet> {
             onCancel: () {
               queue.cancel(item.key);
               if (!item.finished) {
-                showToast(context, 'Unduhan ${item.book.title} dibatalin');
+                showToast(
+                  context,
+                  context.l10n.downloadCanceledDownloadOf(item.book.title),
+                );
               }
             },
             onRetry: () => queue.enqueue(item.book),
@@ -182,25 +190,30 @@ class _DownloadRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.stabilo;
     final status = queuedAfter == null
-        ? item.label
-        : 'Antri, abis $queuedAfter';
+        ? item.label(context)
+        : context.l10n.downloadQueuedAfter(queuedAfter!);
     final failed = item.status == DownloadStatus.failed;
     final trailing = switch (item.status) {
       DownloadStatus.queued => CircleButton(
-        semanticLabel: 'Hapus dari antrian',
+        semanticLabel: context.l10n.downloadRemoveFromQueue,
         icon: AppIcons.close,
         size: 40,
         onPressed: onCancel,
       ),
       DownloadStatus.downloading || DownloadStatus.importing => CircleButton(
-        semanticLabel: 'Batalin',
+        semanticLabel: context.l10n.meaningCancel,
         icon: AppIcons.close,
         size: 40,
         onPressed: onCancel,
       ),
-      DownloadStatus.failed => _Pill(label: 'Coba lagi', onTap: onRetry),
-      DownloadStatus.done ||
-      DownloadStatus.duplicate => _Pill(label: 'Baca', onTap: onRead),
+      DownloadStatus.failed => _Pill(
+        label: context.l10n.meaningTryAgain,
+        onTap: onRetry,
+      ),
+      DownloadStatus.done || DownloadStatus.duplicate => _Pill(
+        label: context.l10n.downloadRead,
+        onTap: onRead,
+      ),
     };
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: Space.s2),
@@ -267,13 +280,14 @@ class _Pill extends StatelessWidget {
 }
 
 extension DownloadItemLabels on DownloadItem {
-  String get label => switch (status) {
-    DownloadStatus.queued => 'Antri',
-    DownloadStatus.downloading =>
-      'Lagi diunduh · ${(progress.clamp(0.0, 1.0) * 100).round()}%',
-    DownloadStatus.importing => 'Nyusun buku…',
-    DownloadStatus.done => 'Udah masuk rak',
-    DownloadStatus.duplicate => 'Udah ada di rak',
-    DownloadStatus.failed => 'Gagal, koneksinya putus',
+  String label(BuildContext context) => switch (status) {
+    DownloadStatus.queued => context.l10n.discoverQueued,
+    DownloadStatus.downloading => context.l10n.discoverDownloading(
+      (progress.clamp(0.0, 1.0) * 100).round(),
+    ),
+    DownloadStatus.importing => context.l10n.downloadPreparingBook,
+    DownloadStatus.done => context.l10n.downloadAddedToShelf,
+    DownloadStatus.duplicate => context.l10n.downloadAlreadyOnShelf,
+    DownloadStatus.failed => context.l10n.downloadFailedConnectionLost,
   };
 }

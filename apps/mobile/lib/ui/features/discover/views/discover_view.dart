@@ -1,3 +1,4 @@
+import 'package:luma/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -84,7 +85,10 @@ class _DiscoverViewState extends ConsumerState<DiscoverView> {
                   alignment: Alignment.centerLeft,
                   child: Semantics(
                     header: true,
-                    child: Text('Cari buku', style: StabiloType.titleLg),
+                    child: Text(
+                      context.l10n.discoverDiscover,
+                      style: StabiloType.titleLg,
+                    ),
                   ),
                 ),
               ),
@@ -177,7 +181,7 @@ class _SearchField extends StatelessWidget {
                 color: c.ink,
               ),
               decoration: InputDecoration(
-                hintText: 'Judul atau nama penulis',
+                hintText: context.l10n.discoverTitleOrAuthorName,
                 hintStyle: StabiloType.body.copyWith(
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
@@ -194,7 +198,7 @@ class _SearchField extends StatelessWidget {
                 ? const SizedBox.shrink()
                 : Semantics(
                     button: true,
-                    label: 'Hapus kata cari',
+                    label: context.l10n.discoverClearSearch,
                     child: GestureDetector(
                       onTap: () => onChanged(''),
                       child: Container(
@@ -242,9 +246,9 @@ class _CatalogSetup extends StatelessWidget {
     final failed = state is CatalogSyncFailed;
     final text = switch (state) {
       CatalogSyncDownloading(:final progress) when progress >= 0 =>
-        'Nyiapin katalog buku… ${(progress * 100).round()}%',
-      CatalogSyncImporting() => 'Nyusun katalog…',
-      _ => 'Nyiapin katalog buku…',
+        context.l10n.discoverPreparingBookCatalog((progress * 100).round()),
+      CatalogSyncImporting() => context.l10n.settingsPreparingCatalog,
+      _ => context.l10n.discoverPreparingBookCatalog2,
     };
     return ListView(
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
@@ -253,8 +257,8 @@ class _CatalogSetup extends StatelessWidget {
         if (failed)
           DiscoverNotice(
             icon: AppIcons.alert,
-            title: 'Katalog lagi gak bisa dihubungin',
-            body: 'Bukan salah lo kok. Coba lagi bentar lagi ya.',
+            title: context.l10n.discoverCanTReachTheCatalog,
+            body: context.l10n.discoverItSNotYourFaultGive,
             onRetry: onRetry,
           )
         else
@@ -262,7 +266,7 @@ class _CatalogSetup extends StatelessWidget {
             icon: AppIcons.loading,
             spinning: true,
             title: text,
-            body: 'Sekali aja, abis itu nyari jalan tanpa internet.',
+            body: context.l10n.discoverJustOnceThenSearchWorksOffline,
           ),
         if (!failed) const SkeletonRows(),
       ],
@@ -299,12 +303,10 @@ class _TopChart extends ConsumerWidget {
           _inset(
             DiscoverEmpty(
               icon: AppIcons.offline,
-              title: 'Lo lagi offline',
-              body:
-                  'Nyari tetep jalan. Tapi daftar rame, detail buku, sama '
-                  'unduhan butuh internet. Buku di rak tetap bisa lo baca kok.',
+              title: context.l10n.discoverYouReOffline,
+              body: context.l10n.discoverSearchStillWorksPopularBooksDetails,
               action: AppButton.primary(
-                label: 'Buka rak',
+                label: context.l10n.discoverOpenShelf,
                 pill: true,
                 height: 48,
                 onPressed: () => context.go(Routes.home),
@@ -322,7 +324,7 @@ class _TopChart extends ConsumerWidget {
                   textBaseline: TextBaseline.alphabetic,
                   children: [
                     Text(
-                      'LAGI RAME',
+                      context.l10n.discoverPopularNow,
                       style: StabiloType.caption.copyWith(
                         fontWeight: FontWeight.w700,
                         letterSpacing: 0.05 * 13,
@@ -342,15 +344,14 @@ class _TopChart extends ConsumerWidget {
                 switch (popular) {
                   PopularFailed() => DiscoverNotice(
                     icon: AppIcons.alert,
-                    title: 'Katalog lagi gak bisa dihubungin',
-                    body: 'Bukan salah lo kok. Coba lagi bentar lagi ya.',
+                    title: context.l10n.discoverCanTReachTheCatalog,
+                    body: context.l10n.discoverItSNotYourFaultGive,
                     onRetry: onRetry,
                   ),
                   PopularLoading(slow: true) => DiscoverNotice(
                     icon: AppIcons.history,
-                    title: 'Katalognya lagi lemot nih',
-                    body:
-                        'Udah 5 detik lebih. Tungguin bentar, atau coba lagi.',
+                    title: context.l10n.discoverTheCatalogIsTakingAWhile,
+                    body: context.l10n.discoverItSBeenOverSecondsGive,
                     onRetry: onRetry,
                   ),
                   PopularLoading() => const SkeletonRows(),
@@ -377,7 +378,7 @@ class _TopChart extends ConsumerWidget {
               children: [
                 const SizedBox(height: Space.s5),
                 Text(
-                  'COBA CARI',
+                  context.l10n.discoverTrySearching,
                   style: StabiloType.caption.copyWith(
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.05 * 13,
@@ -438,7 +439,7 @@ class _TopCard extends StatelessWidget {
     final b = Theme.of(context).brightness;
     return Semantics(
       button: true,
-      label: '#1 lagi rame, ${book.title}',
+      label: context.l10n.discoverPopular(book.title),
       child: GestureDetector(
         onTap: () => context.push(Routes.catalogBook(book), extra: book),
         child: Container(
@@ -473,7 +474,7 @@ class _TopCard extends StatelessWidget {
                       spacing: 3,
                       children: [
                         Text(
-                          '#1 lagi rame',
+                          context.l10n.discoverPopular2,
                           style: StabiloType.micro.copyWith(
                             fontSize: 12.5,
                             color: c.onAccent,
@@ -641,10 +642,8 @@ class _Results extends ConsumerWidget {
       return _inset(
         DiscoverEmpty(
           icon: HugeIcons.strokeRoundedSearchRemove,
-          title: 'Gak nemu “${results.query}”',
-          body:
-              'Pencarian cuma nyocokin judul sama nama penulis. Cek ejaannya, '
-              'atau coba kata yang lebih pendek.',
+          title: context.l10n.discoverNoMatchesFor(results.query),
+          body: context.l10n.discoverSearchMatchesTitlesAndAuthorNames,
         ),
       );
     }
@@ -661,7 +660,7 @@ class _Results extends ConsumerWidget {
           children: [
             Flexible(
               child: Text(
-                'HASIL BUAT “${results.query.toUpperCase()}”',
+                context.l10n.discoverResultsFor(results.query.toUpperCase()),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: StabiloType.caption.copyWith(
@@ -672,7 +671,7 @@ class _Results extends ConsumerWidget {
               ),
             ),
             Text(
-              '${results.total} hasil · urut paling cocok',
+              context.l10n.discoverResultsBestMatchFirst(results.total),
               style: StabiloType.caption.copyWith(
                 fontWeight: FontWeight.w600,
                 color: c.ink2,
@@ -688,13 +687,13 @@ class _Results extends ConsumerWidget {
         ],
         if (results.moreFailed)
           _Footer(
-            label: 'Gagal ngambil. Coba lagi',
+            label: context.l10n.discoverCouldnTLoadTryAgain,
             icon: AppIcons.retry,
             onTap: onRetryMore,
           )
         else if (results.hasMore)
           _Footer(
-            label: 'Ngambil ${CatalogRepository.pageSize} lagi…',
+            label: context.l10n.discoverLoadingMore(CatalogRepository.pageSize),
             icon: AppIcons.loading,
             spinning: true,
           ),
@@ -715,7 +714,7 @@ class _BestMatch extends StatelessWidget {
     final b = Theme.of(context).brightness;
     return Semantics(
       button: true,
-      label: 'Paling cocok, ${book.title}',
+      label: context.l10n.discoverBestMatch(book.title),
       child: GestureDetector(
         onTap: () => context.push(Routes.catalogBook(book), extra: book),
         child: Container(
@@ -736,7 +735,7 @@ class _BestMatch extends StatelessWidget {
                   spacing: 3,
                   children: [
                     Text(
-                      'Paling cocok',
+                      context.l10n.discoverBestMatch2,
                       style: StabiloType.micro.copyWith(
                         fontSize: 12.5,
                         color: c.ink2,
@@ -854,12 +853,17 @@ class _BookStatus extends ConsumerWidget {
       ),
     );
     final tag = switch ((shelf?.contains(book.externalId) ?? false, item)) {
-      (true, _) => Tag.status('Udah di rak', icon: AppIcons.check),
-      (_, DownloadItem(status: DownloadStatus.queued)) => const Tag.status(
-        'Antri',
+      (true, _) => Tag.status(
+        context.l10n.discoverOnYourShelf,
+        icon: AppIcons.check,
+      ),
+      (_, DownloadItem(status: DownloadStatus.queued)) => Tag.status(
+        context.l10n.discoverQueued,
       ),
       (_, DownloadItem(:final progress)) => Tag.status(
-        'Lagi diunduh · ${(progress.clamp(0.0, 1.0) * 100).round()}%',
+        context.l10n.discoverDownloading(
+          (progress.clamp(0.0, 1.0) * 100).round(),
+        ),
         icon: HugeIcons.strokeRoundedDownload04,
       ),
       _ => null,

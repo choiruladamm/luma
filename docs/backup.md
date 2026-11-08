@@ -155,3 +155,9 @@ Setelah restore/reopen, proyeksi `parts[].text` defensif tetap terbaca sebagai
 draf terminal tanpa sitasi/auto-send/trusted history. Status running dipulihkan
 ke interrupted; partial escape/Unicode ditahan. Stop/background flush tail;
 backup/process kill hanya memiliki checkpoint durable terakhir.
+
+### Bahasa antarmuka (#184)
+
+`app.locale` ikut backup di tabel settings. Restore memuat ulang locale dari DB hasil restore;
+backup lama tanpa key memakai Indonesia. Bahasa konten/AI tersimpan tetap utuh. Round-trip
+preferensi English diuji di `test/data/restore_service_test.dart`. Detail: [i18n.md](i18n.md).

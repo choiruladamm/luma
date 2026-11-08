@@ -1,3 +1,4 @@
+import 'package:luma/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/stabilo_theme.dart';
@@ -63,7 +64,7 @@ class ChapterHeading extends StatelessWidget {
             ),
           ),
           Text(
-            'Bab $number dari $total · ±$minutes mnt',
+            context.l10n.chapterChapterOfMin(number, total, minutes),
             style: StabiloType.caption.copyWith(
               fontSize: 12.5,
               fontWeight: FontWeight.w600,

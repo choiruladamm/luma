@@ -1,3 +1,4 @@
+import 'package:luma/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -38,7 +39,7 @@ class ChapterEnd extends ConsumerWidget {
     final next = this.next;
     return Semantics(
       container: true,
-      label: 'Bab selesai',
+      label: context.l10n.chapterChapterFinished,
       child: Container(
         padding: const EdgeInsets.all(Space.s5),
         decoration: BoxDecoration(
@@ -69,7 +70,7 @@ class ChapterEnd extends ConsumerWidget {
                         AppIcon(AppIcons.check, size: 12, color: c.ink),
                         Flexible(
                           child: Text(
-                            '$title kelar',
+                            context.l10n.readerFinished(title),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: StabiloType.tag.copyWith(
@@ -84,7 +85,7 @@ class ChapterEnd extends ConsumerWidget {
                 ),
                 if (translated != null && translated > 0)
                   Text(
-                    '$translated paragraf diterjemahin',
+                    context.l10n.chapterParagraphsTranslated(translated),
                     style: StabiloType.caption.copyWith(color: c.ink2),
                   ),
               ],
@@ -95,14 +96,18 @@ class ChapterEnd extends ConsumerWidget {
               children: [
                 Text(
                   next == null
-                      ? 'Itu tadi bab terakhir!'
-                      : 'Lanjut ke ${next.title}?',
+                      ? context.l10n.chapterThatWasTheLastChapter
+                      : context.l10n.chapterContinueTo(next.title),
                   style: StabiloType.titleMd.copyWith(color: c.ink),
                 ),
                 Text(
                   next == null
-                      ? 'Bukunya kelar, tinggal satu tap lagi'
-                      : 'Bab $nextNumber dari $total · ±${readingMinutes(next.chars)} mnt',
+                      ? context.l10n.chapterOneMoreTapToFinishThe
+                      : context.l10n.chapterChapterOfMin(
+                          nextNumber,
+                          total,
+                          readingMinutes(next.chars),
+                        ),
                   style: StabiloType.caption.copyWith(
                     fontSize: 14,
                     color: c.ink2,
@@ -111,7 +116,7 @@ class ChapterEnd extends ConsumerWidget {
               ],
             ),
             AppButton.primary(
-              label: 'Lanjut, gas',
+              label: context.l10n.chapterLetSKeepGoing,
               icon: AppIcons.next,
               iconAfter: true,
               onPressed: onNext,
@@ -127,7 +132,7 @@ class ChapterEnd extends ConsumerWidget {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                child: const Text('Udahan dulu, balik ke rak'),
+                child: Text(context.l10n.chapterStopHereBackToShelf),
               ),
             ),
           ],

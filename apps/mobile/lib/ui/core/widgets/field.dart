@@ -1,3 +1,4 @@
+import 'package:luma/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -119,7 +120,7 @@ class _AppFieldState extends State<AppField> {
                       ? const SizedBox.shrink()
                       : CircleButton(
                           size: 40,
-                          semanticLabel: 'Hapus ${widget.label}',
+                          semanticLabel: context.l10n.fieldClear(widget.label),
                           icon: AppIcons.close,
                           onPressed: widget.onClear,
                         ),
@@ -127,7 +128,9 @@ class _AppFieldState extends State<AppField> {
               if (widget.secret)
                 CircleButton(
                   size: 40,
-                  semanticLabel: _hidden ? 'Liat key' : 'Sembunyiin key',
+                  semanticLabel: _hidden
+                      ? context.l10n.fieldShowKey
+                      : context.l10n.fieldHideKey,
                   icon: _hidden ? AppIcons.show : AppIcons.hide,
                   onPressed: () => setState(() => _hidden = !_hidden),
                 ),

@@ -1,0 +1,3155 @@
+{
+  "@@locale": "id",
+  "interfaceLanguage": "Bahasa antarmuka",
+  "interfaceLanguageNote": "Bahasa ini cuma buat tampilan. Terjemahan dan jawaban AI tetap Bahasa Indonesia.",
+  "languageSaveFailed": "Bahasanya gagal disimpen. Coba lagi, ya.",
+  "bookImporting": "Lagi diimport {p0}",
+  "@bookImporting": {
+    "description": "Interface copy in ui/core/widgets/book_row.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "bookProcessing": "Lagi diproses",
+  "@bookProcessing": {
+    "description": "Interface copy in ui/core/widgets/book_row.dart"
+  },
+  "bookNew": "Baru",
+  "@bookNew": {
+    "description": "Interface copy in ui/core/widgets/book_row.dart"
+  },
+  "bookFinished": "Kelar!",
+  "@bookFinished": {
+    "description": "Interface copy in ui/core/widgets/book_row.dart"
+  },
+  "bookChapters": "{p0} bab",
+  "@bookChapters": {
+    "description": "Interface copy in ui/core/widgets/book_row.dart",
+    "placeholders": {
+      "p0": {
+        "type": "int"
+      }
+    }
+  },
+  "aiCopy": "Salin",
+  "@aiCopy": {
+    "description": "Interface copy in ui/core/widgets/ai_status.dart"
+  },
+  "aiUnavailable": "{p0}, belum bisa: {p1}",
+  "@aiUnavailable": {
+    "description": "Interface copy in ui/core/widgets/ai_status.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      },
+      "p1": {
+        "type": "Object"
+      }
+    }
+  },
+  "bookCloseMenu": "Tutup menu",
+  "@bookCloseMenu": {
+    "description": "Interface copy in ui/core/widgets/book_menu.dart"
+  },
+  "searchSearchResults": "Hasil cari",
+  "@searchSearchResults": {
+    "description": "Interface copy in ui/core/widgets/search_navigator.dart"
+  },
+  "searchPreviousResult": "Hasil sebelumnya",
+  "@searchPreviousResult": {
+    "description": "Interface copy in ui/core/widgets/search_navigator.dart"
+  },
+  "searchBackToResults": "Balik ke daftar hasil",
+  "@searchBackToResults": {
+    "description": "Interface copy in ui/core/widgets/search_navigator.dart"
+  },
+  "searchOf": "{p0} dari {p1}",
+  "@searchOf": {
+    "description": "Interface copy in ui/core/widgets/search_navigator.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      },
+      "p1": {
+        "type": "Object"
+      }
+    }
+  },
+  "searchOf2": "{p0} dari {p1} · {p2}",
+  "@searchOf2": {
+    "description": "Interface copy in ui/core/widgets/search_navigator.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      },
+      "p1": {
+        "type": "Object"
+      },
+      "p2": {
+        "type": "Object"
+      }
+    }
+  },
+  "searchNextResult": "Hasil berikutnya",
+  "@searchNextResult": {
+    "description": "Interface copy in ui/core/widgets/search_navigator.dart"
+  },
+  "searchExitSearch": "Keluar dari cari",
+  "@searchExitSearch": {
+    "description": "Interface copy in ui/core/widgets/search_navigator.dart"
+  },
+  "searchClearField": "Hapus isian",
+  "@searchClearField": {
+    "description": "Interface copy in ui/core/widgets/search_field.dart"
+  },
+  "dialogCancel": "Batal",
+  "@dialogCancel": {
+    "description": "Interface copy in ui/core/widgets/dialog.dart"
+  },
+  "sheetClose": "Tutup",
+  "@sheetClose": {
+    "description": "Interface copy in ui/core/widgets/sheet.dart"
+  },
+  "searchCurrentlyReading": "Lagi dibaca",
+  "@searchCurrentlyReading": {
+    "description": "Interface copy in ui/core/widgets/search_result.dart"
+  },
+  "searchResults": "{p0} hasil",
+  "@searchResults": {
+    "description": "Interface copy in ui/core/widgets/search_result.dart",
+    "placeholders": {
+      "p0": {
+        "type": "int"
+      }
+    }
+  },
+  "fieldClear": "Hapus {p0}",
+  "@fieldClear": {
+    "description": "Interface copy in ui/core/widgets/field.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "fieldShowKey": "Liat key",
+  "@fieldShowKey": {
+    "description": "Interface copy in ui/core/widgets/field.dart"
+  },
+  "fieldHideKey": "Sembunyiin key",
+  "@fieldHideKey": {
+    "description": "Interface copy in ui/core/widgets/field.dart"
+  },
+  "navMainNavigation": "Navigasi utama",
+  "@navMainNavigation": {
+    "description": "Interface copy in ui/core/widgets/nav_bar.dart"
+  },
+  "navActiveDownloads": "{p0}, {p1} unduhan jalan",
+  "@navActiveDownloads": {
+    "description": "Interface copy in ui/core/widgets/nav_bar.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      },
+      "p1": {
+        "type": "Object"
+      }
+    }
+  },
+  "bookSearchThisBook": "Cari kata di buku ini",
+  "@bookSearchThisBook": {
+    "description": "Interface copy in ui/features/reader/views/book_search_sheet.dart"
+  },
+  "bookNoMatchesForInThisBook": "Gak ketemu “{p0}” di buku ini",
+  "@bookNoMatchesForInThisBook": {
+    "description": "Interface copy in ui/features/reader/views/book_search_sheet.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "bookCheckTheSpellingOrTryAnother": "Cek ejaannya, atau coba kata lain.",
+  "@bookCheckTheSpellingOrTryAnother": {
+    "description": "Interface copy in ui/features/reader/views/book_search_sheet.dart"
+  },
+  "bookSearchIsStuck": "Pencariannya lagi macet",
+  "@bookSearchIsStuck": {
+    "description": "Interface copy in ui/features/reader/views/book_search_sheet.dart"
+  },
+  "bookCloseItAndTryAgain": "Tutup terus buka lagi ya.",
+  "@bookCloseItAndTryAgain": {
+    "description": "Interface copy in ui/features/reader/views/book_search_sheet.dart"
+  },
+  "bookRecentSearches": "Terakhir dicari",
+  "@bookRecentSearches": {
+    "description": "Interface copy in ui/features/reader/views/book_search_sheet.dart"
+  },
+  "bookClear": "Hapus",
+  "@bookClear": {
+    "description": "Interface copy in ui/features/reader/views/book_search_sheet.dart"
+  },
+  "bookTooManyResultsTryAMore": "Kebanyakan, coba kata yang lebih spesifik",
+  "@bookTooManyResultsTryAMore": {
+    "description": "Interface copy in ui/features/reader/views/book_search_sheet.dart"
+  },
+  "bookPreparingSearch": "Nyiapin pencarian…",
+  "@bookPreparingSearch": {
+    "description": "Interface copy in ui/features/reader/views/book_search_sheet.dart"
+  },
+  "bookJustOnceForThisBookSearches": "Cuma sekali buat buku ini. Abis ini nyarinya langsung kilat.",
+  "@bookJustOnceForThisBookSearches": {
+    "description": "Interface copy in ui/features/reader/views/book_search_sheet.dart"
+  },
+  "readerCouldnTOpenTheChatTry": "Obrolan belum bisa dibuka. Coba buka ulang bukunya.",
+  "@readerCouldnTOpenTheChatTry": {
+    "description": "Interface copy in ui/features/reader/views/reader_view.dart"
+  },
+  "readerBackToYourPreviousPosition": "Balik ke posisi tadi?",
+  "@readerBackToYourPreviousPosition": {
+    "description": "Interface copy in ui/features/reader/views/reader_view.dart"
+  },
+  "readerGoBack": "Balik",
+  "@readerGoBack": {
+    "description": "Interface copy in ui/features/reader/views/reader_view.dart"
+  },
+  "readerThisSourceIsNoLongerAvailable": "Sumber ini udah gak tersedia.",
+  "@readerThisSourceIsNoLongerAvailable": {
+    "description": "Interface copy in ui/features/reader/views/reader_view.dart"
+  },
+  "readerPreviewingNoReadingProgressYet": "Lagi ngintip · belum ada progres baca",
+  "@readerPreviewingNoReadingProgressYet": {
+    "description": "Interface copy in ui/features/reader/views/reader_view.dart"
+  },
+  "readerPreviewingSavedPositionParagraph": "Lagi ngintip · progres masih {p0} · Paragraf {p1}",
+  "@readerPreviewingSavedPositionParagraph": {
+    "description": "Interface copy in ui/features/reader/views/reader_view.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      },
+      "p1": {
+        "type": "Object"
+      }
+    }
+  },
+  "readerCouldnTOpenTheBook": "Yah, bukunya gagal kebuka",
+  "@readerCouldnTOpenTheBook": {
+    "description": "Interface copy in ui/features/reader/views/reader_view.dart"
+  },
+  "meaningCopiedReadyToPaste": "Udah disalin, tinggal paste",
+  "@meaningCopiedReadyToPaste": {
+    "description": "Interface copy in ui/features/reader/views/meaning_sheet.dart"
+  },
+  "meaningTimeoutSeconds": "timeout · 30 detik",
+  "@meaningTimeoutSeconds": {
+    "description": "Interface copy in ui/features/reader/views/meaning_sheet.dart"
+  },
+  "meaningOfflineDisconnected": "offline / gak nyambung",
+  "@meaningOfflineDisconnected": {
+    "description": "Interface copy in ui/features/reader/views/meaning_sheet.dart"
+  },
+  "meaningHttpKeyRejected": "HTTP {p0} · key ditolak",
+  "@meaningHttpKeyRejected": {
+    "description": "Interface copy in ui/features/reader/views/meaning_sheet.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "meaningHttpNoCredit": "HTTP 402 · saldo abis",
+  "@meaningHttpNoCredit": {
+    "description": "Interface copy in ui/features/reader/views/meaning_sheet.dart"
+  },
+  "meaningInvalidAiResponse": "jawaban AI gak valid",
+  "@meaningInvalidAiResponse": {
+    "description": "Interface copy in ui/features/reader/views/meaning_sheet.dart"
+  },
+  "meaningTranslationAndMeaningComplete": "Artinya udah lengkap",
+  "@meaningTranslationAndMeaningComplete": {
+    "description": "Interface copy in ui/features/reader/views/meaning_sheet.dart"
+  },
+  "meaningWritingTranslationAndMeaning": "Artinya, lagi ditulis",
+  "@meaningWritingTranslationAndMeaning": {
+    "description": "Interface copy in ui/features/reader/views/meaning_sheet.dart"
+  },
+  "meaningHangOnThinking": "Bentar, lagi mikir...",
+  "@meaningHangOnThinking": {
+    "description": "Interface copy in ui/features/reader/views/meaning_sheet.dart"
+  },
+  "meaningHereSWhatItMeans": "Artinya gini nih",
+  "@meaningHereSWhatItMeans": {
+    "description": "Interface copy in ui/features/reader/views/meaning_sheet.dart"
+  },
+  "meaningCancel": "Batalin",
+  "@meaningCancel": {
+    "description": "Interface copy in ui/features/reader/views/meaning_sheet.dart"
+  },
+  "meaningTranslation": "Terjemahan",
+  "@meaningTranslation": {
+    "description": "Interface copy in ui/features/reader/views/meaning_sheet.dart"
+  },
+  "meaningWhatTheAuthorMeans": "Maksud penulisnya tuh...",
+  "@meaningWhatTheAuthorMeans": {
+    "description": "Interface copy in ui/features/reader/views/meaning_sheet.dart"
+  },
+  "meaningCopied": "Disalin",
+  "@meaningCopied": {
+    "description": "Interface copy in ui/features/reader/views/meaning_sheet.dart"
+  },
+  "meaningAskAboutThis": "Tanyain ini",
+  "@meaningAskAboutThis": {
+    "description": "Interface copy in ui/features/reader/views/meaning_sheet.dart"
+  },
+  "meaningThinking": "Lagi mikir",
+  "@meaningThinking": {
+    "description": "Interface copy in ui/features/reader/views/meaning_sheet.dart"
+  },
+  "meaningWriting": "Lagi nulis",
+  "@meaningWriting": {
+    "description": "Interface copy in ui/features/reader/views/meaning_sheet.dart"
+  },
+  "meaningNext": "Lanjut",
+  "@meaningNext": {
+    "description": "Interface copy in ui/features/reader/views/meaning_sheet.dart"
+  },
+  "meaningTakingALittleLonger": "Agak lama nih...",
+  "@meaningTakingALittleLonger": {
+    "description": "Interface copy in ui/features/reader/views/meaning_sheet.dart"
+  },
+  "meaningTheAiIsStillThinkingGive": "AI-nya masih mikir. Tungguin bentar lagi, atau coba ulang.",
+  "@meaningTheAiIsStillThinkingGive": {
+    "description": "Interface copy in ui/features/reader/views/meaning_sheet.dart"
+  },
+  "meaningTryAgain": "Coba lagi",
+  "@meaningTryAgain": {
+    "description": "Interface copy in ui/features/reader/views/meaning_sheet.dart"
+  },
+  "meaningCutOffHalfway": "Yah, kepotong di tengah",
+  "@meaningCutOffHalfway": {
+    "description": "Interface copy in ui/features/reader/views/meaning_sheet.dart"
+  },
+  "meaningTheConnectionDroppedWhileWritingWhat": "Koneksinya putus pas lagi nulis. Yang udah masuk tetep di sini.",
+  "@meaningTheConnectionDroppedWhileWritingWhat": {
+    "description": "Interface copy in ui/features/reader/views/meaning_sheet.dart"
+  },
+  "meaningCouldnTGetTheMeaning": "Gagal ngambil artinya",
+  "@meaningCouldnTGetTheMeaning": {
+    "description": "Interface copy in ui/features/reader/views/meaning_sheet.dart"
+  },
+  "meaningSomethingWentWrong": "Yah, gagal nih",
+  "@meaningSomethingWentWrong": {
+    "description": "Interface copy in ui/features/reader/views/meaning_sheet.dart"
+  },
+  "meaningTheConnectionMightBeDownOr": "Kayaknya koneksi lagi ngadat, atau AI-nya lagi sibuk. Tinggal coba lagi aja.",
+  "@meaningTheConnectionMightBeDownOr": {
+    "description": "Interface copy in ui/features/reader/views/meaning_sheet.dart"
+  },
+  "meaningMaybeLater": "Nanti aja",
+  "@meaningMaybeLater": {
+    "description": "Interface copy in ui/features/reader/views/meaning_sheet.dart"
+  },
+  "meaningAddYourApiKeyFirst": "Isi API key dulu yuk",
+  "@meaningAddYourApiKeyFirst": {
+    "description": "Interface copy in ui/features/reader/views/meaning_sheet.dart"
+  },
+  "meaningTranslationsAndMeaningsUseAiThrough": "Artinya dibikin AI lewat OpenRouter. Tempel API key lo sekali aja di Pengaturan, abis itu tinggal tap-tap paragraf.",
+  "@meaningTranslationsAndMeaningsUseAiThrough": {
+    "description": "Interface copy in ui/features/reader/views/meaning_sheet.dart"
+  },
+  "meaningDonTHaveOneCreateIt": "Belum punya? Bikin dulu di ",
+  "@meaningDonTHaveOneCreateIt": {
+    "description": "Interface copy in ui/features/reader/views/meaning_sheet.dart"
+  },
+  "meaningOpenSettings": "Buka Pengaturan",
+  "@meaningOpenSettings": {
+    "description": "Interface copy in ui/features/reader/views/meaning_sheet.dart"
+  },
+  "meaningOpenBreakdown": "Buka bedahan",
+  "@meaningOpenBreakdown": {
+    "description": "Interface copy in ui/features/reader/views/meaning_sheet.dart"
+  },
+  "meaningStillPuzzledBreakItDown": "Masih bingung? Bedahin",
+  "@meaningStillPuzzledBreakItDown": {
+    "description": "Interface copy in ui/features/reader/views/meaning_sheet.dart"
+  },
+  "meaningPreviouslyBrokenDown": "Udah pernah dibedah · {p0}",
+  "@meaningPreviouslyBrokenDown": {
+    "description": "Interface copy in ui/features/reader/views/meaning_sheet.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "meaningSectionBySectionPlusPeopleTerms": "Per bagian, plus tokoh & istilah",
+  "@meaningSectionBySectionPlusPeopleTerms": {
+    "description": "Interface copy in ui/features/reader/views/meaning_sheet.dart"
+  },
+  "chapterSourceMissing": "Sumber hilang",
+  "@chapterSourceMissing": {
+    "description": "Interface copy in ui/features/reader/views/chapter_text.dart"
+  },
+  "chapterCurrentlyOpenParagraphGroup": "Grup paragraf yang lagi dibuka",
+  "@chapterCurrentlyOpenParagraphGroup": {
+    "description": "Interface copy in ui/features/reader/views/chapter_text.dart"
+  },
+  "chapterSceneBreak": "Pemisah adegan",
+  "@chapterSceneBreak": {
+    "description": "Interface copy in ui/features/reader/views/chapter_text.dart"
+  },
+  "readerReadingMenu": "Menu baca",
+  "@readerReadingMenu": {
+    "description": "Interface copy in ui/features/reader/views/reader_capsule.dart"
+  },
+  "readerBackToShelf": "Balik ke rak",
+  "@readerBackToShelf": {
+    "description": "Interface copy in ui/features/reader/views/reader_capsule.dart"
+  },
+  "readerContents": "Daftar isi",
+  "@readerContents": {
+    "description": "Interface copy in ui/features/reader/views/reader_capsule.dart"
+  },
+  "readerMoreActions": "Aksi lain",
+  "@readerMoreActions": {
+    "description": "Interface copy in ui/features/reader/views/reader_capsule.dart"
+  },
+  "readerBookChat": "Ngobrolin buku",
+  "@readerBookChat": {
+    "description": "Interface copy in ui/features/reader/views/reader_capsule.dart"
+  },
+  "readerBookProgress": "Progres buku",
+  "@readerBookProgress": {
+    "description": "Interface copy in ui/features/reader/views/reader_capsule.dart"
+  },
+  "bookBook": "Bukunya ",
+  "@bookBook": {
+    "description": "Interface copy in ui/features/reader/views/book_end_view.dart"
+  },
+  "bookFinished2": "kelar!",
+  "@bookFinished2": {
+    "description": "Interface copy in ui/features/reader/views/book_end_view.dart"
+  },
+  "bookYouReadRightToTheLast": "{p0} udah lo libas sampe kalimat terakhir. Keren sih.",
+  "@bookYouReadRightToTheLast": {
+    "description": "Interface copy in ui/features/reader/views/book_end_view.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "bookReadingTime": "waktu baca",
+  "@bookReadingTime": {
+    "description": "Interface copy in ui/features/reader/views/book_end_view.dart"
+  },
+  "bookParagraphsTranslated": "paragraf diartiin",
+  "@bookParagraphsTranslated": {
+    "description": "Interface copy in ui/features/reader/views/book_end_view.dart"
+  },
+  "bookBackToShelfFindAnotherBook": "Balik ke rak, cari buku lain",
+  "@bookBackToShelfFindAnotherBook": {
+    "description": "Interface copy in ui/features/reader/views/book_end_view.dart"
+  },
+  "bookReadAgainFromTheStart": "Baca ulang dari awal",
+  "@bookReadAgainFromTheStart": {
+    "description": "Interface copy in ui/features/reader/views/book_end_view.dart"
+  },
+  "chapterChapterOfMin": "Bab {p0} dari {p1} · ±{p2} mnt",
+  "@chapterChapterOfMin": {
+    "description": "Interface copy in ui/features/reader/views/chapter_heading.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      },
+      "p1": {
+        "type": "Object"
+      },
+      "p2": {
+        "type": "Object"
+      }
+    }
+  },
+  "tocChaptersRead": "{p0} · {p1} bab · {p2}% kebaca",
+  "@tocChaptersRead": {
+    "description": "Interface copy in ui/features/reader/views/toc_sheet.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      },
+      "p1": {
+        "type": "int"
+      },
+      "p2": {
+        "type": "Object"
+      }
+    }
+  },
+  "tocCurrentlyReadingMin": "Lagi dibaca · ±{p0} mnt",
+  "@tocCurrentlyReadingMin": {
+    "description": "Interface copy in ui/features/reader/views/toc_sheet.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "tocMin": "±{p0} mnt",
+  "@tocMin": {
+    "description": "Interface copy in ui/features/reader/views/toc_sheet.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "readerFinished": "{p0} kelar",
+  "@readerFinished": {
+    "description": "Interface copy in ui/features/reader/views/reader_overlay.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "readerMinLeft": "±{p0} mnt lagi",
+  "@readerMinLeft": {
+    "description": "Interface copy in ui/features/reader/views/reader_overlay.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "readerChatAboutTheBook": "Ngobrol soal bukunya",
+  "@readerChatAboutTheBook": {
+    "description": "Interface copy in ui/features/reader/views/reader_overlays.dart"
+  },
+  "readerBackToChat": "Balik ke ngobrol",
+  "@readerBackToChat": {
+    "description": "Interface copy in ui/features/reader/views/reader_overlays.dart"
+  },
+  "readerKeepReading": "Lanjut baca",
+  "@readerKeepReading": {
+    "description": "Interface copy in ui/features/reader/views/reader_overlays.dart"
+  },
+  "readYouLastReadHere": "Terakhir lo baca di sini",
+  "@readYouLastReadHere": {
+    "description": "Interface copy in ui/features/reader/views/read_mark.dart"
+  },
+  "chapterChapterFinished": "Bab selesai",
+  "@chapterChapterFinished": {
+    "description": "Interface copy in ui/features/reader/views/chapter_end.dart"
+  },
+  "chapterParagraphsTranslated": "{p0} paragraf diterjemahin",
+  "@chapterParagraphsTranslated": {
+    "description": "Interface copy in ui/features/reader/views/chapter_end.dart",
+    "placeholders": {
+      "p0": {
+        "type": "int"
+      }
+    }
+  },
+  "chapterThatWasTheLastChapter": "Itu tadi bab terakhir!",
+  "@chapterThatWasTheLastChapter": {
+    "description": "Interface copy in ui/features/reader/views/chapter_end.dart"
+  },
+  "chapterContinueTo": "Lanjut ke {p0}?",
+  "@chapterContinueTo": {
+    "description": "Interface copy in ui/features/reader/views/chapter_end.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "chapterOneMoreTapToFinishThe": "Bukunya kelar, tinggal satu tap lagi",
+  "@chapterOneMoreTapToFinishThe": {
+    "description": "Interface copy in ui/features/reader/views/chapter_end.dart"
+  },
+  "chapterLetSKeepGoing": "Lanjut, gas",
+  "@chapterLetSKeepGoing": {
+    "description": "Interface copy in ui/features/reader/views/chapter_end.dart"
+  },
+  "chapterStopHereBackToShelf": "Udahan dulu, balik ke rak",
+  "@chapterStopHereBackToShelf": {
+    "description": "Interface copy in ui/features/reader/views/chapter_end.dart"
+  },
+  "readerSearchWords": "Cari kata",
+  "@readerSearchWords": {
+    "description": "Interface copy in ui/features/reader/views/reader_menu.dart"
+  },
+  "readerViewResultsFor": "Lihat hasil “{p0}”",
+  "@readerViewResultsFor": {
+    "description": "Interface copy in ui/features/reader/views/reader_menu.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "readerReadingAppearance": "Atur tampilan",
+  "@readerReadingAppearance": {
+    "description": "Interface copy in ui/features/reader/views/reader_menu.dart"
+  },
+  "readerSizeFontTheme": "Ukuran, font, tema",
+  "@readerSizeFontTheme": {
+    "description": "Interface copy in ui/features/reader/views/reader_menu.dart"
+  },
+  "aaMakeItYours": "Atur bacaan lo",
+  "@aaMakeItYours": {
+    "description": "Interface copy in ui/features/reader/views/aa_sheet.dart"
+  },
+  "aaTextSize": "Ukuran huruf",
+  "@aaTextSize": {
+    "description": "Interface copy in ui/features/reader/views/aa_sheet.dart"
+  },
+  "aaFont": "Font",
+  "@aaFont": {
+    "description": "Interface copy in ui/features/reader/views/aa_sheet.dart"
+  },
+  "aaClear": "Jelas",
+  "@aaClear": {
+    "description": "Interface copy in ui/features/reader/views/aa_sheet.dart"
+  },
+  "aaBookLike": "Kayak buku",
+  "@aaBookLike": {
+    "description": "Interface copy in ui/features/reader/views/aa_sheet.dart"
+  },
+  "aaSystemDefault": "Bawaan sistem",
+  "@aaSystemDefault": {
+    "description": "Interface copy in ui/features/reader/views/aa_sheet.dart"
+  },
+  "aaLineSpacing": "Jarak baris",
+  "@aaLineSpacing": {
+    "description": "Interface copy in ui/features/reader/views/aa_sheet.dart"
+  },
+  "aaTight": "Rapat",
+  "@aaTight": {
+    "description": "Interface copy in ui/features/reader/views/aa_sheet.dart"
+  },
+  "aaBalanced": "Pas",
+  "@aaBalanced": {
+    "description": "Interface copy in ui/features/reader/views/aa_sheet.dart"
+  },
+  "aaRoomy": "Lega",
+  "@aaRoomy": {
+    "description": "Interface copy in ui/features/reader/views/aa_sheet.dart"
+  },
+  "aaMargins": "Margin",
+  "@aaMargins": {
+    "description": "Interface copy in ui/features/reader/views/aa_sheet.dart"
+  },
+  "aaNarrow": "Sempit",
+  "@aaNarrow": {
+    "description": "Interface copy in ui/features/reader/views/aa_sheet.dart"
+  },
+  "aaTheme": "Tema",
+  "@aaTheme": {
+    "description": "Interface copy in ui/features/reader/views/aa_sheet.dart"
+  },
+  "aaLight": "Terang",
+  "@aaLight": {
+    "description": "Interface copy in ui/features/reader/views/aa_sheet.dart"
+  },
+  "aaDark": "Gelap",
+  "@aaDark": {
+    "description": "Interface copy in ui/features/reader/views/aa_sheet.dart"
+  },
+  "aaSystem": "Ikut sistem",
+  "@aaSystem": {
+    "description": "Interface copy in ui/features/reader/views/aa_sheet.dart"
+  },
+  "aaScreenDisplay": "Tampilan layar",
+  "@aaScreenDisplay": {
+    "description": "Interface copy in ui/features/reader/views/aa_sheet.dart"
+  },
+  "aaHideClockBattery": "Sembunyiin jam & baterai",
+  "@aaHideClockBattery": {
+    "description": "Interface copy in ui/features/reader/views/aa_sheet.dart"
+  },
+  "aaHideTheStatusBarWithThe": "Status bar ngumpet bareng menu pas lagi baca",
+  "@aaHideTheStatusBarWithThe": {
+    "description": "Interface copy in ui/features/reader/views/aa_sheet.dart"
+  },
+  "aaShowProgressLine": "Tampilin garis progres",
+  "@aaShowProgressLine": {
+    "description": "Interface copy in ui/features/reader/views/aa_sheet.dart"
+  },
+  "aaAThinLineAtTheBottom": "Garis tipis di bawah layar pas menu ngumpet",
+  "@aaAThinLineAtTheBottom": {
+    "description": "Interface copy in ui/features/reader/views/aa_sheet.dart"
+  },
+  "aaSmallerText": "Kecilin huruf",
+  "@aaSmallerText": {
+    "description": "Interface copy in ui/features/reader/views/aa_sheet.dart"
+  },
+  "aaLargerText": "Gedein huruf",
+  "@aaLargerText": {
+    "description": "Interface copy in ui/features/reader/views/aa_sheet.dart"
+  },
+  "aaFont2": "Font {p0}",
+  "@aaFont2": {
+    "description": "Interface copy in ui/features/reader/views/aa_sheet.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "aaTheme2": "Tema {p0}",
+  "@aaTheme2": {
+    "description": "Interface copy in ui/features/reader/views/aa_sheet.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "backupBackupCompleteAllSafe": "Backup kelar, aman!",
+  "@backupBackupCompleteAllSafe": {
+    "description": "Interface copy in ui/features/settings/views/backup_listener.dart"
+  },
+  "backupBackupFailed": "Yah, backup gagal",
+  "@backupBackupFailed": {
+    "description": "Interface copy in ui/features/settings/views/backup_listener.dart"
+  },
+  "backupTryAgainInAMoment": "Coba lagi bentar ya",
+  "@backupTryAgainInAMoment": {
+    "description": "Interface copy in ui/features/settings/views/backup_listener.dart"
+  },
+  "settingsYourDataIsBack": "Sip, data lo udah balik!",
+  "@settingsYourDataIsBack": {
+    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+  },
+  "settingsBooksTranslations": "{p0} buku · {p1} terjemahan",
+  "@settingsBooksTranslations": {
+    "description": "Interface copy in ui/features/settings/views/settings_view.dart",
+    "placeholders": {
+      "p0": {
+        "type": "int",
+        "format": "decimalPattern"
+      },
+      "p1": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "settingsApiKeysArenTIncludedIn": "API key gak ikut backup, isi ulang dulu biar bisa nerjemahin.",
+  "@settingsApiKeysArenTIncludedIn": {
+    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+  },
+  "settingsAddKey": "Isi key",
+  "@settingsAddKey": {
+    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+  },
+  "settingsDeleteTranslationCache": "Hapus cache terjemahan?",
+  "@settingsDeleteTranslationCache": {
+    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+  },
+  "settingsAllSavedTranslationsWillBeDeleted": "Semua terjemahan yang udah kesimpen bakal ilang. Paragraf yang dibuka lagi manggil AI ulang dan motong saldo lagi. Obrolan buku lo tetap kesimpen.",
+  "@settingsAllSavedTranslationsWillBeDeleted": {
+    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+  },
+  "settingsYourCatalogIsAlreadyUpTo": "Katalognya udah yang terbaru",
+  "@settingsYourCatalogIsAlreadyUpTo": {
+    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+  },
+  "settingsBack": "Balik",
+  "@settingsBack": {
+    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+  },
+  "settingsSettings": "Pengaturan",
+  "@settingsSettings": {
+    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+  },
+  "settingsOpenrouterApiKey": "API key OpenRouter",
+  "@settingsOpenrouterApiKey": {
+    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+  },
+  "settingsAiModel": "Model AI",
+  "@settingsAiModel": {
+    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+  },
+  "settingsChargesComeFromYourOpenrouterAccount": "Biayanya kepotong dari saldo akun OpenRouter lo.",
+  "@settingsChargesComeFromYourOpenrouterAccount": {
+    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+  },
+  "settingsBackupRestore": "Backup & pulihin",
+  "@settingsBackupRestore": {
+    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+  },
+  "settingsBookCatalog": "Katalog buku",
+  "@settingsBookCatalog": {
+    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+  },
+  "settingsAroundProjectGutenbergBooksToSearch": "Daftar ±62.000 buku Project Gutenberg buat nyari judul tanpa internet. Diperbarui mingguan.",
+  "@settingsAroundProjectGutenbergBooksToSearch": {
+    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+  },
+  "settingsStorage": "Penyimpanan",
+  "@settingsStorage": {
+    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+  },
+  "settingsStoredSecurelyOnYourDeviceKeychain": "Disimpen aman di perangkat (Keychain / Keystore), gak dikirim ke mana-mana selain OpenRouter.",
+  "@settingsStoredSecurelyOnYourDeviceKeychain": {
+    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+  },
+  "settingsThatSNotAnOpenrouterApi": "Itu bukan API key OpenRouter. Key-nya mulai dari sk-or-... dan gak disimpen.",
+  "@settingsThatSNotAnOpenrouterApi": {
+    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+  },
+  "settingsOpenrouterRejectedTheKeySoIt": "Key-nya ditolak OpenRouter, jadi gak disimpen. Cek lagi ya.",
+  "@settingsOpenrouterRejectedTheKeySoIt": {
+    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+  },
+  "settingsHangOnChecking": "Bentar, lagi ngecek...",
+  "@settingsHangOnChecking": {
+    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+  },
+  "settingsYourKeyWorks": "Key-nya jalan",
+  "@settingsYourKeyWorks": {
+    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+  },
+  "settingsOpenrouterRejectedYourKey": "Key-nya ditolak OpenRouter",
+  "@settingsOpenrouterRejectedYourKey": {
+    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+  },
+  "settingsStoredSecurelyOnYourDevice": "Disimpen aman di perangkat",
+  "@settingsStoredSecurelyOnYourDevice": {
+    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+  },
+  "settingsIncludesBooksReadingProgressTranslationsAnd": "Isinya buku, progres baca, terjemahan, sama pengaturan. ",
+  "@settingsIncludesBooksReadingProgressTranslationsAnd": {
+    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+  },
+  "settingsApiKeysArenTIncluded": "API key gak ikut",
+  "@settingsApiKeysArenTIncluded": {
+    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+  },
+  "settingsSoAddYoursAgainAfterRestoring": ", jadi abis pulihin isi ulang ya. Simpen file-nya di iCloud Drive biar gak ikut kehapus pas install ulang.",
+  "@settingsSoAddYoursAgainAfterRestoring": {
+    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+  },
+  "settingsJustNow": "Barusan",
+  "@settingsJustNow": {
+    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+  },
+  "settingsBackupStatus": "Status backup",
+  "@settingsBackupStatus": {
+    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+  },
+  "settingsLastBackup": "Backup terakhir",
+  "@settingsLastBackup": {
+    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+  },
+  "settingsNoBackupsYet": "Belum pernah backup",
+  "@settingsNoBackupsYet": {
+    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+  },
+  "settingsYourDataIsOnlyOnThis": "Data lo cuma ada di HP ini doang",
+  "@settingsYourDataIsOnlyOnThis": {
+    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+  },
+  "settingsBackUpNow": "Backup sekarang",
+  "@settingsBackUpNow": {
+    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+  },
+  "settingsRestoreFromBackup": "Pulihin dari backup",
+  "@settingsRestoreFromBackup": {
+    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+  },
+  "settingsDefaultMostAccurate": "Default · paling akurat",
+  "@settingsDefaultMostAccurate": {
+    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+  },
+  "settingsTranslationCache": "Cache terjemahan",
+  "@settingsTranslationCache": {
+    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+  },
+  "settingsParagraphs": "{p0} paragraf · {p1}",
+  "@settingsParagraphs": {
+    "description": "Interface copy in ui/features/settings/views/settings_view.dart",
+    "placeholders": {
+      "p0": {
+        "type": "int",
+        "format": "decimalPattern"
+      },
+      "p1": {
+        "type": "Object"
+      }
+    }
+  },
+  "settingsClearCache": "Hapus cache",
+  "@settingsClearCache": {
+    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+  },
+  "settingsNotDownloadedMb": "Belum diunduh · 5,6 MB",
+  "@settingsNotDownloadedMb": {
+    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+  },
+  "settingsUpdated": "Diperbarui {p0} · ",
+  "@settingsUpdated": {
+    "description": "Interface copy in ui/features/settings/views/settings_view.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "settingsBooks": "{p0}{p1} buku",
+  "@settingsBooks": {
+    "description": "Interface copy in ui/features/settings/views/settings_view.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      },
+      "p1": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "settingsCheckingForUpdates": "Ngecek versi terbaru…",
+  "@settingsCheckingForUpdates": {
+    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+  },
+  "settingsDownloading": "Ngunduh…",
+  "@settingsDownloading": {
+    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+  },
+  "settingsDownloading2": "Ngunduh {p0}%",
+  "@settingsDownloading2": {
+    "description": "Interface copy in ui/features/settings/views/settings_view.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "settingsPreparingCatalog": "Nyusun katalog…",
+  "@settingsPreparingCatalog": {
+    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+  },
+  "settingsFailedKeepingThePreviousCatalog": "Gagal, katalog lama tetep dipakai",
+  "@settingsFailedKeepingThePreviousCatalog": {
+    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+  },
+  "settingsDownload": "Unduh",
+  "@settingsDownload": {
+    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+  },
+  "settingsUpdate": "Perbarui",
+  "@settingsUpdate": {
+    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+  },
+  "settingsGutenbergCatalog": "Katalog Gutenberg",
+  "@settingsGutenbergCatalog": {
+    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+  },
+  "backupBooksReadingProgress": "{p0} buku + progres bacanya",
+  "@backupBooksReadingProgress": {
+    "description": "Interface copy in ui/features/settings/views/backup_sheet.dart",
+    "placeholders": {
+      "p0": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "backupTranslations": "{p0} terjemahan",
+  "@backupTranslations": {
+    "description": "Interface copy in ui/features/settings/views/backup_sheet.dart",
+    "placeholders": {
+      "p0": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "backupReadingSettingsAiModel": "Pengaturan baca & model AI",
+  "@backupReadingSettingsAiModel": {
+    "description": "Interface copy in ui/features/settings/views/backup_sheet.dart"
+  },
+  "backupBackingUp": "Lagi backup",
+  "@backupBackingUp": {
+    "description": "Interface copy in ui/features/settings/views/backup_sheet.dart"
+  },
+  "backupPackingYourBackup": "Lagi ngebungkus backup...",
+  "@backupPackingYourBackup": {
+    "description": "Interface copy in ui/features/settings/views/backup_sheet.dart"
+  },
+  "backupTheShareMenuOpensNextSave": "Abis ini muncul menu share. Simpen ke Files / Drive terus taruh di tempat aman biar gak ilang.",
+  "@backupTheShareMenuOpensNextSave": {
+    "description": "Interface copy in ui/features/settings/views/backup_sheet.dart"
+  },
+  "restoreRestoreThisBackup": "Pulihin dari backup ini?",
+  "@restoreRestoreThisBackup": {
+    "description": "Interface copy in ui/features/settings/views/restore_sheets.dart"
+  },
+  "restoreReplaceRestore": "Ganti & pulihin",
+  "@restoreReplaceRestore": {
+    "description": "Interface copy in ui/features/settings/views/restore_sheets.dart"
+  },
+  "restoreYourApiKeyWonTBe": "API key lo gak kesentuh.",
+  "@restoreYourApiKeyWonTBe": {
+    "description": "Interface copy in ui/features/settings/views/restore_sheets.dart"
+  },
+  "restoreCreatedLuma": "Dibikin {p0} · Luma {p1}",
+  "@restoreCreatedLuma": {
+    "description": "Interface copy in ui/features/settings/views/restore_sheets.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      },
+      "p1": {
+        "type": "Object"
+      }
+    }
+  },
+  "restoreBooksOnShelf": "buku di rak",
+  "@restoreBooksOnShelf": {
+    "description": "Interface copy in ui/features/settings/views/restore_sheets.dart"
+  },
+  "restoreTranslations": "terjemahan",
+  "@restoreTranslations": {
+    "description": "Interface copy in ui/features/settings/views/restore_sheets.dart"
+  },
+  "restoreAllDataOnThisPhoneWill": "Semua data di HP ini bakal diganti",
+  "@restoreAllDataOnThisPhoneWill": {
+    "description": "Interface copy in ui/features/settings/views/restore_sheets.dart"
+  },
+  "restoreYourCurrentBooksProgressAndTranslations": "Buku, progres, sama terjemahan yang ada sekarang ({p0} buku) diganti total sama isi backup. Yang sekarang gak bisa dibalikin.",
+  "@restoreYourCurrentBooksProgressAndTranslations": {
+    "description": "Interface copy in ui/features/settings/views/restore_sheets.dart",
+    "placeholders": {
+      "p0": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "restoreYesIUnderstandReplaceEverything": "Iya, gua ngerti. Ganti aja semuanya.",
+  "@restoreYesIUnderstandReplaceEverything": {
+    "description": "Interface copy in ui/features/settings/views/restore_sheets.dart"
+  },
+  "restoreRestoring": "Lagi mulihin",
+  "@restoreRestoring": {
+    "description": "Interface copy in ui/features/settings/views/restore_sheets.dart"
+  },
+  "restoreRestoringYourData": "Lagi mulihin data lo...",
+  "@restoreRestoringYourData": {
+    "description": "Interface copy in ui/features/settings/views/restore_sheets.dart"
+  },
+  "restoreCheckBackupFile": "Cek file backup",
+  "@restoreCheckBackupFile": {
+    "description": "Interface copy in ui/features/settings/views/restore_sheets.dart"
+  },
+  "restoreRestoreBooks": "Balikin {p0} buku",
+  "@restoreRestoreBooks": {
+    "description": "Interface copy in ui/features/settings/views/restore_sheets.dart",
+    "placeholders": {
+      "p0": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "restoreRestoreProgressTranslations": "Balikin progres & terjemahan",
+  "@restoreRestoreProgressTranslations": {
+    "description": "Interface copy in ui/features/settings/views/restore_sheets.dart"
+  },
+  "restoreKeepLumaOpenThisWonT": "Jangan tutup Luma dulu ya, bentar doang kok.",
+  "@restoreKeepLumaOpenThisWonT": {
+    "description": "Interface copy in ui/features/settings/views/restore_sheets.dart"
+  },
+  "restoreThisIsnTALumaBackup": "Ini bukan backup Luma",
+  "@restoreThisIsnTALumaBackup": {
+    "description": "Interface copy in ui/features/settings/views/restore_sheets.dart"
+  },
+  "restoreLumaBackupFilesAreNamedLuma": "File backup Luma itu yang namanya luma-backup-…zip, hasil dari tombol \"Backup sekarang\". Coba cari lagi di file manager ya.",
+  "@restoreLumaBackupFilesAreNamedLuma": {
+    "description": "Interface copy in ui/features/settings/views/restore_sheets.dart"
+  },
+  "restoreThisBackupIsFromANewer": "Backup-nya dari Luma yang lebih baru",
+  "@restoreThisBackupIsFromANewer": {
+    "description": "Interface copy in ui/features/settings/views/restore_sheets.dart"
+  },
+  "restoreThisFileWasCreatedWithLuma": "File ini dibikin pake Luma {p0}, sedangkan yang keinstall masih {p1}. Install Luma versi terbaru dulu, baru pulihin.",
+  "@restoreThisFileWasCreatedWithLuma": {
+    "description": "Interface copy in ui/features/settings/views/restore_sheets.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      },
+      "p1": {
+        "type": "Object"
+      }
+    }
+  },
+  "restoreTheBackupFileIsDamaged": "File backup-nya rusak",
+  "@restoreTheBackupFileIsDamaged": {
+    "description": "Interface copy in ui/features/settings/views/restore_sheets.dart"
+  },
+  "restoreCouldnTReadTheFileIt": "Isinya gak kebaca, mungkin kepotong pas disimpen. Coba file backup yang lain.",
+  "@restoreCouldnTReadTheFileIt": {
+    "description": "Interface copy in ui/features/settings/views/restore_sheets.dart"
+  },
+  "restoreCouldnTRestore": "Yah, gagal mulihin",
+  "@restoreCouldnTRestore": {
+    "description": "Interface copy in ui/features/settings/views/restore_sheets.dart"
+  },
+  "restoreSomethingWentWrongWhileReplacingData": "Ada yang error pas ganti data, semuanya udah dibalikin kayak semula.",
+  "@restoreSomethingWentWrongWhileReplacingData": {
+    "description": "Interface copy in ui/features/settings/views/restore_sheets.dart"
+  },
+  "restoreRestoreFailed": "Gagal mulihin",
+  "@restoreRestoreFailed": {
+    "description": "Interface copy in ui/features/settings/views/restore_sheets.dart"
+  },
+  "restoreChooseAnotherFile": "Pilih file lain",
+  "@restoreChooseAnotherFile": {
+    "description": "Interface copy in ui/features/settings/views/restore_sheets.dart"
+  },
+  "restoreYourCurrentDataHasnTBeen": "Tenang, data yang sekarang gak diapa-apain.",
+  "@restoreYourCurrentDataHasnTBeen": {
+    "description": "Interface copy in ui/features/settings/views/restore_sheets.dart"
+  },
+  "importImporting": "Lagi import",
+  "@importImporting": {
+    "description": "Interface copy in ui/features/import_book/views/import_sheets.dart"
+  },
+  "importUnpackingEpub": "Lagi ngebongkar EPUB...",
+  "@importUnpackingEpub": {
+    "description": "Interface copy in ui/features/import_book/views/import_sheets.dart"
+  },
+  "importReadTitleAuthor": "Baca judul & penulis",
+  "@importReadTitleAuthor": {
+    "description": "Interface copy in ui/features/import_book/views/import_sheets.dart"
+  },
+  "importGetCover": "Ambil cover",
+  "@importGetCover": {
+    "description": "Interface copy in ui/features/import_book/views/import_sheets.dart"
+  },
+  "importSplitIntoChaptersParagraphs": "Mecah per bab & paragraf",
+  "@importSplitIntoChaptersParagraphs": {
+    "description": "Interface copy in ui/features/import_book/views/import_sheets.dart"
+  },
+  "importAdded": "ditambah {p0}",
+  "@importAdded": {
+    "description": "Interface copy in ui/features/import_book/views/import_sheets.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "importThisBookIsAlreadyOnYour": "Eh, buku ini udah ada di rak",
+  "@importThisBookIsAlreadyOnYour": {
+    "description": "Interface copy in ui/features/import_book/views/import_sheets.dart"
+  },
+  "importYouVeImportedTheSameBook": "Lo pernah import buku yang sama. Mau lanjutin yang lama aja?",
+  "@importYouVeImportedTheSameBook": {
+    "description": "Interface copy in ui/features/import_book/views/import_sheets.dart"
+  },
+  "importOpenExistingBook": "Buka yang udah ada",
+  "@importOpenExistingBook": {
+    "description": "Interface copy in ui/features/import_book/views/import_sheets.dart"
+  },
+  "importReplaceFile": "Ganti file-nya",
+  "@importReplaceFile": {
+    "description": "Interface copy in ui/features/import_book/views/import_sheets.dart"
+  },
+  "importReplacingTheFileKeepsYourProgress": "Ganti file = progres & terjemahan lama tetep aman.",
+  "@importReplacingTheFileKeepsYourProgress": {
+    "description": "Interface copy in ui/features/import_book/views/import_sheets.dart"
+  },
+  "importThisFileIsDamaged": "File-nya rusak nih",
+  "@importThisFileIsDamaged": {
+    "description": "Interface copy in ui/features/import_book/views/import_sheets.dart"
+  },
+  "importCouldnTOpenThisEpubIt": "EPUB-nya gak bisa dibuka, kayaknya korup atau kedownload setengah. Coba download ulang, terus import lagi.",
+  "@importCouldnTOpenThisEpubIt": {
+    "description": "Interface copy in ui/features/import_book/views/import_sheets.dart"
+  },
+  "importDamagedFile": "{p0} · file rusak",
+  "@importDamagedFile": {
+    "description": "Interface copy in ui/features/import_book/views/import_sheets.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "importThisIsnTAnEpub": "Ini bukan EPUB",
+  "@importThisIsnTAnEpub": {
+    "description": "Interface copy in ui/features/import_book/views/import_sheets.dart"
+  },
+  "importThisImporterReadsEpubFilesConvert": "App ini cuma bisa baca .epub. Kalau bukunya PDF atau MOBI, convert dulu ke EPUB (misal pake Calibre), baru import lagi.",
+  "@importThisImporterReadsEpubFilesConvert": {
+    "description": "Interface copy in ui/features/import_book/views/import_sheets.dart"
+  },
+  "importThisBookIsDrmLocked": "Bukunya dikunci DRM",
+  "@importThisBookIsDrmLocked": {
+    "description": "Interface copy in ui/features/import_book/views/import_sheets.dart"
+  },
+  "importThisEpubIsLockedToIts": "EPUB ini dikunci sama tokonya, jadi cuma bisa dibaca di app toko itu. Pake file EPUB yang bebas DRM ya.",
+  "@importThisEpubIsLockedToIts": {
+    "description": "Interface copy in ui/features/import_book/views/import_sheets.dart"
+  },
+  "importBookTitleCanTBeEmpty": "Judul buku gak boleh kosong",
+  "@importBookTitleCanTBeEmpty": {
+    "description": "Interface copy in ui/features/import_book/views/import_markdown_sheet.dart"
+  },
+  "importMustBeANumber": "Harus angka",
+  "@importMustBeANumber": {
+    "description": "Interface copy in ui/features/import_book/views/import_markdown_sheet.dart"
+  },
+  "importImport": "Masukin",
+  "@importImport": {
+    "description": "Interface copy in ui/features/import_book/views/import_markdown_sheet.dart"
+  },
+  "importWhichBookIsThisFor": "Masuk ke buku mana?",
+  "@importWhichBookIsThisFor": {
+    "description": "Interface copy in ui/features/import_book/views/import_markdown_sheet.dart"
+  },
+  "importBookTitle": "Judul buku",
+  "@importBookTitle": {
+    "description": "Interface copy in ui/features/import_book/views/import_markdown_sheet.dart"
+  },
+  "importChapterTitle": "Judul bab",
+  "@importChapterTitle": {
+    "description": "Interface copy in ui/features/import_book/views/import_markdown_sheet.dart"
+  },
+  "importChapterTitleOptional": "Judul bab (opsional)",
+  "@importChapterTitleOptional": {
+    "description": "Interface copy in ui/features/import_book/views/import_markdown_sheet.dart"
+  },
+  "importChapterNumber": "Nomor bab",
+  "@importChapterNumber": {
+    "description": "Interface copy in ui/features/import_book/views/import_markdown_sheet.dart"
+  },
+  "importLastChapterInThisBook": "Bab terakhir di buku ini: {p0}",
+  "@importLastChapterInThisBook": {
+    "description": "Interface copy in ui/features/import_book/views/import_markdown_sheet.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "importGuessedFromTheFileTitleYou": "Ditebak dari judul di file. Boleh diubah.",
+  "@importGuessedFromTheFileTitleYou": {
+    "description": "Interface copy in ui/features/import_book/views/import_markdown_sheet.dart"
+  },
+  "importNewBook": "Buku baru",
+  "@importNewBook": {
+    "description": "Interface copy in ui/features/import_book/views/import_markdown_sheet.dart"
+  },
+  "importCreateABookFromThisFile": "Bikin buku dari file ini",
+  "@importCreateABookFromThisFile": {
+    "description": "Interface copy in ui/features/import_book/views/import_markdown_sheet.dart"
+  },
+  "discoverDiscover": "Cari buku",
+  "@discoverDiscover": {
+    "description": "Interface copy in ui/features/discover/views/discover_view.dart"
+  },
+  "discoverTitleOrAuthorName": "Judul atau nama penulis",
+  "@discoverTitleOrAuthorName": {
+    "description": "Interface copy in ui/features/discover/views/discover_view.dart"
+  },
+  "discoverClearSearch": "Hapus kata cari",
+  "@discoverClearSearch": {
+    "description": "Interface copy in ui/features/discover/views/discover_view.dart"
+  },
+  "discoverPreparingBookCatalog": "Nyiapin katalog buku… {p0}%",
+  "@discoverPreparingBookCatalog": {
+    "description": "Interface copy in ui/features/discover/views/discover_view.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "discoverPreparingBookCatalog2": "Nyiapin katalog buku…",
+  "@discoverPreparingBookCatalog2": {
+    "description": "Interface copy in ui/features/discover/views/discover_view.dart"
+  },
+  "discoverCanTReachTheCatalog": "Katalog lagi gak bisa dihubungin",
+  "@discoverCanTReachTheCatalog": {
+    "description": "Interface copy in ui/features/discover/views/discover_view.dart"
+  },
+  "discoverItSNotYourFaultGive": "Bukan salah lo kok. Coba lagi bentar lagi ya.",
+  "@discoverItSNotYourFaultGive": {
+    "description": "Interface copy in ui/features/discover/views/discover_view.dart"
+  },
+  "discoverJustOnceThenSearchWorksOffline": "Sekali aja, abis itu nyari jalan tanpa internet.",
+  "@discoverJustOnceThenSearchWorksOffline": {
+    "description": "Interface copy in ui/features/discover/views/discover_view.dart"
+  },
+  "discoverYouReOffline": "Lo lagi offline",
+  "@discoverYouReOffline": {
+    "description": "Interface copy in ui/features/discover/views/discover_view.dart"
+  },
+  "discoverSearchStillWorksPopularBooksDetails": "Nyari tetep jalan. Tapi daftar rame, detail buku, sama unduhan butuh internet. Buku di rak tetap bisa lo baca kok.",
+  "@discoverSearchStillWorksPopularBooksDetails": {
+    "description": "Interface copy in ui/features/discover/views/discover_view.dart"
+  },
+  "discoverOpenShelf": "Buka rak",
+  "@discoverOpenShelf": {
+    "description": "Interface copy in ui/features/discover/views/discover_view.dart"
+  },
+  "discoverPopularNow": "LAGI RAME",
+  "@discoverPopularNow": {
+    "description": "Interface copy in ui/features/discover/views/discover_view.dart"
+  },
+  "discoverTheCatalogIsTakingAWhile": "Katalognya lagi lemot nih",
+  "@discoverTheCatalogIsTakingAWhile": {
+    "description": "Interface copy in ui/features/discover/views/discover_view.dart"
+  },
+  "discoverItSBeenOverSecondsGive": "Udah 5 detik lebih. Tungguin bentar, atau coba lagi.",
+  "@discoverItSBeenOverSecondsGive": {
+    "description": "Interface copy in ui/features/discover/views/discover_view.dart"
+  },
+  "discoverTrySearching": "COBA CARI",
+  "@discoverTrySearching": {
+    "description": "Interface copy in ui/features/discover/views/discover_view.dart"
+  },
+  "discoverPopular": "#1 lagi rame, {p0}",
+  "@discoverPopular": {
+    "description": "Interface copy in ui/features/discover/views/discover_view.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "discoverPopular2": "#1 lagi rame",
+  "@discoverPopular2": {
+    "description": "Interface copy in ui/features/discover/views/discover_view.dart"
+  },
+  "discoverNoMatchesFor": "Gak nemu “{p0}”",
+  "@discoverNoMatchesFor": {
+    "description": "Interface copy in ui/features/discover/views/discover_view.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "discoverSearchMatchesTitlesAndAuthorNames": "Pencarian cuma nyocokin judul sama nama penulis. Cek ejaannya, atau coba kata yang lebih pendek.",
+  "@discoverSearchMatchesTitlesAndAuthorNames": {
+    "description": "Interface copy in ui/features/discover/views/discover_view.dart"
+  },
+  "discoverResultsFor": "HASIL BUAT “{p0}”",
+  "@discoverResultsFor": {
+    "description": "Interface copy in ui/features/discover/views/discover_view.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "discoverResultsBestMatchFirst": "{p0} hasil · urut paling cocok",
+  "@discoverResultsBestMatchFirst": {
+    "description": "Interface copy in ui/features/discover/views/discover_view.dart",
+    "placeholders": {
+      "p0": {
+        "type": "int"
+      }
+    }
+  },
+  "discoverCouldnTLoadTryAgain": "Gagal ngambil. Coba lagi",
+  "@discoverCouldnTLoadTryAgain": {
+    "description": "Interface copy in ui/features/discover/views/discover_view.dart"
+  },
+  "discoverLoadingMore": "Ngambil {p0} lagi…",
+  "@discoverLoadingMore": {
+    "description": "Interface copy in ui/features/discover/views/discover_view.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "discoverBestMatch": "Paling cocok, {p0}",
+  "@discoverBestMatch": {
+    "description": "Interface copy in ui/features/discover/views/discover_view.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "discoverBestMatch2": "Paling cocok",
+  "@discoverBestMatch2": {
+    "description": "Interface copy in ui/features/discover/views/discover_view.dart"
+  },
+  "discoverOnYourShelf": "Udah di rak",
+  "@discoverOnYourShelf": {
+    "description": "Interface copy in ui/features/discover/views/discover_view.dart"
+  },
+  "discoverQueued": "Antri",
+  "@discoverQueued": {
+    "description": "Interface copy in ui/features/discover/views/discover_view.dart"
+  },
+  "discoverDownloading": "Lagi diunduh · {p0}%",
+  "@discoverDownloading": {
+    "description": "Interface copy in ui/features/discover/views/discover_view.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "downloadDownloadingBooks": "Ngunduh {p0} buku · {p1}%",
+  "@downloadDownloadingBooks": {
+    "description": "Interface copy in ui/features/discover/views/download_chip.dart",
+    "placeholders": {
+      "p0": {
+        "type": "int"
+      },
+      "p1": {
+        "type": "Object"
+      }
+    }
+  },
+  "downloadDownloadStatus": "Status unduhan, {p0}",
+  "@downloadDownloadStatus": {
+    "description": "Interface copy in ui/features/discover/views/download_chip.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "downloadDownloads": "Unduhan",
+  "@downloadDownloads": {
+    "description": "Interface copy in ui/features/discover/views/download_chip.dart"
+  },
+  "downloadKeepsGoingWhileYouBrowse": "Jalan terus walau lo pindah layar",
+  "@downloadKeepsGoingWhileYouBrowse": {
+    "description": "Interface copy in ui/features/discover/views/download_chip.dart"
+  },
+  "downloadNoActiveDownloads": "Gak ada yang lagi diunduh.",
+  "@downloadNoActiveDownloads": {
+    "description": "Interface copy in ui/features/discover/views/download_chip.dart"
+  },
+  "downloadCanceledDownloadOf": "Unduhan {p0} dibatalin",
+  "@downloadCanceledDownloadOf": {
+    "description": "Interface copy in ui/features/discover/views/download_chip.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "downloadQueuedAfter": "Antri, abis {p0}",
+  "@downloadQueuedAfter": {
+    "description": "Interface copy in ui/features/discover/views/download_chip.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "downloadRemoveFromQueue": "Hapus dari antrian",
+  "@downloadRemoveFromQueue": {
+    "description": "Interface copy in ui/features/discover/views/download_chip.dart"
+  },
+  "downloadPreparingBook": "Nyusun buku…",
+  "@downloadPreparingBook": {
+    "description": "Interface copy in ui/features/discover/views/download_chip.dart"
+  },
+  "downloadAddedToShelf": "Udah masuk rak",
+  "@downloadAddedToShelf": {
+    "description": "Interface copy in ui/features/discover/views/download_chip.dart"
+  },
+  "downloadAlreadyOnShelf": "Udah ada di rak",
+  "@downloadAlreadyOnShelf": {
+    "description": "Interface copy in ui/features/discover/views/download_chip.dart"
+  },
+  "downloadFailedConnectionLost": "Gagal, koneksinya putus",
+  "@downloadFailedConnectionLost": {
+    "description": "Interface copy in ui/features/discover/views/download_chip.dart"
+  },
+  "bookAddedToGutenberg": "Masuk Gutenberg",
+  "@bookAddedToGutenberg": {
+    "description": "Interface copy in ui/features/discover/views/book_detail_view.dart"
+  },
+  "bookSize": "Ukuran",
+  "@bookSize": {
+    "description": "Interface copy in ui/features/discover/views/book_detail_view.dart"
+  },
+  "bookEnglish": "Inggris",
+  "@bookEnglish": {
+    "description": "Interface copy in ui/features/discover/views/book_detail_view.dart"
+  },
+  "bookLanguage": "Bahasa",
+  "@bookLanguage": {
+    "description": "Interface copy in ui/features/discover/views/book_detail_view.dart"
+  },
+  "bookSynopsis": "Sinopsis",
+  "@bookSynopsis": {
+    "description": "Interface copy in ui/features/discover/views/book_detail_view.dart"
+  },
+  "bookNoSynopsisForThisBookYet": "Belum ada sinopsis buat buku ini. Langsung buka bab 1 aja.",
+  "@bookNoSynopsisForThisBookYet": {
+    "description": "Interface copy in ui/features/discover/views/book_detail_view.dart"
+  },
+  "bookReadMore": "Baca selengkapnya",
+  "@bookReadMore": {
+    "description": "Interface copy in ui/features/discover/views/book_detail_view.dart"
+  },
+  "bookAbout": "Tentang",
+  "@bookAbout": {
+    "description": "Interface copy in ui/features/discover/views/book_detail_view.dart"
+  },
+  "bookListedIn": "Masuk daftar",
+  "@bookListedIn": {
+    "description": "Interface copy in ui/features/discover/views/book_detail_view.dart"
+  },
+  "bookAuthor": "Penulis",
+  "@bookAuthor": {
+    "description": "Interface copy in ui/features/discover/views/book_detail_view.dart"
+  },
+  "bookFileInfo": "Info file",
+  "@bookFileInfo": {
+    "description": "Interface copy in ui/features/discover/views/book_detail_view.dart"
+  },
+  "bookFormat": "Format",
+  "@bookFormat": {
+    "description": "Interface copy in ui/features/discover/views/book_detail_view.dart"
+  },
+  "bookCopyright": "Hak cipta",
+  "@bookCopyright": {
+    "description": "Interface copy in ui/features/discover/views/book_detail_view.dart"
+  },
+  "bookPublicDomainInTheUs": "Public domain di AS",
+  "@bookPublicDomainInTheUs": {
+    "description": "Interface copy in ui/features/discover/views/book_detail_view.dart"
+  },
+  "bookCatalogId": "ID katalog",
+  "@bookCatalogId": {
+    "description": "Interface copy in ui/features/discover/views/book_detail_view.dart"
+  },
+  "bookBookDetails": "Detail buku",
+  "@bookBookDetails": {
+    "description": "Interface copy in ui/features/discover/views/book_detail_view.dart"
+  },
+  "bookOtherBooksInTheCatalog": "{p0} buku lain di katalog",
+  "@bookOtherBooksInTheCatalog": {
+    "description": "Interface copy in ui/features/discover/views/book_detail_view.dart",
+    "placeholders": {
+      "p0": {
+        "type": "int"
+      }
+    }
+  },
+  "bookFindMoreBooksBy": "Cari buku lain {p0}",
+  "@bookFindMoreBooksBy": {
+    "description": "Interface copy in ui/features/discover/views/book_detail_view.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "bookDownloadFailedConnectionLost": "Gagal ngunduh, koneksinya putus.",
+  "@bookDownloadFailedConnectionLost": {
+    "description": "Interface copy in ui/features/discover/views/book_detail_view.dart"
+  },
+  "bookReadNow": "Baca sekarang",
+  "@bookReadNow": {
+    "description": "Interface copy in ui/features/discover/views/book_detail_view.dart"
+  },
+  "bookContinueReading": "Lanjut baca · {p0}%",
+  "@bookContinueReading": {
+    "description": "Interface copy in ui/features/discover/views/book_detail_view.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "bookAlreadyOnYourShelfNoNeed": "Udah ada di rak lo, gak perlu diunduh lagi",
+  "@bookAlreadyOnYourShelfNoNeed": {
+    "description": "Interface copy in ui/features/discover/views/book_detail_view.dart"
+  },
+  "bookQueued": "Antri…",
+  "@bookQueued": {
+    "description": "Interface copy in ui/features/discover/views/book_detail_view.dart"
+  },
+  "bookDownloading": "Lagi diunduh…",
+  "@bookDownloading": {
+    "description": "Interface copy in ui/features/discover/views/book_detail_view.dart"
+  },
+  "bookFeelFreeToBrowseILl": "Boleh ditinggal, nanti gua kabarin pas udah masuk rak.",
+  "@bookFeelFreeToBrowseILl": {
+    "description": "Interface copy in ui/features/discover/views/book_detail_view.dart"
+  },
+  "bookGetBook": "Ambil buku",
+  "@bookGetBook": {
+    "description": "Interface copy in ui/features/discover/views/book_detail_view.dart"
+  },
+  "bookFreeStraightToYourShelf": "Gratis, langsung masuk Rak buku lo",
+  "@bookFreeStraightToYourShelf": {
+    "description": "Interface copy in ui/features/discover/views/book_detail_view.dart"
+  },
+  "downloadAddedToShelf2": "{p0} udah masuk rak",
+  "@downloadAddedToShelf2": {
+    "description": "Interface copy in ui/features/discover/views/download_toasts.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "downloadIsAlreadyOnYourShelf": "{p0} udah ada di rak",
+  "@downloadIsAlreadyOnYourShelf": {
+    "description": "Interface copy in ui/features/discover/views/download_toasts.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "downloadCouldnTDownload": "Gagal ngunduh {p0}",
+  "@downloadCouldnTDownload": {
+    "description": "Interface copy in ui/features/discover/views/download_toasts.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "downloadTapToStartReading": "Tap buat mulai baca",
+  "@downloadTapToStartReading": {
+    "description": "Interface copy in ui/features/discover/views/download_toasts.dart"
+  },
+  "downloadOpen": "Buka",
+  "@downloadOpen": {
+    "description": "Interface copy in ui/features/discover/views/download_toasts.dart"
+  },
+  "downloadRead": "Baca",
+  "@downloadRead": {
+    "description": "Interface copy in ui/features/discover/views/download_toasts.dart"
+  },
+  "chatThisBook": "Buku ini",
+  "@chatThisBook": {
+    "description": "Interface copy in ui/features/chat/views/chat_sessions_view.dart"
+  },
+  "chatThisBook2": "buku ini",
+  "@chatThisBook2": {
+    "description": "Interface copy in ui/features/chat/views/chat_sessions_view.dart"
+  },
+  "chatCouldnTOpenHistory": "Riwayatnya gak kebuka.",
+  "@chatCouldnTOpenHistory": {
+    "description": "Interface copy in ui/features/chat/views/chat_sessions_view.dart"
+  },
+  "chatYourChatsAreSafeTryReloading": "Obrolan lo aman kok. Coba muat ulang bentar lagi.",
+  "@chatYourChatsAreSafeTryReloading": {
+    "description": "Interface copy in ui/features/chat/views/chat_sessions_view.dart"
+  },
+  "chatReload": "Muat ulang",
+  "@chatReload": {
+    "description": "Interface copy in ui/features/chat/views/chat_sessions_view.dart"
+  },
+  "chatNoChatsYet": "Belum ada obrolan.",
+  "@chatNoChatsYet": {
+    "description": "Interface copy in ui/features/chat/views/chat_sessions_view.dart"
+  },
+  "chatYourChatsWillAppearHereOrganized": "Obrolan yang lo mulai bakal muncul di sini, dipisah per sesi.",
+  "@chatYourChatsWillAppearHereOrganized": {
+    "description": "Interface copy in ui/features/chat/views/chat_sessions_view.dart"
+  },
+  "chatBackToChat": "Kembali ke obrolan",
+  "@chatBackToChat": {
+    "description": "Interface copy in ui/features/chat/views/chat_sessions_view.dart"
+  },
+  "chatChatHistory": "Riwayat obrolan",
+  "@chatChatHistory": {
+    "description": "Interface copy in ui/features/chat/views/chat_sessions_view.dart"
+  },
+  "chatNewChat": "Obrolan baru",
+  "@chatNewChat": {
+    "description": "Interface copy in ui/features/chat/views/chat_sessions_view.dart"
+  },
+  "chatUpdated": "Diperbarui {p0}",
+  "@chatUpdated": {
+    "description": "Interface copy in ui/features/chat/views/chat_sessions_view.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "chatOpenNow": "Lagi dibuka",
+  "@chatOpenNow": {
+    "description": "Interface copy in ui/features/chat/views/chat_sessions_view.dart"
+  },
+  "chatArchived": "Arsip",
+  "@chatArchived": {
+    "description": "Interface copy in ui/features/chat/views/chat_sessions_view.dart"
+  },
+  "chatMenuFor": "Menu {p0}",
+  "@chatMenuFor": {
+    "description": "Interface copy in ui/features/chat/views/chat_sessions_view.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "chatReadingPositionMovedToThisQuote": "Posisi baca pindah ke kutipan ini.",
+  "@chatReadingPositionMovedToThisQuote": {
+    "description": "Interface copy in ui/features/chat/views/chat_source_visit_view.dart"
+  },
+  "chatReadingPositionHasnTMovedTry": "Posisi baca belum dipindah. Coba lagi.",
+  "@chatReadingPositionHasnTMovedTry": {
+    "description": "Interface copy in ui/features/chat/views/chat_source_visit_view.dart"
+  },
+  "chatThisSourceIsNoLongerAvailable": "Sumber ini udah gak tersedia. Posisi baca lo tetap aman.",
+  "@chatThisSourceIsNoLongerAvailable": {
+    "description": "Interface copy in ui/features/chat/views/chat_source_visit_view.dart"
+  },
+  "chatAskAboutThisBook": "Tanyain isi buku ini…",
+  "@chatAskAboutThisBook": {
+    "description": "Interface copy in ui/features/chat/views/chat_composer.dart"
+  },
+  "chatStopResponse": "Hentikan jawaban",
+  "@chatStopResponse": {
+    "description": "Interface copy in ui/features/chat/views/chat_composer.dart"
+  },
+  "chatSendQuestion": "Kirim pertanyaan",
+  "@chatSendQuestion": {
+    "description": "Interface copy in ui/features/chat/views/chat_composer.dart"
+  },
+  "chatRename": "Ubah judul",
+  "@chatRename": {
+    "description": "Interface copy in ui/features/chat/views/chat_session_menu.dart"
+  },
+  "chatUnavailableForArchivedChats": "Gak bisa buat obrolan arsip",
+  "@chatUnavailableForArchivedChats": {
+    "description": "Interface copy in ui/features/chat/views/chat_session_menu.dart"
+  },
+  "chatDeleteChat": "Hapus obrolan",
+  "@chatDeleteChat": {
+    "description": "Interface copy in ui/features/chat/views/chat_session_menu.dart"
+  },
+  "chatDeleteThisChat": "Hapus obrolan ini?",
+  "@chatDeleteThisChat": {
+    "description": "Interface copy in ui/features/chat/views/chat_session_menu.dart"
+  },
+  "chatWillBePermanentlyDeletedYourBook": "“{p0}” bakal dihapus permanen. Bukunya, progres baca, dan obrolan lain gak ikut kehapus.",
+  "@chatWillBePermanentlyDeletedYourBook": {
+    "description": "Interface copy in ui/features/chat/views/chat_session_menu.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "chatCouldnTSaveTheTitleTry": "Judul belum tersimpan. Coba lagi.",
+  "@chatCouldnTSaveTheTitleTry": {
+    "description": "Interface copy in ui/features/chat/views/chat_session_menu.dart"
+  },
+  "chatSave": "Simpan",
+  "@chatSave": {
+    "description": "Interface copy in ui/features/chat/views/chat_session_menu.dart"
+  },
+  "chatChatTitle": "Judul obrolan",
+  "@chatChatTitle": {
+    "description": "Interface copy in ui/features/chat/views/chat_session_menu.dart"
+  },
+  "chatThisFeatureIsStillInDevelopment": "Fitur ini masih dalam pengembangan. Jawaban AI bisa keliru, jadi cek sumbernya lewat angka sitasi.",
+  "@chatThisFeatureIsStillInDevelopment": {
+    "description": "Interface copy in ui/features/chat/views/chat_context_card.dart"
+  },
+  "chatParagraph": "bagian {p0}",
+  "@chatParagraph": {
+    "description": "Interface copy in ui/features/chat/views/chat_context_card.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "chatReadInBook": "Baca di buku",
+  "@chatReadInBook": {
+    "description": "Interface copy in ui/features/chat/views/chat_context_card.dart"
+  },
+  "chatCollapseContext": "Ciutkan konteks",
+  "@chatCollapseContext": {
+    "description": "Interface copy in ui/features/chat/views/chat_context_card.dart"
+  },
+  "chatExpandContext": "Perluas konteks",
+  "@chatExpandContext": {
+    "description": "Interface copy in ui/features/chat/views/chat_context_card.dart"
+  },
+  "chatDraftNotes": "CATATAN SEMENTARA",
+  "@chatDraftNotes": {
+    "description": "Interface copy in ui/features/chat/views/chat_history.dart"
+  },
+  "chatParagraph2": "{p0}, paragraf {p1}",
+  "@chatParagraph2": {
+    "description": "Interface copy in ui/features/chat/views/chat_history.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      },
+      "p1": {
+        "type": "Object"
+      }
+    }
+  },
+  "chatJumpToLatest": "Ke terbaru",
+  "@chatJumpToLatest": {
+    "description": "Interface copy in ui/features/chat/views/chat_history.dart"
+  },
+  "chatBackToReading": "Balik baca",
+  "@chatBackToReading": {
+    "description": "Interface copy in ui/features/chat/views/chat_view.dart"
+  },
+  "chatArchivedReadOnly": "Arsip · cuma bisa dibaca",
+  "@chatArchivedReadOnly": {
+    "description": "Interface copy in ui/features/chat/views/chat_view.dart"
+  },
+  "chatThisHistoryCanTBeContinued": "Riwayat ini gak bisa dilanjutkan.",
+  "@chatThisHistoryCanTBeContinued": {
+    "description": "Interface copy in ui/features/chat/views/chat_view.dart"
+  },
+  "chatAskAboutThisBook2": "Tanya soal buku ini…",
+  "@chatAskAboutThisBook2": {
+    "description": "Interface copy in ui/features/chat/views/chat_view.dart"
+  },
+  "chatAskAboutThisQuote": "Tanya soal kutipan ini…",
+  "@chatAskAboutThisQuote": {
+    "description": "Interface copy in ui/features/chat/views/chat_view.dart"
+  },
+  "chatContinue": "Lanjutkan",
+  "@chatContinue": {
+    "description": "Interface copy in ui/features/chat/views/chat_view.dart"
+  },
+  "chatWhatWouldYouLikeToDiscuss": "Mau ngobrolin apa soal bukunya?",
+  "@chatWhatWouldYouLikeToDiscuss": {
+    "description": "Interface copy in ui/features/chat/views/chat_view.dart"
+  },
+  "chatThisBookIsUnavailable": "Buku ini gak tersedia.",
+  "@chatThisBookIsUnavailable": {
+    "description": "Interface copy in ui/features/chat/views/chat_view.dart"
+  },
+  "chatWhatWouldYouLikeToAsk": "Mau tanya apa soal kutipan ini?",
+  "@chatWhatWouldYouLikeToAsk": {
+    "description": "Interface copy in ui/features/chat/views/chat_view.dart"
+  },
+  "chatWriteYourQuestionBelowTheQuote": "Tulis pertanyaan lo di bawah. Kutipan sama terjemahannya ikut kebaca sebagai konteks.",
+  "@chatWriteYourQuestionBelowTheQuote": {
+    "description": "Interface copy in ui/features/chat/views/chat_view.dart"
+  },
+  "chatAskAnythingAboutAnswersIncludeCitations": "Tanya apa aja soal {p0}. Jawabannya selalu ada sitasi ke bagian bukunya.",
+  "@chatAskAnythingAboutAnswersIncludeCitations": {
+    "description": "Interface copy in ui/features/chat/views/chat_view.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "chat": "{p0} · {p1}",
+  "@chat": {
+    "description": "Interface copy in ui/features/chat/views/chat_source_sheet.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      },
+      "p1": {
+        "type": "Object"
+      }
+    }
+  },
+  "chatTheBookHasChanged": "Bukunya udah berubah",
+  "@chatTheBookHasChanged": {
+    "description": "Interface copy in ui/features/chat/views/chat_source_sheet.dart"
+  },
+  "chatOpenInBook": "Buka di buku",
+  "@chatOpenInBook": {
+    "description": "Interface copy in ui/features/chat/views/chat_source_sheet.dart"
+  },
+  "chatCheckingQuoteLocation": "Lagi ngecek lokasi kutipan…",
+  "@chatCheckingQuoteLocation": {
+    "description": "Interface copy in ui/features/chat/views/chat_source_sheet.dart"
+  },
+  "chatCheckTheOriginalTextWithoutChanging": "Cek teks aslinya tanpa mengubah posisi baca lo.",
+  "@chatCheckTheOriginalTextWithoutChanging": {
+    "description": "Interface copy in ui/features/chat/views/chat_source_sheet.dart"
+  },
+  "chatThisSourceIsNoLongerAvailable2": "Sumber ini udah gak tersedia atau jawabannya belum lolos pengecekan. Kutipan lama tetap bisa lo baca.",
+  "@chatThisSourceIsNoLongerAvailable2": {
+    "description": "Interface copy in ui/features/chat/views/chat_source_sheet.dart"
+  },
+  "chatHangOnPreparingTheChat": "Bentar, lagi siapin obrolan…",
+  "@chatHangOnPreparingTheChat": {
+    "description": "Interface copy in ui/features/chat/views/chat_copy.dart"
+  },
+  "chatLookingForSourcesInTheBook": "Lagi nyari sumber di buku…",
+  "@chatLookingForSourcesInTheBook": {
+    "description": "Interface copy in ui/features/chat/views/chat_copy.dart"
+  },
+  "chatHangOnThinking": "Bentar, lagi mikir…",
+  "@chatHangOnThinking": {
+    "description": "Interface copy in ui/features/chat/views/chat_copy.dart"
+  },
+  "chatWriting": "Lagi nulis…",
+  "@chatWriting": {
+    "description": "Interface copy in ui/features/chat/views/chat_copy.dart"
+  },
+  "chatTakingAWhileStillWorking": "Agak lama nih, masih diproses…",
+  "@chatTakingAWhileStillWorking": {
+    "description": "Interface copy in ui/features/chat/views/chat_copy.dart"
+  },
+  "chatResponseComplete": "Jawaban selesai",
+  "@chatResponseComplete": {
+    "description": "Interface copy in ui/features/chat/views/chat_copy.dart"
+  },
+  "chatTheResponseWasCutOff": "Jawabannya keputus.",
+  "@chatTheResponseWasCutOff": {
+    "description": "Interface copy in ui/features/chat/views/chat_copy.dart"
+  },
+  "chatStopped": "Dihentiin.",
+  "@chatStopped": {
+    "description": "Interface copy in ui/features/chat/views/chat_copy.dart"
+  },
+  "chatTheChatWasInterrupted": "Obrolan sempat terputus",
+  "@chatTheChatWasInterrupted": {
+    "description": "Interface copy in ui/features/chat/views/chat_copy.dart"
+  },
+  "chatBackToTranslation": "Balik ke Terjemahin",
+  "@chatBackToTranslation": {
+    "description": "Interface copy in ui/features/chat/views/chat_copy.dart"
+  },
+  "chatBack": "Kembali",
+  "@chatBack": {
+    "description": "Interface copy in ui/features/chat/views/chat_copy.dart"
+  },
+  "chatNoApiKeyYetAddIt": "API key belum diisi. Isi dulu di Pengaturan, lalu kirim lagi.",
+  "@chatNoApiKeyYetAddIt": {
+    "description": "Interface copy in ui/features/chat/views/chat_copy.dart"
+  },
+  "chatConnectionLostCheckYourInternetAnd": "Koneksi lagi putus. Cek internet lo, lalu coba lagi.",
+  "@chatConnectionLostCheckYourInternetAnd": {
+    "description": "Interface copy in ui/features/chat/views/chat_copy.dart"
+  },
+  "chatTheResponseTookTooLongYou": "Kelamaan nunggu jawaban. Lo bisa coba lagi.",
+  "@chatTheResponseTookTooLongYou": {
+    "description": "Interface copy in ui/features/chat/views/chat_copy.dart"
+  },
+  "chatTheResponseHasnTPassedValidation": "Jawabannya belum lolos pengecekan. Coba lagi, yuk.",
+  "@chatTheResponseHasnTPassedValidation": {
+    "description": "Interface copy in ui/features/chat/views/chat_copy.dart"
+  },
+  "chatApiKeyRejectedCheckYourKey": "API key ditolak. Periksa key lo di Pengaturan.",
+  "@chatApiKeyRejectedCheckYourKey": {
+    "description": "Interface copy in ui/features/chat/views/chat_copy.dart"
+  },
+  "chatYourOpenrouterCreditHasRunOut": "Saldo OpenRouter habis. Cek akun lo, lalu coba lagi.",
+  "@chatYourOpenrouterCreditHasRunOut": {
+    "description": "Interface copy in ui/features/chat/views/chat_copy.dart"
+  },
+  "chatRateLimitReachedWaitAMoment": "Lagi kena batas request. Tunggu sebentar, lalu coba lagi.",
+  "@chatRateLimitReachedWaitAMoment": {
+    "description": "Interface copy in ui/features/chat/views/chat_copy.dart"
+  },
+  "chatTheAiServiceIsHavingTrouble": "Layanan AI lagi bermasalah. Coba lagi nanti.",
+  "@chatTheAiServiceIsHavingTrouble": {
+    "description": "Interface copy in ui/features/chat/views/chat_copy.dart"
+  },
+  "chatToday": "Hari ini",
+  "@chatToday": {
+    "description": "Interface copy in ui/features/chat/views/chat_copy.dart"
+  },
+  "chatYesterday": "Kemarin",
+  "@chatYesterday": {
+    "description": "Interface copy in ui/features/chat/views/chat_copy.dart"
+  },
+  "chatLastDays": "7 hari terakhir",
+  "@chatLastDays": {
+    "description": "Interface copy in ui/features/chat/views/chat_copy.dart"
+  },
+  "chatOlder": "Lebih lama",
+  "@chatOlder": {
+    "description": "Interface copy in ui/features/chat/views/chat_copy.dart"
+  },
+  "chatCheckingTheBook": "Lagi meriksa isi buku…",
+  "@chatCheckingTheBook": {
+    "description": "Interface copy in ui/features/chat/views/chat_copy.dart"
+  },
+  "chatReading": "Lagi baca {p0}…",
+  "@chatReading": {
+    "description": "Interface copy in ui/features/chat/views/chat_copy.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "chatChunks": "{p0} {p1}/{p2} potongan",
+  "@chatChunks": {
+    "description": "Interface copy in ui/features/chat/views/chat_copy.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      },
+      "p1": {
+        "type": "Object"
+      },
+      "p2": {
+        "type": "Object"
+      }
+    }
+  },
+  "chatPreparingTheBookChunks": "Lagi nyiapin buku… {p0}/{p1} potongan",
+  "@chatPreparingTheBookChunks": {
+    "description": "Interface copy in ui/features/chat/views/chat_copy.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      },
+      "p1": {
+        "type": "Object"
+      }
+    }
+  },
+  "chatPlanning": "Lagi nyusun rencana",
+  "@chatPlanning": {
+    "description": "Interface copy in ui/features/chat/views/chat_copy.dart"
+  },
+  "chatLoadingSavedNotes": "Lagi ambil catatan tersimpan",
+  "@chatLoadingSavedNotes": {
+    "description": "Interface copy in ui/features/chat/views/chat_copy.dart"
+  },
+  "chatWritingTheResponse": "Lagi nulis jawaban",
+  "@chatWritingTheResponse": {
+    "description": "Interface copy in ui/features/chat/views/chat_copy.dart"
+  },
+  "chatWorking": "Lagi {p0}{p1}",
+  "@chatWorking": {
+    "description": "Interface copy in ui/features/chat/views/chat_copy.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      },
+      "p1": {
+        "type": "Object"
+      }
+    }
+  },
+  "chatThisDraftHasnTPassedResponse": "Draf ini belum lolos pengecekan jawaban.",
+  "@chatThisDraftHasnTPassedResponse": {
+    "description": "Interface copy in ui/features/chat/views/chat_copy.dart"
+  },
+  "chatFixingTheResponseFormat": "Lagi benerin format jawaban… ({p0}/{p1})",
+  "@chatFixingTheResponseFormat": {
+    "description": "Interface copy in ui/features/chat/views/chat_copy.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      },
+      "p1": {
+        "type": "Object"
+      }
+    }
+  },
+  "chatInterpretation": "Tafsiran",
+  "@chatInterpretation": {
+    "description": "Interface copy in ui/features/chat/views/chat_answer_blocks.dart"
+  },
+  "chatOutsideTheBook": "Di luar buku",
+  "@chatOutsideTheBook": {
+    "description": "Interface copy in ui/features/chat/views/chat_answer_blocks.dart"
+  },
+  "chatStepsCompleted": "{p0} langkah selesai",
+  "@chatStepsCompleted": {
+    "description": "Interface copy in ui/features/chat/views/chat_steps_row.dart",
+    "placeholders": {
+      "p0": {
+        "type": "int"
+      }
+    }
+  },
+  "chatSteps": "Langkah {p0}",
+  "@chatSteps": {
+    "description": "Interface copy in ui/features/chat/views/chat_steps_row.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "chatShowMore": "lihat {p0} lagi",
+  "@chatShowMore": {
+    "description": "Interface copy in ui/features/chat/views/chat_steps_row.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "chatAnswerNow": "Jawab sekarang",
+  "@chatAnswerNow": {
+    "description": "Interface copy in ui/features/chat/views/chat_steps_row.dart"
+  },
+  "chatUseTheNotesReceivedSoFar": "Pakai {p0} catatan yang udah masuk, sisa buku gak dibaca.",
+  "@chatUseTheNotesReceivedSoFar": {
+    "description": "Interface copy in ui/features/chat/views/chat_steps_row.dart",
+    "placeholders": {
+      "p0": {
+        "type": "int"
+      }
+    }
+  },
+  "peekNextGroup": "{p0} · grup berikutnya",
+  "@peekNextGroup": {
+    "description": "Interface copy in ui/features/breakdown/views/peek_sheet.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "peekConnectsToStartOf": "Nyambung ke · awal {p0}",
+  "@peekConnectsToStartOf": {
+    "description": "Interface copy in ui/features/breakdown/views/peek_sheet.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "peekTranslate": "Artiin",
+  "@peekTranslate": {
+    "description": "Interface copy in ui/features/breakdown/views/peek_sheet.dart"
+  },
+  "peekTryTranslatingAgain": "Coba artiin lagi",
+  "@peekTryTranslatingAgain": {
+    "description": "Interface copy in ui/features/breakdown/views/peek_sheet.dart"
+  },
+  "peekBreakThisDownToo": "Bedahin ini juga",
+  "@peekBreakThisDownToo": {
+    "description": "Interface copy in ui/features/breakdown/views/peek_sheet.dart"
+  },
+  "peekWhatCameThroughIsStillHere": "Yang udah masuk tetep di sini, tapi gak disimpen.",
+  "@peekWhatCameThroughIsStillHere": {
+    "description": "Interface copy in ui/features/breakdown/views/peek_sheet.dart"
+  },
+  "peekTranslationNeedsAnOpenrouterApiKey": "Artiin butuh API key OpenRouter.",
+  "@peekTranslationNeedsAnOpenrouterApiKey": {
+    "description": "Interface copy in ui/features/breakdown/views/peek_sheet.dart"
+  },
+  "peekApiKeyRejected": "API key-nya ditolak",
+  "@peekApiKeyRejected": {
+    "description": "Interface copy in ui/features/breakdown/views/peek_sheet.dart"
+  },
+  "peekOpenrouterRejectedYourKeyCheckIt": "OpenRouter gak nerima key lo. Cek lagi di Pengaturan.",
+  "@peekOpenrouterRejectedYourKeyCheckIt": {
+    "description": "Interface copy in ui/features/breakdown/views/peek_sheet.dart"
+  },
+  "peekOpenrouterCreditRanOut": "Saldo OpenRouter abis",
+  "@peekOpenrouterCreditRanOut": {
+    "description": "Interface copy in ui/features/breakdown/views/peek_sheet.dart"
+  },
+  "peekTopUpAtOpenrouterAiThen": "Isi saldo dulu di openrouter.ai, abis itu coba lagi.",
+  "@peekTopUpAtOpenrouterAiThen": {
+    "description": "Interface copy in ui/features/breakdown/views/peek_sheet.dart"
+  },
+  "peekCouldnTTranslate": "Yah, gagal ngartiin",
+  "@peekCouldnTTranslate": {
+    "description": "Interface copy in ui/features/breakdown/views/peek_sheet.dart"
+  },
+  "peekTheConnectionIsHavingTroubleYou": "Koneksi lagi ngadat. Teks aslinya tetep bisa dibaca.",
+  "@peekTheConnectionIsHavingTroubleYou": {
+    "description": "Interface copy in ui/features/breakdown/views/peek_sheet.dart"
+  },
+  "breakdownCouldnTBringTheQuoteOver": "Kutipannya belum bisa dibawa. Coba buka ulang bukunya.",
+  "@breakdownCouldnTBringTheQuoteOver": {
+    "description": "Interface copy in ui/features/breakdown/views/breakdown_view.dart"
+  },
+  "breakdownBreakdownComplete": "Bedahan udah lengkap, {p0}",
+  "@breakdownBreakdownComplete": {
+    "description": "Interface copy in ui/features/breakdown/views/breakdown_view.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "breakdownTerms": "Istilah",
+  "@breakdownTerms": {
+    "description": "Interface copy in ui/features/breakdown/views/breakdown_view.dart"
+  },
+  "breakdownPractice": "Praktek",
+  "@breakdownPractice": {
+    "description": "Interface copy in ui/features/breakdown/views/breakdown_view.dart"
+  },
+  "breakdownBreakdown": "Bedahin",
+  "@breakdownBreakdown": {
+    "description": "Interface copy in ui/features/breakdown/views/breakdown_view.dart"
+  },
+  "breakdownCutOffHalfway": "Kepotong di tengah",
+  "@breakdownCutOffHalfway": {
+    "description": "Interface copy in ui/features/breakdown/views/breakdown_view.dart"
+  },
+  "breakdownBreakingItDown": "Lagi ngebedah...",
+  "@breakdownBreakingItDown": {
+    "description": "Interface copy in ui/features/breakdown/views/breakdown_view.dart"
+  },
+  "breakdownHereSTheBreakdown": "Udah dibedah nih",
+  "@breakdownHereSTheBreakdown": {
+    "description": "Interface copy in ui/features/breakdown/views/breakdown_view.dart"
+  },
+  "breakdownSectionsReceived": "{p0} bagian masuk",
+  "@breakdownSectionsReceived": {
+    "description": "Interface copy in ui/features/breakdown/views/breakdown_view.dart",
+    "placeholders": {
+      "p0": {
+        "type": "int"
+      }
+    }
+  },
+  "breakdownBreakingItDownHangOn": "Lagi ngebedah, tunggu ya",
+  "@breakdownBreakingItDownHangOn": {
+    "description": "Interface copy in ui/features/breakdown/views/breakdown_view.dart"
+  },
+  "breakdownBreakdown2": "Bedahin, {p0} {p1}",
+  "@breakdownBreakdown2": {
+    "description": "Interface copy in ui/features/breakdown/views/breakdown_view.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      },
+      "p1": {
+        "type": "Object"
+      }
+    }
+  },
+  "breakdownComplete": "udah lengkap",
+  "@breakdownComplete": {
+    "description": "Interface copy in ui/features/breakdown/views/breakdown_view.dart"
+  },
+  "breakdownCancelBackToTranslation": "Batalin, balik ke Artinya",
+  "@breakdownCancelBackToTranslation": {
+    "description": "Interface copy in ui/features/breakdown/views/breakdown_view.dart"
+  },
+  "breakdownBackToTranslation": "Balik ke Artinya",
+  "@breakdownBackToTranslation": {
+    "description": "Interface copy in ui/features/breakdown/views/breakdown_view.dart"
+  },
+  "breakdownYourTranslationIsSavedButBreakdown": "Artinya udah kesimpen, tapi Bedahin butuh AI lewat OpenRouter. API key lo udah gak ada di Pengaturan, tempel lagi sekali aja.",
+  "@breakdownYourTranslationIsSavedButBreakdown": {
+    "description": "Interface copy in ui/features/breakdown/views/breakdown_view.dart"
+  },
+  "breakdownIdea": "1 gagasan",
+  "@breakdownIdea": {
+    "description": "Interface copy in ui/features/breakdown/views/breakdown_view.dart"
+  },
+  "breakdownSections": "{p0} bagian",
+  "@breakdownSections": {
+    "description": "Interface copy in ui/features/breakdown/views/breakdown_view.dart",
+    "placeholders": {
+      "p0": {
+        "type": "int"
+      }
+    }
+  },
+  "breakdownCouldnTBreakItDown": "Yah, gagal ngebedah",
+  "@breakdownCouldnTBreakItDown": {
+    "description": "Interface copy in ui/features/breakdown/views/breakdown_view.dart"
+  },
+  "breakdownYouReOffline": "Lagi offline nih",
+  "@breakdownYouReOffline": {
+    "description": "Interface copy in ui/features/breakdown/views/breakdown_view.dart"
+  },
+  "breakdownBreakdownNeedsInternetConnectAndTry": "Bedahin butuh internet. Nyalain dulu, abis itu coba lagi. Bedahan yang udah kesimpen tetep bisa dibuka.",
+  "@breakdownBreakdownNeedsInternetConnectAndTry": {
+    "description": "Interface copy in ui/features/breakdown/views/breakdown_view.dart"
+  },
+  "breakdownOpenrouterRejectedYourKeyCheckIt": "OpenRouter gak nerima key lo. Cek lagi di Pengaturan, siapa tau kepotong pas ditempel.",
+  "@breakdownOpenrouterRejectedYourKeyCheckIt": {
+    "description": "Interface copy in ui/features/breakdown/views/breakdown_view.dart"
+  },
+  "breakdownKeyRejected": "{p0} · key ditolak",
+  "@breakdownKeyRejected": {
+    "description": "Interface copy in ui/features/breakdown/views/breakdown_view.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "breakdownTopUpAtOpenrouterAiThen": "Isi saldo dulu di openrouter.ai, abis itu balik ke sini dan coba lagi.",
+  "@breakdownTopUpAtOpenrouterAiThen": {
+    "description": "Interface copy in ui/features/breakdown/views/breakdown_view.dart"
+  },
+  "breakdownNoCredit": "402 · saldo abis",
+  "@breakdownNoCredit": {
+    "description": "Interface copy in ui/features/breakdown/views/breakdown_view.dart"
+  },
+  "breakdownTheResponseFormatIsInvalid": "Jawabannya berantakan",
+  "@breakdownTheResponseFormatIsInvalid": {
+    "description": "Interface copy in ui/features/breakdown/views/breakdown_view.dart"
+  },
+  "breakdownTheAiReturnedSomethingLumaCan": "AI-nya ngasih jawaban yang gak bisa dibaca Luma. Coba sekali lagi, biasanya beres.",
+  "@breakdownTheAiReturnedSomethingLumaCan": {
+    "description": "Interface copy in ui/features/breakdown/views/breakdown_view.dart"
+  },
+  "breakdownInvalidFormat": "format gak valid",
+  "@breakdownInvalidFormat": {
+    "description": "Interface copy in ui/features/breakdown/views/breakdown_view.dart"
+  },
+  "breakdownSection": "Bagian {p0}",
+  "@breakdownSection": {
+    "description": "Interface copy in ui/features/breakdown/views/breakdown_view.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "breakdownTranslatedText": "Teks terjemahan",
+  "@breakdownTranslatedText": {
+    "description": "Interface copy in ui/features/breakdown/views/breakdown_view.dart"
+  },
+  "breakdownTranslatedTextSections": "Teks terjemahan, {p0} bagian",
+  "@breakdownTranslatedTextSections": {
+    "description": "Interface copy in ui/features/breakdown/views/breakdown_view.dart",
+    "placeholders": {
+      "p0": {
+        "type": "int"
+      }
+    }
+  },
+  "breakdownCollapseTranslatedText": "Lipet teks terjemahan",
+  "@breakdownCollapseTranslatedText": {
+    "description": "Interface copy in ui/features/breakdown/views/breakdown_view.dart"
+  },
+  "breakdownTextBeingExplained": "Teks yang dibedah",
+  "@breakdownTextBeingExplained": {
+    "description": "Interface copy in ui/features/breakdown/views/breakdown_view.dart"
+  },
+  "breakdownSectionOf": "Bagian {p0} dari {p1}, {p2}",
+  "@breakdownSectionOf": {
+    "description": "Interface copy in ui/features/breakdown/views/breakdown_view.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      },
+      "p1": {
+        "type": "Object"
+      },
+      "p2": {
+        "type": "Object"
+      }
+    }
+  },
+  "breakdownMeaning": "MAKSUDNYA",
+  "@breakdownMeaning": {
+    "description": "Interface copy in ui/features/breakdown/views/breakdown_view.dart"
+  },
+  "breakdownLogic": "LOGIKANYA",
+  "@breakdownLogic": {
+    "description": "Interface copy in ui/features/breakdown/views/breakdown_view.dart"
+  },
+  "breakdownSection2": " · bagian {p0}",
+  "@breakdownSection2": {
+    "description": "Interface copy in ui/features/breakdown/views/breakdown_view.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "breakdownConnectsTo": "NYAMBUNG KE",
+  "@breakdownConnectsTo": {
+    "description": "Interface copy in ui/features/breakdown/views/breakdown_view.dart"
+  },
+  "breakdownPuttingItIntoPractice": "Praktekinnya gini",
+  "@breakdownPuttingItIntoPractice": {
+    "description": "Interface copy in ui/features/breakdown/views/breakdown_view.dart"
+  },
+  "breakdownContinuation": "Lanjutan",
+  "@breakdownContinuation": {
+    "description": "Interface copy in ui/features/breakdown/views/breakdown_view.dart"
+  },
+  "breakdownContinuationOf": "Lanjutan {p0}",
+  "@breakdownContinuationOf": {
+    "description": "Interface copy in ui/features/breakdown/views/breakdown_view.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "breakdownChapter": "Bab {p0}",
+  "@breakdownChapter": {
+    "description": "Interface copy in ui/features/breakdown/views/breakdown_view.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "breakdownConnectsTo2": "Nyambung ke {p0}, {p1}",
+  "@breakdownConnectsTo2": {
+    "description": "Interface copy in ui/features/breakdown/views/breakdown_view.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      },
+      "p1": {
+        "type": "Object"
+      }
+    }
+  },
+  "breakdownConnectsToDoubleTapToPreview": "Nyambung ke {p0}, {p1}. Ketuk dua kali buat ngintip.",
+  "@breakdownConnectsToDoubleTapToPreview": {
+    "description": "Interface copy in ui/features/breakdown/views/breakdown_view.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      },
+      "p1": {
+        "type": "Object"
+      }
+    }
+  },
+  "breakdownTheAiIsBusyGiveIt": "AI-nya lagi rame. Tungguin bentar, atau coba minta ulang.",
+  "@breakdownTheAiIsBusyGiveIt": {
+    "description": "Interface copy in ui/features/breakdown/views/breakdown_view.dart"
+  },
+  "breakdownTheConnectionDroppedDuringTheBreakdown": "Koneksinya putus pas lagi ngebedah.",
+  "@breakdownTheConnectionDroppedDuringTheBreakdown": {
+    "description": "Interface copy in ui/features/breakdown/views/breakdown_view.dart"
+  },
+  "breakdownTheConnectionDroppedDuringTheBreakdown2": "Koneksinya putus pas lagi ngebedah. Bagian 1 tetep di sini.",
+  "@breakdownTheConnectionDroppedDuringTheBreakdown2": {
+    "description": "Interface copy in ui/features/breakdown/views/breakdown_view.dart"
+  },
+  "breakdownTheConnectionDroppedDuringTheBreakdown3": "Koneksinya putus pas lagi ngebedah. Bagian 1–{p0} tetep di sini.",
+  "@breakdownTheConnectionDroppedDuringTheBreakdown3": {
+    "description": "Interface copy in ui/features/breakdown/views/breakdown_view.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "breakdownTryAgainFromTheStart": "Coba lagi dari awal",
+  "@breakdownTryAgainFromTheStart": {
+    "description": "Interface copy in ui/features/breakdown/views/breakdown_view.dart"
+  },
+  "breakdownHighlightInTheText": "Sorot \"{p0}\" di teks",
+  "@breakdownHighlightInTheText": {
+    "description": "Interface copy in ui/features/breakdown/views/breakdown_view.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "breakdownOpenTranslatedText": "Buka teks terjemahan",
+  "@breakdownOpenTranslatedText": {
+    "description": "Interface copy in ui/features/breakdown/views/breakdown_view.dart"
+  },
+  "breakdownJumpToSectionOf": "Lompat ke bagian {p0} dari {p1}",
+  "@breakdownJumpToSectionOf": {
+    "description": "Interface copy in ui/features/breakdown/views/breakdown_view.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      },
+      "p1": {
+        "type": "Object"
+      }
+    }
+  },
+  "breakdownJumpTo": "Lompat ke {p0}",
+  "@breakdownJumpTo": {
+    "description": "Interface copy in ui/features/breakdown/views/breakdown_view.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "bookTitleAuthorUpdated": "Sip, judul & penulisnya udah diganti",
+  "@bookTitleAuthorUpdated": {
+    "description": "Interface copy in ui/features/bookshelf/views/book_edit_sheet.dart"
+  },
+  "bookCouldnTSave": "Yah, gagal nyimpen",
+  "@bookCouldnTSave": {
+    "description": "Interface copy in ui/features/bookshelf/views/book_edit_sheet.dart"
+  },
+  "bookEditTitleAuthor": "Ubah judul & penulis",
+  "@bookEditTitleAuthor": {
+    "description": "Interface copy in ui/features/bookshelf/views/book_edit_sheet.dart"
+  },
+  "bookCoverPreview": "Preview cover",
+  "@bookCoverPreview": {
+    "description": "Interface copy in ui/features/bookshelf/views/book_edit_sheet.dart"
+  },
+  "bookOriginalEpubCover": "Cover asli EPUB",
+  "@bookOriginalEpubCover": {
+    "description": "Interface copy in ui/features/bookshelf/views/book_edit_sheet.dart"
+  },
+  "bookDefaultCover": "Cover default",
+  "@bookDefaultCover": {
+    "description": "Interface copy in ui/features/bookshelf/views/book_edit_sheet.dart"
+  },
+  "bookTitle": "Judul",
+  "@bookTitle": {
+    "description": "Interface copy in ui/features/bookshelf/views/book_edit_sheet.dart"
+  },
+  "bookAuthorOptional": "Penulis (opsional)",
+  "@bookAuthorOptional": {
+    "description": "Interface copy in ui/features/bookshelf/views/book_edit_sheet.dart"
+  },
+  "bookAuthorName": "Nama penulis",
+  "@bookAuthorName": {
+    "description": "Interface copy in ui/features/bookshelf/views/book_edit_sheet.dart"
+  },
+  "bookYourOriginalCoverIsSavedYou": "Cover asli tetep disimpen, bisa dinyalain lagi kapan aja.",
+  "@bookYourOriginalCoverIsSavedYou": {
+    "description": "Interface copy in ui/features/bookshelf/views/book_edit_sheet.dart"
+  },
+  "bookThisCoverComesFromTheEpub": "Cover ini bawaan file EPUB, jadi gak ikut berubah pas judulnya lo ganti.",
+  "@bookThisCoverComesFromTheEpub": {
+    "description": "Interface copy in ui/features/bookshelf/views/book_edit_sheet.dart"
+  },
+  "bookUseDefaultCover": "Pakai cover default",
+  "@bookUseDefaultCover": {
+    "description": "Interface copy in ui/features/bookshelf/views/book_edit_sheet.dart"
+  },
+  "bookRestoreOriginals": "Balikin ke aslinya",
+  "@bookRestoreOriginals": {
+    "description": "Interface copy in ui/features/bookshelf/views/book_edit_sheet.dart"
+  },
+  "bookFromEpub": "Dari EPUB: {p0} · {p1}",
+  "@bookFromEpub": {
+    "description": "Interface copy in ui/features/bookshelf/views/book_edit_sheet.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      },
+      "p1": {
+        "type": "Object"
+      }
+    }
+  },
+  "bookshelfAddedToYourShelf": "Sip, udah masuk rak!",
+  "@bookshelfAddedToYourShelf": {
+    "description": "Interface copy in ui/features/bookshelf/views/bookshelf_view.dart"
+  },
+  "bookshelfChapterAlreadyExists": "Bab {p0} udah ada",
+  "@bookshelfChapterAlreadyExists": {
+    "description": "Interface copy in ui/features/bookshelf/views/bookshelf_view.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "bookshelfReplacingChapterWillAlsoDeleteIts": "Kalau diganti, terjemahan yang udah kesimpen di bab {p0} yang lama ikut kehapus.",
+  "@bookshelfReplacingChapterWillAlsoDeleteIts": {
+    "description": "Interface copy in ui/features/bookshelf/views/bookshelf_view.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "bookshelfReplace": "Ganti",
+  "@bookshelfReplace": {
+    "description": "Interface copy in ui/features/bookshelf/views/bookshelf_view.dart"
+  },
+  "bookshelfAddedToShelf": "{p0} masuk rak ✨",
+  "@bookshelfAddedToShelf": {
+    "description": "Interface copy in ui/features/bookshelf/views/bookshelf_view.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "bookshelfChapterAddedTo": "Bab {p0} masuk ke {p1} ✨",
+  "@bookshelfChapterAddedTo": {
+    "description": "Interface copy in ui/features/bookshelf/views/bookshelf_view.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      },
+      "p1": {
+        "type": "Object"
+      }
+    }
+  },
+  "bookshelfBookInfo": "Info buku",
+  "@bookshelfBookInfo": {
+    "description": "Interface copy in ui/features/bookshelf/views/bookshelf_view.dart"
+  },
+  "bookshelfRemoveFromShelf": "Hapus dari rak",
+  "@bookshelfRemoveFromShelf": {
+    "description": "Interface copy in ui/features/bookshelf/views/bookshelf_view.dart"
+  },
+  "bookshelfProgress": "Progres {p0}%",
+  "@bookshelfProgress": {
+    "description": "Interface copy in ui/features/bookshelf/views/bookshelf_view.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "bookshelfTranslatedParagraphs": "{p0} paragraf yang udah diartiin",
+  "@bookshelfTranslatedParagraphs": {
+    "description": "Interface copy in ui/features/bookshelf/views/bookshelf_view.dart",
+    "placeholders": {
+      "p0": {
+        "type": "int"
+      }
+    }
+  },
+  "bookshelfAnd": " sama ",
+  "@bookshelfAnd": {
+    "description": "Interface copy in ui/features/bookshelf/views/bookshelf_view.dart"
+  },
+  "bookshelfRemoveFromYourShelf": "Hapus \"{p0}\" dari rak?",
+  "@bookshelfRemoveFromYourShelf": {
+    "description": "Interface copy in ui/features/bookshelf/views/bookshelf_view.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "bookshelfYourOriginalFileStaysSafe": "{p0}File aslinya tetep aman kok.",
+  "@bookshelfYourOriginalFileStaysSafe": {
+    "description": "Interface copy in ui/features/bookshelf/views/bookshelf_view.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "bookshelfNeverMind": "Gak jadi",
+  "@bookshelfNeverMind": {
+    "description": "Interface copy in ui/features/bookshelf/views/bookshelf_view.dart"
+  },
+  "bookshelfCouldnTDeleteTheBook": "Yah, gagal ngehapus bukunya",
+  "@bookshelfCouldnTDeleteTheBook": {
+    "description": "Interface copy in ui/features/bookshelf/views/bookshelf_view.dart"
+  },
+  "bookshelfSortBy": "Urutin pake",
+  "@bookshelfSortBy": {
+    "description": "Interface copy in ui/features/bookshelf/views/bookshelf_view.dart"
+  },
+  "bookshelfCouldnTOpenYourShelf": "Yah, rak-nya gagal kebuka",
+  "@bookshelfCouldnTOpenYourShelf": {
+    "description": "Interface copy in ui/features/bookshelf/views/bookshelf_view.dart"
+  },
+  "bookshelfThatSEverythingBooksOnYour": "Udah mentok. {p0} buku di rak lo.",
+  "@bookshelfThatSEverythingBooksOnYour": {
+    "description": "Interface copy in ui/features/bookshelf/views/bookshelf_view.dart",
+    "placeholders": {
+      "p0": {
+        "type": "int"
+      }
+    }
+  },
+  "bookshelfAllBooks": "Semua buku",
+  "@bookshelfAllBooks": {
+    "description": "Interface copy in ui/features/bookshelf/views/bookshelf_view.dart"
+  },
+  "bookshelfShelfOrder": "Urutan rak: {p0}",
+  "@bookshelfShelfOrder": {
+    "description": "Interface copy in ui/features/bookshelf/views/bookshelf_view.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "bookshelfGridView": "Tampilan grid",
+  "@bookshelfGridView": {
+    "description": "Interface copy in ui/features/bookshelf/views/bookshelf_view.dart"
+  },
+  "bookshelfListView": "Tampilan list",
+  "@bookshelfListView": {
+    "description": "Interface copy in ui/features/bookshelf/views/bookshelf_view.dart"
+  },
+  "bookshelfAFamousOpeningLine": "KALIMAT PEMBUKA PALING TERKENAL",
+  "@bookshelfAFamousOpeningLine": {
+    "description": "Interface copy in ui/features/bookshelf/views/bookshelf_view.dart"
+  },
+  "bookshelfGet": "Ambil {p0}",
+  "@bookshelfGet": {
+    "description": "Interface copy in ui/features/bookshelf/views/bookshelf_view.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "bookshelfGet2": "Ambil",
+  "@bookshelfGet2": {
+    "description": "Interface copy in ui/features/bookshelf/views/bookshelf_view.dart"
+  },
+  "bookshelfYourShelfIsStill": "Rak lo masih ",
+  "@bookshelfYourShelfIsStill": {
+    "description": "Interface copy in ui/features/bookshelf/views/bookshelf_view.dart"
+  },
+  "bookshelfEmpty": "kosong",
+  "@bookshelfEmpty": {
+    "description": "Interface copy in ui/features/bookshelf/views/bookshelf_view.dart"
+  },
+  "bookshelfGetTheBookAboveOrFind": "Ambil buku di atas, atau cari yang lain. Gratis semua.",
+  "@bookshelfGetTheBookAboveOrFind": {
+    "description": "Interface copy in ui/features/bookshelf/views/bookshelf_view.dart"
+  },
+  "bookshelfFindFreeBooks": "Cari buku gratis",
+  "@bookshelfFindFreeBooks": {
+    "description": "Interface copy in ui/features/bookshelf/views/bookshelf_view.dart"
+  },
+  "bookshelfOrImportEpubMarkdownFromFiles": "atau import EPUB / Markdown dari Files",
+  "@bookshelfOrImportEpubMarkdownFromFiles": {
+    "description": "Interface copy in ui/features/bookshelf/views/bookshelf_view.dart"
+  },
+  "bookshelfTapAParagraphWhenYouGet": "Nanti tap paragraf yang bikin pusing",
+  "@bookshelfTapAParagraphWhenYouGet": {
+    "description": "Interface copy in ui/features/bookshelf/views/bookshelf_view.dart"
+  },
+  "bookshelfPuzzledByASentenceBreakIt": "Bingung sama satu kalimat? Bedahin",
+  "@bookshelfPuzzledByASentenceBreakIt": {
+    "description": "Interface copy in ui/features/bookshelf/views/bookshelf_view.dart"
+  },
+  "bookshelfFromTheTranslationSheetTapBreakdown": "Dari sheet Artinya, tap Bedahin: kalimatnya dipecah bagian per bagian, dijelasin satu-satu.",
+  "@bookshelfFromTheTranslationSheetTapBreakdown": {
+    "description": "Interface copy in ui/features/bookshelf/views/bookshelf_view.dart"
+  },
+  "bookshelfChatAboutTheBookAnytime": "Ngobrolin bukunya kapan aja",
+  "@bookshelfChatAboutTheBookAnytime": {
+    "description": "Interface copy in ui/features/bookshelf/views/bookshelf_view.dart"
+  },
+  "bookshelfAskAboutCharactersThePlotOr": "Nanya soal tokoh, alur, atau kenapa gitu: jawabannya ngutip halaman bukunya langsung.",
+  "@bookshelfAskAboutCharactersThePlotOr": {
+    "description": "Interface copy in ui/features/bookshelf/views/bookshelf_view.dart"
+  },
+  "bookshelfDownloading": "{p0} lagi diunduh",
+  "@bookshelfDownloading": {
+    "description": "Interface copy in ui/features/bookshelf/views/bookshelf_view.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "bookshelfWhileYouWaitOf": "SAMBIL NUNGGU · {p0} DARI {p1}",
+  "@bookshelfWhileYouWaitOf": {
+    "description": "Interface copy in ui/features/bookshelf/views/bookshelf_view.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      },
+      "p1": {
+        "type": "Object"
+      }
+    }
+  },
+  "bookshelfHereSWhatItMeans": "ARTINYA GINI NIH",
+  "@bookshelfHereSWhatItMeans": {
+    "description": "Interface copy in ui/features/bookshelf/views/bookshelf_view.dart"
+  },
+  "backupNoBackupsYet": "Belum pernah backup nih",
+  "@backupNoBackupsYet": {
+    "description": "Interface copy in ui/features/bookshelf/views/backup_reminder.dart"
+  },
+  "backupYourDataIsOnlyOnThis": "Data lo cuma ada di HP ini doang. Amanin dulu yuk.",
+  "@backupYourDataIsOnlyOnThis": {
+    "description": "Interface copy in ui/features/bookshelf/views/backup_reminder.dart"
+  },
+  "backupItSBeenDaysSinceYour": "Udah 6 hari belum backup nih",
+  "@backupItSBeenDaysSinceYour": {
+    "description": "Interface copy in ui/features/bookshelf/views/backup_reminder.dart"
+  },
+  "backupYourReinstallIsDueTomorrowBack": "Besok jatah install ulang. Amanin data lo dulu yuk.",
+  "@backupYourReinstallIsDueTomorrowBack": {
+    "description": "Interface copy in ui/features/bookshelf/views/backup_reminder.dart"
+  },
+  "backupItSBeenDaysSinceYour2": "Udah {p0} hari belum backup nih",
+  "@backupItSBeenDaysSinceYour2": {
+    "description": "Interface copy in ui/features/bookshelf/views/backup_reminder.dart",
+    "placeholders": {
+      "p0": {
+        "type": "int"
+      }
+    }
+  },
+  "backupBackUpYourDataBeforeYour": "Amanin data lo dulu yuk, sebelum keburu install ulang.",
+  "@backupBackUpYourDataBeforeYour": {
+    "description": "Interface copy in ui/features/bookshelf/views/backup_reminder.dart"
+  },
+  "backupBackupReminder": "Pengingat backup",
+  "@backupBackupReminder": {
+    "description": "Interface copy in ui/features/bookshelf/views/backup_reminder.dart"
+  },
+  "backupDismissReminder": "Tutup pengingat",
+  "@backupDismissReminder": {
+    "description": "Interface copy in ui/features/bookshelf/views/backup_reminder.dart"
+  },
+  "shelfYourBookshelf": "Rak buku lo",
+  "@shelfYourBookshelf": {
+    "description": "Interface copy in ui/features/bookshelf/views/shelf_header.dart"
+  },
+  "shelfImportEpub": "Import EPUB",
+  "@shelfImportEpub": {
+    "description": "Interface copy in ui/features/bookshelf/views/shelf_header.dart"
+  },
+  "bookReadingPosition": "Lagi di",
+  "@bookReadingPosition": {
+    "description": "Interface copy in ui/features/bookshelf/views/book_info_sheet.dart"
+  },
+  "bookLastOpened": "Terakhir dibuka",
+  "@bookLastOpened": {
+    "description": "Interface copy in ui/features/bookshelf/views/book_info_sheet.dart"
+  },
+  "bookAdded": "Ditambah",
+  "@bookAdded": {
+    "description": "Interface copy in ui/features/bookshelf/views/book_info_sheet.dart"
+  },
+  "bookParagraphsTranslated2": "Paragraf diartiin",
+  "@bookParagraphsTranslated2": {
+    "description": "Interface copy in ui/features/bookshelf/views/book_info_sheet.dart"
+  },
+  "bookFileSize": "Ukuran file",
+  "@bookFileSize": {
+    "description": "Interface copy in ui/features/bookshelf/views/book_info_sheet.dart"
+  },
+  "bookFileName": "Nama file",
+  "@bookFileName": {
+    "description": "Interface copy in ui/features/bookshelf/views/book_info_sheet.dart"
+  },
+  "bookAuthorNotFound": "Penulis gak ketemu",
+  "@bookAuthorNotFound": {
+    "description": "Interface copy in ui/features/bookshelf/views/book_info_sheet.dart"
+  },
+  "continueContinueReading": "Lanjut baca {p0}, {p1}",
+  "@continueContinueReading": {
+    "description": "Interface copy in ui/features/bookshelf/views/continue_card.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      },
+      "p1": {
+        "type": "Object"
+      }
+    }
+  },
+  "continueLetSKeepReading": "Lanjut baca yuk →",
+  "@continueLetSKeepReading": {
+    "description": "Interface copy in ui/features/bookshelf/views/continue_card.dart"
+  },
+  "continueChapterOf": "Bab {p0} dari {p1}",
+  "@continueChapterOf": {
+    "description": "Interface copy in ui/features/bookshelf/views/continue_card.dart",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      },
+      "p1": {
+        "type": "Object"
+      }
+    }
+  },
+  "breakdownPeopleTerms": "Tokoh & istilah",
+  "@breakdownPeopleTerms": {
+    "description": "Interface copy in ui/features/breakdown/views/breakdown_view.dart"
+  },
+  "relativeToday": "hari ini",
+  "@relativeToday": {
+    "description": "Calendar-relative time"
+  },
+  "relativeYesterday": "kemarin",
+  "@relativeYesterday": {
+    "description": "Calendar-relative time"
+  },
+  "relativeDays": "{count} hari lalu",
+  "@relativeDays": {
+    "description": "Calendar-relative time",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "relativeWeeks": "{count} minggu lalu",
+  "@relativeWeeks": {
+    "description": "Calendar-relative time",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "relativeMonths": "{count} bulan lalu",
+  "@relativeMonths": {
+    "description": "Calendar-relative time",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "relativeYears": "{count} tahun lalu",
+  "@relativeYears": {
+    "description": "Calendar-relative time",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "notStarted": "Belum mulai",
+  "@notStarted": {
+    "description": "UI label rendered from application state"
+  },
+  "finishedReading": "Kelar dibaca",
+  "@finishedReading": {
+    "description": "UI label rendered from application state"
+  },
+  "chapterPosition": "Bab {current} dari {total}",
+  "@chapterPosition": {
+    "description": "UI label rendered from application state",
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "sortLastOpened": "Terakhir dibuka",
+  "@sortLastOpened": {
+    "description": "UI label rendered from application state"
+  },
+  "sortTitle": "Judul (A–Z)",
+  "@sortTitle": {
+    "description": "UI label rendered from application state"
+  },
+  "sortAdded": "Baru ditambah",
+  "@sortAdded": {
+    "description": "UI label rendered from application state"
+  },
+  "chapterList": "Bab {range}",
+  "@chapterList": {
+    "description": "UI label rendered from application state",
+    "placeholders": {
+      "range": {
+        "type": "String"
+      }
+    }
+  },
+  "chapterListLower": "bab {range}",
+  "@chapterListLower": {
+    "description": "UI label rendered from application state",
+    "placeholders": {
+      "range": {
+        "type": "String"
+      }
+    }
+  },
+  "noChapters": "Belum ada bab",
+  "@noChapters": {
+    "description": "UI label rendered from application state"
+  },
+  "chapterCount": "{count} bab",
+  "@chapterCount": {
+    "description": "UI label rendered from application state",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "chaptersRead": "{range} udah dibaca",
+  "@chaptersRead": {
+    "description": "UI label rendered from application state",
+    "placeholders": {
+      "range": {
+        "type": "String"
+      }
+    }
+  },
+  "chapterReading": "lagi baca bab {number}",
+  "@chapterReading": {
+    "description": "UI label rendered from application state",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "unknownAuthor": "tanpa penulis",
+  "@unknownAuthor": {
+    "description": "UI label rendered from application state"
+  },
+  "deletedProgress": "{details} ikut kehapus. ",
+  "@deletedProgress": {
+    "description": "UI label rendered from application state",
+    "placeholders": {
+      "details": {
+        "type": "String"
+      }
+    }
+  },
+  "bookDeleted": "Buku ini sudah dihapus.",
+  "@bookDeleted": {
+    "description": "UI label rendered from application state"
+  },
+  "bookChanged": "Isi buku berubah. Mulai obrolan baru untuk lanjut.",
+  "@bookChanged": {
+    "description": "UI label rendered from application state"
+  },
+  "chatHistoryDamaged": "Riwayat sesi ini rusak. Lo bisa hapus sesi ini.",
+  "@chatHistoryDamaged": {
+    "description": "UI label rendered from application state"
+  },
+  "chatUnavailable": "Obrolan belum bisa dibuka. Coba buka lagi.",
+  "@chatUnavailable": {
+    "description": "UI label rendered from application state"
+  },
+  "questionInvalid": "Pertanyaan kosong atau terlalu panjang.",
+  "@questionInvalid": {
+    "description": "UI label rendered from application state"
+  },
+  "checkpointInvalid": "Progres penelusuran sudah tidak cocok. Kirim pertanyaan baru buat mulai ulang.",
+  "@checkpointInvalid": {
+    "description": "UI label rendered from application state"
+  },
+  "notificationChannelName": "Unduhan buku",
+  "@notificationChannelName": {
+    "description": "UI label rendered from application state"
+  },
+  "notificationChannelDescription": "Kabar pas buku yang diunduh udah masuk rak",
+  "@notificationChannelDescription": {
+    "description": "UI label rendered from application state"
+  },
+  "sourceParagraph": "bagian {number}",
+  "@sourceParagraph": {
+    "description": "UI label rendered from application state",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "navShelf": "Rak",
+  "markdownThisFileIsEmpty": "Filenya kosong nih",
+  "@markdownThisFileIsEmpty": {
+    "description": "Markdown import error"
+  },
+  "markdownThereSNoReadingText": "Gak ada teks bacaan di dalamnya, jadi belum ada yang bisa dimasukin. Cek lagi file-nya, atau pilih file bab yang lain.",
+  "@markdownThereSNoReadingText": {
+    "description": "Markdown import error"
+  },
+  "markdownPWords": "{p0} · 0 kata",
+  "@markdownPWords": {
+    "description": "Markdown import error",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      }
+    }
+  },
+  "markdownCouldnTReadTheChapter": "Nomor babnya gak kebaca",
+  "@markdownCouldnTReadTheChapter": {
+    "description": "Markdown import error"
+  },
+  "markdownTheChapterNumberAtThe": "Di bagian atas file ada tulisan nomor bab, tapi bukan angka. Ganti jadi angka, terus coba lagi. Atau pilih file lain.",
+  "@markdownTheChapterNumberAtThe": {
+    "description": "Markdown import error"
+  },
+  "markdownPChapterNumberP": "{p0} · nomor bab: “{p1}”",
+  "@markdownPChapterNumberP": {
+    "description": "Markdown import error",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      },
+      "p1": {
+        "type": "Object"
+      }
+    }
+  },
+  "markdownInvalidBookName": "Nama bukunya gak valid",
+  "@markdownInvalidBookName": {
+    "description": "Markdown import error"
+  },
+  "markdownTheBookNameAtThe": "Nama buku di bagian atas file cuma boleh huruf kecil, angka, sama strip. Ganti jadi kayak ",
+  "@markdownTheBookNameAtThe": {
+    "description": "Markdown import error"
+  },
+  "markdownPBookNameP": "{p0} · nama buku: “{p1}”",
+  "@markdownPBookNameP": {
+    "description": "Markdown import error",
+    "placeholders": {
+      "p0": {
+        "type": "Object"
+      },
+      "p1": {
+        "type": "Object"
+      }
+    }
+  },
+  "markdownOrRemoveThatLineAnd": ", atau hapus baris itu biar Luma yang nebak.",
+  "@markdownOrRemoveThatLineAnd": {
+    "description": "Markdown import error"
+  },
+  "markdownCouldnTReadThisFile": "Filenya gak kebaca",
+  "@markdownCouldnTReadThisFile": {
+    "description": "Markdown import error"
+  },
+  "markdownLumaCanTReadThis": "Luma gak bisa baca isi file ini. Coba pilih file lain, atau simpan ulang filenya dulu.",
+  "@markdownLumaCanTReadThis": {
+    "description": "Markdown import error"
+  },
+  "navSettings": "Atur",
+  "editTitleEmpty": "Judul gak boleh kosong",
+  "backToConversation": "Balik ke obrolan",
+  "readingDurationMinutes": "{minutes} mnt",
+  "readingDurationHours": "{hours} jam {minutes} mnt",
+  "@readingDurationMinutes": {
+    "description": "Reading duration on book completion",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "@readingDurationHours": {
+    "description": "Reading duration on book completion",
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "chatPartialNote": "Sebagian pertanyaan belum punya bukti yang cukup di sumber ini.",
+  "chatNoEvidenceNote": "Belum ada sumber yang cukup untuk menjawab itu. Coba tunjukkan kutipan atau perjelas pertanyaannya."
+}

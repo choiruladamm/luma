@@ -1,3 +1,5 @@
+import 'package:luma/l10n/l10n.dart';
+
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
@@ -231,7 +233,7 @@ class _MeaningSheetState extends ConsumerState<MeaningSheet> {
     setState(() => _copied = true);
     showOverlayToast(
       context,
-      'Udah disalin, tinggal paste',
+      context.l10n.meaningCopiedReadyToPaste,
       bottom: MediaQuery.paddingOf(context).bottom + 68,
     );
   }
@@ -287,15 +289,18 @@ class _MeaningSheetState extends ConsumerState<MeaningSheet> {
   }
 
   /// Kode kecil buat debug di state error.
-  static String _errorCode(Object error) => switch (error) {
-    AiException(error: AiError.timeout) => 'timeout · 30 detik',
-    AiException(error: AiError.network) => 'offline / gak nyambung',
+  String _errorCode(Object error) => switch (error) {
+    AiException(error: AiError.timeout) => context.l10n.meaningTimeoutSeconds,
+    AiException(error: AiError.network) =>
+      context.l10n.meaningOfflineDisconnected,
     AiException(error: AiError.http, :final status)
         when status == 401 || status == 403 =>
-      'HTTP $status · key ditolak',
-    AiException(error: AiError.http, status: 402) => 'HTTP 402 · saldo abis',
+      context.l10n.meaningHttpKeyRejected(status ?? 0),
+    AiException(error: AiError.http, status: 402) =>
+      context.l10n.meaningHttpNoCredit,
     AiException(error: AiError.http, :final status) => 'HTTP $status',
-    AiException(error: AiError.invalidResponse) => 'jawaban AI gak valid',
+    AiException(error: AiError.invalidResponse) =>
+      context.l10n.meaningInvalidAiResponse,
     _ => 'error',
   };
 }
@@ -719,7 +724,7 @@ class _AnswerState extends State<_Answer> with TickerProviderStateMixin {
       if (MediaQuery.accessibleNavigationOf(context)) {
         SemanticsService.sendAnnouncement(
           View.of(context),
-          'Artinya udah lengkap',
+          context.l10n.meaningTranslationAndMeaningComplete,
           TextDirection.ltr,
         );
       }
@@ -845,22 +850,28 @@ class _AnswerState extends State<_Answer> with TickerProviderStateMixin {
     return NotificationListener<ScrollNotification>(
       onNotification: _onScroll,
       child: Semantics(
-        label: writing ? 'Artinya, lagi ditulis' : null,
+        label: writing
+            ? context.l10n.meaningWritingTranslationAndMeaning
+            : null,
         child: _ScrollFrame(
           margin: typo.margin,
           hideable: true,
           locked: writing,
           frozen: thinking,
           header: _Title(
-            thinking ? 'Bentar, lagi mikir...' : 'Artinya gini nih',
-            closeLabel: writing ? 'Batalin' : 'Tutup',
+            thinking
+                ? context.l10n.meaningHangOnThinking
+                : context.l10n.meaningHereSWhatItMeans,
+            closeLabel: writing
+                ? context.l10n.meaningCancel
+                : context.l10n.sheetClose,
             onClose: widget.onClose,
           ),
           content: [
             if (_ai.phase == AiPhase.slow)
               _SlowCard(onCancel: widget.onClose, onRetry: widget.onRetry),
             _Section(
-              tag: const Tag.section('Terjemahan'),
+              tag: Tag.section(context.l10n.meaningTranslation),
               // Satu blok per paragraf, biar jeda dialognya sama kayak aslinya.
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -885,8 +896,8 @@ class _AnswerState extends State<_Answer> with TickerProviderStateMixin {
             ),
             if (!_cut || lastMeaning)
               _Section(
-                tag: const Tag.section(
-                  'Maksud penulisnya tuh...',
+                tag: Tag.section(
+                  context.l10n.meaningWhatTheAuthorMeans,
                   tone: TagTone.pink,
                 ),
                 child: lastMeaning
@@ -899,13 +910,15 @@ class _AnswerState extends State<_Answer> with TickerProviderStateMixin {
           actions: [
             if (_finished && widget.onChat != null) ...[
               CircleButton(
-                semanticLabel: widget.copied ? 'Disalin' : 'Salin',
+                semanticLabel: widget.copied
+                    ? context.l10n.meaningCopied
+                    : context.l10n.aiCopy,
                 icon: widget.copied ? AppIcons.check : AppIcons.copy,
                 size: Layout.chatComposer,
                 onPressed: widget.onCopy,
               ),
               AppButton.secondary(
-                label: 'Tanyain ini',
+                label: context.l10n.meaningAskAboutThis,
                 icon: AppIcons.chat,
                 onPressed: widget.onChat,
               ),
@@ -915,11 +928,15 @@ class _AnswerState extends State<_Answer> with TickerProviderStateMixin {
                 child: writing && !_cut && _ai.phase != AiPhase.slow
                     ? StatusButton(
                         key: ValueKey(thinking),
-                        label: thinking ? 'Lagi mikir' : 'Lagi nulis',
+                        label: thinking
+                            ? context.l10n.meaningThinking
+                            : context.l10n.meaningWriting,
                       )
                     : AppButton.secondary(
                         key: const ValueKey('copy'),
-                        label: widget.copied ? 'Disalin' : 'Salin',
+                        label: widget.copied
+                            ? context.l10n.meaningCopied
+                            : context.l10n.aiCopy,
                         icon: widget.copied ? AppIcons.check : AppIcons.copy,
                         onPressed: _finished ? widget.onCopy : null,
                       ),
@@ -927,7 +944,7 @@ class _AnswerState extends State<_Answer> with TickerProviderStateMixin {
             Expanded(
               // Mati selama masih diproses; aktif lagi pas selesai / kepotong.
               child: AppButton.primary(
-                label: 'Lanjut',
+                label: context.l10n.meaningNext,
                 icon: AppIcons.down,
                 iconAfter: true,
                 onPressed: writing ? null : widget.onNext,
@@ -992,19 +1009,19 @@ class _SlowCard extends StatelessWidget {
         tile: c.accent,
         icon: AppIcons.clock,
         iconColor: c.onAccent,
-        title: 'Agak lama nih...',
-        body: 'AI-nya masih mikir. Tungguin bentar lagi, atau coba ulang.',
+        title: context.l10n.meaningTakingALittleLonger,
+        body: context.l10n.meaningTheAiIsStillThinkingGive,
         actions: [
           Expanded(
             child: AppButton.secondary(
-              label: 'Batal',
+              label: context.l10n.dialogCancel,
               height: 40,
               onPressed: onCancel,
             ),
           ),
           Expanded(
             child: AppButton.primary(
-              label: 'Coba lagi',
+              label: context.l10n.meaningTryAgain,
               icon: AppIcons.retry,
               height: 40,
               onPressed: onRetry,
@@ -1033,12 +1050,12 @@ class _CutBanner extends StatelessWidget {
         tile: c.pink,
         icon: AppIcons.offline,
         iconColor: c.onPink,
-        title: 'Yah, kepotong di tengah',
-        body: 'Koneksinya putus pas lagi nulis. Yang udah masuk tetep di sini.',
+        title: context.l10n.meaningCutOffHalfway,
+        body: context.l10n.meaningTheConnectionDroppedWhileWritingWhat,
         actions: [
           Expanded(
             child: AppButton.primary(
-              label: 'Coba lagi',
+              label: context.l10n.meaningTryAgain,
               icon: AppIcons.retry,
               height: 40,
               onPressed: onRetry,
@@ -1069,7 +1086,7 @@ class _TileHeader extends StatelessWidget {
     children: [
       tile,
       CircleButton(
-        semanticLabel: 'Tutup',
+        semanticLabel: context.l10n.sheetClose,
         icon: AppIcons.close,
         onPressed: onClose,
       ),
@@ -1110,7 +1127,7 @@ class _Failed extends StatelessWidget {
     final c = context.stabilo;
     return Semantics(
       liveRegion: true,
-      label: 'Gagal ngambil artinya',
+      label: context.l10n.meaningCouldnTGetTheMeaning,
       child: _ScrollFrame(
         gap: 14,
         topInset: _tileInset,
@@ -1119,11 +1136,9 @@ class _Failed extends StatelessWidget {
           onClose: onClose,
         ),
         content: [
-          const _Message(
-            title: 'Yah, gagal nih',
-            body:
-                'Kayaknya koneksi lagi ngadat, atau AI-nya lagi sibuk. Tinggal '
-                'coba lagi aja.',
+          _Message(
+            title: context.l10n.meaningSomethingWentWrong,
+            body: context.l10n.meaningTheConnectionMightBeDownOr,
           ),
           Align(
             alignment: Alignment.centerLeft,
@@ -1143,10 +1158,13 @@ class _Failed extends StatelessWidget {
           ),
         ],
         actions: [
-          AppButton.secondary(label: 'Nanti aja', onPressed: onClose),
+          AppButton.secondary(
+            label: context.l10n.meaningMaybeLater,
+            onPressed: onClose,
+          ),
           Expanded(
             child: AppButton.primary(
-              label: 'Coba lagi',
+              label: context.l10n.meaningTryAgain,
               icon: AppIcons.retry,
               onPressed: onRetry,
             ),
@@ -1174,16 +1192,14 @@ class _NoKey extends StatelessWidget {
         onClose: onClose,
       ),
       content: [
-        const _Message(
-          title: 'Isi API key dulu yuk',
-          body:
-              'Artinya dibikin AI lewat OpenRouter. Tempel API key lo sekali '
-              'aja di Pengaturan, abis itu tinggal tap-tap paragraf.',
+        _Message(
+          title: context.l10n.meaningAddYourApiKeyFirst,
+          body: context.l10n.meaningTranslationsAndMeaningsUseAiThrough,
         ),
         Text.rich(
           TextSpan(
             children: [
-              const TextSpan(text: 'Belum punya? Bikin dulu di '),
+              TextSpan(text: context.l10n.meaningDonTHaveOneCreateIt),
               TextSpan(
                 text: 'openrouter.ai/keys',
                 style: StabiloType.mono.copyWith(fontSize: 13, color: c.ink),
@@ -1197,10 +1213,13 @@ class _NoKey extends StatelessWidget {
         ),
       ],
       actions: [
-        AppButton.secondary(label: 'Nanti aja', onPressed: onClose),
+        AppButton.secondary(
+          label: context.l10n.meaningMaybeLater,
+          onPressed: onClose,
+        ),
         Expanded(
           child: AppButton.primary(
-            label: 'Buka Pengaturan',
+            label: context.l10n.meaningOpenSettings,
             icon: AppIcons.next,
             iconAfter: true,
             onPressed: onSettings,
@@ -1236,10 +1255,16 @@ class _BreakdownEntry extends ConsumerWidget {
     if (sections == null) return const SizedBox.shrink();
     final c = context.stabilo;
     final opened = sections > 0;
-    final title = opened ? 'Buka bedahan' : 'Masih bingung? Bedahin';
+    final title = opened
+        ? context.l10n.meaningOpenBreakdown
+        : context.l10n.meaningStillPuzzledBreakItDown;
     final subtitle = opened
-        ? 'Udah pernah dibedah · ${sections == 1 ? '1 gagasan' : '$sections bagian'}'
-        : 'Per bagian, plus tokoh & istilah';
+        ? context.l10n.meaningPreviouslyBrokenDown(
+            sections == 1
+                ? context.l10n.breakdownIdea
+                : context.l10n.breakdownSections(sections),
+          )
+        : context.l10n.meaningSectionBySectionPlusPeopleTerms;
     final entry = Semantics(
       button: true,
       label: '$title. $subtitle',

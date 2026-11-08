@@ -1,3 +1,5 @@
+import 'package:luma/l10n/l10n.dart';
+
 import 'dart:io';
 import 'dart:math' as math;
 
@@ -6,7 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../data/services/file_storage.dart';
 import '../../../../domain/models/book.dart';
-import '../../../../domain/reading.dart';
+import '../../../core/format.dart';
 import '../../../core/theme/stabilo_theme.dart';
 import '../../../core/theme/stabilo_tokens.dart';
 import '../../../core/theme/stabilo_type.dart';
@@ -41,7 +43,7 @@ class BookEndView extends ConsumerWidget {
             child: Align(
               alignment: Alignment.centerLeft,
               child: CircleButton(
-                semanticLabel: 'Tutup',
+                semanticLabel: context.l10n.sheetClose,
                 icon: AppIcons.close,
                 onPressed: onClose,
               ),
@@ -68,7 +70,7 @@ class BookEndView extends ConsumerWidget {
                         Text.rich(
                           TextSpan(
                             children: [
-                              const TextSpan(text: 'Bukunya '),
+                              TextSpan(text: context.l10n.bookBook),
                               WidgetSpan(
                                 alignment: PlaceholderAlignment.baseline,
                                 baseline: TextBaseline.alphabetic,
@@ -83,7 +85,7 @@ class BookEndView extends ConsumerWidget {
                                     ),
                                   ),
                                   child: Text(
-                                    'kelar!',
+                                    context.l10n.bookFinished2,
                                     style: _hero.copyWith(color: c.onAccent),
                                   ),
                                 ),
@@ -96,8 +98,7 @@ class BookEndView extends ConsumerWidget {
                         ConstrainedBox(
                           constraints: const BoxConstraints(maxWidth: 300),
                           child: Text(
-                            '${book.title} udah lo libas sampe kalimat '
-                            'terakhir. Keren sih.',
+                            context.l10n.bookYouReadRightToTheLast(book.title),
                             textAlign: TextAlign.center,
                             style: StabiloType.body.copyWith(color: c.ink2),
                           ),
@@ -110,12 +111,15 @@ class BookEndView extends ConsumerWidget {
                         spacing: 10,
                         children: [
                           _Stat(
-                            value: formatReadingTime(end.readingSeconds),
-                            label: 'waktu baca',
+                            value: formatReadingTime(
+                              end.readingSeconds,
+                              locale: context.l10n.localeName,
+                            ),
+                            label: context.l10n.bookReadingTime,
                           ),
                           _Stat(
                             value: '${end.translated}',
-                            label: 'paragraf diartiin',
+                            label: context.l10n.bookParagraphsTranslated,
                           ),
                         ],
                       ),
@@ -129,7 +133,7 @@ class BookEndView extends ConsumerWidget {
             spacing: Space.s2,
             children: [
               AppButton.primary(
-                label: 'Balik ke rak, cari buku lain',
+                label: context.l10n.bookBackToShelfFindAnotherBook,
                 height: 56,
                 onPressed: onClose,
               ),
@@ -142,7 +146,7 @@ class BookEndView extends ConsumerWidget {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                child: const Text('Baca ulang dari awal'),
+                child: Text(context.l10n.bookReadAgainFromTheStart),
               ),
             ],
           ),

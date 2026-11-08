@@ -64,6 +64,22 @@ class FakeProgress implements ReadingProgressRepository {
 class FakeSettings implements SettingsRepository {
   FakeSettings([this.prefs = const ReaderPrefs()]);
 
+  String language = 'id';
+  bool failLocaleSave = false;
+  final _languages = StreamController<String>.broadcast();
+  @override
+  Stream<String> watchLocale() async* {
+    yield language;
+    yield* _languages.stream;
+  }
+
+  @override
+  Future<void> saveLocale(String value) async {
+    if (failLocaleSave) throw StateError('save failed');
+    language = value;
+    _languages.add(value);
+  }
+
   ReaderPrefs prefs;
   bool seenChatHint = true;
   @override

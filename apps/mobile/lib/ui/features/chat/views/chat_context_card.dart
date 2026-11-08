@@ -1,3 +1,4 @@
+import 'package:luma/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../domain/models/book_chat.dart';
@@ -25,7 +26,7 @@ class ChatNotice extends StatelessWidget {
         const AppIcon(AppIcons.info),
         Expanded(
           child: Text(
-            'Fitur ini masih dalam pengembangan. Jawaban AI bisa keliru, jadi cek sumbernya lewat angka sitasi.',
+            context.l10n.chatThisFeatureIsStillInDevelopment,
             style: StabiloType.caption.copyWith(
               fontSize: 13,
               height: 1.4,
@@ -50,8 +51,10 @@ class ChatContextCard extends StatefulWidget {
   final ChatQuote quote;
 
   /// "Buku II · bagian 1".
-  String get where {
-    final paragraph = 'bagian ${quote.anchors.first.paragraphIndex + 1}';
+  String where(BuildContext context) {
+    final paragraph = context.l10n.chatParagraph(
+      quote.anchors.first.paragraphIndex + 1,
+    );
     final chapter = quote.chapterTitle;
     return chapter == null ? paragraph : '$chapter · $paragraph';
   }
@@ -99,7 +102,7 @@ class _ChatContextCardState extends State<ChatContextCard> {
               children: [
                 Expanded(
                   child: Text(
-                    widget.where,
+                    widget.where(context),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: StabiloType.caption.copyWith(
@@ -116,7 +119,7 @@ class _ChatContextCardState extends State<ChatContextCard> {
                     child: Semantics(
                       button: true,
                       excludeSemantics: true,
-                      label: 'Baca di buku',
+                      label: context.l10n.chatReadInBook,
                       child: Container(
                         height: 32,
                         padding: const EdgeInsets.fromLTRB(9, 0, 12, 0),
@@ -130,7 +133,7 @@ class _ChatContextCardState extends State<ChatContextCard> {
                           children: [
                             const AppIcon(AppIcons.book, size: 16),
                             Text(
-                              'Baca di buku',
+                              context.l10n.chatReadInBook,
                               style: StabiloType.label.copyWith(
                                 fontSize: 12.5,
                                 color: context.stabilo.ink,
@@ -142,7 +145,9 @@ class _ChatContextCardState extends State<ChatContextCard> {
                     ),
                   ),
                 IconButton(
-                  tooltip: _expanded ? 'Ciutkan konteks' : 'Perluas konteks',
+                  tooltip: _expanded
+                      ? context.l10n.chatCollapseContext
+                      : context.l10n.chatExpandContext,
                   constraints: const BoxConstraints.tightFor(
                     width: 40,
                     height: 40,
@@ -183,7 +188,7 @@ class _ChatContextCardState extends State<ChatContextCard> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       spacing: Space.s2,
                       children: [
-                        const Tag.section('Terjemahan'),
+                        Tag.section(context.l10n.meaningTranslation),
                         SelectableText(
                           widget.quote.translation!,
                           style: typo.style,

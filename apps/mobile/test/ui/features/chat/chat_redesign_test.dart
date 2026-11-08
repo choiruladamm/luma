@@ -1,3 +1,5 @@
+import 'package:luma/l10n/app_localizations.dart';
+
 import 'dart:io';
 import 'dart:ui' as ui;
 
@@ -57,6 +59,9 @@ void main() {
         child: RepaintBoundary(
           key: const ValueKey('capture'),
           child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: const Locale('id'),
             theme: stabiloTheme(brightness),
             builder: (context, child) => MediaQuery(
               data: MediaQuery.of(context).copyWith(disableAnimations: reduced),

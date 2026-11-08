@@ -1,3 +1,4 @@
+import 'package:luma/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 
 import '../theme/stabilo_theme.dart';
@@ -65,7 +66,7 @@ class SheetFrame extends StatelessWidget {
     super.key,
     this.title,
     this.leading,
-    this.closeLabel = 'Tutup',
+    this.closeLabel,
     this.showClose = true,
     required this.children,
     this.actions = const [],
@@ -76,7 +77,7 @@ class SheetFrame extends StatelessWidget {
 
   /// Di kiri judul, mis. titik "lagi mikir".
   final Widget? leading;
-  final String closeLabel;
+  final String? closeLabel;
   final bool showClose;
 
   /// Section isi, jaraknya 16.
@@ -114,7 +115,7 @@ class SheetFrame extends StatelessWidget {
                 ),
                 if (showClose)
                   CircleButton(
-                    semanticLabel: closeLabel,
+                    semanticLabel: closeLabel ?? context.l10n.sheetClose,
                     icon: AppIcons.close,
                     onPressed: () => Navigator.of(context).pop(),
                   ),

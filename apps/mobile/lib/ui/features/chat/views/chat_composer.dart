@@ -1,3 +1,4 @@
+import 'package:luma/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/stabilo_theme.dart';
@@ -15,11 +16,11 @@ class ChatComposer extends StatefulWidget {
     required this.onChanged,
     required this.onSend,
     required this.onStop,
-    this.hint = 'Tanyain isi buku ini…',
+    this.hint,
   });
   final String draft;
   final bool canSend, running, enabled;
-  final String hint;
+  final String? hint;
   final ValueChanged<String> onChanged;
   final VoidCallback onSend, onStop;
 
@@ -94,7 +95,8 @@ class _ChatComposerState extends State<ChatComposer> {
                     ),
                     cursorColor: c.ink,
                     decoration: InputDecoration.collapsed(
-                      hintText: widget.hint,
+                      hintText:
+                          widget.hint ?? context.l10n.chatAskAboutThisBook,
                       hintStyle: StabiloType.body.copyWith(
                         height: 22 / 16,
                         color: c.ink3,
@@ -106,8 +108,8 @@ class _ChatComposerState extends State<ChatComposer> {
               ),
               CircleButton(
                 semanticLabel: widget.running
-                    ? 'Hentikan jawaban'
-                    : 'Kirim pertanyaan',
+                    ? context.l10n.chatStopResponse
+                    : context.l10n.chatSendQuestion,
                 icon: widget.running ? null : AppIcons.send,
                 glyph: widget.running
                     ? Container(
