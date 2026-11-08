@@ -17,7 +17,7 @@ Reader buku iOS + Android (EPUB, Markdown; dipakai sendiri, dogfooding): tap par
   - `status:idea`: belum diputusin; bisa ditutup `wontfix`.
 - **Integrasi existing:** Ngobrolin buku (#112) tersisa gate akhir #124; Discover (#163) seluruh anak closed, acceptance akhir belum tercatat lengkap. Status closed/merged tidak menggantikan bukti device.
 - **Induk berurutan:**
-  - Import PDF langsung (induk #83, `feat/import-pdf`): #84 spike (gerbang: hasil jelek = stop) → #85 → #86 → #87 → #88 → #89.
+  - Import PDF langsung (induk #83): selesai, merged lewat #193. Sisa ditunda di `status:deferred` (#90 password, #91 OCR, #92 rapikan LLM, #93 preview bab, #94 layout kolom/sidebar, rencana di issue itu); Android dan tap Artinya di PDF belum diuji terpisah.
   - Import PDF lewat Markdown: sisa #78 (uji PDF asli).
   - Statistik (induk #42): tampilan #50–#58 nunggu data ngumpul + desain.
 - Issue / ide / item ditunda baru: bikin issue dengan label status yang cocok, sisipin di induk yang cocok, tambah link `(#N)` di docs-nya.
