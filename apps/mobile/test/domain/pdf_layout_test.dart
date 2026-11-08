@@ -695,4 +695,86 @@ void main() {
       expect(engine.glyphsToLines(glyphs, pageNumber: 1).single.text, 'riti');
     });
   });
+
+  group('wrapped headings and author-line marks', () {
+    PdfLine ln(String t, double base, {double fh = 0.02, int page = 1}) =>
+        PdfLine(
+          text: t,
+          bounds: PdfRectNormalized(
+            left: 0.1,
+            top: base - fh,
+            width: 0.6,
+            height: fh,
+          ),
+          pageNumber: page,
+          fontHeight: fh,
+          baselineY: base,
+          medianGlyphWidth: 0.008,
+        );
+
+    test('a heading wrapped over three lines is one heading block', () {
+      final blocks = engine.processToBlocks([
+        ln(
+          'Structural and Functional Neural Correlates in Individuals with',
+          0.15,
+        ),
+        ln('Excessive Smartphone Use: A Systematic Review and', 0.19),
+        ln('Meta-Analysis', 0.23),
+        ln('Body text of the paper starts here and goes on.', 0.30, fh: 0.012),
+      ], bodyFontSize: 0.012);
+      expect(blocks.first.type, ParagraphType.heading);
+      expect(
+        blocks.first.text,
+        'Structural and Functional Neural Correlates in Individuals with '
+        'Excessive Smartphone Use: A Systematic Review and Meta-Analysis',
+      );
+      expect(blocks, hasLength(2));
+    });
+
+    test('headings of different size or far apart stay separate', () {
+      final blocks = engine.processToBlocks([
+        ln('Part One', 0.15, fh: 0.03),
+        ln('A smaller subheading', 0.19),
+        ln('Same size but far below', 0.40),
+        ln('Body text of the paper starts here.', 0.50, fh: 0.012),
+      ], bodyFontSize: 0.012);
+      expect(
+        blocks.where((b) => b.type == ParagraphType.heading).map((b) => b.text),
+        ['Part One', 'A smaller subheading', 'Same size but far below'],
+      );
+    });
+
+    test(
+      'raised affiliation digits, commas and daggers leave a clean author line',
+      () {
+        // "Ana Lin" + raised "1,†" + real comma + " Yu-Tzu Chang".
+        const tall = 'HMLYTC';
+        var x = 0.1;
+        final out = <PdfGlyph>[];
+        void word(String t, {double raise = 0.0, double h = 0.009}) {
+          for (final c in t.split('')) {
+            final hh = tall.contains(c) ? 0.014 : h;
+            out.add(g(c, x, 0.30 - hh - raise, 0.008, hh));
+            x += 0.01;
+          }
+        }
+
+        void space() {
+          out.add(g(' ', x, 0.30, 0, 0));
+          x += 0.01;
+        }
+
+        word('Ana');
+        space();
+        word('Lin');
+        word('1,\u2020', raise: 0.007, h: 0.007);
+        word(',', h: 0.003);
+        space();
+        word('Bo');
+        out.add(g('\n', x, 0.3, 0, 0));
+        final line = engine.glyphsToLines(out, pageNumber: 1).single;
+        expect(line.text, 'Ana Lin, Bo');
+      },
+    );
+  });
 }

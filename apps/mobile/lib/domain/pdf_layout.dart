@@ -317,11 +317,14 @@ class PdfLayoutEngine {
 
     final lines = <PdfLine>[];
     for (var cluster in lineClusters) {
+      var droppedMarks = false;
       if (!runMode) {
         cluster.sort((a, b) => a.bounds.left.compareTo(b.bounds.left));
       } else {
+        final before = cluster.length;
         cluster = _withoutFootnoteMarks(cluster);
         if (cluster.isEmpty) continue;
+        droppedMarks = cluster.length != before;
       }
 
       final sb = StringBuffer();
@@ -370,7 +373,11 @@ class PdfLayoutEngine {
         }
       }
 
-      final text = sb.toString().replaceAll(RegExp(r' {2,}'), ' ').trim();
+      var text = sb.toString().replaceAll(RegExp(r' {2,}'), ' ').trim();
+      // A removed marker leaves a gap before the punctuation that followed it.
+      if (droppedMarks) {
+        text = text.replaceAllMapped(RegExp(r'\s+([,;.])'), (m) => m[1]!);
+      }
       if (text.isNotEmpty && maxR > minL) {
         lines.add(
           PdfLine(
@@ -440,7 +447,7 @@ class PdfLayoutEngine {
       for (final g in cluster)
         // Raised off the baseline. (Size is no guide: in real books a
         // superscript digit's box is nearly as tall as an ascender.)
-        _digit.hasMatch(g.char) && g.bounds.bottom < base - f * 0.25,
+        _markGlyph.hasMatch(g.char) && g.bounds.bottom < base - f * 0.25,
     ];
     if (!isMark.contains(true)) return cluster;
     final kept = [
@@ -451,7 +458,10 @@ class PdfLayoutEngine {
     return kept.any((g) => g.char.trim().isNotEmpty) ? kept : cluster;
   }
 
-  static final _digit = RegExp(r'^[0-9]$');
+  // Footnote / affiliation markers: digits and the raised separators next to
+  // them ("Lin 1,†,"). A normal comma sits on or below the baseline, so only
+  // the superscript ones match.
+  static final _markGlyph = RegExp(r'^[0-9,;†‡*§¶]$');
   static final _upperOrDigit = RegExp(r'^[\p{Lu}\p{N}]$', unicode: true);
 
   /// Font size proxy from *tight* boxes: the 80th percentile of letter/digit
@@ -678,6 +688,10 @@ class PdfLayoutEngine {
       currentType = ParagraphType.paragraph;
     }
 
+    // Last heading line, while headings keep following one another: a heading
+    // that wraps over several lines is one heading, not one per line.
+    PdfLine? headingTail;
+
     for (var i = 0; i < lines.length; i++) {
       final line = lines[i];
 
@@ -723,12 +737,39 @@ class PdfLayoutEngine {
       final isHeading = _isHeadingLine(line, bodyFontSize);
 
       if (isHeading) {
+        final tail = headingTail;
+        if (currentLines.isEmpty &&
+            tail != null &&
+            blocks.isNotEmpty &&
+            blocks.last.type == ParagraphType.heading &&
+            _continuesHeading(tail, line)) {
+          final last = blocks.removeLast();
+          blocks.add(
+            PdfLocatedBlock(
+              type: ParagraphType.heading,
+              text: '${last.text} ${line.text.trim()}',
+              pageNumber: last.pageNumber,
+              bounds: PdfRectNormalized(
+                left: math.min(last.bounds.left, line.bounds.left),
+                top: last.bounds.top,
+                width:
+                    math.max(last.bounds.right, line.bounds.right) -
+                    math.min(last.bounds.left, line.bounds.left),
+                height: math.max(0, line.bounds.bottom - last.bounds.top),
+              ),
+            ),
+          );
+          headingTail = line;
+          continue;
+        }
         flushCurrent();
         currentType = ParagraphType.heading;
         currentLines.add(line);
         flushCurrent();
+        headingTail = line;
         continue;
       }
+      headingTail = null;
 
       // 4. Paragraph boundary check against previous line in currentLines
       if (currentLines.isNotEmpty) {
@@ -776,6 +817,16 @@ class PdfLayoutEngine {
       return true;
     }
     return false;
+  }
+
+  /// [line] is the next line of the heading that [tail] ended: same page, same
+  /// size, and directly below (within ~2 line heights baseline to baseline).
+  bool _continuesHeading(PdfLine tail, PdfLine line) {
+    if (tail.pageNumber != line.pageNumber) return false;
+    final ratio = line.fontHeight / tail.fontHeight;
+    if (ratio < 0.92 || ratio > 1.08) return false;
+    final gap = line.baseline - tail.baseline;
+    return gap > 0 && gap <= tail.fontHeight * 2.2;
   }
 
   bool _isDropCap(

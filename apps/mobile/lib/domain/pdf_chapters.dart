@@ -727,7 +727,7 @@ PdfLayoutResult layoutPdf(
               b.pageNumber <= 5 &&
               b.type == ParagraphType.heading &&
               b.text.trim().length >= 3 &&
-              b.text.trim().length <= 120 &&
+              b.text.trim().length <= 180 &&
               !_frontMatterLabel.hasMatch(b.text.trim()),
         )
         .firstOrNull
