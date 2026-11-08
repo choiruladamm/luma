@@ -46,7 +46,7 @@
     "lib/data/services/chapter_extractor.dart": "fe6d8ab2f9f4ebbe7ed85855ec49d5f3e5c515696496aa6a96d5d9d9d465f9b2",
     "lib/domain/grouping.dart": "f05b72b647b4030bbc122d29291ad3f70fc716ad9cb4509a4886c2ddbea13c7e",
     "lib/domain/luma_markdown.dart": "6ca17d92a05852da73ab491c108ae15f6395516632ec023d083b313332a75b63",
-    "pubspec.lock": "bdc304f15fb23c11da9efaa5f548a8a949da1f1d3b87045068f2b731c96d0d8b"
+    "pubspec.lock": "a78831217536d0664c118af45c3b62aab7a3bd2ee13fd8d4fc7045c38cae84f4"
   },
   "replayOf": {
     "file": "test/fixtures/book_chat_spike113/book_chat_heldout_protocol_v1.json",

@@ -95,12 +95,16 @@ class _BookshelfViewState extends ConsumerState<BookshelfView> {
           dismissible: false,
           builder: (_) => const ImportProgressSheet(),
         );
-      case ImportSuccess(:final book):
+      case ImportSuccess(:final book, :final skippedPages):
         _import.dismiss();
         showToast(
           context,
           context.l10n.bookshelfAddedToYourShelf,
-          subtitle: [book.title, ?book.author].join(' · '),
+          // PDF campuran: jujur soal halaman tanpa teks yang dilewati.
+          subtitle: skippedPages > 0
+              ? '${book.title} · ${context.l10n.importPdfSkippedPages(skippedPages)}'
+              : [book.title, ?book.author].join(' · '),
+          duration: skippedPages > 0 ? Motion.toastBaca : null,
           leading: BookCover(
             title: book.title,
             width: 30,
@@ -128,6 +132,18 @@ class _BookshelfViewState extends ConsumerState<BookshelfView> {
         showAppSheet<void>(
           context,
           builder: (sheet) => ImportFailedSheet(
+            fileName: fileName,
+            error: error,
+            onPickAnother: () {
+              Navigator.of(sheet).pop();
+              _import.pick();
+            },
+          ),
+        ).whenComplete(_dismissIf(next));
+      case ImportPdfFailed(:final fileName, :final error):
+        showAppSheet<void>(
+          context,
+          builder: (sheet) => ImportPdfFailedSheet(
             fileName: fileName,
             error: error,
             onPickAnother: () {

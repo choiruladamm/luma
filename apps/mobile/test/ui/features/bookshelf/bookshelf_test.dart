@@ -162,7 +162,7 @@ void main() {
       expect(find.text('Pride and Prejudice'), findsWidgets);
       expect(find.text('Cari buku gratis'), findsOneWidget);
       expect(
-        find.text('atau import EPUB / Markdown dari Files'),
+        find.text('atau import EPUB / PDF / Markdown dari Files'),
         findsOneWidget,
       );
       expect(find.byType(BookCard), findsNothing);

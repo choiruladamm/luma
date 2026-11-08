@@ -56,7 +56,7 @@ void main() {
     }
     expect(
       sha256.convert(utf8.encode(normalized)).toString(),
-      '02a5894aaf8cf111023e106434e2a98b94ca07ecbdcfbd229386820320ec9277',
+      '747b2c4613b83328ded3539fa18b8a909f866690d2f57d86a6a1cdcafe5a7b0e',
     );
   });
 }

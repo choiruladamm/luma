@@ -969,7 +969,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get importThisImporterReadsEpubFilesConvert =>
-      'This importer reads .epub files. Convert PDF or MOBI to EPUB first (for example with Calibre), then import.';
+      'This importer reads .epub files. Convert MOBI to EPUB first (for example with Calibre), then import.';
 
   @override
   String get importThisBookIsDrmLocked => 'This book is DRM-locked';
@@ -2083,7 +2083,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get bookshelfOrImportEpubMarkdownFromFiles =>
-      'or import EPUB / Markdown from Files';
+      'or import EPUB / PDF / Markdown from Files';
 
   @override
   String get bookshelfTapAParagraphWhenYouGet =>
@@ -2418,4 +2418,53 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get chatNoEvidenceNote =>
       'There isn’t enough source material to answer that yet. Try selecting a quote or making your question more specific.';
+
+  @override
+  String get importUnpackingPdf => 'Unpacking PDF...';
+
+  @override
+  String get importPdfPasswordTitle => 'This PDF is password-protected';
+
+  @override
+  String get importPdfPasswordBody =>
+      'Luma can’t open password-protected PDFs yet. Remove the password in another app, save a copy, then import again.';
+
+  @override
+  String get importPdfScanTitle => 'This PDF has almost no text';
+
+  @override
+  String get importPdfScanBody =>
+      'Most pages have no readable text, so it may be a scan. For scanned PDFs, use the photo route or Docling to convert it to Markdown, then import the .md file.';
+
+  @override
+  String get importPdfDamagedTitle => 'Couldn’t open this PDF';
+
+  @override
+  String get importPdfDamagedBody =>
+      'It may be corrupt or only partly downloaded. Download it again, then import.';
+
+  @override
+  String get importPdfEmptyTitle => 'No readable text found';
+
+  @override
+  String get importPdfEmptyBody =>
+      'The PDF opened, but there’s no text to turn into chapters. If it’s only images, use the photo route or Docling.';
+
+  @override
+  String get importPdfIoTitle => 'Couldn’t read this file';
+
+  @override
+  String get importPdfIoBody =>
+      'Reading or copying the file failed. Check your storage space, then try again.';
+
+  @override
+  String importPdfSkippedPages(int p0) {
+    String _temp0 = intl.Intl.pluralLogic(
+      p0,
+      locale: localeName,
+      other: '$p0 pages without text skipped',
+      one: '1 page without text skipped',
+    );
+    return '$_temp0';
+  }
 }

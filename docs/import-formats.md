@@ -194,7 +194,29 @@ PDF scan tanpa teks butuh OCR; hasilnya paling riskan salah. Untuk PDF scan atau
 
 ## Import PDF langsung
 
-> Status: **rencana** (induk [#83](https://github.com/choiruladamm/luma/issues/83), branch `feat/import-pdf`). Dimulai dari spike #84; hasil jelek = berhenti, jalur Docling di atas tetap jadi caranya.
+> Status: **jalan di Luma Dev iOS (simulator)**, branch `feat/import-pdf`, induk [#83](https://github.com/choiruladamm/luma/issues/83). Spike #84 lolos, pipeline #85–#88 dipasang, dituning terhadap 5 PDF asli (#89). Android belum diuji. Jalur Docling tetap jadi cadangan (scan, layout rumit).
+
+**Hasil korpus (#89, 8 Nov 2026, macOS `flutter test` via `tool/pdf_probe.dart`, bukan angka device).**
+
+| PDF | Halaman | Bab | Catatan |
+|---|---|---|---|
+| Novel nonfiksi 1 kolom (Atomic Habits) | 256 | 24, sesuai bookmark | Paragraf utuh, tanpa nomor halaman nyelip. Daftar isi ebook (tanpa nomor halaman) ikut jadi isi bab "Epigraph" |
+| Nonfiksi + catatan (The First 20 Hours) | 331 | 16, sesuai bookmark | 5 halaman tanpa teks (cover/ilustrasi) dilewati; hyphen akhir baris jadi gabung (`three-` + `character` → `threecharacter`) |
+| Buku besar dengan "Letters" sebagai satu bookmark (Letters from a Stoic) | 312 | 51 | Bookmark raksasa dipecah ke anak-anaknya; surat tanpa bookmark ikut surat sebelumnya |
+| Jurnal 2 kolom (systematic review) | 15 | 5 | Halaman 1 (kotak sitasi di samping) campur aduk; sisanya kebaca; header/footer berulang dibuang |
+| Dokumen teknis (system card) | 153 | 16 | Beberapa bookmark aneh jadi bab kecil; tabel jadi paragraf pendek |
+
+Waktu (macOS, bukan benchmark): ekstraksi 0,5–1,6 dtk, layout 0,7 dtk untuk 250–330 halaman. Simulator iPhone 17 (iOS 27, build debug Luma Dev): pilih PDF 331 halaman dari Files → progres → rak (cover, 17 bab) → baca bab → duplikat membuka sheet "udah ada di rak" → progres baca tersimpan.
+
+**Yang ditemukan dan diperbaiki dari korpus:** kotak huruf PDFium itu *ketat* (titik kecil, `h` lebih tinggi dari `a`), jadi pengelompokan baris pakai geometri memecah satu baris jadi banyak. Sekarang layout memakai pemisah baris + spasi dari PDFium sendiri; ukuran font = persentil 80 tinggi huruf; batas paragraf pakai jarak baseline, lebar huruf, dan lebar kolom, bukan konstanta.
+
+**Error nyata (PDFium asli, PDF buatan `gs`/`cupsfilter`, `tool/pdf_import_check.dart`):** scan (12/12 halaman tanpa teks) → `scan`; `-sUserPassword` → `password`; 3 KB byte acak `.pdf` → `corrupt`; separuh scan separuh teks → masuk dengan `skipped=12`.
+
+**Putaran perbaikan kedua (analisis menyeluruh).** Catatan kaki (digit naik dari baseline) dibuang dari baris; paragraf sampah dari gambar/diagram (`nn nn n`, satu huruf, angka halaman polos) dibuang (sampah pendek 80 → 11 per buku); heading di awal bab yang cuma mengulang judul bab dibuang; daftar isi tanpa nomor halaman dicocokkan per kata (`1 | Judul` vs `1 Judul`), termasuk yang barisnya menyatu; spasi hilang antar-run PDFium disisipkan (kutip/apostrof dikecualikan); tanpa pemisah baris PDFium, baris dikelompokkan per baseline; baris dibentuk per halaman di service (puncak RSS 334 → 275 MB di macOS, layout 1 dtk → 0,15 dtk); salinan sementara picker dibersihkan abis import; judul dari nama file dibersihkan (`_`, spasi dobel, `(z-lib.org)`).
+
+**Putaran ketiga (uji Atomic Habits + Letters di device).** Spasi hilang antar-run beda ukuran ("THE FATE OF" huruf kapital kecil + "British") disisipkan memakai ukuran lokal; bab front matter bookmark yang cuma label dan kurang dari 1500 karakter (Title Page, Copyright Page, Contents, Cover) dibuang; daftar isi yang tertanam di bab lain (4+ blok pendek berurutan yang kebanyakan judul bab) dibuang; judul lengkap diambil dari baris pertama huruf kapital yang memuat heading ("LETTERS FROM A STOIC", bukan "FROM A STOIC"). Metrik korpus tanpa regresi.
+
+**Batas yang diketahui:** judul/penulis dari metadata PDF belum kebaca (pdfrx 2.12 tanpa API-nya; judul = heading pertama di 5 halaman awal yang bukan label front matter, lalu nama file, jadi PDF yang halaman judulnya bukan heading tampil sebagai nama file), halaman dengan kotak samping / kolom tak sama lebar / 3+ kolom (#94; rencana dan contoh jurnal MDPI halaman 1 dicatat di issue itu), tabel, huruf kecil kapital di awal bab, daftar isi yang barisnya tergabung jadi satu paragraf. Daftar isi tanpa nomor halaman dibuang kalau barisnya mengutip judul bab lain. Hyphen akhir baris dibuang, kecuali setelah kepala kata majemuk (`two-`, `three-`, `self-`, ...). Belum diuji: Android, rotasi/spread, tap Artinya di paragraf PDF (butuh panggilan AI).
 
 Pilih `.pdf` di picker, langsung jadi satu buku utuh, tanpa Docling.
 
@@ -216,7 +238,7 @@ Pilih `.pdf` di picker, langsung jadi satu buku utuh, tanpa Docling.
 picker (.pdf) ─► ImportRepository.importPdf
    1. hash → cek dobel
    2. PdfService (pdfrx, worker PDFium-nya sendiri)
-        → per halaman: baris {text, x, y, w, h}
+        → per halaman: huruf → baris langsung (huruf halaman dibuang; satu buku gak numpuk di memori)
         → outline (bookmark → halaman), metadata, render halaman 1 → cover
    3. Isolate.run(layout + pecah bab)   ← Dart murni, gak tau pdfrx
         → List<ParsedChapter> (paragraf + assignGroups)
@@ -254,7 +276,7 @@ Lalu aturan non-isi yang sama kayak EPUB ([raw.md](ideas/raw.md)): bab kosong da
 | Ber-password | Error "PDF-nya dikunci password" (input password ditunda, #90) |
 | PDF scan (> 50% halaman tanpa teks) | Error "PDF ini hasil scan, gak ada teksnya" + arahan ke prompt foto / Docling |
 | Campuran scan + teks | Halaman tanpa teks dilewati, toast nyebut jumlahnya |
-| Rusak / bukan PDF | `PdfException`, pola `EpubException` |
+| Rusak / bukan PDF | `PdfImportException` (`PdfImportError`: password, scan, corrupt, notPdf, empty, io), pola `EpubException`. Cancel = `ImportCancelled` |
 | PDF yang sama | Cek hash → buka buku lama |
 | Besar (500+ halaman, 100MB+) | `openFile(path)`, bukan bytes; teks dilepas per halaman; progres per halaman; bisa dibatalin |
 | Dua kolom | Langkah 3. Tiga kolom ke atas gak dijamin (#94), arahkan ke Docling |
@@ -262,7 +284,7 @@ Lalu aturan non-isi yang sama kayak EPUB ([raw.md](ideas/raw.md)): bab kosong da
 | Puisi, dialog, list | Baris pendek bisa kepecah jadi banyak paragraf; diterima, grouping tetap gabung yang pendek |
 | Tabel, angka | Baris yang mayoritas angka/simbol dibuang; caption gambar tetap ikut |
 | RTL / CJK / teks vertikal | Di luar scope |
-| Judul / penulis | Judul: metadata → heading terbesar halaman 1 → nama file. Penulis: metadata atau null |
+| Judul / penulis | Judul: heading pertama halaman 1 → nama file. Penulis: null. **Deviasi:** pdfrx 2.12 gak punya API metadata, jadi judul/penulis metadata belum kebaca; tambah kalau pdfrx nyediain, bukan FFI langsung |
 | Cover | Render halaman 1; gagal = cover default |
 | Tuning nanti | Naikin `pdfParserVersion`, re-import dari file tersimpan, hapus `ai_results` buku itu |
 | `finishedAt` | `reading_progress_repository.dart` sekarang cuma `SourceType.epub`, tambah `pdf` |

@@ -68,7 +68,7 @@ class ReadingProgressRepository {
             (b) =>
                 b.id.equals(bookId) &
                 b.finishedAt.isNull() &
-                b.sourceType.equalsValue(SourceType.epub),
+                b.sourceType.equalsValue(SourceType.markdown).not(),
           ))
           .write(BooksCompanion(finishedAt: Value(DateTime.now())));
 

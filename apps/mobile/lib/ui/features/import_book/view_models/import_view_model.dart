@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,9 +7,13 @@ import '../../../../data/repositories/book_repository.dart';
 import '../../../../data/repositories/import_repository.dart';
 import '../../../../data/services/epub_parser.dart';
 import '../../../../data/services/file_picker_service.dart';
+import '../../../../data/services/pdf_service.dart';
 import '../../../../domain/luma_markdown.dart';
 import '../../../../domain/models/book.dart';
 import '../../../core/theme/stabilo_tokens.dart';
+
+/// Format file yang lagi diimport lewat jalur EPUB/PDF (judul sheet proses).
+enum ImportFormat { epub, pdf }
 
 /// State alur import (board 13–18).
 sealed class ImportState {
@@ -24,6 +29,7 @@ class ImportProcessing extends ImportState {
     required this.fileName,
     required this.size,
     required this.stage,
+    this.format = ImportFormat.epub,
     this.progress = 0,
     this.glide = Motion.progressStep,
   });
@@ -31,6 +37,7 @@ class ImportProcessing extends ImportState {
   final String fileName;
   final int size;
   final ImportStage stage;
+  final ImportFormat format;
 
   /// 0–1, asli dari tahapnya, cuma naik. 1 = beres, tinggal nahan sampe batas
   /// minimum loading.
@@ -42,9 +49,12 @@ class ImportProcessing extends ImportState {
 }
 
 class ImportSuccess extends ImportState {
-  const ImportSuccess(this.book);
+  const ImportSuccess(this.book, {this.skippedPages = 0});
 
   final ShelfBook book;
+
+  /// Halaman PDF tanpa teks yang dilewati (cuma PDF campuran).
+  final int skippedPages;
 }
 
 class ImportDuplicate extends ImportState {
@@ -59,6 +69,14 @@ class ImportFailed extends ImportState {
 
   final String fileName;
   final EpubError error;
+}
+
+/// Import PDF gagal ([PdfImportError] dipetain di sheet, bukan jadi EpubError).
+class ImportPdfFailed extends ImportState {
+  const ImportPdfFailed({required this.fileName, required this.error});
+
+  final String fileName;
+  final PdfImportError error;
 }
 
 /// Tujuan import satu bab Markdown. [bookId] null = cari / bikin lewat
@@ -168,14 +186,63 @@ class ImportController extends Notifier<ImportState> {
     if (file != null) await importFile(file);
   }
 
-  /// `.md` / `.markdown` lewat jalur Markdown, sisanya EPUB.
+  /// `.md` / `.markdown` lewat jalur Markdown, `.pdf` lewat path, sisanya EPUB.
   Future<void> importFile(PickedFile file) async {
     final ext = file.name.toLowerCase().split('.').last;
     if (ext == 'md' || ext == 'markdown') return importMarkdownFile(file);
+    if (ext == 'pdf') return _importPdf(file);
     return _importEpub(file);
   }
 
-  Future<void> _importEpub(PickedFile file) async {
+  Future<void> _importEpub(PickedFile file) => _runImport(
+    file,
+    ImportFormat.epub,
+    (repo, onStage, onProgress, isCancelled) async {
+      final r = await repo.importEpub(
+        await file.read(),
+        fileName: file.name,
+        onStage: onStage,
+        onProgress: onProgress,
+        isCancelled: isCancelled,
+      );
+      return (bookId: r.bookId, duplicate: r.duplicate, skippedPages: 0);
+    },
+  );
+
+  Future<void> _importPdf(PickedFile file) {
+    final path = file.path;
+    // Tanpa path gak ada yang bisa dibuka; PDF gak pernah dimuat jadi bytes.
+    if (path == null) {
+      return _runImport(file, ImportFormat.pdf, (_, _, _, _) async {
+        throw const PdfImportException(PdfImportError.io, 'no path');
+      });
+    }
+    return _runImport(
+      file,
+      ImportFormat.pdf,
+      (repo, onStage, onProgress, isCancelled) => repo.importPdf(
+        path,
+        fileName: file.name,
+        onStage: onStage,
+        onProgress: onProgress,
+        isCancelled: isCancelled,
+      ),
+    );
+  }
+
+  /// Jalur import EPUB/PDF: tahap + progres + batal + hasil. Run yang
+  /// nomornya ketinggalan (batal / ketimpa import baru) gak nyentuh state.
+  Future<void> _runImport(
+    PickedFile file,
+    ImportFormat format,
+    Future<PdfImportResult> Function(
+      ImportRepository repo,
+      void Function(ImportStage) onStage,
+      void Function(double) onProgress,
+      bool Function() isCancelled,
+    )
+    go,
+  ) async {
     final run = ++_run;
     bool cancelled() => run != _run;
     final clock = Stopwatch()..start();
@@ -191,38 +258,52 @@ class ImportController extends Notifier<ImportState> {
         fileName: file.name,
         size: file.size,
         stage: stage,
+        format: format,
         progress: progress,
         glide: glide,
       );
     }
 
+    ImportState failed(Object error) => switch (error) {
+      EpubException(:final error) => ImportFailed(
+        fileName: file.name,
+        error: error,
+      ),
+      PdfImportException(:final error) => ImportPdfFailed(
+        fileName: file.name,
+        error: error,
+      ),
+      _ when format == ImportFormat.pdf => ImportPdfFailed(
+        fileName: file.name,
+        error: PdfImportError.corrupt,
+      ),
+      _ => ImportFailed(fileName: file.name, error: EpubError.corrupt),
+    };
+
     try {
-      final result = await ref
-          .read(importRepositoryProvider)
-          .importEpub(
-            await file.read(),
-            fileName: file.name,
-            onStage: (s) {
-              if (cancelled()) return;
-              stage = s;
-              if (s != ImportStage.reading) revealed = true;
-              show();
-            },
-            onProgress: (p) {
-              // Cuma naik, dan cuma update tiap ganti persen bulat.
-              if (cancelled() || p <= progress) return;
-              final wholePercent = (p * 100).floor() > (progress * 100).floor();
-              progress = p;
-              if (wholePercent) show();
-            },
-            isCancelled: cancelled,
-          );
+      final result = await go(
+        ref.read(importRepositoryProvider),
+        (s) {
+          if (cancelled()) return;
+          stage = s;
+          if (s != ImportStage.reading) revealed = true;
+          show();
+        },
+        (p) {
+          // Cuma naik, dan cuma update tiap ganti persen bulat.
+          if (cancelled() || p <= progress) return;
+          final wholePercent = (p * 100).floor() > (progress * 100).floor();
+          progress = p;
+          if (wholePercent) show();
+        },
+        cancelled,
+      );
       // Batal pas lagi nyimpen: bukunya tetep masuk rak, sheet-nya udah tutup.
       if (cancelled()) return;
       final book = await ref.read(bookRepositoryProvider).book(result.bookId);
       if (cancelled()) return;
       if (book == null) {
-        state = ImportFailed(fileName: file.name, error: EpubError.corrupt);
+        state = failed(StateError('buku ilang'));
         return;
       }
       // Duplikat gak ditahan.
@@ -239,16 +320,16 @@ class ImportController extends Notifier<ImportState> {
       show(glide: glide);
       await Future<void>.delayed(glide + Motion.importSettle);
       if (cancelled()) return;
-      state = ImportSuccess(book);
+      state = ImportSuccess(book, skippedPages: result.skippedPages);
     } on ImportCancelled {
       // cancel() udah ngembaliin ke idle.
-    } on EpubException catch (e) {
+    } catch (e) {
+      if (!cancelled()) state = failed(e);
+    } finally {
+      // Salinan sementara dari picker udah gak dipakai (file asli udah
+      // disalin ke storage app kalau import berhasil).
       if (!cancelled()) {
-        state = ImportFailed(fileName: file.name, error: e.error);
-      }
-    } catch (_) {
-      if (!cancelled()) {
-        state = ImportFailed(fileName: file.name, error: EpubError.corrupt);
+        unawaited(ref.read(filePickerServiceProvider).clearTemporaryFiles());
       }
     }
   }

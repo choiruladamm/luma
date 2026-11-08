@@ -1,7 +1,9 @@
 import 'markdown_shelf.dart';
 
-/// Asal buku. EPUB di MVP; Markdown nanti (docs/ideas/import-formats.md).
-enum SourceType { epub, markdown }
+/// Asal buku (docs/import-formats.md). Disimpan sebagai nama enum (`textEnum`),
+/// jadi nambah nilai gak ngubah schema. Binary lama gak ngenalin `pdf`:
+/// backup berisi buku PDF jangan di-restore ke app versi sebelum import PDF.
+enum SourceType { epub, markdown, pdf }
 
 /// Jenis blok di chapter. Heading & sceneBreak gak punya grup, gak bisa di-tap.
 enum ParagraphType { paragraph, heading, sceneBreak }
