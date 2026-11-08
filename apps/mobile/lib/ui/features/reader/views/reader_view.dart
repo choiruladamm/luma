@@ -4,7 +4,6 @@ import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -36,6 +35,7 @@ import 'toc_sheet.dart';
 import 'chapter_end.dart';
 import 'paragraph_text.dart';
 import 'reader_overlay.dart';
+import 'reader_system_ui.dart';
 import 'chapter_heading.dart';
 import 'reader_types.dart';
 import 'scrim_hole.dart';
@@ -69,6 +69,12 @@ class _ReaderViewState extends ConsumerState<ReaderView>
   late final _now = ref.read(readerNowProvider);
   late final _clock = ReadingClock(_now());
   late final _chrome = ReaderChrome(vsync: this);
+  late final _ui = ReaderSystemUi(
+    isVisit: widget.sourceVisit != null,
+    barsShown: () => _chrome.visible.value || !_prefs.hideStatusBar,
+    offReader: () => _offReader > 0,
+    mounted: () => mounted,
+  );
 
   /// Setelan Aa terakhir (status bar, garis progres, gaya teks).
   ReaderPrefs _prefs = const ReaderPrefs();
@@ -138,23 +144,14 @@ class _ReaderViewState extends ConsumerState<ReaderView>
     if (widget.sourceVisit == null) {
       _progress.markOpened(widget.bookId).ignore();
     }
-    _chrome.visible.addListener(_syncStatusBar);
+    _chrome.visible.addListener(_ui.sync);
     _fraction.addListener(_anchor);
-    if (_android && widget.sourceVisit == null) {
-      // Bar yang kebuka swipe tepi ngumpet lagi sesudah jeda, kalau memang
-      // harusnya ngumpet.
-      SystemChrome.setSystemUIChangeCallback((visible) async {
-        if (!visible || !mounted) return;
-        _rehide?.cancel();
-        _rehide = Timer(const Duration(seconds: 2), _syncStatusBar);
-      });
-    }
+    _ui.attach();
   }
 
   int _offReader = 0;
   bool _openingChat = false;
   Future<void> _pendingSave = Future.value();
-  Timer? _rehide;
   Timer? _chatHintTimer;
   bool _chatHintChecked = false, _chatHintVisible = false;
 
@@ -177,8 +174,6 @@ class _ReaderViewState extends ConsumerState<ReaderView>
       }
     });
   }
-
-  static bool get _android => defaultTargetPlatform == TargetPlatform.android;
 
   /// Posisi pertama yang kebaca (buku kebuka di titik tersimpan) = awal
   /// potongan sesi pertama.
@@ -205,7 +200,7 @@ class _ReaderViewState extends ConsumerState<ReaderView>
     try {
       await _save(force: true);
       if (!mounted) return null;
-      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+      _ui.edgeToEdge();
       final result = await context.push<T>(route, extra: extra);
       if (result == ReaderReturn.reading &&
           mounted &&
@@ -238,7 +233,7 @@ class _ReaderViewState extends ConsumerState<ReaderView>
                 AppLifecycleState.resumed) {
           if (widget.sourceVisit == null) _clock.resume(_now());
         }
-        _syncStatusBar();
+        _ui.sync();
       }
     }
   }
@@ -307,27 +302,6 @@ class _ReaderViewState extends ConsumerState<ReaderView>
     }
   }
 
-  /// Status bar ngumpet bareng kapsul. Android: navbar ikut ngumpet
-  /// (immersive sticky, muncul sebentar kalau di-swipe). iOS: bar bawah
-  /// (home indicator) dibiarin.
-  void _syncStatusBar() {
-    if (_offReader > 0 || widget.sourceVisit != null) {
-      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-      return;
-    }
-    final show = _chrome.visible.value || !_prefs.hideStatusBar;
-    if (_android) {
-      SystemChrome.setEnabledSystemUIMode(
-        show ? SystemUiMode.edgeToEdge : SystemUiMode.immersiveSticky,
-      );
-      return;
-    }
-    SystemChrome.setEnabledSystemUIMode(
-      SystemUiMode.manual,
-      overlays: show ? SystemUiOverlay.values : const [SystemUiOverlay.bottom],
-    );
-  }
-
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
@@ -343,23 +317,12 @@ class _ReaderViewState extends ConsumerState<ReaderView>
   @override
   void dispose() {
     _saveLater?.cancel();
-    _rehide?.cancel();
     _chatHintTimer?.cancel();
     _regrow?.cancel();
     _scrolling.dispose();
-    if (_android && widget.sourceVisit == null) {
-      SystemChrome.setSystemUIChangeCallback(null);
-    }
     _save().ignore();
     WidgetsBinding.instance.removeObserver(this);
-    if (_android) {
-      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-    } else {
-      SystemChrome.setEnabledSystemUIMode(
-        SystemUiMode.manual,
-        overlays: SystemUiOverlay.values,
-      );
-    }
+    _ui.release();
     _chrome.dispose();
     _fraction.dispose();
     super.dispose();
@@ -728,7 +691,7 @@ class _ReaderViewState extends ConsumerState<ReaderView>
     final saved = ref.watch(readingPositionProvider(widget.bookId));
     _chrome.reduceMotion = MediaQuery.disableAnimationsOf(context);
     _prefs = ref.watch(readerPrefsProvider).value ?? const ReaderPrefs();
-    ref.listen(readerPrefsProvider, (_, _) => _syncStatusBar());
+    ref.listen(readerPrefsProvider, (_, _) => _ui.sync());
     return Scaffold(
       body: Listener(
         // Scroll & tap sama-sama mulai dari sini.
