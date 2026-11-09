@@ -415,6 +415,46 @@ void main() {
     },
   );
 
+  test('long session: correction stays last, order is chronological, other sessions and books never leak', () {
+    final turns = [
+      for (var i = 1; i <= 12; i++)
+        turn(
+          id: i,
+          sequence: i,
+          question: i == 9
+              ? 'Koreksi: maksud gue bab 3, bukan bab 2'
+              : 'Tanya $i',
+          reply: answer(text: 'Jawab $i'),
+        ),
+      turn(id: 20, sequence: 5, sessionId: 99, question: 'Sesi lain'),
+      turn(id: 21, sequence: 5, owner: foreign, question: 'Buku lain'),
+      turn(id: 22, sequence: 5, owner: changed, question: 'Revisi lain'),
+      turn(
+        id: 23,
+        sequence: 6,
+        phase: ChatPhase.stopped,
+        question: 'Dihentikan sebelum jawab',
+      ),
+    ];
+    final data = jsonDecode(prompt(history: turns).user) as Map;
+    final asked = [
+      ...((data['earlierQuestions'] as List?) ?? const []),
+      ...(data['history'] as List).map((h) => (h as Map)['question']),
+    ];
+    expect(asked, isNot(contains('Sesi lain')));
+    expect(asked, isNot(contains('Buku lain')));
+    expect(asked, isNot(contains('Revisi lain')));
+    expect(asked, contains('Dihentikan sebelum jawab'));
+    expect(
+      asked.indexOf('Koreksi: maksud gue bab 3, bukan bab 2'),
+      lessThan(asked.indexOf('Tanya 12')),
+    );
+    expect(
+      (data['history'] as List).map((h) => (h as Map)['question']).last,
+      'Tanya 12',
+    );
+  });
+
   test('history keeps completed conversation but excludes other sessions, nonfinal and later turns', () {
     final built = prompt(
       history: [

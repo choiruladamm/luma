@@ -1,10 +1,17 @@
 # Integrasi LLM
 
-## Rencana revisi chat — 9 November 2026
+## Revisi chat #195 — 9 November 2026
 
-Audit dan plan implementasi [#195](https://github.com/choiruladamm/luma/issues/195), induk [#112](https://github.com/choiruladamm/luma/issues/112): konteks sesi sebelum retrieval, reuse bukti percakapan, memory sesi panjang, RAG adaptif dan jawaban otomatis. UI ditargetkan menghapus hitungan potongan/embedding, catatan sementara teknis, Jawab sekarang dan Lanjutkan scan; sumber, Stop dan Retry tetap tersedia. Urutan baru #195 → gate akhir #124. Ini rencana, belum perilaku runtime; uraian implementasi lama di bawah tetap berlaku sampai revisi diterapkan.
+Induk [#112](https://github.com/choiruladamm/luma/issues/112), sebelum gate [#124](https://github.com/choiruladamm/luma/issues/124). Sudah berlaku (prompt versi 8):
 
-Audit baseline `d5391bc`: history sudah terkirim tetapi terbatas 16.000 byte; belum ada jalur conversation-only, persiapan memuat seluruh paragraf, cold dense retrieval menunggu index lengkap. Embedding sudah memakai cache durable dan batch 64/concurrency 3. Tes `chat_contract_test.dart` + `chat_context_repository_test.dart`: 74 lulus; belum ada pengukuran live AI/device. Scope, file/caller, evaluasi multi-turn, migrasi bila diperlukan dan acceptance lengkap ada di issue.
+- **Strategi `conversation`**: planner memilihnya untuk ringkas/jelaskan/ingat isi diskusi tanpa fakta buku baru. Tanpa embedding, tanpa selector; sumber jawaban turn valid sebelumnya dipakai ulang (`H1…`) dan tetap divalidasi hash/revision.
+- **Buku dimuat lazy**: `prepare` cuma memuat paragraf bab yang dirujuk kutipan/history plus jumlah karakter per bab (agregat SQL). Seluruh buku dimuat setelah planner memutuskan perlu baca/cari (`fullCorpusLoads` = 0 di fast path).
+- **Konteks sesi**: history dibatasi 16.000 byte, tapi jawaban yang terlalu besar tidak lagi mengosongkan konteks terbaru (dikirim tanpa jawabannya) dan turn yang tidak muat tidak menghentikan loop. Pertanyaan lama yang jawabannya tidak dimuat, termasuk turn gagal/dihentikan, masuk `earlierQuestions` (maks 3.000 byte, terbaru diprioritaskan; hanya maksud, bukan bukti) ke planner dan prompt jawaban.
+- **Pencarian**: bukti turn sebelumnya jadi kandidat awal (maks seperempat slot), bukan dipaksa; selector memutuskan.
+- **Jawaban terpotong**: `finish_reason: length` dengan JSON tidak lengkap memakai repair khusus "kirim ulang lebih ringkas", bukan salinan yang sama.
+- **UI**: tanpa hitungan potongan, Langkah AI, catatan sementara, Jawab sekarang, dan Lanjutkan; status sederhana, sitasi, Stop, Retry. Data langkah/checkpoint lama tetap tersimpan. Checkpoint scan parsial tidak punya pemicu UI (kode `continueExploration` tetap ada).
+
+Belum dikerjakan (tetap di #195): ringkasan sesi persisten (butuh migrasi), lanjutan jawaban terpotong dalam turn yang sama, index lexical sekali per buku / cold index tanpa menunggu dense, telemetri latensi, benchmark baseline vs baru dengan model nyata, evaluasi held-out. Belum ada klaim latensi/biaya/kualitas; tes memakai transport palsu.
 
 ## Provider
 
