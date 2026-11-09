@@ -351,6 +351,9 @@ class ChatContextRepository {
         {
           'question': input.turn.question,
           'history': history,
+          if ((jsonDecode(input.preflight.user) as Map)['earlierQuestions']
+              case final List earlier)
+            'earlierQuestions': earlier,
           if (quote != null) 'selectedQuote': quote.text,
           'book': {
             'title': input.book.title,
@@ -448,9 +451,10 @@ class ChatContextRepository {
         await ensureFull();
       }
       var selected = quoted;
-      if (plan.strategy == ChatSearchStrategy.conversation) {
+      // Sumber jawaban selesai dari turn history yang valid (#195).
+      List<ChatSource> historyEvidence(List<ChatSource> base) {
         final historyIds = input.preflight.historyTurnIds.toSet();
-        final evidence = <ChatSource>[...quoted];
+        final evidence = <ChatSource>[...base];
         for (final turn in input.history.reversed) {
           if (!historyIds.contains(turn.id)) continue;
           for (final block in turn.answer!.blocks) {
@@ -472,7 +476,14 @@ class ChatContextRepository {
             }
           }
         }
-        selected = fitChatSources(evidence, maxBytes: sourceBudget);
+        return evidence;
+      }
+
+      if (plan.strategy == ChatSearchStrategy.conversation) {
+        selected = fitChatSources(
+          historyEvidence(quoted),
+          maxBytes: sourceBudget,
+        );
       }
       ChatExploration? exploration;
       var noteSourceIds = <String, String>{};
@@ -913,7 +924,11 @@ class ChatContextRepository {
         var queries =
             saved?.pendingQueries ??
             (plan.queries.isEmpty ? [plan.englishQuery] : plan.queries);
-        var candidates = <ChatSource>[];
+        // Bukti turn sebelumnya jadi kandidat (bukan dipaksa): selector yang
+        // memutuskan masih relevan atau topiknya sudah ganti.
+        var candidates = historyEvidence([])
+            .take(chatMaxCandidates ~/ 4)
+            .toList();
         ChatExploration searchCheckpoint(
           List<String> pending, {
           String? stopReason,

@@ -122,6 +122,40 @@ void main() {
         paragraphs: paragraphs,
       );
 
+  test(
+    'older questions stay as intent context when their answers do not fit',
+    () {
+      final big = 'x' * 17000;
+      final turns = [
+        turn(id: 1, sequence: 1, question: 'Pertanyaan pertama gue'),
+        turn(
+          id: 2,
+          sequence: 2,
+          question: 'Pertanyaan gagal',
+          phase: ChatPhase.failed,
+        ),
+        turn(
+          id: 3,
+          sequence: 3,
+          question: 'Pertanyaan besar',
+          reply: answer(text: big),
+        ),
+        turn(id: 4, sequence: 4, question: 'Pertanyaan terbaru'),
+      ];
+      final data = jsonDecode(prompt(history: turns).user) as Map;
+      final history = data['history'] as List;
+      final earlier = data['earlierQuestions'] as List;
+      // Jawaban besar tidak mengosongkan konteks terbaru, dan pertanyaan
+      // gagal/lama tetap tercatat sebagai maksud (bukan fakta).
+      expect((history.last as Map)['question'], 'Pertanyaan terbaru');
+      expect(earlier, contains('Pertanyaan gagal'));
+      expect([
+        ...history.map((h) => (h as Map)['question']),
+        ...earlier,
+      ], containsAll(['Pertanyaan pertama gue', 'Pertanyaan besar']));
+    },
+  );
+
   test('anchors enforce book/revision/hash, range and UTF-16 boundaries', () {
     anchor().validate(paragraph, book);
     anchor(start: 1, end: 3, snapshot: '😀').validate(paragraph, book);
@@ -214,7 +248,7 @@ void main() {
     expect(result.blocks.map((b) => b.kind), ChatAnswerKind.values);
     expect(identical(result.blocks.first.sources.single, s), isTrue);
     expect(result.note, isEmpty);
-    expect(chatPromptVersion, 7);
+    expect(chatPromptVersion, 8);
   });
 
   test('layout is optional, unknown values read as paragraph and quote needs a book part', () {

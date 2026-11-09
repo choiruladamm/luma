@@ -341,6 +341,8 @@ class LifecycleContext implements ChatContextRepository {
   LifecycleContext(this.repo);
   final LifecycleRepo repo;
   @override
+  int fullCorpusLoads = 0;
+  @override
   final tokenBudget = chatQuestionTokens;
   @override
   final deadline = chatQuestionDeadline;
