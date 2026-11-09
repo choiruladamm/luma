@@ -389,7 +389,10 @@ void main() {
     expect(progress.last, examined);
     final frame = (await prepared.stream().toList()).last;
     expect(frame.answer!.status, ChatAnswerStatus.partial);
-    expect(frame.answer!.blocks.last.text, contains('$examined/34'));
+    expect(
+      frame.answer!.blocks.last.text,
+      contains('belum mencakup semua bagian'),
+    );
     expect(
       ChatExploration.parse((await latest()).exploration!).stopReason,
       'budget',
@@ -578,6 +581,49 @@ void main() {
     },
   );
 
+  test(
+    'conversation follow-up reuses validated evidence from its session',
+    () async {
+      final evidence = source();
+      await chat.prepareSources(turn.attemptRef, [evidence]);
+      await chat.finalize(
+        turn.attemptRef,
+        phase: ChatPhase.done,
+        answer: ChatAnswer(
+          status: ChatAnswerStatus.answered,
+          blocks: [
+            ChatAnswerBlock(text: 'Penjaga taman.', sources: [evidence]),
+          ],
+        ),
+      );
+      final next = await chat.appendTurn(
+        book,
+        turn.sessionId,
+        question: 'Jelaskan jawaban tadi lebih sederhana',
+        model: model,
+        promptVersion: chatPromptVersion,
+      );
+      adapter.strategy = 'conversation';
+      final prepared = (await context.prepare(next))!;
+      expect(prepared.prompt.historyTurnIds, [turn.id]);
+      expect(prepared.prompt.sources.single.text, evidence.text);
+      expect(adapter.requests.where((r) => r.path == '/embeddings'), isEmpty);
+      expect(adapter.selections, 0);
+    },
+  );
+
+  test(
+    'conversation planner skips book search and document embeddings',
+    () async {
+      adapter.strategy = 'conversation';
+      final prepared = await context.prepare(turn);
+      expect(prepared, isNotNull);
+      expect(adapter.requests.where((r) => r.path == '/embeddings'), isEmpty);
+      expect(adapter.selections, 0);
+      expect(adapter.batches, isEmpty);
+    },
+  );
+
   test('chapters strategy reads the requested chapter directly, without embeddings or notes', () async {
     adapter.strategy = 'chapters';
     adapter.chapterIds = [chapter];
@@ -711,11 +757,12 @@ void main() {
         adapter.batches.expand((b) => b).every((id) => id.startsWith('S')),
         isTrue,
       );
-      final examined = adapter.batches.fold<int>(0, (n, b) => n + b.length);
       final frame = (await prepared.stream().toList()).last;
       expect(frame.answer!.status, ChatAnswerStatus.partial);
-      expect(frame.answer!.blocks.last.text, contains('dari bab yang diminta'));
-      expect(frame.answer!.blocks.last.text, contains('$examined/33'));
+      expect(
+        frame.answer!.blocks.last.text,
+        contains('belum mencakup semua bagian'),
+      );
       final user = jsonDecode(prepared.prompt.user) as Map;
       expect((user['exploration'] as Map)['scope'], 'chapters');
       expect((user['exploration'] as Map)['stopReason'], 'budget');
@@ -1210,7 +1257,10 @@ void main() {
     final prepared = (await context.prepare(turn))!;
     final frame = (await prepared.stream().toList()).last;
     expect(frame.answer!.status, ChatAnswerStatus.partial);
-    expect(frame.answer!.blocks.last.text, contains('kebutuhan pencarian'));
+    expect(
+      frame.answer!.blocks.last.text,
+      contains('belum mencakup semua bagian'),
+    );
     await chat.finalize(
       turn.attemptRef,
       phase: ChatPhase.done,

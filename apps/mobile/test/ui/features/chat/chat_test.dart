@@ -267,42 +267,11 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  test('unfinished index progress never hides a terminal status', () {
-    for (final phase in [
-      ChatPhase.done,
-      ChatPhase.failed,
-      ChatPhase.cut,
-      ChatPhase.stopped,
-      ChatPhase.interrupted,
-    ]) {
-      expect(
-        ChatState(
-          phase: phase,
-          indexProgress: (completed: 64, total: 100),
-        ).indexLabel(AppLocalizationsId()),
-        isNull,
-      );
-    }
-    expect(
-      ChatState(
-        phase: ChatPhase.slow,
-        indexProgress: (completed: 100, total: 100),
-      ).indexLabel(AppLocalizationsId()),
-      isNull,
-    );
-  });
-
   for (final theme in [ThemeMode.light, ThemeMode.dark]) {
-    testWidgets('Langkah AI row: running, done closed, done open ($theme)', (
+    testWidgets('technical progress never shows while reading ($theme)', (
       t,
     ) async {
       final running = turn(1, phase: ChatPhase.retrieving);
-      final steps = [
-        ChatStep.plan('baca seluruh buku, 102 bab'),
-        for (var i = 1; i <= 6; i++)
-          ChatStep.read('Book I › $i', detail: '$i catatan'),
-        ChatStep.read('Book II › IV', status: ChatStepStatus.running),
-      ];
       await open(
         t,
         themeMode: theme,
@@ -311,148 +280,58 @@ void main() {
           loading: false,
           turns: [running],
           phase: ChatPhase.retrieving,
-          steps: (attempt: running.attemptRef, steps: steps),
+          steps: (
+            attempt: running.attemptRef,
+            steps: [
+              ChatStep.plan('baca seluruh buku, 102 bab'),
+              ChatStep.read('Book II › IV', status: ChatStepStatus.running),
+            ],
+          ),
+          indexProgress: (completed: 64, total: 100),
           explorationProgress: const (
             completed: 3,
             total: 9,
             label: 'Book II › IV',
             notes: <ChatExplorationNote>[],
           ) as ChatExplorationProgress,
-          preview: (
-            attempt: running.attemptRef,
-            blocks: [ChatAnswerBlock(text: 'Catatan satu', sources: [])],
-          ),
         ),
       );
       await t.pump(const Duration(seconds: 3));
-      // Running: status row names the running step, list open by default.
-      expect(labelText('Lagi baca Book II › IV'), findsOneWidget);
-      expect(find.text('Langkah 8'), findsOneWidget);
-      expect(find.textContaining('Rencana: baca seluruh buku'), findsOneWidget);
-      expect(labelContaining('Baca Book I › 6'), findsNothing);
-      expect(find.text('lihat 2 lagi'), findsOneWidget);
-      await t.tap(find.text('lihat 2 lagi'));
-      await t.pump();
-      expect(labelContaining('Baca Book II › IV'), findsOneWidget);
-      expect(find.text('lihat 2 lagi'), findsNothing);
-      // Catatan sementara block with the text button and caption.
-      expect(find.text('CATATAN SEMENTARA'), findsOneWidget);
-      expect(find.text('Jawab sekarang'), findsOneWidget);
-      expect(
-        find.text('Pakai 0 catatan yang udah masuk, sisa buku gak dibaca.'),
-        findsOneWidget,
-      );
-      await t.tap(find.text('Jawab sekarang'));
-      await t.pump();
-      expect(vm.answerNows, 1);
-      // Collapse while running: toggle wins over the default.
-      await t.tap(labelText('Lagi baca Book II › IV'));
-      await t.pump();
-      expect(find.textContaining('Rencana: baca seluruh buku'), findsNothing);
-
-      // Done: the turn carries its own steps; closed by default.
-      final finished = [
-        ...steps.take(7),
-        ChatStep.read('Book II › IV', detail: '2 catatan'),
-        ChatStep.answer(),
-      ];
-      vm.push(
-        ChatState(
-          book: book,
-          loading: false,
-          turns: [turn(1, answer: answer, steps: finished)],
-          phase: ChatPhase.done,
-        ),
-      );
-      await t.pump(const Duration(seconds: 3));
-      expect(find.text('9 langkah selesai'), findsOneWidget);
-      expect(find.text('Langkah 9'), findsNothing);
-      expect(find.text('Jawab sekarang'), findsNothing);
-      expect(find.text('CATATAN SEMENTARA'), findsNothing);
-      expect(find.textContaining('Rencana: baca seluruh buku'), findsNothing);
-      await t.tap(find.text('9 langkah selesai'));
-      await t.pump();
-      expect(find.textContaining('Rencana: baca seluruh buku'), findsOneWidget);
-      // "lihat N lagi" was already opened on this turn; the full list stays.
-      expect(find.text('lihat 3 lagi'), findsNothing);
-      expect(find.textContaining('Jawaban'), findsWidgets);
+      expect(find.text('Lagi nyari sumber di buku…'), findsOneWidget);
+      for (final hidden in [
+        'langkah',
+        'Langkah',
+        'potongan',
+        'CATATAN SEMENTARA',
+        'Jawab sekarang',
+        'Lanjutkan',
+      ]) {
+        expect(find.textContaining(hidden), findsNothing, reason: hidden);
+      }
       expect(t.takeException(), isNull);
     });
   }
 
-  testWidgets(
-    'old turns without steps show no status row; skipped lines are muted',
-    (t) async {
-      await open(
-        t,
-        state: ChatState(
-          book: book,
-          loading: false,
-          turns: [
-            turn(1, answer: answer),
-            turn(
-              2,
-              phase: ChatPhase.stopped,
-              steps: [
-                ChatStep.plan('cari di buku'),
-                ChatStep.skip('Endnotes'),
-                ChatStep.search('q', status: ChatStepStatus.skipped),
-              ],
-            ),
-          ],
-          phase: ChatPhase.stopped,
-        ),
-      );
-      await t.pump(const Duration(seconds: 3));
-      expect(find.text('3 langkah selesai'), findsOneWidget);
-      expect(find.textContaining('langkah selesai'), findsOneWidget);
-      await t.tap(find.text('3 langkah selesai'));
-      await t.pump();
-      expect(find.text('–'), findsNWidgets(2));
-      expect(checkIcons, findsNWidgets(2)); // status row + the one done step
-      expect(find.textContaining('Dilewati: Endnotes'), findsOneWidget);
-    },
-  );
-
-  testWidgets(
-    'saved notes render as a tagged provisional draft while reading',
-    (t) async {
-      final running = turn(1, phase: ChatPhase.retrieving);
-      await open(
-        t,
-        state: ChatState(
-          book: book,
-          loading: false,
-          turns: [running],
-          phase: ChatPhase.retrieving,
-          explorationProgress: const (
-            completed: 3,
-            total: 9,
-            label: 'Book I › II',
-            notes: <ChatExplorationNote>[],
-          ) as ChatExplorationProgress,
-          preview: (
-            attempt: running.attemptRef,
-            blocks: [ChatAnswerBlock(text: 'Catatan satu', sources: [])],
+  testWidgets('legacy turns with saved steps show no step row', (t) async {
+    await open(
+      t,
+      state: ChatState(
+        book: book,
+        loading: false,
+        turns: [
+          turn(
+            1,
+            answer: answer,
+            steps: [ChatStep.plan('cari di buku'), ChatStep.skip('Endnotes')],
           ),
-        ),
-      );
-      await t.pump(const Duration(seconds: 3)); // pacer reveals the draft
-      expect(find.text('CATATAN SEMENTARA'), findsOneWidget);
-      expect(find.textContaining('Catatan satu'), findsOneWidget);
-      expect(find.text('Jawab sekarang'), findsOneWidget);
-      expect(labelText('Lagi baca Book I › II… 3/9 potongan'), findsOneWidget);
-      vm.push(
-        vm.current.copyWith(
-          phase: ChatPhase.writing,
-          explorationProgress: null,
-        ),
-      );
-      await t.pump();
-      expect(find.text('CATATAN SEMENTARA'), findsNothing);
-      expect(find.text('Jawab sekarang'), findsNothing);
-    },
-  );
+        ],
+      ),
+    );
+    await t.pump(const Duration(seconds: 3));
+    expect(find.textContaining('langkah'), findsNothing);
+    expect(find.textContaining('Dilewati'), findsNothing);
+    expect(find.textContaining('Jawaban tervalidasi.'), findsOneWidget);
+  });
 
   test('repair status replaces the phase label only while running', () {
     final running = ChatState(phase: ChatPhase.waiting, repairAttempt: 1);
@@ -729,7 +608,7 @@ void main() {
   );
 
   for (final theme in [ThemeMode.light, ThemeMode.dark]) {
-    testWidgets('global progress, Stop and explicit Continue in $theme', (
+    testWidgets('partial checkpoint shows no scan controls ($theme)', (
       t,
     ) async {
       final checkpoint = ChatExploration(
@@ -756,14 +635,11 @@ void main() {
           phase: ChatPhase.done,
         ),
       );
-      expect(find.text('Lanjutkan'), findsOneWidget);
-      expect(vm.continuations, 0);
-      await t.tap(find.text('Lanjutkan'));
-      await t.pump();
-      expect(vm.continuations, 1);
       expect(find.text('Lanjutkan'), findsNothing);
+      expect(find.text('Coba lagi'), findsNothing);
       vm.push(
         vm.current.copyWith(
+          phase: ChatPhase.retrieving,
           explorationProgress: const (
             completed: 8,
             total: 20,
@@ -777,15 +653,8 @@ void main() {
         ),
       );
       await t.pump();
-      expect(
-        labelText('Lagi baca Book II › IV: Of Progress… 8/20 potongan'),
-        findsOneWidget,
-      );
-      expect(find.text('Jawab sekarang'), findsOneWidget);
-      await t.tap(find.text('Jawab sekarang'));
-      await t.pump();
-      expect(vm.answerNows, 1);
-      // A running continuation receives its own turn; prior answer remains visible.
+      expect(find.textContaining('potongan'), findsNothing);
+      expect(find.text('Jawab sekarang'), findsNothing);
       expect(find.textContaining('Jawaban tervalidasi.'), findsOneWidget);
       expect(t.takeException(), isNull);
       await t.tap(button('Hentikan jawaban'));
@@ -842,7 +711,7 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('index progress and Stop remain available in $theme', (
+    testWidgets('index progress shows plain status and Stop works in $theme', (
       tester,
     ) async {
       await open(
@@ -857,23 +726,11 @@ void main() {
           indexProgress: (completed: 64, total: 100),
         ),
       );
-      expect(find.text('Lagi nyiapin buku… 64/100 potongan'), findsOneWidget);
-      expect(tester.takeException(), isNull);
+      expect(find.text('Lagi nyari sumber di buku…'), findsOneWidget);
+      expect(find.textContaining('potongan'), findsNothing);
       vm.push(vm.current.copyWith(phase: ChatPhase.slow));
       await tester.pump();
-      expect(find.text('Lagi nyiapin buku… 64/100 potongan'), findsOneWidget);
-      expect(find.text('Agak lama nih, masih diproses…'), findsNothing);
-      vm.push(vm.current.copyWith(indexProgress: (completed: 80, total: 100)));
-      await tester.pump();
-      expect(find.text('Lagi nyiapin buku… 80/100 potongan'), findsOneWidget);
-      vm.push(
-        vm.current.copyWith(
-          phase: ChatPhase.retrieving,
-          indexProgress: (completed: 100, total: 100),
-        ),
-      );
-      await tester.pump();
-      expect(find.text('Lagi nyari sumber di buku…'), findsOneWidget);
+      expect(find.textContaining('potongan'), findsNothing);
       expect(vm.sends, 0);
       await tester.tap(button('Hentikan jawaban'));
       await tester.pumpAndSettle();

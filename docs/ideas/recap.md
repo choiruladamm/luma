@@ -1,5 +1,11 @@
 # Iterasi 2: Recap Bacaan
 
+## Rencana versi kecil: Kemarin sampai mana?
+
+Rencana implementasi lengkap ada di [#194](https://github.com/choiruladamm/luma/issues/194), turunan [#104](https://github.com/choiruladamm/luma/issues/104): sheet sebelum lanjut baca, ringkasan 2–3 poin dari teks terdekat sebelum posisi tersimpan, cache lokal, sumber, serta pintasan diskusi terakhir yang dibuka secara eksplisit karena dapat berisi spoiler. Belum diimplementasikan; board UI masih perlu ditetapkan.
+
+Versi kecil ini tidak menunggu terjemahan massal atau overview seluruh buku di bawah. Posisi tersimpan bukan bukti semua bagian sebelumnya telah dibaca; paragraf batas dikecualikan secara konservatif. Deteksi pertanyaan menggantung otomatis ditunda; versi awal memakai label “Pertanyaan terakhir”. Scope, migrasi, invalidasi, urutan kerja, dan acceptance dirinci di issue.
+
 ## Tujuan
 
 Misal sudah baca 18% buku. Pengguna bisa membuka layar Recap untuk:

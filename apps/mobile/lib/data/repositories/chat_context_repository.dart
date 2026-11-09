@@ -359,6 +359,32 @@ class ChatContextRepository {
                   'Maksud lo bab yang di ${ambiguous.join(', ')} yang mana?',
             );
       var selected = input.quoted;
+      if (plan.strategy == ChatSearchStrategy.conversation) {
+        final historyIds = input.preflight.historyTurnIds.toSet();
+        final evidence = <ChatSource>[...input.quoted];
+        for (final turn in input.history.reversed) {
+          if (!historyIds.contains(turn.id)) continue;
+          for (final block in turn.answer!.blocks) {
+            for (final source in block.sources) {
+              if (evidence.any(
+                (s) =>
+                    s.text == source.text &&
+                    s.anchors.first.paragraph == source.anchors.first.paragraph,
+              )) {
+                continue;
+              }
+              evidence.add(
+                ChatSource(
+                  id: 'H${evidence.length + 1}',
+                  chapterTitle: source.chapterTitle,
+                  anchors: source.anchors,
+                ),
+              );
+            }
+          }
+        }
+        selected = fitChatSources(evidence, maxBytes: sourceBudget);
+      }
       ChatExploration? exploration;
       var noteSourceIds = <String, String>{};
       var cachedChapterCount = 0;
@@ -384,7 +410,8 @@ class ChatContextRepository {
       // Langkah AI (#153): dicatat tanpa request tambahan.
       if (plan.needsClarification) {
         onStep?.call(ChatStep.plan('tanya balik dulu'));
-      } else if (plan.strategy == ChatSearchStrategy.offTopic) {
+      } else if ((plan.strategy == ChatSearchStrategy.offTopic ||
+          plan.strategy == ChatSearchStrategy.conversation)) {
         onStep?.call(ChatStep.plan('ngobrol tanpa buka buku'));
       } else if (plan.strategy.reads) {
         onStep?.call(
@@ -402,6 +429,7 @@ class ChatContextRepository {
       if (!plan.needsClarification &&
           plan.strategy != ChatSearchStrategy.chapters &&
           plan.strategy != ChatSearchStrategy.offTopic &&
+          plan.strategy != ChatSearchStrategy.conversation &&
           plan.skipIds.isNotEmpty) {
         onStep?.call(ChatStep.skip(labelsOf(plan.skipIds)));
       }
@@ -778,6 +806,7 @@ class ChatContextRepository {
       } else if (!plan.needsClarification &&
           !plan.strategy.reads &&
           plan.strategy != ChatSearchStrategy.offTopic &&
+          plan.strategy != ChatSearchStrategy.conversation &&
           input.chunks.isNotEmpty) {
         final searched = <String>{...?saved?.searchedQueries};
         // Bab yang boleh jadi kandidat; tersimpan di checkpoint untuk Lanjutkan.
@@ -1506,9 +1535,8 @@ class PreparedChat {
             blocks: [
               ...answer.blocks,
               ChatAnswerBlock(
-                text: work.strategy.reads
-                    ? 'Udah diperiksa ${work.cursor}/${work.total} potongan${work.strategy == ChatSearchStrategy.chapters ? ' dari bab yang diminta' : ' isi buku'}. Masih ada ${work.total - work.cursor} potongan yang belum diperiksa. Pakai Lanjutkan buat meneruskan penelusuran.'
-                    : 'Masih ada ${work.pendingQueries.length} kebutuhan pencarian yang belum diperiksa. Pakai Lanjutkan buat meneruskan penelusuran.',
+                text:
+                    'Jawaban ini belum mencakup semua bagian yang lo tanyakan.',
                 kind: ChatAnswerKind.conversation,
                 sources: [],
               ),

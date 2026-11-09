@@ -419,13 +419,7 @@ class _ChatViewState extends ConsumerState<ChatView> {
                 height: Layout.touch,
                 onPressed: () => _navigate(() => context.push(Routes.settings)),
               ),
-            if (state.canContinue)
-              AppButton.secondary(
-                label: context.l10n.chatContinue,
-                height: Layout.touch,
-                onPressed: () => unawaited(_vm.continueExploration()),
-              ),
-            if (state.canRetry && !state.canContinue)
+            if (state.canRetry)
               GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 excludeFromSemantics: true,
@@ -471,7 +465,6 @@ class _ChatViewState extends ConsumerState<ChatView> {
     if (state.turns.isNotEmpty) {
       return ChatHistory(
         preview: state.preview,
-        indexLabel: state.indexLabel(context.l10n),
         key: ValueKey(state.activeSession?.id),
         turns: state.turns,
         anchor: state.scrollAnchor,
@@ -486,13 +479,6 @@ class _ChatViewState extends ConsumerState<ChatView> {
         contextCard: card,
         typo: typo,
         lastActions: _actions(state),
-        steps: state.steps,
-        answerNow: state.canAnswerNow
-            ? (
-                notes: state.explorationProgress?.notes.length ?? 0,
-                onPressed: _vm.answerNow,
-              )
-            : null,
         reserveAnswerSpace: true,
         chapterNumbers: ref
             .watch(chatChapterNumbersProvider(widget.bookId))

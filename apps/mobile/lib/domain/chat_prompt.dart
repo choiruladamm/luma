@@ -4,7 +4,7 @@ import 'chat_toc.dart';
 import 'models/book_chat.dart';
 import 'chat_preview.dart';
 
-const chatPromptVersion = 6;
+const chatPromptVersion = 7;
 const chatQuestionBytes = 2000;
 const chatHistoryBytes = 16000;
 const chatSourceBytes = 40000;
@@ -200,7 +200,7 @@ ChatPrompt buildChatPrompt({
   };
   final availableHistory =
       maxBytes - _bytes(chatAnswerSystemPrompt) - _bytes(jsonEncode(data));
-  final kept = <ChatTurn>[];
+  final kept = <(ChatTurn, Map<String, String>)>[];
   var used = 0;
   for (final t in turns) {
     try {
@@ -211,16 +211,21 @@ ChatPrompt buildChatPrompt({
     } on FormatException {
       continue; // Corrupt/stale history is readable as an error, never trusted context.
     }
-    final size = _bytes(jsonEncode(_historyData(t)));
+    var entry = _historyData(t);
+    var size = _bytes(jsonEncode(entry));
+    if (size > chatHistoryBytes) {
+      entry = {'question': t.question, 'answer': ''};
+      size = _bytes(jsonEncode(entry));
+    }
     if (used + size > chatHistoryBytes ||
         used + size + kept.length > availableHistory) {
-      break;
+      continue;
     }
-    kept.add(t);
+    kept.add((t, entry));
     used += size;
   }
   final chronological = kept.reversed.toList();
-  data['history'] = [for (final t in chronological) _historyData(t)];
+  data['history'] = [for (final entry in chronological) entry.$2];
   final user = jsonEncode(data);
   if (_bytes(user) + _bytes(chatAnswerSystemPrompt) > maxBytes) {
     throw const FormatException('Prompt melebihi batas');
@@ -228,7 +233,7 @@ ChatPrompt buildChatPrompt({
   return ChatPrompt(
     user: user,
     sources: sources,
-    historyTurnIds: chronological.map((t) => t.id).toList(),
+    historyTurnIds: chronological.map((entry) => entry.$1.id).toList(),
   );
 }
 

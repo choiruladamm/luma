@@ -1,5 +1,11 @@
 # Integrasi LLM
 
+## Rencana revisi chat — 9 November 2026
+
+Audit dan plan implementasi [#195](https://github.com/choiruladamm/luma/issues/195), induk [#112](https://github.com/choiruladamm/luma/issues/112): konteks sesi sebelum retrieval, reuse bukti percakapan, memory sesi panjang, RAG adaptif dan jawaban otomatis. UI ditargetkan menghapus hitungan potongan/embedding, catatan sementara teknis, Jawab sekarang dan Lanjutkan scan; sumber, Stop dan Retry tetap tersedia. Urutan baru #195 → gate akhir #124. Ini rencana, belum perilaku runtime; uraian implementasi lama di bawah tetap berlaku sampai revisi diterapkan.
+
+Audit baseline `d5391bc`: history sudah terkirim tetapi terbatas 16.000 byte; belum ada jalur conversation-only, persiapan memuat seluruh paragraf, cold dense retrieval menunggu index lengkap. Embedding sudah memakai cache durable dan batch 64/concurrency 3. Tes `chat_contract_test.dart` + `chat_context_repository_test.dart`: 74 lulus; belum ada pengukuran live AI/device. Scope, file/caller, evaluasi multi-turn, migrasi bila diperlukan dan acceptance lengkap ada di issue.
+
 ## Provider
 
 OpenRouter (API OpenAI-compatible, base URL `https://openrouter.ai/api/v1`).

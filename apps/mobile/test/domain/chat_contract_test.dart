@@ -214,7 +214,7 @@ void main() {
     expect(result.blocks.map((b) => b.kind), ChatAnswerKind.values);
     expect(identical(result.blocks.first.sources.single, s), isTrue);
     expect(result.note, isEmpty);
-    expect(chatPromptVersion, 6);
+    expect(chatPromptVersion, 7);
   });
 
   test('layout is optional, unknown values read as paragraph and quote needs a book part', () {
@@ -415,6 +415,15 @@ void main() {
       ],
     );
     expect(bounded.historyTurnIds, [2]);
+    final oversized = answer(text: 'x' * (chatHistoryBytes + 1));
+    final withOversizedLatest = prompt(
+      history: [
+        turn(id: 1, sequence: 1),
+        turn(id: 2, sequence: 2, reply: oversized),
+      ],
+    );
+    expect(withOversizedLatest.historyTurnIds, [1, 2]);
+    expect(withOversizedLatest.user, contains('Earlier question'));
     final perClaimCopies = ChatAnswer(
       status: ChatAnswerStatus.answered,
       blocks: [

@@ -590,21 +590,6 @@ class ChatViewModel extends Notifier<ChatState> {
         onExplorationProgress: (progress) {
           if (!_running(life, run)) return;
           state = state.copyWith(explorationProgress: progress);
-          if (progress.notes.isNotEmpty) {
-            // Catatan sementara tampil sebagai draf provisional, tanpa sumber.
-            run.preview = [
-              for (final n in progress.notes)
-                ChatAnswerBlock(
-                  text: n.text,
-                  kind: ChatAnswerKind.conversation,
-                  sources: [],
-                ),
-            ];
-            run.previewTimer ??= Timer(const Duration(milliseconds: 50), () {
-              run.previewTimer = null;
-              if (_running(life, run)) _publishPreview(run);
-            });
-          }
         },
         onIndexProgress: (completed, total) {
           if (_running(life, run)) {
