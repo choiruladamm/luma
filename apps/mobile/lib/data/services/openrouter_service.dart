@@ -106,7 +106,6 @@ class OpenRouterService {
     int maxTokens = chatAnswerMaxTokens,
     int inputBytes = chatSelectorBytes,
     void Function(ChatUsage usage)? onUsage,
-    void Function(String reason)? onFinish,
     CancelToken? cancel,
   }) {
     final messages = [
@@ -140,7 +139,6 @@ class OpenRouterService {
       maxTokens: maxTokens,
       jsonOutput: true,
       onUsage: onUsage,
-      onFinish: onFinish,
     );
   }
 
@@ -218,7 +216,6 @@ class OpenRouterService {
     int? maxTokens,
     bool jsonOutput = false,
     void Function(ChatUsage usage)? onUsage,
-    void Function(String reason)? onFinish,
   }) async* {
     if (apiKey == null || apiKey.trim().isEmpty) {
       throw const AiException(AiError.noApiKey);
@@ -243,7 +240,6 @@ class OpenRouterService {
           if (data == '[DONE]') return;
           final event = _event(data);
           if (event.usage != null) onUsage?.call(event.usage!);
-          if (event.finish != null) onFinish?.call(event.finish!);
           if (event.delta.isNotEmpty) yield event.delta;
         }
       }
@@ -344,14 +340,12 @@ class OpenRouterService {
   }
 
   /// Isi `delta.content` satu event SSE; event error → [AiError.http].
-  static ({String delta, ChatUsage? usage, String? finish}) _event(
-    String data,
-  ) {
+  static ({String delta, ChatUsage? usage}) _event(String data) {
     final Object? json;
     try {
       json = jsonDecode(data);
     } on FormatException {
-      return (delta: '', usage: null, finish: null);
+      return (delta: '', usage: null);
     }
     final delta = switch (json) {
       {'error': final Object error} => throw AiException(
@@ -368,10 +362,6 @@ class OpenRouterService {
     return (
       delta: delta,
       usage: json is Map ? parseChatUsage(json['usage']) : null,
-      finish: switch (json) {
-        {'choices': [{'finish_reason': final String r}, ...]} => r,
-        _ => null,
-      },
     );
   }
 

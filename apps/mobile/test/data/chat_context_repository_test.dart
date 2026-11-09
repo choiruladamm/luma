@@ -204,7 +204,6 @@ class ChatAdapter implements HttpClientAdapter {
       return sse([
         for (final rune in runes.take(runes.length ~/ 2))
           event(String.fromCharCode(rune)),
-        'data: {"choices":[{"delta":{},"finish_reason":"length"}]}\n\n',
         'data: [DONE]\n\n',
       ]);
     }

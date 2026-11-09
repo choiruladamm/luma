@@ -1493,6 +1493,17 @@ bool _overlaps(ChatSource a, ChatSource b) {
   return b.anchors.any((x) => keys.contains(_anchorKey(x))) || _contains(b, a);
 }
 
+/// JSON berhenti di tengah (batas token): jawaban tak lengkap, bukan salah format.
+bool _endedMidJson(String raw) {
+  try {
+    jsonDecode(raw);
+    return false;
+  } on FormatException catch (e) {
+    final end = e.offset == null || e.offset! >= raw.trimRight().length;
+    return end && !e.message.contains('Unexpected character');
+  }
+}
+
 List<ChatSource> _uniqueSources(List<ChatSource> sources) {
   final ranges = <String>{};
   return [
@@ -1569,7 +1580,6 @@ class PreparedChat {
           chatAnswerMaxTokens,
         );
         var validatedParts = 0;
-        String? finish;
         await for (final delta in _router.chatStream(
           apiKey: _key,
           model: model,
@@ -1578,7 +1588,6 @@ class PreparedChat {
           history: history,
           inputBytes: chatRequestInputBytes,
           onUsage: (usage) => _budget.settle(reservation, usage),
-          onFinish: (r) => finish = r,
           cancel: cancel,
         )) {
           decoder.add(delta);
@@ -1610,7 +1619,7 @@ class PreparedChat {
           onStep?.call(ChatStep.repair(attempt + 1, chatMaxRepairs));
           // Terpotong batas token: kirim ulang lebih ringkas, bukan salinan
           // yang sama yang bakal terpotong lagi.
-          final cut = finish == 'length';
+          final cut = _endedMidJson(decoder.raw);
           reason = cut ? 'Output terpotong batas panjang' : e.message;
           history = [
             {'role': 'assistant', 'content': decoder.raw},
