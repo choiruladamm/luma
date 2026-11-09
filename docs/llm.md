@@ -1,5 +1,18 @@
 # Integrasi LLM
 
+## Revisi chat #195 — 9 November 2026
+
+Induk [#112](https://github.com/choiruladamm/luma/issues/112), sebelum gate [#124](https://github.com/choiruladamm/luma/issues/124). Sudah berlaku (prompt versi 8):
+
+- **Strategi `conversation`**: planner memilihnya untuk ringkas/jelaskan/ingat isi diskusi tanpa fakta buku baru. Tanpa embedding, tanpa selector; sumber jawaban turn valid sebelumnya dipakai ulang (`H1…`) dan tetap divalidasi hash/revision.
+- **Buku dimuat lazy**: `prepare` cuma memuat paragraf bab yang dirujuk kutipan/history plus jumlah karakter per bab (agregat SQL). Seluruh buku dimuat setelah planner memutuskan perlu baca/cari (`fullCorpusLoads` = 0 di fast path).
+- **Konteks sesi**: history dibatasi 16.000 byte, tapi jawaban yang terlalu besar tidak lagi mengosongkan konteks terbaru (dikirim tanpa jawabannya) dan turn yang tidak muat tidak menghentikan loop. Pertanyaan lama yang jawabannya tidak dimuat, termasuk turn gagal/dihentikan, masuk `earlierQuestions` (maks 3.000 byte, terbaru diprioritaskan; hanya maksud, bukan bukti) ke planner dan prompt jawaban.
+- **Pencarian**: bukti turn sebelumnya jadi kandidat awal (maks seperempat slot), bukan dipaksa; selector memutuskan.
+- **Jawaban terpotong**: JSON jawaban yang berhenti di tengah (batas token) memakai repair khusus "kirim ulang lebih ringkas", bukan salinan yang sama.
+- **UI**: tanpa hitungan potongan, Langkah AI, catatan sementara, Jawab sekarang, dan Lanjutkan; status sederhana, sitasi, Stop, Retry. Data langkah/checkpoint lama tetap tersimpan. Checkpoint scan parsial tidak punya pemicu UI (kode `continueExploration` tetap ada).
+
+Belum dikerjakan (tetap di #195): ringkasan sesi persisten (butuh migrasi), lanjutan jawaban terpotong dalam turn yang sama, index lexical sekali per buku / cold index tanpa menunggu dense, telemetri latensi, benchmark baseline vs baru dengan model nyata, evaluasi held-out. Belum ada klaim latensi/biaya/kualitas; tes memakai transport palsu.
+
 ## Provider
 
 OpenRouter (API OpenAI-compatible, base URL `https://openrouter.ai/api/v1`).

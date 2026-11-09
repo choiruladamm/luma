@@ -185,15 +185,13 @@ void main() {
   );
 
   test(
-    'saved notes show as a provisional draft during reading; Jawab sekarang flags the run once',
+    'saved reading notes never become a visible draft; only real answer text previews',
     () => fakeAsync((time) {
       open(time);
       send(time);
       final sink = context.progressSinks.last!;
       sink((completed: 0, total: 10, label: 'Book I › II', notes: const []));
       pump(time);
-      expect(state().explorationProgress!.label, 'Book I › II');
-      expect(state().preview, isNull);
       sink((
         completed: 4,
         total: 10,
@@ -204,14 +202,11 @@ void main() {
       ));
       pump(time);
       time.elapse(const Duration(milliseconds: 50));
-      expect(state().preview!.blocks.single.text, 'Catatan satu');
-      expect(state().preview!.blocks.single.sources, isEmpty);
-      expect(state().preview!.blocks.single.kind, ChatAnswerKind.conversation);
-      // Empty answer frames keep the notes visible until real text arrives.
+      expect(state().preview?.blocks ?? [], isEmpty);
       context.prepared.last.frames.add(const ChatStreamFrame('{'));
       pump(time);
       time.elapse(const Duration(milliseconds: 50));
-      expect(state().preview!.blocks.single.text, 'Catatan satu');
+      expect(state().preview?.blocks ?? [], isEmpty);
       context.prepared.last.frames.add(
         ChatStreamFrame(
           '{"parts":[{"text":"Jawaban',

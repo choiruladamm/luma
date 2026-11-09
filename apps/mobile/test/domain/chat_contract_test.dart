@@ -122,6 +122,40 @@ void main() {
         paragraphs: paragraphs,
       );
 
+  test(
+    'older questions stay as intent context when their answers do not fit',
+    () {
+      final big = 'x' * 17000;
+      final turns = [
+        turn(id: 1, sequence: 1, question: 'Pertanyaan pertama gue'),
+        turn(
+          id: 2,
+          sequence: 2,
+          question: 'Pertanyaan gagal',
+          phase: ChatPhase.failed,
+        ),
+        turn(
+          id: 3,
+          sequence: 3,
+          question: 'Pertanyaan besar',
+          reply: answer(text: big),
+        ),
+        turn(id: 4, sequence: 4, question: 'Pertanyaan terbaru'),
+      ];
+      final data = jsonDecode(prompt(history: turns).user) as Map;
+      final history = data['history'] as List;
+      final earlier = data['earlierQuestions'] as List;
+      // Jawaban besar tidak mengosongkan konteks terbaru, dan pertanyaan
+      // gagal/lama tetap tercatat sebagai maksud (bukan fakta).
+      expect((history.last as Map)['question'], 'Pertanyaan terbaru');
+      expect(earlier, contains('Pertanyaan gagal'));
+      expect([
+        ...history.map((h) => (h as Map)['question']),
+        ...earlier,
+      ], containsAll(['Pertanyaan pertama gue', 'Pertanyaan besar']));
+    },
+  );
+
   test('anchors enforce book/revision/hash, range and UTF-16 boundaries', () {
     anchor().validate(paragraph, book);
     anchor(start: 1, end: 3, snapshot: '😀').validate(paragraph, book);
@@ -214,7 +248,7 @@ void main() {
     expect(result.blocks.map((b) => b.kind), ChatAnswerKind.values);
     expect(identical(result.blocks.first.sources.single, s), isTrue);
     expect(result.note, isEmpty);
-    expect(chatPromptVersion, 6);
+    expect(chatPromptVersion, 8);
   });
 
   test('layout is optional, unknown values read as paragraph and quote needs a book part', () {
@@ -381,6 +415,46 @@ void main() {
     },
   );
 
+  test('long session: correction stays last, order is chronological, other sessions and books never leak', () {
+    final turns = [
+      for (var i = 1; i <= 12; i++)
+        turn(
+          id: i,
+          sequence: i,
+          question: i == 9
+              ? 'Koreksi: maksud gue bab 3, bukan bab 2'
+              : 'Tanya $i',
+          reply: answer(text: 'Jawab $i'),
+        ),
+      turn(id: 20, sequence: 5, sessionId: 99, question: 'Sesi lain'),
+      turn(id: 21, sequence: 5, owner: foreign, question: 'Buku lain'),
+      turn(id: 22, sequence: 5, owner: changed, question: 'Revisi lain'),
+      turn(
+        id: 23,
+        sequence: 6,
+        phase: ChatPhase.stopped,
+        question: 'Dihentikan sebelum jawab',
+      ),
+    ];
+    final data = jsonDecode(prompt(history: turns).user) as Map;
+    final asked = [
+      ...((data['earlierQuestions'] as List?) ?? const []),
+      ...(data['history'] as List).map((h) => (h as Map)['question']),
+    ];
+    expect(asked, isNot(contains('Sesi lain')));
+    expect(asked, isNot(contains('Buku lain')));
+    expect(asked, isNot(contains('Revisi lain')));
+    expect(asked, contains('Dihentikan sebelum jawab'));
+    expect(
+      asked.indexOf('Koreksi: maksud gue bab 3, bukan bab 2'),
+      lessThan(asked.indexOf('Tanya 12')),
+    );
+    expect(
+      (data['history'] as List).map((h) => (h as Map)['question']).last,
+      'Tanya 12',
+    );
+  });
+
   test('history keeps completed conversation but excludes other sessions, nonfinal and later turns', () {
     final built = prompt(
       history: [
@@ -415,6 +489,15 @@ void main() {
       ],
     );
     expect(bounded.historyTurnIds, [2]);
+    final oversized = answer(text: 'x' * (chatHistoryBytes + 1));
+    final withOversizedLatest = prompt(
+      history: [
+        turn(id: 1, sequence: 1),
+        turn(id: 2, sequence: 2, reply: oversized),
+      ],
+    );
+    expect(withOversizedLatest.historyTurnIds, [1, 2]);
+    expect(withOversizedLatest.user, contains('Earlier question'));
     final perClaimCopies = ChatAnswer(
       status: ChatAnswerStatus.answered,
       blocks: [

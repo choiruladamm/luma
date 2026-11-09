@@ -4,7 +4,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import '../../../../domain/chat_steps.dart';
 import '../../../../domain/models/book_chat.dart';
 import '../../../../domain/models/reader_prefs.dart';
 import '../../../core/theme/reader_typography.dart';
@@ -19,7 +18,6 @@ import 'chat_copy.dart';
 import 'chat_response.dart';
 import 'chat_context_card.dart';
 import 'chat_source_label.dart';
-import 'chat_steps_row.dart';
 
 class ChatHistory extends StatefulWidget {
   const ChatHistory({
@@ -29,7 +27,6 @@ class ChatHistory extends StatefulWidget {
     this.anchor,
     this.phase,
     this.preview,
-    this.indexLabel,
     this.onSource,
     this.suspended = false,
     this.selectedSource,
@@ -41,15 +38,8 @@ class ChatHistory extends StatefulWidget {
     this.reserveAnswerSpace = false,
     this.chapterNumbers,
     this.typo,
-    this.steps,
-    this.answerNow,
   });
 
-  /// Langkah AI attempt yang lagi jalan (#153); turn selesai pakai `turn.steps`.
-  final ({ChatAttemptRef attempt, List<ChatStep> steps})? steps;
-
-  /// Jawab sekarang di bawah catatan sementara; null = tidak tersedia.
-  final ({int notes, VoidCallback onPressed})? answerNow;
   final List<ChatTurn> turns;
   final ({int turnId, String sourceId})? selectedSource;
   final EdgeInsets padding;
@@ -64,7 +54,6 @@ class ChatHistory extends StatefulWidget {
   final ChatScrollAnchor? anchor;
   final ChatPhase? phase;
   final ({ChatAttemptRef attempt, List<ChatAnswerBlock> blocks})? preview;
-  final String? indexLabel;
   final void Function(ChatTurn, ChatSource)? onSource;
   final ValueChanged<ChatScrollAnchor> onAnchor;
   @override
@@ -83,8 +72,6 @@ class _ChatHistoryState extends State<ChatHistory> {
           ChatPhase phase,
           List<ChatAnswerBlock> blocks,
           String label,
-          List<ChatStep>? steps,
-          bool answerNow,
           Widget child,
         })
       >{};
@@ -260,22 +247,13 @@ class _ChatHistoryState extends State<ChatHistory> {
     final phase = turn.id == widget.turns.last.id
         ? widget.phase ?? turn.phase
         : turn.phase;
-    final label = turn.id == widget.turns.last.id
-        ? widget.indexLabel ?? turn.draftLabel(context.l10n, phase)
-        : turn.draftLabel(context.l10n, phase);
-    final isLast = turn.id == widget.turns.last.id;
-    final steps =
-        turn.steps ??
-        (widget.steps?.attempt == turn.attemptRef ? widget.steps!.steps : null);
-    final answerNow = isLast && phase.isRunning ? widget.answerNow : null;
+    final label = turn.draftLabel(context.l10n, phase);
     final cached = _rendered[turn.id];
     if (cached != null &&
         identical(cached.turn, turn) &&
         cached.phase == phase &&
         identical(cached.blocks, blocks) &&
-        cached.label == label &&
-        identical(cached.steps, steps) &&
-        cached.answerNow == (answerNow != null)) {
+        cached.label == label) {
       return cached.child;
     }
     final child = Center(
@@ -328,16 +306,6 @@ class _ChatHistoryState extends State<ChatHistory> {
                     ),
                   ),
                 ),
-                if (steps != null && steps.isNotEmpty)
-                  // Board: 14 dari bubble, 18 ke isi (spacing turn 16).
-                  Transform.translate(
-                    offset: const Offset(0, -2),
-                    child: ChatStepsRow(
-                      key: ValueKey(('steps', turn.attemptRef)),
-                      steps: steps,
-                      running: phase.isRunning,
-                    ),
-                  ),
                 if (blocks.isNotEmpty || phase.isRunning)
                   ChatResponse(
                     key: ValueKey(turn.attemptRef),
@@ -347,19 +315,6 @@ class _ChatHistoryState extends State<ChatHistory> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       spacing: typo.paragraphGap,
                       children: [
-                        if (answer == null &&
-                            (phase == ChatPhase.retrieving ||
-                                phase == ChatPhase.slow) &&
-                            visible.any((b) => b.text.isNotEmpty))
-                          Text(
-                            context.l10n.chatDraftNotes,
-                            style: StabiloType.caption.copyWith(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 0.36,
-                              color: context.stabilo.ink3,
-                            ),
-                          ),
                         if (phase.isRunning &&
                             visible.every((b) => b.text.isEmpty))
                           Row(
@@ -367,10 +322,7 @@ class _ChatHistoryState extends State<ChatHistory> {
                             children: [
                               WritingDots(color: context.stabilo.ink2),
                               Flexible(
-                                child: Text.rich(
-                                  chatLabelSpan(label, context.stabilo.ink2),
-                                  style: StabiloType.caption,
-                                ),
+                                child: Text(label, style: StabiloType.caption),
                               ),
                             ],
                           ),
@@ -400,15 +352,6 @@ class _ChatHistoryState extends State<ChatHistory> {
                       ],
                     ),
                   ),
-                if (answerNow != null &&
-                    (phase == ChatPhase.retrieving || phase == ChatPhase.slow))
-                  Transform.translate(
-                    offset: const Offset(0, -6), // board: 10 dari teks
-                    child: ChatAnswerNow(
-                      notes: answerNow.notes,
-                      onPressed: answerNow.onPressed,
-                    ),
-                  ),
                 if (answer != null &&
                     answer.displayNote(context.l10n).isNotEmpty)
                   Text(
@@ -430,10 +373,7 @@ class _ChatHistoryState extends State<ChatHistory> {
                     !(phase.isRunning && blocks.every((b) => b.text.isEmpty)))
                   Semantics(
                     liveRegion: true,
-                    child: Text.rich(
-                      chatLabelSpan(label, context.stabilo.ink2),
-                      style: StabiloType.caption,
-                    ),
+                    child: Text(label, style: StabiloType.caption),
                   ),
                 if (turn.id == widget.turns.last.id &&
                     widget.lastActions != null)
@@ -449,8 +389,6 @@ class _ChatHistoryState extends State<ChatHistory> {
       phase: phase,
       blocks: blocks,
       label: label,
-      steps: steps,
-      answerNow: answerNow != null,
       child: child,
     );
     return child;

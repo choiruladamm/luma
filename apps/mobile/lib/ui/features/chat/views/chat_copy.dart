@@ -81,26 +81,6 @@ String chatTimeGroup(AppLocalizations l10n, DateTime at, DateTime now) {
   return l10n.chatOlder;
 }
 
-extension ChatIndexCopy on ChatState {
-  String? indexLabel(AppLocalizations l10n) {
-    final examined = explorationProgress;
-    if ((phase == ChatPhase.retrieving || phase == ChatPhase.slow) &&
-        examined != null) {
-      final where = examined.label == null
-          ? l10n.chatCheckingTheBook
-          : l10n.chatReading(examined.label!);
-      return l10n.chatChunks(where, examined.completed, examined.total);
-    }
-    final progress = indexProgress;
-    if ((phase != ChatPhase.retrieving && phase != ChatPhase.slow) ||
-        progress == null ||
-        progress.completed >= progress.total) {
-      return null;
-    }
-    return l10n.chatPreparingTheBookChunks(progress.completed, progress.total);
-  }
-}
-
 extension ChatStepCopy on ChatStep {
   /// Teks baris status saat langkah ini yang lagi jalan ("Lagi baca Book II › IV").
   String statusLabel(AppLocalizations l10n) => switch (kind) {

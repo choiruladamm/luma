@@ -388,6 +388,7 @@ class ChatTurn {
 
 /// chapters = baca bab/bagian yang dirujuk langsung; global = seluruh isi.
 enum ChatSearchStrategy {
+  conversation,
   specific,
   crossChapter,
   global,
