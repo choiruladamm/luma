@@ -1569,6 +1569,7 @@ class PreparedChat {
           chatAnswerMaxTokens,
         );
         var validatedParts = 0;
+        String? finish;
         await for (final delta in _router.chatStream(
           apiKey: _key,
           model: model,
@@ -1577,6 +1578,7 @@ class PreparedChat {
           history: history,
           inputBytes: chatRequestInputBytes,
           onUsage: (usage) => _budget.settle(reservation, usage),
+          onFinish: (r) => finish = r,
           cancel: cancel,
         )) {
           decoder.add(delta);
@@ -1606,14 +1608,19 @@ class PreparedChat {
           if (attempt >= chatMaxRepairs || _budget.expired) rethrow;
           _budget.repairs++;
           onStep?.call(ChatStep.repair(attempt + 1, chatMaxRepairs));
-          reason = e.message;
+          // Terpotong batas token: kirim ulang lebih ringkas, bukan salinan
+          // yang sama yang bakal terpotong lagi.
+          final cut = finish == 'length';
+          reason = cut ? 'Output terpotong batas panjang' : e.message;
           history = [
             {'role': 'assistant', 'content': decoder.raw},
             {
               'role': 'user',
               'content': jsonEncode({
                 'repair': reason,
-                'instruction': 'Output sebelumnya ditolak aplikasi karena alasan di repair. Kirim ulang SELURUH jawaban sebagai satu JSON valid sesuai skema sistem, dengan isi yang sama, perbaiki hanya masalah itu. Semua source_ids harus dari sources.',
+                'instruction': cut
+                    ? 'Output sebelumnya terpotong batas panjang. Kirim ulang SELURUH jawaban sebagai satu JSON valid sesuai skema sistem, lebih ringkas (prioritaskan poin yang ditanyakan, gabungkan bagian), tanpa memotong JSON. Semua source_ids harus dari sources.'
+                    : 'Output sebelumnya ditolak aplikasi karena alasan di repair. Kirim ulang SELURUH jawaban sebagai satu JSON valid sesuai skema sistem, dengan isi yang sama, perbaiki hanya masalah itu. Semua source_ids harus dari sources.',
               }),
             },
           ];

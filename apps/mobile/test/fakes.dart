@@ -192,6 +192,7 @@ class FakeOpenRouter implements OpenRouterService {
     int maxTokens = chatAnswerMaxTokens,
     int inputBytes = chatSelectorBytes,
     void Function(ChatUsage usage)? onUsage,
+    void Function(String reason)? onFinish,
     CancelToken? cancel,
   }) => throw UnimplementedError('Use the fake Dio chat transport');
 

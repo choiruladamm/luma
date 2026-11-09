@@ -55,6 +55,8 @@ class ChatAdapter implements HttpClientAdapter {
   bool modelsFail = false;
   bool longNotesOnce = false;
   int selections = 0;
+  bool cutAnswerOnce = false;
+  int answerCalls = 0;
   final overviewSystems = <bool>[];
   bool alwaysBadBatch = false;
   List<int> chapterIds = const [];
@@ -194,6 +196,17 @@ class ChatAdapter implements HttpClientAdapter {
           },
         ],
       });
+    }
+    if (cutAnswerOnce &&
+        system == chatAnswerSystemPrompt &&
+        ++answerCalls == 1) {
+      final runes = raw.runes.toList();
+      return sse([
+        for (final rune in runes.take(runes.length ~/ 2))
+          event(String.fromCharCode(rune)),
+        'data: {"choices":[{"delta":{},"finish_reason":"length"}]}\n\n',
+        'data: [DONE]\n\n',
+      ]);
     }
     return sse([
       for (final rune in raw.runes) event(String.fromCharCode(rune)),
@@ -623,6 +636,28 @@ void main() {
       expect(adapter.selections, 0);
       expect(adapter.batches, isEmpty);
       expect(context.fullCorpusLoads, 0);
+    },
+  );
+
+  test(
+    'answer cut by the token limit is resent shorter, not as a copy',
+    () async {
+      adapter.strategy = 'conversation';
+      adapter.cutAnswerOnce = true;
+      final prepared = (await context.prepare(turn))!;
+      final frames = await prepared.stream().toList();
+      expect(frames.last.answer, isNotNull);
+      final answerRequests = adapter.requests
+          .where((r) => r.path != '/embeddings')
+          .where(
+            (r) =>
+                jsonEncode((r.data as Map)['messages']).contains('terpotong'),
+          );
+      expect(answerRequests, hasLength(1));
+      expect(
+        frames.any((f) => f.repairReason == 'Output terpotong batas panjang'),
+        isTrue,
+      );
     },
   );
 
