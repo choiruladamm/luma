@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:drift/drift.dart';
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/chat_steps.dart';
@@ -32,6 +33,10 @@ const chatMaxRepairs = 2;
 
 /// Each send reads credentials afresh. Document vectors survive in the local DB.
 class ChatContextRepository {
+  /// Berapa kali seluruh buku dimuat; fast path percakapan harus 0.
+  @visibleForTesting
+  int fullCorpusLoads = 0;
+
   ChatContextRepository(
     this._db,
     this._chat,
@@ -97,6 +102,76 @@ class ChatContextRepository {
   /// never sends an answer. Caller owns checkpoint/finalize and stop lifecycle.
   /// [readingChapterId] = bab yang sedang dibaca saat masuk chat, hanya untuk
   /// menyelesaikan rujukan "bab ini"/"bab III"; bukan sumber fakta.
+  Future<Map<int, int>> _chapterChars(int bookId) async {
+    final sum = _db.paragraphs.content.length.sum();
+    final q =
+        _db.selectOnly(_db.paragraphs).join([
+            innerJoin(
+              _db.chapters,
+              _db.chapters.id.equalsExp(_db.paragraphs.chapterId),
+            ),
+          ])
+          ..addColumns([_db.paragraphs.chapterId, sum])
+          ..where(_db.chapters.bookId.equals(bookId))
+          ..groupBy([_db.paragraphs.chapterId]);
+    return {
+      for (final r in await q.get())
+        r.read(_db.paragraphs.chapterId)!: r.read(sum) ?? 0,
+    };
+  }
+
+  /// Paragraf + chunk + window buku; [chapterIds] null = seluruh buku.
+  Future<
+    ({
+      List<ChatSource> chunks,
+      List<ChatSource> windows,
+      Map<ChatParagraphRef, ChatParagraph> paragraphs,
+    })
+  >
+  _loadCorpus(int bookId, ChatBookRef book, Set<int>? chapterIds) async {
+    final query =
+        _db.select(_db.paragraphs).join([
+            innerJoin(
+              _db.chapters,
+              _db.chapters.id.equalsExp(_db.paragraphs.chapterId),
+            ),
+          ])
+          ..where(
+            _db.chapters.bookId.equals(bookId) &
+                (chapterIds == null
+                    ? const Constant(true)
+                    : _db.chapters.id.isIn(chapterIds)),
+          )
+          ..orderBy([
+            OrderingTerm.asc(_db.chapters.sortOrder),
+            OrderingTerm.asc(_db.chapters.id),
+            OrderingTerm.asc(_db.paragraphs.paragraphIndex),
+          ]);
+    final indexed = <ChatIndexedParagraph>[];
+    final paragraphs = <ChatParagraphRef, ChatParagraph>{};
+    for (final row in await query.get()) {
+      final p = row.readTable(_db.paragraphs), c = row.readTable(_db.chapters);
+      final ChatParagraph paragraph = (
+        book: book,
+        chapterId: c.id,
+        paragraphIndex: p.paragraphIndex,
+        text: p.content,
+      );
+      paragraphs[(chapterId: c.id, paragraphIndex: p.paragraphIndex)] =
+          paragraph;
+      indexed.add((
+        paragraph: paragraph,
+        chapterTitle: c.title,
+        groupIndex: p.groupIndex,
+      ));
+    }
+    return (
+      chunks: chatChunks(indexed, book),
+      windows: chatGlobalWindows(indexed),
+      paragraphs: paragraphs,
+    );
+  }
+
   Future<PreparedChat?> prepare(
     ChatTurn target, {
     CancelToken? cancel,
@@ -166,40 +241,18 @@ class ChatContextRepository {
                     (c) => OrderingTerm.asc(c.id),
                   ]))
                 .get();
-        final query =
-            _db.select(_db.paragraphs).join([
-                innerJoin(
-                  _db.chapters,
-                  _db.chapters.id.equalsExp(_db.paragraphs.chapterId),
-                ),
-              ])
-              ..where(_db.chapters.bookId.equals(b.id))
-              ..orderBy([
-                OrderingTerm.asc(_db.chapters.sortOrder),
-                OrderingTerm.asc(_db.chapters.id),
-                OrderingTerm.asc(_db.paragraphs.paragraphIndex),
-              ]);
-        final indexed = <ChatIndexedParagraph>[];
-        final paragraphs = <ChatParagraphRef, ChatParagraph>{};
-        final chars = <int, int>{};
-        for (final row in await query.get()) {
-          final p = row.readTable(_db.paragraphs),
-              c = row.readTable(_db.chapters);
-          final ChatParagraph paragraph = (
-            book: session.book,
-            chapterId: c.id,
-            paragraphIndex: p.paragraphIndex,
-            text: p.content,
-          );
-          paragraphs[(chapterId: c.id, paragraphIndex: p.paragraphIndex)] =
-              paragraph;
-          chars[c.id] = (chars[c.id] ?? 0) + p.content.length;
-          indexed.add((
-            paragraph: paragraph,
-            chapterTitle: c.title,
-            groupIndex: p.groupIndex,
-          ));
-        }
+        // Cuma bab yang dirujuk kutipan/history yang dimuat penuh; sisanya
+        // dimuat setelah planner memutuskan perlu baca buku (#195).
+        final scopeIds = <int>{
+          for (final a in turn.quote?.anchors ?? const <SourceAnchor>[])
+            a.chapterId,
+          for (final t in turns)
+            for (final block in t.answer?.blocks ?? const <ChatAnswerBlock>[])
+              for (final src in block.sources)
+                for (final a in src.anchors) a.chapterId,
+        };
+        final corpus = await _loadCorpus(b.id, session.book, scopeIds);
+        final chars = await _chapterChars(b.id);
         final toc = <ChatChapterInfo>[
           for (final c in chapterRows)
             if (chars.containsKey(c.id))
@@ -210,7 +263,8 @@ class ChatContextRepository {
                 chars: chars[c.id]!,
               ),
         ];
-        final chunks = chatChunks(indexed, session.book);
+        final chunks = corpus.chunks;
+        final paragraphs = corpus.paragraphs;
         final quoted = chatQuoteSources(chunks, turn.quote);
         // Validate quote coverage, question, history and actual system budget
         // before any paid request. Final selected sources get the same checks.
@@ -232,7 +286,7 @@ class ChatContextRepository {
           book: b,
           toc: toc,
           chunks: chunks,
-          windows: chatGlobalWindows(indexed),
+          windows: corpus.windows,
           paragraphs: paragraphs,
           history: turns,
           quoted: quoted,
@@ -241,6 +295,33 @@ class ChatContextRepository {
       });
       _check(cancel);
       if (input == null) return null;
+      var corpus = (
+        chunks: input.chunks,
+        windows: input.windows,
+        paragraphs: input.paragraphs,
+      );
+      var quoted = input.quoted;
+      var fullCorpus = false;
+      // Buku dibaca penuh hanya kalau planner butuh cari/baca (#195).
+      Future<void> ensureFull() async {
+        if (fullCorpus) return;
+        fullCorpusLoads++;
+        final loaded = await _db.transaction(() async {
+          final row = await (_db.select(
+            _db.books,
+          )..where((x) => x.id.equals(input.book.id))).getSingleOrNull();
+          if (row == null ||
+              row.contentRevision != target.book.contentRevision) {
+            throw const FormatException('Buku berubah');
+          }
+          return _loadCorpus(input.book.id, input.session.book, null);
+        });
+        _check(cancel);
+        corpus = loaded;
+        quoted = chatQuoteSources(loaded.chunks, input.turn.quote);
+        fullCorpus = true;
+      }
+
       final budget = ChatBudget(
         model: await _modelInfo(input.turn.model, cancel),
         tokens: tokenBudget,
@@ -299,7 +380,7 @@ class ChatContextRepository {
       List<ChatSource> scopedWindows(List<int> ids) {
         final scoped = [
           for (final id in ids)
-            for (final w in input.windows)
+            for (final w in corpus.windows)
               if (w.anchors.first.chapterId == id) w,
         ];
         return [
@@ -313,9 +394,12 @@ class ChatContextRepository {
       }
 
       if (saved != null) {
+        await ensureFull();
         saved.validate(
           input.turn,
-          saved.strategy.reads ? scopedWindows(saved.chapterIds) : input.chunks,
+          saved.strategy.reads
+              ? scopedWindows(saved.chapterIds)
+              : corpus.chunks,
         );
       }
       final rawPlan = saved == null
@@ -358,10 +442,15 @@ class ChatContextRepository {
               clarification:
                   'Maksud lo bab yang di ${ambiguous.join(', ')} yang mana?',
             );
-      var selected = input.quoted;
+      if (!plan.needsClarification &&
+          plan.strategy != ChatSearchStrategy.offTopic &&
+          plan.strategy != ChatSearchStrategy.conversation) {
+        await ensureFull();
+      }
+      var selected = quoted;
       if (plan.strategy == ChatSearchStrategy.conversation) {
         final historyIds = input.preflight.historyTurnIds.toSet();
-        final evidence = <ChatSource>[...input.quoted];
+        final evidence = <ChatSource>[...quoted];
         for (final turn in input.history.reversed) {
           if (!historyIds.contains(turn.id)) continue;
           for (final block in turn.answer!.blocks) {
@@ -477,7 +566,7 @@ class ChatContextRepository {
           for (final (i, w) in windows.indexed) w.anchors.first.chapterId: i,
         };
         final globalQuotes = <ChatSource>[];
-        for (final (i, source) in input.quoted.indexed) {
+        for (final (i, source) in quoted.indexed) {
           final matches = windows.where(
             (w) => _rangeKey(w) == _rangeKey(source),
           );
@@ -807,7 +896,7 @@ class ChatContextRepository {
           !plan.strategy.reads &&
           plan.strategy != ChatSearchStrategy.offTopic &&
           plan.strategy != ChatSearchStrategy.conversation &&
-          input.chunks.isNotEmpty) {
+          corpus.chunks.isNotEmpty) {
         final searched = <String>{...?saved?.searchedQueries};
         // Bab yang boleh jadi kandidat; tersimpan di checkpoint untuk Lanjutkan.
         final allowedChapters = plan.chapterIds.isEmpty
@@ -815,8 +904,8 @@ class ChatContextRepository {
             : plan.chapterIds;
         if (saved != null) {
           selected = _uniqueSources([
-            ...input.quoted,
-            for (final s in input.chunks)
+            ...quoted,
+            for (final s in corpus.chunks)
               if (saved.selectedIds.contains(s.id)) s,
           ]);
         }
@@ -834,10 +923,10 @@ class ChatContextRepository {
           turnId: target.id,
           question: target.question,
           model: target.model,
-          manifest: chatWindowManifest(input.chunks),
+          manifest: chatWindowManifest(corpus.chunks),
           query: plan.englishQuery,
           cursor: 0,
-          total: input.chunks.length,
+          total: corpus.chunks.length,
           notes: [],
           strategy: plan.strategy,
           chapterIds: allowedChapters,
@@ -872,12 +961,12 @@ class ChatContextRepository {
             ChatStep.search(fresh.join(' · '), status: ChatStepStatus.running),
           );
           final rankings = await _rank(
-            input.chunks,
+            corpus.chunks,
             current,
             input.book.parserVersion,
             original,
             fresh,
-            input.quoted,
+            quoted,
             key,
             cancel,
             target,
@@ -888,26 +977,26 @@ class ChatContextRepository {
           // planner membatasi bab isi; index embedding tetap seluruh buku.
           final allowed = allowedChapters.toSet();
           final found = [
-            for (final s in chatFuseRanks(rankings, quoteSources: input.quoted))
+            for (final s in chatFuseRanks(rankings, quoteSources: quoted))
               if (allowed.contains(s.anchors.first.chapterId) ||
-                  input.quoted.contains(s))
+                  quoted.contains(s))
                 s,
           ];
           candidates = _uniqueSources([
-            ...input.quoted,
+            ...quoted,
             ...selected,
             ...found,
             ...candidates,
           ]).take(chatMaxCandidates).toList();
-          validateChatSources(candidates, current, input.paragraphs);
-          final forced = input.quoted.map((s) => s.id).toSet();
+          validateChatSources(candidates, current, corpus.paragraphs);
+          final forced = quoted.map((s) => s.id).toSet();
           final selectorUser = chatRetrievalUser(
             {
               'question': target.question,
               'history': history,
               'searchedQueries': searched.toList(),
-              if (input.quoted.length == 1)
-                'selectedSourceId': candidates.indexOf(input.quoted.single) + 1,
+              if (quoted.length == 1)
+                'selectedSourceId': candidates.indexOf(quoted.single) + 1,
               'selectedSourceIds': [
                 for (final (i, source) in candidates.indexed)
                   if (forced.contains(source.id)) i + 1,
@@ -950,7 +1039,7 @@ class ChatContextRepository {
           // hilang hanya karena query baru tidak menemukan apa pun.
           selected = fitChatSources(
             _uniqueSources([
-              ...parseChatSelection(raw, candidates, input.quoted),
+              ...parseChatSelection(raw, candidates, quoted),
               ...selected,
             ]),
             maxBytes: sourceBudget,
@@ -996,14 +1085,14 @@ class ChatContextRepository {
         // Add adjacent windows after the direct evidence, without losing forced quotes.
         final neighbors = <ChatSource>[];
         for (final source in selected) {
-          final i = input.chunks.indexOf(source);
+          final i = corpus.chunks.indexOf(source);
           for (final j in [i - 1, i + 1]) {
             if (i >= 0 &&
                 j >= 0 &&
-                j < input.chunks.length &&
-                input.chunks[j].anchors.first.chapterId ==
+                j < corpus.chunks.length &&
+                corpus.chunks[j].anchors.first.chapterId ==
                     source.anchors.first.chapterId) {
-              neighbors.add(input.chunks[j]);
+              neighbors.add(corpus.chunks[j]);
             }
           }
         }
@@ -1036,7 +1125,7 @@ class ChatContextRepository {
         beforeSequence: input.turn.sequence,
         history: input.history,
         sources: selected,
-        paragraphs: input.paragraphs,
+        paragraphs: corpus.paragraphs,
         title: input.book.title,
         author: input.book.author,
         quote: quote,
@@ -1091,7 +1180,7 @@ class ChatContextRepository {
         input.turn.model,
         prompt,
         current,
-        input.paragraphs,
+        corpus.paragraphs,
         exploration,
         budget,
         () => !_disposed

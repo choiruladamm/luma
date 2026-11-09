@@ -609,6 +609,7 @@ void main() {
       expect(prepared.prompt.sources.single.text, evidence.text);
       expect(adapter.requests.where((r) => r.path == '/embeddings'), isEmpty);
       expect(adapter.selections, 0);
+      expect(context.fullCorpusLoads, 0);
     },
   );
 
@@ -621,6 +622,7 @@ void main() {
       expect(adapter.requests.where((r) => r.path == '/embeddings'), isEmpty);
       expect(adapter.selections, 0);
       expect(adapter.batches, isEmpty);
+      expect(context.fullCorpusLoads, 0);
     },
   );
 
