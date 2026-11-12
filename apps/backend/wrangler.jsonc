@@ -1,0 +1,59 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // Rencana & aturan free tier: docs/backend.md
+  "name": "luma-backend",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-11-10",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true,
+    "logs": { "enabled": true, "head_sampling_rate": 1 },
+    "traces": { "enabled": true, "head_sampling_rate": 0.01 }
+  },
+  // Binding gak diwarisin antar env: tiap env nulis lengkap.
+  // database_id diisi setelah `wrangler d1 create` (lihat docs/backend.md, Setup & deploy).
+  "env": {
+    "dev": {
+      "name": "luma-backend-dev",
+      "vars": {
+        "ENV": "dev",
+        "SYNC_ENABLED": "true",
+        "BACKUP_ENABLED": "true",
+        "AI_KEY_ENABLED": "true"
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "luma-dev",
+          "database_id": "f37e0e34-a9fe-4617-a077-770cb59bd386",
+          "migrations_dir": "migrations"
+        }
+      ],
+      "r2_buckets": [{ "binding": "BUCKET", "bucket_name": "luma-dev" }],
+      "ratelimits": [
+        { "name": "RATE_LIMITER", "namespace_id": "1001", "simple": { "limit": 60, "period": 60 } }
+      ]
+    },
+    "prod": {
+      "name": "luma-backend",
+      "vars": {
+        "ENV": "prod",
+        "SYNC_ENABLED": "true",
+        "BACKUP_ENABLED": "true",
+        "AI_KEY_ENABLED": "true"
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "luma-prod",
+          "database_id": "00000000-0000-0000-0000-000000000000",
+          "migrations_dir": "migrations"
+        }
+      ],
+      "r2_buckets": [{ "binding": "BUCKET", "bucket_name": "luma-prod" }],
+      "ratelimits": [
+        { "name": "RATE_LIMITER", "namespace_id": "2001", "simple": { "limit": 60, "period": 60 } }
+      ]
+    }
+  }
+}

@@ -49,7 +49,7 @@ flowchart LR
 | File | R2 | Semua key per user: `u/{userId}/...` |
 | Auth | Better Auth + plugin `bearer` | Butuh flag `nodejs_compat` |
 | Tooling | Bun + Wrangler | Bun cuma tooling, runtime tetap Workers |
-| Test | Vitest + plugin Workers (`cloudflareTest()`), MSW | `make backend-test`, lihat [Strategi test](#strategi-test) |
+| Test | Vitest + `@cloudflare/vitest-plugin` (`cloudflareTest()`), MSW lewat `@msw/cloudflare` | `make backend-test`, lihat [Strategi test](#strategi-test) |
 
 Tidak dipakai: Workers Static Assets untuk frontend (app-nya mobile; cuma halaman statis `/privacy` dan hapus akun), AI Gateway (AI tidak lewat backend, lihat [AI](#ai-subsidi--byok)).
 
@@ -387,9 +387,9 @@ apps/backend/
 │       └── *.ts (pure)       # aturan murni (mis. sync/merge.ts), tanpa I/O
 └── test/
     ├── unit/                 # aturan murni
-    ├── integration/          # SELF.fetch per fitur + helper login
+    ├── integration/          # exports.default.fetch per fitur + helper login
     ├── fixtures/contract/    # JSON request/response, dibaca juga oleh test Dart
-    └── setup.ts              # applyD1Migrations, MSW
+    └── setup.ts              # applyD1Migrations, MSW (@msw/cloudflare)
 ```
 
 Lapisan per fitur dan titik test:
@@ -408,7 +408,7 @@ flowchart TB
   CL --> OR[OpenRouter]
   TU["test/unit"] -.-> PURE
   TU -.-> SV
-  TI["test/integration<br/>SELF.fetch + MSW"] -.-> RT
+  TI["test/integration<br/>exports.default.fetch + MSW"] -.-> RT
 ```
 
 Pipeline request (route `/v1/auth/*` milik Better Auth tidak lewat `session`):
@@ -523,12 +523,12 @@ erDiagram
 
 ## Strategi test
 
-Tiap issue backend selesai bawa test-nya di semua lapisan yang disentuh. Integrasi Workers memakai plugin `cloudflareTest()` (Vitest di runtime workerd, D1/R2 lokal Miniflare). `fetchMock` dari `cloudflare:test` sudah dihapus: mock keluar (Google, OpenRouter) lewat **MSW** atau `vi.spyOn(globalThis, "fetch")`.
+Tiap issue backend selesai bawa test-nya di semua lapisan yang disentuh. Integrasi Workers memakai `@cloudflare/vitest-plugin` (`cloudflareTest()`, pengganti `@cloudflare/vitest-pool-workers`; Vitest di runtime workerd, D1/R2/rate limit lokal Miniflare). Request ke Worker lewat `exports.default.fetch` dari `cloudflare:workers` (`SELF` sudah deprecated). `fetchMock` dari `cloudflare:test` sudah dihapus: mock keluar (Google, OpenRouter) lewat **MSW** dengan `@msw/cloudflare` (`msw/node` gak jalan di workerd). `test/setup.ts` memasang handler cadangan: fetch keluar yang gak di-mock dapat 599 `UNMOCKED_FETCH`, jadi subrequest tak terduga ketahuan.
 
 | Lapisan | Alat | Isi | Perintah |
 |---|---|---|---|
 | Unit backend | vitest | Aturan murni: merge sync per kind, retensi backup, hitung limit, nama key R2, crypto | `make backend-test` |
-| Integrasi backend | `SELF.fetch` + D1/R2 lokal, migrasi `applyD1Migrations` | Tiap endpoint lewat app utuh, layanan luar di-mock | `make backend-test` |
+| Integrasi backend | `exports.default.fetch` / `app.request` + D1/R2 lokal, migrasi `applyD1Migrations` | Tiap endpoint lewat app utuh, layanan luar di-mock | `make backend-test` |
 | Kontrak | `test/fixtures/contract/*.json` | Contoh request/response asli, dibaca vitest dan test Dart | dua-duanya |
 | Unit/data Flutter | `flutter test` | Mapping kunci alami, trigger outbox (Drift in-memory), service HTTP pakai adapter `dio` palsu | `make test` |
 | Widget Flutter | `flutter test` | Login, Pengaturan, banner; provider di-override (aturan `CLAUDE.md`) | `make test` |
@@ -577,6 +577,43 @@ gitGraph
 - Build hanya Luma Dev (`make dev`, `make run f=dev`); app Luma tidak tersentuh sampai merge.
 - **Schema Drift**: migrasi backend (#109) selalu memakai nomor setelah `schemaVersion` terbaru di `master`. Kalau `master` naik schema setelah migrasi backend dibuat, nomor dan test migrasinya disesuaikan saat merge `master` → `feat/backend`.
 - `feat/backend` di-merge ke `master` setelah #198–#201 + #109 selesai dan diuji di device.
+
+## Setup & deploy
+
+Sekali per akun Cloudflare (butuh `make backend-install` dulu):
+
+```bash
+cd apps/backend
+bunx wrangler login
+bunx wrangler d1 create luma-dev        # salin database_id ke env.dev di wrangler.jsonc
+bunx wrangler d1 create luma-prod       # → env.prod
+bunx wrangler r2 bucket create luma-dev
+bunx wrangler r2 bucket create luma-prod
+```
+
+Lalu:
+
+1. Isi `database_id` dev/prod di `wrangler.jsonc`, `make backend-types`.
+2. `make backend-migrate e=dev` (setelah ada migrasi, mulai #199).
+3. `make backend-deploy e=dev`. URL per env ada di `backendUrls` (`apps/mobile/lib/data/services/backend_client.dart`).
+4. Cek: `make backend-live` (client Flutter → Worker dev) atau `curl https://luma-backend-dev.choiruladamm.workers.dev/v1/health` → `{"status":"ok","env":"dev"}`. Tepat setelah deploy pertama ke subdomain baru, beberapa request bisa kena error Cloudflare 1104/1042 selama propagasi; hilang sendiri dalam ±1 menit.
+
+**Status resource** (12 November 2026): env dev udah dibuat dan ter-deploy (D1 `luma-dev`, R2 `luma-dev`, `https://luma-backend-dev.choiruladamm.workers.dev`). Env prod (D1/R2 `luma-prod`) dibuat saat backend di-merge ke `master`.
+
+Secret (mulai #199/#200, tiap env): `bunx wrangler secret put <NAMA> --env dev`. Lokal: `apps/backend/.dev.vars` (gitignored). Secret gak pernah ditulis di `wrangler.jsonc`.
+
+Harian:
+
+| Perintah | Fungsi |
+|---|---|
+| `make backend-dev` | Worker lokal env dev di `:8787` (D1/R2 lokal). Dari device: `make run f=dev` dengan `--dart-define=BACKEND_URL=http://<ip-laptop>:8787` |
+| `make backend-test` | Typecheck + vitest (workerd) + coverage ≥ 80% |
+| `make backend-live` | Client Flutter memanggil Worker dev yang ter-deploy (jaringan) |
+| `make backend-types` | Generate ulang tipe `Env` setelah ubah `wrangler.jsonc` |
+| `make backend-migrate e=dev` | Terapkan migrasi D1 remote |
+| `make backend-deploy e=dev` | Deploy; `e=prod` cuma dari `master` |
+
+Ukuran bundle dicek `bunx wrangler deploy --env dev --dry-run --outdir dist` (scaffold #198: 16,5 KiB gzip, batas 3MB).
 
 ## Urutan kerja
 

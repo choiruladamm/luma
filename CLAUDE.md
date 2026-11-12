@@ -25,7 +25,7 @@ Reader buku iOS + Android (EPUB, Markdown; dipakai sendiri, dogfooding): tap par
 
 ## Project
 
-App Flutter di `apps/mobile`, Flutter dikunci lewat `.fvmrc`. Perintah lewat `Makefile` di root (`make help`); di luar itu `fvm flutter` / `fvm dart` dari `apps/mobile`.
+App Flutter di `apps/mobile`, Flutter dikunci lewat `.fvmrc`. Perintah lewat `Makefile` di root (`make help`); di luar itu `fvm flutter` / `fvm dart` dari `apps/mobile`. Backend Worker di `apps/backend` (Bun + Wrangler): `make backend-dev` / `backend-test` / `backend-deploy e=dev`, setup akun di `docs/backend.md` (Setup & deploy).
 
 - Setelah ubah tabel Drift atau model freezed: `make gen`. File `*.g.dart` / `*.freezed.dart` ikut di-commit.
 - Schema Drift: udah ada data di iPhone, jadi tiap ubah tabel wajib naikin `schemaVersion` + langkah di `onUpgrade` + test di `test/data/migration_test.dart` (fixture SQL versi lama, bandingin schema hasil migrasi sama install baru). Data user dipertahankan lewat migrasi, gak pernah lewat hapus app. `drift_dev make-migrations` gak bisa dipakai: kolom `paragraphs.text` bikin kode snapshot-nya gagal compile.
