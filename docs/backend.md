@@ -646,7 +646,8 @@ Ukuran bundle dicek `bunx wrangler deploy --env dev --dry-run --outdir dist` (sc
 ## Urutan kerja
 
 1. Scaffold `apps/backend` ([#198](https://github.com/choiruladamm/luma/issues/198), Hono, Drizzle, D1, R2, env dev/prod, observability, vitest, target Makefile)
-2. Auth ([#199](https://github.com/choiruladamm/luma/issues/199), email dev, Google prod, kode undangan, sesi di Flutter, hapus akun, `/privacy`)
+2. Auth backend + data layer ([#199](https://github.com/choiruladamm/luma/issues/199), email dev, kode undangan, sesi, hapus akun, `/privacy`)
+   - Auth UI + Google ([#211](https://github.com/choiruladamm/luma/issues/211), layar Masuk, akun di Pengaturan, gerbang login wajib; nunggu board desain + OAuth Client ID). Boleh dikerjakan paralel dengan #200–#201.
 3. Key AI ([#200](https://github.com/choiruladamm/luma/issues/200), subsidi + BYOK, guardrail, budget)
 4. Backup cloud ([#201](https://github.com/choiruladamm/luma/issues/201))
 5. Sync push ([#109](https://github.com/choiruladamm/luma/issues/109), migrasi outbox/inbox, push, dump Markdown)
