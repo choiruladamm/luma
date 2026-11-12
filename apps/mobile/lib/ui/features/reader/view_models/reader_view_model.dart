@@ -3,11 +3,11 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../data/repositories/ai_key_repository.dart';
 import '../../../../data/repositories/ai_results_repository.dart';
 import '../../../../data/repositories/book_repository.dart';
 import '../../../../data/repositories/reading_progress_repository.dart';
 import '../../../../data/repositories/settings_repository.dart';
-import '../../../../data/services/api_key_store.dart';
 import '../../../../data/services/openrouter_service.dart';
 import '../../../../domain/ai_prompt.dart';
 import '../../../../domain/models/ai_reply.dart';
@@ -53,7 +53,7 @@ final groupAiProvider = FutureProvider.autoDispose.family<AiReply, GroupRef>((
   // hasilnya tetep disimpen.
   final cache = ref.watch(aiResultsRepositoryProvider);
   final ai = ref.watch(openRouterServiceProvider);
-  final keys = ref.watch(apiKeyStoreProvider);
+  final keys = ref.watch(aiKeyRepositoryProvider);
   final settings = ref.watch(settingsRepositoryProvider);
 
   final cached = await cache.find(group);
@@ -138,7 +138,7 @@ class GroupAiStream extends Notifier<AiStream> {
     // Ambil semua sebelum await.
     final cache = ref.read(aiResultsRepositoryProvider);
     final ai = ref.read(openRouterServiceProvider);
-    final keys = ref.read(apiKeyStoreProvider);
+    final keys = ref.read(aiKeyRepositoryProvider);
     final settings = ref.read(settingsRepositoryProvider);
 
     void emit(AiStream next) {

@@ -18,6 +18,7 @@ import '../../domain/models/book_chat.dart';
 import '../database/app_database.dart';
 import '../services/api_key_store.dart';
 import '../services/openrouter_service.dart';
+import 'ai_key_repository.dart';
 import 'chat_repository.dart';
 import 'chat_index_repository.dart';
 import 'chat_notes_repository.dart';
@@ -1534,7 +1535,7 @@ final chatContextRepositoryProvider = Provider<ChatContextRepository>((ref) {
     ref.watch(appDatabaseProvider),
     ref.watch(chatRepositoryProvider),
     ref.watch(openRouterServiceProvider),
-    ref.watch(apiKeyStoreProvider),
+    ref.watch(aiKeyRepositoryProvider),
   );
   ref.onDispose(repo.dispose);
   return repo;
