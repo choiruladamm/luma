@@ -25,7 +25,7 @@
         {
           "binding": "DB",
           "database_name": "luma-dev",
-          "database_id": "00000000-0000-0000-0000-000000000000",
+          "database_id": "f37e0e34-a9fe-4617-a077-770cb59bd386",
           "migrations_dir": "migrations"
         }
       ],

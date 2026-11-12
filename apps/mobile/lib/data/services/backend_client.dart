@@ -4,11 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'http_client.dart';
 
-/// URL Worker per flavor (docs/backend.md, Lingkungan). `SUBDOMAIN` diganti
-/// subdomain workers.dev akun setelah deploy pertama (`make backend-deploy e=dev`).
+/// URL Worker per flavor (docs/backend.md, Lingkungan). Env prod baru ada
+/// setelah backend di-merge ke master (`make backend-deploy e=prod`).
 const backendUrls = {
-  'dev': 'https://luma-backend-dev.SUBDOMAIN.workers.dev',
-  'prod': 'https://luma-backend.SUBDOMAIN.workers.dev',
+  'dev': 'https://luma-backend-dev.choiruladamm.workers.dev',
+  'prod': 'https://luma-backend.choiruladamm.workers.dev',
 };
 
 /// `--dart-define=BACKEND_URL=http://<ip>:8787` menimpa URL flavor, buat

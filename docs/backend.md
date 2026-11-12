@@ -595,8 +595,10 @@ Lalu:
 
 1. Isi `database_id` dev/prod di `wrangler.jsonc`, `make backend-types`.
 2. `make backend-migrate e=dev` (setelah ada migrasi, mulai #199).
-3. `make backend-deploy e=dev` → catat URL `https://luma-backend-dev.<subdomain>.workers.dev`, ganti `SUBDOMAIN` di `backendUrls` (`apps/mobile/lib/data/services/backend_client.dart`).
-4. Cek: `curl https://luma-backend-dev.<subdomain>.workers.dev/v1/health` → `{"status":"ok","env":"dev"}`.
+3. `make backend-deploy e=dev`. URL per env ada di `backendUrls` (`apps/mobile/lib/data/services/backend_client.dart`).
+4. Cek: `make backend-live` (client Flutter → Worker dev) atau `curl https://luma-backend-dev.choiruladamm.workers.dev/v1/health` → `{"status":"ok","env":"dev"}`. Tepat setelah deploy pertama ke subdomain baru, beberapa request bisa kena error Cloudflare 1104/1042 selama propagasi; hilang sendiri dalam ±1 menit.
+
+**Status resource** (12 November 2026): env dev udah dibuat dan ter-deploy (D1 `luma-dev`, R2 `luma-dev`, `https://luma-backend-dev.choiruladamm.workers.dev`). Env prod (D1/R2 `luma-prod`) dibuat saat backend di-merge ke `master`.
 
 Secret (mulai #199/#200, tiap env): `bunx wrangler secret put <NAMA> --env dev`. Lokal: `apps/backend/.dev.vars` (gitignored). Secret gak pernah ditulis di `wrangler.jsonc`.
 
@@ -606,6 +608,7 @@ Harian:
 |---|---|
 | `make backend-dev` | Worker lokal env dev di `:8787` (D1/R2 lokal). Dari device: `make run f=dev` dengan `--dart-define=BACKEND_URL=http://<ip-laptop>:8787` |
 | `make backend-test` | Typecheck + vitest (workerd) + coverage ≥ 80% |
+| `make backend-live` | Client Flutter memanggil Worker dev yang ter-deploy (jaringan) |
 | `make backend-types` | Generate ulang tipe `Env` setelah ubah `wrangler.jsonc` |
 | `make backend-migrate e=dev` | Terapkan migrasi D1 remote |
 | `make backend-deploy e=dev` | Deploy; `e=prod` cuma dari `master` |
