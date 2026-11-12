@@ -35,6 +35,42 @@
 
 Data tersimpan lokal (SQLite lewat Drift). Yang keluar dari device hanya teks grup yang di-tap, dikirim ke OpenRouter pakai API key sendiri.
 
+## Arsitektur
+
+```mermaid
+flowchart LR
+  subgraph Device["Device iOS / Android"]
+    direction TB
+    App["Luma Flutter<br/>UI → ViewModel → Repository"]
+    Drift[("Drift SQLite<br/>sumber kebenaran")]
+    KC[["Secure storage<br/>token · ai.lumaKey · ai.byokKey"]]
+    App --> Drift
+    App --> KC
+  end
+  subgraph CF["Cloudflare free tier"]
+    direction TB
+    W["Worker Hono /v1"]
+    D1[("D1<br/>akun · ai_keys<br/>user_storage · records")]
+    R2[("R2<br/>u/userId/files<br/>u/userId/backups")]
+    RL["Rate Limiting"]
+    W --> D1
+    W --> R2
+    W --> RL
+  end
+  subgraph EXT["Layanan luar"]
+    direction TB
+    G["Google Sign-In"]
+    OR["OpenRouter<br/>model AI"]
+  end
+  App -- "Bearer: auth · key AI · backup · sync" --> W
+  W -. "verifikasi idToken" .-> G
+  W -- "management key" --> OR
+  App == "AI langsung: key subsidi / BYOK" ==> OR
+  App -. "google_sign_in" .-> G
+```
+
+Detail: [docs/architecture.md](docs/architecture.md) (app) dan [docs/backend.md](docs/backend.md) (backend Cloudflare, diagram alur login, key AI, backup, sync, dan schema D1).
+
 ## Tech stack
 
 Flutter ([FVM](https://fvm.app)) · Riverpod 3 · Drift · go_router · freezed · [OpenRouter](https://openrouter.ai) (model bisa diganti di Pengaturan) · `flutter_secure_storage` untuk API key (tidak ikut backup).

@@ -4,6 +4,42 @@
 
 App tetap **local-first**: Drift di device sumber kebenaran, semua fitur baca/AI/cari jalan tanpa backend. Backend cuma nambah akun, kuota AI subsidi, backup cloud, dan sync antar device.
 
+## Gambaran sistem
+
+Device tetap sumber kebenaran. Worker cuma melayani akun, key AI, backup, dan sync; AI dipanggil langsung dari device ke OpenRouter.
+
+```mermaid
+flowchart LR
+  subgraph Device["Device iOS / Android"]
+    direction TB
+    App["Luma Flutter<br/>UI → ViewModel → Repository"]
+    Drift[("Drift SQLite<br/>sumber kebenaran")]
+    KC[["Secure storage<br/>token · ai.lumaKey · ai.byokKey"]]
+    App --> Drift
+    App --> KC
+  end
+  subgraph CF["Cloudflare free tier"]
+    direction TB
+    W["Worker Hono /v1"]
+    D1[("D1<br/>akun · ai_keys<br/>user_storage · records")]
+    R2[("R2<br/>u/userId/files<br/>u/userId/backups")]
+    RL["Rate Limiting"]
+    W --> D1
+    W --> R2
+    W --> RL
+  end
+  subgraph EXT["Layanan luar"]
+    direction TB
+    G["Google Sign-In"]
+    OR["OpenRouter<br/>model AI"]
+  end
+  App -- "Bearer: auth · key AI · backup · sync" --> W
+  W -. "verifikasi idToken" .-> G
+  W -- "management key" --> OR
+  App == "AI langsung: key subsidi / BYOK" ==> OR
+  App -. "google_sign_in" .-> G
+```
+
 ## Stack
 
 | Layer | Pilihan | Catatan |
@@ -13,7 +49,7 @@ App tetap **local-first**: Drift di device sumber kebenaran, semua fitur baca/AI
 | File | R2 | Semua key per user: `u/{userId}/...` |
 | Auth | Better Auth + plugin `bearer` | Butuh flag `nodejs_compat` |
 | Tooling | Bun + Wrangler | Bun cuma tooling, runtime tetap Workers |
-| Test | `vitest` + `@cloudflare/vitest-pool-workers` | `make backend-test` |
+| Test | Vitest + plugin Workers (`cloudflareTest()`), MSW | `make backend-test`, lihat [Strategi test](#strategi-test) |
 
 Tidak dipakai: Workers Static Assets untuk frontend (app-nya mobile; cuma halaman statis `/privacy` dan hapus akun), AI Gateway (AI tidak lewat backend, lihat [AI](#ai-subsidi--byok)).
 
@@ -78,13 +114,37 @@ Log: `observability.enabled: true` (Workers Logs). Pemulihan D1: Time Travel baw
 
 ## Auth
 
-Better Auth dipasang di Hono (`app.all("/v1/auth/*", ...)`), instance dibuat per request karena binding D1 baru ada di dalam request.
+Better Auth dipasang di Hono (`app.all("/v1/auth/*", ...)`) dengan adapter `@better-auth/drizzle-adapter` (`provider: "sqlite"`, `usePlural: true`), instance dibuat per request karena binding D1 baru ada di dalam request. Schema: `npx auth@latest generate` → `drizzle-kit generate` → `wrangler d1 migrations apply`.
 
 - **Dev**: email + password, hanya kalau `ENV != prod`. Hash password diganti PBKDF2 lewat `crypto.subtle` (`emailAndPassword.password.hash/verify`); scrypt default terlalu berat untuk CPU 10ms.
 - **Prod**: Google lewat **idToken native** (`google_sign_in`, `serverClientId` = web client ID). Server: `socialProviders.google.clientId` berupa array web/iOS/Android. Tanpa redirect OAuth di mobile.
 - **Sign in with Apple**: wajib (App Store 4.8) kalau masuk App Store sambil nawarin Google; polanya sama (idToken). Ditunda sampai rilis App Store.
 - **Gerbang beta**: kode undangan (`databaseHooks.user.create.before`). Dicabut saat pricing siap.
 - **Flutter**: tanpa SDK resmi; panggil REST langsung lewat `dio` (`/sign-in/email`, `/sign-up/email`, `/sign-in/social` dengan `{provider: "google", idToken: {token}}`). Token dari header `set-auth-token` disimpan di `flutter_secure_storage`, dikirim sebagai `Authorization: Bearer`.
+
+Alur login Google (prod):
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor U as User
+  participant A as App Flutter
+  participant G as Google SDK
+  participant W as Worker /v1/auth
+  participant D as D1
+  U->>A: Tap "Masuk pakai Google"
+  A->>G: google_sign_in (serverClientId = web)
+  G-->>A: idToken
+  A->>W: POST /v1/auth/sign-in/social {provider, idToken}
+  W->>W: verifikasi idToken (aud = client ID web/iOS/Android)
+  W->>D: user baru → cek kode undangan · upsert user + account · buat session
+  W-->>A: 200 + header set-auth-token
+  A->>A: simpan token di secure storage
+  Note over A,W: request berikutnya pakai Authorization: Bearer token
+  alt akun beda dari akun terakhir di device
+    A->>U: konfirmasi "Data di HP ini bakal dihapus dulu"
+  end
+```
 
 ### Sesi & akun
 
@@ -106,6 +166,40 @@ key = ai.byokKey ?? ai.lumaKey
 - **BYOK**: user isi key OpenRouter sendiri (field paste yang sudah ada). Kalau diisi, menang; dikosongkan → balik ke subsidi. Belum login → BYOK seperti sekarang.
 - API key (subsidi maupun BYOK) tetap hanya di secure storage, tidak ikut backup/sync.
 
+Alur key AI:
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant A as App
+  participant W as Worker /v1/ai
+  participant D as D1
+  participant O as OpenRouter
+  alt ai.byokKey diisi
+    A->>O: chat/completions pakai key user
+  else ai.lumaKey sudah ada
+    A->>O: chat/completions pakai key subsidi
+  else belum punya key subsidi
+    A->>W: POST /v1/ai/key
+    W->>D: cari ai_keys user
+    opt belum ada / kedaluwarsa
+      W->>O: POST /keys (limit 0.02 daily, expires 30 hari, workspace luma-subsidi)
+      O-->>W: key + hash
+      W->>D: simpan key_enc (AES-GCM)
+    end
+    W-->>A: key
+    A->>A: simpan ai.lumaKey
+    A->>O: chat/completions pakai key subsidi
+  end
+  O-->>A: stream jawaban
+  opt 402 kuota subsidi habis
+    A->>A: "Kuota gratis lagi abis, pakai key sendiri dulu yuk"
+  end
+  opt 401 key subsidi ditolak
+    A->>W: POST /v1/ai/key (rotasi, sekali)
+  end
+```
+
 ### Endpoint
 
 | Endpoint | Fungsi |
@@ -114,7 +208,7 @@ key = ai.byokKey ?? ai.lumaKey
 | `GET /v1/ai/usage` | Usage + limit dari OpenRouter (`GET /keys/{hash}`) untuk "Sisa kuota" |
 | `GET /v1/ai/config` | Daftar model yang diizinkan untuk mode subsidi |
 
-D1: `ai_keys(user_id unique, key_hash, key_enc, limit, expires_at)`. Key disimpan terenkripsi AES-GCM (kunci di secret Worker) karena OpenRouter cuma memberi teks key sekali saat dibuat.
+D1: `ai_keys(user_id unique, key_hash, key_enc, limit_usd, expires_at)`. Key disimpan terenkripsi AES-GCM (kunci di secret Worker) karena OpenRouter cuma memberi teks key sekali saat dibuat.
 
 ### Batas & pengaman
 
@@ -145,11 +239,37 @@ Zip penuh tidak di-upload (bisa ratusan MB, lewat batas body 100MB). Isinya dipi
 
 | Endpoint | Fungsi |
 |---|---|
-| `POST /v1/files/missing` | `{names}` → `{missing}` |
+| `POST /v1/files/missing` | `{names}` → `{missing}`, lewat satu `R2.list` prefix (bukan HEAD per file, batas 50 subrequest) |
 | `PUT /v1/files/:name` | Body di-stream ke R2, maks 100MB |
 | `PUT /v1/backups` | Zip kecil, `customMetadata` dari manifest; hapus snapshot lama di luar 10 terakhir |
 | `GET /v1/backups` | List lewat `R2.list({prefix, include: ["customMetadata"]})`, tanpa tabel D1 |
 | `GET /v1/backups/:ts` | Download |
+
+Alur backup:
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant A as App
+  participant W as Worker /v1
+  participant D as D1
+  participant R as R2
+  Note over A: pemicu: buka/resume (login, > 24 jam) atau tombol manual
+  A->>A: VACUUM INTO snapshot + manifest → zip kecil
+  A->>W: POST /v1/files/missing {names}
+  W->>R: list prefix u/userId/files/ (satu subrequest)
+  W-->>A: {missing}
+  loop tiap file yang belum ada
+    A->>W: PUT /v1/files/:name (stream)
+    W->>D: cek + tambah user_storage.bytes (lewat kuota → 413)
+    W->>R: put u/userId/files/name
+  end
+  A->>W: PUT /v1/backups (zip DB)
+  W->>R: put u/userId/backups/ts.zip + customMetadata
+  W->>R: hapus snapshot di luar 10 terakhir
+  W-->>A: 200
+  A->>A: lastBackupAt = sekarang
+```
 
 - **Pemicu**: otomatis saat app dibuka/resume kalau login dan backup cloud terakhir > 24 jam (diam-diam, gagal = coba lagi resume berikutnya) + tombol "Backup ke cloud" di Pengaturan (sheet progres + toast yang sama). Sukses mengisi `lastBackupAt`, jadi banner pengingat ikut tenang.
 - **Retensi**: 10 snapshot terakhir, dihapus di request `PUT` yang sama (bukan lifecycle rule umur, supaya jeda lama tidak menghapus semuanya).
@@ -205,6 +325,33 @@ Client (butuh migrasi Drift: tabel baru + trigger, tanpa ubah kolom tabel lama):
 - Pull: kunci alami → ID lokal → terapkan, trigger dimatikan selama pull supaya tidak di-push balik.
 - `sync_inbox`: record yang belum bisa diterapkan (buku belum ter-download, `parserVersion` beda, atau `schemaVersion` record lebih baru dari app) → dicoba lagi setelah import / update app.
 
+Alur push/pull:
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant DB as Drift
+  participant OB as sync_outbox
+  participant S as Sync service
+  participant W as Worker /v1/sync
+  participant D as D1 records
+  DB->>OB: trigger insert/update/delete (PK kind, key)
+  Note over S: pemicu: resume (min 5 menit) / debounce 60 detik
+  S->>OB: ambil maks 500
+  S->>S: ID lokal → kunci alami
+  S->>W: POST /v1/sync/push {schemaVersion, records}
+  W->>D: db.batch: upsert sesuai aturan merge + seq++
+  W-->>S: 200 {seq}
+  S->>OB: hapus yang terkirim
+  S->>W: GET /v1/sync/pull?since=seq
+  W->>D: SELECT seq > since
+  W-->>S: records
+  S->>DB: trigger mati · kunci alami → ID lokal · terapkan
+  alt buku belum ada / parserVersion beda / schemaVersion lebih baru
+    S->>S: simpan di sync_inbox, coba lagi setelah import / update app
+  end
+```
+
 ### File buku
 
 - Folder `u/{userId}/files/` yang sama dengan backup cloud.
@@ -218,6 +365,218 @@ Route di bawah `/v1`. Push membawa `schemaVersion`; pull menahan record dengan v
 ### Ditolak
 
 PowerSync / ElectricSQL / Turso (di luar Cloudflare, mengganti fondasi Drift), CRDT (berlebihan untuk satu user beberapa device), sync = restore snapshot terbaru (perubahan device lain hilang).
+
+## Arsitektur kode
+
+```
+apps/backend/
+├── wrangler.jsonc            # env dev/prod, D1, R2, rate limit, vars
+├── drizzle.config.ts
+├── migrations/               # hasil drizzle-kit; di-apply wrangler dan test
+├── src/
+│   ├── index.ts              # Hono app: middleware + mount route, export default
+│   ├── env.ts                # tipe Bindings (hasil `wrangler types`)
+│   ├── middleware/           # requestId, killSwitch, bodyLimit, session, rateLimit, onError
+│   ├── db/schema.ts          # tabel Drizzle + schema Better Auth hasil generate
+│   ├── lib/                  # crypto (AES-GCM, PBKDF2), errors, helper R2
+│   ├── clients/openrouter.ts # fetch tipis ke OpenRouter (di-mock di test)
+│   └── features/<fitur>/     # auth, account, ai-key, files, backup, sync
+│       ├── routes.ts         # Hono + validator, tanpa logika bisnis
+│       ├── service.ts        # logika bisnis, dependency lewat parameter
+│       ├── repo.ts           # query Drizzle
+│       └── *.ts (pure)       # aturan murni (mis. sync/merge.ts), tanpa I/O
+└── test/
+    ├── unit/                 # aturan murni
+    ├── integration/          # SELF.fetch per fitur + helper login
+    ├── fixtures/contract/    # JSON request/response, dibaca juga oleh test Dart
+    └── setup.ts              # applyD1Migrations, MSW
+```
+
+Lapisan per fitur dan titik test:
+
+```mermaid
+flowchart TB
+  subgraph feature["features/fitur"]
+    RT["routes.ts<br/>Hono + zod, tanpa logika"] --> SV["service.ts<br/>logika bisnis"]
+    SV --> PURE["aturan murni<br/>mis. sync/merge.ts"]
+    SV --> RP["repo.ts<br/>Drizzle"]
+  end
+  SV --> CL["clients/openrouter.ts"]
+  SV --> LIB["lib/: crypto · r2 · errors"]
+  RP --> D1[(D1)]
+  LIB --> R2[(R2)]
+  CL --> OR[OpenRouter]
+  TU["test/unit"] -.-> PURE
+  TU -.-> SV
+  TI["test/integration<br/>SELF.fetch + MSW"] -.-> RT
+```
+
+Pipeline request (route `/v1/auth/*` milik Better Auth tidak lewat `session`):
+
+```mermaid
+flowchart LR
+  R([Request]) --> A[requestId] --> B{killSwitch<br/>fitur nyala?}
+  B -- tidak --> X1[503 + Retry-After]
+  B -- ya --> C{bodyLimit}
+  C -- kebesaran --> X2[413]
+  C -- ok --> D{session<br/>Bearer valid?}
+  D -- tidak --> X3[401]
+  D -- ya --> E{rateLimit}
+  E -- lewat batas --> X4[429 + Retry-After]
+  E -- ok --> F{validator zod}
+  F -- invalid --> X5[400]
+  F -- ok --> H[handler<br/>routes → service → repo]
+  H --> OK([Response])
+  H -. throw .-> ERR[onError<br/>error seragam]
+```
+
+- **Urutan middleware**: `requestId → killSwitch → bodyLimit → session → rateLimit → validator → handler`, `onError` di luar. Saklar darurat jalan sebelum D1/R2 disentuh.
+- **Validasi**: `@hono/zod-validator` + zod di semua input. Error seragam `{"error": {"code", "message"}}`; Flutter memetakan `code` ke enum.
+- **Tanpa OpenAPI / codegen client Dart**: ±15 endpoint, fixture kontrak cukup. Ditinjau ulang kalau frontend web (#208) jalan.
+- **Ukuran script**: Workers free maks 3MB terkompres; dicek lewat `wrangler deploy --dry-run` sejak #198.
+- **`seq` sync per user** di `user_storage.seq`, dinaikkan di `db.batch()` yang sama dengan upsert record (D1 batch atomik).
+- **Alat cek cepat**: Hono CLI (`npx hono request` / `batch`) boleh dipakai untuk eksplorasi; bukti tetap test vitest.
+
+### Konvensi penamaan
+
+| Lapisan | Format | Contoh |
+|---|---|---|
+| Tabel & kolom D1 | `snake_case`, tabel jamak | `users`, `ai_keys`, `user_id`, `expires_at` |
+| Property TypeScript (Drizzle) | `camelCase` | `userId`, `expiresAt` |
+| JSON request/response | `camelCase` | `{"keyHash": "…", "expiresAt": "…"}` |
+| Kode error | `UPPER_SNAKE_CASE` | `QUOTA_EXCEEDED`, `INVALID_INVITE_CODE` |
+| Path URL | huruf kecil, `kebab-case` | `/v1/ai/key`, `/v1/sync/push` |
+| Waktu di JSON | ISO 8601 UTC | `"2026-11-12T15:04:05.123Z"` |
+| Waktu / boolean di D1 | integer (`timestamp_ms` / `boolean` mode Drizzle) | `expires_at = 1794500000000` |
+
+- Mapping `camelCase` ↔ `snake_case` lewat opsi `casing: "snake_case"` di `drizzle()` dan `drizzle.config.ts`; kode tidak menulis nama kolom satu-satu.
+- **Jebakan Better Auth**: schema hasil generate bisa menulis nama kolom eksplisit (`text("emailVerified")`) yang menang atas `casing`. Habis generate, nama kolom diubah ke `snake_case`, property dibiarkan (Better Auth memetakan lewat property). Test integrasi auth membuktikan.
+- JSON `camelCase` karena respons Better Auth sudah `camelCase` dan Dart (`freezed` + `json_serializable`) default `camelCase`, jadi tanpa `@JsonKey(name:)`.
+- Kode error ikut format Better Auth (`INVALID_EMAIL_OR_PASSWORD`), satu pola di client.
+- `records.data` (sync) memakai nama field Dart (`camelCase`), bukan nama kolom SQL Drift.
+
+### Schema D1
+
+Tabel `users`, `sessions`, `accounts`, `verifications` dibuat Better Auth (`npx auth@latest generate`, `usePlural: true`); sisanya milik Luma.
+
+```mermaid
+erDiagram
+  users ||--o{ sessions : punya
+  users ||--o{ accounts : "login lewat"
+  users ||--o| ai_keys : "key subsidi"
+  users ||--|| user_storage : "kuota + seq"
+  users ||--o{ records : "data sync"
+  invite_codes }o--o| users : dipakai
+  users {
+    text id PK
+    text email
+    text name
+    int email_verified
+    int banned
+    int created_at
+    int updated_at
+  }
+  sessions {
+    text id PK
+    text user_id FK
+    text token
+    int expires_at
+  }
+  accounts {
+    text id PK
+    text user_id FK
+    text provider_id
+    text account_id
+  }
+  verifications {
+    text id PK
+    text identifier
+    int expires_at
+  }
+  invite_codes {
+    text code PK
+    text used_by FK
+    int used_at
+  }
+  ai_keys {
+    text user_id PK, FK
+    text key_hash
+    text key_enc
+    real limit_usd
+    int expires_at
+  }
+  user_storage {
+    text user_id PK, FK
+    int bytes
+    int seq
+  }
+  records {
+    text user_id PK, FK
+    text kind PK
+    text key PK
+    text data
+    int updated_at
+    int deleted
+    int seq
+  }
+```
+
+## Strategi test
+
+Tiap issue backend selesai bawa test-nya di semua lapisan yang disentuh. Integrasi Workers memakai plugin `cloudflareTest()` (Vitest di runtime workerd, D1/R2 lokal Miniflare). `fetchMock` dari `cloudflare:test` sudah dihapus: mock keluar (Google, OpenRouter) lewat **MSW** atau `vi.spyOn(globalThis, "fetch")`.
+
+| Lapisan | Alat | Isi | Perintah |
+|---|---|---|---|
+| Unit backend | vitest | Aturan murni: merge sync per kind, retensi backup, hitung limit, nama key R2, crypto | `make backend-test` |
+| Integrasi backend | `SELF.fetch` + D1/R2 lokal, migrasi `applyD1Migrations` | Tiap endpoint lewat app utuh, layanan luar di-mock | `make backend-test` |
+| Kontrak | `test/fixtures/contract/*.json` | Contoh request/response asli, dibaca vitest dan test Dart | dua-duanya |
+| Unit/data Flutter | `flutter test` | Mapping kunci alami, trigger outbox (Drift in-memory), service HTTP pakai adapter `dio` palsu | `make test` |
+| Widget Flutter | `flutter test` | Login, Pengaturan, banner; provider di-override (aturan `CLAUDE.md`) | `make test` |
+| E2E lokal (#109 saja) | test Dart bertag `backend` ke `wrangler dev` | Dua `AppDatabase` in-memory sync lewat Worker lokal; default di-skip | `make backend-e2e` |
+
+**Checklist wajib tiap endpoint** (integrasi):
+
+1. Jalur sukses.
+2. 401 tanpa token / token salah.
+3. 400 / 413 body tidak valid atau kebesaran.
+4. Isolasi user: user A tidak bisa baca/tulis data user B.
+5. Saklar darurat mati → 503, D1/R2 tidak disentuh.
+6. 429 saat kena rate limit.
+7. Anggaran: jumlah query D1 dan subrequest per request ≤ [tabel anggaran](#anggaran-per-aksi) (spy di `env.DB` / `fetch`).
+
+**Coverage**: `@vitest/coverage-istanbul` (V8 tidak didukung di pool Workers), ambang 80% baris untuk `service.ts` dan file aturan murni; `routes.ts` cukup lewat integrasi. CPU 10ms tidak terukur di test: dicek lewat `wrangler dev` dan Workers Logs env dev.
+
+E2E hanya diwajibkan di #109; fase lain cukup unit + integrasi + kontrak + test Flutter.
+
+## Branch & worktree
+
+```mermaid
+%%{init: {'gitGraph': {'mainBranchName': 'master'}}}%%
+gitGraph
+  commit id: "app stabil"
+  branch feat/backend
+  commit id: "docs backend"
+  branch issue-198
+  commit id: "scaffold"
+  checkout feat/backend
+  merge issue-198
+  checkout master
+  commit id: "fix app"
+  checkout feat/backend
+  merge master id: "sinkron master"
+  branch issue-199
+  commit id: "auth"
+  checkout feat/backend
+  merge issue-199
+  checkout master
+  merge feat/backend id: "MVP backend"
+```
+
+- Semua kerja backend di branch **`feat/backend`** (worktree terpisah, dibuat dari `master`). Tiap issue punya branch sendiri dari `feat/backend` dan di-merge ke sana, bukan ke `master`.
+- `master` di-merge ke `feat/backend` tiap mulai issue baru supaya tidak makin jauh.
+- Build hanya Luma Dev (`make dev`, `make run f=dev`); app Luma tidak tersentuh sampai merge.
+- **Schema Drift**: migrasi backend (#109) selalu memakai nomor setelah `schemaVersion` terbaru di `master`. Kalau `master` naik schema setelah migrasi backend dibuat, nomor dan test migrasinya disesuaikan saat merge `master` → `feat/backend`.
+- `feat/backend` di-merge ke `master` setelah #198–#201 + #109 selesai dan diuji di device.
 
 ## Urutan kerja
 

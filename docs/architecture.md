@@ -1,5 +1,41 @@
 # Arsitektur & Alur
 
+## Gambaran sistem
+
+App local-first: Drift di device sumber kebenaran. Backend Cloudflare (akun, key AI, backup cloud, sync) dijelaskan di [backend.md](backend.md).
+
+```mermaid
+flowchart LR
+  subgraph Device["Device iOS / Android"]
+    direction TB
+    App["Luma Flutter<br/>UI → ViewModel → Repository"]
+    Drift[("Drift SQLite<br/>sumber kebenaran")]
+    KC[["Secure storage<br/>token · ai.lumaKey · ai.byokKey"]]
+    App --> Drift
+    App --> KC
+  end
+  subgraph CF["Cloudflare free tier"]
+    direction TB
+    W["Worker Hono /v1"]
+    D1[("D1<br/>akun · ai_keys<br/>user_storage · records")]
+    R2[("R2<br/>u/userId/files<br/>u/userId/backups")]
+    RL["Rate Limiting"]
+    W --> D1
+    W --> R2
+    W --> RL
+  end
+  subgraph EXT["Layanan luar"]
+    direction TB
+    G["Google Sign-In"]
+    OR["OpenRouter<br/>model AI"]
+  end
+  App -- "Bearer: auth · key AI · backup · sync" --> W
+  W -. "verifikasi idToken" .-> G
+  W -- "management key" --> OR
+  App == "AI langsung: key subsidi / BYOK" ==> OR
+  App -. "google_sign_in" .-> G
+```
+
 ## Routing (go_router)
 
 - Shell tab (`StatefulShellRoute.indexedStack`, `AppShell` + `LumaNavBar` melayang, board Komponen · NavBar): `/` → Rak buku, `/discover` → Cari buku ([discover.md](discover.md)), `/settings` → Pengaturan (tab Atur). Bar ke-hide pas keyboard naik; konten tab dapet padding bawah `Layout.navSpace` lewat MediaQuery. Chip "Ngunduh N buku" + lencana di tab Cari buku dari `downloadQueueProvider`. Tap tab aktif lagi = `tabReselectProvider` → layar gulung ke atas.
