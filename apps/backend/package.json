@@ -1,0 +1,30 @@
+{
+  "name": "luma-backend",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --env dev",
+    "types": "wrangler types --env dev",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:cov": "vitest run --coverage",
+    "db:generate": "drizzle-kit generate",
+    "size": "wrangler deploy --env dev --dry-run --outdir dist"
+  },
+  "dependencies": {
+    "@hono/zod-validator": "^0.9.1",
+    "drizzle-orm": "^0.45.4",
+    "hono": "^4.13.18",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-plugin": "^1.8.1",
+    "@msw/cloudflare": "^0.2.0",
+    "@vitest/coverage-istanbul": "^5.1.0",
+    "drizzle-kit": "^0.31.11",
+    "msw": "^3.0.5",
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.0",
+    "wrangler": "^4.161.0"
+  }
+}

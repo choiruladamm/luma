@@ -1,8 +1,9 @@
 APP := apps/mobile
+BACKEND := apps/backend
 FLUTTER := cd $(APP) && fvm flutter
 DART := cd $(APP) && fvm dart
 
-.PHONY: help get l10n gen brand live chat-agent-live chat-spike chat-spike-live chat-oracle-live chat-discussion-live chat-adaptive-live chat-retrieval chat-dense-live chat-dense-replay chat-heldout-live chat-refine-live chat-validation2-live chat-recovery-live chat-validation3-live watch run release dev run-android release-android dev-android apk profile test analyze format check clean
+.PHONY: help get l10n gen brand live chat-agent-live chat-spike chat-spike-live chat-oracle-live chat-discussion-live chat-adaptive-live chat-retrieval chat-dense-live chat-dense-replay chat-heldout-live chat-refine-live chat-validation2-live chat-recovery-live chat-validation3-live watch run release dev run-android release-android dev-android apk profile test analyze format check clean backend-install backend-dev backend-types backend-test backend-migrate backend-deploy
 
 help: ## list commands
 	@grep -E '^[a-z0-9-]+:.*## ' $(MAKEFILE_LIST) | awk -F ':.*## ' '{printf "  %-16s %s\n", $$1, $$2}'
@@ -108,3 +109,24 @@ check: l10n format analyze test ## format, analyze, test
 
 clean: ## flutter clean + pub get
 	$(FLUTTER) clean && fvm flutter pub get
+
+backend-install: ## backend: install deps (bun)
+	cd $(BACKEND) && bun install
+
+backend-dev: ## backend: run Worker locally (env dev, http://<ip>:8787; app: --dart-define=BACKEND_URL=...)
+	cd $(BACKEND) && bunx wrangler dev --env dev --ip 0.0.0.0
+
+backend-types: ## backend: regenerate Env types after editing wrangler.jsonc
+	cd $(BACKEND) && bunx wrangler types --env dev
+
+backend-test: ## backend: typecheck + vitest (workerd) + coverage
+	cd $(BACKEND) && bunx tsc --noEmit && bunx vitest run --coverage
+
+backend-migrate: ## backend: apply D1 migrations remotely (e=dev|prod)
+	@test "$(e)" = dev -o "$(e)" = prod || { echo "pakai e=dev atau e=prod"; exit 1; }
+	cd $(BACKEND) && bunx wrangler d1 migrations apply DB --env $(e) --remote
+
+backend-deploy: ## backend: deploy Worker (e=dev|prod; prod only from master)
+	@test "$(e)" = dev -o "$(e)" = prod || { echo "pakai e=dev atau e=prod"; exit 1; }
+	@if [ "$(e)" = prod ]; then test "$$(git rev-parse --abbrev-ref HEAD)" = master || { echo "backend prod cuma dari master"; exit 1; }; fi
+	cd $(BACKEND) && bunx wrangler deploy --env $(e)
