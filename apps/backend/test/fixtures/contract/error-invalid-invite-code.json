@@ -1,0 +1,12 @@
+{
+  "request": {
+    "method": "POST",
+    "path": "/v1/auth/sign-up/email",
+    "headers": { "x-invite-code": "SALAH" },
+    "body": { "name": "Adam", "email": "baru@luma.test", "password": "rahasia-banget-123" }
+  },
+  "response": {
+    "status": 403,
+    "body": { "error": { "code": "INVALID_INVITE_CODE", "message": "Invite code is invalid or already used" } }
+  }
+}

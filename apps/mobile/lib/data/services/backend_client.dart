@@ -112,16 +112,44 @@ class BackendClient {
   final Future<void> Function(Duration) _sleep;
 
   Future<BackendHealth> health() async {
-    final res = await _send(() => _dio.get<Map<String, Object?>>('/v1/health'));
+    final res = await request('GET', '/v1/health');
     return BackendHealth.fromJson(res.data!);
   }
 
-  Future<Response<T>> _send<T>(Future<Response<T>> Function() request) async {
+  /// Satu panggilan JSON ke Worker. [token] → `Authorization: Bearer`.
+  /// [retry] false untuk aksi yang gak aman diulang (daftar akun): request yang
+  /// putus di tengah bisa aja udah diproses server.
+  Future<Response<Map<String, Object?>>> request(
+    String method,
+    String path, {
+    Object? body,
+    String? token,
+    Map<String, String> headers = const {},
+    bool retry = true,
+  }) => _send(
+    () => _dio.request<Map<String, Object?>>(
+      path,
+      data: body,
+      options: Options(
+        method: method,
+        headers: {
+          ...headers,
+          if (token != null) 'authorization': 'Bearer $token',
+        },
+      ),
+    ),
+    retry: retry,
+  );
+
+  Future<Response<T>> _send<T>(
+    Future<Response<T>> Function() request, {
+    bool retry = true,
+  }) async {
     for (var attempt = 1; ; attempt++) {
       try {
         return await request();
       } on DioException catch (e) {
-        if (attempt >= backendMaxAttempts || !backendShouldRetry(e)) {
+        if (!retry || attempt >= backendMaxAttempts || !backendShouldRetry(e)) {
           throw backendExceptionFrom(e);
         }
         await _sleep(backendBackoff(attempt));

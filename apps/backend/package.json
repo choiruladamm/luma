@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "wrangler dev --env dev",
-    "types": "wrangler types --env dev",
+    "types": "wrangler types --env dev --strict-vars false",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:cov": "vitest run --coverage",
@@ -12,7 +12,9 @@
     "size": "wrangler deploy --env dev --dry-run --outdir dist"
   },
   "dependencies": {
+    "@better-auth/drizzle-adapter": "^1.7.22",
     "@hono/zod-validator": "^0.9.1",
+    "better-auth": "^1.7.22",
     "drizzle-orm": "^0.45.4",
     "hono": "^4.13.18",
     "zod": "^4.6.7"

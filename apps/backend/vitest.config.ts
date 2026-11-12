@@ -7,7 +7,13 @@ export default defineConfig(async () => {
     plugins: [
       cloudflareTest({
         wrangler: { configPath: "./wrangler.jsonc", environment: "dev" },
-        miniflare: { bindings: { TEST_MIGRATIONS: migrations } },
+        miniflare: {
+          bindings: {
+            TEST_MIGRATIONS: migrations,
+            BETTER_AUTH_SECRET: "test-secret-yang-panjangnya-lebih-dari-32-karakter",
+            GOOGLE_CLIENT_SECRET: "",
+          },
+        },
       }),
     ],
     test: {
@@ -15,7 +21,7 @@ export default defineConfig(async () => {
       coverage: {
         provider: "istanbul" as const,
         include: ["src/**/*.ts"],
-        exclude: ["src/index.ts", "src/env.ts", "src/db/schema.ts"],
+        exclude: ["src/index.ts", "src/env.ts", "src/db/schema.ts", "src/db/auth-schema.ts"],
         thresholds: { lines: 80, functions: 80, branches: 80, statements: 80 },
       },
     },

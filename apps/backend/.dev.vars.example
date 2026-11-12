@@ -1,0 +1,4 @@
+# Salin ke .dev.vars (gitignored) untuk `make backend-dev` dan `make backend-types`.
+# Remote: `bunx wrangler secret put <NAMA> --env dev|prod`.
+BETTER_AUTH_SECRET=ganti-dengan-openssl-rand-base64-32
+GOOGLE_CLIENT_SECRET=

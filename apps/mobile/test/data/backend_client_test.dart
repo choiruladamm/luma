@@ -1,59 +1,8 @@
-import 'dart:convert';
-import 'dart:io';
-import 'dart:typed_data';
-
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:luma/data/services/backend_client.dart';
 
-/// Fixture kontrak bersama backend (apps/backend/test/fixtures/contract).
-Map<String, Object?> contract(String name) => jsonDecode(
-  File('../backend/test/fixtures/contract/$name.json').readAsStringSync(),
-) as Map<String, Object?>;
-
-class FakeAdapter implements HttpClientAdapter {
-  final queue = <Object>[];
-  final requests = <RequestOptions>[];
-
-  @override
-  Future<ResponseBody> fetch(
-    RequestOptions options,
-    Stream<Uint8List>? requestStream,
-    Future<void>? cancelFuture,
-  ) async {
-    requests.add(options);
-    final next = queue.removeAt(0);
-    if (next is ResponseBody) return next;
-    if (next is DioExceptionType) {
-      throw DioException(requestOptions: options, type: next);
-    }
-    throw next;
-  }
-
-  @override
-  void close({bool force = false}) {}
-}
-
-ResponseBody json(
-  int status,
-  Object? body, {
-  Map<String, String> headers = const {},
-}) => ResponseBody.fromString(
-  jsonEncode(body),
-  status,
-  headers: {
-    Headers.contentTypeHeader: [Headers.jsonContentType],
-    for (final e in headers.entries) e.key.toLowerCase(): [e.value],
-  },
-);
-
-/// Respons dari fixture kontrak, apa adanya.
-ResponseBody fromContract(Map<String, Object?> fixture) {
-  final res = fixture['response']! as Map<String, Object?>;
-  final headers = (res['headers'] as Map<String, Object?>? ?? {})
-      .cast<String, String>();
-  return json(res['status']! as int, res['body'], headers: headers);
-}
+import '../support/backend_fakes.dart';
 
 void main() {
   late FakeAdapter adapter;
