@@ -1,0 +1,7 @@
+{
+  "request": { "method": "POST", "path": "/v1/ai/key", "headers": { "authorization": "Bearer <token>" }, "body": {} },
+  "response": {
+    "status": 200,
+    "body": { "key": "<token>", "expiresAt": "<iso>", "dailyLimitUsd": 0.02 }
+  }
+}

@@ -7,6 +7,7 @@ import * as schema from "../db/schema";
 import { assignInviteCode, consumeInviteCode, INVITE_HEADER } from "./invite";
 import { hashPassword, verifyPassword } from "./password";
 import { SESSION_EXPIRES_IN_MS, SESSION_UPDATE_AGE_MS } from "./session";
+import { userAdditionalFields } from "./user-fields";
 
 const inviteFrom = (headers: Headers | undefined) => headers?.get(INVITE_HEADER)?.trim() ?? "";
 
@@ -51,6 +52,7 @@ export function createAuth(env: Env) {
     },
     socialProviders: googleProvider(env),
     plugins: [bearer()],
+    user: { additionalFields: userAdditionalFields },
     // Rate limit pakai binding Workers per IP (middleware app), bukan storage Better Auth.
     rateLimit: { enabled: false },
     // Login wajib + offline: sesi panjang, diperpanjang paling sering sekali sehari (1 tulis D1).

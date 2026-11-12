@@ -23,7 +23,14 @@
         "BETTER_AUTH_URL": "https://luma-backend-dev.choiruladamm.workers.dev",
         "INVITE_REQUIRED": "true",
         // Client ID OAuth Google web,ios,android dipisah koma (publik, bukan secret). Kosong = Google mati.
-        "GOOGLE_CLIENT_IDS": ""
+        "GOOGLE_CLIENT_IDS": "",
+        // Kuota AI subsidi (docs/backend.md, AI). Model harus sama dengan guardrail workspace OpenRouter.
+        "AI_DAILY_LIMIT_USD": "0.02",
+        "AI_MONTHLY_BUDGET_USD": "5",
+        "AI_KEY_TTL_DAYS": "30",
+        "OPENROUTER_WORKSPACE_ID": "8cad9ec8-0469-4bb5-912c-8c5411269ae8",
+        "AI_CHAT_MODELS": "deepseek/deepseek-v4.1-flash,qwen/qwen3.8-flash,z-ai/glm-5.3-flash",
+        "AI_EMBEDDING_MODELS": "qwen/qwen3-embedding-8b,openai/text-embedding-3-large"
       },
       "d1_databases": [
         {
@@ -47,7 +54,14 @@
         "AI_KEY_ENABLED": "true",
         "BETTER_AUTH_URL": "https://luma-backend.choiruladamm.workers.dev",
         "INVITE_REQUIRED": "true",
-        "GOOGLE_CLIENT_IDS": ""
+        "GOOGLE_CLIENT_IDS": "",
+        "AI_DAILY_LIMIT_USD": "0.02",
+        "AI_MONTHLY_BUDGET_USD": "5",
+        "AI_KEY_TTL_DAYS": "30",
+        // Workspace luma-subsidi-prod dibuat saat backend masuk master.
+        "OPENROUTER_WORKSPACE_ID": "",
+        "AI_CHAT_MODELS": "deepseek/deepseek-v4.1-flash,qwen/qwen3.8-flash,z-ai/glm-5.3-flash",
+        "AI_EMBEDDING_MODELS": "qwen/qwen3-embedding-8b,openai/text-embedding-3-large"
       },
       "d1_databases": [
         {

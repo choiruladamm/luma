@@ -2,3 +2,5 @@
 # Remote: `bunx wrangler secret put <NAMA> --env dev|prod`.
 BETTER_AUTH_SECRET=ganti-dengan-openssl-rand-base64-32
 GOOGLE_CLIENT_SECRET=
+OPENROUTER_MANAGEMENT_KEY=
+AI_KEY_ENC_SECRET=ganti-dengan-openssl-rand-base64-32

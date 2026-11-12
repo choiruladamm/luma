@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import type { AppEnv } from "./env";
 import { account } from "./features/account/routes";
+import { ai } from "./features/ai-key/routes";
 import { auth } from "./features/auth/routes";
 import { health } from "./features/health/routes";
 import { legal } from "./features/legal/routes";
@@ -17,6 +18,7 @@ app.use("/v1/*", rateLimit(clientIp));
 app.route("/v1/health", health);
 app.route("/v1/auth", auth);
 app.route("/v1/me", account);
+app.route("/v1/ai", ai);
 app.route("/", legal);
 
 app.notFound(() => {

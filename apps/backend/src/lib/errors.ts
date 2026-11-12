@@ -10,6 +10,7 @@ export type ErrorCode =
   | "PAYLOAD_TOO_LARGE"
   | "RATE_LIMITED"
   | "SERVICE_DISABLED"
+  | "AI_BANNED"
   | "INTERNAL_ERROR";
 
 export type ErrorBody = { error: { code: ErrorCode; message: string } };
