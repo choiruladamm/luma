@@ -148,8 +148,13 @@ sequenceDiagram
 
 ### Sesi & akun
 
-- **Sesi kedaluwarsa / 401**: sync, backup cloud, dan pengambilan key AI berhenti diam-diam, muncul banner "Login lagi". Baca, cache, dan BYOK tetap jalan.
-- **Logout**: data lokal tetap.
+**Login wajib** (keputusan 12 November 2026): app tanpa sesi tersimpan membuka layar Masuk dulu (redirect go_router), termasuk install yang sudah punya data. Supaya tetap local-first:
+
+- **Sekali saja**: token sesi di secure storage. Ada token → app langsung terbuka tanpa menunggu backend, offline pun jalan. Gerbang cuma cek "ada token", bukan memanggil server.
+- **Data lama**: data Drift yang sudah ada tidak disentuh; login pertama menjadikannya milik akun itu (ikut sync nanti).
+- **Sesi kedaluwarsa / 401**: tidak mengunci app. Sync, backup cloud, dan pengambilan key AI berhenti diam-diam, muncul banner "Login lagi". Baca, cache, dan BYOK tetap jalan.
+- **Logout**: data lokal tetap, kembali ke layar Masuk.
+- **Risiko App Store 5.1.1**: Apple bisa menolak login wajib untuk app yang fitur intinya tidak berbasis akun. Diterima selama distribusi sideload; ditinjau ulang sebelum submit App Store.
 - **Ganti akun**: login dengan akun yang beda dari akun terakhir di device → konfirmasi "Data di HP ini bakal dihapus dulu", supaya sync tidak mencampur data dua orang.
 - **Hapus akun** (wajib App Store 5.1.1(v) dan Play Store): `DELETE /v1/me` menghapus baris D1 user, semua objek R2 `u/{userId}/`, dan key OpenRouter-nya. Play Store butuh URL web untuk hapus akun → halaman kecil di Worker.
 - **Kebijakan privasi**: halaman statis `/privacy`: data yang disimpan (akun, backup, data sync), teks yang dikirim ke OpenRouter, cara hapus akun.
@@ -162,8 +167,8 @@ AI tetap dipanggil **langsung dari device ke OpenRouter**; `OpenRouterService`, 
 key = ai.byokKey ?? ai.lumaKey
 ```
 
-- **Subsidi (default setelah login)**: backend membuat key OpenRouter per user lewat management key (`POST /api/v1/keys`), dibuat **lazy** saat AI pertama kali dipakai, bukan saat daftar.
-- **BYOK**: user isi key OpenRouter sendiri (field paste yang sudah ada). Kalau diisi, menang; dikosongkan → balik ke subsidi. Belum login → BYOK seperti sekarang.
+- **Subsidi (default)**: backend membuat key OpenRouter per user lewat management key (`POST /api/v1/keys`), dibuat **lazy** saat AI pertama kali dipakai, bukan saat daftar.
+- **BYOK**: user isi key OpenRouter sendiri (field paste yang sudah ada). Kalau diisi, menang; dikosongkan → balik ke subsidi. Key BYOK yang sudah tersimpan sebelum login tetap dipakai setelah login.
 - API key (subsidi maupun BYOK) tetap hanya di secure storage, tidak ikut backup/sync.
 
 Alur key AI:
