@@ -20,7 +20,7 @@ Reader buku iOS + Android (EPUB, Markdown; dipakai sendiri, dogfooding): tap par
   - Import PDF langsung (induk #83): selesai, merged lewat #193. Sisa ditunda di `status:deferred` (#90 password, #91 OCR, #92 rapikan LLM, #93 preview bab, #94 layout kolom/sidebar, rencana di issue itu); Android dan tap Artinya di PDF belum diuji terpisah.
   - Import PDF lewat Markdown: sisa #78 (uji PDF asli).
   - Statistik (induk #42): tampilan #50–#58 nunggu data ngumpul + desain.
-  - Backend Cloudflare (induk #197): #198 scaffold → #199 auth → #200 key AI → #201 backup cloud → #109 sync. Sisa `status:deferred`: #106, #202–#209. Rencana: `docs/backend.md`.
+  - Backend Cloudflare (induk #197): #198 scaffold → #199 auth → #200 key AI → #201 backup cloud → #109 sync push → #210 sync pull. Kerja di branch `feat/backend` (di-push, belum ke `master`), alur per issue: `docs/backend.md` (Alur kerja per issue). Sisa `status:deferred`: #106, #202–#209.
 - Issue / ide / item ditunda baru: bikin issue dengan label status yang cocok, sisipin di induk yang cocok, tambah link `(#N)` di docs-nya.
 
 ## Project

@@ -548,6 +548,16 @@ Tiap issue backend selesai bawa test-nya di semua lapisan yang disentuh. Integra
 
 E2E hanya diwajibkan di #109; fase lain cukup unit + integrasi + kontrak + test Flutter.
 
+## Alur kerja per issue
+
+Tiap issue dikerjakan utuh per fitur (vertical slice), bukan semua backend dulu lalu semua Flutter:
+
+1. **Kontrak dulu**: contoh request/response ditulis di `apps/backend/test/fixtures/contract/` sebelum kode. Backend dan Flutter sama-sama dites terhadap file itu.
+2. **Backend**: endpoint + test (unit, integrasi, kontrak), `make backend-test`, deploy `make backend-deploy e=dev`.
+3. **Flutter**: service → repository / ViewModel → UI, dengan test-nya. UI yang board desainnya belum ada menyusul; backend + service jalan duluan.
+4. **Cek ujung ke ujung**: `make backend-live` + coba di Luma Dev.
+5. **Merge** branch issue ke `feat/backend`, **push** `feat/backend` ke GitHub (backup, tanpa PR ke `master`), tutup issue dengan ringkasan cek yang dijalankan.
+
 ## Branch & worktree
 
 ```mermaid
@@ -576,7 +586,7 @@ gitGraph
 - `master` di-merge ke `feat/backend` tiap mulai issue baru supaya tidak makin jauh.
 - Build hanya Luma Dev (`make dev`, `make run f=dev`); app Luma tidak tersentuh sampai merge.
 - **Schema Drift**: migrasi backend (#109) selalu memakai nomor setelah `schemaVersion` terbaru di `master`. Kalau `master` naik schema setelah migrasi backend dibuat, nomor dan test migrasinya disesuaikan saat merge `master` → `feat/backend`.
-- `feat/backend` di-merge ke `master` setelah #198–#201 + #109 selesai dan diuji di device.
+- `feat/backend` di-merge ke `master` setelah #198–#201, #109, dan #210 selesai dan diuji di device.
 
 ## Setup & deploy
 
@@ -621,7 +631,8 @@ Ukuran bundle dicek `bunx wrangler deploy --env dev --dry-run --outdir dist` (sc
 2. Auth ([#199](https://github.com/choiruladamm/luma/issues/199), email dev, Google prod, kode undangan, sesi di Flutter, hapus akun, `/privacy`)
 3. Key AI ([#200](https://github.com/choiruladamm/luma/issues/200), subsidi + BYOK, guardrail, budget)
 4. Backup cloud ([#201](https://github.com/choiruladamm/luma/issues/201))
-5. Sync ([#109](https://github.com/choiruladamm/luma/issues/109), migrasi outbox/inbox, push/pull, file buku, ganti akun, versi app)
+5. Sync push ([#109](https://github.com/choiruladamm/luma/issues/109), migrasi outbox/inbox, push, dump Markdown)
+6. Sync pull ([#210](https://github.com/choiruladamm/luma/issues/210), pull, inbox, download buku, E2E dua device)
 
 ## Ditunda
 
