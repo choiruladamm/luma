@@ -7,3 +7,5 @@ Contoh request/response asli, dibaca dua sisi:
 
 Format: `{ "request": { "method", "path", "headers"? , "body"? }, "response": { "status", "headers"?, "body" } }`.
 Field dinamis (mis. `requestId`) tidak dimasukkan.
+
+Placeholder `<token>`, `<id>`, `<iso>` = nilai dinamis: test cuma cek tipe/bentuknya (string tidak kosong, ISO 8601), bukan isinya.

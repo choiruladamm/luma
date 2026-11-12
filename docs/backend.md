@@ -92,8 +92,8 @@ Perkiraan untuk satu user aktif per hari. Wajib diperbarui saat implementasi ber
 
 | Aksi | Request Worker | Baris D1 | Operasi R2 |
 |---|---|---|---|
-| Login | 1–2 (jarang) | ±3 tulis | - |
-| Auth per request (cek sesi bearer) | termasuk di request lain | 1 baca | - |
+| Login / daftar (#199) | 1–2, sekali per device | ±3–6 tulis | - |
+| Auth per request (cek sesi bearer, #199) | termasuk di request lain | 1 baca (+1 tulis maks sekali sehari) | - |
 | Key AI (`POST /v1/ai/key`) | 0 (sudah ada key), 1 saat pertama / 401 | 1 baca / 1 tulis | - |
 | Usage/config AI | ≤ 2 (Pengaturan dibuka) | 1 baca | - |
 | Backup otomatis | 2 + jumlah file baru (1×/hari) | - | 1 list + 1–2 tulis + hapus snapshot lama |
@@ -114,13 +114,26 @@ Log: `observability.enabled: true` (Workers Logs). Pemulihan D1: Time Travel baw
 
 ## Auth
 
-Better Auth dipasang di Hono (`app.all("/v1/auth/*", ...)`) dengan adapter `@better-auth/drizzle-adapter` (`provider: "sqlite"`, `usePlural: true`), instance dibuat per request karena binding D1 baru ada di dalam request. Schema: `npx auth@latest generate` → `drizzle-kit generate` → `wrangler d1 migrations apply`.
+Better Auth 1.7 dipasang di Hono (`/v1/auth/*`) dengan adapter `@better-auth/drizzle-adapter` (`provider: "sqlite"`, `usePlural: true`). Schema: `bunx auth@latest generate --config scripts/auth-schema.config.ts --output src/db/auth-schema.ts` (kolom langsung `snake_case`) → `bunx drizzle-kit generate` → `make backend-migrate e=dev`.
 
-- **Dev**: email + password, hanya kalau `ENV != prod`. Hash password diganti PBKDF2 lewat `crypto.subtle` (`emailAndPassword.password.hash/verify`); scrypt default terlalu berat untuk CPU 10ms.
+**CPU** (diukur `wrangler tail` di env dev, 12 November 2026):
+
+| Endpoint | Median | Catatan |
+|---|---|---|
+| `GET /v1/me` (cek sesi) | 2 ms | Jalur panas. Gak lewat Better Auth: `findSessionUser` satu query join `sessions` + `users` |
+| `POST /v1/auth/sign-in/email` | 19 ms | Better Auth + PBKDF2. Sekali per device, masuk toleransi "sesekali lewat" Cloudflare |
+| `POST /v1/auth/sign-up/email` | ±50 ms | Sekali per akun |
+
+- Instance Better Auth mahal dibuat, jadi dipakai ulang per isolate (`getAuth`, kunci objek `env`).
+- **Aturan**: route Luma (`/v1/me`, sync, backup, key AI) cek sesi lewat `requireSession` (D1 langsung), **jangan** `auth.api.getSession`. Better Auth cuma untuk `/v1/auth/*`.
+- Cloudflare memberi tiap isolate toleransi untuk request yang *sesekali* lewat 10 ms; yang *konsisten* lewat dihentikan (error 1102). Login boleh sesekali lewat, jalur panas tidak.
+
+- **Dev**: email + password, hanya kalau `ENV != prod`. Hash password diganti PBKDF2-SHA256 lewat `crypto.subtle` (`emailAndPassword.password.hash/verify`), 20.000 iterasi (±1,5 ms di laptop), iterasi ikut disimpan di hash. Di bawah anjuran OWASP (600.000) karena batas CPU; diterima karena login email cuma ada di dev. Scrypt default Better Auth terlalu berat untuk CPU 10 ms.
 - **Prod**: Google lewat **idToken native** (`google_sign_in`, `serverClientId` = web client ID). Server: `socialProviders.google.clientId` berupa array web/iOS/Android. Tanpa redirect OAuth di mobile.
 - **Sign in with Apple**: wajib (App Store 4.8) kalau masuk App Store sambil nawarin Google; polanya sama (idToken). Ditunda sampai rilis App Store.
-- **Gerbang beta**: kode undangan (`databaseHooks.user.create.before`). Dicabut saat pricing siap.
-- **Flutter**: tanpa SDK resmi; panggil REST langsung lewat `dio` (`/sign-in/email`, `/sign-up/email`, `/sign-in/social` dengan `{provider: "google", idToken: {token}}`). Token dari header `set-auth-token` disimpan di `flutter_secure_storage`, dikirim sebagai `Authorization: Bearer`.
+- **Gerbang beta**: kode undangan lewat header `x-invite-code` saat daftar, dipakai atomik di `databaseHooks.user.create.before` (satu `UPDATE … WHERE used_at IS NULL`), salah/terpakai → 403 `INVALID_INVITE_CODE`. Dimatikan lewat `vars` `INVITE_REQUIRED=false` saat pricing siap. Kode dibuat manual: `bunx wrangler d1 execute DB --env dev --remote --command "INSERT INTO invite_codes (code) VALUES ('BETA-XXXX')"`.
+- **Google**: aktif kalau `vars` `GOOGLE_CLIENT_IDS` (web,ios,android, dipisah koma) diisi; secret `GOOGLE_CLIENT_SECRET`. Belum diisi (menunggu OAuth client ID).
+- **Flutter**: tanpa SDK resmi; panggil REST langsung lewat `dio` (`/sign-in/email`, `/sign-up/email`, `/sign-in/social` dengan `{provider: "google", idToken: {token}}`). Token dari header `set-auth-token` (bentuk `<token>.<signature>`) disimpan di `flutter_secure_storage`, dikirim sebagai `Authorization: Bearer`. Error Better Auth `{code, message}` dibungkus server jadi format seragam `{error: {code, message}}`.
 
 Alur login Google (prod):
 
@@ -615,7 +628,7 @@ Lalu:
 
 **Status resource** (12 November 2026): env dev udah dibuat dan ter-deploy (D1 `luma-dev`, R2 `luma-dev`, `https://luma-backend-dev.choiruladamm.workers.dev`). Env prod (D1/R2 `luma-prod`) dibuat saat backend di-merge ke `master`.
 
-Secret (mulai #199/#200, tiap env): `bunx wrangler secret put <NAMA> --env dev`. Lokal: `apps/backend/.dev.vars` (gitignored). Secret gak pernah ditulis di `wrangler.jsonc`.
+Secret (tiap env): `bunx wrangler secret put <NAMA> --env dev`. Lokal: salin `apps/backend/.dev.vars.example` ke `.dev.vars` (gitignored). Secret gak pernah ditulis di `wrangler.jsonc`. Dibutuhkan: `BETTER_AUTH_SECRET` (`openssl rand -base64 32`; dev udah diisi), `GOOGLE_CLIENT_SECRET` (#199, Google).
 
 Harian:
 

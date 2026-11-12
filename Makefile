@@ -117,7 +117,7 @@ backend-dev: ## backend: run Worker locally (env dev, http://<ip>:8787; app: --d
 	cd $(BACKEND) && bunx wrangler dev --env dev --ip 0.0.0.0
 
 backend-types: ## backend: regenerate Env types after editing wrangler.jsonc
-	cd $(BACKEND) && bunx wrangler types --env dev
+	cd $(BACKEND) && bunx wrangler types --env dev --strict-vars false
 
 backend-test: ## backend: typecheck + vitest (workerd) + coverage
 	cd $(BACKEND) && bunx tsc --noEmit && bunx vitest run --coverage

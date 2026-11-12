@@ -19,7 +19,11 @@
         "ENV": "dev",
         "SYNC_ENABLED": "true",
         "BACKUP_ENABLED": "true",
-        "AI_KEY_ENABLED": "true"
+        "AI_KEY_ENABLED": "true",
+        "BETTER_AUTH_URL": "https://luma-backend-dev.choiruladamm.workers.dev",
+        "INVITE_REQUIRED": "true",
+        // Client ID OAuth Google web,ios,android dipisah koma (publik, bukan secret). Kosong = Google mati.
+        "GOOGLE_CLIENT_IDS": ""
       },
       "d1_databases": [
         {
@@ -40,7 +44,10 @@
         "ENV": "prod",
         "SYNC_ENABLED": "true",
         "BACKUP_ENABLED": "true",
-        "AI_KEY_ENABLED": "true"
+        "AI_KEY_ENABLED": "true",
+        "BETTER_AUTH_URL": "https://luma-backend.choiruladamm.workers.dev",
+        "INVITE_REQUIRED": "true",
+        "GOOGLE_CLIENT_IDS": ""
       },
       "d1_databases": [
         {
