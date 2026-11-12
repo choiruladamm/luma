@@ -20,6 +20,7 @@ Reader buku iOS + Android (EPUB, Markdown; dipakai sendiri, dogfooding): tap par
   - Import PDF langsung (induk #83): selesai, merged lewat #193. Sisa ditunda di `status:deferred` (#90 password, #91 OCR, #92 rapikan LLM, #93 preview bab, #94 layout kolom/sidebar, rencana di issue itu); Android dan tap Artinya di PDF belum diuji terpisah.
   - Import PDF lewat Markdown: sisa #78 (uji PDF asli).
   - Statistik (induk #42): tampilan #50–#58 nunggu data ngumpul + desain.
+  - Backend Cloudflare (induk #197): #198 scaffold → #199 auth → #200 key AI → #201 backup cloud → #109 sync. Sisa `status:deferred`: #106, #202–#209. Rencana: `docs/backend.md`.
 - Issue / ide / item ditunda baru: bikin issue dengan label status yang cocok, sisipin di induk yang cocok, tambah link `(#N)` di docs-nya.
 
 ## Project
@@ -114,6 +115,7 @@ Integration test di luar scope MVP.
 - Parsing EPUB dan zip backup jalan di isolate.
 - Index Cari kata (`paragraph_fts`, FTS5 external-content) nempel ke rowid `paragraphs` dan dijaga trigger. Jangan nulis ke `paragraphs` dengan trigger dimatiin, dan habis `VACUUM` / ganti file DB wajib `rebuildBookSearchIndex()` (restore udah). Detail: `docs/book-search.md`.
 - Model LLM dibaca dari Pengaturan, reasoning dimatikan, output JSON divalidasi (`docs/llm.md`).
+- Backend (`apps/backend`) dan kode client yang memanggilnya wajib muat free tier Cloudflare: tanpa polling, debounce/batch, retry terbatas, stream file. Tiap perubahan pemanggilan backend perbarui tabel anggaran di `docs/backend.md` (Aturan free tier).
 
 ## Copy
 

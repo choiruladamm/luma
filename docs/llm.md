@@ -24,7 +24,7 @@ Estimasi: ~800 token input + ~400 token output per tap → dengan GLM 5.3 Flash 
 - **Validasi** `translations.length` = jumlah paragraf grup. Kalau tidak cocok, retry sekali; kalau masih gagal, tampilkan state error.
 - Timeout request ±30 detik → state error ("Yah, gagal nih"). Jalur streaming: dua tingkat, 15 detik tanpa token = "Agak lama nih..." (request tetep jalan), 30 detik = error; token berhenti 20 detik di tengah = kepotong.
 - API key belum diisi → jangan panggil API, tampilkan state "API key belum diisi" dengan tombol ke Pengaturan.
-- Untuk MVP pribadi, API key disimpan lokal di `flutter_secure_storage`. Kalau mau rilis, wajib lewat backend proxy.
+- Untuk MVP pribadi, API key disimpan lokal di `flutter_secure_storage`. Rencana rilis: key subsidi per user dari backend + BYOK, tanpa proxy ([backend.md](backend.md), #200).
 - Atur preferensi provider di OpenRouter kalau ingin menghindari provider yang memakai data untuk training.
 
 **Implementasi** (`OpenRouterService`):
