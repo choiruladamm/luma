@@ -12,10 +12,13 @@ import '../../domain/chat_retrieval.dart';
 import '../../domain/models/book_chat.dart';
 
 import '../../domain/models/ai_reply.dart';
+import '../repositories/ai_key_repository.dart';
 
 /// OpenRouter (API OpenAI-compatible, docs/llm.md).
 class OpenRouterService {
-  OpenRouterService([Dio? dio])
+  /// [onKeyRejected] dipanggil saat OpenRouter balas 401 untuk sebuah key,
+  /// supaya key subsidi dirotasi di baca berikutnya (docs/backend.md, AI).
+  OpenRouterService([Dio? dio, void Function(String apiKey)? onKeyRejected])
     : _dio =
           dio ??
           Dio(
@@ -25,7 +28,20 @@ class OpenRouterService {
               sendTimeout: _timeout,
               receiveTimeout: _timeout,
             ),
-          );
+          ) {
+    if (onKeyRejected == null) return;
+    _dio.interceptors.add(
+      InterceptorsWrapper(
+        onError: (e, handler) {
+          final auth = e.requestOptions.headers['Authorization'];
+          if (e.response?.statusCode == 401 && auth is String) {
+            onKeyRejected(auth.replaceFirst('Bearer ', ''));
+          }
+          handler.next(e);
+        },
+      ),
+    );
+  }
 
   final Dio _dio;
   static const _timeout = Duration(seconds: 30);
@@ -409,5 +425,8 @@ class SseDecoder {
 }
 
 final openRouterServiceProvider = Provider<OpenRouterService>(
-  (ref) => OpenRouterService(),
+  (ref) => OpenRouterService(
+    null,
+    (key) => ref.read(aiKeyRepositoryProvider).markRejected(key),
+  ),
 );

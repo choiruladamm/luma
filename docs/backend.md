@@ -94,8 +94,8 @@ Perkiraan untuk satu user aktif per hari. Wajib diperbarui saat implementasi ber
 |---|---|---|---|
 | Login / daftar (#199) | 1–2, sekali per device | ±3–6 tulis | - |
 | Auth per request (cek sesi bearer, #199) | termasuk di request lain | 1 baca (+1 tulis maks sekali sehari) | - |
-| Key AI (`POST /v1/ai/key`) | 0 (sudah ada key), 1 saat pertama / 401 | 1 baca / 1 tulis | - |
-| Usage/config AI | ≤ 2 (Pengaturan dibuka) | 1 baca | - |
+| Key AI (`POST /v1/ai/key`, #200) | 1 per device per 30 hari (+1 setelah 401) | 2 baca (+1 tulis saat bikin/rotasi); subrequest OpenRouter 0 / 1 / 2 | - |
+| Usage/config AI (#200) | ≤ 2 (Pengaturan dibuka; cache usage 1 jam, config 24 jam) | usage 2 baca + 1 subrequest; config 1 baca | - |
 | Backup otomatis | 2 + jumlah file baru (1×/hari) | - | 1 list + 1–2 tulis + hapus snapshot lama |
 | Sync (resume + debounce) | ±10–30 | ±50–300 tulis, ±100–500 baca | - |
 | Download buku di device baru | 1 per buku (sekali) | - | 1 baca per buku |
@@ -226,7 +226,9 @@ sequenceDiagram
 | `GET /v1/ai/usage` | Usage + limit dari OpenRouter (`GET /keys/{hash}`) untuk "Sisa kuota" |
 | `GET /v1/ai/config` | Daftar model yang diizinkan untuk mode subsidi |
 
-D1: `ai_keys(user_id unique, key_hash, key_enc, limit_usd, expires_at)`. Key disimpan terenkripsi AES-GCM (kunci di secret Worker) karena OpenRouter cuma memberi teks key sekali saat dibuat.
+D1: `ai_keys(user_id PK, key_hash, key_enc, limit_usd, expires_at, created_at)` + kolom `users.banned` (Better Auth `additionalFields`, `input: false`, `returned: false`). Key disimpan terenkripsi AES-GCM (`v1.<iv>.<ct>`, kunci secret `AI_KEY_ENC_SECRET`) karena OpenRouter cuma memberi teks key sekali saat dibuat. Kunci enkripsi hilang/diganti → key lama gak kebaca → otomatis dirotasi, bukan error.
+
+Aturan `issueKey`: pakai ulang selama masih berlaku (subrequest 0), bikin lazy, rotasi sehari sebelum kedaluwarsa / saat `{"rotate": true}` / saat gak kebaca (hapus lama + bikin baru), limit `vars` berubah → `PATCH` limit key yang ada. Hapus akun mencabut key duluan.
 
 ### Batas & pengaman
 
@@ -242,7 +244,11 @@ Batas terburuk: **biaya subsidi per bulan ≤ min(budget workspace, jumlah user 
 
 Angka di `vars` `wrangler.jsonc` (`AI_DAILY_LIMIT_USD`, `AI_MONTHLY_BUDGET_USD`). Ubah limit → key yang sudah ada di-`PATCH`. Paket berbayar nanti = limit per key lebih besar.
 
-Dicek saat implementasi: `POST /keys` menerima `workspace_id`; budget USD bulanan di guardrail bisa diatur lewat API. Kalau tidak: assign guardrail per key (`POST /guardrails/{id}/assignments/keys`) + saldo terbatas + cron yang mencabut key subsidi saat total bulan ini lewat budget.
+**Spike OpenRouter (12 November 2026, terbukti)**: `POST /keys` menerima `workspace_id`, `limit`, `limit_reset: "daily"`, `expires_at`; respons `{data: {hash, …}, key}`. Workspace `luma-subsidi-dev` (`8cad9ec8-0469-4bb5-912c-8c5411269ae8`) dibuat lewat `POST /workspaces`; **guardrail default workspace** diatur lewat `PATCH /guardrails/{default_guardrail_id}` (nama guardrail default gak bisa diubah) dengan `allowed_models` (3 model chat + 2 embedding) dan `limit_usd: 5`, `reset_interval: "monthly"`. Guardrail default berlaku ke semua key di workspace, jadi gak perlu assign per key. Model di luar allowlist dijawab **404** ("0 endpoints … matching your guardrail restrictions"), bukan 403: client membedakannya dari model yang memang gak ada. OpenRouter menyimpan nama model versi bertanggal (`deepseek/deepseek-v4.1-flash-20260910`); alias tanpa tanggal tetap jalan.
+
+Rahasia: management key OpenRouter (`OPENROUTER_MANAGEMENT_KEY`, gak bisa dipakai inference) + `AI_KEY_ENC_SECRET` per env. `vars`: `AI_DAILY_LIMIT_USD`, `AI_MONTHLY_BUDGET_USD` (cuma catatan; yang menegakkan guardrail), `AI_KEY_TTL_DAYS`, `OPENROUTER_WORKSPACE_ID`, `AI_CHAT_MODELS`, `AI_EMBEDDING_MODELS` (harus sama dengan guardrail).
+
+**CPU** (env dev, 25× per endpoint): `GET /v1/ai/config` median 2 ms, `GET /v1/ai/usage` 4 ms, `POST /v1/ai/key` 5 ms. Lonjakan > 10 ms juga muncul di `/v1/health` (isolate baru), jadi dianggap biaya cold start; endpoint ini jarang dipanggil.
 
 ## Backup cloud
 

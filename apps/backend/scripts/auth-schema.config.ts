@@ -5,10 +5,12 @@ import { drizzleAdapter } from "@better-auth/drizzle-adapter";
 import { betterAuth } from "better-auth";
 import { bearer } from "better-auth/plugins";
 import { drizzle } from "drizzle-orm/d1";
+import { userAdditionalFields } from "../src/auth/user-fields";
 
 export const auth = betterAuth({
   database: drizzleAdapter(drizzle({} as D1Database), { provider: "sqlite", usePlural: true }),
   emailAndPassword: { enabled: true },
   socialProviders: { google: { clientId: "x", clientSecret: "x" } },
   plugins: [bearer()],
+  user: { additionalFields: userAdditionalFields },
 });

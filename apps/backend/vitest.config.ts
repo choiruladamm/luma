@@ -12,6 +12,9 @@ export default defineConfig(async () => {
             TEST_MIGRATIONS: migrations,
             BETTER_AUTH_SECRET: "test-secret-yang-panjangnya-lebih-dari-32-karakter",
             GOOGLE_CLIENT_SECRET: "",
+            OPENROUTER_MANAGEMENT_KEY: "test-management-key",
+            // 32 byte nol, base64: cuma buat test
+            AI_KEY_ENC_SECRET: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
           },
         },
       }),
