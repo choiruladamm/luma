@@ -28,10 +28,10 @@ class _Sync extends Fake implements SyncRepository {
   }
 
   @override
-  Future<int> pushIfDue() async {
-    calls.add('due');
-    return 0;
-  }
+  Future<void> syncIfDue() async => calls.add('due');
+
+  @override
+  Future<void> sync() async => calls.add('sync');
 }
 
 void main() {
@@ -74,7 +74,7 @@ void main() {
     expect(sync.calls, ['push']);
   });
 
-  testWidgets('resume asks for a due push', (tester) async {
+  testWidgets('resume asks for a due sync', (tester) async {
     await pump(tester, AuthStatus.signedIn);
     sync.calls.clear();
 
@@ -92,9 +92,7 @@ void main() {
     expect(sync.calls, ['due']);
   });
 
-  testWidgets('signing in pushes once; signed out never pushes', (
-    tester,
-  ) async {
+  testWidgets('signing in syncs once; signed out never syncs', (tester) async {
     await pump(tester, AuthStatus.signedOut);
     changes.add(null);
     await tester.pump(SyncTrigger.debounce);
@@ -102,6 +100,6 @@ void main() {
 
     auth.set(AuthStatus.signedIn);
     await tester.pump();
-    expect(sync.calls, ['push']);
+    expect(sync.calls, ['sync']);
   });
 }

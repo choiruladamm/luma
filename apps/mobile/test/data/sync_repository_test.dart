@@ -7,6 +7,8 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:luma/data/database/app_database.dart';
 import 'package:luma/data/repositories/auth_repository.dart';
+import 'package:luma/data/repositories/import_repository.dart';
+import 'package:luma/data/repositories/sync_applier.dart';
 import 'package:luma/data/repositories/sync_repository.dart';
 import 'package:luma/data/services/backend_client.dart';
 import 'package:luma/data/services/cloud_backup_service.dart';
@@ -17,14 +19,26 @@ import '../support/backend_fakes.dart';
 
 class _Auth extends Fake implements AuthRepository {
   String? value = 'tok';
+  String user = 'u1';
 
   @override
   Future<String?> token() async => value;
+
+  @override
+  Future<String?> lastUserId() async => user;
 }
 
-/// Worker palsu: `/v1/sync/push` + `/v1/files/*`, simpan semua di memori.
+/// Worker palsu: `/v1/sync/push|pull` + `/v1/files/*`, simpan semua di
+/// memori. Server-nya disederhanakan: record terakhir per kunci menang.
 class _Worker implements HttpClientAdapter {
   final pushes = <Map<String, Object?>>[];
+
+  /// `kind key` → record + `seq`, kayak tabel `records`.
+  final server = <String, Map<String, Object?>>{};
+  var seq = 0;
+
+  /// Cursor `since` tiap pull.
+  final pulls = <int>[];
   final files = <String, Uint8List>{};
   final log = <String>[];
 
@@ -46,8 +60,38 @@ class _Worker implements HttpClientAdapter {
     final path = options.uri.path;
     log.add('${options.method} $path');
     if (queue.isNotEmpty) return queue.removeAt(0);
+    if (path == '/v1/sync/pull') {
+      final since = int.parse(options.uri.queryParameters['since']!);
+      pulls.add(since);
+      final limit = int.parse(options.uri.queryParameters['limit']!);
+      final after =
+          server.values.where((r) => (r['seq']! as int) > since).toList()
+            ..sort((a, b) => (a['seq']! as int).compareTo(b['seq']! as int));
+      final page = after.take(limit).toList();
+      return json(200, {
+        'records': page,
+        'nextSeq': page.isEmpty ? since : page.last['seq'],
+        'more': after.length > limit,
+      });
+    }
     if (path == '/v1/sync/push') {
-      pushes.add((options.data as Map).cast<String, Object?>());
+      final body = (options.data as Map).cast<String, Object?>();
+      pushes.add(body);
+      for (final r in body['records']! as List) {
+        final rec = (r as Map).cast<String, Object?>();
+        final id = '${rec['kind']} ${rec['key']}';
+        final had = server[id]?['updatedAt'] as String?;
+        if (had != null &&
+            DateTime.parse(had)
+                .isAfter(DateTime.parse(rec['updatedAt']! as String))) {
+          continue; // last-write-wins kayak server asli
+        }
+        server[id] = {
+          ...rec,
+          'schemaVersion': body['schemaVersion'],
+          'seq': ++seq,
+        };
+      }
       await duringPush?.call();
       final count = pushes.fold<int>(
         0,
@@ -65,6 +109,14 @@ class _Worker implements HttpClientAdapter {
       });
     }
     final name = Uri.decodeComponent(path.substring('/v1/files/'.length));
+    if (options.method == 'GET') {
+      final bytes = files[name];
+      return bytes == null
+          ? json(404, {
+              'error': {'code': 'NOT_FOUND', 'message': 'File not found'},
+            })
+          : ResponseBody(Stream.value(bytes), 200);
+    }
     final body = Uint8List.fromList([
       await for (final c in requestStream!) ...c,
     ]);
@@ -94,6 +146,19 @@ void main() {
   late FileStorage storage;
   late DateTime now;
   late SyncRepository repo;
+  late BackendClient client;
+
+  /// Satu "device" yang ngobrol ke [worker] yang sama.
+  SyncRepository phone(AppDatabase db, FileStorage storage) => SyncRepository(
+    db: db,
+    service: SyncService(client),
+    files: CloudBackupService(client),
+    storage: storage,
+    auth: auth,
+    applier: SyncApplier(db, storage),
+    import: ImportRepository(db, storage),
+    clock: () => now,
+  );
 
   Future<List<String>> outbox() async => [
     for (final o in await db.select(db.syncOutbox).get()) '${o.kind} ${o.key}',
@@ -112,19 +177,12 @@ void main() {
     storage = FileStorage(tmp);
     await storage.ensureDirs();
     now = DateTime.utc(2026, 11, 13, 10);
-    final client = BackendClient(
+    client = BackendClient(
       baseUrl: 'https://luma.test',
       dio: Dio()..httpClientAdapter = worker,
       sleep: (_) async {},
     );
-    repo = SyncRepository(
-      db: db,
-      service: SyncService(client),
-      files: CloudBackupService(client),
-      storage: storage,
-      auth: auth,
-      clock: () => now,
-    );
+    repo = phone(db, storage);
     await db.customStatement(
       'INSERT INTO books (id, source_type, title, hash, parser_version, '
       "total_chars) VALUES (1, 'epub', 'Meditations', 'h1', 9, 100)",
@@ -266,18 +324,21 @@ void main() {
     expect(await repo.push(), 1);
   });
 
-  test('resume pushes at most every 5 minutes', () async {
-    await repo.pushIfDue();
+  test('resume syncs (push, then pull) at most every 5 minutes', () async {
+    await repo.syncIfDue();
     await db.customStatement("UPDATE books SET title = 'x'");
     worker.log.clear();
 
     now = now.add(const Duration(minutes: 4));
-    await repo.pushIfDue();
+    await repo.syncIfDue();
     expect(worker.log, isEmpty);
 
     now = now.add(const Duration(minutes: 2));
-    await repo.pushIfDue();
-    expect(worker.log, contains('POST /v1/sync/push'));
+    await repo.syncIfDue();
+    expect(worker.log.where((l) => l.contains('/v1/sync/')), [
+      'POST /v1/sync/push',
+      'GET /v1/sync/pull',
+    ]);
   });
 
   test('book files and cover upload once alongside the book record', () async {
@@ -346,5 +407,160 @@ void main() {
       [0, null, 'heading', 'I'],
       [1, 0, 'paragraph', 'Halo'],
     ]);
+  });
+
+  group('two phones', () {
+    late AppDatabase dbB;
+    late FileStorage storageB;
+    late SyncRepository b;
+
+    setUp(() async {
+      dbB = AppDatabase(
+        DatabaseConnection(
+          NativeDatabase.memory(),
+          closeStreamsSynchronously: true,
+        ),
+      );
+      storageB = FileStorage(await tmp.createTemp('b-'));
+      await storageB.ensureDirs();
+      b = phone(dbB, storageB);
+      // Buku contoh di setUp utama gak punya file: gak ikut skenario ini.
+      await db.customStatement('DELETE FROM books');
+      await db.delete(db.syncOutbox).go();
+    });
+    tearDown(() => dbB.close());
+
+    test('B downloads the EPUB A read and gets its progress and AI', () async {
+      final bytes = await File('test/fixtures/alice-in-wonderland.epub')
+          .readAsBytes();
+      final imported = await ImportRepository(
+        db,
+        storage,
+      ).importEpub(bytes, fileName: 'alice-in-wonderland.epub');
+      final book = imported.bookId;
+      final chapter =
+          (await db
+                  .customSelect(
+                    'SELECT id FROM chapters WHERE book_id = ? ORDER BY sort_order '
+                    'LIMIT 1 OFFSET 2',
+                    variables: [Variable(book)],
+                  )
+                  .getSingle())
+              .read<int>('id');
+      await db.customStatement(
+        "UPDATE books SET title = 'Alice (edit)', reading_seconds = 300 "
+        'WHERE id = ?',
+        [book],
+      );
+      await db.customStatement(
+        'INSERT INTO reading_progress (book_id, chapter_id, paragraph_index) '
+        'VALUES (?, ?, 7)',
+        [book, chapter],
+      );
+      await db.customStatement(
+        'INSERT INTO ai_results (chapter_id, group_index, translations, '
+        "meaning, model, prompt_version) VALUES (?, 2, '[\"t\"]', 'm', 'x', 3)",
+        [chapter],
+      );
+      await repo.push();
+
+      await b.sync();
+
+      final got = await dbB.select(dbB.books).getSingle();
+      expect(got.title, 'Alice (edit)');
+      expect(got.readingSeconds, 300);
+      expect(await storageB.book(got.fileName!).exists(), isTrue);
+      final progress = await dbB.select(dbB.readingProgress).getSingle();
+      final bChapter = await (dbB.select(
+        dbB.chapters,
+      )..where((c) => c.id.equals(progress.chapterId))).getSingle();
+      expect((bChapter.sortOrder, progress.paragraphIndex), (2, 7));
+      expect((await dbB.select(dbB.aiResults).getSingle()).groupIndex, 2);
+      expect(await dbB.select(dbB.syncInbox).get(), isEmpty);
+      // Gak ada yang di-push balik dari B.
+      expect(await dbB.select(dbB.syncOutbox).get(), isEmpty);
+
+      // Pull berikutnya lanjut dari cursor, gak dari 0.
+      worker.pulls.clear();
+      now = now.add(const Duration(minutes: 6));
+      await b.sync();
+      expect(worker.pulls.first, greaterThan(0));
+    });
+
+    test('B rebuilds a Markdown book from its dump, groups intact', () async {
+      await db.customStatement(
+        'INSERT INTO books (id, source_type, title, book_key, parser_version, '
+        "total_chars) VALUES (2, 'markdown', 'Catatan', 'notes', 1, 10)",
+      );
+      await db.customStatement(
+        'INSERT INTO chapters (id, book_id, sort_order, chapter_number, title, '
+        "char_offset) VALUES (20, 2, 0, 1, 'Satu', 0)",
+      );
+      await db.customStatement(
+        'INSERT INTO paragraphs (chapter_id, paragraph_index, group_index, '
+        "type, text) VALUES (20, 0, NULL, 'heading', 'Satu'), "
+        "(20, 1, 0, 'paragraph', 'Halo dunia')",
+      );
+      await db.customStatement(
+        'INSERT INTO ai_results (chapter_id, group_index, translations, '
+        "meaning, model) VALUES (20, 0, '[\"Hello\"]', 'm', 'x')",
+      );
+      await repo.push();
+
+      await b.sync();
+
+      final got = await dbB.select(dbB.books).getSingle();
+      expect((got.title, got.bookKey), ('Catatan', 'notes'));
+      final paras = await dbB.select(dbB.paragraphs).get();
+      expect(
+        [for (final x in paras) (x.groupIndex, x.content)],
+        [(null, 'Satu'), (0, 'Halo dunia')],
+      );
+      expect(
+        (await dbB.select(dbB.aiResults).getSingle()).translations,
+        ['["Hello"]'].single,
+      );
+    });
+
+    test('a book deleted on A disappears from B', () async {
+      final bytes = await File('test/fixtures/alice-in-wonderland.epub')
+          .readAsBytes();
+      final imported = await ImportRepository(
+        db,
+        storage,
+      ).importEpub(bytes, fileName: 'alice-in-wonderland.epub');
+      await repo.push();
+      await b.sync();
+      expect(await dbB.select(dbB.books).get(), hasLength(1));
+
+      await db.customStatement('DELETE FROM books WHERE id = ?', [
+        imported.bookId,
+      ]);
+      await repo.push();
+      now = now.add(const Duration(minutes: 6));
+      await b.sync();
+
+      expect(await dbB.select(dbB.books).get(), isEmpty);
+    });
+
+    test('another account on the same phone starts its pull from 0', () async {
+      await db.customStatement(
+        "INSERT INTO settings (key, value) VALUES ('ai.model', 'm')",
+      );
+      await repo.push();
+      await b.sync();
+
+      expect(worker.pulls.last, 0);
+      worker.pulls.clear();
+      now = now.add(const Duration(minutes: 6));
+      await b.sync();
+      expect(worker.pulls.first, greaterThan(0)); // akun sama: lanjut
+
+      auth.user = 'u2';
+      worker.pulls.clear();
+      now = now.add(const Duration(minutes: 6));
+      await b.sync();
+      expect(worker.pulls.first, 0); // akun lain: mulai dari 0
+    });
   });
 }

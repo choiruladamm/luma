@@ -99,7 +99,8 @@ Perkiraan untuk satu user aktif per hari. Wajib diperbarui saat implementasi ber
 | Backup otomatis (#201) | 2 + jumlah file baru (1×/hari) | 1 baca + 1 tulis per upload | `files/missing` 1 list/1000 file; file baru 1 head + 1 put; snapshot 1 put + 1 list (+1 delete) |
 | Restore cloud (#201) | 2 + file yang belum ada di HP | - | 1 list + 1 baca snapshot + 1 baca per file |
 | Sync push (#109: login, resume ≥ 5 menit, 60 detik setelah perubahan terakhir) | ±10–30; sync pertama maks 10 per pemicu | per push: 1 baca sesi + 1 `SELECT` record lama (baris = record di batch) + 1 batch (`seq` + upsert yang berubah saja); ±50–300 tulis, ±100–500 baca | batch berisi buku: `files/missing` 1 list + 1 put per file yang belum ada (sama dengan backup, gak dobel) |
-| Download buku di device baru | 1 per buku (sekali) | - | 1 baca per buku |
+| Sync pull (#210: login, resume ≥ 5 menit, setelah push) | 1 per 500 record perubahan, maks 10 per pemicu (biasanya 1) | 1 baca sesi + baris yang dikembalikan saja (index `records_user_seq`), 0 tulis | - |
+| Download buku di device baru (#210) | 1 per buku (sekali) + 1 dump per buku Markdown | - | 1 baca per buku |
 
 Patokan kapasitas: **±50 request/user/hari → ±2.000 user aktif/hari** di batas Workers; batas pertama yang kena realistisnya **D1 100rb baris tulis/hari** (±300–2.000 user tergantung aktivitas sync). Sync pertama (upload semua `ai_results` lama) dicicil maks 10 batch per pemicu supaya satu user tidak menghabiskan kuota tulis harian.
 
@@ -368,6 +369,15 @@ Detail implementasi push (#109):
 - **Server** (`features/sync/`): batas D1 free 50 query + 100 parameter per request, jadi 1 `SELECT` lewat `json_each`, merge di JS (`merge.ts`), lalu satu `db.batch()`: `seq += n` + satu `INSERT … SELECT FROM json_each … ON CONFLICT`. Record dari app dengan `schemaVersion` lebih lama gak menimpa record versi lebih baru. Balas `{seq, applied}`. Batas yang disengaja: merge dibaca di luar transaksi; dua device push kunci sama di milidetik yang sama → yang terakhir nulis menang.
 - **File buku**: batch yang berisi record buku → `files/missing` buat file, cover, dan dump Markdown `md-{bookKey}-{contentRevision}.json.gz` (bab + paragraf `[index, groupIndex, type, text]`), upload yang belum ada. Gagal upload → record buku tetap di outbox (dikirim ulang, server gak nulis data yang sama).
 - **Pemicu** (`SyncTrigger`): login, resume (min 5 menit), dan 60 detik setelah perubahan terakhir di tabel yang di-sync (`tableUpdates` Drift; tulisan trigger ke outbox gak keliatan stream).
+
+Detail implementasi pull (#210):
+
+- **Server**: `GET /v1/sync/pull?since={seq}&limit=500` → `{records, nextSeq, more}`, satu query lewat index `records_user_seq` (migrasi 0004). Record dibentuk jadi JSON di SQL (`json_object`), Worker cuma nyambung string, tanpa `JSON.parse` 500 record.
+- **Client** (`SyncApplier`): kunci alami → ID lokal per kind (buku lewat `hash`/`book_key`, bab lewat `sortOrder` kalau `parserVersion` sama, sesi chat lewat `(book_id, created_at)`). Urutan dalam satu halaman: setting → buku → sesi chat → anak. Satu transaksi per halaman, cursor `sync.pullSeq` (`{userId}:{seq}`, ganti akun = mulai 0) disimpan di transaksi yang sama.
+- **Merge client**: outbox lokal punya perubahan lebih baru untuk kunci yang sama → lokal dipertahankan (nanti di-push). Buku: field metadata dari pemenang, `firstOpenedAt`/`finishedAt` paling awal, `lastOpenedAt`/`readingSeconds` terbesar; kalau data lokal ikut nyumbang, kuncinya tetap di outbox supaya hasil merge naik ke server. AI: `promptVersion` lalu `createdAt`. Turn chat yang lagi jalan di device ini gak ditimpa.
+- **Gak di-push balik**: trigger outbox tetap nyala; di akhir transaksi baris outbox yang ditulis sejak transaksi mulai dihapus (kecuali kunci hasil merge di atas). Impor buku hasil download juga bukan perubahan lokal: entri outbox bukunya dihapus setelah impor.
+- **`sync_inbox`**: buku belum ada di device, `parserVersion` beda, `schemaVersion` record lebih baru dari app, atau sesi chat belum ada → ditahan, dicoba lagi abis tiap pull dan abis tiap buku keimpor (sync jalan tiap app dibuka, jadi abis update app juga). Tombstone buku ikut buang record anak buku itu dari inbox.
+- **Download buku**: record buku di inbox = antrean. EPUB `importEpub` / PDF `importPdf` dari `GET /v1/files/:name` (hash sama, jadi gak dobel), Markdown dari dump (bab + paragraf + `groupIndex` apa adanya). Satu per satu, jaringan apa aja, gagal = tetap di inbox. Bab Markdown yang ditambah belakangan di device lain belum ikut (#212).
 
 Alur push/pull:
 

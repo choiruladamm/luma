@@ -13,6 +13,8 @@ import '../services/cloud_backup_service.dart';
 import '../services/file_storage.dart';
 import '../services/sync_service.dart';
 import 'auth_repository.dart';
+import 'import_repository.dart';
+import 'sync_applier.dart';
 
 /// Nama dump buku Markdown di folder file cloud (docs/backend.md, File buku).
 String markdownDumpName(String bookKey, int contentRevision) =>
@@ -23,8 +25,15 @@ String markdownDumpName(String bookKey, int contentRevision) =>
 Future<List<int>> _gzipJson(Object json) =>
     Isolate.run(() => gzip.encode(utf8.encode(jsonEncode(json))));
 
-/// Push perubahan lokal (`sync_outbox`) ke server (docs/backend.md, Sync
-/// antar device). Tanpa polling: dipanggil cuma dari pemicu (login, resume,
+Future<Map<String, Object?>> _readGzipJson(String path) => Isolate.run(
+  () => (jsonDecode(
+    utf8.decode(gzip.decode(File(path).readAsBytesSync())),
+  ) as Map).cast<String, Object?>(),
+);
+
+/// Sync antar device (docs/backend.md): push perubahan lokal (`sync_outbox`),
+/// pull perubahan device lain ([SyncApplier]), download + impor buku yang
+/// belum ada. Tanpa polling: dipanggil cuma dari pemicu (login, resume,
 /// debounce perubahan lokal). Error diam-diam; pemicu berikutnya coba lagi.
 class SyncRepository {
   SyncRepository({
@@ -33,6 +42,8 @@ class SyncRepository {
     required this._files,
     required this._storage,
     required this._auth,
+    required this._applier,
+    required this._import,
     this._clock = DateTime.now,
   });
 
@@ -41,6 +52,8 @@ class SyncRepository {
   final CloudBackupService _files;
   final FileStorage _storage;
   final AuthRepository _auth;
+  final SyncApplier _applier;
+  final ImportRepository _import;
   final DateTime Function() _clock;
 
   /// Jarak minimum sync dari resume.
@@ -51,15 +64,108 @@ class SyncRepository {
   static const maxBatches = 10;
 
   Future<int>? _running;
-  DateTime? _lastRun;
+  Future<void>? _syncing;
+  DateTime? _lastSync;
   DateTime? _pausedUntil;
 
   /// Pemicu resume: paling cepat [resumeGap] sekali.
-  Future<int> pushIfDue() async {
-    if (_lastRun case final at? when _clock().difference(at) < resumeGap) {
-      return 0;
+  Future<void> syncIfDue() async {
+    if (_lastSync case final at? when _clock().difference(at) < resumeGap) {
+      return;
     }
-    return push();
+    return sync();
+  }
+
+  /// Login / resume: push dulu, baru pull, lalu download buku yang belum
+  /// ada. Satu sync jalan sekaligus.
+  Future<void> sync() =>
+      _syncing ??= _sync().whenComplete(() => _syncing = null);
+
+  Future<void> _sync() async {
+    _lastSync = _clock();
+    await push();
+    if (_pausedUntil case final until? when _clock().isBefore(until)) return;
+    final token = await _auth.token();
+    if (token == null) return;
+    try {
+      await _pull(token);
+    } on BackendException catch (e) {
+      if (e.retryAfter case final wait?) _pausedUntil = _clock().add(wait);
+      return;
+    }
+    await _downloadBooks(token);
+  }
+
+  /// Halaman demi halaman dari cursor (`sync.pullSeq`, per user: ganti akun =
+  /// mulai dari 0), maks [maxBatches] per pemicu. Abis itu inbox dicoba lagi.
+  Future<void> _pull(String token) async {
+    final user = await _auth.lastUserId() ?? '';
+    var since = await _cursor(user);
+    for (var i = 0; i < maxBatches; i++) {
+      final page = await _service.pull(token, since);
+      await _applier.apply(page.records, cursor: '$user:${page.nextSeq}');
+      since = page.nextSeq;
+      if (!page.more) break;
+    }
+    await _applier.retryInbox();
+  }
+
+  Future<int> _cursor(String user) async {
+    final value = (await (_db.select(
+      _db.settings,
+    )..where((s) => s.key.equals(pullCursorKey))).getSingleOrNull())?.value;
+    if (value == null) return 0;
+    final i = value.lastIndexOf(':');
+    if (i < 0 || value.substring(0, i) != user) return 0;
+    return int.tryParse(value.substring(i + 1)) ?? 0;
+  }
+
+  /// Buku yang record-nya nunggu di inbox: download dari folder file cloud,
+  /// impor, lalu inbox dicoba lagi (metadata + data baca nyusul masuk). Satu
+  /// per satu; yang gagal tetap di inbox buat pemicu berikutnya.
+  Future<void> _downloadBooks(String token) async {
+    for (final r in await _applier.missingBooks()) {
+      try {
+        await _downloadBook(token, r.data!);
+        // Impor hasil sync bukan perubahan lokal: entri outbox-nya (waktu
+        // impor) bakal ngalahin metadata device lain dan ke-push balik.
+        await _db.customStatement(
+          "DELETE FROM sync_outbox WHERE kind = 'book' AND key = ?",
+          [r.key],
+        );
+        await _applier.retryInbox();
+      } on Object {
+        // diam-diam: dicoba lagi pemicu berikutnya
+      }
+    }
+  }
+
+  Future<void> _downloadBook(String token, Map<String, Object?> d) async {
+    final dir = await Directory.systemTemp.createTemp('luma-sync-');
+    try {
+      if (d['bookKey'] case final String bookKey) {
+        final name = markdownDumpName(bookKey, d['contentRevision']! as int);
+        final file = p.join(dir.path, name);
+        await _files.downloadFile(token, name, file);
+        await _applier.insertMarkdown(await _readGzipJson(file), d);
+        return;
+      }
+      final name = d['fileName']! as String;
+      final file = File(p.join(dir.path, name));
+      await _files.downloadFile(token, name, file.path);
+      if (p.extension(name).toLowerCase() == '.pdf') {
+        await _import.importPdf(file.path, fileName: name);
+      } else {
+        await _import.importEpub(
+          await file.readAsBytes(),
+          fileName: name,
+          sourceId: d['sourceId'] as String?,
+          externalId: d['externalId'] as String?,
+        );
+      }
+    } finally {
+      await dir.delete(recursive: true);
+    }
   }
 
   /// Push sampai outbox kosong atau [maxBatches]. Satu push jalan sekaligus.
@@ -71,7 +177,6 @@ class SyncRepository {
     if (_pausedUntil case final until? when _clock().isBefore(until)) return 0;
     final token = await _auth.token();
     if (token == null) return 0;
-    _lastRun = _clock();
     // Satu putaran cuma ngirim perubahan sebelum mulai, maju lewat cursor:
     // yang berubah selama push nunggu pemicu berikutnya (debounce), yang
     // gagal gak diulang di putaran yang sama.
@@ -329,5 +434,7 @@ final syncRepositoryProvider = Provider<SyncRepository>(
     files: ref.watch(cloudBackupServiceProvider),
     storage: ref.watch(fileStorageProvider),
     auth: ref.watch(authRepositoryProvider),
+    applier: ref.watch(syncApplierProvider),
+    import: ref.watch(importRepositoryProvider),
   ),
 );

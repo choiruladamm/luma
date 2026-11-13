@@ -6,9 +6,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../data/repositories/sync_repository.dart';
 import '../../auth/view_models/auth_view_model.dart';
 
-/// Sync push otomatis (docs/backend.md, Sync antar device), tanpa polling:
-/// saat login, tiap resume (jarak min 5 menit di
-/// [SyncRepository.pushIfDue]), dan [debounce] setelah perubahan lokal
+/// Sync otomatis (docs/backend.md, Sync antar device), tanpa polling: sync
+/// penuh saat login dan tiap resume (jarak min 5 menit di
+/// [SyncRepository.syncIfDue]); push aja [debounce] setelah perubahan lokal
 /// terakhir ([syncChangesProvider]).
 class SyncTrigger extends ConsumerStatefulWidget {
   const SyncTrigger({super.key, required this.child});
@@ -30,7 +30,9 @@ class _SyncTriggerState extends ConsumerState<SyncTrigger> {
   @override
   void initState() {
     super.initState();
-    _lifecycle = AppLifecycleListener(onResume: () => _run(resume: true));
+    _lifecycle = AppLifecycleListener(
+      onResume: () => _run(trigger: _Trigger.resume),
+    );
     _changes = ref.read(syncChangesProvider).listen((_) {
       _debounce?.cancel();
       _debounce = Timer(SyncTrigger.debounce, _run);
@@ -45,11 +47,17 @@ class _SyncTriggerState extends ConsumerState<SyncTrigger> {
     super.dispose();
   }
 
-  void _run({bool resume = false}) {
+  /// Debounce perubahan lokal: push aja. Resume / login: sync penuh (push +
+  /// pull + download buku).
+  void _run({_Trigger trigger = _Trigger.change}) {
     final auth = ref.read(authControllerProvider).value;
     if (auth?.status != AuthStatus.signedIn) return;
     final repo = ref.read(syncRepositoryProvider);
-    unawaited(resume ? repo.pushIfDue() : repo.push());
+    unawaited(switch (trigger) {
+      _Trigger.change => repo.push(),
+      _Trigger.resume => repo.syncIfDue(),
+      _Trigger.signIn => repo.sync(),
+    });
   }
 
   @override
@@ -57,9 +65,11 @@ class _SyncTriggerState extends ConsumerState<SyncTrigger> {
     ref.listen(authControllerProvider, (prev, next) {
       if (next.value?.status == AuthStatus.signedIn &&
           prev?.value?.status != AuthStatus.signedIn) {
-        _run();
+        _run(trigger: _Trigger.signIn);
       }
     });
     return widget.child;
   }
 }
+
+enum _Trigger { change, resume, signIn }

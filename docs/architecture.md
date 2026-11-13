@@ -72,7 +72,7 @@ flowchart LR
 - `breakdownSectionsProvider(GroupRef)` → `FutureProvider.autoDispose.family<int>`: jumlah bagian bedahan grup ini yang masih berlaku, 0 = belum ada (entri "Buka bedahan · N bagian" di sheet Artinya).
 - `breakdownPeekProvider(PeekKey)` → `FutureProvider.autoDispose.family<BreakdownPeek?>`, `PeekKey = ({GroupRef from, int? chapter})`: tujuan kartu Nyambung ke (`AiBreakdownsRepository.peek`). `B<n>` = grup pertama chapter ke-n (urut `sortOrder`), null = grup berikutnya di chapter yang sama. Isinya teks asli + terjemahan `ai_results` kalau ada. Null = tujuan gak ada, kartu jadi teks biasa.
 - `importControllerProvider` → `Notifier` untuk state import (idle / processing / success / error / duplicate).
-- Sync push ([backend.md](backend.md), Sync antar device): `syncRepositoryProvider` (`SyncRepository`: outbox → `POST /v1/sync/push` + file buku), `syncServiceProvider` (HTTP), `syncChangesProvider` (event perubahan tabel yang di-sync, sumber debounce `SyncTrigger`; di-override di widget test).
+- Sync ([backend.md](backend.md), Sync antar device): `syncRepositoryProvider` (`SyncRepository`: push outbox + file buku, pull, download + impor buku), `syncApplierProvider` (`SyncApplier`: record pull → tabel lokal, `sync_inbox`), `syncServiceProvider` (HTTP), `syncChangesProvider` (event perubahan tabel yang di-sync, sumber debounce `SyncTrigger`; di-override di widget test).
 
 `GroupRef` = record `({int chapterId, int groupIndex})`: `==`/`hashCode` per nilai udah bawaan Dart, gak perlu `freezed`.
 

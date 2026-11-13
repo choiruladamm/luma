@@ -5,6 +5,8 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:luma/data/database/app_database.dart';
 import 'package:luma/data/repositories/auth_repository.dart';
+import 'package:luma/data/repositories/import_repository.dart';
+import 'package:luma/data/repositories/sync_applier.dart';
 import 'package:luma/data/repositories/sync_repository.dart';
 import 'package:luma/data/services/auth_service.dart';
 import 'package:luma/data/services/backend_client.dart';
@@ -24,6 +26,9 @@ class _Auth extends Fake implements AuthRepository {
 
   @override
   Future<String?> token() async => value;
+
+  @override
+  Future<String?> lastUserId() async => 'e2e';
 }
 
 /// [SyncService] asli yang nyatet hasil tiap push.
@@ -54,12 +59,15 @@ class _Device {
         ),
       ),
       spy = _Spy(client) {
+    final storage = FileStorage(files);
     repo = SyncRepository(
       db: db,
       service: spy,
       files: CloudBackupService(client),
-      storage: FileStorage(files),
+      storage: storage,
       auth: _Auth(token),
+      applier: SyncApplier(db, storage),
+      import: ImportRepository(db, storage),
     );
   }
 
@@ -172,4 +180,72 @@ void main() {
     },
     skip: _url.isEmpty ? 'set LUMA_BACKEND_E2E (make backend-e2e)' : false,
   );
+
+  test('A imports and reads, B pulls: same book once, same data, newer schema held', () async {
+    // Akun baru: data akun tes lain gak ikut kecampur.
+    final session = await AuthService(client).signUpEmail(
+      name: 'E2E pull',
+      email: 'e2e-pull-${DateTime.now().microsecondsSinceEpoch}@luma.test',
+      password: 'rahasia-banget-123',
+      inviteCode: Platform.environment['LUMA_E2E_INVITE2'] ?? '',
+    );
+    final aDir = await tmp.createTemp('a-');
+    final bDir = await tmp.createTemp('b-');
+    final a = _Device(client, session.token, aDir);
+    final b = _Device(client, session.token, bDir);
+    addTearDown(a.db.close);
+    addTearDown(b.db.close);
+    await FileStorage(aDir).ensureDirs();
+    await FileStorage(bDir).ensureDirs();
+
+    final imported = await ImportRepository(a.db, FileStorage(aDir)).importEpub(
+      await File('test/fixtures/alice-in-wonderland.epub').readAsBytes(),
+      fileName: 'alice-in-wonderland.epub',
+    );
+    final chapter =
+        (await a.db
+                .customSelect(
+                  'SELECT id FROM chapters WHERE book_id = ? ORDER BY sort_order '
+                  'LIMIT 1 OFFSET 1',
+                  variables: [Variable(imported.bookId)],
+                )
+                .getSingle())
+            .read<int>('id');
+    await a.db.customStatement(
+      'INSERT INTO reading_progress (book_id, chapter_id, paragraph_index) '
+      'VALUES (?, ?, 4)',
+      [imported.bookId, chapter],
+    );
+    await a.db.customStatement(
+      'INSERT INTO ai_results (chapter_id, group_index, translations, '
+      "meaning, model, prompt_version) VALUES (?, 1, '[\"t\"]', 'm', 'x', 3)",
+      [chapter],
+    );
+    await a.repo.push();
+    // Record dari app versi lebih baru: B harus nahan, bukan nerapin.
+    await SyncService(client).push(session.token, a.db.schemaVersion + 1, [
+      const SyncRecord(
+        kind: 'setting',
+        key: 'ai.model',
+        updatedAt: 1790000000000,
+        data: {'value': 'future/model'},
+      ),
+    ]);
+
+    await b.repo.sync();
+    await b.repo.sync(); // kedua kalinya: buku gak dobel
+
+    expect(await b.db.select(b.db.books).get(), hasLength(1));
+    expect(
+      (await b.db.select(b.db.readingProgress).getSingle()).paragraphIndex,
+      4,
+    );
+    expect(await b.db.select(b.db.aiResults).get(), hasLength(1));
+    final held = await b.db.select(b.db.syncInbox).getSingle();
+    expect((held.kind, held.key), ('setting', 'ai.model'));
+    expect(
+      await b.db.select(b.db.settings).get(),
+      isNot(contains(predicate<Setting>((s) => s.value == 'future/model'))),
+    );
+  }, skip: _url.isEmpty ? 'set LUMA_BACKEND_E2E (make backend-e2e)' : false);
 }
