@@ -3,7 +3,7 @@ BACKEND := apps/backend
 FLUTTER := cd $(APP) && fvm flutter
 DART := cd $(APP) && fvm dart
 
-.PHONY: help get l10n gen brand live chat-agent-live chat-spike chat-spike-live chat-oracle-live chat-discussion-live chat-adaptive-live chat-retrieval chat-dense-live chat-dense-replay chat-heldout-live chat-refine-live chat-validation2-live chat-recovery-live chat-validation3-live watch run release dev run-android release-android dev-android apk profile test analyze format check clean backend-install backend-dev backend-types backend-test backend-live backend-e2e backend-migrate backend-invite backend-deploy
+.PHONY: help get l10n gen brand live chat-agent-live chat-spike chat-spike-live chat-oracle-live chat-discussion-live chat-adaptive-live chat-retrieval chat-dense-live chat-dense-replay chat-heldout-live chat-refine-live chat-validation2-live chat-recovery-live chat-validation3-live watch run release dev run-android release-android dev-android apk profile test analyze format check clean backend-install backend-dev backend-types backend-test backend-live backend-e2e backend-migrate backend-invite backend-ban backend-deploy
 
 help: ## list commands
 	@grep -E '^[a-z0-9-]+:.*## ' $(MAKEFILE_LIST) | awk -F ':.*## ' '{printf "  %-16s %s\n", $$1, $$2}'
@@ -135,6 +135,11 @@ backend-migrate: ## backend: apply D1 migrations remotely (e=dev|prod)
 backend-invite: ## backend: bikin kode undangan acak di D1 remote (e=dev|prod, n=jumlah, default 1)
 	@test "$(e)" = dev -o "$(e)" = prod || { echo "pakai e=dev atau e=prod"; exit 1; }
 	cd $(BACKEND) && bun scripts/invite.ts $(e) $(or $(n),1)
+
+backend-ban: ## backend: cabut akses AI subsidi user (e=dev|prod email=...; butuh OPENROUTER_MANAGEMENT_KEY di env)
+	@test "$(e)" = dev -o "$(e)" = prod || { echo "pakai e=dev atau e=prod"; exit 1; }
+	@test -n "$(email)" || { echo "pakai email=..."; exit 1; }
+	cd $(BACKEND) && bun scripts/ban.ts $(e) $(email)
 
 backend-deploy: ## backend: deploy Worker (e=dev|prod; prod only from master)
 	@test "$(e)" = dev -o "$(e)" = prod || { echo "pakai e=dev atau e=prod"; exit 1; }

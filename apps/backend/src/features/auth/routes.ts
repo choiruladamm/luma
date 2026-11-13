@@ -36,8 +36,14 @@ export async function normalizeAuthError(res: Response): Promise<Response> {
   );
 }
 
+/**
+ * Endpoint Better Auth yang dibuka: cuma yang dipakai app (auth_service.dart).
+ * Sisanya (update-user, change-email, list-sessions, dll.) 404, jadi permukaan
+ * serangan gak ikut nambah tiap Better Auth nambah endpoint.
+ * Google lewat idToken native (`sign-in/social`), tanpa callback redirect.
+ */
+export const AUTH_PATHS = ["/sign-up/email", "/sign-in/email", "/sign-in/social", "/sign-out"] as const;
+
 export const auth = new Hono<AppEnv>()
   .use(limitBody(AUTH_BODY_LIMIT))
-  .on(["GET", "POST"], "/*", async (c) =>
-    normalizeAuthError(await getAuth(c.env).handler(c.req.raw)),
-  );
+  .on("POST", [...AUTH_PATHS], async (c) => normalizeAuthError(await getAuth(c.env).handler(c.req.raw)));

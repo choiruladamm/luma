@@ -117,6 +117,24 @@ describe("sign-in (email, dev)", () => {
     expect(subrequests).toBe(0);
   });
 
+  it.each([
+    ["POST", "/v1/auth/update-user"],
+    ["POST", "/v1/auth/change-email"],
+    ["GET", "/v1/auth/list-sessions"],
+    ["GET", "/v1/auth/get-session"],
+    ["GET", "/v1/auth/sign-in/email"],
+  ])("hides Better Auth endpoints the app does not use: %s %s", async (method, path) => {
+    const { token } = await signUp();
+    const res = await exports.default.fetch(
+      new Request(`https://luma.test${path}`, {
+        method,
+        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        body: method === "POST" ? JSON.stringify({ name: "x", image: "https://evil.test/a.png" }) : undefined,
+      }),
+    );
+    expect(res.status).toBe(404);
+  });
+
   it("rejects oversized bodies before Better Auth parses them", async () => {
     const res = await exports.default.fetch(
       post("/v1/auth/sign-in/email", { email: "x@luma.test", password: "x".repeat(20_000) }),

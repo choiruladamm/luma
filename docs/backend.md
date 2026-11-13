@@ -85,6 +85,13 @@ Menunggu `fetch`/I/O tidak dihitung CPU; `crypto.subtle`, `JSON.parse`, dan komp
 - **R2 dibatasi per user**: kuota penyimpanan per user (awal 1GB, `vars` `USER_STORAGE_BYTES`) dipesan atomik sebelum upload (`reserveBytes`: satu upsert `bytes + size ≤ kuota`, jadi upload paralel gak bisa lolos cek bareng-bareng) di tabel `user_storage(user_id, bytes)`; lewat → 413. Upload gagal → pesanan dikembalikan. File maks 100MB. Retensi backup 10 snapshot.
 - **Sync dibatasi per user** (kuota tulis D1 100rb baris/hari dan 5GB dipakai bareng semua user): `SYNC_DAILY_WRITES` (20.000 baris ditulis per hari UTC) → lewat = 429 `QUOTA_EXCEEDED` + `Retry-After` sampai 00.00 UTC; `SYNC_STORAGE_BYTES` (100MB, panjang key + JSON data semua record) → lewat = 413 `STORAGE_FULL`, kecuali batch yang mengecilkan data. Pemakaian di `user_storage.sync_bytes / sync_day / sync_rows`, dihitung pas dari selisih ukuran record lama vs baru. Push yang gak mengubah apa-apa gak dihitung.
 - **Rate limit**: binding Workers Rate Limiting per user (dan per IP untuk auth/key AI). Lewat → 429 + `Retry-After`.
+- **Endpoint Better Auth di-allowlist**: cuma `POST /v1/auth/{sign-up/email, sign-in/email, sign-in/social, sign-out}` (`AUTH_PATHS`); sisanya 404. Endpoint baru yang dipakai app ditambah ke situ.
+- **Risiko yang diterima** (review #213, dicek ulang sebelum buka pendaftaran tanpa undangan):
+  - Rate limiter Workers dihitung per lokasi Cloudflare, bukan global: batas efektif bisa lebih longgar dari 60/menit.
+  - Batas 100rb request Workers/hari dan 5jt baris baca D1/hari bisa dihabisin lewat banjir request (endpoint tanpa login, atau pull sync berulang). `workers.dev` gak punya WAF; obatnya custom domain + rate rule Cloudflare (#204, #209). Sementara: saklar darurat + pantau Analytics.
+  - `DELETE /v1/me` cukup token sesi, tanpa login ulang: token yang dicuri bisa hapus data cloud (data di HP tetap). Login ulang sebelum hapus akun butuh alur di app, dikerjain bareng #211 kalau perlu.
+  - Token sesi disimpan apa adanya di D1 (bawaan Better Auth); D1 bocor = sesi bisa dipakai. Akses D1 cuma lewat akun Cloudflare.
+  - `updatedAt` record sync dari jam device, jadi jam yang maju menang merge; cuma ngerusak data user itu sendiri.
 - **Saklar darurat**: `vars` `SYNC_ENABLED`, `BACKUP_ENABLED`, `AI_KEY_ENABLED`. `false` → endpoint balas 503 + `Retry-After: 3600` tanpa menyentuh D1/R2; client berhenti sampai pemicu berikutnya setelah jeda itu.
 
 ### Anggaran per aksi
@@ -240,7 +247,7 @@ Aturan `issueKey`: pakai ulang selama masih berlaku (subrequest 0), bikin lazy, 
 |---|---|
 | Biaya per user | `limit: 0.02`, `limit_reset: "daily"` → maks ±$0.60/bulan per user, ±30–50 tap/hari |
 | Total biaya | Budget guardrail workspace OpenRouter **$5/bulan**. Habis → semua key subsidi 402 → "Kuota gratis lagi abis, pakai key sendiri dulu yuk". Saldo OpenRouter tanpa auto top-up sebagai lapis kedua |
-| Key diekstrak dari device | Limit harian kecil + `expires_at` 30 hari. 401 → app panggil `POST /v1/ai/key {"rotate": true}` → kalau key memang udah gak ada di OpenRouter, key lama dihapus dan key baru dibuat; kalau masih ada, key yang sama dikirim balik (rotasi gak bisa dipakai buat reset limit harian). `banned` → `DELETE /keys/{hash}` |
+| Key diekstrak dari device | Limit harian kecil + `expires_at` 30 hari. 401 → app panggil `POST /v1/ai/key {"rotate": true}` → kalau key memang udah gak ada di OpenRouter, key lama dihapus dan key baru dibuat; kalau masih ada, key yang sama dikirim balik (rotasi gak bisa dipakai buat reset limit harian). Ban lewat `make backend-ban e=prod email=…` (env `OPENROUTER_MANAGEMENT_KEY`): `DELETE /keys/{hash}` duluan (key yang udah diekstrak langsung mati, bukan nunggu 30 hari), lalu `banned = 1` + hapus baris `ai_keys` |
 | Model mahal | Workspace `luma-subsidi` dengan default guardrail `allowed_models` (model default + kandidat murah + **model embedding** Ngobrolin). Mode subsidi: pemilih model hanya menampilkan daftar dari `/v1/ai/config` |
 | Spam akun | Login prod hanya Google, key lazy, `user_id` unique, rate limit `POST /v1/ai/key` per IP + per user (binding Workers Rate Limiting), kode undangan selama beta |
 
