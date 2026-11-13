@@ -392,6 +392,8 @@ abstract final class AppIcons {
   static const backup = HugeIcons.strokeRoundedDatabaseExport;
   static const alert = HugeIcons.strokeRoundedAlert02;
   static const restore = HugeIcons.strokeRoundedDatabaseRestore;
+  static const cloudUpload = HugeIcons.strokeRoundedCloudUpload;
+  static const cloudDownload = HugeIcons.strokeRoundedCloudDownload;
   static const clock = HugeIcons.strokeRoundedClock01;
   static const search = HugeIcons.strokeRoundedSearch01;
   static const searchOff = HugeIcons.strokeRoundedSearchRemove;

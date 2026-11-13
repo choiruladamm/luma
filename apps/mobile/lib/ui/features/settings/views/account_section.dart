@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:luma/l10n/l10n.dart';
 
+import '../../../../data/repositories/settings_repository.dart';
 import '../../../../data/services/auth_service.dart';
 import '../../../../data/services/backend_client.dart';
+import '../../../core/format.dart';
 import '../../../core/theme/stabilo_theme.dart';
 import '../../../core/theme/stabilo_tokens.dart';
 import '../../../core/theme/stabilo_type.dart';
@@ -28,6 +30,7 @@ class AccountSection extends ConsumerWidget {
     }
     final user = auth.user;
     final viaEmail = ref.watch(devLoginProvider);
+    final cloudAt = ref.watch(cloudBackupAtProvider).value;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       spacing: Space.s2,
@@ -40,6 +43,26 @@ class AccountSection extends ConsumerWidget {
           ),
         ),
         _ExLibris(user: user, via: viaEmail ? l.authViaEmail : l.authViaGoogle),
+        if (cloudAt != null)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 10),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  l.settingsLastBackup,
+                  style: StabiloType.label.copyWith(color: c.ink2),
+                ),
+                Text(
+                  lastSeen(cloudAt, DateTime.now(), locale: l.localeName),
+                  style: StabiloType.label.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: c.ink,
+                  ),
+                ),
+              ],
+            ),
+          ),
         Row(
           spacing: 10,
           children: [

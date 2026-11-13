@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../data/repositories/cloud_backup_repository.dart';
 import '../../../../data/repositories/settings_repository.dart';
+import '../../../../data/services/backend_client.dart';
 import '../../../../data/services/backup_service.dart';
 import '../../../../data/services/share_service.dart';
 import '../../../../domain/models/backup.dart';
@@ -17,18 +19,21 @@ class BackupIdle extends BackupState {
 }
 
 /// Lagi dibungkus. [name] & [manifest] null sampe DB-nya ke-snapshot.
+/// [cloud] = diunggah ke akun (gak bisa dibatalin, tanpa menu share).
 class BackupRunning extends BackupState {
   const BackupRunning({
     this.name,
     this.manifest,
     this.stage = BackupStage.books,
     this.fraction = 0,
+    this.cloud = false,
   });
 
   final String? name;
   final BackupManifest? manifest;
   final BackupStage stage;
   final double fraction;
+  final bool cloud;
 }
 
 class BackupDone extends BackupState {
@@ -38,7 +43,10 @@ class BackupDone extends BackupState {
 }
 
 class BackupFailed extends BackupState {
-  const BackupFailed();
+  const BackupFailed({this.storageFull = false});
+
+  /// Kuota cloud habis (`STORAGE_FULL`).
+  final bool storageFull;
 }
 
 class BackupController extends Notifier<BackupState> {
@@ -88,6 +96,43 @@ class BackupController extends Notifier<BackupState> {
       state = const BackupFailed();
     } finally {
       await file?.dispose();
+      _busy = false;
+    }
+  }
+
+  /// Backup ke cloud (docs/backup.md): snapshot DB + file yang belum ada di
+  /// cloud. Hasilnya lewat toast yang sama dengan backup biasa.
+  Future<void> startCloud() async {
+    if (_busy) return;
+    _busy = true;
+    state = const BackupRunning(cloud: true);
+    try {
+      final last = await ref
+          .read(cloudBackupRepositoryProvider)
+          .backup(
+            onStart: (name, manifest) => state = BackupRunning(
+              name: name,
+              manifest: manifest,
+              cloud: true,
+            ),
+            onProgress: (stage, fraction) {
+              if (state case BackupRunning(:final name, :final manifest)) {
+                state = BackupRunning(
+                  name: name,
+                  manifest: manifest,
+                  stage: stage,
+                  fraction: fraction,
+                  cloud: true,
+                );
+              }
+            },
+          );
+      state = BackupDone(last);
+    } on BackendException catch (e) {
+      state = BackupFailed(storageFull: e.code == 'STORAGE_FULL');
+    } catch (_) {
+      state = const BackupFailed();
+    } finally {
       _busy = false;
     }
   }

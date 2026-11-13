@@ -699,5 +699,13 @@
   "authToastSignedIn": "Signed in. Hi, {name}!",
   "authToastSignedOut": "Signed out. Books on this phone stay.",
   "authToastDeleted": "Your account is deleted.",
-  "authToastDeleteFailed": "Couldn't delete the account. No internet."
+  "authToastDeleteFailed": "Couldn't delete the account. No internet.",
+  "settingsBackUpToCloud": "Back up to cloud",
+  "settingsRestoreFromCloud": "Restore from cloud",
+  "backupUploadingToYourAccount": "Uploading to your account. Books already in the cloud are skipped.",
+  "backupCloudIsFull": "Your cloud storage is full",
+  "cloudRestorePickTitle": "Pick a cloud backup",
+  "cloudRestoreEmpty": "No cloud backups yet. Tap \"Back up to cloud\" first.",
+  "cloudRestoreLoadFailed": "Couldn't load your backups. Check your connection.",
+  "cloudRestoreDownloadFailed": "Couldn't download the backup. Try again."
 }

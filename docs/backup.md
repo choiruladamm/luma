@@ -84,6 +84,18 @@ Snapshot membawa seluruh DB, termasuk katalog Gutenberg, index `catalog_fts`, me
 - Berhasil → balik ke Rak + toast "Sip, data lo udah balik!" · "N buku · N terjemahan"; kalau API key kosong, toast-nya punya baris kedua "API key gak ikut backup, isi ulang dulu biar bisa nerjemahin." + "Isi key" (6 detik). Gagal ganti → "Yah, gagal mulihin", data lama utuh.
 - Teks board "File backup Luma itu yang akhirannya .luma" disesuaiin jadi nama `luma-backup-…zip`. Tile ringkasan dilabelin "terjemahan" (manifest ngitung baris `ai_results` = grup, bukan paragraf).
 
+## Backup cloud ([#201](https://github.com/choiruladamm/luma/issues/201))
+
+Butuh login. Backend & endpoint: [backend.md](backend.md) (Backup cloud). Backup lewat share sheet tetap ada; cloud cuma ganti tujuannya.
+
+- **Isi**: snapshot zip **tanpa** `books/` & `covers/` (`BackupService.export(snapshotOnly: true)`: `manifest.json` + `luma.sqlite`). File buku & cover diunggah terpisah per nama file (sudah berbasis hash), cuma yang belum ada di cloud (`POST /v1/files/missing`). Ukuran nyata (13 November 2026, iPhone, 12 buku): `luma.sqlite` 42MB, zip snapshot **14,6MB** (±31MB dari 42MB itu katalog Discover). Jauh di bawah batas body 100MB, jadi tanpa multipart.
+- **Alur** (`CloudBackupRepository.backup`): snapshot → daftar nama file lokal → `files/missing` (per 1000 nama) → upload yang hilang satu-satu (stream, `Content-Length`) → `PUT /v1/backups` (manifest ikut di header `x-backup-manifest`) → simpan `backup.cloudLastAt` + backup terakhir (`saveCloudBackup`, jadi pengingat backup ikut tenang). Kena 429 di tengah upload → tunggu `Retry-After` lalu lanjut (maks 5×). Satu backup jalan sekaligus.
+- **Pemicu otomatis** (`CloudBackupTrigger` di root app, cuma dari `main`): saat sesi kebaca (login) dan tiap resume, kalau `backup.cloudLastAt` > 24 jam. Diam-diam; gagal → coba lagi resume berikutnya, paling cepat 1 jam kemudian. Tanpa polling.
+- **Manual**: Pengaturan → kartu Backup → "Backup ke cloud" (muncul kalau login). Sheet progres & toast sama dengan backup biasa; bedanya catatan "Lagi diunggah ke akun lo…", tanpa "Batal", dan kuota penuh (`STORAGE_FULL`) → toast "Penyimpanan cloud lo udah penuh".
+- **Restore**: "Pulihin dari cloud" → daftar snapshot (terbaru dulu: kapan, jumlah buku & terjemahan, ukuran; belum ada board, pakai komponen yang ada) → tap = download zip ke temp → `RestoreService.inspect(zip, fill:)`: setelah DB lolos cek, file yang dirujuk `books` di snapshot disalin dari HP kalau udah ada, sisanya di-download (`GET /v1/files/:name`; 404 dilewatin) → ringkasan board 28 yang sama → `apply` yang sama.
+- **Pelat Ex libris** (board Akun 08): baris "Backup terakhir · Hari ini, 08.12" dari `backup.cloudLastAt`, muncul setelah backup cloud pertama.
+- **Test**: `test/data/cloud_backup_test.dart` (kontrak, round-trip backup cloud → restore di HP lain lewat Worker palsu di memori, upload cuma file baru, 429, pemicu 24 jam pakai jam injeksi), widget di `test/ui/features/settings/`.
+
 ## Pengingat backup
 
 - Pengaturan menampilkan "Backup terakhir: 3 hari lalu" (atau "Belum pernah backup").
