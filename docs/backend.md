@@ -82,7 +82,8 @@ Menunggu `fetch`/I/O tidak dihitung CPU; `crypto.subtle`, `JSON.parse`, dan komp
 - **CPU**: upload/download di-stream (`c.req.raw.body` → R2), tidak di-buffer atau di-hash di Worker. Tidak ada scrypt JS. PBKDF2 (dev saja) pakai iterasi yang muat 10ms, diukur di `wrangler dev`. Payload push divalidasi ringan; batas ukuran body (sync 1MB) ditolak sebelum `JSON.parse`.
 - **D1**: satu request = satu `db.batch()`; upsert yang datanya sama tidak menulis ulang (`ON CONFLICT ... WHERE excluded.updated_at > updated_at`). Index seminimal mungkin (tiap index = baris tulis tambahan).
 - **Subrequest ≤ 50**: hapus R2 pakai `delete([...keys])` per 1000 key; kerja yang lebih besar (mis. hapus akun dengan banyak file) dicicil lewat beberapa request dari client atau Cron Trigger, bukan satu request raksasa.
-- **R2 dibatasi per user**: kuota penyimpanan per user (awal 1GB, `vars` `USER_STORAGE_BYTES`) dicek di `PUT /v1/files/:name` dari tabel `user_storage(user_id, bytes)`; lewat → 413. File maks 100MB. Retensi backup 10 snapshot.
+- **R2 dibatasi per user**: kuota penyimpanan per user (awal 1GB, `vars` `USER_STORAGE_BYTES`) dipesan atomik sebelum upload (`reserveBytes`: satu upsert `bytes + size ≤ kuota`, jadi upload paralel gak bisa lolos cek bareng-bareng) di tabel `user_storage(user_id, bytes)`; lewat → 413. Upload gagal → pesanan dikembalikan. File maks 100MB. Retensi backup 10 snapshot.
+- **Sync dibatasi per user** (kuota tulis D1 100rb baris/hari dan 5GB dipakai bareng semua user): `SYNC_DAILY_WRITES` (20.000 baris ditulis per hari UTC) → lewat = 429 `QUOTA_EXCEEDED` + `Retry-After` sampai 00.00 UTC; `SYNC_STORAGE_BYTES` (100MB, panjang key + JSON data semua record) → lewat = 413 `STORAGE_FULL`, kecuali batch yang mengecilkan data. Pemakaian di `user_storage.sync_bytes / sync_day / sync_rows`, dihitung pas dari selisih ukuran record lama vs baru. Push yang gak mengubah apa-apa gak dihitung.
 - **Rate limit**: binding Workers Rate Limiting per user (dan per IP untuk auth/key AI). Lewat → 429 + `Retry-After`.
 - **Saklar darurat**: `vars` `SYNC_ENABLED`, `BACKUP_ENABLED`, `AI_KEY_ENABLED`. `false` → endpoint balas 503 + `Retry-After: 3600` tanpa menyentuh D1/R2; client berhenti sampai pemicu berikutnya setelah jeda itu.
 
@@ -94,11 +95,11 @@ Perkiraan untuk satu user aktif per hari. Wajib diperbarui saat implementasi ber
 |---|---|---|---|
 | Login / daftar (#199) | 1–2, sekali per device | ±3–6 tulis | - |
 | Auth per request (cek sesi bearer, #199) | termasuk di request lain | 1 baca (+1 tulis maks sekali sehari) | - |
-| Key AI (`POST /v1/ai/key`, #200) | 1 per device per 30 hari (+1 setelah 401) | 2 baca (+1 tulis saat bikin/rotasi); subrequest OpenRouter 0 / 1 / 2 | - |
+| Key AI (`POST /v1/ai/key`, #200) | 1 per device per 30 hari (+1 setelah 401) | 2 baca (+1 tulis saat bikin/rotasi); subrequest OpenRouter 0 / 1 / 2 (+1 cek key saat `rotate`) | - |
 | Usage/config AI (#200) | ≤ 2 (Pengaturan dibuka; cache usage 1 jam, config 24 jam) | usage 2 baca + 1 subrequest; config 1 baca | - |
-| Backup otomatis (#201) | 2 + jumlah file baru (1×/hari) | 1 baca + 1 tulis per upload | `files/missing` 1 list/1000 file; file baru 1 head + 1 put; snapshot 1 put + 1 list (+1 delete) |
+| Backup otomatis (#201) | 2 + jumlah file baru (1×/hari) | 1 tulis (pesan kuota) per upload (+1 kalau upload gagal / retensi membuang snapshot) | `files/missing` 1 list/1000 file; file baru 1 head + 1 put; snapshot 1 put + 1 list (+1 delete) |
 | Restore cloud (#201) | 2 + file yang belum ada di HP | - | 1 list + 1 baca snapshot + 1 baca per file |
-| Sync push (#109: login, resume ≥ 5 menit, 60 detik setelah perubahan terakhir) | ±10–30; sync pertama maks 10 per pemicu | per push: 1 baca sesi + 1 `SELECT` record lama (baris = record di batch) + 1 batch (`seq` + upsert yang berubah saja); ±50–300 tulis, ±100–500 baca | batch berisi buku: `files/missing` 1 list + 1 put per file yang belum ada (sama dengan backup, gak dobel) |
+| Sync push (#109: login, resume ≥ 5 menit, 60 detik setelah perubahan terakhir) | ±10–30; sync pertama maks 10 per pemicu | per push: 1 baca sesi + 1 `SELECT` record lama (baris = record di batch) + 1 baca kuota + 1 batch (`seq` + kuota + upsert yang berubah saja); ±50–300 tulis, ±100–500 baca | batch berisi buku: `files/missing` 1 list + 1 put per file yang belum ada (sama dengan backup, gak dobel) |
 | Sync pull (#210: login, resume ≥ 5 menit, setelah push) | 1 per 500 record perubahan, maks 10 per pemicu (biasanya 1) | 1 baca sesi + baris yang dikembalikan saja (index `records_user_seq`), 0 tulis | - |
 | Download buku di device baru (#210) | 1 per buku (sekali) + 1 dump per buku Markdown | - | 1 baca per buku |
 
@@ -133,7 +134,7 @@ Better Auth 1.7 dipasang di Hono (`/v1/auth/*`) dengan adapter `@better-auth/dri
 - **Dev**: email + password, hanya kalau `ENV != prod`. Hash password diganti PBKDF2-SHA256 lewat `crypto.subtle` (`emailAndPassword.password.hash/verify`), 20.000 iterasi (±1,5 ms di laptop), iterasi ikut disimpan di hash. Di bawah anjuran OWASP (600.000) karena batas CPU; diterima karena login email cuma ada di dev. Argon2id / scrypt / bcrypt (memory-hard, lebih tahan GPU) sudah dipertimbangkan: lewat JS/WASM puluhan–ratusan ms per hash, gak muat CPU 10 ms. **Aturan**: prod gak pernah menyimpan password; login selain Google = Sign in with Apple atau OTP email, bukan password.
 - **Prod**: Google lewat **idToken native** (`google_sign_in`, `serverClientId` = web client ID). Server: `socialProviders.google.clientId` berupa array web/iOS/Android. Tanpa redirect OAuth di mobile.
 - **Sign in with Apple**: wajib (App Store 4.8) kalau masuk App Store sambil nawarin Google; polanya sama (idToken). Ditunda sampai rilis App Store.
-- **Gerbang beta**: kode undangan lewat header `x-invite-code` saat daftar, dipakai atomik di `databaseHooks.user.create.before` (satu `UPDATE … WHERE used_at IS NULL`), 403 dengan kode berbeda: tanpa header `INVITE_CODE_REQUIRED` (app buka layar kode undangan), kode gak ada `INVALID_INVITE_CODE`, udah dipakai `INVITE_CODE_USED`. Format `LUMA-XXXX`; huruf besar/kecil dan strip gak ngaruh (`normalizeInviteCode`). Dimatikan lewat `vars` `INVITE_REQUIRED=false` saat pricing siap. Kode dibuat manual: `bunx wrangler d1 execute DB --env dev --remote --command "INSERT INTO invite_codes (code) VALUES ('LUMA-XXXX')"`.
+- **Gerbang beta**: kode undangan lewat header `x-invite-code` saat daftar, dipakai atomik di `databaseHooks.user.create.before` (satu `UPDATE … WHERE used_at IS NULL`), 403 dengan kode berbeda: tanpa header `INVITE_CODE_REQUIRED` (app buka layar kode undangan), kode gak ada `INVALID_INVITE_CODE`, udah dipakai `INVITE_CODE_USED`. Format `LUMA-XXXXX-XXXXX` (10 karakter acak dari 32 huruf/angka tanpa 0/O/1/I, ±10^15 kemungkinan, gak bisa ditebak lewat brute force walau IP dirotasi); huruf besar/kecil dan strip gak ngaruh (`normalizeInviteCode`), disimpan dalam bentuk normalisasi. Kode lama `LUMA-XXXX` (±10^6) masih diterima, tapi jangan bikin lagi; yang belum dipakai dihapus. Dimatikan lewat `vars` `INVITE_REQUIRED=false` saat pricing siap. Kode dibuat lewat `make backend-invite e=dev n=3` (`newInviteCode` + insert ke D1 remote, kode dicetak).
 - **Google**: aktif kalau `vars` `GOOGLE_CLIENT_IDS` (web,ios,android, dipisah koma) diisi; secret `GOOGLE_CLIENT_SECRET`. Belum diisi (menunggu OAuth client ID).
 - **Flutter**: tanpa SDK resmi; panggil REST langsung lewat `dio` (`/sign-in/email`, `/sign-up/email`, `/sign-in/social` dengan `{provider: "google", idToken: {token}}`). Token dari header `set-auth-token` (bentuk `<token>.<signature>`) disimpan di `flutter_secure_storage`, dikirim sebagai `Authorization: Bearer`. Error Better Auth `{code, message}` dibungkus server jadi format seragam `{error: {code, message}}`.
 
@@ -231,7 +232,7 @@ sequenceDiagram
 
 D1: `ai_keys(user_id PK, key_hash, key_enc, limit_usd, expires_at, created_at)` + kolom `users.banned` (Better Auth `additionalFields`, `input: false`, `returned: false`). Key disimpan terenkripsi AES-GCM (`v1.<iv>.<ct>`, kunci secret `AI_KEY_ENC_SECRET`) karena OpenRouter cuma memberi teks key sekali saat dibuat. Kunci enkripsi hilang/diganti → key lama gak kebaca → otomatis dirotasi, bukan error.
 
-Aturan `issueKey`: pakai ulang selama masih berlaku (subrequest 0), bikin lazy, rotasi sehari sebelum kedaluwarsa / saat `{"rotate": true}` / saat gak kebaca (hapus lama + bikin baru), limit `vars` berubah → `PATCH` limit key yang ada. Hapus akun mencabut key duluan.
+Aturan `issueKey`: pakai ulang selama masih berlaku (subrequest 0), bikin lazy, rotasi sehari sebelum kedaluwarsa / saat gak kebaca / saat `{"rotate": true}` **dan key-nya udah gak ada di OpenRouter** (`GET /keys/{hash}` 404) (hapus lama + bikin baru). `rotate` buat key yang masih ada diabaikan (key yang sama dikirim balik): limit harian nempel di key, jadi rotasi bebas = kuota $0.02 baru tiap kali minta, dan satu user bisa ngabisin budget workspace semua orang, limit `vars` berubah → `PATCH` limit key yang ada. Hapus akun mencabut key duluan.
 
 ### Batas & pengaman
 
@@ -239,7 +240,7 @@ Aturan `issueKey`: pakai ulang selama masih berlaku (subrequest 0), bikin lazy, 
 |---|---|
 | Biaya per user | `limit: 0.02`, `limit_reset: "daily"` → maks ±$0.60/bulan per user, ±30–50 tap/hari |
 | Total biaya | Budget guardrail workspace OpenRouter **$5/bulan**. Habis → semua key subsidi 402 → "Kuota gratis lagi abis, pakai key sendiri dulu yuk". Saldo OpenRouter tanpa auto top-up sebagai lapis kedua |
-| Key diekstrak dari device | Limit harian kecil + `expires_at` 30 hari. 401 → app panggil `POST /v1/ai/key` → key lama dihapus, key baru dibuat. `banned` → `DELETE /keys/{hash}` |
+| Key diekstrak dari device | Limit harian kecil + `expires_at` 30 hari. 401 → app panggil `POST /v1/ai/key {"rotate": true}` → kalau key memang udah gak ada di OpenRouter, key lama dihapus dan key baru dibuat; kalau masih ada, key yang sama dikirim balik (rotasi gak bisa dipakai buat reset limit harian). `banned` → `DELETE /keys/{hash}` |
 | Model mahal | Workspace `luma-subsidi` dengan default guardrail `allowed_models` (model default + kandidat murah + **model embedding** Ngobrolin). Mode subsidi: pemilih model hanya menampilkan daftar dari `/v1/ai/config` |
 | Spam akun | Login prod hanya Google, key lazy, `user_id` unique, rate limit `POST /v1/ai/key` per IP + per user (binding Workers Rate Limiting), kode undangan selama beta |
 
@@ -276,7 +277,7 @@ Zip penuh tidak di-upload (bisa ratusan MB, lewat batas body 100MB). Isinya dipi
 Detail implementasi (#201):
 
 - Semua route: `killSwitch("BACKUP_ENABLED")` → `requireSession` → rate limit per user. Nama file `^[A-Za-z0-9._-]{1,200}$`; `Content-Length` wajib (400 kalau gak ada), maks 100MB (413 `PAYLOAD_TOO_LARGE`). Body di-stream ke R2 lewat `FixedLengthStream`, gak di-buffer/hash di Worker; panjang yang bohong = upload gagal.
-- Kuota: `user_storage.bytes + size ≤ USER_STORAGE_BYTES` (vars, 1GB) → lewat = 413 `STORAGE_FULL`. File yang udah ada (`head`) gak diunggah ulang dan gak dihitung dobel. Snapshot ikut dihitung; yang dibuang retensi mengurangi `bytes`.
+- Kuota: `user_storage.bytes + size ≤ USER_STORAGE_BYTES` (vars, 1GB) → lewat = 413 `STORAGE_FULL`. Dipesan atomik sebelum `put` (`reserveBytes`), dikembalikan kalau `put` gagal. File yang udah ada (`head`) gak diunggah ulang dan gak dihitung dobel. Snapshot ikut dihitung; yang dibuang retensi mengurangi `bytes`.
 - `PUT /v1/backups`: manifest app dikirim di header `x-backup-manifest` (JSON `manifest.json`), disimpan sebagai `customMetadata` (`createdAt` dinormalisasi ke UTC). `GET /v1/backups` → `{"backups": [...]}` terbaru dulu.
 - Ukuran nyata snapshot (13 November 2026): 14,6MB zip dari DB 42MB, jadi multipart gak dipakai. CPU di env dev (`wrangler tail`, hangat): `GET /v1/backups` 3ms, `PUT /v1/backups` 15MB 5–14ms, `PUT /v1/files/:name` 15MB 8ms; cold start sampai ±26ms.
 
@@ -366,7 +367,7 @@ Detail implementasi push (#109):
 - **Kind**: `book`, `reading_progress`, `reading_session`, `ai_result`, `ai_breakdown`, `setting`, `chat_session`, `chat_turn`. Data pakai nama field Dart, waktu ISO 8601 UTC, ID lokal diganti `chapterSortOrder` + `parserVersion`. Tombstone cuma `book` dan `chat_session` (hapus user); hapus cascade anak gak dikirim. Setting allowlist `syncedSettings` (model, bahasa, rak, Aa).
 - **Waktu**: `updatedAt` record = jam device saat trigger jalan (bukan jam server: edit offline yang telat dikirim gak boleh ngalahin edit yang lebih baru).
 - **Push** (`SyncRepository`): satu putaran ambil outbox `updated_at ≤ mulai` lewat cursor, maks 500 record / ±900KB per request, maks 10 batch. Outbox dihapus kalau `updatedAt` belum berubah selama push. Baris anak yang udah hilang dibuang tanpa dikirim. 429/503 → jeda sesuai `Retry-After`.
-- **Server** (`features/sync/`): batas D1 free 50 query + 100 parameter per request, jadi 1 `SELECT` lewat `json_each`, merge di JS (`merge.ts`), lalu satu `db.batch()`: `seq += n` + satu `INSERT … SELECT FROM json_each … ON CONFLICT`. Record dari app dengan `schemaVersion` lebih lama gak menimpa record versi lebih baru. Balas `{seq, applied}`. Batas yang disengaja: merge dibaca di luar transaksi; dua device push kunci sama di milidetik yang sama → yang terakhir nulis menang.
+- **Server** (`features/sync/`): batas D1 free 50 query + 100 parameter per request, jadi 1 `SELECT` lewat `json_each`, merge di JS (`merge.ts`), lalu satu `db.batch()`: `seq += n` + satu `INSERT … SELECT FROM json_each … ON CONFLICT`. Record dari app dengan `schemaVersion` lebih lama gak menimpa record versi lebih baru. Sebelum batch tulis, kuota sync dicek (lihat Aturan server); batch yang sama juga memperbarui `sync_bytes` / `sync_rows`. Balas `{seq, applied}`. Batas yang disengaja: merge dibaca di luar transaksi; dua device push kunci sama di milidetik yang sama → yang terakhir nulis menang.
 - **File buku**: batch yang berisi record buku → `files/missing` buat file, cover, dan dump Markdown `md-{bookKey}-{contentRevision}.json.gz` (bab + paragraf `[index, groupIndex, type, text]`), upload yang belum ada. Gagal upload → record buku tetap di outbox (dikirim ulang, server gak nulis data yang sama).
 - **Pemicu** (`SyncTrigger`): login, resume (min 5 menit), dan 60 detik setelah perubahan terakhir di tabel yang di-sync (`tableUpdates` Drift; tulisan trigger ke outbox gak keliatan stream).
 
@@ -573,6 +574,9 @@ erDiagram
     text user_id PK, FK
     int bytes
     int seq
+    int sync_bytes
+    int sync_day
+    int sync_rows
   }
   records {
     text user_id PK, FK

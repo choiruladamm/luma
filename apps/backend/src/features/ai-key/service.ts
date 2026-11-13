@@ -39,8 +39,10 @@ export type IssuedKey = { key: string; expiresAt: string; dailyLimitUsd: number 
 /**
  * Key subsidi user: dipakai ulang selama masih berlaku (dua device dapat key yang
  * sama, kuota gak dobel), dibuat lazy, diganti kalau hampir kedaluwarsa, gak
- * kebaca, atau diminta `rotate` (app dapat 401 dari OpenRouter).
- * Subrequest: 0 (pakai ulang), 1 (bikin / ubah limit), 2 (rotasi).
+ * kebaca, atau diminta `rotate` dan key-nya memang udah gak ada di OpenRouter.
+ * `rotate` buat key yang masih ada diabaikan: limit harian nempel di key, jadi
+ * rotasi bebas = kuota harian baru tiap kali minta.
+ * Subrequest: 0 (pakai ulang), 1 (bikin / ubah limit / cek `rotate`), 2–3 (rotasi).
  */
 export async function issueKey(
   db: Db,
@@ -51,9 +53,9 @@ export async function issueKey(
 ): Promise<IssuedKey> {
   const row = await allowedKey(db, userId);
   const fresh = row && row.expiresAt.getTime() - now.getTime() > ROTATE_BEFORE_MS;
-  if (row && fresh && !rotate) {
+  if (row && fresh) {
     const key = await decryptText(cfg.encSecret, row.keyEnc);
-    if (key) {
+    if (key && (!rotate || (await admin.keyExists(row.keyHash)))) {
       if (row.limitUsd !== cfg.dailyLimitUsd) {
         await admin.updateLimit(row.keyHash, cfg.dailyLimitUsd);
         await setKeyLimit(db, userId, cfg.dailyLimitUsd);

@@ -140,7 +140,57 @@ describe("POST /v1/sync/push", () => {
     expect(response.status).toBe(429);
   });
 
-  it("stays inside the budget: 500 records = session + 1 read + 1 batch", async () => {
+  it("refuses writes past the daily quota until UTC midnight, without writing", async () => {
+    const { token, userId } = await signUp();
+    const limits = { SYNC_DAILY_WRITES: "3" };
+    const first = await callWithBudget(push(token, pushFixture.request.body), limits);
+    expect(first.response.status).toBe(200);
+
+    const { response } = await callWithBudget(
+      push(token, { schemaVersion: 18, records: [{ ...setting("x", "2026-11-13T10:00:00.000Z"), key: "baru" }] }),
+      limits,
+    );
+
+    expect(response.status).toBe(429);
+    expect(await response.json()).toEqual({ error: { code: "QUOTA_EXCEEDED", message: "Daily sync quota reached" } });
+    const retryAfter = Number(response.headers.get("retry-after"));
+    expect(retryAfter).toBeGreaterThan(0);
+    expect(retryAfter).toBeLessThanOrEqual(24 * 60 * 60);
+    expect(await rows(userId)).toHaveLength(3);
+  });
+
+  it("tracks stored sync size exactly and refuses growth past the storage quota", async () => {
+    const { token, userId } = await signUp();
+    const storedSize = async () => {
+      const usage = await env.DB.prepare("SELECT sync_bytes AS b FROM user_storage WHERE user_id = ?").bind(userId).first<{ b: number }>();
+      const real = await env.DB.prepare(
+        "SELECT sum(length(key) + coalesce(length(data), 0)) AS b FROM records WHERE user_id = ?",
+      )
+        .bind(userId)
+        .first<{ b: number }>();
+      expect(usage?.b).toBe(real?.b);
+      return usage!.b;
+    };
+    const send = (value: string, updatedAt: string, limit = "1000") =>
+      callWithBudget(push(token, { schemaVersion: 18, records: [setting(value, updatedAt)] }), {
+        SYNC_STORAGE_BYTES: limit,
+      });
+
+    expect((await send("a".repeat(100), "2026-11-13T10:00:00.000Z")).response.status).toBe(200);
+    const afterFirst = await storedSize();
+    expect((await send("b".repeat(10), "2026-11-13T10:01:00.000Z")).response.status).toBe(200);
+    expect(await storedSize()).toBe(afterFirst - 90);
+
+    const full = await send("c".repeat(2000), "2026-11-13T10:02:00.000Z");
+    expect(full.response.status).toBe(413);
+    expect(await full.response.json()).toEqual({ error: { code: "STORAGE_FULL", message: "Sync storage is full" } });
+
+    // Udah lewat kuota (kuota diturunin): yang mengecilkan data tetap boleh.
+    expect((await send("d", "2026-11-13T10:03:00.000Z", "1")).response.status).toBe(200);
+    await storedSize();
+  });
+
+  it("stays inside the budget: 500 records = session + 1 read + quota + 1 batch", async () => {
     const { token } = await signUp();
     const records = Array.from({ length: 500 }, (_, i) => ({
       ...setting(`m${i}`, "2026-11-13T10:00:00.000Z"),
@@ -149,7 +199,7 @@ describe("POST /v1/sync/push", () => {
     const { response, d1Queries, subrequests } = await callWithBudget(push(token, { schemaVersion: 18, records }));
     expect(await response.json()).toEqual({ seq: 500, applied: 500 });
     expect(subrequests).toBe(0);
-    // sesi (≤2) + SELECT lama + batch 2 statement
-    expect(d1Queries).toBeLessThanOrEqual(5);
+    // sesi (≤2) + SELECT lama + kuota + batch 2 statement
+    expect(d1Queries).toBeLessThanOrEqual(6);
   });
 });

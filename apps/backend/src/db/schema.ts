@@ -28,8 +28,11 @@ export const inviteCodes = sqliteTable("invite_codes", {
 });
 
 /**
- * Pemakaian R2 per user (docs/backend.md, Batas & pengaman): `bytes` dicek
+ * Pemakaian per user (docs/backend.md, Batas & pengaman): `bytes` = R2, dicek
  * terhadap `USER_STORAGE_BYTES` tiap upload. `seq` = urutan sync (#109).
+ * `syncBytes` = ukuran record sync di D1 (panjang key + JSON data), dicek
+ * terhadap `SYNC_STORAGE_BYTES`. `syncRows` = baris sync ditulis di hari UTC
+ * `syncDay` (hari sejak epoch), dicek terhadap `SYNC_DAILY_WRITES`.
  */
 export const userStorage = sqliteTable("user_storage", {
   userId: text("user_id")
@@ -37,6 +40,9 @@ export const userStorage = sqliteTable("user_storage", {
     .references(() => users.id, { onDelete: "cascade" }),
   bytes: integer("bytes").notNull().default(0),
   seq: integer("seq").notNull().default(0),
+  syncBytes: integer("sync_bytes").notNull().default(0),
+  syncDay: integer("sync_day").notNull().default(0),
+  syncRows: integer("sync_rows").notNull().default(0),
 });
 
 /**

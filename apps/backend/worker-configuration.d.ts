@@ -10,6 +10,8 @@ interface __BaseEnv_Env {
 	BACKUP_ENABLED: string;
 	AI_KEY_ENABLED: string;
 	USER_STORAGE_BYTES: string;
+	SYNC_STORAGE_BYTES: string;
+	SYNC_DAILY_WRITES: string;
 	BETTER_AUTH_URL: string;
 	INVITE_REQUIRED: string;
 	GOOGLE_CLIENT_IDS: string;
@@ -35,7 +37,7 @@ type StringifyValues<EnvType extends Record<string, unknown>> = {
 	[Binding in keyof EnvType]: EnvType[Binding] extends string ? EnvType[Binding] : string;
 };
 declare namespace NodeJS {
-	interface ProcessEnv extends StringifyValues<Pick<Cloudflare.Env, "ENV" | "SYNC_ENABLED" | "BACKUP_ENABLED" | "AI_KEY_ENABLED" | "USER_STORAGE_BYTES" | "BETTER_AUTH_URL" | "INVITE_REQUIRED" | "GOOGLE_CLIENT_IDS" | "AI_DAILY_LIMIT_USD" | "AI_MONTHLY_BUDGET_USD" | "AI_KEY_TTL_DAYS" | "OPENROUTER_WORKSPACE_ID" | "AI_CHAT_MODELS" | "AI_EMBEDDING_MODELS" | "BETTER_AUTH_SECRET" | "GOOGLE_CLIENT_SECRET" | "OPENROUTER_MANAGEMENT_KEY" | "AI_KEY_ENC_SECRET">> {}
+	interface ProcessEnv extends StringifyValues<Pick<Cloudflare.Env, "ENV" | "SYNC_ENABLED" | "BACKUP_ENABLED" | "AI_KEY_ENABLED" | "USER_STORAGE_BYTES" | "SYNC_STORAGE_BYTES" | "SYNC_DAILY_WRITES" | "BETTER_AUTH_URL" | "INVITE_REQUIRED" | "GOOGLE_CLIENT_IDS" | "AI_DAILY_LIMIT_USD" | "AI_MONTHLY_BUDGET_USD" | "AI_KEY_TTL_DAYS" | "OPENROUTER_WORKSPACE_ID" | "AI_CHAT_MODELS" | "AI_EMBEDDING_MODELS" | "BETTER_AUTH_SECRET" | "GOOGLE_CLIENT_SECRET" | "OPENROUTER_MANAGEMENT_KEY" | "AI_KEY_ENC_SECRET">> {}
 }
 declare module "*.txt" {
 	const value: string;

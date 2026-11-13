@@ -24,6 +24,8 @@ export type OpenRouterAdmin = {
   }): Promise<CreatedKey>;
   updateLimit(hash: string, limitUsd: number): Promise<void>;
   getUsage(hash: string): Promise<KeyUsage>;
+  /** False kalau key udah gak ada di OpenRouter (404). */
+  keyExists(hash: string): Promise<boolean>;
   /** 404 (udah gak ada) dianggap sukses. */
   deleteKey(hash: string): Promise<void>;
 };
@@ -65,6 +67,15 @@ export function openRouterAdmin(managementKey: string, fetcher: typeof fetch = f
         usage_daily: number;
       };
       return { limit: data.limit, limitRemaining: data.limit_remaining, usageDaily: data.usage_daily };
+    },
+    async keyExists(hash) {
+      try {
+        await call("GET", `/keys/${hash}`);
+        return true;
+      } catch (e) {
+        if (e instanceof OpenRouterError && e.status === 404) return false;
+        throw e;
+      }
     },
     async deleteKey(hash) {
       try {

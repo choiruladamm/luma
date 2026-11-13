@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { backupId, parseManifest, staleBackups } from "../../src/features/backup/service";
-import { assertFits, MAX_UPLOAD_BYTES, uploadSize } from "../../src/lib/storage";
+import { MAX_UPLOAD_BYTES, uploadSize } from "../../src/lib/storage";
 import backupsPut from "../fixtures/contract/backups-put.json";
 
 describe("backupId", () => {
@@ -36,7 +36,7 @@ describe("parseManifest", () => {
   );
 });
 
-describe("uploadSize / assertFits", () => {
+describe("uploadSize", () => {
   it("needs a Content-Length within 100MB", () => {
     expect(uploadSize("0")).toBe(0);
     expect(uploadSize(String(MAX_UPLOAD_BYTES))).toBe(MAX_UPLOAD_BYTES);
@@ -44,10 +44,5 @@ describe("uploadSize / assertFits", () => {
     expect(() => uploadSize("-1")).toThrow("Content-Length required");
     expect(() => uploadSize("1.5")).toThrow("Content-Length required");
     expect(() => uploadSize(String(MAX_UPLOAD_BYTES + 1))).toThrow(/exceeds/);
-  });
-
-  it("allows filling the quota exactly, not past it", () => {
-    expect(() => assertFits(90, 10, 100)).not.toThrow();
-    expect(() => assertFits(90, 11, 100)).toThrow("Cloud storage is full");
   });
 });

@@ -22,6 +22,10 @@
         "AI_KEY_ENABLED": "true",
         // Kuota R2 per user (byte, 1GB). Lewat → 413 STORAGE_FULL.
         "USER_STORAGE_BYTES": "1073741824",
+        // Kuota sync per user di D1: total ukuran record (100MB) dan baris ditulis per hari UTC.
+        // Lewat → 413 STORAGE_FULL / 429 QUOTA_EXCEEDED (docs/backend.md, Aturan server).
+        "SYNC_STORAGE_BYTES": "104857600",
+        "SYNC_DAILY_WRITES": "20000",
         "BETTER_AUTH_URL": "https://luma-backend-dev.choiruladamm.workers.dev",
         "INVITE_REQUIRED": "true",
         // Client ID OAuth Google web,ios,android dipisah koma (publik, bukan secret). Kosong = Google mati.
@@ -56,6 +60,10 @@
         "AI_KEY_ENABLED": "true",
         // Kuota R2 per user (byte, 1GB). Lewat → 413 STORAGE_FULL.
         "USER_STORAGE_BYTES": "1073741824",
+        // Kuota sync per user di D1: total ukuran record (100MB) dan baris ditulis per hari UTC.
+        // Lewat → 413 STORAGE_FULL / 429 QUOTA_EXCEEDED (docs/backend.md, Aturan server).
+        "SYNC_STORAGE_BYTES": "104857600",
+        "SYNC_DAILY_WRITES": "20000",
         "BETTER_AUTH_URL": "https://luma-backend.choiruladamm.workers.dev",
         "INVITE_REQUIRED": "true",
         "GOOGLE_CLIENT_IDS": "",

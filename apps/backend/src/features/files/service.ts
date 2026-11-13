@@ -1,7 +1,7 @@
 import type { Db } from "../../db/client";
-import { addBytes, storedBytes } from "../../db/user-storage";
+import { releaseOnFailure, reserveBytes } from "../../db/user-storage";
 import { ApiError } from "../../lib/errors";
-import { assertFits, fixedLength, userPrefix } from "../../lib/storage";
+import { fixedLength, userPrefix } from "../../lib/storage";
 
 /** Nama file buku/cover di app sudah berbasis hash; selain pola ini ditolak. */
 export const FILE_NAME = /^[A-Za-z0-9._-]{1,200}$/;
@@ -46,9 +46,8 @@ export async function putFile(
     await body?.cancel();
     return { name, size: existing.size };
   }
-  assertFits(await storedBytes(db, userId), size, quota);
-  await bucket.put(key, fixedLength(body, size));
-  await addBytes(db, userId, size);
+  await reserveBytes(db, userId, size, quota);
+  await releaseOnFailure(db, userId, size, () => bucket.put(key, fixedLength(body, size)));
   return { name, size };
 }
 

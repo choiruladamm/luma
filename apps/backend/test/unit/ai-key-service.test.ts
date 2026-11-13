@@ -24,6 +24,7 @@ function fakeAdmin() {
     createKey: vi.fn(async () => ({ key: `sk-${++n}`, hash: `h-${n}` })),
     updateLimit: vi.fn(async () => {}),
     getUsage: vi.fn(async (): Promise<KeyUsage> => ({ limit: 0.02, limitRemaining: 0.015, usageDaily: 0.005 })),
+    keyExists: vi.fn(async () => true),
     deleteKey: vi.fn(async () => {}),
   } satisfies OpenRouterAdmin;
   return admin;
@@ -60,17 +61,32 @@ describe("issueKey", () => {
     expect(row?.keyEnc).not.toContain("sk-1");
   });
 
-  it("rotates on request: deletes the old key and stores the new one", async () => {
+  it("rotates on request when OpenRouter lost the key: deletes the old one and stores the new one", async () => {
     const { userId } = await signUp();
     const db = createDb(env.DB);
     const admin = fakeAdmin();
     await issueKey(db, admin, cfg, userId);
+    admin.keyExists.mockResolvedValueOnce(false);
 
     const rotated = await issueKey(db, admin, cfg, userId, { rotate: true });
 
     expect(rotated.key).toBe("sk-2");
     expect(admin.deleteKey).toHaveBeenCalledWith("h-1");
     expect((await issueKey(db, admin, cfg, userId)).key).toBe("sk-2");
+  });
+
+  it("ignores rotate while the key still exists, so rotating never resets the daily limit", async () => {
+    const { userId } = await signUp();
+    const db = createDb(env.DB);
+    const admin = fakeAdmin();
+    await issueKey(db, admin, cfg, userId);
+
+    const again = await issueKey(db, admin, cfg, userId, { rotate: true });
+
+    expect(again.key).toBe("sk-1");
+    expect(admin.keyExists).toHaveBeenCalledWith("h-1");
+    expect(admin.createKey).toHaveBeenCalledTimes(1);
+    expect(admin.deleteKey).not.toHaveBeenCalled();
   });
 
   it("rotates a key that is about to expire", async () => {

@@ -1,8 +1,8 @@
 import { z } from "zod";
 import type { Db } from "../../db/client";
-import { addBytes, storedBytes } from "../../db/user-storage";
+import { addBytes, releaseOnFailure, reserveBytes } from "../../db/user-storage";
 import { ApiError } from "../../lib/errors";
-import { assertFits, fixedLength, userPrefix } from "../../lib/storage";
+import { fixedLength, userPrefix } from "../../lib/storage";
 
 /** Snapshot yang disimpan; sisanya dihapus di `PUT` yang sama (docs/backend.md, Backup cloud). */
 export const BACKUP_RETENTION = 10;
@@ -81,18 +81,20 @@ export async function putBackup(
   userId: string,
   upload: { size: number; body: ReadableStream | null; metadata: Record<string, string>; now?: Date },
 ): Promise<BackupInfo> {
-  assertFits(await storedBytes(db, userId), upload.size, quota);
+  await reserveBytes(db, userId, upload.size, quota);
   const prefix = backupsPrefix(userId);
   const key = `${prefix}${backupId(upload.now ?? new Date())}.zip`;
-  const stored = await bucket.put(key, fixedLength(upload.body, upload.size), {
-    httpMetadata: { contentType: "application/zip" },
-    customMetadata: upload.metadata,
-  });
+  const stored = await releaseOnFailure(db, userId, upload.size, () =>
+    bucket.put(key, fixedLength(upload.body, upload.size), {
+      httpMetadata: { contentType: "application/zip" },
+      customMetadata: upload.metadata,
+    }),
+  );
   const listed = await bucket.list({ prefix, limit: 1000 });
   const stale = staleBackups(listed.objects);
   if (stale.length > 0) await bucket.delete(stale.map((o) => o.key));
   const freed = stale.reduce((sum, o) => sum + o.size, 0);
-  await addBytes(db, userId, upload.size - freed);
+  if (freed > 0) await addBytes(db, userId, -freed);
   return info(prefix, { key, size: stored!.size, customMetadata: upload.metadata });
 }
 

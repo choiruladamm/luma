@@ -60,6 +60,18 @@ describe("openRouterAdmin", () => {
     await expect(admin.deleteKey("x")).rejects.toBeInstanceOf(OpenRouterError);
   });
 
+  it("tells existing keys from missing ones, but surfaces other errors", async () => {
+    fakeOpenRouter();
+    const admin = openRouterAdmin("mgmt");
+    const { hash } = await admin.createKey({ name: "n", limitUsd: 0.02, expiresAt: new Date(), workspaceId: "ws" });
+
+    expect(await admin.keyExists(hash)).toBe(true);
+    expect(await admin.keyExists("tidak-ada")).toBe(false);
+
+    network.use(http.get(`${OPENROUTER_API}/keys/:hash`, () => new HttpResponse(null, { status: 500 })));
+    await expect(admin.keyExists(hash)).rejects.toBeInstanceOf(OpenRouterError);
+  });
+
   it("throws OpenRouterError with the status on failures", async () => {
     network.use(http.post(`${OPENROUTER_API}/keys`, () => HttpResponse.json({}, { status: 401 })));
     await expect(

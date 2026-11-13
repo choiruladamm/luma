@@ -12,6 +12,7 @@ export type ErrorCode =
   | "SERVICE_DISABLED"
   | "AI_BANNED"
   | "STORAGE_FULL"
+  | "QUOTA_EXCEEDED"
   | "BACKUP_NOT_FOUND"
   | "INTERNAL_ERROR";
 

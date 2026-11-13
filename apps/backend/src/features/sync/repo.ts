@@ -22,39 +22,56 @@ const fromRow = (r: Row): SyncRecord => ({
   schemaVersion: r.schema_version,
 });
 
+/** Record di D1 + ukurannya (panjang key + JSON data, rumus kuota `sync_bytes`). */
+export type StoredRecord = SyncRecord & { size: number };
+
 /** 1 query: record yang udah ada buat pasangan `(kind, key)` di batch. */
-export async function findRecords(d1: D1Database, userId: string, ids: [Kind, string][]) {
+export async function findRecords(d1: D1Database, userId: string, ids: [Kind, string][]): Promise<StoredRecord[]> {
   const { results } = await d1
     .prepare(
-      `SELECT kind, key, data, updated_at, deleted, schema_version FROM records
+      `SELECT kind, key, data, updated_at, deleted, schema_version,
+         length(key) + coalesce(length(data), 0) AS size FROM records
        WHERE user_id = ?1 AND (kind, key) IN
          (SELECT json_extract(value, '$[0]'), json_extract(value, '$[1]') FROM json_each(?2))`,
     )
     .bind(userId, JSON.stringify(ids))
-    .all<Row>();
-  return results.map(fromRow);
+    .all<Row & { size: number }>();
+  return results.map((r) => ({ ...fromRow(r), size: r.size }));
 }
 
-/** 1 query: `seq` user sekarang (0 kalau belum pernah push). */
-export async function currentSeq(d1: D1Database, userId: string) {
-  const row = await d1.prepare("SELECT seq FROM user_storage WHERE user_id = ?1").bind(userId).first<{ seq: number }>();
-  return row?.seq ?? 0;
+export type SyncUsage = { seq: number; bytes: number; day: number; rows: number };
+
+/** 1 query: `seq` + pemakaian kuota sync user sekarang (semua 0 kalau belum pernah push). */
+export async function syncUsage(d1: D1Database, userId: string): Promise<SyncUsage> {
+  const row = await d1
+    .prepare("SELECT seq, sync_bytes AS bytes, sync_day AS day, sync_rows AS rows FROM user_storage WHERE user_id = ?1")
+    .bind(userId)
+    .first<SyncUsage>();
+  return row ?? { seq: 0, bytes: 0, day: 0, rows: 0 };
 }
 
 /**
- * 1 `db.batch()` atomik (2 statement): `seq += n` + satu
- * `INSERT … SELECT FROM json_each` yang ngasih tiap record `seq` baru berurutan.
- * Balikin `seq` terakhir.
+ * 1 `db.batch()` atomik (2 statement): `seq += n` + kuota (`sync_bytes +=
+ * [bytesDelta]`, `sync_rows += n` di hari UTC [day], reset kalau ganti hari) +
+ * satu `INSERT … SELECT FROM json_each` yang ngasih tiap record `seq` baru
+ * berurutan. Balikin `seq` terakhir.
  */
-export async function writeRecords(d1: D1Database, userId: string, records: SyncRecord[]) {
+export async function writeRecords(
+  d1: D1Database,
+  userId: string,
+  records: SyncRecord[],
+  quota: { bytesDelta: number; day: number },
+) {
   const n = records.length;
   const [bump] = await d1.batch<{ seq: number }>([
     d1
       .prepare(
-        `INSERT INTO user_storage (user_id, seq) VALUES (?1, ?2)
-         ON CONFLICT (user_id) DO UPDATE SET seq = seq + ?2 RETURNING seq`,
+        `INSERT INTO user_storage (user_id, seq, sync_bytes, sync_day, sync_rows) VALUES (?1, ?2, max(0, ?3), ?4, ?2)
+         ON CONFLICT (user_id) DO UPDATE SET seq = seq + ?2, sync_bytes = max(0, sync_bytes + ?3),
+           sync_rows = CASE WHEN sync_day = ?4 THEN sync_rows + ?2 ELSE ?2 END, sync_day = ?4
+         RETURNING seq`,
       )
-      .bind(userId, n),
+      .bind(userId, n, quota.bytesDelta, quota.day),
     d1
       .prepare(
         `INSERT INTO records (user_id, kind, key, data, updated_at, deleted, schema_version, seq)

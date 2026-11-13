@@ -15,6 +15,20 @@ export function normalizeInviteCode(code: string) {
     : compact;
 }
 
+/** 32 huruf/angka tanpa yang mirip (0/O, 1/I): 5 bit per karakter, tanpa bias modulo. */
+const INVITE_ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+
+/**
+ * Kode undangan baru `LUMA-XXXXX-XXXXX`: 10 karakter acak = 32^10 ≈ 10^15
+ * kemungkinan, gak bisa ditebak lewat brute force walau rate limit per IP
+ * diakalin (format lama `LUMA-XXXX` cuma ±10^6). Disimpan dalam bentuk
+ * [normalizeInviteCode].
+ */
+export function newInviteCode() {
+  const chars = [...crypto.getRandomValues(new Uint8Array(10))].map((b) => INVITE_ALPHABET[b & 31]).join("");
+  return `LUMA-${chars.slice(0, 5)}-${chars.slice(5)}`;
+}
+
 export type InviteResult = "ok" | "invalid" | "used";
 
 /**

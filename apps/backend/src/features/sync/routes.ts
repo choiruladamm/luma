@@ -6,7 +6,7 @@ import { ApiError } from "../../lib/errors";
 import { limitBody } from "../../middleware/body-limit";
 import { featureGuard } from "../../middleware/guard";
 import { KINDS } from "./merge";
-import { MAX_PULL_RECORDS, MAX_PUSH_RECORDS, pull, push } from "./service";
+import { MAX_PULL_RECORDS, MAX_PUSH_RECORDS, pull, push, syncLimits } from "./service";
 
 const record = z
   .object({
@@ -41,7 +41,7 @@ export const sync = new Hono<AppEnv>()
         throw new ApiError(400, "BAD_REQUEST", `Body must be {"schemaVersion", "records": [≤${MAX_PUSH_RECORDS}]}`);
       }
     }),
-    async (c) => c.json(await push(c.env.DB, c.get("user").id, c.req.valid("json"))),
+    async (c) => c.json(await push(c.env.DB, c.get("user").id, c.req.valid("json"), syncLimits(c.env))),
   )
   .get(
     "/pull",

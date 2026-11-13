@@ -58,13 +58,25 @@ describe("POST /v1/ai/key", () => {
     const or = fakeOpenRouter();
     const { token } = await signUp();
     const first = (await (await exports.default.fetch(postKey(token))).json()) as { key: string };
+    or.keys.delete("hash-1"); // dicabut di OpenRouter → app dapat 401
 
     const res = await exports.default.fetch(postKey(token, aiKeyRotate.request.body));
     const body = (await expectContract(res, aiKeyRotate)) as { key: string };
 
     expect(body.key).not.toBe(first.key);
-    expect(or.calls).toEqual(["POST /keys", "DELETE /keys/hash-1", "POST /keys"]);
+    expect(or.calls).toEqual(["POST /keys", "GET /keys/hash-1", "DELETE /keys/hash-1", "POST /keys"]);
     expect(or.keys.size).toBe(1);
+  });
+
+  it("returns the same key when rotate is asked for a key that still works", async () => {
+    const or = fakeOpenRouter();
+    const { token } = await signUp();
+    const first = (await (await exports.default.fetch(postKey(token))).json()) as { key: string };
+
+    const again = (await (await exports.default.fetch(postKey(token, { rotate: true }))).json()) as { key: string };
+
+    expect(again.key).toBe(first.key);
+    expect(or.calls).toEqual(["POST /keys", "GET /keys/hash-1"]);
   });
 
   it("refuses banned users (contract)", async () => {

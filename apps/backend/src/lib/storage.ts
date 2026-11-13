@@ -26,10 +26,3 @@ export function uploadSize(header: string | undefined): number {
  */
 export const fixedLength = (body: ReadableStream | null, size: number) =>
   (body ?? new Response("").body!).pipeThrough(new FixedLengthStream(size));
-
-/** Kuota per user: `bytes + size ≤ quota`, lewat → 413 STORAGE_FULL. */
-export function assertFits(used: number, size: number, quota: number) {
-  if (used + size > quota) {
-    throw new ApiError(413, "STORAGE_FULL", "Cloud storage is full");
-  }
-}
