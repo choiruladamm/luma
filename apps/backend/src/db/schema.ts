@@ -1,6 +1,6 @@
 // Tabel D1 (docs/backend.md, Schema D1). Property camelCase, kolom snake_case.
 // Tabel Better Auth di auth-schema.ts (hasil `npx auth@latest generate`, jangan diedit manual).
-import { integer, primaryKey, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { index, integer, primaryKey, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { users } from "./auth-schema";
 
 export * from "./auth-schema";
@@ -59,5 +59,6 @@ export const records = sqliteTable(
     schemaVersion: integer("schema_version").notNull(),
     seq: integer("seq").notNull(),
   },
-  (t) => [primaryKey({ columns: [t.userId, t.kind, t.key] })],
+  // Index (user_id, seq): pull baca cuma baris setelah cursor, bukan semua record user.
+  (t) => [primaryKey({ columns: [t.userId, t.kind, t.key] }), index("records_user_seq").on(t.userId, t.seq)],
 );

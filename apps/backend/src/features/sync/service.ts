@@ -98,3 +98,30 @@ export async function push(d1: D1Database, userId: string, body: PushBody): Prom
   ]);
   return { seq: bump!.results[0]!.seq, applied: n };
 }
+
+/** Maks record per halaman pull. */
+export const MAX_PULL_RECORDS = 500;
+
+/**
+ * Record dengan `seq` > [since], urut `seq`. Tiap record dibentuk jadi JSON di
+ * SQL (`data` udah JSON), jadi Worker cuma nyambung string: tanpa
+ * `JSON.parse`/`stringify` 500 record (batas CPU 10ms). Satu query lewat index
+ * `records_user_seq`; ambil [limit] + 1 buat tahu masih ada halaman berikut.
+ */
+export async function pull(d1: D1Database, userId: string, since: number, limit: number): Promise<string> {
+  const { results } = await d1
+    .prepare(
+      `SELECT seq, json_object(
+         'kind', kind, 'key', key,
+         'updatedAt', strftime('%Y-%m-%dT%H:%M:%fZ', updated_at / 1000.0, 'unixepoch'),
+         'deleted', json(CASE WHEN deleted THEN 'true' ELSE 'false' END),
+         'data', json(data), 'schemaVersion', schema_version, 'seq', seq
+       ) AS j
+       FROM records WHERE user_id = ?1 AND seq > ?2 ORDER BY seq LIMIT ?3`,
+    )
+    .bind(userId, since, limit + 1)
+    .all<{ seq: number; j: string }>();
+  const page = results.slice(0, limit);
+  const nextSeq = page.at(-1)?.seq ?? since;
+  return `{"records":[${page.map((r) => r.j).join(",")}],"nextSeq":${nextSeq},"more":${results.length > limit}}`;
+}

@@ -8,7 +8,7 @@ import { killSwitch } from "../../middleware/kill-switch";
 import { rateLimit } from "../../middleware/rate-limit";
 import { requireSession } from "../../middleware/session";
 import { KINDS } from "./merge";
-import { MAX_PUSH_RECORDS, push } from "./service";
+import { MAX_PULL_RECORDS, MAX_PUSH_RECORDS, pull, push } from "./service";
 
 const record = z
   .object({
@@ -20,6 +20,11 @@ const record = z
   })
   .strict()
   .refine((r) => r.deleted || r.data !== null, "data required unless deleted");
+
+const pullQuery = z.object({
+  since: z.coerce.number().int().min(0),
+  limit: z.coerce.number().int().min(1).max(MAX_PULL_RECORDS).default(MAX_PULL_RECORDS),
+});
 
 const pushBody = z
   .object({
@@ -39,4 +44,18 @@ export const sync = new Hono<AppEnv>()
       }
     }),
     async (c) => c.json(await push(c.env.DB, c.get("user").id, c.req.valid("json"))),
+  )
+  .get(
+    "/pull",
+    zValidator("query", pullQuery, (result) => {
+      if (!result.success) {
+        throw new ApiError(400, "BAD_REQUEST", `Query must be ?since=<seq>&limit=<1..${MAX_PULL_RECORDS}>`);
+      }
+    }),
+    async (c) => {
+      const { since, limit } = c.req.valid("query");
+      return c.body(await pull(c.env.DB, c.get("user").id, since, limit), 200, {
+        "content-type": "application/json",
+      });
+    },
   );

@@ -399,7 +399,7 @@ sequenceDiagram
 ### File buku
 
 - Folder `u/{userId}/files/` yang sama dengan backup cloud.
-- Device baru: semua buku di-download + import otomatis di background, setting "Sync cuma lewat Wi-Fi" (default nyala), indikator "Nyinkronin 3/12 buku" di Rak.
+- Device baru: semua buku di-download + import otomatis di background, lewat jaringan apa aja (tanpa batas Wi-Fi: buku 0,5–15MB). Indikator "Nyinkronin 3/12 buku" di Rak nyusul board desain.
 - **Buku Markdown** (tanpa file sumber): chapters + paragraphs (dengan `groupIndex`) di-dump ke `md-{bookKey}-{contentRevision}.json.gz`, diperlakukan sebagai file. Bab ditambah di dua device sekaligus → terakhir menang.
 
 ### Versi app

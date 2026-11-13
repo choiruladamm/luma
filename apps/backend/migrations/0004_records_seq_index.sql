@@ -1,0 +1,1 @@
+CREATE INDEX `records_user_seq` ON `records` (`user_id`,`seq`);
