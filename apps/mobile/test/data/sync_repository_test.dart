@@ -148,6 +148,9 @@ void main() {
   late SyncRepository repo;
   late BackendClient client;
 
+  /// Progres download yang dilaporin buat indikator Rak.
+  final downloads = <SyncDownloads?>[];
+
   /// Satu "device" yang ngobrol ke [worker] yang sama.
   SyncRepository phone(AppDatabase db, FileStorage storage) => SyncRepository(
     db: db,
@@ -157,6 +160,7 @@ void main() {
     auth: auth,
     applier: SyncApplier(db, storage),
     import: ImportRepository(db, storage),
+    onDownloads: downloads.add,
     clock: () => now,
   );
 
@@ -464,8 +468,11 @@ void main() {
       );
       await repo.push();
 
+      downloads.clear();
       await b.sync();
 
+      // Indikator Rak: 0/1 selama download, lalu ilang.
+      expect(downloads, [(done: 0, total: 1), null]);
       final got = await dbB.select(dbB.books).getSingle();
       expect(got.title, 'Alice (edit)');
       expect(got.readingSeconds, 300);

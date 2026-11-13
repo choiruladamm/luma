@@ -12,6 +12,7 @@ import 'package:hugeicons/hugeicons.dart';
 import '../../../../data/repositories/book_repository.dart';
 import '../../../../data/repositories/reading_progress_repository.dart';
 import '../../../../data/repositories/settings_repository.dart';
+import '../../../../data/repositories/sync_repository.dart';
 import '../../../../data/services/file_storage.dart';
 import '../../../../domain/models/backup.dart';
 import '../../../../domain/models/book.dart';
@@ -44,6 +45,7 @@ import '../view_models/bookshelf_view_model.dart';
 import '../../auth/view_models/auth_view_model.dart';
 import '../../auth/views/session_banner.dart';
 import 'backup_reminder.dart';
+import 'sync_banner.dart';
 import 'book_info_sheet.dart';
 import 'shelf_header.dart';
 import 'continue_card.dart';
@@ -383,10 +385,14 @@ class _BookshelfViewState extends ConsumerState<BookshelfView> {
       AsyncData(value: final list) => list,
       _ => const <ShelfBook>[],
     });
-    final sessionBanner = _sessionBanner();
-    final reminder = sessionBanner == null || backupReminder == null
-        ? sessionBanner ?? backupReminder
-        : Column(spacing: Space.s3, children: [sessionBanner, backupReminder]);
+    final syncing = ref.watch(syncDownloadsProvider);
+    final syncBanner = syncing == null
+        ? null
+        : SyncBanner(done: syncing.done, total: syncing.total);
+    final banners = [?_sessionBanner(), ?syncBanner, ?backupReminder];
+    final reminder = banners.length <= 1
+        ? banners.firstOrNull
+        : Column(spacing: Space.s3, children: banners);
     return BackupListener(
       child: Scaffold(
         body: SafeArea(
@@ -400,7 +406,7 @@ class _BookshelfViewState extends ConsumerState<BookshelfView> {
               _EmptyDownloading(header: header, item: downloading),
             AsyncData(value: final list)
                 when list.isEmpty && importing == null =>
-              _Empty(header: header, onImport: onImport),
+              _Empty(header: header, onImport: onImport, banner: syncBanner),
             AsyncData(value: final list) => _Shelf(
               books: baseline == null
                   ? list
@@ -913,10 +919,13 @@ class _ViewToggle extends StatelessWidget {
 /// Rak kosong (board Cari buku 02): kalimat pembuka terkenal + Ambil,
 /// "Rak lo masih kosong", Cari buku gratis, link import file.
 class _Empty extends ConsumerWidget {
-  const _Empty({required this.header, required this.onImport});
+  const _Empty({required this.header, required this.onImport, this.banner});
 
   final Widget header;
   final VoidCallback onImport;
+
+  /// Indikator sync: device baru mulai dari rak kosong.
+  final Widget? banner;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -934,6 +943,10 @@ class _Empty extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           header,
+          if (banner case final banner?) ...[
+            const SizedBox(height: Space.s3),
+            banner,
+          ],
           Expanded(
             child: Center(
               child: SingleChildScrollView(

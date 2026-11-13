@@ -760,5 +760,7 @@
   "cloudRestorePickTitle": "Pick a cloud backup",
   "cloudRestoreEmpty": "No cloud backups yet. Tap \"Back up to cloud\" first.",
   "cloudRestoreLoadFailed": "Couldn't load your backups. Check your connection.",
-  "cloudRestoreDownloadFailed": "Couldn't download the backup. Try again."
+  "cloudRestoreDownloadFailed": "Couldn't download the backup. Try again.",
+  "bookshelfSyncingBooks": "Syncing {current}/{total} books",
+  "bookshelfSyncingBody": "Pulling in books from your other device. Keep reading meanwhile."
 }

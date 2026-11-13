@@ -44,8 +44,11 @@ class SyncRepository {
     required this._auth,
     required this._applier,
     required this._import,
+    void Function(SyncDownloads? progress)? onDownloads,
     this._clock = DateTime.now,
-  });
+  }) : _onDownloads = onDownloads ?? _ignore;
+
+  static void _ignore(SyncDownloads? _) {}
 
   final AppDatabase _db;
   final SyncService _service;
@@ -54,6 +57,10 @@ class SyncRepository {
   final AuthRepository _auth;
   final SyncApplier _applier;
   final ImportRepository _import;
+
+  /// Progres download buku buat indikator Rak ([syncDownloadsProvider]);
+  /// null = gak ada yang lagi di-download.
+  final void Function(SyncDownloads? progress) _onDownloads;
   final DateTime Function() _clock;
 
   /// Jarak minimum sync dari resume.
@@ -124,19 +131,30 @@ class SyncRepository {
   /// impor, lalu inbox dicoba lagi (metadata + data baca nyusul masuk). Satu
   /// per satu; yang gagal tetap di inbox buat pemicu berikutnya.
   Future<void> _downloadBooks(String token) async {
-    for (final r in await _applier.missingBooks()) {
-      try {
-        await _downloadBook(token, r.data!);
-        // Impor hasil sync bukan perubahan lokal: entri outbox-nya (waktu
-        // impor) bakal ngalahin metadata device lain dan ke-push balik.
-        await _db.customStatement(
-          "DELETE FROM sync_outbox WHERE kind = 'book' AND key = ?",
-          [r.key],
-        );
-        await _applier.retryInbox();
-      } on Object {
-        // diam-diam: dicoba lagi pemicu berikutnya
+    final books = await _applier.missingBooks();
+    if (books.isEmpty) return;
+    try {
+      for (final (i, r) in books.indexed) {
+        _onDownloads((done: i, total: books.length));
+        await _downloadOne(token, r);
       }
+    } finally {
+      _onDownloads(null);
+    }
+  }
+
+  Future<void> _downloadOne(String token, PulledRecord r) async {
+    try {
+      await _downloadBook(token, r.data!);
+      // Impor hasil sync bukan perubahan lokal: entri outbox-nya (waktu
+      // impor) bakal ngalahin metadata device lain dan ke-push balik.
+      await _db.customStatement(
+        "DELETE FROM sync_outbox WHERE kind = 'book' AND key = ?",
+        [r.key],
+      );
+      await _applier.retryInbox();
+    } on Object {
+      // diam-diam: dicoba lagi pemicu berikutnya
     }
   }
 
@@ -427,6 +445,23 @@ final syncChangesProvider = Provider<Stream<void>>((ref) {
   );
 });
 
+/// Download buku hasil sync: [done] dari [total] buku yang nunggu.
+typedef SyncDownloads = ({int done, int total});
+
+class SyncDownloadsNotifier extends Notifier<SyncDownloads?> {
+  @override
+  SyncDownloads? build() => null;
+
+  // ignore: use_setters_to_change_properties
+  void set(SyncDownloads? progress) => state = progress;
+}
+
+/// Indikator "Nyinkronin 3/12 buku" di Rak. null = gak ada download.
+final syncDownloadsProvider =
+    NotifierProvider<SyncDownloadsNotifier, SyncDownloads?>(
+      SyncDownloadsNotifier.new,
+    );
+
 final syncRepositoryProvider = Provider<SyncRepository>(
   (ref) => SyncRepository(
     db: ref.watch(appDatabaseProvider),
@@ -436,5 +471,6 @@ final syncRepositoryProvider = Provider<SyncRepository>(
     auth: ref.watch(authRepositoryProvider),
     applier: ref.watch(syncApplierProvider),
     import: ref.watch(importRepositoryProvider),
+    onDownloads: (p) => ref.read(syncDownloadsProvider.notifier).set(p),
   ),
 );

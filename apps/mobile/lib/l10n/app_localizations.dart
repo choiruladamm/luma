@@ -4663,6 +4663,18 @@ abstract class AppLocalizations {
   /// In id, this message translates to:
   /// **'Gagal download backup. Coba lagi ya.'**
   String get cloudRestoreDownloadFailed;
+
+  /// Interface copy in ui/features/bookshelf/views/sync_banner.dart
+  ///
+  /// In id, this message translates to:
+  /// **'Nyinkronin {current}/{total} buku'**
+  String bookshelfSyncingBooks(int current, int total);
+
+  /// Interface copy in ui/features/bookshelf/views/sync_banner.dart
+  ///
+  /// In id, this message translates to:
+  /// **'Buku dari HP lain lagi diunduh. Sambil baca juga bisa.'**
+  String get bookshelfSyncingBody;
 }
 
 class _AppLocalizationsDelegate

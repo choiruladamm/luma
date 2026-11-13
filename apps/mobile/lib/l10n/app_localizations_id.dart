@@ -2745,4 +2745,13 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get cloudRestoreDownloadFailed =>
       'Gagal download backup. Coba lagi ya.';
+
+  @override
+  String bookshelfSyncingBooks(int current, int total) {
+    return 'Nyinkronin $current/$total buku';
+  }
+
+  @override
+  String get bookshelfSyncingBody =>
+      'Buku dari HP lain lagi diunduh. Sambil baca juga bisa.';
 }

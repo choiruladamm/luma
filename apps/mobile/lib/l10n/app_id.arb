@@ -3479,5 +3479,21 @@
   "cloudRestoreDownloadFailed": "Gagal download backup. Coba lagi ya.",
   "@cloudRestoreDownloadFailed": {
     "description": "Interface copy in ui/features/settings/views/cloud_restore_sheet.dart"
+  },
+  "bookshelfSyncingBooks": "Nyinkronin {current}/{total} buku",
+  "@bookshelfSyncingBooks": {
+    "description": "Interface copy in ui/features/bookshelf/views/sync_banner.dart",
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "bookshelfSyncingBody": "Buku dari HP lain lagi diunduh. Sambil baca juga bisa.",
+  "@bookshelfSyncingBody": {
+    "description": "Interface copy in ui/features/bookshelf/views/sync_banner.dart"
   }
 }
