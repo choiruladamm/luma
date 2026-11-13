@@ -427,22 +427,27 @@ apps/backend/
 ├── wrangler.jsonc            # env dev/prod, D1, R2, rate limit, vars
 ├── drizzle.config.ts
 ├── migrations/               # hasil drizzle-kit; di-apply wrangler dan test
+├── scripts/e2e.sh            # make backend-e2e: Worker lokal + test Dart sync
 ├── src/
-│   ├── index.ts              # Hono app: middleware + mount route, export default
-│   ├── env.ts                # tipe Bindings (hasil `wrangler types`)
-│   ├── middleware/           # requestId, killSwitch, bodyLimit, session, rateLimit, onError
-│   ├── db/schema.ts          # tabel Drizzle + schema Better Auth hasil generate
-│   ├── lib/                  # crypto (AES-GCM, PBKDF2), errors, helper R2
+│   ├── index.ts / app.ts     # Hono app: middleware + mount route, export default
+│   ├── env.ts                # AppEnv: Bindings + `c.var` (db, openrouter, user)
+│   ├── middleware/           # requestId, deps, killSwitch, bodyLimit, session, rateLimit, guard
+│   ├── auth/                 # Better Auth (config, PBKDF2, undangan, cek sesi bearer)
+│   ├── db/
+│   │   ├── schema.ts         # tabel Drizzle + schema Better Auth hasil generate
+│   │   └── user-storage.ts   # tabel bersama `user_storage` (kuota R2 file + backup)
+│   ├── lib/                  # errors, crypto (AES-GCM), encoding, storage (aturan R2 per user)
 │   ├── clients/openrouter.ts # fetch tipis ke OpenRouter (di-mock di test)
-│   └── features/<fitur>/     # auth, account, ai-key, files, backup, sync
-│       ├── routes.ts         # Hono + validator, tanpa logika bisnis
+│   └── features/<fitur>/     # account, ai-key, auth, backup, files, health, legal, sync
+│       ├── routes.ts         # Hono + validator, ambil deps dari `c.var`, tanpa logika
 │       ├── service.ts        # logika bisnis, dependency lewat parameter
-│       ├── repo.ts           # query Drizzle
+│       ├── repo.ts           # semua query D1 fitur itu
 │       └── *.ts (pure)       # aturan murni (mis. sync/merge.ts), tanpa I/O
 └── test/
-    ├── unit/                 # aturan murni
+    ├── unit/                 # aturan murni + service
     ├── integration/          # exports.default.fetch per fitur + helper login
     ├── fixtures/contract/    # JSON request/response, dibaca juga oleh test Dart
+    ├── helpers/              # login, anggaran query/subrequest, kontrak, limit rate test
     └── setup.ts              # applyD1Migrations, MSW (@msw/cloudflare)
 ```
 
@@ -453,12 +458,14 @@ flowchart TB
   subgraph feature["features/fitur"]
     RT["routes.ts<br/>Hono + zod, tanpa logika"] --> SV["service.ts<br/>logika bisnis"]
     SV --> PURE["aturan murni<br/>mis. sync/merge.ts"]
-    SV --> RP["repo.ts<br/>Drizzle"]
+    SV --> RP["repo.ts<br/>query D1"]
   end
   SV --> CL["clients/openrouter.ts"]
-  SV --> LIB["lib/: crypto · r2 · errors"]
+  SV --> LIB["lib/: storage · crypto · errors"]
+  SV --> US["db/user-storage.ts<br/>kuota bersama"]
+  SV --> R2[(R2)]
   RP --> D1[(D1)]
-  LIB --> R2[(R2)]
+  US --> D1
   CL --> OR[OpenRouter]
   TU["test/unit"] -.-> PURE
   TU -.-> SV
@@ -484,7 +491,10 @@ flowchart LR
   H -. throw .-> ERR[onError<br/>error seragam]
 ```
 
-- **Urutan middleware**: `requestId → killSwitch → bodyLimit → session → rateLimit → validator → handler`, `onError` di luar. Saklar darurat jalan sebelum D1/R2 disentuh.
+- **Urutan middleware**: `requestId → (rateLimit IP + deps di semua /v1) → killSwitch → bodyLimit → session → rateLimit user → validator → handler`, `onError` di luar. Saklar darurat jalan sebelum D1/R2 disentuh. Fitur berkuota (files, backup, sync) pakai `featureGuard(flag)` = saklar → sesi → rate limit per user.
+- **Lapisan**: semua query D1 ada di `features/<fitur>/repo.ts` (plus `db/user-storage.ts` buat tabel yang dipakai beberapa fitur), service gak pernah nulis SQL. Fungsi repo = satu unit anggaran query (komentarnya bilang berapa query), jadi aturan free tier tetap kebaca di satu tempat. Fitur gak ngimpor isi fitur lain, kecuali hapus akun yang memang manggil `revokeKey` (ai-key). Operasi R2 tetap di service: tiap fitur punya prefix sendiri di bucket yang sama, aturan bersamanya di `lib/storage.ts`.
+- **Drizzle vs SQL mentah**: Drizzle di semua repo, kecuali `sync/repo.ts`: batch 500 record harus lewat `json_each` dalam satu statement (batas D1 free 50 query + 100 parameter per request), dan pull membentuk JSON di SQL biar Worker gak `JSON.parse` 500 record.
+- **Deps per request**: middleware `deps` naruh `db` (Drizzle) dan `openrouter` di `c.var`; handler gak ngerakit client sendiri.
 - **Validasi**: `@hono/zod-validator` + zod di semua input. Error seragam `{"error": {"code", "message"}}`; Flutter memetakan `code` ke enum.
 - **Tanpa OpenAPI / codegen client Dart**: ±15 endpoint, fixture kontrak cukup. Ditinjau ulang kalau frontend web (#208) jalan.
 - **Ukuran script**: Workers free maks 3MB terkompres; dicek lewat `wrangler deploy --dry-run` sejak #198.
@@ -583,7 +593,7 @@ Tiap issue backend selesai bawa test-nya di semua lapisan yang disentuh. Integra
 | Lapisan | Alat | Isi | Perintah |
 |---|---|---|---|
 | Unit backend | vitest | Aturan murni: merge sync per kind, retensi backup, hitung limit, nama key R2, crypto | `make backend-test` |
-| Integrasi backend | `exports.default.fetch` / `app.request` + D1/R2 lokal, migrasi `applyD1Migrations` | Tiap endpoint lewat app utuh, layanan luar di-mock | `make backend-test` |
+| Integrasi backend | `exports.default.fetch` / `app.request` + D1/R2 lokal, migrasi `applyD1Migrations` | Tiap endpoint lewat app utuh, layanan luar di-mock. Limit rate per IP di test 300/menit (`test/helpers/limits.ts`): semua request test datang dari IP yang sama | `make backend-test` |
 | Kontrak | `test/fixtures/contract/*.json` | Contoh request/response asli, dibaca vitest dan test Dart | dua-duanya |
 | Unit/data Flutter | `flutter test` | Mapping kunci alami, trigger outbox (Drift in-memory), service HTTP pakai adapter `dio` palsu | `make test` |
 | Widget Flutter | `flutter test` | Login, Pengaturan, banner; provider di-override (aturan `CLAUDE.md`) | `make test` |

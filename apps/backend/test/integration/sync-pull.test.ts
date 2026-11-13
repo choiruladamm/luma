@@ -13,8 +13,6 @@ import { signUp } from "../helpers/auth";
 import { callWithBudget } from "../helpers/budget";
 import { expectContract } from "../helpers/contract";
 
-// Terpisah dari sync.test.ts: rate limit IP 60/menit dihitung per file test.
-
 const push = (token: string, body: unknown) =>
   new Request("https://luma.test/v1/sync/push", {
     method: "POST",

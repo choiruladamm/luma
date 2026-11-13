@@ -1,9 +1,6 @@
-import { eq } from "drizzle-orm";
 import type { Db } from "../../db/client";
-import { users } from "../../db/schema";
-
-/** Prefix R2 milik satu user (docs/backend.md, Backup cloud). */
-export const userPrefix = (userId: string) => `u/${userId}/`;
+import { userPrefix } from "../../lib/storage";
+import { deleteUser } from "./repo";
 
 /**
  * Halaman R2 per request hapus akun: tiap halaman = 1 list + 1 delete subrequest,
@@ -23,7 +20,7 @@ export async function deleteAccount(db: Db, bucket: R2Bucket, userId: string): P
     const listed = await bucket.list({ prefix, limit: 1000 });
     if (listed.objects.length > 0) await bucket.delete(listed.objects.map((o) => o.key));
     if (!listed.truncated) {
-      await db.delete(users).where(eq(users.id, userId));
+      await deleteUser(db, userId);
       return { status: "deleted" };
     }
   }

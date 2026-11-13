@@ -1,17 +1,16 @@
 import { Hono } from "hono";
-import { createDb } from "../../db/client";
 import type { AppEnv } from "../../env";
-import { backupGuard } from "../files/routes";
-import { uploadSize } from "../files/service";
+import { uploadSize } from "../../lib/storage";
+import { featureGuard } from "../../middleware/guard";
 import { getBackup, listBackups, parseManifest, putBackup } from "./service";
 
 export const backups = new Hono<AppEnv>()
-  .use(...backupGuard)
+  .use(...featureGuard("BACKUP_ENABLED"))
   .put("/", async (c) => {
     const size = uploadSize(c.req.header("content-length"));
     const metadata = parseManifest(c.req.header("x-backup-manifest"));
     const backup = await putBackup(
-      createDb(c.env.DB),
+      c.var.db,
       c.env.BUCKET,
       Number(c.env.USER_STORAGE_BYTES),
       c.get("user").id,

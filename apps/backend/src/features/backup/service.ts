@@ -1,8 +1,8 @@
 import { z } from "zod";
 import type { Db } from "../../db/client";
+import { addBytes, storedBytes } from "../../db/user-storage";
 import { ApiError } from "../../lib/errors";
-import { userPrefix } from "../account/service";
-import { addBytes, assertFits, fixedLength, storedBytes } from "../files/service";
+import { assertFits, fixedLength, userPrefix } from "../../lib/storage";
 
 /** Snapshot yang disimpan; sisanya dihapus di `PUT` yang sama (docs/backend.md, Backup cloud). */
 export const BACKUP_RETENTION = 10;

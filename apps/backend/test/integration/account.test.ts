@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 import { createDb } from "../../src/db/client";
 import { users } from "../../src/db/schema";
-import { userPrefix } from "../../src/features/account/service";
+import { userPrefix } from "../../src/lib/storage";
 import meDelete from "../fixtures/contract/me-delete.json";
 import me from "../fixtures/contract/me.json";
 import unauthorized from "../fixtures/contract/error-unauthorized.json";

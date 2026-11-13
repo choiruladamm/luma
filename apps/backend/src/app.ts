@@ -9,6 +9,7 @@ import { health } from "./features/health/routes";
 import { legal } from "./features/legal/routes";
 import { sync } from "./features/sync/routes";
 import { ApiError, onError } from "./lib/errors";
+import { deps } from "./middleware/deps";
 import { clientIp, rateLimit } from "./middleware/rate-limit";
 import { requestId } from "./middleware/request-id";
 
@@ -17,7 +18,7 @@ import { requestId } from "./middleware/request-id";
 export const app = new Hono<AppEnv>();
 
 app.use(requestId);
-app.use("/v1/*", rateLimit(clientIp));
+app.use("/v1/*", rateLimit(clientIp), deps);
 app.route("/v1/health", health);
 app.route("/v1/auth", auth);
 app.route("/v1/me", account);

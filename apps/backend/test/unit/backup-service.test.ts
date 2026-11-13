@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { backupId, parseManifest, staleBackups } from "../../src/features/backup/service";
-import { assertFits, MAX_UPLOAD_BYTES, uploadSize } from "../../src/features/files/service";
+import { assertFits, MAX_UPLOAD_BYTES, uploadSize } from "../../src/lib/storage";
 import backupsPut from "../fixtures/contract/backups-put.json";
 
 describe("backupId", () => {

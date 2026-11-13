@@ -4,9 +4,7 @@ import { z } from "zod";
 import type { AppEnv } from "../../env";
 import { ApiError } from "../../lib/errors";
 import { limitBody } from "../../middleware/body-limit";
-import { killSwitch } from "../../middleware/kill-switch";
-import { rateLimit } from "../../middleware/rate-limit";
-import { requireSession } from "../../middleware/session";
+import { featureGuard } from "../../middleware/guard";
 import { KINDS } from "./merge";
 import { MAX_PULL_RECORDS, MAX_PUSH_RECORDS, pull, push } from "./service";
 
@@ -34,7 +32,7 @@ const pushBody = z
   .strict();
 
 export const sync = new Hono<AppEnv>()
-  .use(killSwitch("SYNC_ENABLED"), requireSession, rateLimit((c) => `user:${c.get("user").id}`))
+  .use(...featureGuard("SYNC_ENABLED"))
   .post(
     "/push",
     limitBody(),

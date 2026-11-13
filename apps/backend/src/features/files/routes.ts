@@ -1,14 +1,12 @@
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { z } from "zod";
-import { createDb } from "../../db/client";
 import type { AppEnv } from "../../env";
 import { ApiError } from "../../lib/errors";
+import { uploadSize } from "../../lib/storage";
 import { limitBody } from "../../middleware/body-limit";
-import { killSwitch } from "../../middleware/kill-switch";
-import { rateLimit } from "../../middleware/rate-limit";
-import { requireSession } from "../../middleware/session";
-import { FILE_NAME, getFile, missingFiles, putFile, uploadSize } from "./service";
+import { featureGuard } from "../../middleware/guard";
+import { FILE_NAME, getFile, missingFiles, putFile } from "./service";
 
 const missingBody = z.object({ names: z.array(z.string().regex(FILE_NAME)).max(1000) }).strict();
 
@@ -17,15 +15,8 @@ const fileName = (name: string) => {
   return name;
 };
 
-/** Saklar backup → sesi → rate limit per user, untuk semua route backup & file. */
-export const backupGuard = [
-  killSwitch("BACKUP_ENABLED"),
-  requireSession,
-  rateLimit((c) => `user:${c.get("user").id}`),
-] as const;
-
 export const files = new Hono<AppEnv>()
-  .use(...backupGuard)
+  .use(...featureGuard("BACKUP_ENABLED"))
   .post(
     "/missing",
     limitBody(256 * 1024),
@@ -39,7 +30,7 @@ export const files = new Hono<AppEnv>()
     const name = fileName(c.req.param("name"));
     const size = uploadSize(c.req.header("content-length"));
     const stored = await putFile(
-      createDb(c.env.DB),
+      c.var.db,
       c.env.BUCKET,
       Number(c.env.USER_STORAGE_BYTES),
       c.get("user").id,

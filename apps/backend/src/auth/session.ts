@@ -2,8 +2,7 @@ import { eq } from "drizzle-orm";
 import type { Db } from "../db/client";
 import { sessions, users } from "../db/schema";
 import type { SessionUser } from "../env";
-
-const DAY_MS = 24 * 60 * 60 * 1000;
+import { DAY_MS } from "../lib/encoding";
 
 /** Sama dengan opsi `session` Better Auth (auth.ts): sesi 60 hari, diperpanjang maks sekali sehari. */
 export const SESSION_EXPIRES_IN_MS = 60 * DAY_MS;

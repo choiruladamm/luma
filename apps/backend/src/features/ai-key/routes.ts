@@ -1,8 +1,6 @@
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { z } from "zod";
-import { openRouterAdmin } from "../../clients/openrouter";
-import { createDb } from "../../db/client";
 import type { AppEnv } from "../../env";
 import { ApiError } from "../../lib/errors";
 import { limitBody } from "../../middleware/body-limit";
@@ -24,24 +22,15 @@ export const ai = new Hono<AppEnv>()
     }),
     async (c) => {
       const { rotate } = c.req.valid("json");
-      const issued = await issueKey(
-        createDb(c.env.DB),
-        openRouterAdmin(c.env.OPENROUTER_MANAGEMENT_KEY),
-        aiConfig(c.env),
-        c.get("user").id,
-        { rotate },
-      );
+      const issued = await issueKey(c.var.db, c.var.openrouter, aiConfig(c.env), c.get("user").id, {
+        rotate,
+      });
       return c.json(issued);
     },
   )
   .get("/usage", async (c) =>
     c.json(
-      await usage(
-        createDb(c.env.DB),
-        openRouterAdmin(c.env.OPENROUTER_MANAGEMENT_KEY),
-        aiConfig(c.env),
-        c.get("user").id,
-      ),
+      await usage(c.var.db, c.var.openrouter, aiConfig(c.env), c.get("user").id),
     ),
   )
   .get("/config", (c) => {

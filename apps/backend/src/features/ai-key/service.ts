@@ -1,11 +1,9 @@
-import { eq } from "drizzle-orm";
 import type { OpenRouterAdmin } from "../../clients/openrouter";
 import type { Db } from "../../db/client";
-import { aiKeys, users } from "../../db/schema";
-import { ApiError } from "../../lib/errors";
 import { decryptText, encryptText } from "../../lib/crypto";
-
-const DAY_MS = 24 * 60 * 60 * 1000;
+import { csv, DAY_MS } from "../../lib/encoding";
+import { ApiError } from "../../lib/errors";
+import { findKeyHash, findUserKey, saveKey, setKeyLimit } from "./repo";
 
 /** Key diganti sehari sebelum kedaluwarsa, supaya device gak pegang key yang mati di tengah baca. */
 export const ROTATE_BEFORE_MS = DAY_MS;
@@ -19,21 +17,22 @@ export type AiConfig = {
   embeddingModels: string[];
 };
 
-const list = (value: string) =>
-  value
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
-
 /** Angka dan model dari `vars` (docs/backend.md, Batas & pengaman). Model harus sama dengan guardrail OpenRouter. */
 export const aiConfig = (env: Env): AiConfig => ({
   dailyLimitUsd: Number(env.AI_DAILY_LIMIT_USD),
   ttlDays: Number(env.AI_KEY_TTL_DAYS),
   workspaceId: env.OPENROUTER_WORKSPACE_ID,
   encSecret: env.AI_KEY_ENC_SECRET,
-  chatModels: list(env.AI_CHAT_MODELS),
-  embeddingModels: list(env.AI_EMBEDDING_MODELS),
+  chatModels: csv(env.AI_CHAT_MODELS),
+  embeddingModels: csv(env.AI_EMBEDDING_MODELS),
 });
+
+/** Key + status banned user; banned → 403 `AI_BANNED` (meter "Dicabut", board Kuota AI 01). */
+async function allowedKey(db: Db, userId: string) {
+  const found = await findUserKey(db, userId);
+  if (found.banned) throw new ApiError(403, "AI_BANNED", "AI access is disabled for this account");
+  return found.key;
+}
 
 export type IssuedKey = { key: string; expiresAt: string; dailyLimitUsd: number };
 
@@ -50,22 +49,14 @@ export async function issueKey(
   userId: string,
   { rotate = false, now = new Date() }: { rotate?: boolean; now?: Date } = {},
 ): Promise<IssuedKey> {
-  // Satu query: status banned + key yang tersimpan.
-  const [found] = await db
-    .select({ banned: users.banned, key: aiKeys })
-    .from(users)
-    .leftJoin(aiKeys, eq(aiKeys.userId, users.id))
-    .where(eq(users.id, userId));
-  if (found?.banned) throw new ApiError(403, "AI_BANNED", "AI access is disabled for this account");
-
-  const row = found?.key;
+  const row = await allowedKey(db, userId);
   const fresh = row && row.expiresAt.getTime() - now.getTime() > ROTATE_BEFORE_MS;
   if (row && fresh && !rotate) {
     const key = await decryptText(cfg.encSecret, row.keyEnc);
     if (key) {
       if (row.limitUsd !== cfg.dailyLimitUsd) {
         await admin.updateLimit(row.keyHash, cfg.dailyLimitUsd);
-        await db.update(aiKeys).set({ limitUsd: cfg.dailyLimitUsd }).where(eq(aiKeys.userId, userId));
+        await setKeyLimit(db, userId, cfg.dailyLimitUsd);
       }
       return { key, expiresAt: row.expiresAt.toISOString(), dailyLimitUsd: cfg.dailyLimitUsd };
     }
@@ -88,10 +79,7 @@ export async function issueKey(
     expiresAt,
     createdAt: now,
   };
-  await db
-    .insert(aiKeys)
-    .values({ userId, ...values })
-    .onConflictDoUpdate({ target: aiKeys.userId, set: values });
+  await saveKey(db, userId, values);
   return { key: created.key, expiresAt: expiresAt.toISOString(), dailyLimitUsd: cfg.dailyLimitUsd };
 }
 
@@ -115,14 +103,7 @@ export async function usage(
   now = new Date(),
 ): Promise<AiUsage> {
   const resetsAt = nextUtcMidnight(now).toISOString();
-  // Satu query: status banned (meter "Dicabut", board Kuota AI 01) + key.
-  const [found] = await db
-    .select({ banned: users.banned, keyHash: aiKeys.keyHash })
-    .from(users)
-    .leftJoin(aiKeys, eq(aiKeys.userId, users.id))
-    .where(eq(users.id, userId));
-  if (found?.banned) throw new ApiError(403, "AI_BANNED", "AI access is disabled for this account");
-  const row = found?.keyHash ? { keyHash: found.keyHash } : undefined;
+  const row = await allowedKey(db, userId);
   if (!row) {
     return { dailyLimitUsd: cfg.dailyLimitUsd, remainingUsd: cfg.dailyLimitUsd, usedTodayUsd: 0, resetsAt };
   }
@@ -138,6 +119,6 @@ export async function usage(
 
 /** Hapus key OpenRouter user (hapus akun). Baris D1 ikut terhapus lewat cascade users. */
 export async function revokeKey(db: Db, admin: OpenRouterAdmin, userId: string) {
-  const [row] = await db.select({ keyHash: aiKeys.keyHash }).from(aiKeys).where(eq(aiKeys.userId, userId));
-  if (row) await admin.deleteKey(row.keyHash);
+  const keyHash = await findKeyHash(db, userId);
+  if (keyHash) await admin.deleteKey(keyHash);
 }

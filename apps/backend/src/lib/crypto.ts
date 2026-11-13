@@ -2,8 +2,7 @@
 // `AI_KEY_ENC_SECRET` (base64 32 byte). Kunci hilang → key lama gak kebaca dan
 // dibuat ulang (rotasi), bukan kehilangan data user.
 
-const b64 = (bytes: Uint8Array) => btoa(String.fromCharCode(...bytes));
-const unb64 = (text: string) => Uint8Array.from(atob(text), (c) => c.charCodeAt(0));
+import { b64, unb64 } from "./encoding";
 
 const importKey = (secret: string) =>
   crypto.subtle.importKey("raw", unb64(secret), "AES-GCM", false, ["encrypt", "decrypt"]);

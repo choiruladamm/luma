@@ -4,6 +4,7 @@ import { APIError } from "better-auth/api";
 import { bearer } from "better-auth/plugins";
 import { createDb } from "../db/client";
 import * as schema from "../db/schema";
+import { csv } from "../lib/encoding";
 import { assignInviteCode, consumeInviteCode, INVITE_HEADER } from "./invite";
 import { hashPassword, verifyPassword } from "./password";
 import { SESSION_EXPIRES_IN_MS, SESSION_UPDATE_AGE_MS } from "./session";
@@ -16,7 +17,7 @@ const googleProvider = (env: Env) =>
   env.GOOGLE_CLIENT_IDS
     ? {
         google: {
-          clientId: env.GOOGLE_CLIENT_IDS.split(",").map((id) => id.trim()),
+          clientId: csv(env.GOOGLE_CLIENT_IDS),
           clientSecret: env.GOOGLE_CLIENT_SECRET ?? "",
         },
       }

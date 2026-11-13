@@ -1,13 +1,12 @@
 // PBKDF2-SHA256 lewat crypto.subtle (native). Pengganti scrypt JS default Better Auth
 // yang terlalu berat untuk CPU 10ms Workers free. Login email cuma ada di env dev.
+import { b64, unb64 } from "../lib/encoding";
 
 /** Iterasi dijaga supaya hash muat CPU 10ms di workerd (test/unit/password.test.ts). */
 export const PBKDF2_ITERATIONS = 20_000;
 const SALT_BYTES = 16;
 const KEY_BITS = 256;
 
-const b64 = (bytes: Uint8Array) => btoa(String.fromCharCode(...bytes));
-const unb64 = (text: string) => Uint8Array.from(atob(text), (c) => c.charCodeAt(0));
 
 async function derive(password: string, salt: Uint8Array, iterations: number) {
   const key = await crypto.subtle.importKey(

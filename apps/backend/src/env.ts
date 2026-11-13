@@ -1,8 +1,12 @@
+import type { OpenRouterAdmin } from "./clients/openrouter";
+import type { Db } from "./db/client";
+
 export type SessionUser = { id: string; name: string; email: string; image: string | null };
 
 export type AppEnv = {
   Bindings: Env;
-  Variables: { requestId: string; user: SessionUser };
+  /** `db` + `openrouter` dari middleware `deps`, `user` dari `requireSession`. */
+  Variables: { requestId: string; user: SessionUser; db: Db; openrouter: OpenRouterAdmin };
 };
 
 /** Saklar darurat di `vars` (docs/backend.md, Aturan server). */
