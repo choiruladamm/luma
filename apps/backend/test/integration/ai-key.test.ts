@@ -9,6 +9,7 @@ import aiKeyRotate from "../fixtures/contract/ai-key-rotate.json";
 import aiKey from "../fixtures/contract/ai-key.json";
 import aiUsage from "../fixtures/contract/ai-usage.json";
 import aiBanned from "../fixtures/contract/error-ai-banned.json";
+import bannedUsage from "../fixtures/contract/error-ai-banned-usage.json";
 import disabled from "../fixtures/contract/error-service-disabled.json";
 import unauthorized from "../fixtures/contract/error-unauthorized.json";
 import { signUp } from "../helpers/auth";
@@ -130,6 +131,17 @@ describe("GET /v1/ai/usage", () => {
 
     const res = await exports.default.fetch(url(aiUsage.request.path), { headers: bearer(token) });
     await expectContract(res, aiUsage);
+  });
+});
+
+describe("GET /v1/ai/usage when banned", () => {
+  it("answers 403 AI_BANNED so the meter shows \"Dicabut\" (contract)", async () => {
+    fakeOpenRouter();
+    const { token, userId } = await signUp();
+    await createDb(env.DB).update(users).set({ banned: true }).where(eq(users.id, userId));
+
+    const res = await exports.default.fetch(url(bannedUsage.request.path), { headers: bearer(token) });
+    await expectContract(res, bannedUsage);
   });
 });
 

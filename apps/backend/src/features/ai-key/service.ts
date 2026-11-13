@@ -115,7 +115,14 @@ export async function usage(
   now = new Date(),
 ): Promise<AiUsage> {
   const resetsAt = nextUtcMidnight(now).toISOString();
-  const [row] = await db.select({ keyHash: aiKeys.keyHash }).from(aiKeys).where(eq(aiKeys.userId, userId));
+  // Satu query: status banned (meter "Dicabut", board Kuota AI 01) + key.
+  const [found] = await db
+    .select({ banned: users.banned, keyHash: aiKeys.keyHash })
+    .from(users)
+    .leftJoin(aiKeys, eq(aiKeys.userId, users.id))
+    .where(eq(users.id, userId));
+  if (found?.banned) throw new ApiError(403, "AI_BANNED", "AI access is disabled for this account");
+  const row = found?.keyHash ? { keyHash: found.keyHash } : undefined;
   if (!row) {
     return { dailyLimitUsd: cfg.dailyLimitUsd, remainingUsd: cfg.dailyLimitUsd, usedTodayUsd: 0, resetsAt };
   }
