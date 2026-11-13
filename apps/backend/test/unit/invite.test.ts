@@ -1,0 +1,15 @@
+import { describe, expect, it } from "vitest";
+import { normalizeInviteCode } from "../../src/auth/invite";
+
+describe("normalizeInviteCode", () => {
+  it.each([
+    ["LUMA-7Q2K", "LUMA-7Q2K"],
+    ["luma-7q2k", "LUMA-7Q2K"],
+    ["luma7q2k", "LUMA-7Q2K"],
+    ["  Luma 7Q2K ", "LUMA-7Q2K"],
+    ["TEST-1-ABC", "TEST1ABC"],
+    ["LUMA", "LUMA"],
+  ])("%j → %j", (input, expected) => {
+    expect(normalizeInviteCode(input)).toBe(expected);
+  });
+});

@@ -8,6 +8,8 @@ import signIn from "../fixtures/contract/auth-sign-in-email.json";
 import signUpFixture from "../fixtures/contract/auth-sign-up-email.json";
 import invalidCredentials from "../fixtures/contract/error-invalid-credentials.json";
 import invalidInvite from "../fixtures/contract/error-invalid-invite-code.json";
+import inviteRequired from "../fixtures/contract/error-invite-code-required.json";
+import inviteUsed from "../fixtures/contract/error-invite-code-used.json";
 import { createInvite, PASSWORD, signUp } from "../helpers/auth";
 import { callWithBudget } from "../helpers/budget";
 import { expectContract } from "../helpers/contract";
@@ -32,15 +34,15 @@ describe("sign-up (email, dev)", () => {
     expect(invite?.usedAt).toBeInstanceOf(Date);
   });
 
-  it("rejects a used or unknown invite code (contract)", async () => {
-    const code = await createInvite();
+  it("tells a used invite code apart from an unknown one (contract)", async () => {
+    const code = await createInvite("LUMA-4HJP");
     await exports.default.fetch(
       post("/v1/auth/sign-up/email", { name: "A", email: "a@luma.test", password: PASSWORD }, { "x-invite-code": code }),
     );
     const reused = await exports.default.fetch(
-      post("/v1/auth/sign-up/email", { name: "B", email: "b@luma.test", password: PASSWORD }, { "x-invite-code": code }),
+      post(inviteUsed.request.path, inviteUsed.request.body, inviteUsed.request.headers),
     );
-    await expectContract(reused, invalidInvite);
+    await expectContract(reused, inviteUsed);
 
     const unknown = await exports.default.fetch(
       post(invalidInvite.request.path, invalidInvite.request.body, invalidInvite.request.headers),
@@ -48,12 +50,19 @@ describe("sign-up (email, dev)", () => {
     await expectContract(unknown, invalidInvite);
   });
 
-  it("rejects sign-up without an invite code", async () => {
+  it("asks for an invite code when none was sent (contract)", async () => {
     const res = await exports.default.fetch(
-      post("/v1/auth/sign-up/email", { name: "C", email: "c@luma.test", password: PASSWORD }),
+      post(inviteRequired.request.path, inviteRequired.request.body),
     );
-    expect(res.status).toBe(403);
-    expect(await res.json()).toMatchObject({ error: { code: "INVALID_INVITE_CODE" } });
+    await expectContract(res, inviteRequired);
+  });
+
+  it("accepts invite codes in any case and without the dash", async () => {
+    await createInvite("LUMA-7Q2K");
+    const res = await exports.default.fetch(
+      post("/v1/auth/sign-up/email", { name: "F", email: "f@luma.test", password: PASSWORD }, { "x-invite-code": " luma7q2k " }),
+    );
+    expect(res.status).toBe(200);
   });
 
   it("accepts any sign-up once invites are switched off", async () => {

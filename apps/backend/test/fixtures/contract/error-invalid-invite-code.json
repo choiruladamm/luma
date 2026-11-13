@@ -7,6 +7,6 @@
   },
   "response": {
     "status": 403,
-    "body": { "error": { "code": "INVALID_INVITE_CODE", "message": "Invite code is invalid or already used" } }
+    "body": { "error": { "code": "INVALID_INVITE_CODE", "message": "Invite code is invalid" } }
   }
 }
