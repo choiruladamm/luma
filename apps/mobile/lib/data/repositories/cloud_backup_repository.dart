@@ -66,6 +66,10 @@ class CloudBackupRepository {
     if (await _auth.token() == null) return false;
     final last = await _settings.watchCloudBackupAt().first;
     if (last != null && now.difference(last) < autoInterval) return false;
+    // Rak kosong (device baru yang baru login): snapshot kosong cuma bakal
+    // jadi yang terbaru di daftar restore dan nyingkirin backup asli dari
+    // retensi 10. Tombol manual tetap bisa.
+    if (await _backups.bookCount() == 0) return false;
     _lastAttempt = now;
     try {
       await backup();

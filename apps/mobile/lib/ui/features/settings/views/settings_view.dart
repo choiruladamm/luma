@@ -171,7 +171,11 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
       }
       return;
     }
-    final noKey = await ref.read(apiKeyStoreProvider).read() == null;
+    // Login = kuota gratis jalan tanpa key; cuma yang belum login perlu diingetin.
+    final signedIn =
+        ref.read(authControllerProvider).value?.status == AuthStatus.signedIn;
+    final noKey =
+        !signedIn && await ref.read(apiKeyStoreProvider).read() == null;
     final m = preview.manifest;
     router.go(Routes.home);
     if (!app.mounted) return;

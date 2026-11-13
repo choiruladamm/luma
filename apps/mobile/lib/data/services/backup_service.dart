@@ -109,6 +109,9 @@ class BackupService {
     }
   }
 
+  /// Jumlah buku di rak (tanpa snapshot).
+  Future<int> bookCount() => _count(_db.books);
+
   Future<int> _count(TableInfo<Table, Object?> table) async {
     final n = table.actualTableName;
     final row = await _db

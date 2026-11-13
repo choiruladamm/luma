@@ -305,7 +305,7 @@ sequenceDiagram
   A->>A: lastBackupAt = sekarang
 ```
 
-- **Pemicu**: otomatis saat app dibuka/resume kalau login dan backup cloud terakhir > 24 jam (diam-diam, gagal = coba lagi resume berikutnya) + tombol "Backup ke cloud" di Pengaturan (sheet progres + toast yang sama). Sukses mengisi `lastBackupAt`, jadi banner pengingat ikut tenang.
+- **Pemicu**: otomatis saat app dibuka/resume kalau login, backup cloud terakhir > 24 jam, dan rak gak kosong (diam-diam, gagal = coba lagi resume berikutnya; device baru yang belum punya buku gak ngirim snapshot kosong yang bakal jadi terbaru di daftar restore) + tombol "Backup ke cloud" di Pengaturan (sheet progres + toast yang sama). Sukses mengisi `lastBackupAt`, jadi banner pengingat ikut tenang.
 - **Retensi**: 10 snapshot terakhir, dihapus di request `PUT` yang sama (bukan lifecycle rule umur, supaya jeda lama tidak menghapus semuanya).
 - **Restore**: download zip DB → download file yang belum ada lokal → folder ekstrak sementara → validasi & swap `RestoreService` yang sudah ada (refactor kecil: terima folder hasil ekstrak).
 

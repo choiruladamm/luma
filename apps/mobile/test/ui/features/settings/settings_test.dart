@@ -859,6 +859,20 @@ void main() {
       expect(find.text('Isi key'), findsOneWidget);
     });
 
+    testWidgets('signed in without a key: no reminder (free quota works)', (
+      tester,
+    ) async {
+      FlutterSecureStorage.setMockInitialValues({}); // no key
+      await openFromShelf(tester, cloud: FakeCloud()); // signed in
+      await tapRestore(tester);
+      await tester.tap(find.text('Iya, gua ngerti. Ganti aja semuanya.'));
+      await tester.pump();
+      await tester.tap(find.text('Ganti & pulihin'));
+      await tester.pumpAndSettle();
+      expect(find.text('Sip, data lo udah balik!'), findsOneWidget);
+      expect(find.text('Isi key'), findsNothing);
+    });
+
     testWidgets('a key already there: no reminder', (tester) async {
       await openFromShelf(tester); // setUp saved a key
       await tapRestore(tester);

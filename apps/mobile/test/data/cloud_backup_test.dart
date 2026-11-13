@@ -328,6 +328,14 @@ void main() {
       expect(cloud.backups, hasLength(1));
     });
 
+    test('automatic backup skips an empty shelf (new device)', () async {
+      await b.db.customStatement('DELETE FROM books');
+
+      expect(await repo(b).backupIfDue(), isFalse);
+      expect(cloud.log, isEmpty);
+      expect(cloud.backups, isEmpty);
+    });
+
     test(
       'automatic backup: signed in, once per 24 h, retry after 1 h',
       () async {
