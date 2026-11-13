@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:luma/data/repositories/ai_key_repository.dart';
+import 'package:luma/domain/models/ai_reply.dart';
 import 'package:luma/data/services/ai_key_service.dart';
 import 'package:luma/data/services/api_key_store.dart';
 import 'package:luma/data/services/backend_client.dart';
@@ -122,25 +123,75 @@ void main() {
     expect(await repo.read(), 'sk-lama');
   });
 
-  test('offline with an expired key → null', () async {
-    await session.writeToken('tok');
-    await session.writeSubsidyKey(
-      SubsidyKey(
-        key: 'sk-mati',
-        expiresAt: now.subtract(const Duration(minutes: 1)),
-      ),
-    );
-    adapter.queue.addAll(List.filled(3, DioExceptionType.connectionError));
+  test(
+    'offline with an expired key → network error, not "add a key"',
+    () async {
+      await session.writeToken('tok');
+      await session.writeSubsidyKey(
+        SubsidyKey(
+          key: 'sk-mati',
+          expiresAt: now.subtract(const Duration(minutes: 1)),
+        ),
+      );
+      adapter.queue.addAll(List.filled(3, DioExceptionType.connectionError));
 
-    expect(await repo.read(), isNull);
-  });
+      await expectLater(
+        repo.read(),
+        throwsA(
+          isA<AiException>().having((e) => e.error, 'error', AiError.network),
+        ),
+      );
+    },
+  );
 
-  test('banned account → null, no retry loop (contract)', () async {
+  test('banned account → AI_BANNED error, no retry loop (contract)', () async {
     await session.writeToken('tok');
     adapter.queue.add(fromContract(contract('error-ai-banned')));
 
-    expect(await repo.read(), isNull);
+    await expectLater(
+      repo.read(),
+      throwsA(
+        isA<AiException>()
+            .having((e) => e.status, 'status', 403)
+            .having((e) => e.detail, 'detail', aiBannedCode),
+      ),
+    );
     expect(adapter.requests, hasLength(1));
+  });
+
+  group('subsidyFailureOf', () {
+    test('402 is "quota used up" only on the subsidy key', () {
+      const e = AiException(AiError.http, status: 402);
+      expect(subsidyFailureOf(e, usingSubsidy: true), SubsidyFailure.exhausted);
+      expect(subsidyFailureOf(e, usingSubsidy: false), isNull);
+    });
+
+    test('AI_BANNED is "revoked" either way; other errors are not quota', () {
+      const banned = AiException(
+        AiError.http,
+        status: 403,
+        detail: aiBannedCode,
+      );
+      expect(
+        subsidyFailureOf(banned, usingSubsidy: false),
+        SubsidyFailure.banned,
+      );
+      expect(
+        subsidyFailureOf(
+          const AiException(AiError.http, status: 401),
+          usingSubsidy: true,
+        ),
+        isNull,
+      );
+      expect(
+        subsidyFailureOf(
+          const AiException(AiError.network),
+          usingSubsidy: true,
+        ),
+        isNull,
+      );
+      expect(subsidyFailureOf('boom', usingSubsidy: true), isNull);
+    });
   });
 
   test('isSubsidy tells the subsidy key apart from BYOK', () async {

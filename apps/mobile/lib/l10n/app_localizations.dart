@@ -4297,6 +4297,324 @@ abstract class AppLocalizations {
   /// In id, this message translates to:
   /// **'Gagal hapus akun. Gak ada internet.'**
   String get authToastDeleteFailed;
+
+  /// No description provided for @quotaToday.
+  ///
+  /// In id, this message translates to:
+  /// **'Kuota AI hari ini'**
+  String get quotaToday;
+
+  /// No description provided for @quotaResetAt.
+  ///
+  /// In id, this message translates to:
+  /// **'Reset {time}'**
+  String quotaResetAt(String time);
+
+  /// No description provided for @quotaResetAtIn.
+  ///
+  /// In id, this message translates to:
+  /// **'Reset {time} · {countdown}'**
+  String quotaResetAtIn(String time, String countdown);
+
+  /// No description provided for @quotaCountdown.
+  ///
+  /// In id, this message translates to:
+  /// **'{hours}j {minutes}m'**
+  String quotaCountdown(int hours, int minutes);
+
+  /// No description provided for @quotaTapsLeft.
+  ///
+  /// In id, this message translates to:
+  /// **'± {count} tap lagi'**
+  String quotaTapsLeft(int count);
+
+  /// No description provided for @quotaLow.
+  ///
+  /// In id, this message translates to:
+  /// **'Hampir abis'**
+  String get quotaLow;
+
+  /// No description provided for @quotaUsedUp.
+  ///
+  /// In id, this message translates to:
+  /// **'Kuota gratis hari ini udah kepakai semua.'**
+  String get quotaUsedUp;
+
+  /// No description provided for @quotaLoading.
+  ///
+  /// In id, this message translates to:
+  /// **'Lagi dimuat…'**
+  String get quotaLoading;
+
+  /// No description provided for @quotaLoadFailed.
+  ///
+  /// In id, this message translates to:
+  /// **'Gak bisa ngecek sisa kuota.'**
+  String get quotaLoadFailed;
+
+  /// No description provided for @quotaSource.
+  ///
+  /// In id, this message translates to:
+  /// **'Sumber AI'**
+  String get quotaSource;
+
+  /// No description provided for @quotaOwnKey.
+  ///
+  /// In id, this message translates to:
+  /// **'Key sendiri'**
+  String get quotaOwnKey;
+
+  /// No description provided for @quotaOwnKeyNote.
+  ///
+  /// In id, this message translates to:
+  /// **'Biaya dari saldo OpenRouter lo. Kuota gratis gak kepotong.'**
+  String get quotaOwnKeyNote;
+
+  /// No description provided for @quotaFree.
+  ///
+  /// In id, this message translates to:
+  /// **'Kuota AI gratis'**
+  String get quotaFree;
+
+  /// No description provided for @quotaRevoked.
+  ///
+  /// In id, this message translates to:
+  /// **'Dicabut'**
+  String get quotaRevoked;
+
+  /// No description provided for @quotaBlocked.
+  ///
+  /// In id, this message translates to:
+  /// **'Diblokir'**
+  String get quotaBlocked;
+
+  /// No description provided for @quotaRevokedNote.
+  ///
+  /// In id, this message translates to:
+  /// **'AI masih bisa dipakai pakai key sendiri.'**
+  String get quotaRevokedNote;
+
+  /// No description provided for @quotaExhaustedTitle.
+  ///
+  /// In id, this message translates to:
+  /// **'Kuota gratis hari ini abis'**
+  String get quotaExhaustedTitle;
+
+  /// No description provided for @quotaExhaustedBody.
+  ///
+  /// In id, this message translates to:
+  /// **'Reset jam {time} ({hours} jam {minutes} menit lagi). Biar bisa lanjut sekarang, pakai key OpenRouter sendiri.'**
+  String quotaExhaustedBody(String time, int hours, int minutes);
+
+  /// No description provided for @quotaResetIn.
+  ///
+  /// In id, this message translates to:
+  /// **'Reset dalam'**
+  String get quotaResetIn;
+
+  /// No description provided for @quotaHoursUnit.
+  ///
+  /// In id, this message translates to:
+  /// **'j'**
+  String get quotaHoursUnit;
+
+  /// No description provided for @quotaMinutesUnit.
+  ///
+  /// In id, this message translates to:
+  /// **'m'**
+  String get quotaMinutesUnit;
+
+  /// No description provided for @quotaTapsOf.
+  ///
+  /// In id, this message translates to:
+  /// **'0 dari ± {count} tap tersisa'**
+  String quotaTapsOf(int count);
+
+  /// No description provided for @quotaTapsOfShort.
+  ///
+  /// In id, this message translates to:
+  /// **'0 dari ± {count} tap'**
+  String quotaTapsOfShort(int count);
+
+  /// No description provided for @quotaPeekBody.
+  ///
+  /// In id, this message translates to:
+  /// **'Teks aslinya tetap bisa dibaca. Artiin lagi abis reset jam {time}, atau pakai key sendiri.'**
+  String quotaPeekBody(String time);
+
+  /// No description provided for @quotaUseOwnKey.
+  ///
+  /// In id, this message translates to:
+  /// **'Pakai key sendiri'**
+  String get quotaUseOwnKey;
+
+  /// No description provided for @quotaOk.
+  ///
+  /// In id, this message translates to:
+  /// **'Oke'**
+  String get quotaOk;
+
+  /// No description provided for @quotaChatClosed.
+  ///
+  /// In id, this message translates to:
+  /// **'Kuota abis, buka lagi jam {time}'**
+  String quotaChatClosed(String time);
+
+  /// No description provided for @quotaBannedPill.
+  ///
+  /// In id, this message translates to:
+  /// **'Kuota gratis diblokir'**
+  String get quotaBannedPill;
+
+  /// No description provided for @quotaBannedTitle.
+  ///
+  /// In id, this message translates to:
+  /// **'Akses AI gratis lo dicabut'**
+  String get quotaBannedTitle;
+
+  /// No description provided for @quotaBannedBody.
+  ///
+  /// In id, this message translates to:
+  /// **'Akun ini gak bisa pakai kuota gratis Luma lagi. Artinya, Bedahin, sama Ngobrol tetap bisa jalan pakai key OpenRouter lo sendiri.'**
+  String get quotaBannedBody;
+
+  /// No description provided for @aiSection.
+  ///
+  /// In id, this message translates to:
+  /// **'AI'**
+  String get aiSection;
+
+  /// No description provided for @aiSourceFree.
+  ///
+  /// In id, this message translates to:
+  /// **'Kuota gratis'**
+  String get aiSourceFree;
+
+  /// No description provided for @aiSourceOwn.
+  ///
+  /// In id, this message translates to:
+  /// **'Key sendiri'**
+  String get aiSourceOwn;
+
+  /// No description provided for @aiOwnKeyCost.
+  ///
+  /// In id, this message translates to:
+  /// **'Biayanya kepotong dari saldo akun OpenRouter lo. Kuota gratis Luma gak dipakai selama key ini aktif.'**
+  String get aiOwnKeyCost;
+
+  /// No description provided for @aiKeyRejected401.
+  ///
+  /// In id, this message translates to:
+  /// **'Key-nya ditolak (401)'**
+  String get aiKeyRejected401;
+
+  /// No description provided for @aiKeyRejectedBox.
+  ///
+  /// In id, this message translates to:
+  /// **'OpenRouter nolak key ini. Cek lagi di openrouter.ai/keys, terus tempel ulang. AI berhenti dulu sampai key-nya bener, atau balik ke kuota gratis.'**
+  String get aiKeyRejectedBox;
+
+  /// No description provided for @aiCheckedJustNow.
+  ///
+  /// In id, this message translates to:
+  /// **'Dicek barusan'**
+  String get aiCheckedJustNow;
+
+  /// No description provided for @aiDefaultTag.
+  ///
+  /// In id, this message translates to:
+  /// **'default'**
+  String get aiDefaultTag;
+
+  /// No description provided for @aiBackToFree.
+  ///
+  /// In id, this message translates to:
+  /// **'Balik ke kuota gratis'**
+  String get aiBackToFree;
+
+  /// No description provided for @aiBackToFreeTitle.
+  ///
+  /// In id, this message translates to:
+  /// **'Balik ke kuota gratis?'**
+  String get aiBackToFreeTitle;
+
+  /// No description provided for @aiBackToFreeBody.
+  ///
+  /// In id, this message translates to:
+  /// **'Key OpenRouter lo dihapus dari HP ini. Model balik ke {model}, salah satu dari 3 model gratis.'**
+  String aiBackToFreeBody(String model);
+
+  /// No description provided for @aiBackToFreeConfirm.
+  ///
+  /// In id, this message translates to:
+  /// **'Balik ke gratis'**
+  String get aiBackToFreeConfirm;
+
+  /// No description provided for @aiPickModel.
+  ///
+  /// In id, this message translates to:
+  /// **'Pilih model'**
+  String get aiPickModel;
+
+  /// No description provided for @aiFreeModelsNote.
+  ///
+  /// In id, this message translates to:
+  /// **'Kuota gratis cuma bisa pakai 3 model ini.'**
+  String get aiFreeModelsNote;
+
+  /// No description provided for @aiDefaultCheapest.
+  ///
+  /// In id, this message translates to:
+  /// **'Default · paling hemat'**
+  String get aiDefaultCheapest;
+
+  /// No description provided for @aiMoreModelsTitle.
+  ///
+  /// In id, this message translates to:
+  /// **'Mau model lain?'**
+  String get aiMoreModelsTitle;
+
+  /// No description provided for @aiMoreModelsBody.
+  ///
+  /// In id, this message translates to:
+  /// **'Pakai key OpenRouter sendiri, 300-an model kebuka. Biayanya dari saldo lo.'**
+  String get aiMoreModelsBody;
+
+  /// No description provided for @aiSearchModels.
+  ///
+  /// In id, this message translates to:
+  /// **'Cari dari {count} model'**
+  String aiSearchModels(int count);
+
+  /// No description provided for @aiFilterAll.
+  ///
+  /// In id, this message translates to:
+  /// **'Semua'**
+  String get aiFilterAll;
+
+  /// No description provided for @aiFilterCheap.
+  ///
+  /// In id, this message translates to:
+  /// **'Hemat'**
+  String get aiFilterCheap;
+
+  /// No description provided for @aiFilterLong.
+  ///
+  /// In id, this message translates to:
+  /// **'Konteks panjang'**
+  String get aiFilterLong;
+
+  /// No description provided for @aiModelsLoadFailed.
+  ///
+  /// In id, this message translates to:
+  /// **'Daftar model gak kebaca. Cek internet lo, terus coba lagi.'**
+  String get aiModelsLoadFailed;
+
+  /// No description provided for @aiNoModelMatch.
+  ///
+  /// In id, this message translates to:
+  /// **'Gak ada model yang cocok.'**
+  String get aiNoModelMatch;
 }
 
 class _AppLocalizationsDelegate

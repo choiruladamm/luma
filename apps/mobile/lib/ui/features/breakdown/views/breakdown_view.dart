@@ -32,6 +32,10 @@ import '../../../core/widgets/edge_fade.dart';
 import '../../../core/widgets/tag.dart';
 import '../../../core/widgets/toast.dart';
 import '../../reader/view_models/breakdown_view_model.dart';
+import '../../../../data/repositories/ai_key_repository.dart';
+import '../../../core/widgets/quota.dart';
+import '../../settings/view_models/ai_quota_view_model.dart';
+import '../../settings/views/ai_source_section.dart';
 import 'peek_sheet.dart';
 
 /// Layar Bedahin (board "Terpilih · Bedahin · Opsi C · layar bedah" + "Spek ·
@@ -183,6 +187,11 @@ class _BreakdownViewState extends ConsumerState<BreakdownView> {
         onCopy: _copy,
         onPeek: _peek,
         onChat: _askChat,
+        subsidy: subsidyFailureOf(
+          state.error,
+          usingSubsidy: ref.watch(aiSourceProvider).value != AiSource.own,
+        ),
+        onUseOwnKey: () => openOwnKeySettings(context, ref),
       ),
     );
   }
@@ -330,10 +339,16 @@ class _Screen extends StatefulWidget {
     required this.onCopy,
     required this.onPeek,
     required this.onChat,
+    this.subsidy,
+    this.onUseOwnKey,
   });
 
   final GroupRef group;
   final BreakdownState state;
+
+  /// Gagal karena kuota gratis abis / dicabut (board Kuota AI 09, 12).
+  final SubsidyFailure? subsidy;
+  final VoidCallback? onUseOwnKey;
   final ReaderTypography typo;
   final bool copied;
   final VoidCallback onBack;
@@ -938,6 +953,17 @@ class _ScreenState extends State<_Screen> with TickerProviderStateMixin {
   List<Widget> _buttons(bool thinking) {
     final s = _s;
     final reduced = _reduced;
+    if (s.phase == BreakdownPhase.failed && widget.subsidy != null) {
+      // Kartu kuota punya aksi sendiri ("Pakai key sendiri").
+      return [
+        Expanded(
+          child: AppButton.secondary(
+            label: context.l10n.chatBackToReading,
+            onPressed: widget.onDone,
+          ),
+        ),
+      ];
+    }
     if (s.phase == BreakdownPhase.failed) {
       final f = _failureCopy(context, s.error);
       return [
@@ -1001,6 +1027,17 @@ class _ScreenState extends State<_Screen> with TickerProviderStateMixin {
   /// Gagal sebelum ada isi: gantiin panel penjelasan (bentuk 06 Artinya ·
   /// error / 10 API key kosong). Panel teks tetep ada.
   Widget _failure(StabiloColors c) {
+    if (widget.subsidy case final kind?) {
+      return Padding(
+        padding: const EdgeInsets.only(top: Space.s4),
+        child: kind == SubsidyFailure.banned
+            ? QuotaBannedCard(onUseOwnKey: widget.onUseOwnKey!)
+            : QuotaExhaustedCard(
+                now: DateTime.now(),
+                onUseOwnKey: widget.onUseOwnKey!,
+              ),
+      );
+    }
     final noKey = _s.error?.error == AiError.noApiKey;
     final f = _failureCopy(context, _s.error);
     return Semantics(

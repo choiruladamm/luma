@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../domain/models/ai_reply.dart';
 import '../services/ai_key_service.dart';
+import '../services/backend_client.dart';
 import '../services/api_key_store.dart';
 import '../services/session_store.dart';
 
@@ -63,12 +65,45 @@ class AiKeyRepository implements ApiKeyStore {
       await _session.writeSubsidyKey(issued);
       _rejected = null;
       return issued.key;
+    } on BackendException catch (e) {
+      // Akses kuota gratis dicabut: kartu "Akses AI gratis lo dicabut"
+      // (board Kuota AI 12), bukan "API key belum diisi".
+      if (e.code == aiBannedCode) {
+        throw const AiException(
+          AiError.http,
+          status: 403,
+          detail: aiBannedCode,
+        );
+      }
+      final usable = stored != null && stored.expiresAt.isAfter(_now());
+      if (usable) return stored.key;
+      // Ada sesi tapi backend gak kejangkau: layar AI nampilin error
+      // jaringan, bukan minta key.
+      if (e.code == 'NETWORK') throw const AiException(AiError.network);
+      return null;
     } on Object {
-      // Offline / backend mati: key lama yang belum kedaluwarsa masih kepake.
+      // Secure storage gagal dibaca dll: key lama yang belum kedaluwarsa
+      // masih kepake.
       final usable = stored != null && stored.expiresAt.isAfter(_now());
       return usable ? stored.key : null;
     }
   }
+}
+
+/// Kode server saat akun gak boleh pakai kuota gratis (docs/backend.md, AI).
+/// Dipakai juga sebagai [AiException.detail] supaya UI bisa ngenalin.
+const aiBannedCode = 'AI_BANNED';
+
+/// AI gagal karena kuota gratis abis (402 dengan key subsidi) atau akses
+/// dicabut. Null = error biasa, pakai pesan lama.
+enum SubsidyFailure { exhausted, banned }
+
+/// [usingSubsidy] = gak ada key sendiri waktu error terjadi.
+SubsidyFailure? subsidyFailureOf(Object? error, {required bool usingSubsidy}) {
+  if (error is! AiException || error.error != AiError.http) return null;
+  if (error.detail == aiBannedCode) return SubsidyFailure.banned;
+  if (error.status == 402 && usingSubsidy) return SubsidyFailure.exhausted;
+  return null;
 }
 
 final aiKeyRepositoryProvider = Provider<AiKeyRepository>(

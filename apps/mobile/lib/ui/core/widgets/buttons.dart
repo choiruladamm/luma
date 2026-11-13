@@ -389,6 +389,8 @@ abstract final class AppIcons {
   static const retry = HugeIcons.strokeRoundedRefresh;
   static const offline = HugeIcons.strokeRoundedCloudOff;
   static const key = HugeIcons.strokeRoundedKey01;
+  static const sunrise = HugeIcons.strokeRoundedSunrise;
+  static const lock = HugeIcons.strokeRoundedLock;
   static const backup = HugeIcons.strokeRoundedDatabaseExport;
   static const alert = HugeIcons.strokeRoundedAlert02;
   static const restore = HugeIcons.strokeRoundedDatabaseRestore;

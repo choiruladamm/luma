@@ -3305,5 +3305,147 @@
   },
   "authToastSignedOut": "Udah keluar. Buku di HP ini tetap ada.",
   "authToastDeleted": "Akun lo udah dihapus.",
-  "authToastDeleteFailed": "Gagal hapus akun. Gak ada internet."
+  "authToastDeleteFailed": "Gagal hapus akun. Gak ada internet.",
+  "quotaToday": "Kuota AI hari ini",
+  "quotaResetAt": "Reset {time}",
+  "@quotaResetAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "quotaResetAtIn": "Reset {time} · {countdown}",
+  "@quotaResetAtIn": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      },
+      "countdown": {
+        "type": "String"
+      }
+    }
+  },
+  "quotaCountdown": "{hours}j {minutes}m",
+  "@quotaCountdown": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "quotaTapsLeft": "± {count} tap lagi",
+  "@quotaTapsLeft": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "quotaLow": "Hampir abis",
+  "quotaUsedUp": "Kuota gratis hari ini udah kepakai semua.",
+  "quotaLoading": "Lagi dimuat…",
+  "quotaLoadFailed": "Gak bisa ngecek sisa kuota.",
+  "quotaSource": "Sumber AI",
+  "quotaOwnKey": "Key sendiri",
+  "quotaOwnKeyNote": "Biaya dari saldo OpenRouter lo. Kuota gratis gak kepotong.",
+  "quotaFree": "Kuota AI gratis",
+  "quotaRevoked": "Dicabut",
+  "quotaBlocked": "Diblokir",
+  "quotaRevokedNote": "AI masih bisa dipakai pakai key sendiri.",
+  "quotaExhaustedTitle": "Kuota gratis hari ini abis",
+  "quotaExhaustedBody": "Reset jam {time} ({hours} jam {minutes} menit lagi). Biar bisa lanjut sekarang, pakai key OpenRouter sendiri.",
+  "@quotaExhaustedBody": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      },
+      "hours": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "quotaResetIn": "Reset dalam",
+  "quotaHoursUnit": "j",
+  "quotaMinutesUnit": "m",
+  "quotaTapsOf": "0 dari ± {count} tap tersisa",
+  "@quotaTapsOf": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "quotaTapsOfShort": "0 dari ± {count} tap",
+  "@quotaTapsOfShort": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "quotaPeekBody": "Teks aslinya tetap bisa dibaca. Artiin lagi abis reset jam {time}, atau pakai key sendiri.",
+  "@quotaPeekBody": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "quotaUseOwnKey": "Pakai key sendiri",
+  "quotaOk": "Oke",
+  "quotaChatClosed": "Kuota abis, buka lagi jam {time}",
+  "@quotaChatClosed": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "quotaBannedPill": "Kuota gratis diblokir",
+  "quotaBannedTitle": "Akses AI gratis lo dicabut",
+  "quotaBannedBody": "Akun ini gak bisa pakai kuota gratis Luma lagi. Artinya, Bedahin, sama Ngobrol tetap bisa jalan pakai key OpenRouter lo sendiri.",
+  "aiSection": "AI",
+  "aiSourceFree": "Kuota gratis",
+  "aiSourceOwn": "Key sendiri",
+  "aiOwnKeyCost": "Biayanya kepotong dari saldo akun OpenRouter lo. Kuota gratis Luma gak dipakai selama key ini aktif.",
+  "aiKeyRejected401": "Key-nya ditolak (401)",
+  "aiKeyRejectedBox": "OpenRouter nolak key ini. Cek lagi di openrouter.ai/keys, terus tempel ulang. AI berhenti dulu sampai key-nya bener, atau balik ke kuota gratis.",
+  "aiCheckedJustNow": "Dicek barusan",
+  "aiDefaultTag": "default",
+  "aiBackToFree": "Balik ke kuota gratis",
+  "aiBackToFreeTitle": "Balik ke kuota gratis?",
+  "aiBackToFreeBody": "Key OpenRouter lo dihapus dari HP ini. Model balik ke {model}, salah satu dari 3 model gratis.",
+  "@aiBackToFreeBody": {
+    "placeholders": {
+      "model": {
+        "type": "String"
+      }
+    }
+  },
+  "aiBackToFreeConfirm": "Balik ke gratis",
+  "aiPickModel": "Pilih model",
+  "aiFreeModelsNote": "Kuota gratis cuma bisa pakai 3 model ini.",
+  "aiDefaultCheapest": "Default · paling hemat",
+  "aiMoreModelsTitle": "Mau model lain?",
+  "aiMoreModelsBody": "Pakai key OpenRouter sendiri, 300-an model kebuka. Biayanya dari saldo lo.",
+  "aiSearchModels": "Cari dari {count} model",
+  "@aiSearchModels": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "aiFilterAll": "Semua",
+  "aiFilterCheap": "Hemat",
+  "aiFilterLong": "Konteks panjang",
+  "aiModelsLoadFailed": "Daftar model gak kebaca. Cek internet lo, terus coba lagi.",
+  "aiNoModelMatch": "Gak ada model yang cocok."
 }

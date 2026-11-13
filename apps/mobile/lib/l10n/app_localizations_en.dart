@@ -2724,4 +2724,192 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get authToastDeleteFailed =>
       'Couldn\'t delete the account. No internet.';
+
+  @override
+  String get quotaToday => 'AI quota today';
+
+  @override
+  String quotaResetAt(String time) {
+    return 'Resets $time';
+  }
+
+  @override
+  String quotaResetAtIn(String time, String countdown) {
+    return 'Resets $time · $countdown';
+  }
+
+  @override
+  String quotaCountdown(int hours, int minutes) {
+    return '${hours}h ${minutes}m';
+  }
+
+  @override
+  String quotaTapsLeft(int count) {
+    return '≈ $count taps left';
+  }
+
+  @override
+  String get quotaLow => 'Almost out';
+
+  @override
+  String get quotaUsedUp => 'Today\'s free quota is used up.';
+
+  @override
+  String get quotaLoading => 'Loading…';
+
+  @override
+  String get quotaLoadFailed => 'Couldn\'t check the remaining quota.';
+
+  @override
+  String get quotaSource => 'AI source';
+
+  @override
+  String get quotaOwnKey => 'Own key';
+
+  @override
+  String get quotaOwnKeyNote =>
+      'Charged to your OpenRouter balance. Free quota isn\'t used.';
+
+  @override
+  String get quotaFree => 'Free AI quota';
+
+  @override
+  String get quotaRevoked => 'Revoked';
+
+  @override
+  String get quotaBlocked => 'Blocked';
+
+  @override
+  String get quotaRevokedNote => 'AI still works with your own key.';
+
+  @override
+  String get quotaExhaustedTitle => 'Today\'s free quota is used up';
+
+  @override
+  String quotaExhaustedBody(String time, int hours, int minutes) {
+    return 'Resets at $time (in ${hours}h ${minutes}m). To keep going now, use your own OpenRouter key.';
+  }
+
+  @override
+  String get quotaResetIn => 'Resets in';
+
+  @override
+  String get quotaHoursUnit => 'h';
+
+  @override
+  String get quotaMinutesUnit => 'm';
+
+  @override
+  String quotaTapsOf(int count) {
+    return '0 of ≈ $count taps left';
+  }
+
+  @override
+  String quotaTapsOfShort(int count) {
+    return '0 of ≈ $count taps';
+  }
+
+  @override
+  String quotaPeekBody(String time) {
+    return 'The original text is still readable. Translate again after the $time reset, or use your own key.';
+  }
+
+  @override
+  String get quotaUseOwnKey => 'Use my own key';
+
+  @override
+  String get quotaOk => 'OK';
+
+  @override
+  String quotaChatClosed(String time) {
+    return 'Out of quota, back at $time';
+  }
+
+  @override
+  String get quotaBannedPill => 'Free quota blocked';
+
+  @override
+  String get quotaBannedTitle => 'Your free AI access was revoked';
+
+  @override
+  String get quotaBannedBody =>
+      'This account can\'t use Luma\'s free quota anymore. Meaning, Breakdown, and Chat still work with your own OpenRouter key.';
+
+  @override
+  String get aiSection => 'AI';
+
+  @override
+  String get aiSourceFree => 'Free quota';
+
+  @override
+  String get aiSourceOwn => 'Own key';
+
+  @override
+  String get aiOwnKeyCost =>
+      'Charged to your OpenRouter balance. Luma\'s free quota isn\'t used while this key is active.';
+
+  @override
+  String get aiKeyRejected401 => 'Key rejected (401)';
+
+  @override
+  String get aiKeyRejectedBox =>
+      'OpenRouter rejected this key. Check it at openrouter.ai/keys and paste it again. AI stops until the key works, or switch back to the free quota.';
+
+  @override
+  String get aiCheckedJustNow => 'Checked just now';
+
+  @override
+  String get aiDefaultTag => 'default';
+
+  @override
+  String get aiBackToFree => 'Back to free quota';
+
+  @override
+  String get aiBackToFreeTitle => 'Back to the free quota?';
+
+  @override
+  String aiBackToFreeBody(String model) {
+    return 'Your OpenRouter key is removed from this phone. The model goes back to $model, one of the 3 free models.';
+  }
+
+  @override
+  String get aiBackToFreeConfirm => 'Back to free';
+
+  @override
+  String get aiPickModel => 'Choose a model';
+
+  @override
+  String get aiFreeModelsNote =>
+      'The free quota only works with these 3 models.';
+
+  @override
+  String get aiDefaultCheapest => 'Default · cheapest';
+
+  @override
+  String get aiMoreModelsTitle => 'Want another model?';
+
+  @override
+  String get aiMoreModelsBody =>
+      'Use your own OpenRouter key to unlock hundreds of models. Charged to your balance.';
+
+  @override
+  String aiSearchModels(int count) {
+    return 'Search $count models';
+  }
+
+  @override
+  String get aiFilterAll => 'All';
+
+  @override
+  String get aiFilterCheap => 'Budget';
+
+  @override
+  String get aiFilterLong => 'Long context';
+
+  @override
+  String get aiModelsLoadFailed =>
+      'Couldn\'t load the model list. Check your internet, then try again.';
+
+  @override
+  String get aiNoModelMatch => 'No matching models.';
 }

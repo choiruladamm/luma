@@ -224,7 +224,7 @@ sequenceDiagram
 | Endpoint | Fungsi |
 |---|---|
 | `POST /v1/ai/key` | Belum punya → buat key; sudah → kirim key yang sama (satu key per user, dua device tidak dapat kuota ganda). Ditolak kalau `banned` |
-| `GET /v1/ai/usage` | Usage + limit dari OpenRouter (`GET /keys/{hash}`) untuk "Sisa kuota" |
+| `GET /v1/ai/usage` | Usage + limit dari OpenRouter (`GET /keys/{hash}`) untuk "Sisa kuota". User `banned` → 403 `AI_BANNED` (meter "Dicabut") |
 | `GET /v1/ai/config` | Daftar model yang diizinkan untuk mode subsidi |
 
 D1: `ai_keys(user_id PK, key_hash, key_enc, limit_usd, expires_at, created_at)` + kolom `users.banned` (Better Auth `additionalFields`, `input: false`, `returned: false`). Key disimpan terenkripsi AES-GCM (`v1.<iv>.<ct>`, kunci secret `AI_KEY_ENC_SECRET`) karena OpenRouter cuma memberi teks key sekali saat dibuat. Kunci enkripsi hilang/diganti → key lama gak kebaca → otomatis dirotasi, bukan error.

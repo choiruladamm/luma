@@ -3,7 +3,6 @@ import 'dart:async';
 import '../../../../l10n/l10n.dart';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:path/path.dart' as p;
@@ -17,7 +16,6 @@ import '../../../../data/services/api_key_store.dart';
 import '../../../../data/services/catalog_sync_service.dart';
 import '../../../../data/services/file_picker_service.dart';
 import '../../../../data/services/restore_service.dart';
-import '../../../../domain/models/ai_model.dart';
 import '../../../../domain/models/backup.dart';
 import '../../../../routing/router.dart';
 import '../../../core/format.dart';
@@ -27,12 +25,11 @@ import '../../../core/theme/stabilo_type.dart';
 import '../../../core/widgets/buttons.dart';
 import '../../../core/widgets/dialog.dart';
 import '../../../core/widgets/edge_fade.dart';
-import '../../../core/widgets/field.dart';
 import '../../../core/widgets/sheet.dart';
 import '../../../core/widgets/toast.dart';
 import '../view_models/backup_view_model.dart';
-import '../view_models/settings_view_model.dart';
 import 'account_section.dart';
+import 'ai_source_section.dart';
 import 'backup_listener.dart';
 import 'restore_sheets.dart';
 
@@ -46,8 +43,6 @@ class SettingsView extends ConsumerStatefulWidget {
 }
 
 class _SettingsViewState extends ConsumerState<SettingsView> {
-  final _key = TextEditingController();
-
   BackupController get _backup => ref.read(backupControllerProvider.notifier);
 
   bool _restoring = false;
@@ -147,22 +142,6 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
     );
   }
 
-  @override
-  void initState() {
-    super.initState();
-    ref.read(apiKeyStoreProvider).read().then((key) {
-      if (mounted && _key.text.isEmpty) _key.text = key ?? '';
-    });
-  }
-
-  @override
-  void dispose() {
-    _key.dispose();
-    super.dispose();
-  }
-
-  ApiKeyEntry get _entry => ref.read(apiKeyEntryProvider.notifier);
-
   Future<void> _clearCache() async {
     final ok = await showConfirmDialog(
       context,
@@ -177,7 +156,6 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
 
   @override
   Widget build(BuildContext context) {
-    final model = ref.watch(aiModelProvider).value ?? defaultAiModel;
     final cache = ref.watch(aiCacheStatsProvider).value;
     ref.listen(catalogSyncProvider, (_, state) {
       if (state is! CatalogSyncUpToDate) return;
@@ -234,36 +212,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                       const SizedBox(height: 22),
                       _LanguagePicker(),
                       const SizedBox(height: 22),
-                      AppField(
-                        label: context.l10n.settingsOpenrouterApiKey,
-                        controller: _key,
-                        secret: true,
-                        // Spasi / baris baru ikut ke-paste dari mana-mana:
-                        // dibuang di sini, key gak pernah mengandungnya.
-                        inputFormatters: [
-                          FilteringTextInputFormatter.deny(RegExp(r'\s')),
-                        ],
-                        onChanged: _entry.edit,
-                        onClear: () {
-                          _key.clear();
-                          _entry.clear();
-                        },
-                      ),
-                      const SizedBox(height: Space.s2),
-                      _KeyStatus(status: ref.watch(apiKeyEntryProvider)),
-                      const SizedBox(height: 22),
-                      _Section(
-                        label: context.l10n.settingsAiModel,
-                        note: context
-                            .l10n
-                            .settingsChargesComeFromYourOpenrouterAccount,
-                        child: _ModelPicker(
-                          selected: model,
-                          onSelect: (id) => ref
-                              .read(settingsRepositoryProvider)
-                              .saveModel(id),
-                        ),
-                      ),
+                      const AiSourceSection(),
                       const SizedBox(height: 22),
                       _Section(
                         label: context.l10n.settingsBackupRestore,
@@ -302,73 +251,6 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
         ),
       ),
     );
-  }
-}
-
-/// Di bawah field key. Key diterima OpenRouter: "Key-nya jalan". Bukan bentuk
-/// key, atau ditolak: pesan merah dan keynya gak disimpen. Selain itu (belum
-/// ada / lagi ngecek / offline) cuma penjelasan tempat nyimpennya.
-class _KeyStatus extends StatelessWidget {
-  const _KeyStatus({required this.status});
-
-  final KeyStatus status;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.stabilo;
-    final small = StabiloType.caption.copyWith(
-      fontSize: 12.5,
-      fontWeight: FontWeight.w400,
-      color: c.ink2,
-    );
-    final label = StabiloType.caption.copyWith(fontWeight: FontWeight.w600);
-    Widget error(String text) =>
-        Text(text, style: label.copyWith(color: c.danger));
-    return switch (status) {
-      KeyStatus.idle => Text(
-        context.l10n.settingsStoredSecurelyOnYourDeviceKeychain,
-        style: small,
-      ),
-      KeyStatus.badFormat => error(
-        context.l10n.settingsThatSNotAnOpenrouterApi,
-      ),
-      KeyStatus.refused => error(
-        context.l10n.settingsOpenrouterRejectedTheKeySoIt,
-      ),
-      KeyStatus.checking || KeyStatus.rejected || KeyStatus.valid => Row(
-        children: [
-          Expanded(
-            child: switch (status) {
-              KeyStatus.checking => Text(
-                context.l10n.settingsHangOnChecking,
-                style: small,
-              ),
-              KeyStatus.valid => Row(
-                spacing: 6,
-                children: [
-                  Container(
-                    width: 18,
-                    height: 18,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: c.accent,
-                      shape: BoxShape.circle,
-                    ),
-                    child: AppIcon(AppIcons.check, size: 11, color: c.onAccent),
-                  ),
-                  Text(
-                    context.l10n.settingsYourKeyWorks,
-                    style: label.copyWith(color: c.ink),
-                  ),
-                ],
-              ),
-              _ => error(context.l10n.settingsOpenrouterRejectedYourKey),
-            },
-          ),
-          Text(context.l10n.settingsStoredSecurelyOnYourDevice, style: small),
-        ],
-      ),
-    };
   }
 }
 
@@ -553,160 +435,6 @@ class _BackupCard extends StatelessWidget {
   }
 }
 
-/// RadioRow (board Komponen 04): titik kuning + nama + model ID mono.
-class _ModelPicker extends StatelessWidget {
-  const _ModelPicker({required this.selected, required this.onSelect});
-
-  final String selected;
-  final ValueChanged<String> onSelect;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.stabilo;
-    return Container(
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        color: c.sheet,
-        borderRadius: BorderRadius.circular(Radii.menu),
-      ),
-      child: Column(
-        children: [
-          for (final (i, m) in aiModels.indexed) ...[
-            if (i > 0) Divider(height: 1, thickness: 1, color: c.menuLine),
-            _ModelRow(
-              model: m,
-              selected: m.id == selected,
-              onTap: () => onSelect(m.id),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _ModelRow extends StatelessWidget {
-  const _ModelRow({
-    required this.model,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final AiModel model;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.stabilo;
-    return Semantics(
-      inMutuallyExclusiveGroup: true,
-      checked: selected,
-      button: true,
-      label: model.label,
-      excludeSemantics: true,
-      child: InkWell(
-        onTap: onTap,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: 60),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: Space.s4,
-              vertical: 10,
-            ),
-            child: Row(
-              spacing: Space.s3,
-              children: [
-                Container(
-                  width: 22,
-                  height: 22,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: selected ? c.accent : null,
-                    border: Border.all(
-                      color: selected ? c.accentBorder : c.fieldLine,
-                      width: Layout.outline,
-                    ),
-                  ),
-                  child: selected
-                      ? Container(
-                          width: 8,
-                          height: 8,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: c.onAccent,
-                          ),
-                        )
-                      : null,
-                ),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    spacing: 2,
-                    children: [
-                      Wrap(
-                        spacing: Space.s2,
-                        runSpacing: Space.s1,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        children: [
-                          Text(
-                            model.label,
-                            style: StabiloType.label.copyWith(
-                              fontWeight: selected
-                                  ? FontWeight.w700
-                                  : FontWeight.w600,
-                              color: c.ink,
-                            ),
-                          ),
-                          if (model.id == defaultAiModel)
-                            // Selebar teksnya, sebaris sama nama (board 23). Pake
-                            // `alignment` di Container bakal bikin dia melebar
-                            // sepenuh baris dan turun ke bawah nama.
-                            Container(
-                              height: 20,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: Space.s2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: c.muted,
-                                borderRadius: BorderRadius.circular(Radii.full),
-                              ),
-                              child: Align(
-                                widthFactor: 1,
-                                child: Text(
-                                  context.l10n.settingsDefaultMostAccurate,
-                                  style: StabiloType.micro.copyWith(
-                                    height: 1,
-                                    color: c.ink,
-                                  ),
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                      Text(
-                        model.id,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: StabiloType.mono.copyWith(
-                          fontSize: 12,
-                          color: c.ink2,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// SettingsRow cache: jumlah paragraf + ukuran, tombol hapus warna danger.
 class _CacheRow extends StatelessWidget {
   const _CacheRow({required this.stats, required this.onClear});
 

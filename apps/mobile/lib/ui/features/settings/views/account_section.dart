@@ -12,6 +12,7 @@ import '../../auth/view_models/auth_view_model.dart';
 import '../../auth/views/auth_dialogs.dart';
 import '../../auth/views/auth_toast.dart';
 import '../../auth/views/login_view.dart';
+import 'ai_source_section.dart';
 
 /// Pengaturan → Akun (board Akun 08): pelat Ex libris, Keluar, Hapus akun.
 /// Slot "Sisa kuota AI" dan "Backup terakhir" disembunyiin sampai datanya ada.
@@ -40,6 +41,7 @@ class AccountSection extends ConsumerWidget {
           ),
         ),
         _ExLibris(user: user, via: viaEmail ? l.authViaEmail : l.authViaGoogle),
+        const AccountQuotaMeter(),
         Row(
           spacing: 10,
           children: [

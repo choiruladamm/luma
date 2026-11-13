@@ -27,6 +27,10 @@ import '../../../core/widgets/tag.dart';
 import '../../../core/widgets/toast.dart';
 import '../view_models/breakdown_view_model.dart';
 import '../view_models/reader_view_model.dart';
+import '../../../../data/repositories/ai_key_repository.dart';
+import '../../../core/widgets/quota.dart';
+import '../../settings/view_models/ai_quota_view_model.dart';
+import '../../settings/views/ai_source_section.dart';
 import 'meaning_chrome.dart';
 
 /// Sheet Artinya (board 05 hasil, 06 error, 09 udah disalin, 10 API key
@@ -245,12 +249,20 @@ class _MeaningSheetState extends ConsumerState<MeaningSheet> {
     final prefs = ref.watch(readerPrefsProvider).value ?? const ReaderPrefs();
     final typo = ReaderTypography(prefs, Theme.of(context).brightness);
     void retry() => ref.invalidate(groupAiStreamProvider(widget.group));
+    final usingSubsidy = ref.watch(aiSourceProvider).value != AiSource.own;
     return switch (ai) {
       AiStream(
         phase: AiPhase.failed,
         error: AiException(error: AiError.noApiKey),
       ) =>
         _NoKey(onClose: _close, onSettings: widget.onSettings),
+      AiStream(phase: AiPhase.failed, :final error)
+          when subsidyFailureOf(error, usingSubsidy: usingSubsidy) != null =>
+        _Quota(
+          kind: subsidyFailureOf(error, usingSubsidy: usingSubsidy)!,
+          onClose: _close,
+          onUseOwnKey: () => openOwnKeySettings(context, ref, closeSheet: true),
+        ),
       AiStream(phase: AiPhase.failed, :final error) => _Failed(
         code: _errorCode(error ?? 'error'),
         onClose: _close,
@@ -1171,6 +1183,46 @@ class _Failed extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Kuota gratis abis / akses dicabut (board Kuota AI 08, 12).
+class _Quota extends StatelessWidget {
+  const _Quota({
+    required this.kind,
+    required this.onClose,
+    required this.onUseOwnKey,
+  });
+
+  final SubsidyFailure kind;
+  final VoidCallback onClose;
+  final VoidCallback onUseOwnKey;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.stabilo;
+    final banned = kind == SubsidyFailure.banned;
+    return _ScrollFrame(
+      gap: 14,
+      topInset: _tileInset,
+      header: _TileHeader(
+        tile: banned
+            ? IconTile(icon: AppIcons.lock, bg: c.pink, fg: c.onPink)
+            : IconTile(icon: AppIcons.sunrise, bg: c.accent, fg: c.onAccent),
+        onClose: onClose,
+      ),
+      content: [
+        if (banned)
+          QuotaBannedCard(onUseOwnKey: onUseOwnKey, onOk: onClose)
+        else
+          QuotaExhaustedCard(
+            now: DateTime.now(),
+            onUseOwnKey: onUseOwnKey,
+            onOk: onClose,
+          ),
+      ],
+      actions: const [],
     );
   }
 }

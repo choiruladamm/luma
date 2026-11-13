@@ -17,6 +17,10 @@ import '../../../core/widgets/edge_fade.dart';
 import '../../../core/widgets/sheet.dart';
 import '../../reader/view_models/breakdown_view_model.dart';
 import '../../reader/view_models/reader_view_model.dart';
+import '../../../../data/repositories/ai_key_repository.dart';
+import '../../../core/widgets/quota.dart';
+import '../../settings/view_models/ai_quota_view_model.dart';
+import '../../settings/views/ai_source_section.dart';
 
 /// Hasil sheet intip: mau ngapain abis ditutup.
 sealed class PeekResult {
@@ -69,6 +73,24 @@ class PeekSheet extends ConsumerStatefulWidget {
 }
 
 class _PeekSheetState extends ConsumerState<PeekSheet> {
+  Widget _quotaCard(SubsidyFailure kind) {
+    void useOwnKey() {
+      ref.read(ownKeyRequestProvider.notifier).request();
+      Navigator.of(context).pop(const PeekSettings());
+    }
+
+    void ok() => Navigator.of(context).pop();
+    return kind == SubsidyFailure.banned
+        ? QuotaBannedCard(onUseOwnKey: useOwnKey, onOk: ok)
+        : QuotaExhaustedCard(
+            now: DateTime.now(),
+            large: false,
+            peek: true,
+            onUseOwnKey: useOwnKey,
+            onOk: ok,
+          );
+  }
+
   /// Artiin udah di-tap: stream grup tujuan ditonton (dan jalan).
   bool _asked = false;
 
@@ -224,11 +246,20 @@ class _PeekSheetState extends ConsumerState<PeekSheet> {
                       ),
                     ),
                     if (failed && ai != null)
-                      _ErrorRow(
-                        stream: ai,
-                        onSettings: () =>
-                            Navigator.of(context).pop(const PeekSettings()),
-                      ),
+                      switch (subsidyFailureOf(
+                        ai.error,
+                        usingSubsidy:
+                            ref.watch(aiSourceProvider).value != AiSource.own,
+                      )) {
+                        // Kuota abis / dicabut (board Kuota AI 10, 12): teks
+                        // asli tetap kebaca di atas kartu.
+                        final kind? => _quotaCard(kind),
+                        null => _ErrorRow(
+                          stream: ai,
+                          onSettings: () =>
+                              Navigator.of(context).pop(const PeekSettings()),
+                        ),
+                      },
                   ],
                 ),
               ),

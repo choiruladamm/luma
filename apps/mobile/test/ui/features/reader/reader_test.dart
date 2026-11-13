@@ -1,3 +1,5 @@
+import 'package:luma/data/repositories/ai_key_repository.dart';
+import 'package:luma/ui/features/settings/view_models/ai_quota_view_model.dart';
 import 'package:luma/l10n/app_localizations.dart';
 
 import 'dart:async';
@@ -280,6 +282,9 @@ void main() {
     FakeProgress? progressOverride,
     ChatSource? visitSource,
     bool showChatHint = false,
+    // Key sendiri: pesan 402 = saldo OpenRouter (kuota gratis punya kartunya
+    // sendiri, board Kuota AI 08).
+    AiSource aiSource = AiSource.own,
   }) async {
     progress = progressOverride ?? FakeProgress(saved);
     settings = FakeSettings(prefs)..seenChatHint = !showChatHint;
@@ -291,6 +296,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          aiSourceProvider.overrideWith((ref) async => aiSource),
           if (visitSource != null)
             chatRepositoryProvider.overrideWithValue(
               VisitProgressRepo(progress, visitSource),
@@ -2893,6 +2899,38 @@ void main() {
       await openTall(tester);
       await tapGroup(tester, 13);
       expect(find.text('HTTP 402 · saldo abis'), findsOneWidget);
+    });
+
+    testWidgets('free quota used up shows the countdown card', (tester) async {
+      answer = (_) async => throw const AiException(AiError.http, status: 402);
+      await openBook(
+        tester,
+        readerBook: tallBook,
+        saved: (chapterId: 13, paragraphIndex: 12, paragraphOffset: 0.0),
+        aiSource: AiSource.subsidy,
+      );
+      await tapGroup(tester, 13);
+      expect(find.text('Kuota gratis hari ini abis'), findsOneWidget);
+      expect(find.text('Reset dalam'), findsOneWidget);
+      expect(find.text('Pakai key sendiri'), findsOneWidget);
+      expect(find.text('HTTP 402 · saldo abis'), findsNothing);
+    });
+
+    testWidgets('revoked free access shows its card', (tester) async {
+      answer = (_) async => throw const AiException(
+        AiError.http,
+        status: 403,
+        detail: aiBannedCode,
+      );
+      await openBook(
+        tester,
+        readerBook: tallBook,
+        saved: (chapterId: 13, paragraphIndex: 12, paragraphOffset: 0.0),
+        aiSource: AiSource.subsidy,
+      );
+      await tapGroup(tester, 13);
+      expect(find.text('Akses AI gratis lo dicabut'), findsOneWidget);
+      expect(find.text('Kuota gratis diblokir'), findsOneWidget);
     });
 
     testWidgets('no API key: asks for one, "Nanti aja" closes', (tester) async {

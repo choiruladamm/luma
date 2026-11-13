@@ -2530,4 +2530,191 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get authToastDeleteFailed => 'Gagal hapus akun. Gak ada internet.';
+
+  @override
+  String get quotaToday => 'Kuota AI hari ini';
+
+  @override
+  String quotaResetAt(String time) {
+    return 'Reset $time';
+  }
+
+  @override
+  String quotaResetAtIn(String time, String countdown) {
+    return 'Reset $time · $countdown';
+  }
+
+  @override
+  String quotaCountdown(int hours, int minutes) {
+    return '${hours}j ${minutes}m';
+  }
+
+  @override
+  String quotaTapsLeft(int count) {
+    return '± $count tap lagi';
+  }
+
+  @override
+  String get quotaLow => 'Hampir abis';
+
+  @override
+  String get quotaUsedUp => 'Kuota gratis hari ini udah kepakai semua.';
+
+  @override
+  String get quotaLoading => 'Lagi dimuat…';
+
+  @override
+  String get quotaLoadFailed => 'Gak bisa ngecek sisa kuota.';
+
+  @override
+  String get quotaSource => 'Sumber AI';
+
+  @override
+  String get quotaOwnKey => 'Key sendiri';
+
+  @override
+  String get quotaOwnKeyNote =>
+      'Biaya dari saldo OpenRouter lo. Kuota gratis gak kepotong.';
+
+  @override
+  String get quotaFree => 'Kuota AI gratis';
+
+  @override
+  String get quotaRevoked => 'Dicabut';
+
+  @override
+  String get quotaBlocked => 'Diblokir';
+
+  @override
+  String get quotaRevokedNote => 'AI masih bisa dipakai pakai key sendiri.';
+
+  @override
+  String get quotaExhaustedTitle => 'Kuota gratis hari ini abis';
+
+  @override
+  String quotaExhaustedBody(String time, int hours, int minutes) {
+    return 'Reset jam $time ($hours jam $minutes menit lagi). Biar bisa lanjut sekarang, pakai key OpenRouter sendiri.';
+  }
+
+  @override
+  String get quotaResetIn => 'Reset dalam';
+
+  @override
+  String get quotaHoursUnit => 'j';
+
+  @override
+  String get quotaMinutesUnit => 'm';
+
+  @override
+  String quotaTapsOf(int count) {
+    return '0 dari ± $count tap tersisa';
+  }
+
+  @override
+  String quotaTapsOfShort(int count) {
+    return '0 dari ± $count tap';
+  }
+
+  @override
+  String quotaPeekBody(String time) {
+    return 'Teks aslinya tetap bisa dibaca. Artiin lagi abis reset jam $time, atau pakai key sendiri.';
+  }
+
+  @override
+  String get quotaUseOwnKey => 'Pakai key sendiri';
+
+  @override
+  String get quotaOk => 'Oke';
+
+  @override
+  String quotaChatClosed(String time) {
+    return 'Kuota abis, buka lagi jam $time';
+  }
+
+  @override
+  String get quotaBannedPill => 'Kuota gratis diblokir';
+
+  @override
+  String get quotaBannedTitle => 'Akses AI gratis lo dicabut';
+
+  @override
+  String get quotaBannedBody =>
+      'Akun ini gak bisa pakai kuota gratis Luma lagi. Artinya, Bedahin, sama Ngobrol tetap bisa jalan pakai key OpenRouter lo sendiri.';
+
+  @override
+  String get aiSection => 'AI';
+
+  @override
+  String get aiSourceFree => 'Kuota gratis';
+
+  @override
+  String get aiSourceOwn => 'Key sendiri';
+
+  @override
+  String get aiOwnKeyCost =>
+      'Biayanya kepotong dari saldo akun OpenRouter lo. Kuota gratis Luma gak dipakai selama key ini aktif.';
+
+  @override
+  String get aiKeyRejected401 => 'Key-nya ditolak (401)';
+
+  @override
+  String get aiKeyRejectedBox =>
+      'OpenRouter nolak key ini. Cek lagi di openrouter.ai/keys, terus tempel ulang. AI berhenti dulu sampai key-nya bener, atau balik ke kuota gratis.';
+
+  @override
+  String get aiCheckedJustNow => 'Dicek barusan';
+
+  @override
+  String get aiDefaultTag => 'default';
+
+  @override
+  String get aiBackToFree => 'Balik ke kuota gratis';
+
+  @override
+  String get aiBackToFreeTitle => 'Balik ke kuota gratis?';
+
+  @override
+  String aiBackToFreeBody(String model) {
+    return 'Key OpenRouter lo dihapus dari HP ini. Model balik ke $model, salah satu dari 3 model gratis.';
+  }
+
+  @override
+  String get aiBackToFreeConfirm => 'Balik ke gratis';
+
+  @override
+  String get aiPickModel => 'Pilih model';
+
+  @override
+  String get aiFreeModelsNote => 'Kuota gratis cuma bisa pakai 3 model ini.';
+
+  @override
+  String get aiDefaultCheapest => 'Default · paling hemat';
+
+  @override
+  String get aiMoreModelsTitle => 'Mau model lain?';
+
+  @override
+  String get aiMoreModelsBody =>
+      'Pakai key OpenRouter sendiri, 300-an model kebuka. Biayanya dari saldo lo.';
+
+  @override
+  String aiSearchModels(int count) {
+    return 'Cari dari $count model';
+  }
+
+  @override
+  String get aiFilterAll => 'Semua';
+
+  @override
+  String get aiFilterCheap => 'Hemat';
+
+  @override
+  String get aiFilterLong => 'Konteks panjang';
+
+  @override
+  String get aiModelsLoadFailed =>
+      'Daftar model gak kebaca. Cek internet lo, terus coba lagi.';
+
+  @override
+  String get aiNoModelMatch => 'Gak ada model yang cocok.';
 }

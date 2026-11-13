@@ -18,6 +18,11 @@ import '../../../core/widgets/buttons.dart';
 import '../../../core/widgets/edge_fade.dart';
 import 'chat_context_card.dart';
 import '../view_models/chat_view_model.dart';
+import '../../../../data/repositories/ai_key_repository.dart';
+import '../../../core/format.dart';
+import '../../../core/widgets/quota.dart';
+import '../../settings/view_models/ai_quota_view_model.dart';
+import '../../settings/views/ai_source_section.dart';
 import 'chat_composer.dart';
 import 'chat_copy.dart';
 import 'chat_history.dart';
@@ -332,12 +337,25 @@ class _ChatViewState extends ConsumerState<ChatView> {
                           ] else if (!state.readOnly)
                             ChatComposer(
                               draft: state.draft,
-                              hint: state.selectedQuote == null
+                              hint: _subsidy(state) == SubsidyFailure.exhausted
+                                  ? context.l10n.quotaChatClosed(
+                                      clockTime(
+                                        nextQuotaReset(DateTime.now()),
+                                        locale: Localizations.localeOf(context)
+                                            .languageCode,
+                                      ),
+                                    )
+                                  : state.selectedQuote == null
                                   ? context.l10n.chatAskAboutThisBook2
                                   : context.l10n.chatAskAboutThisQuote,
-                              canSend: state.canSend,
+                              canSend: state.canSend && _subsidy(state) == null,
                               running: state.phase?.isRunning ?? false,
-                              enabled: !state.loading && !state.busy,
+                              // Kuota abis / dicabut: kolom ketik mati
+                              // (board Kuota AI 11).
+                              enabled:
+                                  !state.loading &&
+                                  !state.busy &&
+                                  _subsidy(state) == null,
                               onChanged: _vm.setDraft,
                               onSend: () => unawaited(_vm.send()),
                               onStop: () => unawaited(_vm.stop()),
@@ -355,8 +373,24 @@ class _ChatViewState extends ConsumerState<ChatView> {
     );
   }
 
+  SubsidyFailure? _subsidy(ChatState state) => subsidyFailureOf(
+    state.error,
+    usingSubsidy: ref.watch(aiSourceProvider).value != AiSource.own,
+  );
+
   Widget _actions(ChatState state) {
     final phase = state.phase ?? state.turns.lastOrNull?.phase;
+    // Kuota abis / dicabut: kartu di posisi jawaban (board Kuota AI 11, 12).
+    if (_subsidy(state) case final kind?) {
+      void useOwnKey() => _navigate(() => openOwnKeySettings(context, ref));
+      return kind == SubsidyFailure.banned
+          ? QuotaBannedCard(onUseOwnKey: useOwnKey)
+          : QuotaExhaustedCard(
+              now: DateTime.now(),
+              large: false,
+              onUseOwnKey: useOwnKey,
+            );
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,

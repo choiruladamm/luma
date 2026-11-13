@@ -1,3 +1,4 @@
+import 'package:luma/ui/features/settings/view_models/ai_quota_view_model.dart';
 import 'package:luma/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -110,6 +111,7 @@ void main() {
     /// The text panel starts folded; most tests look inside it.
     bool unfold = true,
     Size size = const Size(900, 1400),
+    AiSource aiSource = AiSource.own,
   }) async {
     FakeBreakdown.initial = state;
     tester.view.physicalSize = size;
@@ -157,6 +159,7 @@ void main() {
           ),
           groupAiStreamProvider.overrideWith2(FakeArtiin.new),
           settingsRepositoryProvider.overrideWithValue(FakeSettings()),
+          aiSourceProvider.overrideWith((ref) async => aiSource),
         ],
         child: MaterialApp.router(
           localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -468,6 +471,26 @@ void main() {
         'Coba lagi',
       ),
     };
+    testWidgets('free quota used up: countdown card, own-key action', (
+      tester,
+    ) async {
+      await open(
+        tester,
+        BreakdownState(
+          phase: BreakdownPhase.failed,
+          input: onePara,
+          error: const AiException(AiError.http, status: 402),
+        ),
+        aiSource: AiSource.subsidy,
+      );
+      expect(find.text('Kuota gratis hari ini abis'), findsOneWidget);
+      expect(find.text('Saldo OpenRouter abis'), findsNothing);
+      await tester.tap(find.text('Pakai key sendiri'));
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+      expect(find.text('Pengaturan'), findsOneWidget);
+    });
+
     for (final MapEntry(key: error, value: (title, code, action))
         in errors.entries) {
       testWidgets('error ${error.error.name} ${error.status ?? ''}', (

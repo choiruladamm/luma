@@ -262,46 +262,38 @@ void main() {
   );
 
   for (final b in Brightness.values) {
-    testWidgets('shows key (hidden), models, cache ($b)', (tester) async {
+    testWidgets('shows key (hidden), model row, cache ($b)', (tester) async {
       await open(tester, b: b);
       expect(find.text('Pengaturan'), findsOneWidget);
+      // Ada key kesimpen = mode Key sendiri (board Kuota AI 03).
       final field = tester.widget<TextField>(find.byType(TextField));
       expect(field.controller!.text, 'sk-or-v1-saved');
       expect(field.obscureText, isTrue);
-      for (final m in aiModels) {
-        expect(find.text(m.label), findsOneWidget);
-        expect(find.text(m.id), findsOneWidget);
-      }
-      expect(find.text('Default · paling akurat'), findsOneWidget);
+      expect(find.text('Key sendiri'), findsWidgets);
+      expect(find.text('GLM 5.3 Flash'), findsOneWidget);
+      expect(find.text('z-ai/glm-5.3-flash · default'), findsOneWidget);
       expect(find.text('1.240 paragraf · 3,2 MB'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
   }
 
-  testWidgets('the default chip sits beside the model name, hugging its text', (
+  testWidgets('free quota: only the 3 free models, plus a way to more', (
     tester,
   ) async {
+    FlutterSecureStorage.setMockInitialValues({});
     await open(tester);
-    final label = tester.getRect(find.text('DeepSeek V4.1 Flash'));
-    final chip = tester.getRect(
-      find
-          .ancestor(
-            of: find.text('Default · paling akurat'),
-            matching: find.byType(Container),
-          )
-          .first,
-    );
-    expect(chip.height, 20);
-    expect((chip.center.dy - label.center.dy).abs(), lessThan(4)); // same line
-    expect(chip.left, greaterThan(label.right)); // after the name
-    // Hugs its text (8 + 8 padding), not the whole row.
-    final text = tester.getSize(find.text('Default · paling akurat')).width;
-    expect(chip.width, closeTo(text + 16, 0.5));
-    // The model ID stays under both.
+    expect(find.byType(TextField), findsNothing); // no key field in free mode
+    await tester.tap(find.text('GLM 5.3 Flash'));
+    await tester.pumpAndSettle();
     expect(
-      tester.getTopLeft(find.text('deepseek/deepseek-v4.1-flash')).dy,
-      greaterThan(label.bottom),
+      find.text('Kuota gratis cuma bisa pakai 3 model ini.'),
+      findsOneWidget,
     );
+    for (final m in aiModels) {
+      expect(find.text(m.label), findsWidgets);
+    }
+    expect(find.text('Default · paling hemat'), findsOneWidget);
+    expect(find.text('Mau model lain?'), findsOneWidget);
   });
 
   testWidgets('header stays put; the list runs to the bottom edge', (
@@ -396,6 +388,8 @@ void main() {
     testWidgets('no clear button while the field is empty', (tester) async {
       FlutterSecureStorage.setMockInitialValues({});
       await open(tester);
+      await tester.tap(find.text('Key sendiri'));
+      await tester.pumpAndSettle();
       expect(find.bySemanticsLabel('Hapus API key OpenRouter'), findsNothing);
       await tester.enterText(field, good);
       await tester.pump();
@@ -412,8 +406,11 @@ void main() {
     });
   });
 
-  testWidgets('picking a model saves it', (tester) async {
+  testWidgets('picking a free model saves it', (tester) async {
+    FlutterSecureStorage.setMockInitialValues({});
     await open(tester);
+    await tester.tap(find.text('GLM 5.3 Flash'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Qwen 3.8 Flash'));
     await tester.pumpAndSettle();
     expect(settings.model, 'qwen/qwen3.8-flash');
@@ -453,7 +450,7 @@ void main() {
     testWidgets('a key OpenRouter accepts: "Key-nya jalan"', (tester) async {
       await open(tester);
       expect(find.text('Key-nya jalan'), findsOneWidget);
-      expect(find.text('Disimpen aman di perangkat'), findsOneWidget);
+      expect(find.text('Dicek barusan'), findsOneWidget);
       expect(openRouter.checked, ['sk-or-v1-saved']);
     });
 
@@ -505,7 +502,9 @@ void main() {
 
     testWidgets('a rejected key says so', (tester) async {
       await open(tester, keyOk: false);
-      expect(find.text('Key-nya ditolak OpenRouter'), findsOneWidget);
+      expect(find.text('Key-nya ditolak (401)'), findsOneWidget);
+      // Key sendiri ditolak = AI berhenti, gak balik ke kuota gratis.
+      expect(find.textContaining('AI berhenti dulu'), findsOneWidget);
     });
 
     testWidgets('offline: just where it is kept', (tester) async {
