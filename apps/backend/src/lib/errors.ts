@@ -11,6 +11,8 @@ export type ErrorCode =
   | "RATE_LIMITED"
   | "SERVICE_DISABLED"
   | "AI_BANNED"
+  | "STORAGE_FULL"
+  | "BACKUP_NOT_FOUND"
   | "INTERNAL_ERROR";
 
 export type ErrorBody = { error: { code: ErrorCode; message: string } };

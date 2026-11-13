@@ -26,3 +26,15 @@ export const inviteCodes = sqliteTable("invite_codes", {
   usedBy: text("used_by").references(() => users.id, { onDelete: "set null" }),
   usedAt: integer("used_at", { mode: "timestamp_ms" }),
 });
+
+/**
+ * Pemakaian R2 per user (docs/backend.md, Batas & pengaman): `bytes` dicek
+ * terhadap `USER_STORAGE_BYTES` tiap upload. `seq` = urutan sync (#109).
+ */
+export const userStorage = sqliteTable("user_storage", {
+  userId: text("user_id")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  bytes: integer("bytes").notNull().default(0),
+  seq: integer("seq").notNull().default(0),
+});
