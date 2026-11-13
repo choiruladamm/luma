@@ -42,8 +42,11 @@ class BackupService {
 
   /// [onStart] kepanggil sekali abis DB di-snapshot (nama file & jumlah
   /// buku/terjemahan udah ketauan). [isCancelled] dicek di sela tahap;
-  /// pas ngezip, [cancel] selesai = isolate-nya dimatiin.
+  /// pas ngezip, [cancel] selesai = isolate-nya dimatiin. [snapshotOnly]:
+  /// cuma manifest + DB, buat backup cloud (file buku & cover diunggah
+  /// terpisah, docs/backend.md Backup cloud).
   Future<BackupFile?> export({
+    bool snapshotOnly = false,
     DateTime? now,
     void Function(String name, BackupManifest manifest)? onStart,
     void Function(BackupStage stage, double fraction)? onProgress,
@@ -72,20 +75,22 @@ class BackupService {
 
       // EPUB & gambar udah kekompres: disimpen apa adanya. DB dikompres.
       final entries = <_Entry>[
-        for (final f in await _files(_storage.booksDir))
-          (
-            path: f.path,
-            name: 'books/${p.basename(f.path)}',
-            level: 0,
-            stage: 0,
-          ),
-        for (final f in await _files(_storage.coversDir))
-          (
-            path: f.path,
-            name: 'covers/${p.basename(f.path)}',
-            level: 0,
-            stage: 0,
-          ),
+        if (!snapshotOnly) ...[
+          for (final f in await _files(_storage.booksDir))
+            (
+              path: f.path,
+              name: 'books/${p.basename(f.path)}',
+              level: 0,
+              stage: 0,
+            ),
+          for (final f in await _files(_storage.coversDir))
+            (
+              path: f.path,
+              name: 'covers/${p.basename(f.path)}',
+              level: 0,
+              stage: 0,
+            ),
+        ],
         (path: snapshot, name: 'luma.sqlite', level: 6, stage: 1),
         (path: manifestFile.path, name: 'manifest.json', level: 6, stage: 2),
       ];

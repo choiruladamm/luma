@@ -148,6 +148,22 @@ class FakeSettings implements SettingsRepository {
     _backups.add(b);
   }
 
+  DateTime? cloudAt;
+  final _cloud = StreamController<DateTime?>.broadcast();
+
+  @override
+  Stream<DateTime?> watchCloudBackupAt() async* {
+    yield cloudAt;
+    yield* _cloud.stream;
+  }
+
+  @override
+  Future<void> saveCloudBackup(LastBackup b) async {
+    await saveLastBackup(b);
+    cloudAt = b.at;
+    _cloud.add(b.at);
+  }
+
   DateTime? dismissed;
   final _dismissals = StreamController<DateTime?>.broadcast();
 

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/services.dart' show appFlavor;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -139,6 +141,47 @@ class BackendClient {
       ),
     ),
     retry: retry,
+  );
+
+  /// Upload isi [file] apa adanya (`PUT`, di-stream dengan `Content-Length`).
+  /// Tiap percobaan ulang baca file dari awal.
+  Future<Map<String, Object?>> upload(
+    String path,
+    File file, {
+    required String token,
+    Map<String, String> headers = const {},
+    void Function(int sent, int total)? onProgress,
+  }) async {
+    final length = await file.length();
+    final res = await _send(
+      () => _dio.put<Map<String, Object?>>(
+        path,
+        data: file.openRead(),
+        onSendProgress: onProgress,
+        options: Options(
+          headers: {
+            ...headers,
+            'authorization': 'Bearer $token',
+            Headers.contentLengthHeader: length,
+            Headers.contentTypeHeader: 'application/octet-stream',
+          },
+        ),
+      ),
+    );
+    return res.data!;
+  }
+
+  /// Download body [path] ke [savePath].
+  Future<void> download(
+    String path,
+    String savePath, {
+    required String token,
+  }) => _send(
+    () => _dio.download(
+      path,
+      savePath,
+      options: Options(headers: {'authorization': 'Bearer $token'}),
+    ),
   );
 
   Future<Response<T>> _send<T>(

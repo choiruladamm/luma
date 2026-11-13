@@ -3305,5 +3305,37 @@
   },
   "authToastSignedOut": "Udah keluar. Buku di HP ini tetap ada.",
   "authToastDeleted": "Akun lo udah dihapus.",
-  "authToastDeleteFailed": "Gagal hapus akun. Gak ada internet."
+  "authToastDeleteFailed": "Gagal hapus akun. Gak ada internet.",
+  "settingsBackUpToCloud": "Backup ke cloud",
+  "@settingsBackUpToCloud": {
+    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+  },
+  "settingsRestoreFromCloud": "Pulihin dari cloud",
+  "@settingsRestoreFromCloud": {
+    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+  },
+  "backupUploadingToYourAccount": "Lagi diunggah ke akun lo. Buku yang udah ada di cloud gak diunggah ulang.",
+  "@backupUploadingToYourAccount": {
+    "description": "Interface copy in ui/features/settings/views/backup_sheet.dart"
+  },
+  "backupCloudIsFull": "Penyimpanan cloud lo udah penuh",
+  "@backupCloudIsFull": {
+    "description": "Interface copy in ui/features/settings/views/backup_listener.dart"
+  },
+  "cloudRestorePickTitle": "Pilih backup cloud",
+  "@cloudRestorePickTitle": {
+    "description": "Interface copy in ui/features/settings/views/cloud_restore_sheet.dart"
+  },
+  "cloudRestoreEmpty": "Belum ada backup di cloud. Tekan \"Backup ke cloud\" dulu.",
+  "@cloudRestoreEmpty": {
+    "description": "Interface copy in ui/features/settings/views/cloud_restore_sheet.dart"
+  },
+  "cloudRestoreLoadFailed": "Gagal ngambil daftar backup. Cek internet lo.",
+  "@cloudRestoreLoadFailed": {
+    "description": "Interface copy in ui/features/settings/views/cloud_restore_sheet.dart"
+  },
+  "cloudRestoreDownloadFailed": "Gagal download backup. Coba lagi ya.",
+  "@cloudRestoreDownloadFailed": {
+    "description": "Interface copy in ui/features/settings/views/cloud_restore_sheet.dart"
+  }
 }

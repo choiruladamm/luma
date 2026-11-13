@@ -79,6 +79,7 @@ class StuckBackup extends Fake implements BackupService {
 
   @override
   Future<BackupFile?> export({
+    bool snapshotOnly = false,
     DateTime? now,
     void Function(String name, BackupManifest manifest)? onStart,
     void Function(BackupStage stage, double fraction)? onProgress,

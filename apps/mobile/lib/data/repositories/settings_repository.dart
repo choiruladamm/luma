@@ -127,6 +127,23 @@ class SettingsRepository {
     ]),
   );
 
+  /// Backup cloud terakhir yang sukses (pemicu otomatis 24 jam, pelat Ex
+  /// libris); null = belum pernah.
+  Stream<DateTime?> watchCloudBackupAt() =>
+      (_db.select(_db.settings)..where((s) => s.key.equals(_cloudAt)))
+          .watchSingleOrNull()
+          .map((row) => DateTime.tryParse(row?.value ?? ''));
+
+  /// Backup cloud sukses: sekaligus jadi backup terakhir (pengingat tenang).
+  Future<void> saveCloudBackup(LastBackup b) => _db.batch(
+    (batch) => batch.insertAllOnConflictUpdate(_db.settings, [
+      SettingsCompanion.insert(key: _backupAt, value: b.at.toIso8601String()),
+      SettingsCompanion.insert(key: _backupName, value: b.name),
+      SettingsCompanion.insert(key: _backupSize, value: '${b.size}'),
+      SettingsCompanion.insert(key: _cloudAt, value: b.at.toIso8601String()),
+    ]),
+  );
+
   /// Kapan banner pengingat backup terakhir ditutup.
   Stream<DateTime?> watchReminderDismissed() =>
       (_db.select(_db.settings)..where((s) => s.key.equals(_dismissed)))
@@ -143,6 +160,7 @@ class SettingsRepository {
   static const _backupAt = 'backup.lastAt';
   static const _backupName = 'backup.lastName';
   static const _backupSize = 'backup.lastSize';
+  static const _cloudAt = 'backup.cloudLastAt';
 
   Future<void> saveReaderPrefs(ReaderPrefs prefs) => _db.batch(
     (b) => b.insertAllOnConflictUpdate(_db.settings, [
@@ -179,6 +197,11 @@ final shelfViewProvider = StreamProvider<ShelfView>(
 /// Backup terakhir (Pengaturan, pengingat backup).
 final lastBackupProvider = StreamProvider<LastBackup?>(
   (ref) => ref.watch(settingsRepositoryProvider).watchLastBackup(),
+);
+
+/// Backup cloud terakhir (pelat Ex libris).
+final cloudBackupAtProvider = StreamProvider<DateTime?>(
+  (ref) => ref.watch(settingsRepositoryProvider).watchCloudBackupAt(),
 );
 
 final reminderDismissedProvider = StreamProvider<DateTime?>(

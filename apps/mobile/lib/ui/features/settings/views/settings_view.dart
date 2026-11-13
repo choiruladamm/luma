@@ -12,6 +12,7 @@ import '../../../../data/database/app_database.dart';
 import '../../../../data/repositories/ai_breakdowns_repository.dart';
 import '../../../../data/repositories/ai_results_repository.dart';
 import '../../../../data/repositories/catalog_repository.dart';
+import '../../../../data/repositories/cloud_backup_repository.dart';
 import '../../../../data/repositories/settings_repository.dart';
 import '../../../../data/services/api_key_store.dart';
 import '../../../../data/services/catalog_sync_service.dart';
@@ -30,10 +31,12 @@ import '../../../core/widgets/edge_fade.dart';
 import '../../../core/widgets/field.dart';
 import '../../../core/widgets/sheet.dart';
 import '../../../core/widgets/toast.dart';
+import '../../auth/view_models/auth_view_model.dart';
 import '../view_models/backup_view_model.dart';
 import '../view_models/settings_view_model.dart';
 import 'account_section.dart';
 import 'backup_listener.dart';
+import 'cloud_restore_sheet.dart';
 import 'restore_sheets.dart';
 
 /// Pengaturan app (board 23 Pengaturan app): API key, model AI, cache
@@ -89,6 +92,48 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
         }
         await _apply(service, preview);
         return;
+      }
+    } finally {
+      _restoring = false;
+    }
+  }
+
+  /// Pulihin dari cloud: pilih snapshot → download & cek → ringkasan yang
+  /// sama dengan zip biasa (board 28) → ganti data.
+  Future<void> _restoreCloud() async {
+    if (_restoring) return;
+    _restoring = true;
+    try {
+      final repo = ref.read(cloudBackupRepositoryProvider);
+      final service = ref.read(restoreServiceProvider);
+      final picked = await showCloudRestorePicker(
+        context,
+        load: repo.list,
+        prepare: (b) => repo.prepareRestore(b, service),
+      );
+      if (!mounted) {
+        if (picked is RestorePreview) await picked.discard();
+        return;
+      }
+      switch (picked) {
+        case RestoreException(:final manifest):
+          await showRestoreFailed(
+            context,
+            fileName: manifest == null
+                ? ''
+                : backupFileName(manifest.createdAt),
+            error: picked,
+          );
+        case RestorePreview preview:
+          final current = await service.currentBooks();
+          if (!mounted) return await preview.discard();
+          final ok = await showRestoreSummary(
+            context,
+            preview: preview,
+            currentBooks: current,
+          );
+          if (!ok || !mounted) return await preview.discard();
+          await _apply(service, preview);
       }
     } finally {
       _restoring = false;
@@ -273,6 +318,11 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                           loaded: ref.watch(lastBackupProvider).hasValue,
                           onBackup: _backup.start,
                           onRestore: _restore,
+                          cloud:
+                              ref.watch(authControllerProvider).value?.status ==
+                              AuthStatus.signedIn,
+                          onCloudBackup: _backup.startCloud,
+                          onCloudRestore: _restoreCloud,
                         ),
                       ),
                       const SizedBox(height: 22),
@@ -446,9 +496,17 @@ class _BackupCard extends StatelessWidget {
     required this.loaded,
     required this.onBackup,
     required this.onRestore,
+    this.cloud = false,
+    this.onCloudBackup,
+    this.onCloudRestore,
   });
 
   final LastBackup? last;
+
+  /// Login: tombol backup & pulihin cloud ikut muncul.
+  final bool cloud;
+  final VoidCallback? onCloudBackup;
+  final VoidCallback? onCloudRestore;
 
   /// Status backup udah kebaca (biar gak sempet nongol "belum pernah").
   final bool loaded;
@@ -541,12 +599,26 @@ class _BackupCard extends StatelessWidget {
             icon: AppIcons.backup,
             onPressed: onBackup,
           ),
+          if (cloud)
+            AppButton.secondary(
+              label: context.l10n.settingsBackUpToCloud,
+              icon: AppIcons.cloudUpload,
+              height: 48,
+              onPressed: onCloudBackup,
+            ),
           AppButton.secondary(
             label: context.l10n.settingsRestoreFromBackup,
             icon: AppIcons.restore,
             height: 48,
             onPressed: onRestore,
           ),
+          if (cloud)
+            AppButton.secondary(
+              label: context.l10n.settingsRestoreFromCloud,
+              icon: AppIcons.cloudDownload,
+              height: 48,
+              onPressed: onCloudRestore,
+            ),
         ],
       ),
     );

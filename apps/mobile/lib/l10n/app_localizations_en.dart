@@ -2724,4 +2724,32 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get authToastDeleteFailed =>
       'Couldn\'t delete the account. No internet.';
+
+  @override
+  String get settingsBackUpToCloud => 'Back up to cloud';
+
+  @override
+  String get settingsRestoreFromCloud => 'Restore from cloud';
+
+  @override
+  String get backupUploadingToYourAccount =>
+      'Uploading to your account. Books already in the cloud are skipped.';
+
+  @override
+  String get backupCloudIsFull => 'Your cloud storage is full';
+
+  @override
+  String get cloudRestorePickTitle => 'Pick a cloud backup';
+
+  @override
+  String get cloudRestoreEmpty =>
+      'No cloud backups yet. Tap \"Back up to cloud\" first.';
+
+  @override
+  String get cloudRestoreLoadFailed =>
+      'Couldn\'t load your backups. Check your connection.';
+
+  @override
+  String get cloudRestoreDownloadFailed =>
+      'Couldn\'t download the backup. Try again.';
 }
