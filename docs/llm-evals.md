@@ -75,3 +75,12 @@ Okt 2026. Pertanyaan utama: bisa gak model balikin rentang kalimat (`K1-K3`) yan
 - V tetep 2 bagian (penilaian vs kejadian, lalu tiga tahap menyalahkan). Bisa diterima: tampilan 2 bagian di desain (nomor, tanpa chip).
 - GLM lambat buat Bedahin (reasoning wajib, 40–66 dtk teks panjang) dan bagiannya lebih gampang kepecah. DeepSeek tetep default.
 
+
+## Pembekuan ulang guard (13 November 2026)
+
+Guard hash evaluasi chat (`test/fixtures/book_chat_heldout_protocol_v1.json`, `book_chat_validation2_protocol.json`, `book_chat_validation3_protocol.json`, dan hash `pubspec.lock` ternormalisasi di `test/l10n_test.dart`) dibekukan ulang untuk dua file. Prompt, retrieval, parser, dan pemilihan model gak berubah:
+
+- `lib/data/services/openrouter_service.dart` (#200): constructor dapat callback opsional `onKeyRejected` + interceptor Dio yang melapor 401 (rotasi key subsidi), dan provider memakai `AiKeyRepository`. Request/response ke OpenRouter tetap sama.
+- `pubspec.lock` (#211): tambah `url_launcher` (link Kebijakan privasi di layar Masuk). Dependency runtime AI gak berubah.
+
+File hasil evaluasi lama (`*_result*.json`) sengaja gak disentuh: isinya catatan historis dari versi saat evaluasi dijalankan. Menambah dependency berikutnya (mis. `google_sign_in`) butuh pembekuan ulang yang sama dan baris baru di sini.

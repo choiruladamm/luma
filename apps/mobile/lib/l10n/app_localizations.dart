@@ -3817,6 +3817,486 @@ abstract class AppLocalizations {
   /// In id, this message translates to:
   /// **'{p0} halaman tanpa teks dilewati'**
   String importPdfSkippedPages(int p0);
+
+  /// No description provided for @authLoginTitle.
+  ///
+  /// In id, this message translates to:
+  /// **'Rak lo, ikut\nke mana aja.'**
+  String get authLoginTitle;
+
+  /// No description provided for @authLoginSubtitle.
+  ///
+  /// In id, this message translates to:
+  /// **'Satu akun buat semua bacaan lo'**
+  String get authLoginSubtitle;
+
+  /// No description provided for @authChapterOne.
+  ///
+  /// In id, this message translates to:
+  /// **'BAB I'**
+  String get authChapterOne;
+
+  /// No description provided for @authChapterTwo.
+  ///
+  /// In id, this message translates to:
+  /// **'BAB II'**
+  String get authChapterTwo;
+
+  /// No description provided for @authChapterThree.
+  ///
+  /// In id, this message translates to:
+  /// **'BAB III'**
+  String get authChapterThree;
+
+  /// No description provided for @authBenefitQuota.
+  ///
+  /// In id, this message translates to:
+  /// **'Kuota AI gratis'**
+  String get authBenefitQuota;
+
+  /// No description provided for @authBenefitQuotaNote.
+  ///
+  /// In id, this message translates to:
+  /// **'Artinya, Bedahin, sama Ngobrol'**
+  String get authBenefitQuotaNote;
+
+  /// No description provided for @authBenefitBackup.
+  ///
+  /// In id, this message translates to:
+  /// **'Backup ke cloud'**
+  String get authBenefitBackup;
+
+  /// No description provided for @authBenefitBackupNote.
+  ///
+  /// In id, this message translates to:
+  /// **'Rak sama catatan lo aman'**
+  String get authBenefitBackupNote;
+
+  /// No description provided for @authBenefitSync.
+  ///
+  /// In id, this message translates to:
+  /// **'Sync antar HP'**
+  String get authBenefitSync;
+
+  /// No description provided for @authBenefitSyncNote.
+  ///
+  /// In id, this message translates to:
+  /// **'Lanjut di iPhone atau Android'**
+  String get authBenefitSyncNote;
+
+  /// No description provided for @authSignInGoogle.
+  ///
+  /// In id, this message translates to:
+  /// **'Masuk pakai Google'**
+  String get authSignInGoogle;
+
+  /// No description provided for @authConnectingGoogle.
+  ///
+  /// In id, this message translates to:
+  /// **'Nyambung ke Google…'**
+  String get authConnectingGoogle;
+
+  /// No description provided for @authGoogleWillAsk.
+  ///
+  /// In id, this message translates to:
+  /// **'Abis ini Google nanya lo mau pakai akun yang mana.'**
+  String get authGoogleWillAsk;
+
+  /// No description provided for @authPrivacyNote.
+  ///
+  /// In id, this message translates to:
+  /// **'Dengan masuk, lo setuju sama {policy} Luma.'**
+  String authPrivacyNote(String policy);
+
+  /// No description provided for @authPrivacyPolicy.
+  ///
+  /// In id, this message translates to:
+  /// **'Kebijakan privasi'**
+  String get authPrivacyPolicy;
+
+  /// No description provided for @authNetworkTitle.
+  ///
+  /// In id, this message translates to:
+  /// **'Gak bisa nyambung'**
+  String get authNetworkTitle;
+
+  /// No description provided for @authNetworkBody.
+  ///
+  /// In id, this message translates to:
+  /// **'Cek internet lo, terus coba lagi.'**
+  String get authNetworkBody;
+
+  /// No description provided for @authTryAgain.
+  ///
+  /// In id, this message translates to:
+  /// **'Coba lagi'**
+  String get authTryAgain;
+
+  /// No description provided for @authRejectedTitle.
+  ///
+  /// In id, this message translates to:
+  /// **'Login-nya ditolak'**
+  String get authRejectedTitle;
+
+  /// No description provided for @authRejectedBody.
+  ///
+  /// In id, this message translates to:
+  /// **'Akun Google ini gak bisa dipakai buat masuk. Coba pakai akun lain.'**
+  String get authRejectedBody;
+
+  /// No description provided for @authUseAnotherAccount.
+  ///
+  /// In id, this message translates to:
+  /// **'Pakai akun lain'**
+  String get authUseAnotherAccount;
+
+  /// No description provided for @authDevBadge.
+  ///
+  /// In id, this message translates to:
+  /// **'Build developer'**
+  String get authDevBadge;
+
+  /// No description provided for @authDevLabel.
+  ///
+  /// In id, this message translates to:
+  /// **'Build dev'**
+  String get authDevLabel;
+
+  /// No description provided for @authDevTitle.
+  ///
+  /// In id, this message translates to:
+  /// **'Isi yang kosong.'**
+  String get authDevTitle;
+
+  /// No description provided for @authDevEmailLead.
+  ///
+  /// In id, this message translates to:
+  /// **'Email gua'**
+  String get authDevEmailLead;
+
+  /// No description provided for @authDevPasswordLead.
+  ///
+  /// In id, this message translates to:
+  /// **'dan kata sandinya'**
+  String get authDevPasswordLead;
+
+  /// No description provided for @authDevNote.
+  ///
+  /// In id, this message translates to:
+  /// **'Cuma ada di build developer. Versi rilis cuma pakai Google.'**
+  String get authDevNote;
+
+  /// No description provided for @authEmailLabel.
+  ///
+  /// In id, this message translates to:
+  /// **'Email'**
+  String get authEmailLabel;
+
+  /// No description provided for @authPasswordLabel.
+  ///
+  /// In id, this message translates to:
+  /// **'Kata sandi'**
+  String get authPasswordLabel;
+
+  /// No description provided for @authSignUp.
+  ///
+  /// In id, this message translates to:
+  /// **'Daftar'**
+  String get authSignUp;
+
+  /// No description provided for @authSignIn.
+  ///
+  /// In id, this message translates to:
+  /// **'Masuk'**
+  String get authSignIn;
+
+  /// No description provided for @authInvalidCredentialsTitle.
+  ///
+  /// In id, this message translates to:
+  /// **'Email atau kata sandinya salah'**
+  String get authInvalidCredentialsTitle;
+
+  /// No description provided for @authInvalidCredentialsBody.
+  ///
+  /// In id, this message translates to:
+  /// **'Cek lagi, terus coba masuk lagi.'**
+  String get authInvalidCredentialsBody;
+
+  /// No description provided for @authUserExistsTitle.
+  ///
+  /// In id, this message translates to:
+  /// **'Email ini udah terdaftar'**
+  String get authUserExistsTitle;
+
+  /// No description provided for @authUserExistsBody.
+  ///
+  /// In id, this message translates to:
+  /// **'Pakai Masuk aja, bukan Daftar.'**
+  String get authUserExistsBody;
+
+  /// No description provided for @authPasswordShortTitle.
+  ///
+  /// In id, this message translates to:
+  /// **'Kata sandinya kependekan'**
+  String get authPasswordShortTitle;
+
+  /// No description provided for @authPasswordShortBody.
+  ///
+  /// In id, this message translates to:
+  /// **'Minimal 8 karakter.'**
+  String get authPasswordShortBody;
+
+  /// No description provided for @authSignedInAs.
+  ///
+  /// In id, this message translates to:
+  /// **'Masuk sebagai'**
+  String get authSignedInAs;
+
+  /// No description provided for @authChange.
+  ///
+  /// In id, this message translates to:
+  /// **'Ganti'**
+  String get authChange;
+
+  /// No description provided for @authInviteIntro.
+  ///
+  /// In id, this message translates to:
+  /// **'Luma lagi beta, jadi akun baru butuh undangan.'**
+  String get authInviteIntro;
+
+  /// No description provided for @authInviteLead.
+  ///
+  /// In id, this message translates to:
+  /// **'Kode undangan gua:'**
+  String get authInviteLead;
+
+  /// No description provided for @authInviteHint.
+  ///
+  /// In id, this message translates to:
+  /// **'Huruf besar/kecil gak ngaruh. Strip boleh dilewatin.'**
+  String get authInviteHint;
+
+  /// No description provided for @authContinue.
+  ///
+  /// In id, this message translates to:
+  /// **'Lanjut'**
+  String get authContinue;
+
+  /// No description provided for @authNoteLabel.
+  ///
+  /// In id, this message translates to:
+  /// **'CATATAN'**
+  String get authNoteLabel;
+
+  /// No description provided for @authInviteUsedTitle.
+  ///
+  /// In id, this message translates to:
+  /// **'Kode ini udah dipakai'**
+  String get authInviteUsedTitle;
+
+  /// No description provided for @authInviteUsedBody.
+  ///
+  /// In id, this message translates to:
+  /// **'Satu kode buat satu akun. Minta kode baru ke yang ngundang lo.'**
+  String get authInviteUsedBody;
+
+  /// No description provided for @authInviteInvalidTitle.
+  ///
+  /// In id, this message translates to:
+  /// **'Kodenya salah'**
+  String get authInviteInvalidTitle;
+
+  /// No description provided for @authInviteInvalidBody.
+  ///
+  /// In id, this message translates to:
+  /// **'Cek lagi hurufnya, atau minta kode baru ke yang ngundang lo.'**
+  String get authInviteInvalidBody;
+
+  /// No description provided for @settingsAccount.
+  ///
+  /// In id, this message translates to:
+  /// **'Akun'**
+  String get settingsAccount;
+
+  /// No description provided for @authExLibris.
+  ///
+  /// In id, this message translates to:
+  /// **'EX LIBRIS'**
+  String get authExLibris;
+
+  /// No description provided for @authViaGoogle.
+  ///
+  /// In id, this message translates to:
+  /// **'Masuk lewat Google'**
+  String get authViaGoogle;
+
+  /// No description provided for @authViaEmail.
+  ///
+  /// In id, this message translates to:
+  /// **'Masuk lewat email'**
+  String get authViaEmail;
+
+  /// No description provided for @authSignOut.
+  ///
+  /// In id, this message translates to:
+  /// **'Keluar'**
+  String get authSignOut;
+
+  /// No description provided for @authDeleteAccount.
+  ///
+  /// In id, this message translates to:
+  /// **'Hapus akun'**
+  String get authDeleteAccount;
+
+  /// No description provided for @authSignOutTitle.
+  ///
+  /// In id, this message translates to:
+  /// **'Keluar dari akun?'**
+  String get authSignOutTitle;
+
+  /// No description provided for @authSignOutBody.
+  ///
+  /// In id, this message translates to:
+  /// **'Buku, progres, sama catatan di HP ini tetap ada. Lo balik ke layar Masuk; backup + sync berhenti dulu.'**
+  String get authSignOutBody;
+
+  /// No description provided for @authSwitchTitle.
+  ///
+  /// In id, this message translates to:
+  /// **'Ganti ke akun lain?'**
+  String get authSwitchTitle;
+
+  /// No description provided for @authSwitchOwner.
+  ///
+  /// In id, this message translates to:
+  /// **'Isi HP ini punya'**
+  String get authSwitchOwner;
+
+  /// No description provided for @authSwitchNew.
+  ///
+  /// In id, this message translates to:
+  /// **'Mau masuk pakai'**
+  String get authSwitchNew;
+
+  /// No description provided for @authSwitchBodyLead.
+  ///
+  /// In id, this message translates to:
+  /// **'Biar gak kecampur,'**
+  String get authSwitchBodyLead;
+
+  /// No description provided for @authSwitchBodyBold.
+  ///
+  /// In id, this message translates to:
+  /// **'isi HP ini dihapus dulu'**
+  String get authSwitchBodyBold;
+
+  /// No description provided for @authSwitchBodyTail.
+  ///
+  /// In id, this message translates to:
+  /// **': buku, progres, catatan. Data akun lama tetap aman di cloud.'**
+  String get authSwitchBodyTail;
+
+  /// No description provided for @authSwitchConfirm.
+  ///
+  /// In id, this message translates to:
+  /// **'Hapus isi HP & lanjut'**
+  String get authSwitchConfirm;
+
+  /// No description provided for @authSwitchKeep.
+  ///
+  /// In id, this message translates to:
+  /// **'Pakai akun lama aja'**
+  String get authSwitchKeep;
+
+  /// No description provided for @authDeleteTitle.
+  ///
+  /// In id, this message translates to:
+  /// **'Hapus akun selamanya?'**
+  String get authDeleteTitle;
+
+  /// No description provided for @authDeleteBody.
+  ///
+  /// In id, this message translates to:
+  /// **'Centang semua biar yakin lo ngerti apa yang ilang. Ini gak bisa dibalikin.'**
+  String get authDeleteBody;
+
+  /// No description provided for @authDeleteCheckAccount.
+  ///
+  /// In id, this message translates to:
+  /// **'Akun {email} kehapus'**
+  String authDeleteCheckAccount(String email);
+
+  /// No description provided for @authDeleteCheckBackup.
+  ///
+  /// In id, this message translates to:
+  /// **'Semua backup di cloud ilang'**
+  String get authDeleteCheckBackup;
+
+  /// No description provided for @authDeleteCheckSync.
+  ///
+  /// In id, this message translates to:
+  /// **'Data sync di semua HP lo ilang'**
+  String get authDeleteCheckSync;
+
+  /// No description provided for @authDeleteNote.
+  ///
+  /// In id, this message translates to:
+  /// **'Buku di HP ini gak ikut kehapus, tapi gak kebackup lagi.'**
+  String get authDeleteNote;
+
+  /// No description provided for @authDeleteConfirm.
+  ///
+  /// In id, this message translates to:
+  /// **'Hapus akun selamanya'**
+  String get authDeleteConfirm;
+
+  /// No description provided for @authSessionExpiredTitle.
+  ///
+  /// In id, this message translates to:
+  /// **'Sesi lo habis'**
+  String get authSessionExpiredTitle;
+
+  /// No description provided for @authSessionExpiredBody.
+  ///
+  /// In id, this message translates to:
+  /// **'Baca tetap jalan; backup & sync nunggu dulu.'**
+  String get authSessionExpiredBody;
+
+  /// No description provided for @authSignInAgain.
+  ///
+  /// In id, this message translates to:
+  /// **'Login lagi'**
+  String get authSignInAgain;
+
+  /// No description provided for @authCloseBanner.
+  ///
+  /// In id, this message translates to:
+  /// **'Tutup'**
+  String get authCloseBanner;
+
+  /// No description provided for @authToastSignedIn.
+  ///
+  /// In id, this message translates to:
+  /// **'Udah masuk. Halo, {name}!'**
+  String authToastSignedIn(String name);
+
+  /// No description provided for @authToastSignedOut.
+  ///
+  /// In id, this message translates to:
+  /// **'Udah keluar. Buku di HP ini tetap ada.'**
+  String get authToastSignedOut;
+
+  /// No description provided for @authToastDeleted.
+  ///
+  /// In id, this message translates to:
+  /// **'Akun lo udah dihapus.'**
+  String get authToastDeleted;
+
+  /// No description provided for @authToastDeleteFailed.
+  ///
+  /// In id, this message translates to:
+  /// **'Gagal hapus akun. Gak ada internet.'**
+  String get authToastDeleteFailed;
 }
 
 class _AppLocalizationsDelegate

@@ -121,9 +121,10 @@ void main() {
     });
 
     test(
-      'logging in as a different account than last time is flagged',
+      'a different account than last time is flagged and not saved yet',
       () async {
         await store.writeLastUserId('akun-lama');
+        await store.writeLastUserEmail('lama@luma.test');
         adapter.queue.add(fromContract(contract('auth-sign-in-email')));
 
         final result = await repo.signInEmail(
@@ -132,6 +133,84 @@ void main() {
         );
 
         expect(result.switchedAccount, isTrue);
+        expect(result.previousEmail, 'lama@luma.test');
+        expect(await repo.hasSession(), isFalse);
+        expect(await store.readLastUserId(), 'akun-lama');
+      },
+    );
+
+    test('commit saves the switched session as the new owner', () async {
+      await store.writeLastUserId('akun-lama');
+      adapter.queue.add(fromContract(contract('auth-sign-in-email')));
+      final result = await repo.signInEmail(
+        email: 'adam@luma.test',
+        password: 'p' * 10,
+      );
+
+      await repo.commit(result.session);
+
+      expect(await store.readToken(), 'tok123.sig456');
+      expect(await store.readLastUserId(), 'user-1');
+      expect(await store.readLastUserEmail(), 'adam@luma.test');
+    });
+
+    test('discard signs the new session out and keeps the old owner', () async {
+      await store.writeLastUserId('akun-lama');
+      adapter.queue
+        ..add(fromContract(contract('auth-sign-in-email')))
+        ..add(json(200, {'success': true}));
+      final result = await repo.signInEmail(
+        email: 'adam@luma.test',
+        password: 'p' * 10,
+      );
+
+      await repo.discard(result.session);
+
+      expect(adapter.requests.last.uri.path, '/v1/auth/sign-out');
+      expect(
+        adapter.requests.last.headers['authorization'],
+        'Bearer tok123.sig456',
+      );
+      expect(await repo.hasSession(), isFalse);
+      expect(await store.readLastUserId(), 'akun-lama');
+    });
+
+    test('Google sign-in sends the idToken and the invite header', () async {
+      adapter.queue.add(fromContract(contract('auth-sign-in-email')));
+
+      await repo.signInGoogle(
+        idToken: 'id-token-google',
+        inviteCode: 'LUMA-7Q2K',
+      );
+
+      final req = adapter.requests.single;
+      expect(req.uri.path, '/v1/auth/sign-in/social');
+      expect(req.headers['x-invite-code'], 'LUMA-7Q2K');
+      expect(req.data, {
+        'provider': 'google',
+        'idToken': {'token': 'id-token-google'},
+      });
+    });
+
+    test(
+      'a new account without a code surfaces INVITE_CODE_REQUIRED (contract)',
+      () async {
+        adapter.queue.add(fromContract(contract('error-invite-code-required')));
+
+        await expectLater(
+          repo.signUpEmail(name: 'A', email: 'a@luma.test', password: 'x' * 10),
+          throwsA(
+            isA<BackendException>().having(
+              (e) => e.code,
+              'code',
+              AuthErrorCode.inviteRequired,
+            ),
+          ),
+        );
+        expect(
+          adapter.requests.single.headers.containsKey('x-invite-code'),
+          isFalse,
+        );
       },
     );
   });
@@ -161,13 +240,21 @@ void main() {
       },
     );
 
-    test('401 from /v1/me drops the stored token (contract)', () async {
-      await store.writeToken('mati');
-      adapter.queue.add(fromContract(contract('error-unauthorized')));
+    test(
+      '401 from /v1/me keeps the token so the app stays open (contract)',
+      () async {
+        await store.writeToken('mati');
+        adapter.queue.add(fromContract(contract('error-unauthorized')));
 
-      await expectLater(repo.currentUser(), throwsA(isA<BackendException>()));
-      expect(await repo.hasSession(), isFalse);
-    });
+        await expectLater(
+          repo.currentUser(),
+          throwsA(
+            isA<BackendException>().having((e) => e.statusCode, 'status', 401),
+          ),
+        );
+        expect(await repo.hasSession(), isTrue);
+      },
+    );
 
     test(
       'signOut clears the token even when offline, keeps last account',

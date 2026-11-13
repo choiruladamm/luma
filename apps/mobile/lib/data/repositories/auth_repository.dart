@@ -4,14 +4,23 @@ import '../services/auth_service.dart';
 import '../services/backend_client.dart';
 import '../services/session_store.dart';
 
-/// Hasil login: [switchedAccount] true kalau HP ini terakhir dipakai akun
-/// lain, jadi data lokal harus dikonfirmasi-hapus dulu sebelum lanjut
-/// (docs/backend.md, Sesi & akun).
+/// Hasil login. [switchedAccount] true = HP ini terakhir dipakai akun lain:
+/// sesi BELUM disimpan, pemanggil konfirmasi dulu (board Akun 10) lalu
+/// [AuthRepository.commit] atau [AuthRepository.discard].
 class SignInResult {
-  const SignInResult({required this.user, required this.switchedAccount});
+  const SignInResult({
+    required this.session,
+    required this.switchedAccount,
+    this.previousEmail,
+  });
 
-  final AuthUser user;
+  final AuthSession session;
   final bool switchedAccount;
+
+  /// Email akun lama di HP ini (dialog ganti akun).
+  final String? previousEmail;
+
+  AuthUser get user => session.user;
 }
 
 /// Sumber kebenaran sesi di HP: token di secure storage, login wajib
@@ -30,6 +39,8 @@ class AuthRepository {
 
   Future<String?> token() => _store.readToken();
 
+  Future<String?> lastUserId() => _store.readLastUserId();
+
   Future<SignInResult> signInEmail({
     required String email,
     required String password,
@@ -41,7 +52,7 @@ class AuthRepository {
     required String name,
     required String email,
     required String password,
-    required String inviteCode,
+    String? inviteCode,
   }) async => _keep(
     await _service.signUpEmail(
       name: name.trim(),
@@ -51,16 +62,36 @@ class AuthRepository {
     ),
   );
 
-  /// User dari server, sekalian cek token masih berlaku. 401 → token dibuang.
+  Future<SignInResult> signInGoogle({
+    required String idToken,
+    String? inviteCode,
+  }) async => _keep(
+    await _service.signInGoogle(idToken: idToken, inviteCode: inviteCode),
+  );
+
+  /// Simpan sesi setelah ganti akun dikonfirmasi.
+  Future<void> commit(AuthSession session) async {
+    await _store.writeToken(session.token);
+    await _store.writeLastUserId(session.user.id);
+    await _store.writeLastUserEmail(session.user.email);
+  }
+
+  /// Ganti akun dibatalin: sesi baru dibuang di server (best effort), HP tetap
+  /// milik akun lama.
+  Future<void> discard(AuthSession session) async {
+    try {
+      await _service.signOut(session.token);
+    } on BackendException {
+      // Offline: token baru cuma hidup di server sampai kedaluwarsa.
+    }
+  }
+
+  /// User dari server sekalian cek token. 401 dilempar apa adanya: token
+  /// TETAP disimpan supaya app gak kekunci (banner "Login lagi", board Akun 12).
   Future<AuthUser?> currentUser() async {
     final token = await _store.readToken();
     if (token == null) return null;
-    try {
-      return await _service.me(token);
-    } on BackendException catch (e) {
-      if (e.statusCode == 401) await _store.clearToken();
-      rethrow;
-    }
+    return _service.me(token);
   }
 
   /// Logout: token lokal selalu dihapus walau server gak kejangkau. Data lokal tetap.
@@ -94,11 +125,12 @@ class AuthRepository {
 
   Future<SignInResult> _keep(AuthSession session) async {
     final last = await _store.readLastUserId();
-    await _store.writeToken(session.token);
-    await _store.writeLastUserId(session.user.id);
+    final switched = last != null && last != session.user.id;
+    if (!switched) await commit(session);
     return SignInResult(
-      user: session.user,
-      switchedAccount: last != null && last != session.user.id,
+      session: session,
+      switchedAccount: switched,
+      previousEmail: switched ? await _store.readLastUserEmail() : null,
     );
   }
 }

@@ -41,6 +41,8 @@ import '../../discover/curated_books.dart';
 import '../../discover/view_models/download_queue_view_model.dart';
 import '../../discover/views/catalog_cover.dart';
 import '../view_models/bookshelf_view_model.dart';
+import '../../auth/view_models/auth_view_model.dart';
+import '../../auth/views/session_banner.dart';
 import 'backup_reminder.dart';
 import 'book_info_sheet.dart';
 import 'shelf_header.dart';
@@ -229,6 +231,16 @@ class _BookshelfViewState extends ConsumerState<BookshelfView> {
     if (identical(ref.read(importControllerProvider), shown)) _import.dismiss();
   };
 
+  /// Banner sesi habis (board Akun 12), di atas kartu Lanjut baca.
+  Widget? _sessionBanner() {
+    final auth = ref.watch(authControllerProvider).value;
+    if (auth == null || !auth.showExpiredBanner) return null;
+    return SessionExpiredBanner(
+      onSignIn: () => context.go(Routes.login),
+      onClose: ref.read(authControllerProvider.notifier).dismissBanner,
+    );
+  }
+
   /// Banner pengingat backup (docs/backup.md), atau null.
   Widget? _reminder(List<ShelfBook> books) {
     final last = ref.watch(lastBackupProvider);
@@ -367,10 +379,14 @@ class _BookshelfViewState extends ConsumerState<BookshelfView> {
         .where((i) => !i.finished)
         .firstOrNull;
     final baseline = importing == null ? null : _importBaseline;
-    final reminder = _reminder(switch (books) {
+    final backupReminder = _reminder(switch (books) {
       AsyncData(value: final list) => list,
       _ => const <ShelfBook>[],
     });
+    final sessionBanner = _sessionBanner();
+    final reminder = sessionBanner == null || backupReminder == null
+        ? sessionBanner ?? backupReminder
+        : Column(spacing: Space.s3, children: [sessionBanner, backupReminder]);
     return BackupListener(
       child: Scaffold(
         body: SafeArea(
