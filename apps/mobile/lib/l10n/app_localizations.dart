@@ -4615,6 +4615,54 @@ abstract class AppLocalizations {
   /// In id, this message translates to:
   /// **'Gak ada model yang cocok.'**
   String get aiNoModelMatch;
+
+  /// Interface copy in ui/features/settings/views/settings_view.dart
+  ///
+  /// In id, this message translates to:
+  /// **'Backup ke cloud'**
+  String get settingsBackUpToCloud;
+
+  /// Interface copy in ui/features/settings/views/settings_view.dart
+  ///
+  /// In id, this message translates to:
+  /// **'Pulihin dari cloud'**
+  String get settingsRestoreFromCloud;
+
+  /// Interface copy in ui/features/settings/views/backup_sheet.dart
+  ///
+  /// In id, this message translates to:
+  /// **'Lagi diunggah ke akun lo. Buku yang udah ada di cloud gak diunggah ulang.'**
+  String get backupUploadingToYourAccount;
+
+  /// Interface copy in ui/features/settings/views/backup_listener.dart
+  ///
+  /// In id, this message translates to:
+  /// **'Penyimpanan cloud lo udah penuh'**
+  String get backupCloudIsFull;
+
+  /// Interface copy in ui/features/settings/views/cloud_restore_sheet.dart
+  ///
+  /// In id, this message translates to:
+  /// **'Pilih backup cloud'**
+  String get cloudRestorePickTitle;
+
+  /// Interface copy in ui/features/settings/views/cloud_restore_sheet.dart
+  ///
+  /// In id, this message translates to:
+  /// **'Belum ada backup di cloud. Tekan \"Backup ke cloud\" dulu.'**
+  String get cloudRestoreEmpty;
+
+  /// Interface copy in ui/features/settings/views/cloud_restore_sheet.dart
+  ///
+  /// In id, this message translates to:
+  /// **'Gagal ngambil daftar backup. Cek internet lo.'**
+  String get cloudRestoreLoadFailed;
+
+  /// Interface copy in ui/features/settings/views/cloud_restore_sheet.dart
+  ///
+  /// In id, this message translates to:
+  /// **'Gagal download backup. Coba lagi ya.'**
+  String get cloudRestoreDownloadFailed;
 }
 
 class _AppLocalizationsDelegate

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:luma/data/repositories/settings_repository.dart';
 import 'package:luma/data/services/auth_service.dart';
 import 'package:luma/data/services/backend_client.dart';
 import 'package:luma/l10n/app_localizations.dart';
@@ -50,6 +51,7 @@ void main() {
     WidgetTester tester, {
     AuthState? state,
     bool deleteFails = false,
+    DateTime? cloudAt,
   }) async {
     tester.view
       ..physicalSize = const Size(900, 1400)
@@ -64,6 +66,7 @@ void main() {
         overrides: [
           authControllerProvider.overrideWith(() => auth),
           devLoginProvider.overrideWithValue(false),
+          cloudBackupAtProvider.overrideWith((ref) => Stream.value(cloudAt)),
         ],
         child: MaterialApp(
           localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -90,6 +93,24 @@ void main() {
     expect(find.text('rara.putri@gmail.com'), findsOneWidget);
     expect(find.text('Masuk lewat Google'), findsOneWidget);
     expect(find.text('R'), findsOneWidget);
+  });
+
+  testWidgets('last cloud backup row shows once there is one (board Akun 08)', (
+    tester,
+  ) async {
+    final at = DateTime.now().copyWith(hour: 8, minute: 12);
+    await pump(tester, cloudAt: at);
+    await tester.pump();
+    expect(find.text('Backup terakhir'), findsOneWidget);
+    expect(find.text('Hari ini, 08.12'), findsOneWidget);
+  });
+
+  testWidgets('no last backup row before the first cloud backup', (
+    tester,
+  ) async {
+    await pump(tester);
+    await tester.pump();
+    expect(find.text('Backup terakhir'), findsNothing);
   });
 
   testWidgets('hidden when signed out', (tester) async {

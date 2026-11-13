@@ -752,5 +752,13 @@
   "aiFilterCheap": "Budget",
   "aiFilterLong": "Long context",
   "aiModelsLoadFailed": "Couldn't load the model list. Check your internet, then try again.",
-  "aiNoModelMatch": "No matching models."
+  "aiNoModelMatch": "No matching models.",
+  "settingsBackUpToCloud": "Back up to cloud",
+  "settingsRestoreFromCloud": "Restore from cloud",
+  "backupUploadingToYourAccount": "Uploading to your account. Books already in the cloud are skipped.",
+  "backupCloudIsFull": "Your cloud storage is full",
+  "cloudRestorePickTitle": "Pick a cloud backup",
+  "cloudRestoreEmpty": "No cloud backups yet. Tap \"Back up to cloud\" first.",
+  "cloudRestoreLoadFailed": "Couldn't load your backups. Check your connection.",
+  "cloudRestoreDownloadFailed": "Couldn't download the backup. Try again."
 }

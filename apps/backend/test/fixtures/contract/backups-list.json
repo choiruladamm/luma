@@ -1,0 +1,19 @@
+{
+  "request": { "method": "GET", "path": "/v1/backups", "headers": { "authorization": "Bearer <token>" } },
+  "response": {
+    "status": 200,
+    "body": {
+      "backups": [
+        {
+          "id": "<id>",
+          "createdAt": "2026-11-13T10:04:05.000Z",
+          "size": 8,
+          "books": 12,
+          "aiResults": 185,
+          "schemaVersion": 17,
+          "appVersion": "0.3.0"
+        }
+      ]
+    }
+  }
+}

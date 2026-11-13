@@ -2717,4 +2717,32 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get aiNoModelMatch => 'Gak ada model yang cocok.';
+
+  @override
+  String get settingsBackUpToCloud => 'Backup ke cloud';
+
+  @override
+  String get settingsRestoreFromCloud => 'Pulihin dari cloud';
+
+  @override
+  String get backupUploadingToYourAccount =>
+      'Lagi diunggah ke akun lo. Buku yang udah ada di cloud gak diunggah ulang.';
+
+  @override
+  String get backupCloudIsFull => 'Penyimpanan cloud lo udah penuh';
+
+  @override
+  String get cloudRestorePickTitle => 'Pilih backup cloud';
+
+  @override
+  String get cloudRestoreEmpty =>
+      'Belum ada backup di cloud. Tekan \"Backup ke cloud\" dulu.';
+
+  @override
+  String get cloudRestoreLoadFailed =>
+      'Gagal ngambil daftar backup. Cek internet lo.';
+
+  @override
+  String get cloudRestoreDownloadFailed =>
+      'Gagal download backup. Coba lagi ya.';
 }

@@ -96,7 +96,8 @@ Perkiraan untuk satu user aktif per hari. Wajib diperbarui saat implementasi ber
 | Auth per request (cek sesi bearer, #199) | termasuk di request lain | 1 baca (+1 tulis maks sekali sehari) | - |
 | Key AI (`POST /v1/ai/key`, #200) | 1 per device per 30 hari (+1 setelah 401) | 2 baca (+1 tulis saat bikin/rotasi); subrequest OpenRouter 0 / 1 / 2 | - |
 | Usage/config AI (#200) | ≤ 2 (Pengaturan dibuka; cache usage 1 jam, config 24 jam) | usage 2 baca + 1 subrequest; config 1 baca | - |
-| Backup otomatis | 2 + jumlah file baru (1×/hari) | - | 1 list + 1–2 tulis + hapus snapshot lama |
+| Backup otomatis (#201) | 2 + jumlah file baru (1×/hari) | 1 baca + 1 tulis per upload | `files/missing` 1 list/1000 file; file baru 1 head + 1 put; snapshot 1 put + 1 list (+1 delete) |
+| Restore cloud (#201) | 2 + file yang belum ada di HP | - | 1 list + 1 baca snapshot + 1 baca per file |
 | Sync (resume + debounce) | ±10–30 | ±50–300 tulis, ±100–500 baca | - |
 | Download buku di device baru | 1 per buku (sekali) | - | 1 baca per buku |
 
@@ -268,7 +269,15 @@ Zip penuh tidak di-upload (bisa ratusan MB, lewat batas body 100MB). Isinya dipi
 | `PUT /v1/files/:name` | Body di-stream ke R2, maks 100MB |
 | `PUT /v1/backups` | Zip kecil, `customMetadata` dari manifest; hapus snapshot lama di luar 10 terakhir |
 | `GET /v1/backups` | List lewat `R2.list({prefix, include: ["customMetadata"]})`, tanpa tabel D1 |
-| `GET /v1/backups/:ts` | Download |
+| `GET /v1/backups/:id` | Download (`id` = `yyyyMMddTHHmmssZ`; gak ada → 404 `BACKUP_NOT_FOUND`) |
+| `GET /v1/files/:name` | Download file buku/cover (restore di device baru) |
+
+Detail implementasi (#201):
+
+- Semua route: `killSwitch("BACKUP_ENABLED")` → `requireSession` → rate limit per user. Nama file `^[A-Za-z0-9._-]{1,200}$`; `Content-Length` wajib (400 kalau gak ada), maks 100MB (413 `PAYLOAD_TOO_LARGE`). Body di-stream ke R2 lewat `FixedLengthStream`, gak di-buffer/hash di Worker; panjang yang bohong = upload gagal.
+- Kuota: `user_storage.bytes + size ≤ USER_STORAGE_BYTES` (vars, 1GB) → lewat = 413 `STORAGE_FULL`. File yang udah ada (`head`) gak diunggah ulang dan gak dihitung dobel. Snapshot ikut dihitung; yang dibuang retensi mengurangi `bytes`.
+- `PUT /v1/backups`: manifest app dikirim di header `x-backup-manifest` (JSON `manifest.json`), disimpan sebagai `customMetadata` (`createdAt` dinormalisasi ke UTC). `GET /v1/backups` → `{"backups": [...]}` terbaru dulu.
+- Ukuran nyata snapshot (13 November 2026): 14,6MB zip dari DB 42MB, jadi multipart gak dipakai. CPU di env dev (`wrangler tail`, hangat): `GET /v1/backups` 3ms, `PUT /v1/backups` 15MB 5–14ms, `PUT /v1/files/:name` 15MB 8ms; cold start sampai ±26ms.
 
 Alur backup:
 

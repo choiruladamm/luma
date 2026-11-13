@@ -8,9 +8,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:luma/data/database/app_database.dart';
 import 'package:luma/data/repositories/ai_breakdowns_repository.dart';
 import 'package:luma/data/repositories/ai_results_repository.dart';
 import 'package:luma/data/repositories/catalog_repository.dart';
+import 'package:luma/data/repositories/cloud_backup_repository.dart';
+import 'package:luma/data/services/backend_client.dart';
+import 'package:luma/data/services/cloud_backup_service.dart';
+import 'package:luma/ui/features/auth/view_models/auth_view_model.dart';
 import 'package:luma/data/services/catalog_sync_service.dart';
 import 'package:luma/data/repositories/settings_repository.dart';
 import 'package:luma/data/services/api_key_store.dart';
@@ -70,6 +75,7 @@ class FakeBackup extends Fake implements BackupService {
 
   @override
   Future<BackupFile?> export({
+    bool snapshotOnly = false,
     DateTime? now,
     void Function(String name, BackupManifest manifest)? onStart,
     void Function(BackupStage stage, double fraction)? onProgress,
@@ -122,7 +128,11 @@ class FakeRestore extends Fake implements RestoreService {
   final applied = <RestorePreview>[];
 
   @override
-  Future<RestorePreview> inspect(File zip) async {
+  Future<RestorePreview> inspect(
+    File zip, {
+    String? fileName,
+    Future<void> Function(Directory dir, AppDatabase snapshot)? fill,
+  }) async {
     if (inspectError != null) throw inspectError!;
     return preview;
   }
@@ -139,6 +149,57 @@ class FakeRestore extends Fake implements RestoreService {
     onStage?.call(2);
     if (applyFails) throw const FileSystemException('disk full');
     applied.add(preview);
+  }
+}
+
+class SignedIn extends AuthController {
+  @override
+  Future<AuthState> build() async => const AuthState(AuthStatus.signedIn);
+}
+
+/// Cloud backup without a backend: [release] finishes the upload.
+class FakeCloud extends Fake implements CloudBackupRepository {
+  final release = Completer<void>();
+  Object? error;
+  final backups = <CloudBackup>[];
+  final prepared = <String>[];
+  RestorePreview? preview;
+
+  @override
+  Future<LastBackup> backup({
+    void Function(String name, BackupManifest manifest)? onStart,
+    void Function(BackupStage stage, double fraction)? onProgress,
+  }) async {
+    onStart?.call(
+      'luma-backup-20261113-0812.zip',
+      BackupManifest(
+        appVersion: '0.3.0',
+        schemaVersion: 17,
+        createdAt: DateTime(2026, 11, 13, 8, 12),
+        books: 3,
+        aiResults: 50,
+      ),
+    );
+    onProgress?.call(BackupStage.books, 0.4);
+    await release.future;
+    if (error != null) throw error!;
+    return (
+      at: DateTime.now(),
+      name: 'luma-backup-20261113-0812.zip',
+      size: 15352134,
+    );
+  }
+
+  @override
+  Future<List<CloudBackup>> list() async => backups;
+
+  @override
+  Future<RestorePreview> prepareRestore(
+    CloudBackup backup,
+    RestoreService restore,
+  ) async {
+    prepared.add(backup.id);
+    return preview!;
   }
 }
 
@@ -191,6 +252,7 @@ void main() {
     Completer<void>? gate,
     LastBackup? lastBackup,
     CatalogSyncState catalog = const CatalogSyncIdle(),
+    FakeCloud? cloud,
 
     /// false kalau layar punya spinner abadi (pumpAndSettle gak bakal kelar).
     bool settle = true,
@@ -228,6 +290,10 @@ void main() {
           backupServiceProvider.overrideWithValue(backup),
           shareServiceProvider.overrideWithValue(share),
           catalogSyncProvider.overrideWith(() => FakeCatalogSync(catalog)),
+          if (cloud != null) ...[
+            authControllerProvider.overrideWith(SignedIn.new),
+            cloudBackupRepositoryProvider.overrideWithValue(cloud),
+          ],
           catalogStatsProvider.overrideWith(
             (ref) => catalogStats == null
                 ? const Stream.empty()
@@ -629,7 +695,7 @@ void main() {
     late FakePicker picker;
 
     /// Settings over the shelf, like in the app, so going home is visible.
-    Future<void> openFromShelf(WidgetTester tester) async {
+    Future<void> openFromShelf(WidgetTester tester, {FakeCloud? cloud}) async {
       tester.view.physicalSize = const Size(900, 1800);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
@@ -668,6 +734,10 @@ void main() {
             openRouterServiceProvider.overrideWithValue(FakeOpenRouter()),
             restoreServiceProvider.overrideWithValue(restore),
             filePickerServiceProvider.overrideWithValue(picker),
+            if (cloud != null) ...[
+              authControllerProvider.overrideWith(SignedIn.new),
+              cloudBackupRepositoryProvider.overrideWithValue(cloud),
+            ],
           ],
           child: MaterialApp.router(
             localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -682,6 +752,62 @@ void main() {
       cache.stats.add((paragraphs: 0, bytes: 0));
       await tester.pumpAndSettle();
     }
+
+    testWidgets('cloud: pick a snapshot, same summary, data back', (
+      tester,
+    ) async {
+      final cloud = FakeCloud()
+        ..backups.add(
+          CloudBackup(
+            id: '20261113T011200Z',
+            createdAt: DateTime.now().copyWith(hour: 8, minute: 12),
+            size: 15352134,
+            books: 7,
+            aiResults: 1240,
+            schemaVersion: 17,
+            appVersion: '0.3.0',
+          ),
+        );
+      await openFromShelf(tester, cloud: cloud);
+      cloud.preview = restore.preview;
+      await tester.scrollUntilVisible(
+        find.text('Pulihin dari cloud'),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(find.text('Pulihin dari cloud'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Pilih backup cloud'), findsOneWidget);
+      expect(find.text('Hari ini, 08.12'), findsOneWidget);
+      expect(find.text('7 buku · 1.240 terjemahan · 14,6 MB'), findsOneWidget);
+      await tester.tap(find.text('Hari ini, 08.12'));
+      await tester.pumpAndSettle();
+
+      expect(cloud.prepared, ['20261113T011200Z']);
+      expect(find.text('Pulihin dari backup ini?'), findsOneWidget);
+      await tester.tap(find.text('Iya, gua ngerti. Ganti aja semuanya.'));
+      await tester.pump();
+      await tester.tap(find.text('Ganti & pulihin'));
+      await tester.pumpAndSettle();
+      expect(restore.applied, hasLength(1));
+      expect(find.text('Sip, data lo udah balik!'), findsOneWidget);
+    });
+
+    testWidgets('cloud: nothing backed up yet says so', (tester) async {
+      await openFromShelf(tester, cloud: FakeCloud());
+      await tester.scrollUntilVisible(
+        find.text('Pulihin dari cloud'),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(find.text('Pulihin dari cloud'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text('Belum ada backup di cloud. Tekan "Backup ke cloud" dulu.'),
+        findsOneWidget,
+      );
+    });
 
     Future<void> tapRestore(WidgetTester tester) async {
       await tester.scrollUntilVisible(
@@ -939,5 +1065,64 @@ void main() {
     expect(find.text('Interface language'), findsOneWidget);
     expect(find.text('OpenRouter API key'), findsOneWidget);
     expect(find.text('Bahasa antarmuka'), findsNothing);
+  });
+
+  group('cloud backup', () {
+    Future<void> tapCloud(WidgetTester tester) async {
+      await tester.scrollUntilVisible(
+        find.text('Backup ke cloud'),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(find.text('Backup ke cloud'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+    }
+
+    testWidgets('signed out: no cloud buttons', (tester) async {
+      await open(tester);
+      expect(find.text('Backup ke cloud'), findsNothing);
+      expect(find.text('Pulihin dari cloud'), findsNothing);
+    });
+
+    testWidgets('uploads with the progress sheet, then the same toast', (
+      tester,
+    ) async {
+      final cloud = FakeCloud();
+      await open(tester, cloud: cloud);
+      await tapCloud(tester);
+
+      expect(find.text('Lagi ngebungkus backup...'), findsOneWidget);
+      expect(find.text('3 buku + progres bacanya'), findsOneWidget);
+      expect(find.text('40%'), findsOneWidget);
+      expect(
+        find.text(
+          'Lagi diunggah ke akun lo. Buku yang udah ada di cloud gak diunggah ulang.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Batal'), findsNothing);
+
+      cloud.release.complete();
+      await tester.pumpAndSettle();
+      expect(find.text('Lagi ngebungkus backup...'), findsNothing);
+      expect(find.text('Backup kelar, aman!'), findsOneWidget);
+      expect(share.shared, isEmpty);
+    });
+
+    testWidgets('a full cloud says so', (tester) async {
+      final cloud = FakeCloud()
+        ..error = const BackendException(
+          code: 'STORAGE_FULL',
+          message: 'Cloud storage is full',
+          statusCode: 413,
+        );
+      await open(tester, cloud: cloud);
+      await tapCloud(tester);
+      cloud.release.complete();
+      await tester.pumpAndSettle();
+      expect(find.text('Yah, backup gagal'), findsOneWidget);
+      expect(find.text('Penyimpanan cloud lo udah penuh'), findsOneWidget);
+    });
   });
 }

@@ -1,0 +1,9 @@
+{
+  "request": {
+    "method": "PUT",
+    "path": "/v1/files/3539482a.jpg",
+    "headers": { "authorization": "Bearer <token>", "content-length": "5" },
+    "body": "cover"
+  },
+  "response": { "status": 200, "body": { "name": "3539482a.jpg", "size": 5 } }
+}
