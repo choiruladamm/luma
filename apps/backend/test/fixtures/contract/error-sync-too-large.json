@@ -1,0 +1,7 @@
+{
+  "request": { "method": "POST", "path": "/v1/sync/push" },
+  "response": {
+    "status": 413,
+    "body": { "error": { "code": "PAYLOAD_TOO_LARGE", "message": "Body exceeds 1048576 bytes" } }
+  }
+}

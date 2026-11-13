@@ -1,6 +1,6 @@
 // Tabel D1 (docs/backend.md, Schema D1). Property camelCase, kolom snake_case.
 // Tabel Better Auth di auth-schema.ts (hasil `npx auth@latest generate`, jangan diedit manual).
-import { integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { integer, primaryKey, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { users } from "./auth-schema";
 
 export * from "./auth-schema";
@@ -38,3 +38,26 @@ export const userStorage = sqliteTable("user_storage", {
   bytes: integer("bytes").notNull().default(0),
   seq: integer("seq").notNull().default(0),
 });
+
+/**
+ * Data sync per baris (docs/backend.md, Sync antar device). `data` = JSON field
+ * Dart (camelCase), null untuk tombstone. `seq` = urutan per user buat pull.
+ * `schema_version` = versi schema Drift app pengirim; versi lebih lama gak
+ * boleh menimpa record versi lebih baru.
+ */
+export const records = sqliteTable(
+  "records",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    kind: text("kind").notNull(),
+    key: text("key").notNull(),
+    data: text("data"),
+    updatedAt: integer("updated_at").notNull(),
+    deleted: integer("deleted", { mode: "boolean" }).notNull().default(false),
+    schemaVersion: integer("schema_version").notNull(),
+    seq: integer("seq").notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.kind, t.key] })],
+);

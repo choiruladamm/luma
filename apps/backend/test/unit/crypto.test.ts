@@ -17,7 +17,8 @@ describe("AES-GCM text sealing", () => {
     const sealed = await encryptText(SECRET, "sk-or-v1-rahasia");
     expect(await decryptText(OTHER, sealed)).toBeNull();
     const [v, iv, ct] = sealed.split(".");
-    const flipped = `${ct!.slice(0, -2)}${ct!.endsWith("A=") ? "B=" : "A="}`;
+    // Karakter pertama (6 bit data penuh), bukan karakter terakhir yang sebagian bit-nya padding.
+    const flipped = `${ct!.startsWith("A") ? "B" : "A"}${ct!.slice(1)}`;
     expect(await decryptText(SECRET, [v, iv, flipped].join("."))).toBeNull();
   });
 
