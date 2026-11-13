@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/models/ai_reply.dart';
 import '../../domain/models/book.dart';
+import 'sync_schema.dart';
 
 part 'app_database.g.dart';
 
@@ -364,6 +365,36 @@ class ChatVectors extends Table {
   Set<Column> get primaryKey => {indexId, ordinal};
 }
 
+/// Perubahan lokal yang belum di-push (docs/backend.md, Sync antar device).
+/// Diisi trigger SQLite dari [syncKinds], bukan repository. Satu baris per
+/// `(kind, key)`: 100 update posisi baca = 1 record. Baris yang udah gak ada
+/// saat push = tombstone (kind yang punya tombstone) atau dibuang.
+class SyncOutbox extends Table {
+  TextColumn get kind => text()();
+  TextColumn get key => text()();
+
+  /// ms epoch saat perubahan terakhir (jam device).
+  IntColumn get updatedAt => integer()();
+
+  @override
+  Set<Column> get primaryKey => {kind, key};
+}
+
+/// Record pull yang belum bisa diterapkan (buku belum ada, `parserVersion`
+/// beda, atau schema record lebih baru dari app). Dipakai pull (#210).
+class SyncInbox extends Table {
+  TextColumn get kind => text()();
+  TextColumn get key => text()();
+
+  /// JSON data record, null = tombstone.
+  TextColumn get data => text().nullable()();
+  IntColumn get updatedAt => integer()();
+  IntColumn get schemaVersion => integer()();
+
+  @override
+  Set<Column> get primaryKey => {kind, key};
+}
+
 @DriftDatabase(
   tables: [
     Books,
@@ -381,6 +412,8 @@ class ChatVectors extends Table {
     ChatVectors,
     ChatChapterNotes,
     CatalogBooks,
+    SyncOutbox,
+    SyncInbox,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -416,7 +449,16 @@ class AppDatabase extends _$AppDatabase {
   // test/data/migration_test.dart. Backup dari versi lama ikut dimigrasi pas
   // di-restore.
   @override
-  int get schemaVersion => 17;
+  int get schemaVersion => 18;
+
+  /// Trigger outbox sync di tiap tabel yang di-sync ([syncKinds]).
+  Future<void> createSyncTriggers() async {
+    for (final kind in syncKinds) {
+      for (final sql in kind.triggers) {
+        await customStatement(sql);
+      }
+    }
+  }
 
   /// FTS5 external-content di atas `catalog_books` (teks gak dobel). Isinya
   /// gak otomatis ikut: [rebuildCatalogFts] tiap `catalog_books` diganti.
@@ -477,6 +519,7 @@ class AppDatabase extends _$AppDatabase {
       await m.createAll();
       await createCatalogFts();
       await createBookSearchFts();
+      await createSyncTriggers();
     },
     onUpgrade: (m, from, to) async {
       if (from < 2) {
@@ -543,6 +586,15 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 17) {
         await createBookSearchFts(); // buku lama di-index lazy
+      }
+      if (from < 18) {
+        await m.createTable(syncOutbox);
+        await m.createTable(syncInbox);
+        // Data lama ikut antrean sync pertama (dicicil per pemicu).
+        for (final kind in syncKinds) {
+          await customStatement(kind.backfill);
+        }
+        await createSyncTriggers();
       }
     },
     // SQLite matiin foreign key secara default; cascade butuh ini.

@@ -9,6 +9,7 @@ import 'l10n/app_localizations.dart';
 import 'ui/core/theme/stabilo_theme.dart';
 import 'ui/features/discover/views/download_toasts.dart';
 import 'ui/features/settings/views/cloud_backup_trigger.dart';
+import 'ui/features/settings/views/sync_trigger.dart';
 import 'ui/features/splash/splash_overlay.dart';
 
 Future<void> main() async {
@@ -29,8 +30,8 @@ class LumaApp extends ConsumerWidget {
 
   final bool splash;
 
-  /// Backup cloud otomatis saat buka/resume (cuma dari `main`: test gak
-  /// punya DB asli).
+  /// Backup cloud + sync push otomatis (cuma dari `main`: test gak punya DB
+  /// asli).
   final bool autoBackup;
 
   @override
@@ -57,7 +58,9 @@ class LumaApp extends ConsumerWidget {
             : DownloadToasts(
                 child: autoBackup
                     ? CloudBackupTrigger(
-                        child: child ?? const SizedBox.shrink(),
+                        child: SyncTrigger(
+                          child: child ?? const SizedBox.shrink(),
+                        ),
                       )
                     : child ?? const SizedBox.shrink(),
               ),

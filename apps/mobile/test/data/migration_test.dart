@@ -160,6 +160,15 @@ final v16 = [
         : sql,
 ];
 
+// Frozen schema 17: paragraph_fts + trigger-nya, sebelum sync outbox.
+final v17 = [
+  ...v16,
+  "CREATE VIRTUAL TABLE paragraph_fts USING fts5(text, content='paragraphs', content_rowid='rowid', tokenize='unicode61 remove_diacritics 2')",
+  "CREATE TRIGGER paragraph_fts_ai AFTER INSERT ON paragraphs BEGIN INSERT INTO paragraph_fts(rowid, text) SELECT new.rowid, new.text WHERE new.type != 'sceneBreak'; END",
+  "CREATE TRIGGER paragraph_fts_ad AFTER DELETE ON paragraphs BEGIN INSERT INTO paragraph_fts(paragraph_fts, rowid, text) SELECT 'delete', old.rowid, old.text WHERE EXISTS (SELECT 1 FROM paragraph_fts_docsize WHERE id = old.rowid); END",
+  "CREATE TRIGGER paragraph_fts_au AFTER UPDATE OF text, type ON paragraphs BEGIN INSERT INTO paragraph_fts(paragraph_fts, rowid, text) SELECT 'delete', old.rowid, old.text WHERE EXISTS (SELECT 1 FROM paragraph_fts_docsize WHERE id = old.rowid); INSERT INTO paragraph_fts(rowid, text) SELECT new.rowid, new.text WHERE new.type != 'sceneBreak'; END",
+];
+
 AppDatabase _open([void Function(dynamic raw)? setup]) => AppDatabase(
   DatabaseConnection(
     NativeDatabase.memory(setup: setup),
@@ -351,6 +360,59 @@ void main() {
     addTearDown(fresh.close);
     expect(await _shape(db), await _shape(fresh));
   });
+
+  test('v17 → v18 adds sync outbox/inbox, backfills it with row times, and '
+      'installs triggers', () async {
+    final db = _old(v17, 17);
+    addTearDown(db.close);
+    await db.customStatement(
+      "INSERT INTO settings (key, value) VALUES ('ai.model', 'm'), "
+      "('backup.lastAt', 'x')",
+    );
+    // _old nulis data sebelum migrasi; settings di atas ditulis setelahnya
+    // (lewat trigger), jadi dicek terpisah.
+    final outbox = {
+      for (final r in await db.select(db.syncOutbox).get())
+        '${r.kind} ${r.key}': r.updatedAt,
+    };
+    expect(outbox['book a'], 1790500000 * 1000); // last_opened_at
+    expect(outbox.keys, containsAll(['reading_progress a', 'ai_result a/0/0']));
+    expect(outbox.keys, contains('setting ai.model'));
+    expect(outbox.keys, isNot(contains('setting backup.lastAt')));
+    expect(await db.select(db.syncInbox).get(), isEmpty);
+
+    // Data user utuh.
+    expect((await db.select(db.books).getSingle()).title, 'Meditations');
+    expect((await db.select(db.readingProgress).getSingle()).paragraphIndex, 3);
+
+    await db.customStatement("UPDATE books SET title = 'M'");
+    final book = await (db.select(
+      db.syncOutbox,
+    )..where((o) => o.kind.equals('book'))).getSingle();
+    expect(book.updatedAt, greaterThan(1790500000 * 1000));
+
+    final fresh = _open();
+    addTearDown(fresh.close);
+    expect(await _shape(db), await _shape(fresh));
+  });
+
+  test(
+    'v17 → v18 backfill: settings without timestamps queue at time 0',
+    () async {
+      final db = _open((raw) {
+        for (final sql in v17) {
+          raw.execute(sql);
+        }
+        raw.execute(
+          "INSERT INTO settings (key, value) VALUES ('shelf.sort', 'title')",
+        );
+        raw.execute('PRAGMA user_version = 17');
+      });
+      addTearDown(db.close);
+      final row = await db.select(db.syncOutbox).getSingle();
+      expect((row.kind, row.key, row.updatedAt), ('setting', 'shelf.sort', 0));
+    },
+  );
 
   test('v16 → v17 adds paragraph_fts; old books index lazily', () async {
     final db = _open((raw) {

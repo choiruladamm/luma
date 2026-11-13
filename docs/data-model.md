@@ -162,6 +162,8 @@ Meta sync di `settings`: `catalog.lastModified`, `catalog.syncedAt`, `catalog.co
 
 `paragraph_fts` (v17): virtual table FTS5 external-content di atas `paragraphs` (`text`, `content_rowid='rowid'`, `tokenize='unicode61 remove_diacritics 2'`) + shadow table `paragraph_fts_*`. Bukan tabel Drift: dibuat lewat `AppDatabase.createBookSearchFts` bareng tiga trigger di `paragraphs` yang ngejaga isinya. Buku lama di-index lazy, restore men-rebuild. Detail: [book-search.md](book-search.md).
 
+`sync_outbox` (v18): `(kind, key, updatedAt ms)`, satu baris per kunci alami yang berubah sejak push terakhir. Diisi trigger dari spec `syncKinds` (`lib/data/database/sync_schema.dart`), bukan repository. `sync_inbox` (v18): record pull yang belum bisa diterapkan, dipakai #210. Detail: [backend.md](backend.md) (Sync antar device).
+
 ## Versi schema & migrasi
 
 | Versi | Perubahan |
@@ -183,6 +185,7 @@ Meta sync di `settings`: `catalog.lastModified`, `catalog.syncedAt`, `catalog.co
 | 15 | Virtual table FTS5 `catalog_fts` di atas `catalog_books` (#169), langsung di-rebuild dari isi katalog yang ada. Data user gak disentuh |
 | 16 | `books.sourceId`, `externalId` nullable (#164); baris lama null |
 | 17 | Virtual table FTS5 `paragraph_fts` + trigger di `paragraphs` (#177, Cari kata). Kosong buat buku lama, di-index lazy pas pertama nyari. Data user gak disentuh |
+| 18 | Sync push ([#109](https://github.com/choiruladamm/luma/issues/109)): tabel `sync_outbox` + `sync_inbox` (PK `(kind, key)`) dan trigger `sync_<tabel>_ai/au/ad` di tabel yang di-sync. Outbox di-backfill dari semua baris lama dengan waktu dari isi baris (`last_opened_at`, `updated_at`, …; settings = 0). Kolom tabel lama gak berubah |
 
 Tiap ubah tabel: naikkan `schemaVersion`, tambah langkah di `onUpgrade`, dan test migrasi dari versi sebelumnya (data tetap utuh, schema hasil migrasi sama dengan install baru). Restore backup dari schema lama ikut dimigrasi saat database dibuka ([backup.md](backup.md)).
 

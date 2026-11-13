@@ -98,7 +98,7 @@ Perkiraan untuk satu user aktif per hari. Wajib diperbarui saat implementasi ber
 | Usage/config AI (#200) | ≤ 2 (Pengaturan dibuka; cache usage 1 jam, config 24 jam) | usage 2 baca + 1 subrequest; config 1 baca | - |
 | Backup otomatis (#201) | 2 + jumlah file baru (1×/hari) | 1 baca + 1 tulis per upload | `files/missing` 1 list/1000 file; file baru 1 head + 1 put; snapshot 1 put + 1 list (+1 delete) |
 | Restore cloud (#201) | 2 + file yang belum ada di HP | - | 1 list + 1 baca snapshot + 1 baca per file |
-| Sync (resume + debounce) | ±10–30 | ±50–300 tulis, ±100–500 baca | - |
+| Sync push (#109: login, resume ≥ 5 menit, 60 detik setelah perubahan terakhir) | ±10–30; sync pertama maks 10 per pemicu | per push: 1 baca sesi + 1 `SELECT` record lama (baris = record di batch) + 1 batch (`seq` + upsert yang berubah saja); ±50–300 tulis, ±100–500 baca | batch berisi buku: `files/missing` 1 list + 1 put per file yang belum ada (sama dengan backup, gak dobel) |
 | Download buku di device baru | 1 per buku (sekali) | - | 1 baca per buku |
 
 Patokan kapasitas: **±50 request/user/hari → ±2.000 user aktif/hari** di batas Workers; batas pertama yang kena realistisnya **D1 100rb baris tulis/hari** (±300–2.000 user tergantung aktivitas sync). Sync pertama (upload semua `ai_results` lama) dicicil maks 10 batch per pemicu supaya satu user tidak menghabiskan kuota tulis harian.
@@ -345,7 +345,7 @@ Tidak ikut: `chapters`/`paragraphs` (diparse ulang dari file), `catalog_books`, 
 Server (D1):
 
 ```sql
-records(user_id, kind, key, data JSON, updated_at, deleted, seq,
+records(user_id, kind, key, data JSON, updated_at, deleted, schema_version, seq,
         PRIMARY KEY (user_id, kind, key))
 ```
 
@@ -358,6 +358,16 @@ Client (butuh migrasi Drift: tabel baru + trigger, tanpa ubah kolom tabel lama):
 - Push: outbox → ubah ID lokal ke kunci alami → kirim.
 - Pull: kunci alami → ID lokal → terapkan, trigger dimatikan selama pull supaya tidak di-push balik.
 - `sync_inbox`: record yang belum bisa diterapkan (buku belum ter-download, `parserVersion` beda, atau `schemaVersion` record lebih baru dari app) → dicoba lagi setelah import / update app.
+
+Detail implementasi push (#109):
+
+- **Spec per kind** di `lib/data/database/sync_schema.dart` (`syncKinds`): ekspresi kunci alami SQL, syarat ikut, `json_object` data. Dari situ dibikin trigger outbox, backfill migrasi 18, dan query data saat push. Kunci dihitung trigger saat kejadian (setelah delete ID lokal hilang). Spec yang berubah = naikin schema + pasang ulang trigger.
+- **Kind**: `book`, `reading_progress`, `reading_session`, `ai_result`, `ai_breakdown`, `setting`, `chat_session`, `chat_turn`. Data pakai nama field Dart, waktu ISO 8601 UTC, ID lokal diganti `chapterSortOrder` + `parserVersion`. Tombstone cuma `book` dan `chat_session` (hapus user); hapus cascade anak gak dikirim. Setting allowlist `syncedSettings` (model, bahasa, rak, Aa).
+- **Waktu**: `updatedAt` record = jam device saat trigger jalan (bukan jam server: edit offline yang telat dikirim gak boleh ngalahin edit yang lebih baru).
+- **Push** (`SyncRepository`): satu putaran ambil outbox `updated_at ≤ mulai` lewat cursor, maks 500 record / ±900KB per request, maks 10 batch. Outbox dihapus kalau `updatedAt` belum berubah selama push. Baris anak yang udah hilang dibuang tanpa dikirim. 429/503 → jeda sesuai `Retry-After`.
+- **Server** (`features/sync/`): batas D1 free 50 query + 100 parameter per request, jadi 1 `SELECT` lewat `json_each`, merge di JS (`merge.ts`), lalu satu `db.batch()`: `seq += n` + satu `INSERT … SELECT FROM json_each … ON CONFLICT`. Record dari app dengan `schemaVersion` lebih lama gak menimpa record versi lebih baru. Balas `{seq, applied}`. Batas yang disengaja: merge dibaca di luar transaksi; dua device push kunci sama di milidetik yang sama → yang terakhir nulis menang.
+- **File buku**: batch yang berisi record buku → `files/missing` buat file, cover, dan dump Markdown `md-{bookKey}-{contentRevision}.json.gz` (bab + paragraf `[index, groupIndex, type, text]`), upload yang belum ada. Gagal upload → record buku tetap di outbox (dikirim ulang, server gak nulis data yang sama).
+- **Pemicu** (`SyncTrigger`): login, resume (min 5 menit), dan 60 detik setelah perubahan terakhir di tabel yang di-sync (`tableUpdates` Drift; tulisan trigger ke outbox gak keliatan stream).
 
 Alur push/pull:
 
@@ -375,7 +385,7 @@ sequenceDiagram
   S->>S: ID lokal → kunci alami
   S->>W: POST /v1/sync/push {schemaVersion, records}
   W->>D: db.batch: upsert sesuai aturan merge + seq++
-  W-->>S: 200 {seq}
+  W-->>S: 200 {seq, applied}
   S->>OB: hapus yang terkirim
   S->>W: GET /v1/sync/pull?since=seq
   W->>D: SELECT seq > since
@@ -551,6 +561,7 @@ erDiagram
     text data
     int updated_at
     int deleted
+    int schema_version
     int seq
   }
 ```
@@ -566,7 +577,7 @@ Tiap issue backend selesai bawa test-nya di semua lapisan yang disentuh. Integra
 | Kontrak | `test/fixtures/contract/*.json` | Contoh request/response asli, dibaca vitest dan test Dart | dua-duanya |
 | Unit/data Flutter | `flutter test` | Mapping kunci alami, trigger outbox (Drift in-memory), service HTTP pakai adapter `dio` palsu | `make test` |
 | Widget Flutter | `flutter test` | Login, Pengaturan, banner; provider di-override (aturan `CLAUDE.md`) | `make test` |
-| E2E lokal (#109 saja) | test Dart bertag `backend` ke `wrangler dev` | Dua `AppDatabase` in-memory sync lewat Worker lokal; default di-skip | `make backend-e2e` |
+| E2E lokal (#109 saja) | `test/data/sync_e2e_test.dart` ke `wrangler dev` (`apps/backend/scripts/e2e.sh`: migrasi + kode undangan lokal) | Dua `AppDatabase` in-memory push lewat Worker lokal (last-write-wins, tombstone, backfill 1200 record, dump Markdown); tanpa `LUMA_BACKEND_E2E` di-skip | `make backend-e2e` |
 
 **Checklist wajib tiap endpoint** (integrasi):
 
