@@ -1,6 +1,7 @@
 import { env } from "cloudflare:test";
 import { exports } from "cloudflare:workers";
 import { createDb } from "../../src/db/client";
+import { normalizeInviteCode } from "../../src/auth/invite";
 import { inviteCodes } from "../../src/db/schema";
 
 export const PASSWORD = "rahasia-banget-123";
@@ -8,8 +9,9 @@ let counter = 0;
 
 /** Bikin kode undangan baru di D1 dan kembalikan kodenya. */
 export async function createInvite(code = `TEST-${++counter}-${crypto.randomUUID().slice(0, 8)}`) {
-  await createDb(env.DB).insert(inviteCodes).values({ code: code.toUpperCase() });
-  return code.toUpperCase();
+  const normalized = normalizeInviteCode(code);
+  await createDb(env.DB).insert(inviteCodes).values({ code: normalized });
+  return normalized;
 }
 
 export type SignedUp = { token: string; userId: string; email: string };

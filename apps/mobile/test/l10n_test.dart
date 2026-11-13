@@ -54,9 +54,11 @@ void main() {
         (m) => '${m[1]}transitive',
       );
     }
+    // Dibekukan ulang 13 Nov 2026 (#211: url_launcher). Alasan & daftar:
+    // docs/llm-evals.md (Pembekuan ulang guard).
     expect(
       sha256.convert(utf8.encode(normalized)).toString(),
-      '747b2c4613b83328ded3539fa18b8a909f866690d2f57d86a6a1cdcafe5a7b0e',
+      'e7d39538924598029d9b5c622be73bd0422e02c7fafa928cd78de3a86950dbe8',
     );
   });
 }

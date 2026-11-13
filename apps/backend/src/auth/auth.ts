@@ -63,10 +63,23 @@ export function createAuth(env: Env) {
           before: async (user, ctx) => {
             if (!inviteRequired) return;
             const code = inviteFrom(ctx?.headers);
-            if (!code || !(await consumeInviteCode(db, code))) {
+            if (!code) {
+              throw new APIError("FORBIDDEN", {
+                code: "INVITE_CODE_REQUIRED",
+                message: "New accounts need an invite code",
+              });
+            }
+            const result = await consumeInviteCode(db, code);
+            if (result === "used") {
+              throw new APIError("FORBIDDEN", {
+                code: "INVITE_CODE_USED",
+                message: "Invite code has already been used",
+              });
+            }
+            if (result === "invalid") {
               throw new APIError("FORBIDDEN", {
                 code: "INVALID_INVITE_CODE",
-                message: "Invite code is invalid or already used",
+                message: "Invite code is invalid",
               });
             }
           },

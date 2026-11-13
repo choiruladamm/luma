@@ -3204,5 +3204,106 @@
         "type": "int"
       }
     }
-  }
+  },
+  "authLoginTitle": "Rak lo, ikut\nke mana aja.",
+  "authLoginSubtitle": "Satu akun buat semua bacaan lo",
+  "authChapterOne": "BAB I",
+  "authChapterTwo": "BAB II",
+  "authChapterThree": "BAB III",
+  "authBenefitQuota": "Kuota AI gratis",
+  "authBenefitQuotaNote": "Artinya, Bedahin, sama Ngobrol",
+  "authBenefitBackup": "Backup ke cloud",
+  "authBenefitBackupNote": "Rak sama catatan lo aman",
+  "authBenefitSync": "Sync antar HP",
+  "authBenefitSyncNote": "Lanjut di iPhone atau Android",
+  "authSignInGoogle": "Masuk pakai Google",
+  "authConnectingGoogle": "Nyambung ke Google…",
+  "authGoogleWillAsk": "Abis ini Google nanya lo mau pakai akun yang mana.",
+  "authPrivacyNote": "Dengan masuk, lo setuju sama {policy} Luma.",
+  "@authPrivacyNote": {
+    "placeholders": {
+      "policy": {
+        "type": "String"
+      }
+    }
+  },
+  "authPrivacyPolicy": "Kebijakan privasi",
+  "authNetworkTitle": "Gak bisa nyambung",
+  "authNetworkBody": "Cek internet lo, terus coba lagi.",
+  "authTryAgain": "Coba lagi",
+  "authRejectedTitle": "Login-nya ditolak",
+  "authRejectedBody": "Akun Google ini gak bisa dipakai buat masuk. Coba pakai akun lain.",
+  "authUseAnotherAccount": "Pakai akun lain",
+  "authDevBadge": "Build developer",
+  "authDevLabel": "Build dev",
+  "authDevTitle": "Isi yang kosong.",
+  "authDevEmailLead": "Email gua",
+  "authDevPasswordLead": "dan kata sandinya",
+  "authDevNote": "Cuma ada di build developer. Versi rilis cuma pakai Google.",
+  "authEmailLabel": "Email",
+  "authPasswordLabel": "Kata sandi",
+  "authSignUp": "Daftar",
+  "authSignIn": "Masuk",
+  "authInvalidCredentialsTitle": "Email atau kata sandinya salah",
+  "authInvalidCredentialsBody": "Cek lagi, terus coba masuk lagi.",
+  "authUserExistsTitle": "Email ini udah terdaftar",
+  "authUserExistsBody": "Pakai Masuk aja, bukan Daftar.",
+  "authPasswordShortTitle": "Kata sandinya kependekan",
+  "authPasswordShortBody": "Minimal 8 karakter.",
+  "authSignedInAs": "Masuk sebagai",
+  "authChange": "Ganti",
+  "authInviteIntro": "Luma lagi beta, jadi akun baru butuh undangan.",
+  "authInviteLead": "Kode undangan gua:",
+  "authInviteHint": "Huruf besar/kecil gak ngaruh. Strip boleh dilewatin.",
+  "authContinue": "Lanjut",
+  "authNoteLabel": "CATATAN",
+  "authInviteUsedTitle": "Kode ini udah dipakai",
+  "authInviteUsedBody": "Satu kode buat satu akun. Minta kode baru ke yang ngundang lo.",
+  "authInviteInvalidTitle": "Kodenya salah",
+  "authInviteInvalidBody": "Cek lagi hurufnya, atau minta kode baru ke yang ngundang lo.",
+  "settingsAccount": "Akun",
+  "authExLibris": "EX LIBRIS",
+  "authViaGoogle": "Masuk lewat Google",
+  "authViaEmail": "Masuk lewat email",
+  "authSignOut": "Keluar",
+  "authDeleteAccount": "Hapus akun",
+  "authSignOutTitle": "Keluar dari akun?",
+  "authSignOutBody": "Buku, progres, sama catatan di HP ini tetap ada. Lo balik ke layar Masuk; backup + sync berhenti dulu.",
+  "authSwitchTitle": "Ganti ke akun lain?",
+  "authSwitchOwner": "Isi HP ini punya",
+  "authSwitchNew": "Mau masuk pakai",
+  "authSwitchBodyLead": "Biar gak kecampur,",
+  "authSwitchBodyBold": "isi HP ini dihapus dulu",
+  "authSwitchBodyTail": ": buku, progres, catatan. Data akun lama tetap aman di cloud.",
+  "authSwitchConfirm": "Hapus isi HP & lanjut",
+  "authSwitchKeep": "Pakai akun lama aja",
+  "authDeleteTitle": "Hapus akun selamanya?",
+  "authDeleteBody": "Centang semua biar yakin lo ngerti apa yang ilang. Ini gak bisa dibalikin.",
+  "authDeleteCheckAccount": "Akun {email} kehapus",
+  "@authDeleteCheckAccount": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "authDeleteCheckBackup": "Semua backup di cloud ilang",
+  "authDeleteCheckSync": "Data sync di semua HP lo ilang",
+  "authDeleteNote": "Buku di HP ini gak ikut kehapus, tapi gak kebackup lagi.",
+  "authDeleteConfirm": "Hapus akun selamanya",
+  "authSessionExpiredTitle": "Sesi lo habis",
+  "authSessionExpiredBody": "Baca tetap jalan; backup & sync nunggu dulu.",
+  "authSignInAgain": "Login lagi",
+  "authCloseBanner": "Tutup",
+  "authToastSignedIn": "Udah masuk. Halo, {name}!",
+  "@authToastSignedIn": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "authToastSignedOut": "Udah keluar. Buku di HP ini tetap ada.",
+  "authToastDeleted": "Akun lo udah dihapus.",
+  "authToastDeleteFailed": "Gagal hapus akun. Gak ada internet."
 }

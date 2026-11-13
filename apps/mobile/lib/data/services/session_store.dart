@@ -9,6 +9,7 @@ class SessionStore {
   final FlutterSecureStorage _storage;
   static const _tokenKey = 'backend_session_token';
   static const _lastUserKey = 'backend_last_user_id';
+  static const _lastEmailKey = 'backend_last_user_email';
   static const _subsidyKey = 'ai_subsidy_key';
   static const _subsidyExpiresKey = 'ai_subsidy_key_expires_at';
 
@@ -58,7 +59,16 @@ class SessionStore {
   Future<void> writeLastUserId(String id) =>
       _storage.write(key: _lastUserKey, value: id);
 
-  Future<void> clearLastUserId() => _storage.delete(key: _lastUserKey);
+  Future<void> clearLastUserId() async {
+    await _storage.delete(key: _lastUserKey);
+    await _storage.delete(key: _lastEmailKey);
+  }
+
+  /// Email akun terakhir, buat dialog ganti akun ("Isi HP ini punya …").
+  Future<String?> readLastUserEmail() => _storage.read(key: _lastEmailKey);
+
+  Future<void> writeLastUserEmail(String email) =>
+      _storage.write(key: _lastEmailKey, value: email);
 }
 
 class SubsidyKey {

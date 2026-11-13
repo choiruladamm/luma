@@ -1,0 +1,12 @@
+{
+  "request": {
+    "method": "POST",
+    "path": "/v1/auth/sign-up/email",
+    "headers": { "x-invite-code": "LUMA-4HJP" },
+    "body": { "name": "Adam", "email": "baru@luma.test", "password": "rahasia-banget-123" }
+  },
+  "response": {
+    "status": 403,
+    "body": { "error": { "code": "INVITE_CODE_USED", "message": "Invite code has already been used" } }
+  }
+}

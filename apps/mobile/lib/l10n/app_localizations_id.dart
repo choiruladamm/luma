@@ -2272,4 +2272,262 @@ class AppLocalizationsId extends AppLocalizations {
   String importPdfSkippedPages(int p0) {
     return '$p0 halaman tanpa teks dilewati';
   }
+
+  @override
+  String get authLoginTitle => 'Rak lo, ikut\nke mana aja.';
+
+  @override
+  String get authLoginSubtitle => 'Satu akun buat semua bacaan lo';
+
+  @override
+  String get authChapterOne => 'BAB I';
+
+  @override
+  String get authChapterTwo => 'BAB II';
+
+  @override
+  String get authChapterThree => 'BAB III';
+
+  @override
+  String get authBenefitQuota => 'Kuota AI gratis';
+
+  @override
+  String get authBenefitQuotaNote => 'Artinya, Bedahin, sama Ngobrol';
+
+  @override
+  String get authBenefitBackup => 'Backup ke cloud';
+
+  @override
+  String get authBenefitBackupNote => 'Rak sama catatan lo aman';
+
+  @override
+  String get authBenefitSync => 'Sync antar HP';
+
+  @override
+  String get authBenefitSyncNote => 'Lanjut di iPhone atau Android';
+
+  @override
+  String get authSignInGoogle => 'Masuk pakai Google';
+
+  @override
+  String get authConnectingGoogle => 'Nyambung ke Google…';
+
+  @override
+  String get authGoogleWillAsk =>
+      'Abis ini Google nanya lo mau pakai akun yang mana.';
+
+  @override
+  String authPrivacyNote(String policy) {
+    return 'Dengan masuk, lo setuju sama $policy Luma.';
+  }
+
+  @override
+  String get authPrivacyPolicy => 'Kebijakan privasi';
+
+  @override
+  String get authNetworkTitle => 'Gak bisa nyambung';
+
+  @override
+  String get authNetworkBody => 'Cek internet lo, terus coba lagi.';
+
+  @override
+  String get authTryAgain => 'Coba lagi';
+
+  @override
+  String get authRejectedTitle => 'Login-nya ditolak';
+
+  @override
+  String get authRejectedBody =>
+      'Akun Google ini gak bisa dipakai buat masuk. Coba pakai akun lain.';
+
+  @override
+  String get authUseAnotherAccount => 'Pakai akun lain';
+
+  @override
+  String get authDevBadge => 'Build developer';
+
+  @override
+  String get authDevLabel => 'Build dev';
+
+  @override
+  String get authDevTitle => 'Isi yang kosong.';
+
+  @override
+  String get authDevEmailLead => 'Email gua';
+
+  @override
+  String get authDevPasswordLead => 'dan kata sandinya';
+
+  @override
+  String get authDevNote =>
+      'Cuma ada di build developer. Versi rilis cuma pakai Google.';
+
+  @override
+  String get authEmailLabel => 'Email';
+
+  @override
+  String get authPasswordLabel => 'Kata sandi';
+
+  @override
+  String get authSignUp => 'Daftar';
+
+  @override
+  String get authSignIn => 'Masuk';
+
+  @override
+  String get authInvalidCredentialsTitle => 'Email atau kata sandinya salah';
+
+  @override
+  String get authInvalidCredentialsBody => 'Cek lagi, terus coba masuk lagi.';
+
+  @override
+  String get authUserExistsTitle => 'Email ini udah terdaftar';
+
+  @override
+  String get authUserExistsBody => 'Pakai Masuk aja, bukan Daftar.';
+
+  @override
+  String get authPasswordShortTitle => 'Kata sandinya kependekan';
+
+  @override
+  String get authPasswordShortBody => 'Minimal 8 karakter.';
+
+  @override
+  String get authSignedInAs => 'Masuk sebagai';
+
+  @override
+  String get authChange => 'Ganti';
+
+  @override
+  String get authInviteIntro =>
+      'Luma lagi beta, jadi akun baru butuh undangan.';
+
+  @override
+  String get authInviteLead => 'Kode undangan gua:';
+
+  @override
+  String get authInviteHint =>
+      'Huruf besar/kecil gak ngaruh. Strip boleh dilewatin.';
+
+  @override
+  String get authContinue => 'Lanjut';
+
+  @override
+  String get authNoteLabel => 'CATATAN';
+
+  @override
+  String get authInviteUsedTitle => 'Kode ini udah dipakai';
+
+  @override
+  String get authInviteUsedBody =>
+      'Satu kode buat satu akun. Minta kode baru ke yang ngundang lo.';
+
+  @override
+  String get authInviteInvalidTitle => 'Kodenya salah';
+
+  @override
+  String get authInviteInvalidBody =>
+      'Cek lagi hurufnya, atau minta kode baru ke yang ngundang lo.';
+
+  @override
+  String get settingsAccount => 'Akun';
+
+  @override
+  String get authExLibris => 'EX LIBRIS';
+
+  @override
+  String get authViaGoogle => 'Masuk lewat Google';
+
+  @override
+  String get authViaEmail => 'Masuk lewat email';
+
+  @override
+  String get authSignOut => 'Keluar';
+
+  @override
+  String get authDeleteAccount => 'Hapus akun';
+
+  @override
+  String get authSignOutTitle => 'Keluar dari akun?';
+
+  @override
+  String get authSignOutBody =>
+      'Buku, progres, sama catatan di HP ini tetap ada. Lo balik ke layar Masuk; backup + sync berhenti dulu.';
+
+  @override
+  String get authSwitchTitle => 'Ganti ke akun lain?';
+
+  @override
+  String get authSwitchOwner => 'Isi HP ini punya';
+
+  @override
+  String get authSwitchNew => 'Mau masuk pakai';
+
+  @override
+  String get authSwitchBodyLead => 'Biar gak kecampur,';
+
+  @override
+  String get authSwitchBodyBold => 'isi HP ini dihapus dulu';
+
+  @override
+  String get authSwitchBodyTail =>
+      ': buku, progres, catatan. Data akun lama tetap aman di cloud.';
+
+  @override
+  String get authSwitchConfirm => 'Hapus isi HP & lanjut';
+
+  @override
+  String get authSwitchKeep => 'Pakai akun lama aja';
+
+  @override
+  String get authDeleteTitle => 'Hapus akun selamanya?';
+
+  @override
+  String get authDeleteBody =>
+      'Centang semua biar yakin lo ngerti apa yang ilang. Ini gak bisa dibalikin.';
+
+  @override
+  String authDeleteCheckAccount(String email) {
+    return 'Akun $email kehapus';
+  }
+
+  @override
+  String get authDeleteCheckBackup => 'Semua backup di cloud ilang';
+
+  @override
+  String get authDeleteCheckSync => 'Data sync di semua HP lo ilang';
+
+  @override
+  String get authDeleteNote =>
+      'Buku di HP ini gak ikut kehapus, tapi gak kebackup lagi.';
+
+  @override
+  String get authDeleteConfirm => 'Hapus akun selamanya';
+
+  @override
+  String get authSessionExpiredTitle => 'Sesi lo habis';
+
+  @override
+  String get authSessionExpiredBody =>
+      'Baca tetap jalan; backup & sync nunggu dulu.';
+
+  @override
+  String get authSignInAgain => 'Login lagi';
+
+  @override
+  String get authCloseBanner => 'Tutup';
+
+  @override
+  String authToastSignedIn(String name) {
+    return 'Udah masuk. Halo, $name!';
+  }
+
+  @override
+  String get authToastSignedOut => 'Udah keluar. Buku di HP ini tetap ada.';
+
+  @override
+  String get authToastDeleted => 'Akun lo udah dihapus.';
+
+  @override
+  String get authToastDeleteFailed => 'Gagal hapus akun. Gak ada internet.';
 }

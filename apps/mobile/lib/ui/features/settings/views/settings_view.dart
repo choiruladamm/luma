@@ -32,6 +32,7 @@ import '../../../core/widgets/sheet.dart';
 import '../../../core/widgets/toast.dart';
 import '../view_models/backup_view_model.dart';
 import '../view_models/settings_view_model.dart';
+import 'account_section.dart';
 import 'backup_listener.dart';
 import 'restore_sheets.dart';
 
@@ -229,6 +230,8 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                       MediaQuery.paddingOf(context).bottom,
                     ),
                     children: [
+                      const AccountSection(),
+                      const SizedBox(height: 22),
                       _LanguagePicker(),
                       const SizedBox(height: 22),
                       AppField(

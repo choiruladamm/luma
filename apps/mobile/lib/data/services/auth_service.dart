@@ -38,6 +38,12 @@ abstract final class AuthErrorCode {
   static const invalidCredentials = 'INVALID_EMAIL_OR_PASSWORD';
   static const userExists = 'USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL';
   static const unauthorized = 'UNAUTHORIZED';
+
+  /// Akun baru tanpa kode undangan → minta kode (board Akun 06).
+  static const inviteRequired = 'INVITE_CODE_REQUIRED';
+  static const inviteUsed = 'INVITE_CODE_USED';
+
+  static const inviteCodes = {invalidInvite, inviteRequired, inviteUsed};
 }
 
 /// Panggilan `/v1/auth/*` dan `/v1/me`. Gak nyimpen apa-apa: penyimpanan
@@ -53,17 +59,40 @@ class AuthService {
     required String name,
     required String email,
     required String password,
-    required String inviteCode,
+    String? inviteCode,
   }) async {
     final res = await _client.request(
       'POST',
       '/v1/auth/sign-up/email',
       body: {'name': name, 'email': email, 'password': password},
-      headers: {inviteHeader: inviteCode.trim()},
+      headers: _invite(inviteCode),
       retry: false,
     );
     return _session(res.headers.value('set-auth-token'), res.data!);
   }
+
+  /// Login Google pakai idToken dari `google_sign_in`. Akun baru butuh
+  /// [inviteCode] selama beta (server balas `INVITE_CODE_REQUIRED` kalau kosong).
+  Future<AuthSession> signInGoogle({
+    required String idToken,
+    String? inviteCode,
+  }) async {
+    final res = await _client.request(
+      'POST',
+      '/v1/auth/sign-in/social',
+      body: {
+        'provider': 'google',
+        'idToken': {'token': idToken},
+      },
+      headers: _invite(inviteCode),
+      retry: false,
+    );
+    return _session(res.headers.value('set-auth-token'), res.data!);
+  }
+
+  Map<String, String> _invite(String? code) => {
+    if (code != null && code.trim().isNotEmpty) inviteHeader: code.trim(),
+  };
 
   Future<AuthSession> signInEmail({
     required String email,

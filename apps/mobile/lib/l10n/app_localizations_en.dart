@@ -2467,4 +2467,261 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get authLoginTitle => 'Your shelf,\nwherever you go.';
+
+  @override
+  String get authLoginSubtitle => 'One account for all your reading';
+
+  @override
+  String get authChapterOne => 'CHAPTER I';
+
+  @override
+  String get authChapterTwo => 'CHAPTER II';
+
+  @override
+  String get authChapterThree => 'CHAPTER III';
+
+  @override
+  String get authBenefitQuota => 'Free AI quota';
+
+  @override
+  String get authBenefitQuotaNote => 'Meaning, Breakdown, and Chat';
+
+  @override
+  String get authBenefitBackup => 'Cloud backup';
+
+  @override
+  String get authBenefitBackupNote => 'Your shelf and notes stay safe';
+
+  @override
+  String get authBenefitSync => 'Sync across phones';
+
+  @override
+  String get authBenefitSyncNote => 'Pick up on iPhone or Android';
+
+  @override
+  String get authSignInGoogle => 'Sign in with Google';
+
+  @override
+  String get authConnectingGoogle => 'Connecting to Google…';
+
+  @override
+  String get authGoogleWillAsk => 'Next, Google will ask which account to use.';
+
+  @override
+  String authPrivacyNote(String policy) {
+    return 'By signing in, you agree to Luma\'s $policy.';
+  }
+
+  @override
+  String get authPrivacyPolicy => 'Privacy policy';
+
+  @override
+  String get authNetworkTitle => 'Can\'t connect';
+
+  @override
+  String get authNetworkBody => 'Check your internet, then try again.';
+
+  @override
+  String get authTryAgain => 'Try again';
+
+  @override
+  String get authRejectedTitle => 'Sign-in was rejected';
+
+  @override
+  String get authRejectedBody =>
+      'This Google account can\'t be used to sign in. Try another account.';
+
+  @override
+  String get authUseAnotherAccount => 'Use another account';
+
+  @override
+  String get authDevBadge => 'Developer build';
+
+  @override
+  String get authDevLabel => 'Dev build';
+
+  @override
+  String get authDevTitle => 'Fill in the blanks.';
+
+  @override
+  String get authDevEmailLead => 'My email is';
+
+  @override
+  String get authDevPasswordLead => 'and my password is';
+
+  @override
+  String get authDevNote =>
+      'Developer builds only. Release builds use Google only.';
+
+  @override
+  String get authEmailLabel => 'Email';
+
+  @override
+  String get authPasswordLabel => 'Password';
+
+  @override
+  String get authSignUp => 'Sign up';
+
+  @override
+  String get authSignIn => 'Sign in';
+
+  @override
+  String get authInvalidCredentialsTitle => 'Wrong email or password';
+
+  @override
+  String get authInvalidCredentialsBody => 'Check them, then sign in again.';
+
+  @override
+  String get authUserExistsTitle => 'This email is already registered';
+
+  @override
+  String get authUserExistsBody => 'Use Sign in instead of Sign up.';
+
+  @override
+  String get authPasswordShortTitle => 'Password is too short';
+
+  @override
+  String get authPasswordShortBody => 'Use at least 8 characters.';
+
+  @override
+  String get authSignedInAs => 'Signing in as';
+
+  @override
+  String get authChange => 'Change';
+
+  @override
+  String get authInviteIntro =>
+      'Luma is in beta, so new accounts need an invite.';
+
+  @override
+  String get authInviteLead => 'My invite code:';
+
+  @override
+  String get authInviteHint => 'Case doesn\'t matter. The dash is optional.';
+
+  @override
+  String get authContinue => 'Continue';
+
+  @override
+  String get authNoteLabel => 'NOTE';
+
+  @override
+  String get authInviteUsedTitle => 'This code has been used';
+
+  @override
+  String get authInviteUsedBody =>
+      'One code per account. Ask whoever invited you for a new one.';
+
+  @override
+  String get authInviteInvalidTitle => 'That code is wrong';
+
+  @override
+  String get authInviteInvalidBody =>
+      'Check the letters again, or ask whoever invited you for a new code.';
+
+  @override
+  String get settingsAccount => 'Account';
+
+  @override
+  String get authExLibris => 'EX LIBRIS';
+
+  @override
+  String get authViaGoogle => 'Signed in with Google';
+
+  @override
+  String get authViaEmail => 'Signed in with email';
+
+  @override
+  String get authSignOut => 'Sign out';
+
+  @override
+  String get authDeleteAccount => 'Delete account';
+
+  @override
+  String get authSignOutTitle => 'Sign out?';
+
+  @override
+  String get authSignOutBody =>
+      'Books, progress, and notes on this phone stay. You\'ll go back to sign-in; backup and sync pause.';
+
+  @override
+  String get authSwitchTitle => 'Switch to another account?';
+
+  @override
+  String get authSwitchOwner => 'This phone\'s data belongs to';
+
+  @override
+  String get authSwitchNew => 'Signing in with';
+
+  @override
+  String get authSwitchBodyLead => 'To keep things separate,';
+
+  @override
+  String get authSwitchBodyBold => 'this phone is cleared first';
+
+  @override
+  String get authSwitchBodyTail =>
+      ': books, progress, notes. The old account\'s data stays safe in the cloud.';
+
+  @override
+  String get authSwitchConfirm => 'Clear phone & continue';
+
+  @override
+  String get authSwitchKeep => 'Keep the old account';
+
+  @override
+  String get authDeleteTitle => 'Delete account forever?';
+
+  @override
+  String get authDeleteBody =>
+      'Tick everything so you know what\'s lost. This can\'t be undone.';
+
+  @override
+  String authDeleteCheckAccount(String email) {
+    return 'Account $email is deleted';
+  }
+
+  @override
+  String get authDeleteCheckBackup => 'All cloud backups are gone';
+
+  @override
+  String get authDeleteCheckSync => 'Sync data on all your phones is gone';
+
+  @override
+  String get authDeleteNote =>
+      'Books on this phone stay, but won\'t be backed up anymore.';
+
+  @override
+  String get authDeleteConfirm => 'Delete account forever';
+
+  @override
+  String get authSessionExpiredTitle => 'Your session expired';
+
+  @override
+  String get authSessionExpiredBody =>
+      'Reading still works; backup & sync wait.';
+
+  @override
+  String get authSignInAgain => 'Sign in again';
+
+  @override
+  String get authCloseBanner => 'Close';
+
+  @override
+  String authToastSignedIn(String name) {
+    return 'Signed in. Hi, $name!';
+  }
+
+  @override
+  String get authToastSignedOut => 'Signed out. Books on this phone stay.';
+
+  @override
+  String get authToastDeleted => 'Your account is deleted.';
+
+  @override
+  String get authToastDeleteFailed =>
+      'Couldn\'t delete the account. No internet.';
 }

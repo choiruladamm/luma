@@ -290,6 +290,7 @@ abstract final class AppIcons {
   static const book = HugeIcons.strokeRoundedBookOpen01;
   static const back = HugeIcons.strokeRoundedArrowLeft01;
   static const close = HugeIcons.strokeRoundedCancel01;
+  static const logout = HugeIcons.strokeRoundedLogout01;
   static const check = HugeIcons.strokeRoundedTick02;
   static const show = HugeIcons.strokeRoundedView;
   static const hide = HugeIcons.strokeRoundedViewOff;
