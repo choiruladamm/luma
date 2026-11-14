@@ -157,9 +157,9 @@ Urutan middleware: `requestId → rateLimit per IP → [/api/auth/* → Better A
 | `GET /api/users/:id` | - | data di atas + `sessions: [{userAgent, ipAddress, createdAt, updatedAt}]` (maks 50, terbaru dulu), `ai: {limit, usageDaily, expiresAt} \| null`, `invite: {code, usedAt} \| null`. `getUsage` gagal → tetap 200 dengan `usageDaily: null` | 1 `batch` (4 statement) + 1 subrequest OpenRouter (`getUsage`) kalau punya key |
 | `POST /api/users/:id/ban` | - | `{banned: true, keyRevoked}` | 1 query (user + hash key), `deleteKey` OpenRouter dulu (404 = sudah hilang, dianggap sukses); gagal → 502 tanpa menyentuh D1. Sukses → 1 `batch` (`banned = 1` + hapus `ai_keys`). Idempoten |
 | `POST /api/users/:id/unban` | - | `{banned: false}` | 1 update (`RETURNING`, user gak ada → 404) |
-| `GET /api/invites?status=unused\|used` | - | `{items: [{code, usedBy: {id, email} \| null, usedAt}]}` | 1 query |
-| `POST /api/invites` | `{count: 1..20}` | `{codes: [...]}` | 1 insert |
-| `DELETE /api/invites/:code` | - | 204 | `DELETE … WHERE used_by IS NULL`; sudah dipakai → 409 |
+| `GET /api/invites?status=unused\|used` | `status` opsional (tanpa = semua) | `{items: [{code, usedBy: {id, email} \| null, usedAt}]}`. Terpakai = `used_at` terisi (`usedBy` bisa `null` kalau akunnya dihapus). Kode ditampilkan `LUMA-XXXXX-XXXXX`; maks 500 baris | 1 query |
+| `POST /api/invites` | `{count: 1..20}` | 201 `{codes: [...]}` format `LUMA-XXXXX-XXXXX` (disimpan ternormalisasi, sama dengan `make backend-invite`) | 1 insert |
+| `DELETE /api/invites/:code` | - | 204 | `DELETE … WHERE used_at IS NULL` (kode dinormalisasi dulu); gagal → +1 query: ada → 409 `INVITE_CODE_USED`, gak ada → 404 |
 
 Kode error: `UNAUTHORIZED` 401, `FORBIDDEN` 403, `NOT_FOUND` 404, `INVITE_CODE_USED` 409, `RATE_LIMITED` 429, `OPENROUTER_FAILED` 502.
 

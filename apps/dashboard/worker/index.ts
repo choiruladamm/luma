@@ -1,5 +1,6 @@
 import { getAuth } from "./auth/auth";
 import { factory } from "./env";
+import { invites } from "./features/invites/routes";
 import { users } from "./features/users/routes";
 import { ApiError, onError } from "./lib/errors";
 import { rateLimitAdmin, rateLimitIp } from "./middleware/rate-limit";
@@ -28,7 +29,8 @@ app.all("/api/auth/*", notFound);
 // Admin routes are chained after the guards so `AppType` carries their types.
 const routes = app
   .use("/api/*", requireAdmin, requireSameOriginJson, rateLimitAdmin)
-  .route("/api/users", users);
+  .route("/api/users", users)
+  .route("/api/invites", invites);
 
 app.notFound(notFound);
 app.onError(onError);
