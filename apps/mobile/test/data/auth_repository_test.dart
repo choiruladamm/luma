@@ -176,12 +176,14 @@ void main() {
     });
 
     test('Google sign-in sends the idToken and the invite header', () async {
-      adapter.queue.add(fromContract(contract('auth-sign-in-email')));
+      adapter.queue.add(fromContract(contract('auth-sign-in-social')));
 
-      await repo.signInGoogle(
+      final result = await repo.signInGoogle(
         idToken: 'id-token-google',
         inviteCode: 'LUMA-7Q2K',
       );
+
+      expect(result.user.email, 'adam@gmail.test');
 
       final req = adapter.requests.single;
       expect(req.uri.path, '/v1/auth/sign-in/social');
