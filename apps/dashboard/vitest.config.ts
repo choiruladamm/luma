@@ -1,5 +1,6 @@
 import { cloudflareTest, readD1Migrations } from "@cloudflare/vitest-plugin";
 import { defineConfig } from "vitest/config";
+import { backendVars } from "./backend-vars";
 
 export default defineConfig(async () => {
   // The backend owns the schema: apply its migrations so changes that break the dashboard show up here.
@@ -16,6 +17,7 @@ export default defineConfig(async () => {
             ADMIN_RATE_LIMITER: { namespace_id: "1102", simple: { limit: 10_000, period: 60 } },
           },
           bindings: {
+            ...backendVars("dev"),
             TEST_MIGRATIONS: migrations,
             ADMIN_EMAILS: "admin@luma.test",
             // Keep the local .dev.vars (http://localhost) out: tests use the real https domain.

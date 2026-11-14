@@ -22,7 +22,7 @@ Prinsip:
 
 Tidak masuk MVP: hapus user (tetap lewat `DELETE /v1/me` dari app), revoke sesi, impersonate, toggle saklar, analytics Cloudflare (request/hari, CPU p99), pemakaian AI per user di daftar user.
 
-Spend workspace OpenRouter di Ringkasan menunggu spike: cek ada tidaknya endpoint list key per workspace atau pemakaian guardrail. Kalau tidak ada, kartu ini dibuang.
+Spend workspace OpenRouter di Ringkasan dari `GET /activity?workspace_id=` OpenRouter: menghitung key yang sudah dihapus (ban, rotasi), beda dengan menjumlah key yang masih hidup. Cuma hari UTC yang sudah lewat (spend "sampai kemarin") dan 30 hari terakhir. Budget dari `AI_MONTHLY_BUDGET_USD` backend, yang harus sama dengan guardrail workspace; guardrail sendiri tidak punya angka pemakaian.
 
 ## Arsitektur
 
@@ -152,7 +152,7 @@ Urutan middleware: `requestId → rateLimit per IP → [/api/auth/* → Better A
 
 | Endpoint | Request | Respons | D1 / subrequest |
 |---|---|---|---|
-| `GET /api/overview` | - | `{users: {total, new7d, banned}, storage: {r2Bytes, syncBytes}, syncToday: {rows, limit}, invites: {unused}, flags: {sync, backup, aiKey}}` | 1 `batch` ±4 agregat; `flags` dari `env` |
+| `GET /api/overview` | - | `{users: {total, new7d, banned}, storage: {r2Bytes, syncBytes}, syncToday: {rows, limit: 100000}, invites: {unused}, flags: {sync, backup, aiKey}, ai: {spendUsd, budgetUsd, asOf}}`. `syncToday.rows` = `SUM(sync_rows)` untuk `sync_day` hari ini (UTC). `ai.spendUsd` bulan UTC ini sampai `asOf` (kemarin); OpenRouter gagal → `null`, tetap 200 | 1 `batch` 3 agregat + 1 subrequest OpenRouter (`/activity`); `flags` dari `env` |
 | `GET /api/users?q=&cursor=&limit=50` | `q` awalan email | `{items: [{id, email, name, createdAt, lastActiveAt, banned, hasAiKey, r2Bytes, syncBytes}], nextCursor}`, terbaru dulu (`createdAt` lalu `id` menurun); `nextCursor` = `<createdAt ms>,<id>` atau `null` | 1 query: `users` ⟕ `user_storage` ⟕ `ai_keys`, `lastActiveAt` subquery `MAX(sessions.updated_at)` per baris |
 | `GET /api/users/:id` | - | data di atas + `sessions: [{userAgent, ipAddress, createdAt, updatedAt}]` (maks 50, terbaru dulu), `ai: {limit, usageDaily, expiresAt} \| null`, `invite: {code, usedAt} \| null`. `getUsage` gagal → tetap 200 dengan `usageDaily: null` | 1 `batch` (4 statement) + 1 subrequest OpenRouter (`getUsage`) kalau punya key |
 | `POST /api/users/:id/ban` | - | `{banned: true, keyRevoked}` | 1 query (user + hash key), `deleteKey` OpenRouter dulu (404 = sudah hilang, dianggap sukses); gagal → 502 tanpa menyentuh D1. Sukses → 1 `batch` (`banned = 1` + hapus `ai_keys`). Idempoten |
@@ -208,7 +208,7 @@ Prompt Claude Design (detail visual diserahkan ke Claude Design, mengikuti found
 
 ## Lingkungan lokal
 
-- `make dashboard-dev`: Vite dev server (`@cloudflare/vite-plugin`) yang menjalankan Worker di `http://localhost:5173`; SPA nanti ikut di server yang sama. D1 lokal memakai state wrangler yang sama dengan `make backend-dev` (`persistState` ke `apps/backend/.wrangler/state`), jadi data lokalnya sama. Secret dan `ADMIN_EMAILS` / `BETTER_AUTH_URL` lokal di `apps/dashboard/.dev.vars` (salin dari `.dev.vars.example`); login Google lokal butuh `GOOGLE_CLIENT_SECRET` terisi.
+- `make dashboard-dev`: Vite dev server (`@cloudflare/vite-plugin`) yang menjalankan Worker di `http://localhost:5173`; SPA nanti ikut di server yang sama. D1 lokal memakai state wrangler yang sama dengan `make backend-dev` (`persistState` ke `apps/backend/.wrangler/state`), jadi data lokalnya sama. Var backend yang dibaca dashboard (`SYNC_ENABLED`, `BACKUP_ENABLED`, `AI_KEY_ENABLED`, `OPENROUTER_WORKSPACE_ID`, `AI_MONTHLY_BUDGET_USD`) diambil dari `apps/backend/wrangler.jsonc` env yang sama saat dev, build, dan test (`apps/dashboard/backend-vars.ts`), jadi satu sumber; saklar backend yang diubah baru terlihat di dashboard setelah dashboard di-deploy ulang. Secret dan `ADMIN_EMAILS` / `BETTER_AUTH_URL` lokal di `apps/dashboard/.dev.vars` (salin dari `.dev.vars.example`); login Google lokal butuh `GOOGLE_CLIENT_SECRET` terisi.
 - Cloudflare Access tidak ada di lokal; Better Auth tetap jalan, jadi perilaku auth sama kecuali lapis edge.
 - Login Google lokal: tambah redirect URI `http://localhost:5173/api/auth/callback/google` di web client Google Cloud Console. App OAuth masih mode Testing ([#215](https://github.com/choiruladamm/luma/issues/215)); admin terdaftar sebagai test user.
 - Target Makefile: `dashboard-install`, `dashboard-dev`, `dashboard-test` (`tsc` + vitest workerd), `dashboard-deploy e=dev|prod` (`CLOUDFLARE_ENV=<env> vite build` lalu `wrangler deploy` dengan config hasil build; prod hanya dari `master`).
