@@ -5,8 +5,7 @@ Paths in this file are relative to `apps/mobile` unless they start with `docs/` 
 ## Codegen and schema
 
 - After changing a Drift table or a freezed model: `make gen`. Commit the generated `*.g.dart` / `*.freezed.dart` files.
-- Real user data already lives on the iPhone, so every table change must bump `schemaVersion`, add a step in `onUpgrade`, and add a test in `test/data/migration_test.dart` (old-version SQL fixture, compare the migrated schema with a fresh install). User data is kept through migrations, never by deleting the app. `drift_dev make-migrations` can't be used: the `paragraphs.text` column breaks its snapshot code.
-- Backend-related migrations on `feat/backend` take the number after the latest `schemaVersion` on `master`; renumber when merging `master` in (`docs/backend.md`, Branch & worktree).
+- Real user data already lives on the iPhone, so every table change bumps `schemaVersion`, adds an `onUpgrade` step, and adds a test in `test/data/migration_test.dart`. User data is kept through migrations, never by deleting the app. Follow the `drift-migration` skill for the steps.
 
 ## Builds on device
 
@@ -51,12 +50,6 @@ Load only the skill the current work needs:
 - `flutter-add-widget-test`: writing screen/component widget tests.
 
 Skill conflicts with this file → follow this file (the architecture skill shows `ChangeNotifier` + `provider`/`get_it`; here it's Riverpod).
-
-## Dart: conditional logic
-
-- Ternaries at most 1 level deep in the widget tree.
-- More than 2 branches, or labels/text derived from model state: extract to a getter in an extension on the model (e.g. `book.progressLabel`), body is sequential `if/return`.
-- State that can grow: enum + switch expression.
 
 ## Tests
 

@@ -15,7 +15,7 @@ Run from the repo root:
 | `make backend-live` | Flutter client calls the deployed dev Worker |
 | `make backend-e2e` | Dart sync E2E through a local `wrangler dev` |
 | `make backend-migrate e=dev\|prod` | Apply D1 migrations remotely |
-| `make backend-deploy e=dev\|prod` | Deploy; `prod` only from `master` (enforced) |
+| `make backend-deploy e=dev\|prod` | Deploy; `prod` only from `master` (enforced). Full procedure: `/backend-deploy <env>` |
 
 Bundle size check (3 MB compressed limit): `bun run size` from `apps/backend`.
 
