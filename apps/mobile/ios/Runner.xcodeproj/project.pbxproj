@@ -434,7 +434,7 @@
 			baseConfigurationReference = 7AFA3C8E1D35360C0083082E /* Release.xcconfig */;
 			buildSettings = {
 				APP_DISPLAY_NAME = Luma;
-				GOOGLE_REVERSED_CLIENT_ID = "";
+				GOOGLE_REVERSED_CLIENT_ID = com.googleusercontent.apps.366577823040-4t2j2h8h8c300c1r1fc9olhov42p4ora;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
@@ -723,7 +723,7 @@
 			baseConfigurationReference = 9740EEB21CF90195004384FC /* Debug.xcconfig */;
 			buildSettings = {
 				APP_DISPLAY_NAME = Luma;
-				GOOGLE_REVERSED_CLIENT_ID = "";
+				GOOGLE_REVERSED_CLIENT_ID = com.googleusercontent.apps.366577823040-4t2j2h8h8c300c1r1fc9olhov42p4ora;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
@@ -748,7 +748,7 @@
 			baseConfigurationReference = 7AFA3C8E1D35360C0083082E /* Release.xcconfig */;
 			buildSettings = {
 				APP_DISPLAY_NAME = Luma;
-				GOOGLE_REVERSED_CLIENT_ID = "";
+				GOOGLE_REVERSED_CLIENT_ID = com.googleusercontent.apps.366577823040-4t2j2h8h8c300c1r1fc9olhov42p4ora;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";

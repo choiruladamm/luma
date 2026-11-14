@@ -14,8 +14,13 @@ void main() {
       expect(google.iosClientId, googleClients['dev']!.ios);
     });
 
-    test('prod and unflavored builds stay unconfigured', () {
-      expect(googleSourceFor('prod'), isA<UnconfiguredGoogle>());
+    test('prod uses its own iOS client and the shared web client', () {
+      final google = googleSourceFor('prod') as NativeGoogle;
+      expect(google.serverClientId, googleClients['dev']!.server);
+      expect(google.iosClientId, isNot(googleClients['dev']!.ios));
+    });
+
+    test('unflavored builds stay unconfigured', () {
       expect(googleSourceFor(null), isA<UnconfiguredGoogle>());
     });
   });

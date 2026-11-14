@@ -24,15 +24,19 @@ const googleSignInFailed = 'GOOGLE_SIGN_IN_FAILED';
 /// iOS butuh client ID-nya sendiri + URL scheme `GOOGLE_REVERSED_CLIENT_ID`
 /// (build setting per konfigurasi Xcode). Android cukup `server`, client
 /// Android dicocokkan Google lewat package + SHA-1.
-/// Flavor prod kosong sampai client `id.ruma.luma` dibuat.
+/// Web client (`server`) dipakai bersama dev dan prod.
 const googleClients = {
   'dev': (
     server: '366577823040-vhr2h7toc53pb891v0qoc1m62pps2v41.apps.googleusercontent.com',
     ios: '366577823040-iado5q8njuvdienlc83al1ed2he5u3c0.apps.googleusercontent.com',
   ),
+  'prod': (
+    server: '366577823040-vhr2h7toc53pb891v0qoc1m62pps2v41.apps.googleusercontent.com',
+    ios: '366577823040-4t2j2h8h8c300c1r1fc9olhov42p4ora.apps.googleusercontent.com',
+  ),
 };
 
-/// Placeholder untuk flavor tanpa client ID Google (prod sampai dibuat).
+/// Placeholder untuk build tanpa client ID Google (tanpa flavor).
 class UnconfiguredGoogle implements GoogleIdTokenSource {
   const UnconfiguredGoogle();
 

@@ -73,7 +73,7 @@
         "SYNC_DAILY_WRITES": "20000",
         "BETTER_AUTH_URL": "https://luma-api.chrl.cloud",
         "INVITE_REQUIRED": "true",
-        "GOOGLE_CLIENT_IDS": "",
+        "GOOGLE_CLIENT_IDS": "366577823040-vhr2h7toc53pb891v0qoc1m62pps2v41.apps.googleusercontent.com,366577823040-4t2j2h8h8c300c1r1fc9olhov42p4ora.apps.googleusercontent.com,366577823040-ll4mt5p6rucqa7mlpn4f30negtlgr6se.apps.googleusercontent.com",
         "AI_DAILY_LIMIT_USD": "0.02",
         "AI_MONTHLY_BUDGET_USD": "5",
         "AI_KEY_TTL_DAYS": "30",
