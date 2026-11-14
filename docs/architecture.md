@@ -38,7 +38,7 @@ flowchart LR
 
 ## Routing (go_router)
 
-- Shell tab (`StatefulShellRoute.indexedStack`, `AppShell` + `LumaNavBar` melayang, board Komponen · NavBar): `/` → Rak buku, `/discover` → Cari buku ([discover.md](discover.md)), `/settings` → Pengaturan (tab Atur). Bar ke-hide pas keyboard naik; konten tab dapet padding bawah `Layout.navSpace` lewat MediaQuery. Chip "Ngunduh N buku" + lencana di tab Cari buku dari `downloadQueueProvider`. Tap tab aktif lagi = `tabReselectProvider` → layar gulung ke atas.
+- Shell tab (`StatefulShellRoute.indexedStack`, `AppShell` + `LumaNavBar` melayang, board Komponen · NavBar): `/` → Rak buku, `/discover` → Cari buku ([discover.md](discover.md)), `/settings` → Pengaturan (tab Atur, meja depan `SettingsHubView`; halaman detail `/settings/account`, `/settings/ai`, `/settings/backup`, `/settings/catalog` anak rutenya, jadi bar tab tetap kelihatan; Cache dan Tampilan cuma sheet, lihat [design.md](design.md)). Bar ke-hide pas keyboard naik; konten tab dapet padding bawah `Layout.navSpace` lewat MediaQuery. Chip "Ngunduh N buku" + lencana di tab Cari buku dari `downloadQueueProvider`. Tap tab aktif lagi = `tabReselectProvider` → layar gulung ke atas.
 - `/reader/:bookId` → Halaman baca (posisi dari `reading_progress`)
 - `/reader/:bookId/breakdown/:chapterId/:groupIndex` → Bedahin satu grup (`Routes.breakdown`). Cuma di-`push` dari sheet Artinya: sheet tetep di bawah, balik = balik ke sheet. "Balik baca" = `pop(true)`, yang manggil (`ReaderView`) ikut nutup sheet-nya, jadi langsung ke halaman.
 - `/login` → `LoginView` (login wajib), di luar shell tanpa bottom bar. `authRedirect` + `refreshListenable` dari `authControllerProvider`: status sesi berubah → redirect dicek ulang.

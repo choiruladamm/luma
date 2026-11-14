@@ -140,6 +140,15 @@ Boards 33–38 (+ baris masuk di Info buku, board 21). Sheet bertumpuk di atas I
 
 Semua layar MVP awal sudah final (terang + gelap): rak kosong/berisi, baca, artinya (loading / hasil / error / udah disalin / API key kosong) dengan highlight grup, Aa, daftar isi, akhir bab, akhir buku, import (proses / berhasil / duplikat / rusak / bukan EPUB / DRM), urutkan rak, tekan lama buku, info buku, konfirmasi hapus, pengaturan, penanda grup yang sudah diterjemahkan.
 
+## Pengaturan (meja depan)
+
+Board "Pengaturan · 01–11" di page `atur` Stabilo (terang + gelap). Layar utama muat satu layar tanpa scroll dan gak ketutup bar tab: kartu akun + cincin kuota AI, kartu model AI ("Ganti model" buka pemilih, "Atur AI" ke halaman AI), lalu 4 tile Backup · Katalog · Cache · Tampilan (nama + satu status + tombol bulat "›"; titik pink di sebelah nama kalau ada yang perlu dicek, misalnya belum pernah backup).
+
+- Halaman detail (anak rute `/settings`, bar tab tetap ada): Akun, AI, Backup & pulihin, Katalog buku. Cache dan Tampilan cukup sheet.
+- Tampilan = tema (Ikut sistem · Terang · Gelap, setelan yang sama kayak Tema di menu Aa) + bahasa tampilan; bahasa ini gak ngubah terjemahan / jawaban AI.
+- Palet hemat: kuning cuma tombol utama + tab aktif, pink buat status + tombol hapus.
+- Kerangka halaman detail: `SettingsPage` (tombol balik + judul + isi scroll dengan jarak bawah buat bar tab).
+
 ## Layar yang masih didesain
 
 Backup & restore ([backup.md](backup.md)): bagian Backup di Pengaturan, proses export, restore (pilih file → ringkasan → konfirmasi → proses → berhasil / gagal), banner pengingat backup.
