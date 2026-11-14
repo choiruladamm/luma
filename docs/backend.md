@@ -111,6 +111,8 @@ Perkiraan untuk satu user aktif per hari. Wajib diperbarui saat implementasi ber
 | Download buku di device baru (#210) | 1 per buku (sekali) + 1 dump per buku Markdown | - | 1 baca per buku |
 | Login dashboard admin (docs/dashboard.md) | 3 per login (`sign-in/social`, callback, `get-session`), sesi 12 jam | `sign-in/social` 0 (state di cookie); callback ≤ 5 query (cari akun + user + cek admin + update token + simpan sesi) + 1 subrequest token Google; `get-session` 1 baca | - |
 | Auth per request dashboard | termasuk di request lain | 1 baca (tanpa cookie / tanda tangan salah: 0), tanpa tulis (sesi gak diperpanjang) | - |
+| Dashboard: daftar / detail user | 1 per halaman dibuka (tanpa polling) | daftar: 1 query, baris dibaca ±2× user per halaman (subquery sesi per baris); detail: 1 batch 4 statement + 1 subrequest `getUsage` kalau punya key | - |
+| Dashboard: ban / unban | 1 per aksi, maks 30/menit per admin | ban: 1 baca + 1 batch 2 tulis + 1 subrequest `deleteKey` kalau punya key; unban: 1 tulis | - |
 
 Patokan kapasitas: **±50 request/user/hari → ±2.000 user aktif/hari** di batas Workers; batas pertama yang kena realistisnya **D1 100rb baris tulis/hari** (±300–2.000 user tergantung aktivitas sync). Sync pertama (upload semua `ai_results` lama) dicicil maks 10 batch per pemicu supaya satu user tidak menghabiskan kuota tulis harian.
 
@@ -251,7 +253,7 @@ Aturan `issueKey`: pakai ulang selama masih berlaku (subrequest 0), bikin lazy, 
 |---|---|
 | Biaya per user | `limit: 0.02`, `limit_reset: "daily"` → maks ±$0.60/bulan per user, ±30–50 tap/hari |
 | Total biaya | Budget guardrail workspace OpenRouter **$5/bulan**. Habis → semua key subsidi 402 → "Kuota gratis lagi abis, pakai key sendiri dulu yuk". Saldo OpenRouter tanpa auto top-up sebagai lapis kedua |
-| Key diekstrak dari device | Limit harian kecil + `expires_at` 30 hari. 401 → app panggil `POST /v1/ai/key {"rotate": true}` → kalau key memang udah gak ada di OpenRouter, key lama dihapus dan key baru dibuat; kalau masih ada, key yang sama dikirim balik (rotasi gak bisa dipakai buat reset limit harian). Ban lewat `make backend-ban e=prod email=…` (env `OPENROUTER_MANAGEMENT_KEY`): `DELETE /keys/{hash}` duluan (key yang udah diekstrak langsung mati, bukan nunggu 30 hari), lalu `banned = 1` + hapus baris `ai_keys` |
+| Key diekstrak dari device | Limit harian kecil + `expires_at` 30 hari. 401 → app panggil `POST /v1/ai/key {"rotate": true}` → kalau key memang udah gak ada di OpenRouter, key lama dihapus dan key baru dibuat; kalau masih ada, key yang sama dikirim balik (rotasi gak bisa dipakai buat reset limit harian). Ban lewat dashboard admin (docs/dashboard.md) atau `make backend-ban e=prod email=…` (env `OPENROUTER_MANAGEMENT_KEY`), unban lewat dashboard atau `make backend-unban`: `DELETE /keys/{hash}` duluan (key yang udah diekstrak langsung mati, bukan nunggu 30 hari), lalu `banned = 1` + hapus baris `ai_keys` |
 | Model mahal | Workspace `luma-subsidi-dev` / `luma-subsidi-prod` (satu per env, `OPENROUTER_WORKSPACE_ID`) dengan default guardrail `allowed_models` (model default + kandidat murah + **model embedding** Ngobrolin). Mode subsidi: pemilih model hanya menampilkan daftar dari `/v1/ai/config` |
 | Spam akun | Login prod hanya Google, key lazy, `user_id` unique, rate limit `POST /v1/ai/key` per IP + per user (binding Workers Rate Limiting), kode undangan selama beta |
 
@@ -707,6 +709,7 @@ Harian:
 | `make backend-e2e` | E2E sync (#109): client Dart sync lewat Worker lokal (`wrangler dev`) |
 | `make backend-invite e=dev n=3` | Bikin kode undangan acak di D1 remote (`n` default 1) |
 | `make backend-ban e=dev email=...` | Cabut akses AI subsidi user (butuh `OPENROUTER_MANAGEMENT_KEY` di env) |
+| `make backend-unban e=dev email=...` | Pulihkan akses AI subsidi user (`banned = 0`; key baru dibuat lazy). Cadangan kalau dashboard admin gak bisa dipakai |
 | `make backend-types` | Generate ulang tipe `Env` setelah ubah `wrangler.jsonc` |
 | `make backend-migrate e=dev` | Terapkan migrasi D1 remote |
 | `make backend-deploy e=dev` | Deploy; `e=prod` cuma dari `master` |

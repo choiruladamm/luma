@@ -11,7 +11,10 @@ export default defineConfig(async () => {
         miniflare: {
           // Semua request test datang dari IP yang sama: limit asli (60/menit) dinaikin.
           // 429 dites lewat override binding.
-          ratelimits: { RATE_LIMITER: { namespace_id: "1101", simple: { limit: 10_000, period: 60 } } },
+          ratelimits: {
+            RATE_LIMITER: { namespace_id: "1101", simple: { limit: 10_000, period: 60 } },
+            ADMIN_RATE_LIMITER: { namespace_id: "1102", simple: { limit: 10_000, period: 60 } },
+          },
           bindings: {
             TEST_MIGRATIONS: migrations,
             ADMIN_EMAILS: "admin@luma.test",

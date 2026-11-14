@@ -21,7 +21,8 @@ The Cloudflare env is picked by `CLOUDFLARE_ENV` at dev/build time, never `wrang
 worker/
 ├── index.ts       # app, middleware order, Better Auth allowlist, export AppType
 ├── auth.ts        # Better Auth instance + isAdmin (ADMIN_EMAILS)
-├── middleware.ts  # requestId, security headers, IP rate limit, requireAdmin, mutation check
+├── middleware.ts  # requestId, security headers, IP rate limit, requireAdmin, mutation check + per-admin limit, validate()
+├── users.ts       # /api/users: list, detail, ban, unban (route + service)
 ├── audit.ts       # audit(c, action, targetId) → Workers Logs; call it in every mutation
 ├── errors.ts      # ApiError + onError, {"error": {"code", "message"}}
 ├── env.ts         # AppEnv: Bindings + c.var (db, admin, requestId)
@@ -37,13 +38,13 @@ worker/
 
 ## Shared code with the backend
 
-Imported relatively from `../backend/src`, never copied or edited from here (`db/schema.ts`, `db/client.ts`, `auth/user-fields.ts`). Schema and migrations are owned by the backend; tests apply `../backend/migrations`.
+Imported relatively from `../backend/src`, never copied or edited from here (`db/schema.ts`, `db/client.ts`, `auth/user-fields.ts`, `clients/openrouter.ts`). Don't import backend files that touch the backend `Env` (e.g. `features/*/service.ts`): tsc checks them against the dashboard `Env`. Schema and migrations are owned by the backend; tests apply `../backend/migrations`.
 
 Two copies of `drizzle-orm` exist (backend's and ours). Runtime is fine; `tsconfig.json` `paths` points both at ours so the types match. Keep the versions in both `package.json` files equal.
 
 ## Tests
 
-Vitest with `@cloudflare/vitest-plugin`, Miniflare D1. `test/helpers/session.ts` makes signed session cookies (`adminCookie()`, `userCookie()`, `sessionCookie(userId, opts)`) by writing a `sessions` row and signing the token with the test `BETTER_AUTH_SECRET`. `test/helpers/app.ts` `call(path, init, envOverrides)` counts D1 queries. Outbound fetches go through MSW (`test/setup.ts`); unmocked ones return 599.
+Vitest with `@cloudflare/vitest-plugin`, Miniflare D1. `test/helpers/session.ts` makes signed session cookies (`adminCookie()`, `userCookie()`, `sessionCookie(userId, opts)`) by writing a `sessions` row and signing the token with the test `BETTER_AUTH_SECRET`. `test/helpers/app.ts` `call(path, init, envOverrides)` counts D1 queries. Outbound fetches go through MSW (`test/setup.ts`); unmocked ones return 599. `test/helpers/openrouter.ts` fakes OpenRouter `GET`/`DELETE /keys/:hash`; `giveUserData()` adds backend rows (key, storage, invite).
 
 - `guard.test.ts` iterates every registered route: no cookie → 401 without D1, non-admin cookie → 403. New routes are covered automatically; still add success, validation, and budget tests per endpoint.
 - Test bindings pin `BETTER_AUTH_URL` to the https domain so a local `.dev.vars` doesn't leak in.

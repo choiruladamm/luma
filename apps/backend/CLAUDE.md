@@ -55,7 +55,7 @@ src/
 - Edit `src/db/schema.ts`, then `bun run db:generate` (drizzle-kit) to add a file under `migrations/`. Never edit an applied migration; add a new one.
 - Tests apply migrations via `applyD1Migrations`, so a new migration is covered by `make backend-test`.
 - Apply remotely with `make backend-migrate e=dev` before deploying code that needs it. Migrations must keep existing user data.
-- The admin dashboard (`apps/dashboard`) reads the same D1 and imports `src/db/schema.ts`, `src/db/client.ts`, and `src/auth/user-fields.ts` (later also `src/auth/invite.ts`, `src/clients/openrouter.ts`). Changing these files or the schema also runs `make dashboard-test`; keep them free of the backend `Env` type.
+- The admin dashboard (`apps/dashboard`) reads the same D1 and imports `src/db/schema.ts`, `src/db/client.ts`, `src/auth/user-fields.ts`, and `src/clients/openrouter.ts` (later also `src/auth/invite.ts`); its tests read `src/features/ai-key/repo.ts`. Changing these files or the schema also runs `make dashboard-test`; keep them free of the backend `Env` type.
 
 ## Free tier (mandatory)
 

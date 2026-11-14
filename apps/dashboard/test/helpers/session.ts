@@ -2,14 +2,18 @@ import { env } from "cloudflare:test";
 import { makeSignature } from "better-auth/crypto";
 import { getAuth } from "../../worker/auth";
 import { createDb } from "../../../backend/src/db/client";
-import { accounts, sessions, users } from "../../../backend/src/db/schema";
+import { accounts, aiKeys, inviteCodes, sessions, userStorage, users } from "../../../backend/src/db/schema";
 
 export const ADMIN_EMAIL = "admin@luma.test";
 let counter = 0;
 
-export async function createUser({ email = `user-${++counter}@luma.test`, emailVerified = true } = {}) {
+export async function createUser({
+  email = `user-${++counter}@luma.test`,
+  emailVerified = true,
+  createdAt = new Date(),
+}: { email?: string; emailVerified?: boolean; createdAt?: Date } = {}) {
   const id = crypto.randomUUID();
-  await createDb(env.DB).insert(users).values({ id, name: "Tester", email, emailVerified });
+  await createDb(env.DB).insert(users).values({ id, name: "Tester", email, emailVerified, createdAt, updatedAt: createdAt });
   return { id, email };
 }
 
@@ -50,4 +54,26 @@ export async function createGoogleUser(email: string, sub = `google-${crypto.ran
     .insert(accounts)
     .values({ id: crypto.randomUUID(), accountId: sub, providerId: "google", userId: user.id, createdAt: now, updatedAt: now });
   return { ...user, sub };
+}
+
+/** Baris D1 milik backend untuk user test: key AI, pemakaian, kode undangan. */
+export async function giveUserData(
+  userId: string,
+  { keyHash, r2Bytes, syncBytes, invite }: { keyHash?: string; r2Bytes?: number; syncBytes?: number; invite?: string } = {},
+) {
+  const db = createDb(env.DB);
+  if (keyHash) {
+    await db.insert(aiKeys).values({
+      userId,
+      keyHash,
+      keyEnc: "rahasia-terenkripsi",
+      limitUsd: 0.02,
+      expiresAt: new Date("2026-12-14T00:00:00Z"),
+      createdAt: new Date(),
+    });
+  }
+  if (r2Bytes !== undefined || syncBytes !== undefined) {
+    await db.insert(userStorage).values({ userId, bytes: r2Bytes ?? 0, syncBytes: syncBytes ?? 0 });
+  }
+  if (invite) await db.insert(inviteCodes).values({ code: invite, usedBy: userId, usedAt: new Date("2026-11-01T00:00:00Z") });
 }
