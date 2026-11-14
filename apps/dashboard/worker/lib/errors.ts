@@ -8,6 +8,7 @@ export type ErrorCode =
   | "UNAUTHORIZED"
   | "FORBIDDEN"
   | "NOT_FOUND"
+  | "INVITE_CODE_USED"
   | "RATE_LIMITED"
   | "OPENROUTER_FAILED"
   | "INTERNAL_ERROR";

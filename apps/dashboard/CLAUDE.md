@@ -47,7 +47,7 @@ client/                  # React SPA (#221): imports only `type AppType` from wo
 
 ## Shared code with the backend
 
-Imported relatively from `../backend/src`, never copied or edited from here (`db/schema.ts`, `db/client.ts`, `auth/user-fields.ts`, `clients/openrouter.ts`). Don't import backend files that touch the backend `Env` (e.g. `features/*/service.ts`): tsc checks them against the dashboard `Env`. Schema and migrations are owned by the backend; tests apply `../backend/migrations`.
+Imported relatively from `../backend/src`, never copied or edited from here (`db/schema.ts`, `db/client.ts`, `auth/user-fields.ts`, `auth/invite.ts`, `clients/openrouter.ts`). Don't import backend files that touch the backend `Env` (e.g. `features/*/service.ts`): tsc checks them against the dashboard `Env`. Schema and migrations are owned by the backend; tests apply `../backend/migrations`.
 
 Two copies of `drizzle-orm` exist (backend's and ours). Runtime is fine; `tsconfig.json` `paths` points both at ours so the types match. Keep the versions in both `package.json` files equal.
 
