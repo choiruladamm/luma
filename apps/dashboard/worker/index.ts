@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { getAuth } from "./auth";
 import type { AppEnv } from "./env";
 import { ApiError, onError } from "./errors";
+import { users } from "./users";
 import { rateLimitIp, requestId, requireAdmin, requireSameOriginJson, securityHeaders } from "./middleware";
 
 /**
@@ -25,7 +26,7 @@ for (const [method, path] of AUTH_ROUTES) app.on(method, path, (c) => getAuth(c.
 app.all("/api/auth/*", notFound);
 
 // Route admin di-chain setelah guard supaya `AppType` ikut membawa tipenya.
-const routes = app.use("/api/*", requireAdmin, requireSameOriginJson);
+const routes = app.use("/api/*", requireAdmin, requireSameOriginJson).route("/api/users", users);
 
 app.notFound(notFound);
 app.onError(onError);

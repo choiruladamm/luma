@@ -1,3 +1,5 @@
+import { zValidator } from "@hono/zod-validator";
+import type { ValidationTargets } from "hono";
 import { getSignedCookie } from "hono/cookie";
 import { createMiddleware } from "hono/factory";
 import { createDb } from "../../backend/src/db/client";
@@ -5,6 +7,7 @@ import { isAdmin } from "./auth";
 import type { AppEnv } from "./env";
 import { ApiError } from "./errors";
 import { findSession } from "./repo";
+import type { ZodType } from "zod";
 
 export const RATE_LIMIT_PERIOD_SECONDS = 60;
 
@@ -22,14 +25,12 @@ export const securityHeaders = createMiddleware<AppEnv>(async (c, next) => {
   c.res.headers.set("X-Content-Type-Options", "nosniff");
 });
 
+const tooMany = () =>
+  new ApiError(429, "RATE_LIMITED", "Too many requests", { "Retry-After": String(RATE_LIMIT_PERIOD_SECONDS) });
+
 export const rateLimitIp = createMiddleware<AppEnv>(async (c, next) => {
   const ip = c.req.header("cf-connecting-ip") ?? "unknown";
-  const { success } = await c.env.RATE_LIMITER.limit({ key: `ip:${ip}` });
-  if (!success) {
-    throw new ApiError(429, "RATE_LIMITED", "Too many requests", {
-      "Retry-After": String(RATE_LIMIT_PERIOD_SECONDS),
-    });
-  }
+  if (!(await c.env.RATE_LIMITER.limit({ key: `ip:${ip}` })).success) throw tooMany();
   await next();
 });
 
@@ -62,12 +63,20 @@ export const requireAdmin = createMiddleware<AppEnv>(async (c, next) => {
 
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 
-/** CSRF: mutasi wajib JSON dan `Origin` persis domain dashboard. */
+/** CSRF: mutasi wajib JSON dan `Origin` persis domain dashboard, plus rate limit per admin. */
 export const requireSameOriginJson = createMiddleware<AppEnv>(async (c, next) => {
   if (!SAFE_METHODS.has(c.req.method)) {
     const json = c.req.header("content-type")?.split(";")[0]?.trim().toLowerCase() === "application/json";
     const origin = c.req.header("origin") === new URL(c.env.BETTER_AUTH_URL).origin;
     if (!json || !origin) throw new ApiError(403, "FORBIDDEN", "Mutations need JSON from the dashboard origin");
+    // Salah klik / skrip nyasar: mutasi per admin dibatasi (binding ADMIN_RATE_LIMITER, 30/menit).
+    if (!(await c.env.ADMIN_RATE_LIMITER.limit({ key: `admin:${c.var.admin.id}` })).success) throw tooMany();
   }
   await next();
 });
+
+/** zod validator dengan error format dashboard (400 BAD_REQUEST). */
+export const validate = <T extends keyof ValidationTargets, S extends ZodType>(target: T, schema: S) =>
+  zValidator(target, schema, (result) => {
+    if (!result.success) throw new ApiError(400, "BAD_REQUEST", result.error.issues[0]?.message ?? "Invalid input");
+  });

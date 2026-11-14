@@ -153,10 +153,10 @@ Urutan middleware: `requestId → rateLimit per IP → [/api/auth/* → Better A
 | Endpoint | Request | Respons | D1 / subrequest |
 |---|---|---|---|
 | `GET /api/overview` | - | `{users: {total, new7d, banned}, storage: {r2Bytes, syncBytes}, syncToday: {rows, limit}, invites: {unused}, flags: {sync, backup, aiKey}}` | 1 `batch` ±4 agregat; `flags` dari `env` |
-| `GET /api/users?q=&cursor=&limit=50` | `q` awalan email | `{items: [{id, email, name, createdAt, lastActiveAt, banned, hasAiKey, r2Bytes, syncBytes}], nextCursor}` | 1 query: `users` ⟕ `user_storage` ⟕ `ai_keys` ⟕ `MAX(sessions.updated_at)` |
-| `GET /api/users/:id` | - | data di atas + `sessions: [{userAgent, ipAddress, createdAt, updatedAt}]`, `ai: {limit, usageDaily, expiresAt} \| null`, `invite: {code, usedAt} \| null` | 1 `batch` + 1 subrequest OpenRouter (`getUsage`) kalau punya key |
-| `POST /api/users/:id/ban` | - | `{banned: true, keyRevoked}` | `deleteKey` OpenRouter dulu; gagal → 502 tanpa menyentuh D1. Sukses → 1 `batch` (`banned = 1` + hapus `ai_keys`). Idempoten |
-| `POST /api/users/:id/unban` | - | `{banned: false}` | 1 update |
+| `GET /api/users?q=&cursor=&limit=50` | `q` awalan email | `{items: [{id, email, name, createdAt, lastActiveAt, banned, hasAiKey, r2Bytes, syncBytes}], nextCursor}`, terbaru dulu (`createdAt` lalu `id` menurun); `nextCursor` = `<createdAt ms>,<id>` atau `null` | 1 query: `users` ⟕ `user_storage` ⟕ `ai_keys`, `lastActiveAt` subquery `MAX(sessions.updated_at)` per baris |
+| `GET /api/users/:id` | - | data di atas + `sessions: [{userAgent, ipAddress, createdAt, updatedAt}]` (maks 50, terbaru dulu), `ai: {limit, usageDaily, expiresAt} \| null`, `invite: {code, usedAt} \| null`. `getUsage` gagal → tetap 200 dengan `usageDaily: null` | 1 `batch` (4 statement) + 1 subrequest OpenRouter (`getUsage`) kalau punya key |
+| `POST /api/users/:id/ban` | - | `{banned: true, keyRevoked}` | 1 query (user + hash key), `deleteKey` OpenRouter dulu (404 = sudah hilang, dianggap sukses); gagal → 502 tanpa menyentuh D1. Sukses → 1 `batch` (`banned = 1` + hapus `ai_keys`). Idempoten |
+| `POST /api/users/:id/unban` | - | `{banned: false}` | 1 update (`RETURNING`, user gak ada → 404) |
 | `GET /api/invites?status=unused\|used` | - | `{items: [{code, usedBy: {id, email} \| null, usedAt}]}` | 1 query |
 | `POST /api/invites` | `{count: 1..20}` | `{codes: [...]}` | 1 insert |
 | `DELETE /api/invites/:code` | - | 204 | `DELETE … WHERE used_by IS NULL`; sudah dipakai → 409 |
@@ -181,7 +181,7 @@ Dashboard memakai D1 dan kuota Workers yang sama dengan backend, jadi selain mem
 | Clickjacking tombol ban | `frame-ancestors 'none'` |
 | Input jahat | zod di semua input: `:id` dan `:code` format pasti, `q` maks 100 karakter dengan `%`/`_` di-escape untuk `LIKE`, `limit` ≤ 50, `count` 1–20. Query lewat Drizzle (terparameter) |
 | Data sensitif bocor lewat respons | Repo memilih kolom eksplisit (tanpa `select *`). `key_enc`, token sesi, dan isi `records` tidak pernah dikirim |
-| Admin disalahgunakan / salah klik | Ban dan hapus undangan pakai dialog konfirmasi. Badge DEV/PROD. Rate limit per admin untuk mutasi (30/menit). Audit `{admin, action, targetId, requestId}` ke Workers Logs |
+| Admin disalahgunakan / salah klik | Ban dan hapus undangan pakai dialog konfirmasi. Badge DEV/PROD. Rate limit per admin untuk mutasi (30/menit, binding `ADMIN_RATE_LIMITER`). Audit `{admin, action, targetId, requestId}` ke Workers Logs |
 | Cookie admin dicuri | httpOnly, Secure, umur 12 jam, sign-out menghapus sesi. Hapus email dari `ADMIN_EMAILS` + deploy → sesi yang masih ada langsung ditolak `requireAdmin` |
 | Akun Google admin dibobol | Di luar kode: 2FA di akun Google. Selama app OAuth mode Testing, cuma test user yang bisa login sama sekali |
 

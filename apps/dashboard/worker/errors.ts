@@ -9,6 +9,7 @@ export type ErrorCode =
   | "FORBIDDEN"
   | "NOT_FOUND"
   | "RATE_LIMITED"
+  | "OPENROUTER_FAILED"
   | "INTERNAL_ERROR";
 
 export class ApiError extends Error {
