@@ -24,6 +24,19 @@
 	<string>$(FLUTTER_BUILD_NAME)</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
+	<!-- Google Sign-In: balikan dari jendela Google. REVERSED_CLIENT_ID client iOS
+	     per flavor (build setting GOOGLE_REVERSED_CLIENT_ID, kosong = Google mati). -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>$(GOOGLE_REVERSED_CLIENT_ID)</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
