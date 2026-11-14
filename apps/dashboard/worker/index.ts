@@ -1,6 +1,7 @@
 import { getAuth } from "./auth/auth";
 import { factory } from "./env";
 import { invites } from "./features/invites/routes";
+import { overview } from "./features/overview/routes";
 import { users } from "./features/users/routes";
 import { ApiError, onError } from "./lib/errors";
 import { rateLimitAdmin, rateLimitIp } from "./middleware/rate-limit";
@@ -30,7 +31,8 @@ app.all("/api/auth/*", notFound);
 const routes = app
   .use("/api/*", requireAdmin, requireSameOriginJson, rateLimitAdmin)
   .route("/api/users", users)
-  .route("/api/invites", invites);
+  .route("/api/invites", invites)
+  .route("/api/overview", overview);
 
 app.notFound(notFound);
 app.onError(onError);

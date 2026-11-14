@@ -114,6 +114,7 @@ Perkiraan untuk satu user aktif per hari. Wajib diperbarui saat implementasi ber
 | Dashboard: daftar / detail user | 1 per halaman dibuka (tanpa polling) | daftar: 1 query, baris dibaca ±2× user per halaman (subquery sesi per baris); detail: 1 batch 4 statement + 1 subrequest `getUsage` kalau punya key | - |
 | Dashboard: ban / unban | 1 per aksi, maks 30/menit per admin | ban: 1 baca + 1 batch 2 tulis + 1 subrequest `deleteKey` kalau punya key; unban: 1 tulis | - |
 | Dashboard: undangan (lihat / bikin / hapus) | 1 per aksi, mutasi maks 30/menit per admin | lihat: 1 baca (maks 500 baris); bikin: 1 insert (1–20 baris); hapus: 1 tulis (+1 baca kalau gagal) | - |
+| Dashboard: ringkasan | 1 per halaman dibuka (tanpa polling) | 1 batch 3 agregat: baca semua baris `users`, `user_storage`, kode undangan belum dipakai + 1 subrequest OpenRouter `/activity` | - |
 
 Patokan kapasitas: **±50 request/user/hari → ±2.000 user aktif/hari** di batas Workers; batas pertama yang kena realistisnya **D1 100rb baris tulis/hari** (±300–2.000 user tergantung aktivitas sync). Sync pertama (upload semua `ai_results` lama) dicicil maks 10 batch per pemicu supaya satu user tidak menghabiskan kuota tulis harian.
 
