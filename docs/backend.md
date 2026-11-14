@@ -688,7 +688,7 @@ Lalu:
 3. `make backend-deploy e=dev`. URL per env ada di `backendUrls` (`apps/mobile/lib/data/services/backend_client.dart`).
 4. Cek: `make backend-live` (client Flutter → Worker dev) atau `curl https://luma-api-dev.chrl.cloud/v1/health` → `{"status":"ok","env":"dev"}`. Tepat setelah deploy pertama ke subdomain baru, beberapa request bisa kena error Cloudflare 1104/1042 selama propagasi; hilang sendiri dalam ±1 menit.
 
-**Resource:** env dev = D1 `luma-dev`, R2 `luma-dev`, `https://luma-api-dev.chrl.cloud`. Env prod (D1/R2 `luma-prod`, `https://luma-api.chrl.cloud`) dibuat saat backend di-merge ke `master`; `database_id` prod di `wrangler.jsonc` masih placeholder sampai itu.
+**Resource:** env dev = D1 `luma-dev`, R2 `luma-dev`, `https://luma-api-dev.chrl.cloud`. Env prod = D1 `luma-prod`, R2 `luma-prod`, `https://luma-api.chrl.cloud`. Worker prod baru ada setelah deploy pertama dari `master`; secret prod ikut di deploy pertama lewat `--secrets-file` (skill `/backend-deploy`).
 
 **Custom domain (#214):** XL (Internet Positif) ngarahin `*.workers.dev` ke blockpage lewat DNS, jadi app pakai custom domain di zone `chrl.cloud` (Cloudflare, nameserver dipindah dari Rumahweb; domain diperpanjang di Rumahweb, jatuh tempo 13 April 2027): dev `https://luma-api-dev.chrl.cloud`, prod `https://luma-api.chrl.cloud` (`routes` `custom_domain` di `wrangler.jsonc`, record DNS + sertifikat dibuat otomatis saat deploy). Satu tingkat subdomain (bukan `api.luma.chrl.cloud`) karena sertifikat gratis cuma nutup `*.chrl.cloud`. `*.workers.dev` tetap nyala sebagai cadangan; `BETTER_AUTH_URL` ikut custom domain.
 
