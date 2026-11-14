@@ -118,7 +118,7 @@ Workers Logs + dashboard Analytics (request, CPU p99, error) dicek tiap rilis ba
 
 ## Lingkungan
 
-`wrangler` env `dev` dan `prod`, masing-masing D1, R2, dan workspace OpenRouter sendiri. Luma Dev (`id.ruma.luma.dev`) → env `dev`, Luma (`id.ruma.luma`) → `prod`, sama seperti aturan flavor di `CLAUDE.md`. `baseUrl` di Flutter ditentukan per flavor.
+`wrangler` env `dev` dan `prod`, masing-masing D1, R2, dan workspace OpenRouter sendiri. Luma Dev (`id.ruma.luma.dev`) → env `dev`, Luma (`id.ruma.luma`) → `prod`, sama seperti aturan flavor di `apps/mobile/CLAUDE.md`. `baseUrl` di Flutter ditentukan per flavor.
 
 Log: `observability.enabled: true` (Workers Logs). Pemulihan D1: Time Travel bawaan. Deploy manual `make backend-deploy`; CI/CD ditunda.
 
@@ -609,7 +609,7 @@ Tiap issue backend selesai bawa test-nya di semua lapisan yang disentuh. Integra
 | Integrasi backend | `exports.default.fetch` / `app.request` + D1/R2 lokal, migrasi `applyD1Migrations` | Tiap endpoint lewat app utuh, layanan luar di-mock. Limit rate per IP di test 300/menit (`test/helpers/limits.ts`): semua request test datang dari IP yang sama | `make backend-test` |
 | Kontrak | `test/fixtures/contract/*.json` | Contoh request/response asli, dibaca vitest dan test Dart | dua-duanya |
 | Unit/data Flutter | `flutter test` | Mapping kunci alami, trigger outbox (Drift in-memory), service HTTP pakai adapter `dio` palsu | `make test` |
-| Widget Flutter | `flutter test` | Login, Pengaturan, banner; provider di-override (aturan `CLAUDE.md`) | `make test` |
+| Widget Flutter | `flutter test` | Login, Pengaturan, banner; provider di-override (aturan `apps/mobile/CLAUDE.md`) | `make test` |
 | E2E lokal (#109 saja) | `test/data/sync_e2e_test.dart` ke `wrangler dev` (`apps/backend/scripts/e2e.sh`: migrasi + kode undangan lokal) | Dua `AppDatabase` in-memory push lewat Worker lokal (last-write-wins, tombstone, backfill 1200 record, dump Markdown); tanpa `LUMA_BACKEND_E2E` di-skip | `make backend-e2e` |
 
 **Checklist wajib tiap endpoint** (integrasi):
