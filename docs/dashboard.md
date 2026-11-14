@@ -49,11 +49,11 @@ flowchart LR
 | Data | Binding D1 ke database yang sama dengan backend env itu. Tidak pakai R2 |
 | Styling | Belum diputuskan (Tailwind atau lainnya), menunggu export foundation Stabilo dari Claude Design |
 
-Routing Static Assets: request `/api/*` masuk Worker, sisanya file statis dengan fallback `index.html`.
+Routing Static Assets: request `/api/*` masuk Worker, sisanya file statis dengan fallback `index.html`. React ditambahkan ke proyek Vite `apps/dashboard` yang sudah ada (`react()` sebelum `cloudflare()` di `vite.config.ts`, `index.html` di root `apps/dashboard`), bukan proyek Vite baru di `client/`.
 
 ```jsonc
 "assets": {
-  "directory": "./dist/client",
+  // Tanpa "directory": plugin Vite Cloudflare mengarahkannya ke hasil build client.
   "not_found_handling": "single-page-application",
   "run_worker_first": ["/api/*"]
 }
