@@ -20,7 +20,8 @@
       "vars": {
         "ENV": "dev",
         // Email admin dipisah koma. Kosong = semua ditolak (fail closed).
-        "ADMIN_EMAILS": "",
+        // Harus akun Google yang sudah ada di D1 env ini: dashboard gak bisa bikin akun.
+        "ADMIN_EMAILS": "work.adamm@gmail.com",
         "BETTER_AUTH_URL": "https://luma-admin-dev.chrl.cloud",
         // Client ID OAuth Google web (publik), sama dengan entri pertama GOOGLE_CLIENT_IDS backend.
         "GOOGLE_CLIENT_ID": "366577823040-vhr2h7toc53pb891v0qoc1m62pps2v41.apps.googleusercontent.com"
