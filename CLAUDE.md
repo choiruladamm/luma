@@ -19,6 +19,12 @@ Commands go through the root `Makefile` (`make help`). Mobile targets are bare (
 - **Tasks:** GitHub issues, labeled `area:*`. One issue = one unit of work. Every dependency on the issue's **Tergantung** line must be closed first. Tick the scope checklist when done.
 - **Progress and status** live in GitHub issues and parent issues, not in this file. Check the parent issue's checklist for what's left.
 
+## Keeping docs current
+
+- `docs/` describes how the system works now. Changing behavior a doc describes (names, routes, tables, limits, flows, copy quoted in docs) means updating that doc in the same commit.
+- No progress, dates, or branch names in docs; at most one line pointing to the parent issue. Past iterations stay only where the reason still matters, marked as old ("angka lama; sekarang …").
+- After touching docs or doc citations in comments, run `make docs-check`.
+
 ## Issue workflow
 
 - Milestone `MVP` is done except dogfooding (#29).

@@ -3,7 +3,7 @@ BACKEND := apps/backend
 FLUTTER := cd $(APP) && fvm flutter
 DART := cd $(APP) && fvm dart
 
-.PHONY: help get l10n gen brand live chat-agent-live chat-spike chat-spike-live chat-oracle-live chat-discussion-live chat-adaptive-live chat-retrieval chat-dense-live chat-dense-replay chat-heldout-live chat-refine-live chat-validation2-live chat-recovery-live chat-validation3-live watch run release dev run-android release-android dev-android apk profile test analyze format check clean backend-install backend-dev backend-types backend-test backend-live backend-e2e backend-migrate backend-invite backend-ban backend-deploy
+.PHONY: help get l10n gen brand live chat-agent-live chat-spike chat-spike-live chat-oracle-live chat-discussion-live chat-adaptive-live chat-retrieval chat-dense-live chat-dense-replay chat-heldout-live chat-refine-live chat-validation2-live chat-recovery-live chat-validation3-live watch run release dev run-android release-android dev-android apk profile test analyze format check clean docs-check backend-install backend-dev backend-types backend-test backend-live backend-e2e backend-migrate backend-invite backend-ban backend-deploy
 
 help: ## list commands
 	@grep -E '^[a-z0-9-]+:.*## ' $(MAKEFILE_LIST) | awk -F ':.*## ' '{printf "  %-16s %s\n", $$1, $$2}'
@@ -109,6 +109,9 @@ check: l10n format analyze test ## format, analyze, test
 
 clean: ## flutter clean + pub get
 	$(FLUTTER) clean && fvm flutter pub get
+
+docs-check: ## docs: doc citations in code comments and links between docs still resolve
+	python3 scripts/docs_check.py
 
 backend-install: ## backend: install deps (bun)
 	cd $(BACKEND) && bun install
