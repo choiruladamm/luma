@@ -6,96 +6,81 @@
 </p>
 
 <p align="center">
-  Reader EPUB dan Markdown untuk iOS dan Android. Tap satu paragraf, langsung muncul terjemahan Indonesia dan maknanya, tanpa keluar dari halaman baca.
+  A book reader for iOS and Android with an AI that has read the book. Tap a paragraph for an Indonesian translation and what it means, or ask about the whole book and get answers cited from its pages.
 </p>
 
 <div align="center">
-  <img src="docs/images/showcase-4.png" alt="Layar Luma: rak, baca, terjemahan, Bedahin, dan Pengaturan" width="100%">
+  <img src="docs/images/showcase-4.png" alt="Luma screens: shelf, reader, translation, Bedahin, and Settings" width="100%">
 
 <details>
-<summary>Intip showcase lainnya</summary>
+<summary>More screens</summary>
 <br>
-  <img src="docs/images/showcase-1.png" alt="Rak, baca, terjemahan, dan Bedahin" width="100%">
+  <img src="docs/images/showcase-1.png" alt="Shelf, reader, translation, and Bedahin" width="100%">
   <br><br>
-  <img src="docs/images/showcase-2.png" alt="Alur: tap paragraf, terjemahan, bedah" width="100%">
+  <img src="docs/images/showcase-2.png" alt="Flow: tap a paragraph, translation, breakdown" width="100%">
   <br><br>
-  <img src="docs/images/showcase-3.png" alt="Daftar isi, font, dan Pengaturan" width="100%">
+  <img src="docs/images/showcase-3.png" alt="Table of contents, type settings, and Settings" width="100%">
 </details>
 </div>
 
+No more copying paragraphs into a chatbot that hasn't read your book, then hunting for your place again: the explanation sits next to the text, and the AI answers from the book itself.
+
+## Talk to your book
+
+*Ngobrolin buku* is a chat that reads the book with you. Ask "why did she refuse him?" or "what does the author mean by virtue here?" and it:
+
+- plans what to read: the current chapter, specific chapters from the real table of contents, or a search for a concept across the whole book;
+- answers with citations, each one a tap away from the exact passage, without losing your reading position;
+- shows its steps as it works (reading, searching, writing) and keeps notes per chapter so later questions are faster;
+- knows where you are in the book and can start from a quote you highlighted.
+
 ## Features
 
-- **Tap paragraf → terjemahan + makna**, ditulis bertahap (streaming) di bottom sheet.
-- **Bedahin**: bedah gagasan jadi beberapa bagian, dengan sambungan ke bagian lain di buku.
-- **Cache hasil AI**: grup yang pernah di-tap gak manggil LLM lagi.
-- **Import EPUB dan Markdown** lewat parser sendiri, jalan di isolate.
-- **Rak buku** dengan cover, progres, dan posisi baca per buku.
-- **Halaman baca imersif** dengan pengaturan font, ukuran, jarak baris, dan tema terang/gelap.
-- **Backup & restore** semua data ke satu file `.zip`.
+- **Read:** distraction-free reader with font, size, spacing and light/dark themes; full-text search inside a book.
+- **Understand:** *Artinya* (translation + meaning per paragraph, streamed) and *Bedahin* (breaks an idea into parts and links them to the rest of the book).
+- **Collect:** import EPUB, Markdown and PDF; find and download public-domain books from Project Gutenberg.
+- **Keep:** local-first library, backup to a `.zip` or the cloud, sync between devices. UI in Indonesian or English.
 
-Data tersimpan lokal (SQLite lewat Drift). Yang keluar dari device hanya teks grup yang di-tap, dikirim ke OpenRouter pakai API key sendiri.
+## Data and privacy
 
-## Arsitektur
+Your library lives on the device (SQLite via Drift). AI requests go straight from the device to [OpenRouter](https://openrouter.ai), with either your own API key or a free quota tied to your account. An account (invite-only for now) enables cloud backup and sync through a small Cloudflare Worker; API keys stay in the device's secure storage and are never backed up.
 
-```mermaid
-flowchart LR
-  subgraph Device["Device iOS / Android"]
-    direction TB
-    App["Luma Flutter<br/>UI → ViewModel → Repository"]
-    Drift[("Drift SQLite<br/>sumber kebenaran")]
-    KC[["Secure storage<br/>token · ai.lumaKey · ai.byokKey"]]
-    App --> Drift
-    App --> KC
-  end
-  subgraph CF["Cloudflare free tier"]
-    direction TB
-    W["Worker Hono /v1"]
-    D1[("D1<br/>akun · ai_keys<br/>user_storage · records")]
-    R2[("R2<br/>u/userId/files<br/>u/userId/backups")]
-    RL["Rate Limiting"]
-    W --> D1
-    W --> R2
-    W --> RL
-  end
-  subgraph EXT["Layanan luar"]
-    direction TB
-    G["Google Sign-In"]
-    OR["OpenRouter<br/>model AI"]
-  end
-  App -- "Bearer: auth · key AI · backup · sync" --> W
-  W -. "verifikasi idToken" .-> G
-  W -- "management key" --> OR
-  App == "AI langsung: key subsidi / BYOK" ==> OR
-  App -. "google_sign_in" .-> G
-```
+## Repo
 
-Detail: [docs/architecture.md](docs/architecture.md) (app) dan [docs/backend.md](docs/backend.md) (backend Cloudflare, diagram alur login, key AI, backup, sync, dan schema D1).
-
-## Tech stack
-
-Flutter ([FVM](https://fvm.app)) · Riverpod 3 · Drift · go_router · freezed · [OpenRouter](https://openrouter.ai) (model bisa diganti di Pengaturan) · `flutter_secure_storage` untuk API key (tidak ikut backup).
+| Path | What |
+|---|---|
+| `apps/mobile` | Flutter app (Riverpod, Drift, go_router) |
+| `apps/backend` | Cloudflare Worker: Hono, D1, R2, Better Auth |
+| `docs/` | Product and technical docs, in Indonesian ([index](docs/README.md)) |
 
 ## Getting started
 
-Butuh Flutter lewat FVM, plus Xcode (iOS) dan/atau Android SDK.
+Needs Flutter via [FVM](https://fvm.app), Xcode and/or the Android SDK, and [Bun](https://bun.sh) for the backend.
 
 ```bash
-make get      # pub get
-make gen      # codegen (drift, freezed)
-make check    # format, analyze, test
-make run      # debug di device / simulator
-make help     # semua perintah
+make get            # pub get
+make gen            # codegen (Drift, freezed)
+make run f=dev      # debug build of Luma Dev on a device / simulator
+make check          # format, analyze, test
+
+make backend-install
+make backend-dev    # local Worker on :8787
+make backend-test
+
+make help           # every command
 ```
 
-Isi API key OpenRouter (`sk-or-...`) di **Pengaturan** untuk memakai fitur AI.
+Backend accounts, secrets and deploys: [docs/backend.md](docs/backend.md) (Setup & deploy).
 
-Build ke device: `make dev` / `make dev-android` (Luma Dev, branch apa saja), `make release` / `make release-android` / `make apk` (Luma, hanya dari `master`).
+## Builds
 
-Keystore Android (sekali, simpan di luar repo):
+Two apps with separate data: **Luma Dev** (`make dev`, `make dev-android`) from any branch, and **Luma** (`make release`, `make release-android`, `make apk`) from `master` only.
+
+Android release signing uses a fixed keystore kept outside the repo:
 
 ```bash
 keytool -genkeypair -v -keystore ~/.android/luma-release.jks -alias luma \
   -keyalg RSA -keysize 2048 -validity 10000
 ```
 
-Lalu buat `apps/mobile/android/key.properties` (gitignored): `storeFile`, `storePassword`, `keyAlias=luma`, `keyPassword`.
+Then create `apps/mobile/android/key.properties` (gitignored) with `storeFile`, `storePassword`, `keyAlias=luma` and `keyPassword`.
