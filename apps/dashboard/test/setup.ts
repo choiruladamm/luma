@@ -6,9 +6,9 @@ import { afterAll, afterEach, beforeAll, beforeEach } from "vitest";
 await applyD1Migrations(env.DB, env.TEST_MIGRATIONS);
 
 /**
- * Semua fetch keluar (Google, OpenRouter) di-mock lewat `network.use(...)`.
- * Fetch yang gak di-mock jatuh ke handler terakhir dan gagal keras, jadi
- * subrequest tak terduga ketahuan di test.
+ * Every outbound fetch (Google, OpenRouter) is mocked with `network.use(...)`.
+ * Unmocked fetches hit the last handler and fail loudly, so unexpected
+ * subrequests show up in tests.
  */
 export const network = setupNetwork();
 

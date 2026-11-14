@@ -10,8 +10,8 @@ const GOOGLE_TOKEN = "https://oauth2.googleapis.com/token";
 const b64url = (value: object) => btoa(JSON.stringify(value)).replace(/=+$/, "").replace(/\+/g, "-").replace(/\//g, "_");
 
 /**
- * Google palsu untuk tukar code: idToken cuma di-decode Better Auth setelah
- * pertukaran code server-ke-server, jadi tanda tangannya gak dipakai di sini.
+ * Fake Google code exchange: Better Auth only decodes the idToken after the
+ * server-to-server code exchange, so its signature isn't checked here.
  */
 function fakeGoogleToken(claims: { sub: string; email: string }) {
   const idToken = [
@@ -28,7 +28,7 @@ function fakeGoogleToken(claims: { sub: string; email: string }) {
 
 const cookiesFrom = (res: Response) => res.headers.getSetCookie().map((c) => c.split(";")[0]!);
 
-/** sign-in/social → URL Google + cookie state; callback dengan state itu. */
+/** sign-in/social → Google URL + state cookie; callback with that state. */
 async function loginWithGoogle(claims: { sub: string; email: string }, overrides: Partial<Env> = {}) {
   const start = await call(
     "/api/auth/sign-in/social",
@@ -69,7 +69,7 @@ describe("login with Google (redirect)", () => {
     const admin = await createGoogleUser("admin-google@luma.test");
     const overrides = { ADMIN_EMAILS: "admin-google@luma.test" };
     const { response, d1Queries } = (await loginWithGoogle({ sub: admin.sub, email: admin.email }, overrides)).callback;
-    // Anggaran (docs/backend.md, Anggaran per aksi): cari akun + user + cek admin + update token + simpan sesi.
+    // Budget (docs/backend.md, Anggaran per aksi): find account + user + admin check + token update + save session.
     expect(d1Queries).toBeLessThanOrEqual(5);
 
     expect(response.status).toBe(302);

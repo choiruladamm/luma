@@ -3,8 +3,8 @@ import { OPENROUTER_API } from "../../../backend/src/clients/openrouter";
 import { network } from "../setup";
 
 /**
- * OpenRouter management API palsu (GET/DELETE /keys/:hash, bentuk respons sama
- * dengan backend). `fail` → semua panggilan 500. Handler direset tiap test.
+ * Fake OpenRouter management API (GET/DELETE /keys/:hash, same response shape
+ * as the backend's). `fail` → every call returns 500. Handlers reset per test.
  */
 export function fakeOpenRouter({ keys = [] as string[], fail = false, usageDaily = 0.004 } = {}) {
   const live = new Set(keys);

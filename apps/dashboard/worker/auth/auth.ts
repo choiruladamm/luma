@@ -1,37 +1,25 @@
 import { drizzleAdapter } from "@better-auth/drizzle-adapter";
 import { betterAuth } from "better-auth";
 import { APIError } from "better-auth/api";
-import { userAdditionalFields } from "../../backend/src/auth/user-fields";
-import { createDb } from "../../backend/src/db/client";
-import * as schema from "../../backend/src/db/schema";
-import { findUserForAdminCheck } from "./repo";
+import { userAdditionalFields } from "../../../backend/src/auth/user-fields";
+import { createDb } from "../../../backend/src/db/client";
+import * as schema from "../../../backend/src/db/schema";
+import { isAdmin } from "./admin";
+import { findUserForAdminCheck } from "./session";
 
 export const SESSION_EXPIRES_IN_S = 12 * 60 * 60;
 
-/**
- * Admin = email persis ada di `ADMIN_EMAILS` (setelah trim + lowercase) dan sudah
- * diverifikasi. `ADMIN_EMAILS` kosong → gak ada admin (fail closed).
- */
-export function isAdmin(env: Pick<Env, "ADMIN_EMAILS">, user: { email: string; emailVerified: boolean }) {
-  if (!user.emailVerified) return false;
-  const email = user.email.trim().toLowerCase();
-  return env.ADMIN_EMAILS.split(",").some((item) => {
-    const admin = item.trim().toLowerCase();
-    return admin !== "" && admin === email;
-  });
-}
-
 let cached: { env: Env; auth: Auth } | undefined;
 
-/** Instance Better Auth mahal dibikin (puluhan ms CPU): dipakai ulang per isolate selama `env` sama. */
+/** Building Better Auth is expensive (tens of ms CPU): reuse it per isolate while `env` is the same object. */
 export function getAuth(env: Env): Auth {
   if (cached?.env !== env) cached = { env, auth: createAuth(env) };
   return cached.auth;
 }
 
 /**
- * Instance Better Auth kedua di D1 backend: cuma login Google redirect buat admin,
- * cookie sesi ditandatangani secret dashboard sendiri (token app mobile gak berlaku).
+ * Second Better Auth instance on the backend D1: Google redirect login for admins only,
+ * session cookies signed with the dashboard's own secret (mobile app tokens don't work).
  */
 export function createAuth(env: Env) {
   const db = createDb(env.DB);
@@ -47,13 +35,13 @@ export function createAuth(env: Env) {
       google: { clientId: env.GOOGLE_CLIENT_ID, clientSecret: env.GOOGLE_CLIENT_SECRET },
     },
     user: { additionalFields: userAdditionalFields },
-    // State OAuth di cookie terenkripsi: sign-in/social gak nulis D1.
+    // OAuth state lives in an encrypted cookie: sign-in/social doesn't write D1.
     account: { storeStateStrategy: "cookie" },
-    // Rate limit lewat binding Workers per IP (middleware), bukan storage Better Auth.
+    // Rate limiting is the per-IP Workers binding (middleware), not Better Auth storage.
     rateLimit: { enabled: false },
-    // Sesi admin pendek dan gak diperpanjang: lewat 12 jam login lagi.
+    // Short admin sessions, never extended: sign in again after 12 hours.
     session: { expiresIn: SESSION_EXPIRES_IN_S, disableSessionRefresh: true },
-    // Error callback (mis. non-admin) balik ke halaman login SPA, bukan halaman error Better Auth.
+    // Callback errors (e.g. non-admin) go back to the SPA login page, not Better Auth's error page.
     onAPIError: { errorURL: "/login" },
     databaseHooks: {
       user: {

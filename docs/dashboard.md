@@ -65,14 +65,14 @@ Struktur:
 apps/dashboard/
 ├── wrangler.jsonc        # env dev/prod, D1, rate limit, vars ADMIN_EMAILS
 ├── vite.config.ts        # @cloudflare/vite-plugin (+ @vitejs/plugin-react saat SPA)
-├── worker/               # API
-│   ├── index.ts          # app + middleware + mount route; export type AppType
-│   ├── auth.ts           # instance Better Auth dashboard + isAdmin
-│   ├── middleware.ts     # requestId, header keamanan, rate limit, requireAdmin, cek mutasi
-│   ├── audit.ts          # log audit mutasi ke Workers Logs
-│   ├── overview.ts / users.ts / invites.ts   # route + service
-│   └── repo.ts           # semua query D1
-└── src/                  # SPA
+├── worker/               # API, pola sama dengan apps/backend/src
+│   ├── index.ts          # urutan middleware + mount route; export type AppType
+│   ├── env.ts            # AppEnv + createFactory
+│   ├── auth/             # instance Better Auth, isAdmin, query sesi
+│   ├── middleware/       # requestId, header keamanan, rate limit, requireAdmin, cek mutasi, validate
+│   ├── lib/              # errors, audit
+│   └── features/         # users/, invites/, overview/: routes.ts + service.ts + repo.ts
+└── client/               # SPA (cuma import tipe AppType dari worker/)
     ├── main.tsx          # React Router
     ├── api.ts            # hc<AppType>()
     └── pages/            # Login, Ringkasan, User, DetailUser, Undangan
@@ -148,7 +148,7 @@ sequenceDiagram
 
 ## Endpoint
 
-Urutan middleware: `requestId → rateLimit per IP → [/api/auth/* → Better Auth] → sesi cookie + requireAdmin → cek mutasi (JSON + `Origin`) → validator → handler`, `onError` di luar. Header CSP dan `nosniff` dipasang di semua respons. Sesi cookie dicek tanpa membangun instance Better Auth (mahal CPU): tanda tangan HMAC dulu, lalu 1 query join `sessions` + `users`.
+Urutan middleware: `requestId → rateLimit per IP → [/api/auth/* → Better Auth] → sesi cookie + requireAdmin → cek mutasi (JSON + `Origin`) → rate limit per admin (mutasi) → validator → handler`, `onError` di luar. Header CSP dan `nosniff` dipasang di semua respons. Sesi cookie dicek tanpa membangun instance Better Auth (mahal CPU): tanda tangan HMAC dulu, lalu 1 query join `sessions` + `users`.
 
 | Endpoint | Request | Respons | D1 / subrequest |
 |---|---|---|---|

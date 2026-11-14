@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { audit } from "../../worker/audit";
-import { isAdmin } from "../../worker/auth";
+import { audit } from "../../worker/lib/audit";
+import { isAdmin } from "../../worker/auth/admin";
 
 const user = (email: string, emailVerified = true) => ({ email, emailVerified });
 
