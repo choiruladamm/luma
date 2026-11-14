@@ -194,7 +194,7 @@ PDF scan tanpa teks butuh OCR; hasilnya paling riskan salah. Untuk PDF scan atau
 
 ## Import PDF langsung
 
-> Status: **jalan di Luma Dev iOS (simulator)**, branch `feat/import-pdf`, induk [#83](https://github.com/choiruladamm/luma/issues/83). Spike #84 lolos, pipeline #85–#88 dipasang, dituning terhadap 5 PDF asli (#89). Android belum diuji. Jalur Docling tetap jadi cadangan (scan, layout rumit).
+> Status: **jalan**, sudah di `master` (PR #193; diuji di iOS simulator), induk [#83](https://github.com/choiruladamm/luma/issues/83). Spike #84 lolos, pipeline #85–#88 dipasang, dituning terhadap 5 PDF asli (#89). Android belum diuji. Jalur Docling tetap jadi cadangan (scan, layout rumit).
 
 **Hasil korpus (#89, 8 Nov 2026, macOS `flutter test` via `tool/pdf_probe.dart`, bukan angka device).**
 

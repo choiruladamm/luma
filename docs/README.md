@@ -3,7 +3,6 @@
 > Nama app: **Luma**
 > Desain: **Stabilo** ([design.md](design.md))
 > Status: fitur inti tersedia; dogfooding MVP (#29) dan gate integrasi chat (#124) masih terbuka
-> Terakhir diupdate: 8 November 2026
 
 > **Untuk Claude Code:** folder `docs/` adalah sumber kebenaran untuk keputusan produk, data model, dan alur. File inti ada di tabel di bawah. `docs/ideas/` adalah rencana iterasi berikutnya dan ide kasar, **jangan dikerjakan** kecuali diminta.
 
@@ -20,7 +19,7 @@
 | [import-formats.md](import-formats.md) | Import Luma Markdown (foto buku fisik) & PDF lewat Markdown |
 | [discover.md](discover.md) | Cari & download buku public domain (Gutenberg OPDS, interface BookSource) |
 | [book-search.md](book-search.md) | Cari kata di dalam buku (index FTS5 paragraf, aturan pencarian, alur lompat) |
-| [backend.md](backend.md) | Rencana backend Cloudflare: auth, kuota AI subsidi + BYOK, backup cloud, sync |
+| [backend.md](backend.md) | Backend Cloudflare (`apps/backend`): auth, kuota AI subsidi + BYOK, backup cloud, sync |
 | [ideas/recap.md](ideas/recap.md) | Iterasi 2: Recap bacaan |
 | [ideas/raw.md](ideas/raw.md) | Catatan & ide raw dari dogfooding |
 

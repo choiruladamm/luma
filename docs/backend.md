@@ -1,6 +1,6 @@
 # Backend (Cloudflare)
 
-> Status: rencana, belum ada kode. Keputusan dari diskusi 9 November 2026. Induk: [#197](https://github.com/choiruladamm/luma/issues/197).
+> Kode di `apps/backend`, jalan di env dev (branch `feat/backend`, belum di `master`); env prod belum dibuat. Keputusan awal dari diskusi 9 November 2026. Induk dan progres: [#197](https://github.com/choiruladamm/luma/issues/197).
 
 App tetap **local-first**: Drift di device sumber kebenaran, semua fitur baca/AI/cari jalan tanpa backend. Backend cuma nambah akun, kuota AI subsidi, backup cloud, dan sync antar device.
 
@@ -686,7 +686,7 @@ Lalu:
 3. `make backend-deploy e=dev`. URL per env ada di `backendUrls` (`apps/mobile/lib/data/services/backend_client.dart`).
 4. Cek: `make backend-live` (client Flutter → Worker dev) atau `curl https://luma-api-dev.chrl.cloud/v1/health` → `{"status":"ok","env":"dev"}`. Tepat setelah deploy pertama ke subdomain baru, beberapa request bisa kena error Cloudflare 1104/1042 selama propagasi; hilang sendiri dalam ±1 menit.
 
-**Status resource** (12 November 2026): env dev udah dibuat dan ter-deploy (D1 `luma-dev`, R2 `luma-dev`, `https://luma-backend-dev.choiruladamm.workers.dev`). Env prod (D1/R2 `luma-prod`) dibuat saat backend di-merge ke `master`.
+**Resource:** env dev = D1 `luma-dev`, R2 `luma-dev`, `https://luma-api-dev.chrl.cloud`. Env prod (D1/R2 `luma-prod`, `https://luma-api.chrl.cloud`) dibuat saat backend di-merge ke `master`.
 
 **Custom domain (#214):** XL (Internet Positif) ngarahin `*.workers.dev` ke blockpage lewat DNS, jadi app pakai custom domain di zone `chrl.cloud` (Cloudflare, nameserver dipindah dari Rumahweb; domain diperpanjang di Rumahweb, jatuh tempo 13 April 2027): dev `https://luma-api-dev.chrl.cloud`, prod `https://luma-api.chrl.cloud` (`routes` `custom_domain` di `wrangler.jsonc`, record DNS + sertifikat dibuat otomatis saat deploy). Satu tingkat subdomain (bukan `api.luma.chrl.cloud`) karena sertifikat gratis cuma nutup `*.chrl.cloud`. `*.workers.dev` tetap nyala sebagai cadangan; `BETTER_AUTH_URL` ikut custom domain.
 
@@ -707,13 +707,7 @@ Ukuran bundle dicek `bunx wrangler deploy --env dev --dry-run --outdir dist` (sc
 
 ## Urutan kerja
 
-1. Scaffold `apps/backend` ([#198](https://github.com/choiruladamm/luma/issues/198), Hono, Drizzle, D1, R2, env dev/prod, observability, vitest, target Makefile)
-2. Auth backend + data layer ([#199](https://github.com/choiruladamm/luma/issues/199), email dev, kode undangan, sesi, hapus akun, `/privacy`)
-   - Auth UI + Google ([#211](https://github.com/choiruladamm/luma/issues/211), layar Masuk, akun di Pengaturan, gerbang login wajib; nunggu board desain + OAuth Client ID). Boleh dikerjakan paralel dengan #200–#201.
-3. Key AI ([#200](https://github.com/choiruladamm/luma/issues/200), subsidi + BYOK, guardrail, budget)
-4. Backup cloud ([#201](https://github.com/choiruladamm/luma/issues/201))
-5. Sync push ([#109](https://github.com/choiruladamm/luma/issues/109), migrasi outbox/inbox, push, dump Markdown)
-6. Sync pull ([#210](https://github.com/choiruladamm/luma/issues/210), pull, inbox, download buku, E2E dua device)
+Urutan issue dan progresnya ada di checklist induk [#197](https://github.com/choiruladamm/luma/issues/197). Rantai utamanya: scaffold (#198) → auth (#199, UI + Google #211) → key AI (#200) → backup cloud (#201) → sync push (#109) → sync pull (#210), plus custom domain (#214).
 
 ## Ditunda
 
