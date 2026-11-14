@@ -29,7 +29,8 @@
         "BETTER_AUTH_URL": "https://luma-backend-dev.choiruladamm.workers.dev",
         "INVITE_REQUIRED": "true",
         // Client ID OAuth Google web,ios,android dipisah koma (publik, bukan secret). Kosong = Google mati.
-        "GOOGLE_CLIENT_IDS": "",
+        // Dev: web, iOS id.ruma.luma.dev, Android id.ruma.luma.dev (release + debug SHA-1).
+        "GOOGLE_CLIENT_IDS": "366577823040-vhr2h7toc53pb891v0qoc1m62pps2v41.apps.googleusercontent.com,366577823040-iado5q8njuvdienlc83al1ed2he5u3c0.apps.googleusercontent.com,366577823040-1al41309eeu55f1eer8abb0pdvk5dldp.apps.googleusercontent.com,366577823040-ftbbr6peb5l9ke8bk00th3l93orb644q.apps.googleusercontent.com",
         // Kuota AI subsidi (docs/backend.md, AI). Model harus sama dengan guardrail workspace OpenRouter.
         "AI_DAILY_LIMIT_USD": "0.02",
         "AI_MONTHLY_BUDGET_USD": "5",
