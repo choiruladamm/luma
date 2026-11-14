@@ -16,7 +16,12 @@ import 'auth_dialogs.dart';
 import 'auth_toast.dart';
 
 /// Build dev = email + kata sandi; rilis = Google (board Akun 05).
-final devLoginProvider = Provider<bool>((ref) => appFlavor == 'dev');
+/// `--dart-define=GOOGLE_LOGIN=true` maksa layar Google di build dev (uji
+/// login Google ke Worker dev tanpa build rilis).
+const _forceGoogleLogin = bool.fromEnvironment('GOOGLE_LOGIN');
+final devLoginProvider = Provider<bool>(
+  (ref) => appFlavor == 'dev' && !_forceGoogleLogin,
+);
 
 /// Layar Masuk (board Akun 01–07). Login wajib: gak ada bottom bar dan gak
 /// bisa dilewatin; sukses → router pindah sendiri ke Rak.
