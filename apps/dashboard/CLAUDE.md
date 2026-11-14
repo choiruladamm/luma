@@ -33,7 +33,7 @@ worker/
     ├── routes.ts        # Hono + validate(), deps from c.var, no logic; chained for AppType
     ├── service.ts       # business logic, dependencies passed as params
     └── repo.ts          # every D1 query of the feature
-client/                  # React SPA (#221): imports only `type AppType` from worker/
+client/                  # React SPA, see "Client" below
 ```
 
 - Middleware order: `securityHeaders → requestId → IP rateLimit → [/api/auth/* allowlist → Better Auth] → requireAdmin → requireSameOriginJson → rateLimitAdmin → validate → handler`. `requireAdmin` is global on `/api/*`; never add per-route auth or mount routes before it.
@@ -44,6 +44,18 @@ client/                  # React SPA (#221): imports only `type AppType` from wo
 - Metadata only: never select `records`, `key_enc`, or session tokens into a response. Pick columns explicitly.
 - Free tier: same per-account Workers/D1 quota as the backend. Every endpoint updates the budget table in `docs/backend.md` (Anggaran per aksi). No polling.
 - Code comments in this app are in English (docs, issues, and API error copy stay as they are).
+
+## Client (`client/`)
+
+Stack: React, React Router (routing only), TanStack Query over `hc<AppType>()`, RHF + zod, TanStack Table, Zustand. No Axios, no React Router loaders/actions. Files are kebab-case.
+
+- One-way flow: `pages → (feature hooks + queries) → api → lib/api-client`. Components only take props; features don't import each other.
+- `features/*/api/`: raw `hc` calls through `unwrap()` → data or `ApiError`; no React. `queries/`: the only place for `useQuery`/`useMutation`, keys in `query-keys.ts`. `hooks/`: client logic that never calls the API. `schemas/`: zod for forms, mirroring worker limits (the worker stays the authority).
+- `client/` imports from `worker/` with `import type` only. Better Auth routes aren't in `AppType`; `features/auth/api` uses plain `fetch`.
+- Keep the TanStack Query defaults in `app/query-client.ts` (no focus refetch, no polling): the dashboard shares the backend's free-tier quota.
+- Zustand (`stores/`) holds UI state only, never API data.
+- Static files don't pass through the Worker: their security headers live in `public/_headers`.
+- `tsconfig.client.json` checks `client/` (DOM + JSX); `make dashboard-test` runs it. `client/lib` has unit tests in `test/unit/`.
 
 ## Shared code with the backend
 

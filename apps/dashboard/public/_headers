@@ -1,0 +1,4 @@
+# Static assets (the SPA) don't pass through the Worker, so its security headers are set here.
+/*
+  Content-Security-Policy: default-src 'self'; frame-ancestors 'none'
+  X-Content-Type-Options: nosniff
