@@ -3496,5 +3496,172 @@
   "bookshelfSyncingBody": "Buku dari HP lain lagi diunduh. Sambil baca juga bisa.",
   "@bookshelfSyncingBody": {
     "description": "Interface copy in ui/features/bookshelf/views/sync_banner.dart"
+  },
+  "settingsAccountPhoto": "Foto profil",
+  "settingsAccountUsedToday": "Kepakai hari ini",
+  "settingsAccountUsedValue": "{count} tap",
+  "@settingsAccountUsedValue": {
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "settingsAccountDaily": "Jatah harian",
+  "settingsAccountDailyValue": "± 30–50 tap",
+  "settingsAccountSignOutNote": "Buku di HP ini tetap ada",
+  "settingsAccountDeleteNote": "Hapus akun + semua data di server",
+  "settingsHubModelFree": "Model AI · Kuota gratis",
+  "@settingsHubModelFree": {},
+  "settingsHubModelOwn": "Model AI · Key sendiri",
+  "@settingsHubModelOwn": {},
+  "settingsHubChangeModel": "Ganti model",
+  "@settingsHubChangeModel": {},
+  "settingsHubManageAi": "Atur AI",
+  "@settingsHubManageAi": {},
+  "settingsHubModelDefault": "{id} · default",
+  "@settingsHubModelDefault": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsHubMoreSection": "Data & lainnya",
+  "@settingsHubMoreSection": {},
+  "settingsHubTileBackup": "Backup",
+  "@settingsHubTileBackup": {},
+  "settingsHubTileCatalog": "Katalog",
+  "@settingsHubTileCatalog": {},
+  "settingsHubTileCache": "Cache",
+  "@settingsHubTileCache": {},
+  "settingsHubTileDisplay": "Tampilan",
+  "@settingsHubTileDisplay": {},
+  "settingsHubBackupNever": "Belum pernah",
+  "@settingsHubBackupNever": {},
+  "settingsHubCatalogNever": "Belum diunduh",
+  "@settingsHubCatalogNever": {},
+  "settingsHubCatalogDownloading": "Diunduh {percent}%",
+  "@settingsHubCatalogDownloading": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsHubCatalogWorking": "Lagi nyiapin…",
+  "@settingsHubCatalogWorking": {},
+  "settingsHubCatalogDone": "Udah diunduh",
+  "@settingsHubCatalogDone": {},
+  "settingsHubCatalogFailed": "Gagal, coba lagi",
+  "@settingsHubCatalogFailed": {},
+  "settingsHubCacheEmpty": "Kosong",
+  "@settingsHubCacheEmpty": {},
+  "settingsHubCacheUsed": "{size} terpakai",
+  "@settingsHubCacheUsed": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsHubDisplayStatus": "{theme} · {language}",
+  "@settingsHubDisplayStatus": {
+    "placeholders": {
+      "theme": {
+        "type": "String"
+      },
+      "language": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsHubSignedOut": "Belum masuk",
+  "@settingsHubSignedOut": {},
+  "settingsHubSignedOutNote": "Masuk buat dapet kuota AI gratis",
+  "@settingsHubSignedOutNote": {},
+  "settingsHubQuotaReset": "Reset {time} · {countdown} lagi",
+  "@settingsHubQuotaReset": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      },
+      "countdown": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsBackupSaveToFile": "Simpen salinan ke file",
+  "settingsBackupRestoreFrom": "Pulihin dari",
+  "settingsBackupFile": "File",
+  "settingsBackupCloud": "Cloud",
+  "settingsAiFreeModelsLabel": "Model AI · {count} model gratis",
+  "@settingsAiFreeModelsLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsAiMoreModelsHint": "300-an model lain kebuka kalau lo pakai key OpenRouter sendiri.",
+  "settingsAiDefaultBadge": "Default",
+  "settingsAiKeyChecking": "Lagi ngecek ke OpenRouter…",
+  "settingsAiKeyRejectedBody": "OpenRouter nolak key ini. Cek lagi di openrouter.ai/keys, terus tempel ulang.",
+  "settingsAiKeyRejectedFallback": "Sementara AI balik pakai kuota gratis (sisa {percent}%) sampai key-nya bener.",
+  "@settingsAiKeyRejectedFallback": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsAiKeyRejectedFallbackNoQuota": "Sementara AI balik pakai kuota gratis sampai key-nya bener.",
+  "settingsAiKeyRecheck": "Cek lagi",
+  "settingsAiModelFallsBack": "{id} · balik ke model gratis",
+  "@settingsAiModelFallsBack": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsCatalogTitle": "Katalog buku",
+  "settingsCatalogCardTitle": "Katalog Gutenberg",
+  "settingsCatalogNotDownloaded": "Belum diunduh · 5,6 MB",
+  "settingsCatalogChecking": "Ngecek versi terbaru…",
+  "settingsCatalogDownloading": "Lagi diunduh",
+  "settingsCatalogPreparing": "Nyusun katalog…",
+  "settingsCatalogFailed": "Gagal, katalog lama tetep dipakai",
+  "settingsCatalogDownload": "Unduh",
+  "settingsCatalogUpdate": "Perbarui",
+  "settingsCatalogCancel": "Batal",
+  "settingsCatalogRetry": "Coba lagi",
+  "settingsCatalogUpToDate": "Katalognya udah yang terbaru",
+  "settingsCatalogWhy": "Buat apa?",
+  "settingsCatalogWhySearch": "Cari judul tanpa internet",
+  "settingsCatalogWhySearchBody": "Ketik judul atau penulis, hasilnya langsung keluar",
+  "settingsCatalogWhyBooks": "±62.000 buku Project Gutenberg",
+  "settingsCatalogWhyBooksBody": "Semuanya public domain, gratis diambil",
+  "settingsCatalogWhyWeekly": "Diperbarui mingguan",
+  "settingsCatalogWhyWeeklyBody": "Tap Perbarui kalau mau yang paling baru",
+  "settingsCatalogBackgroundNote": "Boleh tutup layar ini, unduhan jalan terus di belakang.",
+  "settingsCacheEyebrow": "Penyimpanan",
+  "settingsCacheTitle": "Hapus cache terjemahan?",
+  "settingsCacheParagraphs": "paragraf",
+  "settingsCacheUsed": "dipakai",
+  "settingsCacheBody": "Terjemahan yang udah disimpen bakal ilang dari HP ini. Pas lo buka lagi, Luma nerjemahin ulang, dan itu makan kuota AI.",
+  "settingsCacheClear": "Hapus cache",
+  "settingsCacheCancel": "Batal",
+  "settingsDisplayTitle": "Tampilan",
+  "settingsDisplayTheme": "Tema",
+  "settingsDisplaySystemHint": "Ngikut mode HP",
+  "settingsDisplayLightHint": "Kertas krem",
+  "settingsDisplayDarkHint": "Buat malem",
+  "settingsDisplayThemeNote": "Ini setelan yang sama kayak Tema di menu Aa pas baca. Ganti di satu tempat, dua-duanya ikut.",
+  "settingsDisplayLanguage": "Bahasa tampilan",
+  "settingsDisplayLanguageNote": "Bahasa ini cuma buat tampilan. Terjemahan sama jawaban AI tetap Bahasa Indonesia.",
+  "settingsCatalogBooks": "{count} buku",
+  "@settingsCatalogBooks": {
+    "placeholders": {"count": {"type": "int", "format": "decimalPattern"}}
+  },
+  "settingsCatalogBooksUpdated": "{count} buku · Diperbarui {date}",
+  "@settingsCatalogBooksUpdated": {
+    "placeholders": {"count": {"type": "int", "format": "decimalPattern"}, "date": {"type": "String"}}
   }
 }

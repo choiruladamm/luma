@@ -2758,4 +2758,281 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get bookshelfSyncingBody =>
       'Buku dari HP lain lagi diunduh. Sambil baca juga bisa.';
+
+  @override
+  String get settingsAccountPhoto => 'Foto profil';
+
+  @override
+  String get settingsAccountUsedToday => 'Kepakai hari ini';
+
+  @override
+  String settingsAccountUsedValue(int count) {
+    return '$count tap';
+  }
+
+  @override
+  String get settingsAccountDaily => 'Jatah harian';
+
+  @override
+  String get settingsAccountDailyValue => '± 30–50 tap';
+
+  @override
+  String get settingsAccountSignOutNote => 'Buku di HP ini tetap ada';
+
+  @override
+  String get settingsAccountDeleteNote => 'Hapus akun + semua data di server';
+
+  @override
+  String get settingsHubModelFree => 'Model AI · Kuota gratis';
+
+  @override
+  String get settingsHubModelOwn => 'Model AI · Key sendiri';
+
+  @override
+  String get settingsHubChangeModel => 'Ganti model';
+
+  @override
+  String get settingsHubManageAi => 'Atur AI';
+
+  @override
+  String settingsHubModelDefault(String id) {
+    return '$id · default';
+  }
+
+  @override
+  String get settingsHubMoreSection => 'Data & lainnya';
+
+  @override
+  String get settingsHubTileBackup => 'Backup';
+
+  @override
+  String get settingsHubTileCatalog => 'Katalog';
+
+  @override
+  String get settingsHubTileCache => 'Cache';
+
+  @override
+  String get settingsHubTileDisplay => 'Tampilan';
+
+  @override
+  String get settingsHubBackupNever => 'Belum pernah';
+
+  @override
+  String get settingsHubCatalogNever => 'Belum diunduh';
+
+  @override
+  String settingsHubCatalogDownloading(int percent) {
+    return 'Diunduh $percent%';
+  }
+
+  @override
+  String get settingsHubCatalogWorking => 'Lagi nyiapin…';
+
+  @override
+  String get settingsHubCatalogDone => 'Udah diunduh';
+
+  @override
+  String get settingsHubCatalogFailed => 'Gagal, coba lagi';
+
+  @override
+  String get settingsHubCacheEmpty => 'Kosong';
+
+  @override
+  String settingsHubCacheUsed(String size) {
+    return '$size terpakai';
+  }
+
+  @override
+  String settingsHubDisplayStatus(String theme, String language) {
+    return '$theme · $language';
+  }
+
+  @override
+  String get settingsHubSignedOut => 'Belum masuk';
+
+  @override
+  String get settingsHubSignedOutNote => 'Masuk buat dapet kuota AI gratis';
+
+  @override
+  String settingsHubQuotaReset(String time, String countdown) {
+    return 'Reset $time · $countdown lagi';
+  }
+
+  @override
+  String get settingsBackupSaveToFile => 'Simpen salinan ke file';
+
+  @override
+  String get settingsBackupRestoreFrom => 'Pulihin dari';
+
+  @override
+  String get settingsBackupFile => 'File';
+
+  @override
+  String get settingsBackupCloud => 'Cloud';
+
+  @override
+  String settingsAiFreeModelsLabel(int count) {
+    return 'Model AI · $count model gratis';
+  }
+
+  @override
+  String get settingsAiMoreModelsHint =>
+      '300-an model lain kebuka kalau lo pakai key OpenRouter sendiri.';
+
+  @override
+  String get settingsAiDefaultBadge => 'Default';
+
+  @override
+  String get settingsAiKeyChecking => 'Lagi ngecek ke OpenRouter…';
+
+  @override
+  String get settingsAiKeyRejectedBody =>
+      'OpenRouter nolak key ini. Cek lagi di openrouter.ai/keys, terus tempel ulang.';
+
+  @override
+  String settingsAiKeyRejectedFallback(int percent) {
+    return 'Sementara AI balik pakai kuota gratis (sisa $percent%) sampai key-nya bener.';
+  }
+
+  @override
+  String get settingsAiKeyRejectedFallbackNoQuota =>
+      'Sementara AI balik pakai kuota gratis sampai key-nya bener.';
+
+  @override
+  String get settingsAiKeyRecheck => 'Cek lagi';
+
+  @override
+  String settingsAiModelFallsBack(String id) {
+    return '$id · balik ke model gratis';
+  }
+
+  @override
+  String get settingsCatalogTitle => 'Katalog buku';
+
+  @override
+  String get settingsCatalogCardTitle => 'Katalog Gutenberg';
+
+  @override
+  String get settingsCatalogNotDownloaded => 'Belum diunduh · 5,6 MB';
+
+  @override
+  String get settingsCatalogChecking => 'Ngecek versi terbaru…';
+
+  @override
+  String get settingsCatalogDownloading => 'Lagi diunduh';
+
+  @override
+  String get settingsCatalogPreparing => 'Nyusun katalog…';
+
+  @override
+  String get settingsCatalogFailed => 'Gagal, katalog lama tetep dipakai';
+
+  @override
+  String get settingsCatalogDownload => 'Unduh';
+
+  @override
+  String get settingsCatalogUpdate => 'Perbarui';
+
+  @override
+  String get settingsCatalogCancel => 'Batal';
+
+  @override
+  String get settingsCatalogRetry => 'Coba lagi';
+
+  @override
+  String get settingsCatalogUpToDate => 'Katalognya udah yang terbaru';
+
+  @override
+  String get settingsCatalogWhy => 'Buat apa?';
+
+  @override
+  String get settingsCatalogWhySearch => 'Cari judul tanpa internet';
+
+  @override
+  String get settingsCatalogWhySearchBody =>
+      'Ketik judul atau penulis, hasilnya langsung keluar';
+
+  @override
+  String get settingsCatalogWhyBooks => '±62.000 buku Project Gutenberg';
+
+  @override
+  String get settingsCatalogWhyBooksBody =>
+      'Semuanya public domain, gratis diambil';
+
+  @override
+  String get settingsCatalogWhyWeekly => 'Diperbarui mingguan';
+
+  @override
+  String get settingsCatalogWhyWeeklyBody =>
+      'Tap Perbarui kalau mau yang paling baru';
+
+  @override
+  String get settingsCatalogBackgroundNote =>
+      'Boleh tutup layar ini, unduhan jalan terus di belakang.';
+
+  @override
+  String get settingsCacheEyebrow => 'Penyimpanan';
+
+  @override
+  String get settingsCacheTitle => 'Hapus cache terjemahan?';
+
+  @override
+  String get settingsCacheParagraphs => 'paragraf';
+
+  @override
+  String get settingsCacheUsed => 'dipakai';
+
+  @override
+  String get settingsCacheBody =>
+      'Terjemahan yang udah disimpen bakal ilang dari HP ini. Pas lo buka lagi, Luma nerjemahin ulang, dan itu makan kuota AI.';
+
+  @override
+  String get settingsCacheClear => 'Hapus cache';
+
+  @override
+  String get settingsCacheCancel => 'Batal';
+
+  @override
+  String get settingsDisplayTitle => 'Tampilan';
+
+  @override
+  String get settingsDisplayTheme => 'Tema';
+
+  @override
+  String get settingsDisplaySystemHint => 'Ngikut mode HP';
+
+  @override
+  String get settingsDisplayLightHint => 'Kertas krem';
+
+  @override
+  String get settingsDisplayDarkHint => 'Buat malem';
+
+  @override
+  String get settingsDisplayThemeNote =>
+      'Ini setelan yang sama kayak Tema di menu Aa pas baca. Ganti di satu tempat, dua-duanya ikut.';
+
+  @override
+  String get settingsDisplayLanguage => 'Bahasa tampilan';
+
+  @override
+  String get settingsDisplayLanguageNote =>
+      'Bahasa ini cuma buat tampilan. Terjemahan sama jawaban AI tetap Bahasa Indonesia.';
+
+  @override
+  String settingsCatalogBooks(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    return '$countString buku';
+  }
+
+  @override
+  String settingsCatalogBooksUpdated(int count, String date) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    return '$countString buku · Diperbarui $date';
+  }
 }
