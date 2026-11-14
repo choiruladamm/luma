@@ -28,7 +28,7 @@ const db = () => createDb(env.DB);
 const userRow = async (id: string) => (await db().select().from(users).where(eq(users.id, id)))[0]!;
 const keyRow = async (id: string) => (await db().select().from(aiKeys).where(eq(aiKeys.userId, id)))[0] ?? null;
 
-/** User dengan prefix email unik per test, supaya pencarian gak ketabrak data test lain. */
+/** Unique email prefix per test, so searches don't hit other tests' data. */
 const tag = () => `t${crypto.randomUUID().slice(0, 8)}`;
 
 describe("GET /api/users", () => {
@@ -112,7 +112,7 @@ describe("GET /api/users/:id", () => {
 
     const { response, d1Queries } = await get(`/api/users/${user.id}`);
     expect(response.status).toBe(200);
-    // guard 1 + batch 4 statement.
+    // guard 1 + batch of 4 statements.
     expect(d1Queries).toBe(5);
     expect(openrouter.calls).toEqual(["GET hash-detail"]);
     const body = (await response.json()) as Record<string, unknown>;
@@ -170,7 +170,7 @@ describe("POST /api/users/:id/ban", () => {
     const { response, d1Queries } = await post(`/api/users/${user.id}/ban`);
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ banned: true, keyRevoked: true });
-    // guard 1 + cari key 1 + batch 2 statement.
+    // guard 1 + key lookup 1 + batch of 2 statements.
     expect(d1Queries).toBe(4);
     expect(openrouter.calls).toEqual(["DELETE hash-ban"]);
     expect(openrouter.live.has("hash-ban")).toBe(false);
@@ -237,7 +237,7 @@ describe("POST /api/users/:id/unban", () => {
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ banned: false });
     expect(d1Queries).toBe(2);
-    // Yang dibaca `issueKey` backend sebelum bikin key (banned → 403 AI_BANNED).
+    // What the backend `issueKey` reads before creating a key (banned → 403 AI_BANNED).
     expect(await findUserKey(db(), user.id)).toEqual({ banned: false, key: null });
     expect(log.mock.calls.map((c) => JSON.parse(c[0] as string)).find((l) => l.message === "audit")).toMatchObject({
       action: "user.unban",

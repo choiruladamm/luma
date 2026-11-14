@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  // Desain & keamanan: docs/dashboard.md
+  // Design & security: docs/dashboard.md
   "name": "luma-admin",
   "main": "worker/index.ts",
   "compatibility_date": "2026-11-10",
@@ -9,8 +9,8 @@
     "enabled": true,
     "logs": { "enabled": true, "head_sampling_rate": 1 }
   },
-  // Binding gak diwarisin antar env: tiap env nulis lengkap. D1 = database backend env yang sama.
-  // Satu-satunya jalan masuk: custom domain di belakang Cloudflare Access (tanpa workers.dev / preview URL).
+  // Bindings aren't inherited across envs: each env lists them all. D1 = the backend database of the same env.
+  // The only way in: the custom domain behind Cloudflare Access (no workers.dev / preview URLs).
   "env": {
     "dev": {
       "name": "luma-admin-dev",
@@ -19,11 +19,11 @@
       "preview_urls": false,
       "vars": {
         "ENV": "dev",
-        // Email admin dipisah koma. Kosong = semua ditolak (fail closed).
-        // Harus akun Google yang sudah ada di D1 env ini: dashboard gak bisa bikin akun.
+        // Comma-separated admin emails. Empty = everyone rejected (fail closed).
+        // Must be a Google account already in this env's D1: the dashboard can't create accounts.
         "ADMIN_EMAILS": "work.adamm@gmail.com",
         "BETTER_AUTH_URL": "https://luma-admin-dev.chrl.cloud",
-        // Client ID OAuth Google web (publik), sama dengan entri pertama GOOGLE_CLIENT_IDS backend.
+        // Google OAuth web client ID (public), same as the first entry of the backend GOOGLE_CLIENT_IDS.
         "GOOGLE_CLIENT_ID": "366577823040-vhr2h7toc53pb891v0qoc1m62pps2v41.apps.googleusercontent.com"
       },
       "d1_databases": [

@@ -1,11 +1,11 @@
 import { cloudflare } from "@cloudflare/vite-plugin";
 import { defineConfig } from "vite";
 
-// Env Cloudflare (dev/prod di wrangler.jsonc) dipilih lewat CLOUDFLARE_ENV saat dev dan build.
+// The Cloudflare env (dev/prod in wrangler.jsonc) is picked by CLOUDFLARE_ENV at dev and build time.
 export default defineConfig({
   plugins: [
     cloudflare({
-      // State lokal yang sama dengan `make backend-dev`: D1 lokal dashboard = D1 lokal backend.
+      // Same local state as `make backend-dev`: the dashboard's local D1 is the backend's.
       persistState: { path: "../backend/.wrangler/state" },
     }),
   ],

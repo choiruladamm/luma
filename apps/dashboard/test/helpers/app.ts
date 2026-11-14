@@ -3,7 +3,7 @@ import { app } from "../../worker/index";
 
 export const ORIGIN = "https://luma-admin-dev.chrl.cloud";
 
-/** Bungkus D1 dan hitung statement (prepare/exec). */
+/** Wrap D1 and count statements (prepare/exec). */
 function countingD1(d1: D1Database) {
   let queries = 0;
   const db = new Proxy(d1, {
@@ -22,7 +22,7 @@ function countingD1(d1: D1Database) {
   return { db, count: () => queries };
 }
 
-/** Panggil app dengan `env` yang bisa ditimpa, sambil menghitung query D1. */
+/** Call the app with overridable `env`, counting D1 queries. */
 export async function call(input: string | Request, init: RequestInit = {}, overrides: Partial<Env> = {}) {
   const d1 = countingD1(env.DB);
   const request = typeof input === "string" ? new Request(new URL(input, ORIGIN), init) : input;

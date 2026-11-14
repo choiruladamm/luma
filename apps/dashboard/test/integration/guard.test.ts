@@ -1,14 +1,14 @@
 import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
-import { getAuth } from "../../worker/auth";
+import { getAuth } from "../../worker/auth/auth";
 import { app } from "../../worker/index";
 import { call, errorCode, ORIGIN } from "../helpers/app";
 import { ADMIN_EMAIL, adminCookie, createUser, sessionCookie, userCookie } from "../helpers/session";
 
-/** Path yang pasti lewat guard lalu 404: bukti guard global, bukan per route. */
+/** A path that passes the guard then 404s: proves the guard is global, not per route. */
 const PROBE = "/api/__probe";
 
-/** Semua route admin terdaftar (middleware dan /api/auth/* dibuang), plus probe. */
+/** Every registered admin route (middleware and /api/auth/* removed), plus the probe. */
 const adminRoutes = () => [
   ...app.routes
     .filter((r) => r.method !== "ALL" && r.path.startsWith("/api/") && !r.path.startsWith("/api/auth/"))

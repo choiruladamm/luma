@@ -1,7 +1,7 @@
-# Salin ke .dev.vars (gitignored) buat `make dashboard-dev`.
+# Copy to .dev.vars (gitignored) for `make dashboard-dev`.
 BETTER_AUTH_SECRET=ganti-dengan-string-acak-minimal-32-karakter
 GOOGLE_CLIENT_SECRET=
 OPENROUTER_MANAGEMENT_KEY=
-# Lokal tanpa Access, http.
+# Local: no Access, plain http.
 BETTER_AUTH_URL=http://localhost:5173
 ADMIN_EMAILS=

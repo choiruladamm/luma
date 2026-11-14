@@ -17,24 +17,33 @@ The Cloudflare env is picked by `CLOUDFLARE_ENV` at dev/build time, never `wrang
 
 ## Code layout
 
+Same pattern as `apps/backend/src`:
+
 ```
 worker/
-├── index.ts       # app, middleware order, Better Auth allowlist, export AppType
-├── auth.ts        # Better Auth instance + isAdmin (ADMIN_EMAILS)
-├── middleware.ts  # requestId, security headers, IP rate limit, requireAdmin, mutation check + per-admin limit, validate()
-├── users.ts       # /api/users: list, detail, ban, unban (route + service)
-├── audit.ts       # audit(c, action, targetId) → Workers Logs; call it in every mutation
-├── errors.ts      # ApiError + onError, {"error": {"code", "message"}}
-├── env.ts         # AppEnv: Bindings + c.var (db, admin, requestId)
-└── repo.ts        # every D1 query
+├── index.ts             # middleware order, Better Auth allowlist, route mounting, export AppType
+├── env.ts               # AppEnv + `factory` (createFactory<AppEnv>)
+├── auth/
+│   ├── auth.ts          # Better Auth instance
+│   ├── admin.ts         # isAdmin (ADMIN_EMAILS)
+│   └── session.ts       # session cookie name + session/user queries for auth
+├── middleware/          # request-id, security-headers, rate-limit (IP + per admin), require-admin, same-origin, validate
+├── lib/                 # errors (ApiError, onError), audit
+└── features/<feature>/
+    ├── routes.ts        # Hono + validate(), deps from c.var, no logic; chained for AppType
+    ├── service.ts       # business logic, dependencies passed as params
+    └── repo.ts          # every D1 query of the feature
+client/                  # React SPA (#221): imports only `type AppType` from worker/
 ```
 
-- Middleware order: `securityHeaders → requestId → IP rateLimit → [/api/auth/* allowlist → Better Auth] → requireAdmin → requireSameOriginJson → validator → handler`. `requireAdmin` is global on `/api/*`; never add per-route auth or mount routes before it.
-- New admin routes are chained onto `routes` in `index.ts` so `AppType` carries their types. Feature routes take `db`/`admin` from `c.var`.
+- Middleware order: `securityHeaders → requestId → IP rateLimit → [/api/auth/* allowlist → Better Auth] → requireAdmin → requireSameOriginJson → rateLimitAdmin → validate → handler`. `requireAdmin` is global on `/api/*`; never add per-route auth or mount routes before it.
+- Build the app, middleware, and feature routers from `factory` in `env.ts`. Feature routes are chained (`factory.createApp().get(...).post(...)`) and mounted with `.route()` on `routes` in `index.ts`, so `AppType` carries their types.
+- Features don't import each other. Each `repo.ts` function is one query-budget unit; its comment states the query count.
 - Better Auth endpoints are allowlisted in `AUTH_ROUTES`; anything else under `/api/auth/*` is 404. Don't add one without updating `docs/dashboard.md`.
 - Never build the Better Auth instance outside `/api/auth/*` (tens of ms CPU). `requireAdmin` verifies the cookie HMAC itself, then one D1 join.
 - Metadata only: never select `records`, `key_enc`, or session tokens into a response. Pick columns explicitly.
 - Free tier: same per-account Workers/D1 quota as the backend. Every endpoint updates the budget table in `docs/backend.md` (Anggaran per aksi). No polling.
+- Code comments in this app are in English (docs, issues, and API error copy stay as they are).
 
 ## Shared code with the backend
 

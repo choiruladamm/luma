@@ -2,7 +2,7 @@ import type { Context } from "hono";
 import { HTTPException } from "hono/http-exception";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
-/** Kode error dashboard (docs/dashboard.md, Endpoint); format sama dengan backend. */
+/** Dashboard error codes (docs/dashboard.md, Endpoint); same format as the backend. */
 export type ErrorCode =
   | "BAD_REQUEST"
   | "UNAUTHORIZED"
@@ -25,7 +25,7 @@ export class ApiError extends Error {
 
 const body = (code: ErrorCode, message: string) => ({ error: { code, message } });
 
-/** `app.onError`: ApiError apa adanya, sisanya 500 + log JSON terstruktur. */
+/** `app.onError`: ApiError as is, anything else → 500 + structured JSON log. */
 export const onError = (err: Error, c: Context) => {
   if (err instanceof ApiError) {
     for (const [k, v] of Object.entries(err.headers)) c.header(k, v);
