@@ -140,8 +140,11 @@ void main() {
 
         await tapAndWait(tester, find.text('Daftar'));
 
-        expect(find.text('Kode undangan gua:'), findsOneWidget);
-        expect(find.text('baru@luma.test'), findsOneWidget);
+        expect(find.textContaining('Kode undangan gua:'), findsOneWidget);
+        expect(
+          find.textContaining('baru@luma.test', findRichText: true),
+          findsOneWidget,
+        );
         expect(find.text('Ganti'), findsOneWidget);
 
         await tester.enterText(find.byType(TextField), 'LUMA-4HJP');

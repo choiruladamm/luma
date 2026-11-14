@@ -172,6 +172,7 @@ class _AiSourceSectionState extends ConsumerState<AiSourceSection> {
             label: l.settingsOpenrouterApiKey,
             controller: _key,
             focusNode: _focus,
+            hint: 'sk-or-v1-…',
             secret: true,
             inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'\s'))],
             // Lagi ngedit key: tab Key sendiri tetap kebuka walau field
@@ -760,7 +761,10 @@ class _ModelOption extends StatelessWidget {
 /// Meter kuota di bawah pelat Ex libris (board Kuota AI 01 / Akun 08). Buka
 /// Pengaturan = cek kuota, paling sering sejam sekali (cache provider).
 class AccountQuotaMeter extends ConsumerStatefulWidget {
-  const AccountQuotaMeter({super.key});
+  const AccountQuotaMeter({super.key, this.bare = false});
+
+  /// Tanpa kotak sendiri: udah di dalam pelat Ex libris (board Kuota AI 02).
+  final bool bare;
 
   @override
   ConsumerState<AccountQuotaMeter> createState() => _AccountQuotaMeterState();
@@ -779,6 +783,8 @@ class _AccountQuotaMeterState extends ConsumerState<AccountQuotaMeter> {
   Widget build(BuildContext context) {
     final c = context.stabilo;
     final source = ref.watch(aiSourceProvider).value ?? AiSource.subsidy;
+    final meter = QuotaMeter(data: quotaMeterData(ref, source: source));
+    if (widget.bare) return meter;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: Space.s3),
       decoration: BoxDecoration(
@@ -786,7 +792,7 @@ class _AccountQuotaMeterState extends ConsumerState<AccountQuotaMeter> {
         borderRadius: BorderRadius.circular(Radii.field),
         border: Border.all(color: c.outline),
       ),
-      child: QuotaMeter(data: quotaMeterData(ref, source: source)),
+      child: meter,
     );
   }
 }

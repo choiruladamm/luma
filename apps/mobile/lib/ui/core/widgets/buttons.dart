@@ -32,7 +32,7 @@ class AppIcon extends StatelessWidget {
   );
 }
 
-enum _Tone { primary, secondary, danger }
+enum _Tone { primary, secondary, outline, ink, danger }
 
 /// Tombol Stabilo (board Komponen 01).
 ///
@@ -40,7 +40,11 @@ enum _Tone { primary, secondary, danger }
 ///   maksimal satu.
 /// - [AppButton.secondary]: muted. [destructive] = teks merah (mis. "Hapus"
 ///   cache).
+/// - [AppButton.outline]: latar sheet + garis, aksi kedua yang sejajar
+///   tombol utama ("Daftar", "Keluar" di Akun).
+/// - [AppButton.ink]: latar tinta, konfirmasi yang gak merusak ("Keluar").
 /// - [AppButton.danger]: latar danger, buat konfirmasi hapus/ganti data.
+///   [soft] = pink + garis (dialog akun, board Akun 10–11).
 ///
 /// Tinggi: 56 = CTA layar (sudut 20), 52 = aksi di sheet, 48 = dialog &
 /// state sheet, 40 = aksi kecil di baris/toast. Di bawah 56 bentuknya pill.
@@ -56,7 +60,8 @@ class AppButton extends StatelessWidget {
     this.loading = false,
     this.pill = false,
   }) : _tone = _Tone.primary,
-       destructive = false;
+       destructive = false,
+       soft = false;
 
   const AppButton.secondary({
     super.key,
@@ -68,6 +73,33 @@ class AppButton extends StatelessWidget {
     this.destructive = false,
     this.loading = false,
   }) : _tone = _Tone.secondary,
+       soft = false,
+       pill = false;
+
+  const AppButton.outline({
+    super.key,
+    required this.label,
+    required this.onPressed,
+    this.icon,
+    this.iconAfter = false,
+    this.height = 52,
+    this.loading = false,
+  }) : _tone = _Tone.outline,
+       destructive = false,
+       soft = false,
+       pill = false;
+
+  const AppButton.ink({
+    super.key,
+    required this.label,
+    required this.onPressed,
+    this.icon,
+    this.iconAfter = false,
+    this.height = 52,
+    this.loading = false,
+  }) : _tone = _Tone.ink,
+       destructive = false,
+       soft = false,
        pill = false;
 
   const AppButton.danger({
@@ -78,6 +110,7 @@ class AppButton extends StatelessWidget {
     this.iconAfter = false,
     this.height = 48,
     this.loading = false,
+    this.soft = false,
   }) : _tone = _Tone.danger,
        destructive = true,
        pill = false;
@@ -91,6 +124,7 @@ class AppButton extends StatelessWidget {
   final double height;
   final bool destructive;
   final bool pill;
+  final bool soft;
 
   /// Spinner gantiin teks, lebar tetap, gak bisa di-tap.
   final bool loading;
@@ -100,7 +134,9 @@ class AppButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.stabilo;
     final enabled = onPressed != null && !loading;
-    final primary = _tone == _Tone.primary;
+    // Tombol bergaris + bayangan tekan: primary, danger lembut.
+    final primary = _tone == _Tone.primary || (_tone == _Tone.danger && soft);
+    final outline = _tone == _Tone.outline;
     final radius = BorderRadius.circular(
       height >= 56 && !pill ? Radii.lg : Radii.full,
     );
@@ -109,6 +145,9 @@ class AppButton extends StatelessWidget {
       _ when !enabled => (primary ? c.track : c.muted, c.ink3),
       _Tone.primary => (c.accent, c.onAccent),
       _Tone.secondary => (c.muted, destructive ? c.danger : c.ink),
+      _Tone.outline => (c.sheet, c.ink),
+      _Tone.ink => (c.ink, c.canvas),
+      _Tone.danger when soft => (c.pink, c.onPink),
       _Tone.danger => (c.danger, c.onDanger),
     };
     final fontSize = height >= 56 ? 16.0 : (height <= 48 ? 14.0 : 15.0);
@@ -127,8 +166,13 @@ class AppButton extends StatelessWidget {
           color: bg,
           shape: RoundedRectangleBorder(
             borderRadius: radius,
-            side: primary && enabled
-                ? BorderSide(color: c.accentBorder, width: Layout.outline)
+            side: (primary || outline) && enabled
+                ? BorderSide(
+                    // Garis kuning cuma buat primary; lainnya garis tinta
+                    // (gelap: abu, board Akun gelap).
+                    color: _tone == _Tone.primary ? c.accentBorder : c.outline,
+                    width: Layout.outline,
+                  )
                 : BorderSide.none,
           ),
           clipBehavior: Clip.antiAlias,
@@ -407,6 +451,9 @@ abstract final class AppIcons {
   static const grid = HugeIcons.strokeRoundedGridView;
   static const list = HugeIcons.strokeRoundedLeftToRightListBullet;
   static const info = HugeIcons.strokeRoundedInformationCircle;
+  static const code = HugeIcons.strokeRoundedCode;
+  static const checkCircle = HugeIcons.strokeRoundedCheckmarkCircle02;
+  static const user = HugeIcons.strokeRoundedUser;
   static const delete = HugeIcons.strokeRoundedDelete02;
   static const fileRemove = HugeIcons.strokeRoundedFileRemove;
   static const alertCircle = HugeIcons.strokeRoundedAlertCircle;

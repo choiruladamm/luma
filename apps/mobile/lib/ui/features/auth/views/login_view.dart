@@ -141,13 +141,13 @@ class _TitlePage extends StatelessWidget {
                 l.authBenefitQuota,
                 l.authBenefitQuotaNote,
               ),
-              _Rule(color: c.outline),
+              _Rule(color: c.track),
               _Chapter(
                 l.authChapterTwo,
                 l.authBenefitBackup,
                 l.authBenefitBackupNote,
               ),
-              _Rule(color: c.outline),
+              _Rule(color: c.track),
               _Chapter(
                 l.authChapterThree,
                 l.authBenefitSync,
@@ -243,13 +243,10 @@ class _Chapter extends StatelessWidget {
 
 /// Catatan kaki gagal: garis pendek + ¹ + judul berstabilo pink + keterangan.
 class _Footnote extends StatelessWidget {
-  const _Footnote({required this.title, required this.body, this.label});
+  const _Footnote({required this.title, required this.body});
 
   final String title;
   final String body;
-
-  /// "CATATAN" di atas (board Akun 07).
-  final String? label;
 
   @override
   Widget build(BuildContext context) {
@@ -261,26 +258,16 @@ class _Footnote extends StatelessWidget {
         spacing: Space.s2,
         children: [
           _Rule(color: c.ink, width: 72),
-          if (label != null)
-            Text(
-              label!,
-              style: StabiloType.micro.copyWith(
-                fontWeight: FontWeight.w700,
-                letterSpacing: 1.2,
-                color: c.ink3,
-              ),
-            ),
           Text.rich(
             TextSpan(
               children: [
-                if (label == null)
-                  TextSpan(
-                    text: '1 ',
-                    style: TextStyle(
-                      color: c.danger,
-                      fontWeight: FontWeight.w800,
-                    ),
+                TextSpan(
+                  text: '1 ',
+                  style: TextStyle(
+                    color: c.danger,
+                    fontWeight: FontWeight.w800,
                   ),
+                ),
                 TextSpan(
                   text: title,
                   style: TextStyle(
@@ -296,6 +283,147 @@ class _Footnote extends StatelessWidget {
               height: 1.45,
               color: c.ink,
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Catatan tempel pink buat salah kode undangan (board Akun 07).
+class _StickyNote extends StatelessWidget {
+  const _StickyNote({
+    required this.label,
+    required this.title,
+    required this.body,
+  });
+
+  final String label;
+  final String title;
+  final String body;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.stabilo;
+    return Semantics(
+      liveRegion: true,
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 290),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: c.pink,
+          border: Border.all(color: c.outline, width: Layout.outline),
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(6),
+            topRight: Radius.circular(6),
+            bottomLeft: Radius.circular(6),
+            bottomRight: Radius.circular(18),
+          ),
+          boxShadow: Elevation.press(c, Theme.of(context).brightness),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          spacing: 3,
+          children: [
+            Text(
+              label,
+              style: StabiloType.micro.copyWith(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 1.15,
+                color: c.onPink,
+              ),
+            ),
+            Text(
+              title,
+              style: StabiloType.label.copyWith(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: c.onPink,
+              ),
+            ),
+            Text(
+              body,
+              style: StabiloType.caption.copyWith(
+                fontSize: 13.5,
+                height: 1.4,
+                color: c.onPink,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// "Masuk sebagai … · Ganti" di layar kode undangan (board Akun 06).
+class _SignedInChip extends StatelessWidget {
+  const _SignedInChip({required this.email, required this.onChange});
+
+  final String? email;
+  final VoidCallback onChange;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.stabilo;
+    final l = context.l10n;
+    final style = StabiloType.caption.copyWith(
+      fontSize: 13,
+      fontWeight: FontWeight.w600,
+      color: c.ink,
+    );
+    return Container(
+      padding: const EdgeInsets.fromLTRB(8, 4, 4, 4),
+      decoration: BoxDecoration(
+        color: c.muted,
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        spacing: 10,
+        children: [
+          Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              color: c.accent,
+              shape: BoxShape.circle,
+              border: Border.all(color: c.outline, width: Layout.outline),
+            ),
+            child: Center(
+              child: AppIcon(AppIcons.user, size: 16, color: c.onAccent),
+            ),
+          ),
+          if (email case final email?)
+            Flexible(
+              child: Text.rich(
+                TextSpan(
+                  children: [
+                    TextSpan(text: '${l.authSignedInAs} '),
+                    TextSpan(
+                      text: email,
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                  ],
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: style,
+              ),
+            ),
+          TextButton(
+            onPressed: onChange,
+            style: TextButton.styleFrom(
+              foregroundColor: c.ink,
+              minimumSize: const Size(Layout.touch, 36),
+              padding: const EdgeInsets.symmetric(horizontal: Space.s2),
+              textStyle: style.copyWith(
+                fontWeight: FontWeight.w700,
+                decoration: TextDecoration.underline,
+              ),
+            ),
+            child: Text(l.authChange),
           ),
         ],
       ),
@@ -364,14 +492,19 @@ class _GoogleButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.stabilo;
-    return SizedBox(
+    return Container(
       height: 56,
+      decoration: BoxDecoration(
+        shape: BoxShape.rectangle,
+        borderRadius: BorderRadius.circular(Radii.full),
+        boxShadow: Elevation.press(c, Theme.of(context).brightness),
+      ),
       child: OutlinedButton(
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
           backgroundColor: c.sheet,
           foregroundColor: c.ink,
-          side: BorderSide(color: c.ink, width: 1.5),
+          side: BorderSide(color: c.outline, width: 1.5),
           shape: const StadiumBorder(),
           textStyle: StabiloType.label.copyWith(
             fontSize: 16,
@@ -390,7 +523,7 @@ class _GoogleButton extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: c.sheet,
                   shape: BoxShape.circle,
-                  border: Border.all(color: c.outline, width: 1.5),
+                  border: Border.all(color: c.track, width: 1.5),
                 ),
                 child: Text(
                   'G',
@@ -550,8 +683,16 @@ class _DevBodyState extends ConsumerState<_DevBody> {
       ),
       children: [
         Row(
+          spacing: 10,
           children: [
             const LumaLogo(size: 30),
+            Image.asset(
+              'assets/brand/wordmark.png',
+              height: 23,
+              color: c.ink,
+              colorBlendMode: BlendMode.srcIn,
+              semanticLabel: 'luma',
+            ),
             const Spacer(),
             Text(
               l.authDevLabel.toUpperCase(),
@@ -568,15 +709,21 @@ class _DevBodyState extends ConsumerState<_DevBody> {
           alignment: Alignment.centerLeft,
           child: Container(
             height: 22,
-            padding: const EdgeInsets.symmetric(horizontal: 9),
-            alignment: Alignment.center,
+            padding: const EdgeInsets.fromLTRB(7, 0, 9, 0),
             decoration: BoxDecoration(
               color: c.muted,
               borderRadius: BorderRadius.circular(Radii.full),
             ),
-            child: Text(
-              l.authDevBadge,
-              style: StabiloType.tag.copyWith(color: c.ink),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              spacing: 4,
+              children: [
+                AppIcon(AppIcons.code, size: 12, color: c.ink),
+                Text(
+                  l.authDevBadge,
+                  style: StabiloType.tag.copyWith(color: c.ink),
+                ),
+              ],
             ),
           ),
         ),
@@ -622,7 +769,7 @@ class _DevBodyState extends ConsumerState<_DevBody> {
           spacing: 10,
           children: [
             Expanded(
-              child: AppButton.secondary(
+              child: AppButton.outline(
                 label: l.authSignUp,
                 onPressed: ready && !state.loading
                     ? () => vm.signUpEmail(_email.text, _password.text)
@@ -659,6 +806,7 @@ class _Blank extends StatelessWidget {
     this.mono = false,
     this.autofocus = false,
     this.onSubmitted,
+    this.line = 2.5,
   });
 
   final TextEditingController controller;
@@ -673,10 +821,13 @@ class _Blank extends StatelessWidget {
   final bool mono;
   final bool autofocus;
 
+  /// Tebal garis isian (kode undangan 3).
+  final double line;
+
   @override
   Widget build(BuildContext context) {
     final c = context.stabilo;
-    final line = error ? c.danger : c.ink;
+    final color = error ? c.danger : c.ink;
     return SizedBox(
       width: width,
       child: TextField(
@@ -693,7 +844,8 @@ class _Blank extends StatelessWidget {
         onSubmitted: onSubmitted,
         style: (mono ? StabiloType.mono : StabiloType.titleSm).copyWith(
           fontSize: fontSize,
-          fontWeight: FontWeight.w700,
+          fontWeight: mono ? FontWeight.w800 : FontWeight.w700,
+          letterSpacing: mono ? fontSize * 0.06 : null,
           color: c.ink,
         ),
         decoration: InputDecoration(
@@ -703,10 +855,10 @@ class _Blank extends StatelessWidget {
           semanticCounterText: label,
           contentPadding: const EdgeInsets.fromLTRB(6, 0, 6, 2),
           enabledBorder: UnderlineInputBorder(
-            borderSide: BorderSide(color: line, width: 2.5),
+            borderSide: BorderSide(color: color, width: line),
           ),
           focusedBorder: UnderlineInputBorder(
-            borderSide: BorderSide(color: line, width: 2.5),
+            borderSide: BorderSide(color: color, width: line),
           ),
         ),
       ),
@@ -768,61 +920,31 @@ class _InviteBodyState extends ConsumerState<_InviteBody> {
           Expanded(
             child: ListView(
               children: [
-                if (state.email case final email?)
-                  Row(
-                    spacing: Space.s2,
-                    children: [
-                      Text(
-                        l.authSignedInAs,
-                        style: StabiloType.caption.copyWith(color: c.ink2),
-                      ),
-                      Flexible(
-                        child: Text(
-                          email,
-                          overflow: TextOverflow.ellipsis,
-                          style: StabiloType.caption.copyWith(
-                            fontWeight: FontWeight.w700,
-                            color: c.ink,
-                          ),
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: vm.backToStart,
-                        child: Text(l.authChange),
-                      ),
-                    ],
-                  )
-                else
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: TextButton(
-                      onPressed: vm.backToStart,
-                      child: Text(l.authChange),
-                    ),
-                  ),
-                const SizedBox(height: Space.s6),
-                Text(
-                  l.authInviteIntro,
-                  style: StabiloType.reading.copyWith(
-                    fontSize: 16,
-                    fontStyle: FontStyle.italic,
-                    color: c.ink2,
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: _SignedInChip(
+                    email: state.email,
+                    onChange: vm.backToStart,
                   ),
                 ),
-                const SizedBox(height: Space.s4),
+                const SizedBox(height: Space.s5),
                 Text(
-                  l.authInviteLead,
+                  '${l.authInviteIntro} ${l.authInviteLead}',
                   style: StabiloType.reading.copyWith(
                     fontSize: 22,
+                    height: 1.5,
                     color: c.ink,
                   ),
                 ),
-                const SizedBox(height: Space.s2),
+                const SizedBox(height: Space.s5),
                 _Blank(
                   controller: _code,
                   label: 'LUMA-XXXX',
                   width: double.infinity,
-                  fontSize: 30,
+                  // Board 34, tapi kode asli LUMA-XXXXX-XXXXX (16 huruf) baru
+                  // muat satu baris di 28.
+                  fontSize: 28,
+                  line: 3,
                   mono: true,
                   autofocus: true,
                   error: state.error != null,
@@ -838,8 +960,15 @@ class _InviteBodyState extends ConsumerState<_InviteBody> {
                   style: StabiloType.caption.copyWith(color: c.ink3),
                 ),
                 if (title != null) ...[
-                  const SizedBox(height: Space.s6),
-                  _Footnote(title: title, body: body!, label: l.authNoteLabel),
+                  const SizedBox(height: Space.s5),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: _StickyNote(
+                      label: l.authNoteLabel,
+                      title: title,
+                      body: body!,
+                    ),
+                  ),
                 ],
               ],
             ),
@@ -860,4 +989,6 @@ void showSignedInToast(BuildContext context, String name) => showAuthToast(
   context,
   context.l10n.authToastSignedIn(name.split(' ').first),
   tone: AuthToastTone.success,
+  // Dipanggil dari layar Masuk, tapi munculnya di Rak (di atas bottom bar).
+  overNav: true,
 );

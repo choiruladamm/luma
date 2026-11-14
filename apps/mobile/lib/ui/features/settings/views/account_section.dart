@@ -34,7 +34,7 @@ class AccountSection extends ConsumerWidget {
     final cloudAt = ref.watch(cloudBackupAtProvider).value;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      spacing: Space.s2,
+      spacing: Space.s3,
       children: [
         Text(
           l.settingsAccount,
@@ -44,20 +44,24 @@ class AccountSection extends ConsumerWidget {
           ),
         ),
         _ExLibris(user: user, via: viaEmail ? l.authViaEmail : l.authViaGoogle),
-        const AccountQuotaMeter(),
         if (cloudAt != null)
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 2),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
                   l.settingsLastBackup,
-                  style: StabiloType.label.copyWith(color: c.ink2),
+                  style: StabiloType.label.copyWith(
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w400,
+                    color: c.ink2,
+                  ),
                 ),
                 Text(
                   lastSeen(cloudAt, DateTime.now(), locale: l.localeName),
                   style: StabiloType.label.copyWith(
+                    fontSize: 14.5,
                     fontWeight: FontWeight.w700,
                     color: c.ink,
                   ),
@@ -69,18 +73,27 @@ class AccountSection extends ConsumerWidget {
           spacing: 10,
           children: [
             Expanded(
-              child: AppButton.secondary(
+              child: AppButton.outline(
                 label: l.authSignOut,
                 icon: AppIcons.logout,
+                height: 48,
                 onPressed: () => _signOut(context, ref),
               ),
             ),
             Expanded(
-              child: AppButton.secondary(
-                label: l.authDeleteAccount,
-                icon: AppIcons.delete,
-                destructive: true,
+              child: TextButton.icon(
                 onPressed: () => _delete(context, ref, user?.email ?? ''),
+                icon: AppIcon(AppIcons.delete, size: 18, color: c.danger),
+                label: Text(l.authDeleteAccount),
+                style: TextButton.styleFrom(
+                  foregroundColor: c.danger,
+                  minimumSize: const Size.fromHeight(48),
+                  shape: const StadiumBorder(),
+                  textStyle: StabiloType.label.copyWith(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               ),
             ),
           ],
@@ -96,7 +109,14 @@ class AccountSection extends ConsumerWidget {
     final messenger = ScaffoldMessenger.of(context);
     await ref.read(authControllerProvider.notifier).signOut();
     if (messenger.mounted && context.mounted) {
-      showAuthToast(context, message, tone: AuthToastTone.info);
+      // Muncul di layar Masuk (tanpa bottom bar).
+      showAuthToast(
+        context,
+        message,
+        tone: AuthToastTone.info,
+        icon: AppIcons.logout,
+        overNav: false,
+      );
     }
   }
 
@@ -122,7 +142,13 @@ class AccountSection extends ConsumerWidget {
     );
     if (!context.mounted) return;
     if (deleted) {
-      showAuthToast(context, l.authToastDeleted, tone: AuthToastTone.info);
+      showAuthToast(
+        context,
+        l.authToastDeleted,
+        tone: AuthToastTone.info,
+        icon: AppIcons.delete,
+        overNav: false,
+      );
     } else if (failed) {
       showAuthToast(
         context,
@@ -135,7 +161,9 @@ class AccountSection extends ConsumerWidget {
   }
 }
 
-/// Pelat Ex libris: foto, nama pakai font baca, email.
+/// Pelat Ex libris (board Akun 08 + Kuota AI 02): kartu bergaris, bingkai
+/// putus-putus di dalam, foto + nama font baca di tengah, meter kuota di
+/// bawah garis putus-putus.
 class _ExLibris extends StatelessWidget {
   const _ExLibris({required this.user, required this.via});
 
@@ -148,59 +176,138 @@ class _ExLibris extends StatelessWidget {
     final l = context.l10n;
     final name = user?.name ?? '';
     final image = user?.image;
+    final dash = c.fieldLine;
     return Container(
-      padding: const EdgeInsets.all(Space.s5),
+      padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
         color: c.sheet,
-        borderRadius: BorderRadius.circular(Radii.menu),
-        border: Border.all(color: c.ink, width: 1.5),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: c.outline, width: Layout.outline),
+        boxShadow: Elevation.press(c, Theme.of(context).brightness),
       ),
-      child: Row(
-        spacing: Space.s4,
-        children: [
-          CircleAvatar(
-            radius: 28,
-            backgroundColor: c.accent,
-            foregroundImage: image == null ? null : NetworkImage(image),
-            child: Text(
-              name.isEmpty ? '?' : name.characters.first.toUpperCase(),
-              style: StabiloType.titleMd.copyWith(color: c.onAccent),
-            ),
-          ),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              spacing: 2,
-              children: [
-                Text(
-                  l.authExLibris,
-                  style: StabiloType.micro.copyWith(
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1.6,
-                    color: c.ink3,
-                  ),
-                ),
-                Text(
-                  name,
-                  overflow: TextOverflow.ellipsis,
-                  style: StabiloType.reading.copyWith(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    color: c.ink,
-                  ),
-                ),
-                if (user?.email case final email?)
+      child: CustomPaint(
+        painter: _Dashed(color: dash, radius: 15),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            spacing: 12,
+            children: [
+              Column(
+                spacing: 4,
+                children: [
                   Text(
-                    email,
-                    overflow: TextOverflow.ellipsis,
-                    style: StabiloType.caption.copyWith(color: c.ink2),
+                    l.authExLibris,
+                    style: StabiloType.micro.copyWith(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 11 * 0.28,
+                      color: c.ink2,
+                    ),
                   ),
-                Text(via, style: StabiloType.caption.copyWith(color: c.ink3)),
-              ],
-            ),
+                  Container(
+                    width: 52,
+                    height: 52,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: c.outline,
+                        width: Layout.outline,
+                      ),
+                    ),
+                    child: CircleAvatar(
+                      backgroundColor: c.accent,
+                      foregroundImage: image == null
+                          ? null
+                          : NetworkImage(image),
+                      child: Text(
+                        name.isEmpty
+                            ? '?'
+                            : name.characters.first.toUpperCase(),
+                        style: StabiloType.titleSm.copyWith(color: c.onAccent),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    name,
+                    textAlign: TextAlign.center,
+                    overflow: TextOverflow.ellipsis,
+                    style: StabiloType.reading.copyWith(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                      color: c.ink,
+                    ),
+                  ),
+                  if (user?.email case final email?)
+                    Text(
+                      email,
+                      textAlign: TextAlign.center,
+                      overflow: TextOverflow.ellipsis,
+                      style: StabiloType.caption.copyWith(
+                        fontSize: 13,
+                        color: c.ink2,
+                      ),
+                    ),
+                  Text(
+                    via,
+                    style: StabiloType.caption.copyWith(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: c.ink2,
+                    ),
+                  ),
+                ],
+              ),
+              CustomPaint(
+                painter: _Dashed(color: dash),
+                child: const Padding(
+                  padding: EdgeInsets.only(top: 12),
+                  child: AccountQuotaMeter(bare: true),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
+}
+
+/// Garis putus-putus 1,5: bingkai [radius] di sekeliling, atau (null) garis
+/// atas doang.
+class _Dashed extends CustomPainter {
+  const _Dashed({required this.color, this.radius});
+
+  final Color color;
+  final double? radius;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1.5
+      ..style = PaintingStyle.stroke;
+    final path = Path();
+    if (radius case final r?) {
+      path.addRRect(
+        RRect.fromRectAndRadius(
+          (Offset.zero & size).deflate(0.75),
+          Radius.circular(r),
+        ),
+      );
+    } else {
+      path
+        ..moveTo(0, 0)
+        ..lineTo(size.width, 0);
+    }
+    for (final metric in path.computeMetrics()) {
+      for (var d = 0.0; d < metric.length; d += 9) {
+        canvas.drawPath(metric.extractPath(d, d + 5), paint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_Dashed old) => old.color != color || old.radius != radius;
 }

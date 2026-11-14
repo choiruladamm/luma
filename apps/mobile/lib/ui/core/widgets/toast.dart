@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../theme/stabilo_theme.dart';
@@ -49,14 +51,43 @@ void showToast(
         backgroundColor: Colors.transparent,
         elevation: 0,
         padding: EdgeInsets.zero,
-        margin: const EdgeInsets.fromLTRB(
-          Layout.margin,
-          0,
-          Layout.margin,
-          Space.s6,
-        ),
+        margin: toastMargin(context),
       ),
     );
+}
+
+/// Route yang punya bottom bar melayang (diisi `AppShell`).
+// ponytail: satu global, cukup selama cuma ada satu shell ber-bottom bar.
+ModalRoute<Object?>? navBarRoute;
+
+/// Margin snackbar toast. Di tab shell (Rak · Cari buku · Atur) nav bar
+/// melayang di atas Scaffold, jadi toast naik 12 di atas bar (board Akun 13).
+///
+/// [overNav] null = bar keliatan kalau route [navBarRoute] lagi paling atas
+/// (sheet yang barusan di-pop udah gak dihitung). Isi kalau toast dipanggil
+/// sebelum layarnya pindah (login → Rak, Atur → layar Masuk).
+/// [offBar] = jarak dari bawah layar kalau gak ada bar (null = 24 di atas
+/// safe area). Snackbar sendiri udah nambahin safe area bawah.
+EdgeInsets toastMargin(
+  BuildContext context, {
+  bool? overNav,
+  double side = Layout.margin,
+  double? offBar,
+}) {
+  final media = MediaQuery.of(context);
+  final safe = media.viewPadding.bottom;
+  final nav =
+      overNav ??
+      ((navBarRoute?.isCurrent ?? false) && media.viewInsets.bottom == 0);
+  final double bottom;
+  if (nav) {
+    bottom = math.max(Layout.navBottom, safe) + Layout.navBar + Space.s3 - safe;
+  } else if (offBar != null) {
+    bottom = math.max(0, offBar - safe);
+  } else {
+    bottom = Space.s6;
+  }
+  return EdgeInsets.fromLTRB(side, 0, side, bottom);
 }
 
 /// Toast pill di atas semua route, buat dari dalem sheet (snackbar-nya

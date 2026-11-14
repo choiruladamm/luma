@@ -146,8 +146,12 @@ void main() {
     await tester.pumpAndSettle();
     expect(auth.deletes, 0);
 
-    for (final box in find.byType(Checkbox).evaluate().toList()) {
-      await tester.tap(find.byWidget(box.widget));
+    for (final item in const [
+      'Akun rara.putri@gmail.com kehapus',
+      'Semua backup di cloud ilang',
+      'Data sync di semua HP lo ilang',
+    ]) {
+      await tester.tap(find.text(item));
       await tester.pump();
     }
     await tester.tap(find.text('Hapus akun selamanya'));
@@ -162,8 +166,12 @@ void main() {
 
     await tester.tap(find.text('Hapus akun'));
     await tester.pumpAndSettle();
-    for (final box in find.byType(Checkbox).evaluate().toList()) {
-      await tester.tap(find.byWidget(box.widget));
+    for (final item in const [
+      'Akun rara.putri@gmail.com kehapus',
+      'Semua backup di cloud ilang',
+      'Data sync di semua HP lo ilang',
+    ]) {
+      await tester.tap(find.text(item));
       await tester.pump();
     }
     await tester.tap(find.text('Hapus akun selamanya'));

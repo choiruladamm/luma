@@ -5,21 +5,52 @@ import '../../../core/theme/stabilo_theme.dart';
 import '../../../core/theme/stabilo_tokens.dart';
 import '../../../core/theme/stabilo_type.dart';
 import '../../../core/widgets/buttons.dart';
-import '../../../core/widgets/dialog.dart';
 
 /// Board Akun 09: keluar. `true` = dikonfirmasi.
-Future<bool> showSignOutDialog(BuildContext context) {
-  final l = context.l10n;
-  return showConfirmDialog(
-    context,
-    title: l.authSignOutTitle,
-    message: l.authSignOutBody,
-    confirmLabel: l.authSignOut,
-    destructive: false,
+Future<bool> showSignOutDialog(BuildContext context) async {
+  final ok = await showDialog<bool>(
+    context: context,
+    useRootNavigator: true,
+    builder: (context) {
+      final l = context.l10n;
+      return _AccountDialog(
+        title: l.authSignOutTitle,
+        actions: [
+          AppButton.ink(
+            label: l.authSignOut,
+            icon: AppIcons.logout,
+            onPressed: () => Navigator.of(context).pop(true),
+          ),
+          AppButton.secondary(
+            label: l.dialogCancel,
+            onPressed: () => Navigator.of(context).pop(false),
+          ),
+        ],
+        children: [_DialogBody(l.authSignOutBody)],
+      );
+    },
+  );
+  return ok ?? false;
+}
+
+/// Isi dialog akun: font baca 15,5.
+class _DialogBody extends StatelessWidget {
+  const _DialogBody(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Text(
+    text,
+    style: StabiloType.reading.copyWith(
+      fontSize: 15.5,
+      height: 1.5,
+      color: context.stabilo.ink,
+    ),
   );
 }
 
-/// Kartu dialog akun: judul, isi, tombol bertumpuk (board Akun 10, 11).
+/// Kartu dialog akun: judul, isi, tombol bertumpuk (board Akun 09–11).
 class _AccountDialog extends StatelessWidget {
   const _AccountDialog({
     required this.title,
@@ -36,19 +67,28 @@ class _AccountDialog extends StatelessWidget {
     final c = context.stabilo;
     return Dialog(
       insetPadding: const EdgeInsets.symmetric(
-        horizontal: Space.s6,
+        horizontal: Space.s5,
         vertical: Space.s6,
       ),
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(Space.s5),
+        padding: const EdgeInsets.all(22),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
-          spacing: Space.s3,
+          spacing: Space.s4,
           children: [
-            Text(title, style: StabiloType.titleMd.copyWith(color: c.ink)),
+            Text(
+              title,
+              style: StabiloType.titleMd.copyWith(
+                fontWeight: FontWeight.w800,
+                color: c.ink,
+              ),
+            ),
             ...children,
-            const SizedBox(height: Space.s1),
-            ...actions,
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              spacing: Space.s2,
+              children: actions,
+            ),
           ],
         ),
       ),
@@ -116,6 +156,8 @@ class _SwitchAccountDialogState extends State<_SwitchAccountDialog> {
         actions: [
           AppButton.danger(
             label: l.authSwitchConfirm,
+            soft: true,
+            height: 52,
             loading: _busy,
             onPressed: _busy ? null : () => _run(widget.onConfirm),
           ),
@@ -246,6 +288,9 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
         actions: [
           AppButton.danger(
             label: l.authDeleteConfirm,
+            icon: AppIcons.delete,
+            soft: true,
+            height: 52,
             loading: _busy,
             onPressed: all && !_busy ? _confirm : null,
           ),
@@ -255,29 +300,98 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
           ),
         ],
         children: [
-          Text(
-            l.authDeleteBody,
-            style: StabiloType.body.copyWith(color: c.ink2),
+          _DialogBody(l.authDeleteBody),
+          Column(
+            spacing: 6,
+            children: [
+              for (var i = 0; i < items.length; i++)
+                _CheckRow(
+                  label: items[i],
+                  checked: _checked[i],
+                  onTap: _busy
+                      ? null
+                      : () => setState(() => _checked[i] = !_checked[i]),
+                ),
+            ],
           ),
-          for (var i = 0; i < items.length; i++)
-            CheckboxListTile(
-              value: _checked[i],
-              onChanged: _busy
-                  ? null
-                  : (v) => setState(() => _checked[i] = v ?? false),
-              title: Text(
-                items[i],
-                style: StabiloType.body.copyWith(color: c.ink),
-              ),
-              controlAffinity: ListTileControlAffinity.leading,
-              contentPadding: EdgeInsets.zero,
-              dense: true,
-            ),
           Text(
             l.authDeleteNote,
-            style: StabiloType.caption.copyWith(color: c.ink3),
+            style: StabiloType.caption.copyWith(
+              fontSize: 12.5,
+              height: 1.4,
+              color: c.ink2,
+            ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Baris centang di dialog hapus akun: pill abu, kotak 22 (board Akun 11).
+class _CheckRow extends StatelessWidget {
+  const _CheckRow({
+    required this.label,
+    required this.checked,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool checked;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.stabilo;
+    return Semantics(
+      checked: checked,
+      enabled: onTap != null,
+      child: Material(
+        color: c.muted,
+        borderRadius: BorderRadius.circular(14),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            child: Row(
+              spacing: 12,
+              children: [
+                Container(
+                  width: 22,
+                  height: 22,
+                  decoration: BoxDecoration(
+                    color: checked ? c.ink : c.sheet,
+                    borderRadius: BorderRadius.circular(7),
+                    border: checked
+                        ? null
+                        : Border.all(color: c.ink3, width: Layout.outline),
+                  ),
+                  child: checked
+                      ? Center(
+                          child: AppIcon(
+                            AppIcons.check,
+                            size: 14,
+                            color: c.canvas,
+                          ),
+                        )
+                      : null,
+                ),
+                Expanded(
+                  child: Text(
+                    label,
+                    style: StabiloType.label.copyWith(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      height: 1.3,
+                      color: c.ink,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
