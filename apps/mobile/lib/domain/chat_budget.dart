@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-/// Budget satu kiriman Ngobrol (#143): token gabungan input + output lintas
+/// Budget satu kiriman Ngobrol: token gabungan input + output lintas
 /// semua request, dan tenggat total. Angka reservasi konservatif dipakai
 /// sampai usage asli dari provider tersedia; unknown tidak pernah dihitung 0.
 const chatQuestionTokens = 2000000;

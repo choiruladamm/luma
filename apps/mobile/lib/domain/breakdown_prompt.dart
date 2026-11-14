@@ -9,7 +9,7 @@ import 'sentences.dart';
 
 /// Naik tiap prompt Bedahin atau aturan [splitSentences] berubah: rentang
 /// kalimat di cache cuma berlaku buat pemecahan yang sama.
-/// 1 = awal (#61).
+/// 1 = awal.
 const breakdownPromptVersion = 1;
 
 const breakdownSystemPrompt =

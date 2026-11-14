@@ -10,7 +10,7 @@ import '../database/app_database.dart';
 // Decoder arsip memeriksa struktur/ownership, bukan keberadaan paragraf terbaru.
 // Validasi hash/range terhadap buku aktif dilakukan lagi sebelum prompt/jump.
 class ChatSnapshot {
-  /// Langkah AI (#153): rusak → null, turn tetap terbaca.
+  /// Langkah AI: rusak → null, turn tetap terbaca.
   static List<ChatStep>? steps(String? raw) {
     if (raw == null) return null;
     try {

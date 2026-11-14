@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-/// Langkah AI (#153): jejak apa yang dilakukan aplikasi selama satu attempt
+/// Langkah AI: jejak apa yang dilakukan aplikasi selama satu attempt
 /// Ngobrol (rencana, cache, baca, cari, berhenti, perbaikan, jawaban).
 /// Dicatat tanpa request tambahan, disimpan sekali di `chat_turns.steps`.
 enum ChatStepKind {

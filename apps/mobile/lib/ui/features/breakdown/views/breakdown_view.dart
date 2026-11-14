@@ -41,8 +41,8 @@ import 'peek_sheet.dart';
 /// Layar Bedahin (board "Terpilih · Bedahin · Opsi C · layar bedah" + "Spek ·
 /// Bedahin · state"). Di-push dari sheet Artinya: balik = ke sheet, "Balik
 /// baca" = `pop(ReaderReturn.reading)`, sheet-nya ikut ditutup sama yang manggil. Ditutup di
-/// tengah proses = request dibatalin (provider autoDispose). Bisa numpuk
-/// (#65): "Bedahin ini juga" dari intip push Bedahin lain di atasnya; balik =
+/// tengah proses = request dibatalin (provider autoDispose). Bisa numpuk:
+/// "Bedahin ini juga" dari intip push Bedahin lain di atasnya; balik =
 /// mundur satu lapis, "Balik baca" dari lapis mana pun nerusin `pop(ReaderReturn.reading)`
 /// sampe ke halaman.
 class BreakdownView extends ConsumerStatefulWidget {
@@ -318,7 +318,7 @@ Breakdown _whole(Breakdown b) {
 ///   sendiri kalau lebih.
 /// - Tombol ngumpet pas scroll penjelasan (aturan [ScrollRun]), kecuali
 ///   selama proses atau VoiceOver nyala.
-/// - Sinkron (≥ 2 bagian, #64): blok yang lewat garis baca jadi aktif
+/// - Sinkron (≥ 2 bagian): blok yang lewat garis baca jadi aktif
 ///   ([activeBlock]), kalimat bagiannya disorot di panel dan panel scroll
 ///   ke situ. Tap nomor / chip = lompat. Panel kelipet by default, buka /
 ///   lipet cuma dari tap ([_folded]). Selama nulis sorotannya udah jalan dari
@@ -1808,8 +1808,8 @@ class _Block extends StatelessWidget {
   );
 }
 
-/// Kartu Nyambung ke. Tujuannya ketemu = garis + chevron, tap = intip
-/// (#65); gak ketemu = teks biasa.
+/// Kartu Nyambung ke. Tujuannya ketemu = garis + chevron, tap = intip;
+/// gak ketemu = teks biasa.
 class _LinkCard extends ConsumerWidget {
   const _LinkCard({
     required this.link,

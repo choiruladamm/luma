@@ -10,7 +10,7 @@ import '../view_models/download_queue_view_model.dart';
 
 /// Kabar download selesai / gagal, dari mana pun user lagi berada (board 15 /
 /// 16): toast "Emma udah masuk rak" + Buka (di layar baca) / Baca. App di
-/// latar (#175): notifikasi lokal dengan kalimat yang sama, tap = buka buku.
+/// latar: notifikasi lokal dengan kalimat yang sama, tap = buka buku.
 /// Dipasang di `builder` MaterialApp (di bawah ScaffoldMessenger, di atas
 /// router), jadi navigasinya lewat [routerProvider], bukan context.
 class DownloadToasts extends ConsumerStatefulWidget {

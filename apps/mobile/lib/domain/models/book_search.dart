@@ -75,7 +75,7 @@ extension BookSearchResultLabel on BookSearchResult {
 }
 
 /// Hasil yang di-tap di sheet Cari kata: reader lompat ke [hit], dan nyimpen
-/// [result] buat navigator ↑ ↓ (#180).
+/// [result] buat navigator ↑ ↓.
 typedef BookSearchPick = ({
   String query,
   BookSearchResult result,

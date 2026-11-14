@@ -29,7 +29,7 @@ InlineSpan chatLabelSpan(String text, Color color) {
   );
 }
 
-/// Langkah AI (#153, board "Langkah AI · baris status di atas jawaban"):
+/// Langkah AI (board "Langkah AI · baris status di atas jawaban"):
 /// baris status 40pt (dot kuning berdenyut + "Lagi baca …" + "Langkah 7" +
 /// chevron saat jalan; centang + "12 langkah selesai" setelah selesai), dan
 /// daftar langkah yang bisa dibuka/ditutup per turn. Default terbuka saat

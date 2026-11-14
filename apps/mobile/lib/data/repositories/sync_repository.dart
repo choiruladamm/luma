@@ -314,7 +314,7 @@ class SyncRepository {
   }
 
   /// File buku yang belum ada di cloud (file, cover, dump Markdown), biar
-  /// device lain bisa download (#210). Balikin kunci buku yang gagal.
+  /// device lain bisa download. Balikin kunci buku yang gagal.
   Future<Set<String>> _uploadBookFiles(
     String token,
     List<SyncRecord> records,

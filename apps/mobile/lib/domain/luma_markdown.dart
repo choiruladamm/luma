@@ -28,7 +28,7 @@ class LumaMarkdownException implements Exception {
   String toString() => 'LumaMarkdownException($error, $detail)';
 }
 
-/// Satu file `.md` = satu chapter (docs/ideas/import-formats.md).
+/// Satu file `.md` = satu chapter (docs/import-formats.md).
 ///
 /// Field meta diisi dari frontmatter, kalau kosong dari tebakan (heading
 /// pertama, nama file). Yang gak bisa ditebak tetap null, diisi UI / importer.

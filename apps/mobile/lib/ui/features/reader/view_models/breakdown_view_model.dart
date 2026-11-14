@@ -205,7 +205,7 @@ final breakdownSectionsProvider = FutureProvider.autoDispose
 /// Kartu Nyambung ke: dari grup mana, ke bab ke berapa (null = lanjutan).
 typedef PeekKey = ({GroupRef from, int? chapter});
 
-/// Isi sheet intip (#65). Null = tujuannya gak ada, kartu jadi teks biasa.
+/// Isi sheet intip. Null = tujuannya gak ada, kartu jadi teks biasa.
 final breakdownPeekProvider = FutureProvider.autoDispose
     .family<BreakdownPeek?, PeekKey>(
       (ref, key) =>

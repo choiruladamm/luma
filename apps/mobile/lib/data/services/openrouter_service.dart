@@ -110,7 +110,7 @@ class OpenRouterService {
 
   /// Chat/rewrite/selector share SSE and bounded pre-content reasoning fallback.
   /// History can be supplied as native user/assistant messages by other callers.
-  /// [inputBytes] = batas byte messages untuk request ini (dari ledger #143;
+  /// [inputBytes] = batas byte messages untuk request ini (dari budget kiriman;
   /// default batas selector lama). [onUsage] menerima usage asli dari event
   /// SSE terakhir bila provider mengirimnya.
   Stream<String> chatStream({
@@ -159,7 +159,7 @@ class OpenRouterService {
   }
 
   /// Metadata model dari provider (gratis, tanpa kunci): context window untuk
-  /// ukuran batch #143. Gagal → null, pemanggil memakai fallback konservatif.
+  /// ukuran batch. Gagal → null, pemanggil memakai fallback konservatif.
   Future<ChatModelInfo?> modelInfo(String model, {CancelToken? cancel}) async {
     try {
       final res = await _dio.get<Object?>('/models', cancelToken: cancel);

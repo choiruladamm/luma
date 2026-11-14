@@ -300,10 +300,10 @@ class ChatTurns extends Table {
   TextColumn get draft => text().withDefault(const Constant(''))();
   TextColumn get exploration => text().nullable()();
 
-  /// Langkah AI (#153), JSON; ditulis sekali di finalize, null pada turn lama.
+  /// Langkah AI, JSON; ditulis sekali di finalize, null pada turn lama.
   TextColumn get steps => text().nullable()();
 
-  /// Teks mentah supaya mapper #116 bisa menangani enum backup yang rusak.
+  /// Teks mentah supaya mapper chat bisa menangani enum backup yang rusak.
   TextColumn get phase => text()();
   IntColumn get attempt => integer().withDefault(const Constant(1))();
   TextColumn get model => text()();
@@ -330,7 +330,7 @@ class ChatIndexes extends Table {
   BoolColumn get ready => boolean().withDefault(const Constant(false))();
 }
 
-/// Catatan generatif per bab untuk pertanyaan seluruh buku (#151): dipakai
+/// Catatan generatif per bab untuk pertanyaan seluruh buku: dipakai
 /// ulang lintas pertanyaan selama revision + manifest window bab sama. Data
 /// turunan: ikut backup, dihapus saat isi berubah atau buku dihapus.
 @DataClassName('ChatChapterNoteRow')
@@ -381,7 +381,7 @@ class SyncOutbox extends Table {
 }
 
 /// Record pull yang belum bisa diterapkan (buku belum ada, `parserVersion`
-/// beda, atau schema record lebih baru dari app). Dipakai pull (#210).
+/// beda, atau schema record lebih baru dari app). Dipakai pull.
 class SyncInbox extends Table {
   TextColumn get kind => text()();
   TextColumn get key => text()();

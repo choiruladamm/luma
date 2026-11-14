@@ -6091,10 +6091,10 @@ class ChatTurnRow extends DataClass implements Insertable<ChatTurnRow> {
   final String draft;
   final String? exploration;
 
-  /// Langkah AI (#153), JSON; ditulis sekali di finalize, null pada turn lama.
+  /// Langkah AI, JSON; ditulis sekali di finalize, null pada turn lama.
   final String? steps;
 
-  /// Teks mentah supaya mapper #116 bisa menangani enum backup yang rusak.
+  /// Teks mentah supaya mapper chat bisa menangani enum backup yang rusak.
   final String phase;
   final int attempt;
   final String model;

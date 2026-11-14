@@ -47,13 +47,13 @@ class ChatState {
     this.steps,
   }) : turns = List.unmodifiable(turns);
 
-  /// Langkah AI attempt yang sedang/baru jalan (#153); turn lama membawa
+  /// Langkah AI attempt yang sedang/baru jalan; turn lama membawa
   /// langkahnya sendiri lewat `ChatTurn.steps`.
   final ({ChatAttemptRef attempt, List<ChatStep> steps})? steps;
 
   final ({int completed, int total})? indexProgress;
 
-  /// Bab yang sedang dibaca + catatan sementara (#150).
+  /// Bab yang sedang dibaca + catatan sementara.
   final ChatExplorationProgress? explorationProgress;
 
   /// Jawab sekarang sudah ditekan pada attempt berjalan.
@@ -168,7 +168,7 @@ class ChatViewModel extends Notifier<ChatState> {
   ChatViewModel(this.bookId);
   final int bookId;
 
-  /// Ledger #143 menghentikan putaran pada 5 menit; ini pagar kalau request
+  /// Budget kiriman (`chat_budget.dart`) menghentikan putaran pada 5 menit; ini pagar kalau request
   /// terakhir menggantung.
   static const retrievalTimeout = Duration(minutes: 6);
   late _ChatLifetime _life;

@@ -45,7 +45,7 @@ class ChatHistory extends StatefulWidget {
     this.answerNow,
   });
 
-  /// Langkah AI attempt yang lagi jalan (#153); turn selesai pakai `turn.steps`.
+  /// Langkah AI attempt yang lagi jalan; turn selesai pakai `turn.steps`.
   final ({ChatAttemptRef attempt, List<ChatStep> steps})? steps;
 
   /// Jawab sekarang di bawah catatan sementara; null = tidak tersedia.

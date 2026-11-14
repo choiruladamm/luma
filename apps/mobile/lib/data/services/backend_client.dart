@@ -9,7 +9,7 @@ import 'http_client.dart';
 /// URL Worker per flavor (docs/backend.md, Lingkungan). Env prod baru ada
 /// setelah backend di-merge ke master (`make backend-deploy e=prod`).
 const backendUrls = {
-  // Custom domain (#214): `*.workers.dev` diblok sebagian ISP (XL).
+  // Custom domain: `*.workers.dev` diblok sebagian ISP (XL).
   'dev': 'https://luma-api-dev.chrl.cloud',
   'prod': 'https://luma-api.chrl.cloud',
 };

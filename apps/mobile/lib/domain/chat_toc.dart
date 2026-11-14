@@ -1,4 +1,4 @@
-/// Daftar isi asli buku untuk perencanaan Ngobrol (#143): identitas bab dari
+/// Daftar isi asli buku untuk perencanaan Ngobrol: identitas bab dari
 /// `chapters.id`, label TOC asli, section induk ("Discourses › Book I"), dan
 /// ukuran. Model memilih bab lewat `id`; aplikasi memvalidasi, bukan percaya.
 typedef ChatChapterInfo = ({int id, String title, String? section, int chars});

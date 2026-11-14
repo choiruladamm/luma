@@ -37,7 +37,7 @@ import 'cloud_restore_sheet.dart';
 import 'restore_sheets.dart';
 
 /// Pengaturan app (board 23 Pengaturan app): API key, model AI, cache
-/// terjemahan. Bagian Backup & pulihin nyusul di #24–#26.
+/// terjemahan, backup & pulihin.
 class SettingsView extends ConsumerStatefulWidget {
   const SettingsView({super.key});
 
@@ -605,7 +605,7 @@ class _RowButton extends StatelessWidget {
   }
 }
 
-/// SettingsRow katalog Gutenberg (#169): status sync + satu tombol yang
+/// SettingsRow katalog Gutenberg: status sync + satu tombol yang
 /// ikut keadaannya (Unduh / Perbarui / Batal / Coba lagi). Board belum ada,
 /// ikut pola `_CacheRow`.
 class _CatalogRow extends StatelessWidget {

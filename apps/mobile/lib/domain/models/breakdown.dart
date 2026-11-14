@@ -1,4 +1,4 @@
-/// Tahap Bedahin satu grup (#62). Ambang waktunya sama kayak makna cepat.
+/// Tahap Bedahin satu grup. Ambang waktunya sama kayak makna cepat.
 enum BreakdownPhase {
   /// Nunggu token pertama.
   waiting,
@@ -90,7 +90,7 @@ class BreakdownLink {
   final String why;
 }
 
-/// Tujuan kartu Nyambung ke yang di-intip (#65): grup pertama bab [B<n>],
+/// Tujuan kartu Nyambung ke yang di-intip: grup pertama bab [B<n>],
 /// atau grup berikutnya di bab yang sama (lanjutan).
 class BreakdownPeek {
   const BreakdownPeek({

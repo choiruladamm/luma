@@ -42,3 +42,9 @@ Commands go through the root `Makefile` (`make help`). Mobile targets are bare (
 - Run only the checks relevant to what you changed (per-app guidance in each app's CLAUDE.md). Commit only when those checks exit 0; never chain a commit behind `grep` or `;`.
 - In the hand-off, state which checks ran and whether the full suite was skipped.
 - Docs, issues, and app copy are written in Indonesian; code, identifiers, and CLAUDE.md files in English.
+
+## Code comments
+
+- Comments explain why, not history. Which issue added the code belongs in the commit message, not the comment.
+- Issue numbers in comments only for open work (`TODO(#N): ...`) or for evidence the code can't show (a spike, eval, or decision issue, e.g. `spike #34: 30/30 valid`).
+- Cite a doc (`docs/<file>.md, <Section>`) only where the code follows a rule that isn't visible from the file itself. The comment must still make sense without opening the doc, and the path and section must exist.
