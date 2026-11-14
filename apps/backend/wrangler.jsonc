@@ -15,6 +15,10 @@
   "env": {
     "dev": {
       "name": "luma-backend-dev",
+      // Custom domain (#214): *.workers.dev diblok sebagian ISP (XL). workers.dev tetap nyala sebagai cadangan.
+      "routes": [{ "pattern": "luma-api-dev.chrl.cloud", "custom_domain": true }],
+      // Ada `routes` → wrangler matiin workers.dev kalau gak ditulis eksplisit.
+      "workers_dev": true,
       "vars": {
         "ENV": "dev",
         "SYNC_ENABLED": "true",
@@ -26,7 +30,7 @@
         // Lewat → 413 STORAGE_FULL / 429 QUOTA_EXCEEDED (docs/backend.md, Aturan server).
         "SYNC_STORAGE_BYTES": "104857600",
         "SYNC_DAILY_WRITES": "20000",
-        "BETTER_AUTH_URL": "https://luma-backend-dev.choiruladamm.workers.dev",
+        "BETTER_AUTH_URL": "https://luma-api-dev.chrl.cloud",
         "INVITE_REQUIRED": "true",
         // Client ID OAuth Google web,ios,android dipisah koma (publik, bukan secret). Kosong = Google mati.
         // Dev: web, iOS id.ruma.luma.dev, Android id.ruma.luma.dev (release + debug SHA-1).
@@ -54,6 +58,8 @@
     },
     "prod": {
       "name": "luma-backend",
+      "routes": [{ "pattern": "luma-api.chrl.cloud", "custom_domain": true }],
+      "workers_dev": true,
       "vars": {
         "ENV": "prod",
         "SYNC_ENABLED": "true",
@@ -65,7 +71,7 @@
         // Lewat → 413 STORAGE_FULL / 429 QUOTA_EXCEEDED (docs/backend.md, Aturan server).
         "SYNC_STORAGE_BYTES": "104857600",
         "SYNC_DAILY_WRITES": "20000",
-        "BETTER_AUTH_URL": "https://luma-backend.choiruladamm.workers.dev",
+        "BETTER_AUTH_URL": "https://luma-api.chrl.cloud",
         "INVITE_REQUIRED": "true",
         "GOOGLE_CLIENT_IDS": "",
         "AI_DAILY_LIMIT_USD": "0.02",

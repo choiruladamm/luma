@@ -9,8 +9,9 @@ import 'http_client.dart';
 /// URL Worker per flavor (docs/backend.md, Lingkungan). Env prod baru ada
 /// setelah backend di-merge ke master (`make backend-deploy e=prod`).
 const backendUrls = {
-  'dev': 'https://luma-backend-dev.choiruladamm.workers.dev',
-  'prod': 'https://luma-backend.choiruladamm.workers.dev',
+  // Custom domain (#214): `*.workers.dev` diblok sebagian ISP (XL).
+  'dev': 'https://luma-api-dev.chrl.cloud',
+  'prod': 'https://luma-api.chrl.cloud',
 };
 
 /// `--dart-define=BACKEND_URL=http://<ip>:8787` menimpa URL flavor, buat
