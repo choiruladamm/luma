@@ -133,6 +133,7 @@ Better Auth 1.7 dipasang di Hono (`/v1/auth/*`) dengan adapter `@better-auth/dri
 | `GET /v1/me` (cek sesi) | 2 ms | Jalur panas. Gak lewat Better Auth: `findSessionUser` satu query join `sessions` + `users` |
 | `POST /v1/auth/sign-in/email` | 19 ms | Better Auth + PBKDF2. Sekali per device, masuk toleransi "sesekali lewat" Cloudflare |
 | `POST /v1/auth/sign-up/email` | ±50 ms | Sekali per akun |
+| `POST /v1/auth/sign-in/social` (Google idToken) | 11 ms (9–18, 14 November 2026) | Verifikasi JWKS Google + 7 query D1. Sekali per device, masuk toleransi "sesekali lewat" |
 
 - Instance Better Auth mahal dibuat, jadi dipakai ulang per isolate (`getAuth`, kunci objek `env`).
 - **Aturan**: route Luma (`/v1/me`, sync, backup, key AI) cek sesi lewat `requireSession` (D1 langsung), **jangan** `auth.api.getSession`. Better Auth cuma untuk `/v1/auth/*`.
