@@ -84,3 +84,19 @@ Guard hash evaluasi chat (`test/fixtures/book_chat_heldout_protocol_v1.json`, `b
 - `pubspec.lock` (#211): tambah `url_launcher` (link Kebijakan privasi di layar Masuk). Dependency runtime AI gak berubah.
 
 File hasil evaluasi lama (`*_result*.json`) sengaja gak disentuh: isinya catatan historis dari versi saat evaluasi dijalankan. Menambah dependency berikutnya (mis. `google_sign_in`) butuh pembekuan ulang yang sama dan baris baru di sini.
+
+## Riwayat Ngobrolin buku
+
+Iterasi chat yang membentuk perilaku di [llm.md](llm.md#ngobrolin-buku). Angka tiap iterasi sudah diganti yang sekarang di sana; di sini cuma apa yang berubah dan kenapa.
+
+- **Spike (#113, #114):** kontrak v1 (`answered | partial | not_found`, maks 2 klaim berisi fakta buku saja, history cuma jawaban `answered`, rewrite + selector terpisah). Hybrid dense + BM25 + RRF dan selector terbukti pada Large; Qwen hybrid dan performa device gak dibuktikan. Manifest spike diarsipkan di `test/fixtures/book_chat_spike113/`, guard hash di bagian Pembekuan ulang guard.
+- **Retrieval dan streaming produksi (#117, #134):** port pipeline spike ke aplikasi, index embedding permanen di Drift supaya restart gak embedding ulang, fallback model embedding per model-space.
+- **Pacing dan preview (#123, #141):** teks chat memakai `Pacer` Artinya; preview diproyeksikan dari JSON streaming supaya jawaban kebaca selagi ditulis, sitasi dicabut kalau gagal.
+- **Kontrak v2 (#137):** jawaban jadi paragraf natural bertipe (`book | interpretation | external | conversation`) dengan status `clarify` / `off_topic`, supaya interpretasi, kritik, dan pengetahuan luar boleh tanpa dipaksa jadi sitasi buku. v1 tetap terbaca.
+- **Bentuk jawaban (prompt v4):** `layout` (paragraph / item / bullet / quote) + inline tebal / miring, supaya jawaban panjang gampang dipindai; nilai gak dikenal jatuh ke `paragraph`.
+- **Penelusuran adaptif (#138):** rewrite + strategi (specific / crossChapter / global / correction / offTopic) dalam satu request, `missing_queries` dari selector, mode global dengan catatan kumulatif. Dulu dibatasi 7 completion, 3 putaran, 3 batch, 150 detik per kiriman.
+- **Pembacaan mandiri buku (#143):** planner membaca TOC asli (`chapters.section`, nomor bab) dan memilih baca bab / seluruh buku / pencarian; ledger token + waktu per kiriman menggantikan batas tetap (completion, putaran, batch); batch paralel, perbaikan otomatis jawaban invalid (maks 2), prompt v5. Alasan: pertanyaan "bab III" dan "ringkas buku ini" gak terjawab oleh pencarian konsep. Hasil run: `test/fixtures/book_chat_agent_<tag>.json` (`baseline` = pipeline sebelum #143, `v1` = hasil pertama).
+- **Progres yang ngomong (#150):** label bab yang lagi dibaca, catatan sementara, Jawab sekarang (`stopReason: user`), index embedding 3 batch bersamaan.
+- **Cache catatan bab (#151) dan front/back matter:** catatan `global` question-agnostic disimpan per bab; `skip_ids` dari planner mengeluarkan Endnotes / Imprint; pilihan selector di-union lintas putaran; prompt v6.
+- **Langkah AI:** jejak per attempt (rencana, baca, cari, berhenti, perbaikan) disimpan di `chat_turns.steps` dan ditampilkan sebagai baris status di atas jawaban.
+- **Redesign (#146):** viewport penuh, header overlay, composer kapsul, sheet sumber, reader kunjungan, riwayat per sesi, Tanyain ini.

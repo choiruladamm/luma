@@ -224,323 +224,97 @@ LANJUT | judul | kenapa nyambung
 
 ## Evaluasi model
 
-Default sekarang **GLM 5.3 Flash** (`defaultAiModel`, sejak #200). DeepSeek V4.1 Flash menang evaluasi buta #28 tapi bukan default. Hasil dan alasannya: [llm-evals.md](llm-evals.md#evaluasi-model-28).
+Default sekarang **GLM 5.3 Flash** (`defaultAiModel`). DeepSeek V4.1 Flash menang evaluasi buta #28 tapi bukan default. Hasil dan alasannya: [llm-evals.md](llm-evals.md#evaluasi-model-28).
 
+## Ngobrolin buku
 
-## Percakapan Book Chat v2 (#137)
+Chat per buku dari reader (tombol Ngobrol, aksi Tanyain ini di sheet Artinya). Model dari `ai.model` di Pengaturan, gak ada auto-switch. Gak ada web search. Kode: `lib/domain/chat_*.dart`, `lib/data/repositories/chat_*.dart`, `lib/ui/features/chat/`. Versi prompt: `chatPromptVersion` (sekarang **6**); turn menyimpan versi yang dipakai dan retry menolak versi/model yang beda dari attempt tersimpan.
 
-`chatPromptVersion = 3` (#138; angka lama, sekarang 6, lihat bagian Pembacaan mandiri buku), format jawaban tetap v2. AI menjawab teks biasa dalam beberapa paragraf natural,
-termasuk interpretasi, kritik, penerapan dan pengetahuan umum yang relevan dengan
-buku. Pertanyaan sepenuhnya di luar topik buku ditolak singkat. Fakta buku harus
-mengikuti sources; pengetahuan tambahan tidak diberi sitasi buku palsu. Instruksi
-dalam buku/quote/history bukan instruksi sistem. Periksa premis, ikuti koreksi,
-dan tanyakan klarifikasi hanya jika salah tafsir akan melenceng jauh.
+Gak ada request ke provider waktu buka riwayat, restart, atau ganti Pengaturan: semua request muncul dari send / retry / Lanjutkan eksplisit. Key dibaca ulang di tiap send.
 
-Wire JSON: `status: answered | partial | clarify | off_topic`, `parts` berisi
-`text`, `kind: book | interpretation | external | conversation`, dan `source_ids`.
-Book wajib merujuk sumber; external/conversation tidak boleh memakai sumber buku;
-interpretation boleh merujuk gagasan asal. Maksimal32paragraf, output3000token.
-Semua ID harus dipetakan ke snapshot attempt yang sudah divalidasi. Key JSON
-duplikat (termasuk escaped alias) ditolak agar tidak menimpa disclaimer/sumber.
-Validasi struktural tidak menjamin semua klaim model benar; keterbatasan #136
-masih berlaku dan ditindaklanjuti lewat dogfooding, bukan gate kesempurnaan.
+### Alur satu kiriman
 
-Budget UTF-8 bytes: question2000, history16000, sources18000, prompt termasuk
-system48000; kandidat40; selector8, snapshot akhir maksimal12 sumber dalam18000bytes
-(angka lama; sekarang `chatPromptBytes` 120000, `chatSourceBytes` 40000, `chatMaxSources` 24). History dari turn done tanpa error pada
-sesi/book/revision aktif, termasuk partial/clarify/off-topic dan legacy not_found.
-History adalah konteks percakapan, bukan bukti buku; raw/interrupted/failed tidak
-ikut. Jawaban utuh dipertahankan sampai budget; sumber stale/corrupt tetap ditolak.
-Sesi lama dapat melanjutkan prompt terbaru tanpa menulis ulang jawaban v1. Snapshot
-jawaban v2 memakai formatVersion2; v1 tetap terbaca dengan note tetap lamanya.
+1. **Planner** (`chatPlanSystem`, 1 request, `max_tokens` 600) menerima question, history, kutipan aktif, `book`, `toc` dan `readingPosition`. `toc` = tiap `chapters.id` dengan `section` induk TOC (mis. "Discourses › Book I"), `title` asli, `number` (Romawi / Arab di awal judul, supaya "bab 3" cocok dengan "III") dan `chars`. `readingPosition` = bab yang lagi dibuka reader waktu masuk chat, cuma buat menyelesaikan rujukan ("bab ini"), bukan sumber fakta. Keluarannya `strategy`, query Inggris utama + maks 3 `queries`, `chapter_ids`, `skip_ids`, `needs_clarification` + `clarification`. Rewrite pertanyaan dan pilihan strategi digabung di satu request ini, gak ada classifier terpisah.
+2. Cabang menurut strategi:
+   - `chapters`: pertanyaan nunjuk bab / Book / bagian. Bab yang diminta dibaca langsung.
+   - `global`: butuh seluruh buku. Semua bab isi dibaca bertahap jadi catatan.
+   - `specific` / `crossChapter` / `correction`: pencarian konsep di buku.
+   - `offTopic`, atau `needs_clarification`: gak ada retrieval, jawaban langsung (penolakan singkat / tanya balik).
+3. **Jawaban** (1 request streaming) dari sumber yang terkumpul. Sumber kosong tetap masuk ke model jawaban (buat bantuan umum atau klarifikasi).
 
-Tidak ada request saat buka history/restart/settings. Pada send/retry eksplisit,
-no-source/ambiguity tetap dapat memanggil answer untuk bantuan atau klarifikasi;
-ambiguity tidak memanggil embedding/selector. Renderer chat existing menampilkan
-semua paragraf dan chip sumber yang tersedia tanpa format heading wajib.
-Retrieval adaptif memakai jalur #138 di bawah. Source visit tetap #122; sumber terpilih tidak berarti seluruh buku sudah diperiksa.
+Validasi planner (`parseChatQueryPlan`): JSON dengan key unik, `queries` ≤ 3 dan unik, strategi dikenal, `chapters` wajib bawa `chapter_ids` kecuali minta klarifikasi. ID bab (angka dalam string diterima) harus unik dan ada di `toc`; ID asing = respons invalid, tanpa request lanjutan. Aplikasi juga ngecek sendiri: kalau nomor bab ("bab III") ada di beberapa section, pertanyaan gak nyebut Book, dan posisi baca gak menentukan, model gak boleh nebak. Aplikasi menimpa rencananya jadi klarifikasi ("Maksud lo bab yang di Book I, Book II yang mana?"). Balasan pendek buat klarifikasi sebelumnya ("Book I") digabung dengan pertanyaan asalnya oleh prompt planner.
 
-Model aplikasi tetap dari Pengaturan. **Live evaluation** memakai GLM5.3Flash
-primary, Qwen3.8Flash fallback sesuai instruksi user; ini tidak mengganti model
-Pengaturan. Tidak ada web search atau langkah audit draf tambahan pada runtime.
+**Front/back matter.** Planner mengisi `skip_ids` (Endnotes, Imprint, Colophon, kata pengantar orang lain, …) buat `global` dan pencarian; bab isi = TOC minus `skip_ids`. `skip_ids` kosong kalau pertanyaannya justru soal bagian itu. Bab lama tanpa `section` di-backfill lokal dari EPUB tersimpan saat chat dibuka ([data-model.md](data-model.md)).
 
-## Penelusuran adaptif (#138)
+### Baca bab dan seluruh buku
 
-Rewrite existing sekaligus memilih specific/crossChapter/global/correction/offTopic,
-query utama dan maksimal3subquery Inggris. Tidak ada request classifier terpisah.
-Ambiguity/off-topic melewati embedding dan selector. Spesifik/koreksi/lintas bab
-memakai index durable #134, dense original + setiap subquery + BM25, RRF ke40kandidat,
-selector maksimal8 dan penambahan window tetangga bab yang sama bila masih muat.
-Kutipan aktif tetap wajib tercakup utuh. Selector dapat mengembalikan maksimal2
-missing_queries, tanpa retry output/HTTP invalid. Awal + maksimal2putaran tambahan,
-maksimal3subquery baru per kiriman (angka lama; sekarang ≤9 subquery per kiriman tanpa batas putaran tetap, batas 64 per rangkaian tetap berlaku). Pending query dan pilihan berhasil disimpan;
-Lanjutkan mencari kebutuhan tersisa. Original question tetap di-embed bersama
-subquery baru pada tiap putaran; belum ada cache embedding query. Batas keseluruhan
-64subquery per rangkaian; setelah itu kirim pertanyaan baru untuk penelusuran baru.
+Teks asli dipecah jadi window ≤ 1200 unit UTF-16 tanpa overlap, urut bab / paragraf, termasuk paragraf tanpa `groupIndex` (surrogate gak dipotong). Window dibaca dalam batch:
 
-Global tidak memakai embedding/top8sebagai proxy buku. Semua teks asli, termasuk
-paragraf tanpa groupIndex, diurutkan sesuai bab/paragraf, dipecah menjadi window
-tanpa overlap ≤1200UTF-16units (surrogate aman). Setiap batch ≤8window dan12000bytes
-teks+metadata, maksimal3batch per kiriman. Model memperbarui catatan kumulatif
-≤8catatan/1200karakter/6000bytes dengan ≤64ID window asli. Catatan adalah ringkasan
-generatif yang bisa kehilangan detail, bukan kutipan atau jaminan factuality.
-Bukti window digabung per chapter.id dengan range asli; overlap dideduplikasi,
-gap tetap berupa anchor terpisah. Sumber akhir tetap ≤12/18000bytes; source_ids
-catatan dipetakan ulang ke snapshot akhir. Batch yang melampaui kontrak/sumber
-berhenti tanpa retry dan tanpa memajukan cursor, bukan memotong sitasi diam-diam.
+- Batch ≤ `chatGlobalBatchBytes` 48000 byte dan 40 window, dikecilkan mengikuti sisa context / budget. Begitu batch ≥ 60% penuh, batch berhenti di batas bab, jadi satu label per batch dan catatan rapi per bab.
+- `chatGlobalConcurrency` 3 batch dikirim bersamaan (catatan per batch independen); checkpoint tetap di-commit urut cursor.
+- Model cuma menulis catatan **baru** per batch (`max_tokens` 2500, termasuk reasoning GLM; GLM ±50 token/detik, jadi output per batch harus pendek): ≤ 14 catatan / 4800 karakter / 80 ID window. Aplikasi yang mengakumulasi ke checkpoint (≤ 400 catatan / 120000 karakter / 800 ID); teks bukti batch lama gak dikirim ulang, cuma catatannya (`previousNotes`).
+- Catatan yang kepanjangan / terpotong / ID asing diulang **sekali per batch** dengan pesan assistant + alasan penolakan, maks `chatMaxBatchRetries` 8 per kiriman. Ini langkah baca, bukan jatah perbaikan jawaban.
+- Catatan adalah ringkasan generatif yang bisa kehilangan detail, bukan kutipan dan bukan jaminan factuality. Jawaban nerima `notesAreGenerated`.
 
-Budget per kiriman (angka lama; limit per kiriman ini sudah diganti ledger di `lib/domain/chat_budget.dart`: `chatQuestionTokens`, `chatQuestionDeadline` 5 menit, `chatEmbeddingRequests` 90): maksimal7completion logis termasuk answer, total ceiling
-8000outputtoken,280000inputbytes kumulatif. Planner/selector600token, catatan1400,
-answer3000. Maksimal70request embedding dan3200000inputbytes kumulatif termasuk
-fallback model-space existing. Seluruh buku tetap dibatasi1500000bytes; batch
-dokumen64. Stop mengambil putaran baru setelah100detik; pre-dispatch ceiling150detik,
-ViewModel membatalkan retrieval setelah3menit (angka lama; sekarang `retrievalTimeout` 6 menit, budget berhenti di 5). Answer memakai waiting30s/stall20s
-existing. In-flight request ikut cancel/timer; ceiling waktu bukan jaminan billing.
-Compatibility mandatory-reasoning existing bisa menambah satu HTTP400+fallback
-per completion (maksimal14HTTP chat); bukan retry jawaban invalid atau HTTP umum.
-Model aplikasi tetap dari Pengaturan, tidak auto-switch GLM/Qwen untuk mempercantik
-hasil. Live harness mengirim reasoning yang didukung metadata sejak awal.
+Dua prompt catatan: `chatOverviewSystem` buat `global` (catatan question-agnostic: gagasan, argumen, contoh, istilah bab) dan `chatGlobalSystem` buat `chapters` (catatan terhadap pertanyaan ini).
 
-Checkpoint `chat_turns.exploration` policy1 memuat book/revision/session/turn,
-question/model, manifest seluruh window, strategi/query, cursor/total/catatan atau
-searched/pending/selected IDs. Commit setelah batch tervalidasi, di luar transaksi
-network; owner/attempt/phase/revision/hash diperiksa sebelum network dan commit.
-Lanjutkan eksplisit membuat turn baru dan rebind checkpoint ke ID baru dalam
-transaksi, mempertahankan jawaban/sumber turn lama. Complete global berarti semua
-window diproses, bukan setiap detail dipertahankan dalam catatan. Partial global
-selalu diberi status partial serta hitungan cakupan dari aplikasi; pencarian
-partial menyebut kebutuhan yang belum diperiksa. Restart/settings/hydrate tidak
-mengirim request. Stop/error menyimpan batch durable terakhir; crash setelah
-provider sukses sebelum commit masih bisa mengulang biaya batch itu.
+**Baca langsung.** Strategi `chapters` mengirim window bab yang diminta sebagai teks asli (tanpa catatan, digabung per bab, dipecah bila besar) kalau seluruhnya muat budget sumber. Kalau gak muat (bab panjang / Book utuh), diolah lewat loop catatan di atas.
 
-`make chat-adaptive-live` adalah diagnostic produksi global+continuation pada buku
-sintetis asli4bab, GLM primary; `m=qwen/qwen3.8-flash` fallback eksplisit. Guard
-memakai ledger berbayar #136 tanpa menghapus reservasi lama, menolak duplicate
-request/embedding pada diagnostic ini. Live tersebut tidak mengukur retrieval
-buku nyata, cold/warm embedding billing, atau performa device.
+**Cache catatan bab.** Strategi `global` menyimpan catatan per bab di `chat_chapter_notes` (`ChatNotesRepository`) begitu semua window bab itu selesai dibaca. Kunci: buku + revision + bab + manifest window bab + `chatChapterNotesPolicy` (1); isinya anchor paragraf, bukan ID window (ID tergantung urutan baca). Send berikutnya memuat bab yang cocok tanpa request: urutan baca menaruh bab cache di depan, `cursor` mulai dari jumlah window-nya, dan jawaban nerima `notesFromCache` (jumlah bab dari cache). Stop / Jawab sekarang di tengah tetap menyimpan bab yang sudah selesai; `contentChanged` dan hapus buku membuang cache. `chapters` tetap question-specific dan gak di-cache.
 
-## Pembacaan mandiri buku (#143)
+**Sumber akhir.** Window yang paling sering dikutip catatan, digabung per bab (`chatPackGlobalSources`), dipecah bila besar (`chatSplitLargeSources`), dimuat sampai budget sumber. ID catatan yang gak muat dibuang dari catatan itu, teksnya tetap. Jawaban nerima `exploration` (`scope`: `chapters | book | search`, `examinedChapters`, cakupan, `stopReason`, `clarification`).
 
-`chatPromptVersion = 5` (angka lama; sekarang 6), checkpoint `exploration` policy 2. Planner
-(`chatPlanSystem`) menerima question, history, kutipan, `book`, **`toc`** (tiap
-`chapters.id` dengan `section` induk TOC, `title` asli, `number` dari Romawi/Arab,
-`chars`) dan `readingPosition` dari entry reader. Keluarannya `strategy`:
-`chapters` (baca bab/bagian yang dirujuk; `chapter_ids` wajib dari toc, atau
-`needs_clarification` + `clarification` singkat bila "bab III" ambigu antar Book),
-`global` (seluruh bab isi; front/back matter seperti Endnotes/Imprint tidak masuk
-`chapter_ids`), `specific`/`crossChapter`/`correction` (pencarian konsep #138),
-`offTopic`. ID bab dari model divalidasi terhadap toc; ID asing = invalid, tanpa
-request lanjutan. Bab lama tanpa `section` di-backfill lokal dari EPUB tersimpan
-saat chat buku dibuka ([data-model.md](data-model.md)).
+### Pencarian konsep
 
-`chapters`: window bab yang diminta dikirim utuh sebagai sources (teks asli, tanpa
-catatan) bila muat budget sumber; bab panjang/Book utuh diolah lewat loop catatan
-di bawah. `global`: loop catatan atas window bab isi berurutan. Loop catatan
-(`chatGlobalSystem`): batch ≤ `chatGlobalBatchBytes` 48000 / 40 window, turun
-mengikuti context model; `chatGlobalConcurrency` 3 batch dikirim bersamaan
-(catatan per batch independen), checkpoint tetap commit urut cursor. Model hanya
-menulis catatan **baru** per batch (≤ 14 catatan / 4800 karakter / 80 ID,
-`max_tokens` 2500 termasuk reasoning GLM; GLM ≈ 50 token/detik, jadi output per
-batch harus pendek; batch invalid diulang sekali, `chatMaxBatchRetries` 8 per
-kiriman sebagai langkah baca, bukan jatah perbaikan jawaban), aplikasi
-mengakumulasi ke checkpoint (≤ 400 catatan / 120000 karakter / 800 ID; Discourses
-±24 batch × 2300 karakter);
-teks bukti catatan lama tidak dikirim ulang. Catatan batch yang
-kepanjangan/terpotong/ID asing diperbaiki sekali lewat pesan assistant + user
-(jatah `chatMaxRepairs` bersama). Tidak ada batas putaran
-tetap: berhenti saat selesai, budget/tenggat, atau cancel; `stopReason` tersimpan
-(`budget | deadline | stagnant`). Pencarian: putaran lanjut selama selector minta
-`missing_queries`, budget cukup, ≤ 9 subquery per kiriman dan pilihan berubah
-(pilihan identik dua putaran = `stagnant`). Sumber akhir: window yang paling sering
-dikutip catatan, digabung per bab (`chatPackGlobalSources`), dipecah bila besar
-(`chatSplitLargeSources`), dimuat sampai budget sumber; ID catatan yang tidak muat
-dibuang dari catatan itu, teksnya tetap. Jawaban menerima `exploration.scope`
-(`chapters | book | search`), `examinedChapters`, cakupan, `stopReason`,
-`clarification`; `complete false` tetap `partial` + trailer Lanjutkan.
+Chunk: satu group paragraf ≤ 1800 unit UTF-16 = satu chunk; group lebih panjang dipecah per 1800 dengan overlap 200. Tiap putaran:
 
-**Ledger per kiriman** (`chat_budget.dart`): 2.000.000 token input+output dan 5
-menit lintas semua request, termasuk perbaikan. Reservasi sebelum dispatch:
-`bytes/2` input + `max_tokens`; usage asli dari SSE (`stream_options.include_usage`)
-menggantikan reservasi, unknown tetap dihitung reservasi (tidak pernah 0).
-Context per request dari `GET /models` (`context_length`, gratis, cache per
-repository); gagal → 128000 konservatif, tercatat `contextFromProvider=false`.
-Batas praktis input per request 240000 bytes. Sumber dan history jawaban dibatasi
-context model (`buildChatPrompt(maxBytes:)`). Embedding dicatat terpisah (≤ 90
-request / 3,2 MB per kiriman); cap buku 1,5 MB hanya untuk jalur embedding.
-Putaran baru disisakan 40000 token + 45 detik untuk jawaban. Batas lama
-7 completion / 3 putaran / 3 batch / 150 detik dihapus; `chatPromptBytes` 120000,
-`chatSourceBytes` 40000, `chatMaxSources` 24. Lanjutkan = ledger baru, melanjutkan
-cursor/catatan/pending durable. Model tetap dari Pengaturan.
+1. Embedding: dense query asli + dense tiap subquery Inggris + BM25 tiap subquery, digabung RRF (k = 60) jadi ≤ `chatMaxCandidates` 40 kandidat. Kandidat dari bab di luar bab isi dibuang setelah ranking (index embedding tetap seluruh buku). Kutipan aktif selalu ikut dan wajib tercakup utuh (multi-window / multi-group boleh); kalau gak muat, request gagal jelas, bukan dipotong. `selectedQuote` selalu teks asli, bukan terjemahan.
+2. **Selector** (`chatSelectionSystem`, `max_tokens` 600, prompt ≤ `chatSelectorBytes` 90000) memilih ≤ 8 indeks kandidat dan boleh minta ≤ 2 `missing_queries` (query Inggris buat bagian yang belum terjawab). Output invalid gak di-retry.
+3. Pilihan di-union lintas putaran: query lanjutan yang gak nemu apa pun gak membuang bukti sebelumnya. Di akhir, window tetangga bab yang sama ditambahkan selama masih muat.
 
-**Perbaikan otomatis**: output jawaban yang gagal validasi format/sumber dikirim
-ulang maksimal 2 kali per kiriman (`chatMaxRepairs`), dalam ledger yang sama,
-dengan output lama sebagai pesan assistant + alasan penolakan. HTTP/saldo/kunci
-tidak diulang. Draft durable hanya bertambah: output lama tetap di depan, perbaikan
-ditambahkan di belakang. ViewModel menampilkan "Lagi benerin format jawaban… (n/2)"
-pada turn yang sama; preview lama tetap sampai teks baru masuk. Gagal setelah 2
-perbaikan = `failed/invalidResponse` dengan draf terbaca + Coba lagi.
+Putaran lanjut selama selector minta `missing_queries` baru, tanpa batas putaran tetap, dengan batas: ≤ 3 query segar per putaran, ≤ 9 subquery per kiriman, ≤ 64 per rangkaian (setelah itu kirim pertanyaan baru), dan putaran baru butuh sisa jatah jawaban (lihat Budget). Pilihan identik dua putaran berturut-turut = `stagnant`. Query asli di-embed ulang tiap putaran (belum ada cache embedding query).
 
-**Progres yang ngomong (#150).** `prepare(onExplorationProgress:)` mengirim
-`ChatExplorationProgress {completed, total, label, notes}`: `label` = bab window
-pertama pada group batch yang sedang jalan, `notes` = catatan yang sudah tersimpan
-di checkpoint. ViewModel menampilkan "Lagi baca Book II › IV: …" dan catatan sebagai
-preview provisional (blok `conversation` tanpa sumber, tag "Catatan sementara"),
-bukan history terpercaya; preview lama bertahan sampai teks jawaban pertama masuk.
-Batch berhenti di batas bab begitu ≥ 60% kuota terisi. **Jawab sekarang**
-(`answerNow`): loop berhenti setelah group yang jalan tersimpan, `stopReason: user`
-ikut disimpan, jawaban `partial` dari catatan yang ada, Lanjutkan tetap tersedia.
-Index embedding dokumen dikirim 3 batch bersamaan dan disimpan urut ordinal
-(prefix tetap valid). **Cache catatan bab (#151).** Strategi `global` memakai `chatOverviewSystem`:
-catatan per batch question-agnostic (gagasan, argumen, contoh, istilah bab) dan
-disimpan per bab di `chat_chapter_notes` begitu semua window bab itu selesai
-dibaca (`ChatNotesRepository`, kunci buku + revision + bab + manifest window bab +
-`chatChapterNotesPolicy`; anchor paragraf, bukan ID window). Send berikutnya
-memuat bab yang cocok tanpa request: urutan baca menaruh bab cache di depan,
-`cursor` mulai dari jumlah window-nya, `chapterIds` checkpoint = urutan baca itu.
-Jawaban menerima `notesFromCache` (jumlah bab dari cache). Stop/Jawab sekarang di
-tengah tetap menyimpan bab yang sudah selesai; `contentChanged` dan hapus buku
-membuang cache; strategi `chapters` tetap question-specific dan tidak di-cache.
-Front/back matter: planner mengisi `skip_ids` (Endnotes, Imprint, Colophon…)
-untuk `global` dan pencarian; bab isi = TOC minus `skip_ids` (ID numerik dalam
-string diterima, ID asing ditolak). Kandidat pencarian dari bab di luar daftar isi
-dibuang setelah ranking, index embedding tetap seluruh buku; `skip_ids` kosong kalau
-pertanyaannya soal bagian itu. Daftar bab yang boleh tersimpan di `chapterIds`
-checkpoint pencarian. Pilihan selector di-union lintas putaran: query lanjutan yang
-tidak menemukan apa pun tidak membuang bukti putaran sebelumnya.
-`chatPromptVersion = 6`.
+**Index embedding.** Qwen3 Embedding 8B (4096 dimensi) primary; fallback OpenAI `text-embedding-3-large` (3072) kalau provider timeout / network / 404 / 408 / 429 / 5xx. Auth, saldo, input invalid, cancel, sertifikat, dan error lain gak memicu fallback. Tiap model punya model-space sendiri (dokumen + query), vektor gak pernah dicampur atau dipotong. Detail:
 
-Bukti live: `make chat-agent-live` (`tag=`, `cases=`, `cont=`, `book=`, `m=`)
-menjalankan pipeline produksi pada `test/fixtures/discourses.epub` (Standard
-Ebooks, terjemahan Long, nav Book I–IV › bab) dan menulis
-`test/fixtures/book_chat_agent_<tag>.json` (jawaban, cakupan, request, usage,
-biaya). `baseline` = pipeline sebelum #143; `v1` = hasil pertama #143. Gutenberg
-hanya punya *selection* Discourses (#10661) tanpa TOC bab, tidak dipakai.
+- Vektor dokumen disimpan permanen di Drift; RAM cuma memegang satu index aktif. Kunci: versi format storage, buku / revision / parser / chunk policy / model / dimensi / query template; manifest mengikat chapter, range, hash, judul bab.
+- Dibangun cuma pada send / retry eksplisit yang butuh retrieval, batch ≤ 64 dokumen, 3 batch bersamaan, disimpan atomik urut ordinal (Float32 little-endian + checksum). Putus di tengah: aksi user berikutnya lanjut dari prefix lengkap yang tersimpan; ranking baru jalan setelah semua chunk lengkap. Stop / back / background gak auto-resume. Crash setelah provider sukses sebelum commit lokal bisa mengulang biaya batch itu.
+- Cache divalidasi saat load (count, ordinal, checksum, dimensi, nilai finite / bukan nol); yang rusak dibangun ulang untuk index itu saja. Perubahan isi buku menghapus indexnya; ganti judul / cover / model jawaban gak ngulang embedding. Cache ikut backup DB tapi selalu divalidasi; backup lama tanpa index tetap jalan. Gak ada API key di cache.
+- Batas input: 8000 byte per input, 64 input per request, `chatEmbeddingInputBytes` 1.500.000 byte per model-space (dokumen + query); overflow ditolak sebelum request berikutnya.
 
-## Kontrak Book Chat v1 (arsip #114)
+### Budget, batas, dan timeout
 
-Bagian ini menyimpan kontrak lama untuk memahami data dan bukti spike, bukan
-batas percakapan runtime v2.
+**Ledger per kiriman** (`chat_budget.dart`), mencakup semua request chat termasuk planner, catatan, selector, perbaikan, dan jawaban:
 
+- `chatQuestionTokens` 2.000.000 token (input + output) dan `chatQuestionDeadline` 5 menit.
+- Reservasi sebelum dispatch: byte input / 2 + `max_tokens`. Usage asli dari SSE (`stream_options.include_usage`) menggantikan reservasi; usage yang gak ada tetap dihitung reservasi (gak pernah 0). Ceiling waktu dan token bukan jaminan billing.
+- Context per request dari `GET /models` (`context_length`, gratis, di-cache per repository); gagal → `chatFallbackContextTokens` 128000, tercatat `contextFromProvider = false`. Margin `chatContextMargin` 4000 token buat system + overhead JSON.
+- Input per request ≤ `chatRequestInputBytes` 240000 byte (menjaga latensi prompt processing di bawah tenggat), juga dibatasi context model dan sisa budget. Batch catatan, sumber, dan history mengikuti batas ini.
+- Putaran baru (batch catatan atau putaran pencarian) cuma jalan kalau masih menyisakan `chatAnswerReserveTokens` 40000 token + `chatAnswerReserveTime` 45 detik buat jawaban. Kalau gak: berhenti dengan `stopReason` `budget` / `deadline`.
+- Embedding dicatat terpisah: ≤ `chatEmbeddingRequests` 90 request dan `chatEmbeddingBytes` 3.200.000 byte per kiriman (termasuk fallback model-space).
 
-`chatPromptVersion = 1` di `lib/domain/chat_prompt.dart`; system answer disalin
-**identik** dari kandidat spike #113 yang diterima user. Retrieval/prompt/transport
-produksi tersedia tanpa UI (#117). Model rewrite, selector, dan jawaban mengikuti
-`ai.model` di Pengaturan. Bukti mutu
-spike hanya untuk model/provider yang diuji, dan masih memiliki keterbatasan yang
-[diterima user](https://github.com/choiruladamm/luma/issues/113#issuecomment-6449993269).
+**Batas prompt jawaban** (UTF-8 byte): question `chatQuestionBytes` 2000; history `chatHistoryBytes` 16000; sumber `chatSourceBytes` 40000 (dan ≤ sisa budget input jawaban − system − 6000); prompt termasuk system `chatPromptBytes` 120000; sumber ≤ `chatMaxSources` 24. Sumber yang gak muat dibuang utuh, bukan dipotong. `max_tokens` jawaban `chatAnswerMaxTokens` 3000; semua request chat pakai JSON mode dan temperature 0, reasoning dimatikan. Model yang menolak itu (reasoning wajib, mis. GLM) dapat satu HTTP 400 + request ulang per panggilan chat; itu bukan retry jawaban.
 
-- JSON `status: answered | partial | not_found`, maksimal dua `claims` dengan
-  `text` dan `source_ids`. Parser menolak status/ID tidak dikenal, duplikat, sumber
-  foreign/stale, dan kontradiksi status. ID dipetakan ke snapshot sumber yang
-  dikirim attempt itu; model tidak membuat chapter ID atau kutipan.
-- `note` dari model selalu diganti copy tetap. Hanya claims yang berisi fakta buku;
-  tidak ada blok konteks tambahan generatif. Snapshot ber-ID sah tidak membuktikan
-  semua isi klaim benar. JSON parsial/draft bukan jawaban tervalidasi.
-- Budget **UTF-8 bytes**, bukan token: question 2.000, history 4.000, source 18.000,
-  answer prompt termasuk system 28.000; selector 90.000; kandidat 40, sumber 8,
-  answer maxTokens 800. Sumber dibuang utuh bila tidak muat; kutipan pengguna wajib
-  tetap tercakup seluruh rentangnya atau request ditolak jelas. Quote multi-window
-  memiliki `selectedSourceIds`; `selectedQuote` selalu teks asli, bukan terjemahan.
-- History hanya turn sebelum target sequence, dari session/book/revision aktif,
-  phase done dan answer status answered tanpa error. Partial/not_found/cut/failed/
-  stopped/interrupted tidak menjadi konteks assistant. Giliran terbaru yang utuh
-  dipertahankan sampai budget, tanpa memotong jawaban. History membantu rujukan,
-  tidak menjadi bukti.
-- `ChatQueryPlan` memisahkan English search query dan `needsClarification` sebelum
-  melihat kandidat. Ambiguitas menghasilkan no-source deterministik; bukan alasan
-  menebak dari pengetahuan model. Implementasi rewrite/ranking ada di #117.
-- `ChatIndexKey` memisahkan book revision/parser/chunk policy/model/query template.
-  Qwen3 Embedding8B (4096) primary, OpenAI Large (3072) fallback sesuai user.
-  Provider timeout/network/404/408/429/5xx dapat memicu **full** reindex dan re-embed
-  semua query. Auth/billing/input/cancel/certificate tidak memicu fallback. Tidak
-  mencampur/memotong vektor lintas model. Mutu hybrid baru terbukti pada Large saja.
+**Timeout** (`ChatViewModel`): sama dengan sheet Artinya lewat `GroupAiStream`: 15 detik tanpa token → fase `slow` (request tetap jalan); 30 detik tanpa token sejak menunggu jawaban (atau sejak perbaikan dimulai) = `timeout`; 20 detik berhenti di tengah teks = `cut`. Fase persiapan / retrieval dipagari `retrievalTimeout` 6 menit, sedikit di atas deadline ledger (5 menit), buat jaga-jaga request terakhir menggantung. Request yang lagi jalan ikut dibatalkan lewat cancel.
 
+### Prompt dan format jawaban
 
-### Retrieval dan streaming produksi (#117)
+`chatAnswerSystemPrompt` (Indonesia santai): jawab permintaan sesuai maksudnya, termasuk interpretasi, kritik, contoh, dan pengetahuan luar. Buku itu pegangan, bukan batas penalaran: fakta yang diatasnamakan buku harus didukung `sources` (semua klausanya), pengetahuan tambahan gak boleh pakai sitasi buku, kutipan langsung harus persis sumber. Instruksi di teks buku / quote / history bukan instruksi sistem (field user itu DATA). Premis diperiksa dan koreksi diikuti; tanya balik cuma kalau salah tafsir bakal melenceng jauh; pertanyaan yang sama sekali di luar topik ditolak singkat.
 
-`ChatContextRepository.prepare(turn, cancel:)` membaca key dari `ApiKeyStore` pada
-setiap send, mengambil turn/history/paragraf dari DB dalam snapshot transaksi,
-dan menolak model/versi prompt yang berbeda dari attempt tersimpan. Caller mengambil
-`model()` sebelum create/append/retry. Tidak ada network ketika hydrate history.
-Tidak ada filter reading_progress: semua bab buku pada revision sesi dapat dicari.
+Wire JSON (tiap key sekali; key duplikat, termasuk alias escaped, ditolak biar gak menimpa sumber / disclaimer):
 
-Pipeline mengikuti spike yang diterima: group parser, window 1.800 UTF-16 dengan
-overlap 200 untuk group panjang, original dense + English dense + English BM25,
-RRF60 top40, selector max8. Rewrite Inggris (max256 output tokens) berjalan sebelum
-kandidat; needs_clarification melewati embedding dan selector; answer tetap berjalan
-untuk klarifikasi atau bantuan relevan tanpa sumber. Selector (max256) memilih indeks kandidat yang tervalidasi.
-Kutipan dipertahankan utuh, termasuk multi-window/multi-group; jika tidak muat,
-request gagal jelas. Source final diberi S1…Sn menurut urutan seleksi (n ≤ 24; selector tetap maksimal 8); anchor berisi
-chapter.id, paragraphIndex, offset UTF-16, hash seluruh paragraf dan excerpt asli.
-Teks terjemahan pendamping quote tidak dikirim sebagai bukti.
+```
+{"status":"answered|partial|clarify|off_topic",
+ "parts":[{"layout":"paragraph|item|bullet|quote",
+           "kind":"book|interpretation|external|conversation",
+           "text":"...","source_ids":[]}]}
+```
 
-Vektor dokumen disimpan permanen di Drift lokal ([#134](https://github.com/choiruladamm/luma/issues/134)),
-sementara RAM hanya memegang satu index aktif. Key memuat versi format storage,
-book/revision/parser/chunk policy/model/dimensi/query template; manifest mengikat
-chapter/range/hash dan judul bab. Restart atau pindah buku memuat ulang cache yang
-valid, tanpa embedding dokumen ulang. Import/buka chat/history tidak mengirim request;
-index dibangun hanya pada send/retry eksplisit yang memerlukan retrieval.
+- `status`: `answered` = seluruh permintaan terjawab; `partial` = ada bagian belum terjawab, gap dijelaskan di `conversation`; `clarify` / `off_topic`. (Jawaban lama berstatus `not_found` dan format v1 dengan `claims` tetap terbaca; `formatVersion` 2 = `parts`.)
+- `kind`: `book` wajib punya `source_ids`; `external` dan `conversation` gak boleh punya sumber; `interpretation` boleh merujuk gagasan asal. ID dipetakan hanya ke snapshot sumber yang dikirim attempt itu (S1…Sn menurut urutan seleksi), model gak bikin ID bab atau kutipan.
+- 1–32 `parts` per jawaban. Urutan key per part: layout, kind, text, source_ids (biar layout udah ada pas teks di-stream).
+- Bila ada, `exploration` menjelaskan cakupan: `scope` `chapters` (sources = teks asli bab diminta), `book` (seluruh bab isi dibaca bertahap, `notes` = catatan generatif), `search`. `complete = false` → status wajib `partial`. `clarification` ada → status `clarify` dengan satu kalimat pendek.
 
-Batch maksimal64 disimpan atomik sebagai Float32 little-endian + checksum. Index
-building dapat dilanjutkan dari prefix lengkap tersimpan pada aksi user berikutnya;
-ranking baru berjalan setelah seluruh chunk lengkap. Progres UI menghitung chunk
-yang sudah durable. Stop/back/background tidak auto-resume. Crash sesudah provider
-sukses sebelum commit lokal tetap bisa mengulang biaya batch itu. Count, ordinal,
-checksum, dimensions dan nilai finite/nonzero diperiksa saat load; cache rusak
-khusus index itu dibangun ulang. Perubahan isi menghapus index buku dalam transaksi;
-metadata judul/cover dan model jawaban saja tidak mengulang embedding.
-
-Qwen4096 primary; fallback provider memakai Large3072 dengan dokumen dan query
-pada model-space terpisah. Cache valid masing-masing model dipertahankan dan dapat
-digunakan ulang. Auth/billing/input/cancel/certificate/unknown tidak beralih model.
-Batas input embedding **1.500.000 UTF-8 bytes** per model-space (dokumen + query),
-8.000 per input, batch64. Overflow ditolak sebelum request berikutnya; tidak
-memotong vektor atau kutipan. Maksimal dua model-space jika fallback, bukan retry
-jawaban. Cache ikut snapshot backup DB, tetapi selalu divalidasi sebelum dipakai;
-backup lama tanpa index tetap bekerja. Tidak ada API key dalam cache.
-
-Satu send normal memakai satu rewrite, embedding dokumen saat cache miss + satu
-batch dua query, satu selector, dan satu answer. Warm send tanpa index ulang =
-**4 request**; cold send = `ceil(chunkCount/64) + 4`, ditambah embedding dokumen Large yang belum tersimpan jika
-fallback. Clarification = satu rewrite + satu answer, tanpa embedding/selector.
-Sumber kosong setelah seleksi tetap masuk model jawaban. Chat max output3000,
-JSON mode dan temperature0; exception
-mandatory-reasoning dapat menambah satu HTTP request per panggilan chat sebelum
-konten. Tidak ada retry otomatis untuk HTTP lain atau output invalid. Ini batas
-request/input, bukan nominal biaya: biaya aktual bergantung model/provider; tidak
-menjalankan evaluasi berbayar baru untuk port produksi ini.
-
-`prepare` memanggil `ChatRepository.prepareSources` sebelum mengembalikan
-`PreparedChat`. Null berarti attempt stale/terminal/deleted dan harus dibuang.
-`PreparedChat.stream(cancel:)` hanya dapat dipakai sekali. `ChatStreamFrame.draft`
-adalah JSON mentah kumulatif untuk checkpoint, **bukan teks UI**. `ChatPreviewDecoder` (#141) membaca struktur JSON incremental, hanya memproyeksikan
-`parts[].text` ke `frame.preview`, menunda escape/Unicode yang belum lengkap.
-Objek paragraf lengkap memakai validator blok yang sama dengan final; ID sumber
-hanya dari snapshot frozen dan dicek live sebelum chip tampil. Preview tetap
-provisional; hanya frame terakhir setelah SSE DONE dan validasi final memiliki
-`answer`. Duplicate key/struktur invalid menghentikan preview dan mencabut sitasi;
-validasi final tetap wajib untuk seluruh JSON. Tidak ada marker mentah, HTML, tautan eksternal, atau
-instruksi buku yang dijadikan aksi. #120 merender teks klaim sebagai teks biasa;
-action sumber hanya dari objek `ChatSource` yang dipetakan aplikasi.
-
-`validatePrepared` memeriksa exact frozen sources + live owner/attempt/revision/hash
-sebelum network jawaban dan sebelum memaparkan sitasi. Attempt yang tidak aktif
-mengakhiri stream tanpa frame final; hash rusak/output invalid menjadi
-`AiError.invalidResponse`. SSE putus/DONE hilang dan error provider tetap error,
-bukan not_found. #118 memiliki cancel/checkpoint/finalize, termasuk error sebelum
-prepare selesai. Callback harus memakai repository instance asal. Finalize memvalidasi
-ulang snapshot; resolver #122 memvalidasi lagi ketika sumber dikunjungi.
-
-Bukti historis spike tidak diubah menjadi evaluasi baru: tiga manifest original
-diarsipkan byte-for-byte di `test/fixtures/book_chat_spike113/`. Manifest replay
-aktif menyimpan `replayOf` + hash arsip dan hash transport produksi yang diperluas;
-seluruh hash helper/prompt/gold tetap sama. Tes parity memeriksa teks/range chunk
-pada kedua buku validation3, sistem prompt beku, dan integritas manifest/arsip.
-Batas kualitas spike tetap berlaku; Qwen hybrid dan performa perangkat belum dibuktikan.
-
-### Bentuk jawaban Ngobrolin buku (prompt v4)
-
-Tiap `parts[]` punya `layout` opsional selain `kind`, `text`, `source_ids` (urutan key: layout, kind, text, source_ids, biar layout udah ada pas teks di-stream). Nilai gak dikenal / kosong dibaca `paragraph`, jadi jawaban lama dan backup lama tetap kebaca (tersimpan di snapshot jawaban, tanpa migrasi Drift).
+**Layout** (tersimpan di snapshot jawaban, tanpa migrasi Drift; nilai kosong / gak dikenal dibaca `paragraph`, jadi jawaban dan backup lama tetap kebaca):
 
 | layout | Dipakai buat | Tampilan |
 |---|---|---|
@@ -549,99 +323,62 @@ Tiap `parts[]` punya `layout` opsional selain `kind`, `text`, `source_ids` (urut
 | `bullet` | 3+ ciri/contoh tanpa urutan | titik 5pt, jarak sama dengan butir |
 | `quote` | kutipan langsung persis sumber, cuma `kind=book`, maks 2 kalimat | blok muted radius 14 + garis kiri kuning 3pt |
 
-Di luar `quote` + `book`, layout `quote` jatuh ke `paragraph`. Butir `item` dan `bullet` dua-duanya diawali **frasa tebal**. Dari situ aplikasi bersihin salah label model waktu render (data tersimpan gak diubah, `chatDisplayLayouts`): pengantar yang berakhir `:` jadi paragraf; butir pertama yang gak diawali tebal sementara semua butir sesudahnya iya = pengantar, jadi paragraf; daftar satu butir jadi paragraf; selagi streaming, blok terakhir yang pertama di daftarnya tampil paragraf dulu (belum tentu butir), nomor / titik muncul pas butir berikutnya mulai. `interpretation` dan `external` dapet label kecil (Tafsiran / Di luar buku) di awal tiap grup berturut-turut; `conversation` tampil sebagai kartu catatan muted dengan ikon info.
+Di luar `quote` + `book`, layout `quote` jatuh ke `paragraph`. Aplikasi membersihkan salah label model waktu render (data tersimpan gak diubah, `chatDisplayLayouts`): pengantar yang berakhir `:` jadi paragraf; butir pertama yang gak diawali tebal sementara semua butir sesudahnya iya = pengantar, jadi paragraf; daftar satu butir jadi paragraf; selagi streaming, blok terakhir yang pertama di daftarnya tampil paragraf dulu (nomor / titik muncul pas butir berikutnya mulai). `interpretation` dan `external` dapat label kecil (Tafsiran / Di luar buku) di awal tiap grup berturut-turut; `conversation` tampil sebagai kartu catatan muted dengan ikon info.
 
 Inline cuma `**tebal**` dan `*miring*` (`lib/domain/chat_markup.dart`): tebal buat istilah kunci pertama kali muncul dan awal butir, 1–3 per paragraf; miring buat judul buku, kata asing, penekanan ringan. Parser toleran buat stream (penanda yang belum ketutup gak pernah tampil sebagai bintang) dan membuang markdown lain (heading, link, backtick, tanda daftar di awal). Font italic asli: Atkinson Italic + Bold Italic, Literata Italic (variable, dipakai di 400).
 
-### UX streaming Ngobrolin buku (#141)
+### Sumber, sitasi, dan validasi
 
-ViewModel memublikasikan preview bertanda attempt maksimal sekali per50ms, tanpa
-request AI tambahan. DB tetap memakai checkpoint500ms/1KiB
-existing; complete/Stop/error flush tail. Bubble dan anchor paragraf dipakai ulang,
-scroll tetap selama respons tumbuh, termasuk saat user di bawah. “Ke terbaru”
-adalah aksi eksplisit; kirim pertanyaan baru langsung pindah ke turn terbaru
-sekali, lalu streaming tetap diam. Anchor resume/kembali sumber tetap dipakai. Status “Lagi nulis…” live-region;
-teks yang tumbuh bukan live-region. Jawaban done mengganti preview di tempat.
+- Tiap sumber punya anchor: `chapter.id`, `paragraphIndex`, offset UTF-16, hash seluruh paragraf, dan excerpt asli. Terjemahan pendamping quote bukan bukti.
+- `validatePrepared` memeriksa sumber beku + owner / attempt / revision / hash live sebelum request jawaban dan sebelum chip sitasi tampil; finalize memvalidasi ulang, dan resolver sumber memvalidasi lagi saat sumber dikunjungi. Attempt yang gak aktif mengakhiri stream tanpa frame final. Hash rusak / output invalid = `AiError.invalidResponse`; SSE putus, `[DONE]` hilang, atau error provider tetap error, bukan "gak ketemu".
+- Snapshot ID sah gak membuktikan semua klaim model benar; keterbatasan itu diterima dan dipantau lewat dogfooding, bukan gate kesempurnaan.
+- Teks klaim dirender sebagai teks biasa: gak ada HTML, link eksternal, atau instruksi buku yang jadi aksi. Aksi sumber cuma dari objek `ChatSource` yang dipetakan aplikasi.
+- **History**: turn `done`, tanpa error, ada jawaban (termasuk `partial` / `clarify` / `off_topic` dan `not_found` lama) di sesi / buku / revision aktif. Raw / interrupted / failed gak ikut. History = konteks percakapan, bukan bukti buku; jawaban utuh dipertahankan sampai `chatHistoryBytes`, yang terbaru dulu, sumber stale / corrupt ditolak.
 
-Stop/network/invalid final mempertahankan teks, status terminal dan retry eksplisit.
-Semua sitasi provisional dicabut saat terminal gagal/terputus. `ChatSnapshot`
-merekonstruksi teks draf secara defensif dari raw checkpoint saat reopen/restore,
-tanpa sitasi dan tanpa menjadikannya answer/history. Legacy v1 menunggu final,
-tidak dipaksa memakai preview v2. Tanpa migrasi Drift baru; process kill dapat kehilangan
-tail di bawah ambang checkpoint, sedangkan stop/background menunggu flush.
-Pengecekan struktur/sumber bukan jaminan semua klaim model benar.
+**Perbaikan otomatis.** Output jawaban yang gagal validasi format / sumber dikirim ulang maks `chatMaxRepairs` 2 kali per kiriman dalam ledger yang sama, dengan output lama sebagai pesan assistant + alasan penolakan; gak jalan kalau tenggat habis. HTTP / saldo / key gak diulang. Draft durable hanya bertambah (output lama tetap di depan). Gagal setelah 2 perbaikan = `failed` / `invalidResponse` dengan draf yang masih terbaca + Coba lagi.
 
+**Jawaban partial.** Kalau eksplorasi belum selesai (budget / tenggat / Jawab sekarang / stagnant), status dipaksa `partial` dan aplikasi menambah blok `conversation` berisi hitungan cakupan ("udah diperiksa n/m potongan", atau jumlah kebutuhan pencarian yang belum diperiksa) + ajakan Lanjutkan. Hitungan datang dari aplikasi, bukan model.
 
-### Pacing tampilan chat (#123)
+### Checkpoint, Lanjutkan, dan Jawab sekarang
 
-`ChatResponse` memakai `Pacer` Terjemahin hanya untuk teks preview aman, per
-attempt dan per frame pada respons aktif. Panjang dihitung dalam grapheme agar
-emoji/aksen tidak terpotong. Chip sumber menunggu seluruh teks paragraf tampil;
-source guards dan pencabutan sitasi saat terminal gagal tetap milik jalur #141.
-History/cache langsung tampil; reduced motion langsung mengungkap teks aman.
-Stop/error/background mengungkap sisa teks tanpa menunggu drain. Final tetap
-dipersist oleh ViewModel sebelum pacing visual selesai; tidak ada DB write per frame.
-Teks tetap selectable, paragraf berjarak token `Space.s5`, kolom maksimum
-`Layout.chatTextWidth` dengan typography bacaan Stabilo dan jarak baris dark.
-Output kontrak v2 tetap teks biasa; tidak ditambah renderer Markdown atau protocol baru.
+- `chat_turns.exploration` (policy `chatExplorationPolicy` 2): book / revision / session / turn, question / model, manifest seluruh window, strategi, query, cursor / total, catatan, `chapterIds`, query searched / pending, ID terpilih, `stopReason` (`complete | budget | deadline | stagnant | user`). Di-commit setelah batch tervalidasi, di luar transaksi network; owner / attempt / phase / revision / hash diperiksa sebelum network dan sebelum commit.
+- Stop / error menyimpan batch durable terakhir. Crash setelah provider sukses sebelum commit bisa mengulang biaya batch itu.
+- **Lanjutkan** membuat turn baru dengan ledger baru, merebind checkpoint ke ID turn baru dalam satu transaksi, dan melanjutkan cursor / catatan / pending query durable; jawaban dan sumber turn lama tetap.
+- **Jawab sekarang** (`answerNow`): loop berhenti setelah group batch yang berjalan tersimpan, `stopReason: user` ikut disimpan, jawaban `partial` dibuat dari catatan yang ada, Lanjutkan tetap tersedia.
 
-### Redesign Ngobrolin Buku (#146)
+### Langkah AI dan progres
 
-Acuan screen: `design/references/ngobrolin-buku.html`. Export statis cukup untuk
-implementasi; catatan naratif yang tertinggal tidak menggantikan screen dan
-kontrak aplikasi. Tema gelap mengikuti token Stabilo existing.
+Aplikasi mencatat jejak tiap attempt tanpa request tambahan (`ChatStep`, `lib/domain/chat_steps.dart`), disimpan sekali di `chat_turns.steps`. Jenis: `plan`, `cache`, `read`, `search`, `skip`, `repair`, `retry`, `stop`, `answer`; status `done` / `running` / `skipped`. Langkah `running` selalu paling belakang; langkah selesai dengan kind + label sama menuntaskannya. Attempt yang berakhir tanpa jawaban menandai langkah running sebagai dilewati. Batas decode: ≤ 400 langkah, label / detail ≤ 300 karakter, kind / status harus dikenal.
 
-Chat menggunakan viewport penuh dengan header overlay 52pt yang menghilang saat
-scroll turun dan kembali saat naik (ReaderChrome), serta composer kapsul 52pt
-minimum yang tumbuh sampai lima baris. Tinggi header/composer diukur supaya teks
-besar dan keyboard tetap menyisakan padding scroll yang benar. Notice fitur ikut
-scroll. Jawaban memakai readingSheet 15,5/1,5 (dark mengikuti forBrightness),
-paragraf berjarak12, turn32; bubble pertanyaan rata kanan maksimal82% lebar.
-Sumber tampil sebagai chip inline dengan target sentuh44. Label memakai nama bab
-asli yang tersedia, tidak mengarang nomor bagian dari ID aplikasi.
+UI (`ChatStepsRow`): baris status setinggi 40pt di atas jawaban (titik kuning berdenyut + "Lagi baca Book II › IV: …" + "Langkah n" saat jalan; centang + "n langkah selesai" setelah selesai). Daftar langkah terbuka saat jalan, tertutup setelah selesai, toggle user menang sampai turn ganti; 6 langkah pertama tampil, sisanya bisa dibuka. Label bab "Book I › III: Judul" memakai chevron kecil, bukan karakter.
 
-Kirim menempatkan pertanyaan baru di bawah header sekali dengan animasi; reduced
-motion memakai jump. Turn terbaru diberi ruang minimum untuk pertumbuhan jawaban.
-Streaming/final, munculnya chip dan keyboard tidak memaksa scroll. Tombol turun
-muncul saat jarak ke bawah lebih80pt. Pacing/source guards tetap memakai #123/#141;
-kursor visual dan titik tunggu tidak mengumumkan setiap karakter ke screen reader.
-Hanya turn terakhir yang dapat diulang/diteruskan memiliki aksi kecil dalam isi
-scroll; status lama tidak menumpuk tombol di atas composer. Settings, error dan
-Lanjutkan tetap memakai state ViewModel existing.
+Selama baca, `prepare(onExplorationProgress:)` mengirim `{completed, total, label, notes}`: `label` = bab window pertama batch yang jalan, `notes` = catatan tersimpan di checkpoint. Catatan tampil sebagai preview provisional (blok `conversation` tanpa sumber, tag "CATATAN SEMENTARA"), bukan history terpercaya, dan bertahan sampai teks jawaban pertama masuk. Progres index embedding (chunk yang sudah durable) tampil terpisah. Tombol Jawab sekarang ada selama membaca.
 
-Sheet sitasi memiliki viewport penuh, grabber, metadata/konteks yang ikut scroll,
-kutipan dalam blok muted, serta close dan Buka di buku satu baris di bawah.
-Geometri mengikuti overlay Artinya: isi margin24, grabber atas10, tombol bawah34,
-fade atas20 clear12; fade bawah20 clear86; padding akhir102. Sesuai screen #146,
-teks kutipan mulai pada margin24, latar kutipan melebar 12 di kedua sisi dan
-padding vertikal10; aksi bawah memakai margin16 dan jarak10. Konteks sebelum/sesudah
-serta label posisi dibaca lokal hanya untuk lokasi valid. Membuka sheet/reader
-kunjungan tetap tanpa penulisan progres maupun waktu baca.
+### Streaming dan pacing
 
-Reader kunjungan hanya memiliki label intip dan kapsul Balik ke ngobrol / Lanjut
-baca. Label intip mengambil progres tersimpan terbaru lewat provider terpisah,
-tanpa mereset viewport reader yang masih terbuka di belakang. Balik memulihkan
-anchor chat. Lanjut baca memvalidasi ulang sumber dan menulis
-posisi awal kutipan dalam satu transaksi; kemudian kembali ke reader biasa di
-posisi baru. Revision, ownership, attempt dan validitas teks harus tetap cocok.
-Pembatalan/kegagalan tidak memindahkan progres. Reader asli memuat posisi tersimpan
-sebelum melanjutkan clock; posisi lamanya tidak boleh menimpa hasil aksi eksplisit.
-Kapsul progres reader biasa kini satu objek dengan tombol Ngobrol bulat di ujung. Petunjuk pertama disimpan sebagai key `reader.chatHintSeen` pada settings; tidak ada perubahan schema.
+- `ChatStreamFrame.draft` = JSON mentah kumulatif buat checkpoint, **bukan teks UI**. Checkpoint DB tiap 500 ms / 1 KiB (complete / Stop / error / background flush ekornya); process kill bisa kehilangan ekor di bawah ambang itu.
+- `ChatPreviewDecoder` membaca JSON incremental dan cuma memproyeksikan `parts[].text` ke `frame.preview` (escape / Unicode yang belum lengkap ditunda). Objek paragraf lengkap dicek dengan validator blok yang sama dengan final; ID sumber cuma dari snapshot beku dan dicek live sebelum chip tampil. Duplicate key / struktur invalid menghentikan preview dan mencabut sitasi. Hanya frame terakhir (setelah SSE DONE dan validasi final) yang punya `answer`; jawaban done mengganti preview di tempat.
+- ViewModel mempublikasikan preview maks sekali per 50 ms. Bubble dan anchor paragraf dipakai ulang; scroll tetap selama respons tumbuh.
+- `ChatResponse` memakai `Pacer` yang sama dengan Artinya, per attempt dan per frame, panjang dihitung per grapheme. Chip sumber menunggu seluruh teks paragraf tampil. History / cache langsung tampil; reduced motion langsung mengungkap teks aman; Stop / error / background mengungkap sisa teks tanpa menunggu drain. Final dipersist ViewModel sebelum pacing visual selesai (gak ada DB write per frame).
+- Stop / network / invalid final mempertahankan teks, status terminal, dan Coba lagi eksplisit; semua sitasi provisional dicabut saat gagal / terputus. `ChatSnapshot` merekonstruksi teks draf secara defensif dari raw checkpoint saat reopen / restore, tanpa sitasi dan bukan answer / history. Legacy v1 menunggu final.
 
-Riwayat per buku dikelompokkan Hari ini/Kemarin/7 hari terakhir/Lebih lama, memiliki
-penanda aktif/arsip, menu rename/hapus per sesi dan CTA baru di bawah. Rename sesi
-nonaktif tidak mengaktifkan sesi itu; repository tetap memeriksa buku/revision.
-Arsip tidak bisa diubah judulnya/dilanjutkan; hapus tetap membutuhkan konfirmasi.
-Draft kosong belum membuat sesi. Preview menampilkan jawaban valid terakhir; fallback pertanyaan ketika belum tersedia.
+### Tampilan chat
 
-Tanyain ini berada pada baris aksi Artinya: Salin ikon, Tanyain ini muted, Lanjut
-kuning. Isi sheet lain tidak didesain ulang. Entry membuka composer kosong dan
-kartu konteks ciut (dua baris) yang bisa memperlihatkan kutipan + terjemahan, tanpa
-auto-send. Konteks pertama tampil sekali di awal history; kiriman baru menciutkan
-kartu. Baca di buku membuka kunjungan tervalidasi, progres baru pindah pada Lanjut
-baca. Header menyediakan kembali satu lapis dan akses ringkas langsung Balik baca.
-Entry kutipan yang sama melanjutkan sesi yang cocok pada buku/revision sama;
-pencocokan lokal tidak mengirim request AI. Nama bab opsional ikut snapshot quote
-JSON untuk UI, kompatibel dengan snapshot lama tanpa perubahan schema. Terjemahan
-pendamping UI tetap bukan bukti model. Import/hydrate/history tidak menambah paid
-request. #143 tetap menangani kualitas konteks/retrieval, bukan redesign ini.
+Acuan: `design/references/ngobrolin-buku.html` (export statis; tema gelap mengikuti token Stabilo).
+
+- Viewport penuh, header overlay `Layout.chatHeader` 52pt yang hilang saat scroll turun dan kembali saat naik (`ReaderChrome`), composer kapsul `Layout.chatComposer` 52pt minimum, tumbuh sampai lima baris. Tinggi header / composer diukur supaya teks besar dan keyboard tetap menyisakan padding scroll yang benar. Notice fitur ikut scroll.
+- Jawaban pakai `readingSheet` 15,5/1,5, kolom maks `Layout.chatTextWidth` 680, paragraf berjarak 12, turn 32; bubble pertanyaan rata kanan maks `Layout.chatBubbleFraction` 82% lebar. Teks selectable. Sumber tampil sebagai chip inline (target sentuh 44), label pakai nama bab asli, bukan nomor bagian karangan dari ID aplikasi.
+- Kirim menaruh pertanyaan baru di bawah header sekali dengan animasi (reduced motion = jump) dan memberi ruang tumbuh buat jawabannya. Streaming, chip, dan keyboard gak memaksa scroll. Tombol "Ke terbaru" muncul saat jarak ke bawah > `Layout.chatFollowDistance` 80pt; anchor resume / balik dari sumber tetap dipakai. Status "Lagi nulis…" live-region, teks yang tumbuh bukan; kursor visual dan titik tunggu gak diumumkan per karakter ke screen reader.
+- Hanya turn terakhir yang bisa diulang / diteruskan punya aksi kecil di isi scroll (Coba lagi, Lanjutkan); status lama gak numpuk di atas composer.
+- Fase `ChatPhase`: `preparing` → `retrieving` → `waiting` → `writing` (+ `slow`) → `done`; terminal gagal: `failed` (belum ada teks), `cut` (ada teks), `stopped`, `interrupted`. Perbaikan format tampil sebagai status "Lagi benerin format jawaban… (n/2)" di turn yang sama, preview lama tetap sampai teks baru masuk.
+- **Sheet sumber**: viewport penuh, grabber, metadata / konteks sebelum-sesudah ikut scroll (dibaca lokal hanya buat lokasi valid), kutipan dalam blok muted, aksi Tutup + Buka di buku. Geometri mengikuti overlay Artinya dan board. Membuka sheet / reader kunjungan gak menulis progres atau waktu baca.
+- **Reader kunjungan** (dari Buka di buku): cuma label intip dan kapsul Balik ke ngobrol / Lanjut baca. Label intip mengambil progres tersimpan terbaru lewat provider terpisah tanpa mereset viewport reader yang masih terbuka. Balik memulihkan anchor chat. Lanjut baca memvalidasi ulang sumber (revision, ownership, attempt, validitas teks) dan menulis posisi awal kutipan dalam satu transaksi, lalu kembali ke reader biasa di posisi baru; batal / gagal gak memindahkan progres.
+- Kapsul progres reader biasa satu objek dengan tombol Ngobrol bulat di ujung. Petunjuk pertama disimpan di key `reader.chatHintSeen` (tabel `settings`).
+- **Riwayat per buku**: dikelompokkan Hari ini / Kemarin / 7 hari terakhir / Lebih lama, penanda aktif / arsip, menu rename / hapus per sesi (hapus pakai konfirmasi), CTA baru di bawah. Rename sesi nonaktif gak mengaktifkan sesi itu; repository tetap memeriksa buku / revision. Sesi arsip (revision lama) gak bisa di-rename atau dilanjutkan. Draft kosong belum membuat sesi. Preview menampilkan jawaban valid terakhir, fallback ke pertanyaan.
+- **Tanyain ini**: aksi di baris Artinya (Salin ikon, Tanyain ini muted, Lanjut kuning). Entry membuka composer kosong + kartu konteks dua baris yang bisa memperlihatkan kutipan + terjemahan, tanpa auto-send. Konteks pertama tampil sekali di awal history; kiriman baru menciutkan kartu. Entry kutipan yang sama melanjutkan sesi yang cocok pada buku / revision sama (pencocokan lokal, tanpa request). Nama bab opsional ikut snapshot quote JSON buat UI, kompatibel dengan snapshot lama. Terjemahan pendamping di UI bukan bukti model.
+
+### Bukti live
+
+- `make chat-agent-live` (`tag=`, `cases=`, `cont=`, `book=`, `m=`) menjalankan pipeline produksi pada `test/fixtures/discourses.epub` (Standard Ebooks, terjemahan Long, nav Book I–IV › bab) dan menulis `test/fixtures/book_chat_agent_<tag>.json` (jawaban, cakupan, request, usage, biaya).
+- `make chat-adaptive-live` = diagnostic global + continuation pada buku sintetis 4 bab, GLM primary, `m=` buat model lain; menolak duplicate request / embedding. Gak mengukur retrieval buku nyata, billing embedding cold / warm, atau performa device.
+- Mutu retrieval hybrid dan jalur Qwen terbukti dengan keterbatasan yang [diterima user](https://github.com/choiruladamm/luma/issues/113#issuecomment-6449993269); bukti spike asli diarsipkan byte-for-byte di `test/fixtures/book_chat_spike113/`. Riwayat iterasi dan hasil evaluasi: [llm-evals.md](llm-evals.md#riwayat-ngobrolin-buku).
