@@ -250,7 +250,7 @@ Aturan `issueKey`: pakai ulang selama masih berlaku (subrequest 0), bikin lazy, 
 | Biaya per user | `limit: 0.02`, `limit_reset: "daily"` → maks ±$0.60/bulan per user, ±30–50 tap/hari |
 | Total biaya | Budget guardrail workspace OpenRouter **$5/bulan**. Habis → semua key subsidi 402 → "Kuota gratis lagi abis, pakai key sendiri dulu yuk". Saldo OpenRouter tanpa auto top-up sebagai lapis kedua |
 | Key diekstrak dari device | Limit harian kecil + `expires_at` 30 hari. 401 → app panggil `POST /v1/ai/key {"rotate": true}` → kalau key memang udah gak ada di OpenRouter, key lama dihapus dan key baru dibuat; kalau masih ada, key yang sama dikirim balik (rotasi gak bisa dipakai buat reset limit harian). Ban lewat `make backend-ban e=prod email=…` (env `OPENROUTER_MANAGEMENT_KEY`): `DELETE /keys/{hash}` duluan (key yang udah diekstrak langsung mati, bukan nunggu 30 hari), lalu `banned = 1` + hapus baris `ai_keys` |
-| Model mahal | Workspace `luma-subsidi` dengan default guardrail `allowed_models` (model default + kandidat murah + **model embedding** Ngobrolin). Mode subsidi: pemilih model hanya menampilkan daftar dari `/v1/ai/config` |
+| Model mahal | Workspace `luma-subsidi-dev` / `luma-subsidi-prod` (satu per env, `OPENROUTER_WORKSPACE_ID`) dengan default guardrail `allowed_models` (model default + kandidat murah + **model embedding** Ngobrolin). Mode subsidi: pemilih model hanya menampilkan daftar dari `/v1/ai/config` |
 | Spam akun | Login prod hanya Google, key lazy, `user_id` unique, rate limit `POST /v1/ai/key` per IP + per user (binding Workers Rate Limiting), kode undangan selama beta |
 
 Batas terburuk: **biaya subsidi per bulan ≤ min(budget workspace, jumlah user × limit bulanan per user)**, ditegakkan OpenRouter.

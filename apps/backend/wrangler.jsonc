@@ -77,8 +77,8 @@
         "AI_DAILY_LIMIT_USD": "0.02",
         "AI_MONTHLY_BUDGET_USD": "5",
         "AI_KEY_TTL_DAYS": "30",
-        // Workspace luma-subsidi-prod dibuat saat backend masuk master.
-        "OPENROUTER_WORKSPACE_ID": "",
+        // Workspace luma-subsidi-prod (guardrail default: allowlist model + $5/bulan).
+        "OPENROUTER_WORKSPACE_ID": "50af7b13-ca88-454b-9385-2e61296c2084",
         "AI_CHAT_MODELS": "deepseek/deepseek-v4.1-flash,qwen/qwen3.8-flash,z-ai/glm-5.3-flash",
         "AI_EMBEDDING_MODELS": "qwen/qwen3-embedding-8b,openai/text-embedding-3-large"
       },
