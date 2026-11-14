@@ -98,18 +98,6 @@ abstract class AppLocalizations {
     Locale('id'),
   ];
 
-  /// No description provided for @interfaceLanguage.
-  ///
-  /// In id, this message translates to:
-  /// **'Bahasa antarmuka'**
-  String get interfaceLanguage;
-
-  /// No description provided for @interfaceLanguageNote.
-  ///
-  /// In id, this message translates to:
-  /// **'Bahasa ini cuma buat tampilan. Terjemahan dan jawaban AI tetap Bahasa Indonesia.'**
-  String get interfaceLanguageNote;
-
   /// No description provided for @languageSaveFailed.
   ///
   /// In id, this message translates to:
@@ -968,293 +956,143 @@ abstract class AppLocalizations {
   /// **'Coba lagi bentar ya'**
   String get backupTryAgainInAMoment;
 
-  /// Interface copy in ui/features/settings/views/settings_view.dart
+  /// Interface copy in ui/features/settings/views/backup_view.dart
   ///
   /// In id, this message translates to:
   /// **'Sip, data lo udah balik!'**
   String get settingsYourDataIsBack;
 
-  /// Interface copy in ui/features/settings/views/settings_view.dart
+  /// Interface copy in ui/features/settings/views/cloud_restore_sheet.dart
   ///
   /// In id, this message translates to:
   /// **'{p0} buku · {p1} terjemahan'**
   String settingsBooksTranslations(int p0, int p1);
 
-  /// Interface copy in ui/features/settings/views/settings_view.dart
+  /// Interface copy in ui/features/settings/views/backup_view.dart
   ///
   /// In id, this message translates to:
   /// **'API key gak ikut backup, isi ulang dulu biar bisa nerjemahin.'**
   String get settingsApiKeysArenTIncludedIn;
 
-  /// Interface copy in ui/features/settings/views/settings_view.dart
+  /// Interface copy in ui/features/settings/views/backup_view.dart
   ///
   /// In id, this message translates to:
   /// **'Isi key'**
   String get settingsAddKey;
 
-  /// Interface copy in ui/features/settings/views/settings_view.dart
-  ///
-  /// In id, this message translates to:
-  /// **'Hapus cache terjemahan?'**
-  String get settingsDeleteTranslationCache;
-
-  /// Interface copy in ui/features/settings/views/settings_view.dart
-  ///
-  /// In id, this message translates to:
-  /// **'Semua terjemahan yang udah kesimpen bakal ilang. Paragraf yang dibuka lagi manggil AI ulang dan motong saldo lagi. Obrolan buku lo tetap kesimpen.'**
-  String get settingsAllSavedTranslationsWillBeDeleted;
-
-  /// Interface copy in ui/features/settings/views/settings_view.dart
-  ///
-  /// In id, this message translates to:
-  /// **'Katalognya udah yang terbaru'**
-  String get settingsYourCatalogIsAlreadyUpTo;
-
-  /// Interface copy in ui/features/settings/views/settings_view.dart
+  /// Interface copy in ui/features/settings/views/settings_page.dart
   ///
   /// In id, this message translates to:
   /// **'Balik'**
   String get settingsBack;
 
-  /// Interface copy in ui/features/settings/views/settings_view.dart
+  /// Interface copy in ui/features/settings/views/settings_hub_view.dart
   ///
   /// In id, this message translates to:
   /// **'Pengaturan'**
   String get settingsSettings;
 
-  /// Interface copy in ui/features/settings/views/settings_view.dart
+  /// Interface copy in ui/features/settings/views/ai_view.dart
   ///
   /// In id, this message translates to:
   /// **'API key OpenRouter'**
   String get settingsOpenrouterApiKey;
 
-  /// Interface copy in ui/features/settings/views/settings_view.dart
+  /// Interface copy in ui/features/settings/views/ai_view.dart
   ///
   /// In id, this message translates to:
   /// **'Model AI'**
   String get settingsAiModel;
 
-  /// Interface copy in ui/features/settings/views/settings_view.dart
-  ///
-  /// In id, this message translates to:
-  /// **'Biayanya kepotong dari saldo akun OpenRouter lo.'**
-  String get settingsChargesComeFromYourOpenrouterAccount;
-
-  /// Interface copy in ui/features/settings/views/settings_view.dart
+  /// Interface copy in ui/features/settings/views/backup_view.dart
   ///
   /// In id, this message translates to:
   /// **'Backup & pulihin'**
   String get settingsBackupRestore;
 
-  /// Interface copy in ui/features/settings/views/settings_view.dart
-  ///
-  /// In id, this message translates to:
-  /// **'Katalog buku'**
-  String get settingsBookCatalog;
-
-  /// Interface copy in ui/features/settings/views/settings_view.dart
-  ///
-  /// In id, this message translates to:
-  /// **'Daftar ±62.000 buku Project Gutenberg buat nyari judul tanpa internet. Diperbarui mingguan.'**
-  String get settingsAroundProjectGutenbergBooksToSearch;
-
-  /// Interface copy in ui/features/settings/views/settings_view.dart
-  ///
-  /// In id, this message translates to:
-  /// **'Penyimpanan'**
-  String get settingsStorage;
-
-  /// Interface copy in ui/features/settings/views/settings_view.dart
+  /// Interface copy in ui/features/settings/views/ai_view.dart
   ///
   /// In id, this message translates to:
   /// **'Disimpen aman di perangkat (Keychain / Keystore), gak dikirim ke mana-mana selain OpenRouter.'**
   String get settingsStoredSecurelyOnYourDeviceKeychain;
 
-  /// Interface copy in ui/features/settings/views/settings_view.dart
+  /// Interface copy in ui/features/settings/views/ai_view.dart
   ///
   /// In id, this message translates to:
   /// **'Itu bukan API key OpenRouter. Key-nya mulai dari sk-or-... dan gak disimpen.'**
   String get settingsThatSNotAnOpenrouterApi;
 
-  /// Interface copy in ui/features/settings/views/settings_view.dart
+  /// Interface copy in ui/features/settings/views/ai_view.dart
   ///
   /// In id, this message translates to:
   /// **'Key-nya ditolak OpenRouter, jadi gak disimpen. Cek lagi ya.'**
   String get settingsOpenrouterRejectedTheKeySoIt;
 
-  /// Interface copy in ui/features/settings/views/settings_view.dart
-  ///
-  /// In id, this message translates to:
-  /// **'Bentar, lagi ngecek...'**
-  String get settingsHangOnChecking;
-
-  /// Interface copy in ui/features/settings/views/settings_view.dart
+  /// Interface copy in ui/features/settings/views/ai_view.dart
   ///
   /// In id, this message translates to:
   /// **'Key-nya jalan'**
   String get settingsYourKeyWorks;
 
-  /// Interface copy in ui/features/settings/views/settings_view.dart
-  ///
-  /// In id, this message translates to:
-  /// **'Key-nya ditolak OpenRouter'**
-  String get settingsOpenrouterRejectedYourKey;
-
-  /// Interface copy in ui/features/settings/views/settings_view.dart
-  ///
-  /// In id, this message translates to:
-  /// **'Disimpen aman di perangkat'**
-  String get settingsStoredSecurelyOnYourDevice;
-
-  /// Interface copy in ui/features/settings/views/settings_view.dart
+  /// Interface copy in ui/features/settings/views/backup_view.dart
   ///
   /// In id, this message translates to:
   /// **'Isinya buku, progres baca, terjemahan, sama pengaturan. '**
   String get settingsIncludesBooksReadingProgressTranslationsAnd;
 
-  /// Interface copy in ui/features/settings/views/settings_view.dart
+  /// Interface copy in ui/features/settings/views/backup_view.dart
   ///
   /// In id, this message translates to:
   /// **'API key gak ikut'**
   String get settingsApiKeysArenTIncluded;
 
-  /// Interface copy in ui/features/settings/views/settings_view.dart
+  /// Interface copy in ui/features/settings/views/backup_view.dart
   ///
   /// In id, this message translates to:
   /// **', jadi abis pulihin isi ulang ya. Simpen file-nya di iCloud Drive biar gak ikut kehapus pas install ulang.'**
   String get settingsSoAddYoursAgainAfterRestoring;
 
-  /// Interface copy in ui/features/settings/views/settings_view.dart
+  /// Interface copy in ui/features/settings/views/backup_view.dart
   ///
   /// In id, this message translates to:
   /// **'Barusan'**
   String get settingsJustNow;
 
-  /// Interface copy in ui/features/settings/views/settings_view.dart
+  /// Interface copy in ui/features/settings/views/backup_view.dart
   ///
   /// In id, this message translates to:
   /// **'Status backup'**
   String get settingsBackupStatus;
 
-  /// Interface copy in ui/features/settings/views/settings_view.dart
+  /// Interface copy in ui/features/settings/views/backup_view.dart
   ///
   /// In id, this message translates to:
   /// **'Backup terakhir'**
   String get settingsLastBackup;
 
-  /// Interface copy in ui/features/settings/views/settings_view.dart
+  /// Interface copy in ui/features/settings/views/backup_view.dart
   ///
   /// In id, this message translates to:
   /// **'Belum pernah backup'**
   String get settingsNoBackupsYet;
 
-  /// Interface copy in ui/features/settings/views/settings_view.dart
+  /// Interface copy in ui/features/settings/views/backup_view.dart
   ///
   /// In id, this message translates to:
   /// **'Data lo cuma ada di HP ini doang'**
   String get settingsYourDataIsOnlyOnThis;
 
-  /// Interface copy in ui/features/settings/views/settings_view.dart
+  /// Interface copy in ui/features/settings/views/backup_view.dart
   ///
   /// In id, this message translates to:
   /// **'Backup sekarang'**
   String get settingsBackUpNow;
 
-  /// Interface copy in ui/features/settings/views/settings_view.dart
-  ///
-  /// In id, this message translates to:
-  /// **'Pulihin dari backup'**
-  String get settingsRestoreFromBackup;
-
-  /// Interface copy in ui/features/settings/views/settings_view.dart
-  ///
-  /// In id, this message translates to:
-  /// **'Default · paling akurat'**
-  String get settingsDefaultMostAccurate;
-
-  /// Interface copy in ui/features/settings/views/settings_view.dart
-  ///
-  /// In id, this message translates to:
-  /// **'Cache terjemahan'**
-  String get settingsTranslationCache;
-
-  /// Interface copy in ui/features/settings/views/settings_view.dart
-  ///
-  /// In id, this message translates to:
-  /// **'{p0} paragraf · {p1}'**
-  String settingsParagraphs(int p0, Object p1);
-
-  /// Interface copy in ui/features/settings/views/settings_view.dart
-  ///
-  /// In id, this message translates to:
-  /// **'Hapus cache'**
-  String get settingsClearCache;
-
-  /// Interface copy in ui/features/settings/views/settings_view.dart
-  ///
-  /// In id, this message translates to:
-  /// **'Belum diunduh · 5,6 MB'**
-  String get settingsNotDownloadedMb;
-
-  /// Interface copy in ui/features/settings/views/settings_view.dart
-  ///
-  /// In id, this message translates to:
-  /// **'Diperbarui {p0} · '**
-  String settingsUpdated(Object p0);
-
-  /// Interface copy in ui/features/settings/views/settings_view.dart
-  ///
-  /// In id, this message translates to:
-  /// **'{p0}{p1} buku'**
-  String settingsBooks(Object p0, int p1);
-
-  /// Interface copy in ui/features/settings/views/settings_view.dart
-  ///
-  /// In id, this message translates to:
-  /// **'Ngecek versi terbaru…'**
-  String get settingsCheckingForUpdates;
-
-  /// Interface copy in ui/features/settings/views/settings_view.dart
-  ///
-  /// In id, this message translates to:
-  /// **'Ngunduh…'**
-  String get settingsDownloading;
-
-  /// Interface copy in ui/features/settings/views/settings_view.dart
-  ///
-  /// In id, this message translates to:
-  /// **'Ngunduh {p0}%'**
-  String settingsDownloading2(Object p0);
-
-  /// Interface copy in ui/features/settings/views/settings_view.dart
+  /// Interface copy in ui/features/discover/views/discover_view.dart
   ///
   /// In id, this message translates to:
   /// **'Nyusun katalog…'**
   String get settingsPreparingCatalog;
-
-  /// Interface copy in ui/features/settings/views/settings_view.dart
-  ///
-  /// In id, this message translates to:
-  /// **'Gagal, katalog lama tetep dipakai'**
-  String get settingsFailedKeepingThePreviousCatalog;
-
-  /// Interface copy in ui/features/settings/views/settings_view.dart
-  ///
-  /// In id, this message translates to:
-  /// **'Unduh'**
-  String get settingsDownload;
-
-  /// Interface copy in ui/features/settings/views/settings_view.dart
-  ///
-  /// In id, this message translates to:
-  /// **'Perbarui'**
-  String get settingsUpdate;
-
-  /// Interface copy in ui/features/settings/views/settings_view.dart
-  ///
-  /// In id, this message translates to:
-  /// **'Katalog Gutenberg'**
-  String get settingsGutenbergCatalog;
 
   /// Interface copy in ui/features/settings/views/backup_sheet.dart
   ///
@@ -4124,12 +3962,6 @@ abstract class AppLocalizations {
   /// **'Akun'**
   String get settingsAccount;
 
-  /// No description provided for @authExLibris.
-  ///
-  /// In id, this message translates to:
-  /// **'EX LIBRIS'**
-  String get authExLibris;
-
   /// No description provided for @authViaGoogle.
   ///
   /// In id, this message translates to:
@@ -4514,23 +4346,11 @@ abstract class AppLocalizations {
   /// **'Key-nya ditolak (401)'**
   String get aiKeyRejected401;
 
-  /// No description provided for @aiKeyRejectedBox.
-  ///
-  /// In id, this message translates to:
-  /// **'OpenRouter nolak key ini. Cek lagi di openrouter.ai/keys, terus tempel ulang. AI berhenti dulu sampai key-nya bener, atau balik ke kuota gratis.'**
-  String get aiKeyRejectedBox;
-
   /// No description provided for @aiCheckedJustNow.
   ///
   /// In id, this message translates to:
   /// **'Dicek barusan'**
   String get aiCheckedJustNow;
-
-  /// No description provided for @aiDefaultTag.
-  ///
-  /// In id, this message translates to:
-  /// **'default'**
-  String get aiDefaultTag;
 
   /// No description provided for @aiBackToFree.
   ///
@@ -4621,18 +4441,6 @@ abstract class AppLocalizations {
   /// In id, this message translates to:
   /// **'Gak ada model yang cocok.'**
   String get aiNoModelMatch;
-
-  /// Interface copy in ui/features/settings/views/settings_view.dart
-  ///
-  /// In id, this message translates to:
-  /// **'Backup ke cloud'**
-  String get settingsBackUpToCloud;
-
-  /// Interface copy in ui/features/settings/views/settings_view.dart
-  ///
-  /// In id, this message translates to:
-  /// **'Pulihin dari cloud'**
-  String get settingsRestoreFromCloud;
 
   /// Interface copy in ui/features/settings/views/backup_sheet.dart
   ///

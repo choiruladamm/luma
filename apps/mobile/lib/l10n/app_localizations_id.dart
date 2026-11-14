@@ -10,13 +10,6 @@ class AppLocalizationsId extends AppLocalizations {
   AppLocalizationsId([String locale = 'id']) : super(locale);
 
   @override
-  String get interfaceLanguage => 'Bahasa antarmuka';
-
-  @override
-  String get interfaceLanguageNote =>
-      'Bahasa ini cuma buat tampilan. Terjemahan dan jawaban AI tetap Bahasa Indonesia.';
-
-  @override
   String get languageSaveFailed => 'Bahasanya gagal disimpen. Coba lagi, ya.';
 
   @override
@@ -533,16 +526,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get settingsAddKey => 'Isi key';
 
   @override
-  String get settingsDeleteTranslationCache => 'Hapus cache terjemahan?';
-
-  @override
-  String get settingsAllSavedTranslationsWillBeDeleted =>
-      'Semua terjemahan yang udah kesimpen bakal ilang. Paragraf yang dibuka lagi manggil AI ulang dan motong saldo lagi. Obrolan buku lo tetap kesimpen.';
-
-  @override
-  String get settingsYourCatalogIsAlreadyUpTo => 'Katalognya udah yang terbaru';
-
-  @override
   String get settingsBack => 'Balik';
 
   @override
@@ -555,21 +538,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get settingsAiModel => 'Model AI';
 
   @override
-  String get settingsChargesComeFromYourOpenrouterAccount =>
-      'Biayanya kepotong dari saldo akun OpenRouter lo.';
-
-  @override
   String get settingsBackupRestore => 'Backup & pulihin';
-
-  @override
-  String get settingsBookCatalog => 'Katalog buku';
-
-  @override
-  String get settingsAroundProjectGutenbergBooksToSearch =>
-      'Daftar ±62.000 buku Project Gutenberg buat nyari judul tanpa internet. Diperbarui mingguan.';
-
-  @override
-  String get settingsStorage => 'Penyimpanan';
 
   @override
   String get settingsStoredSecurelyOnYourDeviceKeychain =>
@@ -584,16 +553,7 @@ class AppLocalizationsId extends AppLocalizations {
       'Key-nya ditolak OpenRouter, jadi gak disimpen. Cek lagi ya.';
 
   @override
-  String get settingsHangOnChecking => 'Bentar, lagi ngecek...';
-
-  @override
   String get settingsYourKeyWorks => 'Key-nya jalan';
-
-  @override
-  String get settingsOpenrouterRejectedYourKey => 'Key-nya ditolak OpenRouter';
-
-  @override
-  String get settingsStoredSecurelyOnYourDevice => 'Disimpen aman di perangkat';
 
   @override
   String get settingsIncludesBooksReadingProgressTranslationsAnd =>
@@ -625,71 +585,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get settingsBackUpNow => 'Backup sekarang';
 
   @override
-  String get settingsRestoreFromBackup => 'Pulihin dari backup';
-
-  @override
-  String get settingsDefaultMostAccurate => 'Default · paling akurat';
-
-  @override
-  String get settingsTranslationCache => 'Cache terjemahan';
-
-  @override
-  String settingsParagraphs(int p0, Object p1) {
-    final intl.NumberFormat p0NumberFormat = intl.NumberFormat.decimalPattern(
-      localeName,
-    );
-    final String p0String = p0NumberFormat.format(p0);
-
-    return '$p0String paragraf · $p1';
-  }
-
-  @override
-  String get settingsClearCache => 'Hapus cache';
-
-  @override
-  String get settingsNotDownloadedMb => 'Belum diunduh · 5,6 MB';
-
-  @override
-  String settingsUpdated(Object p0) {
-    return 'Diperbarui $p0 · ';
-  }
-
-  @override
-  String settingsBooks(Object p0, int p1) {
-    final intl.NumberFormat p1NumberFormat = intl.NumberFormat.decimalPattern(
-      localeName,
-    );
-    final String p1String = p1NumberFormat.format(p1);
-
-    return '$p0$p1String buku';
-  }
-
-  @override
-  String get settingsCheckingForUpdates => 'Ngecek versi terbaru…';
-
-  @override
-  String get settingsDownloading => 'Ngunduh…';
-
-  @override
-  String settingsDownloading2(Object p0) {
-    return 'Ngunduh $p0%';
-  }
-
-  @override
   String get settingsPreparingCatalog => 'Nyusun katalog…';
-
-  @override
-  String get settingsFailedKeepingThePreviousCatalog =>
-      'Gagal, katalog lama tetep dipakai';
-
-  @override
-  String get settingsDownload => 'Unduh';
-
-  @override
-  String get settingsUpdate => 'Perbarui';
-
-  @override
-  String get settingsGutenbergCatalog => 'Katalog Gutenberg';
 
   @override
   String backupBooksReadingProgress(int p0) {
@@ -2437,9 +2333,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get settingsAccount => 'Akun';
 
   @override
-  String get authExLibris => 'EX LIBRIS';
-
-  @override
   String get authViaGoogle => 'Masuk lewat Google';
 
   @override
@@ -2662,14 +2555,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get aiKeyRejected401 => 'Key-nya ditolak (401)';
 
   @override
-  String get aiKeyRejectedBox =>
-      'OpenRouter nolak key ini. Cek lagi di openrouter.ai/keys, terus tempel ulang. AI berhenti dulu sampai key-nya bener, atau balik ke kuota gratis.';
-
-  @override
   String get aiCheckedJustNow => 'Dicek barusan';
-
-  @override
-  String get aiDefaultTag => 'default';
 
   @override
   String get aiBackToFree => 'Balik ke kuota gratis';
@@ -2721,12 +2607,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get aiNoModelMatch => 'Gak ada model yang cocok.';
-
-  @override
-  String get settingsBackUpToCloud => 'Backup ke cloud';
-
-  @override
-  String get settingsRestoreFromCloud => 'Pulihin dari cloud';
 
   @override
   String get backupUploadingToYourAccount =>

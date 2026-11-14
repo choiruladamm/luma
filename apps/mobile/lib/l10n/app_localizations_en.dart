@@ -10,13 +10,6 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
-  String get interfaceLanguage => 'Interface language';
-
-  @override
-  String get interfaceLanguageNote =>
-      'This changes the interface language. Translations and AI responses stay in Indonesian.';
-
-  @override
   String get languageSaveFailed => 'Couldn’t save the language. Try again.';
 
   @override
@@ -578,17 +571,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsAddKey => 'Add key';
 
   @override
-  String get settingsDeleteTranslationCache => 'Delete translation cache?';
-
-  @override
-  String get settingsAllSavedTranslationsWillBeDeleted =>
-      'All saved translations will be deleted. Opening those paragraphs again will request AI and use credit again. Your book chats will stay.';
-
-  @override
-  String get settingsYourCatalogIsAlreadyUpTo =>
-      'Your catalog is already up to date';
-
-  @override
   String get settingsBack => 'Back';
 
   @override
@@ -601,21 +583,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsAiModel => 'AI model';
 
   @override
-  String get settingsChargesComeFromYourOpenrouterAccount =>
-      'Charges come from your OpenRouter account credit.';
-
-  @override
   String get settingsBackupRestore => 'Backup & restore';
-
-  @override
-  String get settingsBookCatalog => 'Book catalog';
-
-  @override
-  String get settingsAroundProjectGutenbergBooksToSearch =>
-      'Around 62,000 Project Gutenberg books to search offline. Updated weekly.';
-
-  @override
-  String get settingsStorage => 'Storage';
 
   @override
   String get settingsStoredSecurelyOnYourDeviceKeychain =>
@@ -630,18 +598,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'OpenRouter rejected the key, so it wasn’t saved. Check it and try again.';
 
   @override
-  String get settingsHangOnChecking => 'Hang on, checking...';
-
-  @override
   String get settingsYourKeyWorks => 'Your key works';
-
-  @override
-  String get settingsOpenrouterRejectedYourKey =>
-      'OpenRouter rejected your key';
-
-  @override
-  String get settingsStoredSecurelyOnYourDevice =>
-      'Stored securely on your device';
 
   @override
   String get settingsIncludesBooksReadingProgressTranslationsAnd =>
@@ -673,83 +630,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsBackUpNow => 'Back up now';
 
   @override
-  String get settingsRestoreFromBackup => 'Restore from backup';
-
-  @override
-  String get settingsDefaultMostAccurate => 'Default · most accurate';
-
-  @override
-  String get settingsTranslationCache => 'Translation cache';
-
-  @override
-  String settingsParagraphs(int p0, Object p1) {
-    final intl.NumberFormat p0NumberFormat = intl.NumberFormat.decimalPattern(
-      localeName,
-    );
-    final String p0String = p0NumberFormat.format(p0);
-
-    String _temp0 = intl.Intl.pluralLogic(
-      p0,
-      locale: localeName,
-      other: '$p0String paragraphs',
-      one: '$p0String paragraph',
-    );
-    return '$_temp0 · $p1';
-  }
-
-  @override
-  String get settingsClearCache => 'Clear cache';
-
-  @override
-  String get settingsNotDownloadedMb => 'Not downloaded · 5.6 MB';
-
-  @override
-  String settingsUpdated(Object p0) {
-    return 'Updated $p0 · ';
-  }
-
-  @override
-  String settingsBooks(Object p0, int p1) {
-    final intl.NumberFormat p1NumberFormat = intl.NumberFormat.decimalPattern(
-      localeName,
-    );
-    final String p1String = p1NumberFormat.format(p1);
-
-    String _temp0 = intl.Intl.pluralLogic(
-      p1,
-      locale: localeName,
-      other: '$p1String books',
-      one: '$p1String book',
-    );
-    return '$p0$_temp0';
-  }
-
-  @override
-  String get settingsCheckingForUpdates => 'Checking for updates…';
-
-  @override
-  String get settingsDownloading => 'Downloading…';
-
-  @override
-  String settingsDownloading2(Object p0) {
-    return 'Downloading $p0%';
-  }
-
-  @override
   String get settingsPreparingCatalog => 'Preparing catalog…';
-
-  @override
-  String get settingsFailedKeepingThePreviousCatalog =>
-      'Failed; keeping the previous catalog';
-
-  @override
-  String get settingsDownload => 'Download';
-
-  @override
-  String get settingsUpdate => 'Update';
-
-  @override
-  String get settingsGutenbergCatalog => 'Gutenberg catalog';
 
   @override
   String backupBooksReadingProgress(int p0) {
@@ -2630,9 +2511,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsAccount => 'Account';
 
   @override
-  String get authExLibris => 'EX LIBRIS';
-
-  @override
   String get authViaGoogle => 'Signed in with Google';
 
   @override
@@ -2856,14 +2734,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiKeyRejected401 => 'Key rejected (401)';
 
   @override
-  String get aiKeyRejectedBox =>
-      'OpenRouter rejected this key. Check it at openrouter.ai/keys and paste it again. AI stops until the key works, or switch back to the free quota.';
-
-  @override
   String get aiCheckedJustNow => 'Checked just now';
-
-  @override
-  String get aiDefaultTag => 'default';
 
   @override
   String get aiBackToFree => 'Back to free quota';
@@ -2916,12 +2787,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aiNoModelMatch => 'No matching models.';
-
-  @override
-  String get settingsBackUpToCloud => 'Back up to cloud';
-
-  @override
-  String get settingsRestoreFromCloud => 'Restore from cloud';
 
   @override
   String get backupUploadingToYourAccount =>

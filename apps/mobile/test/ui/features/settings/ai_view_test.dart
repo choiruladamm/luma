@@ -12,6 +12,7 @@ import 'package:luma/domain/models/ai_model.dart';
 import 'package:luma/l10n/app_localizations.dart';
 import 'package:luma/ui/core/theme/stabilo_theme.dart';
 import 'package:luma/ui/features/settings/view_models/ai_quota_view_model.dart';
+import 'package:luma/ui/features/settings/view_models/settings_view_model.dart';
 import 'package:luma/ui/features/settings/views/ai_view.dart';
 
 import '../../../fakes.dart';
@@ -197,5 +198,145 @@ void main() {
     expect(settings.model, defaultAiModel);
     expect(find.byType(TextField), findsNothing);
     expect(find.text('Model AI · 3 model gratis'), findsOneWidget);
+  });
+
+  group('key input (ported)', () {
+    const good = 'sk-or-v1-0123456789abcdef';
+    final field = find.byType(TextField);
+    const clear = 'Hapus API key OpenRouter';
+
+    Future<void> type(WidgetTester tester, String text) async {
+      await tester.enterText(field, text);
+      await tester.pump(const Duration(milliseconds: 700)); // debounce
+      await tester.pump();
+      await tester.pump();
+    }
+
+    String shown(WidgetTester tester) =>
+        tester.widget<TextField>(field).controller!.text;
+
+    testWidgets('text that is not a key is never saved or sent', (
+      tester,
+    ) async {
+      savedKey();
+      await open(tester);
+      openRouter.checked.clear();
+      await type(tester, 'halo dunia');
+      expect(find.textContaining('bukan API key OpenRouter'), findsOneWidget);
+      expect(openRouter.checked, isEmpty);
+      expect(await ApiKeyStore().read(), 'sk-or-v1-saved');
+    });
+
+    testWidgets('offline: a well-formed key is saved anyway', (tester) async {
+      savedKey();
+      await open(tester);
+      openRouter.keyOk = null;
+      await type(tester, good);
+      expect(await ApiKeyStore().read(), good);
+      expect(find.text('Key-nya jalan'), findsNothing);
+      expect(find.textContaining('gak disimpen'), findsNothing);
+    });
+
+    testWidgets('pasted spaces and new lines never reach the field', (
+      tester,
+    ) async {
+      savedKey();
+      await open(tester);
+      await type(tester, '  $good \n');
+      expect(shown(tester), good);
+      expect(await ApiKeyStore().read(), good);
+    });
+
+    testWidgets('the clear button wipes the field and the secure storage', (
+      tester,
+    ) async {
+      savedKey();
+      await open(tester);
+      await tester.tap(find.bySemanticsLabel(clear));
+      await tester.pump();
+      await tester.pump();
+      expect(shown(tester), isEmpty);
+      expect(await ApiKeyStore().read(), isNull);
+      expect(find.bySemanticsLabel(clear), findsNothing);
+    });
+
+    testWidgets('no clear button while the field is empty', (tester) async {
+      noKey();
+      await open(tester);
+      await tester.tap(find.text('Key sendiri'));
+      await tester.pump();
+      expect(find.bySemanticsLabel(clear), findsNothing);
+      await tester.enterText(field, good);
+      await tester.pump();
+      expect(find.bySemanticsLabel(clear), findsOneWidget);
+    });
+
+    testWidgets('emptying the field by hand deletes the key too', (
+      tester,
+    ) async {
+      savedKey();
+      await open(tester);
+      await tester.enterText(field, '');
+      await tester.pump();
+      expect(await ApiKeyStore().read(), isNull);
+    });
+
+    testWidgets('typing checks once, after a pause', (tester) async {
+      savedKey();
+      await open(tester);
+      openRouter.checked.clear();
+      for (final k in [
+        'sk-or-v1-aaaaaaa1',
+        'sk-or-v1-aaaaaa12',
+        'sk-or-v1-aaaaa123',
+      ]) {
+        await tester.enterText(field, k);
+        await tester.pump(const Duration(milliseconds: 200));
+      }
+      expect(openRouter.checked, isEmpty);
+      await tester.pump(const Duration(milliseconds: 600));
+      await tester.pump();
+      expect(openRouter.checked, ['sk-or-v1-aaaaa123']);
+    });
+
+    test(
+      'reopening shows the last verdict at once, re-checks quietly',
+      () async {
+        FlutterSecureStorage.setMockInitialValues({
+          'openrouter_api_key': 'sk-or-v1-saved',
+        });
+        final fake = FakeOpenRouter();
+        final container = ProviderContainer(
+          overrides: [
+            apiKeyStoreProvider.overrideWithValue(ApiKeyStore()),
+            openRouterServiceProvider.overrideWithValue(fake),
+          ],
+        );
+        addTearDown(container.dispose);
+        final first = container.listen(apiKeyEntryProvider, (_, _) {});
+        expect(first.read(), KeyStatus.checking);
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+        expect(first.read(), KeyStatus.valid);
+        first.close();
+        await Future<void>.delayed(Duration.zero); // autoDispose
+
+        final gate = Completer<void>();
+        fake.gate = gate;
+        final again = container.listen(apiKeyEntryProvider, (_, _) {});
+        expect(again.read(), KeyStatus.valid); // no "checking" in between
+        fake.keyOk = false;
+        gate.complete();
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+        expect(again.read(), KeyStatus.rejected);
+      },
+    );
+
+    testWidgets('offline: key status does not claim it works', (tester) async {
+      savedKey();
+      await open(tester, keyOk: null);
+      expect(find.text('Key-nya jalan'), findsNothing);
+    });
   });
 }

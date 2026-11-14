@@ -13,7 +13,7 @@ import '../../../core/widgets/buttons.dart';
 import '../../../core/widgets/field.dart';
 import '../view_models/ai_quota_view_model.dart';
 import '../view_models/settings_view_model.dart';
-import 'ai_source_section.dart'
+import 'ai_shared.dart'
     show ownKeyRequestProvider, showBackToFreeSheet, showModelPickerSheet;
 import 'settings_page.dart';
 

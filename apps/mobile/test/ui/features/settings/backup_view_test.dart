@@ -349,6 +349,29 @@ void main() {
       expect(find.text('Barusan'), findsOneWidget);
     });
 
+    testWidgets('share sheet closed without saving: nothing recorded', (
+      tester,
+    ) async {
+      await open(tester);
+      share.saved = false;
+      await tap(tester, 'Backup sekarang');
+      backup.release.complete();
+      await tester.pumpAndSettle();
+      expect(share.shared, hasLength(1));
+      expect(settings.lastBackup, isNull);
+      expect(find.text('Backup kelar, aman!'), findsNothing);
+    });
+
+    testWidgets('"Batalin" stops it, nothing shared', (tester) async {
+      await open(tester);
+      await tap(tester, 'Backup sekarang');
+      await tester.tap(find.text('Batalin'));
+      await tester.pumpAndSettle();
+      expect(backup.cancelled, isTrue);
+      expect(find.text('Lagi ngebungkus backup...'), findsNothing);
+      expect(share.shared, isEmpty);
+    });
+
     testWidgets('a failure says so', (tester) async {
       await open(tester);
       backup.error = const FileSystemException('disk full');
@@ -487,6 +510,34 @@ void main() {
       await tester.pumpAndSettle();
       expect(picker.picks, isEmpty);
       expect(find.text('Ini bukan backup Luma'), findsNothing);
+    });
+
+    testWidgets('signed in without a key: no reminder (free quota works)', (
+      tester,
+    ) async {
+      FlutterSecureStorage.setMockInitialValues({});
+      await open(tester, cloud: FakeCloud());
+      await tapRestore(tester);
+      await confirmRestore(tester);
+      expect(find.text('Sip, data lo udah balik!'), findsOneWidget);
+      expect(find.text('Isi key'), findsNothing);
+    });
+
+    testWidgets('made by a newer Luma: names both versions', (tester) async {
+      await open(tester);
+      restore.inspectError = RestoreException(
+        RestoreError.tooNew,
+        manifest: BackupManifest(
+          appVersion: '9.0.0',
+          schemaVersion: 9,
+          createdAt: DateTime(2026, 11, 20),
+          books: 1,
+          aiResults: 0,
+        ),
+      );
+      await tapRestore(tester);
+      expect(find.text('Backup-nya dari Luma yang lebih baru'), findsOneWidget);
+      expect(find.textContaining('dibikin pake Luma 9.0.0'), findsOneWidget);
     });
 
     testWidgets('swapping fails: says the old data is back', (tester) async {

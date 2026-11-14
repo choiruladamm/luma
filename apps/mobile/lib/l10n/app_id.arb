@@ -1,7 +1,5 @@
 {
   "@@locale": "id",
-  "interfaceLanguage": "Bahasa antarmuka",
-  "interfaceLanguageNote": "Bahasa ini cuma buat tampilan. Terjemahan dan jawaban AI tetap Bahasa Indonesia.",
   "languageSaveFailed": "Bahasanya gagal disimpen. Coba lagi, ya.",
   "bookImporting": "Lagi diimport {p0}",
   "@bookImporting": {
@@ -723,11 +721,11 @@
   },
   "settingsYourDataIsBack": "Sip, data lo udah balik!",
   "@settingsYourDataIsBack": {
-    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+    "description": "Interface copy in ui/features/settings/views/backup_view.dart"
   },
   "settingsBooksTranslations": "{p0} buku · {p1} terjemahan",
   "@settingsBooksTranslations": {
-    "description": "Interface copy in ui/features/settings/views/settings_view.dart",
+    "description": "Interface copy in ui/features/settings/views/cloud_restore_sheet.dart",
     "placeholders": {
       "p0": {
         "type": "int",
@@ -741,215 +739,87 @@
   },
   "settingsApiKeysArenTIncludedIn": "API key gak ikut backup, isi ulang dulu biar bisa nerjemahin.",
   "@settingsApiKeysArenTIncludedIn": {
-    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+    "description": "Interface copy in ui/features/settings/views/backup_view.dart"
   },
   "settingsAddKey": "Isi key",
   "@settingsAddKey": {
-    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
-  },
-  "settingsDeleteTranslationCache": "Hapus cache terjemahan?",
-  "@settingsDeleteTranslationCache": {
-    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
-  },
-  "settingsAllSavedTranslationsWillBeDeleted": "Semua terjemahan yang udah kesimpen bakal ilang. Paragraf yang dibuka lagi manggil AI ulang dan motong saldo lagi. Obrolan buku lo tetap kesimpen.",
-  "@settingsAllSavedTranslationsWillBeDeleted": {
-    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
-  },
-  "settingsYourCatalogIsAlreadyUpTo": "Katalognya udah yang terbaru",
-  "@settingsYourCatalogIsAlreadyUpTo": {
-    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+    "description": "Interface copy in ui/features/settings/views/backup_view.dart"
   },
   "settingsBack": "Balik",
   "@settingsBack": {
-    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+    "description": "Interface copy in ui/features/settings/views/settings_page.dart"
   },
   "settingsSettings": "Pengaturan",
   "@settingsSettings": {
-    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+    "description": "Interface copy in ui/features/settings/views/settings_hub_view.dart"
   },
   "settingsOpenrouterApiKey": "API key OpenRouter",
   "@settingsOpenrouterApiKey": {
-    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+    "description": "Interface copy in ui/features/settings/views/ai_view.dart"
   },
   "settingsAiModel": "Model AI",
   "@settingsAiModel": {
-    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
-  },
-  "settingsChargesComeFromYourOpenrouterAccount": "Biayanya kepotong dari saldo akun OpenRouter lo.",
-  "@settingsChargesComeFromYourOpenrouterAccount": {
-    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+    "description": "Interface copy in ui/features/settings/views/ai_view.dart"
   },
   "settingsBackupRestore": "Backup & pulihin",
   "@settingsBackupRestore": {
-    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
-  },
-  "settingsBookCatalog": "Katalog buku",
-  "@settingsBookCatalog": {
-    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
-  },
-  "settingsAroundProjectGutenbergBooksToSearch": "Daftar ±62.000 buku Project Gutenberg buat nyari judul tanpa internet. Diperbarui mingguan.",
-  "@settingsAroundProjectGutenbergBooksToSearch": {
-    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
-  },
-  "settingsStorage": "Penyimpanan",
-  "@settingsStorage": {
-    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+    "description": "Interface copy in ui/features/settings/views/backup_view.dart"
   },
   "settingsStoredSecurelyOnYourDeviceKeychain": "Disimpen aman di perangkat (Keychain / Keystore), gak dikirim ke mana-mana selain OpenRouter.",
   "@settingsStoredSecurelyOnYourDeviceKeychain": {
-    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+    "description": "Interface copy in ui/features/settings/views/ai_view.dart"
   },
   "settingsThatSNotAnOpenrouterApi": "Itu bukan API key OpenRouter. Key-nya mulai dari sk-or-... dan gak disimpen.",
   "@settingsThatSNotAnOpenrouterApi": {
-    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+    "description": "Interface copy in ui/features/settings/views/ai_view.dart"
   },
   "settingsOpenrouterRejectedTheKeySoIt": "Key-nya ditolak OpenRouter, jadi gak disimpen. Cek lagi ya.",
   "@settingsOpenrouterRejectedTheKeySoIt": {
-    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
-  },
-  "settingsHangOnChecking": "Bentar, lagi ngecek...",
-  "@settingsHangOnChecking": {
-    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+    "description": "Interface copy in ui/features/settings/views/ai_view.dart"
   },
   "settingsYourKeyWorks": "Key-nya jalan",
   "@settingsYourKeyWorks": {
-    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
-  },
-  "settingsOpenrouterRejectedYourKey": "Key-nya ditolak OpenRouter",
-  "@settingsOpenrouterRejectedYourKey": {
-    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
-  },
-  "settingsStoredSecurelyOnYourDevice": "Disimpen aman di perangkat",
-  "@settingsStoredSecurelyOnYourDevice": {
-    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+    "description": "Interface copy in ui/features/settings/views/ai_view.dart"
   },
   "settingsIncludesBooksReadingProgressTranslationsAnd": "Isinya buku, progres baca, terjemahan, sama pengaturan. ",
   "@settingsIncludesBooksReadingProgressTranslationsAnd": {
-    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+    "description": "Interface copy in ui/features/settings/views/backup_view.dart"
   },
   "settingsApiKeysArenTIncluded": "API key gak ikut",
   "@settingsApiKeysArenTIncluded": {
-    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+    "description": "Interface copy in ui/features/settings/views/backup_view.dart"
   },
   "settingsSoAddYoursAgainAfterRestoring": ", jadi abis pulihin isi ulang ya. Simpen file-nya di iCloud Drive biar gak ikut kehapus pas install ulang.",
   "@settingsSoAddYoursAgainAfterRestoring": {
-    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+    "description": "Interface copy in ui/features/settings/views/backup_view.dart"
   },
   "settingsJustNow": "Barusan",
   "@settingsJustNow": {
-    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+    "description": "Interface copy in ui/features/settings/views/backup_view.dart"
   },
   "settingsBackupStatus": "Status backup",
   "@settingsBackupStatus": {
-    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+    "description": "Interface copy in ui/features/settings/views/backup_view.dart"
   },
   "settingsLastBackup": "Backup terakhir",
   "@settingsLastBackup": {
-    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+    "description": "Interface copy in ui/features/settings/views/backup_view.dart"
   },
   "settingsNoBackupsYet": "Belum pernah backup",
   "@settingsNoBackupsYet": {
-    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+    "description": "Interface copy in ui/features/settings/views/backup_view.dart"
   },
   "settingsYourDataIsOnlyOnThis": "Data lo cuma ada di HP ini doang",
   "@settingsYourDataIsOnlyOnThis": {
-    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+    "description": "Interface copy in ui/features/settings/views/backup_view.dart"
   },
   "settingsBackUpNow": "Backup sekarang",
   "@settingsBackUpNow": {
-    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
-  },
-  "settingsRestoreFromBackup": "Pulihin dari backup",
-  "@settingsRestoreFromBackup": {
-    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
-  },
-  "settingsDefaultMostAccurate": "Default · paling akurat",
-  "@settingsDefaultMostAccurate": {
-    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
-  },
-  "settingsTranslationCache": "Cache terjemahan",
-  "@settingsTranslationCache": {
-    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
-  },
-  "settingsParagraphs": "{p0} paragraf · {p1}",
-  "@settingsParagraphs": {
-    "description": "Interface copy in ui/features/settings/views/settings_view.dart",
-    "placeholders": {
-      "p0": {
-        "type": "int",
-        "format": "decimalPattern"
-      },
-      "p1": {
-        "type": "Object"
-      }
-    }
-  },
-  "settingsClearCache": "Hapus cache",
-  "@settingsClearCache": {
-    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
-  },
-  "settingsNotDownloadedMb": "Belum diunduh · 5,6 MB",
-  "@settingsNotDownloadedMb": {
-    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
-  },
-  "settingsUpdated": "Diperbarui {p0} · ",
-  "@settingsUpdated": {
-    "description": "Interface copy in ui/features/settings/views/settings_view.dart",
-    "placeholders": {
-      "p0": {
-        "type": "Object"
-      }
-    }
-  },
-  "settingsBooks": "{p0}{p1} buku",
-  "@settingsBooks": {
-    "description": "Interface copy in ui/features/settings/views/settings_view.dart",
-    "placeholders": {
-      "p0": {
-        "type": "Object"
-      },
-      "p1": {
-        "type": "int",
-        "format": "decimalPattern"
-      }
-    }
-  },
-  "settingsCheckingForUpdates": "Ngecek versi terbaru…",
-  "@settingsCheckingForUpdates": {
-    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
-  },
-  "settingsDownloading": "Ngunduh…",
-  "@settingsDownloading": {
-    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
-  },
-  "settingsDownloading2": "Ngunduh {p0}%",
-  "@settingsDownloading2": {
-    "description": "Interface copy in ui/features/settings/views/settings_view.dart",
-    "placeholders": {
-      "p0": {
-        "type": "Object"
-      }
-    }
+    "description": "Interface copy in ui/features/settings/views/backup_view.dart"
   },
   "settingsPreparingCatalog": "Nyusun katalog…",
   "@settingsPreparingCatalog": {
-    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
-  },
-  "settingsFailedKeepingThePreviousCatalog": "Gagal, katalog lama tetep dipakai",
-  "@settingsFailedKeepingThePreviousCatalog": {
-    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
-  },
-  "settingsDownload": "Unduh",
-  "@settingsDownload": {
-    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
-  },
-  "settingsUpdate": "Perbarui",
-  "@settingsUpdate": {
-    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
-  },
-  "settingsGutenbergCatalog": "Katalog Gutenberg",
-  "@settingsGutenbergCatalog": {
-    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
+    "description": "Interface copy in ui/features/discover/views/discover_view.dart"
   },
   "backupBooksReadingProgress": "{p0} buku + progres bacanya",
   "@backupBooksReadingProgress": {
@@ -3263,7 +3133,6 @@
   "authInviteInvalidTitle": "Kodenya salah",
   "authInviteInvalidBody": "Cek lagi hurufnya, atau minta kode baru ke yang ngundang lo.",
   "settingsAccount": "Akun",
-  "authExLibris": "EX LIBRIS",
   "authViaGoogle": "Masuk lewat Google",
   "authViaEmail": "Masuk lewat email",
   "authSignOut": "Keluar",
@@ -3417,9 +3286,7 @@
   "aiSourceOwn": "Key sendiri",
   "aiOwnKeyCost": "Biayanya kepotong dari saldo akun OpenRouter lo. Kuota gratis Luma gak dipakai selama key ini aktif.",
   "aiKeyRejected401": "Key-nya ditolak (401)",
-  "aiKeyRejectedBox": "OpenRouter nolak key ini. Cek lagi di openrouter.ai/keys, terus tempel ulang. AI berhenti dulu sampai key-nya bener, atau balik ke kuota gratis.",
   "aiCheckedJustNow": "Dicek barusan",
-  "aiDefaultTag": "default",
   "aiBackToFree": "Balik ke kuota gratis",
   "aiBackToFreeTitle": "Balik ke kuota gratis?",
   "aiBackToFreeBody": "Key OpenRouter lo dihapus dari HP ini. Model balik ke {model}, salah satu dari 3 model gratis.",
@@ -3449,14 +3316,6 @@
   "aiFilterLong": "Konteks panjang",
   "aiModelsLoadFailed": "Daftar model gak kebaca. Cek internet lo, terus coba lagi.",
   "aiNoModelMatch": "Gak ada model yang cocok.",
-  "settingsBackUpToCloud": "Backup ke cloud",
-  "@settingsBackUpToCloud": {
-    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
-  },
-  "settingsRestoreFromCloud": "Pulihin dari cloud",
-  "@settingsRestoreFromCloud": {
-    "description": "Interface copy in ui/features/settings/views/settings_view.dart"
-  },
   "backupUploadingToYourAccount": "Lagi diunggah ke akun lo. Buku yang udah ada di cloud gak diunggah ulang.",
   "@backupUploadingToYourAccount": {
     "description": "Interface copy in ui/features/settings/views/backup_sheet.dart"
@@ -3501,7 +3360,11 @@
   "settingsAccountUsedToday": "Kepakai hari ini",
   "settingsAccountUsedValue": "{count} tap",
   "@settingsAccountUsedValue": {
-    "placeholders": {"count": {"type": "int"}}
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   },
   "settingsAccountDaily": "Jatah harian",
   "settingsAccountDailyValue": "± 30–50 tap",
@@ -3658,10 +3521,23 @@
   "settingsDisplayLanguageNote": "Bahasa ini cuma buat tampilan. Terjemahan sama jawaban AI tetap Bahasa Indonesia.",
   "settingsCatalogBooks": "{count} buku",
   "@settingsCatalogBooks": {
-    "placeholders": {"count": {"type": "int", "format": "decimalPattern"}}
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
   },
   "settingsCatalogBooksUpdated": "{count} buku · Diperbarui {date}",
   "@settingsCatalogBooksUpdated": {
-    "placeholders": {"count": {"type": "int", "format": "decimalPattern"}, "date": {"type": "String"}}
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
   }
 }

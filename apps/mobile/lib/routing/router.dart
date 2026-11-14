@@ -21,7 +21,7 @@ import '../ui/features/settings/views/account_view.dart';
 import '../ui/features/settings/views/ai_view.dart';
 import '../ui/features/settings/views/backup_view.dart';
 import '../ui/features/settings/views/catalog_view.dart';
-import '../ui/features/settings/views/settings_view.dart';
+import '../ui/features/settings/views/settings_hub_view.dart';
 import '../ui/features/shell/views/app_shell.dart';
 
 abstract final class Routes {
@@ -92,7 +92,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: Routes.settings,
-                builder: (_, _) => const SettingsView(),
+                builder: (_, _) => const SettingsHubView(),
                 routes: [
                   GoRoute(
                     path: 'account',

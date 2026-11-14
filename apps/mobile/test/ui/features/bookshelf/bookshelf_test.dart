@@ -30,7 +30,7 @@ import 'package:luma/ui/features/bookshelf/views/book_edit_sheet.dart';
 import 'package:luma/ui/features/bookshelf/views/book_info_sheet.dart';
 import 'package:luma/ui/features/reader/view_models/reader_view_model.dart';
 import 'package:luma/ui/features/reader/views/reader_view.dart';
-import 'package:luma/ui/features/settings/views/settings_view.dart';
+import 'package:luma/ui/features/settings/views/settings_hub_view.dart';
 
 import '../../../fakes.dart';
 import '../discover/discover_view_test.dart' show FakeSource;
@@ -287,7 +287,7 @@ void main() {
     expect(find.byType(LumaNavBar), findsOneWidget);
     await tester.tap(find.bySemanticsLabel('Atur'));
     await tester.pumpAndSettle();
-    expect(find.byType(SettingsView), findsOneWidget);
+    expect(find.byType(SettingsHubView), findsOneWidget);
     // Tab, bukan push: gak ada tombol balik.
     expect(find.bySemanticsLabel('Balik'), findsNothing);
   });

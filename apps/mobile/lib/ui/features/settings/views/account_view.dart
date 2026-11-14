@@ -14,7 +14,7 @@ import '../../auth/views/auth_dialogs.dart';
 import '../../auth/views/auth_toast.dart';
 import '../../auth/views/login_view.dart';
 import '../view_models/ai_quota_view_model.dart';
-import 'ai_source_section.dart';
+import 'ai_shared.dart';
 import 'settings_page.dart';
 
 /// Pengaturan → Akun (board "Pengaturan · 02 Akun"): profil, kartu kuota AI,

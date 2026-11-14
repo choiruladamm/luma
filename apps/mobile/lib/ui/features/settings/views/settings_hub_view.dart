@@ -21,7 +21,7 @@ import '../../../core/widgets/buttons.dart';
 import '../../../core/widgets/quota.dart';
 import '../../auth/view_models/auth_view_model.dart';
 import '../view_models/ai_quota_view_model.dart';
-import 'ai_source_section.dart';
+import 'ai_shared.dart';
 import 'cache_sheet.dart';
 import 'display_sheet.dart';
 import 'settings_page.dart';

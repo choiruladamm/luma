@@ -30,7 +30,7 @@ import '../view_models/reader_view_model.dart';
 import '../../../../data/repositories/ai_key_repository.dart';
 import '../../../core/widgets/quota.dart';
 import '../../settings/view_models/ai_quota_view_model.dart';
-import '../../settings/views/ai_source_section.dart';
+import '../../settings/views/ai_shared.dart';
 import 'meaning_chrome.dart';
 
 /// Sheet Artinya (board 05 hasil, 06 error, 09 udah disalin, 10 API key

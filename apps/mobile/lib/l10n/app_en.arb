@@ -1,7 +1,5 @@
 {
   "@@locale": "en",
-  "interfaceLanguage": "Interface language",
-  "interfaceLanguageNote": "This changes the interface language. Translations and AI responses stay in Indonesian.",
   "languageSaveFailed": "Couldn’t save the language. Try again.",
   "bookImporting": "Importing {p0}",
   "bookProcessing": "Processing",
@@ -149,25 +147,15 @@
   "settingsBooksTranslations": "{p0, plural, one{{p0} book} other{{p0} books}} · {p1, plural, one{{p1} translation} other{{p1} translations}}",
   "settingsApiKeysArenTIncludedIn": "API keys aren’t included in backups. Add yours again to translate.",
   "settingsAddKey": "Add key",
-  "settingsDeleteTranslationCache": "Delete translation cache?",
-  "settingsAllSavedTranslationsWillBeDeleted": "All saved translations will be deleted. Opening those paragraphs again will request AI and use credit again. Your book chats will stay.",
-  "settingsYourCatalogIsAlreadyUpTo": "Your catalog is already up to date",
   "settingsBack": "Back",
   "settingsSettings": "Settings",
   "settingsOpenrouterApiKey": "OpenRouter API key",
   "settingsAiModel": "AI model",
-  "settingsChargesComeFromYourOpenrouterAccount": "Charges come from your OpenRouter account credit.",
   "settingsBackupRestore": "Backup & restore",
-  "settingsBookCatalog": "Book catalog",
-  "settingsAroundProjectGutenbergBooksToSearch": "Around 62,000 Project Gutenberg books to search offline. Updated weekly.",
-  "settingsStorage": "Storage",
   "settingsStoredSecurelyOnYourDeviceKeychain": "Stored securely on your device (Keychain / Keystore). Sent only to OpenRouter.",
   "settingsThatSNotAnOpenrouterApi": "That’s not an OpenRouter API key. Keys start with sk-or-... It hasn’t been saved.",
   "settingsOpenrouterRejectedTheKeySoIt": "OpenRouter rejected the key, so it wasn’t saved. Check it and try again.",
-  "settingsHangOnChecking": "Hang on, checking...",
   "settingsYourKeyWorks": "Your key works",
-  "settingsOpenrouterRejectedYourKey": "OpenRouter rejected your key",
-  "settingsStoredSecurelyOnYourDevice": "Stored securely on your device",
   "settingsIncludesBooksReadingProgressTranslationsAnd": "Includes books, reading progress, translations, and settings. ",
   "settingsApiKeysArenTIncluded": "API keys aren’t included",
   "settingsSoAddYoursAgainAfterRestoring": ", so add yours again after restoring. Keep the file in iCloud Drive so it survives a reinstall.",
@@ -177,22 +165,7 @@
   "settingsNoBackupsYet": "No backups yet",
   "settingsYourDataIsOnlyOnThis": "Your data is only on this phone",
   "settingsBackUpNow": "Back up now",
-  "settingsRestoreFromBackup": "Restore from backup",
-  "settingsDefaultMostAccurate": "Default · most accurate",
-  "settingsTranslationCache": "Translation cache",
-  "settingsParagraphs": "{p0, plural, one{{p0} paragraph} other{{p0} paragraphs}} · {p1}",
-  "settingsClearCache": "Clear cache",
-  "settingsNotDownloadedMb": "Not downloaded · 5.6 MB",
-  "settingsUpdated": "Updated {p0} · ",
-  "settingsBooks": "{p0}{p1, plural, one{{p1} book} other{{p1} books}}",
-  "settingsCheckingForUpdates": "Checking for updates…",
-  "settingsDownloading": "Downloading…",
-  "settingsDownloading2": "Downloading {p0}%",
   "settingsPreparingCatalog": "Preparing catalog…",
-  "settingsFailedKeepingThePreviousCatalog": "Failed; keeping the previous catalog",
-  "settingsDownload": "Download",
-  "settingsUpdate": "Update",
-  "settingsGutenbergCatalog": "Gutenberg catalog",
   "backupBooksReadingProgress": "{p0, plural, one{{p0} book} other{{p0} books}} + reading progress",
   "backupTranslations": "{p0, plural, one{{p0} translation} other{{p0} translations}}",
   "backupReadingSettingsAiModel": "Reading settings & AI model",
@@ -671,7 +644,6 @@
   "authInviteInvalidTitle": "That code is wrong",
   "authInviteInvalidBody": "Check the letters again, or ask whoever invited you for a new code.",
   "settingsAccount": "Account",
-  "authExLibris": "EX LIBRIS",
   "authViaGoogle": "Signed in with Google",
   "authViaEmail": "Signed in with email",
   "authSignOut": "Sign out",
@@ -736,9 +708,7 @@
   "aiSourceOwn": "Own key",
   "aiOwnKeyCost": "Charged to your OpenRouter balance. Luma's free quota isn't used while this key is active.",
   "aiKeyRejected401": "Key rejected (401)",
-  "aiKeyRejectedBox": "OpenRouter rejected this key. Check it at openrouter.ai/keys and paste it again. AI stops until the key works, or switch back to the free quota.",
   "aiCheckedJustNow": "Checked just now",
-  "aiDefaultTag": "default",
   "aiBackToFree": "Back to free quota",
   "aiBackToFreeTitle": "Back to the free quota?",
   "aiBackToFreeBody": "Your OpenRouter key is removed from this phone. The model goes back to {model}, one of the 3 free models.",
@@ -754,8 +724,6 @@
   "aiFilterLong": "Long context",
   "aiModelsLoadFailed": "Couldn't load the model list. Check your internet, then try again.",
   "aiNoModelMatch": "No matching models.",
-  "settingsBackUpToCloud": "Back up to cloud",
-  "settingsRestoreFromCloud": "Restore from cloud",
   "backupUploadingToYourAccount": "Uploading to your account. Books already in the cloud are skipped.",
   "backupCloudIsFull": "Your cloud storage is full",
   "cloudRestorePickTitle": "Pick a cloud backup",
@@ -768,7 +736,11 @@
   "settingsAccountUsedToday": "Used today",
   "settingsAccountUsedValue": "{count, plural, =1{1 tap} other{{count} taps}}",
   "@settingsAccountUsedValue": {
-    "placeholders": {"count": {"type": "int"}}
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   },
   "settingsAccountDaily": "Daily allowance",
   "settingsAccountDailyValue": "± 30–50 taps",
@@ -846,10 +818,23 @@
   "settingsDisplayLanguageNote": "This language is only for the interface. Translations and AI answers stay in Bahasa Indonesia.",
   "settingsCatalogBooks": "{count, plural, one{{count} book} other{{count} books}}",
   "@settingsCatalogBooks": {
-    "placeholders": {"count": {"type": "int", "format": "decimalPattern"}}
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
   },
   "settingsCatalogBooksUpdated": "{count, plural, one{{count} book} other{{count} books}} · Updated {date}",
   "@settingsCatalogBooksUpdated": {
-    "placeholders": {"count": {"type": "int", "format": "decimalPattern"}, "date": {"type": "String"}}
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
   }
 }
