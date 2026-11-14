@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "es2024",
+    "lib": ["es2024"],
+    "module": "es2022",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": false,
+    // Kode backend yang diimport resolve drizzle-orm dari node_modules backend: tipe
+    // disatukan ke copy dashboard supaya kelas SQL/kolom dari dua copy cocok.
+    "paths": { "drizzle-orm": ["./node_modules/drizzle-orm"], "drizzle-orm/*": ["./node_modules/drizzle-orm/*"] },
+    "types": ["./worker-configuration.d.ts", "@cloudflare/vitest-plugin/types"]
+  },
+  "include": ["worker", "test", "worker-configuration.d.ts", "vitest.config.ts", "vite.config.ts"]
+}

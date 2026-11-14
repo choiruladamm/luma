@@ -1,9 +1,10 @@
 APP := apps/mobile
 BACKEND := apps/backend
+DASHBOARD := apps/dashboard
 FLUTTER := cd $(APP) && fvm flutter
 DART := cd $(APP) && fvm dart
 
-.PHONY: help get l10n gen brand live chat-agent-live chat-spike chat-spike-live chat-oracle-live chat-discussion-live chat-adaptive-live chat-retrieval chat-dense-live chat-dense-replay chat-heldout-live chat-refine-live chat-validation2-live chat-recovery-live chat-validation3-live watch run release dev run-android release-android dev-android apk profile test analyze format check clean docs-check backend-install backend-dev backend-types backend-test backend-live backend-e2e backend-migrate backend-invite backend-ban backend-deploy
+.PHONY: help get l10n gen brand live chat-agent-live chat-spike chat-spike-live chat-oracle-live chat-discussion-live chat-adaptive-live chat-retrieval chat-dense-live chat-dense-replay chat-heldout-live chat-refine-live chat-validation2-live chat-recovery-live chat-validation3-live watch run release dev run-android release-android dev-android apk profile test analyze format check clean docs-check backend-install backend-dev backend-types backend-test backend-live backend-e2e backend-migrate backend-invite backend-ban backend-deploy dashboard-install dashboard-dev dashboard-test dashboard-deploy
 
 help: ## list commands
 	@grep -E '^[a-z0-9-]+:.*## ' $(MAKEFILE_LIST) | awk -F ':.*## ' '{printf "  %-16s %s\n", $$1, $$2}'
@@ -148,3 +149,17 @@ backend-deploy: ## backend: deploy Worker (e=dev|prod; prod only from master)
 	@test "$(e)" = dev -o "$(e)" = prod || { echo "pakai e=dev atau e=prod"; exit 1; }
 	@if [ "$(e)" = prod ]; then test "$$(git rev-parse --abbrev-ref HEAD)" = master || { echo "backend prod cuma dari master"; exit 1; }; fi
 	cd $(BACKEND) && bunx wrangler deploy --env $(e)
+
+dashboard-install: ## dashboard: install deps (bun)
+	cd $(DASHBOARD) && bun install
+
+dashboard-dev: ## dashboard: Vite dev server with the Worker (env dev, http://localhost:5173), same local D1 as backend-dev
+	cd $(DASHBOARD) && CLOUDFLARE_ENV=dev bunx vite dev
+
+dashboard-test: ## dashboard: typecheck + vitest (workerd), backend migrations applied
+	cd $(DASHBOARD) && bunx tsc --noEmit && bunx vitest run
+
+dashboard-deploy: ## dashboard: deploy admin Worker (e=dev|prod; prod only from master)
+	@test "$(e)" = dev -o "$(e)" = prod || { echo "pakai e=dev atau e=prod"; exit 1; }
+	@if [ "$(e)" = prod ]; then test "$$(git rev-parse --abbrev-ref HEAD)" = master || { echo "dashboard prod cuma dari master"; exit 1; }; fi
+	cd $(DASHBOARD) && CLOUDFLARE_ENV=$(e) bunx vite build && bunx wrangler deploy

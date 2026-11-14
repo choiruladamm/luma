@@ -109,6 +109,8 @@ Perkiraan untuk satu user aktif per hari. Wajib diperbarui saat implementasi ber
 | Sync push (#109: login, resume ≥ 5 menit, 60 detik setelah perubahan terakhir) | ±10–30; sync pertama maks 10 per pemicu | per push: 1 baca sesi + 1 `SELECT` record lama (baris = record di batch) + 1 baca kuota + 1 batch (`seq` + kuota + upsert yang berubah saja); ±50–300 tulis, ±100–500 baca | batch berisi buku: `files/missing` 1 list + 1 put per file yang belum ada (sama dengan backup, gak dobel) |
 | Sync pull (#210: login, resume ≥ 5 menit, setelah push) | 1 per 500 record perubahan, maks 10 per pemicu (biasanya 1) | 1 baca sesi + baris yang dikembalikan saja (index `records_user_seq`), 0 tulis | - |
 | Download buku di device baru (#210) | 1 per buku (sekali) + 1 dump per buku Markdown | - | 1 baca per buku |
+| Login dashboard admin (docs/dashboard.md) | 3 per login (`sign-in/social`, callback, `get-session`), sesi 12 jam | `sign-in/social` 0 (state di cookie); callback ≤ 5 query (cari akun + user + cek admin + update token + simpan sesi) + 1 subrequest token Google; `get-session` 1 baca | - |
+| Auth per request dashboard | termasuk di request lain | 1 baca (tanpa cookie / tanda tangan salah: 0), tanpa tulis (sesi gak diperpanjang) | - |
 
 Patokan kapasitas: **±50 request/user/hari → ±2.000 user aktif/hari** di batas Workers; batas pertama yang kena realistisnya **D1 100rb baris tulis/hari** (±300–2.000 user tergantung aktivitas sync). Sync pertama (upload semua `ai_results` lama) dicicil maks 10 batch per pemicu supaya satu user tidak menghabiskan kuota tulis harian.
 

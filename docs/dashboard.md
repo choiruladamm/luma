@@ -1,6 +1,6 @@
 # Dashboard admin (web)
 
-> Kode di `apps/dashboard` (belum dibuat). Urutan issue dan checklist: induk [#216](https://github.com/choiruladamm/luma/issues/216).
+> Kode di `apps/dashboard` (API dulu; SPA menyusul). Urutan issue dan checklist: induk [#216](https://github.com/choiruladamm/luma/issues/216).
 
 Pengganti kerjaan admin yang sekarang lewat terminal (`make backend-invite`, `make backend-ban`, query `wrangler d1 execute` manual). Cuma dipakai pemilik app. Backend `/v1` dan app mobile tidak berubah.
 
@@ -64,10 +64,12 @@ Struktur:
 ```
 apps/dashboard/
 ├── wrangler.jsonc        # env dev/prod, D1, rate limit, vars ADMIN_EMAILS
-├── vite.config.ts        # @vitejs/plugin-react + @cloudflare/vite-plugin
+├── vite.config.ts        # @cloudflare/vite-plugin (+ @vitejs/plugin-react saat SPA)
 ├── worker/               # API
 │   ├── index.ts          # app + middleware + mount route; export type AppType
-│   ├── auth.ts           # instance Better Auth dashboard
+│   ├── auth.ts           # instance Better Auth dashboard + isAdmin
+│   ├── middleware.ts     # requestId, header keamanan, rate limit, requireAdmin, cek mutasi
+│   ├── audit.ts          # log audit mutasi ke Workers Logs
 │   ├── overview.ts / users.ts / invites.ts   # route + service
 │   └── repo.ts           # semua query D1
 └── src/                  # SPA
@@ -83,6 +85,7 @@ Backend pemilik schema; dashboard cuma konsumen. Diimport relatif dari `../backe
 | File | Dipakai untuk |
 |---|---|
 | `db/schema.ts` | Tabel Drizzle |
+| `db/client.ts` | `createDb` (Drizzle D1, `casing: "snake_case"`) |
 | `auth/user-fields.ts` | `additionalFields` Better Auth, supaya schema sama persis |
 | `auth/invite.ts` | `newInviteCode`, `normalizeInviteCode` |
 | `clients/openrouter.ts` | `deleteKey`, `getUsage` |
@@ -111,6 +114,7 @@ Dashboard menjalankan **instance Better Auth kedua** di D1 yang sama:
 - `basePath: "/api/auth"`, Google OAuth redirect (web client ID yang sudah ada di `GOOGLE_CLIENT_IDS`), tanpa plugin `bearer`, `BETTER_AUTH_SECRET` sendiri. Token sesi app mobile tidak bisa dipakai di dashboard.
 - `databaseHooks.user.create.before` selalu menolak: dashboard tidak bisa membuat akun.
 - `databaseHooks.session.create.before` menolak email di luar `ADMIN_EMAILS`: user biasa tidak pernah dapat cookie.
+- Sesi 12 jam dan tidak diperpanjang (`disableSessionRefresh`). Error di callback (bukan admin, akun belum ada) redirect ke `/login?error=FORBIDDEN&error_description=...` (`onAPIError.errorURL`), bukan halaman error Better Auth.
 - Middleware `requireAdmin` mengecek email lagi di tiap `/api/*` (selain `/api/auth/*`).
 - Endpoint Better Auth di-allowlist: `GET get-session`, `POST sign-in/social`, `GET callback/google`, `POST sign-out`. Sisanya 404.
 
@@ -144,7 +148,7 @@ sequenceDiagram
 
 ## Endpoint
 
-Urutan middleware: `requestId → rateLimit per IP → [/api/auth/* → Better Auth] → sesi cookie → requireAdmin → validator → handler`, `onError` di luar.
+Urutan middleware: `requestId → rateLimit per IP → [/api/auth/* → Better Auth] → sesi cookie + requireAdmin → cek mutasi (JSON + `Origin`) → validator → handler`, `onError` di luar. Header CSP dan `nosniff` dipasang di semua respons. Sesi cookie dicek tanpa membangun instance Better Auth (mahal CPU): tanda tangan HMAC dulu, lalu 1 query join `sessions` + `users`.
 
 | Endpoint | Request | Respons | D1 / subrequest |
 |---|---|---|---|
@@ -204,10 +208,10 @@ Prompt Claude Design (detail visual diserahkan ke Claude Design, mengikuti found
 
 ## Lingkungan lokal
 
-- `make dashboard-dev`: Vite + Worker lokal dalam satu dev server, D1 lokal memakai state wrangler yang sama dengan `make backend-dev` (`--persist-to`), jadi data lokalnya sama.
+- `make dashboard-dev`: Vite dev server (`@cloudflare/vite-plugin`) yang menjalankan Worker di `http://localhost:5173`; SPA nanti ikut di server yang sama. D1 lokal memakai state wrangler yang sama dengan `make backend-dev` (`persistState` ke `apps/backend/.wrangler/state`), jadi data lokalnya sama. Secret dan `ADMIN_EMAILS` / `BETTER_AUTH_URL` lokal di `apps/dashboard/.dev.vars` (salin dari `.dev.vars.example`); login Google lokal butuh `GOOGLE_CLIENT_SECRET` terisi.
 - Cloudflare Access tidak ada di lokal; Better Auth tetap jalan, jadi perilaku auth sama kecuali lapis edge.
 - Login Google lokal: tambah redirect URI `http://localhost:5173/api/auth/callback/google` di web client Google Cloud Console. App OAuth masih mode Testing ([#215](https://github.com/choiruladamm/luma/issues/215)); admin terdaftar sebagai test user.
-- Target Makefile: `dashboard-install`, `dashboard-dev`, `dashboard-test` (`tsc` + vitest workerd), `dashboard-deploy e=dev|prod` (prod hanya dari `master`).
+- Target Makefile: `dashboard-install`, `dashboard-dev`, `dashboard-test` (`tsc` + vitest workerd), `dashboard-deploy e=dev|prod` (`CLOUDFLARE_ENV=<env> vite build` lalu `wrangler deploy` dengan config hasil build; prod hanya dari `master`).
 
 ## Urutan kerja
 

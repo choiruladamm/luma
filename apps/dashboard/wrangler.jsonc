@@ -1,0 +1,65 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // Desain & keamanan: docs/dashboard.md
+  "name": "luma-admin",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-11-10",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true,
+    "logs": { "enabled": true, "head_sampling_rate": 1 }
+  },
+  // Binding gak diwarisin antar env: tiap env nulis lengkap. D1 = database backend env yang sama.
+  // Satu-satunya jalan masuk: custom domain di belakang Cloudflare Access (tanpa workers.dev / preview URL).
+  "env": {
+    "dev": {
+      "name": "luma-admin-dev",
+      "routes": [{ "pattern": "luma-admin-dev.chrl.cloud", "custom_domain": true }],
+      "workers_dev": false,
+      "preview_urls": false,
+      "vars": {
+        "ENV": "dev",
+        // Email admin dipisah koma. Kosong = semua ditolak (fail closed).
+        // Harus akun Google yang sudah ada di D1 env ini: dashboard gak bisa bikin akun.
+        "ADMIN_EMAILS": "work.adamm@gmail.com",
+        "BETTER_AUTH_URL": "https://luma-admin-dev.chrl.cloud",
+        // Client ID OAuth Google web (publik), sama dengan entri pertama GOOGLE_CLIENT_IDS backend.
+        "GOOGLE_CLIENT_ID": "366577823040-vhr2h7toc53pb891v0qoc1m62pps2v41.apps.googleusercontent.com"
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "luma-dev",
+          "database_id": "f37e0e34-a9fe-4617-a077-770cb59bd386",
+          "migrations_dir": "../backend/migrations"
+        }
+      ],
+      "ratelimits": [
+        { "name": "RATE_LIMITER", "namespace_id": "1101", "simple": { "limit": 60, "period": 60 } }
+      ]
+    },
+    "prod": {
+      "name": "luma-admin",
+      "routes": [{ "pattern": "luma-admin.chrl.cloud", "custom_domain": true }],
+      "workers_dev": false,
+      "preview_urls": false,
+      "vars": {
+        "ENV": "prod",
+        "ADMIN_EMAILS": "",
+        "BETTER_AUTH_URL": "https://luma-admin.chrl.cloud",
+        "GOOGLE_CLIENT_ID": "366577823040-vhr2h7toc53pb891v0qoc1m62pps2v41.apps.googleusercontent.com"
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "luma-prod",
+          "database_id": "efe82b84-66d5-437f-b00b-1b287a2f6dc0",
+          "migrations_dir": "../backend/migrations"
+        }
+      ],
+      "ratelimits": [
+        { "name": "RATE_LIMITER", "namespace_id": "2101", "simple": { "limit": 60, "period": 60 } }
+      ]
+    }
+  }
+}
