@@ -98,18 +98,6 @@ abstract class AppLocalizations {
     Locale('id'),
   ];
 
-  /// No description provided for @interfaceLanguage.
-  ///
-  /// In id, this message translates to:
-  /// **'Bahasa antarmuka'**
-  String get interfaceLanguage;
-
-  /// No description provided for @interfaceLanguageNote.
-  ///
-  /// In id, this message translates to:
-  /// **'Bahasa ini cuma buat tampilan. Terjemahan dan jawaban AI tetap Bahasa Indonesia.'**
-  String get interfaceLanguageNote;
-
   /// No description provided for @languageSaveFailed.
   ///
   /// In id, this message translates to:
@@ -968,293 +956,143 @@ abstract class AppLocalizations {
   /// **'Coba lagi bentar ya'**
   String get backupTryAgainInAMoment;
 
-  /// Interface copy in ui/features/settings/views/settings_view.dart
+  /// Interface copy in ui/features/settings/views/backup_view.dart
   ///
   /// In id, this message translates to:
   /// **'Sip, data lo udah balik!'**
   String get settingsYourDataIsBack;
 
-  /// Interface copy in ui/features/settings/views/settings_view.dart
+  /// Interface copy in ui/features/settings/views/cloud_restore_sheet.dart
   ///
   /// In id, this message translates to:
   /// **'{p0} buku · {p1} terjemahan'**
   String settingsBooksTranslations(int p0, int p1);
 
-  /// Interface copy in ui/features/settings/views/settings_view.dart
+  /// Interface copy in ui/features/settings/views/backup_view.dart
   ///
   /// In id, this message translates to:
   /// **'API key gak ikut backup, isi ulang dulu biar bisa nerjemahin.'**
   String get settingsApiKeysArenTIncludedIn;
 
-  /// Interface copy in ui/features/settings/views/settings_view.dart
+  /// Interface copy in ui/features/settings/views/backup_view.dart
   ///
   /// In id, this message translates to:
   /// **'Isi key'**
   String get settingsAddKey;
 
-  /// Interface copy in ui/features/settings/views/settings_view.dart
-  ///
-  /// In id, this message translates to:
-  /// **'Hapus cache terjemahan?'**
-  String get settingsDeleteTranslationCache;
-
-  /// Interface copy in ui/features/settings/views/settings_view.dart
-  ///
-  /// In id, this message translates to:
-  /// **'Semua terjemahan yang udah kesimpen bakal ilang. Paragraf yang dibuka lagi manggil AI ulang dan motong saldo lagi. Obrolan buku lo tetap kesimpen.'**
-  String get settingsAllSavedTranslationsWillBeDeleted;
-
-  /// Interface copy in ui/features/settings/views/settings_view.dart
-  ///
-  /// In id, this message translates to:
-  /// **'Katalognya udah yang terbaru'**
-  String get settingsYourCatalogIsAlreadyUpTo;
-
-  /// Interface copy in ui/features/settings/views/settings_view.dart
+  /// Interface copy in ui/features/settings/views/settings_page.dart
   ///
   /// In id, this message translates to:
   /// **'Balik'**
   String get settingsBack;
 
-  /// Interface copy in ui/features/settings/views/settings_view.dart
+  /// Interface copy in ui/features/settings/views/settings_hub_view.dart
   ///
   /// In id, this message translates to:
   /// **'Pengaturan'**
   String get settingsSettings;
 
-  /// Interface copy in ui/features/settings/views/settings_view.dart
+  /// Interface copy in ui/features/settings/views/ai_view.dart
   ///
   /// In id, this message translates to:
   /// **'API key OpenRouter'**
   String get settingsOpenrouterApiKey;
 
-  /// Interface copy in ui/features/settings/views/settings_view.dart
+  /// Interface copy in ui/features/settings/views/ai_view.dart
   ///
   /// In id, this message translates to:
   /// **'Model AI'**
   String get settingsAiModel;
 
-  /// Interface copy in ui/features/settings/views/settings_view.dart
-  ///
-  /// In id, this message translates to:
-  /// **'Biayanya kepotong dari saldo akun OpenRouter lo.'**
-  String get settingsChargesComeFromYourOpenrouterAccount;
-
-  /// Interface copy in ui/features/settings/views/settings_view.dart
+  /// Interface copy in ui/features/settings/views/backup_view.dart
   ///
   /// In id, this message translates to:
   /// **'Backup & pulihin'**
   String get settingsBackupRestore;
 
-  /// Interface copy in ui/features/settings/views/settings_view.dart
-  ///
-  /// In id, this message translates to:
-  /// **'Katalog buku'**
-  String get settingsBookCatalog;
-
-  /// Interface copy in ui/features/settings/views/settings_view.dart
-  ///
-  /// In id, this message translates to:
-  /// **'Daftar ±62.000 buku Project Gutenberg buat nyari judul tanpa internet. Diperbarui mingguan.'**
-  String get settingsAroundProjectGutenbergBooksToSearch;
-
-  /// Interface copy in ui/features/settings/views/settings_view.dart
-  ///
-  /// In id, this message translates to:
-  /// **'Penyimpanan'**
-  String get settingsStorage;
-
-  /// Interface copy in ui/features/settings/views/settings_view.dart
+  /// Interface copy in ui/features/settings/views/ai_view.dart
   ///
   /// In id, this message translates to:
   /// **'Disimpen aman di perangkat (Keychain / Keystore), gak dikirim ke mana-mana selain OpenRouter.'**
   String get settingsStoredSecurelyOnYourDeviceKeychain;
 
-  /// Interface copy in ui/features/settings/views/settings_view.dart
+  /// Interface copy in ui/features/settings/views/ai_view.dart
   ///
   /// In id, this message translates to:
   /// **'Itu bukan API key OpenRouter. Key-nya mulai dari sk-or-... dan gak disimpen.'**
   String get settingsThatSNotAnOpenrouterApi;
 
-  /// Interface copy in ui/features/settings/views/settings_view.dart
+  /// Interface copy in ui/features/settings/views/ai_view.dart
   ///
   /// In id, this message translates to:
   /// **'Key-nya ditolak OpenRouter, jadi gak disimpen. Cek lagi ya.'**
   String get settingsOpenrouterRejectedTheKeySoIt;
 
-  /// Interface copy in ui/features/settings/views/settings_view.dart
-  ///
-  /// In id, this message translates to:
-  /// **'Bentar, lagi ngecek...'**
-  String get settingsHangOnChecking;
-
-  /// Interface copy in ui/features/settings/views/settings_view.dart
+  /// Interface copy in ui/features/settings/views/ai_view.dart
   ///
   /// In id, this message translates to:
   /// **'Key-nya jalan'**
   String get settingsYourKeyWorks;
 
-  /// Interface copy in ui/features/settings/views/settings_view.dart
-  ///
-  /// In id, this message translates to:
-  /// **'Key-nya ditolak OpenRouter'**
-  String get settingsOpenrouterRejectedYourKey;
-
-  /// Interface copy in ui/features/settings/views/settings_view.dart
-  ///
-  /// In id, this message translates to:
-  /// **'Disimpen aman di perangkat'**
-  String get settingsStoredSecurelyOnYourDevice;
-
-  /// Interface copy in ui/features/settings/views/settings_view.dart
+  /// Interface copy in ui/features/settings/views/backup_view.dart
   ///
   /// In id, this message translates to:
   /// **'Isinya buku, progres baca, terjemahan, sama pengaturan. '**
   String get settingsIncludesBooksReadingProgressTranslationsAnd;
 
-  /// Interface copy in ui/features/settings/views/settings_view.dart
+  /// Interface copy in ui/features/settings/views/backup_view.dart
   ///
   /// In id, this message translates to:
   /// **'API key gak ikut'**
   String get settingsApiKeysArenTIncluded;
 
-  /// Interface copy in ui/features/settings/views/settings_view.dart
+  /// Interface copy in ui/features/settings/views/backup_view.dart
   ///
   /// In id, this message translates to:
   /// **', jadi abis pulihin isi ulang ya. Simpen file-nya di iCloud Drive biar gak ikut kehapus pas install ulang.'**
   String get settingsSoAddYoursAgainAfterRestoring;
 
-  /// Interface copy in ui/features/settings/views/settings_view.dart
+  /// Interface copy in ui/features/settings/views/backup_view.dart
   ///
   /// In id, this message translates to:
   /// **'Barusan'**
   String get settingsJustNow;
 
-  /// Interface copy in ui/features/settings/views/settings_view.dart
+  /// Interface copy in ui/features/settings/views/backup_view.dart
   ///
   /// In id, this message translates to:
   /// **'Status backup'**
   String get settingsBackupStatus;
 
-  /// Interface copy in ui/features/settings/views/settings_view.dart
+  /// Interface copy in ui/features/settings/views/backup_view.dart
   ///
   /// In id, this message translates to:
   /// **'Backup terakhir'**
   String get settingsLastBackup;
 
-  /// Interface copy in ui/features/settings/views/settings_view.dart
+  /// Interface copy in ui/features/settings/views/backup_view.dart
   ///
   /// In id, this message translates to:
   /// **'Belum pernah backup'**
   String get settingsNoBackupsYet;
 
-  /// Interface copy in ui/features/settings/views/settings_view.dart
+  /// Interface copy in ui/features/settings/views/backup_view.dart
   ///
   /// In id, this message translates to:
   /// **'Data lo cuma ada di HP ini doang'**
   String get settingsYourDataIsOnlyOnThis;
 
-  /// Interface copy in ui/features/settings/views/settings_view.dart
+  /// Interface copy in ui/features/settings/views/backup_view.dart
   ///
   /// In id, this message translates to:
   /// **'Backup sekarang'**
   String get settingsBackUpNow;
 
-  /// Interface copy in ui/features/settings/views/settings_view.dart
-  ///
-  /// In id, this message translates to:
-  /// **'Pulihin dari backup'**
-  String get settingsRestoreFromBackup;
-
-  /// Interface copy in ui/features/settings/views/settings_view.dart
-  ///
-  /// In id, this message translates to:
-  /// **'Default · paling akurat'**
-  String get settingsDefaultMostAccurate;
-
-  /// Interface copy in ui/features/settings/views/settings_view.dart
-  ///
-  /// In id, this message translates to:
-  /// **'Cache terjemahan'**
-  String get settingsTranslationCache;
-
-  /// Interface copy in ui/features/settings/views/settings_view.dart
-  ///
-  /// In id, this message translates to:
-  /// **'{p0} paragraf · {p1}'**
-  String settingsParagraphs(int p0, Object p1);
-
-  /// Interface copy in ui/features/settings/views/settings_view.dart
-  ///
-  /// In id, this message translates to:
-  /// **'Hapus cache'**
-  String get settingsClearCache;
-
-  /// Interface copy in ui/features/settings/views/settings_view.dart
-  ///
-  /// In id, this message translates to:
-  /// **'Belum diunduh · 5,6 MB'**
-  String get settingsNotDownloadedMb;
-
-  /// Interface copy in ui/features/settings/views/settings_view.dart
-  ///
-  /// In id, this message translates to:
-  /// **'Diperbarui {p0} · '**
-  String settingsUpdated(Object p0);
-
-  /// Interface copy in ui/features/settings/views/settings_view.dart
-  ///
-  /// In id, this message translates to:
-  /// **'{p0}{p1} buku'**
-  String settingsBooks(Object p0, int p1);
-
-  /// Interface copy in ui/features/settings/views/settings_view.dart
-  ///
-  /// In id, this message translates to:
-  /// **'Ngecek versi terbaru…'**
-  String get settingsCheckingForUpdates;
-
-  /// Interface copy in ui/features/settings/views/settings_view.dart
-  ///
-  /// In id, this message translates to:
-  /// **'Ngunduh…'**
-  String get settingsDownloading;
-
-  /// Interface copy in ui/features/settings/views/settings_view.dart
-  ///
-  /// In id, this message translates to:
-  /// **'Ngunduh {p0}%'**
-  String settingsDownloading2(Object p0);
-
-  /// Interface copy in ui/features/settings/views/settings_view.dart
+  /// Interface copy in ui/features/discover/views/discover_view.dart
   ///
   /// In id, this message translates to:
   /// **'Nyusun katalog…'**
   String get settingsPreparingCatalog;
-
-  /// Interface copy in ui/features/settings/views/settings_view.dart
-  ///
-  /// In id, this message translates to:
-  /// **'Gagal, katalog lama tetep dipakai'**
-  String get settingsFailedKeepingThePreviousCatalog;
-
-  /// Interface copy in ui/features/settings/views/settings_view.dart
-  ///
-  /// In id, this message translates to:
-  /// **'Unduh'**
-  String get settingsDownload;
-
-  /// Interface copy in ui/features/settings/views/settings_view.dart
-  ///
-  /// In id, this message translates to:
-  /// **'Perbarui'**
-  String get settingsUpdate;
-
-  /// Interface copy in ui/features/settings/views/settings_view.dart
-  ///
-  /// In id, this message translates to:
-  /// **'Katalog Gutenberg'**
-  String get settingsGutenbergCatalog;
 
   /// Interface copy in ui/features/settings/views/backup_sheet.dart
   ///
@@ -4124,12 +3962,6 @@ abstract class AppLocalizations {
   /// **'Akun'**
   String get settingsAccount;
 
-  /// No description provided for @authExLibris.
-  ///
-  /// In id, this message translates to:
-  /// **'EX LIBRIS'**
-  String get authExLibris;
-
   /// No description provided for @authViaGoogle.
   ///
   /// In id, this message translates to:
@@ -4514,23 +4346,11 @@ abstract class AppLocalizations {
   /// **'Key-nya ditolak (401)'**
   String get aiKeyRejected401;
 
-  /// No description provided for @aiKeyRejectedBox.
-  ///
-  /// In id, this message translates to:
-  /// **'OpenRouter nolak key ini. Cek lagi di openrouter.ai/keys, terus tempel ulang. AI berhenti dulu sampai key-nya bener, atau balik ke kuota gratis.'**
-  String get aiKeyRejectedBox;
-
   /// No description provided for @aiCheckedJustNow.
   ///
   /// In id, this message translates to:
   /// **'Dicek barusan'**
   String get aiCheckedJustNow;
-
-  /// No description provided for @aiDefaultTag.
-  ///
-  /// In id, this message translates to:
-  /// **'default'**
-  String get aiDefaultTag;
 
   /// No description provided for @aiBackToFree.
   ///
@@ -4622,18 +4442,6 @@ abstract class AppLocalizations {
   /// **'Gak ada model yang cocok.'**
   String get aiNoModelMatch;
 
-  /// Interface copy in ui/features/settings/views/settings_view.dart
-  ///
-  /// In id, this message translates to:
-  /// **'Backup ke cloud'**
-  String get settingsBackUpToCloud;
-
-  /// Interface copy in ui/features/settings/views/settings_view.dart
-  ///
-  /// In id, this message translates to:
-  /// **'Pulihin dari cloud'**
-  String get settingsRestoreFromCloud;
-
   /// Interface copy in ui/features/settings/views/backup_sheet.dart
   ///
   /// In id, this message translates to:
@@ -4681,6 +4489,480 @@ abstract class AppLocalizations {
   /// In id, this message translates to:
   /// **'Buku dari HP lain lagi diunduh. Sambil baca juga bisa.'**
   String get bookshelfSyncingBody;
+
+  /// No description provided for @settingsAccountPhoto.
+  ///
+  /// In id, this message translates to:
+  /// **'Foto profil'**
+  String get settingsAccountPhoto;
+
+  /// No description provided for @settingsAccountUsedToday.
+  ///
+  /// In id, this message translates to:
+  /// **'Kepakai hari ini'**
+  String get settingsAccountUsedToday;
+
+  /// No description provided for @settingsAccountUsedValue.
+  ///
+  /// In id, this message translates to:
+  /// **'{count} tap'**
+  String settingsAccountUsedValue(int count);
+
+  /// No description provided for @settingsAccountDaily.
+  ///
+  /// In id, this message translates to:
+  /// **'Jatah harian'**
+  String get settingsAccountDaily;
+
+  /// No description provided for @settingsAccountDailyValue.
+  ///
+  /// In id, this message translates to:
+  /// **'± 30–50 tap'**
+  String get settingsAccountDailyValue;
+
+  /// No description provided for @settingsAccountSignOutNote.
+  ///
+  /// In id, this message translates to:
+  /// **'Buku di HP ini tetap ada'**
+  String get settingsAccountSignOutNote;
+
+  /// No description provided for @settingsAccountDeleteNote.
+  ///
+  /// In id, this message translates to:
+  /// **'Hapus akun + semua data di server'**
+  String get settingsAccountDeleteNote;
+
+  /// No description provided for @settingsHubModelFree.
+  ///
+  /// In id, this message translates to:
+  /// **'Model AI · Kuota gratis'**
+  String get settingsHubModelFree;
+
+  /// No description provided for @settingsHubModelOwn.
+  ///
+  /// In id, this message translates to:
+  /// **'Model AI · Key sendiri'**
+  String get settingsHubModelOwn;
+
+  /// No description provided for @settingsHubChangeModel.
+  ///
+  /// In id, this message translates to:
+  /// **'Ganti model'**
+  String get settingsHubChangeModel;
+
+  /// No description provided for @settingsHubManageAi.
+  ///
+  /// In id, this message translates to:
+  /// **'Atur AI'**
+  String get settingsHubManageAi;
+
+  /// No description provided for @settingsHubModelDefault.
+  ///
+  /// In id, this message translates to:
+  /// **'{id} · default'**
+  String settingsHubModelDefault(String id);
+
+  /// No description provided for @settingsHubMoreSection.
+  ///
+  /// In id, this message translates to:
+  /// **'Data & lainnya'**
+  String get settingsHubMoreSection;
+
+  /// No description provided for @settingsHubTileBackup.
+  ///
+  /// In id, this message translates to:
+  /// **'Backup'**
+  String get settingsHubTileBackup;
+
+  /// No description provided for @settingsHubTileCatalog.
+  ///
+  /// In id, this message translates to:
+  /// **'Katalog'**
+  String get settingsHubTileCatalog;
+
+  /// No description provided for @settingsHubTileCache.
+  ///
+  /// In id, this message translates to:
+  /// **'Cache'**
+  String get settingsHubTileCache;
+
+  /// No description provided for @settingsHubTileDisplay.
+  ///
+  /// In id, this message translates to:
+  /// **'Tampilan'**
+  String get settingsHubTileDisplay;
+
+  /// No description provided for @settingsHubBackupNever.
+  ///
+  /// In id, this message translates to:
+  /// **'Belum pernah'**
+  String get settingsHubBackupNever;
+
+  /// No description provided for @settingsHubCatalogNever.
+  ///
+  /// In id, this message translates to:
+  /// **'Belum diunduh'**
+  String get settingsHubCatalogNever;
+
+  /// No description provided for @settingsHubCatalogDownloading.
+  ///
+  /// In id, this message translates to:
+  /// **'Diunduh {percent}%'**
+  String settingsHubCatalogDownloading(int percent);
+
+  /// No description provided for @settingsHubCatalogWorking.
+  ///
+  /// In id, this message translates to:
+  /// **'Lagi nyiapin…'**
+  String get settingsHubCatalogWorking;
+
+  /// No description provided for @settingsHubCatalogDone.
+  ///
+  /// In id, this message translates to:
+  /// **'Udah diunduh'**
+  String get settingsHubCatalogDone;
+
+  /// No description provided for @settingsHubCatalogFailed.
+  ///
+  /// In id, this message translates to:
+  /// **'Gagal, coba lagi'**
+  String get settingsHubCatalogFailed;
+
+  /// No description provided for @settingsHubCacheEmpty.
+  ///
+  /// In id, this message translates to:
+  /// **'Kosong'**
+  String get settingsHubCacheEmpty;
+
+  /// No description provided for @settingsHubCacheUsed.
+  ///
+  /// In id, this message translates to:
+  /// **'{size} terpakai'**
+  String settingsHubCacheUsed(String size);
+
+  /// No description provided for @settingsHubDisplayStatus.
+  ///
+  /// In id, this message translates to:
+  /// **'{theme} · {language}'**
+  String settingsHubDisplayStatus(String theme, String language);
+
+  /// No description provided for @settingsHubSignedOut.
+  ///
+  /// In id, this message translates to:
+  /// **'Belum masuk'**
+  String get settingsHubSignedOut;
+
+  /// No description provided for @settingsHubSignedOutNote.
+  ///
+  /// In id, this message translates to:
+  /// **'Masuk buat dapet kuota AI gratis'**
+  String get settingsHubSignedOutNote;
+
+  /// No description provided for @settingsHubQuotaReset.
+  ///
+  /// In id, this message translates to:
+  /// **'Reset {time} · {countdown} lagi'**
+  String settingsHubQuotaReset(String time, String countdown);
+
+  /// No description provided for @settingsBackupSaveToFile.
+  ///
+  /// In id, this message translates to:
+  /// **'Simpen salinan ke file'**
+  String get settingsBackupSaveToFile;
+
+  /// No description provided for @settingsBackupRestoreFrom.
+  ///
+  /// In id, this message translates to:
+  /// **'Pulihin dari'**
+  String get settingsBackupRestoreFrom;
+
+  /// No description provided for @settingsBackupFile.
+  ///
+  /// In id, this message translates to:
+  /// **'File'**
+  String get settingsBackupFile;
+
+  /// No description provided for @settingsBackupCloud.
+  ///
+  /// In id, this message translates to:
+  /// **'Cloud'**
+  String get settingsBackupCloud;
+
+  /// No description provided for @settingsAiFreeModelsLabel.
+  ///
+  /// In id, this message translates to:
+  /// **'Model AI · {count} model gratis'**
+  String settingsAiFreeModelsLabel(int count);
+
+  /// No description provided for @settingsAiMoreModelsHint.
+  ///
+  /// In id, this message translates to:
+  /// **'300-an model lain kebuka kalau lo pakai key OpenRouter sendiri.'**
+  String get settingsAiMoreModelsHint;
+
+  /// No description provided for @settingsAiDefaultBadge.
+  ///
+  /// In id, this message translates to:
+  /// **'Default'**
+  String get settingsAiDefaultBadge;
+
+  /// No description provided for @settingsAiKeyChecking.
+  ///
+  /// In id, this message translates to:
+  /// **'Lagi ngecek ke OpenRouter…'**
+  String get settingsAiKeyChecking;
+
+  /// No description provided for @settingsAiKeyRejectedBody.
+  ///
+  /// In id, this message translates to:
+  /// **'OpenRouter nolak key ini. Cek lagi di openrouter.ai/keys, terus tempel ulang.'**
+  String get settingsAiKeyRejectedBody;
+
+  /// No description provided for @settingsAiKeyRejectedFallback.
+  ///
+  /// In id, this message translates to:
+  /// **'Sementara AI balik pakai kuota gratis (sisa {percent}%) sampai key-nya bener.'**
+  String settingsAiKeyRejectedFallback(int percent);
+
+  /// No description provided for @settingsAiKeyRejectedFallbackNoQuota.
+  ///
+  /// In id, this message translates to:
+  /// **'Sementara AI balik pakai kuota gratis sampai key-nya bener.'**
+  String get settingsAiKeyRejectedFallbackNoQuota;
+
+  /// No description provided for @settingsAiKeyRecheck.
+  ///
+  /// In id, this message translates to:
+  /// **'Cek lagi'**
+  String get settingsAiKeyRecheck;
+
+  /// No description provided for @settingsAiModelFallsBack.
+  ///
+  /// In id, this message translates to:
+  /// **'{id} · balik ke model gratis'**
+  String settingsAiModelFallsBack(String id);
+
+  /// No description provided for @settingsCatalogTitle.
+  ///
+  /// In id, this message translates to:
+  /// **'Katalog buku'**
+  String get settingsCatalogTitle;
+
+  /// No description provided for @settingsCatalogCardTitle.
+  ///
+  /// In id, this message translates to:
+  /// **'Katalog Gutenberg'**
+  String get settingsCatalogCardTitle;
+
+  /// No description provided for @settingsCatalogNotDownloaded.
+  ///
+  /// In id, this message translates to:
+  /// **'Belum diunduh · 5,6 MB'**
+  String get settingsCatalogNotDownloaded;
+
+  /// No description provided for @settingsCatalogChecking.
+  ///
+  /// In id, this message translates to:
+  /// **'Ngecek versi terbaru…'**
+  String get settingsCatalogChecking;
+
+  /// No description provided for @settingsCatalogDownloading.
+  ///
+  /// In id, this message translates to:
+  /// **'Lagi diunduh'**
+  String get settingsCatalogDownloading;
+
+  /// No description provided for @settingsCatalogPreparing.
+  ///
+  /// In id, this message translates to:
+  /// **'Nyusun katalog…'**
+  String get settingsCatalogPreparing;
+
+  /// No description provided for @settingsCatalogFailed.
+  ///
+  /// In id, this message translates to:
+  /// **'Gagal, katalog lama tetep dipakai'**
+  String get settingsCatalogFailed;
+
+  /// No description provided for @settingsCatalogDownload.
+  ///
+  /// In id, this message translates to:
+  /// **'Unduh'**
+  String get settingsCatalogDownload;
+
+  /// No description provided for @settingsCatalogUpdate.
+  ///
+  /// In id, this message translates to:
+  /// **'Perbarui'**
+  String get settingsCatalogUpdate;
+
+  /// No description provided for @settingsCatalogCancel.
+  ///
+  /// In id, this message translates to:
+  /// **'Batal'**
+  String get settingsCatalogCancel;
+
+  /// No description provided for @settingsCatalogRetry.
+  ///
+  /// In id, this message translates to:
+  /// **'Coba lagi'**
+  String get settingsCatalogRetry;
+
+  /// No description provided for @settingsCatalogUpToDate.
+  ///
+  /// In id, this message translates to:
+  /// **'Katalognya udah yang terbaru'**
+  String get settingsCatalogUpToDate;
+
+  /// No description provided for @settingsCatalogWhy.
+  ///
+  /// In id, this message translates to:
+  /// **'Buat apa?'**
+  String get settingsCatalogWhy;
+
+  /// No description provided for @settingsCatalogWhySearch.
+  ///
+  /// In id, this message translates to:
+  /// **'Cari judul tanpa internet'**
+  String get settingsCatalogWhySearch;
+
+  /// No description provided for @settingsCatalogWhySearchBody.
+  ///
+  /// In id, this message translates to:
+  /// **'Ketik judul atau penulis, hasilnya langsung keluar'**
+  String get settingsCatalogWhySearchBody;
+
+  /// No description provided for @settingsCatalogWhyBooks.
+  ///
+  /// In id, this message translates to:
+  /// **'±62.000 buku Project Gutenberg'**
+  String get settingsCatalogWhyBooks;
+
+  /// No description provided for @settingsCatalogWhyBooksBody.
+  ///
+  /// In id, this message translates to:
+  /// **'Semuanya public domain, gratis diambil'**
+  String get settingsCatalogWhyBooksBody;
+
+  /// No description provided for @settingsCatalogWhyWeekly.
+  ///
+  /// In id, this message translates to:
+  /// **'Diperbarui mingguan'**
+  String get settingsCatalogWhyWeekly;
+
+  /// No description provided for @settingsCatalogWhyWeeklyBody.
+  ///
+  /// In id, this message translates to:
+  /// **'Tap Perbarui kalau mau yang paling baru'**
+  String get settingsCatalogWhyWeeklyBody;
+
+  /// No description provided for @settingsCatalogBackgroundNote.
+  ///
+  /// In id, this message translates to:
+  /// **'Boleh tutup layar ini, unduhan jalan terus di belakang.'**
+  String get settingsCatalogBackgroundNote;
+
+  /// No description provided for @settingsCacheEyebrow.
+  ///
+  /// In id, this message translates to:
+  /// **'Penyimpanan'**
+  String get settingsCacheEyebrow;
+
+  /// No description provided for @settingsCacheTitle.
+  ///
+  /// In id, this message translates to:
+  /// **'Hapus cache terjemahan?'**
+  String get settingsCacheTitle;
+
+  /// No description provided for @settingsCacheParagraphs.
+  ///
+  /// In id, this message translates to:
+  /// **'paragraf'**
+  String get settingsCacheParagraphs;
+
+  /// No description provided for @settingsCacheUsed.
+  ///
+  /// In id, this message translates to:
+  /// **'dipakai'**
+  String get settingsCacheUsed;
+
+  /// No description provided for @settingsCacheBody.
+  ///
+  /// In id, this message translates to:
+  /// **'Terjemahan yang udah disimpen bakal ilang dari HP ini. Pas lo buka lagi, Luma nerjemahin ulang, dan itu makan kuota AI.'**
+  String get settingsCacheBody;
+
+  /// No description provided for @settingsCacheClear.
+  ///
+  /// In id, this message translates to:
+  /// **'Hapus cache'**
+  String get settingsCacheClear;
+
+  /// No description provided for @settingsCacheCancel.
+  ///
+  /// In id, this message translates to:
+  /// **'Batal'**
+  String get settingsCacheCancel;
+
+  /// No description provided for @settingsDisplayTitle.
+  ///
+  /// In id, this message translates to:
+  /// **'Tampilan'**
+  String get settingsDisplayTitle;
+
+  /// No description provided for @settingsDisplayTheme.
+  ///
+  /// In id, this message translates to:
+  /// **'Tema'**
+  String get settingsDisplayTheme;
+
+  /// No description provided for @settingsDisplaySystemHint.
+  ///
+  /// In id, this message translates to:
+  /// **'Ngikut mode HP'**
+  String get settingsDisplaySystemHint;
+
+  /// No description provided for @settingsDisplayLightHint.
+  ///
+  /// In id, this message translates to:
+  /// **'Kertas krem'**
+  String get settingsDisplayLightHint;
+
+  /// No description provided for @settingsDisplayDarkHint.
+  ///
+  /// In id, this message translates to:
+  /// **'Buat malem'**
+  String get settingsDisplayDarkHint;
+
+  /// No description provided for @settingsDisplayThemeNote.
+  ///
+  /// In id, this message translates to:
+  /// **'Ini setelan yang sama kayak Tema di menu Aa pas baca. Ganti di satu tempat, dua-duanya ikut.'**
+  String get settingsDisplayThemeNote;
+
+  /// No description provided for @settingsDisplayLanguage.
+  ///
+  /// In id, this message translates to:
+  /// **'Bahasa tampilan'**
+  String get settingsDisplayLanguage;
+
+  /// No description provided for @settingsDisplayLanguageNote.
+  ///
+  /// In id, this message translates to:
+  /// **'Bahasa ini cuma buat tampilan. Terjemahan sama jawaban AI tetap Bahasa Indonesia.'**
+  String get settingsDisplayLanguageNote;
+
+  /// No description provided for @settingsCatalogBooks.
+  ///
+  /// In id, this message translates to:
+  /// **'{count} buku'**
+  String settingsCatalogBooks(int count);
+
+  /// No description provided for @settingsCatalogBooksUpdated.
+  ///
+  /// In id, this message translates to:
+  /// **'{count} buku · Diperbarui {date}'**
+  String settingsCatalogBooksUpdated(int count, String date);
 }
 
 class _AppLocalizationsDelegate

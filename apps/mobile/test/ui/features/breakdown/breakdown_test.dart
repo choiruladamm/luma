@@ -147,6 +147,10 @@ void main() {
           path: Routes.settings,
           builder: (_, _) => const Scaffold(body: Text('Pengaturan')),
         ),
+        GoRoute(
+          path: Routes.settingsAi,
+          builder: (_, _) => const Scaffold(body: Text('Pengaturan')),
+        ),
       ],
     );
     addTearDown(router.dispose);

@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:luma/data/repositories/settings_repository.dart';
 import 'package:luma/data/services/auth_service.dart';
 import 'package:luma/data/services/backend_client.dart';
 import 'package:luma/l10n/app_localizations.dart';
 import 'package:luma/ui/core/theme/stabilo_theme.dart';
 import 'package:luma/ui/features/auth/view_models/auth_view_model.dart';
 import 'package:luma/ui/features/auth/views/login_view.dart';
-import 'package:luma/ui/features/settings/views/account_section.dart';
+import 'package:luma/data/services/ai_key_service.dart';
+import 'package:luma/ui/features/settings/view_models/ai_quota_view_model.dart';
+import 'package:luma/ui/features/settings/views/account_view.dart';
 
 /// Sesi palsu: catat Keluar / Hapus akun tanpa backend.
 class FakeAuthController extends AuthController {
@@ -38,6 +39,21 @@ class FakeAuthController extends AuthController {
   }
 }
 
+class FakeQuota extends AiQuotaController {
+  @override
+  Future<QuotaState> build() async => QuotaState(
+    usage: AiUsage(
+      dailyLimitUsd: 0.02,
+      remainingUsd: 0.0128,
+      usedTodayUsd: 0.0072,
+      resetsAt: DateTime.utc(2099),
+    ),
+  );
+
+  @override
+  Future<void> refresh({bool force = false}) async {}
+}
+
 const rara = AuthUser(
   id: 'u1',
   name: 'Rara Putri',
@@ -51,7 +67,6 @@ void main() {
     WidgetTester tester, {
     AuthState? state,
     bool deleteFails = false,
-    DateTime? cloudAt,
   }) async {
     tester.view
       ..physicalSize = const Size(900, 1400)
@@ -66,56 +81,35 @@ void main() {
         overrides: [
           authControllerProvider.overrideWith(() => auth),
           devLoginProvider.overrideWithValue(false),
-          cloudBackupAtProvider.overrideWith((ref) => Stream.value(cloudAt)),
+          aiQuotaProvider.overrideWith(FakeQuota.new),
+          aiSourceProvider.overrideWith((ref) async => AiSource.subsidy),
         ],
         child: MaterialApp(
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           locale: const Locale('id'),
           theme: stabiloTheme(Brightness.light),
-          home: const Scaffold(
-            body: SingleChildScrollView(child: AccountSection()),
-          ),
+          home: const AccountView(),
         ),
       ),
     );
     await tester.pump();
   }
 
-  testWidgets('ex libris plate shows name, email and sign-in method', (
-    tester,
-  ) async {
+  testWidgets('shows profile and the quota card values', (tester) async {
     await pump(tester);
+    await tester.pump();
 
     expect(find.text('Akun'), findsOneWidget);
-    expect(find.text('EX LIBRIS'), findsOneWidget);
     expect(find.text('Rara Putri'), findsOneWidget);
     expect(find.text('rara.putri@gmail.com'), findsOneWidget);
     expect(find.text('Masuk lewat Google'), findsOneWidget);
-    expect(find.text('R'), findsOneWidget);
-  });
-
-  testWidgets('last cloud backup row shows once there is one (board Akun 08)', (
-    tester,
-  ) async {
-    final at = DateTime.now().copyWith(hour: 8, minute: 12);
-    await pump(tester, cloudAt: at);
-    await tester.pump();
-    expect(find.text('Backup terakhir'), findsOneWidget);
-    expect(find.text('Hari ini, 08.12'), findsOneWidget);
-  });
-
-  testWidgets('no last backup row before the first cloud backup', (
-    tester,
-  ) async {
-    await pump(tester);
-    await tester.pump();
-    expect(find.text('Backup terakhir'), findsNothing);
-  });
-
-  testWidgets('hidden when signed out', (tester) async {
-    await pump(tester, state: const AuthState(AuthStatus.signedOut));
-    expect(find.text('EX LIBRIS'), findsNothing);
+    expect(find.text('Kuota AI hari ini'), findsOneWidget);
+    expect(find.text('64%'), findsOneWidget);
+    expect(find.text('Kepakai hari ini'), findsOneWidget);
+    expect(find.text('14 tap'), findsOneWidget);
+    expect(find.text('Jatah harian'), findsOneWidget);
+    expect(find.text('± 30–50 tap'), findsOneWidget);
   });
 
   testWidgets('sign out asks first, then signs out with a toast', (

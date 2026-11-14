@@ -35,7 +35,7 @@ import '../../reader/view_models/breakdown_view_model.dart';
 import '../../../../data/repositories/ai_key_repository.dart';
 import '../../../core/widgets/quota.dart';
 import '../../settings/view_models/ai_quota_view_model.dart';
-import '../../settings/views/ai_source_section.dart';
+import '../../settings/views/ai_shared.dart';
 import 'peek_sheet.dart';
 
 /// Layar Bedahin (board "Terpilih · Bedahin · Opsi C · layar bedah" + "Spek ·

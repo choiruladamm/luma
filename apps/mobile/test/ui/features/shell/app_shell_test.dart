@@ -17,7 +17,7 @@ import 'package:luma/ui/features/bookshelf/view_models/bookshelf_view_model.dart
 import 'package:luma/ui/features/discover/view_models/download_queue_view_model.dart';
 import 'package:luma/ui/features/discover/views/discover_view.dart';
 import 'package:luma/ui/features/reader/view_models/reader_view_model.dart';
-import 'package:luma/ui/features/settings/views/settings_view.dart';
+import 'package:luma/ui/features/settings/views/settings_hub_view.dart';
 
 import '../../../fakes.dart';
 import '../bookshelf/bookshelf_test.dart' show FakeBooks, StuckBackup;
@@ -79,7 +79,7 @@ void main() {
     expect(find.byType(DiscoverView), findsOneWidget);
     await tester.tap(find.bySemanticsLabel('Atur'));
     await tester.pumpAndSettle();
-    expect(find.byType(SettingsView), findsOneWidget);
+    expect(find.byType(SettingsHubView), findsOneWidget);
     expect(find.bySemanticsLabel('Balik'), findsNothing);
     await tester.tap(find.bySemanticsLabel('Rak'));
     await tester.pumpAndSettle();

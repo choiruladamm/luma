@@ -10,13 +10,6 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
-  String get interfaceLanguage => 'Interface language';
-
-  @override
-  String get interfaceLanguageNote =>
-      'This changes the interface language. Translations and AI responses stay in Indonesian.';
-
-  @override
   String get languageSaveFailed => 'Couldn’t save the language. Try again.';
 
   @override
@@ -497,7 +490,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aaDark => 'Dark';
 
   @override
-  String get aaSystem => 'System';
+  String get aaSystem => 'Follow system';
 
   @override
   String get aaScreenDisplay => 'Screen display';
@@ -578,17 +571,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsAddKey => 'Add key';
 
   @override
-  String get settingsDeleteTranslationCache => 'Delete translation cache?';
-
-  @override
-  String get settingsAllSavedTranslationsWillBeDeleted =>
-      'All saved translations will be deleted. Opening those paragraphs again will request AI and use credit again. Your book chats will stay.';
-
-  @override
-  String get settingsYourCatalogIsAlreadyUpTo =>
-      'Your catalog is already up to date';
-
-  @override
   String get settingsBack => 'Back';
 
   @override
@@ -601,21 +583,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsAiModel => 'AI model';
 
   @override
-  String get settingsChargesComeFromYourOpenrouterAccount =>
-      'Charges come from your OpenRouter account credit.';
-
-  @override
   String get settingsBackupRestore => 'Backup & restore';
-
-  @override
-  String get settingsBookCatalog => 'Book catalog';
-
-  @override
-  String get settingsAroundProjectGutenbergBooksToSearch =>
-      'Around 62,000 Project Gutenberg books to search offline. Updated weekly.';
-
-  @override
-  String get settingsStorage => 'Storage';
 
   @override
   String get settingsStoredSecurelyOnYourDeviceKeychain =>
@@ -630,18 +598,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'OpenRouter rejected the key, so it wasn’t saved. Check it and try again.';
 
   @override
-  String get settingsHangOnChecking => 'Hang on, checking...';
-
-  @override
   String get settingsYourKeyWorks => 'Your key works';
-
-  @override
-  String get settingsOpenrouterRejectedYourKey =>
-      'OpenRouter rejected your key';
-
-  @override
-  String get settingsStoredSecurelyOnYourDevice =>
-      'Stored securely on your device';
 
   @override
   String get settingsIncludesBooksReadingProgressTranslationsAnd =>
@@ -673,83 +630,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsBackUpNow => 'Back up now';
 
   @override
-  String get settingsRestoreFromBackup => 'Restore from backup';
-
-  @override
-  String get settingsDefaultMostAccurate => 'Default · most accurate';
-
-  @override
-  String get settingsTranslationCache => 'Translation cache';
-
-  @override
-  String settingsParagraphs(int p0, Object p1) {
-    final intl.NumberFormat p0NumberFormat = intl.NumberFormat.decimalPattern(
-      localeName,
-    );
-    final String p0String = p0NumberFormat.format(p0);
-
-    String _temp0 = intl.Intl.pluralLogic(
-      p0,
-      locale: localeName,
-      other: '$p0String paragraphs',
-      one: '$p0String paragraph',
-    );
-    return '$_temp0 · $p1';
-  }
-
-  @override
-  String get settingsClearCache => 'Clear cache';
-
-  @override
-  String get settingsNotDownloadedMb => 'Not downloaded · 5.6 MB';
-
-  @override
-  String settingsUpdated(Object p0) {
-    return 'Updated $p0 · ';
-  }
-
-  @override
-  String settingsBooks(Object p0, int p1) {
-    final intl.NumberFormat p1NumberFormat = intl.NumberFormat.decimalPattern(
-      localeName,
-    );
-    final String p1String = p1NumberFormat.format(p1);
-
-    String _temp0 = intl.Intl.pluralLogic(
-      p1,
-      locale: localeName,
-      other: '$p1String books',
-      one: '$p1String book',
-    );
-    return '$p0$_temp0';
-  }
-
-  @override
-  String get settingsCheckingForUpdates => 'Checking for updates…';
-
-  @override
-  String get settingsDownloading => 'Downloading…';
-
-  @override
-  String settingsDownloading2(Object p0) {
-    return 'Downloading $p0%';
-  }
-
-  @override
   String get settingsPreparingCatalog => 'Preparing catalog…';
-
-  @override
-  String get settingsFailedKeepingThePreviousCatalog =>
-      'Failed; keeping the previous catalog';
-
-  @override
-  String get settingsDownload => 'Download';
-
-  @override
-  String get settingsUpdate => 'Update';
-
-  @override
-  String get settingsGutenbergCatalog => 'Gutenberg catalog';
 
   @override
   String backupBooksReadingProgress(int p0) {
@@ -2630,9 +2511,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsAccount => 'Account';
 
   @override
-  String get authExLibris => 'EX LIBRIS';
-
-  @override
   String get authViaGoogle => 'Signed in with Google';
 
   @override
@@ -2856,14 +2734,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiKeyRejected401 => 'Key rejected (401)';
 
   @override
-  String get aiKeyRejectedBox =>
-      'OpenRouter rejected this key. Check it at openrouter.ai/keys and paste it again. AI stops until the key works, or switch back to the free quota.';
-
-  @override
   String get aiCheckedJustNow => 'Checked just now';
-
-  @override
-  String get aiDefaultTag => 'default';
 
   @override
   String get aiBackToFree => 'Back to free quota';
@@ -2918,12 +2789,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiNoModelMatch => 'No matching models.';
 
   @override
-  String get settingsBackUpToCloud => 'Back up to cloud';
-
-  @override
-  String get settingsRestoreFromCloud => 'Restore from cloud';
-
-  @override
   String get backupUploadingToYourAccount =>
       'Uploading to your account. Books already in the cloud are skipped.';
 
@@ -2953,4 +2818,300 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get bookshelfSyncingBody =>
       'Pulling in books from your other device. Keep reading meanwhile.';
+
+  @override
+  String get settingsAccountPhoto => 'Profile photo';
+
+  @override
+  String get settingsAccountUsedToday => 'Used today';
+
+  @override
+  String settingsAccountUsedValue(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count taps',
+      one: '1 tap',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get settingsAccountDaily => 'Daily allowance';
+
+  @override
+  String get settingsAccountDailyValue => '± 30–50 taps';
+
+  @override
+  String get settingsAccountSignOutNote => 'Your books on this phone stay';
+
+  @override
+  String get settingsAccountDeleteNote =>
+      'Delete your account + all data on the server';
+
+  @override
+  String get settingsHubModelFree => 'AI model · Free quota';
+
+  @override
+  String get settingsHubModelOwn => 'AI model · Your own key';
+
+  @override
+  String get settingsHubChangeModel => 'Change model';
+
+  @override
+  String get settingsHubManageAi => 'AI settings';
+
+  @override
+  String settingsHubModelDefault(String id) {
+    return '$id · default';
+  }
+
+  @override
+  String get settingsHubMoreSection => 'Data & more';
+
+  @override
+  String get settingsHubTileBackup => 'Backup';
+
+  @override
+  String get settingsHubTileCatalog => 'Catalog';
+
+  @override
+  String get settingsHubTileCache => 'Cache';
+
+  @override
+  String get settingsHubTileDisplay => 'Display';
+
+  @override
+  String get settingsHubBackupNever => 'Never';
+
+  @override
+  String get settingsHubCatalogNever => 'Not downloaded';
+
+  @override
+  String settingsHubCatalogDownloading(int percent) {
+    return 'Downloaded $percent%';
+  }
+
+  @override
+  String get settingsHubCatalogWorking => 'Getting it ready…';
+
+  @override
+  String get settingsHubCatalogDone => 'Downloaded';
+
+  @override
+  String get settingsHubCatalogFailed => 'Failed, try again';
+
+  @override
+  String get settingsHubCacheEmpty => 'Empty';
+
+  @override
+  String settingsHubCacheUsed(String size) {
+    return '$size used';
+  }
+
+  @override
+  String settingsHubDisplayStatus(String theme, String language) {
+    return '$theme · $language';
+  }
+
+  @override
+  String get settingsHubSignedOut => 'Not signed in';
+
+  @override
+  String get settingsHubSignedOutNote => 'Sign in to get the free AI quota';
+
+  @override
+  String settingsHubQuotaReset(String time, String countdown) {
+    return 'Resets $time · $countdown left';
+  }
+
+  @override
+  String get settingsBackupSaveToFile => 'Save a copy to a file';
+
+  @override
+  String get settingsBackupRestoreFrom => 'Restore from';
+
+  @override
+  String get settingsBackupFile => 'File';
+
+  @override
+  String get settingsBackupCloud => 'Cloud';
+
+  @override
+  String settingsAiFreeModelsLabel(int count) {
+    return 'AI model · $count free models';
+  }
+
+  @override
+  String get settingsAiMoreModelsHint =>
+      '300+ other models open up when you use your own OpenRouter key.';
+
+  @override
+  String get settingsAiDefaultBadge => 'Default';
+
+  @override
+  String get settingsAiKeyChecking => 'Checking with OpenRouter…';
+
+  @override
+  String get settingsAiKeyRejectedBody =>
+      'OpenRouter rejected this key. Double-check it at openrouter.ai/keys, then paste it again.';
+
+  @override
+  String settingsAiKeyRejectedFallback(int percent) {
+    return 'For now AI goes back to the free quota ($percent% left) until the key is fixed.';
+  }
+
+  @override
+  String get settingsAiKeyRejectedFallbackNoQuota =>
+      'For now AI goes back to the free quota until the key is fixed.';
+
+  @override
+  String get settingsAiKeyRecheck => 'Check again';
+
+  @override
+  String settingsAiModelFallsBack(String id) {
+    return '$id · back to a free model';
+  }
+
+  @override
+  String get settingsCatalogTitle => 'Book catalog';
+
+  @override
+  String get settingsCatalogCardTitle => 'Gutenberg catalog';
+
+  @override
+  String get settingsCatalogNotDownloaded => 'Not downloaded · 5.6 MB';
+
+  @override
+  String get settingsCatalogChecking => 'Checking for updates…';
+
+  @override
+  String get settingsCatalogDownloading => 'Downloading';
+
+  @override
+  String get settingsCatalogPreparing => 'Setting up the catalog…';
+
+  @override
+  String get settingsCatalogFailed =>
+      'Failed, still using the previous catalog';
+
+  @override
+  String get settingsCatalogDownload => 'Download';
+
+  @override
+  String get settingsCatalogUpdate => 'Update';
+
+  @override
+  String get settingsCatalogCancel => 'Cancel';
+
+  @override
+  String get settingsCatalogRetry => 'Try again';
+
+  @override
+  String get settingsCatalogUpToDate => 'Your catalog is already up to date';
+
+  @override
+  String get settingsCatalogWhy => 'What\'s it for?';
+
+  @override
+  String get settingsCatalogWhySearch => 'Search titles offline';
+
+  @override
+  String get settingsCatalogWhySearchBody =>
+      'Type a title or author, results show up right away';
+
+  @override
+  String get settingsCatalogWhyBooks => 'About 62,000 Project Gutenberg books';
+
+  @override
+  String get settingsCatalogWhyBooksBody => 'All public domain, free to grab';
+
+  @override
+  String get settingsCatalogWhyWeekly => 'Updated weekly';
+
+  @override
+  String get settingsCatalogWhyWeeklyBody =>
+      'Tap Update if you want the latest';
+
+  @override
+  String get settingsCatalogBackgroundNote =>
+      'You can close this screen, the download keeps going in the background.';
+
+  @override
+  String get settingsCacheEyebrow => 'Storage';
+
+  @override
+  String get settingsCacheTitle => 'Delete the translation cache?';
+
+  @override
+  String get settingsCacheParagraphs => 'paragraphs';
+
+  @override
+  String get settingsCacheUsed => 'used';
+
+  @override
+  String get settingsCacheBody =>
+      'Saved translations will be gone from this phone. When you open them again, Luma translates them again, and that uses AI quota.';
+
+  @override
+  String get settingsCacheClear => 'Delete cache';
+
+  @override
+  String get settingsCacheCancel => 'Cancel';
+
+  @override
+  String get settingsDisplayTitle => 'Display';
+
+  @override
+  String get settingsDisplayTheme => 'Theme';
+
+  @override
+  String get settingsDisplaySystemHint => 'Matches your phone';
+
+  @override
+  String get settingsDisplayLightHint => 'Cream paper';
+
+  @override
+  String get settingsDisplayDarkHint => 'For night reading';
+
+  @override
+  String get settingsDisplayThemeNote =>
+      'This is the same setting as Theme in the Aa menu while reading. Change it in one place and both follow.';
+
+  @override
+  String get settingsDisplayLanguage => 'Display language';
+
+  @override
+  String get settingsDisplayLanguageNote =>
+      'This language is only for the interface. Translations and AI answers stay in Bahasa Indonesia.';
+
+  @override
+  String settingsCatalogBooks(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString books',
+      one: '$countString book',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String settingsCatalogBooksUpdated(int count, String date) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString books',
+      one: '$countString book',
+    );
+    return '$_temp0 · Updated $date';
+  }
 }
