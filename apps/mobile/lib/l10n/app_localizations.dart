@@ -3950,6 +3950,12 @@ abstract class AppLocalizations {
   /// **'Pakai akun lain'**
   String get authUseAnotherAccount;
 
+  /// No description provided for @authEmailRejectedBody.
+  ///
+  /// In id, this message translates to:
+  /// **'Server-nya nolak. Coba lagi bentar; kalau masih gagal, pakai email lain.'**
+  String get authEmailRejectedBody;
+
   /// No description provided for @authDevBadge.
   ///
   /// In id, this message translates to:

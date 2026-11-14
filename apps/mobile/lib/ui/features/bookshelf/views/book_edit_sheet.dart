@@ -45,11 +45,14 @@ class _BookEditSheetState extends ConsumerState<BookEditSheet> {
     final nav = Navigator.of(context);
     final ok = await vm.save();
     if (!mounted) return;
+    // Sheet ini numpuk di atas sheet Info buku: snackbar bakal ketutup sheet,
+    // jadi toast-nya di overlay root.
     if (ok) {
+      final message = context.l10n.bookTitleAuthorUpdated;
+      showOverlayToast(context, message);
       nav.pop();
-      showToast(context, context.l10n.bookTitleAuthorUpdated);
     } else {
-      showToast(context, context.l10n.bookCouldnTSave);
+      showOverlayToast(context, context.l10n.bookCouldnTSave);
     }
   }
 

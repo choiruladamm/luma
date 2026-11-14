@@ -2538,6 +2538,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authUseAnotherAccount => 'Use another account';
 
   @override
+  String get authEmailRejectedBody =>
+      'The server said no. Try again in a moment; if it keeps failing, use another email.';
+
+  @override
   String get authDevBadge => 'Developer build';
 
   @override

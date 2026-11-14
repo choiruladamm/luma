@@ -2344,6 +2344,10 @@ class AppLocalizationsId extends AppLocalizations {
   String get authUseAnotherAccount => 'Pakai akun lain';
 
   @override
+  String get authEmailRejectedBody =>
+      'Server-nya nolak. Coba lagi bentar; kalau masih gagal, pakai email lain.';
+
+  @override
   String get authDevBadge => 'Build developer';
 
   @override

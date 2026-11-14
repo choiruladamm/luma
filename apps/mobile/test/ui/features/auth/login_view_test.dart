@@ -170,6 +170,26 @@ void main() {
         findsOneWidget,
       );
     });
+
+    testWidgets('other refusal never mentions a Google account', (
+      tester,
+    ) async {
+      h.adapter.queue.add(
+        json(403, {
+          'error': {'code': 'FORBIDDEN', 'message': 'Forbidden'},
+        }),
+      );
+      await pump(tester, dev: true);
+      await tester.enterText(find.byType(TextField).at(0), 'adam@luma.test');
+      await tester.enterText(find.byType(TextField).at(1), 'rahasia-banget');
+      await tester.pump();
+
+      await tapAndWait(tester, find.text('Daftar'));
+
+      expect(find.textContaining('Login-nya ditolak'), findsOneWidget);
+      expect(find.textContaining('pakai email lain'), findsOneWidget);
+      expect(find.textContaining('Google'), findsOneWidget); // catatan dev aja
+    });
   });
 
   group('switch account dialog', () {

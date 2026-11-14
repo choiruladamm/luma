@@ -642,6 +642,7 @@
   "authRejectedTitle": "Sign-in was rejected",
   "authRejectedBody": "This Google account can't be used to sign in. Try another account.",
   "authUseAnotherAccount": "Use another account",
+  "authEmailRejectedBody": "The server said no. Try again in a moment; if it keeps failing, use another email.",
   "authDevBadge": "Developer build",
   "authDevLabel": "Dev build",
   "authDevTitle": "Fill in the blanks.",

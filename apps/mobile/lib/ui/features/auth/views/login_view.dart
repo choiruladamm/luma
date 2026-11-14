@@ -667,7 +667,8 @@ class _DevBodyState extends ConsumerState<_DevBody> {
       ),
       LoginError.network => (l.authNetworkTitle, l.authNetworkBody),
       null => (null, null),
-      _ => (l.authRejectedTitle, l.authRejectedBody),
+      // Build dev: gak ada Google, jadi jangan sebut akun Google.
+      _ => (l.authRejectedTitle, l.authEmailRejectedBody),
     };
     final reading = StabiloType.reading.copyWith(
       fontSize: 22,
