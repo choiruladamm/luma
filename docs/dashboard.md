@@ -65,9 +65,11 @@ Struktur:
 apps/dashboard/
 ├── wrangler.jsonc        # env dev/prod, D1, rate limit, vars ADMIN_EMAILS
 ├── vite.config.ts        # @cloudflare/vite-plugin (+ @vitejs/plugin-react saat SPA)
+├── backend-vars.ts       # baca var backend (saklar, workspace OpenRouter, budget) dari apps/backend/wrangler.jsonc
 ├── worker/               # API, pola sama dengan apps/backend/src
 │   ├── index.ts          # urutan middleware + mount route; export type AppType
 │   ├── env.ts            # AppEnv + createFactory
+│   ├── backend-env.d.ts  # tipe var backend yang disuntik
 │   ├── auth/             # instance Better Auth, isAdmin, query sesi
 │   ├── middleware/       # requestId, header keamanan, rate limit, requireAdmin, cek mutasi, validate
 │   ├── lib/              # errors, audit
@@ -88,9 +90,10 @@ Backend pemilik schema; dashboard cuma konsumen. Diimport relatif dari `../backe
 | `db/client.ts` | `createDb` (Drizzle D1, `casing: "snake_case"`) |
 | `auth/user-fields.ts` | `additionalFields` Better Auth, supaya schema sama persis |
 | `auth/invite.ts` | `newInviteCode`, `normalizeInviteCode` |
-| `clients/openrouter.ts` | `deleteKey`, `getUsage` |
+| `clients/openrouter.ts` | `deleteKey`, `getUsage`, `OPENROUTER_API` (`/activity` di Ringkasan) |
+| `lib/encoding.ts` | `DAY_MS` (hari UTC `sync_day`, sama dengan backend) |
 
-Migrasi D1 hanya dibuat di backend. Test dashboard menerapkan `../backend/migrations`, jadi perubahan schema yang merusak dashboard ketahuan di `make dashboard-test`.
+Test dashboard juga membaca `features/ai-key/repo.ts` (`findUserKey`, yang dibaca `issueKey`) untuk memastikan unban membuka AI lagi. Migrasi D1 hanya dibuat di backend. Test dashboard menerapkan `../backend/migrations`, jadi perubahan schema yang merusak dashboard ketahuan di `make dashboard-test`.
 
 Script `apps/backend/scripts/invite.ts` dan `ban.ts` tetap ada sebagai cadangan kalau dashboard atau login Google bermasalah, ditambah `unban.ts` (`make backend-unban`) supaya cadangan terminal lengkap.
 
@@ -98,7 +101,7 @@ Script `apps/backend/scripts/invite.ts` dan `ban.ts` tetap ada sebagai cadangan 
 
 Dua lapis:
 
-1. **Cloudflare Access** (edge): policy cuma mengizinkan email admin, login lewat Google atau one-time PIN email. Request tanpa lolos Access tidak pernah sampai Worker, jadi tidak memakai kuota Workers maupun D1. Lapis ini cuma menyaring traffic; JWT Access (`Cf-Access-Jwt-Assertion`) tidak diverifikasi di Worker karena tanpa `workers.dev` dan preview URL tidak ada jalan yang melewati Access.
+1. **Cloudflare Access** (edge): policy cuma mengizinkan email admin, login lewat one-time PIN email (atau Google kalau IdP-nya ditambah). Request tanpa lolos Access tidak pernah sampai Worker, jadi tidak memakai kuota Workers maupun D1. Lapis ini cuma menyaring traffic; JWT Access (`Cf-Access-Jwt-Assertion`) tidak diverifikasi di Worker karena tanpa `workers.dev` dan preview URL tidak ada jalan yang melewati Access.
 2. **Better Auth** (Worker): sesi dan keputusan siapa admin. Tetap fail closed sendiri, jadi Access yang salah konfigurasi atau dimatikan tidak membuka dashboard.
 
 Satu role: **admin**, ditentukan lewat `vars` `ADMIN_EMAILS` (dipisah koma) per env. Tanpa kolom `role`, tanpa migrasi. Role kedua (mis. cuma baca) nanti cukup `VIEWER_EMAILS`.
@@ -161,7 +164,7 @@ Urutan middleware: `requestId → rateLimit per IP → [/api/auth/* → Better A
 | `POST /api/invites` | `{count: 1..20}` | 201 `{codes: [...]}` format `LUMA-XXXXX-XXXXX` (disimpan ternormalisasi, sama dengan `make backend-invite`) | 1 insert |
 | `DELETE /api/invites/:code` | - | 204 | `DELETE … WHERE used_at IS NULL` (kode dinormalisasi dulu); gagal → +1 query: ada → 409 `INVITE_CODE_USED`, gak ada → 404 |
 
-Kode error: `UNAUTHORIZED` 401, `FORBIDDEN` 403, `NOT_FOUND` 404, `INVITE_CODE_USED` 409, `RATE_LIMITED` 429, `OPENROUTER_FAILED` 502.
+Kode error: `BAD_REQUEST` 400 (validasi zod), `UNAUTHORIZED` 401, `FORBIDDEN` 403, `NOT_FOUND` 404, `INVITE_CODE_USED` 409, `RATE_LIMITED` 429 (+ `Retry-After`), `INTERNAL_ERROR` 500, `OPENROUTER_FAILED` 502.
 
 ## Keamanan
 
@@ -205,6 +208,17 @@ Prompt Claude Design (detail visual diserahkan ke Claude Design, mengikuti found
 > **Layar Ringkasan.** Kartu angka: jumlah user (total, baru 7 hari, di-ban), total penyimpanan file dan data sync, baris sync ditulis hari ini dibanding batas harian 100.000, jumlah kode undangan yang belum dipakai. Status tiga saklar layanan (Sync, Backup, Key AI): nyala/mati, cuma tampilan. Navigasi ke User dan Undangan. Badge DEV di header untuk env dev.
 >
 > **Layar User.** Kolom cari email, daftar user: email, nama, tanggal daftar, terakhir aktif, penyimpanan file, data sync, punya key AI atau tidak, status di-ban. Paginasi "Muat lagi". Klik baris ke detail user. Di HP, baris jadi kartu. State kosong (belum ada user / hasil cari kosong) dan loading.
+
+## Setup & deploy
+
+Urutan per env (dev sudah jalan; prod saat deploy dari `master`):
+
+1. **Google Cloud Console**, web client OAuth (yang sama dengan entri pertama `GOOGLE_CLIENT_IDS` backend): redirect URI `https://luma-admin-dev.chrl.cloud/api/auth/callback/google`, `https://luma-admin.chrl.cloud/api/auth/callback/google`, `http://localhost:5173/api/auth/callback/google`. Admin terdaftar sebagai test user selama app OAuth mode Testing.
+2. **Cloudflare Zero Trust** (Access controls), **sebelum deploy pertama** supaya custom domain tidak pernah terbuka tanpa Access: login method One-time PIN, policy Allow berisi email admin, aplikasi self-hosted per hostname (`luma-admin-dev.chrl.cloud` / `luma-admin.chrl.cloud`, path kosong). Cek: request tanpa login → 302 ke `<team>.cloudflareaccess.com`.
+3. **`ADMIN_EMAILS`** di `wrangler.jsonc` env itu: akun Google yang sudah ada di D1 env itu (dashboard tidak bisa membuat akun).
+4. **Deploy**: `make dashboard-deploy e=<env>`. D1 tidak perlu migrasi tersendiri; migrasi backend (`make backend-migrate`) yang berlaku.
+5. **Secret** (`bunx wrangler secret put <NAMA> --env <env>` dari `apps/dashboard`): `BETTER_AUTH_SECRET` (acak baru, beda dari backend), `GOOGLE_CLIENT_SECRET` (web client), `OPENROUTER_MANAGEMENT_KEY` (management key workspace OpenRouter env itu).
+6. **Cek**: login OTP Access → `/api/auth/get-session` = `null`; login Google admin → sesi 12 jam; `/api/overview` cocok dengan query manual `wrangler d1 execute`.
 
 ## Lingkungan lokal
 
