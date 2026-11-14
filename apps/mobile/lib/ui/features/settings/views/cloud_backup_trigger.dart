@@ -25,6 +25,14 @@ class _CloudBackupTriggerState extends ConsumerState<CloudBackupTrigger> {
   void initState() {
     super.initState();
     _lifecycle = AppLifecycleListener(onResume: _run);
+    // fireImmediately: auth udah kelar sebelum widget ini dipasang (app
+    // dibuka dalam kondisi login) juga dihitung login.
+    ref.listenManual(authControllerProvider, (prev, next) {
+      if (next.value?.status == AuthStatus.signedIn &&
+          prev?.value?.status != AuthStatus.signedIn) {
+        _run();
+      }
+    }, fireImmediately: true);
   }
 
   @override
@@ -41,12 +49,6 @@ class _CloudBackupTriggerState extends ConsumerState<CloudBackupTrigger> {
 
   @override
   Widget build(BuildContext context) {
-    ref.listen(authControllerProvider, (prev, next) {
-      if (next.value?.status == AuthStatus.signedIn &&
-          prev?.value?.status != AuthStatus.signedIn) {
-        _run();
-      }
-    });
     return widget.child;
   }
 }
