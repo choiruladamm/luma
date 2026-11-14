@@ -82,8 +82,10 @@ Guard hash evaluasi chat (`test/fixtures/book_chat_heldout_protocol_v1.json`, `b
 
 - `lib/data/services/openrouter_service.dart` (#200): constructor dapat callback opsional `onKeyRejected` + interceptor Dio yang melapor 401 (rotasi key subsidi), dan provider memakai `AiKeyRepository`. Request/response ke OpenRouter tetap sama.
 - `pubspec.lock` (#211): tambah `url_launcher` (link Kebijakan privasi di layar Masuk). Dependency runtime AI gak berubah.
+- `pubspec.lock` (#211, 14 November 2026): tambah `google_sign_in` 7.2.0 + paket platformnya (`_android`, `_ios`, `_web`, `_platform_interface`, `google_identity_services_web`) buat login Google. Hash `pubspec.lock` di `l10n_test.dart` dan di tiga protocol (heldout, validation2, validation3) dibekukan ulang; dependency runtime AI gak berubah.
+- `lib/domain/luma_markdown.dart` (14 November 2026, protocol heldout): cuma komentar rujukan docs yang dibenerin (`docs/ideas/import-formats.md` → `docs/import-formats.md`), parser gak berubah.
 
-File hasil evaluasi lama (`*_result*.json`) sengaja gak disentuh: isinya catatan historis dari versi saat evaluasi dijalankan. Menambah dependency berikutnya (mis. `google_sign_in`) butuh pembekuan ulang yang sama dan baris baru di sini.
+File hasil evaluasi lama (`*_result*.json`) sengaja gak disentuh: isinya catatan historis dari versi saat evaluasi dijalankan. Menambah dependency berikutnya butuh pembekuan ulang yang sama dan baris baru di sini.
 
 ## Riwayat Ngobrolin buku
 
