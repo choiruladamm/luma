@@ -1,0 +1,12 @@
+{
+  // The SPA: browser + JSX. It reaches worker/ only through `import type { AppType }`, which still
+  // makes tsc walk the worker code, so the Workers types are loaded too (skipLibCheck hides the
+  // DOM/Workers overlap in .d.ts files).
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "lib": ["es2024", "dom", "dom.iterable"],
+    "jsx": "react-jsx",
+    "types": ["./worker-configuration.d.ts", "vite/client"]
+  },
+  "include": ["client", "worker/backend-env.d.ts", "worker-configuration.d.ts"]
+}

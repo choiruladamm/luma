@@ -44,7 +44,7 @@ flowchart LR
 | Lokasi | `apps/dashboard`, Worker sendiri, bukan route di Worker backend: endpoint admin tidak ikut ke API publik `/v1` |
 | Domain | `luma-admin.chrl.cloud` (prod), `luma-admin-dev.chrl.cloud` (dev). Satu deploy per env; prod hanya dari `master` |
 | Akses | Cloudflare Access (self-hosted application per hostname) di depan Worker. `workers_dev: false` dan `preview_urls: false`, jadi custom domain di belakang Access satu-satunya jalan masuk |
-| Frontend | Vite + React SPA, disajikan Workers Static Assets dari Worker yang sama (satu origin, tanpa CORS). React Router (loader/action) untuk data dan revalidasi setelah aksi. Klien API `hc<AppType>()` dari Hono RPC, jadi tipe request/response ikut Worker |
+| Frontend | Vite + React SPA di `client/`, disajikan Workers Static Assets dari Worker yang sama (satu origin, tanpa CORS). React Router cuma untuk routing. Data lewat TanStack Query di atas klien `hc<AppType>()` Hono RPC (tipe request/response ikut Worker, header JSON global); login/logout `fetch` biasa ke `/api/auth/*`. Form RHF + zod, tabel TanStack Table (mode manual, paginasi di server), Zustand cuma untuk state UI (bukan data API). Tanpa Axios |
 | API | Hono di `/api/*`, zod validator, error `{"error": {"code", "message"}}` seperti backend |
 | Data | Binding D1 ke database yang sama dengan backend env itu. Tidak pakai R2 |
 | Styling | Belum diputuskan (Tailwind atau lainnya), menunggu export foundation Stabilo dari Claude Design |
@@ -74,10 +74,24 @@ apps/dashboard/
 │   ├── middleware/       # requestId, header keamanan, rate limit, requireAdmin, cek mutasi, validate
 │   ├── lib/              # errors, audit
 │   └── features/         # users/, invites/, overview/: routes.ts + service.ts + repo.ts
-└── client/               # SPA (cuma import tipe AppType dari worker/)
-    ├── main.tsx          # React Router
-    ├── api.ts            # hc<AppType>()
-    └── pages/            # Login, Ringkasan, User, DetailUser, Undangan
+├── index.html            # entry SPA → client/main.tsx
+├── public/_headers       # CSP + nosniff untuk file statis (gak lewat Worker)
+├── tsconfig.client.json  # client/: DOM + JSX
+└── client/               # SPA, file kebab-case; cuma import tipe dari worker/
+    ├── main.tsx
+    ├── app/              # router, providers, query-client (setelan free tier), require-session
+    ├── lib/              # api-client (hc), api-error, env (badge DEV), format
+    ├── hooks/            # hook generik: use-debounce, use-media-query, use-copy-to-clipboard
+    ├── stores/           # Zustand, state UI saja
+    ├── features/<fitur>/ # auth, overview, users, invites
+    │   ├── api/          # panggilan hc mentah → data atau ApiError
+    │   ├── queries/      # useQuery/useMutation + query-keys.ts
+    │   ├── hooks/        # logika client khusus fitur (gak panggil API)
+    │   ├── schemas/      # zod untuk form
+    │   ├── components/   # tampilan, cuma terima props
+    │   └── pages/        # satu file per layar
+    ├── components/       # layout + ui (foundation Stabilo)
+    └── styles/           # token Stabilo
 ```
 
 ### Kode bersama dengan backend
@@ -149,6 +163,8 @@ sequenceDiagram
   end
 ```
 
+Alur di `client/` satu arah: `pages → (hooks fitur + queries) → api → lib/api-client`. Fitur gak saling import. TanStack Query disetel untuk free tier: tanpa refetch saat fokus jendela, tanpa polling, retry 1 kali cuma untuk error server/jaringan, `staleTime` 60 detik; 401 di mana pun → `/login`. Habis ban/unban, cache user di-invalidasi; angka Ringkasan ikut berubah setelah cache-nya basi.
+
 ## Endpoint
 
 Urutan middleware: `requestId → rateLimit per IP → [/api/auth/* → Better Auth] → sesi cookie + requireAdmin → cek mutasi (JSON + `Origin`) → rate limit per admin (mutasi) → validator → handler`, `onError` di luar. Header CSP dan `nosniff` dipasang di semua respons. Sesi cookie dicek tanpa membangun instance Better Auth (mahal CPU): tanda tangan HMAC dulu, lalu 1 query join `sessions` + `users`.
@@ -180,7 +196,7 @@ Dashboard memakai D1 dan kuota Workers yang sama dengan backend, jadi selain mem
 | Jalan masuk yang melewati Access | `workers_dev: false`, `preview_urls: false`; Worker cuma terpasang di custom domain yang dilindungi Access |
 | Access salah konfigurasi atau dimatikan | Better Auth tetap memeriksa sesi dan `ADMIN_EMAILS` (fail closed); yang hilang cuma perlindungan kuota di edge |
 | CSRF | Cookie SameSite=Lax. Mutasi wajib `content-type: application/json` dan header `Origin` harus domain dashboard (selain itu 403). `trustedOrigins` cuma domain `luma-admin*` |
-| XSS (nama/email/user agent user ditampilkan) | React meng-escape teks; `dangerouslySetInnerHTML` dilarang. Header `Content-Security-Policy: default-src 'self'; frame-ancestors 'none'` dan `X-Content-Type-Options: nosniff` untuk semua respons |
+| XSS (nama/email/user agent user ditampilkan) | React meng-escape teks; `dangerouslySetInnerHTML` dilarang. Header `Content-Security-Policy: default-src 'self'; frame-ancestors 'none'` dan `X-Content-Type-Options: nosniff` untuk semua respons: respons Worker lewat middleware, file statis SPA lewat `public/_headers` (Static Assets gak lewat Worker) |
 | Clickjacking tombol ban | `frame-ancestors 'none'` |
 | Input jahat | zod di semua input: `:id` dan `:code` format pasti, `q` maks 100 karakter dengan `%`/`_` di-escape untuk `LIKE`, `limit` ≤ 50, `count` 1–20. Query lewat Drizzle (terparameter) |
 | Data sensitif bocor lewat respons | Repo memilih kolom eksplisit (tanpa `select *`). `key_enc`, token sesi, dan isi `records` tidak pernah dikirim |
@@ -225,7 +241,7 @@ Urutan per env (dev sudah jalan; prod saat deploy dari `master`):
 - `make dashboard-dev`: Vite dev server (`@cloudflare/vite-plugin`) yang menjalankan Worker di `http://localhost:5173`; SPA nanti ikut di server yang sama. D1 lokal memakai state wrangler yang sama dengan `make backend-dev` (`persistState` ke `apps/backend/.wrangler/state`), jadi data lokalnya sama. Var backend yang dibaca dashboard (`SYNC_ENABLED`, `BACKUP_ENABLED`, `AI_KEY_ENABLED`, `OPENROUTER_WORKSPACE_ID`, `AI_MONTHLY_BUDGET_USD`) diambil dari `apps/backend/wrangler.jsonc` env yang sama saat dev, build, dan test (`apps/dashboard/backend-vars.ts`), jadi satu sumber; saklar backend yang diubah baru terlihat di dashboard setelah dashboard di-deploy ulang. Secret dan `ADMIN_EMAILS` / `BETTER_AUTH_URL` lokal di `apps/dashboard/.dev.vars` (salin dari `.dev.vars.example`); login Google lokal butuh `GOOGLE_CLIENT_SECRET` terisi.
 - Cloudflare Access tidak ada di lokal; Better Auth tetap jalan, jadi perilaku auth sama kecuali lapis edge.
 - Login Google lokal: tambah redirect URI `http://localhost:5173/api/auth/callback/google` di web client Google Cloud Console. App OAuth masih mode Testing ([#215](https://github.com/choiruladamm/luma/issues/215)); admin terdaftar sebagai test user.
-- Target Makefile: `dashboard-install`, `dashboard-dev`, `dashboard-test` (`tsc` + vitest workerd), `dashboard-deploy e=dev|prod` (`CLOUDFLARE_ENV=<env> vite build` lalu `wrangler deploy` dengan config hasil build; prod hanya dari `master`).
+- Target Makefile: `dashboard-install`, `dashboard-dev`, `dashboard-test` (`tsc` worker + client, vitest workerd), `dashboard-deploy e=dev|prod` (`CLOUDFLARE_ENV=<env> vite build` lalu `wrangler deploy` dengan config hasil build; prod hanya dari `master`).
 
 ## Urutan kerja
 

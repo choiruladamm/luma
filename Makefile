@@ -161,8 +161,8 @@ dashboard-install: ## dashboard: install deps (bun)
 dashboard-dev: ## dashboard: Vite dev server with the Worker (env dev, http://localhost:5173), same local D1 as backend-dev
 	cd $(DASHBOARD) && CLOUDFLARE_ENV=dev bunx vite dev
 
-dashboard-test: ## dashboard: typecheck + vitest (workerd), backend migrations applied
-	cd $(DASHBOARD) && bunx tsc --noEmit && bunx vitest run
+dashboard-test: ## dashboard: typecheck worker + client, vitest (workerd), backend migrations applied
+	cd $(DASHBOARD) && bunx tsc --noEmit && bunx tsc --noEmit -p tsconfig.client.json && bunx vitest run
 
 dashboard-deploy: ## dashboard: deploy admin Worker (e=dev|prod; prod only from master)
 	@test "$(e)" = dev -o "$(e)" = prod || { echo "pakai e=dev atau e=prod"; exit 1; }

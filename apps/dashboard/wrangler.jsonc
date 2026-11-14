@@ -9,6 +9,12 @@
     "enabled": true,
     "logs": { "enabled": true, "head_sampling_rate": 1 }
   },
+  // SPA: static files and an index.html fallback; only /api/* reaches the Worker.
+  // No "directory": the Vite plugin points it at the client build output.
+  "assets": {
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  },
   // Bindings aren't inherited across envs: each env lists them all. D1 = the backend database of the same env.
   // The only way in: the custom domain behind Cloudflare Access (no workers.dev / preview URLs).
   "env": {
