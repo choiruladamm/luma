@@ -10,7 +10,7 @@ flowchart LR
     direction TB
     App["Luma Flutter<br/>UI → ViewModel → Repository"]
     Drift[("Drift SQLite<br/>sumber kebenaran")]
-    KC[["Secure storage<br/>token · ai.lumaKey · ai.byokKey"]]
+    KC[["Secure storage<br/>backend_session_token · ai_subsidy_key · openrouter_api_key"]]
     App --> Drift
     App --> KC
   end
@@ -41,6 +41,9 @@ flowchart LR
 - Shell tab (`StatefulShellRoute.indexedStack`, `AppShell` + `LumaNavBar` melayang, board Komponen · NavBar): `/` → Rak buku, `/discover` → Cari buku ([discover.md](discover.md)), `/settings` → Pengaturan (tab Atur). Bar ke-hide pas keyboard naik; konten tab dapet padding bawah `Layout.navSpace` lewat MediaQuery. Chip "Ngunduh N buku" + lencana di tab Cari buku dari `downloadQueueProvider`. Tap tab aktif lagi = `tabReselectProvider` → layar gulung ke atas.
 - `/reader/:bookId` → Halaman baca (posisi dari `reading_progress`)
 - `/reader/:bookId/breakdown/:chapterId/:groupIndex` → Bedahin satu grup (`Routes.breakdown`). Cuma di-`push` dari sheet Artinya: sheet tetep di bawah, balik = balik ke sheet. "Balik baca" = `pop(true)`, yang manggil (`ReaderView`) ikut nutup sheet-nya, jadi langsung ke halaman.
+- `/login` → `LoginView` (login wajib), di luar shell tanpa bottom bar. `authRedirect` + `refreshListenable` dari `authControllerProvider`: status sesi berubah → redirect dicek ulang.
+- `/discover/book/:sourceId/:externalId` → `BookDetailView`, `extra` = `CatalogBook` (kepala layar tanpa nunggu jaringan). Di luar shell.
+- Chat, di luar shell: `/reader/:bookId/chat`, `/reader/:bookId/chat/quote`, `/reader/:bookId/chat/sessions`, `/reader/:bookId/chat/source/:sessionId/:turnId/:attempt/:sourceId` (`Routes.chat*`).
 - `/settings` juga di-`push` dari layar baca / chat / Bedahin (di atas shell, dapet tombol Balik karena `Navigator.canPop`).
 - Bottom sheet artinya, Aa, dan Daftar isi **bukan route**, cukup `showModalBottomSheet`.
 
@@ -48,8 +51,8 @@ flowchart LR
 
 - `booksStreamProvider` → `StreamProvider` dari query Drift, untuk grid rak.
 - `chapterParagraphsProvider(chapterId)` → paragraf satu chapter dari Drift.
-- `bookChaptersProvider(bookId)` → daftar chapter terurut `sortOrder` (untuk Daftar isi).
-- Cari kata ([book-search.md](book-search.md)): `bookSearchIndexProvider` (`BookSearchIndex`, backfill index FTS5 buku lama), `bookSearchRepositoryProvider` (`BookSearchRepository`: cari + riwayat), `bookSearchProvider(bookId)` → `NotifierProvider.autoDispose.family` (`BookSearchViewModel`, state `BookSearchState`: fase `checking`/`preparing`/`idle`/`results`/`empty`/`failed`). Mode cari di reader (`_SearchMode`) tinggal di `_ReaderViewState`, bukan provider: umurnya sama kayak halaman baca.
+- Daftar isi dibangun dari `ReaderBook` (`readerBookProvider(bookId)`, `toc_sheet.dart`), bukan provider chapter terpisah.
+- Cari kata ([book-search.md](book-search.md)): `bookSearchIndexProvider` (`BookSearchIndex`, backfill index FTS5 buku lama), `bookSearchRepositoryProvider` (`BookSearchRepository`: cari + riwayat), `bookSearchProvider(bookId)` → `NotifierProvider.autoDispose.family` (`BookSearchViewModel`, state `BookSearchState`: fase `checking`/`preparing`/`idle`/`results`/`empty`/`failed`). Mode cari di reader (`SearchMode`, `reader_types.dart`) tinggal di field `_search` milik `_ReaderViewState`, bukan provider: umurnya sama kayak halaman baca.
 - `groupAiProvider(GroupRef)` → `FutureProvider.autoDispose.family`:
   1. Cek `ai_results`
   2. Kalau belum ada: ambil paragraf grup + sampe 3 paragraf (bukan heading/pemisah) sebelum paragraf pertama grup di chapter yang sama sebagai konteks
@@ -71,7 +74,7 @@ flowchart LR
   5. Ke-dispose (tutup layar) = `CancelToken`, gak ada yang disimpen. Coba lagi = `ref.invalidate`.
 - `breakdownSectionsProvider(GroupRef)` → `FutureProvider.autoDispose.family<int>`: jumlah bagian bedahan grup ini yang masih berlaku, 0 = belum ada (entri "Buka bedahan · N bagian" di sheet Artinya).
 - `breakdownPeekProvider(PeekKey)` → `FutureProvider.autoDispose.family<BreakdownPeek?>`, `PeekKey = ({GroupRef from, int? chapter})`: tujuan kartu Nyambung ke (`AiBreakdownsRepository.peek`). `B<n>` = grup pertama chapter ke-n (urut `sortOrder`), null = grup berikutnya di chapter yang sama. Isinya teks asli + terjemahan `ai_results` kalau ada. Null = tujuan gak ada, kartu jadi teks biasa.
-- `importControllerProvider` → `Notifier` untuk state import (idle / processing / success / error / duplicate).
+- `importControllerProvider` → `Notifier` untuk state import, `ImportState` sealed: `ImportIdle`, `ImportProcessing`, `ImportSuccess`, `ImportDuplicate`, `ImportFailed`, `ImportPdfFailed`, `ImportMarkdownPending` (sealed), `ImportMarkdownDone`, `ImportMarkdownFailed`.
 - Sync ([backend.md](backend.md), Sync antar device): `syncRepositoryProvider` (`SyncRepository`: push outbox + file buku, pull, download + impor buku), `syncApplierProvider` (`SyncApplier`: record pull → tabel lokal, `sync_inbox`), `syncServiceProvider` (HTTP), `syncChangesProvider` (event perubahan tabel yang di-sync, sumber debounce `SyncTrigger`; di-override di widget test).
 
 `GroupRef` = record `({int chapterId, int groupIndex})`: `==`/`hashCode` per nilai udah bawaan Dart, gak perlu `freezed`.
@@ -86,6 +89,8 @@ flowchart LR
 6. Copy ke `Documents/books/{hash}.epub`, cover ke `Documents/covers/{hash}.{ext}`
 7. Insert `books` + `chapters` + `paragraphs` dalam **satu transaksi** Drift
 8. Gagal setelah nyalin → hapus file yang sudah di-copy (transaksi di-rollback), state **error**
+
+Import PDF dan Markdown dijelaskan di [import-formats.md](import-formats.md).
 
 Parsing buku besar bisa berat: jalankan di isolate (`compute` / `Isolate.run`) supaya UI tidak freeze.
 
@@ -109,7 +114,7 @@ Parsing buku besar bisa berat: jalankan di isolate (`compute` / `Isolate.run`) s
   - Tinggi sheet tetap 62,5% layar (528 di 844) di semua state, `DraggableScrollableSheet` (min 0, snap): tarik turun di isi pas offset 0 atau di grabber nutup sheet. Isi scroll setinggi sheet (EdgeFade 20pt), header ikut ke-scroll, grabber dan tombol (Salin / Lanjut) lapisan di atas isi, padding isi atas 91 / bawah 102. Error dan API key kosong juga 528 (tombol nempel di bawah).
   - State: loading ("Bentar, lagi mikir..." + titik berdenyut, skeleton shimmer, tombol mati), hasil (Terjemahan per paragraf + "Maksud penulisnya tuh...", Salin + Lanjut), error ("Yah, gagal nih" + kode kecil: `timeout · 30 detik`, `offline / gak nyambung`, `HTTP 401 · key ditolak`, `HTTP 402 · saldo abis`, `HTTP n`, `jawaban AI gak valid`; "Coba lagi" = `ref.invalidate`), API key kosong ("Isi API key dulu yuk" → Pengaturan). Sheet memakai `groupAiStreamProvider`; teks muncul bertahap dengan pacing, cache langsung tampil. Detail streaming di [llm.md](llm.md).
   - "Salin" nyalin terjemahan seluruh grup (satu paragraf per blok), tombolnya jadi "Disalin" + toast "Udah disalin, tinggal paste" di atas sheet.
-  - **Penanda grup** yang udah diterjemahin (ParagraphMark): garis 4pt warna `mark` di tengah margin kiri, sepanjang grup (inset 5pt). Grup itu langsung keisi dari cache pas di-tap.
+  - **Penanda grup** yang udah diterjemahin (`ReadMark`, data dari `translatedGroupsProvider`): garis 4pt warna `mark` di tengah margin kiri, sepanjang grup (inset 5pt). Grup itu langsung keisi dari cache pas di-tap.
 - **Akhir bab**: kartu akhir bab keliatan → dua kapsul muncul, kapsul bawah nulis "<judul bab> kelar". **Akhir buku**: layar sendiri tanpa kapsul, garis progres penuh 100%, cover pake cover default (tanpa bulatan huruf), status bar balik.
 - **Lanjut baca** (buka buku yang ada posisi tersimpannya): kapsul muncul 2,5 detik buat orientasi terus ngumpet sendiri (batal kalau user udah scroll duluan). Grup tempat posisi tersimpan dikasih kilatan stabilo sekali, 0 → 60% → 0 dalam 1,2 detik. "Kurangi gerakan" iOS nyala → tanpa kilatan, gantinya garis kiri 4pt yang ilang setelah 3 detik.
 - Status bar ngumpet bareng kapsul kalau toggle "Sembunyiin jam & baterai" nyala (default nyala; togglenya di Aa, #18). Keluar halaman baca → status bar balik.
@@ -276,7 +281,7 @@ sedang navigasi. Insert yang gagal menyisakan draft untuk dikirim ulang eksplisi
 |---|---|
 | Send/retry eksplisit | preparing → retrieving → waiting → writing → done |
 | 15s belum ada raw token | slow di state UI; request masih berjalan |
-| Retrieval/rewrite/embedding/selector total 3 menit | failed + timeout; cancel, tanpa retry |
+| Retrieval/rewrite/embedding/selector total 6 menit | failed + timeout; cancel, tanpa retry |
 | 30s setelah prepare tanpa raw token | failed + timeout |
 | 20s stall setelah raw token | cut + timeout, flush raw partial |
 | HTTP/network/invalid output | failed sebelum raw, cut setelah raw; error dipertahankan |
@@ -290,7 +295,7 @@ Raw JSON dari #117 hanya untuk checkpoint. #141 mengirim proyeksi terstruktur
 lengkap baru boleh memiliki chip sumber setelah validasi frozen + live sources;
 preview tetap provisional dan sitasinya dicabut saat gagal/terputus. Hanya final frame yang
 tervalidasi diteruskan ke finalize done. Clock memakai 15/30/20s yang sama dengan
-Artinya; retrieval memakai deadline total3menit terpisah karena dapat mencakup
+Artinya; retrieval memakai deadline total 6 menit (`ChatViewModel.retrievalTimeout`; budget `chat_budget.dart` berhenti di 5 menit) terpisah karena dapat mencakup
 indexing buku. Nilai ini batas produksi konservatif, bukan hasil benchmark device.
 Tidak memakai Pacer untuk menampilkan JSON yang belum tervalidasi.
 

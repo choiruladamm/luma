@@ -55,7 +55,7 @@ Index: `(bookId, sortOrder)`.
 | chapterId | int (FK → chapters.id) | |
 | paragraphIndex | int | Urutan dalam chapter |
 | groupIndex | int? | Grup untuk tap/AI. Null untuk heading & pemisah adegan (tidak bisa di-tap) |
-| type | text | `paragraph` / `heading` / `scene_break` |
+| type | text | `paragraph` / `heading` / `sceneBreak` |
 | text | text | Teks polos yang sudah dinormalisasi |
 
 Unique key: `(chapterId, paragraphIndex)`. Index tambahan: `(chapterId, groupIndex)`.
@@ -164,6 +164,24 @@ Meta sync di `settings`: `catalog.lastModified`, `catalog.syncedAt`, `catalog.co
 
 `sync_outbox` (v18): `(kind, key, updatedAt ms)`, satu baris per kunci alami yang berubah sejak push terakhir. Diisi trigger dari spec `syncKinds` (`lib/data/database/sync_schema.dart`), bukan repository. `sync_inbox` (v18): record pull yang belum bisa diterapkan (#210): buku belum ada / `parserVersion` beda / schema lebih baru / sesi chat belum ada. Cursor pull di `settings` `sync.pullSeq` = `{userId}:{seq}` (gak ikut sync). Detail: [backend.md](backend.md) (Sync antar device).
 
+`sync_outbox` (v18):
+
+| Kolom | Tipe | Catatan |
+|-------|------|---------|
+| `kind` | text | PK bagian 1, jenis record |
+| `key` | text | PK bagian 2, kunci alami |
+| `updatedAt` | int | ms epoch perubahan terakhir (jam device) |
+
+`sync_inbox` (v18):
+
+| Kolom | Tipe | Catatan |
+|-------|------|---------|
+| `kind` | text | PK bagian 1 |
+| `key` | text | PK bagian 2 |
+| `data` | text? | JSON record, null = tombstone |
+| `updatedAt` | int | ms epoch |
+| `schemaVersion` | int | schema pengirim record |
+
 ## Versi schema & migrasi
 
 | Versi | Perubahan |
@@ -191,7 +209,7 @@ Tiap ubah tabel: naikkan `schemaVersion`, tambah langkah di `onUpgrade`, dan tes
 
 ## Pengaturan
 
-API key di `flutter_secure_storage` (Keychain di iOS, Keystore di Android). Model ID, preferensi Aa, dan backup terakhir di tabel `settings` sederhana (key-value) di Drift, supaya ikut ter-backup. Model LLM: `ai.model` (model ID OpenRouter, default `deepseek/deepseek-v4.1-flash`; pilihan dari daftar kandidat di [llm.md](llm.md)). API key di Keychain / Keystore dengan kunci `openrouter_api_key`, cuma disimpen setelah lolos cek bentuk dan cek ke OpenRouter ([llm.md](llm.md)); kosong = dihapus. "Hapus cache" di Pengaturan = kosongin `ai_results` + `ai_breakdowns` setelah konfirmasi; Pengaturan nampilin jumlah paragraf yang udah diterjemahin + ukuran teksnya. Backup terakhir: `backup.lastAt` (ISO 8601), `backup.lastName`, `backup.lastSize` (byte). Kunci Aa: `reader.size` (indeks step 0–6), `reader.font`, `reader.spacing`, `reader.margin`, `theme` (nama enum), `reader.hideStatusBar`, `reader.showProgressLine` (`true`/`false`). Urutan rak: `shelf.sort` (`lastOpened` / `title` / `added`, default `lastOpened`). Tampilan rak: `shelf.view` (`grid` / `list`, default `grid`). Hindari `shared_preferences` untuk data yang perlu ikut backup.
+API key di `flutter_secure_storage` (Keychain di iOS, Keystore di Android). Model ID, preferensi Aa, dan backup terakhir di tabel `settings` sederhana (key-value) di Drift, supaya ikut ter-backup. Model LLM: `ai.model` (model ID OpenRouter, default `deepseek/deepseek-v4.1-flash`; pilihan dari daftar kandidat di [llm.md](llm.md)). API key di Keychain / Keystore dengan kunci `openrouter_api_key`, cuma disimpen setelah lolos cek bentuk dan cek ke OpenRouter ([llm.md](llm.md)); kosong = dihapus. "Hapus cache" di Pengaturan = kosongin `ai_results` + `ai_breakdowns` setelah konfirmasi; Pengaturan nampilin jumlah paragraf yang udah diterjemahin + ukuran teksnya. Backup terakhir: `backup.lastAt` (ISO 8601), `backup.lastName`, `backup.lastSize` (byte), `backup.cloudLastAt` (backup cloud terakhir), `backup.reminderDismissedAt` (pengingat backup terakhir ditutup). Tanda hint chat udah dilihat: `reader.chatHintSeen` = `'1'`. Kunci Aa: `reader.size` (indeks step 0–6), `reader.font`, `reader.spacing`, `reader.margin`, `theme` (nama enum), `reader.hideStatusBar`, `reader.showProgressLine` (`true`/`false`). Urutan rak: `shelf.sort` (`lastOpened` / `title` / `added`, default `lastOpened`). Tampilan rak: `shelf.view` (`grid` / `list`, default `grid`). Hindari `shared_preferences` untuk data yang perlu ikut backup.
 
 
 ## Penyimpanan percakapan (#114/#115)
@@ -284,7 +302,7 @@ backfill. Anchor/paragraf tidak dinomori ulang; `parserVersion` tetap 1.
 `chat_indexes`: id, bookId (FK cascade), identity unik (JSON versi format1,
 bookId/contentRevision/parser/chunkPolicy/model/dimensions/queryTemplate), manifest,
 chunkCount, ready defaultfalse. `chat_vectors`: indexId (FK cascade), ordinal,
-vector BLOB Float32 little-endian, checksum SHA-256 base64 BLOB; PK(indexId,ordinal).
+vector BLOB Float32 little-endian, checksum SHA-256 base64 TEXT; PK(indexId,ordinal).
 Anchor tidak disalin: chunk/anchor dibangun ulang dari teks dan dicek manifest-nya.
 Index lengkap dan partial ikut backup sebagai data turunan yang bisa dibuat ulang.
 Perubahan isi melalui contentChanged menghapus cache buku; hapus buku cascade.

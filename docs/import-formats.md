@@ -228,7 +228,7 @@ Pilih `.pdf` di picker, langsung jadi satu buku utuh, tanpa Docling.
 | Ekstraksi | Heuristik di device, bukan LLM | Gratis, offline, teks gak diubah. LLM berisiko parafrase, mahal satu buku penuh, lambat |
 | Model buku | Satu PDF = satu buku utuh, kayak EPUB | `finishedAt` dan cek dobel lewat hash jalan |
 | `SourceType` | Tambah `pdf` | Kolom `textEnum`: schema gak berubah, tanpa migrasi |
-| File asli | Disimpen (`$hash.pdf`), ikut backup (`books/`) | Heuristik bakal sering di-tuning: naikin versi parser + re-import tanpa minta file lagi |
+| File asli | Disimpen (`$hash.pdf`), ikut backup (`books/`) | Heuristik bakal sering di-tuning: naikin versi parser + re-import tanpa minta file lagi (re-import PDF rencana, belum ada kodenya) |
 | Versi parser | `pdfParserVersion` terpisah, disimpan di `books.parserVersion` | Tuning PDF gak maksa re-import EPUB |
 | Jalur Docling | Tetap ada | PDF scan / layout rumit |
 
@@ -255,11 +255,11 @@ PDFium gak thread-safe dan pdfrx udah jalanin di worker sendiri, jadi logika lay
 4. **Header/footer**: baris di pita atas/bawah (~8% tinggi halaman) yang teksnya (tanpa angka) berulang di ≥ 30% halaman dibuang. Nomor halaman polos (`12`, `xii`, `- 12 -`) dibuang.
 5. **Font badan** = modus tinggi huruf, dibobot jumlah karakter.
 6. **Catatan kaki**: baris bawah dengan font < 0.85× badan yang diawali angka dibuang; angka superscript di badan (lebih kecil dan naik) dibuang.
-7. **Heading**: baris pendek dengan font ≥ 1.2× badan, atau pola `Chapter N` / `Bab N` / `Part`. Drop cap (satu huruf besar) digabung ke baris berikutnya.
+7. **Heading**: baris dengan font ≥ 1.2× badan, atau pola `Chapter N` / `Bab N` / `Part`. Drop cap (satu huruf besar) digabung ke baris berikutnya.
 8. **Paragraf baru** kalau jarak antarbaris > 1.5× spasi normal, ada indent baris pertama, atau baris sebelumnya pendek (< 80% lebar) dan berakhiran `.?!"”`.
 9. **Sambung antarhalaman**: akhir halaman tanpa tanda titik + halaman berikut diawali huruf kecil = satu paragraf.
 10. **Tanda hubung**: `kon-` + `tinu` (huruf kecil) jadi `kontinu`; huruf besar / angka setelahnya = hubung dipertahankan.
-11. **Pemisah adegan**: `* * *`, `***`, `#`, atau celah vertikal besar tanpa teks jadi `scene_break`.
+11. **Pemisah adegan**: `* * *`, `***`, `---`, `- - -`, `___`, `• • •`, `###`, atau celah vertikal besar tanpa teks jadi `scene_break`.
 
 ### Pecah bab (#86)
 
@@ -274,7 +274,7 @@ Lalu aturan non-isi yang sama kayak EPUB ([raw.md](ideas/raw.md)): bab kosong da
 | Kasus | Penanganan |
 |---|---|
 | Ber-password | Error "PDF-nya dikunci password" (input password ditunda, #90) |
-| PDF scan (> 50% halaman tanpa teks) | Error "PDF ini hasil scan, gak ada teksnya" + arahan ke prompt foto / Docling |
+| PDF scan (> 50% halaman tanpa teks) | Error "PDF ini hampir gak ada teksnya" + arahan ke prompt foto / Docling |
 | Campuran scan + teks | Halaman tanpa teks dilewati, toast nyebut jumlahnya |
 | Rusak / bukan PDF | `PdfImportException` (`PdfImportError`: password, scan, corrupt, notPdf, empty, io), pola `EpubException`. Cancel = `ImportCancelled` |
 | PDF yang sama | Cek hash → buka buku lama |
@@ -284,10 +284,10 @@ Lalu aturan non-isi yang sama kayak EPUB ([raw.md](ideas/raw.md)): bab kosong da
 | Puisi, dialog, list | Baris pendek bisa kepecah jadi banyak paragraf; diterima, grouping tetap gabung yang pendek |
 | Tabel, angka | Baris yang mayoritas angka/simbol dibuang; caption gambar tetap ikut |
 | RTL / CJK / teks vertikal | Di luar scope |
-| Judul / penulis | Judul: heading pertama halaman 1 → nama file. Penulis: null. **Deviasi:** pdfrx 2.12 gak punya API metadata, jadi judul/penulis metadata belum kebaca; tambah kalau pdfrx nyediain, bukan FFI langsung |
+| Judul / penulis | Judul: heading pertama di 5 halaman awal yang bukan label front matter (Copyright, Daftar isi, dst) → nama file. Penulis: null. **Deviasi:** pdfrx 2.12 gak punya API metadata, jadi judul/penulis metadata belum kebaca; tambah kalau pdfrx nyediain, bukan FFI langsung |
 | Cover | Render halaman 1; gagal = cover default |
-| Tuning nanti | Naikin `pdfParserVersion`, re-import dari file tersimpan, hapus `ai_results` buku itu |
-| `finishedAt` | `reading_progress_repository.dart` sekarang cuma `SourceType.epub`, tambah `pdf` |
+| Tuning nanti | Naikin `pdfParserVersion`, re-import dari file tersimpan, hapus `ai_results` buku itu (rencana, belum ada kodenya: `import_repository.dart` baru backfill EPUB) |
+| `finishedAt` | `reading_progress_repository.dart` sudah mencakup PDF, cuma Markdown yang dilewat |
 | Backup / restore | `$hash.pdf` ikut `books/`; cek restore gak cuma nerima `.epub` |
 | Ukuran app | PDFium nambah ~5–8MB per arsitektur, diukur di spike |
 

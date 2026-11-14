@@ -11,7 +11,7 @@ Default aplikasi mengikuti `defaultAiModel` di `lib/domain/models/ai_model.dart`
 | Model | Model ID | Input | Output | Catatan |
 |-------|----------|-------|--------|---------|
 | GLM 5.3 Flash | `z-ai/glm-5.3-flash` | $0.075 | $0.25 | Termurah di tabel, tapi reasoning gak bisa dimatiin (token output lebih banyak) dan paling sering salah ketik |
-| DeepSeek V4.1 Flash | `deepseek/deepseek-v4.1-flash` | $0.15–0.30 | $0.60–1.20 | Harga beda jam sibuk / tidak sibuk. **Default** (evaluasi #28) |
+| DeepSeek V4.1 Flash | `deepseek/deepseek-v4.1-flash` | $0.15–0.30 | $0.60–1.20 | Harga beda jam sibuk / tidak sibuk. Menang evaluasi buta #28; default sekarang GLM (lihat bagian Evaluasi model) |
 | Qwen 3.8 Flash | `qwen/qwen3.8-flash` | $0.15 | $0.47 | Keluarga Qwen kuat di multibahasa |
 
 Estimasi: ~800 token input + ~400 token output per tap → dengan GLM 5.3 Flash sekitar **$0.16 per 1.000 tap**.
@@ -224,12 +224,12 @@ LANJUT | judul | kenapa nyambung
 
 ## Evaluasi model
 
-Default **DeepSeek V4.1 Flash**. Hasil dan alasannya: [llm-evals.md](llm-evals.md#evaluasi-model-28).
+Default sekarang **GLM 5.3 Flash** (`defaultAiModel`, sejak #200). DeepSeek V4.1 Flash menang evaluasi buta #28 tapi bukan default. Hasil dan alasannya: [llm-evals.md](llm-evals.md#evaluasi-model-28).
 
 
 ## Percakapan Book Chat v2 (#137)
 
-`chatPromptVersion = 3` (#138), format jawaban tetap v2. AI menjawab teks biasa dalam beberapa paragraf natural,
+`chatPromptVersion = 3` (#138; angka lama, sekarang 6, lihat bagian Pembacaan mandiri buku), format jawaban tetap v2. AI menjawab teks biasa dalam beberapa paragraf natural,
 termasuk interpretasi, kritik, penerapan dan pengetahuan umum yang relevan dengan
 buku. Pertanyaan sepenuhnya di luar topik buku ditolak singkat. Fakta buku harus
 mengikuti sources; pengetahuan tambahan tidak diberi sitasi buku palsu. Instruksi
@@ -246,7 +246,8 @@ Validasi struktural tidak menjamin semua klaim model benar; keterbatasan #136
 masih berlaku dan ditindaklanjuti lewat dogfooding, bukan gate kesempurnaan.
 
 Budget UTF-8 bytes: question2000, history16000, sources18000, prompt termasuk
-system48000; kandidat40; selector8, snapshot akhir maksimal12 sumber dalam18000bytes. History dari turn done tanpa error pada
+system48000; kandidat40; selector8, snapshot akhir maksimal12 sumber dalam18000bytes
+(angka lama; sekarang `chatPromptBytes` 120000, `chatSourceBytes` 40000, `chatMaxSources` 24). History dari turn done tanpa error pada
 sesi/book/revision aktif, termasuk partial/clarify/off-topic dan legacy not_found.
 History adalah konteks percakapan, bukan bukti buku; raw/interrupted/failed tidak
 ikut. Jawaban utuh dipertahankan sampai budget; sumber stale/corrupt tetap ditolak.
@@ -272,7 +273,7 @@ memakai index durable #134, dense original + setiap subquery + BM25, RRF ke40kan
 selector maksimal8 dan penambahan window tetangga bab yang sama bila masih muat.
 Kutipan aktif tetap wajib tercakup utuh. Selector dapat mengembalikan maksimal2
 missing_queries, tanpa retry output/HTTP invalid. Awal + maksimal2putaran tambahan,
-maksimal3subquery baru per kiriman. Pending query dan pilihan berhasil disimpan;
+maksimal3subquery baru per kiriman (angka lama; sekarang ≤9 subquery per kiriman tanpa batas putaran tetap, batas 64 per rangkaian tetap berlaku). Pending query dan pilihan berhasil disimpan;
 Lanjutkan mencari kebutuhan tersisa. Original question tetap di-embed bersama
 subquery baru pada tiap putaran; belum ada cache embedding query. Batas keseluruhan
 64subquery per rangkaian; setelah itu kirim pertanyaan baru untuk penelusuran baru.
@@ -288,12 +289,12 @@ gap tetap berupa anchor terpisah. Sumber akhir tetap ≤12/18000bytes; source_id
 catatan dipetakan ulang ke snapshot akhir. Batch yang melampaui kontrak/sumber
 berhenti tanpa retry dan tanpa memajukan cursor, bukan memotong sitasi diam-diam.
 
-Budget per kiriman: maksimal7completion logis termasuk answer, total ceiling
+Budget per kiriman (angka lama; limit per kiriman ini sudah diganti ledger di `lib/domain/chat_budget.dart`: `chatQuestionTokens`, `chatQuestionDeadline` 5 menit, `chatEmbeddingRequests` 90): maksimal7completion logis termasuk answer, total ceiling
 8000outputtoken,280000inputbytes kumulatif. Planner/selector600token, catatan1400,
 answer3000. Maksimal70request embedding dan3200000inputbytes kumulatif termasuk
 fallback model-space existing. Seluruh buku tetap dibatasi1500000bytes; batch
 dokumen64. Stop mengambil putaran baru setelah100detik; pre-dispatch ceiling150detik,
-ViewModel membatalkan retrieval setelah3menit. Answer memakai waiting30s/stall20s
+ViewModel membatalkan retrieval setelah3menit (angka lama; sekarang `retrievalTimeout` 6 menit, budget berhenti di 5). Answer memakai waiting30s/stall20s
 existing. In-flight request ikut cancel/timer; ceiling waktu bukan jaminan billing.
 Compatibility mandatory-reasoning existing bisa menambah satu HTTP400+fallback
 per completion (maksimal14HTTP chat); bukan retry jawaban invalid atau HTTP umum.
@@ -320,7 +321,7 @@ buku nyata, cold/warm embedding billing, atau performa device.
 
 ## Pembacaan mandiri buku (#143)
 
-`chatPromptVersion = 5`, checkpoint `exploration` policy 2. Planner
+`chatPromptVersion = 5` (angka lama; sekarang 6), checkpoint `exploration` policy 2. Planner
 (`chatPlanSystem`) menerima question, history, kutipan, `book`, **`toc`** (tiap
 `chapters.id` dengan `section` induk TOC, `title` asli, `number` dari Romawi/Arab,
 `chars`) dan `readingPosition` dari entry reader. Keluarannya `strategy`:
@@ -469,7 +470,7 @@ RRF60 top40, selector max8. Rewrite Inggris (max256 output tokens) berjalan sebe
 kandidat; needs_clarification melewati embedding dan selector; answer tetap berjalan
 untuk klarifikasi atau bantuan relevan tanpa sumber. Selector (max256) memilih indeks kandidat yang tervalidasi.
 Kutipan dipertahankan utuh, termasuk multi-window/multi-group; jika tidak muat,
-request gagal jelas. Source final diberi S1…S8 menurut urutan seleksi; anchor berisi
+request gagal jelas. Source final diberi S1…Sn menurut urutan seleksi (n ≤ 24; selector tetap maksimal 8); anchor berisi
 chapter.id, paragraphIndex, offset UTF-16, hash seluruh paragraf dan excerpt asli.
 Teks terjemahan pendamping quote tidak dikirim sebagai bukti.
 
@@ -566,7 +567,7 @@ Stop/network/invalid final mempertahankan teks, status terminal dan retry ekspli
 Semua sitasi provisional dicabut saat terminal gagal/terputus. `ChatSnapshot`
 merekonstruksi teks draf secara defensif dari raw checkpoint saat reopen/restore,
 tanpa sitasi dan tanpa menjadikannya answer/history. Legacy v1 menunggu final,
-tidak dipaksa memakai preview v2. Schema tetap10; process kill dapat kehilangan
+tidak dipaksa memakai preview v2. Tanpa migrasi Drift baru; process kill dapat kehilangan
 tail di bawah ambang checkpoint, sedangkan stop/background menunggu flush.
 Pengecekan struktur/sumber bukan jaminan semua klaim model benar.
 

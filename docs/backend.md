@@ -14,7 +14,7 @@ flowchart LR
     direction TB
     App["Luma Flutter<br/>UI → ViewModel → Repository"]
     Drift[("Drift SQLite<br/>sumber kebenaran")]
-    KC[["Secure storage<br/>token · ai.lumaKey · ai.byokKey"]]
+    KC[["Secure storage<br/>token sesi · key AI subsidi · key OpenRouter sendiri"]]
     App --> Drift
     App --> KC
   end
@@ -70,11 +70,11 @@ Menunggu `fetch`/I/O tidak dihitung CPU; `crypto.subtle`, `JSON.parse`, dan komp
 ### Aturan client
 
 - **Tanpa polling.** Gak ada timer yang manggil backend berkala. Pemicu hanya: app dibuka/resume, aksi user, atau perubahan lokal.
-- **Jarak minimum per pemicu otomatis**: sync paling cepat 5 menit sekali saat resume; push setelah perubahan lokal di-debounce 60 detik; backup otomatis 24 jam.
+- **Jarak minimum per pemicu otomatis**: sync paling cepat 5 menit sekali saat resume; push setelah perubahan lokal di-debounce 60 detik; backup otomatis 24 jam, dan setelah satu percobaan (sukses atau gagal) pemicu otomatis berikutnya menunggu minimal 1 jam (`retryGap`).
 - **Dedupe sebelum kirim**: `sync_outbox` ber-PK `(kind, key)`, jadi 100 update posisi baca = 1 record.
 - **Batch**: push maks 500 record per request; satu request `POST /v1/files/missing` untuk semua nama file.
-- **Retry**: hanya untuk error jaringan/5xx, backoff eksponensial (maks 3 kali per pemicu). 4xx tidak di-retry. Hormati `Retry-After` pada 429/503. Pemicu otomatis yang gagal menunggu pemicu berikutnya, bukan loop.
-- **Cache respons yang jarang berubah**: `/v1/ai/config` 24 jam, `/v1/ai/usage` cuma saat Pengaturan dibuka (cache 1 jam), key AI disimpan sampai 401.
+- **Retry**: hanya untuk error jaringan/5xx, backoff eksponensial (`backendMaxAttempts = 3`: 1 percobaan + 2 retry, jeda 0,5 dtk lalu 1 dtk). 4xx tidak di-retry, kecuali backup cloud yang mengulang 429 `RATE_LIMITED` sampai 5 kali per file (`rateLimitRetries`) sesuai `Retry-After`. Hormati `Retry-After` pada 429/503. Pemicu otomatis yang gagal menunggu pemicu berikutnya, bukan loop.
+- **Cache respons yang jarang berubah**: `/v1/ai/config` di-cache selama umur provider-nya, `/v1/ai/usage` cuma saat Pengaturan dibuka (cache 1 jam), key AI disimpan sampai 401 atau diperbarui 1 hari sebelum kedaluwarsa.
 - **Sesi tidak dicek tiap app dibuka**: token dipakai langsung; 401 baru memicu login ulang.
 
 ### Aturan server
@@ -84,7 +84,7 @@ Menunggu `fetch`/I/O tidak dihitung CPU; `crypto.subtle`, `JSON.parse`, dan komp
 - **Subrequest ≤ 50**: hapus R2 pakai `delete([...keys])` per 1000 key; kerja yang lebih besar (mis. hapus akun dengan banyak file) dicicil lewat beberapa request dari client atau Cron Trigger, bukan satu request raksasa.
 - **R2 dibatasi per user**: kuota penyimpanan per user (awal 1GB, `vars` `USER_STORAGE_BYTES`) dipesan atomik sebelum upload (`reserveBytes`: satu upsert `bytes + size ≤ kuota`, jadi upload paralel gak bisa lolos cek bareng-bareng) di tabel `user_storage(user_id, bytes)`; lewat → 413. Upload gagal → pesanan dikembalikan. File maks 100MB. Retensi backup 10 snapshot.
 - **Sync dibatasi per user** (kuota tulis D1 100rb baris/hari dan 5GB dipakai bareng semua user): `SYNC_DAILY_WRITES` (20.000 baris ditulis per hari UTC) → lewat = 429 `QUOTA_EXCEEDED` + `Retry-After` sampai 00.00 UTC; `SYNC_STORAGE_BYTES` (100MB, panjang key + JSON data semua record) → lewat = 413 `STORAGE_FULL`, kecuali batch yang mengecilkan data. Pemakaian di `user_storage.sync_bytes / sync_day / sync_rows`, dihitung pas dari selisih ukuran record lama vs baru. Push yang gak mengubah apa-apa gak dihitung.
-- **Rate limit**: binding Workers Rate Limiting per user (dan per IP untuk auth/key AI). Lewat → 429 + `Retry-After`.
+- **Rate limit**: binding Workers Rate Limiting: per IP di semua `/v1/*` (`app.ts`), plus per user di `featureGuard` (files, backup, sync) dan `POST /v1/ai/key`. Lewat → 429 + `Retry-After`.
 - **Endpoint Better Auth di-allowlist**: cuma `POST /v1/auth/{sign-up/email, sign-in/email, sign-in/social, sign-out}` (`AUTH_PATHS`); sisanya 404. Endpoint baru yang dipakai app ditambah ke situ.
 - **Risiko yang diterima** (review #213, dicek ulang sebelum buka pendaftaran tanpa undangan):
   - Rate limiter Workers dihitung per lokasi Cloudflare, bukan global: batas efektif bisa lebih longgar dari 60/menit.
@@ -182,7 +182,7 @@ sequenceDiagram
 - **Risiko App Store 5.1.1**: Apple bisa menolak login wajib untuk app yang fitur intinya tidak berbasis akun. Diterima selama distribusi sideload; ditinjau ulang sebelum submit App Store.
 - **Ganti akun**: login dengan akun yang beda dari akun terakhir di device (`SessionStore` simpan id + email akun terakhir) → sesi baru BELUM disimpan, dialog board Akun 10. "Hapus isi HP & lanjut" = `LocalDataRepository.wipeBooks()` (semua buku lewat `BookRepository.delete` + `ai_calls`; pengaturan tetap) lalu `commit`. "Pakai akun lama aja" = `discard` (sesi baru di-sign-out di server), HP tetap milik akun lama.
 - **UI** (board halaman "11 · Akun & login" di Stabilo): layar Masuk `/login` di luar shell (Google di rilis, email + Daftar/Masuk di Luma Dev via `appFlavor`), kode undangan, Pengaturan → Akun (pelat Ex libris, Keluar, Hapus akun dengan 3 centang), toast akun (tab kuning/abu/pink). Slot "Sisa kuota AI" dan "Backup terakhir" di pelat menyusul (#200, #201). Tombol Google masih tanda "G" + `UnconfiguredGoogle` sampai OAuth Client ID diisi (`google_sign_in`, aset tombol resmi).
-- **Hapus akun** (wajib App Store 5.1.1(v) dan Play Store): `DELETE /v1/me` menghapus baris D1 user, semua objek R2 `u/{userId}/`, dan key OpenRouter-nya. Play Store butuh URL web untuk hapus akun → halaman kecil di Worker.
+- **Hapus akun** (wajib App Store 5.1.1(v) dan Play Store): `DELETE /v1/me` menghapus baris D1 user, semua objek R2 `u/{userId}/`, dan key OpenRouter-nya. Kalau objek R2 banyak, dihapus per halaman dan server balas 202 `pending` (user belum dihapus); client memanggil lagi sampai 200. Play Store butuh URL web untuk hapus akun → halaman kecil di Worker.
 - **Kebijakan privasi**: halaman statis `/privacy`: data yang disimpan (akun, backup, data sync), teks yang dikirim ke OpenRouter, cara hapus akun.
 
 ## AI (subsidi + BYOK)
@@ -190,7 +190,7 @@ sequenceDiagram
 AI tetap dipanggil **langsung dari device ke OpenRouter**; `OpenRouterService`, streaming, `ai_calls`, dan retry tidak berubah. Yang berubah cuma asal key:
 
 ```
-key = ai.byokKey ?? ai.lumaKey
+key = openrouter_api_key ?? ai_subsidy_key
 ```
 
 - **Subsidi (default)**: backend membuat key OpenRouter per user lewat management key (`POST /api/v1/keys`), dibuat **lazy** saat AI pertama kali dipakai, bukan saat daftar.
@@ -206,9 +206,9 @@ sequenceDiagram
   participant W as Worker /v1/ai
   participant D as D1
   participant O as OpenRouter
-  alt ai.byokKey diisi
+  alt openrouter_api_key diisi
     A->>O: chat/completions pakai key user
-  else ai.lumaKey sudah ada
+  else ai_subsidy_key sudah ada
     A->>O: chat/completions pakai key subsidi
   else belum punya key subsidi
     A->>W: POST /v1/ai/key
@@ -219,7 +219,7 @@ sequenceDiagram
       W->>D: simpan key_enc (AES-GCM)
     end
     W-->>A: key
-    A->>A: simpan ai.lumaKey
+    A->>A: simpan ai_subsidy_key
     A->>O: chat/completions pakai key subsidi
   end
   O-->>A: stream jawaban
@@ -373,7 +373,7 @@ Client (butuh migrasi Drift: tabel baru + trigger, tanpa ubah kolom tabel lama):
 Detail implementasi push (#109):
 
 - **Spec per kind** di `lib/data/database/sync_schema.dart` (`syncKinds`): ekspresi kunci alami SQL, syarat ikut, `json_object` data. Dari situ dibikin trigger outbox, backfill migrasi 18, dan query data saat push. Kunci dihitung trigger saat kejadian (setelah delete ID lokal hilang). Spec yang berubah = naikin schema + pasang ulang trigger.
-- **Kind**: `book`, `reading_progress`, `reading_session`, `ai_result`, `ai_breakdown`, `setting`, `chat_session`, `chat_turn`. Data pakai nama field Dart, waktu ISO 8601 UTC, ID lokal diganti `chapterSortOrder` + `parserVersion`. Tombstone cuma `book` dan `chat_session` (hapus user); hapus cascade anak gak dikirim. Setting allowlist `syncedSettings` (model, bahasa, rak, Aa).
+- **Kind**: `book`, `reading_progress`, `reading_session`, `ai_result`, `ai_breakdown`, `setting`, `chat_session`, `chat_turn`. Data pakai nama field Dart, waktu ISO 8601 UTC, ID lokal diganti `chapterSortOrder` + `parserVersion`. Tombstone cuma `book` dan `chat_session` (hapus user); hapus cascade anak gak dikirim. Setting allowlist `syncedSettings` (model AI, bahasa, urutan/tampilan rak, tema, dan pengaturan pembaca `reader.*`).
 - **Waktu**: `updatedAt` record = jam device saat trigger jalan (bukan jam server: edit offline yang telat dikirim gak boleh ngalahin edit yang lebih baru).
 - **Push** (`SyncRepository`): satu putaran ambil outbox `updated_at ≤ mulai` lewat cursor, maks 500 record / ±900KB per request, maks 10 batch. Outbox dihapus kalau `updatedAt` belum berubah selama push. Baris anak yang udah hilang dibuang tanpa dikirim. 429/503 → jeda sesuai `Retry-After`.
 - **Server** (`features/sync/`): batas D1 free 50 query + 100 parameter per request, jadi 1 `SELECT` lewat `json_each`, merge di JS (`merge.ts`), lalu satu `db.batch()`: `seq += n` + satu `INSERT … SELECT FROM json_each … ON CONFLICT`. Record dari app dengan `schemaVersion` lebih lama gak menimpa record versi lebih baru. Sebelum batch tulis, kuota sync dicek (lihat Aturan server); batch yang sama juga memperbarui `sync_bytes` / `sync_rows`. Balas `{seq, applied}`. Batas yang disengaja: merge dibaca di luar transaksi; dua device push kunci sama di milidetik yang sama → yang terakhir nulis menang.
@@ -506,7 +506,7 @@ flowchart LR
 - **Drizzle vs SQL mentah**: Drizzle di semua repo, kecuali `sync/repo.ts`: batch 500 record harus lewat `json_each` dalam satu statement (batas D1 free 50 query + 100 parameter per request), dan pull membentuk JSON di SQL biar Worker gak `JSON.parse` 500 record.
 - **Deps per request**: middleware `deps` naruh `db` (Drizzle) dan `openrouter` di `c.var`; handler gak ngerakit client sendiri.
 - **Validasi**: `@hono/zod-validator` + zod di semua input. Error seragam `{"error": {"code", "message"}}`; Flutter memetakan `code` ke enum.
-- **Tanpa OpenAPI / codegen client Dart**: ±15 endpoint, fixture kontrak cukup. Ditinjau ulang kalau frontend web (#208) jalan.
+- **Tanpa OpenAPI / codegen client Dart**: ±20 endpoint, fixture kontrak cukup. Ditinjau ulang kalau frontend web (#208) jalan.
 - **Ukuran script**: Workers free maks 3MB terkompres; dicek lewat `wrangler deploy --dry-run` sejak #198.
 - **`seq` sync per user** di `user_storage.seq`, dinaikkan di `db.batch()` yang sama dengan upsert record (D1 batch atomik).
 - **Alat cek cepat**: Hono CLI (`npx hono request` / `batch`) boleh dipakai untuk eksplorasi; bukti tetap test vitest.
@@ -622,7 +622,7 @@ Tiap issue backend selesai bawa test-nya di semua lapisan yang disentuh. Integra
 6. 429 saat kena rate limit.
 7. Anggaran: jumlah query D1 dan subrequest per request ≤ [tabel anggaran](#anggaran-per-aksi) (spy di `env.DB` / `fetch`).
 
-**Coverage**: `@vitest/coverage-istanbul` (V8 tidak didukung di pool Workers), ambang 80% baris untuk `service.ts` dan file aturan murni; `routes.ts` cukup lewat integrasi. CPU 10ms tidak terukur di test: dicek lewat `wrangler dev` dan Workers Logs env dev.
+**Coverage**: `@vitest/coverage-istanbul` (V8 tidak didukung di pool Workers), ambang 80% (baris, fungsi, cabang, statement) untuk semua `src/**` kecuali `index.ts`, `env.ts`, dan file schema (`vitest.config.ts`). CPU 10ms tidak terukur di test: dicek lewat `wrangler dev` dan Workers Logs env dev.
 
 E2E hanya diwajibkan di #109; fase lain cukup unit + integrasi + kontrak + test Flutter.
 
@@ -690,15 +690,19 @@ Lalu:
 
 **Custom domain (#214):** XL (Internet Positif) ngarahin `*.workers.dev` ke blockpage lewat DNS, jadi app pakai custom domain di zone `chrl.cloud` (Cloudflare, nameserver dipindah dari Rumahweb; domain diperpanjang di Rumahweb, jatuh tempo 13 April 2027): dev `https://luma-api-dev.chrl.cloud`, prod `https://luma-api.chrl.cloud` (`routes` `custom_domain` di `wrangler.jsonc`, record DNS + sertifikat dibuat otomatis saat deploy). Satu tingkat subdomain (bukan `api.luma.chrl.cloud`) karena sertifikat gratis cuma nutup `*.chrl.cloud`. `*.workers.dev` tetap nyala sebagai cadangan; `BETTER_AUTH_URL` ikut custom domain.
 
-Secret (tiap env): `bunx wrangler secret put <NAMA> --env dev`. Lokal: salin `apps/backend/.dev.vars.example` ke `.dev.vars` (gitignored). Secret gak pernah ditulis di `wrangler.jsonc`. Dibutuhkan: `BETTER_AUTH_SECRET` (`openssl rand -base64 32`; dev udah diisi), `GOOGLE_CLIENT_SECRET` (#199, Google).
+Secret (tiap env): `bunx wrangler secret put <NAMA> --env dev`. Lokal: salin `apps/backend/.dev.vars.example` ke `.dev.vars` (gitignored). Secret gak pernah ditulis di `wrangler.jsonc`. Dibutuhkan: `BETTER_AUTH_SECRET` (`openssl rand -base64 32`; dev udah diisi), `GOOGLE_CLIENT_SECRET` (#199, Google), `OPENROUTER_MANAGEMENT_KEY` (bikin/cabut key AI), `AI_KEY_ENC_SECRET` (enkripsi key AI, `openssl rand -base64 32`).
 
 Harian:
 
 | Perintah | Fungsi |
 |---|---|
+| `make backend-install` | Install dependensi backend (bun) |
 | `make backend-dev` | Worker lokal env dev di `:8787` (D1/R2 lokal). Dari device: `make run f=dev` dengan `--dart-define=BACKEND_URL=http://<ip-laptop>:8787` |
 | `make backend-test` | Typecheck + vitest (workerd) + coverage ≥ 80% |
 | `make backend-live` | Client Flutter memanggil Worker dev yang ter-deploy (jaringan) |
+| `make backend-e2e` | E2E sync (#109): client Dart sync lewat Worker lokal (`wrangler dev`) |
+| `make backend-invite e=dev n=3` | Bikin kode undangan acak di D1 remote (`n` default 1) |
+| `make backend-ban e=dev email=...` | Cabut akses AI subsidi user (butuh `OPENROUTER_MANAGEMENT_KEY` di env) |
 | `make backend-types` | Generate ulang tipe `Env` setelah ubah `wrangler.jsonc` |
 | `make backend-migrate e=dev` | Terapkan migrasi D1 remote |
 | `make backend-deploy e=dev` | Deploy; `e=prod` cuma dari `master` |

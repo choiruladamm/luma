@@ -50,7 +50,7 @@ Snapshot membawa seluruh DB, termasuk katalog Gutenberg, index `catalog_fts`, me
 3. Tulis `manifest.json`
 4. Zip snapshot + folder `books/` + `covers/` (pakai package `archive`, jalankan di isolate karena file EPUB bisa besar)
 5. Buka share sheet (`share_plus`) → user pilih "Save to Files", iCloud Drive, atau AirDrop (Android: Drive, Downloads, dll)
-6. Simpan `lastBackupAt` di tabel `settings`, hapus file zip sementara
+6. Simpan `backup.lastAt` (+ `backup.lastName`, `backup.lastSize`) di tabel `settings`, hapus file zip sementara
 
 **Implementasi** (`BackupService` + `BackupController`):
 
@@ -58,7 +58,7 @@ Snapshot membawa seluruh DB, termasuk katalog Gutenberg, index `catalog_fts`, me
 - Zip di isolate (`Isolate.spawn` + port progres), urutan: `books/`, `covers/` (disimpen tanpa kompresi, udah kekompres), `luma.sqlite`, `manifest.json` (dikompres). Sheet "Lagi ngebungkus backup..." (board 26) nampilin nama file, persen, dan centang per tahap: buku → terjemahan (DB) → pengaturan (manifest). "Batalin" matiin isolate-nya, folder sementara dibuang.
 - Sheet progres ditutup dulu, baru menu share muncul. Backup terakhir cuma dicatet kalau share-nya **beneran disimpen/dikirim** (`ShareResultStatus.success`; di Android `unavailable` juga dianggap sukses, lihat [architecture.md](architecture.md)); ditutup tanpa milih = gak dicatet. Zip sementara selalu dihapus.
 - Berhasil → toast "Backup kelar, aman!" + "12,4 MB · nama file" (board 27). Gagal → toast "Yah, backup gagal".
-- Pengaturan, bagian "Backup & pulihin": kapan backup terakhir ("Barusan" kalau < 1 jam, "Kemarin", "3 hari lalu", ...), nama + ukuran file, atau "Belum pernah backup" (ikon pink). Tombol "Pulihin dari backup" nyusul di #25.
+- Pengaturan, bagian "Backup & pulihin": kapan backup terakhir ("Barusan" kalau < 1 jam, "Kemarin", "3 hari lalu", ...), nama + ukuran file, atau "Belum pernah backup" (ikon pink). Tombol "Pulihin dari backup" ada di bagian yang sama.
 - Board nulis nama file `luma-backup-2026-10-06.luma`; yang dipake tetep `luma-backup-YYYYMMDD-HHmm.zip` (zip biasa, gak perlu daftar tipe file custom di iOS).
 
 ## Alur import (restore)
@@ -70,7 +70,7 @@ Snapshot membawa seluruh DB, termasuk katalog Gutenberg, index `catalog_fts`, me
    - `schemaVersion` backup **≤** schema app sekarang (backup dari versi lebih baru → tolak)
    - `luma.sqlite` bisa dibuka
 4. Tampilkan ringkasan: jumlah buku, jumlah terjemahan, tanggal backup
-5. Konfirmasi: "Semua data di Luma sekarang bakal diganti. Lanjut?"
+5. Konfirmasi: "Semua data di HP ini bakal diganti" (buku, progres, terjemahan sekarang diganti total, gak bisa dibalikin), tombol "Ganti & pulihin" setelah centang "Iya, gua ngerti. Ganti aja semuanya."
 6. Blok send/retry chat → cancel + await flush terminal → tutup koneksi Drift → ganti file database + folder `books/` & `covers/` → buka lagi database (migrasi Drift otomatis jalan kalau backup dari schema lama). Backup dari sebelum schema 4: terjemahannya jadi `promptVersion` 1, diterjemahin ulang pas grupnya dibuka
 7. Invalidate provider Riverpod (atau restart ke Rak)
 8. Gagal di langkah mana pun → hapus folder sementara, data lama tetap utuh
@@ -90,7 +90,7 @@ Butuh login. Backend & endpoint: [backend.md](backend.md) (Backup cloud). Backup
 
 - **Isi**: snapshot zip **tanpa** `books/` & `covers/` (`BackupService.export(snapshotOnly: true)`: `manifest.json` + `luma.sqlite`). File buku & cover diunggah terpisah per nama file (sudah berbasis hash), cuma yang belum ada di cloud (`POST /v1/files/missing`). Ukuran nyata (13 November 2026, iPhone, 12 buku): `luma.sqlite` 42MB, zip snapshot **14,6MB** (±31MB dari 42MB itu katalog Discover). Jauh di bawah batas body 100MB, jadi tanpa multipart.
 - **Alur** (`CloudBackupRepository.backup`): snapshot → daftar nama file lokal → `files/missing` (per 1000 nama) → upload yang hilang satu-satu (stream, `Content-Length`) → `PUT /v1/backups` (manifest ikut di header `x-backup-manifest`) → simpan `backup.cloudLastAt` + backup terakhir (`saveCloudBackup`, jadi pengingat backup ikut tenang). Kena 429 di tengah upload → tunggu `Retry-After` lalu lanjut (maks 5×). Satu backup jalan sekaligus.
-- **Pemicu otomatis** (`CloudBackupTrigger` di root app, cuma dari `main`): saat sesi kebaca (login) dan tiap resume, kalau `backup.cloudLastAt` > 24 jam. Diam-diam; gagal → coba lagi resume berikutnya, paling cepat 1 jam kemudian. Tanpa polling.
+- **Pemicu otomatis** (`CloudBackupTrigger` di root app, cuma dari `main`): saat sesi kebaca (login) dan tiap resume, kalau `backup.cloudLastAt` > 24 jam dan rak gak kosong (`bookCount() == 0` dilewat). Diam-diam; gagal → coba lagi resume berikutnya, paling cepat 1 jam kemudian. Tanpa polling.
 - **Manual**: Pengaturan → kartu Backup → "Backup ke cloud" (muncul kalau login). Sheet progres & toast sama dengan backup biasa; bedanya catatan "Lagi diunggah ke akun lo…", tanpa "Batal", dan kuota penuh (`STORAGE_FULL`) → toast "Penyimpanan cloud lo udah penuh".
 - **Restore**: "Pulihin dari cloud" → daftar snapshot (terbaru dulu: kapan, jumlah buku & terjemahan, ukuran; belum ada board, pakai komponen yang ada) → tap = download zip ke temp → `RestoreService.inspect(zip, fill:)`: setelah DB lolos cek, file yang dirujuk `books` di snapshot disalin dari HP kalau udah ada, sisanya di-download (`GET /v1/files/:name`; 404 dilewatin) → ringkasan board 28 yang sama → `apply` yang sama.
 - **Pelat Ex libris** (board Akun 08): baris "Backup terakhir · Hari ini, 08.12" dari `backup.cloudLastAt`, muncul setelah backup cloud pertama.
@@ -99,7 +99,7 @@ Butuh login. Backend & endpoint: [backend.md](backend.md) (Backup cloud). Backup
 ## Pengingat backup
 
 - Pengaturan menampilkan "Backup terakhir: 3 hari lalu" (atau "Belum pernah backup").
-- Kalau `lastBackupAt` lebih dari **6 hari** (sebelum siklus install ulang 7 hari), tampilkan banner kecil di Rak: "Udah 6 hari belum backup nih" dengan tombol "Backup".
+- Kalau `backup.lastAt` **6 hari atau lebih** (sebelum siklus install ulang 7 hari), tampilkan banner kecil di Rak: "Udah 6 hari belum backup nih" dengan tombol "Backup".
 - Banner bisa ditutup, muncul lagi besoknya.
 - **Implementasi:** hitungan per tanggal kalender dari backup terakhir; kalau belum pernah backup, dari buku pertama yang diimport (rak kosong = gak ada banner). Muncul mulai hari ke-6. Ditutup → tanggalnya disimpen di `settings` (`backup.reminderDismissedAt`), nongol lagi besok. Banner pink (board 24) ada di paling atas area scroll Rak; teksnya: hari ke-6 "Udah 6 hari belum backup nih" · "Besok jatah install ulang. Amanin data lo dulu yuk.", lebih dari itu "Udah N hari belum backup nih" · "Amanin data lo dulu yuk, sebelum keburu install ulang.", belum pernah "Belum pernah backup nih" · "Data lo cuma ada di HP ini doang. Amanin dulu yuk.". "Backup sekarang" langsung jalanin backup di Rak (sheet progres & toast-nya sama kayak di Pengaturan).
 

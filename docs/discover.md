@@ -34,9 +34,9 @@ Gak ada aggregator gratis lintas sumber. OPDS satu-satunya protokol bersama, tap
 - **Kolom baru `books.sourceId` + `books.externalId`** (migrasi + test) biar hasil cari bisa nunjukin "udah di rak" sebelum download.
 - **Download di Notifier level app** (tanpa `autoDispose`): satu download jalan, sisanya antri; pindah layar gak batal; selesai = toast + masuk rak. Cuma app kill yang motong. Gak pakai `background_downloader`.
   - `downloadQueueProvider` (`ui/features/discover/view_models/download_queue_view_model.dart`, `Notifier<List<DownloadItem>>`): `enqueue(book)` (lagi antri / jalan = no-op, yang udah selesai diganti), `cancel(key)` (antri = hilang; jalan = berhenti di checkpoint berikutnya lalu hilang), `dismiss(key)` buat entri selesai / gagal. Status `queued → downloading(progress) → importing → done / duplicate / failed(error)`; `key` = `sourceId/externalId`. Import pakai `fileName` `pg{id}.epub`, bawa `sourceId` + `externalId`.
-  - `DownloadToasts` di `builder` MaterialApp (di atas router): tiap entri yang baru selesai → toast "Sip, udah masuk rak!" / "Udah ada di rak" (· Baca, push lewat `routerProvider`) / "Gagal ngunduh". Copy final sudah terintegrasi lewat #174 dan dilokalisasi di #188; perilaku akhir dijelaskan di bagian Board.
+  - `DownloadToasts` di `builder` MaterialApp (di atas router): tiap entri yang baru selesai → toast "{judul} udah masuk rak" / "{judul} udah ada di rak" (· Baca, push lewat `routerProvider`) / "Gagal ngunduh {judul}". Copy final sudah terintegrasi lewat #174 dan dilokalisasi di #188; perilaku akhir dijelaskan di bagian Board.
 - **Cover hasil cari** pakai `cached_network_image` (dependensi baru). Cover rak tetep dari EPUB.
-- **Cache halaman populer** in-memory per sesi di ViewModel, key `(sourceId, page)`. Hasil cari lokal gak di-cache (±6 ms).
+- **Halaman populer** di-fetch tiap provider dibuat (`loadPopular` di ViewModel); cache per sesi belum ada. Hasil cari lokal juga gak di-cache (±6 ms).
 
 Ditunda (ditambah pas kebutuhannya nyata): cache abstrak lintas sumber, filter generik (subjek, penulis), rating.
 
@@ -102,7 +102,7 @@ Gak dibikin sampai ada bukti perlu: diff per baris, toleransi typo (tokenizer `t
 
 Aturan gutenberg.org ([robot_access](https://www.gutenberg.org/policy/robot_access.html)): traffic tanpa kontak diblok IP.
 
-- User-Agent: `Luma/<versi> (+mailto:work.adamm@gmail.com)`, juga buat request cover.
+- User-Agent: `Luma/<versi> (+mailto:work.adamm@gmail.com)`, cuma buat request Dio (`http_client.dart`); cover lewat `CachedNetworkImage` tanpa header kustom.
 - Timeout 15 detik search / 60 detik download.
 - Retry 3× cuma buat 429/503, backoff bertahap. Error lain langsung ditampilin.
 - Request cuma buat yang user lihat: gak prefetch halaman berikutnya, gak fetch detail per item di list.
@@ -124,7 +124,7 @@ Keputusan implementasi yang gak ada di board:
 - Tab Cari buku = `DiscoverView` + `discoverProvider` (`ui/features/discover/`): `PopularState` (loading / slow setelah 5 detik / ready Top 10 / failed offline · dead), `SearchResults` (query, items, total, hasMore, loadingMore, moreFailed) dari `search(q)` tiap ketikan tanpa debounce; `loadMore` pas sisa scroll < 200. Badge baris dari `shelfExternalIdsProvider` (stream `BookRepository.watchExternalIds`) + `downloadQueueProvider`. Cover jaringan lewat `CatalogCover` (muted pas belum kemuat, cover default kalau gagal). Kolom cari dimatiin sampai katalog ada.
 - Fixture evaluasi Ngobrolin buku ngunci hash `pubspec.lock`; nambah dependensi UI (`cached_network_image`) = perbarui hash di manifest aktif (heldout v1, validation2, validation3) dan `pubspec.lock` masuk daftar `mutable` di `chat_retrieval_test`. Arsip `spike113` dan `refined_protocol_v2` gak disentuh.
 - Offline (09) dideteksi dari error jaringan (`connectionError` / `SocketException`), dicoba lagi tiap tab dibuka; tanpa `connectivity_plus`.
-- "Lagi rame" di-cache in-memory per sesi; buka app baru = request lagi.
+- "Lagi rame" di-fetch tiap `loadPopular` jalan (provider dibuat); cache per sesi belum ada.
 - Kutipan layar 02 / 17 dari daftar kurasi hardcode (Pride and Prejudice, Emma, Alice); buku lain pakai kutipan Pride and Prejudice. Daftarnya di `ui/features/discover/curated_books.dart` (`curatedBooks`, `curatedFor`). Rak kosong = `_Empty` (02: kutipan + Ambil = `enqueue`, Cari buku gratis = tab Cari, link import) / `_EmptyDownloading` (17: progres + 3 kartu tips, `PageView`) di `bookshelf_view.dart`, dipilih dari `downloadQueueProvider`. Label "Baru" udah ada di `BookCard` (belum pernah dibuka).
 - Sheet Unduhan (14) = `_DownloadsSheet` di `download_chip.dart`: baris per entri antrian (Batalin / Hapus dari antrian / Coba lagi / Baca), "Antri, abis <buku sebelumnya>", batal = toast "Unduhan X dibatalin", entri selesai / gagal di-`dismiss` pas sheet ditutup (ditunda satu microtask). Toast 15 / 16 (`DownloadToasts`): "X udah masuk rak" + Buka (di `/reader/`) / Baca, 5 detik; duplikat "X udah ada di rak"; gagal "Gagal ngunduh X".
 - Penulis di detail (tap) = balik ke cari dengan query nama penulis (FTS), bukan `byAuthor` persis.
