@@ -15,5 +15,5 @@
     "paths": { "drizzle-orm": ["./node_modules/drizzle-orm"], "drizzle-orm/*": ["./node_modules/drizzle-orm/*"] },
     "types": ["./worker-configuration.d.ts", "@cloudflare/vitest-plugin/types"]
   },
-  "include": ["worker", "test", "worker-configuration.d.ts", "vitest.config.ts"]
+  "include": ["worker", "test", "worker-configuration.d.ts", "vitest.config.ts", "vite.config.ts"]
 }

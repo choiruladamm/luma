@@ -153,8 +153,8 @@ backend-deploy: ## backend: deploy Worker (e=dev|prod; prod only from master)
 dashboard-install: ## dashboard: install deps (bun)
 	cd $(DASHBOARD) && bun install
 
-dashboard-dev: ## dashboard: run admin Worker locally (env dev, http://localhost:5173), same local D1 as backend-dev
-	cd $(DASHBOARD) && bunx wrangler dev --env dev --port 5173 --persist-to ../backend/.wrangler/state
+dashboard-dev: ## dashboard: Vite dev server with the Worker (env dev, http://localhost:5173), same local D1 as backend-dev
+	cd $(DASHBOARD) && CLOUDFLARE_ENV=dev bunx vite dev
 
 dashboard-test: ## dashboard: typecheck + vitest (workerd), backend migrations applied
 	cd $(DASHBOARD) && bunx tsc --noEmit && bunx vitest run
@@ -162,4 +162,4 @@ dashboard-test: ## dashboard: typecheck + vitest (workerd), backend migrations a
 dashboard-deploy: ## dashboard: deploy admin Worker (e=dev|prod; prod only from master)
 	@test "$(e)" = dev -o "$(e)" = prod || { echo "pakai e=dev atau e=prod"; exit 1; }
 	@if [ "$(e)" = prod ]; then test "$$(git rev-parse --abbrev-ref HEAD)" = master || { echo "dashboard prod cuma dari master"; exit 1; }; fi
-	cd $(DASHBOARD) && bunx wrangler deploy --env $(e)
+	cd $(DASHBOARD) && CLOUDFLARE_ENV=$(e) bunx vite build && bunx wrangler deploy

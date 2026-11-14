@@ -64,7 +64,7 @@ Struktur:
 ```
 apps/dashboard/
 ├── wrangler.jsonc        # env dev/prod, D1, rate limit, vars ADMIN_EMAILS
-├── vite.config.ts        # @vitejs/plugin-react + @cloudflare/vite-plugin
+├── vite.config.ts        # @cloudflare/vite-plugin (+ @vitejs/plugin-react saat SPA)
 ├── worker/               # API
 │   ├── index.ts          # app + middleware + mount route; export type AppType
 │   ├── auth.ts           # instance Better Auth dashboard + isAdmin
@@ -208,10 +208,10 @@ Prompt Claude Design (detail visual diserahkan ke Claude Design, mengikuti found
 
 ## Lingkungan lokal
 
-- `make dashboard-dev`: Worker lokal di `http://localhost:5173` (`wrangler dev`; Vite ikut masuk saat SPA dibuat, [#221](https://github.com/choiruladamm/luma/issues/221)). D1 lokal memakai state wrangler yang sama dengan `make backend-dev` (`--persist-to`), jadi data lokalnya sama. Secret dan `ADMIN_EMAILS` / `BETTER_AUTH_URL` lokal di `apps/dashboard/.dev.vars` (salin dari `.dev.vars.example`); login Google lokal butuh `GOOGLE_CLIENT_SECRET` terisi.
+- `make dashboard-dev`: Vite dev server (`@cloudflare/vite-plugin`) yang menjalankan Worker di `http://localhost:5173`; SPA nanti ikut di server yang sama. D1 lokal memakai state wrangler yang sama dengan `make backend-dev` (`persistState` ke `apps/backend/.wrangler/state`), jadi data lokalnya sama. Secret dan `ADMIN_EMAILS` / `BETTER_AUTH_URL` lokal di `apps/dashboard/.dev.vars` (salin dari `.dev.vars.example`); login Google lokal butuh `GOOGLE_CLIENT_SECRET` terisi.
 - Cloudflare Access tidak ada di lokal; Better Auth tetap jalan, jadi perilaku auth sama kecuali lapis edge.
 - Login Google lokal: tambah redirect URI `http://localhost:5173/api/auth/callback/google` di web client Google Cloud Console. App OAuth masih mode Testing ([#215](https://github.com/choiruladamm/luma/issues/215)); admin terdaftar sebagai test user.
-- Target Makefile: `dashboard-install`, `dashboard-dev`, `dashboard-test` (`tsc` + vitest workerd), `dashboard-deploy e=dev|prod` (prod hanya dari `master`).
+- Target Makefile: `dashboard-install`, `dashboard-dev`, `dashboard-test` (`tsc` + vitest workerd), `dashboard-deploy e=dev|prod` (`CLOUDFLARE_ENV=<env> vite build` lalu `wrangler deploy` dengan config hasil build; prod hanya dari `master`).
 
 ## Urutan kerja
 

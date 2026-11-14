@@ -9,11 +9,11 @@ Run from the repo root:
 | Command | Does |
 |---|---|
 | `make dashboard-install` | `bun install` |
-| `make dashboard-dev` | Local Worker, env dev, `http://localhost:5173`, shares the local D1 of `make backend-dev`. Secrets in `.dev.vars` (copy `.dev.vars.example`) |
+| `make dashboard-dev` | Vite dev server running the Worker (`CLOUDFLARE_ENV=dev`), `http://localhost:5173`, shares the local D1 of `make backend-dev`. Secrets in `.dev.vars` (copy `.dev.vars.example`) |
 | `make dashboard-test` | `tsc --noEmit` + vitest (workerd), backend migrations applied |
-| `make dashboard-deploy e=dev\|prod` | Deploy; `prod` only from `master` (enforced) |
+| `make dashboard-deploy e=dev\|prod` | `CLOUDFLARE_ENV=<env> vite build` then `wrangler deploy` (uses the flattened `dist/` config); `prod` only from `master` (enforced) |
 
-After editing `wrangler.jsonc`: `bunx wrangler types --env dev --strict-vars false` from `apps/dashboard` (needs `.dev.vars` so secrets get typed).
+The Cloudflare env is picked by `CLOUDFLARE_ENV` at dev/build time, never `wrangler deploy --env`. `wrangler secret put --env <env>` still reads `wrangler.jsonc` and works as usual. After editing `wrangler.jsonc`: `bunx wrangler types --env dev --strict-vars false` from `apps/dashboard` (needs `.dev.vars` so secrets get typed).
 
 ## Code layout
 
