@@ -20,6 +20,7 @@
 | [discover.md](discover.md) | Cari & download buku public domain (Gutenberg OPDS, interface BookSource) |
 | [book-search.md](book-search.md) | Cari kata di dalam buku (index FTS5 paragraf, aturan pencarian, alur lompat) |
 | [backend.md](backend.md) | Backend Cloudflare (`apps/backend`): auth, kuota AI subsidi + BYOK, backup cloud, sync |
+| [dashboard.md](dashboard.md) | Dashboard admin web (`apps/dashboard`): user, ban, undangan, ringkasan |
 | [ideas/recap.md](ideas/recap.md) | Iterasi 2: Recap bacaan |
 | [ideas/raw.md](ideas/raw.md) | Catatan & ide raw dari dogfooding |
 
