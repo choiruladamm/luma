@@ -12,7 +12,7 @@
 | [data-model.md](data-model.md) | Tabel Drift, versi schema & migrasi, kunci settings |
 | [grouping.md](grouping.md) | Pengelompokan paragraf jadi grup tap/AI |
 | [architecture.md](architecture.md) | Routing, provider Riverpod, alur import & baca |
-| [i18n.md](i18n.md) | Antarmuka Indonesia / English, implementasi dan batas validasi; AI tetap Indonesia (#184) |
+| [i18n.md](i18n.md) | Antarmuka Indonesia / English; AI tetap Indonesia |
 | [llm.md](llm.md) | OpenRouter, model, aturan implementasi, prompt, Bedahin |
 | [llm-evals.md](llm-evals.md) | Hasil spike & evaluasi (#34, #41, #28, #61) |
 | [backup.md](backup.md) | Backup & restore |

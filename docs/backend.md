@@ -1,6 +1,6 @@
 # Backend (Cloudflare)
 
-> Kode di `apps/backend`, jalan di env dev (branch `feat/backend`, belum di `master`); env prod belum dibuat. Keputusan awal dari diskusi 9 November 2026. Induk dan progres: [#197](https://github.com/choiruladamm/luma/issues/197).
+> Kode di `apps/backend`. Hanya env dev yang di-deploy; env prod baru dibuat saat backend masuk `master` (lihat Setup & deploy). Keputusan awal dari diskusi 9 November 2026. Urutan issue dan checklist: induk [#197](https://github.com/choiruladamm/luma/issues/197).
 
 App tetap **local-first**: Drift di device sumber kebenaran, semua fitur baca/AI/cari jalan tanpa backend. Backend cuma nambah akun, kuota AI subsidi, backup cloud, dan sync antar device.
 
@@ -143,7 +143,7 @@ Better Auth 1.7 dipasang di Hono (`/v1/auth/*`) dengan adapter `@better-auth/dri
 - **Prod**: Google lewat **idToken native** (`google_sign_in`, `serverClientId` = web client ID). Server: `socialProviders.google.clientId` berupa array web/iOS/Android. Tanpa redirect OAuth di mobile.
 - **Sign in with Apple**: wajib (App Store 4.8) kalau masuk App Store sambil nawarin Google; polanya sama (idToken). Ditunda sampai rilis App Store.
 - **Gerbang beta**: kode undangan lewat header `x-invite-code` saat daftar, dipakai atomik di `databaseHooks.user.create.before` (satu `UPDATE … WHERE used_at IS NULL`), 403 dengan kode berbeda: tanpa header `INVITE_CODE_REQUIRED` (app buka layar kode undangan), kode gak ada `INVALID_INVITE_CODE`, udah dipakai `INVITE_CODE_USED`. Format `LUMA-XXXXX-XXXXX` (10 karakter acak dari 32 huruf/angka tanpa 0/O/1/I, ±10^15 kemungkinan, gak bisa ditebak lewat brute force walau IP dirotasi); huruf besar/kecil dan strip gak ngaruh (`normalizeInviteCode`), disimpan dalam bentuk normalisasi. Kode lama `LUMA-XXXX` (±10^6) masih diterima, tapi jangan bikin lagi; yang belum dipakai dihapus. Dimatikan lewat `vars` `INVITE_REQUIRED=false` saat pricing siap. Kode dibuat lewat `make backend-invite e=dev n=3` (`newInviteCode` + insert ke D1 remote, kode dicetak).
-- **Google**: aktif kalau `vars` `GOOGLE_CLIENT_IDS` (web,ios,android, dipisah koma) diisi; secret `GOOGLE_CLIENT_SECRET`. Project Google Cloud `luma-reader-9900`, consent screen External mode Testing (cuma test user yang bisa login, sesi Google kedaluwarsa tiap 7 hari; publish + verifikasi Google sebelum rilis umum). Client per app: web (= `serverClientId`, `aud` idToken), iOS per bundle ID, Android per package + SHA-1 (release keystore `key.properties` dan debug keystore buat build debug/emulator). Dev udah diisi (`id.ruma.luma.dev`); prod diisi saat client `id.ruma.luma` dibuat. Test: `test/integration/auth-google.test.ts` (JWKS + idToken RS256 palsu lewat MSW, fixture `auth-sign-in-social.json`).
+- **Google**: aktif kalau `vars` `GOOGLE_CLIENT_IDS` (web,ios,android, dipisah koma) diisi; secret `GOOGLE_CLIENT_SECRET`. Project Google Cloud `luma-reader-9900`, consent screen External mode Testing (cuma test user yang bisa login, sesi Google kedaluwarsa tiap 7 hari; publish + verifikasi Google sebelum rilis umum). Client per app: web (= `serverClientId`, `aud` idToken), iOS per bundle ID, Android per package + SHA-1 (release keystore `key.properties` dan debug keystore buat build debug/emulator). Dev terisi (`id.ruma.luma.dev`); prod kosong sampai client `id.ruma.luma` dibuat. Test: `test/integration/auth-google.test.ts` (JWKS + idToken RS256 palsu lewat MSW, fixture `auth-sign-in-social.json`).
 - **App (`google_auth.dart`)**: `NativeGoogle` (`google_sign_in` 7) per flavor dari `googleClients`; flavor tanpa entri → `UnconfiguredGoogle`. iOS butuh client ID-nya sendiri + URL scheme `REVERSED_CLIENT_ID` lewat build setting `GOOGLE_REVERSED_CLIENT_ID` per konfigurasi Xcode. Luma Dev tetap layar email + sandi; `--dart-define=GOOGLE_LOGIN=true` maksa layar Google buat uji.
 - **Flutter**: tanpa SDK resmi; panggil REST langsung lewat `dio` (`/sign-in/email`, `/sign-up/email`, `/sign-in/social` dengan `{provider: "google", idToken: {token}}`). Token dari header `set-auth-token` (bentuk `<token>.<signature>`) disimpan di `flutter_secure_storage`, dikirim sebagai `Authorization: Bearer`. Error Better Auth `{code, message}` dibungkus server jadi format seragam `{error: {code, message}}`.
 
@@ -181,7 +181,7 @@ sequenceDiagram
 - **Logout**: data lokal tetap, kembali ke layar Masuk.
 - **Risiko App Store 5.1.1**: Apple bisa menolak login wajib untuk app yang fitur intinya tidak berbasis akun. Diterima selama distribusi sideload; ditinjau ulang sebelum submit App Store.
 - **Ganti akun**: login dengan akun yang beda dari akun terakhir di device (`SessionStore` simpan id + email akun terakhir) → sesi baru BELUM disimpan, dialog board Akun 10. "Hapus isi HP & lanjut" = `LocalDataRepository.wipeBooks()` (semua buku lewat `BookRepository.delete` + `ai_calls`; pengaturan tetap) lalu `commit`. "Pakai akun lama aja" = `discard` (sesi baru di-sign-out di server), HP tetap milik akun lama.
-- **UI** (board halaman "11 · Akun & login" di Stabilo): layar Masuk `/login` di luar shell (Google di rilis, email + Daftar/Masuk di Luma Dev via `appFlavor`), kode undangan, Pengaturan → Akun (pelat Ex libris, Keluar, Hapus akun dengan 3 centang), toast akun (tab kuning/abu/pink). Slot "Sisa kuota AI" dan "Backup terakhir" di pelat menyusul (#200, #201). Tombol Google masih tanda "G" + `UnconfiguredGoogle` sampai OAuth Client ID diisi (`google_sign_in`, aset tombol resmi).
+- **UI** (board halaman "11 · Akun & login" di Stabilo): layar Masuk `/login` di luar shell (Google di rilis, email + Daftar/Masuk di Luma Dev via `appFlavor`), kode undangan, Pengaturan → Akun (pelat Ex libris, Keluar, Hapus akun dengan 3 centang), toast akun (tab kuning/abu/pink). Pelat memuat slot "Sisa kuota AI" dan "Backup terakhir". Tombol Google pakai `google_sign_in` (aset tombol resmi); flavor tanpa OAuth Client ID (prod) memakai `UnconfiguredGoogle` yang melempar `GOOGLE_NOT_CONFIGURED`.
 - **Hapus akun** (wajib App Store 5.1.1(v) dan Play Store): `DELETE /v1/me` menghapus baris D1 user, semua objek R2 `u/{userId}/`, dan key OpenRouter-nya. Kalau objek R2 banyak, dihapus per halaman dan server balas 202 `pending` (user belum dihapus); client memanggil lagi sampai 200. Play Store butuh URL web untuk hapus akun → halaman kecil di Worker.
 - **Kebijakan privasi**: halaman statis `/privacy`: data yang disimpan (akun, backup, data sync), teks yang dikirim ke OpenRouter, cara hapus akun.
 
@@ -632,11 +632,13 @@ Tiap issue dikerjakan utuh per fitur (vertical slice), bukan semua backend dulu 
 
 1. **Kontrak dulu**: contoh request/response ditulis di `apps/backend/test/fixtures/contract/` sebelum kode. Backend dan Flutter sama-sama dites terhadap file itu.
 2. **Backend**: endpoint + test (unit, integrasi, kontrak), `make backend-test`, deploy `make backend-deploy e=dev`.
-3. **Flutter**: service → repository / ViewModel → UI, dengan test-nya. UI yang board desainnya belum ada menyusul; backend + service jalan duluan.
+3. **Flutter**: service → repository / ViewModel → UI, dengan test-nya. UI yang board desainnya belum ada dikerjakan setelah board jadi; backend + service jalan duluan.
 4. **Cek ujung ke ujung**: `make backend-live` + coba di Luma Dev.
-5. **Merge** branch issue ke `feat/backend`, **push** `feat/backend` ke GitHub (backup, tanpa PR ke `master`), tutup issue dengan ringkasan cek yang dijalankan.
+5. **Merge** branch issue ke `feat/backend`, **push** `feat/backend` ke GitHub (backup, tanpa PR ke `master`), tutup issue dengan ringkasan cek yang dijalankan. Langkah ini berlaku selama kerja backend ada di `feat/backend`.
 
 ## Branch & worktree
+
+Berlaku selama kerja backend ada di `feat/backend`; section ini dihapus setelah branch itu di-merge ke `master`.
 
 ```mermaid
 %%{init: {'gitGraph': {'mainBranchName': 'master'}}}%%
@@ -682,15 +684,15 @@ bunx wrangler r2 bucket create luma-prod
 Lalu:
 
 1. Isi `database_id` dev/prod di `wrangler.jsonc`, `make backend-types`.
-2. `make backend-migrate e=dev` (setelah ada migrasi, mulai #199).
+2. `make backend-migrate e=dev` (migrasi di `apps/backend/migrations`).
 3. `make backend-deploy e=dev`. URL per env ada di `backendUrls` (`apps/mobile/lib/data/services/backend_client.dart`).
 4. Cek: `make backend-live` (client Flutter → Worker dev) atau `curl https://luma-api-dev.chrl.cloud/v1/health` → `{"status":"ok","env":"dev"}`. Tepat setelah deploy pertama ke subdomain baru, beberapa request bisa kena error Cloudflare 1104/1042 selama propagasi; hilang sendiri dalam ±1 menit.
 
-**Resource:** env dev = D1 `luma-dev`, R2 `luma-dev`, `https://luma-api-dev.chrl.cloud`. Env prod (D1/R2 `luma-prod`, `https://luma-api.chrl.cloud`) dibuat saat backend di-merge ke `master`.
+**Resource:** env dev = D1 `luma-dev`, R2 `luma-dev`, `https://luma-api-dev.chrl.cloud`. Env prod (D1/R2 `luma-prod`, `https://luma-api.chrl.cloud`) dibuat saat backend di-merge ke `master`; `database_id` prod di `wrangler.jsonc` masih placeholder sampai itu.
 
 **Custom domain (#214):** XL (Internet Positif) ngarahin `*.workers.dev` ke blockpage lewat DNS, jadi app pakai custom domain di zone `chrl.cloud` (Cloudflare, nameserver dipindah dari Rumahweb; domain diperpanjang di Rumahweb, jatuh tempo 13 April 2027): dev `https://luma-api-dev.chrl.cloud`, prod `https://luma-api.chrl.cloud` (`routes` `custom_domain` di `wrangler.jsonc`, record DNS + sertifikat dibuat otomatis saat deploy). Satu tingkat subdomain (bukan `api.luma.chrl.cloud`) karena sertifikat gratis cuma nutup `*.chrl.cloud`. `*.workers.dev` tetap nyala sebagai cadangan; `BETTER_AUTH_URL` ikut custom domain.
 
-Secret (tiap env): `bunx wrangler secret put <NAMA> --env dev`. Lokal: salin `apps/backend/.dev.vars.example` ke `.dev.vars` (gitignored). Secret gak pernah ditulis di `wrangler.jsonc`. Dibutuhkan: `BETTER_AUTH_SECRET` (`openssl rand -base64 32`; dev udah diisi), `GOOGLE_CLIENT_SECRET` (#199, Google), `OPENROUTER_MANAGEMENT_KEY` (bikin/cabut key AI), `AI_KEY_ENC_SECRET` (enkripsi key AI, `openssl rand -base64 32`).
+Secret (tiap env): `bunx wrangler secret put <NAMA> --env dev`. Lokal: salin `apps/backend/.dev.vars.example` ke `.dev.vars` (gitignored). Secret gak pernah ditulis di `wrangler.jsonc`. Dibutuhkan: `BETTER_AUTH_SECRET` (`openssl rand -base64 32`; dev terisi), `GOOGLE_CLIENT_SECRET` (#199, Google), `OPENROUTER_MANAGEMENT_KEY` (bikin/cabut key AI), `AI_KEY_ENC_SECRET` (enkripsi key AI, `openssl rand -base64 32`).
 
 Harian:
 
@@ -707,11 +709,11 @@ Harian:
 | `make backend-migrate e=dev` | Terapkan migrasi D1 remote |
 | `make backend-deploy e=dev` | Deploy; `e=prod` cuma dari `master` |
 
-Ukuran bundle dicek `bunx wrangler deploy --env dev --dry-run --outdir dist` (scaffold #198: 16,5 KiB gzip, batas 3MB).
+Ukuran bundle dicek `bunx wrangler deploy --env dev --dry-run --outdir dist` (batas Workers free 3MB gzip).
 
 ## Urutan kerja
 
-Urutan issue dan progresnya ada di checklist induk [#197](https://github.com/choiruladamm/luma/issues/197). Rantai utamanya: scaffold (#198) → auth (#199, UI + Google #211) → key AI (#200) → backup cloud (#201) → sync push (#109) → sync pull (#210), plus custom domain (#214).
+Urutan issue ada di checklist induk [#197](https://github.com/choiruladamm/luma/issues/197). Rantai utamanya: scaffold (#198) → auth (#199, UI + Google #211) → key AI (#200) → backup cloud (#201) → sync push (#109) → sync pull (#210), plus custom domain (#214).
 
 ## Ditunda
 
