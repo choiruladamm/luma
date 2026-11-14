@@ -46,7 +46,7 @@ final v4 = [
         : sql,
 ];
 
-/// v5 (install baru): statistik #42. books.finished_at, ai_results
+/// v5 (install baru): statistik. books.finished_at, ai_results
 /// open_count + last_opened_at, reading_sessions + index, ai_calls.
 const v5 = [
   '''CREATE TABLE "books" ("id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, "source_type" TEXT NOT NULL, "book_key" TEXT NULL UNIQUE, "title" TEXT NOT NULL, "author" TEXT NULL, "file_name" TEXT NULL, "cover_name" TEXT NULL, "hash" TEXT NULL UNIQUE, "parser_version" INTEGER NOT NULL, "total_chars" INTEGER NOT NULL, "created_at" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)), "last_opened_at" INTEGER NULL, "first_opened_at" INTEGER NULL, "reading_seconds" INTEGER NOT NULL DEFAULT 0, "finished_at" INTEGER NULL)''',
@@ -69,7 +69,7 @@ const v6 = [
   '''CREATE TABLE "ai_breakdowns" ("chapter_id" INTEGER NOT NULL REFERENCES chapters (id) ON DELETE CASCADE, "group_index" INTEGER NOT NULL, "body" TEXT NOT NULL, "source_hash" TEXT NOT NULL, "model" TEXT NOT NULL, "prompt_version" INTEGER NOT NULL, "created_at" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)), PRIMARY KEY ("chapter_id", "group_index"))''',
 ];
 
-/// v7 install baru: metadata EPUB #69. Fixture tidak memakai model schema baru.
+/// v7 install baru: metadata EPUB. Fixture tidak memakai model schema baru.
 final v7 = [
   '''CREATE TABLE "books" ("id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, "source_type" TEXT NOT NULL, "book_key" TEXT NULL UNIQUE, "title" TEXT NOT NULL, "author" TEXT NULL, "file_name" TEXT NULL, "cover_name" TEXT NULL, "original_title" TEXT NULL, "original_author" TEXT NULL, "use_default_cover" INTEGER NOT NULL DEFAULT 0 CHECK ("use_default_cover" IN (0, 1)), "hash" TEXT NULL UNIQUE, "parser_version" INTEGER NOT NULL, "total_chars" INTEGER NOT NULL, "created_at" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)), "last_opened_at" INTEGER NULL, "first_opened_at" INTEGER NULL, "reading_seconds" INTEGER NOT NULL DEFAULT 0, "finished_at" INTEGER NULL)''',
   ...v6.skip(1),
@@ -291,7 +291,7 @@ void main() {
             .getSingle();
         expect(progress.paragraphIndex, 3);
         expect(progress.paragraphOffset, 0.0);
-        // Translations from before #40 count as the old prompt.
+        // Translations from before the prompt version column count as the old prompt.
         final cached = await migrated.select(migrated.aiResults).getSingle();
         expect(cached.promptVersion, 1);
         // Statistik baru mulai dari nol: gak ada riwayat buat di-backfill.

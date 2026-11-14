@@ -1313,7 +1313,7 @@ void main() {
   });
 
   group('Aa', () {
-    // Aa pindah ke menu ⋯ di kapsul (Cari kata #176).
+    // Aa pindah ke menu ⋯ di kapsul (Cari kata).
     final aaButton = find.byWidgetPredicate(
       (w) => w is CircleButton && w.semanticLabel == 'Aksi lain',
     );

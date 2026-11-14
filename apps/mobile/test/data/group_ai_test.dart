@@ -162,7 +162,7 @@ void main() {
             translations: '["lama 6", "lama 7"]',
             meaning: 'Makna lama.',
             model: 'm',
-            // promptVersion left out: 1, like rows from before #40
+            // promptVersion left out: 1, like rows from before the prompt version column
           ),
         );
     final repo = AiResultsRepository(db);

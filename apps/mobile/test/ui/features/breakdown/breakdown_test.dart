@@ -645,7 +645,7 @@ void main() {
     handle.dispose();
   });
 
-  group('sync (#64)', () {
+  group('sync', () {
     final four = input(['Satu ini. Dua ini. Tiga ini. Empat ini.']);
     BreakdownSection long(int k) => BreakdownSection(
       from: k,
@@ -941,7 +941,7 @@ void main() {
     });
   });
 
-  group('Nyambung ke (#65)', () {
+  group('Nyambung ke', () {
     const xvii = (chapterId: 17, groupIndex: 0);
     const next = (chapterId: 10, groupIndex: 1);
     final linked = done(

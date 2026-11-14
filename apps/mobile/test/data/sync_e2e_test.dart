@@ -14,7 +14,7 @@ import 'package:luma/data/services/cloud_backup_service.dart';
 import 'package:luma/data/services/file_storage.dart';
 import 'package:luma/data/services/sync_service.dart';
 
-/// E2E #109 (`make backend-e2e`): client Dart asli push ke Worker lokal
+/// E2E sync push (`make backend-e2e`): client Dart asli push ke Worker lokal
 /// (`wrangler dev`, D1/R2 lokal). Tanpa `LUMA_BACKEND_E2E` di-skip.
 final _url = Platform.environment['LUMA_BACKEND_E2E'] ?? '';
 final _invite = Platform.environment['LUMA_E2E_INVITE'] ?? '';

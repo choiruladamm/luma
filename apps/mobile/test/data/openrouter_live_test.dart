@@ -111,7 +111,7 @@ void main() {
   );
 }
 
-/// Bedahin sample (#61): the group, its book, and what the answer must show.
+/// Bedahin sample: the group, its book, and what the answer must show.
 typedef BedahinCase = ({
   String name,
   AiBook book,

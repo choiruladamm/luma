@@ -54,7 +54,7 @@ void main() {
         (m) => '${m[1]}transitive',
       );
     }
-    // Dibekukan ulang 13 Nov 2026 (#211: url_launcher). Alasan & daftar:
+    // Dibekukan ulang 13 Nov 2026 (url_launcher). Alasan & daftar:
     // docs/llm-evals.md (Pembekuan ulang guard).
     expect(
       sha256.convert(utf8.encode(normalized)).toString(),
