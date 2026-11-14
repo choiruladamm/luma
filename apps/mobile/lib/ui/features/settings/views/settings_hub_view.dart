@@ -685,29 +685,35 @@ class SettingsTile extends StatelessWidget {
               spacing: 6,
               children: [
                 AppIcon(icon, size: 15, color: c.ink2),
-                Flexible(
-                  child: Text(
-                    name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: StabiloType.caption.copyWith(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: c.ink2,
-                    ),
+                Expanded(
+                  child: Row(
+                    spacing: 6,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: StabiloType.caption.copyWith(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: c.ink2,
+                          ),
+                        ),
+                      ),
+                      if (attention)
+                        Container(
+                          key: const ValueKey('attention-dot'),
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: c.pink,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                    ],
                   ),
                 ),
-                if (attention)
-                  Container(
-                    key: const ValueKey('attention-dot'),
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: c.pink,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                const Spacer(),
                 Container(
                   width: 24,
                   height: 24,

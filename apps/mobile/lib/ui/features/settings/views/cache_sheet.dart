@@ -38,6 +38,7 @@ class _CacheSheet extends ConsumerWidget {
       actions: [
         Expanded(
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             spacing: Space.s2,
             children: [
               AppButton.danger(
