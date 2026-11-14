@@ -8,9 +8,10 @@ iOS + Android book reader (EPUB, Markdown, PDF; personal dogfooding app): tap a 
 |---|---|---|---|
 | `apps/mobile` | Flutter app | Flutter (pinned via `.fvmrc`), Riverpod 3, Drift, go_router | `apps/mobile/CLAUDE.md` |
 | `apps/backend` | Cloudflare Worker API (`/v1`) | Bun + Wrangler, Hono, D1 + Drizzle, R2, Better Auth | `apps/backend/CLAUDE.md` |
+| `apps/dashboard` | Admin web Worker (`/api`), shares backend D1 | Bun + Wrangler, Hono, Better Auth (cookie), Drizzle | `apps/dashboard/CLAUDE.md` |
 | `docs/` | Product, data model, flows, one file per topic | | index: `docs/README.md` |
 
-Commands go through the root `Makefile` (`make help`). Mobile targets are bare (`make test`, `make dev`), backend targets are prefixed `backend-*`.
+Commands go through the root `Makefile` (`make help`). Mobile targets are bare (`make test`, `make dev`), backend targets are prefixed `backend-*`, dashboard targets `dashboard-*`.
 
 ## Sources of truth
 
