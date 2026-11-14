@@ -686,6 +686,8 @@ Lalu:
 
 **Status resource** (12 November 2026): env dev udah dibuat dan ter-deploy (D1 `luma-dev`, R2 `luma-dev`, `https://luma-backend-dev.choiruladamm.workers.dev`). Env prod (D1/R2 `luma-prod`) dibuat saat backend di-merge ke `master`.
 
+**`workers.dev` diblok ISP:** XL (Internet Positif) ngarahin `*.workers.dev` ke blockpage lewat DNS, jadi app gak nyampe ke Worker. Sementara buat uji: DNS Mac ke `1.1.1.1`, Private DNS emulator Android ke `one.one.one.one` (quick boot nyimpen DNS lama). Permanen: custom domain (#214).
+
 Secret (tiap env): `bunx wrangler secret put <NAMA> --env dev`. Lokal: salin `apps/backend/.dev.vars.example` ke `.dev.vars` (gitignored). Secret gak pernah ditulis di `wrangler.jsonc`. Dibutuhkan: `BETTER_AUTH_SECRET` (`openssl rand -base64 32`; dev udah diisi), `GOOGLE_CLIENT_SECRET` (#199, Google).
 
 Harian:

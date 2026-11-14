@@ -33,6 +33,14 @@ class _SyncTriggerState extends ConsumerState<SyncTrigger> {
     _lifecycle = AppLifecycleListener(
       onResume: () => _run(trigger: _Trigger.resume),
     );
+    // fireImmediately: auth udah kelar sebelum widget ini dipasang (app
+    // dibuka dalam kondisi login) juga dihitung login.
+    ref.listenManual(authControllerProvider, (prev, next) {
+      if (next.value?.status == AuthStatus.signedIn &&
+          prev?.value?.status != AuthStatus.signedIn) {
+        _run(trigger: _Trigger.signIn);
+      }
+    }, fireImmediately: true);
     _changes = ref.read(syncChangesProvider).listen((_) {
       _debounce?.cancel();
       _debounce = Timer(SyncTrigger.debounce, _run);
@@ -62,12 +70,6 @@ class _SyncTriggerState extends ConsumerState<SyncTrigger> {
 
   @override
   Widget build(BuildContext context) {
-    ref.listen(authControllerProvider, (prev, next) {
-      if (next.value?.status == AuthStatus.signedIn &&
-          prev?.value?.status != AuthStatus.signedIn) {
-        _run(trigger: _Trigger.signIn);
-      }
-    });
     return widget.child;
   }
 }

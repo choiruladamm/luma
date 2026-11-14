@@ -102,4 +102,29 @@ void main() {
     await tester.pump();
     expect(sync.calls, ['sync']);
   });
+
+  testWidgets('opening the app already signed in syncs once', (tester) async {
+    // Auth kelar sebelum SyncTrigger dipasang (router nge-watch duluan):
+    // gak ada perubahan status yang bisa didengerin.
+    auth = _Auth(const AuthState(AuthStatus.signedIn));
+    final container = ProviderContainer(
+      overrides: [
+        authControllerProvider.overrideWith(() => auth),
+        syncRepositoryProvider.overrideWithValue(sync),
+        syncChangesProvider.overrideWithValue(changes.stream),
+      ],
+    );
+    addTearDown(container.dispose);
+    await container.read(authControllerProvider.future);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const SyncTrigger(child: SizedBox()),
+      ),
+    );
+    await tester.pump();
+
+    expect(sync.calls, ['sync']);
+  });
 }
