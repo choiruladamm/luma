@@ -39,9 +39,12 @@ export function InviteCard({ invite, actions }: { invite: InviteItem; actions: R
         <InviteStatusChip used={invite.usedAt !== null} />
       </div>
       {invite.usedAt && (
-        <span className="flex items-center gap-1.5 text-caption text-ink2">
+        <span className="flex min-w-0 items-center gap-1.5 text-caption text-ink2">
           <Icon name="user" size={14} />
-          <UsedBy invite={invite} /> · {formatDate(invite.usedAt)}
+          <span className="min-w-0 truncate">
+            <UsedBy invite={invite} />
+          </span>
+          <span className="flex-none">· {formatDate(invite.usedAt)}</span>
         </span>
       )}
       <div className="flex gap-2">{actions}</div>

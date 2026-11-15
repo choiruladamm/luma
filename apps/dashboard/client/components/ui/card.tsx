@@ -24,7 +24,7 @@ export function CardHeader({ id, title, subtitle, action }: { id?: string; title
 /** Komponen 1, kartu angka: label left, icon tile right, 36/600 number, caption pinned to the bottom. */
 export function StatCard({ label, icon, value, note, danger }: { label: string; icon: IconName; value: ReactNode; note?: ReactNode; danger?: boolean }) {
   return (
-    <div className="flex min-h-[140px] flex-col gap-3.5 rounded-card bg-sheet px-[22px] py-5">
+    <section aria-label={label} className="flex min-h-[140px] flex-col gap-3.5 rounded-card bg-sheet px-[22px] py-5">
       <div className="flex items-center justify-between gap-2">
         <span className="text-body font-medium text-ink2">{label}</span>
         <span className="flex size-8 items-center justify-center rounded-tile bg-muted text-ink2">
@@ -33,6 +33,6 @@ export function StatCard({ label, icon, value, note, danger }: { label: string; 
       </div>
       <span className={cn("text-stat font-semibold tabular-nums", danger ? "text-danger-ink" : "text-ink")}>{value}</span>
       {note && <span className="mt-auto text-caption text-ink2">{note}</span>}
-    </div>
+    </section>
   );
 }

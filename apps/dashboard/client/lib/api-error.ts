@@ -44,3 +44,14 @@ export async function unwrap<T>(request: Promise<{ ok: boolean; json(): Promise<
   if (!res.ok) throw await toApiError(res as unknown as Response);
   return res.json();
 }
+
+/** Like `unwrap` for responses without a body (204): resolves on ok, throws ApiError otherwise. */
+export async function unwrapEmpty(request: Promise<{ ok: boolean }>): Promise<void> {
+  let res: { ok: boolean };
+  try {
+    res = await request;
+  } catch {
+    throw new ApiError(0, "NETWORK");
+  }
+  if (!res.ok) throw await toApiError(res as unknown as Response);
+}

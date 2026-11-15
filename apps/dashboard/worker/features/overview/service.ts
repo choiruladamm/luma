@@ -16,10 +16,13 @@ export async function getOverview(db: Db, env: Env, requestId: string, now = new
   const syncDay = Math.floor(now.getTime() / DAY_MS);
   const [counts, spendUsd] = await Promise.all([
     overviewCounts(db, { since: new Date(now.getTime() - 7 * DAY_MS), syncDay }),
-    monthSpendUsd(env.OPENROUTER_MANAGEMENT_KEY, env.OPENROUTER_WORKSPACE_ID, now).catch((e: Error) => {
-      console.error(JSON.stringify({ message: "openrouter activity failed", requestId, error: e.message }));
-      return null;
-    }),
+    // No management key (local dev / e2e): skip the call instead of a guaranteed 401.
+    env.OPENROUTER_MANAGEMENT_KEY
+      ? monthSpendUsd(env.OPENROUTER_MANAGEMENT_KEY, env.OPENROUTER_WORKSPACE_ID, now).catch((e: Error) => {
+          console.error(JSON.stringify({ message: "openrouter activity failed", requestId, error: e.message }));
+          return null;
+        })
+      : null,
   ]);
   return {
     users: { total: counts.users.total, new7d: counts.users.newSince, banned: counts.users.banned },

@@ -10,7 +10,8 @@ Run from the repo root:
 |---|---|
 | `make dashboard-install` | `bun install` |
 | `make dashboard-dev` | Vite dev server running the Worker (`CLOUDFLARE_ENV=dev`), `http://localhost:5173`, shares the local D1 of `make backend-dev`. Secrets in `.dev.vars` (copy `.dev.vars.example`) |
-| `make dashboard-test` | `tsc --noEmit` + vitest (workerd), backend migrations applied |
+| `make dashboard-test` | `tsc` (worker + client) + vitest: worker in workerd (backend migrations applied), client in happy-dom |
+| `make dashboard-e2e` | Playwright on the installed Chrome against `vite dev` in the local `e2e` env (own D1 under `.wrangler/e2e-state`, seeded each run, test secrets in `.dev.vars.e2e`). Never touches a remote database |
 | `make dashboard-deploy e=dev\|prod` | `CLOUDFLARE_ENV=<env> vite build` then `wrangler deploy` (uses the flattened `dist/` config); `prod` only from `master` (enforced) |
 
 Backend vars the dashboard reads (switches, OpenRouter workspace, AI budget) come from `apps/backend/wrangler.jsonc` of the same env via `backend-vars.ts`, injected by `vite.config.ts` and `vitest.config.ts`; their types are in `worker/backend-env.d.ts`. Never copy them into this `wrangler.jsonc`. The Cloudflare env is picked by `CLOUDFLARE_ENV` at dev/build time, never `wrangler deploy --env`. `wrangler secret put --env <env>` still reads `wrangler.jsonc` and works as usual. After editing `wrangler.jsonc`: `bunx wrangler types --env dev --strict-vars false` from `apps/dashboard` (needs `.dev.vars` so secrets get typed).
@@ -66,7 +67,10 @@ Two copies of `drizzle-orm` exist (backend's and ours). Runtime is fine; `tsconf
 
 ## Tests
 
-Vitest with `@cloudflare/vitest-plugin`, Miniflare D1. `test/helpers/session.ts` makes signed session cookies (`adminCookie()`, `userCookie()`, `sessionCookie(userId, opts)`) by writing a `sessions` row and signing the token with the test `BETTER_AUTH_SECRET`. `test/helpers/app.ts` `call(path, init, envOverrides)` counts D1 statements that run (batch items included). Outbound fetches go through MSW (`test/setup.ts`); unmocked ones return 599. `test/helpers/openrouter.ts` fakes OpenRouter `GET`/`DELETE /keys/:hash`; `giveUserData()` adds backend rows (key, storage, invite).
+Three layers:
 
-- `guard.test.ts` iterates every registered route: no cookie → 401 without D1, non-admin cookie → 403. New routes are covered automatically; still add success, validation, and budget tests per endpoint.
-- Test bindings pin `BETTER_AUTH_URL` to the https domain so a local `.dev.vars` doesn't leak in.
+- **Worker** (`test/unit`, `test/integration`, `vitest.config.ts`): Vitest with `@cloudflare/vitest-plugin`, Miniflare D1. `test/helpers/session.ts` makes signed session cookies (`adminCookie()`, `userCookie()`, `sessionCookie(userId, opts)`). `test/helpers/app.ts` `call(path, init, envOverrides)` counts D1 statements that run (batch items included). Outbound fetches go through MSW (`test/setup.ts`); unmocked ones return 599. `test/helpers/openrouter.ts` fakes OpenRouter; `giveUserData()` adds backend rows. `guard.test.ts` iterates every registered route: no cookie → 401 without D1, non-admin cookie → 403. Test bindings pin `BETTER_AUTH_URL` to the https domain so a local `.dev.vars` doesn't leak in.
+- **Client** (`test/client`, `vitest.client.config.ts`, happy-dom): `unit/` for `lib`, stores, hooks, and `components/ui`; `integration/` per feature renders the whole app (`helpers/render.tsx`: memory router over the real routes, guard, shell, query client) with the API mocked by MSW (`helpers/handlers.ts`, fixtures shaped like the worker's responses). Unhandled requests fail the test. user-event stubs the clipboard: read it back with `navigator.clipboard.readText()`.
+- **E2E** (`e2e/`, `playwright.config.ts`): real SPA + Worker through `vite dev`, env `e2e`. `global-setup.ts` applies the backend migrations, empties and seeds the tables (`seed.ts`, no AI keys so ban never calls OpenRouter), and writes a signed admin cookie. Specs run serially on desktop; `@phone` ones also on a phone viewport.
+
+New features add worker integration tests (success, validation, budget) and client integration tests (states and actions); flows that cross screens go to e2e.

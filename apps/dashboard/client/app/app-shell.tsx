@@ -52,7 +52,7 @@ export function AppShell() {
           </div>
           <span className="flex-[1_1_24px]" />
           <form role="search" onSubmit={submitSearch} className="hidden min-w-[200px] flex-[0_1_280px] lg:block">
-            <SearchInput label="Cari email" placeholder="Cari email user…" value={search} onChange={(e) => setSearch(e.target.value)} />
+            <SearchInput label="Cari email user" placeholder="Cari email user…" value={search} onChange={(e) => setSearch(e.target.value)} />
           </form>
           {isDevHost(window.location.hostname) && (
             <Chip tone="pink" icon="code" className="h-7 px-2.5 text-[11.5px] font-semibold tracking-[0.06em]">

@@ -4,7 +4,7 @@ DASHBOARD := apps/dashboard
 FLUTTER := cd $(APP) && fvm flutter
 DART := cd $(APP) && fvm dart
 
-.PHONY: help get l10n gen brand live chat-agent-live chat-spike chat-spike-live chat-oracle-live chat-discussion-live chat-adaptive-live chat-retrieval chat-dense-live chat-dense-replay chat-heldout-live chat-refine-live chat-validation2-live chat-recovery-live chat-validation3-live watch run release dev run-android release-android dev-android apk profile test analyze format check clean docs-check backend-install backend-dev backend-types backend-test backend-live backend-e2e backend-migrate backend-invite backend-ban backend-unban backend-deploy dashboard-install dashboard-dev dashboard-test dashboard-deploy
+.PHONY: help get l10n gen brand live chat-agent-live chat-spike chat-spike-live chat-oracle-live chat-discussion-live chat-adaptive-live chat-retrieval chat-dense-live chat-dense-replay chat-heldout-live chat-refine-live chat-validation2-live chat-recovery-live chat-validation3-live watch run release dev run-android release-android dev-android apk profile test analyze format check clean docs-check backend-install backend-dev backend-types backend-test backend-live backend-e2e backend-migrate backend-invite backend-ban backend-unban backend-deploy dashboard-install dashboard-dev dashboard-test dashboard-e2e dashboard-deploy
 
 help: ## list commands
 	@grep -E '^[a-z0-9-]+:.*## ' $(MAKEFILE_LIST) | awk -F ':.*## ' '{printf "  %-16s %s\n", $$1, $$2}'
@@ -161,8 +161,11 @@ dashboard-install: ## dashboard: install deps (bun)
 dashboard-dev: ## dashboard: Vite dev server with the Worker (env dev, http://localhost:5173), same local D1 as backend-dev
 	cd $(DASHBOARD) && CLOUDFLARE_ENV=dev bunx vite dev
 
-dashboard-test: ## dashboard: typecheck worker + client, vitest (workerd), backend migrations applied
-	cd $(DASHBOARD) && bunx tsc --noEmit && bunx tsc --noEmit -p tsconfig.client.json && bunx vitest run
+dashboard-test: ## dashboard: typecheck worker + client, vitest worker (workerd) + client (happy-dom)
+	cd $(DASHBOARD) && bunx tsc --noEmit && bunx tsc --noEmit -p tsconfig.client.json && bunx vitest run && bunx vitest run -c vitest.client.config.ts
+
+dashboard-e2e: ## dashboard: Playwright e2e on installed Chrome, local e2e env with its own D1 (no remote)
+	cd $(DASHBOARD) && bunx playwright test
 
 dashboard-deploy: ## dashboard: deploy admin Worker (e=dev|prod; prod only from master)
 	@test "$(e)" = dev -o "$(e)" = prod || { echo "pakai e=dev atau e=prod"; exit 1; }
