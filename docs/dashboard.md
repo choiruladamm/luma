@@ -214,7 +214,7 @@ Batas Workers 100rb request/hari dihitung per akun, jadi dashboard ikut memakai 
 ## UI
 
 - Copy Indonesia dan English, light dan dark mengikuti sistem (lihat Bahasa di bawah).
-- Responsif sampai lebar HP (±360px): di bawah 768px tabel berubah jadi daftar kartu (bergaris tepi tipis), navigasi pindah ke tab bar bawah, dialog jadi bottom sheet (menempel di bawah, tombol konfirmasi sama lebar, tanpa hint Esc), judul halaman dan tombol utamanya satu baris dengan waktu data di bawahnya, dan profil Detail user memadat (avatar di samping email, email pindah baris di `@`, fakta 2 kolom). Menu yang meredupkan halaman di HP (menu akun, search) mengunci scroll halaman.
+- Responsif sampai lebar HP (±360px): di bawah 768px tabel berubah jadi daftar kartu (bergaris tepi tipis), navigasi pindah ke tab bar bawah, dialog jadi bottom sheet (menempel di bawah, tombol konfirmasi sama lebar, tanpa hint Esc), judul halaman dan tombol utamanya satu baris dengan waktu data di bawahnya, profil Detail user memadat (avatar di samping email, email pindah baris di `@`, fakta 2 kolom, kartu File buku dan Data sync berdampingan), dan filter Undangan dibagi rata selebar baris dengan label pendek ("Belum" / "Udah"). Menu yang meredupkan halaman di HP (menu akun, search) mengunci scroll halaman.
 - Badge **DEV** di header kalau env bukan prod, supaya tidak salah ban di prod.
 - Board: halaman "14 · Admin web" di Stabilo (komponen 1 & 2, Ringkasan, User, Detail user + dialog ban + udah di-ban, Undangan + kode baru, tampilan HP, menu burger, loading). Bahasa (Indonesia/English) dan tema Terang/Gelap/Sistem di menu akun, pilihan disimpan di browser.
 - Beda dari board karena data atau produk:

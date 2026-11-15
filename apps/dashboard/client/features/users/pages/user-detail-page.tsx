@@ -8,7 +8,7 @@ import { ApiError, errorText } from "../../../lib/api-error";
 import { toast } from "../../../stores/toast-store";
 import { useOverview } from "../../overview/queries/use-overview";
 import { BanDialog } from "../components/ban-dialog";
-import { AiCard, SessionsCard, UsageCards } from "../components/user-detail-cards";
+import { AiCard, NUMBER_GRID, SessionsCard, UsageCards } from "../components/user-detail-cards";
 import { UserDetailSkeleton } from "../components/user-detail-skeleton";
 import { UserProfile } from "../components/user-profile";
 import { useBanUser, useUnbanUser } from "../queries/use-ban-user";
@@ -99,7 +99,7 @@ export function UserDetailPage() {
           )
         }
       />
-      <div className="flex flex-wrap gap-4">
+      <div className={NUMBER_GRID}>
         <UsageCards user={data} totalR2={overview.data?.storage.r2Bytes} />
         <AiCard ai={data.ai} />
       </div>

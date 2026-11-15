@@ -95,12 +95,24 @@ export function InvitesPage() {
               setFilter(f);
               setLimit(PAGE);
             }}
+            stretch="phone"
             options={(["all", "unused", "used"] as const).map((value) => ({
               value,
-              label: t.invites[value],
+              // Phones show the short word; the full label stays the accessible name.
+              label:
+                value === "all" ? (
+                  t.invites.all
+                ) : (
+                  <>
+                    <span aria-hidden="true" className="md:hidden">
+                      {value === "unused" ? t.invites.unusedShort : t.invites.usedShort}
+                    </span>
+                    <span className="max-md:sr-only">{t.invites[value]}</span>
+                  </>
+                ),
               count: all ? counts[value] : <Skeleton className="inline-block h-3 w-4 align-middle" />,
             }))}
-            className="max-w-full overflow-x-auto"
+            className="max-w-full"
           />
           <span className="text-caption text-ink2">{t.invites.oneEach}</span>
         </div>

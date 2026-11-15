@@ -2,19 +2,23 @@ import { Card, CardHeader } from "../../../components/ui/card";
 import { Icon } from "../../../components/ui/icons";
 import { ProgressBar } from "../../../components/ui/meter";
 import { type Messages, useI18n } from "../../../i18n";
+import { cn } from "../../../lib/cn";
 import { formatBytes, formatDate, formatRelative, formatUsd } from "../../../lib/format";
 import type { UserDetail } from "../api/users-api";
 
 /** Also used by the loading skeleton, so both share the exact box. */
-export function NumberCard({ title, value, children }: { title: string; value: React.ReactNode; children?: React.ReactNode }) {
+export function NumberCard({ title, value, children, wide }: { title: string; value: React.ReactNode; children?: React.ReactNode; wide?: boolean }) {
   return (
-    <section className="flex flex-[1_1_260px] flex-col gap-3 rounded-card bg-sheet p-6">
+    <section className={cn("flex min-w-0 flex-[1_1_260px] flex-col gap-3 rounded-card bg-sheet p-4 md:p-6", wide && "col-span-2")}>
       <h2 className="m-0 text-body font-semibold text-ink2">{title}</h2>
-      <span className="text-[30px] leading-none font-semibold tracking-[-0.03em] tabular-nums">{value}</span>
+      <span className="text-[24px] leading-none font-semibold tracking-[-0.03em] tabular-nums md:text-[30px]">{value}</span>
       {children}
     </section>
   );
 }
+
+/** Usage cards sit in `NUMBER_GRID`: two columns on phones (the AI card spans both), a wrapping row on desktop. */
+export const NUMBER_GRID = "grid grid-cols-2 gap-3 md:flex md:flex-wrap md:gap-4";
 
 /** File and sync usage; the share of all files shows only when the overview is already cached. */
 export function UsageCards({ user, totalR2 }: { user: UserDetail; totalR2?: number }) {
@@ -41,7 +45,7 @@ export function UsageCards({ user, totalR2 }: { user: UserDetail; totalR2?: numb
 export function AiCard({ ai }: { ai: UserDetail["ai"] }) {
   const { t, locale } = useI18n();
   return (
-    <NumberCard title={t.userDetail.freeAi} value={ai ? (ai.usageDaily === null ? "—" : formatUsd(ai.usageDaily, locale)) : t.userDetail.aiNone}>
+    <NumberCard wide title={t.userDetail.freeAi} value={ai ? (ai.usageDaily === null ? "—" : formatUsd(ai.usageDaily, locale)) : t.userDetail.aiNone}>
       {ai ? (
         <>
           {ai.usageDaily !== null && <ProgressBar value={(ai.usageDaily / ai.limit) * 100} label={t.userDetail.aiUsageBar} />}

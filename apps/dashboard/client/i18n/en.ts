@@ -182,6 +182,8 @@ export const en: Messages = {
     all: "All",
     unused: "Unused",
     used: "Used",
+    unusedShort: "Unused",
+    usedShort: "Used",
     oneEach: "One code per account",
     loading: "Loading invite codes",
     empty: "No invite codes yet",

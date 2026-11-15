@@ -181,6 +181,8 @@ export const id = {
     all: "Semua",
     unused: "Belum dipakai",
     used: "Udah dipakai",
+    unusedShort: "Belum",
+    usedShort: "Udah",
     oneEach: "Satu kode buat satu akun",
     loading: "Lagi muat kode undangan",
     empty: "Belum ada kode undangan",

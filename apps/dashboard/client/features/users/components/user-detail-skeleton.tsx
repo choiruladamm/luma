@@ -2,7 +2,7 @@ import { Button, IconButton } from "../../../components/ui/button";
 import { Card, CardHeader } from "../../../components/ui/card";
 import { Skeleton } from "../../../components/ui/skeleton";
 import { useI18n } from "../../../i18n";
-import { NumberCard } from "./user-detail-cards";
+import { NUMBER_GRID, NumberCard } from "./user-detail-cards";
 
 /** A text-shaped block inside the real text element, so the line keeps its real height. */
 const Line = ({ className }: { className: string }) => <Skeleton className={`inline-block align-middle ${className}`} />;
@@ -47,17 +47,17 @@ export function UserDetailSkeleton() {
           ))}
         </dl>
       </section>
-      <div className="flex flex-wrap gap-4">
-        <NumberCard title={t.userDetail.bookFiles} value={<Line className="h-[26px] w-20 rounded-[8px]" />}>
+      <div className={NUMBER_GRID}>
+        <NumberCard title={t.userDetail.bookFiles} value={<Line className="h-[20px] w-20 rounded-[8px] md:h-[26px]" />}>
           <div className="h-2 rounded-full bg-track" />
           <span className="text-caption">
             <Line className="h-3 w-44" />
           </span>
         </NumberCard>
-        <NumberCard title={t.users.syncData} value={<Line className="h-[26px] w-20 rounded-[8px]" />}>
+        <NumberCard title={t.users.syncData} value={<Line className="h-[20px] w-20 rounded-[8px] md:h-[26px]" />}>
           <span className="text-caption text-ink2">{t.userDetail.syncNote}</span>
         </NumberCard>
-        <NumberCard title={t.userDetail.freeAi} value={<Line className="h-[26px] w-28 rounded-[8px]" />}>
+        <NumberCard wide title={t.userDetail.freeAi} value={<Line className="h-[20px] w-28 rounded-[8px] md:h-[26px]" />}>
           <span className="flex flex-col text-caption">
             <span>
               <Line className="h-3 w-full max-w-[280px]" />
