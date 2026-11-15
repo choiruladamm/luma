@@ -5,7 +5,8 @@ import { type Messages, useI18n } from "../../../i18n";
 import { formatBytes, formatDate, formatRelative, formatUsd } from "../../../lib/format";
 import type { UserDetail } from "../api/users-api";
 
-function NumberCard({ title, value, children }: { title: string; value: string; children?: React.ReactNode }) {
+/** Also used by the loading skeleton, so both share the exact box. */
+export function NumberCard({ title, value, children }: { title: string; value: React.ReactNode; children?: React.ReactNode }) {
   return (
     <section className="flex flex-[1_1_260px] flex-col gap-3 rounded-card bg-sheet p-6">
       <h2 className="m-0 text-body font-semibold text-ink2">{title}</h2>
