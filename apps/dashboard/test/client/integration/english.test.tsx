@@ -40,7 +40,7 @@ describe("English UI", () => {
 
   it("User detail: profile, AI quota, devices, ban dialog", async () => {
     const { user } = renderApp("/users/u1");
-    expect(await screen.findByRole("heading", { name: "sekar.ayu@gmail.com" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /^sekar\.ayu\s?@gmail\.com$/ })).toBeInTheDocument();
     expect(screen.getByText("Signs in with")).toBeInTheDocument();
     expect(screen.getByText("Luma app 0.3.0")).toBeInTheDocument();
     expect(screen.getByText("1 session, including expired ones")).toBeInTheDocument();

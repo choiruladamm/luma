@@ -23,7 +23,7 @@ export function UsersPage() {
   const overview = useOverview();
   const i18n = useI18n();
   const { t, locale } = i18n;
-  const columns = useMemo(() => userColumns(i18n), [i18n]);
+  const columns = useMemo(() => userColumns(i18n, q), [i18n, q]);
   const rows = useMemo(() => users.data?.pages.flatMap((p) => p.items) ?? [], [users.data]);
   const total = overview.data?.users.total;
   const value = form.watch("q");
@@ -33,7 +33,7 @@ export function UsersPage() {
       <PageHeader
         title={t.shell.users}
         after={total !== undefined ? <Chip tone="sheet">{formatNumber(total, locale)}</Chip> : <Skeleton className="h-7 w-10" />}
-        actions={<UpdatedAt at={users.dataUpdatedAt} onRefresh={() => void users.refetch()} refreshing={users.isFetching} />}
+        meta={<UpdatedAt at={users.dataUpdatedAt} onRefresh={() => void users.refetch()} refreshing={users.isFetching} />}
       />
       <section aria-label={t.users.list} className="overflow-hidden rounded-card bg-sheet">
         <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-5">
@@ -75,7 +75,7 @@ export function UsersPage() {
             rowHref={(u) => `/users/${u.id}`}
             numeric={USER_NUMERIC}
             sortedBy="createdAt"
-            renderCard={(u) => <UserCard user={u} />}
+            renderCard={(u) => <UserCard user={u} q={q} />}
             footer={<LoadMore shown={rows.length} total={q ? undefined : total} onMore={users.hasNextPage ? () => void users.fetchNextPage() : undefined} loading={users.isFetchingNextPage} />}
           />
         )}

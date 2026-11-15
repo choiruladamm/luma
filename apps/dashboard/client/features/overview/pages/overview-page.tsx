@@ -34,7 +34,7 @@ export function OverviewPage() {
 
   return (
     <>
-      <PageHeader title={t.shell.overview} actions={<UpdatedAt at={overview.dataUpdatedAt} onRefresh={refresh} refreshing={overview.isFetching} />} />
+      <PageHeader title={t.shell.overview} meta={<UpdatedAt at={overview.dataUpdatedAt} onRefresh={refresh} refreshing={overview.isFetching} />} />
       {overview.isError && !data ? (
         <section className="rounded-card bg-sheet">
           <ErrorState message={errorText(overview.error, t)} onRetry={() => void overview.refetch()} />

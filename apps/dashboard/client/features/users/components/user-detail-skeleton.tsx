@@ -1,4 +1,4 @@
-import { Button } from "../../../components/ui/button";
+import { Button, IconButton } from "../../../components/ui/button";
 import { Card, CardHeader } from "../../../components/ui/card";
 import { Skeleton } from "../../../components/ui/skeleton";
 import { useI18n } from "../../../i18n";
@@ -17,11 +17,11 @@ export function UserDetailSkeleton() {
   const facts = [t.users.joined, t.users.lastActive, t.userDetail.signsInWith, t.userDetail.inviteCode];
   return (
     <div aria-busy="true" aria-label={t.userDetail.loading} className="contents">
-      <section className="flex flex-col gap-6 rounded-card bg-sheet p-6 md:p-7">
-        <div className="flex flex-wrap items-center gap-5">
-          <Skeleton className="size-[72px] flex-none" />
-          <div className="flex min-w-0 flex-[1_1_320px] flex-col gap-1.5">
-            <h1 className="m-0 font-display text-title font-semibold">
+      <section className="flex flex-col gap-5 rounded-card bg-sheet p-5 md:gap-6 md:p-7">
+        <div className="flex items-start gap-3.5 md:flex-wrap md:items-center md:gap-5">
+          <Skeleton className="size-14 flex-none md:size-[72px]" />
+          <div className="flex min-w-0 flex-1 flex-col gap-1.5 md:flex-[1_1_320px]">
+            <h1 className="m-0 font-display text-[22px] leading-[1.2] font-semibold md:text-title">
               <Line className="h-[0.8em] w-[min(320px,100%)] rounded-[10px]" />
             </h1>
             <div className="flex flex-wrap items-center gap-2">
@@ -31,11 +31,12 @@ export function UserDetailSkeleton() {
               <Skeleton className="h-6 w-[68px]" />
             </div>
           </div>
-          <Button variant="secondary" icon="copy" disabled>
+          <Button variant="secondary" icon="copy" disabled className="max-md:hidden">
             {t.userDetail.copyEmail}
           </Button>
+          <IconButton icon="copy" label={t.userDetail.copyEmail} disabled className="flex-none md:hidden" />
         </div>
-        <dl className="m-0 grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-5 border-t border-track pt-5">
+        <dl className="m-0 grid grid-cols-2 gap-x-4 gap-y-4 border-t border-track pt-5 md:grid-cols-[repeat(auto-fit,minmax(180px,1fr))] md:gap-5">
           {facts.map((label) => (
             <div key={label} className="flex flex-col gap-1">
               <dt className="text-caption font-medium text-ink2">{label}</dt>

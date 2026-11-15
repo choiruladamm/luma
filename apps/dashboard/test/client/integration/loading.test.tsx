@@ -58,6 +58,6 @@ describe("loading skeletons", () => {
       expect(within(busy).getByText(label)).toBeInTheDocument();
     }
     expect(within(busy).getByRole("heading", { name: "Perangkat" })).toBeInTheDocument();
-    expect(within(busy).getByRole("button", { name: "Salin email" })).toBeDisabled();
+    for (const b of within(busy).getAllByRole("button", { name: "Salin email" })) expect(b).toBeDisabled();
   });
 });

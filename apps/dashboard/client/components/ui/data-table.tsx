@@ -15,7 +15,8 @@ export const columnHelper = <T extends RowData>() => createColumnHelper<Features
 /**
  * Komponen 2, Tabel: sheet card radius 20, horizontal scroll (min 1040), header 13/500 ink2,
  * rows 60 tall with a track divider. With `rowHref` a whole row is one link (hover canvas +
- * underlined lead text, arrow at the end). Below 768px rows render as cards (`renderCard`).
+ * underlined lead text, arrow at the end). Below 768px rows render as cards (`renderCard`) with a
+ * track ring: canvas alone is nearly the sheet's color in light mode.
  */
 export function DataTable<T extends RowData>({ columns, data, label, rowHref, numeric = [], sortedBy, renderCard, footer, minWidth = 1040 }: { columns: ColumnDef<Features, T, any>[]; data: T[]; label: string; rowHref?: (row: T) => string; numeric?: string[]; sortedBy?: string; renderCard?: (row: T) => ReactNode; footer?: ReactNode; minWidth?: number }) {
   const table = useTable({ features, columns, data });
@@ -30,11 +31,11 @@ export function DataTable<T extends RowData>({ columns, data, label, rowHref, nu
           {data.map((row, i) => (
             <li key={i}>
               {rowHref ? (
-                <Link to={rowHref(row)} className="block rounded-row bg-canvas p-4 text-ink no-underline hover:bg-muted">
+                <Link to={rowHref(row)} className="block rounded-row bg-canvas p-4 text-ink no-underline shadow-[inset_0_0_0_1px_var(--c-track)] hover:bg-muted">
                   {renderCard(row)}
                 </Link>
               ) : (
-                <div className="rounded-row bg-canvas p-4">{renderCard(row)}</div>
+                <div className="rounded-row bg-canvas p-4 shadow-[inset_0_0_0_1px_var(--c-track)]">{renderCard(row)}</div>
               )}
             </li>
           ))}
@@ -118,7 +119,7 @@ export function TableSkeleton({ label, columns, card, rows = 8, rowLink, minWidt
     return (
       <ul aria-busy="true" aria-label={label} className="m-0 flex list-none flex-col gap-2 p-3">
         {list.map((r) => (
-          <li key={r} className="rounded-row bg-canvas p-4">
+          <li key={r} className="rounded-row bg-canvas p-4 shadow-[inset_0_0_0_1px_var(--c-track)]">
             {card}
           </li>
         ))}

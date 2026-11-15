@@ -9,7 +9,7 @@ import { server } from "../setup";
 describe("Detail user", () => {
   it("shows profile, sign-in provider, invite, usage, AI quota, devices", async () => {
     renderApp("/users/u1");
-    expect(await screen.findByRole("heading", { name: "sekar.ayu@gmail.com" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /^sekar\.ayu\s?@gmail\.com$/ })).toBeInTheDocument();
     expect(screen.getByText("Google")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "LUMA-7KQ2" })).toHaveAttribute("href", "/invites");
     expect(screen.getByText("App Luma 0.3.0")).toBeInTheDocument();
@@ -80,8 +80,9 @@ describe("Detail user", () => {
   it("copies the email", async () => {
     const { user } = renderApp("/users/u1");
     // The loading skeleton shows the same button disabled; wait for the profile.
-    await screen.findByRole("heading", { name: "sekar.ayu@gmail.com" });
-    await user.click(screen.getByRole("button", { name: "Salin email" }));
+    await screen.findByRole("heading", { name: /^sekar\.ayu\s?@gmail\.com$/ });
+    // Desktop button + phone icon button share the name; CSS shows one of them.
+    await user.click(screen.getAllByRole("button", { name: "Salin email" })[0]!);
     expect(await navigator.clipboard.readText()).toBe("sekar.ayu@gmail.com");
     expect(await screen.findByText("Email disalin")).toBeInTheDocument();
   });

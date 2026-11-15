@@ -77,9 +77,9 @@ export function InvitesPage() {
     <>
       <PageHeader
         title={t.shell.invites}
+        meta={<UpdatedAt at={invites.dataUpdatedAt} onRefresh={() => void invites.refetch()} refreshing={invites.isFetching} />}
         actions={
           <>
-            <UpdatedAt at={invites.dataUpdatedAt} onRefresh={() => void invites.refetch()} refreshing={invites.isFetching} />
             <Button variant="primary" icon="plus" onClick={makeCode} loading={create.isPending}>
               {t.invites.create}
             </Button>

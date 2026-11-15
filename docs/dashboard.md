@@ -10,7 +10,7 @@ Pengganti kerjaan admin yang sekarang lewat terminal (`make backend-invite`, `ma
 |---|---|
 | Login | Tombol masuk Google. Email di luar daftar admin ditolak |
 | Ringkasan | Jumlah user (total, baru 7 hari, di-ban), total R2 dan data sync, baris sync ditulis hari ini vs batas D1 100rb, kode undangan belum dipakai, status saklar darurat (`SYNC_ENABLED`, `BACKUP_ENABLED`, `AI_KEY_ENABLED`, cuma ditampilkan) |
-| User | Daftar user, cari pakai awalan email, paginasi 50 |
+| User | Daftar user, cari email atau nama (bagian mana pun, paling cocok dulu), paginasi 50 |
 | Detail user | Data user, sesi per device, pemakaian key AI subsidi, kode undangan yang dipakai, tombol ban / unban |
 | Undangan | Bikin 1–20 kode, daftar belum/sudah dipakai (oleh siapa, kapan), copy, hapus kode yang belum dipakai |
 
@@ -173,7 +173,7 @@ Urutan middleware: `requestId → rateLimit per IP → [/api/auth/* → Better A
 | Endpoint | Request | Respons | D1 / subrequest |
 |---|---|---|---|
 | `GET /api/overview` | - | `{users: {total, new7d, banned}, storage: {r2Bytes, syncBytes}, syncToday: {rows, limit: 100000}, invites: {unused}, flags: {sync, backup, aiKey}, ai: {spendUsd, budgetUsd, asOf}}`. `syncToday.rows` = `SUM(sync_rows)` untuk `sync_day` hari ini (UTC). `ai.spendUsd` bulan UTC ini sampai `asOf` (kemarin); OpenRouter gagal → `null`, tetap 200 | 1 `batch` 3 agregat + 1 subrequest OpenRouter (`/activity`); `flags` dari `env` |
-| `GET /api/users?q=&cursor=&limit=50` | `q` awalan email | `{items: [{id, email, name, createdAt, lastActiveAt, banned, hasAiKey, r2Bytes, syncBytes}], nextCursor}`, terbaru dulu (`createdAt` lalu `id` menurun); `nextCursor` = `<createdAt ms>,<id>` atau `null` | 1 query: `users` ⟕ `user_storage` ⟕ `ai_keys`, `lastActiveAt` subquery `MAX(sessions.updated_at)` per baris |
+| `GET /api/users?q=&cursor=&limit=50` | `q` dicari di email atau nama, bagian mana pun, tanpa beda huruf besar/kecil | `{items: [{id, email, name, createdAt, lastActiveAt, banned, hasAiKey, r2Bytes, syncBytes}], nextCursor}`. Tanpa `q`: terbaru dulu (`createdAt` lalu `id` menurun), `nextCursor` = `<createdAt ms>,<id>`. Dengan `q`: paling cocok dulu (0 email persis, 1 awalan email, 2 awal kata: setelah `.` `_` `-` `@` di email atau kata di nama, 3 sisanya), seri terbaru dulu, `nextCursor` = `<peringkat>,<createdAt ms>,<id>`. Habis → `null` | 1 query: `users` ⟕ `user_storage` ⟕ `ai_keys`, `lastActiveAt` subquery `MAX(sessions.updated_at)` per baris |
 | `GET /api/users/:id` | - | data di atas + `sessions: [{userAgent, ipAddress, createdAt, updatedAt}]` (maks 50, terbaru dulu), `ai: {limit, usageDaily, expiresAt} \| null`, `invite: {code, usedAt} \| null`, `providers` (id provider Better Auth: `google`, `credential`). `getUsage` gagal → tetap 200 dengan `usageDaily: null` | 1 `batch` (5 statement) + 1 subrequest OpenRouter (`getUsage`) kalau punya key |
 | `POST /api/users/:id/ban` | - | `{banned: true, keyRevoked}` | 1 query (user + hash key), `deleteKey` OpenRouter dulu (404 = sudah hilang, dianggap sukses); gagal → 502 tanpa menyentuh D1. Sukses → 1 `batch` (`banned = 1` + hapus `ai_keys`). Idempoten |
 | `POST /api/users/:id/unban` | - | `{banned: false}` | 1 update (`RETURNING`, user gak ada → 404) |
@@ -214,18 +214,19 @@ Batas Workers 100rb request/hari dihitung per akun, jadi dashboard ikut memakai 
 ## UI
 
 - Copy Indonesia dan English, light dan dark mengikuti sistem (lihat Bahasa di bawah).
-- Responsif sampai lebar HP (±360px): di layar sempit, tabel User berubah jadi daftar kartu dan navigasi pindah ke bawah atau menu.
+- Responsif sampai lebar HP (±360px): di bawah 768px tabel berubah jadi daftar kartu (bergaris tepi tipis), navigasi pindah ke tab bar bawah, dialog jadi bottom sheet (menempel di bawah, tombol konfirmasi sama lebar, tanpa hint Esc), judul halaman dan tombol utamanya satu baris dengan waktu data di bawahnya, dan profil Detail user memadat (avatar di samping email, email pindah baris di `@`, fakta 2 kolom). Menu yang meredupkan halaman di HP (menu akun, search) mengunci scroll halaman.
 - Badge **DEV** di header kalau env bukan prod, supaya tidak salah ban di prod.
 - Board: halaman "14 · Admin web" di Stabilo (komponen 1 & 2, Ringkasan, User, Detail user + dialog ban + udah di-ban, Undangan + kode baru, tampilan HP, menu burger, loading). Bahasa (Indonesia/English) dan tema Terang/Gelap/Sistem di menu akun, pilihan disimpan di browser.
 - Beda dari board karena data atau produk:
   - Ban cuma mencabut AI subsidi, jadi copy "gak bisa masuk atau sync" diganti "Kuota AI gratisnya dicabut. Masuk, backup, dan sync tetap jalan".
   - Kartu Sync cuma hari ini (backend gak nyimpan riwayat per hari), bukan grafik 7 hari.
   - Key AI: "Kuota gratis" kalau punya key subsidi, selain itu "—"; key sendiri gak pernah sampai server.
+  - Navigasi HP: tab bar melayang di bawah (ikon, label, jumlah) menggantikan menu burger (board 11), jadi pindah layar cukup satu tap. Header HP tinggal logo, titik DEV, search, dan avatar.
   - Tanpa tanggal ban (gak ada kolom `banned_at`) dan tanpa kolom "Dibuat" di Undangan (`invite_codes` gak punya `created_at`).
   - Tambahan: layar Login, kartu Perangkat (sesi) dan Kuota AI gratis di Detail user, kartu Kuota AI gratis (spend bulan ini) di Ringkasan, dialog konfirmasi hapus kode.
 - Loading: tata letak asli langsung tampil (judul, label, header kolom), angka dan baris diganti skeleton (board loading), bukan layar loading terpisah. Undangan dan Detail user gak punya board loading, jadi ikut aturan yang sama; di HP tabel yang lagi muat tampil sebagai kartu, sama dengan tabel aslinya. Jumlah di filter Undangan ikut skeleton, bukan "0".
 - Waktu ditampilkan di zona waktu browser admin.
-- Cari email di header (combobox): `/` fokus ke kolom; minimal 2 huruf, setelah jeda 300 ms muncul 5 user teratas (awalan email) plus "Lihat semua hasil" ke `/users?q=`. Panah + Enter buka user, Esc tutup lalu kosongkan. Query sama dengan halaman User, jadi pindah ke daftar pakai cache. Disembunyikan di `/users` (halaman itu punya kolom cari sendiri); di bawah 1024px jadi tombol ikon yang membuka panel di bawah header.
+- Cari email di header (combobox): `/` fokus ke kolom; minimal 2 huruf, setelah jeda 300 ms muncul 5 user paling cocok (email atau nama, bagian yang cocok disorot stabilo pink) plus "Lihat semua hasil" ke `/users?q=`. Input dinormalisasi (trim, huruf kecil, buang `mailto:`). Panah + Enter buka user; Enter pada email persis langsung buka user itu; Esc tutup lalu kosongkan. Query sama dengan halaman User, jadi pindah ke daftar pakai cache. Disembunyikan di `/users` (halaman itu punya kolom cari sendiri); di bawah 1024px jadi tombol ikon yang mengganti isi header dengan kolom cari + tombol tutup (halaman diredupkan dan gak bisa di-scroll).
 - Tab (nav desktop, Segmented) punya pill aktif dan pill hover yang meluncur (`useSlidingPill`), tanpa animasi kalau browser minta kurangi gerakan.
 
 ### Bahasa
