@@ -5,7 +5,8 @@ import { describe, expect, it, vi } from "vitest";
 import { Avatar, avatarColor } from "../../../client/components/ui/avatar";
 import { Button, IconButton } from "../../../client/components/ui/button";
 import { Chip } from "../../../client/components/ui/chip";
-import { columnHelper, DataTable, LoadMore } from "../../../client/components/ui/data-table";
+import { columnHelper, DataTable } from "../../../client/components/ui/data-table";
+import { Pagination, pageList } from "../../../client/components/ui/pagination";
 import { ConfirmFooter, Dialog } from "../../../client/components/ui/dialog";
 import { Segmented } from "../../../client/components/ui/segmented";
 import { EmptyState, ErrorState } from "../../../client/components/ui/states";
@@ -135,7 +136,7 @@ describe("DataTable", () => {
   const data: Row[] = [{ id: "u1", email: "a@x.com", bytes: 5 }];
 
   it("renders headers, rows, and a link per row", () => {
-    const router = createMemoryRouter([{ path: "/", element: <DataTable label="Daftar" columns={columns} data={data} rowHref={(r) => `/users/${r.id}`} numeric={["bytes"]} sortedBy="email" /> }]);
+    const router = createMemoryRouter([{ path: "/", element: <DataTable label="Daftar" columns={columns} data={data} rowHref={(r) => `/users/${r.id}`} numeric={["bytes"]} sort={{ id: "email", dir: "desc" }} /> }]);
     render(<RouterProvider router={router} />);
     const table = screen.getByRole("table", { name: "Daftar" });
     expect(within(table).getByRole("columnheader", { name: /User/ })).toHaveAttribute("aria-sort", "descending");
@@ -143,14 +144,33 @@ describe("DataTable", () => {
     expect(within(table).getByRole("cell", { name: "5" })).toHaveClass("text-right");
   });
 
-  it("LoadMore shows counts and only offers more when there is more", async () => {
-    const onMore = vi.fn();
-    const { rerender } = render(<LoadMore shown={10} total={48} onMore={onMore} />);
-    expect(screen.getByText("Nampilin 10 dari 48")).toBeInTheDocument();
-    await userEvent.click(screen.getByRole("button", { name: "Muat lagi" }));
-    expect(onMore).toHaveBeenCalled();
-    rerender(<LoadMore shown={48} total={48} />);
-    expect(screen.queryByRole("button", { name: "Muat lagi" })).toBeNull();
+  it("sortable headers are buttons that report the column; the sorted one carries aria-sort", async () => {
+    const onSort = vi.fn();
+    const router = createMemoryRouter([{ path: "/", element: <DataTable label="Daftar" columns={columns} data={data} sort={{ id: "bytes", dir: "asc" }} sortable={["bytes"]} onSort={onSort} /> }]);
+    render(<RouterProvider router={router} />);
+    expect(screen.getByRole("columnheader", { name: /File/ })).toHaveAttribute("aria-sort", "ascending");
+    expect(screen.queryByRole("button", { name: /User/ })).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: /File/ }));
+    expect(onSort).toHaveBeenCalledWith("bytes");
+  });
+});
+
+describe("Pagination", () => {
+  it("lists first, last, and a window around the current page", () => {
+    expect(pageList(1, 5)).toEqual([1, 2, 3, 4, 5]);
+    expect(pageList(5, 10)).toEqual([1, null, 4, 5, 6, null, 10]);
+    expect(pageList(1, 10)).toEqual([1, 2, null, 10]);
+    expect(pageList(10, 10)).toEqual([1, null, 9, 10]);
+  });
+
+  it("shows the range, marks the current page, and disables the ends", async () => {
+    const onPage = vi.fn();
+    render(<Pagination page={1} pageCount={3} total={45} pageSize={20} onPage={onPage} />);
+    expect(screen.getByText("1–20 dari 45")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Halaman 1" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("button", { name: "Halaman sebelumnya" })).toBeDisabled();
+    await userEvent.click(screen.getByRole("button", { name: "Halaman berikutnya" }));
+    expect(onPage).toHaveBeenCalledWith(2);
   });
 });
 

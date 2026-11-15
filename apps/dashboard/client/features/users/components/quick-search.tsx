@@ -8,6 +8,7 @@ import { useI18n } from "../../../i18n";
 import { errorText } from "../../../lib/api-error";
 import { cn } from "../../../lib/cn";
 import { formatNumber } from "../../../lib/format";
+import { DEFAULT_USERS_PARAMS } from "../hooks/use-users-params";
 import { useUsers } from "../queries/use-users";
 import { UserIdentity, UserStatusChip } from "./user-columns";
 
@@ -40,12 +41,13 @@ export function QuickSearch({ shortcut, autoFocus, onDone, tone, className }: { 
   const typed = normalize(value);
   const q = useDebounce(typed, 300);
   const valid = q.length >= MIN && q.length <= MAX;
-  const users = useUsers(q, valid);
+  const users = useUsers({ ...DEFAULT_USERS_PARAMS, q }, valid);
 
-  const page = valid ? users.data?.pages[0] : undefined;
+  // Placeholder data is the previous search's page: not an answer for this one.
+  const page = valid && !users.isPlaceholderData ? users.data : undefined;
   const items = page?.items.slice(0, SHOWN) ?? [];
   const settled = typed === q && valid;
-  const loading = typed.length >= MIN && (!settled || users.isPending);
+  const loading = typed.length >= MIN && (!settled || users.isPending || users.isPlaceholderData);
   const showList = open && typed.length >= MIN;
   // Options: the users, then "see all" (only once there is something to see).
   const count = items.length + (items.length > 0 ? 1 : 0);
@@ -98,7 +100,7 @@ export function QuickSearch({ shortcut, autoFocus, onDone, tone, className }: { 
   };
 
   const optionId = (i: number) => `${listId}-${i}`;
-  const total = page ? (page.nextCursor ? `${formatNumber(page.items.length, locale)}+` : formatNumber(page.items.length, locale)) : "";
+  const total = page ? formatNumber(page.total, locale) : "";
 
   return (
     <div className={cn("relative", className)}>

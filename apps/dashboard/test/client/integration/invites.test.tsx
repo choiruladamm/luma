@@ -90,9 +90,31 @@ describe("Undangan", () => {
   it("pages through long lists on the client", async () => {
     const many = Array.from({ length: 25 }, (_, i) => ({ code: `LUMA-K${String(i).padStart(4, "0")}-ZZZZZ`, usedBy: null, usedAt: null }));
     server.use(http.get(`${API}/invites`, () => HttpResponse.json({ items: many })));
+    let calls = 0;
+    server.events.on("request:start", () => calls++);
     const { user } = renderApp("/invites");
-    expect(await screen.findByText("Nampilin 20 dari 25")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Muat lagi" }));
-    expect(screen.getByText("Nampilin 25 dari 25")).toBeInTheDocument();
+    expect(await screen.findByText("1–20 dari 25")).toBeInTheDocument();
+    calls = 0;
+    await user.click(screen.getByRole("button", { name: "Halaman 2" }));
+    expect(screen.getByText("21–25 dari 25")).toBeInTheDocument();
+    expect(calls).toBe(0);
+    server.events.removeAllListeners();
+  });
+
+  it("searches codes (with or without dashes) and emails, and sorts by date used, on the client", async () => {
+    const { user } = renderApp("/invites");
+    const box = await screen.findByRole("searchbox", { name: "Cari kode atau email" });
+    await user.type(box, "eeeeeff");
+    expect(await screen.findAllByText("LUMA-EEEEE-FFFFF")).not.toHaveLength(0);
+    expect(screen.queryByText("LUMA-AAAAA-BBBBB")).toBeNull();
+    await user.clear(box);
+    await user.type(box, "nobody");
+    expect(screen.getByText("Gak ada kode atau email yang cocok sama “nobody”")).toBeInTheDocument();
+    await user.clear(box);
+
+    await user.click(screen.getByRole("button", { name: /Tanggal dipakai/ }));
+    expect(screen.getByRole("columnheader", { name: /Tanggal dipakai/ })).toHaveAttribute("aria-sort", "descending");
+    const firstCode = within(screen.getByRole("table", { name: "Kode undangan" })).getAllByRole("row")[1]!;
+    expect(firstCode).toHaveTextContent("LUMA-EEEEE-FFFFF");
   });
 });

@@ -4,8 +4,7 @@ import { Link, useNavigate } from "react-router";
 import { useMediaQuery } from "../../hooks/use-media-query";
 import { useI18n } from "../../i18n";
 import { cn } from "../../lib/cn";
-import { formatNumber } from "../../lib/format";
-import { Icon, Spinner } from "./icons";
+import { Icon } from "./icons";
 
 // Core-only table: search and pagination happen on the server, so no row-model features.
 export const features = tableFeatures({});
@@ -18,7 +17,13 @@ export const columnHelper = <T extends RowData>() => createColumnHelper<Features
  * underlined lead text, arrow at the end). Below 768px rows render as cards (`renderCard`) with a
  * track ring: canvas alone is nearly the sheet's color in light mode.
  */
-export function DataTable<T extends RowData>({ columns, data, label, rowHref, numeric = [], sortedBy, renderCard, footer, minWidth = 1040 }: { columns: ColumnDef<Features, T, any>[]; data: T[]; label: string; rowHref?: (row: T) => string; numeric?: string[]; sortedBy?: string; renderCard?: (row: T) => ReactNode; footer?: ReactNode; minWidth?: number }) {
+export type TableSort = { id: string; dir: "asc" | "desc" };
+
+/**
+ * `sort` marks the sorted column (ink + arrow + aria-sort); columns in `sortable` get a header
+ * button that calls `onSort(id)` (the page decides the direction: same column flips it).
+ */
+export function DataTable<T extends RowData>({ columns, data, label, rowHref, numeric = [], sort, sortable = [], onSort, renderCard, footer, minWidth = 1040 }: { columns: ColumnDef<Features, T, any>[]; data: T[]; label: string; rowHref?: (row: T) => string; numeric?: string[]; sort?: TableSort | null; sortable?: string[]; onSort?: (id: string) => void; renderCard?: (row: T) => ReactNode; footer?: ReactNode; minWidth?: number }) {
   const table = useTable({ features, columns, data });
   const navigate = useNavigate();
   const narrow = useMediaQuery("(max-width: 767px)");
@@ -52,17 +57,31 @@ export function DataTable<T extends RowData>({ columns, data, label, rowHref, nu
           <thead>
             {table.getHeaderGroups().map((group) => (
               <tr key={group.id}>
-                {group.headers.map((header, i) => (
-                  <th
-                    key={header.id}
-                    scope="col"
-                    aria-sort={sortedBy === header.column.id ? "descending" : undefined}
-                    className={cn("border-b border-track py-3 text-caption font-medium whitespace-nowrap", sortedBy === header.column.id ? "text-ink" : "text-ink2", numeric.includes(header.column.id) ? "text-right" : "text-left", i === 0 ? "pr-3 pl-6" : "px-3")}
-                  >
-                    {header.isPlaceholder ? null : <table.FlexRender header={header} />}
-                    {sortedBy === header.column.id && <Icon name="down" size={14} className="ml-1 inline align-[-2px]" />}
-                  </th>
-                ))}
+                {group.headers.map((header, i) => {
+                  const id = header.column.id;
+                  const active = sort?.id === id;
+                  const arrow = active && <Icon name={sort.dir === "asc" ? "up" : "down"} size={14} className="inline align-[-2px]" />;
+                  return (
+                    <th
+                      key={header.id}
+                      scope="col"
+                      aria-sort={active ? (sort.dir === "asc" ? "ascending" : "descending") : undefined}
+                      className={cn("border-b border-track py-3 text-caption font-medium whitespace-nowrap", active ? "text-ink" : "text-ink2", numeric.includes(id) ? "text-right" : "text-left", i === 0 ? "pr-3 pl-6" : "px-3")}
+                    >
+                      {sortable.includes(id) && onSort ? (
+                        <button type="button" onClick={() => onSort(id)} className={cn("group/sort -mx-2 inline-flex items-center gap-1 rounded-full px-2 py-1 font-medium hover:bg-muted", numeric.includes(id) && "flex-row-reverse")}>
+                          <table.FlexRender header={header} />
+                          {arrow || <Icon name="sort" size={14} className="opacity-0 group-hover/sort:opacity-60" />}
+                        </button>
+                      ) : (
+                        <>
+                          {header.isPlaceholder ? null : <table.FlexRender header={header} />}
+                          {arrow && <span className="ml-1">{arrow}</span>}
+                        </>
+                      )}
+                    </th>
+                  );
+                })}
                 {rowHref && (
                   <th scope="col" className="w-5 border-b border-track py-3 pr-6 pl-1">
                     <span className="sr-only">{t.common.open}</span>
@@ -163,24 +182,6 @@ export function TableSkeleton({ label, columns, card, rows = 8, rowLink, minWidt
           ))}
         </tbody>
       </table>
-    </div>
-  );
-}
-
-/** "Nampilin 10 dari 48" + "Muat lagi" (server cursor or client slice). */
-export function LoadMore({ shown, total, onMore, loading }: { shown: number; total?: number; onMore?: () => void; loading?: boolean }) {
-  const { t, locale } = useI18n();
-  return (
-    <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-4">
-      <span className="text-caption text-ink2 tabular-nums">
-        {total === undefined ? t.common.showing(formatNumber(shown, locale)) : t.common.showingOf(formatNumber(shown, locale), formatNumber(total, locale))}
-      </span>
-      {onMore && (
-        <button type="button" onClick={onMore} disabled={loading} aria-busy={loading || undefined} className="inline-flex h-11 items-center gap-2 rounded-full bg-muted px-5 text-body font-medium text-ink hover:bg-track disabled:text-ink2">
-          {loading && <Spinner />}
-          {t.common.loadMore}
-        </button>
-      )}
     </div>
   );
 }

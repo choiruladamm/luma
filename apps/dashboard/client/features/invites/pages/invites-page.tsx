@@ -2,7 +2,9 @@ import { useMemo, useState } from "react";
 import { PageHeader } from "../../../components/layout/page-header";
 import { UpdatedAt } from "../../../components/layout/updated-at";
 import { Button, IconButton } from "../../../components/ui/button";
-import { DataTable, LoadMore } from "../../../components/ui/data-table";
+import { DataTable, type TableSort } from "../../../components/ui/data-table";
+import { Pagination } from "../../../components/ui/pagination";
+import { SearchInput } from "../../../components/ui/search-input";
 import { Segmented } from "../../../components/ui/segmented";
 import { Skeleton } from "../../../components/ui/skeleton";
 import { EmptyState, ErrorState } from "../../../components/ui/states";
@@ -21,8 +23,8 @@ type Filter = "all" | "unused" | "used";
 const PAGE = 20;
 
 /**
- * Board 08 Undangan + 09 new code. One request loads every code (the API caps at 500); the
- * filter counts and "Muat lagi" work on that list, so switching filters costs nothing.
+ * Board 08 Undangan + 09 new code. One request loads every code (the API caps at 500); search,
+ * filter counts, sorting, and pages all work on that list, so none of them costs a request.
  */
 export function InvitesPage() {
   const invites = useInvites();
@@ -30,7 +32,9 @@ export function InvitesPage() {
   const remove = useDeleteInvite();
   const { copied, copy } = useCopyToClipboard();
   const [filter, setFilter] = useState<Filter>("all");
-  const [limit, setLimit] = useState(PAGE);
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
+  const [sort, setSort] = useState<TableSort | null>(null);
   const [created, setCreated] = useState<{ code: string; at: string } | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const i18n = useI18n();
@@ -38,8 +42,26 @@ export function InvitesPage() {
 
   const all = invites.data?.items;
   const counts = useMemo(() => ({ all: all?.length ?? 0, unused: all?.filter((i) => !i.usedAt).length ?? 0, used: all?.filter((i) => i.usedAt).length ?? 0 }), [all]);
-  const filtered = useMemo(() => (all ?? []).filter((i) => filter === "all" || (filter === "used") === (i.usedAt !== null)), [all, filter]);
-  const rows = useMemo(() => filtered.slice(0, limit), [filtered, limit]);
+  const needle = search.trim().toLowerCase();
+  const filtered = useMemo(() => {
+    const list = (all ?? []).filter(
+      (i) =>
+        (filter === "all" || (filter === "used") === (i.usedAt !== null)) &&
+        // Codes are shown with dashes; match with or without them.
+        (!needle || i.code.toLowerCase().replaceAll("-", "").includes(needle.replaceAll("-", "")) || (i.usedBy?.email.toLowerCase().includes(needle) ?? false)),
+    );
+    if (!sort) return list; // API order: unused first, then the most recently used
+    const key = (i: InviteItem) => (sort.id === "code" ? i.code : (i.usedAt ?? ""));
+    const sign = sort.dir === "asc" ? 1 : -1;
+    return [...list].sort((a, b) => sign * key(a).localeCompare(key(b)));
+  }, [all, filter, needle, sort]);
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE));
+  const current = Math.min(page, pageCount);
+  const rows = useMemo(() => filtered.slice((current - 1) * PAGE, current * PAGE), [filtered, current]);
+  const onSort = (id: string) => {
+    setSort((s) => ({ id, dir: s?.id === id && s.dir === "desc" ? "asc" : "desc" }));
+    setPage(1);
+  };
 
   const copyCode = (code: string) =>
     copy(code).then(
@@ -93,7 +115,7 @@ export function InvitesPage() {
             value={filter}
             onChange={(f) => {
               setFilter(f);
-              setLimit(PAGE);
+              setPage(1);
             }}
             stretch="phone"
             options={(["all", "unused", "used"] as const).map((value) => ({
@@ -114,7 +136,19 @@ export function InvitesPage() {
             }))}
             className="max-w-full"
           />
-          <span className="text-caption text-ink2">{t.invites.oneEach}</span>
+          <SearchInput
+            label={t.invites.search}
+            placeholder={`${t.invites.search}…`}
+            tone="canvas"
+            className="min-w-0 flex-[1_1_240px] md:max-w-[320px]"
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
+            onClear={() => setSearch("")}
+          />
+          <span className="basis-full text-caption text-ink2">{t.invites.oneEach}</span>
         </div>
         {invites.isError ? (
           <ErrorState message={errorText(invites.error, t)} onRetry={() => void invites.refetch()} />
@@ -125,15 +159,22 @@ export function InvitesPage() {
             {t.invites.emptyBody}
           </EmptyState>
         ) : filtered.length === 0 ? (
-          <EmptyState icon="ticket" title={filter === "unused" ? t.invites.allUsed : t.invites.noneUsed} />
+          needle ? (
+            <EmptyState icon="search" title={t.invites.noSearchMatch(search.trim())} />
+          ) : (
+            <EmptyState icon="ticket" title={filter === "unused" ? t.invites.allUsed : t.invites.noneUsed} />
+          )
         ) : (
           <DataTable
             label={t.invites.table}
             columns={columns}
             data={rows}
             minWidth={760}
+            sort={sort}
+            sortable={["code", "usedAt"]}
+            onSort={onSort}
             renderCard={(i) => <InviteCard invite={i} actions={actions(i)} />}
-            footer={<LoadMore shown={rows.length} total={filtered.length} onMore={rows.length < filtered.length ? () => setLimit((l) => l + PAGE) : undefined} />}
+            footer={<Pagination page={current} pageCount={pageCount} total={filtered.length} pageSize={PAGE} onPage={setPage} />}
           />
         )}
       </section>

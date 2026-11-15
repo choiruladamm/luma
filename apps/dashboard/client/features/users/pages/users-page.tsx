@@ -1,9 +1,10 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { PageHeader } from "../../../components/layout/page-header";
 import { UpdatedAt } from "../../../components/layout/updated-at";
-import { ButtonLink } from "../../../components/ui/button";
+import { Button, ButtonLink } from "../../../components/ui/button";
 import { Chip } from "../../../components/ui/chip";
-import { DataTable, LoadMore } from "../../../components/ui/data-table";
+import { DataTable, type TableSort } from "../../../components/ui/data-table";
+import { Pagination } from "../../../components/ui/pagination";
 import { SearchInput } from "../../../components/ui/search-input";
 import { Skeleton } from "../../../components/ui/skeleton";
 import { EmptyState, ErrorState } from "../../../components/ui/states";
@@ -13,18 +14,42 @@ import { formatNumber } from "../../../lib/format";
 import { useOverview } from "../../overview/queries/use-overview";
 import { USER_NUMERIC, UserCard, userColumns } from "../components/user-columns";
 import { UsersTableSkeleton } from "../components/users-table-skeleton";
+import { UsersFilterChips, UsersFilterSheet } from "../components/users-filters";
 import { useUserSearch } from "../hooks/use-user-search";
+import { activeFilterCount, type UserSort, useUsersParams } from "../hooks/use-users-params";
 import { useUsers } from "../queries/use-users";
 
-/** Board 02 User (+ 13 loading, empty and search-empty states from komponen 2). */
+// Table column id ↔ worker sort key.
+const SORT_OF: Record<string, UserSort> = { createdAt: "created", lastActiveAt: "lastActive", r2Bytes: "r2", syncBytes: "sync" };
+const COLUMN_OF: Partial<Record<UserSort, string>> = { created: "createdAt", lastActive: "lastActiveAt", r2: "r2Bytes", sync: "syncBytes" };
+
+/**
+ * Board 02 User (+ 13 loading, empty and search-empty states from komponen 2), with filters,
+ * column sorting, and page numbers; all of it lives in the URL (useUsersParams).
+ */
 export function UsersPage() {
   const { form, q, clear, invalid } = useUserSearch();
-  const users = useUsers(q);
+  const { params, set } = useUsersParams();
+  const users = useUsers(params);
   const overview = useOverview();
   const i18n = useI18n();
   const { t, locale } = i18n;
   const columns = useMemo(() => userColumns(i18n, q), [i18n, q]);
-  const rows = useMemo(() => users.data?.pages.flatMap((p) => p.items) ?? [], [users.data]);
+  const rows = users.data?.items ?? [];
+  const pageCount = users.data?.pageCount;
+  const filtered = activeFilterCount(params) > 0;
+  const currentSort: UserSort = params.sort && (params.sort !== "relevance" || q) ? params.sort : q ? "relevance" : "created";
+  const tableSort: TableSort | null = COLUMN_OF[currentSort] ? { id: COLUMN_OF[currentSort]!, dir: params.dir } : null;
+  // Same column flips the direction; a new column starts descending (biggest / newest first).
+  const onSort = (id: string) => {
+    const next = SORT_OF[id]!;
+    set({ sort: next, dir: next === currentSort && params.dir === "desc" ? "asc" : "desc" });
+  };
+
+  // A page past the end (rows deleted, a stale link) lands on the last page instead.
+  useEffect(() => {
+    if (pageCount !== undefined && params.page > pageCount) set({ page: pageCount });
+  }, [pageCount, params.page]);
   const total = overview.data?.users.total;
   const value = form.watch("q");
 
@@ -36,11 +61,17 @@ export function UsersPage() {
         meta={<UpdatedAt at={users.dataUpdatedAt} onRefresh={() => void users.refetch()} refreshing={users.isFetching} />}
       />
       <section aria-label={t.users.list} className="overflow-hidden rounded-card bg-sheet">
-        <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-5">
-          <form role="search" onSubmit={(e) => e.preventDefault()} className="flex min-w-0 flex-[1_1_280px] flex-col gap-1">
-            <SearchInput label={t.users.search} placeholder={t.shell.searchUsersPlaceholder} tone="canvas" className="max-w-[420px]" onClear={clear} value={value} {...form.register("q")} aria-invalid={invalid || undefined} />
-            {invalid && <span className="pl-4 text-caption text-danger-ink">{t.users.searchTooLong}</span>}
-          </form>
+        <div className="flex flex-col gap-3 px-6 py-5">
+          <div className="flex flex-wrap items-start gap-3">
+            <form role="search" onSubmit={(e) => e.preventDefault()} className="flex min-w-0 flex-[1_1_280px] flex-col gap-1 md:max-w-[420px]">
+              <SearchInput label={t.users.search} placeholder={t.shell.searchUsersPlaceholder} tone="canvas" onClear={clear} value={value} {...form.register("q")} aria-invalid={invalid || undefined} />
+              {invalid && <span className="pl-4 text-caption text-danger-ink">{t.users.searchTooLong}</span>}
+            </form>
+            <UsersFilterSheet params={params} set={set} currentSort={currentSort} />
+            <div className="max-md:hidden">
+              <UsersFilterChips params={params} set={set} />
+            </div>
+          </div>
           <span className="flex flex-wrap items-center gap-x-5 gap-y-1 text-caption text-ink2">
             {overview.data ? (
               <span>{t.users.summary(formatNumber(overview.data.users.total, locale), formatNumber(overview.data.users.banned, locale), overview.data.users.total)}</span>
@@ -50,7 +81,6 @@ export function UsersPage() {
                 <Skeleton className="h-3 w-14" />
               </span>
             )}
-            <span>{t.users.sorted}</span>
           </span>
         </div>
         {users.isError ? (
@@ -58,7 +88,11 @@ export function UsersPage() {
         ) : !users.data ? (
           <UsersTableSkeleton />
         ) : rows.length === 0 ? (
-          q ? (
+          filtered ? (
+            <EmptyState icon="filter" title={t.users.noFilterMatch} action={<Button variant="secondary" onClick={() => set({ status: undefined, ai: undefined, activity: undefined })}>{t.users.reset}</Button>}>
+              {t.users.noFilterMatchBody}
+            </EmptyState>
+          ) : q ? (
             <EmptyState icon="search" title={t.users.noMatch(q)}>
               {t.users.noMatchBody}
             </EmptyState>
@@ -74,9 +108,11 @@ export function UsersPage() {
             data={rows}
             rowHref={(u) => `/users/${u.id}`}
             numeric={USER_NUMERIC}
-            sortedBy="createdAt"
+            sort={tableSort}
+            sortable={Object.keys(SORT_OF)}
+            onSort={onSort}
             renderCard={(u) => <UserCard user={u} q={q} />}
-            footer={<LoadMore shown={rows.length} total={q ? undefined : total} onMore={users.hasNextPage ? () => void users.fetchNextPage() : undefined} loading={users.isFetchingNextPage} />}
+            footer={<Pagination page={params.page} pageCount={users.data.pageCount} total={users.data.total} pageSize={params.limit} onPage={(page) => set({ page })} pageSizes={[25, 50]} onPageSize={(limit) => set({ limit: limit as 25 | 50 })} />}
           />
         )}
       </section>
