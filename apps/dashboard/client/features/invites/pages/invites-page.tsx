@@ -42,8 +42,8 @@ export function InvitesPage() {
 
   const copyCode = (code: string) =>
     copy(code).then(
-      () => toast(`Kode ${code} disalin`),
-      () => toast("Gagal nyalin kode. Coba lagi.", { tone: "error" }),
+      () => toast(getI18n().t.invites.copied(code)),
+      () => toast(getI18n().t.invites.copyFailed, { tone: "error" }),
     );
   const makeCode = () =>
     create.mutate(1, {
@@ -53,7 +53,7 @@ export function InvitesPage() {
   const confirmDelete = () =>
     remove.mutate(deleting!, {
       onSuccess: () => {
-        toast(`Kode ${deleting} dihapus`);
+        toast(getI18n().t.invites.deleted(deleting!));
         setDeleting(null);
       },
       onError: (e) => {
@@ -64,61 +64,62 @@ export function InvitesPage() {
 
   const actions = (invite: InviteItem) => (
     <span className="flex justify-end gap-1.5">
-      <IconButton icon="copy" label={`Salin ${invite.code}`} onClick={() => void copyCode(invite.code)} />
-      {!invite.usedAt && <IconButton icon="x" label={`Hapus ${invite.code}`} variant="danger-soft" onClick={() => setDeleting(invite.code)} />}
+      <IconButton icon="copy" label={t.invites.copyCode(invite.code)} onClick={() => void copyCode(invite.code)} />
+      {!invite.usedAt && <IconButton icon="x" label={t.invites.deleteCode(invite.code)} variant="danger-soft" onClick={() => setDeleting(invite.code)} />}
     </span>
   );
   // `actions` only closes over stable setters and the clipboard hook.
+  // `actions` reads `t`, so the columns follow the language too.
   const columns = useMemo(() => inviteColumns(i18n, actions), [copy, i18n]);
 
   return (
     <>
       <PageHeader
-        title="Undangan"
+        title={t.shell.invites}
         actions={
           <>
             <UpdatedAt at={invites.dataUpdatedAt} onRefresh={() => void invites.refetch()} refreshing={invites.isFetching} />
             <Button variant="primary" icon="plus" onClick={makeCode} disabled={create.isPending}>
-              {create.isPending ? "Lagi bikin…" : "Bikin kode"}
+              {create.isPending ? t.invites.creating : t.invites.create}
             </Button>
           </>
         }
       />
-      <section aria-label="Daftar kode undangan" className="overflow-hidden rounded-card bg-sheet">
+      <section aria-label={t.invites.list} className="overflow-hidden rounded-card bg-sheet">
         <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-5">
           <Segmented
-            label="Saring kode"
+            label={t.invites.filter}
             value={filter}
             onChange={(f) => {
               setFilter(f);
               setLimit(PAGE);
             }}
             options={[
-              { value: "all", label: "Semua", count: counts.all },
-              { value: "unused", label: "Belum dipakai", count: counts.unused },
-              { value: "used", label: "Udah dipakai", count: counts.used },
+              { value: "all", label: t.invites.all, count: counts.all },
+              { value: "unused", label: t.invites.unused, count: counts.unused },
+              { value: "used", label: t.invites.used, count: counts.used },
             ]}
             className="max-w-full overflow-x-auto"
           />
-          <span className="text-caption text-ink2">Satu kode buat satu akun</span>
+          <span className="text-caption text-ink2">{t.invites.oneEach}</span>
         </div>
         {invites.isError ? (
           <ErrorState message={errorText(invites.error, t)} onRetry={() => void invites.refetch()} />
         ) : !all ? (
-          <div aria-busy="true" aria-label="Lagi muat kode undangan" className="flex flex-col gap-4 px-6 pb-6">
+          <div aria-busy="true" aria-label={t.invites.loading} className="flex flex-col gap-4 px-6 pb-6">
             {Array.from({ length: 5 }, (_, i) => (
               <Skeleton key={i} className="h-5 w-full" />
             ))}
           </div>
         ) : all.length === 0 ? (
-          <EmptyState icon="ticket" title="Belum ada kode undangan" action={<Button variant="primary" icon="plus" onClick={makeCode}>Bikin kode</Button>}>
-            Bikin satu buat ngajak orang ikut beta.
+          <EmptyState icon="ticket" title={t.invites.empty} action={<Button variant="primary" icon="plus" onClick={makeCode}>{t.invites.create}</Button>}>
+            {t.invites.emptyBody}
           </EmptyState>
         ) : filtered.length === 0 ? (
-          <EmptyState icon="ticket" title={filter === "unused" ? "Semua kode udah dipakai" : "Belum ada kode yang dipakai"} />
+          <EmptyState icon="ticket" title={filter === "unused" ? t.invites.allUsed : t.invites.noneUsed} />
         ) : (
           <DataTable
-            label="Kode undangan"
+            label={t.invites.table}
             columns={columns}
             data={rows}
             minWidth={760}

@@ -8,17 +8,18 @@ import type { UserListItem } from "../api/users-api";
 const h = columnHelper<UserListItem>();
 
 export function UserStatusChip({ banned }: { banned: boolean }) {
+  const { t } = useI18n();
   return banned ? (
     <Chip tone="danger" dot="filled">
-      Di-ban
+      {t.users.banned}
     </Chip>
   ) : (
-    <Chip dot="filled">Aktif</Chip>
+    <Chip dot="filled">{t.users.active}</Chip>
   );
 }
 
 /** The server only knows the subsidized key; an own key lives on the device, so it shows "—". */
-export const aiKeyLabel = (hasAiKey: boolean) => (hasAiKey ? "Kuota gratis" : "—");
+export const aiKeyLabel = (hasAiKey: boolean, t: I18n["t"]) => (hasAiKey ? t.users.freeQuota : "—");
 
 export function UserIdentity({ user }: { user: Pick<UserListItem, "email" | "name"> }) {
   return (
@@ -35,13 +36,13 @@ export function UserIdentity({ user }: { user: Pick<UserListItem, "email" | "nam
 // Komponen 2, Tabel: numbers right-aligned and tabular, empty values "—".
 export const userColumns = (i18n: I18n) =>
   h.columns([
-  h.accessor("email", { header: "User", cell: (info) => <UserIdentity user={info.row.original} /> }),
-  h.accessor("createdAt", { header: "Daftar", cell: (info) => <span className="whitespace-nowrap">{formatDate(info.getValue(), i18n.locale)}</span> }),
-  h.accessor("lastActiveAt", { header: "Terakhir aktif", cell: (info) => <span className="whitespace-nowrap">{formatRelative(info.getValue(), i18n)}</span> }),
-  h.accessor("r2Bytes", { header: "File", cell: (info) => formatBytes(info.getValue(), i18n.locale) }),
-  h.accessor("syncBytes", { header: "Data sync", cell: (info) => formatBytes(info.getValue(), i18n.locale) }),
-  h.accessor("hasAiKey", { header: "Key AI", cell: (info) => aiKeyLabel(info.getValue()) }),
-  h.accessor("banned", { header: "Status", cell: (info) => <UserStatusChip banned={info.getValue()} /> }),
+  h.accessor("email", { header: i18n.t.users.user, cell: (info) => <UserIdentity user={info.row.original} /> }),
+  h.accessor("createdAt", { header: i18n.t.users.joined, cell: (info) => <span className="whitespace-nowrap">{formatDate(info.getValue(), i18n.locale)}</span> }),
+  h.accessor("lastActiveAt", { header: i18n.t.users.lastActive, cell: (info) => <span className="whitespace-nowrap">{formatRelative(info.getValue(), i18n)}</span> }),
+  h.accessor("r2Bytes", { header: i18n.t.users.files, cell: (info) => formatBytes(info.getValue(), i18n.locale) }),
+  h.accessor("syncBytes", { header: i18n.t.users.syncData, cell: (info) => formatBytes(info.getValue(), i18n.locale) }),
+  h.accessor("hasAiKey", { header: i18n.t.users.aiKey, cell: (info) => aiKeyLabel(info.getValue(), i18n.t) }),
+  h.accessor("banned", { header: i18n.t.users.status, cell: (info) => <UserStatusChip banned={info.getValue()} /> }),
 ]);
 
 export const USER_NUMERIC = ["r2Bytes", "syncBytes"];
@@ -50,10 +51,10 @@ export const USER_NUMERIC = ["r2Bytes", "syncBytes"];
 export function UserCard({ user }: { user: UserListItem }) {
   const i18n = useI18n();
   const data: [string, string][] = [
-    ["Daftar", formatDate(user.createdAt, i18n.locale)],
-    ["Terakhir aktif", formatRelative(user.lastActiveAt, i18n)],
-    ["File", formatBytes(user.r2Bytes, i18n.locale)],
-    ["Data sync", formatBytes(user.syncBytes, i18n.locale)],
+    [i18n.t.users.joined, formatDate(user.createdAt, i18n.locale)],
+    [i18n.t.users.lastActive, formatRelative(user.lastActiveAt, i18n)],
+    [i18n.t.users.files, formatBytes(user.r2Bytes, i18n.locale)],
+    [i18n.t.users.syncData, formatBytes(user.syncBytes, i18n.locale)],
   ];
   return (
     <div className="flex flex-col gap-3">

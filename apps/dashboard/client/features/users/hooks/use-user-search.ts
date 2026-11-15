@@ -33,5 +33,5 @@ export function useUserSearch() {
     form.setValue("q", "");
     setParams({}, { replace: true });
   };
-  return { form, q, clear, error: form.formState.errors.q?.message };
+  return { form, q, clear, invalid };
 }

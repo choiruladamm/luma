@@ -18,7 +18,7 @@ import { useUsers } from "../queries/use-users";
 
 /** Board 02 User (+ 13 loading, empty and search-empty states from komponen 2). */
 export function UsersPage() {
-  const { form, q, clear, error } = useUserSearch();
+  const { form, q, clear, invalid } = useUserSearch();
   const users = useUsers(q);
   const overview = useOverview();
   const i18n = useI18n();
@@ -31,28 +31,26 @@ export function UsersPage() {
   return (
     <>
       <PageHeader
-        title="User"
+        title={t.shell.users}
         after={total !== undefined ? <Chip>{formatNumber(total, locale)}</Chip> : <Skeleton className="h-7 w-10" />}
         actions={<UpdatedAt at={users.dataUpdatedAt} onRefresh={() => void users.refetch()} refreshing={users.isFetching} />}
       />
-      <section aria-label="Daftar user" className="overflow-hidden rounded-card bg-sheet">
+      <section aria-label={t.users.list} className="overflow-hidden rounded-card bg-sheet">
         <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-5">
           <form role="search" onSubmit={(e) => e.preventDefault()} className="flex min-w-0 flex-[1_1_280px] flex-col gap-1">
-            <SearchInput label="Cari email" placeholder="Cari email user…" tone="canvas" className="max-w-[420px]" onClear={clear} value={value} {...form.register("q")} aria-invalid={error ? true : undefined} />
-            {error && <span className="pl-4 text-caption text-danger-ink">{error}</span>}
+            <SearchInput label={t.users.search} placeholder={t.shell.searchUsersPlaceholder} tone="canvas" className="max-w-[420px]" onClear={clear} value={value} {...form.register("q")} aria-invalid={invalid || undefined} />
+            {invalid && <span className="pl-4 text-caption text-danger-ink">{t.users.searchTooLong}</span>}
           </form>
           <span className="flex flex-wrap items-center gap-x-5 gap-y-1 text-caption text-ink2">
             {overview.data ? (
-              <span>
-                {formatNumber(overview.data.users.total, locale)} user · {formatNumber(overview.data.users.banned, locale)} di-ban
-              </span>
+              <span>{t.users.summary(formatNumber(overview.data.users.total, locale), formatNumber(overview.data.users.banned, locale), overview.data.users.total)}</span>
             ) : (
               <span aria-hidden="true" className="flex items-center gap-5">
                 <Skeleton className="h-3 w-[72px]" />
                 <Skeleton className="h-3 w-14" />
               </span>
             )}
-            <span>Urut dari yang paling baru daftar</span>
+            <span>{t.users.sorted}</span>
           </span>
         </div>
         {users.isError ? (
@@ -61,17 +59,17 @@ export function UsersPage() {
           <UsersTableSkeleton />
         ) : rows.length === 0 ? (
           q ? (
-            <EmptyState icon="search" title={`Gak ada email yang cocok sama “${q}”`}>
-              Cek ejaannya, atau cari pakai sebagian email aja.
+            <EmptyState icon="search" title={t.users.noMatch(q)}>
+              {t.users.noMatchBody}
             </EmptyState>
           ) : (
-            <EmptyState icon="users" title="Belum ada user" action={<ButtonLink to="/invites" variant="secondary" icon="ticket">Ke Undangan</ButtonLink>}>
-              Selama beta, user baru masuk lewat kode undangan. Begitu ada yang daftar, mereka muncul di sini.
+            <EmptyState icon="users" title={t.users.empty} action={<ButtonLink to="/invites" variant="secondary" icon="ticket">{t.users.toInvites}</ButtonLink>}>
+              {t.users.emptyBody}
             </EmptyState>
           )
         ) : (
           <DataTable
-            label="Daftar user"
+            label={t.users.list}
             columns={columns}
             data={rows}
             rowHref={(u) => `/users/${u.id}`}

@@ -34,7 +34,7 @@ export function OverviewPage() {
 
   return (
     <>
-      <PageHeader title="Ringkasan" actions={<UpdatedAt at={overview.dataUpdatedAt} onRefresh={refresh} refreshing={overview.isFetching} />} />
+      <PageHeader title={t.shell.overview} actions={<UpdatedAt at={overview.dataUpdatedAt} onRefresh={refresh} refreshing={overview.isFetching} />} />
       {overview.isError && !data ? (
         <section className="rounded-card bg-sheet">
           <ErrorState message={errorText(overview.error, t)} onRetry={() => void overview.refetch()} />
@@ -43,11 +43,11 @@ export function OverviewPage() {
         <>
           {/* Board 12: while loading, the real labels and icons stay and only the values pulse. */}
           <div aria-busy={!data || undefined} className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4">
-            <StatCard label="User terdaftar" icon="users" value={data ? formatNumber(data.users.total, locale) : <StatValueSkeleton />} note={data ? <><strong className="text-ink">+{formatNumber(data.users.new7d, locale)}</strong> dalam 7 hari</> : <StatNoteSkeleton />} />
-            <StatCard label="Baru 7 hari" icon="clock" value={data ? formatNumber(data.users.new7d, locale) : <StatValueSkeleton />} note={data ? `dari ${formatNumber(data.users.total, locale)} user` : <StatNoteSkeleton />} />
-            <StatCard label="Di-ban" icon="ban" value={data ? formatNumber(data.users.banned, locale) : <StatValueSkeleton />} danger={!!data && data.users.banned > 0} note={data ? `${pct(data.users.banned, data.users.total)} dari semua user` : <StatNoteSkeleton />} />
-            <StatCard label="Penyimpanan" icon="drive" value={data ? formatBytes(data.storage.r2Bytes + data.storage.syncBytes, locale) : <StatValueSkeleton />} note={data ? "file buku + data sync" : <StatNoteSkeleton />} />
-            <StatCard label="Kode undangan" icon="ticket" value={data ? formatNumber(data.invites.unused, locale) : <StatValueSkeleton />} note={data ? "belum dipakai" : <StatNoteSkeleton />} />
+            <StatCard label={t.overview.registered} icon="users" value={data ? formatNumber(data.users.total, locale) : <StatValueSkeleton />} note={data ? <><strong className="text-ink">+{formatNumber(data.users.new7d, locale)}</strong> {t.overview.inWeek}</> : <StatNoteSkeleton />} />
+            <StatCard label={t.overview.newWeek} icon="clock" value={data ? formatNumber(data.users.new7d, locale) : <StatValueSkeleton />} note={data ? t.overview.ofUsers(formatNumber(data.users.total, locale), data.users.total) : <StatNoteSkeleton />} />
+            <StatCard label={t.overview.banned} icon="ban" value={data ? formatNumber(data.users.banned, locale) : <StatValueSkeleton />} danger={!!data && data.users.banned > 0} note={data ? t.overview.bannedShare(pct(data.users.banned, data.users.total)) : <StatNoteSkeleton />} />
+            <StatCard label={t.overview.storage} icon="drive" value={data ? formatBytes(data.storage.r2Bytes + data.storage.syncBytes, locale) : <StatValueSkeleton />} note={data ? t.overview.storageNote : <StatNoteSkeleton />} />
+            <StatCard label={t.overview.invites} icon="ticket" value={data ? formatNumber(data.invites.unused, locale) : <StatValueSkeleton />} note={data ? t.overview.unused : <StatNoteSkeleton />} />
           </div>
           <div className="flex flex-wrap items-start gap-4">
             <div className="flex min-w-0 flex-[2_1_480px] flex-col gap-4">
@@ -64,10 +64,10 @@ export function OverviewPage() {
       <section aria-labelledby="h-baru" className="overflow-hidden rounded-card bg-sheet">
         <div className="flex min-h-11 flex-wrap items-center justify-between gap-3 px-6 pt-4 pb-2">
           <h2 id="h-baru" className="m-0 text-card font-semibold">
-            Baru daftar
+            {t.overview.recent}
           </h2>
           <ButtonLink to="/users" variant="secondary" icon="arrow">
-            Semua user
+            {t.overview.allUsers}
           </ButtonLink>
         </div>
         {recent.isError ? (
@@ -76,7 +76,7 @@ export function OverviewPage() {
           <UsersTableSkeleton rows={RECENT} />
         ) : (
           <DataTable
-            label="User yang baru daftar"
+            label={t.overview.recentTable}
             columns={columns}
             data={recentRows}
             rowHref={(u) => `/users/${u.id}`}

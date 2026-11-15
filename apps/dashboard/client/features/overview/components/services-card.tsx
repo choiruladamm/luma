@@ -2,23 +2,25 @@ import { Card, CardHeader } from "../../../components/ui/card";
 import { Chip } from "../../../components/ui/chip";
 import { Icon, type IconName } from "../../../components/ui/icons";
 import { Skeleton } from "../../../components/ui/skeleton";
+import { useI18n } from "../../../i18n";
 
 /** Backend kill switches, display only: they change via `vars` + deploy, not from here. */
 export function ServicesCard({ flags }: { flags?: { sync: boolean; backup: boolean; aiKey: boolean } }) {
+  const { t } = useI18n();
   const rows: [string, IconName, boolean | undefined][] = [
     ["Sync", "sync", flags?.sync],
     ["Backup", "cloud", flags?.backup],
-    ["Key AI", "key", flags?.aiKey],
+    [t.overview.aiKey, "key", flags?.aiKey],
   ];
   return (
     <Card aria-labelledby="h-layanan" aria-busy={!flags || undefined} className="gap-3">
       <CardHeader
         id="h-layanan"
-        title="Layanan"
+        title={t.overview.services}
         action={
           <span className="inline-flex items-center gap-1.5 text-caption text-ink2">
             <Icon name="lock" size={16} />
-            Cuma status
+            {t.overview.statusOnly}
           </span>
         }
       />
@@ -33,7 +35,7 @@ export function ServicesCard({ flags }: { flags?: { sync: boolean; backup: boole
               <Skeleton tone="track" className="h-6 w-[76px]" />
             ) : (
               <Chip tone={on ? "sheet" : "danger"} dot="filled">
-                {on ? "Nyala" : "Mati"}
+                {on ? t.overview.on : t.overview.off}
               </Chip>
             )}
           </li>

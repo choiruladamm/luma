@@ -15,13 +15,13 @@ export const providerLabel = (ids: string[]) => (ids.length ? ids.map((id) => PR
 /** Board 05/07: profile card; banned users get the banner on top (no ban date: not stored). */
 export function UserProfile({ user, onCopyEmail, onUnban, unbanning }: { user: UserDetail; onCopyEmail: () => void; onUnban: () => void; unbanning: boolean }) {
   const i18n = useI18n();
-  const { locale } = i18n;
+  const { t, locale } = i18n;
   const facts: [string, React.ReactNode][] = [
-    ["Daftar", formatDateTime(user.createdAt, locale)],
-    ["Terakhir aktif", user.lastActiveAt ? `${formatRelative(user.lastActiveAt, i18n)} · ${formatDateTime(user.lastActiveAt, locale)}` : "Belum pernah"],
-    ["Masuk lewat", providerLabel(user.providers)],
+    [t.users.joined, formatDateTime(user.createdAt, locale)],
+    [t.users.lastActive, user.lastActiveAt ? `${formatRelative(user.lastActiveAt, i18n)} · ${formatDateTime(user.lastActiveAt, locale)}` : t.time.never],
+    [t.userDetail.signsInWith, providerLabel(user.providers)],
     [
-      "Kode undangan",
+      t.userDetail.inviteCode,
       user.invite ? (
         <Link to="/invites" className="font-mono text-ink no-underline hover:underline">
           {user.invite.code}
@@ -32,17 +32,17 @@ export function UserProfile({ user, onCopyEmail, onUnban, unbanning }: { user: U
     ],
   ];
   return (
-    <section aria-label="Profil user" className="flex flex-col gap-6 rounded-card bg-sheet p-6 md:p-7">
+    <section aria-label={t.userDetail.profile} className="flex flex-col gap-6 rounded-card bg-sheet p-6 md:p-7">
       {user.banned && (
         <Banner
-          title="User ini lagi di-ban"
+          title={t.userDetail.bannedBanner}
           action={
             <Button variant="sheet" icon="key" onClick={onUnban} disabled={unbanning}>
-              {unbanning ? "Lagi buka…" : "Buka ban"}
+              {unbanning ? t.userDetail.unbanning : t.userDetail.unban}
             </Button>
           }
         >
-          Kuota AI gratisnya dicabut. Masuk, backup, dan sync tetap jalan.
+          {t.userDetail.bannedBannerBody}
         </Banner>
       )}
       <div className="flex flex-wrap items-center gap-5">
@@ -52,11 +52,11 @@ export function UserProfile({ user, onCopyEmail, onUnban, unbanning }: { user: U
           <div className="flex flex-wrap items-center gap-2">
             {user.name && <span className="text-body text-ink2">{user.name}</span>}
             <UserStatusChip banned={user.banned} />
-            {user.hasAiKey && <Chip icon="key">Kuota AI gratis</Chip>}
+            {user.hasAiKey && <Chip icon="key">{t.userDetail.freeAi}</Chip>}
           </div>
         </div>
         <Button variant="secondary" icon="copy" onClick={onCopyEmail}>
-          Salin email
+          {t.userDetail.copyEmail}
         </Button>
       </div>
       <dl className="m-0 grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-5 border-t border-track pt-5">

@@ -1,22 +1,24 @@
 import { Button } from "../../../components/ui/button";
 import { ConfirmFooter, Dialog } from "../../../components/ui/dialog";
+import { useI18n } from "../../../i18n";
 
 export function DeleteInviteDialog({ code, onClose, onConfirm, pending }: { code: string | null; onClose: () => void; onConfirm: () => void; pending: boolean }) {
+  const { t } = useI18n();
   return (
     <Dialog
       open={code !== null}
       onClose={onClose}
-      title="Hapus kode ini?"
-      description="Kode yang belum dipakai ini gak bisa dipakai daftar lagi."
+      title={t.invites.deleteTitle}
+      description={t.invites.deleteBody}
       icon="x"
       tone="danger"
       footer={
         <ConfirmFooter>
           <Button variant="secondary" onClick={onClose} autoFocus>
-            Batal
+            {t.common.cancel}
           </Button>
           <Button variant="danger" icon="x" onClick={onConfirm} disabled={pending}>
-            {pending ? "Lagi hapus…" : "Hapus kode"}
+            {pending ? t.invites.deleting : t.invites.delete}
           </Button>
         </ConfirmFooter>
       }
