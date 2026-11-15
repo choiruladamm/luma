@@ -5,7 +5,7 @@ import { invitesKeys } from "./query-keys";
 export const useInvites = (status?: InviteStatus) =>
   useQuery({ queryKey: invitesKeys.list(status), queryFn: () => listInvites(status) });
 
-function useInviteMutation<T>(mutationFn: (input: T) => Promise<unknown>) {
+function useInviteMutation<T, R>(mutationFn: (input: T) => Promise<R>) {
   const queryClient = useQueryClient();
   return useMutation({ mutationFn, onSuccess: () => queryClient.invalidateQueries({ queryKey: invitesKeys.all }) });
 }

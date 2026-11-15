@@ -47,7 +47,7 @@ flowchart LR
 | Frontend | Vite + React SPA di `client/`, disajikan Workers Static Assets dari Worker yang sama (satu origin, tanpa CORS). React Router cuma untuk routing. Data lewat TanStack Query di atas klien `hc<AppType>()` Hono RPC (tipe request/response ikut Worker, header JSON global); login/logout `fetch` biasa ke `/api/auth/*`. Form RHF + zod, tabel TanStack Table (mode manual, paginasi di server), Zustand cuma untuk state UI (bukan data API). Tanpa Axios |
 | API | Hono di `/api/*`, zod validator, error `{"error": {"code", "message"}}` seperti backend |
 | Data | Binding D1 ke database yang sama dengan backend env itu. Tidak pakai R2 |
-| Styling | Belum diputuskan (Tailwind atau lainnya), menunggu export foundation Stabilo dari Claude Design |
+| Styling | Tailwind v4 dengan token Stabilo di `client/styles/app.css` (terang dari board "14 · Admin web", gelap dari token gelap Stabilo app). Font Bricolage Grotesque / Geist / Geist Mono di-bundle (`@fontsource`, CSP gak izinkan Google Fonts). Ikon Hugeicons stroke-rounded, set yang sama dengan app |
 
 Routing Static Assets: request `/api/*` masuk Worker, sisanya file statis dengan fallback `index.html`. React ditambahkan ke proyek Vite `apps/dashboard` yang sudah ada (`react()` sebelum `cloudflare()` di `vite.config.ts`, `index.html` di root `apps/dashboard`), bukan proyek Vite baru di `client/`.
 
@@ -173,10 +173,10 @@ Urutan middleware: `requestId → rateLimit per IP → [/api/auth/* → Better A
 |---|---|---|---|
 | `GET /api/overview` | - | `{users: {total, new7d, banned}, storage: {r2Bytes, syncBytes}, syncToday: {rows, limit: 100000}, invites: {unused}, flags: {sync, backup, aiKey}, ai: {spendUsd, budgetUsd, asOf}}`. `syncToday.rows` = `SUM(sync_rows)` untuk `sync_day` hari ini (UTC). `ai.spendUsd` bulan UTC ini sampai `asOf` (kemarin); OpenRouter gagal → `null`, tetap 200 | 1 `batch` 3 agregat + 1 subrequest OpenRouter (`/activity`); `flags` dari `env` |
 | `GET /api/users?q=&cursor=&limit=50` | `q` awalan email | `{items: [{id, email, name, createdAt, lastActiveAt, banned, hasAiKey, r2Bytes, syncBytes}], nextCursor}`, terbaru dulu (`createdAt` lalu `id` menurun); `nextCursor` = `<createdAt ms>,<id>` atau `null` | 1 query: `users` ⟕ `user_storage` ⟕ `ai_keys`, `lastActiveAt` subquery `MAX(sessions.updated_at)` per baris |
-| `GET /api/users/:id` | - | data di atas + `sessions: [{userAgent, ipAddress, createdAt, updatedAt}]` (maks 50, terbaru dulu), `ai: {limit, usageDaily, expiresAt} \| null`, `invite: {code, usedAt} \| null`. `getUsage` gagal → tetap 200 dengan `usageDaily: null` | 1 `batch` (4 statement) + 1 subrequest OpenRouter (`getUsage`) kalau punya key |
+| `GET /api/users/:id` | - | data di atas + `sessions: [{userAgent, ipAddress, createdAt, updatedAt}]` (maks 50, terbaru dulu), `ai: {limit, usageDaily, expiresAt} \| null`, `invite: {code, usedAt} \| null`, `providers` (id provider Better Auth: `google`, `credential`). `getUsage` gagal → tetap 200 dengan `usageDaily: null` | 1 `batch` (5 statement) + 1 subrequest OpenRouter (`getUsage`) kalau punya key |
 | `POST /api/users/:id/ban` | - | `{banned: true, keyRevoked}` | 1 query (user + hash key), `deleteKey` OpenRouter dulu (404 = sudah hilang, dianggap sukses); gagal → 502 tanpa menyentuh D1. Sukses → 1 `batch` (`banned = 1` + hapus `ai_keys`). Idempoten |
 | `POST /api/users/:id/unban` | - | `{banned: false}` | 1 update (`RETURNING`, user gak ada → 404) |
-| `GET /api/invites?status=unused\|used` | `status` opsional (tanpa = semua) | `{items: [{code, usedBy: {id, email} \| null, usedAt}]}`. Terpakai = `used_at` terisi (`usedBy` bisa `null` kalau akunnya dihapus). Kode ditampilkan `LUMA-XXXXX-XXXXX`; maks 500 baris | 1 query |
+| `GET /api/invites?status=unused\|used` | `status` opsional (tanpa = semua) | `{items: [{code, usedBy: {id, email} \| null, usedAt}]}`. Terpakai = `used_at` terisi (`usedBy` bisa `null` kalau akunnya dihapus). Kode ditampilkan `LUMA-XXXXX-XXXXX`; yang belum dipakai duluan, lalu yang terbaru dipakai; maks 500 baris | 1 query |
 | `POST /api/invites` | `{count: 1..20}` | 201 `{codes: [...]}` format `LUMA-XXXXX-XXXXX` (disimpan ternormalisasi, sama dengan `make backend-invite`) | 1 insert |
 | `DELETE /api/invites/:code` | - | 204 | `DELETE … WHERE used_at IS NULL` (kode dinormalisasi dulu); gagal → +1 query: ada → 409 `INVITE_CODE_USED`, gak ada → 404 |
 
@@ -215,7 +215,15 @@ Batas Workers 100rb request/hari dihitung per akun, jadi dashboard ikut memakai 
 - Copy bahasa Indonesia. Light dan dark mengikuti sistem.
 - Responsif sampai lebar HP (±360px): di layar sempit, tabel User berubah jadi daftar kartu dan navigasi pindah ke bawah atau menu.
 - Badge **DEV** di header kalau env bukan prod, supaya tidak salah ban di prod.
-- Ringkasan dan User didesain di Claude Design. Login, Detail user, dan Undangan dirakit dari foundation Stabilo.
+- Board: halaman "14 · Admin web" di Stabilo (komponen 1 & 2, Ringkasan, User, Detail user + dialog ban + udah di-ban, Undangan + kode baru, tampilan HP, menu burger, loading). Tema Terang/Gelap/Sistem di menu akun, pilihan disimpan di browser.
+- Beda dari board karena data atau produk:
+  - Ban cuma mencabut AI subsidi, jadi copy "gak bisa masuk atau sync" diganti "Kuota AI gratisnya dicabut. Masuk, backup, dan sync tetap jalan".
+  - Kartu Sync cuma hari ini (backend gak nyimpan riwayat per hari), bukan grafik 7 hari.
+  - Key AI: "Kuota gratis" kalau punya key subsidi, selain itu "—"; key sendiri gak pernah sampai server.
+  - Tanpa tanggal ban (gak ada kolom `banned_at`) dan tanpa kolom "Dibuat" di Undangan (`invite_codes` gak punya `created_at`).
+  - Tanpa pilihan bahasa (dashboard cuma bahasa Indonesia).
+  - Tambahan: layar Login, kartu Perangkat (sesi) dan Kuota AI gratis di Detail user, kartu Kuota AI gratis (spend bulan ini) di Ringkasan, dialog konfirmasi hapus kode.
+- Waktu ditampilkan di zona waktu browser admin.
 
 Prompt Claude Design (detail visual diserahkan ke Claude Design, mengikuti foundation Stabilo):
 

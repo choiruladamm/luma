@@ -49,7 +49,8 @@ client/                  # React SPA, see "Client" below
 
 Stack: React, React Router (routing only), TanStack Query over `hc<AppType>()`, RHF + zod, TanStack Table, Zustand. No Axios, no React Router loaders/actions. Files are kebab-case.
 
-- One-way flow: `pages → (feature hooks + queries) → api → lib/api-client`. Components only take props; features don't import each other.
+- One-way flow: `pages → (feature hooks + queries) → api → lib/api-client`. Components only take props. `api/`, `queries/`, and `hooks/` never import another feature; a page may compose another feature's components and queries (Ringkasan shows the users table).
+- UI: board "14 · Admin web" in the Stabilo canvas. Tokens live in `client/styles/app.css` (CSS variables per theme, mapped to Tailwind colors like `bg-sheet`, `text-ink2`); never hard-code a hex in a component. Shared building blocks are in `components/ui` (Button, Chip, Card/StatCard, Segmented, Dialog, DataTable, Toast, states). Icons go through `<Icon name>` (Hugeicons stroke-rounded, the app's set).
 - `features/*/api/`: raw `hc` calls through `unwrap()` → data or `ApiError`; no React. `queries/`: the only place for `useQuery`/`useMutation`, keys in `query-keys.ts`. `hooks/`: client logic that never calls the API. `schemas/`: zod for forms, mirroring worker limits (the worker stays the authority).
 - `client/` imports from `worker/` with `import type` only. Better Auth routes aren't in `AppType`; `features/auth/api` uses plain `fetch`.
 - Keep the TanStack Query defaults in `app/query-client.ts` (no focus refetch, no polling): the dashboard shares the backend's free-tier quota.

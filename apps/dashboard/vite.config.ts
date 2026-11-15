@@ -1,4 +1,5 @@
 import { cloudflare } from "@cloudflare/vite-plugin";
+import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 import { backendVars } from "./backend-vars";
@@ -7,6 +8,7 @@ import { backendVars } from "./backend-vars";
 export default defineConfig({
   plugins: [
     react(),
+    tailwindcss(),
     cloudflare({
       // Same local state as `make backend-dev`: the dashboard's local D1 is the backend's.
       persistState: { path: "../backend/.wrangler/state" },

@@ -1,0 +1,208 @@
+@import "tailwindcss";
+@import "@fontsource-variable/geist";
+@import "@fontsource-variable/geist-mono";
+@import "@fontsource-variable/bricolage-grotesque/opsz.css";
+
+/*
+ * Stabilo tokens (board "14 · Admin web", komponen 1). Light from the board; dark is the
+ * app's Stabilo dark set (apps/mobile stabilo_theme.dart). `page` is the admin background:
+ * muted in light, canvas in dark (dark muted is lighter than the cards).
+ */
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+  --c-page: #f2eddd;
+  --c-canvas: #fffbef;
+  --c-sheet: #fffdf6;
+  --c-muted: #f2eddd;
+  --c-track: #e4ddc9;
+  --c-line: #cfc6ae;
+  --c-ink: #1c1c1c;
+  --c-ink2: #5e5a4e;
+  --c-accent: #ffd84d;
+  --c-on-accent: #1a1a1a;
+  --c-outline: #1a1a1a;
+  --c-pink: #ffc2d3;
+  --c-on-pink: #1a1a1a;
+  --c-danger: #b4361f;
+  --c-on-danger: #fffbef;
+  --c-danger-soft: #f8e1da;
+  --c-danger-ink: #8e2a17;
+  --c-toast: #1c1c1c;
+  --c-toast-ink: #fffbef;
+  --c-scrim: rgb(26 26 26 / 0.38);
+  --c-segment: #fffdf6;
+  /* Initial avatars: first 6 cover colors (apps/mobile stabilo_tokens.dart coverPalette). */
+  --c-av0: #ffe38a;
+  --c-av1: #ffc2d3;
+  --c-av2: #ffb27d;
+  --c-av3: #a6e6c6;
+  --c-av4: #a3b5ff;
+  --c-av5: #d4b8ff;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --c-page: #22201c;
+  --c-canvas: #22201c;
+  --c-sheet: #2c2a25;
+  --c-muted: #36332d;
+  --c-track: #46423a;
+  --c-line: #5a554b;
+  --c-ink: #ddd7c8;
+  --c-ink2: #a19b8e;
+  --c-accent: #e9c75a;
+  --c-on-accent: #22201c;
+  --c-outline: #e9c75a;
+  --c-pink: #d99bae;
+  --c-on-pink: #22201c;
+  --c-danger: #e8836f;
+  --c-on-danger: #22201c;
+  --c-danger-soft: #4a3029;
+  --c-danger-ink: #f2a190;
+  --c-toast: #46423a;
+  --c-toast-ink: #f3ebd3;
+  --c-scrim: rgb(0 0 0 / 0.42);
+  --c-segment: #4a463e;
+  --c-av0: #c1ac6b;
+  --c-av1: #c195a0;
+  --c-av2: #c18962;
+  --c-av3: #81af96;
+  --c-av4: #7f8bbf;
+  --c-av5: #a28dbf;
+}
+
+/* "Sistem" (no data-theme): follow the OS. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --c-page: #22201c;
+    --c-canvas: #22201c;
+    --c-sheet: #2c2a25;
+    --c-muted: #36332d;
+    --c-track: #46423a;
+    --c-line: #5a554b;
+    --c-ink: #ddd7c8;
+    --c-ink2: #a19b8e;
+    --c-accent: #e9c75a;
+    --c-on-accent: #22201c;
+    --c-outline: #e9c75a;
+    --c-pink: #d99bae;
+    --c-on-pink: #22201c;
+    --c-danger: #e8836f;
+    --c-on-danger: #22201c;
+    --c-danger-soft: #4a3029;
+    --c-danger-ink: #f2a190;
+    --c-toast: #46423a;
+    --c-toast-ink: #f3ebd3;
+    --c-scrim: rgb(0 0 0 / 0.42);
+    --c-segment: #4a463e;
+    --c-av0: #c1ac6b;
+    --c-av1: #c195a0;
+    --c-av2: #c18962;
+    --c-av3: #81af96;
+    --c-av4: #7f8bbf;
+    --c-av5: #a28dbf;
+  }
+}
+
+@theme inline {
+  --color-page: var(--c-page);
+  --color-canvas: var(--c-canvas);
+  --color-sheet: var(--c-sheet);
+  --color-muted: var(--c-muted);
+  --color-track: var(--c-track);
+  --color-line: var(--c-line);
+  --color-ink: var(--c-ink);
+  --color-ink2: var(--c-ink2);
+  --color-accent: var(--c-accent);
+  --color-on-accent: var(--c-on-accent);
+  --color-outline: var(--c-outline);
+  --color-pink: var(--c-pink);
+  --color-on-pink: var(--c-on-pink);
+  --color-danger: var(--c-danger);
+  --color-on-danger: var(--c-on-danger);
+  --color-danger-soft: var(--c-danger-soft);
+  --color-danger-ink: var(--c-danger-ink);
+  --color-toast: var(--c-toast);
+  --color-toast-ink: var(--c-toast-ink);
+  --color-scrim: var(--c-scrim);
+  --color-segment: var(--c-segment);
+}
+
+@theme {
+  --font-sans: "Geist Variable", system-ui, sans-serif;
+  --font-display: "Bricolage Grotesque Variable", system-ui, sans-serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* Type scale (komponen 1, Tipografi): max weight 600, numbers tabular. */
+  --text-title: 28px;
+  --text-title--line-height: 34px;
+  --text-title--letter-spacing: -0.02em;
+  --text-stat: 36px;
+  --text-stat--line-height: 1;
+  --text-stat--letter-spacing: -0.03em;
+  --text-dialog: 20px;
+  --text-dialog--line-height: 26px;
+  --text-dialog--letter-spacing: -0.01em;
+  --text-card: 16px;
+  --text-card--line-height: 22px;
+  --text-body: 14px;
+  --text-body--line-height: 21px;
+  --text-caption: 13px;
+  --text-caption--line-height: 18px;
+  --text-chip: 12px;
+  --text-chip--line-height: 16px;
+
+  --radius-tile: 10px;
+  --radius-tile-lg: 12px;
+  --radius-row: 16px;
+  --radius-card: 20px;
+  --radius-menu: 24px;
+  --radius-dialog: 28px;
+
+  --shadow-sheet: 0 8px 30px rgb(26 26 26 / 0.12);
+  --shadow-toast: 0 8px 24px rgb(0 0 0 / 0.18);
+  --shadow-primary: 0 2px 0 var(--c-outline);
+  --shadow-segment: 0 1px 3px rgb(26 26 26 / 0.15);
+
+  --animate-pulse-soft: pulse-soft 1.5s ease-in-out infinite;
+  @keyframes pulse-soft {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+}
+
+@layer base {
+  html {
+    background: var(--c-page);
+    color: var(--c-ink);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    margin: 0;
+    min-height: 100dvh;
+  }
+  :focus-visible {
+    outline: 2px solid var(--c-outline);
+    outline-offset: 2px;
+  }
+  ::placeholder {
+    color: var(--c-ink2);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation: none !important;
+      transition: none !important;
+    }
+  }
+}
