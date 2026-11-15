@@ -32,7 +32,7 @@ export function UsersPage() {
     <>
       <PageHeader
         title={t.shell.users}
-        after={total !== undefined ? <Chip>{formatNumber(total, locale)}</Chip> : <Skeleton className="h-7 w-10" />}
+        after={total !== undefined ? <Chip tone="sheet">{formatNumber(total, locale)}</Chip> : <Skeleton className="h-7 w-10" />}
         actions={<UpdatedAt at={users.dataUpdatedAt} onRefresh={() => void users.refetch()} refreshing={users.isFetching} />}
       />
       <section aria-label={t.users.list} className="overflow-hidden rounded-card bg-sheet">

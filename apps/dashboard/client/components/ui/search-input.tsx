@@ -19,7 +19,8 @@ export const SearchInput = forwardRef<HTMLInputElement, { label: string; onClear
           id={inputId}
           type="search"
           autoComplete="off"
-          className={cn("h-11 w-full rounded-full border-0 pr-4 pl-11 text-body text-ink [&::-webkit-search-cancel-button]:hidden", tone === "sheet" ? "bg-sheet" : "bg-canvas", onClear && props.value ? "pr-12" : "")}
+          className={cn("h-11 w-full rounded-full border-0 pr-4 pl-11 text-body text-ink [&::-webkit-search-cancel-button]:hidden", // On a sheet card, canvas alone is nearly the same color as the card: add a track ring.
+              tone === "sheet" ? "bg-sheet" : "bg-canvas shadow-[inset_0_0_0_1px_var(--c-track)]", onClear && props.value ? "pr-12" : "")}
           {...props}
         />
         {onClear && props.value ? (
