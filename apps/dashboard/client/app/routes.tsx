@@ -1,5 +1,6 @@
 import type { RouteObject } from "react-router";
 import { sessionQuery } from "../features/auth/queries/use-session";
+import { parseInvitesParams } from "../features/invites/hooks/use-invites-params";
 import { invitesQuery } from "../features/invites/queries/use-invites";
 import { overviewQuery } from "../features/overview/queries/use-overview";
 import { userDetailQuery } from "../features/users/queries/use-user-detail";
@@ -40,7 +41,7 @@ export const routes: RouteObject[] = [
       },
       {
         path: "invites",
-        loader: prefetch((qc) => qc.prefetchQuery(invitesQuery())),
+        loader: prefetch((qc, { request }) => qc.prefetchQuery(invitesQuery(parseInvitesParams(new URL(request.url).searchParams)))),
         lazy: async () => ({ Component: (await import("../features/invites/pages/invites-page")).InvitesPage }),
       },
     ],

@@ -24,7 +24,8 @@ describe("phone navigation", () => {
     expect(within(tabBar).getByRole("link", { name: /Ringkasan/ })).toHaveAttribute("aria-current", "page");
     await user.click(within(tabBar).getByRole("link", { name: /Undangan/ }));
     await waitFor(() => expect(router.state.location.pathname).toBe("/invites"));
-    expect(within(tabBar).getByRole("link", { name: /Undangan/ })).toHaveAttribute("aria-current", "page");
+    // The route commits before NavLink re-renders its aria-current: wait for it, not the URL.
+    await waitFor(() => expect(within(tabBar).getByRole("link", { name: /Undangan/ })).toHaveAttribute("aria-current", "page"));
   });
 
   it("search mode swaps the header row and locks the page scroll until closed", async () => {
