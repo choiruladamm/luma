@@ -9,7 +9,7 @@ export const defaultHandlers = () => [
   http.get(`${API}/overview`, () => HttpResponse.json(fx.overview)),
   http.get(`${API}/users`, () => HttpResponse.json(fx.usersPage([fx.user(1), fx.user(2)]))),
   http.get(`${API}/users/:id`, () => HttpResponse.json(fx.userDetail())),
-  http.get(`${API}/invites`, () => HttpResponse.json(fx.invites)),
+  http.get(`${API}/invites`, ({ request }) => HttpResponse.json(fx.invitesPage(fx.invites.items, new URL(request.url)))),
 ];
 
 export const apiError = (status: number, code: string) => HttpResponse.json({ error: { code, message: code } }, { status });

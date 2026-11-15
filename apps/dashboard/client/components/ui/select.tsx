@@ -10,9 +10,9 @@ export type SelectOption<T extends string> = [value: T, text: string];
  * Keyboard: ↑/↓ open and move, Home/End, Enter/Space choose, Esc closes back to the trigger.
  * `active` paints the trigger ink (a filter that differs from its default). The menu opens below,
  * or above when the viewport has no room below (bottom sheets, footers); `up` forces above.
- * `block` fills the row (phone sheets).
+ * `block` fills the row (phone sheets). `shortLabel` replaces the label below 768px ("" hides it).
  */
-export function Select<T extends string>({ label, value, options, onChange, active, block, up, hideLabel, className }: { label: string; value: T; options: SelectOption<T>[]; onChange: (value: T) => void; active?: boolean; block?: boolean; up?: boolean; hideLabel?: boolean; className?: string }) {
+export function Select<T extends string>({ label, shortLabel, value, options, onChange, active, block, up, hideLabel, className }: { label: string; shortLabel?: string; value: T; options: SelectOption<T>[]; onChange: (value: T) => void; active?: boolean; block?: boolean; up?: boolean; hideLabel?: boolean; className?: string }) {
   const [open, setOpen] = useState(false);
   const [focus, setFocus] = useState(0);
   const [above, setAbove] = useState(false);
@@ -84,13 +84,24 @@ export function Select<T extends string>({ label, value, options, onChange, acti
         onClick={() => (open ? close() : show())}
         onKeyDown={onTriggerKey}
         className={cn(
-          "inline-flex h-10 items-center gap-1.5 rounded-full pr-3 pl-3.5 text-caption font-medium transition-colors",
+          "inline-flex h-10 max-w-full min-w-0 items-center gap-1.5 rounded-full pr-3 pl-3.5 text-caption font-medium whitespace-nowrap transition-colors",
           active ? "bg-ink text-canvas" : "bg-muted text-ink hover:bg-track",
           block && "h-12 w-full justify-between pr-4 text-body",
         )}
       >
-        {!hideLabel && <span className={active ? "text-canvas/70" : "text-ink2"}>{label}</span>}
-        <span className={cn("flex items-center gap-1.5", block && "ml-auto")}>
+        {!hideLabel && (
+          <span className={cn("flex-none", active ? "text-canvas/70" : "text-ink2")}>
+            {shortLabel === undefined ? (
+              label
+            ) : (
+              <>
+                <span className="max-md:hidden">{label}</span>
+                {shortLabel && <span className="md:hidden">{shortLabel}</span>}
+              </>
+            )}
+          </span>
+        )}
+        <span className={cn("flex min-w-0 items-center gap-1.5", block && "ml-auto")}>
           <span className="truncate">{text}</span>
           <Icon name="chevdown" size={14} className={cn("transition-transform duration-150", open && "rotate-180")} />
         </span>

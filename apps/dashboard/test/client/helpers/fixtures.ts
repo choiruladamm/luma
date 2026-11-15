@@ -47,3 +47,27 @@ export const usersPage = (items: ReturnType<typeof user>[], { total = items.leng
   page,
   pageCount: Math.max(1, Math.ceil(total / limit)),
 });
+
+type InviteRow = (typeof invites.items)[number];
+
+/**
+ * A `GET /api/invites` answer for `items`, applying the query like the worker would (status,
+ * used-within skipped, q on code/email, code sort, page/limit), with counts that follow `q`.
+ */
+export function invitesPage(items: InviteRow[], url: URL) {
+  const p = url.searchParams;
+  const q = (p.get("q") ?? "").toLowerCase().replaceAll("-", "");
+  const searched = items.filter((i) => !q || i.code.toLowerCase().replaceAll("-", "").includes(q) || (i.usedBy?.email.toLowerCase().includes(q) ?? false));
+  const status = p.get("status");
+  let rows = searched.filter((i) => !status || (status === "used") === (i.usedAt !== null));
+  if (p.get("sort") === "code") rows = [...rows].sort((a, b) => (p.get("dir") === "asc" ? 1 : -1) * a.code.localeCompare(b.code));
+  const limit = Number(p.get("limit") ?? 20);
+  const page = Number(p.get("page") ?? 1);
+  return {
+    items: rows.slice((page - 1) * limit, page * limit),
+    total: rows.length,
+    page,
+    pageCount: Math.max(1, Math.ceil(rows.length / limit)),
+    counts: { all: searched.length, unused: searched.filter((i) => !i.usedAt).length, used: searched.filter((i) => i.usedAt).length },
+  };
+}

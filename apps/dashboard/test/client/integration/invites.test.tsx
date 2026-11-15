@@ -1,7 +1,7 @@
 import { screen, waitFor, within } from "@testing-library/react";
 import { HttpResponse, http } from "msw";
 import { describe, expect, it } from "vitest";
-import { invites } from "../helpers/fixtures";
+import { invites, invitesPage } from "../helpers/fixtures";
 import { API, apiError } from "../helpers/handlers";
 import { renderApp } from "../helpers/render";
 import { server } from "../setup";
@@ -12,23 +12,23 @@ type Item = (typeof invites.items)[number];
 const clipboard = () => navigator.clipboard.readText();
 
 describe("Undangan", () => {
-  it("counts and filters from one request", async () => {
-    let calls = 0;
-    server.use(http.get(`${API}/invites`, () => (calls++, HttpResponse.json(invites))));
+  it("counts per status tab; picking a tab asks the worker for that status", async () => {
+    const statuses: (string | null)[] = [];
+    server.use(http.get(`${API}/invites`, ({ request }) => (statuses.push(new URL(request.url).searchParams.get("status")), HttpResponse.json(invitesPage(invites.items, new URL(request.url))))));
     const { user } = renderApp("/invites");
     expect(await screen.findByRole("tab", { name: /Semua\s*3/ })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByRole("tab", { name: /Belum dipakai\s*2/ })).toBeInTheDocument();
     await user.click(screen.getByRole("tab", { name: /Udah dipakai\s*1/ }));
+    await waitFor(() => expect(within(screen.getByRole("table", { name: "Kode undangan" })).getAllByRole("row")).toHaveLength(2));
     const table = screen.getByRole("table", { name: "Kode undangan" });
-    expect(within(table).getAllByRole("row")).toHaveLength(2);
     expect(within(table).getByRole("link", { name: "user1@luma.test" })).toHaveAttribute("href", "/users/u1");
-    expect(calls).toBe(1);
+    expect(statuses).toEqual([null, "used"]);
   });
 
   it("creates a code, shows the ticket, and copies it", async () => {
     let items: Item[] = [...invites.items];
     server.use(
-      http.get(`${API}/invites`, () => HttpResponse.json({ items })),
+      http.get(`${API}/invites`, ({ request }) => HttpResponse.json(invitesPage(items, new URL(request.url)))),
       http.post(`${API}/invites`, async ({ request }) => {
         expect(await request.json()).toEqual({ count: 1 });
         items = [{ code: "LUMA-NEWWW-CODE1", usedBy: null, usedAt: null }, ...items];
@@ -51,7 +51,7 @@ describe("Undangan", () => {
     let items: Item[] = [...invites.items];
     const deleted: string[] = [];
     server.use(
-      http.get(`${API}/invites`, () => HttpResponse.json({ items })),
+      http.get(`${API}/invites`, ({ request }) => HttpResponse.json(invitesPage(items, new URL(request.url)))),
       http.delete(`${API}/invites/:code`, ({ params }) => {
         deleted.push(params.code as string);
         items = items.filter((i) => i.code !== params.code);
@@ -82,39 +82,51 @@ describe("Undangan", () => {
   });
 
   it("shows the empty state with a create action", async () => {
-    server.use(http.get(`${API}/invites`, () => HttpResponse.json({ items: [] })));
+    server.use(http.get(`${API}/invites`, ({ request }) => HttpResponse.json(invitesPage([], new URL(request.url)))));
     renderApp("/invites");
     expect(await screen.findByText("Belum ada kode undangan")).toBeInTheDocument();
   });
 
-  it("pages through long lists on the client", async () => {
+  it("pages with numbers through the worker, keeping ?page= in the URL", async () => {
     const many = Array.from({ length: 25 }, (_, i) => ({ code: `LUMA-K${String(i).padStart(4, "0")}-ZZZZZ`, usedBy: null, usedAt: null }));
-    server.use(http.get(`${API}/invites`, () => HttpResponse.json({ items: many })));
-    let calls = 0;
-    server.events.on("request:start", () => calls++);
-    const { user } = renderApp("/invites");
+    server.use(http.get(`${API}/invites`, ({ request }) => HttpResponse.json(invitesPage(many, new URL(request.url)))));
+    const { user, router } = renderApp("/invites");
     expect(await screen.findByText("1–20 dari 25")).toBeInTheDocument();
-    calls = 0;
     await user.click(screen.getByRole("button", { name: "Halaman 2" }));
-    expect(screen.getByText("21–25 dari 25")).toBeInTheDocument();
-    expect(calls).toBe(0);
-    server.events.removeAllListeners();
+    expect(await screen.findByText("21–25 dari 25")).toBeInTheDocument();
+    expect(router.state.location.search).toBe("?page=2");
   });
 
-  it("searches codes (with or without dashes) and emails, and sorts by date used, on the client", async () => {
-    const { user } = renderApp("/invites");
+  it("searches (debounced, in the URL), filters by used-within, and sorts through the worker", async () => {
+    const queries: URLSearchParams[] = [];
+    server.use(http.get(`${API}/invites`, ({ request }) => (queries.push(new URL(request.url).searchParams), HttpResponse.json(invitesPage(invites.items, new URL(request.url))))));
+    const { user, router } = renderApp("/invites");
     const box = await screen.findByRole("searchbox", { name: "Cari kode atau email" });
-    await user.type(box, "eeeeeff");
+    await user.type(box, "eeeee-ff");
+    await waitFor(() => expect(router.state.location.search).toBe("?q=eeeee-ff"));
     expect(await screen.findAllByText("LUMA-EEEEE-FFFFF")).not.toHaveLength(0);
     expect(screen.queryByText("LUMA-AAAAA-BBBBB")).toBeNull();
+    expect(queries.filter((q) => q.get("q")).map((q) => q.get("q"))).toEqual(["eeeee-ff"]);
     await user.clear(box);
     await user.type(box, "nobody");
-    expect(screen.getByText("Gak ada kode atau email yang cocok sama “nobody”")).toBeInTheDocument();
+    expect(await screen.findByText("Gak ada kode atau email yang cocok sama “nobody”")).toBeInTheDocument();
     await user.clear(box);
+    await waitFor(() => expect(router.state.location.search).toBe(""));
 
-    await user.click(screen.getByRole("button", { name: /Tanggal dipakai/ }));
-    expect(screen.getByRole("columnheader", { name: /Tanggal dipakai/ })).toHaveAttribute("aria-sort", "descending");
-    const firstCode = within(screen.getByRole("table", { name: "Kode undangan" })).getAllByRole("row")[1]!;
-    expect(firstCode).toHaveTextContent("LUMA-EEEEE-FFFFF");
+    // "Used within" selects the Used tab; the Unused tab clears it.
+    await user.click(screen.getByRole("button", { name: /^Dipakai dalam:/ }));
+    await user.click(screen.getByRole("option", { name: "7 hari" }));
+    await waitFor(() => expect(router.state.location.search).toBe("?status=used&usedWithin=7d"));
+    await user.click(screen.getByRole("tab", { name: /Belum dipakai/ }));
+    await waitFor(() => expect(router.state.location.search).toBe("?status=unused"));
+
+    await user.click(screen.getByRole("tab", { name: /Semua/ }));
+    await user.click(await screen.findByRole("button", { name: /^Kode/ }));
+    await waitFor(() => expect(router.state.location.search).toBe("?sort=code"));
+    expect(screen.getByRole("columnheader", { name: /^Kode/ })).toHaveAttribute("aria-sort", "descending");
+    await user.click(screen.getByRole("button", { name: /^Urutkan:/ }));
+    await user.click(screen.getByRole("option", { name: "Terlama dipakai" }));
+    await waitFor(() => expect(router.state.location.search).toBe("?sort=usedAt&dir=asc"));
   });
+
 });
