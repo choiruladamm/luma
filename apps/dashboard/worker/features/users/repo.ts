@@ -1,7 +1,12 @@
 // Every D1 query of the users feature. Each function is one query-budget unit.
-import { and, desc, eq, lt, or, type SQL, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, isNotNull, isNull, or, type SQL, sql } from "drizzle-orm";
 import type { Db } from "../../../../backend/src/db/client";
 import { accounts, aiKeys, inviteCodes, sessions, users, userStorage } from "../../../../backend/src/db/schema";
+
+// Correlated subquery: uses the sessions(user_id) index. Also a filter and a sort key.
+const lastActive = sql<number | null>`(select max(${sessions.updatedAt}) from ${sessions} where ${sessions.userId} = ${users.id})`;
+const r2Bytes = sql<number>`coalesce(${userStorage.bytes}, 0)`;
+const syncBytes = sql<number>`coalesce(${userStorage.syncBytes}, 0)`;
 
 /** User columns for list and detail. Picked explicitly: `key_enc` and session tokens never leave. */
 const userColumns = {
@@ -10,24 +15,34 @@ const userColumns = {
   name: users.name,
   createdAt: users.createdAt,
   banned: users.banned,
-  // Correlated subquery: uses the sessions(user_id) index, only for returned rows.
-  lastActiveAt: sql<number | null>`(select max(${sessions.updatedAt}) from ${sessions} where ${sessions.userId} = ${users.id})`,
+  lastActiveAt: lastActive,
   hasAiKey: sql<number>`${aiKeys.userId} is not null`,
-  r2Bytes: sql<number>`coalesce(${userStorage.bytes}, 0)`,
-  syncBytes: sql<number>`coalesce(${userStorage.syncBytes}, 0)`,
+  r2Bytes,
+  syncBytes,
 };
 
-// `rank` is the search relevance (0 = best); constant 0 when there is no search.
-const userRows = (db: Db, rank: SQL<number> = sql<number>`0`) =>
+const userRows = (db: Db) =>
   db
-    .select({ ...userColumns, rank: rank.mapWith(Number).as("rank") })
+    .select(userColumns)
     .from(users)
     .leftJoin(userStorage, eq(userStorage.userId, users.id))
     .leftJoin(aiKeys, eq(aiKeys.userId, users.id));
 
 export type UserRow = Awaited<ReturnType<ReturnType<typeof userRows>["all"]>>[number];
-/** Keyset position: `rank` only for a search (results are ordered by relevance first). */
-export type UserCursor = { rank?: number; createdAt: Date; id: string };
+
+export type UserSort = "created" | "lastActive" | "r2" | "sync" | "relevance";
+export type UserListQuery = {
+  q?: string;
+  status?: "active" | "banned";
+  ai?: "yes" | "no";
+  activity?: "7d" | "30d" | "never";
+  sort: UserSort;
+  dir: "asc" | "desc";
+  page: number;
+  limit: number;
+  /** "Now" for the activity windows (ms), passed in so tests can pin it. */
+  now: number;
+};
 
 /** Escape `%`, `_`, `\` so `q` only ever matches as literal text inside a LIKE pattern. */
 export const likeEscape = (q: string) => q.replace(/[\\%_]/g, (ch) => `\\${ch}`);
@@ -49,22 +64,46 @@ function search(q: string) {
   return { filter, rank };
 }
 
+const DAY_MS = 86_400_000;
+
 /**
- * 1 query: newest first, or by relevance then newest when searching. Keyset cursor (rank,
- * createdAt, id). Fetches `limit + 1` to know if there is a next page.
+ * 1 batch (2 statements): one page of users and the total for the same filters. Filters: search
+ * (email or name), ban status, subsidized key, activity window. Sorted by the chosen column (ties:
+ * newest, then id), relevance first when searching. Offset paging: rows skipped are still read,
+ * fine at the dashboard's user counts.
  */
-export function listUsers(db: Db, { q, cursor, limit }: { q?: string; cursor?: UserCursor; limit: number }) {
-  const found = q ? search(q) : undefined;
-  const filters: SQL[] = [];
-  if (found) filters.push(found.filter);
-  if (cursor) {
-    const older = or(lt(users.createdAt, cursor.createdAt), and(eq(users.createdAt, cursor.createdAt), lt(users.id, cursor.id)))!;
-    filters.push(found && cursor.rank !== undefined ? or(sql`${found.rank} > ${cursor.rank}`, and(sql`${found.rank} = ${cursor.rank}`, older))! : older);
-  }
-  return userRows(db, found?.rank)
-    .where(and(...filters))
-    .orderBy(...(found ? [sql`${found.rank}`] : []), desc(users.createdAt), desc(users.id))
-    .limit(limit + 1);
+export async function listUsers(db: Db, query: UserListQuery) {
+  const found = query.q ? search(query.q) : undefined;
+  const filters: (SQL | undefined)[] = [found?.filter];
+  if (query.status) filters.push(eq(users.banned, query.status === "banned"));
+  if (query.ai) filters.push(query.ai === "yes" ? isNotNull(aiKeys.userId) : isNull(aiKeys.userId));
+  if (query.activity === "never") filters.push(sql`${lastActive} is null`);
+  else if (query.activity) filters.push(gte(lastActive, query.now - (query.activity === "7d" ? 7 : 30) * DAY_MS));
+  const where = and(...filters);
+
+  const by = query.dir === "asc" ? asc : desc;
+  const order: SQL[] =
+    query.sort === "relevance" && found
+      ? [sql`${found.rank}`]
+      : query.sort === "lastActive"
+        ? // Never-active users go last in both directions.
+          [sql`${lastActive} ${sql.raw(query.dir)} nulls last`]
+        : query.sort === "r2"
+          ? [by(r2Bytes)]
+          : query.sort === "sync"
+            ? [by(syncBytes)]
+            : [by(users.createdAt)];
+  const tiebreak = query.sort === "created" ? [by(users.id)] : [desc(users.createdAt), desc(users.id)];
+
+  const [rows, [total]] = await db.batch([
+    userRows(db)
+      .where(where)
+      .orderBy(...order, ...tiebreak)
+      .limit(query.limit)
+      .offset((query.page - 1) * query.limit),
+    db.select({ n: count() }).from(users).leftJoin(aiKeys, eq(aiKeys.userId, users.id)).where(where),
+  ]);
+  return { rows, total: total?.n ?? 0 };
 }
 
 /** 1 batch (5 statements): user, sessions, AI key, invite code used, sign-in providers. */
