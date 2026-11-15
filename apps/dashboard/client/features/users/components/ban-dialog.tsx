@@ -30,8 +30,8 @@ export function BanDialog({ user, open, onClose, onConfirm, pending }: { user: U
           <Button variant="secondary" onClick={onClose} autoFocus>
             {t.common.cancel}
           </Button>
-          <Button variant="danger" icon="ban" onClick={onConfirm} disabled={pending}>
-            {pending ? t.userDetail.banning : t.userDetail.ban}
+          <Button variant="danger" icon="ban" onClick={onConfirm} loading={pending}>
+            {t.userDetail.ban}
           </Button>
         </ConfirmFooter>
       }

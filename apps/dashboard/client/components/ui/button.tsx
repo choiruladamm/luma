@@ -1,7 +1,7 @@
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 import { Link, type LinkProps } from "react-router";
 import { cn } from "../../lib/cn";
-import { Icon, type IconName } from "./icons";
+import { Icon, type IconName, Spinner } from "./icons";
 
 // Komponen 1, Tombol: one yellow primary per screen; full danger only inside confirm dialogs.
 export type ButtonVariant = "primary" | "secondary" | "sheet" | "danger" | "danger-soft";
@@ -28,20 +28,24 @@ export function buttonClass(variant: ButtonVariant = "secondary", { size = "md",
 
 type Common = { variant?: ButtonVariant; icon?: IconName; size?: "md" | "lg"; children?: ReactNode };
 
-export function Button({ variant, icon, size, className, children, type = "button", ...props }: Common & ButtonHTMLAttributes<HTMLButtonElement>) {
+/**
+ * `loading`: the request is running. Disabled (board: sand + ink2) and aria-busy; the spinner
+ * takes the icon's place, or goes left of the label when there is no icon. The label stays.
+ */
+export function Button({ variant, icon, size, loading, disabled, className, children, type = "button", ...props }: Common & { loading?: boolean } & ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
-    <button type={type} className={cn(buttonClass(variant, { size }), className)} {...props}>
-      {icon && <Icon name={icon} />}
+    <button type={type} disabled={disabled || loading} aria-busy={loading || undefined} className={cn(buttonClass(variant, { size }), className)} {...props}>
+      {loading ? <Spinner /> : icon && <Icon name={icon} />}
       {children}
     </button>
   );
 }
 
 /** Icon-only button: the label is required (aria-label), the icon is decorative. */
-export function IconButton({ variant = "secondary", icon, label, className, size, ...props }: { icon: IconName; label: string; variant?: ButtonVariant; size?: "md" | "lg" } & ButtonHTMLAttributes<HTMLButtonElement>) {
+export function IconButton({ variant = "secondary", icon, label, className, size, loading, disabled, ...props }: { icon: IconName; label: string; variant?: ButtonVariant; size?: "md" | "lg"; loading?: boolean } & ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
-    <button type="button" aria-label={label} className={cn(buttonClass(variant, { size, iconOnly: true }), className)} {...props}>
-      <Icon name={icon} />
+    <button type="button" aria-label={label} disabled={disabled || loading} aria-busy={loading || undefined} className={cn(buttonClass(variant, { size, iconOnly: true }), className)} {...props}>
+      {loading ? <Spinner /> : <Icon name={icon} />}
     </button>
   );
 }

@@ -26,6 +26,45 @@ describe("Button / IconButton", () => {
   });
 });
 
+describe("Button loading", () => {
+  // Hugeicons renders an <svg>; the spinner is the one with the spin class.
+  const svgs = (el: HTMLElement) => [...el.querySelectorAll("svg")];
+
+  it("swaps the icon for a spinner, keeps the label, and blocks clicks", async () => {
+    const onClick = vi.fn();
+    render(<Button icon="plus" loading onClick={onClick}>Bikin kode</Button>);
+    const button = screen.getByRole("button", { name: "Bikin kode" });
+    expect(button).toBeDisabled();
+    expect(button).toHaveAttribute("aria-busy", "true");
+    expect(svgs(button)).toHaveLength(1);
+    expect(svgs(button)[0]).toHaveClass("motion-safe:animate-spin");
+    await userEvent.click(button);
+    expect(onClick).not.toHaveBeenCalled();
+  });
+
+  it("puts the spinner left of the label when there is no icon", () => {
+    render(<Button loading>Muat lagi</Button>);
+    const button = screen.getByRole("button", { name: "Muat lagi" });
+    expect(button.firstElementChild?.tagName.toLowerCase()).toBe("svg");
+    expect(button.firstElementChild).toHaveClass("motion-safe:animate-spin");
+  });
+
+  it("IconButton keeps its name and shows only the spinner", () => {
+    render(<IconButton icon="refresh" label="Muat ulang data" loading />);
+    const button = screen.getByRole("button", { name: "Muat ulang data" });
+    expect(button).toBeDisabled();
+    expect(svgs(button)).toHaveLength(1);
+    expect(svgs(button)[0]).toHaveClass("motion-safe:animate-spin");
+  });
+
+  it("without loading it renders the icon, not busy", () => {
+    render(<Button icon="plus">Bikin kode</Button>);
+    const button = screen.getByRole("button", { name: "Bikin kode" });
+    expect(button).not.toHaveAttribute("aria-busy");
+    expect(svgs(button)[0]).not.toHaveClass("motion-safe:animate-spin");
+  });
+});
+
 describe("Chip / Avatar", () => {
   it("always carries the status as text", () => {
     render(<Chip tone="danger" dot="filled">Di-ban</Chip>);

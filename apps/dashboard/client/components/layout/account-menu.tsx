@@ -1,7 +1,7 @@
 import { useI18n } from "../../i18n";
 import type { Lang, ThemePref } from "../../stores/ui-store";
 import { Avatar } from "../ui/avatar";
-import { Icon } from "../ui/icons";
+import { Icon, Spinner } from "../ui/icons";
 import { Segmented } from "../ui/segmented";
 
 type Props = {
@@ -88,9 +88,9 @@ export function AccountMenu({ user, open, onToggle, onClose, theme, onTheme, lan
               />
             </div>
             <div className="h-px bg-track" />
-            <button type="button" onClick={onSignOut} disabled={signingOut} className="flex h-11 items-center justify-center gap-2 rounded-full bg-muted px-4 text-body font-medium text-danger-ink hover:bg-danger-soft">
-              <Icon name="logout" />
-              {signingOut ? t.shell.signingOut : t.shell.signOut}
+            <button type="button" onClick={onSignOut} disabled={signingOut} aria-busy={signingOut || undefined} className="flex h-11 items-center justify-center gap-2 rounded-full bg-muted px-4 text-body font-medium text-danger-ink hover:bg-danger-soft">
+              {signingOut ? <Spinner /> : <Icon name="logout" />}
+              {t.shell.signOut}
             </button>
           </div>
         </>

@@ -5,7 +5,7 @@ import { useMediaQuery } from "../../hooks/use-media-query";
 import { useI18n } from "../../i18n";
 import { cn } from "../../lib/cn";
 import { formatNumber } from "../../lib/format";
-import { Icon } from "./icons";
+import { Icon, Spinner } from "./icons";
 
 // Core-only table: search and pagination happen on the server, so no row-model features.
 export const features = tableFeatures({});
@@ -175,8 +175,9 @@ export function LoadMore({ shown, total, onMore, loading }: { shown: number; tot
         {total === undefined ? t.common.showing(formatNumber(shown, locale)) : t.common.showingOf(formatNumber(shown, locale), formatNumber(total, locale))}
       </span>
       {onMore && (
-        <button type="button" onClick={onMore} disabled={loading} className="inline-flex h-11 items-center gap-2 rounded-full bg-muted px-5 text-body font-medium text-ink hover:bg-track disabled:text-ink2">
-          {loading ? t.common.loadingMore : t.common.loadMore}
+        <button type="button" onClick={onMore} disabled={loading} aria-busy={loading || undefined} className="inline-flex h-11 items-center gap-2 rounded-full bg-muted px-5 text-body font-medium text-ink hover:bg-track disabled:text-ink2">
+          {loading && <Spinner />}
+          {t.common.loadMore}
         </button>
       )}
     </div>

@@ -17,8 +17,8 @@ export function DeleteInviteDialog({ code, onClose, onConfirm, pending }: { code
           <Button variant="secondary" onClick={onClose} autoFocus>
             {t.common.cancel}
           </Button>
-          <Button variant="danger" icon="x" onClick={onConfirm} disabled={pending}>
-            {pending ? t.invites.deleting : t.invites.delete}
+          <Button variant="danger" icon="x" onClick={onConfirm} loading={pending}>
+            {t.invites.delete}
           </Button>
         </ConfirmFooter>
       }

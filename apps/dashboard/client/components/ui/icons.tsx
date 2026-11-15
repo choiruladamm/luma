@@ -17,6 +17,7 @@ import {
   DatabaseIcon,
   GlobeIcon,
   GoogleIcon,
+  Loading03Icon,
   GridViewIcon,
   HardDriveIcon,
   Key01Icon,
@@ -75,6 +76,7 @@ const ICONS = {
   logout: Logout01Icon,
   google: GoogleIcon,
   globe: GlobeIcon,
+  loading: Loading03Icon,
 } as const;
 
 export type IconName = keyof typeof ICONS;
@@ -94,3 +96,6 @@ export function Icon({ name, size = 18, strokeWidth = 1.8, label, className }: {
     />
   );
 }
+
+/** Busy indicator for buttons: replaces the button's icon, or sits left of its label. Still under reduced motion. */
+export const Spinner = ({ size = 18 }: { size?: number }) => <Icon name="loading" size={size} className="motion-safe:animate-spin" />;

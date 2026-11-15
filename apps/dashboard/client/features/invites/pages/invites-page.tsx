@@ -80,8 +80,8 @@ export function InvitesPage() {
         actions={
           <>
             <UpdatedAt at={invites.dataUpdatedAt} onRefresh={() => void invites.refetch()} refreshing={invites.isFetching} />
-            <Button variant="primary" icon="plus" onClick={makeCode} disabled={create.isPending}>
-              {create.isPending ? t.invites.creating : t.invites.create}
+            <Button variant="primary" icon="plus" onClick={makeCode} loading={create.isPending}>
+              {t.invites.create}
             </Button>
           </>
         }

@@ -50,8 +50,8 @@ export function LoginPage() {
         </div>
         {error && <Banner title={error.title}>{error.body}</Banner>}
         {signIn.isError && <Banner title={t.auth.failed}>{errorText(signIn.error, t)}</Banner>}
-        <Button variant="primary" size="lg" icon="google" onClick={() => signIn.mutate()} disabled={signIn.isPending || signIn.isSuccess}>
-          {signIn.isPending || signIn.isSuccess ? t.auth.openingGoogle : t.auth.google}
+        <Button variant="primary" size="lg" icon="google" onClick={() => signIn.mutate()} loading={signIn.isPending || signIn.isSuccess}>
+          {t.auth.google}
         </Button>
         <p className="m-0 text-caption text-ink2">{t.auth.sessionNote}</p>
       </div>

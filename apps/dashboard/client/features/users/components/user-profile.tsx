@@ -37,8 +37,8 @@ export function UserProfile({ user, onCopyEmail, onUnban, unbanning }: { user: U
         <Banner
           title={t.userDetail.bannedBanner}
           action={
-            <Button variant="sheet" icon="key" onClick={onUnban} disabled={unbanning}>
-              {unbanning ? t.userDetail.unbanning : t.userDetail.unban}
+            <Button variant="sheet" icon="key" onClick={onUnban} loading={unbanning}>
+              {t.userDetail.unban}
             </Button>
           }
         >
