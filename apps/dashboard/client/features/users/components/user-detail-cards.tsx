@@ -1,6 +1,7 @@
 import { Card, CardHeader } from "../../../components/ui/card";
 import { Icon } from "../../../components/ui/icons";
 import { ProgressBar } from "../../../components/ui/meter";
+import { useI18n } from "../../../i18n";
 import { formatBytes, formatDate, formatRelative, formatUsd } from "../../../lib/format";
 import type { UserDetail } from "../api/users-api";
 
@@ -16,10 +17,11 @@ function NumberCard({ title, value, children }: { title: string; value: string; 
 
 /** File and sync usage; the share of all files shows only when the overview is already cached. */
 export function UsageCards({ user, totalR2 }: { user: UserDetail; totalR2?: number }) {
+  const { locale } = useI18n();
   const share = totalR2 ? (user.r2Bytes / totalR2) * 100 : undefined;
   return (
     <>
-      <NumberCard title="File buku" value={formatBytes(user.r2Bytes)}>
+      <NumberCard title="File buku" value={formatBytes(user.r2Bytes, locale)}>
         {share !== undefined && (
           <>
             <ProgressBar value={share} label="Bagian dari semua file di server" />
@@ -27,7 +29,7 @@ export function UsageCards({ user, totalR2 }: { user: UserDetail; totalR2?: numb
           </>
         )}
       </NumberCard>
-      <NumberCard title="Data sync" value={formatBytes(user.syncBytes)}>
+      <NumberCard title="Data sync" value={formatBytes(user.syncBytes, locale)}>
         <span className="text-caption text-ink2">progres, catatan & pengaturan AI</span>
       </NumberCard>
     </>
@@ -36,14 +38,15 @@ export function UsageCards({ user, totalR2 }: { user: UserDetail; totalR2?: numb
 
 /** Subsidized key only (an own key never reaches the server): today's use vs the daily limit. */
 export function AiCard({ ai }: { ai: UserDetail["ai"] }) {
+  const { locale } = useI18n();
   return (
-    <NumberCard title="Kuota AI gratis" value={ai ? (ai.usageDaily === null ? "—" : formatUsd(ai.usageDaily)) : "Gak pakai"}>
+    <NumberCard title="Kuota AI gratis" value={ai ? (ai.usageDaily === null ? "—" : formatUsd(ai.usageDaily, locale)) : "Gak pakai"}>
       {ai ? (
         <>
           {ai.usageDaily !== null && <ProgressBar value={(ai.usageDaily / ai.limit) * 100} label="Pemakaian AI hari ini" />}
           <span className="text-caption text-ink2">
-            {ai.usageDaily === null ? "Pemakaian gagal dimuat dari OpenRouter. " : `hari ini dari ${formatUsd(ai.limit)} · `}
-            key berlaku sampai {formatDate(ai.expiresAt)}
+            {ai.usageDaily === null ? "Pemakaian gagal dimuat dari OpenRouter. " : `hari ini dari ${formatUsd(ai.limit, locale)} · `}
+            key berlaku sampai {formatDate(ai.expiresAt, locale)}
           </span>
         </>
       ) : (
@@ -64,6 +67,8 @@ export function deviceLabel(userAgent: string | null) {
 
 /** Sessions per device (in scope, not on the board): newest first, max 50 from the API. */
 export function SessionsCard({ sessions }: { sessions: UserDetail["sessions"] }) {
+  const i18n = useI18n();
+  const { locale } = i18n;
   return (
     <Card aria-labelledby="h-sesi" className="gap-3">
       <CardHeader id="h-sesi" title="Perangkat" subtitle={`${sessions.length} sesi masuk, termasuk yang udah kedaluwarsa`} />
@@ -81,11 +86,11 @@ export function SessionsCard({ sessions }: { sessions: UserDetail["sessions"] })
                   {deviceLabel(s.userAgent)}
                 </span>
                 <span className="truncate text-caption text-ink2">
-                  Masuk {formatDate(s.createdAt)}
+                  Masuk {formatDate(s.createdAt, locale)}
                   {s.ipAddress ? ` · ${s.ipAddress}` : ""}
                 </span>
               </span>
-              <span className="text-caption whitespace-nowrap text-ink2">{formatRelative(s.updatedAt)}</span>
+              <span className="text-caption whitespace-nowrap text-ink2">{formatRelative(s.updatedAt, i18n)}</span>
             </li>
           ))}
         </ul>

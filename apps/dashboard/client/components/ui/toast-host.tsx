@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useI18n } from "../../i18n";
 import { cn } from "../../lib/cn";
 import { useToastStore } from "../../stores/toast-store";
 import { Icon } from "./icons";
@@ -10,6 +11,7 @@ import { Icon } from "./icons";
 export function ToastHost() {
   const { toast, dismiss } = useToastStore();
   const [hovered, setHovered] = useState(false);
+  const { t } = useI18n();
 
   useEffect(() => {
     if (!toast || toast.tone === "error" || hovered) return;
@@ -43,7 +45,7 @@ export function ToastHost() {
             </button>
           )}
           {toast.tone === "error" && (
-            <button type="button" aria-label="Tutup" onClick={() => dismiss(toast.id)} className="flex size-10 items-center justify-center rounded-full hover:bg-white/10">
+            <button type="button" aria-label={t.common.close} onClick={() => dismiss(toast.id)} className="flex size-10 items-center justify-center rounded-full hover:bg-white/10">
               <Icon name="x" size={16} />
             </button>
           )}

@@ -1,13 +1,16 @@
 import { NavLink } from "react-router";
+import { useI18n } from "../../i18n";
 import { cn } from "../../lib/cn";
+import { formatNumber } from "../../lib/format";
 import { Icon, type IconName } from "../ui/icons";
 
 export type NavItem = { to: string; label: string; icon: IconName; count?: number };
 
 /** Desktop nav: pills on a sheet track; active = ink pill. */
 export function NavPills({ items }: { items: NavItem[] }) {
+  const { t } = useI18n();
   return (
-    <nav aria-label="Navigasi admin" className="flex gap-1 rounded-[26px] bg-sheet p-1">
+    <nav aria-label={t.shell.nav} className="flex gap-1 rounded-[26px] bg-sheet p-1">
       {items.map((item) => (
         <NavLink
           key={item.to}
@@ -24,8 +27,9 @@ export function NavPills({ items }: { items: NavItem[] }) {
 
 /** Mobile burger panel (board 11): rows 48 with icon, name, count chip; active = ink pill. */
 export function NavPanel({ items, onNavigate }: { items: NavItem[]; onNavigate: () => void }) {
+  const { t, locale } = useI18n();
   return (
-    <nav id="menu-nav" aria-label="Navigasi admin" className="fixed inset-x-3.5 top-[76px] z-20 rounded-menu bg-sheet p-2 shadow-[var(--shadow-sheet),inset_0_0_0_1px_var(--c-track)]">
+    <nav id="menu-nav" aria-label={t.shell.nav} className="fixed inset-x-3.5 top-[76px] z-20 rounded-menu bg-sheet p-2 shadow-[var(--shadow-sheet),inset_0_0_0_1px_var(--c-track)]">
       <ul className="m-0 flex list-none flex-col gap-1 p-0">
         {items.map((item) => (
           <li key={item.to}>
@@ -37,7 +41,7 @@ export function NavPanel({ items, onNavigate }: { items: NavItem[]; onNavigate: 
             >
               <Icon name={item.icon} size={20} />
               <span className="flex-1">{item.label}</span>
-              {item.count !== undefined && <span className="rounded-full bg-muted px-2.5 py-0.5 text-chip font-medium text-ink tabular-nums">{item.count.toLocaleString("id-ID")}</span>}
+              {item.count !== undefined && <span className="rounded-full bg-muted px-2.5 py-0.5 text-chip font-medium text-ink tabular-nums">{formatNumber(item.count, locale)}</span>}
             </NavLink>
           </li>
         ))}

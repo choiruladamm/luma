@@ -1,4 +1,5 @@
 import { type ReactNode, useEffect, useRef } from "react";
+import { useI18n } from "../../i18n";
 import { cn } from "../../lib/cn";
 import { IconButton } from "./button";
 import { Icon, type IconName } from "./icons";
@@ -9,6 +10,7 @@ import { Icon, type IconName } from "./icons";
  */
 export function Dialog({ open, onClose, title, description, icon, tone = "neutral", children, footer }: { open: boolean; onClose: () => void; title: string; description?: ReactNode; icon: IconName; tone?: "neutral" | "danger"; children?: ReactNode; footer: ReactNode }) {
   const ref = useRef<HTMLDialogElement>(null);
+  const { t } = useI18n();
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
@@ -39,7 +41,7 @@ export function Dialog({ open, onClose, title, description, icon, tone = "neutra
               <h2 id="dialog-title" className="m-0 min-w-0 flex-1 text-dialog font-semibold">
                 {title}
               </h2>
-              <IconButton icon="x" label="Tutup dialog" onClick={onClose} />
+              <IconButton icon="x" label={t.common.closeDialog} onClick={onClose} />
             </div>
             {description && <p className="m-0 ml-11 text-body text-ink2">{description}</p>}
           </div>
@@ -53,11 +55,12 @@ export function Dialog({ open, onClose, title, description, icon, tone = "neutra
 
 /** Footer for destructive confirms: canvas panel, Esc hint left, actions right. */
 export function ConfirmFooter({ children }: { children: ReactNode }) {
+  const { t } = useI18n();
   return (
     <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-track bg-canvas px-6 py-4">
       <span className="inline-flex items-center gap-2 text-caption text-ink2">
         <kbd className="inline-flex h-[22px] items-center rounded-[7px] bg-muted px-[7px] font-mono text-chip font-medium text-ink shadow-[inset_0_-1px_0_var(--c-track)]">Esc</kbd>
-        buat batal
+        {t.common.escToCancel}
       </span>
       <div className="flex flex-wrap gap-2.5">{children}</div>
     </div>

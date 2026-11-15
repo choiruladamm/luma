@@ -2,6 +2,7 @@ import { Button } from "../../../components/ui/button";
 import { Chip } from "../../../components/ui/chip";
 import { Dialog, ResultFooter } from "../../../components/ui/dialog";
 import { Icon } from "../../../components/ui/icons";
+import { useI18n } from "../../../i18n";
 import { formatDateTime } from "../../../lib/format";
 
 /**
@@ -9,6 +10,7 @@ import { formatDateTime } from "../../../lib/format";
  * stabilo), copy status announced (aria-live), two equal buttons; yellow turns "Udah disalin".
  */
 export function NewInviteDialog({ code, createdAt, copied, onCopy, onClose }: { code: string | null; createdAt: string; copied: boolean; onCopy: () => void; onClose: () => void }) {
+  const { locale } = useI18n();
   return (
     <Dialog
       open={code !== null}
@@ -44,7 +46,7 @@ export function NewInviteDialog({ code, createdAt, copied, onCopy, onClose }: { 
           <span className="bg-[linear-gradient(transparent_58%,var(--c-pink)_58%,var(--c-pink)_94%,transparent_94%)] px-2 text-center font-mono text-[clamp(22px,6vw,32px)] leading-[1.1] font-semibold tracking-[0.06em] tabular-nums [overflow-wrap:anywhere]">
             {code}
           </span>
-          <span className="text-caption text-ink2">Dibuat {formatDateTime(createdAt)}</span>
+          <span className="text-caption text-ink2">Dibuat {formatDateTime(createdAt, locale)}</span>
         </div>
       </div>
       <div aria-live="polite" className="flex min-h-6 items-center justify-center">

@@ -1,6 +1,7 @@
 import { Avatar } from "../../../components/ui/avatar";
 import { Chip } from "../../../components/ui/chip";
 import { columnHelper } from "../../../components/ui/data-table";
+import { type I18n, useI18n } from "../../../i18n";
 import { formatBytes, formatDate, formatRelative } from "../../../lib/format";
 import type { UserListItem } from "../api/users-api";
 
@@ -32,12 +33,13 @@ export function UserIdentity({ user }: { user: Pick<UserListItem, "email" | "nam
 }
 
 // Komponen 2, Tabel: numbers right-aligned and tabular, empty values "—".
-export const userColumns = h.columns([
+export const userColumns = (i18n: I18n) =>
+  h.columns([
   h.accessor("email", { header: "User", cell: (info) => <UserIdentity user={info.row.original} /> }),
-  h.accessor("createdAt", { header: "Daftar", cell: (info) => <span className="whitespace-nowrap">{formatDate(info.getValue())}</span> }),
-  h.accessor("lastActiveAt", { header: "Terakhir aktif", cell: (info) => <span className="whitespace-nowrap">{formatRelative(info.getValue())}</span> }),
-  h.accessor("r2Bytes", { header: "File", cell: (info) => formatBytes(info.getValue()) }),
-  h.accessor("syncBytes", { header: "Data sync", cell: (info) => formatBytes(info.getValue()) }),
+  h.accessor("createdAt", { header: "Daftar", cell: (info) => <span className="whitespace-nowrap">{formatDate(info.getValue(), i18n.locale)}</span> }),
+  h.accessor("lastActiveAt", { header: "Terakhir aktif", cell: (info) => <span className="whitespace-nowrap">{formatRelative(info.getValue(), i18n)}</span> }),
+  h.accessor("r2Bytes", { header: "File", cell: (info) => formatBytes(info.getValue(), i18n.locale) }),
+  h.accessor("syncBytes", { header: "Data sync", cell: (info) => formatBytes(info.getValue(), i18n.locale) }),
   h.accessor("hasAiKey", { header: "Key AI", cell: (info) => aiKeyLabel(info.getValue()) }),
   h.accessor("banned", { header: "Status", cell: (info) => <UserStatusChip banned={info.getValue()} /> }),
 ]);
@@ -46,11 +48,12 @@ export const USER_NUMERIC = ["r2Bytes", "syncBytes"];
 
 /** Phone layout of a row: avatar, email, status, then 4 data in a 2-column grid. */
 export function UserCard({ user }: { user: UserListItem }) {
+  const i18n = useI18n();
   const data: [string, string][] = [
-    ["Daftar", formatDate(user.createdAt)],
-    ["Terakhir aktif", formatRelative(user.lastActiveAt)],
-    ["File", formatBytes(user.r2Bytes)],
-    ["Data sync", formatBytes(user.syncBytes)],
+    ["Daftar", formatDate(user.createdAt, i18n.locale)],
+    ["Terakhir aktif", formatRelative(user.lastActiveAt, i18n)],
+    ["File", formatBytes(user.r2Bytes, i18n.locale)],
+    ["Data sync", formatBytes(user.syncBytes, i18n.locale)],
   ];
   return (
     <div className="flex flex-col gap-3">

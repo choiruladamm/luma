@@ -44,7 +44,7 @@ flowchart LR
 | Lokasi | `apps/dashboard`, Worker sendiri, bukan route di Worker backend: endpoint admin tidak ikut ke API publik `/v1` |
 | Domain | `luma-admin.chrl.cloud` (prod), `luma-admin-dev.chrl.cloud` (dev). Satu deploy per env; prod hanya dari `master` |
 | Akses | Cloudflare Access (self-hosted application per hostname) di depan Worker. `workers_dev: false` dan `preview_urls: false`, jadi custom domain di belakang Access satu-satunya jalan masuk |
-| Frontend | Vite + React SPA di `client/`, disajikan Workers Static Assets dari Worker yang sama (satu origin, tanpa CORS). React Router untuk routing: tiap layar chunk sendiri (`lazy`), dan loader route cuma memulai query layar itu bareng unduhan chunk-nya tanpa menahan navigasi. Data lewat TanStack Query di atas klien `hc<AppType>()` Hono RPC (tipe request/response ikut Worker, header JSON global); login/logout `fetch` biasa ke `/api/auth/*`. Form RHF + `zod/mini` (zod penuh dua pertiga chunk User), tabel TanStack Table (mode manual, paginasi di server), Zustand cuma untuk state UI (bukan data API). Tanpa Axios |
+| Frontend | Vite + React SPA di `client/`, disajikan Workers Static Assets dari Worker yang sama (satu origin, tanpa CORS). React Router untuk routing: tiap layar chunk sendiri (`lazy`), dan loader route cuma memulai query layar itu bareng unduhan chunk-nya tanpa menahan navigasi. Data lewat TanStack Query di atas klien `hc<AppType>()` Hono RPC (tipe request/response ikut Worker, header JSON global); login/logout `fetch` biasa ke `/api/auth/*`. Form RHF + `zod/mini` (zod penuh dua pertiga chunk User), tabel TanStack Table (mode manual, paginasi di server), Zustand cuma untuk state UI (bukan data API). Copy Indonesia/English tanpa library i18n (lihat UI). Tanpa Axios |
 | API | Hono di `/api/*`, zod validator, error `{"error": {"code", "message"}}` seperti backend |
 | Data | Binding D1 ke database yang sama dengan backend env itu. Tidak pakai R2 |
 | Styling | Tailwind v4 dengan token Stabilo di `client/styles/app.css` (terang dari board "14 · Admin web", gelap dari token gelap Stabilo app). Font Bricolage Grotesque (cuma sumbu `wght`) / Geist / Geist Mono di-bundle (`@fontsource`, CSP gak izinkan Google Fonts). Ikon Hugeicons stroke-rounded, set yang sama dengan app |
@@ -81,6 +81,7 @@ apps/dashboard/
     ├── main.tsx
     ├── app/              # router, providers, query-client (setelan free tier), require-session
     ├── lib/              # api-client (hc), api-error, env (badge DEV), format
+    ├── i18n/             # copy id.ts (sumber) + en.ts (chunk sendiri), useI18n
     ├── hooks/            # hook generik: use-debounce, use-media-query, use-copy-to-clipboard
     ├── stores/           # Zustand, state UI saja
     ├── features/<fitur>/ # auth, overview, users, invites
@@ -212,19 +213,30 @@ Batas Workers 100rb request/hari dihitung per akun, jadi dashboard ikut memakai 
 
 ## UI
 
-- Copy bahasa Indonesia. Light dan dark mengikuti sistem.
+- Copy Indonesia dan English, light dan dark mengikuti sistem (lihat Bahasa di bawah).
 - Responsif sampai lebar HP (±360px): di layar sempit, tabel User berubah jadi daftar kartu dan navigasi pindah ke bawah atau menu.
 - Badge **DEV** di header kalau env bukan prod, supaya tidak salah ban di prod.
-- Board: halaman "14 · Admin web" di Stabilo (komponen 1 & 2, Ringkasan, User, Detail user + dialog ban + udah di-ban, Undangan + kode baru, tampilan HP, menu burger, loading). Tema Terang/Gelap/Sistem di menu akun, pilihan disimpan di browser.
+- Board: halaman "14 · Admin web" di Stabilo (komponen 1 & 2, Ringkasan, User, Detail user + dialog ban + udah di-ban, Undangan + kode baru, tampilan HP, menu burger, loading). Bahasa (Indonesia/English) dan tema Terang/Gelap/Sistem di menu akun, pilihan disimpan di browser.
 - Beda dari board karena data atau produk:
   - Ban cuma mencabut AI subsidi, jadi copy "gak bisa masuk atau sync" diganti "Kuota AI gratisnya dicabut. Masuk, backup, dan sync tetap jalan".
   - Kartu Sync cuma hari ini (backend gak nyimpan riwayat per hari), bukan grafik 7 hari.
   - Key AI: "Kuota gratis" kalau punya key subsidi, selain itu "—"; key sendiri gak pernah sampai server.
   - Tanpa tanggal ban (gak ada kolom `banned_at`) dan tanpa kolom "Dibuat" di Undangan (`invite_codes` gak punya `created_at`).
-  - Tanpa pilihan bahasa (dashboard cuma bahasa Indonesia).
   - Tambahan: layar Login, kartu Perangkat (sesi) dan Kuota AI gratis di Detail user, kartu Kuota AI gratis (spend bulan ini) di Ringkasan, dialog konfirmasi hapus kode.
 - Loading: tata letak asli langsung tampil, angka dan baris diganti skeleton (board loading), bukan layar loading terpisah.
 - Waktu ditampilkan di zona waktu browser admin.
+
+### Bahasa
+
+Aturan copy sama dengan app mobile (docs/i18n.md): Indonesia mengikuti board, English santai, jelas, natural; nama app, model, dan provider tetap. Bedanya cuma default.
+
+- Default ikut browser: `navigator.language` diawali `en` → English, bahasa lain → Indonesia. Pilihan di menu akun (segmented Indonesia / English, nama bahasa gak diterjemahkan) langsung berlaku tanpa Simpan dan disimpan di localStorage bareng tema; habis itu pilihan menang atas bahasa browser.
+- Login gak punya pemilih bahasa (gak ada di board); ikut pilihan tersimpan atau browser.
+- Copy di `client/i18n`: `id.ts` sumber dan bentuknya jadi tipe `Messages`, `en.ts` wajib cocok (key hilang, key lebih, atau parameter beda → `tsc` gagal). Kalimat dinamis berupa fungsi bertipe; plural English lewat `Intl.PluralRules`. Tanpa library.
+- `en.ts` chunk sendiri yang diunduh sebelum render pertama (gak berkedip Indonesia) atau saat ganti bahasa. File statis, jadi gak menambah request Worker; gagal diunduh → tetap Indonesia. `<html lang>` ikut bahasa yang tampil.
+- Error API diterjemahkan di client dari `code` (`t.errors`); `message` dari Worker berbahasa Inggris dan cuma buat log, Worker gak tahu bahasa UI.
+- Angka, ukuran, uang, dan tanggal pakai locale bahasa itu (`id-ID` / `en`): "1,5 KB" / "1.5 KB", "14 Nov 2026" / "Nov 14, 2026". Waktu relatif pakai copy sendiri ("2 mnt lalu" / "2 mins ago").
+- Data user (nama, email, user agent, kode undangan) gak diterjemahkan.
 
 Prompt Claude Design (detail visual diserahkan ke Claude Design, mengikuti foundation Stabilo):
 
@@ -260,4 +272,6 @@ API dulu, SPA menunggu foundation Stabilo dan board desain. Induk [#216](https:/
 2. API user + ban/unban, `make backend-unban` ([#218](https://github.com/choiruladamm/luma/issues/218)).
 3. API kode undangan ([#219](https://github.com/choiruladamm/luma/issues/219)).
 4. API ringkasan + spike spend workspace OpenRouter ([#220](https://github.com/choiruladamm/luma/issues/220)).
-5. SPA React + layar ([#221](https://github.com/choiruladamm/luma/issues/221), deferred sampai foundation dan board jadi).
+5. SPA React + layar ([#221](https://github.com/choiruladamm/luma/issues/221)).
+6. Fondasi i18n Indonesia/English + pilihan Bahasa ([#222](https://github.com/choiruladamm/luma/issues/222)).
+7. Terjemahan layar Ringkasan, User, Detail user, Undangan ([#223](https://github.com/choiruladamm/luma/issues/223)).

@@ -3,6 +3,7 @@ import { Avatar } from "../../../components/ui/avatar";
 import { Banner } from "../../../components/ui/banner";
 import { Button } from "../../../components/ui/button";
 import { Chip } from "../../../components/ui/chip";
+import { useI18n } from "../../../i18n";
 import { formatDateTime, formatRelative } from "../../../lib/format";
 import type { UserDetail } from "../api/users-api";
 import { UserStatusChip } from "./user-columns";
@@ -13,9 +14,11 @@ export const providerLabel = (ids: string[]) => (ids.length ? ids.map((id) => PR
 
 /** Board 05/07: profile card; banned users get the banner on top (no ban date: not stored). */
 export function UserProfile({ user, onCopyEmail, onUnban, unbanning }: { user: UserDetail; onCopyEmail: () => void; onUnban: () => void; unbanning: boolean }) {
+  const i18n = useI18n();
+  const { locale } = i18n;
   const facts: [string, React.ReactNode][] = [
-    ["Daftar", formatDateTime(user.createdAt)],
-    ["Terakhir aktif", user.lastActiveAt ? `${formatRelative(user.lastActiveAt)} · ${formatDateTime(user.lastActiveAt)}` : "Belum pernah"],
+    ["Daftar", formatDateTime(user.createdAt, locale)],
+    ["Terakhir aktif", user.lastActiveAt ? `${formatRelative(user.lastActiveAt, i18n)} · ${formatDateTime(user.lastActiveAt, locale)}` : "Belum pernah"],
     ["Masuk lewat", providerLabel(user.providers)],
     [
       "Kode undangan",

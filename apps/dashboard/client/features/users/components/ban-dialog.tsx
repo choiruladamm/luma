@@ -2,6 +2,7 @@ import { Avatar } from "../../../components/ui/avatar";
 import { Button } from "../../../components/ui/button";
 import { ConfirmFooter, Dialog } from "../../../components/ui/dialog";
 import { Icon, type IconName } from "../../../components/ui/icons";
+import { useI18n } from "../../../i18n";
 import { formatDate } from "../../../lib/format";
 import type { UserDetail } from "../api/users-api";
 import { UserStatusChip } from "./user-columns";
@@ -15,6 +16,7 @@ const EFFECTS: [IconName, string, boolean][] = [
 ];
 
 export function BanDialog({ user, open, onClose, onConfirm, pending }: { user: UserDetail; open: boolean; onClose: () => void; onConfirm: () => void; pending: boolean }) {
+  const { locale } = useI18n();
   return (
     <Dialog
       open={open}
@@ -39,7 +41,7 @@ export function BanDialog({ user, open, onClose, onConfirm, pending }: { user: U
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
           <span className="text-body font-medium [overflow-wrap:anywhere]">{user.email}</span>
           <span className="text-caption text-ink2">
-            {user.name ? `${user.name} · ` : ""}daftar {formatDate(user.createdAt)}
+            {user.name ? `${user.name} · ` : ""}daftar {formatDate(user.createdAt, locale)}
           </span>
         </div>
         <UserStatusChip banned={user.banned} />

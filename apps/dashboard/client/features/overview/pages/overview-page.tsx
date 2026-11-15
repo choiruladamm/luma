@@ -5,6 +5,8 @@ import { ButtonLink } from "../../../components/ui/button";
 import { StatCard } from "../../../components/ui/card";
 import { DataTable } from "../../../components/ui/data-table";
 import { ErrorState } from "../../../components/ui/states";
+import { useI18n } from "../../../i18n";
+import { errorText } from "../../../lib/api-error";
 import { formatBytes, formatNumber } from "../../../lib/format";
 import { USER_NUMERIC, UserCard, userColumns } from "../../users/components/user-columns";
 import { UsersTableSkeleton } from "../../users/components/users-table-skeleton";
@@ -22,6 +24,9 @@ const pct = (part: number, whole: number) => (whole > 0 ? `${Math.round((part / 
 /** Board 01 Ringkasan (+ 12 loading). */
 export function OverviewPage() {
   const overview = useOverview();
+  const i18n = useI18n();
+  const { t, locale } = i18n;
+  const columns = useMemo(() => userColumns(i18n), [i18n]);
   const recent = useUsers("");
   const data = overview.data;
   const recentRows = useMemo(() => recent.data?.pages[0]?.items.slice(0, RECENT) ?? [], [recent.data]);
@@ -32,17 +37,17 @@ export function OverviewPage() {
       <PageHeader title="Ringkasan" actions={<UpdatedAt at={overview.dataUpdatedAt} onRefresh={refresh} refreshing={overview.isFetching} />} />
       {overview.isError && !data ? (
         <section className="rounded-card bg-sheet">
-          <ErrorState message={overview.error.message} onRetry={() => void overview.refetch()} />
+          <ErrorState message={errorText(overview.error, t)} onRetry={() => void overview.refetch()} />
         </section>
       ) : (
         <>
           {/* Board 12: while loading, the real labels and icons stay and only the values pulse. */}
           <div aria-busy={!data || undefined} className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4">
-            <StatCard label="User terdaftar" icon="users" value={data ? formatNumber(data.users.total) : <StatValueSkeleton />} note={data ? <><strong className="text-ink">+{formatNumber(data.users.new7d)}</strong> dalam 7 hari</> : <StatNoteSkeleton />} />
-            <StatCard label="Baru 7 hari" icon="clock" value={data ? formatNumber(data.users.new7d) : <StatValueSkeleton />} note={data ? `dari ${formatNumber(data.users.total)} user` : <StatNoteSkeleton />} />
-            <StatCard label="Di-ban" icon="ban" value={data ? formatNumber(data.users.banned) : <StatValueSkeleton />} danger={!!data && data.users.banned > 0} note={data ? `${pct(data.users.banned, data.users.total)} dari semua user` : <StatNoteSkeleton />} />
-            <StatCard label="Penyimpanan" icon="drive" value={data ? formatBytes(data.storage.r2Bytes + data.storage.syncBytes) : <StatValueSkeleton />} note={data ? "file buku + data sync" : <StatNoteSkeleton />} />
-            <StatCard label="Kode undangan" icon="ticket" value={data ? formatNumber(data.invites.unused) : <StatValueSkeleton />} note={data ? "belum dipakai" : <StatNoteSkeleton />} />
+            <StatCard label="User terdaftar" icon="users" value={data ? formatNumber(data.users.total, locale) : <StatValueSkeleton />} note={data ? <><strong className="text-ink">+{formatNumber(data.users.new7d, locale)}</strong> dalam 7 hari</> : <StatNoteSkeleton />} />
+            <StatCard label="Baru 7 hari" icon="clock" value={data ? formatNumber(data.users.new7d, locale) : <StatValueSkeleton />} note={data ? `dari ${formatNumber(data.users.total, locale)} user` : <StatNoteSkeleton />} />
+            <StatCard label="Di-ban" icon="ban" value={data ? formatNumber(data.users.banned, locale) : <StatValueSkeleton />} danger={!!data && data.users.banned > 0} note={data ? `${pct(data.users.banned, data.users.total)} dari semua user` : <StatNoteSkeleton />} />
+            <StatCard label="Penyimpanan" icon="drive" value={data ? formatBytes(data.storage.r2Bytes + data.storage.syncBytes, locale) : <StatValueSkeleton />} note={data ? "file buku + data sync" : <StatNoteSkeleton />} />
+            <StatCard label="Kode undangan" icon="ticket" value={data ? formatNumber(data.invites.unused, locale) : <StatValueSkeleton />} note={data ? "belum dipakai" : <StatNoteSkeleton />} />
           </div>
           <div className="flex flex-wrap items-start gap-4">
             <div className="flex min-w-0 flex-[2_1_480px] flex-col gap-4">
@@ -66,13 +71,13 @@ export function OverviewPage() {
           </ButtonLink>
         </div>
         {recent.isError ? (
-          <ErrorState message={recent.error.message} onRetry={() => void recent.refetch()} />
+          <ErrorState message={errorText(recent.error, t)} onRetry={() => void recent.refetch()} />
         ) : !recent.data ? (
           <UsersTableSkeleton rows={RECENT} />
         ) : (
           <DataTable
             label="User yang baru daftar"
-            columns={userColumns}
+            columns={columns}
             data={recentRows}
             rowHref={(u) => `/users/${u.id}`}
             numeric={USER_NUMERIC}

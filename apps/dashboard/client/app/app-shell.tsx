@@ -10,6 +10,7 @@ import { ToastHost } from "../components/ui/toast-host";
 import { useSession } from "../features/auth/queries/use-session";
 import { useSignOut } from "../features/auth/queries/use-sign-out";
 import { useOverview } from "../features/overview/queries/use-overview";
+import { chooseLang, useI18n } from "../i18n";
 import { isDevHost } from "../lib/env";
 import { useUiStore } from "../stores/ui-store";
 
@@ -22,6 +23,7 @@ export function AppShell() {
   const signOut = useSignOut();
   const overview = useOverview();
   const { theme, setTheme, openMenu, setOpenMenu } = useUiStore();
+  const { t, lang } = useI18n();
   const navigate = useNavigate();
   const location = useLocation();
   const [search, setSearch] = useState("");
@@ -29,9 +31,9 @@ export function AppShell() {
   useEffect(() => setOpenMenu(null), [location.pathname, setOpenMenu]);
 
   const items: NavItem[] = [
-    { to: "/", label: "Ringkasan", icon: "grid" },
-    { to: "/users", label: "User", icon: "users", count: overview.data?.users.total },
-    { to: "/invites", label: "Undangan", icon: "ticket", count: overview.data?.invites.unused },
+    { to: "/", label: t.shell.overview, icon: "grid" },
+    { to: "/users", label: t.shell.users, icon: "users", count: overview.data?.users.total },
+    { to: "/invites", label: t.shell.invites, icon: "ticket", count: overview.data?.invites.unused },
   ];
 
   const submitSearch = (e: FormEvent) => {
@@ -52,7 +54,7 @@ export function AppShell() {
           </div>
           <span className="flex-[1_1_24px]" />
           <form role="search" onSubmit={submitSearch} className="hidden min-w-[200px] flex-[0_1_280px] lg:block">
-            <SearchInput label="Cari email user" placeholder="Cari email user…" value={search} onChange={(e) => setSearch(e.target.value)} />
+            <SearchInput label={t.shell.searchUsers} placeholder={t.shell.searchUsersPlaceholder} value={search} onChange={(e) => setSearch(e.target.value)} />
           </form>
           {isDevHost(window.location.hostname) && (
             <Chip tone="pink" icon="code" className="h-7 px-2.5 text-[11.5px] font-semibold tracking-[0.06em]">
@@ -67,13 +69,15 @@ export function AppShell() {
               onClose={() => setOpenMenu(null)}
               theme={theme}
               onTheme={setTheme}
+              lang={lang}
+              onLang={(l) => void chooseLang(l)}
               onSignOut={() => signOut.mutate()}
               signingOut={signOut.isPending}
             />
           )}
           <IconButton
             icon={openMenu === "nav" ? "x" : "menu"}
-            label={openMenu === "nav" ? "Tutup navigasi" : "Buka navigasi"}
+            label={openMenu === "nav" ? t.shell.closeNav : t.shell.openNav}
             variant="sheet"
             aria-expanded={openMenu === "nav"}
             aria-controls="menu-nav"
@@ -83,7 +87,7 @@ export function AppShell() {
         </header>
         {openMenu === "nav" && (
           <div className="md:hidden">
-            <button type="button" tabIndex={-1} aria-label="Tutup navigasi" onClick={() => setOpenMenu(null)} className="fixed inset-0 top-[76px] z-10 cursor-default bg-scrim" />
+            <button type="button" tabIndex={-1} aria-label={t.shell.closeNav} onClick={() => setOpenMenu(null)} className="fixed inset-0 top-[76px] z-10 cursor-default bg-scrim" />
             <NavPanel items={items} onNavigate={() => setOpenMenu(null)} />
           </div>
         )}

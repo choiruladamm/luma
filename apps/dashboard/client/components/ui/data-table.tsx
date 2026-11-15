@@ -2,7 +2,9 @@ import { type ColumnDef, createColumnHelper, type RowData, tableFeatures, useTab
 import type { ReactNode } from "react";
 import { Link, useNavigate } from "react-router";
 import { useMediaQuery } from "../../hooks/use-media-query";
+import { useI18n } from "../../i18n";
 import { cn } from "../../lib/cn";
+import { formatNumber } from "../../lib/format";
 import { Icon } from "./icons";
 
 // Core-only table: search and pagination happen on the server, so no row-model features.
@@ -19,6 +21,7 @@ export function DataTable<T extends RowData>({ columns, data, label, rowHref, nu
   const table = useTable({ features, columns, data });
   const navigate = useNavigate();
   const narrow = useMediaQuery("(max-width: 767px)");
+  const { t } = useI18n();
 
   if (narrow && renderCard) {
     return (
@@ -61,7 +64,7 @@ export function DataTable<T extends RowData>({ columns, data, label, rowHref, nu
                 ))}
                 {rowHref && (
                   <th scope="col" className="w-5 border-b border-track py-3 pr-6 pl-1">
-                    <span className="sr-only">Buka</span>
+                    <span className="sr-only">{t.common.open}</span>
                   </th>
                 )}
               </tr>
@@ -101,15 +104,15 @@ export function DataTable<T extends RowData>({ columns, data, label, rowHref, nu
 
 /** "Nampilin 10 dari 48" + "Muat lagi" (server cursor or client slice). */
 export function LoadMore({ shown, total, onMore, loading }: { shown: number; total?: number; onMore?: () => void; loading?: boolean }) {
+  const { t, locale } = useI18n();
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-4">
       <span className="text-caption text-ink2 tabular-nums">
-        Nampilin {shown.toLocaleString("id-ID")}
-        {total !== undefined && ` dari ${total.toLocaleString("id-ID")}`}
+        {total === undefined ? t.common.showing(formatNumber(shown, locale)) : t.common.showingOf(formatNumber(shown, locale), formatNumber(total, locale))}
       </span>
       {onMore && (
         <button type="button" onClick={onMore} disabled={loading} className="inline-flex h-11 items-center gap-2 rounded-full bg-muted px-5 text-body font-medium text-ink hover:bg-track disabled:text-ink2">
-          {loading ? "Lagi muat…" : "Muat lagi"}
+          {loading ? t.common.loadingMore : t.common.loadMore}
         </button>
       )}
     </div>
