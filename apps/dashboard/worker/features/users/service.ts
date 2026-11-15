@@ -19,14 +19,16 @@ const userItem = (row: UserRow) => ({
   syncBytes: row.syncBytes,
 });
 
-const encodeCursor = (row: UserRow) => `${row.createdAt.getTime()},${row.id}`;
+// A search cursor carries the rank too: `<rank>,<createdAt ms>,<id>`; the plain list `<createdAt ms>,<id>`.
+const encodeCursor = (row: UserRow, searching: boolean) => `${searching ? `${row.rank},` : ""}${row.createdAt.getTime()},${row.id}`;
 
 /** User list, 1 query. */
 export async function getUsers(db: Db, query: { q?: string; cursor?: UserCursor; limit: number }) {
-  const rows = await listUsers(db, { q: query.q || undefined, cursor: query.cursor, limit: query.limit });
+  const q = query.q || undefined;
+  const rows = await listUsers(db, { q, cursor: query.cursor, limit: query.limit });
   const page = rows.slice(0, query.limit);
   const last = page.at(-1);
-  return { items: page.map(userItem), nextCursor: rows.length > query.limit && last ? encodeCursor(last) : null };
+  return { items: page.map(userItem), nextCursor: rows.length > query.limit && last ? encodeCursor(last, q !== undefined) : null };
 }
 
 /**

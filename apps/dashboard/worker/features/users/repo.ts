@@ -17,31 +17,53 @@ const userColumns = {
   syncBytes: sql<number>`coalesce(${userStorage.syncBytes}, 0)`,
 };
 
-const userRows = (db: Db) =>
+// `rank` is the search relevance (0 = best); constant 0 when there is no search.
+const userRows = (db: Db, rank: SQL<number> = sql<number>`0`) =>
   db
-    .select(userColumns)
+    .select({ ...userColumns, rank: rank.mapWith(Number).as("rank") })
     .from(users)
     .leftJoin(userStorage, eq(userStorage.userId, users.id))
     .leftJoin(aiKeys, eq(aiKeys.userId, users.id));
 
 export type UserRow = Awaited<ReturnType<ReturnType<typeof userRows>["all"]>>[number];
-export type UserCursor = { createdAt: Date; id: string };
+/** Keyset position: `rank` only for a search (results are ordered by relevance first). */
+export type UserCursor = { rank?: number; createdAt: Date; id: string };
 
-/** Escape `%`, `_`, `\` so `q` only matches as a literal prefix. */
-export const likePrefix = (q: string) => `${q.replace(/[\\%_]/g, (ch) => `\\${ch}`)}%`;
+/** Escape `%`, `_`, `\` so `q` only ever matches as literal text inside a LIKE pattern. */
+export const likeEscape = (q: string) => q.replace(/[\\%_]/g, (ch) => `\\${ch}`);
 
-/** 1 query: newest first, cursor (createdAt, id). Fetches `limit + 1` to know if there is a next page. */
+/**
+ * Search: `q` anywhere in the email or the name (LIKE is case-insensitive for ASCII). Ranked:
+ * 0 exact email, 1 email prefix, 2 start of a word (after . _ - @ in the email, or a word of the
+ * name), 3 anywhere else. Same rows read as the old prefix match: neither can use an index.
+ */
+function search(q: string) {
+  const e = likeEscape(q);
+  const like = (col: typeof users.email | typeof users.name, pattern: string) => sql`${col} like ${pattern} escape '\\'`;
+  const filter = or(like(users.email, `%${e}%`), like(users.name, `%${e}%`))!;
+  const rank = sql<number>`case
+    when lower(${users.email}) = lower(${q}) then 0
+    when ${like(users.email, `${e}%`)} then 1
+    when ${or(like(users.email, `%.${e}%`), like(users.email, `%\\_${e}%`), like(users.email, `%-${e}%`), like(users.email, `%@${e}%`), like(users.name, `${e}%`), like(users.name, `% ${e}%`))} then 2
+    else 3 end`;
+  return { filter, rank };
+}
+
+/**
+ * 1 query: newest first, or by relevance then newest when searching. Keyset cursor (rank,
+ * createdAt, id). Fetches `limit + 1` to know if there is a next page.
+ */
 export function listUsers(db: Db, { q, cursor, limit }: { q?: string; cursor?: UserCursor; limit: number }) {
+  const found = q ? search(q) : undefined;
   const filters: SQL[] = [];
-  if (q) filters.push(sql`${users.email} like ${likePrefix(q)} escape '\\'`);
+  if (found) filters.push(found.filter);
   if (cursor) {
-    filters.push(
-      or(lt(users.createdAt, cursor.createdAt), and(eq(users.createdAt, cursor.createdAt), lt(users.id, cursor.id)))!,
-    );
+    const older = or(lt(users.createdAt, cursor.createdAt), and(eq(users.createdAt, cursor.createdAt), lt(users.id, cursor.id)))!;
+    filters.push(found && cursor.rank !== undefined ? or(sql`${found.rank} > ${cursor.rank}`, and(sql`${found.rank} = ${cursor.rank}`, older))! : older);
   }
-  return userRows(db)
+  return userRows(db, found?.rank)
     .where(and(...filters))
-    .orderBy(desc(users.createdAt), desc(users.id))
+    .orderBy(...(found ? [sql`${found.rank}`] : []), desc(users.createdAt), desc(users.id))
     .limit(limit + 1);
 }
 

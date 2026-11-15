@@ -11,9 +11,10 @@ export async function createUser({
   email = `user-${++counter}@luma.test`,
   emailVerified = true,
   createdAt = new Date(),
-}: { email?: string; emailVerified?: boolean; createdAt?: Date } = {}) {
+  name = "Tester",
+}: { email?: string; emailVerified?: boolean; createdAt?: Date; name?: string } = {}) {
   const id = crypto.randomUUID();
-  await createDb(env.DB).insert(users).values({ id, name: "Tester", email, emailVerified, createdAt, updatedAt: createdAt });
+  await createDb(env.DB).insert(users).values({ id, name, email, emailVerified, createdAt, updatedAt: createdAt });
   return { id, email };
 }
 

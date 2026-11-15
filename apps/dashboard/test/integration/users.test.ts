@@ -81,6 +81,33 @@ describe("GET /api/users", () => {
     expect(items.find((u) => u.id === full.id)?.lastActiveAt).toMatch(/Z$/);
   });
 
+  it("finds q anywhere in the email or name, best match first, and pages through the ranks", async () => {
+    const t = tag();
+    const at = (min: number) => new Date(Date.UTC(2026, 10, 1, 0, min));
+    // Created oldest → newest; the ranking, not the date, decides the order.
+    await createUser({ email: `${t}zz@luma.test`, createdAt: at(1) }); // 1: email prefix
+    await createUser({ email: `ab${t}@luma.test`, createdAt: at(2) }); // 3: inside a word
+    await createUser({ email: `x.${t}@luma.test`, createdAt: at(3) }); // 2: word start in the email
+    await createUser({ email: `nm${crypto.randomUUID().slice(0, 6)}@luma.test`, name: `Putri ${t}`, createdAt: at(4) }); // 2: word of the name
+    const expected = [`${t}zz@luma.test`, "name", `x.${t}@luma.test`, `ab${t}@luma.test`];
+    const label = (u: Item) => (u.email.startsWith("nm") ? "name" : u.email);
+
+    const page = (await (await get(`/api/users?q=${t.toUpperCase()}`)).response.json()) as Page;
+    expect(page.items.map(label)).toEqual(expected);
+
+    const exact = (await (await get(`/api/users?q=${t}zz@luma.test`)).response.json()) as Page;
+    expect(exact.items[0]!.email).toBe(`${t}zz@luma.test`);
+
+    const seen: string[] = [];
+    let cursor: string | null = "";
+    while (cursor !== null) {
+      const p = (await (await get(`/api/users?q=${t}&limit=1${cursor ? `&cursor=${cursor}` : ""}`)).response.json()) as Page;
+      seen.push(...p.items.map(label));
+      cursor = p.nextCursor;
+    }
+    expect(seen).toEqual(expected);
+  });
+
   it("treats % and _ in q as literal characters", async () => {
     const t = tag();
     await createUser({ email: `${t}_a@luma.test` });

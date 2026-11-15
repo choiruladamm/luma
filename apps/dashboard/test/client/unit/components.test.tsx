@@ -10,6 +10,7 @@ import { ConfirmFooter, Dialog } from "../../../client/components/ui/dialog";
 import { Segmented } from "../../../client/components/ui/segmented";
 import { EmptyState, ErrorState } from "../../../client/components/ui/states";
 import { ToastHost } from "../../../client/components/ui/toast-host";
+import { Highlight } from "../../../client/components/ui/highlight";
 import { toast } from "../../../client/stores/toast-store";
 
 describe("Button / IconButton", () => {
@@ -62,6 +63,19 @@ describe("Button loading", () => {
     const button = screen.getByRole("button", { name: "Bikin kode" });
     expect(button).not.toHaveAttribute("aria-busy");
     expect(svgs(button)[0]).not.toHaveClass("motion-safe:animate-spin");
+  });
+});
+
+describe("Highlight", () => {
+  it("marks the first case-insensitive match and keeps the text as typed", () => {
+    const { container } = render(<Highlight text="Work.Adamm@gmail.com" q="adam" />);
+    expect(container.textContent).toBe("Work.Adamm@gmail.com");
+    expect(container.querySelector("mark")?.textContent).toBe("Adam");
+  });
+
+  it("renders plain text without a query or a match", () => {
+    expect(render(<Highlight text="rara@luma.test" />).container.querySelector("mark")).toBeNull();
+    expect(render(<Highlight text="rara@luma.test" q="zzz" />).container.querySelector("mark")).toBeNull();
   });
 });
 

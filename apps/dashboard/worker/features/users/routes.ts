@@ -11,10 +11,11 @@ const listQuery = z.object({
   q: z.string().trim().max(100).optional(),
   cursor: z
     .string()
-    .regex(/^\d{1,15},[A-Za-z0-9_-]{1,64}$/, "Invalid cursor")
+    .regex(/^(?:[0-3],)?\d{1,15},[A-Za-z0-9_-]{1,64}$/, "Invalid cursor")
     .transform((v) => {
-      const [ms, id] = v.split(",") as [string, string];
-      return { createdAt: new Date(Number(ms)), id };
+      const parts = v.split(",");
+      const [ms, id] = parts.slice(-2) as [string, string];
+      return { rank: parts.length === 3 ? Number(parts[0]) : undefined, createdAt: new Date(Number(ms)), id };
     })
     .optional(),
   limit: z.coerce.number().int().min(1).max(USERS_PAGE_SIZE).default(USERS_PAGE_SIZE),

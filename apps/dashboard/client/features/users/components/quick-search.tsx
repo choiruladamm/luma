@@ -15,6 +15,9 @@ const MIN = 2;
 const MAX = 100; // same limit as the worker's `q`
 const SHOWN = 5;
 
+// Pasted "mailto:Name@Mail.com " → "name@mail.com"; the worker matches case-insensitively anyway.
+const normalize = (v: string) => v.trim().toLowerCase().replace(/^mailto:/, "");
+
 const typingInField = (el: EventTarget | null) =>
   el instanceof HTMLElement && (el.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(el.tagName));
 
@@ -27,12 +30,14 @@ export function QuickSearch({ shortcut, autoFocus, onDone, tone, className }: { 
   const { t, locale } = useI18n();
   const navigate = useNavigate();
   const listId = useId();
+  // Own id: the desktop field and the phone search row can both be mounted (CSS shows one).
+  const inputId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
   const [value, setValue] = useState("");
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(-1);
 
-  const typed = value.trim();
+  const typed = normalize(value);
   const q = useDebounce(typed, 300);
   const valid = q.length >= MIN && q.length <= MAX;
   const users = useUsers(q, valid);
@@ -67,7 +72,12 @@ export function QuickSearch({ shortcut, autoFocus, onDone, tone, className }: { 
     onDone?.();
   };
   const seeAll = () => finish(`/users?q=${encodeURIComponent(typed)}`);
-  const choose = (index: number) => (index >= 0 && index < items.length ? finish(`/users/${items[index]!.id}`) : seeAll());
+  const choose = (index: number) => {
+    if (index >= 0 && index < items.length) return finish(`/users/${items[index]!.id}`);
+    // Enter on a full, exact email (ranked first by the worker) opens that user directly.
+    if (index < 0 && settled && items[0]?.email.toLowerCase() === typed) return finish(`/users/${items[0].id}`);
+    seeAll();
+  };
 
   const onKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "ArrowDown" || e.key === "ArrowUp") {
@@ -94,6 +104,7 @@ export function QuickSearch({ shortcut, autoFocus, onDone, tone, className }: { 
     <div className={cn("relative", className)}>
       <SearchInput
         ref={inputRef}
+        id={inputId}
         label={t.shell.searchUsers}
         placeholder={t.shell.searchUsersPlaceholder}
         tone={tone}
@@ -152,7 +163,7 @@ export function QuickSearch({ shortcut, autoFocus, onDone, tone, className }: { 
                     onClick={() => choose(i)}
                     className={cn("flex cursor-pointer items-center justify-between gap-3 rounded-row px-3 py-2", active === i && "bg-canvas")}
                   >
-                    <UserIdentity user={u} />
+                    <UserIdentity user={u} q={typed} />
                     <UserStatusChip banned={u.banned} />
                   </li>
                 ))}

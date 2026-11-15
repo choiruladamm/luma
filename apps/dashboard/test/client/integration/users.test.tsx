@@ -30,7 +30,7 @@ describe("User", () => {
     const { user: u, router } = renderApp("/users");
     await screen.findByRole("table", { name: "Daftar user" });
     await u.type(screen.getByRole("searchbox", { name: "Cari email" }), "sekar");
-    expect(await screen.findByRole("link", { name: /sekar@luma.test/ })).toBeInTheDocument();
+    expect(await screen.findByRole("link", { name: /sekar\s?@\s?luma\.test/ })).toBeInTheDocument();
     expect(router.state.location.search).toBe("?q=sekar");
     expect(queries.filter((q) => q !== null)).toEqual(["sekar"]);
   });
