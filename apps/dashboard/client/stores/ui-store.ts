@@ -3,7 +3,7 @@ import { createJSONStorage, persist } from "zustand/middleware";
 
 export type ThemePref = "light" | "dark" | "system";
 export type Lang = "id" | "en";
-export type OpenMenu = "account" | "nav" | "search" | null;
+export type OpenMenu = "account" | "search" | null;
 
 /** Cross-screen UI state only. API data lives in the TanStack Query cache, never here. */
 type UiState = {

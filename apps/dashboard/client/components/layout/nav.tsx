@@ -32,8 +32,9 @@ export function NavPills({ items }: { items: NavItem[] }) {
           {...pill.item(i)}
           to={item.to}
           end={item.to === "/"}
-          className={cn("relative z-10 inline-flex h-11 items-center rounded-full px-4 text-body no-underline transition-colors duration-200", i === active ? "font-medium text-canvas" : "font-normal text-ink")}
+          className={cn("relative z-10 inline-flex h-11 items-center gap-2 rounded-full pr-4 pl-3.5 text-body no-underline transition-colors duration-200", i === active ? "font-medium text-canvas" : "font-normal text-ink")}
         >
+          <Icon name={item.icon} size={18} />
           {item.label}
         </NavLink>
       ))}
@@ -41,27 +42,40 @@ export function NavPills({ items }: { items: NavItem[] }) {
   );
 }
 
-/** Mobile burger panel (board 11): rows 48 with icon, name, count chip; active = ink pill. */
-export function NavPanel({ items, onNavigate }: { items: NavItem[]; onNavigate: () => void }) {
+/**
+ * Phone nav (<768px): a floating tab bar at the bottom, icon + label + count, one tap to any
+ * screen. The ink pill slides to the navigation target like the desktop nav (useSlidingPill).
+ */
+export function NavTabBar({ items }: { items: NavItem[] }) {
   const { t, locale } = useI18n();
+  const location = useLocation();
+  const navigation = useNavigation();
+  const path = navigation.location?.pathname ?? location.pathname;
+  const active = items.findIndex((item) => isAt(path, item.to));
+  const pill = useSlidingPill(active, items.length);
+
   return (
-    <nav id="menu-nav" aria-label={t.shell.nav} className="fixed inset-x-3.5 top-[76px] z-20 rounded-menu bg-sheet p-2 shadow-[var(--shadow-sheet),inset_0_0_0_1px_var(--c-track)]">
-      <ul className="m-0 flex list-none flex-col gap-1 p-0">
-        {items.map((item) => (
-          <li key={item.to}>
-            <NavLink
-              to={item.to}
-              end={item.to === "/"}
-              onClick={onNavigate}
-              className={({ isActive }) => cn("flex h-12 items-center gap-3 rounded-full px-4 text-body font-medium no-underline", isActive ? "bg-ink text-canvas" : "text-ink hover:bg-canvas")}
-            >
-              <Icon name={item.icon} size={20} />
-              <span className="flex-1">{item.label}</span>
-              {item.count !== undefined && <span className="rounded-full bg-muted px-2.5 py-0.5 text-chip font-medium text-ink tabular-nums">{formatNumber(item.count, locale)}</span>}
-            </NavLink>
-          </li>
-        ))}
-      </ul>
+    <nav aria-label={t.shell.nav} className="fixed inset-x-3 bottom-[calc(12px+env(safe-area-inset-bottom))] z-30 flex rounded-full bg-sheet p-1.5 shadow-[var(--shadow-sheet),inset_0_0_0_1px_var(--c-track)] md:hidden">
+      <span aria-hidden="true" style={pill.activeStyle} className={cn("absolute top-1.5 left-0 h-14 rounded-full bg-ink", pill.slide, pill.activeVisible ? "opacity-100" : "opacity-0")} />
+      {items.map((item, i) => (
+        <NavLink
+          key={item.to}
+          ref={pill.item(i).ref}
+          to={item.to}
+          end={item.to === "/"}
+          className={cn("relative z-10 flex h-14 min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-full no-underline transition-colors duration-200", i === active ? "text-canvas" : "text-ink2")}
+        >
+          <span className="relative">
+            <Icon name={item.icon} size={22} />
+            {item.count !== undefined && (
+              <span className={cn("absolute -top-1.5 left-[14px] min-w-5 rounded-full px-1.5 text-center text-[10.5px] leading-[18px] font-semibold tabular-nums", i === active ? "bg-canvas text-ink" : "bg-muted text-ink")}>
+                {formatNumber(item.count, locale)}
+              </span>
+            )}
+          </span>
+          <span className={cn("max-w-full truncate px-1 text-[12px] leading-none", i === active ? "font-semibold" : "font-medium")}>{item.label}</span>
+        </NavLink>
+      ))}
     </nav>
   );
 }

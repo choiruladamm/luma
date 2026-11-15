@@ -1,4 +1,4 @@
-import { screen, waitFor } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import { HttpResponse, http } from "msw";
 import { describe, expect, it, vi } from "vitest";
 import { API, apiError } from "../helpers/handlers";
@@ -76,7 +76,7 @@ describe("auth", () => {
   it("switches the language from the account menu without calling the API", async () => {
     const { user } = renderApp("/");
     await user.click(await screen.findByRole("button", { name: "Menu akun: Marcus" }));
-    await screen.findByText("48");
+    await within(await screen.findByRole("region", { name: "User terdaftar" })).findByText("48");
     let requests = 0;
     const count = () => requests++;
     server.events.on("request:start", count);

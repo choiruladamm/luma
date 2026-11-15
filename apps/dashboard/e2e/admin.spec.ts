@@ -102,11 +102,23 @@ test("the theme choice survives a reload", async ({ page }) => {
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
 });
 
-test("phone: burger nav and user cards @phone", async ({ page }) => {
+test("phone: bottom tab bar, user cards, and the header search @phone", async ({ page }) => {
   test.skip(test.info().project.name !== "phone", "phone layout only");
   await page.goto("/");
-  await page.getByRole("button", { name: "Buka navigasi" }).click();
-  await page.getByRole("navigation", { name: "Navigasi admin" }).getByRole("link", { name: /User/ }).click();
+  const tabs = page.getByRole("navigation", { name: "Navigasi admin" });
+  await expect(tabs.getByRole("link", { name: /Ringkasan/ })).toHaveAttribute("aria-current", "page");
+  await tabs.getByRole("link", { name: /User/ }).click();
   await expect(page).toHaveURL(/\/users$/);
   await expect(page.getByRole("list", { name: "Daftar user" }).getByRole("link", { name: /rara.anindya@e2e.local/ })).toBeVisible();
+
+  // Search mode replaces the header row; the page behind can't scroll while it's open.
+  await page.goto("/invites");
+  await page.getByRole("button", { name: "Buka pencarian" }).click();
+  const box = page.getByRole("combobox", { name: "Cari email user" });
+  await expect(box).toBeFocused();
+  await expect(page.locator("html")).toHaveCSS("overflow", "hidden");
+  await box.fill("sekar");
+  await page.getByRole("option", { name: /sekar.ayu@e2e.local/ }).click();
+  await expect(page).toHaveURL(/\/users\/[^/]+$/);
+  await expect(page.locator("html")).not.toHaveCSS("overflow", "hidden");
 });

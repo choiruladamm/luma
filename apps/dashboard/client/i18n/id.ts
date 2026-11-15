@@ -49,8 +49,6 @@ export const id = {
     users: "User",
     invites: "Undangan",
     nav: "Navigasi admin",
-    openNav: "Buka navigasi",
-    closeNav: "Tutup navigasi",
     searchUsers: "Cari email user",
     searchUsersPlaceholder: "Cari email user…",
     searchResults: "Hasil cari user",

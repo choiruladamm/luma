@@ -9,7 +9,7 @@ import { server } from "../setup";
 describe("Ringkasan", () => {
   it("shows the numbers, sync, storage, services, AI spend, and newest users", async () => {
     renderApp("/");
-    expect(await screen.findByText("48")).toBeInTheDocument();
+    expect(await within(await screen.findByRole("region", { name: "User terdaftar" })).findByText("48")).toBeInTheDocument();
     expect(screen.getByText("12.480")).toBeInTheDocument();
     expect(screen.getByText(/sisa 87.520/)).toBeInTheDocument();
     expect(screen.getByText("12% kepakai")).toBeInTheDocument();
@@ -35,17 +35,17 @@ describe("Ringkasan", () => {
     expect(await screen.findByText("Data gagal dimuat", {}, { timeout: 3000 })).toBeInTheDocument();
     fail = false;
     await user.click(screen.getAllByRole("button", { name: "Coba lagi" })[0]!);
-    expect(await screen.findByText("48")).toBeInTheDocument();
+    expect(await within(await screen.findByRole("region", { name: "User terdaftar" })).findByText("48")).toBeInTheDocument();
   });
 
   it("refetches on the manual refresh button (no polling)", async () => {
     let calls = 0;
     server.use(http.get(`${API}/overview`, () => (calls++, HttpResponse.json(overview))));
     const { user } = renderApp("/");
-    await screen.findByText("48");
+    await within(await screen.findByRole("region", { name: "User terdaftar" })).findByText("48");
     const before = calls;
     await user.click(screen.getByRole("button", { name: "Muat ulang data" }));
-    await screen.findByText("48");
+    await within(await screen.findByRole("region", { name: "User terdaftar" })).findByText("48");
     expect(calls).toBe(before + 1);
   });
 });

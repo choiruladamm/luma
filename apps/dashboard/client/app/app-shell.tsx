@@ -1,8 +1,8 @@
-import { useEffect } from "react";
+import { type CSSProperties, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Outlet, ScrollRestoration, useLocation } from "react-router";
 import { AccountMenu } from "../components/layout/account-menu";
 import { Wordmark } from "../components/layout/logo";
-import { type NavItem, NavPanel, NavPills } from "../components/layout/nav";
+import { type NavItem, NavPills, NavTabBar } from "../components/layout/nav";
 import { IconButton } from "../components/ui/button";
 import { Chip } from "../components/ui/chip";
 import { ToastHost } from "../components/ui/toast-host";
@@ -11,6 +11,7 @@ import { useSignOut } from "../features/auth/queries/use-sign-out";
 import { useOverview } from "../features/overview/queries/use-overview";
 import { QuickSearch } from "../features/users/components/quick-search";
 import { chooseLang, useI18n } from "../i18n";
+import { cn } from "../lib/cn";
 import { isDevHost } from "../lib/env";
 import { useUiStore } from "../stores/ui-store";
 
@@ -30,6 +31,28 @@ export function AppShell() {
 
   useEffect(() => setOpenMenu(null), [location.pathname, setOpenMenu]);
 
+  // Phone menus and scrims start under the real header (its height varies with wrapping),
+  // instead of a guessed offset that overlapped it.
+  const searching = openMenu === "search" && searchable;
+
+  // A phone menu (dimmed page behind it) locks the page scroll until it closes.
+  useEffect(() => {
+    const phone = openMenu === "search" ? "(max-width: 1023px)" : "(max-width: 767px)";
+    if (!openMenu || !window.matchMedia(phone).matches) return;
+    const root = document.documentElement;
+    const previous = root.style.overflow;
+    root.style.overflow = "hidden";
+    return () => {
+      root.style.overflow = previous;
+    };
+  }, [openMenu]);
+  const headerRef = useRef<HTMLElement>(null);
+  const [headerBottom, setHeaderBottom] = useState(76);
+  useLayoutEffect(() => {
+    // Scrolled past the header → menus sit at the top of the viewport.
+    if (openMenu && headerRef.current) setHeaderBottom(Math.max(0, Math.round(headerRef.current.getBoundingClientRect().bottom)));
+  }, [openMenu]);
+
   const items: NavItem[] = [
     { to: "/", label: t.shell.overview, icon: "grid" },
     { to: "/users", label: t.shell.users, icon: "users", count: overview.data?.users.total },
@@ -38,10 +61,18 @@ export function AppShell() {
 
   const user = session.data?.user;
   return (
-    <div className="min-h-dvh bg-page">
-      <div className="mx-auto flex max-w-[1280px] flex-col gap-7 px-4 pt-5 pb-12 md:px-8">
-        <header className="flex min-h-[52px] items-center gap-2 md:flex-wrap md:gap-4">
-          <Wordmark />
+    <div className="min-h-dvh bg-page" style={{ "--header-bottom": `${headerBottom}px`, "--menu-top": `${headerBottom + 8}px` } as CSSProperties}>
+      {/* Phone: room at the bottom for the floating tab bar. */}
+      <div className="mx-auto flex max-w-[1280px] flex-col gap-7 px-4 pt-5 pb-[calc(108px+env(safe-area-inset-bottom))] md:px-8 md:pb-12">
+        {/* Phone search mode: the header row becomes the search field + close, so nothing floats over it. */}
+        {searching && (
+          <header ref={headerRef} role="search" className="sticky top-3 z-20 flex min-h-[52px] items-center gap-2 lg:hidden">
+            <QuickSearch autoFocus onDone={() => setOpenMenu(null)} className="min-w-0 flex-1" />
+            <IconButton icon="x" label={t.shell.closeSearch} variant="sheet" onClick={() => setOpenMenu(null)} />
+          </header>
+        )}
+        <header ref={searching ? undefined : headerRef} className={cn("relative z-20 flex min-h-[52px] items-center gap-2 md:flex-wrap md:gap-4", searching && "max-lg:hidden")}>
+          <Wordmark dev={isDevHost(window.location.hostname)} />
           <div className="hidden md:block">
             <NavPills items={items} />
           </div>
@@ -52,17 +83,10 @@ export function AppShell() {
             </div>
           )}
           {searchable && (
-            <IconButton
-              icon={openMenu === "search" ? "x" : "search"}
-              label={openMenu === "search" ? t.shell.closeSearch : t.shell.openSearch}
-              variant="sheet"
-              aria-expanded={openMenu === "search"}
-              onClick={() => setOpenMenu(openMenu === "search" ? null : "search")}
-              className="lg:hidden"
-            />
+            <IconButton icon="search" label={t.shell.openSearch} variant="sheet" onClick={() => setOpenMenu("search")} className="lg:hidden" />
           )}
           {isDevHost(window.location.hostname) && (
-            <Chip tone="pink" icon="code" className="h-7 px-2.5 text-[11.5px] font-semibold tracking-[0.06em]">
+            <Chip tone="pink" icon="code" className="h-7 px-2.5 text-[11.5px] font-semibold tracking-[0.06em] max-md:hidden">
               DEV
             </Chip>
           )}
@@ -80,34 +104,16 @@ export function AppShell() {
               signingOut={signOut.isPending}
             />
           )}
-          <IconButton
-            icon={openMenu === "nav" ? "x" : "menu"}
-            label={openMenu === "nav" ? t.shell.closeNav : t.shell.openNav}
-            variant="sheet"
-            aria-expanded={openMenu === "nav"}
-            aria-controls="menu-nav"
-            onClick={() => setOpenMenu(openMenu === "nav" ? null : "nav")}
-            className="md:hidden"
-          />
         </header>
-        {openMenu === "search" && searchable && (
-          <div className="lg:hidden">
-            <button type="button" tabIndex={-1} aria-label={t.shell.closeSearch} onClick={() => setOpenMenu(null)} className="fixed inset-0 top-[76px] z-10 cursor-default bg-scrim" />
-            <div role="search" className="fixed inset-x-3.5 top-[76px] z-20 rounded-menu bg-sheet p-2 shadow-[var(--shadow-sheet),inset_0_0_0_1px_var(--c-track)]">
-              <QuickSearch autoFocus tone="canvas" onDone={() => setOpenMenu(null)} />
-            </div>
-          </div>
-        )}
-        {openMenu === "nav" && (
-          <div className="md:hidden">
-            <button type="button" tabIndex={-1} aria-label={t.shell.closeNav} onClick={() => setOpenMenu(null)} className="fixed inset-0 top-[76px] z-10 cursor-default bg-scrim" />
-            <NavPanel items={items} onNavigate={() => setOpenMenu(null)} />
-          </div>
+        {/* Whole page dimmed (also behind a sticky field when scrolled); the field and its results sit above. */}
+        {searching && (
+          <button type="button" tabIndex={-1} aria-label={t.shell.closeSearch} onClick={() => setOpenMenu(null)} className="fixed inset-0 z-10 cursor-default bg-scrim lg:hidden" />
         )}
         <main className="flex flex-col gap-7">
           <Outlet />
         </main>
       </div>
+      <NavTabBar items={items} />
       <ToastHost />
       {/* New screen → top of the page; back/forward → where the admin left it. */}
       <ScrollRestoration />

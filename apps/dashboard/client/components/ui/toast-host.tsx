@@ -20,7 +20,7 @@ export function ToastHost() {
   }, [toast, hovered, dismiss]);
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-8 z-50 flex justify-center px-4" aria-live="polite">
+    <div className="pointer-events-none fixed inset-x-0 bottom-[calc(96px+env(safe-area-inset-bottom))] z-50 md:bottom-8 flex justify-center px-4" aria-live="polite">
       {toast && (
         <div
           role={toast.tone === "error" ? "alert" : "status"}

@@ -34,15 +34,15 @@ export function AccountMenu({ user, open, onToggle, onClose, theme, onTheme, lan
         aria-controls="menu-akun"
         aria-label={t.shell.accountMenuFor(label)}
         onClick={onToggle}
-        className="inline-flex h-11 items-center gap-1.5 rounded-full bg-sheet pr-3 pl-1 text-ink"
+        className="inline-flex h-11 items-center gap-1.5 rounded-full bg-sheet p-1 text-ink md:pr-3"
       >
         <Avatar seed={user.email} label={label} />
-        <Icon name="chevdown" size={16} className="text-ink2" />
+        <Icon name="chevdown" size={16} className="text-ink2 max-md:hidden" />
       </button>
       {open && (
         <>
           <button type="button" tabIndex={-1} aria-label={t.shell.closeMenu} onClick={onClose} className="fixed inset-0 z-10 cursor-default bg-scrim md:bg-transparent" />
-          <div id="menu-akun" role="group" aria-label={t.shell.accountMenu} className="fixed inset-x-3.5 top-[76px] z-20 flex flex-col gap-4 rounded-menu bg-sheet p-4 shadow-[var(--shadow-sheet),inset_0_0_0_1px_var(--c-track)] md:absolute md:inset-x-auto md:top-[calc(100%+8px)] md:right-0 md:w-[304px]">
+          <div id="menu-akun" role="group" aria-label={t.shell.accountMenu} className="fixed inset-x-3.5 top-(--menu-top) z-20 flex flex-col gap-4 rounded-menu bg-sheet p-4 shadow-[var(--shadow-sheet),inset_0_0_0_1px_var(--c-track)] md:absolute md:inset-x-auto md:top-[calc(100%+8px)] md:right-0 md:w-[304px]">
             <div className="flex items-center gap-3">
               <Avatar seed={user.email} label={label} size={40} />
               <div className="flex min-w-0 flex-col gap-0.5">

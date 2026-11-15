@@ -10,12 +10,19 @@ export function LogoMark({ size = 28 }: { size?: number }) {
   );
 }
 
-export function Wordmark() {
+/** On phones the DEV chip shrinks to a pink dot after "admin" (the chip shows from 768px). */
+export function Wordmark({ dev }: { dev?: boolean }) {
   return (
     <span className="flex items-center gap-2">
       <LogoMark />
       <span className="font-display text-lg font-semibold tracking-[-0.02em]">Luma</span>
       <span className="hidden text-[15px] font-medium text-ink2 min-[380px]:inline">admin</span>
+      {dev && (
+        <span className="inline-flex items-center md:hidden">
+          <span aria-hidden="true" className="size-2 rounded-full bg-pink shadow-[0_0_0_2px_var(--c-page),0_0_0_3px_var(--c-on-pink)]" />
+          <span className="sr-only">DEV</span>
+        </span>
+      )}
     </span>
   );
 }

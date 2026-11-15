@@ -50,8 +50,6 @@ export const en: Messages = {
     users: "Users",
     invites: "Invites",
     nav: "Admin navigation",
-    openNav: "Open navigation",
-    closeNav: "Close navigation",
     searchUsers: "Search user email",
     searchUsersPlaceholder: "Search user email…",
     searchResults: "User search results",
