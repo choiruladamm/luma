@@ -40,6 +40,7 @@ describe("header quick search", () => {
     await user.type(box, "us");
     await user.click(await screen.findByRole("option", { name: /Lihat semua hasil/ }));
     await waitFor(() => expect(router.state.location.search).toBe("?q=us"));
-    expect(screen.queryByRole("combobox", { name: "Cari email user" })).toBeNull();
+    // The shell re-renders after the URL commits: wait for the field to go.
+    await waitFor(() => expect(screen.queryByRole("combobox", { name: "Cari email user" })).toBeNull());
   });
 });

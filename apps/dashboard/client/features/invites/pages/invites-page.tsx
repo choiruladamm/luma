@@ -10,9 +10,11 @@ import { Select } from "../../../components/ui/select";
 import { Skeleton } from "../../../components/ui/skeleton";
 import { EmptyState, ErrorState } from "../../../components/ui/states";
 import { useCopyToClipboard } from "../../../hooks/use-copy-to-clipboard";
+import { useSlidingPill } from "../../../hooks/use-sliding-pill";
 import { useDebounce } from "../../../hooks/use-debounce";
 import { getI18n, useI18n } from "../../../i18n";
 import { errorText } from "../../../lib/api-error";
+import { cn } from "../../../lib/cn";
 import { toast } from "../../../stores/toast-store";
 import type { InviteItem } from "../api/invites-api";
 import { type InviteSort, type InvitesParams, useInvitesParams } from "../hooks/use-invites-params";
@@ -23,6 +25,34 @@ import { NewInviteDialog } from "../components/new-invite-dialog";
 import { useCreateInvites, useDeleteInvite, useInvites } from "../queries/use-invites";
 
 type Filter = "all" | "unused" | "used";
+
+/** Desktop status tabs: label + count, an ink underline that slides to the active tab. */
+function StatusTabs({ value, counts, onChange }: { value: Filter; counts?: Record<Filter, number>; onChange: (f: Filter) => void }) {
+  const { t } = useI18n();
+  const tabs: Filter[] = ["all", "unused", "used"];
+  const pill = useSlidingPill(tabs.indexOf(value), tabs.length);
+  return (
+    <div role="tablist" aria-label={t.invites.filter} onMouseLeave={pill.onMouseLeave} className="relative flex gap-1 border-b border-track px-4 max-md:hidden">
+      <span aria-hidden="true" style={pill.activeStyle} className={cn("absolute bottom-[-1px] left-0 h-0.5 rounded-full bg-ink", pill.slide, pill.activeVisible ? "opacity-100" : "opacity-0")} />
+      {tabs.map((tab, i) => (
+        <button
+          key={tab}
+          {...pill.item(i)}
+          type="button"
+          role="tab"
+          aria-selected={tab === value}
+          onClick={() => onChange(tab)}
+          className={cn("inline-flex h-12 items-center gap-2 rounded-t-[12px] px-3 text-body transition-colors hover:bg-muted/60", tab === value ? "font-semibold text-ink" : "font-medium text-ink2")}
+        >
+          {tab === "all" ? t.invites.all : t.invites[tab]}
+          <span className={cn("rounded-full px-2 text-chip leading-5 tabular-nums", tab === value ? "bg-ink text-canvas" : "bg-muted text-ink2")}>
+            {counts ? counts[tab] : <Skeleton className="inline-block h-3 w-4 align-middle" />}
+          </span>
+        </button>
+      ))}
+    </div>
+  );
+}
 
 /**
  * Board 08 Undangan + 09 new code. Search, status tabs (with counts), "used within", sort, and
@@ -105,6 +135,7 @@ export function InvitesPage() {
     <>
       <PageHeader
         title={t.shell.invites}
+        after={<span className="text-caption text-ink2 max-md:hidden">{t.invites.oneEach}</span>}
         meta={<UpdatedAt at={invites.dataUpdatedAt} onRefresh={() => void invites.refetch()} refreshing={invites.isFetching} />}
         actions={
           <>
@@ -115,9 +146,14 @@ export function InvitesPage() {
         }
       />
       <section aria-label={t.invites.list} className="overflow-hidden rounded-card bg-sheet">
-        <div className="flex flex-col gap-3 px-6 py-5">
-          <div className="flex flex-wrap items-center gap-2 md:gap-3">
-            <SearchInput label={t.invites.search} placeholder={`${t.invites.search}…`} tone="canvas" className="min-w-0 flex-[1_1_240px] md:max-w-[320px]" value={search} onChange={(e) => setSearch(e.target.value)} onClear={() => setSearch("")} />
+        {/* Desktop: underline tabs across the top of the card, then search left + chips right
+            (same toolbar as Users). Phone: search, chips, then the segmented tabs. */}
+        <StatusTabs value={filter} counts={counts} onChange={(f) => set({ status: f === "all" ? undefined : f })} />
+        <div className="flex flex-col gap-3 px-6 py-5 md:flex-row md:items-center">
+          <div className="min-w-0 md:max-w-[420px] md:flex-1">
+            <SearchInput label={t.invites.search} placeholder={`${t.invites.search}…`} tone="canvas" className="w-full" value={search} onChange={(e) => setSearch(e.target.value)} onClear={() => setSearch("")} />
+          </div>
+          <div className="md:ml-auto">
             {/* Phone: the two chips split the row; desktop: right of the search. */}
             <div className="grid w-full grid-cols-2 gap-2 md:ml-auto md:flex md:w-auto md:items-center [&>*]:min-w-0 max-md:[&_button]:w-full">
               <Select
@@ -141,7 +177,7 @@ export function InvitesPage() {
               />
             </div>
           </div>
-          <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="md:hidden">
             <Segmented
               label={t.invites.filter}
               value={filter}
@@ -165,7 +201,6 @@ export function InvitesPage() {
               }))}
               className="max-w-full"
             />
-            <span className="text-caption text-ink2">{t.invites.oneEach}</span>
           </div>
         </div>
         {invites.isError ? (

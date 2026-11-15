@@ -16,9 +16,9 @@ describe("Undangan", () => {
     const statuses: (string | null)[] = [];
     server.use(http.get(`${API}/invites`, ({ request }) => (statuses.push(new URL(request.url).searchParams.get("status")), HttpResponse.json(invitesPage(invites.items, new URL(request.url))))));
     const { user } = renderApp("/invites");
-    expect(await screen.findByRole("tab", { name: /Semua\s*3/ })).toHaveAttribute("aria-selected", "true");
-    expect(screen.getByRole("tab", { name: /Belum dipakai\s*2/ })).toBeInTheDocument();
-    await user.click(screen.getByRole("tab", { name: /Udah dipakai\s*1/ }));
+    expect((await screen.findAllByRole("tab", { name: /Semua\s*3/ }))[0]!).toHaveAttribute("aria-selected", "true");
+    expect(screen.getAllByRole("tab", { name: /Belum dipakai\s*2/ })[0]!).toBeInTheDocument();
+    await user.click(screen.getAllByRole("tab", { name: /Udah dipakai\s*1/ })[0]!);
     await waitFor(() => expect(within(screen.getByRole("table", { name: "Kode undangan" })).getAllByRole("row")).toHaveLength(2));
     const table = screen.getByRole("table", { name: "Kode undangan" });
     expect(within(table).getByRole("link", { name: "user1@luma.test" })).toHaveAttribute("href", "/users/u1");
@@ -44,7 +44,7 @@ describe("Undangan", () => {
     expect(await within(dialog).findByRole("button", { name: "Udah disalin" })).toBeInTheDocument();
     expect(within(dialog).getByText("Udah disalin ke clipboard")).toBeInTheDocument();
     await user.click(within(dialog).getByRole("button", { name: "Selesai" }));
-    expect(await screen.findByRole("tab", { name: /Semua\s*4/ })).toBeInTheDocument();
+    expect((await screen.findAllByRole("tab", { name: /Semua\s*4/ }))[0]!).toBeInTheDocument();
   });
 
   it("deletes an unused code after confirming", async () => {
@@ -104,8 +104,9 @@ describe("Undangan", () => {
     const box = await screen.findByRole("searchbox", { name: "Cari kode atau email" });
     await user.type(box, "eeeee-ff");
     await waitFor(() => expect(router.state.location.search).toBe("?q=eeeee-ff"));
-    expect(await screen.findAllByText("LUMA-EEEEE-FFFFF")).not.toHaveLength(0);
-    expect(screen.queryByText("LUMA-AAAAA-BBBBB")).toBeNull();
+    // The previous list stays up while the search loads (keepPreviousData): wait for it to go.
+    await waitFor(() => expect(screen.queryByText("LUMA-AAAAA-BBBBB")).toBeNull());
+    expect(screen.getAllByText("LUMA-EEEEE-FFFFF")).not.toHaveLength(0);
     expect(queries.filter((q) => q.get("q")).map((q) => q.get("q"))).toEqual(["eeeee-ff"]);
     await user.clear(box);
     await user.type(box, "nobody");
@@ -117,10 +118,10 @@ describe("Undangan", () => {
     await user.click(screen.getByRole("button", { name: /^Dipakai dalam:/ }));
     await user.click(screen.getByRole("option", { name: "7 hari" }));
     await waitFor(() => expect(router.state.location.search).toBe("?status=used&usedWithin=7d"));
-    await user.click(screen.getByRole("tab", { name: /Belum dipakai/ }));
+    await user.click(screen.getAllByRole("tab", { name: /Belum dipakai/ })[0]!);
     await waitFor(() => expect(router.state.location.search).toBe("?status=unused"));
 
-    await user.click(screen.getByRole("tab", { name: /Semua/ }));
+    await user.click(screen.getAllByRole("tab", { name: /Semua/ })[0]!);
     await user.click(await screen.findByRole("button", { name: /^Kode/ }));
     await waitFor(() => expect(router.state.location.search).toBe("?sort=code"));
     expect(screen.getByRole("columnheader", { name: /^Kode/ })).toHaveAttribute("aria-sort", "descending");

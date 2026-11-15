@@ -12,7 +12,7 @@ test.describe("English browser", () => {
     await expect(page.getByRole("navigation", { name: "Pagination" })).toBeVisible();
     await page.goto("/invites");
     await expect(page.getByRole("heading", { name: "Invites", level: 1 })).toBeVisible();
-    await expect(page.getByText("One code per account")).toBeVisible();
+    await expect(page.getByRole("searchbox", { name: "Search code or email" })).toBeVisible();
 
     const menu = page.getByRole("button", { name: /^Account menu:/ });
     await expect(menu).toBeVisible();

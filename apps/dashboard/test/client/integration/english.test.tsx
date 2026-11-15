@@ -55,8 +55,8 @@ describe("English UI", () => {
   it("Invites: filters, statuses, and actions", async () => {
     renderApp("/invites");
     expect(await screen.findByRole("heading", { name: "Invites", level: 1 })).toBeInTheDocument();
-    expect(await screen.findByRole("tab", { name: /All\s*3/ })).toHaveAttribute("aria-selected", "true");
-    expect(screen.getByRole("tab", { name: /Unused\s*2/ })).toBeInTheDocument();
+    expect((await screen.findAllByRole("tab", { name: /All\s*3/ }))[0]!).toHaveAttribute("aria-selected", "true");
+    expect(screen.getAllByRole("tab", { name: /Unused\s*2/ })[0]!).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Copy LUMA-AAAAA-BBBBB" })).toBeInTheDocument();
     expect(screen.getByText("1–3 of 3")).toBeInTheDocument();
   });

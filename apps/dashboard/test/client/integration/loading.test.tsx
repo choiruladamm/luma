@@ -45,8 +45,8 @@ describe("loading skeletons", () => {
       expect(within(busy).getByRole("columnheader", { name })).toBeInTheDocument();
     }
     // Real labels, no misleading "0" while the list loads.
-    expect(screen.getByRole("tab", { name: "Semua" })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: "Belum dipakai" })).toBeInTheDocument();
+    expect(screen.getAllByRole("tab", { name: "Semua" })[0]!).toBeInTheDocument();
+    expect(screen.getAllByRole("tab", { name: "Belum dipakai" })[0]!).toBeInTheDocument();
   });
 
   it("User detail: card titles and fact labels stay, values pulse", async () => {
