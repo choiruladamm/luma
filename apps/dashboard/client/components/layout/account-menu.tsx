@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { useI18n } from "../../i18n";
 import type { Lang, ThemePref } from "../../stores/ui-store";
 import { Avatar } from "../ui/avatar";
@@ -25,8 +26,22 @@ type Props = {
 export function AccountMenu({ user, open, onToggle, onClose, theme, onTheme, lang, onLang, onSignOut, signingOut }: Props) {
   const { t } = useI18n();
   const label = user.name || user.email;
+  // Outside click and Esc close it from the document: the scrim below is position:fixed, which a
+  // transformed / backdrop-filtered parent (the floating nav) shrinks to its own box.
+  const root = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => !root.current?.contains(e.target as Node) && onClose();
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open, onClose]);
   return (
-    <div className="relative flex-none">
+    <div ref={root} className="relative flex-none">
       <button
         type="button"
         aria-haspopup="true"
@@ -37,7 +52,7 @@ export function AccountMenu({ user, open, onToggle, onClose, theme, onTheme, lan
         className="inline-flex h-11 items-center gap-1.5 rounded-full bg-sheet p-1 text-ink md:pr-3"
       >
         <Avatar seed={user.email} label={label} />
-        <Icon name="chevdown" size={16} className="text-ink2 max-md:hidden" />
+        <Icon name="chevdown" size={16} className={`text-ink2 transition-transform duration-150 max-md:hidden ${open ? "rotate-180" : ""}`} />
       </button>
       {open && (
         <>

@@ -231,6 +231,9 @@ Batas Workers 100rb request/hari dihitung per akun, jadi dashboard ikut memakai 
 - Waktu ditampilkan di zona waktu browser admin.
 - Cari email di header (combobox): `/` fokus ke kolom; minimal 2 huruf, setelah jeda 300 ms muncul 5 user paling cocok (email atau nama, bagian yang cocok disorot stabilo pink) plus "Lihat semua hasil" ke `/users?q=`. Input dinormalisasi (trim, huruf kecil, buang `mailto:`). Panah + Enter buka user; Enter pada email persis langsung buka user itu; Esc tutup lalu kosongkan. Query sama dengan halaman User, jadi pindah ke daftar pakai cache. Disembunyikan di `/users` (halaman itu punya kolom cari sendiri); di bawah 1024px jadi tombol ikon yang mengganti isi header dengan kolom cari + tombol tutup (halaman diredupkan dan gak bisa di-scroll).
 - Tab (nav desktop, Segmented) punya pill aktif dan pill hover yang meluncur (`useSlidingPill`), tanpa animasi kalau browser minta kurangi gerakan.
+- Nav melayang (desktop): header gak sticky; begitu header lewat dari layar, kapsul nav ringkas (logo, tab, search, menu akun) turun dari atas dan naik lagi saat header kelihatan. Cuma salinan yang terlihat yang aktif (menu akun, shortcut `/`); yang tersembunyi `inert` + `aria-hidden`.
+- Pindah layar dari nav pakai View Transitions: isi halaman crossfade, nav meluncur dari kapsul melayang ke header (nama transisi `main-nav`); browser tanpa dukungan pindah biasa, dan gerakan dimatikan kalau diminta.
+- Paginasi gak melompat ke atas halaman: ganti halaman menggulir halus ke awal tabel (di bawah nav melayang), dan diam kalau awal tabel sudah terlihat. Panah di halaman pertama/terakhir tampil pudar.
 
 ### Bahasa
 

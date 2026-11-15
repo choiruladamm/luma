@@ -14,7 +14,8 @@ const isAt = (path: string, to: string) => (to === "/" ? path === "/" : path ===
  * the hovered/focused tab (useSlidingPill). The ink pill moves on click, to the navigation's
  * target, without waiting for the screen's chunk.
  */
-export function NavPills({ items }: { items: NavItem[] }) {
+/** `transitionName`: the view-transition name, given to whichever copy (header / floating) is on screen. */
+export function NavPills({ items, transitionName }: { items: NavItem[]; transitionName?: string }) {
   const { t } = useI18n();
   const location = useLocation();
   const navigation = useNavigation();
@@ -23,7 +24,7 @@ export function NavPills({ items }: { items: NavItem[] }) {
   const pill = useSlidingPill(active, items.length);
 
   return (
-    <nav aria-label={t.shell.nav} onMouseLeave={pill.onMouseLeave} className="relative flex gap-1 rounded-[26px] bg-sheet p-1">
+    <nav aria-label={t.shell.nav} onMouseLeave={pill.onMouseLeave} style={{ viewTransitionName: transitionName }} className="relative flex gap-1 rounded-[26px] bg-sheet p-1">
       <span aria-hidden="true" style={pill.hoverStyle} className={cn("absolute top-1 left-0 h-11 rounded-full bg-muted", pill.slide, pill.hoverVisible ? "opacity-100" : "opacity-0")} />
       <span aria-hidden="true" style={pill.activeStyle} className={cn("absolute top-1 left-0 h-11 rounded-full bg-ink", pill.slide, pill.activeVisible ? "opacity-100" : "opacity-0")} />
       {items.map((item, i) => (
@@ -31,6 +32,7 @@ export function NavPills({ items }: { items: NavItem[] }) {
           key={item.to}
           {...pill.item(i)}
           to={item.to}
+          viewTransition
           end={item.to === "/"}
           className={cn("relative z-10 inline-flex h-11 items-center gap-2 rounded-full pr-4 pl-3.5 text-body no-underline transition-colors duration-200", i === active ? "font-medium text-canvas" : "font-normal text-ink")}
         >
@@ -62,6 +64,7 @@ export function NavTabBar({ items }: { items: NavItem[] }) {
           key={item.to}
           ref={pill.item(i).ref}
           to={item.to}
+          viewTransition
           end={item.to === "/"}
           className={cn("relative z-10 flex h-14 min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-full no-underline transition-colors duration-200", i === active ? "text-canvas" : "text-ink2")}
         >

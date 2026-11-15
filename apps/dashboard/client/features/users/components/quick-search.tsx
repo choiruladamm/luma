@@ -137,7 +137,7 @@ export function QuickSearch({ shortcut, autoFocus, onDone, tone, className }: { 
       </span>
       {showList && (
         // mousedown keeps focus in the field, so the blur doesn't close the list before the click lands.
-        <div onMouseDown={(e) => e.preventDefault()} className="absolute inset-x-0 top-[calc(100%+8px)] z-30 rounded-menu bg-sheet p-2 shadow-[var(--shadow-sheet),inset_0_0_0_1px_var(--c-track)]">
+        <div onMouseDown={(e) => e.preventDefault()} className="absolute inset-x-0 top-[calc(100%+8px)] z-30 md:left-auto md:w-[360px] md:min-w-full rounded-menu bg-sheet p-2 shadow-[var(--shadow-sheet),inset_0_0_0_1px_var(--c-track)]">
           <ul id={listId} role="listbox" aria-label={t.shell.searchResults} className="m-0 flex list-none flex-col gap-0.5 p-0">
             {users.isError && settled ? (
               <li className="px-3 py-3 text-body text-danger-ink">{errorText(users.error, t)}</li>

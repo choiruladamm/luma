@@ -214,3 +214,22 @@
     }
   }
 }
+
+/* Route changes from the nav (React Router viewTransition): a short crossfade for the page, and
+   the nav morphs between the floating capsule and the header (both named main-nav). */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 220ms;
+  animation-timing-function: ease-out;
+}
+::view-transition-group(main-nav) {
+  animation-duration: 320ms;
+  animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}

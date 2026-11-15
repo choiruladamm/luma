@@ -142,3 +142,18 @@ test("users: filter, sort by a column, and the state survives a reload", async (
   await expect(page.getByRole("columnheader", { name: /^File/ })).toHaveAttribute("aria-sort", "descending");
   await expect(page.getByRole("navigation", { name: "Paginasi" })).toContainText("dari 5");
 });
+
+test("desktop: a compact nav floats in once the header scrolls away, and its tabs navigate", async ({ page }) => {
+  test.skip(test.info().project.name !== "desktop", "floating nav is desktop only");
+  await page.setViewportSize({ width: 1440, height: 480 });
+  await page.goto("/");
+  // DOM order: header nav, floating nav, phone tab bar. CSS locator: the hidden copy is aria-hidden.
+  const floating = page.locator("nav[aria-label='Navigasi admin']").nth(1);
+  await expect(floating).not.toBeInViewport();
+  await page.evaluate(() => window.scrollTo(0, 600));
+  await expect(floating).toBeInViewport();
+  await floating.getByRole("link", { name: /Undangan/ }).click();
+  await expect(page).toHaveURL(/\/invites$/);
+  // The new screen starts at the top: the header nav is back and the floating copy is hidden again.
+  await expect(page.getByRole("heading", { name: "Undangan", level: 1 })).toBeInViewport();
+});

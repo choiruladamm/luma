@@ -84,6 +84,20 @@ describe("auth", () => {
     expect(signedOut).toBe(true);
   });
 
+  it("closes the account menu on an outside click and on Esc", async () => {
+    const { user } = renderApp("/");
+    const trigger = await screen.findByRole("button", { name: "Menu akun: Marcus" });
+    await user.click(trigger);
+    expect(screen.getByRole("group", { name: "Menu akun" })).toBeInTheDocument();
+    // Outside the menu (the page heading), not the scrim: the scrim can't cover the page inside the floating nav.
+    await user.click(screen.getByRole("heading", { name: "Ringkasan" }));
+    expect(screen.queryByRole("group", { name: "Menu akun" })).toBeNull();
+    await user.click(trigger);
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("group", { name: "Menu akun" })).toBeNull();
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+  });
+
   it("switches the theme from the account menu", async () => {
     const { user } = renderApp("/");
     await user.click(await screen.findByRole("button", { name: "Menu akun: Marcus" }));
