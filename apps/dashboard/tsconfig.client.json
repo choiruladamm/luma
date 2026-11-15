@@ -6,7 +6,7 @@
   "compilerOptions": {
     "lib": ["es2024", "dom", "dom.iterable"],
     "jsx": "react-jsx",
-    "types": ["./worker-configuration.d.ts", "vite/client"]
+    "types": ["./worker-configuration.d.ts", "vite/client", "@testing-library/jest-dom/vitest"]
   },
-  "include": ["client", "worker/backend-env.d.ts", "worker-configuration.d.ts"]
+  "include": ["client", "test/client", "e2e", "vitest.client.config.ts", "playwright.config.ts", "worker/backend-env.d.ts", "worker-configuration.d.ts"]
 }

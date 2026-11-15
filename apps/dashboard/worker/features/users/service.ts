@@ -56,6 +56,8 @@ export async function getUserDetail(db: Db, openrouter: OpenRouterAdmin, id: str
     })),
     ai,
     invite: found.invite ? { code: found.invite.code, usedAt: iso(found.invite.usedAt) } : null,
+    /** Better Auth provider ids ("google", "credential" for email/password). */
+    providers: found.providers,
   };
 }
 

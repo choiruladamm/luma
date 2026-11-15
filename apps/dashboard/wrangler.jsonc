@@ -45,6 +45,31 @@
         { "name": "ADMIN_RATE_LIMITER", "namespace_id": "1102", "simple": { "limit": 30, "period": 60 } }
       ]
     },
+    // Local only (make dashboard-e2e): Playwright against `vite dev` with its own D1 state
+    // (.wrangler/e2e-state) and test secrets (.dev.vars.e2e). Never deployed.
+    "e2e": {
+      "name": "luma-admin-e2e",
+      "workers_dev": false,
+      "preview_urls": false,
+      "vars": {
+        "ENV": "e2e",
+        "ADMIN_EMAILS": "admin@e2e.local",
+        "BETTER_AUTH_URL": "http://localhost:5174",
+        "GOOGLE_CLIENT_ID": "366577823040-vhr2h7toc53pb891v0qoc1m62pps2v41.apps.googleusercontent.com"
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "luma-e2e",
+          "database_id": "00000000-0000-4000-8000-0000000000e2",
+          "migrations_dir": "../backend/migrations"
+        }
+      ],
+      "ratelimits": [
+        { "name": "RATE_LIMITER", "namespace_id": "9101", "simple": { "limit": 10000, "period": 60 } },
+        { "name": "ADMIN_RATE_LIMITER", "namespace_id": "9102", "simple": { "limit": 10000, "period": 60 } }
+      ]
+    },
     "prod": {
       "name": "luma-admin",
       "routes": [{ "pattern": "luma-admin.chrl.cloud", "custom_domain": true }],

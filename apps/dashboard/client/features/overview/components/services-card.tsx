@@ -1,0 +1,39 @@
+import { Card, CardHeader } from "../../../components/ui/card";
+import { Chip } from "../../../components/ui/chip";
+import { Icon, type IconName } from "../../../components/ui/icons";
+
+/** Backend kill switches, display only: they change via `vars` + deploy, not from here. */
+export function ServicesCard({ flags }: { flags: { sync: boolean; backup: boolean; aiKey: boolean } }) {
+  const rows: [string, IconName, boolean][] = [
+    ["Sync", "sync", flags.sync],
+    ["Backup", "cloud", flags.backup],
+    ["Key AI", "key", flags.aiKey],
+  ];
+  return (
+    <Card aria-labelledby="h-layanan" className="gap-3">
+      <CardHeader
+        id="h-layanan"
+        title="Layanan"
+        action={
+          <span className="inline-flex items-center gap-1.5 text-caption text-ink2">
+            <Icon name="lock" size={16} />
+            Cuma status
+          </span>
+        }
+      />
+      <ul className="m-0 flex list-none flex-col gap-2 p-0">
+        {rows.map(([name, icon, on]) => (
+          <li key={name} className="flex min-h-14 items-center gap-3 rounded-row bg-muted py-1.5 pr-2 pl-1.5">
+            <span className="flex size-11 flex-none items-center justify-center rounded-tile-lg bg-sheet">
+              <Icon name={icon} size={20} />
+            </span>
+            <span className="flex-1 text-body font-semibold">{name}</span>
+            <Chip tone={on ? "sheet" : "danger"} dot="filled">
+              {on ? "Nyala" : "Mati"}
+            </Chip>
+          </li>
+        ))}
+      </ul>
+    </Card>
+  );
+}

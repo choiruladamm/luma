@@ -82,6 +82,13 @@ describe("getOverview", () => {
     err.mockRestore();
   });
 
+  it("skips OpenRouter when no management key is set (local dev / e2e)", async () => {
+    const calls = fakeActivity([]);
+    const result = await getOverview(createDb(env.DB), { ...env, OPENROUTER_MANAGEMENT_KEY: "" }, "r", NOW);
+    expect(result.ai.spendUsd).toBeNull();
+    expect(calls).toEqual([]);
+  });
+
   it("reads switches from the injected backend vars", async () => {
     fakeActivity([]);
     const result = await getOverview(createDb(env.DB), { ...env, SYNC_ENABLED: "false", AI_KEY_ENABLED: "nope" }, "r", NOW);

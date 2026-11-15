@@ -1,7 +1,7 @@
 // Every D1 query of the users feature. Each function is one query-budget unit.
 import { and, desc, eq, lt, or, type SQL, sql } from "drizzle-orm";
 import type { Db } from "../../../../backend/src/db/client";
-import { aiKeys, inviteCodes, sessions, users, userStorage } from "../../../../backend/src/db/schema";
+import { accounts, aiKeys, inviteCodes, sessions, users, userStorage } from "../../../../backend/src/db/schema";
 
 /** User columns for list and detail. Picked explicitly: `key_enc` and session tokens never leave. */
 const userColumns = {
@@ -45,9 +45,9 @@ export function listUsers(db: Db, { q, cursor, limit }: { q?: string; cursor?: U
     .limit(limit + 1);
 }
 
-/** 1 batch (4 statements): user, sessions, AI key, invite code used. */
+/** 1 batch (5 statements): user, sessions, AI key, invite code used, sign-in providers. */
 export async function findUserDetail(db: Db, userId: string) {
-  const [user, userSessions, key, invite] = await db.batch([
+  const [user, userSessions, key, invite, providers] = await db.batch([
     userRows(db).where(eq(users.id, userId)).limit(1),
     db
       .select({
@@ -70,9 +70,10 @@ export async function findUserDetail(db: Db, userId: string) {
       .from(inviteCodes)
       .where(eq(inviteCodes.usedBy, userId))
       .limit(1),
+    db.select({ providerId: accounts.providerId }).from(accounts).where(eq(accounts.userId, userId)),
   ]);
   if (!user[0]) return null;
-  return { user: user[0], sessions: userSessions, key: key[0] ?? null, invite: invite[0] ?? null };
+  return { user: user[0], sessions: userSessions, key: key[0] ?? null, invite: invite[0] ?? null, providers: providers.map((p) => p.providerId) };
 }
 
 /** 1 query: does the user exist + AI key hash (null when there is none). */

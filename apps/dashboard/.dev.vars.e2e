@@ -1,0 +1,4 @@
+# Test-only values for the local e2e env (make dashboard-e2e). Not secrets: nothing real uses them.
+BETTER_AUTH_SECRET=e2e-only-secret-not-used-anywhere-else-0000
+GOOGLE_CLIENT_SECRET=
+OPENROUTER_MANAGEMENT_KEY=

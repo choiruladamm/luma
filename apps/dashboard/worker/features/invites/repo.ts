@@ -1,5 +1,5 @@
 // Every D1 query of the invites feature. Each function is one query-budget unit.
-import { and, asc, desc, eq, isNotNull, isNull } from "drizzle-orm";
+import { and, asc, desc, eq, isNotNull, isNull, sql } from "drizzle-orm";
 import type { Db } from "../../../../backend/src/db/client";
 import { inviteCodes, users } from "../../../../backend/src/db/schema";
 
@@ -18,7 +18,8 @@ export function listInvites(db: Db, status?: "unused" | "used") {
       : status === "used"
         ? query.where(isNotNull(inviteCodes.usedAt))
         : query;
-  return filtered.orderBy(desc(inviteCodes.usedAt), asc(inviteCodes.code)).limit(INVITES_MAX);
+  // Unused first (the ones an admin hands out), then most recently used.
+  return filtered.orderBy(sql`${inviteCodes.usedAt} is not null`, desc(inviteCodes.usedAt), asc(inviteCodes.code)).limit(INVITES_MAX);
 }
 
 /** 1 insert for all codes (already normalized). */

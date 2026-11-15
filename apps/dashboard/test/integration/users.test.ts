@@ -6,7 +6,7 @@ import { createDb } from "../../../backend/src/db/client";
 import { aiKeys, users } from "../../../backend/src/db/schema";
 import { call, errorCode, ORIGIN } from "../helpers/app";
 import { fakeOpenRouter } from "../helpers/openrouter";
-import { adminCookie, createUser, giveUserData, sessionCookie } from "../helpers/session";
+import { adminCookie, createGoogleUser, createUser, giveUserData, sessionCookie } from "../helpers/session";
 
 type Item = {
   id: string;
@@ -112,14 +112,15 @@ describe("GET /api/users/:id", () => {
 
     const { response, d1Queries } = await get(`/api/users/${user.id}`);
     expect(response.status).toBe(200);
-    // guard 1 + batch of 4 statements.
-    expect(d1Queries).toBe(5);
+    // guard 1 + batch of 5 statements.
+    expect(d1Queries).toBe(6);
     expect(openrouter.calls).toEqual(["GET hash-detail"]);
     const body = (await response.json()) as Record<string, unknown>;
     expect(body).toMatchObject({
       id: user.id,
       ai: { limit: 0.02, usageDaily: 0.004, expiresAt: "2026-12-14T00:00:00.000Z" },
       invite: { code: "LUMA-DTL1", usedAt: "2026-11-01T00:00:00.000Z" },
+      providers: [],
     });
     expect((body.sessions as unknown[])[0]).toEqual({
       userAgent: null,
@@ -268,5 +269,13 @@ describe("admin mutation rate limit", () => {
     const deny = { limit: async () => ({ success: false }) } as unknown as RateLimit;
     const { response } = await call("/api/users", { headers: { cookie: await adminCookie() } }, { ADMIN_RATE_LIMITER: deny });
     expect(response.status).toBe(200);
+  });
+});
+
+describe("GET /api/users/:id providers", () => {
+  it("lists the sign-in providers of the account", async () => {
+    const user = await createGoogleUser(`prov-${crypto.randomUUID().slice(0, 6)}@luma.test`);
+    const body = (await (await get(`/api/users/${user.id}`)).response.json()) as { providers: string[] };
+    expect(body.providers).toEqual(["google"]);
   });
 });
