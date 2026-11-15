@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router";
 import { Button, ButtonLink } from "../../../components/ui/button";
-import { Skeleton } from "../../../components/ui/skeleton";
 import { EmptyState, ErrorState } from "../../../components/ui/states";
 import { useCopyToClipboard } from "../../../hooks/use-copy-to-clipboard";
 import { getI18n, useI18n } from "../../../i18n";
@@ -10,6 +9,7 @@ import { toast } from "../../../stores/toast-store";
 import { useOverview } from "../../overview/queries/use-overview";
 import { BanDialog } from "../components/ban-dialog";
 import { AiCard, SessionsCard, UsageCards } from "../components/user-detail-cards";
+import { UserDetailSkeleton } from "../components/user-detail-skeleton";
 import { UserProfile } from "../components/user-profile";
 import { useBanUser, useUnbanUser } from "../queries/use-ban-user";
 import { useUserDetail } from "../queries/use-user-detail";
@@ -79,16 +79,7 @@ export function UserDetailPage() {
     return (
       <>
         {crumb}
-        <section aria-busy="true" aria-label={t.userDetail.loading} className="flex flex-col gap-6 rounded-card bg-sheet p-7">
-          <div className="flex items-center gap-5">
-            <Skeleton className="size-[72px]" />
-            <div className="flex flex-col gap-2">
-              <Skeleton className="h-6 w-64" />
-              <Skeleton className="h-4 w-40" />
-            </div>
-          </div>
-          <Skeleton className="h-12 w-full" />
-        </section>
+        <UserDetailSkeleton />
       </>
     );
   }

@@ -12,6 +12,7 @@ import { errorText } from "../../../lib/api-error";
 import { toast } from "../../../stores/toast-store";
 import type { InviteItem } from "../api/invites-api";
 import { DeleteInviteDialog } from "../components/delete-invite-dialog";
+import { InvitesTableSkeleton } from "../components/invites-table-skeleton";
 import { InviteCard, inviteColumns } from "../components/invite-columns";
 import { NewInviteDialog } from "../components/new-invite-dialog";
 import { useCreateInvites, useDeleteInvite, useInvites } from "../queries/use-invites";
@@ -94,11 +95,11 @@ export function InvitesPage() {
               setFilter(f);
               setLimit(PAGE);
             }}
-            options={[
-              { value: "all", label: t.invites.all, count: counts.all },
-              { value: "unused", label: t.invites.unused, count: counts.unused },
-              { value: "used", label: t.invites.used, count: counts.used },
-            ]}
+            options={(["all", "unused", "used"] as const).map((value) => ({
+              value,
+              label: t.invites[value],
+              count: all ? counts[value] : <Skeleton className="inline-block h-3 w-4 align-middle" />,
+            }))}
             className="max-w-full overflow-x-auto"
           />
           <span className="text-caption text-ink2">{t.invites.oneEach}</span>
@@ -106,11 +107,7 @@ export function InvitesPage() {
         {invites.isError ? (
           <ErrorState message={errorText(invites.error, t)} onRetry={() => void invites.refetch()} />
         ) : !all ? (
-          <div aria-busy="true" aria-label={t.invites.loading} className="flex flex-col gap-4 px-6 pb-6">
-            {Array.from({ length: 5 }, (_, i) => (
-              <Skeleton key={i} className="h-5 w-full" />
-            ))}
-          </div>
+          <InvitesTableSkeleton />
         ) : all.length === 0 ? (
           <EmptyState icon="ticket" title={t.invites.empty} action={<Button variant="primary" icon="plus" onClick={makeCode}>{t.invites.create}</Button>}>
             {t.invites.emptyBody}

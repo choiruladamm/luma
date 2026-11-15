@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
 import { cn } from "../../lib/cn";
 
-type Option<T extends string> = { value: T; label: ReactNode; count?: number };
+// `count` may be a skeleton while the list loads, so the tabs keep their width.
+type Option<T extends string> = { value: T; label: ReactNode; count?: ReactNode };
 
 // Komponen 2, Segmented: muted track radius 26, pad 4; options 40 tall; active = sheet + soft shadow.
 // `kind="tabs"` for filters (tablist), `"radio"` for settings (radiogroup).

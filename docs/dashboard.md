@@ -223,7 +223,7 @@ Batas Workers 100rb request/hari dihitung per akun, jadi dashboard ikut memakai 
   - Key AI: "Kuota gratis" kalau punya key subsidi, selain itu "—"; key sendiri gak pernah sampai server.
   - Tanpa tanggal ban (gak ada kolom `banned_at`) dan tanpa kolom "Dibuat" di Undangan (`invite_codes` gak punya `created_at`).
   - Tambahan: layar Login, kartu Perangkat (sesi) dan Kuota AI gratis di Detail user, kartu Kuota AI gratis (spend bulan ini) di Ringkasan, dialog konfirmasi hapus kode.
-- Loading: tata letak asli langsung tampil, angka dan baris diganti skeleton (board loading), bukan layar loading terpisah.
+- Loading: tata letak asli langsung tampil (judul, label, header kolom), angka dan baris diganti skeleton (board loading), bukan layar loading terpisah. Undangan dan Detail user gak punya board loading, jadi ikut aturan yang sama; di HP tabel yang lagi muat tampil sebagai kartu, sama dengan tabel aslinya. Jumlah di filter Undangan ikut skeleton, bukan "0".
 - Waktu ditampilkan di zona waktu browser admin.
 
 ### Bahasa

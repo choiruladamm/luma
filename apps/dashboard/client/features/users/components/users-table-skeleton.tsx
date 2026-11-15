@@ -1,62 +1,59 @@
-import { Icon } from "../../../components/ui/icons";
+import { type SkeletonColumn, TableSkeleton } from "../../../components/ui/data-table";
 import { Skeleton } from "../../../components/ui/skeleton";
 import { useI18n } from "../../../i18n";
 
-// Same columns as user-columns.tsx; `sorted` marks "Daftar" (newest first).
-const HEADERS = [
-  ["user", "left"],
-  ["joined", "left"],
-  ["lastActive", "left"],
-  ["files", "right"],
-  ["syncData", "right"],
-  ["aiKey", "left"],
-  ["status", "left"],
-] as const;
 // Board 13: email widths vary per row so the block reads as a list, not a grid.
 const EMAIL_WIDTHS = [168, 140, 184, 152, 176, 132];
 
-/** Board 13: the real table frame (headers, sort mark) stays; only the values are sand blocks. */
+/** Board 13: the users table (same columns as user-columns.tsx) with sand blocks for values. */
 export function UsersTableSkeleton({ rows = 8 }: { rows?: number }) {
   const { t } = useI18n();
+  const columns: SkeletonColumn[] = [
+    {
+      header: t.users.user,
+      cell: (r) => (
+        <span className="flex items-center gap-3">
+          <Skeleton className="size-9 flex-none" />
+          <span className="flex flex-col gap-1.5">
+            <Skeleton className="h-3" style={{ width: EMAIL_WIDTHS[r % EMAIL_WIDTHS.length] }} />
+            <Skeleton className="h-2.5 w-24" />
+          </span>
+        </span>
+      ),
+    },
+    { header: t.users.joined, sorted: true, cell: () => <Skeleton className="h-3 w-[84px]" /> },
+    { header: t.users.lastActive, cell: () => <Skeleton className="h-3 w-[72px]" /> },
+    { header: t.users.files, align: "right", cell: () => <Skeleton className="h-3 w-12" /> },
+    { header: t.users.syncData, align: "right", cell: () => <Skeleton className="h-3 w-11" /> },
+    { header: t.users.aiKey, cell: () => <Skeleton className="h-3 w-16" /> },
+    { header: t.users.status, cell: () => <Skeleton className="h-6 w-[68px]" /> },
+  ];
+  return <TableSkeleton label={t.users.loading} columns={columns} rows={rows} rowLink card={<UserCardSkeleton />} />;
+}
+
+/** Phone row (UserCard): avatar, email, status, then the 4 labels with value blocks. */
+function UserCardSkeleton() {
+  const { t } = useI18n();
   return (
-    <div aria-busy="true" aria-label={t.users.loading} className="overflow-x-auto">
-      <table className="w-full min-w-[1040px] border-collapse">
-        <thead>
-          <tr>
-            {HEADERS.map(([h, align], i) => (
-              <th key={h} scope="col" aria-sort={h === "joined" ? "descending" : undefined} className={`border-b border-track py-3 text-caption font-medium whitespace-nowrap ${h === "joined" ? "text-ink" : "text-ink2"} ${align === "right" ? "text-right" : "text-left"} ${i === 0 ? "pr-3 pl-6" : "px-3"}`}>
-                {t.users[h]}
-                {h === "joined" && <Icon name="down" size={14} className="ml-1 inline align-[-2px]" />}
-              </th>
-            ))}
-            <th scope="col" className="w-5 border-b border-track py-3 pr-6 pl-1">
-              <span className="sr-only">{t.common.open}</span>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {Array.from({ length: rows }, (_, r) => (
-            <tr key={r}>
-              <td className="h-[60px] border-b border-track pr-3 pl-6">
-                <span className="flex items-center gap-3">
-                  <Skeleton className="size-9 flex-none" />
-                  <span className="flex flex-col gap-1.5">
-                    <Skeleton className="h-3" style={{ width: EMAIL_WIDTHS[r % EMAIL_WIDTHS.length] }} />
-                    <Skeleton className="h-2.5 w-24" />
-                  </span>
-                </span>
-              </td>
-              <td className="border-b border-track px-3"><Skeleton className="h-3 w-[84px]" /></td>
-              <td className="border-b border-track px-3"><Skeleton className="h-3 w-[72px]" /></td>
-              <td className="border-b border-track px-3"><Skeleton className="ml-auto h-3 w-12" /></td>
-              <td className="border-b border-track px-3"><Skeleton className="ml-auto h-3 w-11" /></td>
-              <td className="border-b border-track px-3"><Skeleton className="h-3 w-16" /></td>
-              <td className="border-b border-track px-3"><Skeleton className="h-6 w-[68px]" /></td>
-              <td className="border-b border-track pr-6 pl-1" />
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center gap-3">
+        <Skeleton className="size-9 flex-none" />
+        <span className="flex flex-1 flex-col gap-1.5">
+          <Skeleton className="h-3 w-40" />
+          <Skeleton className="h-2.5 w-24" />
+        </span>
+        <Skeleton className="h-6 w-[68px]" />
+      </div>
+      <dl className="m-0 grid grid-cols-2 gap-x-4 gap-y-2">
+        {[t.users.joined, t.users.lastActive, t.users.files, t.users.syncData].map((label) => (
+          <div key={label} className="flex flex-col gap-1.5">
+            <dt className="text-caption text-ink2">{label}</dt>
+            <dd className="m-0">
+              <Skeleton className="h-3 w-20" />
+            </dd>
+          </div>
+        ))}
+      </dl>
     </div>
   );
 }

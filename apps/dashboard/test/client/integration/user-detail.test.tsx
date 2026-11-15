@@ -79,7 +79,9 @@ describe("Detail user", () => {
 
   it("copies the email", async () => {
     const { user } = renderApp("/users/u1");
-    await user.click(await screen.findByRole("button", { name: "Salin email" }));
+    // The loading skeleton shows the same button disabled; wait for the profile.
+    await screen.findByRole("heading", { name: "sekar.ayu@gmail.com" });
+    await user.click(screen.getByRole("button", { name: "Salin email" }));
     expect(await navigator.clipboard.readText()).toBe("sekar.ayu@gmail.com");
     expect(await screen.findByText("Email disalin")).toBeInTheDocument();
   });
