@@ -1,4 +1,5 @@
-import { NavLink } from "react-router";
+import { NavLink, useLocation, useNavigation } from "react-router";
+import { useSlidingPill } from "../../hooks/use-sliding-pill";
 import { useI18n } from "../../i18n";
 import { cn } from "../../lib/cn";
 import { formatNumber } from "../../lib/format";
@@ -6,17 +7,32 @@ import { Icon, type IconName } from "../ui/icons";
 
 export type NavItem = { to: string; label: string; icon: IconName; count?: number };
 
-/** Desktop nav: pills on a sheet track; active = ink pill. */
+const isAt = (path: string, to: string) => (to === "/" ? path === "/" : path === to || path.startsWith(`${to}/`));
+
+/**
+ * Desktop nav: pills on a sheet track. The ink pill marks the active screen, a sand pill follows
+ * the hovered/focused tab (useSlidingPill). The ink pill moves on click, to the navigation's
+ * target, without waiting for the screen's chunk.
+ */
 export function NavPills({ items }: { items: NavItem[] }) {
   const { t } = useI18n();
+  const location = useLocation();
+  const navigation = useNavigation();
+  const path = navigation.location?.pathname ?? location.pathname;
+  const active = items.findIndex((item) => isAt(path, item.to));
+  const pill = useSlidingPill(active, items.length);
+
   return (
-    <nav aria-label={t.shell.nav} className="flex gap-1 rounded-[26px] bg-sheet p-1">
-      {items.map((item) => (
+    <nav aria-label={t.shell.nav} onMouseLeave={pill.onMouseLeave} className="relative flex gap-1 rounded-[26px] bg-sheet p-1">
+      <span aria-hidden="true" style={pill.hoverStyle} className={cn("absolute top-1 left-0 h-11 rounded-full bg-muted", pill.slide, pill.hoverVisible ? "opacity-100" : "opacity-0")} />
+      <span aria-hidden="true" style={pill.activeStyle} className={cn("absolute top-1 left-0 h-11 rounded-full bg-ink", pill.slide, pill.activeVisible ? "opacity-100" : "opacity-0")} />
+      {items.map((item, i) => (
         <NavLink
           key={item.to}
+          {...pill.item(i)}
           to={item.to}
           end={item.to === "/"}
-          className={({ isActive }) => cn("inline-flex h-11 items-center rounded-full px-4 text-body no-underline", isActive ? "bg-ink font-medium text-canvas" : "font-normal text-ink hover:bg-canvas")}
+          className={cn("relative z-10 inline-flex h-11 items-center rounded-full px-4 text-body no-underline transition-colors duration-200", i === active ? "font-medium text-canvas" : "font-normal text-ink")}
         >
           {item.label}
         </NavLink>
