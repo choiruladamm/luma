@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 100 100" fill="none">
+  <!-- Same mark as client/components/layout/logo.tsx (yellow stabilo U, pink dot), for the Cloudflare Access login page. -->
+  <path d="M26 34 C26 72, 74 72, 74 34" transform="translate(4 4)" stroke="#1A1A1A" stroke-width="28" stroke-linecap="square"/>
+  <path d="M26 34 C26 72, 74 72, 74 34" stroke="#1A1A1A" stroke-width="28" stroke-linecap="square"/>
+  <path d="M26 34 C26 72, 74 72, 74 34" stroke="#FFD84D" stroke-width="20" stroke-linecap="square"/>
+  <circle cx="50" cy="22" r="9" fill="#FFC2D3" stroke="#1A1A1A" stroke-width="4"/>
+</svg>
