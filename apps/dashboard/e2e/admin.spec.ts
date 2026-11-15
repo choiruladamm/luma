@@ -150,10 +150,22 @@ test("desktop: a compact nav floats in once the header scrolls away, and its tab
   // DOM order: header nav, floating nav, phone tab bar. CSS locator: the hidden copy is aria-hidden.
   const floating = page.locator("nav[aria-label='Navigasi admin']").nth(1);
   await expect(floating).not.toBeInViewport();
+  // Wait for the data: before it loads the page is too short to scroll the header away.
+  await expect(page.getByRole("table", { name: "User yang baru daftar" })).toBeVisible();
   await page.evaluate(() => window.scrollTo(0, 600));
   await expect(floating).toBeInViewport();
   await floating.getByRole("link", { name: /Undangan/ }).click();
   await expect(page).toHaveURL(/\/invites$/);
   // The new screen starts at the top: the header nav is back and the floating copy is hidden again.
   await expect(page.getByRole("heading", { name: "Undangan", level: 1 })).toBeInViewport();
+});
+
+test("tablet width: the search icon opens search mode without the floating nav", async ({ page }) => {
+  test.skip(test.info().project.name !== "desktop", "tablet width on the desktop project");
+  await page.setViewportSize({ width: 900, height: 600 });
+  await page.goto("/");
+  await page.getByRole("button", { name: "Buka pencarian" }).click();
+  await expect(page.getByRole("combobox", { name: "Cari email user" }).first()).toBeFocused();
+  // Search mode hides the header row; that must not count as "scrolled away".
+  await expect(page.locator("nav[aria-label='Navigasi admin']").nth(1)).not.toBeInViewport();
 });

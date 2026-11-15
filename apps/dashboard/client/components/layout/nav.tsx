@@ -34,10 +34,18 @@ export function NavPills({ items, transitionName }: { items: NavItem[]; transiti
           to={item.to}
           viewTransition
           end={item.to === "/"}
-          className={cn("relative z-10 inline-flex h-11 items-center gap-2 rounded-full pr-4 pl-3.5 text-body no-underline transition-colors duration-200", i === active ? "font-medium text-canvas" : "font-normal text-ink")}
+          // 768–1023px: icon-only so the header fits one row; the label stays the accessible name
+          // and shows as a tooltip on hover/focus. Labels from 1024px.
+          className={cn("group/tab relative z-10 inline-flex h-11 items-center gap-2 rounded-full px-3.5 text-body no-underline transition-colors duration-200 lg:pr-4", i === active ? "font-medium text-canvas" : "font-normal text-ink")}
         >
           <Icon name={item.icon} size={18} />
-          {item.label}
+          <span className="max-lg:sr-only">{item.label}</span>
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute top-[calc(100%+10px)] left-1/2 z-40 -translate-x-1/2 translate-y-1 rounded-[10px] bg-ink px-2.5 py-1 text-caption font-medium whitespace-nowrap text-canvas opacity-0 shadow-sheet transition-[opacity,transform] duration-150 group-hover/tab:translate-y-0 group-hover/tab:opacity-100 group-focus-visible/tab:translate-y-0 group-focus-visible/tab:opacity-100 motion-reduce:transition-none lg:hidden"
+          >
+            {item.label}
+          </span>
         </NavLink>
       ))}
     </nav>

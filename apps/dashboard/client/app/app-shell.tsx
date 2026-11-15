@@ -43,17 +43,21 @@ export function AppShell() {
 
   // Once the header has scrolled out of view, a separate compact nav floats in from the top
   // (desktop; phones have the bottom tab bar). The header itself never changes.
-  const [floating, setFloating] = useState(false);
+  const [headerGone, setHeaderGone] = useState(false);
+  // Search mode hides the header row (display: none), which the observer reads as "gone":
+  // never float over the search row.
+  const floating = headerGone && !searching;
   useEffect(() => {
     const el = headerRef.current;
     if (!el) return;
-    const observer = new IntersectionObserver(([entry]) => setFloating(!entry!.isIntersecting));
+    const observer = new IntersectionObserver(([entry]) => setHeaderGone(!entry!.isIntersecting));
     observer.observe(el);
     return () => observer.disconnect();
   }, []);
 
   // A phone menu (dimmed page behind it) locks the page scroll until it closes.
   useEffect(() => {
+    // Search mode (icon → full-width row) is below 1024px (where the tabs get labels); from there the header has the field itself.
     const phone = openMenu === "search" ? "(max-width: 1023px)" : "(max-width: 767px)";
     if (!openMenu || !window.matchMedia(phone).matches) return;
     const root = document.documentElement;
@@ -69,7 +73,7 @@ export function AppShell() {
   // header nav and the nav morphs into place instead of the floating copy lingering.
   useLayoutEffect(() => {
     const el = headerRef.current;
-    if (el) setFloating(el.getBoundingClientRect().bottom < 0);
+    if (el) setHeaderGone(el.getBoundingClientRect().bottom < 0);
   }, [location.key]);
   const [headerBottom, setHeaderBottom] = useState(76);
   useLayoutEffect(() => {
@@ -113,7 +117,7 @@ export function AppShell() {
         )}
         <header
           ref={searching ? undefined : headerRef}
-          className={cn("relative z-20 flex min-h-[52px] items-center gap-2 md:flex-wrap md:gap-4", searching && "max-lg:hidden")}
+          className={cn("relative z-20 flex min-h-[52px] flex-nowrap items-center gap-2 md:gap-4", searching && "max-lg:hidden")}
         >
           <Wordmark dev={isDevHost(window.location.hostname)} />
           <div className="hidden md:block">
@@ -121,7 +125,7 @@ export function AppShell() {
           </div>
           <span className="flex-[1_1_24px]" />
           {searchable && (
-            <div role="search" className="hidden min-w-[200px] flex-[0_1_320px] lg:block">
+            <div role="search" className="hidden min-w-[160px] flex-[0_1_320px] lg:block">
               <QuickSearch shortcut={!floating} />
             </div>
           )}
@@ -156,8 +160,9 @@ export function AppShell() {
           <LogoMark size={24} />
           <NavPills items={items} transitionName={floating ? "main-nav" : undefined} />
           <span className="flex-1" />
+          {/* Shrinkable field from 768px: the capsule has room even where the header only fits an icon. */}
           {searchable && (
-            <div role="search" className="w-[240px] max-lg:hidden">
+            <div role="search" className="min-w-0 flex-[0_1_260px]">
               <QuickSearch shortcut={floating} tone="canvas" />
             </div>
           )}

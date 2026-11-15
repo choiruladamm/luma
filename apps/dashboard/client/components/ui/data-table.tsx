@@ -52,7 +52,7 @@ export function DataTable<T extends RowData>({ columns, data, label, rowHref, nu
 
   return (
     <div>
-      <div className="overflow-x-auto">
+      <div className="relative overflow-x-auto">
         <table aria-label={label} className="w-full border-collapse" style={{ minWidth }}>
           <thead>
             {table.getHeaderGroups().map((group) => (
