@@ -15,6 +15,12 @@ import { cn } from "../lib/cn";
 import { isDevHost } from "../lib/env";
 import { useUiStore } from "../stores/ui-store";
 
+// Every full page load (the Google sign-in redirect, a typed URL) starts with location.key
+// "default", so a position saved on an earlier visit in this tab would be restored there. A key
+// per load makes a fresh load start at the top; in-app back/forward still restores.
+const PAGE_LOAD = Date.now();
+const scrollKey = (location: { key: string }) => (location.key === "default" ? `load-${PAGE_LOAD}` : location.key);
+
 /**
  * Header for every admin screen (board 01–11): wordmark, nav pills, global email search, DEV
  * badge, account menu; on phones the nav becomes a burger panel. Only one menu open at a time.
@@ -116,7 +122,7 @@ export function AppShell() {
       <NavTabBar items={items} />
       <ToastHost />
       {/* New screen → top of the page; back/forward → where the admin left it. */}
-      <ScrollRestoration />
+      <ScrollRestoration getKey={scrollKey} />
     </div>
   );
 }
