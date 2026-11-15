@@ -9,15 +9,12 @@ const userId = z.object({ id: z.string().regex(/^[A-Za-z0-9_-]{1,64}$/, "Invalid
 
 const listQuery = z.object({
   q: z.string().trim().max(100).optional(),
-  cursor: z
-    .string()
-    .regex(/^(?:[0-3],)?\d{1,15},[A-Za-z0-9_-]{1,64}$/, "Invalid cursor")
-    .transform((v) => {
-      const parts = v.split(",");
-      const [ms, id] = parts.slice(-2) as [string, string];
-      return { rank: parts.length === 3 ? Number(parts[0]) : undefined, createdAt: new Date(Number(ms)), id };
-    })
-    .optional(),
+  status: z.enum(["active", "banned"]).optional(),
+  ai: z.enum(["yes", "no"]).optional(),
+  activity: z.enum(["7d", "30d", "never"]).optional(),
+  sort: z.enum(["created", "lastActive", "r2", "sync", "relevance"]).optional(),
+  dir: z.enum(["asc", "desc"]).default("desc"),
+  page: z.coerce.number().int().min(1).max(10_000).default(1),
   limit: z.coerce.number().int().min(1).max(USERS_PAGE_SIZE).default(USERS_PAGE_SIZE),
 });
 

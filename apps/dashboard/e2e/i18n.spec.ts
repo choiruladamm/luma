@@ -9,7 +9,7 @@ test.describe("English browser", () => {
     await expect(page.getByRole("heading", { name: "Overview", level: 1 })).toBeVisible();
     await page.goto("/users");
     await expect(page.getByRole("heading", { name: "Users", level: 1 })).toBeVisible();
-    await expect(page.getByText("Newest sign-ups first")).toBeVisible();
+    await expect(page.getByRole("navigation", { name: "Pagination" })).toBeVisible();
     await page.goto("/invites");
     await expect(page.getByRole("heading", { name: "Invites", level: 1 })).toBeVisible();
     await expect(page.getByText("One code per account")).toBeVisible();

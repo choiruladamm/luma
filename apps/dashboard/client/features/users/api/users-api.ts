@@ -1,7 +1,8 @@
 import { api } from "../../../lib/api-client";
 import { unwrap } from "../../../lib/api-error";
 
-export const listUsers = (query: { q?: string; cursor?: string }) => unwrap(api.users.$get({ query }));
+/** `query`: the non-default list params (usersSearchEntries), as strings. */
+export const listUsers = (query: Record<string, string>) => unwrap(api.users.$get({ query }));
 
 export const getUser = (id: string) => unwrap(api.users[":id"].$get({ param: { id } }));
 

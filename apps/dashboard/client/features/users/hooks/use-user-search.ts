@@ -22,16 +22,29 @@ export function useUserSearch() {
     if (q !== form.getValues("q").trim()) form.setValue("q", q);
   }, [q, form]);
 
+  // A new search keeps the filters and sort but goes back to page 1.
+  const writeQ = (value: string) =>
+    setParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (value) next.set("q", value);
+        else next.delete("q");
+        next.delete("page");
+        return next;
+      },
+      { replace: true },
+    );
+
   useEffect(() => {
     // Only a settled value goes to the URL: right after "clear" the debounced value is still the
     // old text, and writing it back would refill the field.
     if (invalid || debounced !== typed.trim() || debounced === q) return;
-    setParams(debounced ? { q: debounced } : {}, { replace: true });
+    writeQ(debounced);
   }, [debounced, typed, invalid, q, setParams]);
 
   const clear = () => {
     form.setValue("q", "");
-    setParams({}, { replace: true });
+    writeQ("");
   };
   return { form, q, clear, invalid };
 }

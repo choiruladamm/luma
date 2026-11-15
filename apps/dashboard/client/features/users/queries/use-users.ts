@@ -1,15 +1,16 @@
-import { infiniteQueryOptions, useInfiniteQuery } from "@tanstack/react-query";
+import { keepPreviousData, queryOptions, useQuery } from "@tanstack/react-query";
 import { listUsers } from "../api/users-api";
+import { type UsersParams, usersSearchEntries } from "../hooks/use-users-params";
 import { usersKeys } from "./query-keys";
 
-/** User list by email prefix; "Muat lagi" = fetchNextPage (server cursor, 50 per page). */
-export const usersQuery = (q: string) =>
-  infiniteQueryOptions({
-    queryKey: usersKeys.list(q),
-    queryFn: ({ pageParam }) => listUsers({ q: q || undefined, cursor: pageParam }),
-    initialPageParam: undefined as string | undefined,
-    getNextPageParam: (last) => last.nextCursor ?? undefined,
-  });
+/** One page of users for the given filters, sort, and page (1 batch on the worker: rows + total). */
+export const usersQuery = (params: UsersParams) => {
+  const entries = usersSearchEntries(params);
+  return queryOptions({ queryKey: usersKeys.list(entries), queryFn: () => listUsers(entries) });
+};
 
-/** `enabled: false` for a query not worth sending yet (the header search below 2 characters). */
-export const useUsers = (q: string, enabled = true) => useInfiniteQuery({ ...usersQuery(q), enabled });
+/**
+ * `enabled: false` for a query not worth sending yet (the header search below 2 characters). The
+ * previous page stays on screen while the next one loads, so paging doesn't flash a skeleton.
+ */
+export const useUsers = (params: UsersParams, enabled = true) => useQuery({ ...usersQuery(params), enabled, placeholderData: keepPreviousData });

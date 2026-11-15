@@ -10,6 +10,7 @@ import { errorText } from "../../../lib/api-error";
 import { formatBytes, formatNumber } from "../../../lib/format";
 import { USER_NUMERIC, UserCard, userColumns } from "../../users/components/user-columns";
 import { UsersTableSkeleton } from "../../users/components/users-table-skeleton";
+import { DEFAULT_USERS_PARAMS } from "../../users/hooks/use-users-params";
 import { useUsers } from "../../users/queries/use-users";
 import { AiSpendCard } from "../components/ai-spend-card";
 import { StatNoteSkeleton, StatValueSkeleton } from "../components/overview-skeleton";
@@ -27,9 +28,9 @@ export function OverviewPage() {
   const i18n = useI18n();
   const { t, locale } = i18n;
   const columns = useMemo(() => userColumns(i18n), [i18n]);
-  const recent = useUsers("");
+  const recent = useUsers(DEFAULT_USERS_PARAMS);
   const data = overview.data;
-  const recentRows = useMemo(() => recent.data?.pages[0]?.items.slice(0, RECENT) ?? [], [recent.data]);
+  const recentRows = useMemo(() => recent.data?.items.slice(0, RECENT) ?? [], [recent.data]);
   const refresh = () => void Promise.all([overview.refetch(), recent.refetch()]);
 
   return (

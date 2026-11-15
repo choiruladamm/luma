@@ -39,3 +39,11 @@ export const invites = {
     { code: "LUMA-EEEEE-FFFFF", usedBy: { id: "u1", email: "user1@luma.test" }, usedAt: "2026-11-12T03:00:00.000Z" },
   ],
 };
+
+/** A `GET /api/users` page: `{items, total, page, pageCount}` (50 per page unless told). */
+export const usersPage = (items: ReturnType<typeof user>[], { total = items.length, page = 1, limit = 50 } = {}) => ({
+  items,
+  total,
+  page,
+  pageCount: Math.max(1, Math.ceil(total / limit)),
+});

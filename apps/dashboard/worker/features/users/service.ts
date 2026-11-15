@@ -1,7 +1,7 @@
 import type { OpenRouterAdmin } from "../../../../backend/src/clients/openrouter";
 import type { Db } from "../../../../backend/src/db/client";
 import { ApiError } from "../../lib/errors";
-import { banUser, findUserDetail, findUserKeyHash, listUsers, type UserCursor, type UserRow, unbanUser } from "./repo";
+import { banUser, findUserDetail, findUserKeyHash, listUsers, type UserListQuery, type UserRow, unbanUser } from "./repo";
 
 export const USERS_PAGE_SIZE = 50;
 
@@ -19,16 +19,15 @@ const userItem = (row: UserRow) => ({
   syncBytes: row.syncBytes,
 });
 
-// A search cursor carries the rank too: `<rank>,<createdAt ms>,<id>`; the plain list `<createdAt ms>,<id>`.
-const encodeCursor = (row: UserRow, searching: boolean) => `${searching ? `${row.rank},` : ""}${row.createdAt.getTime()},${row.id}`;
-
-/** User list, 1 query. */
-export async function getUsers(db: Db, query: { q?: string; cursor?: UserCursor; limit: number }) {
+/**
+ * User list page, 1 batch (rows + total). Without `q` there is no relevance, so that sort falls
+ * back to newest; a page past the end returns no items (the client clamps).
+ */
+export async function getUsers(db: Db, query: Omit<UserListQuery, "sort" | "now"> & { sort?: UserListQuery["sort"] }) {
   const q = query.q || undefined;
-  const rows = await listUsers(db, { q, cursor: query.cursor, limit: query.limit });
-  const page = rows.slice(0, query.limit);
-  const last = page.at(-1);
-  return { items: page.map(userItem), nextCursor: rows.length > query.limit && last ? encodeCursor(last, q !== undefined) : null };
+  const sort = query.sort && (query.sort !== "relevance" || q) ? query.sort : q ? "relevance" : "created";
+  const { rows, total } = await listUsers(db, { ...query, q, sort, now: Date.now() });
+  return { items: rows.map(userItem), total, page: query.page, pageCount: Math.max(1, Math.ceil(total / query.limit)) };
 }
 
 /**

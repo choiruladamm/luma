@@ -32,7 +32,7 @@ describe("English UI", () => {
     renderApp("/users");
     expect(await screen.findByRole("heading", { name: "Users", level: 1 })).toBeInTheDocument();
     expect(await screen.findByText("48 users · 1 banned")).toBeInTheDocument();
-    expect(screen.getByText("Newest sign-ups first")).toBeInTheDocument();
+    expect(screen.getAllByRole("combobox", { name: "Activity" })[0]).toBeInTheDocument();
     expect(await screen.findByRole("table", { name: "User list" })).toBeInTheDocument();
     expect(screen.getByRole("columnheader", { name: /Last active/ })).toBeInTheDocument();
     expect(screen.getAllByText("Never").length).toBeGreaterThan(0);
@@ -58,6 +58,6 @@ describe("English UI", () => {
     expect(await screen.findByRole("tab", { name: /All\s*3/ })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByRole("tab", { name: /Unused\s*2/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Copy LUMA-AAAAA-BBBBB" })).toBeInTheDocument();
-    expect(screen.getByText("Showing 3 of 3")).toBeInTheDocument();
+    expect(screen.getByText("1–3 of 3")).toBeInTheDocument();
   });
 });

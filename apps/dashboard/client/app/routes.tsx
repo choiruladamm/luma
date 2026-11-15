@@ -3,6 +3,7 @@ import { sessionQuery } from "../features/auth/queries/use-session";
 import { invitesQuery } from "../features/invites/queries/use-invites";
 import { overviewQuery } from "../features/overview/queries/use-overview";
 import { userDetailQuery } from "../features/users/queries/use-user-detail";
+import { DEFAULT_USERS_PARAMS, parseUsersParams } from "../features/users/hooks/use-users-params";
 import { usersQuery } from "../features/users/queries/use-users";
 import { prefetch } from "./prefetch";
 
@@ -24,12 +25,12 @@ export const routes: RouteObject[] = [
     children: [
       {
         index: true,
-        loader: prefetch((qc) => qc.prefetchInfiniteQuery(usersQuery(""))),
+        loader: prefetch((qc) => qc.prefetchQuery(usersQuery(DEFAULT_USERS_PARAMS))),
         lazy: async () => ({ Component: (await import("../features/overview/pages/overview-page")).OverviewPage }),
       },
       {
         path: "users",
-        loader: prefetch((qc, { request }) => qc.prefetchInfiniteQuery(usersQuery(new URL(request.url).searchParams.get("q") ?? ""))),
+        loader: prefetch((qc, { request }) => qc.prefetchQuery(usersQuery(parseUsersParams(new URL(request.url).searchParams)))),
         lazy: async () => ({ Component: (await import("../features/users/pages/users-page")).UsersPage }),
       },
       {

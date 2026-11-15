@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import { describe, expect, it, vi } from "vitest";
 import { findUserKey } from "../../../backend/src/features/ai-key/repo";
 import { createDb } from "../../../backend/src/db/client";
-import { aiKeys, users } from "../../../backend/src/db/schema";
+import { aiKeys, sessions, users } from "../../../backend/src/db/schema";
 import { call, errorCode, ORIGIN } from "../helpers/app";
 import { fakeOpenRouter } from "../helpers/openrouter";
 import { adminCookie, createGoogleUser, createUser, giveUserData, sessionCookie } from "../helpers/session";
@@ -18,7 +18,7 @@ type Item = {
   r2Bytes: number;
   syncBytes: number;
 };
-type Page = { items: Item[]; nextCursor: string | null };
+type Page = { items: Item[]; total: number; page: number; pageCount: number };
 
 const get = async (path: string) => call(path, { headers: { cookie: await adminCookie() } });
 const post = async (path: string, overrides: Partial<Env> = {}) =>
@@ -32,37 +32,71 @@ const keyRow = async (id: string) => (await db().select().from(aiKeys).where(eq(
 const tag = () => `t${crypto.randomUUID().slice(0, 8)}`;
 
 describe("GET /api/users", () => {
-  it("lists newest first with cursor pagination in one D1 query (+1 guard)", async () => {
+  it("pages newest first with a total in one D1 batch (+1 guard)", async () => {
     const t = tag();
     const base = Date.UTC(2026, 10, 1);
-    const ids = [];
-    for (let i = 0; i < 5; i++) ids.push((await createUser({ email: `${t}-${i}@luma.test`, createdAt: new Date(base + i * 1000) })).id);
+    for (let i = 0; i < 5; i++) await createUser({ email: `${t}-${i}@luma.test`, createdAt: new Date(base + i * 1000) });
 
-    const first = await get(`/api/users?q=${t}&limit=2`);
+    const first = await get(`/api/users?q=${t}&sort=created&limit=2`);
     expect(first.response.status).toBe(200);
-    expect(first.d1Queries).toBe(2);
+    expect(first.d1Queries).toBe(3);
     const p1 = (await first.response.json()) as Page;
+    expect(p1).toMatchObject({ total: 5, page: 1, pageCount: 3 });
     expect(p1.items.map((u) => u.email)).toEqual([`${t}-4@luma.test`, `${t}-3@luma.test`]);
 
-    const p2 = (await (await get(`/api/users?q=${t}&limit=2&cursor=${p1.nextCursor}`)).response.json()) as Page;
-    const p3 = (await (await get(`/api/users?q=${t}&limit=2&cursor=${p2.nextCursor}`)).response.json()) as Page;
-    expect(p2.items.map((u) => u.email)).toEqual([`${t}-2@luma.test`, `${t}-1@luma.test`]);
+    const p3 = (await (await get(`/api/users?q=${t}&sort=created&limit=2&page=3`)).response.json()) as Page;
     expect(p3.items.map((u) => u.email)).toEqual([`${t}-0@luma.test`]);
-    expect(p3.nextCursor).toBeNull();
+    const asc = (await (await get(`/api/users?q=${t}&sort=created&dir=asc&limit=2`)).response.json()) as Page;
+    expect(asc.items.map((u) => u.email)).toEqual([`${t}-0@luma.test`, `${t}-1@luma.test`]);
+    const past = (await (await get(`/api/users?q=${t}&limit=2&page=9`)).response.json()) as Page;
+    expect(past).toMatchObject({ items: [], total: 5, pageCount: 3 });
   });
 
-  it("keeps the same-millisecond tie stable through the cursor", async () => {
+  it("filters by ban status, subsidized key, and activity window, and counts the filtered total", async () => {
     const t = tag();
-    const at = new Date(Date.UTC(2026, 10, 2));
-    for (let i = 0; i < 3; i++) await createUser({ email: `${t}-${i}@luma.test`, createdAt: at });
-    const seen: string[] = [];
-    let cursor: string | null = "";
-    while (cursor !== null) {
-      const page = (await (await get(`/api/users?q=${t}&limit=1${cursor ? `&cursor=${cursor}` : ""}`)).response.json()) as Page;
-      seen.push(...page.items.map((u) => u.email));
-      cursor = page.nextCursor;
-    }
-    expect(seen.sort()).toEqual([0, 1, 2].map((i) => `${t}-${i}@luma.test`));
+    const banned = await createUser({ email: `${t}-banned@luma.test` });
+    await db().update(users).set({ banned: true }).where(eq(users.id, banned.id));
+    const keyed = await createUser({ email: `${t}-key@luma.test` });
+    await giveUserData(keyed.id, { keyHash: `hash-${t}` });
+    const recent = await createUser({ email: `${t}-recent@luma.test` });
+    await sessionCookie(recent.id);
+    const old = await createUser({ email: `${t}-old@luma.test` });
+    const tenDaysAgo = new Date(Date.now() - 10 * 86_400_000);
+    await db().insert(sessions).values({ id: crypto.randomUUID(), token: crypto.randomUUID(), userId: old.id, expiresAt: tenDaysAgo, createdAt: tenDaysAgo, updatedAt: tenDaysAgo });
+
+    const emails = async (filter: string) => {
+      const page = (await (await get(`/api/users?q=${t}&${filter}`)).response.json()) as Page;
+      expect(page.total).toBe(page.items.length);
+      return page.items.map((u) => u.email.replace(`${t}-`, "").replace("@luma.test", "")).sort();
+    };
+    expect(await emails("status=banned")).toEqual(["banned"]);
+    expect(await emails("status=active")).toEqual(["key", "old", "recent"]);
+    expect(await emails("ai=yes")).toEqual(["key"]);
+    expect(await emails("ai=no")).toEqual(["banned", "old", "recent"]);
+    expect(await emails("activity=7d")).toEqual(["recent"]);
+    expect(await emails("activity=30d")).toEqual(["old", "recent"]);
+    expect(await emails("activity=never")).toEqual(["banned", "key"]);
+    expect(await emails("status=active&activity=never")).toEqual(["key"]);
+  });
+
+  it("sorts by files, sync data, and last active (never-active last both ways)", async () => {
+    const t = tag();
+    const small = await createUser({ email: `${t}-small@luma.test` });
+    await giveUserData(small.id, { r2Bytes: 10, syncBytes: 300 });
+    const big = await createUser({ email: `${t}-big@luma.test` });
+    await giveUserData(big.id, { r2Bytes: 999, syncBytes: 5 });
+    const idle = await createUser({ email: `${t}-idle@luma.test` });
+    await sessionCookie(big.id);
+    const dayAgo = new Date(Date.now() - 86_400_000);
+    await db().insert(sessions).values({ id: crypto.randomUUID(), token: crypto.randomUUID(), userId: small.id, expiresAt: dayAgo, createdAt: dayAgo, updatedAt: dayAgo });
+
+    const order = async (query: string) =>
+      ((await (await get(`/api/users?q=${t}&${query}`)).response.json()) as Page).items.map((u) => u.email.replace(`${t}-`, "").replace("@luma.test", ""));
+    expect(await order("sort=r2")).toEqual(["big", "small", "idle"]);
+    expect(await order("sort=r2&dir=asc")).toEqual(["idle", "small", "big"]);
+    expect(await order("sort=sync")).toEqual(["small", "big", "idle"]);
+    expect(await order("sort=lastActive")).toEqual(["big", "small", "idle"]);
+    expect(await order("sort=lastActive&dir=asc")).toEqual(["small", "big", idle.email.replace(`${t}-`, "").replace("@luma.test", "")]);
   });
 
   it("returns users without storage, key, or sessions, and never leaks keyEnc or tokens", async () => {
@@ -81,7 +115,7 @@ describe("GET /api/users", () => {
     expect(items.find((u) => u.id === full.id)?.lastActiveAt).toMatch(/Z$/);
   });
 
-  it("finds q anywhere in the email or name, best match first, and pages through the ranks", async () => {
+  it("finds q anywhere in the email or name, best match first, across pages", async () => {
     const t = tag();
     const at = (min: number) => new Date(Date.UTC(2026, 10, 1, 0, min));
     // Created oldest → newest; the ranking, not the date, decides the order.
@@ -98,12 +132,11 @@ describe("GET /api/users", () => {
     const exact = (await (await get(`/api/users?q=${t}zz@luma.test`)).response.json()) as Page;
     expect(exact.items[0]!.email).toBe(`${t}zz@luma.test`);
 
+    // Relevance holds across pages too.
     const seen: string[] = [];
-    let cursor: string | null = "";
-    while (cursor !== null) {
-      const p = (await (await get(`/api/users?q=${t}&limit=1${cursor ? `&cursor=${cursor}` : ""}`)).response.json()) as Page;
+    for (let page = 1; page <= 4; page++) {
+      const p = (await (await get(`/api/users?q=${t}&limit=1&page=${page}`)).response.json()) as Page;
       seen.push(...p.items.map(label));
-      cursor = p.nextCursor;
     }
     expect(seen).toEqual(expected);
   });
@@ -122,7 +155,10 @@ describe("GET /api/users", () => {
     ["q over 100 chars", `q=${"a".repeat(101)}`],
     ["limit over 50", "limit=51"],
     ["limit 0", "limit=0"],
-    ["bad cursor", "cursor=abc"],
+    ["bad status", "status=gone"],
+    ["bad sort", "sort=email"],
+    ["bad dir", "dir=up"],
+    ["page 0", "page=0"],
   ])("answers 400 for %s", async (_, query) => {
     const { response } = await get(`/api/users?${query}`);
     expect(response.status).toBe(400);
