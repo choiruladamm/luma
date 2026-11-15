@@ -193,6 +193,27 @@ describe("Pagination", () => {
     expect(pageList(10, 10)).toEqual([1, null, 9, 10]);
   });
 
+  it("a new page glides to the table's top only when that top is off screen", async () => {
+    const onPage = vi.fn();
+    const scroll = vi.fn();
+    const { container } = render(
+      <section>
+        <Pagination page={2} pageCount={3} total={45} pageSize={20} onPage={onPage} />
+      </section>,
+    );
+    const section = container.querySelector("section")!;
+    section.scrollIntoView = scroll;
+    vi.spyOn(section, "getBoundingClientRect").mockReturnValue({ top: -400 } as DOMRect);
+    await userEvent.click(screen.getByRole("button", { name: "Halaman 3" }));
+    expect(onPage).toHaveBeenCalledWith(3);
+    expect(scroll).toHaveBeenCalledWith({ behavior: "smooth", block: "start" });
+
+    scroll.mockClear();
+    vi.spyOn(section, "getBoundingClientRect").mockReturnValue({ top: 120 } as DOMRect);
+    await userEvent.click(screen.getByRole("button", { name: "Halaman 1" }));
+    expect(scroll).not.toHaveBeenCalled();
+  });
+
   it("shows the range, marks the current page, and disables the ends", async () => {
     const onPage = vi.fn();
     render(<Pagination page={1} pageCount={3} total={45} pageSize={20} onPage={onPage} />);

@@ -60,7 +60,7 @@ export function UsersPage() {
         after={total !== undefined ? <Chip tone="sheet">{formatNumber(total, locale)}</Chip> : <Skeleton className="h-7 w-10" />}
         meta={<UpdatedAt at={users.dataUpdatedAt} onRefresh={() => void users.refetch()} refreshing={users.isFetching} />}
       />
-      <section aria-label={t.users.list} className="overflow-hidden rounded-card bg-sheet">
+      <section aria-label={t.users.list} className="scroll-mt-24 overflow-hidden rounded-card bg-sheet">
         <div className="flex flex-col gap-3 px-6 py-5">
           {/* Phone: search + filter icon on one row; desktop: search, then the filter chips. */}
           <div className="flex items-start gap-2 md:gap-3">

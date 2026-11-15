@@ -61,7 +61,8 @@ export function useUsersParams() {
   const params = parseUsersParams(search);
   const set = (patch: Partial<UsersParams>) => {
     const next = { ...params, ...patch, page: patch.page ?? 1 };
-    setSearch(usersSearchEntries(next), { replace: patch.page === undefined });
+    // No router scroll reset: the table stays in view (Pagination scrolls to its top smoothly).
+    setSearch(usersSearchEntries(next), { replace: patch.page === undefined, preventScrollReset: true });
   };
   return { params, set };
 }

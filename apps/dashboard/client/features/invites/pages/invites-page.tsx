@@ -145,7 +145,7 @@ export function InvitesPage() {
           </>
         }
       />
-      <section aria-label={t.invites.list} className="overflow-hidden rounded-card bg-sheet">
+      <section aria-label={t.invites.list} className="scroll-mt-24 overflow-hidden rounded-card bg-sheet">
         {/* Desktop: underline tabs across the top of the card, then search left + chips right
             (same toolbar as Users). Phone: search, chips, then the segmented tabs. */}
         <StatusTabs value={filter} counts={counts} onChange={(f) => set({ status: f === "all" ? undefined : f })} />

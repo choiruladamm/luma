@@ -55,7 +55,8 @@ export function useInvitesParams() {
     const next = { ...params, ...patch, page: patch.page ?? 1 };
     if (patch.usedWithin) next.status = "used";
     if ("status" in patch && patch.status !== "used" && !("usedWithin" in patch)) next.usedWithin = undefined;
-    setSearch(invitesSearchEntries(next), { replace: patch.page === undefined });
+    // No router scroll reset: the table stays in view (Pagination scrolls to its top smoothly).
+    setSearch(invitesSearchEntries(next), { replace: patch.page === undefined, preventScrollReset: true });
   };
   return { params, set };
 }
