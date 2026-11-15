@@ -17,20 +17,19 @@ export type InviteListQuery = {
 };
 
 const DAY_MS = 86_400_000;
-const escapeLike = (q: string) => q.replace(/[\\%_]/g, (ch) => `\\${ch}`);
 
 /**
  * 1 batch (2 statements): one page of invites (with the user who used them) and the counts.
  * `q` matches the code without dashes (codes are stored normalized: upper case) or the user's
- * email, anywhere. The counts follow `q` only (the status tabs); `total` follows every filter.
+ * email, anywhere (case-insensitive). The counts follow `q` only (the status tabs); `total` follows every filter.
  * "Used" = `used_at` set (sign-up); `used_by` may be null after account deletion.
  */
 export async function listInvites(db: Db, query: InviteListQuery) {
-  const needle = query.q ? escapeLike(query.q) : undefined;
-  const search = needle
+  // `instr`, not LIKE: D1 caps LIKE patterns at 50 bytes, and the code/email text needs no escaping.
+  const search = query.q
     ? or(
-        sql`replace(${inviteCodes.code}, '-', '') like ${`%${needle.toUpperCase().replaceAll("-", "")}%`} escape '\\'`,
-        sql`${users.email} like ${`%${needle}%`} escape '\\'`,
+        sql`instr(replace(${inviteCodes.code}, '-', ''), ${query.q.toUpperCase().replaceAll("-", "")}) > 0`,
+        sql`instr(lower(${users.email}), ${query.q.toLowerCase()}) > 0`,
       )
     : undefined;
   const rowFilter = and(

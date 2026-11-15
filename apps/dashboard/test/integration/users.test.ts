@@ -141,6 +141,16 @@ describe("GET /api/users", () => {
     expect(seen).toEqual(expected);
   });
 
+  it("handles a search as long as the limit allows (D1 caps LIKE patterns at 50 bytes)", async () => {
+    const t = tag();
+    const long = `${t}${"x".repeat(60)}`;
+    await createUser({ email: `${long}@luma.test` });
+    const { response } = await get(`/api/users?q=${long}`);
+    expect(response.status).toBe(200);
+    expect(((await response.json()) as Page).items.map((u) => u.email)).toEqual([`${long}@luma.test`]);
+    expect((await get(`/api/users?q=${"z".repeat(100)}`)).response.status).toBe(200);
+  });
+
   it("treats % and _ in q as literal characters", async () => {
     const t = tag();
     await createUser({ email: `${t}_a@luma.test` });

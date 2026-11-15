@@ -44,6 +44,7 @@ client/                  # React SPA, see "Client" below
 - Never build the Better Auth instance outside `/api/auth/*` (tens of ms CPU). `requireAdmin` verifies the cookie HMAC itself, then one D1 join.
 - Metadata only: never select `records`, `key_enc`, or session tokens into a response. Pick columns explicitly.
 - In `db.batch`, give every raw `sql` column an alias (`.as("name")`): D1 names unaliased columns by their SQL text, so two columns with the same text (a count and a filtered total) overwrite each other and come back null or shifted.
+- Text search uses `instr(lower(col), term)`, never `LIKE`: D1 rejects LIKE patterns over 50 bytes (a long `q` returned 500).
 - Free tier: same per-account Workers/D1 quota as the backend. Every endpoint updates the budget table in `docs/backend.md` (Anggaran per aksi). No polling.
 - Code comments in this app are in English (docs, issues, and API error copy stay as they are).
 

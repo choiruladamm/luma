@@ -107,6 +107,12 @@ describe("GET /api/invites", () => {
     expect(byEmail).toMatchObject({ total: 1, counts: { all: 1, unused: 0, used: 1 } });
   });
 
+  it("handles a search as long as the limit allows (D1 caps LIKE patterns at 50 bytes)", async () => {
+    const res = await call(`/api/invites?q=${"z".repeat(100)}`, { headers: { cookie: await adminCookie() } });
+    expect(res.response.status).toBe(200);
+    expect(((await res.response.json()) as Page).items).toEqual([]);
+  });
+
   it("sorts by code or date used, filters used within 7/30 days, and pages with a total", async () => {
     const t = tag();
     const now = Date.now();

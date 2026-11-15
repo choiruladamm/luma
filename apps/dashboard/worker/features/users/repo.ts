@@ -44,22 +44,23 @@ export type UserListQuery = {
   now: number;
 };
 
-/** Escape `%`, `_`, `\` so `q` only ever matches as literal text inside a LIKE pattern. */
-export const likeEscape = (q: string) => q.replace(/[\\%_]/g, (ch) => `\\${ch}`);
-
 /**
- * Search: `q` anywhere in the email or the name (LIKE is case-insensitive for ASCII). Ranked:
- * 0 exact email, 1 email prefix, 2 start of a word (after . _ - @ in the email, or a word of the
- * name), 3 anywhere else. Same rows read as the old prefix match: neither can use an index.
+ * Search: `q` anywhere in the email or the name, case-insensitive. Ranked: 0 exact email,
+ * 1 email prefix, 2 start of a word (after . _ - @ in the email, or a word of the name),
+ * 3 anywhere else. `instr` over lower-cased text instead of LIKE: D1 caps LIKE patterns at 50
+ * bytes (a long query failed with "pattern too complex"), and `%`/`_` need no escaping. Same rows
+ * read as LIKE: neither can use an index.
  */
 function search(q: string) {
-  const e = likeEscape(q);
-  const like = (col: typeof users.email | typeof users.name, pattern: string) => sql`${col} like ${pattern} escape '\\'`;
-  const filter = or(like(users.email, `%${e}%`), like(users.name, `%${e}%`))!;
+  const term = q.toLowerCase();
+  const email = sql`lower(${users.email})`;
+  const name = sql`lower(${users.name})`;
+  const at = (text: SQL, part: string) => sql`instr(${text}, ${part})`;
+  const filter = sql`(${at(email, term)} > 0 or ${at(name, term)} > 0)`;
   const rank = sql<number>`case
-    when lower(${users.email}) = lower(${q}) then 0
-    when ${like(users.email, `${e}%`)} then 1
-    when ${or(like(users.email, `%.${e}%`), like(users.email, `%\\_${e}%`), like(users.email, `%-${e}%`), like(users.email, `%@${e}%`), like(users.name, `${e}%`), like(users.name, `% ${e}%`))} then 2
+    when ${email} = ${term} then 0
+    when ${at(email, term)} = 1 then 1
+    when ${at(email, `.${term}`)} > 0 or ${at(email, `_${term}`)} > 0 or ${at(email, `-${term}`)} > 0 or ${at(email, `@${term}`)} > 0 or ${at(name, term)} = 1 or ${at(name, ` ${term}`)} > 0 then 2
     else 3 end`;
   return { filter, rank };
 }
