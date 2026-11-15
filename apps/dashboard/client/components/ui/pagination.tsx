@@ -2,6 +2,7 @@ import { useI18n } from "../../i18n";
 import { cn } from "../../lib/cn";
 import { formatNumber } from "../../lib/format";
 import { IconButton } from "./button";
+import { Select } from "./select";
 
 /** Page numbers to show: first, last, and a window around the current one; `null` = a gap. */
 export function pageList(page: number, count: number): (number | null)[] {
@@ -29,16 +30,10 @@ export function Pagination({ page, pageCount, total, pageSize, onPage, pageSizes
       <span className="text-caption text-ink2 tabular-nums">{t.common.range(n(from), n(to), n(total))}</span>
       <div className="flex items-center gap-1.5">
         {pageSizes && onPageSize && (
-          <label className="mr-2 inline-flex items-center gap-2 text-caption text-ink2 max-md:hidden">
-            <select value={pageSize} onChange={(e) => onPageSize(Number(e.target.value))} className="h-9 rounded-full border-0 bg-muted px-3 text-caption font-medium text-ink">
-              {pageSizes.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </select>
+          <span className="mr-2 inline-flex items-center gap-2 text-caption text-ink2 max-md:hidden">
+            <Select up hideLabel label={t.common.perPage} value={String(pageSize)} options={pageSizes.map((size) => [String(size), String(size)] as [string, string])} onChange={(v) => onPageSize(Number(v))} />
             {t.common.perPage}
-          </label>
+          </span>
         )}
         <IconButton icon="back" label={t.common.prevPage} size="md" disabled={page <= 1} onClick={() => onPage(page - 1)} />
         <span className="px-2 text-caption font-medium tabular-nums md:hidden">{t.common.pageOf(n(page), n(pageCount))}</span>

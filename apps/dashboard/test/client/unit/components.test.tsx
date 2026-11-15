@@ -12,6 +12,7 @@ import { Segmented } from "../../../client/components/ui/segmented";
 import { EmptyState, ErrorState } from "../../../client/components/ui/states";
 import { ToastHost } from "../../../client/components/ui/toast-host";
 import { Highlight } from "../../../client/components/ui/highlight";
+import { Select } from "../../../client/components/ui/select";
 import { toast } from "../../../client/stores/toast-store";
 
 describe("Button / IconButton", () => {
@@ -152,6 +153,35 @@ describe("DataTable", () => {
     expect(screen.queryByRole("button", { name: /User/ })).toBeNull();
     await userEvent.click(screen.getByRole("button", { name: /File/ }));
     expect(onSort).toHaveBeenCalledWith("bytes");
+  });
+});
+
+describe("Select", () => {
+  const options: [string, string][] = [["", "Semua"], ["active", "Aktif"], ["banned", "Di-ban"]];
+
+  it("opens a listbox with the chosen option checked, picks with the mouse, and closes", async () => {
+    const onChange = vi.fn();
+    render(<Select label="Status" value="" options={options} onChange={onChange} />);
+    await userEvent.click(screen.getByRole("button", { name: "Status: Semua" }));
+    expect(screen.getByRole("option", { name: "Semua" })).toHaveAttribute("aria-selected", "true");
+    await userEvent.click(screen.getByRole("option", { name: "Di-ban" }));
+    expect(onChange).toHaveBeenCalledWith("banned");
+    expect(screen.queryByRole("listbox")).toBeNull();
+  });
+
+  it("works from the keyboard and Esc returns focus to the trigger", async () => {
+    const onChange = vi.fn();
+    render(<Select label="Status" value="" options={options} onChange={onChange} />);
+    const trigger = screen.getByRole("button", { name: "Status: Semua" });
+    trigger.focus();
+    await userEvent.keyboard("{ArrowDown}");
+    expect(screen.getByRole("option", { name: "Semua" })).toHaveFocus();
+    await userEvent.keyboard("{ArrowDown}{Enter}");
+    expect(onChange).toHaveBeenCalledWith("active");
+    await userEvent.click(trigger);
+    await userEvent.keyboard("{Escape}");
+    expect(screen.queryByRole("listbox")).toBeNull();
+    expect(trigger).toHaveFocus();
   });
 });
 

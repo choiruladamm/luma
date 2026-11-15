@@ -14,7 +14,7 @@ import { formatNumber } from "../../../lib/format";
 import { useOverview } from "../../overview/queries/use-overview";
 import { USER_NUMERIC, UserCard, userColumns } from "../components/user-columns";
 import { UsersTableSkeleton } from "../components/users-table-skeleton";
-import { UsersFilterChips, UsersFilterSheet } from "../components/users-filters";
+import { ActiveFilters, UsersFilterChips, UsersFilterSheet } from "../components/users-filters";
 import { useUserSearch } from "../hooks/use-user-search";
 import { activeFilterCount, type UserSort, useUsersParams } from "../hooks/use-users-params";
 import { useUsers } from "../queries/use-users";
@@ -62,16 +62,18 @@ export function UsersPage() {
       />
       <section aria-label={t.users.list} className="overflow-hidden rounded-card bg-sheet">
         <div className="flex flex-col gap-3 px-6 py-5">
-          <div className="flex flex-wrap items-start gap-3">
-            <form role="search" onSubmit={(e) => e.preventDefault()} className="flex min-w-0 flex-[1_1_280px] flex-col gap-1 md:max-w-[420px]">
+          {/* Phone: search + filter icon on one row; desktop: search, then the filter chips. */}
+          <div className="flex items-start gap-2 md:gap-3">
+            <form role="search" onSubmit={(e) => e.preventDefault()} className="flex min-w-0 flex-1 flex-col gap-1 md:max-w-[420px] md:flex-[1_1_280px]">
               <SearchInput label={t.users.search} placeholder={t.shell.searchUsersPlaceholder} tone="canvas" onClear={clear} value={value} {...form.register("q")} aria-invalid={invalid || undefined} />
               {invalid && <span className="pl-4 text-caption text-danger-ink">{t.users.searchTooLong}</span>}
             </form>
             <UsersFilterSheet params={params} set={set} currentSort={currentSort} />
-            <div className="max-md:hidden">
-              <UsersFilterChips params={params} set={set} />
+            <div className="ml-auto max-md:hidden">
+              <UsersFilterChips params={params} set={set} currentSort={currentSort} />
             </div>
           </div>
+          <ActiveFilters params={params} set={set} />
           <span className="flex flex-wrap items-center gap-x-5 gap-y-1 text-caption text-ink2">
             {overview.data ? (
               <span>{t.users.summary(formatNumber(overview.data.users.total, locale), formatNumber(overview.data.users.banned, locale), overview.data.users.total)}</span>

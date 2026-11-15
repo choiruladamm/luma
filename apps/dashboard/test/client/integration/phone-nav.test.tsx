@@ -17,9 +17,10 @@ afterEach(() => {
 describe("phone navigation", () => {
   it("bottom tab bar: icons, labels, counts, and the current screen", async () => {
     const { user, router } = renderApp("/");
-    const bars = await screen.findAllByRole("navigation", { name: "Navigasi admin" });
+    const bars = await screen.findAllByRole("navigation", { name: "Navigasi admin" }, { timeout: 4000 });
     const tabBar = bars.at(-1)!;
-    expect(await within(tabBar).findByText("48")).toBeInTheDocument();
+    // First screen of a cold run: give the overview more than the default 1s.
+    expect(await within(tabBar).findByText("48", {}, { timeout: 4000 })).toBeInTheDocument();
     expect(within(tabBar).getByRole("link", { name: /Ringkasan/ })).toHaveAttribute("aria-current", "page");
     await user.click(within(tabBar).getByRole("link", { name: /Undangan/ }));
     await waitFor(() => expect(router.state.location.pathname).toBe("/invites"));

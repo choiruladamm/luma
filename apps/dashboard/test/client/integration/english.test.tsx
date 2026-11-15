@@ -32,7 +32,7 @@ describe("English UI", () => {
     renderApp("/users");
     expect(await screen.findByRole("heading", { name: "Users", level: 1 })).toBeInTheDocument();
     expect(await screen.findByText("48 users · 1 banned")).toBeInTheDocument();
-    expect(screen.getAllByRole("combobox", { name: "Activity" })[0]).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: /^Sort: Newest sign-ups/ })[0]).toBeInTheDocument();
     expect(await screen.findByRole("table", { name: "User list" })).toBeInTheDocument();
     expect(screen.getByRole("columnheader", { name: /Last active/ })).toBeInTheDocument();
     expect(screen.getAllByText("Never").length).toBeGreaterThan(0);

@@ -126,13 +126,15 @@ test("phone: bottom tab bar, user cards, and the header search @phone", async ({
 test("users: filter, sort by a column, and the state survives a reload", async ({ page }) => {
   test.skip(test.info().project.name !== "desktop", "desktop toolbar");
   await page.goto("/users");
-  await page.getByRole("combobox", { name: "Status" }).first().selectOption("banned");
+  await page.getByRole("button", { name: /^Filter$/ }).click();
+  await page.getByRole("dialog", { name: "Filter user" }).getByRole("button", { name: /^Status:/ }).click();
+  await page.getByRole("option", { name: "Di-ban" }).click();
   await expect(page).toHaveURL(/\?status=banned$/);
   const table = page.getByRole("table", { name: "Daftar user" });
   await expect(table.getByRole("link", { name: /bayu.w@e2e.local/ })).toBeVisible();
   await expect(table.getByRole("link", { name: /rara.anindya@e2e.local/ })).toHaveCount(0);
 
-  await page.getByRole("combobox", { name: "Status" }).first().selectOption("");
+  await page.getByRole("button", { name: "Hapus filter Status: Di-ban" }).click();
   await page.getByRole("button", { name: /^File/ }).click();
   await expect(page).toHaveURL(/\?sort=r2$/);
   await expect(page.getByRole("columnheader", { name: /^File/ })).toHaveAttribute("aria-sort", "descending");
