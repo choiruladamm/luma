@@ -1,5 +1,5 @@
 import { type FormEvent, useEffect, useState } from "react";
-import { Outlet, useLocation, useNavigate } from "react-router";
+import { Outlet, ScrollRestoration, useLocation, useNavigate } from "react-router";
 import { AccountMenu } from "../components/layout/account-menu";
 import { Wordmark } from "../components/layout/logo";
 import { type NavItem, NavPanel, NavPills } from "../components/layout/nav";
@@ -92,6 +92,8 @@ export function AppShell() {
         </main>
       </div>
       <ToastHost />
+      {/* New screen → top of the page; back/forward → where the admin left it. */}
+      <ScrollRestoration />
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { Card, CardHeader } from "../../../components/ui/card";
 import { Chip } from "../../../components/ui/chip";
+import { Skeleton } from "../../../components/ui/skeleton";
 import { formatNumber } from "../../../lib/format";
 
 const HATCH = { background: "repeating-linear-gradient(135deg, var(--c-track) 0 3px, var(--c-canvas) 3px 7px)" };
@@ -8,7 +9,10 @@ const HATCH = { background: "repeating-linear-gradient(135deg, var(--c-track) 0 
  * Sync rows written today vs the account-wide D1 write limit. The board's 7-day chart needs
  * history the backend doesn't keep (only today's counter), so this is the today capsule alone.
  */
-export function SyncCard({ rows, limit }: { rows: number; limit: number }) {
+export function SyncCard({ data, limit = 100_000 }: { data?: { rows: number; limit: number }; limit?: number }) {
+  if (!data) return <SyncCardSkeleton limit={limit} />;
+  const { rows } = data;
+  limit = data.limit;
   const pct = Math.min(100, (rows / limit) * 100);
   const used = rows > 0 && pct < 1 ? "<1" : Math.round(pct).toString();
   return (
@@ -22,6 +26,28 @@ export function SyncCard({ rows, limit }: { rows: number; limit: number }) {
       <div role="img" aria-label={`${formatNumber(rows)} dari ${formatNumber(limit)} baris sync hari ini, ${used}% kepakai.`} className="relative h-14 overflow-hidden rounded-full" style={HATCH}>
         <div className="h-full rounded-full border-[1.5px] border-outline bg-accent" style={{ width: `max(${pct}%, ${rows > 0 ? "56px" : "0px"})` }} />
       </div>
+      <Legend />
+    </Card>
+  );
+}
+
+/** Board 12: header, capsule track and legend stay; the numbers pulse. */
+function SyncCardSkeleton({ limit }: { limit: number }) {
+  return (
+    <Card aria-labelledby="h-sync" aria-busy="true" className="gap-5">
+      <CardHeader id="h-sync" title="Sync" subtitle={`Hari ini · batas ${formatNumber(limit)} baris per hari buat semua user`} />
+      <div className="flex flex-wrap items-center gap-2.5">
+        <Skeleton className="h-9 w-[150px] rounded-[10px]" />
+        <Skeleton className="h-3.5 w-[190px]" />
+      </div>
+      <div aria-hidden="true" className="h-14 rounded-full" style={HATCH} />
+      <Legend />
+    </Card>
+  );
+}
+
+function Legend() {
+  return (
       <div className="flex flex-wrap items-center justify-between gap-3 text-caption text-ink2">
         <div className="flex flex-wrap gap-4">
           <span className="inline-flex items-center gap-1.5">
@@ -35,6 +61,5 @@ export function SyncCard({ rows, limit }: { rows: number; limit: number }) {
         </div>
         <span>Reset tiap 00.00 UTC (07.00 WIB)</span>
       </div>
-    </Card>
   );
 }

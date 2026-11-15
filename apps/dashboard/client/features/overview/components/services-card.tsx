@@ -1,16 +1,17 @@
 import { Card, CardHeader } from "../../../components/ui/card";
 import { Chip } from "../../../components/ui/chip";
 import { Icon, type IconName } from "../../../components/ui/icons";
+import { Skeleton } from "../../../components/ui/skeleton";
 
 /** Backend kill switches, display only: they change via `vars` + deploy, not from here. */
-export function ServicesCard({ flags }: { flags: { sync: boolean; backup: boolean; aiKey: boolean } }) {
-  const rows: [string, IconName, boolean][] = [
-    ["Sync", "sync", flags.sync],
-    ["Backup", "cloud", flags.backup],
-    ["Key AI", "key", flags.aiKey],
+export function ServicesCard({ flags }: { flags?: { sync: boolean; backup: boolean; aiKey: boolean } }) {
+  const rows: [string, IconName, boolean | undefined][] = [
+    ["Sync", "sync", flags?.sync],
+    ["Backup", "cloud", flags?.backup],
+    ["Key AI", "key", flags?.aiKey],
   ];
   return (
-    <Card aria-labelledby="h-layanan" className="gap-3">
+    <Card aria-labelledby="h-layanan" aria-busy={!flags || undefined} className="gap-3">
       <CardHeader
         id="h-layanan"
         title="Layanan"
@@ -28,9 +29,13 @@ export function ServicesCard({ flags }: { flags: { sync: boolean; backup: boolea
               <Icon name={icon} size={20} />
             </span>
             <span className="flex-1 text-body font-semibold">{name}</span>
-            <Chip tone={on ? "sheet" : "danger"} dot="filled">
-              {on ? "Nyala" : "Mati"}
-            </Chip>
+            {on === undefined ? (
+              <Skeleton tone="track" className="h-6 w-[76px]" />
+            ) : (
+              <Chip tone={on ? "sheet" : "danger"} dot="filled">
+                {on ? "Nyala" : "Mati"}
+              </Chip>
+            )}
           </li>
         ))}
       </ul>

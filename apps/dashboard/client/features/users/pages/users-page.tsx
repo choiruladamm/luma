@@ -5,6 +5,7 @@ import { ButtonLink } from "../../../components/ui/button";
 import { Chip } from "../../../components/ui/chip";
 import { DataTable, LoadMore } from "../../../components/ui/data-table";
 import { SearchInput } from "../../../components/ui/search-input";
+import { Skeleton } from "../../../components/ui/skeleton";
 import { EmptyState, ErrorState } from "../../../components/ui/states";
 import { formatNumber } from "../../../lib/format";
 import { useOverview } from "../../overview/queries/use-overview";
@@ -26,7 +27,7 @@ export function UsersPage() {
     <>
       <PageHeader
         title="User"
-        after={total !== undefined && <Chip>{formatNumber(total)}</Chip>}
+        after={total !== undefined ? <Chip>{formatNumber(total)}</Chip> : <Skeleton className="h-7 w-10" />}
         actions={<UpdatedAt at={users.dataUpdatedAt} onRefresh={() => void users.refetch()} refreshing={users.isFetching} />}
       />
       <section aria-label="Daftar user" className="overflow-hidden rounded-card bg-sheet">
@@ -35,8 +36,18 @@ export function UsersPage() {
             <SearchInput label="Cari email" placeholder="Cari email user…" tone="canvas" className="max-w-[420px]" onClear={clear} value={value} {...form.register("q")} aria-invalid={error ? true : undefined} />
             {error && <span className="pl-4 text-caption text-danger-ink">{error}</span>}
           </form>
-          <span className="text-caption text-ink2">
-            {total !== undefined && `${formatNumber(total)} user · ${formatNumber(overview.data!.users.banned)} di-ban · `}Urut dari yang paling baru daftar
+          <span className="flex flex-wrap items-center gap-x-5 gap-y-1 text-caption text-ink2">
+            {overview.data ? (
+              <span>
+                {formatNumber(overview.data.users.total)} user · {formatNumber(overview.data.users.banned)} di-ban
+              </span>
+            ) : (
+              <span aria-hidden="true" className="flex items-center gap-5">
+                <Skeleton className="h-3 w-[72px]" />
+                <Skeleton className="h-3 w-14" />
+              </span>
+            )}
+            <span>Urut dari yang paling baru daftar</span>
           </span>
         </div>
         {users.isError ? (

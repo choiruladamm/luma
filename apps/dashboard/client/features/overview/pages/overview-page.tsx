@@ -10,7 +10,7 @@ import { USER_NUMERIC, UserCard, userColumns } from "../../users/components/user
 import { UsersTableSkeleton } from "../../users/components/users-table-skeleton";
 import { useUsers } from "../../users/queries/use-users";
 import { AiSpendCard } from "../components/ai-spend-card";
-import { CardSkeleton, OverviewStatsSkeleton } from "../components/overview-skeleton";
+import { StatNoteSkeleton, StatValueSkeleton } from "../components/overview-skeleton";
 import { ServicesCard } from "../components/services-card";
 import { StorageCard } from "../components/storage-card";
 import { SyncCard } from "../components/sync-card";
@@ -34,31 +34,24 @@ export function OverviewPage() {
         <section className="rounded-card bg-sheet">
           <ErrorState message={overview.error.message} onRetry={() => void overview.refetch()} />
         </section>
-      ) : !data ? (
-        <>
-          <OverviewStatsSkeleton />
-          <div className="flex flex-wrap gap-4">
-            <CardSkeleton title="Sync" className="flex-[2_1_480px]" />
-            <CardSkeleton title="Penyimpanan" className="flex-[1_1_320px]" />
-          </div>
-        </>
       ) : (
         <>
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4">
-            <StatCard label="User terdaftar" icon="users" value={formatNumber(data.users.total)} note={<><strong className="text-ink">+{formatNumber(data.users.new7d)}</strong> dalam 7 hari</>} />
-            <StatCard label="Baru 7 hari" icon="clock" value={formatNumber(data.users.new7d)} note={`dari ${formatNumber(data.users.total)} user`} />
-            <StatCard label="Di-ban" icon="ban" value={formatNumber(data.users.banned)} danger={data.users.banned > 0} note={`${pct(data.users.banned, data.users.total)} dari semua user`} />
-            <StatCard label="Penyimpanan" icon="drive" value={formatBytes(data.storage.r2Bytes + data.storage.syncBytes)} note="file buku + data sync" />
-            <StatCard label="Kode undangan" icon="ticket" value={formatNumber(data.invites.unused)} note="belum dipakai" />
+          {/* Board 12: while loading, the real labels and icons stay and only the values pulse. */}
+          <div aria-busy={!data || undefined} className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4">
+            <StatCard label="User terdaftar" icon="users" value={data ? formatNumber(data.users.total) : <StatValueSkeleton />} note={data ? <><strong className="text-ink">+{formatNumber(data.users.new7d)}</strong> dalam 7 hari</> : <StatNoteSkeleton />} />
+            <StatCard label="Baru 7 hari" icon="clock" value={data ? formatNumber(data.users.new7d) : <StatValueSkeleton />} note={data ? `dari ${formatNumber(data.users.total)} user` : <StatNoteSkeleton />} />
+            <StatCard label="Di-ban" icon="ban" value={data ? formatNumber(data.users.banned) : <StatValueSkeleton />} danger={!!data && data.users.banned > 0} note={data ? `${pct(data.users.banned, data.users.total)} dari semua user` : <StatNoteSkeleton />} />
+            <StatCard label="Penyimpanan" icon="drive" value={data ? formatBytes(data.storage.r2Bytes + data.storage.syncBytes) : <StatValueSkeleton />} note={data ? "file buku + data sync" : <StatNoteSkeleton />} />
+            <StatCard label="Kode undangan" icon="ticket" value={data ? formatNumber(data.invites.unused) : <StatValueSkeleton />} note={data ? "belum dipakai" : <StatNoteSkeleton />} />
           </div>
           <div className="flex flex-wrap items-start gap-4">
             <div className="flex min-w-0 flex-[2_1_480px] flex-col gap-4">
-              <SyncCard rows={data.syncToday.rows} limit={data.syncToday.limit} />
-              <AiSpendCard ai={data.ai} />
+              <SyncCard data={data?.syncToday} />
+              <AiSpendCard ai={data?.ai} />
             </div>
             <div className="flex min-w-0 flex-[1_1_320px] flex-col gap-4">
-              <StorageCard r2Bytes={data.storage.r2Bytes} syncBytes={data.storage.syncBytes} />
-              <ServicesCard flags={data.flags} />
+              <StorageCard data={data?.storage} />
+              <ServicesCard flags={data?.flags} />
             </div>
           </div>
         </>

@@ -1,6 +1,6 @@
 import { cloudflareTest, readD1Migrations } from "@cloudflare/vitest-plugin";
 import { defineConfig } from "vitest/config";
-import { backendVars } from "./backend-vars";
+import { backendVars } from "./backend-vars.ts";
 
 export default defineConfig(async () => {
   // The backend owns the schema: apply its migrations so changes that break the dashboard show up here.

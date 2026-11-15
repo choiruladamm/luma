@@ -7,7 +7,7 @@ type Option<T extends string> = { value: T; label: ReactNode; count?: number };
 // `kind="tabs"` for filters (tablist), `"radio"` for settings (radiogroup).
 export function Segmented<T extends string>({ label, value, onChange, options, kind = "tabs", stretch, className }: { label: string; value: T; onChange: (v: T) => void; options: Option<T>[]; kind?: "tabs" | "radio"; stretch?: boolean; className?: string }) {
   return (
-    <div role={kind === "tabs" ? "tablist" : "radiogroup"} aria-label={label} className={cn("inline-flex gap-1 rounded-[26px] bg-muted p-1", stretch && "flex w-full gap-0.5", className)}>
+    <div role={kind === "tabs" ? "tablist" : "radiogroup"} aria-label={label} className={cn("rounded-[26px] bg-muted p-1", stretch ? "flex w-full gap-0.5" : "inline-flex gap-1", className)}>
       {options.map((o) => {
         const active = o.value === value;
         return (
@@ -19,9 +19,11 @@ export function Segmented<T extends string>({ label, value, onChange, options, k
             aria-checked={kind === "radio" ? active : undefined}
             onClick={() => onChange(o.value)}
             className={cn(
-              "inline-flex h-10 items-center justify-center gap-2 rounded-[20px] px-4 text-ink whitespace-nowrap",
+              "inline-flex h-10 items-center justify-center rounded-[20px] text-ink whitespace-nowrap",
+              stretch ? "" : "gap-2 px-4",
               kind === "radio" ? "text-caption" : "text-body",
-              stretch && "flex-1 px-2",
+              // Equal thirds that may shrink (the account menu is only 304 wide).
+              stretch && "min-w-0 flex-1 gap-1.5 px-1.5",
               active ? "bg-segment font-semibold shadow-segment" : "font-medium hover:bg-canvas/60",
             )}
           >

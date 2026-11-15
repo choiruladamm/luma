@@ -1,9 +1,19 @@
 import { Card, CardHeader } from "../../../components/ui/card";
 import { ProgressBar } from "../../../components/ui/meter";
+import { Skeleton } from "../../../components/ui/skeleton";
 import { formatDate, formatUsd } from "../../../lib/format";
 
 /** Workspace spend of the subsidized keys this month vs the guardrail budget (runs a day behind). */
-export function AiSpendCard({ ai }: { ai: { spendUsd: number | null; budgetUsd: number; asOf: string } }) {
+export function AiSpendCard({ ai }: { ai?: { spendUsd: number | null; budgetUsd: number; asOf: string } }) {
+  if (!ai) {
+    return (
+      <Card aria-labelledby="h-ai" aria-busy="true" className="gap-3">
+        <CardHeader id="h-ai" title="Kuota AI gratis" subtitle="Bulan ini" />
+        <Skeleton className="h-[30px] w-[150px] rounded-[10px]" />
+        <Skeleton className="h-2 w-full" />
+      </Card>
+    );
+  }
   const pct = ai.spendUsd === null ? 0 : (ai.spendUsd / ai.budgetUsd) * 100;
   return (
     <Card aria-labelledby="h-ai" className="gap-3">

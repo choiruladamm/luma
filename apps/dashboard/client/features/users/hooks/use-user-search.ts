@@ -23,9 +23,11 @@ export function useUserSearch() {
   }, [q, form]);
 
   useEffect(() => {
-    if (invalid || debounced === q) return;
+    // Only a settled value goes to the URL: right after "clear" the debounced value is still the
+    // old text, and writing it back would refill the field.
+    if (invalid || debounced !== typed.trim() || debounced === q) return;
     setParams(debounced ? { q: debounced } : {}, { replace: true });
-  }, [debounced, invalid, q, setParams]);
+  }, [debounced, typed, invalid, q, setParams]);
 
   const clear = () => {
     form.setValue("q", "");
