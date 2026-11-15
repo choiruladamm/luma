@@ -260,6 +260,14 @@ export const id = {
     copiedToClipboard: "Udah disalin ke clipboard",
     newHint: "Tinggal salin, terus kirim. Kodenya tetap ada di daftar Undangan.",
   },
+  appError: {
+    crash: { title: "Ada yang error", body: "Layar ini gagal ditampilkan. Coba muat ulang; kalau masih, cek detail di bawah." },
+    update: { title: "Ada versi baru dashboard", body: "Tab ini masih pakai versi lama. Muat ulang buat lanjut." },
+    notFound: { title: "Halaman gak ditemukan", body: "Alamatnya mungkin salah, atau halamannya udah gak ada." },
+    reload: "Muat ulang",
+    home: "Ke Ringkasan",
+    details: "Detail teknis",
+  },
   time: {
     never: "Belum pernah",
     justNow: "Baru aja",

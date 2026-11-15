@@ -261,6 +261,14 @@ export const en: Messages = {
     copiedToClipboard: "Copied to clipboard",
     newHint: "Just copy and send it. The code stays in the Invites list.",
   },
+  appError: {
+    crash: { title: "Something went wrong", body: "This screen couldn't be shown. Try reloading; if it keeps happening, check the details below." },
+    update: { title: "A new dashboard version is out", body: "This tab is still on the old version. Reload to continue." },
+    notFound: { title: "Page not found", body: "The address may be wrong, or the page no longer exists." },
+    reload: "Reload",
+    home: "Go to Overview",
+    details: "Technical details",
+  },
   time: {
     never: "Never",
     justNow: "Just now",
