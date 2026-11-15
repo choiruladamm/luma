@@ -128,6 +128,9 @@ describe("GET /api/invites", () => {
     const p2 = await page(`?q=${t}&sort=code&dir=asc&limit=3&page=2`);
     expect(p2).toMatchObject({ total: 4, page: 2, pageCount: 2, counts: { all: 4, unused: 1, used: 3 } });
     expect(p2.items.map((i) => i.code.slice(-4))).toEqual(["0004"]);
+    // With a status filter, `total` and that status's count share their SQL text.
+    expect(await page(`?q=${t}&status=unused`)).toMatchObject({ total: 1, pageCount: 1 });
+    expect(await page(`?q=${t}&status=used`)).toMatchObject({ total: 3, pageCount: 1 });
     const window = await page(`?q=${t}&usedWithin=30d`);
     expect(window).toMatchObject({ total: 2, counts: { all: 4, unused: 1, used: 3 } });
   });

@@ -58,11 +58,13 @@ export async function listInvites(db: Db, query: InviteListQuery) {
       .limit(query.limit)
       .offset((query.page - 1) * query.limit),
     db
+      // Explicit aliases: D1 names raw columns by their SQL text, and with a status filter
+      // `total` has the same text as `unused`/`used`, so one would overwrite the other.
       .select({
-        all: count(),
-        unused: sql<number>`coalesce(sum(${inviteCodes.usedAt} is null), 0)`.mapWith(Number),
-        used: sql<number>`coalesce(sum(${inviteCodes.usedAt} is not null), 0)`.mapWith(Number),
-        total: sql<number>`coalesce(sum(${rowFilter ?? sql`1`}), 0)`.mapWith(Number),
+        all: count().as("all"),
+        unused: sql<number>`coalesce(sum(${inviteCodes.usedAt} is null), 0)`.mapWith(Number).as("unused"),
+        used: sql<number>`coalesce(sum(${inviteCodes.usedAt} is not null), 0)`.mapWith(Number).as("used"),
+        total: sql<number>`coalesce(sum(${rowFilter ?? sql`1`}), 0)`.mapWith(Number).as("total"),
       })
       .from(inviteCodes)
       .leftJoin(users, eq(users.id, inviteCodes.usedBy))
