@@ -6,24 +6,24 @@ import { formatBytes } from "../../../lib/format";
 
 /** Half gauge: ink = book files (R2), pink = sync data (D1). No data yet → board 12 skeleton. */
 export function StorageCard({ data }: { data?: { r2Bytes: number; syncBytes: number } }) {
-  const { locale } = useI18n();
+  const { t, locale } = useI18n();
   const total = data ? data.r2Bytes + data.syncBytes : 0;
   const share = (n: number) => (total > 0 ? n / total : 0);
   return (
     <Card aria-labelledby="h-simpan" aria-busy={!data || undefined}>
-      <CardHeader id="h-simpan" title="Penyimpanan" />
+      <CardHeader id="h-simpan" title={t.overview.storage} />
       <Gauge
-        label={data ? `Total ${formatBytes(total, locale)}: file buku ${formatBytes(data.r2Bytes, locale)}, data sync ${formatBytes(data.syncBytes, locale)}.` : "Lagi muat penyimpanan"}
+        label={data ? t.overview.storageGauge(formatBytes(total, locale), formatBytes(data.r2Bytes, locale), formatBytes(data.syncBytes, locale)) : t.overview.storageLoading}
         parts={data ? [{ value: share(data.r2Bytes), color: "var(--c-ink)" }, { value: share(data.syncBytes), color: "var(--c-pink)" }] : []}
       >
         {data ? <span className="text-[26px] leading-none font-semibold tracking-[-0.02em] tabular-nums">{formatBytes(total, locale)}</span> : <Skeleton className="h-[26px] w-[88px] rounded-[8px]" />}
-        <span className="text-caption text-ink2">total</span>
+        <span className="text-caption text-ink2">{t.overview.total}</span>
       </Gauge>
       <div className="flex flex-col gap-2">
         {(
           [
-            ["File buku", data?.r2Bytes, "bg-ink"],
-            ["Data sync", data?.syncBytes, "bg-pink"],
+            [t.overview.bookFiles, data?.r2Bytes, "bg-ink"],
+            [t.overview.syncData, data?.syncBytes, "bg-pink"],
           ] as const
         ).map(([label, bytes, dot]) => (
           <div key={label} className="flex items-center justify-between text-body">

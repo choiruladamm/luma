@@ -9,11 +9,13 @@ import type { InviteItem } from "../api/invites-api";
 const h = columnHelper<InviteItem>();
 
 export function InviteStatusChip({ used }: { used: boolean }) {
-  return used ? <Chip dot="filled">Udah dipakai</Chip> : <Chip tone="sheet" dot="hollow" className="shadow-[inset_0_0_0_1px_var(--c-track)]">Belum dipakai</Chip>;
+  const { t } = useI18n();
+  return used ? <Chip dot="filled">{t.invites.used}</Chip> : <Chip tone="sheet" dot="hollow" className="shadow-[inset_0_0_0_1px_var(--c-track)]">{t.invites.unused}</Chip>;
 }
 
 export function UsedBy({ invite }: { invite: InviteItem }) {
-  if (!invite.usedBy) return <span className="text-ink2">{invite.usedAt ? "Akun udah dihapus" : "—"}</span>;
+  const { t } = useI18n();
+  if (!invite.usedBy) return <span className="text-ink2">{invite.usedAt ? t.invites.accountDeleted : "—"}</span>;
   return (
     <Link to={`/users/${invite.usedBy.id}`} className="text-ink no-underline hover:underline">
       {invite.usedBy.email}
@@ -24,11 +26,11 @@ export function UsedBy({ invite }: { invite: InviteItem }) {
 /** Columns for board 08 (no "Dibuat": invite codes have no created_at). Actions come from the page. */
 export function inviteColumns(i18n: I18n, actions: (invite: InviteItem) => React.ReactNode) {
   return h.columns([
-    h.accessor("code", { header: "Kode", cell: (info) => <span className="font-mono text-body font-medium">{info.getValue()}</span> }),
-    h.accessor("usedAt", { id: "status", header: "Status", cell: (info) => <InviteStatusChip used={info.getValue() !== null} /> }),
-    h.accessor("usedBy", { header: "Dipakai oleh", cell: (info) => <UsedBy invite={info.row.original} /> }),
-    h.accessor("usedAt", { id: "usedAt", header: "Tanggal dipakai", cell: (info) => (info.getValue() ? formatDate(info.getValue()!, i18n.locale) : "—") }),
-    h.display({ id: "actions", header: () => <span className="sr-only">Aksi</span>, cell: (info) => actions(info.row.original) }),
+    h.accessor("code", { header: i18n.t.invites.code, cell: (info) => <span className="font-mono text-body font-medium">{info.getValue()}</span> }),
+    h.accessor("usedAt", { id: "status", header: i18n.t.invites.status, cell: (info) => <InviteStatusChip used={info.getValue() !== null} /> }),
+    h.accessor("usedBy", { header: i18n.t.invites.usedBy, cell: (info) => <UsedBy invite={info.row.original} /> }),
+    h.accessor("usedAt", { id: "usedAt", header: i18n.t.invites.usedAt, cell: (info) => (info.getValue() ? formatDate(info.getValue()!, i18n.locale) : "—") }),
+    h.display({ id: "actions", header: () => <span className="sr-only">{i18n.t.invites.actions}</span>, cell: (info) => actions(info.row.original) }),
   ]);
 }
 

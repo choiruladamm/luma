@@ -1,7 +1,7 @@
 import { Card, CardHeader } from "../../../components/ui/card";
 import { Icon } from "../../../components/ui/icons";
 import { ProgressBar } from "../../../components/ui/meter";
-import { useI18n } from "../../../i18n";
+import { type Messages, useI18n } from "../../../i18n";
 import { formatBytes, formatDate, formatRelative, formatUsd } from "../../../lib/format";
 import type { UserDetail } from "../api/users-api";
 
@@ -17,20 +17,20 @@ function NumberCard({ title, value, children }: { title: string; value: string; 
 
 /** File and sync usage; the share of all files shows only when the overview is already cached. */
 export function UsageCards({ user, totalR2 }: { user: UserDetail; totalR2?: number }) {
-  const { locale } = useI18n();
+  const { t, locale } = useI18n();
   const share = totalR2 ? (user.r2Bytes / totalR2) * 100 : undefined;
   return (
     <>
-      <NumberCard title="File buku" value={formatBytes(user.r2Bytes, locale)}>
+      <NumberCard title={t.userDetail.bookFiles} value={formatBytes(user.r2Bytes, locale)}>
         {share !== undefined && (
           <>
-            <ProgressBar value={share} label="Bagian dari semua file di server" />
-            <span className="text-caption text-ink2">{share < 1 && user.r2Bytes > 0 ? "<1" : Math.round(share)}% dari semua file di server</span>
+            <ProgressBar value={share} label={t.userDetail.shareBar} />
+            <span className="text-caption text-ink2">{t.userDetail.share(share < 1 && user.r2Bytes > 0 ? "<1" : String(Math.round(share)))}</span>
           </>
         )}
       </NumberCard>
-      <NumberCard title="Data sync" value={formatBytes(user.syncBytes, locale)}>
-        <span className="text-caption text-ink2">progres, catatan & pengaturan AI</span>
+      <NumberCard title={t.users.syncData} value={formatBytes(user.syncBytes, locale)}>
+        <span className="text-caption text-ink2">{t.userDetail.syncNote}</span>
       </NumberCard>
     </>
   );
@@ -38,29 +38,29 @@ export function UsageCards({ user, totalR2 }: { user: UserDetail; totalR2?: numb
 
 /** Subsidized key only (an own key never reaches the server): today's use vs the daily limit. */
 export function AiCard({ ai }: { ai: UserDetail["ai"] }) {
-  const { locale } = useI18n();
+  const { t, locale } = useI18n();
   return (
-    <NumberCard title="Kuota AI gratis" value={ai ? (ai.usageDaily === null ? "—" : formatUsd(ai.usageDaily, locale)) : "Gak pakai"}>
+    <NumberCard title={t.userDetail.freeAi} value={ai ? (ai.usageDaily === null ? "—" : formatUsd(ai.usageDaily, locale)) : t.userDetail.aiNone}>
       {ai ? (
         <>
-          {ai.usageDaily !== null && <ProgressBar value={(ai.usageDaily / ai.limit) * 100} label="Pemakaian AI hari ini" />}
+          {ai.usageDaily !== null && <ProgressBar value={(ai.usageDaily / ai.limit) * 100} label={t.userDetail.aiUsageBar} />}
           <span className="text-caption text-ink2">
-            {ai.usageDaily === null ? "Pemakaian gagal dimuat dari OpenRouter. " : `hari ini dari ${formatUsd(ai.limit, locale)} · `}
-            key berlaku sampai {formatDate(ai.expiresAt, locale)}
+            {ai.usageDaily === null ? `${t.userDetail.aiUsageFailed} ` : `${t.userDetail.aiTodayOf(formatUsd(ai.limit, locale))} · `}
+            {t.userDetail.aiKeyUntil(formatDate(ai.expiresAt, locale))}
           </span>
         </>
       ) : (
-        <span className="text-caption text-ink2">Belum minta key subsidi, atau pakai key sendiri. Key-nya gak pernah ditampilin di sini.</span>
+        <span className="text-caption text-ink2">{t.userDetail.aiNoKey}</span>
       )}
     </NumberCard>
   );
 }
 
 /** "Luma/0.3.0 (+mailto:…)" → "App Luma 0.3.0"; browsers and tools keep a short raw label. */
-export function deviceLabel(userAgent: string | null) {
-  if (!userAgent) return "Perangkat gak dikenal";
+export function deviceLabel(userAgent: string | null, t: Messages) {
+  if (!userAgent) return t.userDetail.unknownDevice;
   const app = userAgent.match(/^Luma\/([\w.]+)/);
-  if (app) return `App Luma ${app[1]}`;
+  if (app) return t.userDetail.lumaApp(app[1]!);
   if (userAgent.includes("Mozilla")) return "Browser";
   return userAgent.split(" ")[0]!;
 }
@@ -68,12 +68,12 @@ export function deviceLabel(userAgent: string | null) {
 /** Sessions per device (in scope, not on the board): newest first, max 50 from the API. */
 export function SessionsCard({ sessions }: { sessions: UserDetail["sessions"] }) {
   const i18n = useI18n();
-  const { locale } = i18n;
+  const { t, locale } = i18n;
   return (
     <Card aria-labelledby="h-sesi" className="gap-3">
-      <CardHeader id="h-sesi" title="Perangkat" subtitle={`${sessions.length} sesi masuk, termasuk yang udah kedaluwarsa`} />
+      <CardHeader id="h-sesi" title={t.userDetail.devices} subtitle={t.userDetail.sessions(sessions.length)} />
       {sessions.length === 0 ? (
-        <span className="text-body text-ink2">Belum ada sesi.</span>
+        <span className="text-body text-ink2">{t.userDetail.noSessions}</span>
       ) : (
         <ul className="m-0 flex list-none flex-col gap-2 p-0">
           {sessions.map((s, i) => (
@@ -83,10 +83,10 @@ export function SessionsCard({ sessions }: { sessions: UserDetail["sessions"] })
               </span>
               <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                 <span className="truncate text-body font-semibold" title={s.userAgent ?? undefined}>
-                  {deviceLabel(s.userAgent)}
+                  {deviceLabel(s.userAgent, t)}
                 </span>
                 <span className="truncate text-caption text-ink2">
-                  Masuk {formatDate(s.createdAt, locale)}
+                  {t.userDetail.signedIn(formatDate(s.createdAt, locale))}
                   {s.ipAddress ? ` · ${s.ipAddress}` : ""}
                 </span>
               </span>

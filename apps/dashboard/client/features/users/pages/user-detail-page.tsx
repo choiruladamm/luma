@@ -27,14 +27,19 @@ export function UserDetailPage() {
 
   const doUnban = () =>
     unban.mutate(id, {
-      onSuccess: () => toast(`Ban ${user.data?.email ?? "user"} dibuka`),
+      onSuccess: () => {
+        // getI18n, not the render's `t`: the admin may switch language while the request runs.
+        const { t } = getI18n();
+        toast(t.userDetail.unbanned(user.data?.email ?? t.userDetail.someone));
+      },
       onError: (e) => toast(errorText(e, getI18n().t), { tone: "error" }),
     });
   const doBan = () =>
     ban.mutate(id, {
       onSuccess: () => {
         setConfirming(false);
-        toast(`${user.data?.email ?? "User"} di-ban`, { action: { label: "Buka ban", onClick: doUnban } });
+        const { t } = getI18n();
+        toast(t.userDetail.bannedToast(user.data?.email ?? t.userDetail.someone), { action: { label: t.userDetail.unban, onClick: doUnban } });
       },
       onError: (e) => {
         setConfirming(false);
@@ -43,9 +48,9 @@ export function UserDetailPage() {
     });
 
   const crumb = (
-    <nav aria-label="Lokasi" className="flex items-center gap-2 text-body text-ink2">
+    <nav aria-label={t.userDetail.breadcrumb} className="flex items-center gap-2 text-body text-ink2">
       <Link to="/users" className="text-ink2 no-underline hover:underline">
-        User
+        {t.shell.users}
       </Link>
       <span aria-hidden="true">/</span>
       <span className="truncate font-semibold text-ink">{user.data ? user.data.name || user.data.email : "…"}</span>
@@ -59,8 +64,8 @@ export function UserDetailPage() {
         {crumb}
         <section className="rounded-card bg-sheet">
           {missing ? (
-            <EmptyState icon="user" title="User gak ditemukan" action={<ButtonLink to="/users" variant="secondary" icon="back">Ke daftar user</ButtonLink>}>
-              Mungkin akunnya udah dihapus dari app.
+            <EmptyState icon="user" title={t.userDetail.notFound} action={<ButtonLink to="/users" variant="secondary" icon="back">{t.userDetail.backToList}</ButtonLink>}>
+              {t.userDetail.notFoundBody}
             </EmptyState>
           ) : (
             <ErrorState message={errorText(user.error, t)} onRetry={() => void user.refetch()} />
@@ -74,7 +79,7 @@ export function UserDetailPage() {
     return (
       <>
         {crumb}
-        <section aria-busy="true" aria-label="Lagi muat user" className="flex flex-col gap-6 rounded-card bg-sheet p-7">
+        <section aria-busy="true" aria-label={t.userDetail.loading} className="flex flex-col gap-6 rounded-card bg-sheet p-7">
           <div className="flex items-center gap-5">
             <Skeleton className="size-[72px]" />
             <div className="flex flex-col gap-2">
@@ -98,8 +103,8 @@ export function UserDetailPage() {
         onUnban={doUnban}
         onCopyEmail={() =>
           copy(data.email).then(
-            () => toast("Email disalin"),
-            () => toast("Gagal nyalin email. Coba lagi.", { tone: "error" }),
+            () => toast(getI18n().t.userDetail.emailCopied),
+            () => toast(getI18n().t.userDetail.emailCopyFailed, { tone: "error" }),
           )
         }
       />
@@ -112,12 +117,12 @@ export function UserDetailPage() {
         <section aria-labelledby="h-ban" className="flex flex-wrap items-center justify-between gap-4 rounded-card bg-sheet p-6">
           <div className="flex max-w-[640px] flex-col gap-1">
             <h2 id="h-ban" className="m-0 text-card font-semibold">
-              Ban user ini
+              {t.userDetail.banTitle}
             </h2>
-            <span className="text-body text-ink2">Kuota AI gratisnya dicabut, key yang udah ada langsung mati. Masuk, backup, dan sync tetap jalan. Bisa dibuka kapan aja dari halaman ini.</span>
+            <span className="text-body text-ink2">{t.userDetail.banBody}</span>
           </div>
           <Button variant="danger-soft" icon="ban" onClick={() => setConfirming(true)}>
-            Ban user
+            {t.userDetail.ban}
           </Button>
         </section>
       )}

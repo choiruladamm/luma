@@ -9,29 +9,29 @@ import { UserStatusChip } from "./user-columns";
 
 // Ban in Luma only revokes the subsidized AI quota (docs/dashboard.md, Scope MVP); the board's
 // "can't sign in or sync" copy is corrected here.
-const EFFECTS: [IconName, string, boolean][] = [
-  ["x", "Key AI gratisnya langsung dicabut", true],
-  ["check", "Masuk, backup, dan sync tetap jalan", false],
-  ["check", "Ban bisa dibuka kapan aja dari halaman ini", false],
+const EFFECTS: [IconName, "effectKey" | "effectKeeps" | "effectUndo", boolean][] = [
+  ["x", "effectKey", true],
+  ["check", "effectKeeps", false],
+  ["check", "effectUndo", false],
 ];
 
 export function BanDialog({ user, open, onClose, onConfirm, pending }: { user: UserDetail; open: boolean; onClose: () => void; onConfirm: () => void; pending: boolean }) {
-  const { locale } = useI18n();
+  const { t, locale } = useI18n();
   return (
     <Dialog
       open={open}
       onClose={onClose}
-      title="Ban user ini?"
-      description="Kuota AI gratisnya dicabut sampai ban dibuka."
+      title={t.userDetail.banConfirm}
+      description={t.userDetail.banConfirmBody}
       icon="ban"
       tone="danger"
       footer={
         <ConfirmFooter>
           <Button variant="secondary" onClick={onClose} autoFocus>
-            Batal
+            {t.common.cancel}
           </Button>
           <Button variant="danger" icon="ban" onClick={onConfirm} disabled={pending}>
-            {pending ? "Lagi nge-ban…" : "Ban user"}
+            {pending ? t.userDetail.banning : t.userDetail.ban}
           </Button>
         </ConfirmFooter>
       }
@@ -41,20 +41,21 @@ export function BanDialog({ user, open, onClose, onConfirm, pending }: { user: U
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
           <span className="text-body font-medium [overflow-wrap:anywhere]">{user.email}</span>
           <span className="text-caption text-ink2">
-            {user.name ? `${user.name} · ` : ""}daftar {formatDate(user.createdAt, locale)}
+            {user.name ? `${user.name} · ` : ""}
+            {t.userDetail.joinedOn(formatDate(user.createdAt, locale))}
           </span>
         </div>
         <UserStatusChip banned={user.banned} />
       </div>
       <div className="flex flex-col gap-1">
-        <span className="text-caption font-medium text-ink2">Yang terjadi</span>
+        <span className="text-caption font-medium text-ink2">{t.userDetail.effects}</span>
         <ul className="m-0 flex list-none flex-col p-0">
-          {EFFECTS.map(([icon, text, bad]) => (
-            <li key={text} className="flex min-h-10 items-center gap-3">
+          {EFFECTS.map(([icon, key, bad]) => (
+            <li key={key} className="flex min-h-10 items-center gap-3">
               <span aria-hidden="true" className={`flex size-7 flex-none items-center justify-center rounded-[9px] ${bad ? "bg-danger-soft text-danger-ink" : "bg-muted text-ink"}`}>
                 <Icon name={icon} size={14} strokeWidth={2.2} />
               </span>
-              <span className="text-body">{text}</span>
+              <span className="text-body">{t.userDetail[key]}</span>
             </li>
           ))}
         </ul>
