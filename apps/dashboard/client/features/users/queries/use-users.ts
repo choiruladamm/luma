@@ -11,4 +11,5 @@ export const usersQuery = (q: string) =>
     getNextPageParam: (last) => last.nextCursor ?? undefined,
   });
 
-export const useUsers = (q: string) => useInfiniteQuery(usersQuery(q));
+/** `enabled: false` for a query not worth sending yet (the header search below 2 characters). */
+export const useUsers = (q: string, enabled = true) => useInfiniteQuery({ ...usersQuery(q), enabled });

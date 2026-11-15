@@ -1,15 +1,15 @@
-import { type FormEvent, useEffect, useState } from "react";
-import { Outlet, ScrollRestoration, useLocation, useNavigate } from "react-router";
+import { useEffect } from "react";
+import { Outlet, ScrollRestoration, useLocation } from "react-router";
 import { AccountMenu } from "../components/layout/account-menu";
 import { Wordmark } from "../components/layout/logo";
 import { type NavItem, NavPanel, NavPills } from "../components/layout/nav";
 import { IconButton } from "../components/ui/button";
 import { Chip } from "../components/ui/chip";
-import { SearchInput } from "../components/ui/search-input";
 import { ToastHost } from "../components/ui/toast-host";
 import { useSession } from "../features/auth/queries/use-session";
 import { useSignOut } from "../features/auth/queries/use-sign-out";
 import { useOverview } from "../features/overview/queries/use-overview";
+import { QuickSearch } from "../features/users/components/quick-search";
 import { chooseLang, useI18n } from "../i18n";
 import { isDevHost } from "../lib/env";
 import { useUiStore } from "../stores/ui-store";
@@ -24,9 +24,9 @@ export function AppShell() {
   const overview = useOverview();
   const { theme, setTheme, openMenu, setOpenMenu } = useUiStore();
   const { t, lang } = useI18n();
-  const navigate = useNavigate();
   const location = useLocation();
-  const [search, setSearch] = useState("");
+  // The Users page has its own search field; two on one screen would compete.
+  const searchable = location.pathname !== "/users";
 
   useEffect(() => setOpenMenu(null), [location.pathname, setOpenMenu]);
 
@@ -35,13 +35,6 @@ export function AppShell() {
     { to: "/users", label: t.shell.users, icon: "users", count: overview.data?.users.total },
     { to: "/invites", label: t.shell.invites, icon: "ticket", count: overview.data?.invites.unused },
   ];
-
-  const submitSearch = (e: FormEvent) => {
-    e.preventDefault();
-    const q = search.trim();
-    void navigate(q ? `/users?q=${encodeURIComponent(q)}` : "/users");
-    setSearch("");
-  };
 
   const user = session.data?.user;
   return (
@@ -53,9 +46,21 @@ export function AppShell() {
             <NavPills items={items} />
           </div>
           <span className="flex-[1_1_24px]" />
-          <form role="search" onSubmit={submitSearch} className="hidden min-w-[200px] flex-[0_1_280px] lg:block">
-            <SearchInput label={t.shell.searchUsers} placeholder={t.shell.searchUsersPlaceholder} value={search} onChange={(e) => setSearch(e.target.value)} />
-          </form>
+          {searchable && (
+            <div role="search" className="hidden min-w-[200px] flex-[0_1_320px] lg:block">
+              <QuickSearch shortcut />
+            </div>
+          )}
+          {searchable && (
+            <IconButton
+              icon={openMenu === "search" ? "x" : "search"}
+              label={openMenu === "search" ? t.shell.closeSearch : t.shell.openSearch}
+              variant="sheet"
+              aria-expanded={openMenu === "search"}
+              onClick={() => setOpenMenu(openMenu === "search" ? null : "search")}
+              className="lg:hidden"
+            />
+          )}
           {isDevHost(window.location.hostname) && (
             <Chip tone="pink" icon="code" className="h-7 px-2.5 text-[11.5px] font-semibold tracking-[0.06em]">
               DEV
@@ -85,6 +90,14 @@ export function AppShell() {
             className="md:hidden"
           />
         </header>
+        {openMenu === "search" && searchable && (
+          <div className="lg:hidden">
+            <button type="button" tabIndex={-1} aria-label={t.shell.closeSearch} onClick={() => setOpenMenu(null)} className="fixed inset-0 top-[76px] z-10 cursor-default bg-scrim" />
+            <div role="search" className="fixed inset-x-3.5 top-[76px] z-20 rounded-menu bg-sheet p-2 shadow-[var(--shadow-sheet),inset_0_0_0_1px_var(--c-track)]">
+              <QuickSearch autoFocus tone="canvas" onDone={() => setOpenMenu(null)} />
+            </div>
+          </div>
+        )}
         {openMenu === "nav" && (
           <div className="md:hidden">
             <button type="button" tabIndex={-1} aria-label={t.shell.closeNav} onClick={() => setOpenMenu(null)} className="fixed inset-0 top-[76px] z-10 cursor-default bg-scrim" />

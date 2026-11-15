@@ -225,6 +225,8 @@ Batas Workers 100rb request/hari dihitung per akun, jadi dashboard ikut memakai 
   - Tambahan: layar Login, kartu Perangkat (sesi) dan Kuota AI gratis di Detail user, kartu Kuota AI gratis (spend bulan ini) di Ringkasan, dialog konfirmasi hapus kode.
 - Loading: tata letak asli langsung tampil (judul, label, header kolom), angka dan baris diganti skeleton (board loading), bukan layar loading terpisah. Undangan dan Detail user gak punya board loading, jadi ikut aturan yang sama; di HP tabel yang lagi muat tampil sebagai kartu, sama dengan tabel aslinya. Jumlah di filter Undangan ikut skeleton, bukan "0".
 - Waktu ditampilkan di zona waktu browser admin.
+- Cari email di header (combobox): `/` fokus ke kolom; minimal 2 huruf, setelah jeda 300 ms muncul 5 user teratas (awalan email) plus "Lihat semua hasil" ke `/users?q=`. Panah + Enter buka user, Esc tutup lalu kosongkan. Query sama dengan halaman User, jadi pindah ke daftar pakai cache. Disembunyikan di `/users` (halaman itu punya kolom cari sendiri); di bawah 1024px jadi tombol ikon yang membuka panel di bawah header.
+- Tab (nav desktop, Segmented) punya pill aktif dan pill hover yang meluncur (`useSlidingPill`), tanpa animasi kalau browser minta kurangi gerakan.
 
 ### Bahasa
 
