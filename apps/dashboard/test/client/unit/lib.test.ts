@@ -1,14 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { ApiError, toApiError, unwrap, unwrapEmpty } from "../../../client/lib/api-error";
+import { id } from "../../../client/i18n/id";
+import { ApiError, errorText, toApiError, unwrap, unwrapEmpty } from "../../../client/lib/api-error";
 import { isDevHost } from "../../../client/lib/env";
 import { cn } from "../../../client/lib/cn";
 import { formatBytes, formatRelative, formatUsd } from "../../../client/lib/format";
 
 describe("client api-error", () => {
-  it("maps the worker error body to a code with Indonesian copy", async () => {
+  it("maps the worker error body to a code; the copy comes from the code", async () => {
     const err = await toApiError(Response.json({ error: { code: "INVITE_CODE_USED", message: "used" } }, { status: 409 }));
     expect(err).toMatchObject({ status: 409, code: "INVITE_CODE_USED", serverMessage: "used" });
-    expect(err.message).toBe("Kode undangan sudah dipakai.");
+    expect(errorText(err, id)).toBe("Kode undangan sudah dipakai.");
+    expect(errorText(new Error("boom"), id)).toBe("Ada yang salah di server.");
   });
 
   it("falls back to INTERNAL_ERROR for unknown codes and non-JSON bodies", async () => {
@@ -35,10 +37,10 @@ describe("client env + format", () => {
   });
 
   it("formats bytes and small USD amounts", () => {
-    expect(formatBytes(0)).toBe("0 B");
-    expect(formatBytes(1536)).toBe("1,5 KB");
-    expect(formatBytes(20409434)).toBe("19,5 MB");
-    expect(formatUsd(0.00676)).toMatch(/0,0068/);
+    expect(formatBytes(0, "id-ID")).toBe("0 B");
+    expect(formatBytes(1536, "id-ID")).toBe("1,5 KB");
+    expect(formatBytes(20409434, "id-ID")).toBe("19,5 MB");
+    expect(formatUsd(0.00676, "id-ID")).toMatch(/0,0068/);
   });
 });
 
@@ -54,11 +56,11 @@ describe("client format: relative time", () => {
     [ago(4 * 86_400_000), "4 hari lalu"],
     [ago(15 * 86_400_000), "2 minggu lalu"],
   ])("%s → %s", (iso, label) => {
-    expect(formatRelative(iso, now)).toBe(label);
+    expect(formatRelative(iso, { t: id, locale: "id-ID" }, now)).toBe(label);
   });
 
   it("falls back to the date after a month", () => {
-    expect(formatRelative(ago(60 * 86_400_000), now)).toMatch(/2026/);
+    expect(formatRelative(ago(60 * 86_400_000), { t: id, locale: "id-ID" }, now)).toMatch(/2026/);
   });
 });
 

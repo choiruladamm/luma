@@ -1,35 +1,30 @@
 import type { ErrorCode } from "../../worker/lib/errors";
+import { id, type Messages } from "../i18n/id";
 
 export type ClientErrorCode = ErrorCode | "NETWORK";
 
-const MESSAGES: Record<ClientErrorCode, string> = {
-  BAD_REQUEST: "Isian tidak valid.",
-  UNAUTHORIZED: "Sesi habis. Masuk lagi.",
-  FORBIDDEN: "Akun ini bukan admin.",
-  NOT_FOUND: "Data tidak ditemukan.",
-  INVITE_CODE_USED: "Kode undangan sudah dipakai.",
-  RATE_LIMITED: "Terlalu banyak permintaan. Coba lagi sebentar.",
-  INTERNAL_ERROR: "Ada yang salah di server.",
-  OPENROUTER_FAILED: "OpenRouter gagal dihubungi. Coba lagi.",
-  NETWORK: "Gagal terhubung. Cek koneksi.",
-};
-
-/** Error from the dashboard API, with copy ready to show. */
+/**
+ * Error from the dashboard API. It carries the code, not copy: the worker's message is English
+ * and internal, and the copy depends on the UI language at render time (`errorText`).
+ */
 export class ApiError extends Error {
   constructor(
     readonly status: number,
     readonly code: ClientErrorCode,
     readonly serverMessage?: string,
   ) {
-    super(MESSAGES[code]);
+    super(code);
   }
 }
+
+/** Copy to show for any error, in the current UI language (`t.errors`). */
+export const errorText = (error: Error, t: Messages) => t.errors[error instanceof ApiError ? error.code : "INTERNAL_ERROR"];
 
 /** Turn a failed response (`{"error": {"code", "message"}}`) into an ApiError. */
 export async function toApiError(res: Response): Promise<ApiError> {
   const body = (await res.json().catch(() => null)) as { error?: { code?: string; message?: string } } | null;
   const code = body?.error?.code;
-  const known = code !== undefined && code in MESSAGES ? (code as ClientErrorCode) : "INTERNAL_ERROR";
+  const known = code !== undefined && Object.hasOwn(id.errors, code) ? (code as ClientErrorCode) : "INTERNAL_ERROR";
   return new ApiError(res.status, known, body?.error?.message);
 }
 

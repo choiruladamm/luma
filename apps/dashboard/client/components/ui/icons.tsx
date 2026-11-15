@@ -15,6 +15,7 @@ import {
   ComputerIcon,
   Copy01Icon,
   DatabaseIcon,
+  GlobeIcon,
   GoogleIcon,
   GridViewIcon,
   HardDriveIcon,
@@ -73,6 +74,7 @@ const ICONS = {
   monitor: ComputerIcon,
   logout: Logout01Icon,
   google: GoogleIcon,
+  globe: GlobeIcon,
 } as const;
 
 export type IconName = keyof typeof ICONS;

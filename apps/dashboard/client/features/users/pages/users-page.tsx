@@ -7,6 +7,8 @@ import { DataTable, LoadMore } from "../../../components/ui/data-table";
 import { SearchInput } from "../../../components/ui/search-input";
 import { Skeleton } from "../../../components/ui/skeleton";
 import { EmptyState, ErrorState } from "../../../components/ui/states";
+import { useI18n } from "../../../i18n";
+import { errorText } from "../../../lib/api-error";
 import { formatNumber } from "../../../lib/format";
 import { useOverview } from "../../overview/queries/use-overview";
 import { USER_NUMERIC, UserCard, userColumns } from "../components/user-columns";
@@ -19,6 +21,9 @@ export function UsersPage() {
   const { form, q, clear, error } = useUserSearch();
   const users = useUsers(q);
   const overview = useOverview();
+  const i18n = useI18n();
+  const { t, locale } = i18n;
+  const columns = useMemo(() => userColumns(i18n), [i18n]);
   const rows = useMemo(() => users.data?.pages.flatMap((p) => p.items) ?? [], [users.data]);
   const total = overview.data?.users.total;
   const value = form.watch("q");
@@ -27,7 +32,7 @@ export function UsersPage() {
     <>
       <PageHeader
         title="User"
-        after={total !== undefined ? <Chip>{formatNumber(total)}</Chip> : <Skeleton className="h-7 w-10" />}
+        after={total !== undefined ? <Chip>{formatNumber(total, locale)}</Chip> : <Skeleton className="h-7 w-10" />}
         actions={<UpdatedAt at={users.dataUpdatedAt} onRefresh={() => void users.refetch()} refreshing={users.isFetching} />}
       />
       <section aria-label="Daftar user" className="overflow-hidden rounded-card bg-sheet">
@@ -39,7 +44,7 @@ export function UsersPage() {
           <span className="flex flex-wrap items-center gap-x-5 gap-y-1 text-caption text-ink2">
             {overview.data ? (
               <span>
-                {formatNumber(overview.data.users.total)} user · {formatNumber(overview.data.users.banned)} di-ban
+                {formatNumber(overview.data.users.total, locale)} user · {formatNumber(overview.data.users.banned, locale)} di-ban
               </span>
             ) : (
               <span aria-hidden="true" className="flex items-center gap-5">
@@ -51,7 +56,7 @@ export function UsersPage() {
           </span>
         </div>
         {users.isError ? (
-          <ErrorState message={users.error.message} onRetry={() => void users.refetch()} />
+          <ErrorState message={errorText(users.error, t)} onRetry={() => void users.refetch()} />
         ) : !users.data ? (
           <UsersTableSkeleton />
         ) : rows.length === 0 ? (
@@ -67,7 +72,7 @@ export function UsersPage() {
         ) : (
           <DataTable
             label="Daftar user"
-            columns={userColumns}
+            columns={columns}
             data={rows}
             rowHref={(u) => `/users/${u.id}`}
             numeric={USER_NUMERIC}

@@ -2,6 +2,7 @@ import { Link } from "react-router";
 import { Chip } from "../../../components/ui/chip";
 import { columnHelper } from "../../../components/ui/data-table";
 import { Icon } from "../../../components/ui/icons";
+import { type I18n, useI18n } from "../../../i18n";
 import { formatDate } from "../../../lib/format";
 import type { InviteItem } from "../api/invites-api";
 
@@ -21,17 +22,18 @@ export function UsedBy({ invite }: { invite: InviteItem }) {
 }
 
 /** Columns for board 08 (no "Dibuat": invite codes have no created_at). Actions come from the page. */
-export function inviteColumns(actions: (invite: InviteItem) => React.ReactNode) {
+export function inviteColumns(i18n: I18n, actions: (invite: InviteItem) => React.ReactNode) {
   return h.columns([
     h.accessor("code", { header: "Kode", cell: (info) => <span className="font-mono text-body font-medium">{info.getValue()}</span> }),
     h.accessor("usedAt", { id: "status", header: "Status", cell: (info) => <InviteStatusChip used={info.getValue() !== null} /> }),
     h.accessor("usedBy", { header: "Dipakai oleh", cell: (info) => <UsedBy invite={info.row.original} /> }),
-    h.accessor("usedAt", { id: "usedAt", header: "Tanggal dipakai", cell: (info) => (info.getValue() ? formatDate(info.getValue()!) : "—") }),
+    h.accessor("usedAt", { id: "usedAt", header: "Tanggal dipakai", cell: (info) => (info.getValue() ? formatDate(info.getValue()!, i18n.locale) : "—") }),
     h.display({ id: "actions", header: () => <span className="sr-only">Aksi</span>, cell: (info) => actions(info.row.original) }),
   ]);
 }
 
 export function InviteCard({ invite, actions }: { invite: InviteItem; actions: React.ReactNode }) {
+  const { locale } = useI18n();
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between gap-3">
@@ -44,7 +46,7 @@ export function InviteCard({ invite, actions }: { invite: InviteItem; actions: R
           <span className="min-w-0 truncate">
             <UsedBy invite={invite} />
           </span>
-          <span className="flex-none">· {formatDate(invite.usedAt)}</span>
+          <span className="flex-none">· {formatDate(invite.usedAt, locale)}</span>
         </span>
       )}
       <div className="flex gap-2">{actions}</div>

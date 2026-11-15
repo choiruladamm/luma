@@ -14,6 +14,8 @@ export default defineConfig({
   use: {
     baseURL: `http://localhost:${PORT}`,
     channel: "chrome",
+    // Specs assert the Indonesian copy; the UI follows the browser language (e2e/i18n.spec.ts).
+    locale: "id-ID",
     storageState: "e2e/.auth/admin.json",
     trace: "retain-on-failure",
   },

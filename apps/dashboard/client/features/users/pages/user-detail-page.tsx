@@ -4,7 +4,8 @@ import { Button, ButtonLink } from "../../../components/ui/button";
 import { Skeleton } from "../../../components/ui/skeleton";
 import { EmptyState, ErrorState } from "../../../components/ui/states";
 import { useCopyToClipboard } from "../../../hooks/use-copy-to-clipboard";
-import { ApiError } from "../../../lib/api-error";
+import { getI18n, useI18n } from "../../../i18n";
+import { ApiError, errorText } from "../../../lib/api-error";
 import { toast } from "../../../stores/toast-store";
 import { useOverview } from "../../overview/queries/use-overview";
 import { BanDialog } from "../components/ban-dialog";
@@ -22,11 +23,12 @@ export function UserDetailPage() {
   const unban = useUnbanUser();
   const { copy } = useCopyToClipboard();
   const [confirming, setConfirming] = useState(false);
+  const { t } = useI18n();
 
   const doUnban = () =>
     unban.mutate(id, {
       onSuccess: () => toast(`Ban ${user.data?.email ?? "user"} dibuka`),
-      onError: (e) => toast(e.message, { tone: "error" }),
+      onError: (e) => toast(errorText(e, getI18n().t), { tone: "error" }),
     });
   const doBan = () =>
     ban.mutate(id, {
@@ -36,7 +38,7 @@ export function UserDetailPage() {
       },
       onError: (e) => {
         setConfirming(false);
-        toast(e.message, { tone: "error" });
+        toast(errorText(e, getI18n().t), { tone: "error" });
       },
     });
 
@@ -61,7 +63,7 @@ export function UserDetailPage() {
               Mungkin akunnya udah dihapus dari app.
             </EmptyState>
           ) : (
-            <ErrorState message={user.error.message} onRetry={() => void user.refetch()} />
+            <ErrorState message={errorText(user.error, t)} onRetry={() => void user.refetch()} />
           )}
         </section>
       </>

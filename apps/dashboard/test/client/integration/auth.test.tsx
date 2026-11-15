@@ -72,4 +72,25 @@ describe("auth", () => {
     await user.click(screen.getByRole("radio", { name: "Gelap" }));
     expect(screen.getByRole("radio", { name: "Gelap" })).toHaveAttribute("aria-checked", "true");
   });
+
+  it("switches the language from the account menu without calling the API", async () => {
+    const { user } = renderApp("/");
+    await user.click(await screen.findByRole("button", { name: "Menu akun: Marcus" }));
+    await screen.findByText("48");
+    let requests = 0;
+    const count = () => requests++;
+    server.events.on("request:start", count);
+    await user.click(screen.getByRole("radio", { name: "English" }));
+    expect(await screen.findByRole("radio", { name: "English" })).toHaveAttribute("aria-checked", "true");
+    expect(screen.getByRole("button", { name: "Account menu: Marcus" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Sign out" })).toBeInTheDocument();
+    await waitFor(() => expect(document.documentElement.lang).toBe("en"));
+    expect(JSON.parse(localStorage.getItem("luma-admin-ui")!).state.lang).toBe("en");
+
+    await user.click(screen.getByRole("radio", { name: "Indonesia" }));
+    expect(await screen.findByRole("button", { name: "Keluar" })).toBeInTheDocument();
+    await waitFor(() => expect(document.documentElement.lang).toBe("id"));
+    server.events.removeListener("request:start", count);
+    expect(requests).toBe(0);
+  });
 });

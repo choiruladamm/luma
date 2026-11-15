@@ -7,6 +7,8 @@ import { Segmented } from "../../../components/ui/segmented";
 import { Skeleton } from "../../../components/ui/skeleton";
 import { EmptyState, ErrorState } from "../../../components/ui/states";
 import { useCopyToClipboard } from "../../../hooks/use-copy-to-clipboard";
+import { getI18n, useI18n } from "../../../i18n";
+import { errorText } from "../../../lib/api-error";
 import { toast } from "../../../stores/toast-store";
 import type { InviteItem } from "../api/invites-api";
 import { DeleteInviteDialog } from "../components/delete-invite-dialog";
@@ -30,6 +32,8 @@ export function InvitesPage() {
   const [limit, setLimit] = useState(PAGE);
   const [created, setCreated] = useState<{ code: string; at: string } | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const i18n = useI18n();
+  const { t } = i18n;
 
   const all = invites.data?.items;
   const counts = useMemo(() => ({ all: all?.length ?? 0, unused: all?.filter((i) => !i.usedAt).length ?? 0, used: all?.filter((i) => i.usedAt).length ?? 0 }), [all]);
@@ -44,7 +48,7 @@ export function InvitesPage() {
   const makeCode = () =>
     create.mutate(1, {
       onSuccess: (res) => setCreated({ code: res.codes[0]!, at: new Date().toISOString() }),
-      onError: (e) => toast(e.message, { tone: "error" }),
+      onError: (e) => toast(errorText(e, getI18n().t), { tone: "error" }),
     });
   const confirmDelete = () =>
     remove.mutate(deleting!, {
@@ -54,7 +58,7 @@ export function InvitesPage() {
       },
       onError: (e) => {
         setDeleting(null);
-        toast(e.message, { tone: "error" });
+        toast(errorText(e, getI18n().t), { tone: "error" });
       },
     });
 
@@ -65,7 +69,7 @@ export function InvitesPage() {
     </span>
   );
   // `actions` only closes over stable setters and the clipboard hook.
-  const columns = useMemo(() => inviteColumns(actions), [copy]);
+  const columns = useMemo(() => inviteColumns(i18n, actions), [copy, i18n]);
 
   return (
     <>
@@ -99,7 +103,7 @@ export function InvitesPage() {
           <span className="text-caption text-ink2">Satu kode buat satu akun</span>
         </div>
         {invites.isError ? (
-          <ErrorState message={invites.error.message} onRetry={() => void invites.refetch()} />
+          <ErrorState message={errorText(invites.error, t)} onRetry={() => void invites.refetch()} />
         ) : !all ? (
           <div aria-busy="true" aria-label="Lagi muat kode undangan" className="flex flex-col gap-4 px-6 pb-6">
             {Array.from({ length: 5 }, (_, i) => (
