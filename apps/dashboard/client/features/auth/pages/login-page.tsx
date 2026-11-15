@@ -1,4 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { Navigate, useSearchParams } from "react-router";
 import { LogoMark } from "../../../components/layout/logo";
 import { Banner } from "../../../components/ui/banner";
@@ -25,6 +26,14 @@ export function LoginPage() {
   const session = useSession();
   const [params] = useSearchParams();
   const signIn = useMutation({ mutationFn: signInWithGoogle });
+  // Back from Google restores this page from the back/forward cache with the mutation still
+  // "success" (the button spinning forever): reset it when the page comes back that way.
+  const { reset } = signIn;
+  useEffect(() => {
+    const onShow = (e: PageTransitionEvent) => e.persisted && reset();
+    window.addEventListener("pageshow", onShow);
+    return () => window.removeEventListener("pageshow", onShow);
+  }, [reset]);
   const { t } = useI18n();
   if (session.data) return <Navigate to="/" replace />;
 

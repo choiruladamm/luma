@@ -37,6 +37,24 @@ describe("auth", () => {
     await waitFor(() => expect(assign).toHaveBeenCalledWith("https://accounts.google.com/o/oauth2/v2/auth?x=1"));
   });
 
+  it("coming back from Google (back/forward cache) the button is usable again", async () => {
+    server.use(
+      http.get(`${API}/auth/get-session`, () => HttpResponse.json(null)),
+      http.post(`${API}/auth/sign-in/social`, () => HttpResponse.json({ url: "https://accounts.google.com/o/oauth2/v2/auth?x=1", redirect: true })),
+    );
+    vi.spyOn(window.location, "assign").mockImplementation(() => {});
+    const { user } = renderApp("/login?error=FORBIDDEN&error_description=Dashboard+cannot+create+accounts");
+    const button = await screen.findByRole("button", { name: "Masuk pakai Google" });
+    await user.click(button);
+    // Left for Google: the button stays busy so it can't be pressed twice.
+    await waitFor(() => expect(button).toHaveAttribute("aria-busy", "true"));
+    // Back: the browser restores this page from its back/forward cache.
+    window.dispatchEvent(Object.assign(new Event("pageshow"), { persisted: true }));
+    await waitFor(() => expect(button).not.toHaveAttribute("aria-busy"));
+    expect(button).toBeEnabled();
+    expect(screen.getByText("Akun ini belum terdaftar di Luma")).toBeInTheDocument();
+  });
+
   it("sends a signed-in admin from /login to the overview", async () => {
     renderApp("/login");
     expect(await screen.findByRole("heading", { name: "Ringkasan" })).toBeInTheDocument();
