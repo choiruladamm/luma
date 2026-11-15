@@ -1,6 +1,6 @@
 # Luma admin dashboard (Cloudflare Worker)
 
-Admin-only Worker `luma-admin-{env}`: Hono API under `/api` on the same D1 as the backend env, behind Cloudflare Access + a second Better Auth instance (cookie sessions, Google redirect only). The React SPA (Workers Static Assets) comes later. Full design: `docs/dashboard.md` (repo root). Read it before touching auth, middleware, or an endpoint.
+Admin-only Worker `luma-admin-{env}`: Hono API under `/api` on the same D1 as the backend env, behind Cloudflare Access + a second Better Auth instance (cookie sessions, Google redirect only). The React SPA in `client/` is served by Workers Static Assets. Full design: `docs/dashboard.md` (repo root). Read it before touching auth, middleware, or an endpoint.
 
 ## Commands
 
@@ -48,15 +48,16 @@ client/                  # React SPA, see "Client" below
 
 ## Client (`client/`)
 
-Stack: React, React Router (routing only), TanStack Query over `hc<AppType>()`, RHF + zod, TanStack Table, Zustand. No Axios, no React Router loaders/actions. Files are kebab-case.
+Stack: React, React Router, TanStack Query over `hc<AppType>()`, RHF + `zod/mini`, TanStack Table, Zustand. No Axios, no React Router actions. Files are kebab-case.
 
+- `app/routes.tsx`: every screen is `lazy`. A route `loader` only prefetches that screen's queries (`prefetch()` in `app/prefetch.ts`, the `*Query` options exported next to each hook) and returns `null`; never read loader data, the hooks own it. Tests don't register a query client, so loaders do nothing there; `test/client/helpers/render.tsx` preloads the lazy chunks.
 - One-way flow: `pages → (feature hooks + queries) → api → lib/api-client`. Components only take props. `api/`, `queries/`, and `hooks/` never import another feature; a page may compose another feature's components and queries (Ringkasan shows the users table).
 - UI: board "14 · Admin web" in the Stabilo canvas. Tokens live in `client/styles/app.css` (CSS variables per theme, mapped to Tailwind colors like `bg-sheet`, `text-ink2`); never hard-code a hex in a component. Shared building blocks are in `components/ui` (Button, Chip, Card/StatCard, Segmented, Dialog, DataTable, Toast, states). Icons go through `<Icon name>` (Hugeicons stroke-rounded, the app's set).
-- `features/*/api/`: raw `hc` calls through `unwrap()` → data or `ApiError`; no React. `queries/`: the only place for `useQuery`/`useMutation`, keys in `query-keys.ts`. `hooks/`: client logic that never calls the API. `schemas/`: zod for forms, mirroring worker limits (the worker stays the authority).
+- `features/*/api/`: raw `hc` calls through `unwrap()` → data or `ApiError`; no React. `queries/`: the only place for `useQuery`/`useMutation`, keys in `query-keys.ts`. `hooks/`: client logic that never calls the API. `schemas/`: `zod/mini` for forms (full zod doubled the Users chunk), mirroring worker limits (the worker stays the authority).
 - `client/` imports from `worker/` with `import type` only. Better Auth routes aren't in `AppType`; `features/auth/api` uses plain `fetch`.
 - Keep the TanStack Query defaults in `app/query-client.ts` (no focus refetch, no polling): the dashboard shares the backend's free-tier quota.
 - Zustand (`stores/`) holds UI state only, never API data.
-- Static files don't pass through the Worker: their security headers live in `public/_headers`.
+- Static files don't pass through the Worker: their security and cache headers live in `public/_headers` (`/assets/*` is hashed, so immutable).
 - `tsconfig.client.json` checks `client/` (DOM + JSX); `make dashboard-test` runs it. `client/lib` has unit tests in `test/unit/`.
 
 ## Shared code with the backend

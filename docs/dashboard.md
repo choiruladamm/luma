@@ -22,7 +22,7 @@ Prinsip:
 
 Tidak masuk MVP: hapus user (tetap lewat `DELETE /v1/me` dari app), revoke sesi, impersonate, toggle saklar, analytics Cloudflare (request/hari, CPU p99), pemakaian AI per user di daftar user.
 
-Spend workspace OpenRouter di Ringkasan dari `GET /activity?workspace_id=` OpenRouter: menghitung key yang sudah dihapus (ban, rotasi), beda dengan menjumlah key yang masih hidup. Cuma hari UTC yang sudah lewat (spend "sampai kemarin") dan 30 hari terakhir. Budget dari `AI_MONTHLY_BUDGET_USD` backend, yang harus sama dengan guardrail workspace; guardrail sendiri tidak punya angka pemakaian.
+Spend workspace OpenRouter di Ringkasan dari `GET /activity?workspace_id=` OpenRouter: menghitung key yang sudah dihapus (ban, rotasi), beda dengan menjumlah key yang masih hidup. Cuma hari UTC yang sudah lewat (spend "sampai kemarin") dan 30 hari terakhir. Budget dari `AI_MONTHLY_BUDGET_USD` backend, yang harus sama dengan guardrail workspace; guardrail sendiri tidak punya angka pemakaian. Spend gak di-cache di Worker: Cache API gak tersedia untuk Worker di belakang Cloudflare Access, jadi tiap buka Ringkasan = 1 subrequest.
 
 ## Arsitektur
 
@@ -44,10 +44,10 @@ flowchart LR
 | Lokasi | `apps/dashboard`, Worker sendiri, bukan route di Worker backend: endpoint admin tidak ikut ke API publik `/v1` |
 | Domain | `luma-admin.chrl.cloud` (prod), `luma-admin-dev.chrl.cloud` (dev). Satu deploy per env; prod hanya dari `master` |
 | Akses | Cloudflare Access (self-hosted application per hostname) di depan Worker. `workers_dev: false` dan `preview_urls: false`, jadi custom domain di belakang Access satu-satunya jalan masuk |
-| Frontend | Vite + React SPA di `client/`, disajikan Workers Static Assets dari Worker yang sama (satu origin, tanpa CORS). React Router cuma untuk routing. Data lewat TanStack Query di atas klien `hc<AppType>()` Hono RPC (tipe request/response ikut Worker, header JSON global); login/logout `fetch` biasa ke `/api/auth/*`. Form RHF + zod, tabel TanStack Table (mode manual, paginasi di server), Zustand cuma untuk state UI (bukan data API). Tanpa Axios |
+| Frontend | Vite + React SPA di `client/`, disajikan Workers Static Assets dari Worker yang sama (satu origin, tanpa CORS). React Router untuk routing: tiap layar chunk sendiri (`lazy`), dan loader route cuma memulai query layar itu bareng unduhan chunk-nya tanpa menahan navigasi. Data lewat TanStack Query di atas klien `hc<AppType>()` Hono RPC (tipe request/response ikut Worker, header JSON global); login/logout `fetch` biasa ke `/api/auth/*`. Form RHF + `zod/mini` (zod penuh dua pertiga chunk User), tabel TanStack Table (mode manual, paginasi di server), Zustand cuma untuk state UI (bukan data API). Tanpa Axios |
 | API | Hono di `/api/*`, zod validator, error `{"error": {"code", "message"}}` seperti backend |
 | Data | Binding D1 ke database yang sama dengan backend env itu. Tidak pakai R2 |
-| Styling | Tailwind v4 dengan token Stabilo di `client/styles/app.css` (terang dari board "14 · Admin web", gelap dari token gelap Stabilo app). Font Bricolage Grotesque / Geist / Geist Mono di-bundle (`@fontsource`, CSP gak izinkan Google Fonts). Ikon Hugeicons stroke-rounded, set yang sama dengan app |
+| Styling | Tailwind v4 dengan token Stabilo di `client/styles/app.css` (terang dari board "14 · Admin web", gelap dari token gelap Stabilo app). Font Bricolage Grotesque (cuma sumbu `wght`) / Geist / Geist Mono di-bundle (`@fontsource`, CSP gak izinkan Google Fonts). Ikon Hugeicons stroke-rounded, set yang sama dengan app |
 
 Routing Static Assets: request `/api/*` masuk Worker, sisanya file statis dengan fallback `index.html`. React ditambahkan ke proyek Vite `apps/dashboard` yang sudah ada (`react()` sebelum `cloudflare()` di `vite.config.ts`, `index.html` di root `apps/dashboard`), bukan proyek Vite baru di `client/`.
 
@@ -75,7 +75,7 @@ apps/dashboard/
 │   ├── lib/              # errors, audit
 │   └── features/         # users/, invites/, overview/: routes.ts + service.ts + repo.ts
 ├── index.html            # entry SPA → client/main.tsx
-├── public/_headers       # CSP + nosniff untuk file statis (gak lewat Worker)
+├── public/_headers       # CSP + nosniff untuk file statis (gak lewat Worker), `/assets/*` immutable 1 tahun (nama file ber-hash)
 ├── tsconfig.client.json  # client/: DOM + JSX
 └── client/               # SPA, file kebab-case; cuma import tipe dari worker/
     ├── main.tsx
@@ -163,7 +163,7 @@ sequenceDiagram
   end
 ```
 
-Alur di `client/` satu arah: `pages → (hooks fitur + queries) → api → lib/api-client`. Fitur gak saling import. TanStack Query disetel untuk free tier: tanpa refetch saat fokus jendela, tanpa polling, retry 1 kali cuma untuk error server/jaringan, `staleTime` 60 detik; 401 di mana pun → `/login`. Habis ban/unban, cache user di-invalidasi; angka Ringkasan ikut berubah setelah cache-nya basi.
+Alur di `client/` satu arah: `pages → (hooks fitur + queries) → api → lib/api-client`. Fitur gak saling import. TanStack Query disetel untuk free tier: tanpa refetch saat fokus jendela, tanpa polling, retry 1 kali cuma untuk error server/jaringan, `staleTime` 60 detik; 401 di mana pun → `/login`. Loader route pakai query yang sama dengan layarnya, jadi prefetch gak menambah request. Pindah layar mulai dari atas halaman, tombol back balik ke posisi scroll sebelumnya. Habis ban/unban, cache user di-invalidasi; angka Ringkasan ikut berubah setelah cache-nya basi.
 
 ## Endpoint
 
@@ -223,6 +223,7 @@ Batas Workers 100rb request/hari dihitung per akun, jadi dashboard ikut memakai 
   - Tanpa tanggal ban (gak ada kolom `banned_at`) dan tanpa kolom "Dibuat" di Undangan (`invite_codes` gak punya `created_at`).
   - Tanpa pilihan bahasa (dashboard cuma bahasa Indonesia).
   - Tambahan: layar Login, kartu Perangkat (sesi) dan Kuota AI gratis di Detail user, kartu Kuota AI gratis (spend bulan ini) di Ringkasan, dialog konfirmasi hapus kode.
+- Loading: tata letak asli langsung tampil, angka dan baris diganti skeleton (board loading), bukan layar loading terpisah.
 - Waktu ditampilkan di zona waktu browser admin.
 
 Prompt Claude Design (detail visual diserahkan ke Claude Design, mengikuti foundation Stabilo):

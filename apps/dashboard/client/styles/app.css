@@ -1,7 +1,7 @@
 @import "tailwindcss";
 @import "@fontsource-variable/geist";
 @import "@fontsource-variable/geist-mono";
-@import "@fontsource-variable/bricolage-grotesque/opsz.css";
+@import "@fontsource-variable/bricolage-grotesque/wght.css";
 
 /*
  * Stabilo tokens (board "14 · Admin web", komponen 1). Light from the board; dark is the

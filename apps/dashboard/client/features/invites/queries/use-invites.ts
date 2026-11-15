@@ -1,9 +1,11 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createInvites, deleteInvite, type InviteStatus, listInvites } from "../api/invites-api";
 import { invitesKeys } from "./query-keys";
 
-export const useInvites = (status?: InviteStatus) =>
-  useQuery({ queryKey: invitesKeys.list(status), queryFn: () => listInvites(status) });
+export const invitesQuery = (status?: InviteStatus) =>
+  queryOptions({ queryKey: invitesKeys.list(status), queryFn: () => listInvites(status) });
+
+export const useInvites = (status?: InviteStatus) => useQuery(invitesQuery(status));
 
 function useInviteMutation<T, R>(mutationFn: (input: T) => Promise<R>) {
   const queryClient = useQueryClient();
