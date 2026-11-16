@@ -43,7 +43,7 @@ export function NewInviteDialog({ code, createdAt, copied, onCopy, onClose }: { 
         </div>
         <div className="flex flex-col items-center gap-2 px-5 pt-[22px] pb-[26px]">
           <span className="text-caption text-ink2">{t.invites.codeLabel}</span>
-          <span className="bg-[linear-gradient(transparent_58%,var(--c-pink)_58%,var(--c-pink)_94%,transparent_94%)] px-2 text-center font-mono text-[clamp(22px,6vw,32px)] leading-[1.1] font-semibold tracking-[0.06em] tabular-nums [overflow-wrap:anywhere]">
+          <span className="rounded-[4px] bg-[linear-gradient(transparent_var(--c-mark-from),var(--c-pink)_var(--c-mark-from),var(--c-pink)_var(--c-mark-end),transparent_var(--c-mark-end))] px-2 text-[color:var(--c-mark-ink,inherit)] text-center font-mono text-[clamp(22px,6vw,32px)] leading-[1.1] font-semibold tracking-[0.06em] tabular-nums [overflow-wrap:anywhere]">
             {code}
           </span>
           <span className="text-caption text-ink2">{t.invites.createdAt(formatDateTime(createdAt, locale))}</span>

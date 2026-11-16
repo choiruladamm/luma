@@ -21,6 +21,9 @@
   --c-ink2: #5e5a4e;
   --c-accent: #ffd84d;
   --c-on-accent: #1a1a1a;
+  /* Stabilo marks (search match, invite code): a lower-half underlay; the text keeps its color. */
+  --c-mark-from: 55%;
+  --c-mark-end: 94%;
   --c-outline: #1a1a1a;
   --c-pink: #ffc2d3;
   --c-on-pink: #1a1a1a;
@@ -53,6 +56,10 @@
   --c-ink2: #a19b8e;
   --c-accent: #e9c75a;
   --c-on-accent: #22201c;
+  /* Light ink on yellow/pink is unreadable: marks fill fully and take dark text (on-accent = on-pink). */
+  --c-mark-from: 0%;
+  --c-mark-end: 100%;
+  --c-mark-ink: var(--c-on-accent);
   --c-outline: #e9c75a;
   --c-pink: #d99bae;
   --c-on-pink: #22201c;
@@ -86,6 +93,9 @@
     --c-ink2: #a19b8e;
     --c-accent: #e9c75a;
     --c-on-accent: #22201c;
+    --c-mark-from: 0%;
+    --c-mark-end: 100%;
+    --c-mark-ink: var(--c-on-accent);
     --c-outline: #e9c75a;
     --c-pink: #d99bae;
     --c-on-pink: #22201c;
