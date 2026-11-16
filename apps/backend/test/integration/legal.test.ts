@@ -1,4 +1,4 @@
-import { exports } from "cloudflare:workers";
+import { env, exports } from "cloudflare:workers";
 import { describe, expect, it } from "vitest";
 
 const get = async (path: string) => {
@@ -12,7 +12,8 @@ describe("store-required pages", () => {
     expect(res.status).toBe(200);
     expect(res.headers.get("content-type")).toContain("text/html");
     expect(body).toContain('<html lang="en">');
-    expect(body).toContain("work.adamm@gmail.com");
+    expect(env.CONTACT_EMAIL).toMatch(/@/);
+    expect(body).toContain(`mailto:${env.CONTACT_EMAIL}`);
     expect(body).toContain('href="/privacy"');
     expect(body).toContain('href="/account/delete"');
     expect(body).toMatch(/Last updated \w+ \d+, \d{4}/);

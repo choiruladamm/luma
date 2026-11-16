@@ -2,7 +2,6 @@ import { Hono } from "hono";
 import { html } from "hono/html";
 import type { AppEnv } from "../../env";
 
-const CONTACT = "work.adamm@gmail.com";
 /** Bump when the content of either page changes. */
 const LAST_UPDATED = "November 16, 2026";
 
@@ -60,7 +59,7 @@ const STYLE = html`<style>
 
 type Page = "privacy" | "delete";
 
-const page = (current: Page, title: string, body: ReturnType<typeof html>) => html`<!doctype html>
+const page = (current: Page, title: string, contact: string, body: ReturnType<typeof html>) => html`<!doctype html>
   <html lang="en">
     <head>
       <meta charset="utf-8" />
@@ -79,12 +78,12 @@ const page = (current: Page, title: string, body: ReturnType<typeof html>) => ht
           </nav>
         </header>
         <main>${body}</main>
-        <footer>Questions? <a href="mailto:${CONTACT}">${CONTACT}</a></footer>
+        <footer>Questions? <a href="mailto:${contact}">${contact}</a></footer>
       </div>
     </body>
   </html>`;
 
-const privacy = html`<h1>Privacy Policy</h1>
+const privacy = (contact: string) => html`<h1>Privacy Policy</h1>
   <p class="updated">Last updated ${LAST_UPDATED}</p>
   <p class="lead">
     Luma is a book reader for EPUB, Markdown, and PDF files: tap a paragraph to get an Indonesian
@@ -156,7 +155,7 @@ const privacy = html`<h1>Privacy Policy</h1>
     <li><strong>Use Luma without backup or sync</strong>: your books then stay on your phone only.</li>
     <li><strong>Use your own AI key</strong> instead of the free allowance.</li>
     <li><strong>Delete your account</strong> and all server data at any time: <a href="/account/delete">here's how</a>.</li>
-    <li><strong>Ask</strong> what we hold about you, or for a correction, by emailing <a href="mailto:${CONTACT}">${CONTACT}</a>.</li>
+    <li><strong>Ask</strong> what we hold about you, or for a correction, by emailing <a href="mailto:${contact}">${contact}</a>.</li>
   </ul>
 
   <h2>Children</h2>
@@ -168,9 +167,9 @@ const privacy = html`<h1>Privacy Policy</h1>
   </p>
 
   <h2>Contact</h2>
-  <p><a href="mailto:${CONTACT}">${CONTACT}</a></p>`;
+  <p><a href="mailto:${contact}">${contact}</a></p>`;
 
-const deleteAccount = html`<h1>Delete your Luma account</h1>
+const deleteAccount = (contact: string) => html`<h1>Delete your Luma account</h1>
   <p class="updated">Last updated ${LAST_UPDATED}</p>
   <p class="lead">You can delete your account and all of its data on our servers at any time, right from the app.</p>
 
@@ -201,7 +200,7 @@ const deleteAccount = html`<h1>Delete your Luma account</h1>
   </ul>
 
   <div class="note">
-    <strong>Can't open the app?</strong> Email <a href="mailto:${CONTACT}?subject=Delete%20my%20Luma%20account">${CONTACT}</a>
+    <strong>Can't open the app?</strong> Email <a href="mailto:${contact}?subject=Delete%20my%20Luma%20account">${contact}</a>
     from the email address of your Luma account and ask for deletion. We delete everything listed above
     within 30 days and reply to confirm.
   </div>
@@ -210,5 +209,5 @@ const deleteAccount = html`<h1>Delete your Luma account</h1>
 
 /** Static pages the App Store and Play Store require (docs/backend.md, Sesi & akun). */
 export const legal = new Hono<AppEnv>()
-  .get("/privacy", (c) => c.html(page("privacy", "Privacy Policy", privacy)))
-  .get("/account/delete", (c) => c.html(page("delete", "Delete your account", deleteAccount)));
+  .get("/privacy", (c) => c.html(page("privacy", "Privacy Policy", c.env.CONTACT_EMAIL, privacy(c.env.CONTACT_EMAIL))))
+  .get("/account/delete", (c) => c.html(page("delete", "Delete your account", c.env.CONTACT_EMAIL, deleteAccount(c.env.CONTACT_EMAIL))));
