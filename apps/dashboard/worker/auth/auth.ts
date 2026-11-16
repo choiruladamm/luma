@@ -50,9 +50,14 @@ export function createAuth(env: Env) {
     onAPIError: { errorURL: "/login" },
     databaseHooks: {
       user: {
+        // Only an admin's first Google sign-in creates an account (so a fresh env needs no app
+        // sign-in or invite first). The Google account row comes with it, so the mobile app later
+        // signs this user in as an existing account, without an invite.
         create: {
-          before: async () => {
-            throw new APIError("FORBIDDEN", { code: "FORBIDDEN", message: "Dashboard cannot create accounts" });
+          before: async (user) => {
+            if (!isAdmin(env, { email: user.email, emailVerified: user.emailVerified === true })) {
+              throw new APIError("FORBIDDEN", { code: "FORBIDDEN", message: "Dashboard creates accounts for admins only" });
+            }
           },
         },
       },

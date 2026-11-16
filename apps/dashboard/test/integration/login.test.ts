@@ -94,13 +94,29 @@ describe("login with Google (redirect)", () => {
     expect(await sessionCount(user.id)).toBe(0);
   });
 
-  it("never creates an account, even for an email in ADMIN_EMAILS", async () => {
+  it("creates the account on an admin's first sign-in (Google account linked, so the app finds it later)", async () => {
+    const claims = { sub: "google-admin-baru", email: "admin-baru@luma.test" };
+    const overrides = { ADMIN_EMAILS: claims.email };
+    const { callback } = await loginWithGoogle(claims, overrides);
+
+    expect(callback.response.status).toBe(302);
+    expect(callback.response.headers.get("location")).toBe("/");
+    const user = await env.DB.prepare("SELECT id, email_verified FROM users WHERE email = ?").bind(claims.email).first<{ id: string; email_verified: number }>();
+    expect(user?.email_verified).toBe(1);
+    const account = await env.DB.prepare("SELECT provider_id, account_id FROM accounts WHERE user_id = ?").bind(user!.id).first();
+    expect(account).toEqual({ provider_id: "google", account_id: claims.sub });
+    const session = callback.response.headers.getSetCookie().find((c) => c.startsWith("__Secure-better-auth.session_token="))!;
+    const probe = await call("/api/__probe", { headers: { cookie: session.split(";")[0]! } }, overrides);
+    expect(probe.response.status).toBe(404);
+  });
+
+  it("never creates an account for an email outside ADMIN_EMAILS", async () => {
     const claims = { sub: "google-baru", email: "baru@luma.test" };
-    const { callback } = await loginWithGoogle(claims, { ADMIN_EMAILS: claims.email });
+    const { callback } = await loginWithGoogle(claims, { ADMIN_EMAILS: "admin@luma.test" });
 
     expect(callback.response.status).toBe(302);
     expect(callback.response.headers.get("location")).toBe(
-      "/login?error=FORBIDDEN&error_description=Dashboard+cannot+create+accounts",
+      "/login?error=FORBIDDEN&error_description=Dashboard+creates+accounts+for+admins+only",
     );
     const row = await env.DB.prepare("SELECT id FROM users WHERE email = 'baru@luma.test'").first();
     expect(row).toBeNull();

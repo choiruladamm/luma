@@ -77,7 +77,7 @@
       "preview_urls": false,
       "vars": {
         "ENV": "prod",
-        "ADMIN_EMAILS": "",
+        "ADMIN_EMAILS": "work.adamm@gmail.com",
         "BETTER_AUTH_URL": "https://luma-admin.chrl.cloud",
         "GOOGLE_CLIENT_ID": "366577823040-vhr2h7toc53pb891v0qoc1m62pps2v41.apps.googleusercontent.com"
       },
