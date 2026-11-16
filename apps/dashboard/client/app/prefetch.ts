@@ -9,7 +9,8 @@ export const registerQueryClient = (queryClient: QueryClient) => {
 
 /**
  * Route loader helper: start the queries a screen needs while its code chunk downloads
- * (instead of after it renders), without blocking navigation. Errors stay with the query.
+ * (instead of after it renders), without blocking navigation. Errors stay with the query: pass
+ * `qc.query(...)` (it rejects, unlike the deprecated `prefetchQuery`) and the catch here swallows it.
  */
 export const prefetch =
   (...run: ((qc: QueryClient, args: { request: Request; params: Record<string, string | undefined> }) => Promise<unknown>)[]) =>

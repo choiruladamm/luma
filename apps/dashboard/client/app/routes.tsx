@@ -19,8 +19,8 @@ export const routes: RouteObject[] = [
   {
     // The shell shows nav counts from the overview, so every admin screen warms it too.
     loader: prefetch(
-      (qc) => qc.prefetchQuery(sessionQuery),
-      (qc) => qc.prefetchQuery(overviewQuery),
+      (qc) => qc.query(sessionQuery),
+      (qc) => qc.query(overviewQuery),
     ),
     // Blank while the first loader + chunk settle, same as the guard's pending state.
     HydrateFallback: () => null,
@@ -30,25 +30,25 @@ export const routes: RouteObject[] = [
       {
         index: true,
         ErrorBoundary: ScreenError,
-        loader: prefetch((qc) => qc.prefetchQuery(usersQuery(DEFAULT_USERS_PARAMS))),
+        loader: prefetch((qc) => qc.query(usersQuery(DEFAULT_USERS_PARAMS))),
         lazy: async () => ({ Component: (await import("../features/overview/pages/overview-page")).OverviewPage }),
       },
       {
         path: "users",
         ErrorBoundary: ScreenError,
-        loader: prefetch((qc, { request }) => qc.prefetchQuery(usersQuery(parseUsersParams(new URL(request.url).searchParams)))),
+        loader: prefetch((qc, { request }) => qc.query(usersQuery(parseUsersParams(new URL(request.url).searchParams)))),
         lazy: async () => ({ Component: (await import("../features/users/pages/users-page")).UsersPage }),
       },
       {
         path: "users/:id",
         ErrorBoundary: ScreenError,
-        loader: prefetch((qc, { params }) => qc.prefetchQuery(userDetailQuery(params.id ?? ""))),
+        loader: prefetch((qc, { params }) => qc.query(userDetailQuery(params.id ?? ""))),
         lazy: async () => ({ Component: (await import("../features/users/pages/user-detail-page")).UserDetailPage }),
       },
       {
         path: "invites",
         ErrorBoundary: ScreenError,
-        loader: prefetch((qc, { request }) => qc.prefetchQuery(invitesQuery(parseInvitesParams(new URL(request.url).searchParams)))),
+        loader: prefetch((qc, { request }) => qc.query(invitesQuery(parseInvitesParams(new URL(request.url).searchParams)))),
         lazy: async () => ({ Component: (await import("../features/invites/pages/invites-page")).InvitesPage }),
       },
       { path: "*", Component: NotFoundScreen },
