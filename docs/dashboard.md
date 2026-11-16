@@ -242,7 +242,7 @@ Aturan copy sama dengan app mobile (docs/i18n.md): Indonesia mengikuti board, En
 - Default ikut browser: `navigator.language` diawali `en` → English, bahasa lain → Indonesia. Pilihan di menu akun (segmented Indonesia / English, nama bahasa gak diterjemahkan) langsung berlaku tanpa Simpan dan disimpan di localStorage bareng tema; habis itu pilihan menang atas bahasa browser.
 - Login gak punya pemilih bahasa (gak ada di board); ikut pilihan tersimpan atau browser.
 - Copy di `client/i18n`: `id.ts` sumber dan bentuknya jadi tipe `Messages`, `en.ts` wajib cocok (key hilang, key lebih, atau parameter beda → `tsc` gagal). Kalimat dinamis berupa fungsi bertipe; plural English lewat `Intl.PluralRules`. Tanpa library.
-- `en.ts` chunk sendiri yang diunduh sebelum render pertama (gak berkedip Indonesia) atau saat ganti bahasa. File statis, jadi gak menambah request Worker; gagal diunduh → tetap Indonesia. `<html lang>` ikut bahasa yang tampil.
+- `en.ts` chunk sendiri yang diunduh sebelum render pertama (gak berkedip Indonesia), atau diunduh diam-diam saat halaman idle supaya ganti bahasa pertama kali gak nunggu jaringan. File statis, jadi gak menambah request Worker; gagal diunduh → tetap Indonesia. `<html lang>` ikut bahasa yang tampil.
 - Error API diterjemahkan di client dari `code` (`t.errors`); `message` dari Worker berbahasa Inggris dan cuma buat log, Worker gak tahu bahasa UI.
 - Angka, ukuran, uang, dan tanggal pakai locale bahasa itu (`id-ID` / `en`): "1,5 KB" / "1.5 KB", "14 Nov 2026" / "Nov 14, 2026". Waktu relatif pakai copy sendiri ("2 mnt lalu" / "2 mins ago").
 - Data user (nama, email, user agent, kode undangan) gak diterjemahkan.

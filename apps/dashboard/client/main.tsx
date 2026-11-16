@@ -19,4 +19,8 @@ void loadLang(resolveLang(useUiStore.getState().lang))
         <Providers />
       </StrictMode>,
     );
+    // English is the only lazy chunk. Fetch it once the page is idle, so the first switch from the
+    // account menu doesn't sit waiting on the network (or on Vite's first transform in dev).
+    const idle = window.requestIdleCallback ?? ((run: () => void) => setTimeout(run, 2000));
+    idle(() => void loadLang("en").catch(() => undefined));
   });
