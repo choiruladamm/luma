@@ -25,6 +25,9 @@ export const inviteCodes = sqliteTable("invite_codes", {
   code: text("code").primaryKey(),
   usedBy: text("used_by").references(() => users.id, { onDelete: "set null" }),
   usedAt: integer("used_at", { mode: "timestamp_ms" }),
+  // Nullable: SQLite's ADD COLUMN can't default to "now", and codes made before the column have
+  // no known date. Drizzle inserts fill it; raw SQL inserts (scripts) set it themselves.
+  createdAt: integer("created_at", { mode: "timestamp_ms" }).$defaultFn(() => new Date()),
 });
 
 /**

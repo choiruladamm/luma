@@ -15,6 +15,7 @@ export async function getInvites(db: Db, query: Omit<InviteListQuery, "now">) {
   return {
     items: rows.map((r) => ({
       code: displayInviteCode(r.code),
+      createdAt: r.createdAt?.toISOString() ?? null,
       usedBy: r.userId && r.email ? { id: r.userId, email: r.email } : null,
       usedAt: r.usedAt?.toISOString() ?? null,
     })),
@@ -25,11 +26,12 @@ export async function getInvites(db: Db, query: Omit<InviteListQuery, "now">) {
   };
 }
 
-/** Create `count` codes in 1 insert. Stored normalized, returned in the hand-out format. */
+/** Create `count` codes in 1 insert. Stored normalized, returned in the hand-out format with the stored `createdAt`. */
 export async function createInvites(db: Db, count: number) {
   const codes = Array.from({ length: count }, newInviteCode);
-  await insertInvites(db, codes.map(normalizeInviteCode));
-  return { codes };
+  const createdAt = new Date();
+  await insertInvites(db, codes.map(normalizeInviteCode), createdAt);
+  return { codes, createdAt: createdAt.toISOString() };
 }
 
 /** Delete an unused code: 1 query, +1 to tell 409 (used) from 404 (missing) when nothing was deleted. */

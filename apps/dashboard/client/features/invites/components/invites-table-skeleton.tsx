@@ -12,6 +12,7 @@ export function InvitesTableSkeleton({ rows = 5 }: { rows?: number }) {
   const { t } = useI18n();
   const columns: SkeletonColumn[] = [
     { header: t.invites.code, cell: () => <Skeleton className="h-3.5 w-[168px]" /> },
+    { header: t.invites.created, cell: () => <Skeleton className="h-3 w-20" /> },
     { header: t.invites.status, cell: () => <Skeleton className="h-6 w-[104px]" /> },
     { header: t.invites.usedBy, cell: (r) => (USED_BY_WIDTHS[r % USED_BY_WIDTHS.length] ? <Skeleton className="h-3" style={{ width: USED_BY_WIDTHS[r % USED_BY_WIDTHS.length] }} /> : <Skeleton className="h-3 w-3" />) },
     { header: t.invites.usedAt, cell: () => <Skeleton className="h-3 w-20" /> },
@@ -26,7 +27,7 @@ export function InvitesTableSkeleton({ rows = 5 }: { rows?: number }) {
       ),
     },
   ];
-  return <TableSkeleton label={t.invites.loading} columns={columns} rows={rows} minWidth={760} card={<InviteCardSkeleton />} />;
+  return <TableSkeleton label={t.invites.loading} columns={columns} rows={rows} minWidth={880} card={<InviteCardSkeleton />} />;
 }
 
 /** Phone row (InviteCard): code + status, then the two action buttons. */

@@ -1,6 +1,6 @@
 import { useSearchParams } from "react-router";
 
-export type InviteSort = "default" | "usedAt" | "code";
+export type InviteSort = "default" | "createdAt" | "usedAt" | "code";
 export type InvitesParams = {
   q: string;
   status?: "unused" | "used";
@@ -23,7 +23,7 @@ export function parseInvitesParams(search: URLSearchParams): InvitesParams {
     q: (search.get("q") ?? "").trim(),
     status: pick(search.get("status"), ["unused", "used"] as const),
     usedWithin: pick(search.get("usedWithin"), ["7d", "30d"] as const),
-    sort: pick(search.get("sort"), ["default", "usedAt", "code"] as const) ?? "default",
+    sort: pick(search.get("sort"), ["default", "createdAt", "usedAt", "code"] as const) ?? "default",
     dir: search.get("dir") === "asc" ? "asc" : "desc",
     page: Number.isInteger(page) && page > 1 ? page : 1,
     limit: search.get("limit") === "50" ? 50 : 20,

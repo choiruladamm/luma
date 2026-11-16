@@ -80,6 +80,10 @@ test("create an invite code, copy it, then delete it", async ({ page, context })
   await dialog.getByRole("button", { name: "Selesai" }).click();
 
   await expect(page.getByRole("tab", { name: /Belum dipakai\s*3/ })).toBeVisible();
+  // Newest unused code first, dated today by the worker.
+  const today = new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "short", year: "numeric" }).format(new Date());
+  await expect(page.getByRole("table", { name: "Kode undangan" }).getByRole("row").nth(1)).toContainText(code);
+  await expect(page.getByRole("table", { name: "Kode undangan" }).getByRole("row").nth(1)).toContainText(today);
   await page.getByRole("button", { name: `Hapus ${code}` }).click();
   await page.getByRole("dialog").getByRole("button", { name: "Hapus kode" }).click();
   await expect(page.getByRole("tab", { name: /Belum dipakai\s*2/ })).toBeVisible();

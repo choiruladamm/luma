@@ -88,6 +88,8 @@ export function InvitesPage() {
   const sortValue = `${params.sort}:${params.sort === "default" ? "desc" : params.dir}`;
   const sorts: [string, string][] = [
     ["default:desc", t.invites.sortDefault],
+    ["createdAt:desc", t.invites.sortNewestCreated],
+    ["createdAt:asc", t.invites.sortOldestCreated],
     ["usedAt:desc", t.invites.sortNewestUsed],
     ["usedAt:asc", t.invites.sortOldestUsed],
     ["code:asc", t.invites.sortCodeAsc],
@@ -106,7 +108,7 @@ export function InvitesPage() {
     );
   const makeCode = () =>
     create.mutate(1, {
-      onSuccess: (res) => setCreated({ code: res.codes[0]!, at: new Date().toISOString() }),
+      onSuccess: (res) => setCreated({ code: res.codes[0]!, at: res.createdAt }),
       onError: (e) => toast(errorText(e, getI18n().t), { tone: "error" }),
     });
   const confirmDelete = () =>
@@ -222,9 +224,9 @@ export function InvitesPage() {
             label={t.invites.table}
             columns={columns}
             data={rows}
-            minWidth={760}
+            minWidth={880}
             sort={tableSort}
-            sortable={["code", "usedAt"]}
+            sortable={["code", "createdAt", "usedAt"]}
             onSort={onSort}
             renderCard={(i) => <InviteCard invite={i} actions={actions(i)} />}
             footer={<Pagination page={params.page} pageCount={data.pageCount} total={data.total} pageSize={params.limit} onPage={(page) => set({ page })} pageSizes={[20, 50]} onPageSize={(limit) => set({ limit: limit as 20 | 50 })} />}

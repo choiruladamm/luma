@@ -8,7 +8,7 @@ import { displayInviteCode } from "../../worker/features/invites/service";
 import { call, errorCode, ORIGIN } from "../helpers/app";
 import { adminCookie, createUser, giveUserData } from "../helpers/session";
 
-type Item = { code: string; usedBy: { id: string; email: string } | null; usedAt: string | null };
+type Item = { code: string; createdAt: string | null; usedBy: { id: string; email: string } | null; usedAt: string | null };
 
 const mutate = async (method: string, path: string, body?: unknown) =>
   call(path, {
@@ -31,8 +31,11 @@ describe("POST /api/invites", () => {
     const log = vi.spyOn(console, "log").mockImplementation(() => {});
     const { response, d1Queries } = await mutate("POST", "/api/invites", { count: 3 });
     expect(response.status).toBe(201);
-    const { codes } = (await response.json()) as { codes: string[] };
+    const { codes, createdAt } = (await response.json()) as { codes: string[]; createdAt: string };
     expect(codes).toHaveLength(3);
+    // The dialog shows the stored date, and the list sorts by it.
+    const listed = await list(`?q=${codes[0]!}`);
+    expect(listed[0]!.createdAt).toBe(createdAt);
     for (const code of codes) expect(code).toMatch(/^LUMA-[2-9A-HJ-NP-Z]{5}-[2-9A-HJ-NP-Z]{5}$/);
     // guard 1 + 1 insert.
     expect(d1Queries).toBe(2);
@@ -78,6 +81,7 @@ describe("GET /api/invites", () => {
     expect(unused.map((i) => i.code)).toContain(free);
     expect(unused.map((i) => i.code)).not.toContain(taken);
     expect(used.find((i) => i.code === taken)).toEqual({
+      createdAt: expect.any(String),
       code: taken,
       usedBy: { id: user.id, email: user.email },
       usedAt: "2026-11-10T00:00:00.000Z",
@@ -139,6 +143,25 @@ describe("GET /api/invites", () => {
     expect(await page(`?q=${t}&status=used`)).toMatchObject({ total: 3, pageCount: 1 });
     const window = await page(`?q=${t}&usedWithin=30d`);
     expect(window).toMatchObject({ total: 2, counts: { all: 4, unused: 1, used: 3 } });
+  });
+
+  it("returns createdAt; newest unused codes come first, and codes without a date go last", async () => {
+    const t = tag();
+    const now = Date.now();
+    await db().insert(inviteCodes).values([
+      { code: `LUMA-${t}000A`, createdAt: new Date(now - 5 * DAY) },
+      { code: `LUMA-${t}000B`, createdAt: new Date(now - DAY) },
+      { code: `LUMA-${t}000C`, createdAt: null }, // made before created_at existed
+      { code: `LUMA-${t}000D`, createdAt: new Date(now - 9 * DAY), usedAt: new Date(now - DAY) },
+    ]);
+    const codes = async (query: string) => (await list(`?q=${t}&${query}`)).map((i) => i.code.slice(-1));
+
+    expect(await codes("sort=default")).toEqual(["B", "A", "C", "D"]);
+    expect(await codes("sort=createdAt&dir=desc")).toEqual(["B", "A", "D", "C"]);
+    expect(await codes("sort=createdAt&dir=asc")).toEqual(["D", "A", "B", "C"]);
+    const items = await list(`?q=${t}&sort=createdAt`);
+    expect(items[0]!.createdAt).toBe(new Date(now - DAY).toISOString());
+    expect(items.at(-1)!.createdAt).toBeNull();
   });
 
   it.each(["status=semua", "usedWithin=90d", "sort=email", "dir=up", "page=0", "limit=51", `q=${"a".repeat(101)}`])("answers 400 for %s", async (query) => {

@@ -23,10 +23,11 @@ export function UsedBy({ invite }: { invite: InviteItem }) {
   );
 }
 
-/** Columns for board 08 (no "Dibuat": invite codes have no created_at). Actions come from the page. */
+/** Columns for board 08 plus "Dibuat" ("—" for codes made before it was recorded). Actions come from the page. */
 export function inviteColumns(i18n: I18n, actions: (invite: InviteItem) => React.ReactNode) {
   return h.columns([
     h.accessor("code", { header: i18n.t.invites.code, cell: (info) => <span className="font-mono text-body font-medium">{info.getValue()}</span> }),
+    h.accessor("createdAt", { header: i18n.t.invites.created, cell: (info) => (info.getValue() ? formatDate(info.getValue()!, i18n.locale) : "—") }),
     h.accessor("usedAt", { id: "status", header: i18n.t.invites.status, cell: (info) => <InviteStatusChip used={info.getValue() !== null} /> }),
     h.accessor("usedBy", { header: i18n.t.invites.usedBy, cell: (info) => <UsedBy invite={info.row.original} /> }),
     h.accessor("usedAt", { id: "usedAt", header: i18n.t.invites.usedAt, cell: (info) => (info.getValue() ? formatDate(info.getValue()!, i18n.locale) : "—") }),
@@ -35,13 +36,14 @@ export function inviteColumns(i18n: I18n, actions: (invite: InviteItem) => React
 }
 
 export function InviteCard({ invite, actions }: { invite: InviteItem; actions: React.ReactNode }) {
-  const { locale } = useI18n();
+  const { t, locale } = useI18n();
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between gap-3">
         <span className="font-mono text-card font-semibold">{invite.code}</span>
         <InviteStatusChip used={invite.usedAt !== null} />
       </div>
+      {invite.createdAt && <span className="text-caption text-ink2">{t.invites.createdAt(formatDate(invite.createdAt, locale))}</span>}
       {invite.usedAt && (
         <span className="flex min-w-0 items-center gap-1.5 text-caption text-ink2">
           <Icon name="user" size={14} />

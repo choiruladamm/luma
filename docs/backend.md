@@ -577,6 +577,7 @@ erDiagram
     text code PK
     text used_by FK
     int used_at
+    int created_at "null = dibuat sebelum kolom ini ada"
   }
   ai_keys {
     text user_id PK, FK

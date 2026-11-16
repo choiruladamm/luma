@@ -10,7 +10,7 @@ const listQuery = z.object({
   status: z.enum(["unused", "used"]).optional(),
   usedWithin: z.enum(["7d", "30d"]).optional(),
   q: z.string().trim().max(100).optional(),
-  sort: z.enum(["default", "usedAt", "code"]).default("default"),
+  sort: z.enum(["default", "usedAt", "createdAt", "code"]).default("default"),
   dir: z.enum(["asc", "desc"]).default("desc"),
   page: z.coerce.number().int().min(1).max(10_000).default(1),
   limit: z.coerce.number().int().min(1).max(50).default(INVITES_PAGE_SIZE),

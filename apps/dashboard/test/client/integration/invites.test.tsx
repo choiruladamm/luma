@@ -31,14 +31,16 @@ describe("Undangan", () => {
       http.get(`${API}/invites`, ({ request }) => HttpResponse.json(invitesPage(items, new URL(request.url)))),
       http.post(`${API}/invites`, async ({ request }) => {
         expect(await request.json()).toEqual({ count: 1 });
-        items = [{ code: "LUMA-NEWWW-CODE1", usedBy: null, usedAt: null }, ...items];
-        return HttpResponse.json({ codes: ["LUMA-NEWWW-CODE1"] }, { status: 201 });
+        items = [{ code: "LUMA-NEWWW-CODE1", createdAt: "2026-11-15T03:00:00.000Z", usedBy: null, usedAt: null }, ...items];
+        return HttpResponse.json({ codes: ["LUMA-NEWWW-CODE1"], createdAt: "2026-11-15T03:00:00.000Z" }, { status: 201 });
       }),
     );
     const { user } = renderApp("/invites");
     await user.click(await screen.findByRole("button", { name: "Bikin kode" }));
     const dialog = await screen.findByRole("dialog");
     expect(within(dialog).getByText("LUMA-NEWWW-CODE1")).toBeInTheDocument();
+    // The stored date from the worker, not the browser clock.
+    expect(within(dialog).getByText(/^Dibuat 15 Nov 2026/)).toBeInTheDocument();
     await user.click(within(dialog).getByRole("button", { name: "Salin kode" }));
     expect(await clipboard()).toBe("LUMA-NEWWW-CODE1");
     expect(await within(dialog).findByRole("button", { name: "Udah disalin" })).toBeInTheDocument();
@@ -81,6 +83,19 @@ describe("Undangan", () => {
     expect(await screen.findByText("Kode LUMA-CCCCC-DDDDD disalin")).toBeInTheDocument();
   });
 
+  it("shows when each code was made (— for codes from before it was recorded) and sorts by it", async () => {
+    const { user, router } = renderApp("/invites");
+    const table = await screen.findByRole("table", { name: "Kode undangan" });
+    const cells = (code: string) => within(within(table).getByText(code).closest("tr")!).getAllByRole("cell").map((c) => c.textContent);
+    expect(cells("LUMA-AAAAA-BBBBB")[1]).toBe("14 Nov 2026");
+    expect(cells("LUMA-CCCCC-DDDDD")[1]).toBe("—");
+    await user.click(screen.getByRole("button", { name: /^Dibuat/ }));
+    await waitFor(() => expect(router.state.location.search).toBe("?sort=createdAt"));
+    await user.click(screen.getByRole("button", { name: /^Urutkan:/ }));
+    await user.click(screen.getByRole("option", { name: "Terlama dibuat" }));
+    await waitFor(() => expect(router.state.location.search).toBe("?sort=createdAt&dir=asc"));
+  });
+
   it("shows the empty state with a create action", async () => {
     server.use(http.get(`${API}/invites`, ({ request }) => HttpResponse.json(invitesPage([], new URL(request.url)))));
     renderApp("/invites");
@@ -88,7 +103,7 @@ describe("Undangan", () => {
   });
 
   it("pages with numbers through the worker, keeping ?page= in the URL", async () => {
-    const many = Array.from({ length: 25 }, (_, i) => ({ code: `LUMA-K${String(i).padStart(4, "0")}-ZZZZZ`, usedBy: null, usedAt: null }));
+    const many = Array.from({ length: 25 }, (_, i) => ({ code: `LUMA-K${String(i).padStart(4, "0")}-ZZZZZ`, createdAt: null, usedBy: null, usedAt: null }));
     server.use(http.get(`${API}/invites`, ({ request }) => HttpResponse.json(invitesPage(many, new URL(request.url)))));
     const { user, router } = renderApp("/invites");
     expect(await screen.findByText("1–20 dari 25")).toBeInTheDocument();

@@ -8,7 +8,7 @@ export type InviteListQuery = {
   /** Only codes used within the window (so implies used). */
   usedWithin?: "7d" | "30d";
   q?: string;
-  sort: "default" | "usedAt" | "code";
+  sort: "default" | "usedAt" | "createdAt" | "code";
   dir: "asc" | "desc";
   page: number;
   limit: number;
@@ -38,18 +38,23 @@ export async function listInvites(db: Db, query: InviteListQuery) {
   );
 
   const by = query.dir === "asc" ? asc : desc;
+  // Codes made before `created_at` existed have no date: they go last both ways.
+  // ponytail: no index on used_at/created_at; invite codes stay in the hundreds. Add one if that changes.
+  const newestFirst = [sql`${inviteCodes.createdAt} is null`, desc(inviteCodes.createdAt)];
   const order =
     query.sort === "code"
       ? [by(inviteCodes.code)]
       : query.sort === "usedAt"
         ? // Unused codes (no date) go last both ways.
           [sql`${inviteCodes.usedAt} is null`, by(inviteCodes.usedAt), asc(inviteCodes.code)]
-        : // Unused first (the ones an admin hands out), then most recently used.
-          [sql`${inviteCodes.usedAt} is not null`, desc(inviteCodes.usedAt), asc(inviteCodes.code)];
+        : query.sort === "createdAt"
+          ? [sql`${inviteCodes.createdAt} is null`, by(inviteCodes.createdAt), asc(inviteCodes.code)]
+          : // Unused first (the ones an admin hands out), newest made first; then most recently used.
+            [sql`${inviteCodes.usedAt} is not null`, desc(inviteCodes.usedAt), ...newestFirst, asc(inviteCodes.code)];
 
   const [rows, [counts]] = await db.batch([
     db
-      .select({ code: inviteCodes.code, usedAt: inviteCodes.usedAt, userId: users.id, email: users.email })
+      .select({ code: inviteCodes.code, createdAt: inviteCodes.createdAt, usedAt: inviteCodes.usedAt, userId: users.id, email: users.email })
       .from(inviteCodes)
       .leftJoin(users, eq(users.id, inviteCodes.usedBy))
       .where(and(search, rowFilter))
@@ -72,8 +77,8 @@ export async function listInvites(db: Db, query: InviteListQuery) {
   return { rows, counts: counts ?? { all: 0, unused: 0, used: 0, total: 0 } };
 }
 
-/** 1 insert for all codes (already normalized). */
-export const insertInvites = (db: Db, codes: string[]) => db.insert(inviteCodes).values(codes.map((code) => ({ code })));
+/** 1 insert for all codes (already normalized), all with the same `createdAt`. */
+export const insertInvites = (db: Db, codes: string[], createdAt: Date) => db.insert(inviteCodes).values(codes.map((code) => ({ code, createdAt })));
 
 /** 1 query: delete only while unused. Returns whether a row was deleted. */
 export async function deleteUnusedInvite(db: Db, code: string) {

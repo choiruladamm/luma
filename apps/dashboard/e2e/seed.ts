@@ -24,9 +24,9 @@ export function seedSql(now: number) {
       `INSERT INTO accounts (id,account_id,provider_id,user_id,created_at,updated_at) VALUES (${q(`${u.id}-a`)},${q(`g-${u.id}`)},'google',${q(u.id)},${created},${created});`,
       `INSERT INTO sessions (id,expires_at,token,created_at,updated_at,user_id,user_agent) VALUES (${q(`${u.id}-s`)},${now + 50 * DAY},${q(`tok-${u.id}`)},${created},${now - i * 3_600_000},${q(u.id)},'Luma/0.3.0 (+mailto:x)');`,
       `INSERT INTO user_storage (user_id,bytes,seq,sync_bytes,sync_day,sync_rows) VALUES (${q(u.id)},${(i + 1) * 50 * 1024 * 1024},1,${(i + 1) * 100 * 1024},${Math.floor(now / DAY)},${(i + 1) * 1000});`,
-      `INSERT INTO invite_codes (code,used_by,used_at) VALUES (${q(`LUMA-USED${i}-E2E00`)},${q(u.id)},${created});`,
+      `INSERT INTO invite_codes (code,used_by,used_at,created_at) VALUES (${q(`LUMA-USED${i}-E2E00`)},${q(u.id)},${created},${created - DAY});`,
     );
   });
-  lines.push(`INSERT INTO invite_codes (code) VALUES ('LUMA-FREE0-E2E00'), ('LUMA-FREE1-E2E00');`);
+  lines.push(`INSERT INTO invite_codes (code,created_at) VALUES ('LUMA-FREE0-E2E00',${now - DAY}), ('LUMA-FREE1-E2E00',${now});`);
   return lines.join("\n");
 }

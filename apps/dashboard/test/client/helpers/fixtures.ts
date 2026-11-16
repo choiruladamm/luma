@@ -34,9 +34,10 @@ export const userDetail = (extra: Record<string, unknown> = {}) => ({
 
 export const invites = {
   items: [
-    { code: "LUMA-AAAAA-BBBBB", usedBy: null, usedAt: null },
-    { code: "LUMA-CCCCC-DDDDD", usedBy: null, usedAt: null },
-    { code: "LUMA-EEEEE-FFFFF", usedBy: { id: "u1", email: "user1@luma.test" }, usedAt: "2026-11-12T03:00:00.000Z" },
+    { code: "LUMA-AAAAA-BBBBB", createdAt: "2026-11-14T03:00:00.000Z" as string | null, usedBy: null, usedAt: null },
+    // Made before created_at was recorded.
+    { code: "LUMA-CCCCC-DDDDD", createdAt: null, usedBy: null, usedAt: null },
+    { code: "LUMA-EEEEE-FFFFF", createdAt: "2026-11-01T03:00:00.000Z", usedBy: { id: "u1", email: "user1@luma.test" }, usedAt: "2026-11-12T03:00:00.000Z" },
   ],
 };
 

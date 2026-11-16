@@ -13,7 +13,7 @@ log="$(mktemp -t luma-e2e)"
 cd "$backend"
 bunx wrangler d1 migrations apply DB --env dev --local >/dev/null
 bunx wrangler d1 execute DB --env dev --local \
-  --command "INSERT INTO invite_codes (code) VALUES ('$code'), ('$code2')" >/dev/null
+  --command "INSERT INTO invite_codes (code, created_at) VALUES ('$code', $(date +%s)000), ('$code2', $(date +%s)000)" >/dev/null
 
 bunx wrangler dev --env dev --port "$port" >"$log" 2>&1 &
 worker=$!
