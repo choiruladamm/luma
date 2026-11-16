@@ -7,7 +7,11 @@ import * as schema from "../../../backend/src/db/schema";
 import { isAdmin } from "./admin";
 import { findUserForAdminCheck } from "./session";
 
-export const SESSION_EXPIRES_IN_S = 12 * 60 * 60;
+const DAY_S = 24 * 60 * 60;
+/** Idle limit: unused for 7 days → sign in again. Used sessions slide (see `updateAge`). */
+export const SESSION_EXPIRES_IN_S = 7 * DAY_S;
+/** Slide at most once a day: 1 D1 write per admin per day. */
+export const SESSION_UPDATE_AGE_S = DAY_S;
 
 let cached: { env: Env; auth: Auth } | undefined;
 
@@ -39,8 +43,9 @@ export function createAuth(env: Env) {
     account: { storeStateStrategy: "cookie" },
     // Rate limiting is the per-IP Workers binding (middleware), not Better Auth storage.
     rateLimit: { enabled: false },
-    // Short admin sessions, never extended: sign in again after 12 hours.
-    session: { expiresIn: SESSION_EXPIRES_IN_S, disableSessionRefresh: true },
+    // Sliding session: get-session pushes the expiry (DB row + cookie) once a day while used. Better
+    // Auth has no absolute limit; the 30-day cap is `SESSION_MAX_AGE_MS` in session.ts.
+    session: { expiresIn: SESSION_EXPIRES_IN_S, updateAge: SESSION_UPDATE_AGE_S },
     // Callback errors (e.g. non-admin) go back to the SPA login page, not Better Auth's error page.
     onAPIError: { errorURL: "/login" },
     databaseHooks: {

@@ -29,6 +29,7 @@ export const en: Messages = {
   errors: {
     BAD_REQUEST: "Invalid input.",
     UNAUTHORIZED: "Session expired. Sign in again.",
+    ACCESS_EXPIRED: "Cloudflare session expired. Reloading…",
     FORBIDDEN: "This account isn't an admin.",
     NOT_FOUND: "Not found.",
     INVITE_CODE_USED: "This invite code has already been used.",

@@ -42,6 +42,7 @@ client/                  # React SPA, see "Client" below
 - Features don't import each other. Each `repo.ts` function is one query-budget unit; its comment states the query count.
 - Better Auth endpoints are allowlisted in `AUTH_ROUTES`; anything else under `/api/auth/*` is 404. Don't add one without updating `docs/dashboard.md`.
 - Never build the Better Auth instance outside `/api/auth/*` (tens of ms CPU). `requireAdmin` verifies the cookie HMAC itself, then one D1 join.
+- Sessions slide (7 days idle, `updateAge` 1 day, via `get-session`); Better Auth has no absolute limit, so the 30-day cap (`SESSION_MAX_AGE_MS`) is enforced in `requireAdmin` and in the middleware in front of `get-session`. Keep both when touching either.
 - Metadata only: never select `records`, `key_enc`, or session tokens into a response. Pick columns explicitly.
 - In `db.batch`, give every raw `sql` column an alias (`.as("name")`): D1 names unaliased columns by their SQL text, so two columns with the same text (a count and a filtered total) overwrite each other and come back null or shifted.
 - Text search uses `instr(lower(col), term)`, never `LIKE`: D1 rejects LIKE patterns over 50 bytes (a long `q` returned 500).

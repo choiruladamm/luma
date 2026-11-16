@@ -1,4 +1,7 @@
+import { getSignedCookie } from "hono/cookie";
+import { createDb } from "../../backend/src/db/client";
 import { getAuth } from "./auth/auth";
+import { endSessionIfPastMaxAge, sessionCookieName } from "./auth/session";
 import { factory } from "./env";
 import { invites } from "./features/invites/routes";
 import { overview } from "./features/overview/routes";
@@ -24,6 +27,13 @@ const notFound = () => {
 
 // Order: requestId → IP rate limit → [/api/auth/* → Better Auth] → session + admin → mutation checks → route.
 const app = factory.createApp().use(securityHeaders, requestId).use("/api/*", rateLimitIp);
+// get-session is where Better Auth slides the session, so the 30-day cap goes in front of it:
+// past the cap the row is gone and Better Auth answers "no session" (+1 query per call).
+app.get("/api/auth/get-session", async (c, next) => {
+  const token = await getSignedCookie(c, c.env.BETTER_AUTH_SECRET, sessionCookieName(c.env));
+  if (token) await endSessionIfPastMaxAge(createDb(c.env.DB), token);
+  await next();
+});
 for (const [method, path] of AUTH_ROUTES) app.on(method, path, (c) => getAuth(c.env).handler(c.req.raw));
 app.all("/api/auth/*", notFound);
 

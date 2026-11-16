@@ -1,7 +1,7 @@
 import type { ErrorCode } from "../../worker/lib/errors";
 import { id, type Messages } from "../i18n/id";
 
-export type ClientErrorCode = ErrorCode | "NETWORK";
+export type ClientErrorCode = ErrorCode | "NETWORK" | "ACCESS_EXPIRED";
 
 /**
  * Error from the dashboard API. It carries the code, not copy: the worker's message is English
@@ -24,6 +24,9 @@ export const errorText = (error: Error, t: Messages) => t.errors[error instanceo
 export async function toApiError(res: Response): Promise<ApiError> {
   const body = (await res.json().catch(() => null)) as { error?: { code?: string; message?: string } } | null;
   const code = body?.error?.code;
+  // Our worker's 401 always has a JSON code; a bare 401 is Cloudflare Access saying its own session
+  // expired (it answers so, instead of redirecting, because requests send X-Requested-With).
+  if (res.status === 401 && code === undefined) return new ApiError(401, "ACCESS_EXPIRED");
   const known = code !== undefined && Object.hasOwn(id.errors, code) ? (code as ClientErrorCode) : "INTERNAL_ERROR";
   return new ApiError(res.status, known, body?.error?.message);
 }

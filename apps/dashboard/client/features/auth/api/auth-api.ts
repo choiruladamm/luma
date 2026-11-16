@@ -9,7 +9,8 @@ export type Session = {
 const authFetch = async (path: string, init?: RequestInit) => {
   let res: Response;
   try {
-    res = await fetch(`/api/auth/${path}`, init);
+    // Same Access header as the API client (expired Access session → 401, not a redirect).
+    res = await fetch(`/api/auth/${path}`, { ...init, headers: { ...init?.headers, "x-requested-with": "XMLHttpRequest" } });
   } catch {
     throw new ApiError(0, "NETWORK");
   }

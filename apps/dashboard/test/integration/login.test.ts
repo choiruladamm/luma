@@ -65,7 +65,7 @@ describe("login with Google (redirect)", () => {
     expect(start.d1Queries).toBe(0);
   });
 
-  it("gives an admin a 12h session cookie that passes the guard", async () => {
+  it("gives an admin a 7-day session cookie that passes the guard", async () => {
     const admin = await createGoogleUser("admin-google@luma.test");
     const overrides = { ADMIN_EMAILS: "admin-google@luma.test" };
     const { response, d1Queries } = (await loginWithGoogle({ sub: admin.sub, email: admin.email }, overrides)).callback;
@@ -78,7 +78,7 @@ describe("login with Google (redirect)", () => {
     expect(session).toMatch(/HttpOnly/i);
     expect(session).toMatch(/Secure/);
     expect(session).toMatch(/SameSite=Lax/i);
-    expect(session).toMatch(/Max-Age=43200/);
+    expect(session).toMatch(/Max-Age=604800/);
 
     const probe = await call("/api/__probe", { headers: { cookie: session.split(";")[0]! } }, overrides);
     expect(probe.response.status).toBe(404);

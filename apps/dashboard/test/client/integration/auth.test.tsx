@@ -1,11 +1,38 @@
 import { screen, waitFor, within } from "@testing-library/react";
+import { focusManager } from "@tanstack/react-query";
 import { HttpResponse, http } from "msw";
 import { describe, expect, it, vi } from "vitest";
+import { admin as fixtureAdmin } from "../helpers/fixtures";
 import { API, apiError } from "../helpers/handlers";
 import { renderApp } from "../helpers/render";
 import { server } from "../setup";
 
 describe("auth", () => {
+  it("rechecks the session on tab focus only once it's an hour old (that slides it server side)", async () => {
+    let calls = 0;
+    server.use(http.get(`${API}/auth/get-session`, () => (calls++, HttpResponse.json(fixtureAdmin))));
+    vi.useFakeTimers({ toFake: ["Date"] });
+    try {
+      renderApp("/");
+      expect(await screen.findByRole("heading", { name: "Ringkasan", level: 1 })).toBeInTheDocument();
+      expect(calls).toBe(1);
+      const refocus = () => {
+        focusManager.setFocused(false);
+        focusManager.setFocused(true);
+      };
+      vi.setSystemTime(Date.now() + 30 * 60_000);
+      refocus();
+      await new Promise((r) => setTimeout(r, 50));
+      expect(calls).toBe(1);
+      vi.setSystemTime(Date.now() + 31 * 60_000);
+      refocus();
+      await waitFor(() => expect(calls).toBe(2));
+    } finally {
+      focusManager.setFocused(undefined);
+      vi.useRealTimers();
+    }
+  });
+
   it("sends a signed-out visitor to /login", async () => {
     server.use(http.get(`${API}/auth/get-session`, () => HttpResponse.json(null)));
     const { router } = renderApp("/users");

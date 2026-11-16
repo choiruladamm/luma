@@ -28,6 +28,7 @@ export const id = {
   errors: {
     BAD_REQUEST: "Isian tidak valid.",
     UNAUTHORIZED: "Sesi habis. Masuk lagi.",
+    ACCESS_EXPIRED: "Sesi Cloudflare habis. Memuat ulang…",
     FORBIDDEN: "Akun ini bukan admin.",
     NOT_FOUND: "Data tidak ditemukan.",
     INVITE_CODE_USED: "Kode undangan sudah dipakai.",

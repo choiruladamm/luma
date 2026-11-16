@@ -1,7 +1,7 @@
 import { getSignedCookie } from "hono/cookie";
 import { createDb } from "../../../backend/src/db/client";
 import { isAdmin } from "../auth/admin";
-import { findSession, sessionCookieName } from "../auth/session";
+import { endSessionIfPastMaxAge, findSession, isPastMaxAge, sessionCookieName } from "../auth/session";
 import { factory } from "../env";
 import { ApiError } from "../lib/errors";
 
@@ -18,6 +18,11 @@ export const requireAdmin = factory.createMiddleware(async (c, next) => {
   const db = createDb(c.env.DB);
   const session = await findSession(db, token);
   if (!session || session.expiresAt.getTime() <= Date.now()) {
+    throw new ApiError(401, "UNAUTHORIZED", "Sign in required");
+  }
+  // Better Auth only knows the idle limit: past the absolute one, end the session (+1 query, once).
+  if (isPastMaxAge(session.createdAt)) {
+    await endSessionIfPastMaxAge(db, token);
     throw new ApiError(401, "UNAUTHORIZED", "Sign in required");
   }
   // Rechecked every request: removing an email from ADMIN_EMAILS rejects its existing sessions at once.

@@ -124,7 +124,7 @@ Satu role: **admin**, ditentukan lewat `vars` `ADMIN_EMAILS` (dipisah koma) per 
 | | User Luma | Admin |
 |---|---|---|
 | Masuk lewat | App mobile, `/v1/auth` | Dashboard, `/api/auth` |
-| Sesi | Bearer token | Cookie httpOnly, Secure, SameSite=Lax, 12 jam |
+| Sesi | Bearer token | Cookie httpOnly, Secure, SameSite=Lax; habis setelah 7 hari gak dipakai, maksimal 30 hari sejak login |
 | Baris `users` | Sama | Sama (akun Google yang dipakai di app) |
 
 Dashboard menjalankan **instance Better Auth kedua** di D1 yang sama:
@@ -132,7 +132,7 @@ Dashboard menjalankan **instance Better Auth kedua** di D1 yang sama:
 - `basePath: "/api/auth"`, Google OAuth redirect (web client ID yang sudah ada di `GOOGLE_CLIENT_IDS`), tanpa plugin `bearer`, `BETTER_AUTH_SECRET` sendiri. Token sesi app mobile tidak bisa dipakai di dashboard.
 - `databaseHooks.user.create.before` selalu menolak: dashboard tidak bisa membuat akun.
 - `databaseHooks.session.create.before` menolak email di luar `ADMIN_EMAILS`: user biasa tidak pernah dapat cookie.
-- Sesi 12 jam dan tidak diperpanjang (`disableSessionRefresh`). Error di callback (bukan admin, akun belum ada) redirect ke `/login?error=FORBIDDEN&error_description=...` (`onAPIError.errorURL`), bukan halaman error Better Auth.
+- Sesi geser: `expiresIn` 7 hari, `updateAge` 1 hari, jadi `get-session` memperpanjang baris sesi + cookie paling sering sekali sehari selama dipakai. SPA memanggil `get-session` tiap halaman dibuka dan saat balik ke tab kalau datanya sudah 1 jam (bukan timer, jadi tab yang ditinggal tetap habis setelah 7 hari). Better Auth gak punya batas umur, jadi batas 30 hari sejak login (`SESSION_MAX_AGE_MS`) dijaga Worker: `requireAdmin` dan middleware di depan `get-session` menghapus sesi yang lewat batas. Kenapa bukan refresh token: sesi sudah dicek ke D1 tiap request dan bisa dicabut, jadi token kedua gak menambah keamanan. Error di callback (bukan admin, akun belum ada) redirect ke `/login?error=FORBIDDEN&error_description=...` (`onAPIError.errorURL`), bukan halaman error Better Auth.
 - Middleware `requireAdmin` mengecek email lagi di tiap `/api/*` (selain `/api/auth/*`).
 - Endpoint Better Auth di-allowlist: `GET get-session`, `POST sign-in/social`, `GET callback/google`, `POST sign-out`. Sisanya 404.
 
@@ -202,7 +202,7 @@ Dashboard memakai D1 dan kuota Workers yang sama dengan backend, jadi selain mem
 | Input jahat | zod di semua input: `:id` dan `:code` format pasti, `q` maks 100 karakter, dicari dengan `instr()` (bukan `LIKE`: D1 menolak pola `LIKE` di atas 50 byte, dan `%`/`_` gak perlu di-escape), `limit` ≤ 50, `count` 1–20. Query lewat Drizzle (terparameter) |
 | Data sensitif bocor lewat respons | Repo memilih kolom eksplisit (tanpa `select *`). `key_enc`, token sesi, dan isi `records` tidak pernah dikirim |
 | Admin disalahgunakan / salah klik | Ban dan hapus undangan pakai dialog konfirmasi. Badge DEV/PROD. Rate limit per admin untuk mutasi (30/menit, binding `ADMIN_RATE_LIMITER`). Audit `{admin, action, targetId, requestId}` ke Workers Logs |
-| Cookie admin dicuri | httpOnly, Secure, umur 12 jam, sign-out menghapus sesi. Hapus email dari `ADMIN_EMAILS` + deploy → sesi yang masih ada langsung ditolak `requireAdmin` |
+| Cookie admin dicuri | httpOnly, Secure, habis setelah 7 hari gak dipakai (maksimal 30 hari), sign-out menghapus sesi. Belum ada tombol cabut sesi: hapus barisnya lewat `wrangler d1 execute`, atau hapus email dari `ADMIN_EMAILS` + deploy → sesi yang masih ada langsung ditolak `requireAdmin` |
 | Akun Google admin dibobol | Di luar kode: 2FA di akun Google. Selama app OAuth mode Testing, cuma test user yang bisa login sama sekali |
 
 Secret per env lewat `wrangler secret put`: `BETTER_AUTH_SECRET` (baru, beda dari backend), `GOOGLE_CLIENT_SECRET`, `OPENROUTER_MANAGEMENT_KEY`.
@@ -260,11 +260,11 @@ Prompt Claude Design (detail visual diserahkan ke Claude Design, mengikuti found
 Urutan per env (dev sudah jalan; prod saat deploy dari `master`):
 
 1. **Google Cloud Console**, web client OAuth (yang sama dengan entri pertama `GOOGLE_CLIENT_IDS` backend): redirect URI `https://luma-admin-dev.chrl.cloud/api/auth/callback/google`, `https://luma-admin.chrl.cloud/api/auth/callback/google`, `http://localhost:5173/api/auth/callback/google`. Admin terdaftar sebagai test user selama app OAuth mode Testing.
-2. **Cloudflare Zero Trust** (Access controls), **sebelum deploy pertama** supaya custom domain tidak pernah terbuka tanpa Access: login method One-time PIN, policy Allow berisi email admin, aplikasi self-hosted per hostname (`luma-admin-dev.chrl.cloud` / `luma-admin.chrl.cloud`, path kosong), session duration aplikasi 168h (OTP seminggu sekali; sesi dashboard sendiri tetap 12 jam). Cek: request tanpa login → 302 ke `<team>.cloudflareaccess.com`. Halaman login Access (sekali per akun, Reusable components → Custom pages → Access login page): nama organisasi "Luma", latar `#F2EDDD`, teks `#1A1A1A`, footer "Khusus admin Luma" (tanpa header: `header_text` tampil sebagai kotak abu), logo dari bucket R2 publik `luma-brand` di `https://luma-brand.chrl.cloud/luma-logo.svg` (sumbernya `apps/dashboard/brand/luma-logo.svg`; bucket ini cuma berisi aset brand, bukan file user; URL `r2.dev` dimatikan karena diblokir sebagian ISP Indonesia). HTML penuh untuk halaman ini butuh plan Zero Trust berbayar; melewati halaman ini lewat Google IdP + instant authentication ditunda ([#226](https://github.com/choiruladamm/luma/issues/226)).
+2. **Cloudflare Zero Trust** (Access controls), **sebelum deploy pertama** supaya custom domain tidak pernah terbuka tanpa Access: login method One-time PIN, policy Allow berisi email admin, aplikasi self-hosted per hostname (`luma-admin-dev.chrl.cloud` / `luma-admin.chrl.cloud`, path kosong), session duration aplikasi 720h (OTP sebulan sekali, sama dengan batas 30 hari sesi dashboard). Semua `fetch` SPA mengirim `X-Requested-With: XMLHttpRequest`, jadi Access yang habis menjawab 401 tanpa body (bukan redirect ke domain Access yang diblokir CORS); SPA membedakannya dari 401 Worker (selalu ada `code` JSON) lalu memuat ulang halaman supaya Access menampilkan login-nya. Cek: request tanpa login → 302 ke `<team>.cloudflareaccess.com`. Halaman login Access (sekali per akun, Reusable components → Custom pages → Access login page): nama organisasi "Luma", latar `#F2EDDD`, teks `#1A1A1A`, footer "Khusus admin Luma" (tanpa header: `header_text` tampil sebagai kotak abu), logo dari bucket R2 publik `luma-brand` di `https://luma-brand.chrl.cloud/luma-logo.svg` (sumbernya `apps/dashboard/brand/luma-logo.svg`; bucket ini cuma berisi aset brand, bukan file user; URL `r2.dev` dimatikan karena diblokir sebagian ISP Indonesia). HTML penuh untuk halaman ini butuh plan Zero Trust berbayar; melewati halaman ini lewat Google IdP + instant authentication ditunda ([#226](https://github.com/choiruladamm/luma/issues/226)).
 3. **`ADMIN_EMAILS`** di `wrangler.jsonc` env itu: akun Google yang sudah ada di D1 env itu (dashboard tidak bisa membuat akun).
 4. **Deploy**: `make dashboard-deploy e=<env>`. D1 tidak perlu migrasi tersendiri; migrasi backend (`make backend-migrate`) yang berlaku.
 5. **Secret** (`bunx wrangler secret put <NAMA> --env <env>` dari `apps/dashboard`): `BETTER_AUTH_SECRET` (acak baru, beda dari backend), `GOOGLE_CLIENT_SECRET` (web client), `OPENROUTER_MANAGEMENT_KEY` (management key workspace OpenRouter env itu).
-6. **Cek**: login OTP Access → `/api/auth/get-session` = `null`; login Google admin → sesi 12 jam; `/api/overview` cocok dengan query manual `wrangler d1 execute`.
+6. **Cek**: login OTP Access → `/api/auth/get-session` = `null`; login Google admin → cookie sesi `Max-Age=604800` (7 hari); `/api/overview` cocok dengan query manual `wrangler d1 execute`.
 
 ## Lingkungan lokal
 

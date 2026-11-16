@@ -9,6 +9,17 @@ import { server } from "../setup";
 afterEach(() => vi.restoreAllMocks());
 
 describe("error screens", () => {
+  it("a bare 401 (Cloudflare Access session expired) reloads the page; the worker's 401 goes to login", async () => {
+    const seen: (string | null)[] = [];
+    server.use(
+      http.get(`${API}/overview`, ({ request }) => (seen.push(request.headers.get("x-requested-with")), new HttpResponse("", { status: 401 }))),
+    );
+    const { onAccessExpired, router } = renderApp("/");
+    await vi.waitFor(() => expect(onAccessExpired).toHaveBeenCalled());
+    expect(seen[0]).toBe("XMLHttpRequest");
+    expect(router.state.location.pathname).toBe("/");
+  });
+
   it("an unknown address shows 'not found' inside the shell", async () => {
     renderApp("/nope");
     expect(await screen.findByRole("heading", { name: "Halaman gak ditemukan" })).toBeInTheDocument();

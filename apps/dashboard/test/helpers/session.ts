@@ -24,12 +24,12 @@ export async function createUser({
  * HMAC-SHA256 using the dashboard BETTER_AUTH_SECRET (same format as Better
  * Auth's testUtils plugin).
  */
-export async function sessionCookie(userId: string, { secret = env.BETTER_AUTH_SECRET, expiresInMs = 60_000 } = {}) {
+export async function sessionCookie(userId: string, { secret = env.BETTER_AUTH_SECRET, expiresInMs = 60_000, createdAt = new Date() } = {}) {
   const token = crypto.randomUUID().replaceAll("-", "");
   const now = new Date();
   await createDb(env.DB)
     .insert(sessions)
-    .values({ id: crypto.randomUUID(), token, userId, expiresAt: new Date(now.getTime() + expiresInMs), createdAt: now, updatedAt: now });
+    .values({ id: crypto.randomUUID(), token, userId, expiresAt: new Date(now.getTime() + expiresInMs), createdAt, updatedAt: createdAt });
   const signed = `${token}.${await makeSignature(token, secret)}`;
   const { name } = (await getAuth(env).$context).authCookies.sessionToken;
   return `${name}=${encodeURIComponent(signed)}`;

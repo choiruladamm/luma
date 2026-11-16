@@ -19,6 +19,17 @@ const adminRoutes = () => [
 
 const jsonFromDashboard = { "content-type": "application/json", origin: ORIGIN };
 
+const HOUR = 3_600_000;
+const DAY = 24 * HOUR;
+const adminId = async () =>
+  (await env.DB.prepare("SELECT id FROM users WHERE email = ?").bind(ADMIN_EMAIL).first<{ id: string }>())?.id ?? (await createUser({ email: ADMIN_EMAIL })).id;
+/** The `sessions` row behind a cookie from `sessionCookie()`. */
+const sessionRow = async (cookie: string) => {
+  const token = decodeURIComponent(cookie.split("=")[1]!).split(".")[0]!;
+  const row = await env.DB.prepare("SELECT expires_at FROM sessions WHERE token = ?").bind(token).first<{ expires_at: number }>();
+  return row ? { expiresAt: new Date(row.expires_at) } : null;
+};
+
 describe("guard /api/*", () => {
   it("answers 401 without a cookie on every route, without touching D1", async () => {
     for (const { method, path } of adminRoutes()) {
@@ -136,6 +147,40 @@ describe("Better Auth allowlist", () => {
     expect(response.status).toBe(404);
     expect(await errorCode(response)).toBe("NOT_FOUND");
     expect(d1Queries).toBe(0);
+  });
+
+  it("ends a session past the 30-day cap even while it's in use", async () => {
+    const id = await adminId();
+    const cookie = await sessionCookie(id, { expiresInMs: DAY, createdAt: new Date(Date.now() - 31 * DAY) });
+    const { response, d1Queries } = await call(PROBE, { headers: { cookie } });
+    expect(response.status).toBe(401);
+    // find + delete.
+    expect(d1Queries).toBe(2);
+    expect(await sessionRow(cookie)).toBeNull();
+  });
+
+  it("get-session slides a used session to 7 days (row + cookie) once a day has passed", async () => {
+    const cookie = await sessionCookie(await adminId(), { expiresInMs: 5 * DAY, createdAt: new Date(Date.now() - 2 * DAY) });
+    const { response } = await call("/api/auth/get-session", { headers: { cookie } });
+    expect(response.status).toBe(200);
+    expect(response.headers.getSetCookie().find((c) => c.startsWith("__Secure-better-auth.session_token="))).toMatch(/Max-Age=604800/);
+    expect((await sessionRow(cookie))!.expiresAt.getTime()).toBeGreaterThan(Date.now() + 7 * DAY - 60_000);
+  });
+
+  it("get-session leaves a session refreshed less than a day ago alone", async () => {
+    const cookie = await sessionCookie(await adminId(), { expiresInMs: 7 * DAY - HOUR });
+    const before = (await sessionRow(cookie))!.expiresAt.getTime();
+    const { response } = await call("/api/auth/get-session", { headers: { cookie } });
+    expect(response.status).toBe(200);
+    expect(response.headers.getSetCookie().some((c) => c.startsWith("__Secure-better-auth.session_token="))).toBe(false);
+    expect((await sessionRow(cookie))!.expiresAt.getTime()).toBe(before);
+  });
+
+  it("get-session answers no session past the 30-day cap", async () => {
+    const cookie = await sessionCookie(await adminId(), { expiresInMs: DAY, createdAt: new Date(Date.now() - 31 * DAY) });
+    const { response } = await call("/api/auth/get-session", { headers: { cookie } });
+    expect(await response.json()).toBeNull();
+    expect(await sessionRow(cookie)).toBeNull();
   });
 
   it("serves get-session for an admin cookie", async () => {
