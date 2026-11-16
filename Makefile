@@ -162,7 +162,7 @@ dashboard-dev: ## dashboard: Vite dev server with the Worker (env dev, http://lo
 	cd $(DASHBOARD) && CLOUDFLARE_ENV=dev bunx vite dev
 
 dashboard-test: ## dashboard: typecheck worker + client, vitest worker (workerd) + client (happy-dom)
-	cd $(DASHBOARD) && bunx tsc --noEmit && bunx tsc --noEmit -p tsconfig.client.json && bunx vitest run && bunx vitest run -c vitest.client.config.ts
+	cd $(DASHBOARD) && bunx tsc --noEmit -p tsconfig.worker.json && bunx tsc --noEmit -p tsconfig.client.json && bunx vitest run && bunx vitest run -c vitest.client.config.ts
 
 dashboard-e2e: ## dashboard: Playwright e2e on installed Chrome, local e2e env with its own D1 (no remote)
 	cd $(DASHBOARD) && bunx playwright test

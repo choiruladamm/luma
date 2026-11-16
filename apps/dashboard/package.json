@@ -6,7 +6,7 @@
     "dev": "CLOUDFLARE_ENV=dev vite dev",
     "build": "vite build",
     "types": "wrangler types --env dev --strict-vars false",
-    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.client.json",
+    "typecheck": "tsc --noEmit -p tsconfig.worker.json && tsc --noEmit -p tsconfig.client.json",
     "test": "vitest run"
   },
   "dependencies": {

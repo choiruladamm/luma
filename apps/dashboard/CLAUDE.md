@@ -61,13 +61,13 @@ Stack: React, React Router, TanStack Query over `hc<AppType>()`, RHF + `zod/mini
 - Zustand (`stores/`) holds UI state only, never API data.
 - Copy is never hard-coded: it lives in `client/i18n/id.ts` (source; its shape is the `Messages` type) and `en.ts` (typed `Messages`, its own lazy chunk). Components read `const { t, locale } = useI18n()`; code outside React (mutation callbacks → toasts) uses `getI18n()`. Dynamic sentences are typed functions in the dictionaries. Formatters in `lib/format` take the locale explicitly; column factories take `i18n` and are memoized on it. API errors render through `errorText(error, t)` from the error `code`. User data (names, emails, user agents, codes) is never translated. Rules: `docs/dashboard.md` (Bahasa).
 - Static files don't pass through the Worker: their security and cache headers live in `public/_headers` (`/assets/*` is hashed, so immutable).
-- `tsconfig.client.json` checks `client/` (DOM + JSX); `make dashboard-test` runs it. `client/lib` has unit tests in `test/unit/`.
+- `tsconfig.json` only references `tsconfig.worker.json` (worker + its tests) and `tsconfig.client.json` (`client/`, DOM + JSX), so editors pick the right one per file; `make dashboard-test` checks both. `client/lib` has unit tests in `test/unit/`.
 
 ## Shared code with the backend
 
 Imported relatively from `../backend/src`, never copied or edited from here (`db/schema.ts`, `db/client.ts`, `auth/user-fields.ts`, `auth/invite.ts`, `clients/openrouter.ts`). Don't import backend files that touch the backend `Env` (e.g. `features/*/service.ts`): tsc checks them against the dashboard `Env`. Schema and migrations are owned by the backend; tests apply `../backend/migrations`.
 
-Two copies of `drizzle-orm` exist (backend's and ours). Runtime is fine; `tsconfig.json` `paths` points both at ours so the types match. Keep the versions in both `package.json` files equal.
+Two copies of `drizzle-orm` exist (backend's and ours). Runtime is fine; `tsconfig.worker.json` `paths` points both at ours so the types match. Keep the versions in both `package.json` files equal.
 
 ## Tests
 
