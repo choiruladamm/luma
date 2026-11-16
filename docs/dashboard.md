@@ -20,7 +20,7 @@ Prinsip:
 - **Ban = cabut AI subsidi saja**, sama dengan `make backend-ban` (docs/backend.md, Batas & pengaman). Login, backup, dan sync user tetap jalan. Unban = `banned = 0`; key baru dibuat lazy saat app minta lagi.
 - Saklar darurat tetap `vars` + deploy. Toggle dari dashboard butuh `killSwitch` baca D1/KV tiap request, padahal saklar harus jalan sebelum D1 disentuh.
 
-Tidak masuk MVP: hapus user (tetap lewat `DELETE /v1/me` dari app), revoke sesi, impersonate, toggle saklar, analytics Cloudflare (request/hari, CPU p99), pemakaian AI per user di daftar user.
+Tidak masuk MVP: hapus user (tetap lewat `DELETE /v1/me` dari app), revoke sesi, impersonate, toggle saklar, analytics Cloudflare (request/hari, CPU p99), pemakaian AI per user di daftar user, analytics per user ([#228](https://github.com/choiruladamm/luma/issues/228)).
 
 Spend workspace OpenRouter di Ringkasan dari `GET /activity?workspace_id=` OpenRouter: menghitung key yang sudah dihapus (ban, rotasi), beda dengan menjumlah key yang masih hidup. Cuma hari UTC yang sudah lewat (spend "sampai kemarin") dan 30 hari terakhir. Budget dari `AI_MONTHLY_BUDGET_USD` backend, yang harus sama dengan guardrail workspace; guardrail sendiri tidak punya angka pemakaian. Spend gak di-cache di Worker: Cache API gak tersedia untuk Worker di belakang Cloudflare Access, jadi tiap buka Ringkasan = 1 subrequest.
 
