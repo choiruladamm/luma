@@ -20,8 +20,13 @@ void main() {
       expect(google.iosClientId, isNot(googleClients['dev']!.ios));
     });
 
-    test('unflavored builds stay unconfigured', () {
-      expect(googleSourceFor(null), isA<UnconfiguredGoogle>());
+    test('unflavored builds use prod, like the backend URL', () {
+      final google = googleSourceFor(null) as NativeGoogle;
+      expect(google.iosClientId, googleClients['prod']!.ios);
+    });
+
+    test('unknown flavors stay unconfigured', () {
+      expect(googleSourceFor('staging'), isA<UnconfiguredGoogle>());
     });
   });
 

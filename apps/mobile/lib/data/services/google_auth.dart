@@ -98,9 +98,10 @@ String? googleCanceledOrThrow(GoogleSignInException e) {
   );
 }
 
-/// Sumber idToken untuk flavor build ini.
+/// Sumber idToken untuk flavor build ini. Tanpa flavor (iOS `make release`,
+/// scheme Runner = bundle prod) dipakai client prod, sama seperti backend URL.
 GoogleIdTokenSource googleSourceFor(String? flavor) {
-  final client = googleClients[flavor];
+  final client = googleClients[flavor ?? 'prod'];
   if (client == null) return const UnconfiguredGoogle();
   return NativeGoogle(serverClientId: client.server, iosClientId: client.ios);
 }
