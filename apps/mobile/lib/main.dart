@@ -8,6 +8,8 @@ import 'routing/router.dart';
 import 'l10n/app_localizations.dart';
 import 'ui/core/theme/stabilo_theme.dart';
 import 'ui/features/discover/views/download_toasts.dart';
+import 'ui/features/settings/views/cloud_backup_trigger.dart';
+import 'ui/features/settings/views/sync_trigger.dart';
 import 'ui/features/splash/splash_overlay.dart';
 
 Future<void> main() async {
@@ -16,7 +18,7 @@ Future<void> main() async {
   runApp(
     ProviderScope(
       overrides: [fileStorageProvider.overrideWithValue(storage)],
-      child: const LumaApp(splash: true),
+      child: const LumaApp(splash: true, autoBackup: true),
     ),
   );
 }
@@ -24,9 +26,13 @@ Future<void> main() async {
 class LumaApp extends ConsumerWidget {
   /// [splash] = animasi splash → rak di atas app (cuma dari `main`, test
   /// gak mau ketutup lapisannya).
-  const LumaApp({super.key, this.splash = false});
+  const LumaApp({super.key, this.splash = false, this.autoBackup = false});
 
   final bool splash;
+
+  /// Backup cloud + sync push otomatis (cuma dari `main`: test gak punya DB
+  /// asli).
+  final bool autoBackup;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -49,7 +55,15 @@ class LumaApp extends ConsumerWidget {
         enabled: splash,
         child: language.isLoading && !language.hasValue
             ? const SizedBox.expand()
-            : DownloadToasts(child: child ?? const SizedBox.shrink()),
+            : DownloadToasts(
+                child: autoBackup
+                    ? CloudBackupTrigger(
+                        child: SyncTrigger(
+                          child: child ?? const SizedBox.shrink(),
+                        ),
+                      )
+                    : child ?? const SizedBox.shrink(),
+              ),
       ),
       routerConfig: ref.watch(routerProvider),
     );

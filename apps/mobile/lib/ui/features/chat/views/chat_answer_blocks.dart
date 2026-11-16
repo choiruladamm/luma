@@ -25,7 +25,7 @@ class ChatAnswerBlocks extends StatelessWidget {
     this.provisional = false,
   });
 
-  /// Catatan sementara (#153): teks polos ink2 tanpa kartu, bukan jawaban.
+  /// Catatan sementara: teks polos ink2 tanpa kartu, bukan jawaban.
   final bool provisional;
 
   /// Blok yang lagi keliatan; yang teksnya kosong dilewati.

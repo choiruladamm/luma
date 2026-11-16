@@ -94,7 +94,7 @@ class Phone {
             paragraphOffset: const Value(0.4),
           ),
         );
-    // Stats (#42): only kept on the phone, so the backup must carry them.
+    // Stats: only kept on the phone, so the backup must carry them.
     await db
         .into(db.readingSessions)
         .insert(

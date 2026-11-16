@@ -1,7 +1,7 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Notifikasi lokal (docs/discover.md, #175): dipakai cuma buat "X udah masuk
+/// Notifikasi lokal (docs/discover.md): dipakai cuma buat "X udah masuk
 /// rak" pas app di latar. Izin diminta pas download pertama mulai, bukan pas
 /// app dibuka.
 class NotificationService {

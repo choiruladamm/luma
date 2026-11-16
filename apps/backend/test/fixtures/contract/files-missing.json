@@ -1,0 +1,9 @@
+{
+  "request": {
+    "method": "POST",
+    "path": "/v1/files/missing",
+    "headers": { "authorization": "Bearer <token>" },
+    "body": { "names": ["3539482a.epub", "3539482a.jpg"] }
+  },
+  "response": { "status": 200, "body": { "missing": ["3539482a.jpg"] } }
+}

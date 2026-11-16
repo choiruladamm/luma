@@ -1,0 +1,103 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // Rencana & aturan free tier: docs/backend.md
+  "name": "luma-backend",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-11-10",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true,
+    "logs": { "enabled": true, "head_sampling_rate": 1 },
+    "traces": { "enabled": true, "head_sampling_rate": 0.01 }
+  },
+  // Binding gak diwarisin antar env: tiap env nulis lengkap.
+  // database_id diisi setelah `wrangler d1 create` (lihat docs/backend.md, Setup & deploy).
+  "env": {
+    "dev": {
+      "name": "luma-backend-dev",
+      // Custom domain (#214): *.workers.dev diblok sebagian ISP (XL). workers.dev tetap nyala sebagai cadangan.
+      "routes": [{ "pattern": "luma-api-dev.chrl.cloud", "custom_domain": true }],
+      // Ada `routes` → wrangler matiin workers.dev kalau gak ditulis eksplisit.
+      "workers_dev": true,
+      "vars": {
+        "ENV": "dev",
+        "SYNC_ENABLED": "true",
+        "BACKUP_ENABLED": "true",
+        "AI_KEY_ENABLED": "true",
+        // Kuota R2 per user (byte, 1GB). Lewat → 413 STORAGE_FULL.
+        "USER_STORAGE_BYTES": "1073741824",
+        // Kuota sync per user di D1: total ukuran record (100MB) dan baris ditulis per hari UTC.
+        // Lewat → 413 STORAGE_FULL / 429 QUOTA_EXCEEDED (docs/backend.md, Aturan server).
+        "SYNC_STORAGE_BYTES": "104857600",
+        "SYNC_DAILY_WRITES": "20000",
+        "BETTER_AUTH_URL": "https://luma-api-dev.chrl.cloud",
+        // Public contact on /privacy and /account/delete.
+        "CONTACT_EMAIL": "work.adamm@gmail.com",
+        "INVITE_REQUIRED": "true",
+        // Client ID OAuth Google web,ios,android dipisah koma (publik, bukan secret). Kosong = Google mati.
+        // Dev: web, iOS id.ruma.luma.dev, Android id.ruma.luma.dev (release + debug SHA-1).
+        "GOOGLE_CLIENT_IDS": "366577823040-vhr2h7toc53pb891v0qoc1m62pps2v41.apps.googleusercontent.com,366577823040-iado5q8njuvdienlc83al1ed2he5u3c0.apps.googleusercontent.com,366577823040-1al41309eeu55f1eer8abb0pdvk5dldp.apps.googleusercontent.com,366577823040-ftbbr6peb5l9ke8bk00th3l93orb644q.apps.googleusercontent.com",
+        // Kuota AI subsidi (docs/backend.md, AI). Model harus sama dengan guardrail workspace OpenRouter.
+        "AI_DAILY_LIMIT_USD": "0.02",
+        "AI_MONTHLY_BUDGET_USD": "5",
+        "AI_KEY_TTL_DAYS": "30",
+        "OPENROUTER_WORKSPACE_ID": "8cad9ec8-0469-4bb5-912c-8c5411269ae8",
+        "AI_CHAT_MODELS": "deepseek/deepseek-v4.1-flash,qwen/qwen3.8-flash,z-ai/glm-5.3-flash",
+        "AI_EMBEDDING_MODELS": "qwen/qwen3-embedding-8b,openai/text-embedding-3-large"
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "luma-dev",
+          "database_id": "f37e0e34-a9fe-4617-a077-770cb59bd386",
+          "migrations_dir": "migrations"
+        }
+      ],
+      "r2_buckets": [{ "binding": "BUCKET", "bucket_name": "luma-dev" }],
+      "ratelimits": [
+        { "name": "RATE_LIMITER", "namespace_id": "1001", "simple": { "limit": 60, "period": 60 } }
+      ]
+    },
+    "prod": {
+      "name": "luma-backend",
+      "routes": [{ "pattern": "luma-api.chrl.cloud", "custom_domain": true }],
+      "workers_dev": true,
+      "vars": {
+        "ENV": "prod",
+        "SYNC_ENABLED": "true",
+        "BACKUP_ENABLED": "true",
+        "AI_KEY_ENABLED": "true",
+        // Kuota R2 per user (byte, 1GB). Lewat → 413 STORAGE_FULL.
+        "USER_STORAGE_BYTES": "1073741824",
+        // Kuota sync per user di D1: total ukuran record (100MB) dan baris ditulis per hari UTC.
+        // Lewat → 413 STORAGE_FULL / 429 QUOTA_EXCEEDED (docs/backend.md, Aturan server).
+        "SYNC_STORAGE_BYTES": "104857600",
+        "SYNC_DAILY_WRITES": "20000",
+        "BETTER_AUTH_URL": "https://luma-api.chrl.cloud",
+        // Public contact on /privacy and /account/delete.
+        "CONTACT_EMAIL": "work.adamm@gmail.com",
+        "INVITE_REQUIRED": "true",
+        "GOOGLE_CLIENT_IDS": "366577823040-vhr2h7toc53pb891v0qoc1m62pps2v41.apps.googleusercontent.com,366577823040-4t2j2h8h8c300c1r1fc9olhov42p4ora.apps.googleusercontent.com,366577823040-ll4mt5p6rucqa7mlpn4f30negtlgr6se.apps.googleusercontent.com",
+        "AI_DAILY_LIMIT_USD": "0.02",
+        "AI_MONTHLY_BUDGET_USD": "5",
+        "AI_KEY_TTL_DAYS": "30",
+        // Workspace luma-subsidi-prod (guardrail default: allowlist model + $5/bulan).
+        "OPENROUTER_WORKSPACE_ID": "50af7b13-ca88-454b-9385-2e61296c2084",
+        "AI_CHAT_MODELS": "deepseek/deepseek-v4.1-flash,qwen/qwen3.8-flash,z-ai/glm-5.3-flash",
+        "AI_EMBEDDING_MODELS": "qwen/qwen3-embedding-8b,openai/text-embedding-3-large"
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "luma-prod",
+          "database_id": "efe82b84-66d5-437f-b00b-1b287a2f6dc0",
+          "migrations_dir": "migrations"
+        }
+      ],
+      "r2_buckets": [{ "binding": "BUCKET", "bucket_name": "luma-prod" }],
+      "ratelimits": [
+        { "name": "RATE_LIMITER", "namespace_id": "2001", "simple": { "limit": 60, "period": 60 } }
+      ]
+    }
+  }
+}

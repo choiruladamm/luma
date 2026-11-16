@@ -62,12 +62,14 @@ class _BackupListenerState extends ConsumerState<BackupListener> {
             fg: c.onAccent,
           ),
         );
-      case BackupFailed():
+      case BackupFailed(:final storageFull):
         backup.dismiss();
         showToast(
           context,
           context.l10n.backupBackupFailed,
-          subtitle: context.l10n.backupTryAgainInAMoment,
+          subtitle: storageFull
+              ? context.l10n.backupCloudIsFull
+              : context.l10n.backupTryAgainInAMoment,
           leading: ToastTile(icon: AppIcons.alert, bg: c.pink, fg: c.onPink),
         );
       default:

@@ -57,13 +57,15 @@ void main() {
       final field = current.containsKey('sourceHashes')
           ? 'sourceHashes'
           : 'sha256';
-      // Transport and parser files may move on (#143 adds TOC sections), and
-      // so may the lockfile (#167 adds cached_network_image, UI only); the
+      // Transport and parser files may move on (TOC sections were added), and
+      // so may the lockfile (cached_network_image was added, UI only); the
       // chunk/range test below proves the frozen corpus is unchanged.
+      // luma_markdown.dart: only a doc citation comment changed.
       const mutable = [
         'lib/data/services/openrouter_service.dart',
         'lib/data/services/epub_parser.dart',
         'lib/data/services/chapter_extractor.dart',
+        'lib/domain/luma_markdown.dart',
         'pubspec.lock',
       ];
       final originalHashes = Map.of(original[field] as Map)

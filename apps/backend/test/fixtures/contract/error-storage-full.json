@@ -1,0 +1,11 @@
+{
+  "request": {
+    "method": "PUT",
+    "path": "/v1/files/big.epub",
+    "headers": { "authorization": "Bearer <token>", "content-length": "1073741825" }
+  },
+  "response": {
+    "status": 413,
+    "body": { "error": { "code": "STORAGE_FULL", "message": "Cloud storage is full" } }
+  }
+}

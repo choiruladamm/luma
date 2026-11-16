@@ -1,0 +1,14 @@
+{
+  "request": {
+    "method": "POST",
+    "path": "/v1/sync/push",
+    "headers": { "authorization": "Bearer <token>" },
+    "body": {
+      "schemaVersion": 18,
+      "records": [
+        { "kind": "book", "key": "3539482a", "updatedAt": "2026-11-13T11:00:00.000Z", "deleted": true, "data": null }
+      ]
+    }
+  },
+  "response": { "status": 200, "body": { "seq": 4, "applied": 1 } }
+}

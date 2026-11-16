@@ -1,0 +1,6 @@
+{
+  // Solution file: editors open each file in the project that includes it (worker or client).
+  // Without it, client files fell into the worker config and lost the Vite/DOM types.
+  "files": [],
+  "references": [{ "path": "./tsconfig.worker.json" }, { "path": "./tsconfig.client.json" }]
+}

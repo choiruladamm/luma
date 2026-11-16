@@ -1,0 +1,24 @@
+{
+  "request": {
+    "method": "POST",
+    "path": "/v1/auth/sign-up/email",
+    "headers": { "x-invite-code": "BETA-0001" },
+    "body": { "name": "Adam", "email": "adam@luma.test", "password": "rahasia-banget-123" }
+  },
+  "response": {
+    "status": 200,
+    "headers": { "set-auth-token": "<token>" },
+    "body": {
+      "token": "<token>",
+      "user": {
+        "id": "<id>",
+        "name": "Adam",
+        "email": "adam@luma.test",
+        "emailVerified": false,
+        "image": null,
+        "createdAt": "<iso>",
+        "updatedAt": "<iso>"
+      }
+    }
+  }
+}

@@ -10,13 +10,6 @@ class AppLocalizationsId extends AppLocalizations {
   AppLocalizationsId([String locale = 'id']) : super(locale);
 
   @override
-  String get interfaceLanguage => 'Bahasa antarmuka';
-
-  @override
-  String get interfaceLanguageNote =>
-      'Bahasa ini cuma buat tampilan. Terjemahan dan jawaban AI tetap Bahasa Indonesia.';
-
-  @override
   String get languageSaveFailed => 'Bahasanya gagal disimpen. Coba lagi, ya.';
 
   @override
@@ -533,16 +526,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get settingsAddKey => 'Isi key';
 
   @override
-  String get settingsDeleteTranslationCache => 'Hapus cache terjemahan?';
-
-  @override
-  String get settingsAllSavedTranslationsWillBeDeleted =>
-      'Semua terjemahan yang udah kesimpen bakal ilang. Paragraf yang dibuka lagi manggil AI ulang dan motong saldo lagi. Obrolan buku lo tetap kesimpen.';
-
-  @override
-  String get settingsYourCatalogIsAlreadyUpTo => 'Katalognya udah yang terbaru';
-
-  @override
   String get settingsBack => 'Balik';
 
   @override
@@ -555,21 +538,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get settingsAiModel => 'Model AI';
 
   @override
-  String get settingsChargesComeFromYourOpenrouterAccount =>
-      'Biayanya kepotong dari saldo akun OpenRouter lo.';
-
-  @override
   String get settingsBackupRestore => 'Backup & pulihin';
-
-  @override
-  String get settingsBookCatalog => 'Katalog buku';
-
-  @override
-  String get settingsAroundProjectGutenbergBooksToSearch =>
-      'Daftar ±62.000 buku Project Gutenberg buat nyari judul tanpa internet. Diperbarui mingguan.';
-
-  @override
-  String get settingsStorage => 'Penyimpanan';
 
   @override
   String get settingsStoredSecurelyOnYourDeviceKeychain =>
@@ -584,16 +553,7 @@ class AppLocalizationsId extends AppLocalizations {
       'Key-nya ditolak OpenRouter, jadi gak disimpen. Cek lagi ya.';
 
   @override
-  String get settingsHangOnChecking => 'Bentar, lagi ngecek...';
-
-  @override
   String get settingsYourKeyWorks => 'Key-nya jalan';
-
-  @override
-  String get settingsOpenrouterRejectedYourKey => 'Key-nya ditolak OpenRouter';
-
-  @override
-  String get settingsStoredSecurelyOnYourDevice => 'Disimpen aman di perangkat';
 
   @override
   String get settingsIncludesBooksReadingProgressTranslationsAnd =>
@@ -625,71 +585,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get settingsBackUpNow => 'Backup sekarang';
 
   @override
-  String get settingsRestoreFromBackup => 'Pulihin dari backup';
-
-  @override
-  String get settingsDefaultMostAccurate => 'Default · paling akurat';
-
-  @override
-  String get settingsTranslationCache => 'Cache terjemahan';
-
-  @override
-  String settingsParagraphs(int p0, Object p1) {
-    final intl.NumberFormat p0NumberFormat = intl.NumberFormat.decimalPattern(
-      localeName,
-    );
-    final String p0String = p0NumberFormat.format(p0);
-
-    return '$p0String paragraf · $p1';
-  }
-
-  @override
-  String get settingsClearCache => 'Hapus cache';
-
-  @override
-  String get settingsNotDownloadedMb => 'Belum diunduh · 5,6 MB';
-
-  @override
-  String settingsUpdated(Object p0) {
-    return 'Diperbarui $p0 · ';
-  }
-
-  @override
-  String settingsBooks(Object p0, int p1) {
-    final intl.NumberFormat p1NumberFormat = intl.NumberFormat.decimalPattern(
-      localeName,
-    );
-    final String p1String = p1NumberFormat.format(p1);
-
-    return '$p0$p1String buku';
-  }
-
-  @override
-  String get settingsCheckingForUpdates => 'Ngecek versi terbaru…';
-
-  @override
-  String get settingsDownloading => 'Ngunduh…';
-
-  @override
-  String settingsDownloading2(Object p0) {
-    return 'Ngunduh $p0%';
-  }
-
-  @override
   String get settingsPreparingCatalog => 'Nyusun katalog…';
-
-  @override
-  String get settingsFailedKeepingThePreviousCatalog =>
-      'Gagal, katalog lama tetep dipakai';
-
-  @override
-  String get settingsDownload => 'Unduh';
-
-  @override
-  String get settingsUpdate => 'Perbarui';
-
-  @override
-  String get settingsGutenbergCatalog => 'Katalog Gutenberg';
 
   @override
   String backupBooksReadingProgress(int p0) {
@@ -2271,5 +2167,752 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String importPdfSkippedPages(int p0) {
     return '$p0 halaman tanpa teks dilewati';
+  }
+
+  @override
+  String get authLoginTitle => 'Rak lo, ikut\nke mana aja.';
+
+  @override
+  String get authLoginSubtitle => 'Satu akun buat semua bacaan lo';
+
+  @override
+  String get authChapterOne => 'BAB I';
+
+  @override
+  String get authChapterTwo => 'BAB II';
+
+  @override
+  String get authChapterThree => 'BAB III';
+
+  @override
+  String get authBenefitQuota => 'Kuota AI gratis';
+
+  @override
+  String get authBenefitQuotaNote => 'Artinya, Bedahin, sama Ngobrol';
+
+  @override
+  String get authBenefitBackup => 'Backup ke cloud';
+
+  @override
+  String get authBenefitBackupNote => 'Rak sama catatan lo aman';
+
+  @override
+  String get authBenefitSync => 'Sync antar HP';
+
+  @override
+  String get authBenefitSyncNote => 'Lanjut di iPhone atau Android';
+
+  @override
+  String get authSignInGoogle => 'Masuk pakai Google';
+
+  @override
+  String get authConnectingGoogle => 'Nyambung ke Google…';
+
+  @override
+  String get authGoogleWillAsk =>
+      'Abis ini Google nanya lo mau pakai akun yang mana.';
+
+  @override
+  String authPrivacyNote(String policy) {
+    return 'Dengan masuk, lo setuju sama $policy Luma.';
+  }
+
+  @override
+  String get authPrivacyPolicy => 'Kebijakan privasi';
+
+  @override
+  String get authNetworkTitle => 'Gak bisa nyambung';
+
+  @override
+  String get authNetworkBody => 'Cek internet lo, terus coba lagi.';
+
+  @override
+  String get authTryAgain => 'Coba lagi';
+
+  @override
+  String get authRejectedTitle => 'Login-nya ditolak';
+
+  @override
+  String get authRejectedBody =>
+      'Akun Google ini gak bisa dipakai buat masuk. Coba pakai akun lain.';
+
+  @override
+  String get authUseAnotherAccount => 'Pakai akun lain';
+
+  @override
+  String get authEmailRejectedBody =>
+      'Server-nya nolak. Coba lagi bentar; kalau masih gagal, pakai email lain.';
+
+  @override
+  String get authDevBadge => 'Build developer';
+
+  @override
+  String get authDevLabel => 'Build dev';
+
+  @override
+  String get authDevTitle => 'Isi yang kosong.';
+
+  @override
+  String get authDevEmailLead => 'Email gua';
+
+  @override
+  String get authDevPasswordLead => 'dan kata sandinya';
+
+  @override
+  String get authDevNote =>
+      'Cuma ada di build developer. Versi rilis cuma pakai Google.';
+
+  @override
+  String get authEmailLabel => 'Email';
+
+  @override
+  String get authPasswordLabel => 'Kata sandi';
+
+  @override
+  String get authSignUp => 'Daftar';
+
+  @override
+  String get authSignIn => 'Masuk';
+
+  @override
+  String get authInvalidCredentialsTitle => 'Email atau kata sandinya salah';
+
+  @override
+  String get authInvalidCredentialsBody => 'Cek lagi, terus coba masuk lagi.';
+
+  @override
+  String get authUserExistsTitle => 'Email ini udah terdaftar';
+
+  @override
+  String get authUserExistsBody => 'Pakai Masuk aja, bukan Daftar.';
+
+  @override
+  String get authPasswordShortTitle => 'Kata sandinya kependekan';
+
+  @override
+  String get authPasswordShortBody => 'Minimal 8 karakter.';
+
+  @override
+  String get authSignedInAs => 'Masuk sebagai';
+
+  @override
+  String get authChange => 'Ganti';
+
+  @override
+  String get authInviteIntro =>
+      'Luma lagi beta, jadi akun baru butuh undangan.';
+
+  @override
+  String get authInviteLead => 'Kode undangan gua:';
+
+  @override
+  String get authInviteHint =>
+      'Huruf besar/kecil gak ngaruh. Strip boleh dilewatin.';
+
+  @override
+  String get authContinue => 'Lanjut';
+
+  @override
+  String get authNoteLabel => 'CATATAN';
+
+  @override
+  String get authInviteUsedTitle => 'Kode ini udah dipakai';
+
+  @override
+  String get authInviteUsedBody =>
+      'Satu kode buat satu akun. Minta kode baru ke yang ngundang lo.';
+
+  @override
+  String get authInviteInvalidTitle => 'Kodenya salah';
+
+  @override
+  String get authInviteInvalidBody =>
+      'Cek lagi hurufnya, atau minta kode baru ke yang ngundang lo.';
+
+  @override
+  String get settingsAccount => 'Akun';
+
+  @override
+  String get authViaGoogle => 'Masuk lewat Google';
+
+  @override
+  String get authViaEmail => 'Masuk lewat email';
+
+  @override
+  String get authSignOut => 'Keluar';
+
+  @override
+  String get authDeleteAccount => 'Hapus akun';
+
+  @override
+  String get authSignOutTitle => 'Keluar dari akun?';
+
+  @override
+  String get authSignOutBody =>
+      'Buku, progres, sama catatan di HP ini tetap ada. Lo balik ke layar Masuk; backup + sync berhenti dulu.';
+
+  @override
+  String get authSwitchTitle => 'Ganti ke akun lain?';
+
+  @override
+  String get authSwitchOwner => 'Isi HP ini punya';
+
+  @override
+  String get authSwitchNew => 'Mau masuk pakai';
+
+  @override
+  String get authSwitchBodyLead => 'Biar gak kecampur,';
+
+  @override
+  String get authSwitchBodyBold => 'isi HP ini dihapus dulu';
+
+  @override
+  String get authSwitchBodyTail =>
+      ': buku, progres, catatan. Data akun lama tetap aman di cloud.';
+
+  @override
+  String get authSwitchConfirm => 'Hapus isi HP & lanjut';
+
+  @override
+  String get authSwitchKeep => 'Pakai akun lama aja';
+
+  @override
+  String get authDeleteTitle => 'Hapus akun selamanya?';
+
+  @override
+  String get authDeleteBody =>
+      'Centang semua biar yakin lo ngerti apa yang ilang. Ini gak bisa dibalikin.';
+
+  @override
+  String authDeleteCheckAccount(String email) {
+    return 'Akun $email kehapus';
+  }
+
+  @override
+  String get authDeleteCheckBackup => 'Semua backup di cloud ilang';
+
+  @override
+  String get authDeleteCheckSync => 'Data sync di semua HP lo ilang';
+
+  @override
+  String get authDeleteNote =>
+      'Buku di HP ini gak ikut kehapus, tapi gak kebackup lagi.';
+
+  @override
+  String get authDeleteConfirm => 'Hapus akun selamanya';
+
+  @override
+  String get authSessionExpiredTitle => 'Sesi lo habis';
+
+  @override
+  String get authSessionExpiredBody =>
+      'Baca tetap jalan; backup & sync nunggu dulu.';
+
+  @override
+  String get authSignInAgain => 'Login lagi';
+
+  @override
+  String get authCloseBanner => 'Tutup';
+
+  @override
+  String authToastSignedIn(String name) {
+    return 'Udah masuk. Halo, $name!';
+  }
+
+  @override
+  String get authToastSignedOut => 'Udah keluar. Buku di HP ini tetap ada.';
+
+  @override
+  String get authToastDeleted => 'Akun lo udah dihapus.';
+
+  @override
+  String get authToastDeleteFailed => 'Gagal hapus akun. Gak ada internet.';
+
+  @override
+  String get quotaToday => 'Kuota AI hari ini';
+
+  @override
+  String quotaResetAt(String time) {
+    return 'Reset $time';
+  }
+
+  @override
+  String quotaResetAtIn(String time, String countdown) {
+    return 'Reset $time · $countdown';
+  }
+
+  @override
+  String quotaCountdown(int hours, int minutes) {
+    return '${hours}j ${minutes}m';
+  }
+
+  @override
+  String quotaTapsLeft(int count) {
+    return '± $count tap lagi';
+  }
+
+  @override
+  String get quotaLow => 'Hampir abis';
+
+  @override
+  String get quotaUsedUp => 'Kuota gratis hari ini udah kepakai semua.';
+
+  @override
+  String get quotaLoading => 'Lagi dimuat…';
+
+  @override
+  String get quotaLoadFailed => 'Gak bisa ngecek sisa kuota.';
+
+  @override
+  String get quotaSource => 'Sumber AI';
+
+  @override
+  String get quotaOwnKey => 'Key sendiri';
+
+  @override
+  String get quotaOwnKeyNote =>
+      'Biaya dari saldo OpenRouter lo. Kuota gratis gak kepotong.';
+
+  @override
+  String get quotaFree => 'Kuota AI gratis';
+
+  @override
+  String get quotaRevoked => 'Dicabut';
+
+  @override
+  String get quotaBlocked => 'Diblokir';
+
+  @override
+  String get quotaRevokedNote => 'AI masih bisa dipakai pakai key sendiri.';
+
+  @override
+  String get quotaExhaustedTitle => 'Kuota gratis hari ini abis';
+
+  @override
+  String quotaExhaustedBody(String time, int hours, int minutes) {
+    return 'Reset jam $time ($hours jam $minutes menit lagi). Biar bisa lanjut sekarang, pakai key OpenRouter sendiri.';
+  }
+
+  @override
+  String get quotaResetIn => 'Reset dalam';
+
+  @override
+  String get quotaHoursUnit => 'j';
+
+  @override
+  String get quotaMinutesUnit => 'm';
+
+  @override
+  String quotaTapsOf(int count) {
+    return '0 dari ± $count tap tersisa';
+  }
+
+  @override
+  String quotaTapsOfShort(int count) {
+    return '0 dari ± $count tap';
+  }
+
+  @override
+  String quotaPeekBody(String time) {
+    return 'Teks aslinya tetap bisa dibaca. Artiin lagi abis reset jam $time, atau pakai key sendiri.';
+  }
+
+  @override
+  String get quotaUseOwnKey => 'Pakai key sendiri';
+
+  @override
+  String get quotaOk => 'Oke';
+
+  @override
+  String quotaChatClosed(String time) {
+    return 'Kuota abis, buka lagi jam $time';
+  }
+
+  @override
+  String get quotaBannedPill => 'Kuota gratis diblokir';
+
+  @override
+  String get quotaBannedTitle => 'Akses AI gratis lo dicabut';
+
+  @override
+  String get quotaBannedBody =>
+      'Akun ini gak bisa pakai kuota gratis Luma lagi. Artinya, Bedahin, sama Ngobrol tetap bisa jalan pakai key OpenRouter lo sendiri.';
+
+  @override
+  String get aiSection => 'AI';
+
+  @override
+  String get aiSourceFree => 'Kuota gratis';
+
+  @override
+  String get aiSourceOwn => 'Key sendiri';
+
+  @override
+  String get aiOwnKeyCost =>
+      'Biayanya kepotong dari saldo akun OpenRouter lo. Kuota gratis Luma gak dipakai selama key ini aktif.';
+
+  @override
+  String get aiKeyRejected401 => 'Key-nya ditolak (401)';
+
+  @override
+  String get aiCheckedJustNow => 'Dicek barusan';
+
+  @override
+  String get aiBackToFree => 'Balik ke kuota gratis';
+
+  @override
+  String get aiBackToFreeTitle => 'Balik ke kuota gratis?';
+
+  @override
+  String aiBackToFreeBody(String model) {
+    return 'Key OpenRouter lo dihapus dari HP ini. Model balik ke $model, salah satu dari 3 model gratis.';
+  }
+
+  @override
+  String get aiBackToFreeConfirm => 'Balik ke gratis';
+
+  @override
+  String get aiPickModel => 'Pilih model';
+
+  @override
+  String get aiFreeModelsNote => 'Kuota gratis cuma bisa pakai 3 model ini.';
+
+  @override
+  String get aiDefaultCheapest => 'Default · paling hemat';
+
+  @override
+  String get aiMoreModelsTitle => 'Mau model lain?';
+
+  @override
+  String get aiMoreModelsBody =>
+      'Pakai key OpenRouter sendiri, 300-an model kebuka. Biayanya dari saldo lo.';
+
+  @override
+  String aiSearchModels(int count) {
+    return 'Cari dari $count model';
+  }
+
+  @override
+  String get aiFilterAll => 'Semua';
+
+  @override
+  String get aiFilterCheap => 'Hemat';
+
+  @override
+  String get aiFilterLong => 'Konteks panjang';
+
+  @override
+  String get aiModelsLoadFailed =>
+      'Daftar model gak kebaca. Cek internet lo, terus coba lagi.';
+
+  @override
+  String get aiNoModelMatch => 'Gak ada model yang cocok.';
+
+  @override
+  String get backupUploadingToYourAccount =>
+      'Lagi diunggah ke akun lo. Buku yang udah ada di cloud gak diunggah ulang.';
+
+  @override
+  String get backupCloudIsFull => 'Penyimpanan cloud lo udah penuh';
+
+  @override
+  String get cloudRestorePickTitle => 'Pilih backup cloud';
+
+  @override
+  String get cloudRestoreEmpty =>
+      'Belum ada backup di cloud. Tekan \"Backup ke cloud\" dulu.';
+
+  @override
+  String get cloudRestoreLoadFailed =>
+      'Gagal ngambil daftar backup. Cek internet lo.';
+
+  @override
+  String get cloudRestoreDownloadFailed =>
+      'Gagal download backup. Coba lagi ya.';
+
+  @override
+  String bookshelfSyncingBooks(int current, int total) {
+    return 'Nyinkronin $current/$total buku';
+  }
+
+  @override
+  String get bookshelfSyncingBody =>
+      'Buku dari HP lain lagi diunduh. Sambil baca juga bisa.';
+
+  @override
+  String get settingsAccountPhoto => 'Foto profil';
+
+  @override
+  String get settingsAccountUsedToday => 'Kepakai hari ini';
+
+  @override
+  String settingsAccountUsedValue(int count) {
+    return '$count tap';
+  }
+
+  @override
+  String get settingsAccountDaily => 'Jatah harian';
+
+  @override
+  String get settingsAccountDailyValue => '± 30–50 tap';
+
+  @override
+  String get settingsAccountSignOutNote => 'Buku di HP ini tetap ada';
+
+  @override
+  String get settingsAccountDeleteNote => 'Hapus akun + semua data di server';
+
+  @override
+  String get settingsHubModelFree => 'Model AI · Kuota gratis';
+
+  @override
+  String get settingsHubModelOwn => 'Model AI · Key sendiri';
+
+  @override
+  String get settingsHubChangeModel => 'Ganti model';
+
+  @override
+  String get settingsHubManageAi => 'Atur AI';
+
+  @override
+  String settingsHubModelDefault(String id) {
+    return '$id · default';
+  }
+
+  @override
+  String get settingsHubMoreSection => 'Data & lainnya';
+
+  @override
+  String get settingsHubTileBackup => 'Backup';
+
+  @override
+  String get settingsHubTileCatalog => 'Katalog';
+
+  @override
+  String get settingsHubTileCache => 'Cache';
+
+  @override
+  String get settingsHubTileDisplay => 'Tampilan';
+
+  @override
+  String get settingsHubBackupNever => 'Belum pernah';
+
+  @override
+  String get settingsHubCatalogNever => 'Belum diunduh';
+
+  @override
+  String settingsHubCatalogDownloading(int percent) {
+    return 'Diunduh $percent%';
+  }
+
+  @override
+  String get settingsHubCatalogWorking => 'Lagi nyiapin…';
+
+  @override
+  String get settingsHubCatalogDone => 'Udah diunduh';
+
+  @override
+  String get settingsHubCatalogFailed => 'Gagal, coba lagi';
+
+  @override
+  String get settingsHubCacheEmpty => 'Kosong';
+
+  @override
+  String settingsHubCacheUsed(String size) {
+    return '$size terpakai';
+  }
+
+  @override
+  String settingsHubDisplayStatus(String theme, String language) {
+    return '$theme · $language';
+  }
+
+  @override
+  String get settingsHubSignedOut => 'Belum masuk';
+
+  @override
+  String get settingsHubSignedOutNote => 'Masuk buat dapet kuota AI gratis';
+
+  @override
+  String settingsHubQuotaReset(String time, String countdown) {
+    return 'Reset $time · $countdown lagi';
+  }
+
+  @override
+  String get settingsBackupSaveToFile => 'Simpen salinan ke file';
+
+  @override
+  String get settingsBackupRestoreFrom => 'Pulihin dari';
+
+  @override
+  String get settingsBackupFile => 'File';
+
+  @override
+  String get settingsBackupCloud => 'Cloud';
+
+  @override
+  String settingsAiFreeModelsLabel(int count) {
+    return 'Model AI · $count model gratis';
+  }
+
+  @override
+  String get settingsAiMoreModelsHint =>
+      '300-an model lain kebuka kalau lo pakai key OpenRouter sendiri.';
+
+  @override
+  String get settingsAiDefaultBadge => 'Default';
+
+  @override
+  String get settingsAiKeyChecking => 'Lagi ngecek ke OpenRouter…';
+
+  @override
+  String get settingsAiKeyRejectedBody =>
+      'OpenRouter nolak key ini. Cek lagi di openrouter.ai/keys, terus tempel ulang.';
+
+  @override
+  String settingsAiKeyRejectedFallback(int percent) {
+    return 'Sementara AI balik pakai kuota gratis (sisa $percent%) sampai key-nya bener.';
+  }
+
+  @override
+  String get settingsAiKeyRejectedFallbackNoQuota =>
+      'Sementara AI balik pakai kuota gratis sampai key-nya bener.';
+
+  @override
+  String get settingsAiKeyRecheck => 'Cek lagi';
+
+  @override
+  String settingsAiModelFallsBack(String id) {
+    return '$id · balik ke model gratis';
+  }
+
+  @override
+  String get settingsCatalogTitle => 'Katalog buku';
+
+  @override
+  String get settingsCatalogCardTitle => 'Katalog Gutenberg';
+
+  @override
+  String get settingsCatalogNotDownloaded => 'Belum diunduh · 5,6 MB';
+
+  @override
+  String get settingsCatalogChecking => 'Ngecek versi terbaru…';
+
+  @override
+  String get settingsCatalogDownloading => 'Lagi diunduh';
+
+  @override
+  String get settingsCatalogPreparing => 'Nyusun katalog…';
+
+  @override
+  String get settingsCatalogFailed => 'Gagal, katalog lama tetep dipakai';
+
+  @override
+  String get settingsCatalogDownload => 'Unduh';
+
+  @override
+  String get settingsCatalogUpdate => 'Perbarui';
+
+  @override
+  String get settingsCatalogCancel => 'Batal';
+
+  @override
+  String get settingsCatalogRetry => 'Coba lagi';
+
+  @override
+  String get settingsCatalogUpToDate => 'Katalognya udah yang terbaru';
+
+  @override
+  String get settingsCatalogWhy => 'Buat apa?';
+
+  @override
+  String get settingsCatalogWhySearch => 'Cari judul tanpa internet';
+
+  @override
+  String get settingsCatalogWhySearchBody =>
+      'Ketik judul atau penulis, hasilnya langsung keluar';
+
+  @override
+  String get settingsCatalogWhyBooks => '±62.000 buku Project Gutenberg';
+
+  @override
+  String get settingsCatalogWhyBooksBody =>
+      'Semuanya public domain, gratis diambil';
+
+  @override
+  String get settingsCatalogWhyWeekly => 'Diperbarui mingguan';
+
+  @override
+  String get settingsCatalogWhyWeeklyBody =>
+      'Tap Perbarui kalau mau yang paling baru';
+
+  @override
+  String get settingsCatalogBackgroundNote =>
+      'Boleh tutup layar ini, unduhan jalan terus di belakang.';
+
+  @override
+  String get settingsCacheEyebrow => 'Penyimpanan';
+
+  @override
+  String get settingsCacheTitle => 'Hapus cache terjemahan?';
+
+  @override
+  String get settingsCacheParagraphs => 'paragraf';
+
+  @override
+  String get settingsCacheUsed => 'dipakai';
+
+  @override
+  String get settingsCacheBody =>
+      'Terjemahan yang udah disimpen bakal ilang dari HP ini. Pas lo buka lagi, Luma nerjemahin ulang, dan itu makan kuota AI.';
+
+  @override
+  String get settingsCacheClear => 'Hapus cache';
+
+  @override
+  String get settingsCacheCancel => 'Batal';
+
+  @override
+  String get settingsDisplayTitle => 'Tampilan';
+
+  @override
+  String get settingsDisplayTheme => 'Tema';
+
+  @override
+  String get settingsDisplaySystemHint => 'Ngikut mode HP';
+
+  @override
+  String get settingsDisplayLightHint => 'Kertas krem';
+
+  @override
+  String get settingsDisplayDarkHint => 'Buat malem';
+
+  @override
+  String get settingsDisplayThemeNote =>
+      'Ini setelan yang sama kayak Tema di menu Aa pas baca. Ganti di satu tempat, dua-duanya ikut.';
+
+  @override
+  String get settingsDisplayLanguage => 'Bahasa tampilan';
+
+  @override
+  String get settingsDisplayLanguageNote =>
+      'Bahasa ini cuma buat tampilan. Terjemahan sama jawaban AI tetap Bahasa Indonesia.';
+
+  @override
+  String settingsCatalogBooks(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    return '$countString buku';
+  }
+
+  @override
+  String settingsCatalogBooksUpdated(int count, String date) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    return '$countString buku · Diperbarui $date';
   }
 }

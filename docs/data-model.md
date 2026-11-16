@@ -55,7 +55,7 @@ Index: `(bookId, sortOrder)`.
 | chapterId | int (FK → chapters.id) | |
 | paragraphIndex | int | Urutan dalam chapter |
 | groupIndex | int? | Grup untuk tap/AI. Null untuk heading & pemisah adegan (tidak bisa di-tap) |
-| type | text | `paragraph` / `heading` / `scene_break` |
+| type | text | `paragraph` / `heading` / `sceneBreak` |
 | text | text | Teks polos yang sudah dinormalisasi |
 
 Unique key: `(chapterId, paragraphIndex)`. Index tambahan: `(chapterId, groupIndex)`.
@@ -162,6 +162,26 @@ Meta sync di `settings`: `catalog.lastModified`, `catalog.syncedAt`, `catalog.co
 
 `paragraph_fts` (v17): virtual table FTS5 external-content di atas `paragraphs` (`text`, `content_rowid='rowid'`, `tokenize='unicode61 remove_diacritics 2'`) + shadow table `paragraph_fts_*`. Bukan tabel Drift: dibuat lewat `AppDatabase.createBookSearchFts` bareng tiga trigger di `paragraphs` yang ngejaga isinya. Buku lama di-index lazy, restore men-rebuild. Detail: [book-search.md](book-search.md).
 
+`sync_outbox` (v18): satu baris per kunci alami yang berubah sejak push terakhir. Diisi trigger dari spec `syncKinds` (`lib/data/database/sync_schema.dart`), bukan repository.
+
+| Kolom | Tipe | Catatan |
+|-------|------|---------|
+| `kind` | text | PK bagian 1, jenis record |
+| `key` | text | PK bagian 2, kunci alami |
+| `updatedAt` | int | ms epoch perubahan terakhir (jam device) |
+
+`sync_inbox` (v18): record pull yang belum bisa diterapkan: buku belum ada / `parserVersion` beda / schema lebih baru / sesi chat belum ada.
+
+| Kolom | Tipe | Catatan |
+|-------|------|---------|
+| `kind` | text | PK bagian 1 |
+| `key` | text | PK bagian 2 |
+| `data` | text? | JSON record, null = tombstone |
+| `updatedAt` | int | ms epoch |
+| `schemaVersion` | int | schema pengirim record |
+
+Cursor pull di `settings` `sync.pullSeq` = `{userId}:{seq}` (gak ikut sync). Detail: [backend.md](backend.md) (Sync antar device).
+
 ## Versi schema & migrasi
 
 | Versi | Perubahan |
@@ -183,12 +203,13 @@ Meta sync di `settings`: `catalog.lastModified`, `catalog.syncedAt`, `catalog.co
 | 15 | Virtual table FTS5 `catalog_fts` di atas `catalog_books` (#169), langsung di-rebuild dari isi katalog yang ada. Data user gak disentuh |
 | 16 | `books.sourceId`, `externalId` nullable (#164); baris lama null |
 | 17 | Virtual table FTS5 `paragraph_fts` + trigger di `paragraphs` (#177, Cari kata). Kosong buat buku lama, di-index lazy pas pertama nyari. Data user gak disentuh |
+| 18 | Sync push ([#109](https://github.com/choiruladamm/luma/issues/109)): tabel `sync_outbox` + `sync_inbox` (PK `(kind, key)`) dan trigger `sync_<tabel>_ai/au/ad` di tabel yang di-sync. Outbox di-backfill dari semua baris lama dengan waktu dari isi baris (`last_opened_at`, `updated_at`, …; settings = 0). Kolom tabel lama gak berubah |
 
 Tiap ubah tabel: naikkan `schemaVersion`, tambah langkah di `onUpgrade`, dan test migrasi dari versi sebelumnya (data tetap utuh, schema hasil migrasi sama dengan install baru). Restore backup dari schema lama ikut dimigrasi saat database dibuka ([backup.md](backup.md)).
 
 ## Pengaturan
 
-API key di `flutter_secure_storage` (Keychain di iOS, Keystore di Android). Model ID, preferensi Aa, dan backup terakhir di tabel `settings` sederhana (key-value) di Drift, supaya ikut ter-backup. Model LLM: `ai.model` (model ID OpenRouter, default `deepseek/deepseek-v4.1-flash`; pilihan dari daftar kandidat di [llm.md](llm.md)). API key di Keychain / Keystore dengan kunci `openrouter_api_key`, cuma disimpen setelah lolos cek bentuk dan cek ke OpenRouter ([llm.md](llm.md)); kosong = dihapus. "Hapus cache" di Pengaturan = kosongin `ai_results` + `ai_breakdowns` setelah konfirmasi; Pengaturan nampilin jumlah paragraf yang udah diterjemahin + ukuran teksnya. Backup terakhir: `backup.lastAt` (ISO 8601), `backup.lastName`, `backup.lastSize` (byte). Kunci Aa: `reader.size` (indeks step 0–6), `reader.font`, `reader.spacing`, `reader.margin`, `theme` (nama enum), `reader.hideStatusBar`, `reader.showProgressLine` (`true`/`false`). Urutan rak: `shelf.sort` (`lastOpened` / `title` / `added`, default `lastOpened`). Tampilan rak: `shelf.view` (`grid` / `list`, default `grid`). Hindari `shared_preferences` untuk data yang perlu ikut backup.
+API key di `flutter_secure_storage` (Keychain di iOS, Keystore di Android). Model ID, preferensi Aa, dan backup terakhir di tabel `settings` sederhana (key-value) di Drift, supaya ikut ter-backup. Model LLM: `ai.model` (model ID OpenRouter, default `defaultAiModel` di `lib/domain/models/ai_model.dart`; pilihan dari daftar kandidat di [llm.md](llm.md)). API key di Keychain / Keystore dengan kunci `openrouter_api_key`, cuma disimpen setelah lolos cek bentuk dan cek ke OpenRouter ([llm.md](llm.md)); kosong = dihapus. "Hapus cache" di Pengaturan = kosongin `ai_results` + `ai_breakdowns` setelah konfirmasi; Pengaturan nampilin jumlah paragraf yang udah diterjemahin + ukuran teksnya. Backup terakhir: `backup.lastAt` (ISO 8601), `backup.lastName`, `backup.lastSize` (byte), `backup.cloudLastAt` (backup cloud terakhir), `backup.reminderDismissedAt` (pengingat backup terakhir ditutup). Tanda hint chat udah dilihat: `reader.chatHintSeen` = `'1'`. Kunci Aa: `reader.size` (indeks step 0–6), `reader.font`, `reader.spacing`, `reader.margin`, `theme` (nama enum), `reader.hideStatusBar`, `reader.showProgressLine` (`true`/`false`). Urutan rak: `shelf.sort` (`lastOpened` / `title` / `added`, default `lastOpened`). Tampilan rak: `shelf.view` (`grid` / `list`, default `grid`). Hindari `shared_preferences` untuk data yang perlu ikut backup.
 
 
 ## Penyimpanan percakapan (#114/#115)
@@ -281,7 +302,7 @@ backfill. Anchor/paragraf tidak dinomori ulang; `parserVersion` tetap 1.
 `chat_indexes`: id, bookId (FK cascade), identity unik (JSON versi format1,
 bookId/contentRevision/parser/chunkPolicy/model/dimensions/queryTemplate), manifest,
 chunkCount, ready defaultfalse. `chat_vectors`: indexId (FK cascade), ordinal,
-vector BLOB Float32 little-endian, checksum SHA-256 base64 BLOB; PK(indexId,ordinal).
+vector BLOB Float32 little-endian, checksum SHA-256 base64 TEXT; PK(indexId,ordinal).
 Anchor tidak disalin: chunk/anchor dibangun ulang dari teks dan dicek manifest-nya.
 Index lengkap dan partial ikut backup sebagai data turunan yang bisa dibuat ulang.
 Perubahan isi melalui contentChanged menghapus cache buku; hapus buku cascade.

@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../ui/core/theme/stabilo_tokens.dart';
+import '../ui/features/auth/view_models/auth_view_model.dart';
+import '../ui/features/auth/views/login_view.dart';
 import '../domain/models/book_chat.dart';
 import '../domain/models/catalog.dart';
 import '../ui/features/chat/view_models/chat_view_model.dart';
@@ -15,11 +17,18 @@ import '../ui/features/breakdown/views/breakdown_view.dart';
 import '../ui/features/discover/views/book_detail_view.dart';
 import '../ui/features/discover/views/discover_view.dart';
 import '../ui/features/reader/views/reader_view.dart';
-import '../ui/features/settings/views/settings_view.dart';
+import '../ui/features/settings/views/account_view.dart';
+import '../ui/features/settings/views/ai_view.dart';
+import '../ui/features/settings/views/backup_view.dart';
+import '../ui/features/settings/views/catalog_view.dart';
+import '../ui/features/settings/views/settings_hub_view.dart';
 import '../ui/features/shell/views/app_shell.dart';
 
 abstract final class Routes {
   static const home = '/';
+
+  /// Layar Masuk (login wajib, board Akun 01). Di luar shell: tanpa bottom bar.
+  static const login = '/login';
   static const discover = '/discover';
 
   /// Detail buku katalog; `extra` = `CatalogBook` (kepala layar tanpa nunggu
@@ -27,6 +36,10 @@ abstract final class Routes {
   static String catalogBook(CatalogBook b) =>
       '/discover/book/${b.sourceId}/${Uri.encodeComponent(b.externalId)}';
   static const settings = '/settings';
+  static const settingsAccount = '/settings/account';
+  static const settingsAi = '/settings/ai';
+  static const settingsBackup = '/settings/backup';
+  static const settingsCatalog = '/settings/catalog';
   static String chat(int bookId) => '/reader/$bookId/chat';
   static String chatSource(ChatSourceRef source) =>
       '${chat(source.bookId)}/source/${source.sessionId}/${source.turnId}/${source.attempt}/${Uri.encodeComponent(source.sourceId)}';
@@ -42,8 +55,19 @@ abstract final class Routes {
 
 // Sheet artinya, Aa, dan Daftar isi bukan route: pakai showModalBottomSheet.
 final routerProvider = Provider<GoRouter>((ref) {
+  // Status sesi berubah → router ngecek ulang redirect.
+  final authChanges = ValueNotifier(0);
+  ref.listen(authControllerProvider, (_, _) => authChanges.value++);
+  ref.onDispose(authChanges.dispose);
+
   final router = GoRouter(
+    refreshListenable: authChanges,
+    redirect: (context, state) => authRedirect(
+      ref.read(authControllerProvider).value?.status,
+      state.matchedLocation,
+    ),
     routes: [
+      GoRoute(path: Routes.login, builder: (_, _) => const LoginView()),
       // Tab Rak · Cari buku · Atur, urutan = LumaTab.values.
       StatefulShellRoute.indexedStack(
         builder: (_, _, shell) => AppShell(shell: shell),
@@ -68,7 +92,22 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: Routes.settings,
-                builder: (_, _) => const SettingsView(),
+                builder: (_, _) => const SettingsHubView(),
+                routes: [
+                  GoRoute(
+                    path: 'account',
+                    builder: (_, _) => const AccountView(),
+                  ),
+                  GoRoute(path: 'ai', builder: (_, _) => const AiView()),
+                  GoRoute(
+                    path: 'backup',
+                    builder: (_, _) => const BackupView(),
+                  ),
+                  GoRoute(
+                    path: 'catalog',
+                    builder: (_, _) => const CatalogView(),
+                  ),
+                ],
               ),
             ],
           ),
@@ -299,4 +338,14 @@ class _InvalidChatRoute extends StatelessWidget {
       ),
     ),
   );
+}
+
+/// Login wajib (docs/backend.md, Sesi & akun). Status belum kebaca / gagal
+/// dibaca = gak redirect (app gak kekunci karena secure storage error). Sesi
+/// habis boleh buka layar Masuk ("Login lagi" dari banner).
+String? authRedirect(AuthStatus? status, String location) {
+  final atLogin = location == Routes.login;
+  if (status == AuthStatus.signedOut) return atLogin ? null : Routes.login;
+  if (status == AuthStatus.signedIn && atLogin) return Routes.home;
+  return null;
 }

@@ -9,6 +9,7 @@ import 'package:luma/data/repositories/book_repository.dart';
 import 'package:luma/data/services/file_storage.dart';
 import 'package:luma/domain/models/book.dart';
 import 'package:luma/ui/core/theme/stabilo_theme.dart';
+import 'package:luma/ui/core/theme/stabilo_tokens.dart';
 import 'package:luma/ui/core/widgets/book_cover.dart';
 import 'package:luma/ui/core/widgets/buttons.dart';
 import 'package:luma/ui/core/widgets/switch.dart';
@@ -141,6 +142,9 @@ void main() {
     await tester.tap(simpan);
     await tester.pump();
     expect(repo.saved.single, (title: 'Walden', author: null, cover: false));
+    // Toast di overlay root (biar gak ketutup sheet Info buku), lalu ilang.
+    expect(find.text('Sip, judul & penulisnya udah diganti'), findsOneWidget);
+    await tester.pump(Motion.toast);
   });
 }
 

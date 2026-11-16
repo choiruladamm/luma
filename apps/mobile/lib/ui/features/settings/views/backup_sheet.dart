@@ -110,17 +110,20 @@ class BackupProgressSheet extends ConsumerWidget {
               ],
             ),
             Text(
-              context.l10n.backupTheShareMenuOpensNextSave,
+              run.cloud
+                  ? context.l10n.backupUploadingToYourAccount
+                  : context.l10n.backupTheShareMenuOpensNextSave,
               style: StabiloType.caption.copyWith(
                 fontWeight: FontWeight.w400,
                 height: 1.45,
                 color: c.ink2,
               ),
             ),
-            AppButton.secondary(
-              label: context.l10n.meaningCancel,
-              onPressed: ref.read(backupControllerProvider.notifier).cancel,
-            ),
+            if (!run.cloud)
+              AppButton.secondary(
+                label: context.l10n.meaningCancel,
+                onPressed: ref.read(backupControllerProvider.notifier).cancel,
+              ),
           ],
         ),
       ),

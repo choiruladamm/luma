@@ -200,6 +200,23 @@ void main() {
     await expectLater(service.checkKey('sk'), fails(AiError.network));
   });
 
+  test('a 401 reports the rejected key so the subsidy key rotates', () async {
+    final rejected = <String>[];
+    service = OpenRouterService(
+      Dio(BaseOptions(baseUrl: 'https://openrouter.ai/api/v1'))
+        ..httpClientAdapter = adapter,
+      rejected.add,
+    );
+
+    adapter.replies.add(json({'error': 'nope'}, 401));
+    await expectLater(explain(key: 'sk-subsidi'), throwsA(isA<AiException>()));
+    expect(rejected, ['sk-subsidi']);
+
+    adapter.replies.add(json({'error': 'no credit'}, 402));
+    await expectLater(explain(key: 'sk-subsidi'), throwsA(isA<AiException>()));
+    expect(rejected, ['sk-subsidi']);
+  });
+
   group('SseDecoder', () {
     test('lines cut at chunk boundaries come out whole', () {
       final d = SseDecoder();

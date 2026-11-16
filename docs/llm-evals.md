@@ -49,7 +49,7 @@ Okt 2026. Set 50 potong #41, prompt v3, jalur streaming, penilaian buta (A/B/C d
 
 - **GLM dicoret dari default**: salah ketik paling banyak, ada arti yang kebalik.
 - **Qwen** paling luwes, cepat, murah, dan disukai di bab awal Enchiridion (mis. "dalam kendali kita"), tapi beberapa kali salah fakta dengan yakin (Caius = Caligula, Antoninus "guru" Marcus), parafrase bebas, kata Inggris nyelip.
-- **DeepSeek jadi default**: paling setia ke teks dan paling hati-hati soal fakta (Caius: "kemungkinan Julius Caesar atau Caligula"), makna paling kaya. Kelemahannya sedikit kaku: ditambal di prompt v4 (gaya luwes, padanan istilah yang dikenal pembaca, istilah populer seperti dikotomi kendali / amor fati dengan label jujur, satu contoh gaya). v4 dipasang tanpa evaluasi ulang atas keputusan user; dinilai lewat dogfooding (#29), ganti model tetap bisa dari Pengaturan.
+- **DeepSeek jadi default** (saat itu; default belakangan pindah ke GLM, lihat `docs/llm.md`): paling setia ke teks dan paling hati-hati soal fakta (Caius: "kemungkinan Julius Caesar atau Caligula"), makna paling kaya. Kelemahannya sedikit kaku: ditambal di prompt v4 (gaya luwes, padanan istilah yang dikenal pembaca, istilah populer seperti dikotomi kendali / amor fati dengan label jujur, satu contoh gaya). v4 dipasang tanpa evaluasi ulang atas keputusan user; dinilai lewat dogfooding (#29), ganti model tetap bisa dari Pengaturan.
 - Biaya per tap sebenarnya beda dari tabel harga: GLM bukan yang termurah karena reasoning wajib.
 - Glosarium per buku (mis. "power" → "kendali", "opinion" → "penilaian") masih ditunda; aturan v4 nanggung sebagian.
 
@@ -73,5 +73,32 @@ Okt 2026. Pertanyaan utama: bisa gak model balikin rentang kalimat (`K1-K3`) yan
 - **v1 → v2**: v1 ngarang isi bab dari judul yang cuma angka romawi (Nyambung ke "Bab VIII" dengan isi yang salah), gak pernah nulis `LANJUT`, Meditations dipecah per kalimat, istilah kadang nyalin kata Inggris. v2: daftar sejenis = 1 bagian, `LANJUT` eksplisit, `B<n>` cuma kalau kenal isinya, kata persis wajib dari terjemahan. Hasilnya `LANJUT` 12/12 di grup yang punya lanjutan, Nyambung ke bab lain jarang (2/24) dan masuk akal.
 - **v2 → v3**: Praktek dipaksain ke novel (5/6 run) → v3 batasin ke teks nasihat / ajaran / argumen. Turun jadi 3/6, belum beres; dinilai lewat dogfooding (#29).
 - V tetep 2 bagian (penilaian vs kejadian, lalu tiga tahap menyalahkan). Bisa diterima: tampilan 2 bagian di desain (nomor, tanpa chip).
-- GLM lambat buat Bedahin (reasoning wajib, 40–66 dtk teks panjang) dan bagiannya lebih gampang kepecah. DeepSeek tetep default.
+- GLM lambat buat Bedahin (reasoning wajib, 40–66 dtk teks panjang) dan bagiannya lebih gampang kepecah. DeepSeek tetep default saat itu (belakangan default pindah ke GLM, lihat `docs/llm.md`).
 
+
+## Pembekuan ulang guard (13 November 2026)
+
+Guard hash evaluasi chat (`test/fixtures/book_chat_heldout_protocol_v1.json`, `book_chat_validation2_protocol.json`, `book_chat_validation3_protocol.json`, dan hash `pubspec.lock` ternormalisasi di `test/l10n_test.dart`) dibekukan ulang untuk dua file. Prompt, retrieval, parser, dan pemilihan model gak berubah:
+
+- `lib/data/services/openrouter_service.dart` (#200): constructor dapat callback opsional `onKeyRejected` + interceptor Dio yang melapor 401 (rotasi key subsidi), dan provider memakai `AiKeyRepository`. Request/response ke OpenRouter tetap sama.
+- `pubspec.lock` (#211): tambah `url_launcher` (link Kebijakan privasi di layar Masuk). Dependency runtime AI gak berubah.
+- `pubspec.lock` (#211, 14 November 2026): tambah `google_sign_in` 7.2.0 + paket platformnya (`_android`, `_ios`, `_web`, `_platform_interface`, `google_identity_services_web`) buat login Google. Hash `pubspec.lock` di `l10n_test.dart` dan di tiga protocol (heldout, validation2, validation3) dibekukan ulang; dependency runtime AI gak berubah.
+- `lib/domain/luma_markdown.dart` (14 November 2026, protocol heldout): cuma komentar rujukan docs yang dibenerin (`docs/ideas/import-formats.md` → `docs/import-formats.md`), parser gak berubah.
+
+File hasil evaluasi lama (`*_result*.json`) sengaja gak disentuh: isinya catatan historis dari versi saat evaluasi dijalankan. Menambah dependency berikutnya butuh pembekuan ulang yang sama dan baris baru di sini.
+
+## Riwayat Ngobrolin buku
+
+Iterasi chat yang membentuk perilaku di [llm.md](llm.md#ngobrolin-buku). Angka tiap iterasi sudah diganti yang sekarang di sana; di sini cuma apa yang berubah dan kenapa.
+
+- **Spike (#113, #114):** kontrak v1 (`answered | partial | not_found`, maks 2 klaim berisi fakta buku saja, history cuma jawaban `answered`, rewrite + selector terpisah). Hybrid dense + BM25 + RRF dan selector terbukti pada Large; Qwen hybrid dan performa device gak dibuktikan. Manifest spike diarsipkan di `test/fixtures/book_chat_spike113/`, guard hash di bagian Pembekuan ulang guard.
+- **Retrieval dan streaming produksi (#117, #134):** port pipeline spike ke aplikasi, index embedding permanen di Drift supaya restart gak embedding ulang, fallback model embedding per model-space.
+- **Pacing dan preview (#123, #141):** teks chat memakai `Pacer` Artinya; preview diproyeksikan dari JSON streaming supaya jawaban kebaca selagi ditulis, sitasi dicabut kalau gagal.
+- **Kontrak v2 (#137):** jawaban jadi paragraf natural bertipe (`book | interpretation | external | conversation`) dengan status `clarify` / `off_topic`, supaya interpretasi, kritik, dan pengetahuan luar boleh tanpa dipaksa jadi sitasi buku. v1 tetap terbaca.
+- **Bentuk jawaban (prompt v4):** `layout` (paragraph / item / bullet / quote) + inline tebal / miring, supaya jawaban panjang gampang dipindai; nilai gak dikenal jatuh ke `paragraph`.
+- **Penelusuran adaptif (#138):** rewrite + strategi (specific / crossChapter / global / correction / offTopic) dalam satu request, `missing_queries` dari selector, mode global dengan catatan kumulatif. Dulu dibatasi 7 completion, 3 putaran, 3 batch, 150 detik per kiriman.
+- **Pembacaan mandiri buku (#143):** planner membaca TOC asli (`chapters.section`, nomor bab) dan memilih baca bab / seluruh buku / pencarian; ledger token + waktu per kiriman menggantikan batas tetap (completion, putaran, batch); batch paralel, perbaikan otomatis jawaban invalid (maks 2), prompt v5. Alasan: pertanyaan "bab III" dan "ringkas buku ini" gak terjawab oleh pencarian konsep. Hasil run: `test/fixtures/book_chat_agent_<tag>.json` (`baseline` = pipeline sebelum #143, `v1` = hasil pertama).
+- **Progres yang ngomong (#150):** label bab yang lagi dibaca, catatan sementara, Jawab sekarang (`stopReason: user`), index embedding 3 batch bersamaan.
+- **Cache catatan bab (#151) dan front/back matter:** catatan `global` question-agnostic disimpan per bab; `skip_ids` dari planner mengeluarkan Endnotes / Imprint; pilihan selector di-union lintas putaran; prompt v6.
+- **Langkah AI:** jejak per attempt (rencana, baca, cari, berhenti, perbaikan) disimpan di `chat_turns.steps` dan ditampilkan sebagai baris status di atas jawaban.
+- **Redesign (#146):** viewport penuh, header overlay, composer kapsul, sheet sumber, reader kunjungan, riwayat per sesi, Tanyain ini.

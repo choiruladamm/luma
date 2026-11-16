@@ -6,7 +6,7 @@ import '../../domain/chat_exploration.dart';
 import '../../domain/models/book_chat.dart';
 import '../database/app_database.dart';
 
-/// Catatan per bab untuk pertanyaan seluruh buku (#151). Kunci: buku +
+/// Catatan per bab untuk pertanyaan seluruh buku. Kunci: buku +
 /// revision + bab + manifest window bab + policy. Hanya ditulis setelah bab
 /// itu selesai dibaca dan tervalidasi; dibaca saat send eksplisit berikutnya.
 class ChatNotesRepository {

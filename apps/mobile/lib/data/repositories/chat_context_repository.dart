@@ -18,6 +18,7 @@ import '../../domain/models/book_chat.dart';
 import '../database/app_database.dart';
 import '../services/api_key_store.dart';
 import '../services/openrouter_service.dart';
+import 'ai_key_repository.dart';
 import 'chat_repository.dart';
 import 'chat_index_repository.dart';
 import 'chat_notes_repository.dart';
@@ -68,7 +69,7 @@ class ChatContextRepository {
     if (cancel?.isCancelled ?? false) throw cancel!.cancelError!;
   }
 
-  /// For #118 first-send/retry: capture this model when creating the turn.
+  /// For first send and retry: capture this model when creating the turn.
   Future<String> model() async {
     final row = await (_db.select(
       _db.settings,
@@ -295,7 +296,7 @@ class ChatContextRepository {
       final saved = input.turn.exploration == null
           ? null
           : ChatExploration.parse(input.turn.exploration!);
-      // Urutan [ids] = urutan baca (bab dari cache di depan, #151).
+      // Urutan [ids] = urutan baca (bab dari cache di depan).
       List<ChatSource> scopedWindows(List<int> ids) {
         final scoped = [
           for (final id in ids)
@@ -381,7 +382,7 @@ class ChatContextRepository {
         ...ids.take(4).map(labelOfId),
         if (ids.length > 4) '+${ids.length - 4} lagi',
       ].join(', ');
-      // Langkah AI (#153): dicatat tanpa request tambahan.
+      // Langkah AI: dicatat tanpa request tambahan.
       if (plan.needsClarification) {
         onStep?.call(ChatStep.plan('tanya balik dulu'));
       } else if (plan.strategy == ChatSearchStrategy.offTopic) {
@@ -1534,7 +1535,7 @@ final chatContextRepositoryProvider = Provider<ChatContextRepository>((ref) {
     ref.watch(appDatabaseProvider),
     ref.watch(chatRepositoryProvider),
     ref.watch(openRouterServiceProvider),
-    ref.watch(apiKeyStoreProvider),
+    ref.watch(aiKeyRepositoryProvider),
   );
   ref.onDispose(repo.dispose);
   return repo;

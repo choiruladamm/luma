@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../data/repositories/ai_breakdowns_repository.dart';
+import '../../../../data/repositories/ai_key_repository.dart';
 import '../../../../data/repositories/settings_repository.dart';
-import '../../../../data/services/api_key_store.dart';
 import '../../../../data/services/openrouter_service.dart';
 import '../../../../domain/breakdown_prompt.dart';
 import '../../../../domain/models/ai_reply.dart';
@@ -67,7 +67,7 @@ class BreakdownStream extends Notifier<BreakdownState> {
     // Ambil semua sebelum await.
     final repo = ref.read(aiBreakdownsRepositoryProvider);
     final ai = ref.read(openRouterServiceProvider);
-    final keys = ref.read(apiKeyStoreProvider);
+    final keys = ref.read(aiKeyRepositoryProvider);
     final settings = ref.read(settingsRepositoryProvider);
 
     void emit(BreakdownState next) {
@@ -205,7 +205,7 @@ final breakdownSectionsProvider = FutureProvider.autoDispose
 /// Kartu Nyambung ke: dari grup mana, ke bab ke berapa (null = lanjutan).
 typedef PeekKey = ({GroupRef from, int? chapter});
 
-/// Isi sheet intip (#65). Null = tujuannya gak ada, kartu jadi teks biasa.
+/// Isi sheet intip. Null = tujuannya gak ada, kartu jadi teks biasa.
 final breakdownPeekProvider = FutureProvider.autoDispose
     .family<BreakdownPeek?, PeekKey>(
       (ref, key) =>

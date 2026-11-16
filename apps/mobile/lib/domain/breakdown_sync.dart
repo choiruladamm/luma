@@ -1,4 +1,4 @@
-/// Blok aktif di penjelasan Bedahin (#64): yang lagi lewat garis baca.
+/// Blok aktif di penjelasan Bedahin: yang lagi lewat garis baca.
 ///
 /// [tops] = posisi atas tiap blok (bagian 1..n, lalu Tokoh & istilah dan
 /// Praktekinnya gini kalau ada), relatif ke atas area scroll, urut. Pindah ke

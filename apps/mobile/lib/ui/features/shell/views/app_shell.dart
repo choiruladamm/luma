@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/stabilo_tokens.dart';
 import '../../../core/widgets/nav_bar.dart';
+import '../../../core/widgets/toast.dart';
 import '../../discover/view_models/download_queue_view_model.dart';
 import '../../discover/views/download_chip.dart';
 import '../view_models/tab_reselect.dart';
@@ -32,6 +33,7 @@ class AppShell extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    navBarRoute = ModalRoute.of(context);
     final media = MediaQuery.of(context);
     final keyboard = media.viewInsets.bottom > 0;
     final bottom = math.max(Layout.navBottom, media.padding.bottom);

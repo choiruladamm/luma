@@ -17,8 +17,7 @@ import 'catalog_cover.dart';
 import '../view_models/download_queue_view_model.dart';
 
 /// Chip "Ngunduh N buku · 43%" 12 di atas bar (board Komponen · NavBar).
-/// Ilang kalau gak ada yang jalan / antri. Tap = sheet Unduhan (#174; sementara
-/// daftar polos).
+/// Ilang kalau gak ada yang jalan / antri. Tap = sheet Unduhan.
 class DownloadChip extends ConsumerWidget {
   const DownloadChip({super.key});
 

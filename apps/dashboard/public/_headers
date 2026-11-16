@@ -1,0 +1,8 @@
+# Static assets (the SPA) don't pass through the Worker, so their headers are set here.
+/*
+  Content-Security-Policy: default-src 'self'; frame-ancestors 'none'
+  X-Content-Type-Options: nosniff
+
+# Vite puts a content hash in every file name under /assets: safe to cache for a year.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable

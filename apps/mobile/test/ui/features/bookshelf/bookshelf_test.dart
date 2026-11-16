@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:luma/data/repositories/book_repository.dart';
 import 'package:luma/data/repositories/settings_repository.dart';
+import 'package:luma/data/repositories/sync_repository.dart';
 import 'package:luma/data/services/file_storage.dart';
 import 'package:luma/data/services/backup_service.dart';
 import 'package:luma/domain/models/backup.dart';
@@ -29,7 +30,7 @@ import 'package:luma/ui/features/bookshelf/views/book_edit_sheet.dart';
 import 'package:luma/ui/features/bookshelf/views/book_info_sheet.dart';
 import 'package:luma/ui/features/reader/view_models/reader_view_model.dart';
 import 'package:luma/ui/features/reader/views/reader_view.dart';
-import 'package:luma/ui/features/settings/views/settings_view.dart';
+import 'package:luma/ui/features/settings/views/settings_hub_view.dart';
 
 import '../../../fakes.dart';
 import '../discover/discover_view_test.dart' show FakeSource;
@@ -79,6 +80,7 @@ class StuckBackup extends Fake implements BackupService {
 
   @override
   Future<BackupFile?> export({
+    bool snapshotOnly = false,
     DateTime? now,
     void Function(String name, BackupManifest manifest)? onStart,
     void Function(BackupStage stage, double fraction)? onProgress,
@@ -150,6 +152,46 @@ void main() {
     shelf.add(books);
     await tester.pump();
     await tester.pump(); // sort + view come from settings, one frame later
+  }
+
+  /// Progres download sync, kayak yang diisi `SyncRepository`.
+  void syncing(WidgetTester tester, SyncDownloads? progress) =>
+      ProviderScope.containerOf(tester.element(find.text('Rak buku lo')))
+          .read(syncDownloadsProvider.notifier)
+          .set(progress);
+
+  for (final b in Brightness.values) {
+    testWidgets('sync banner: shows while books come in, then goes ($b)', (
+      tester,
+    ) async {
+      await pump(tester, [book(1, 'Emma', opened: true)], brightness: b);
+      expect(find.textContaining('Nyinkronin'), findsNothing);
+
+      syncing(tester, (done: 2, total: 12));
+      await tester.pump();
+      expect(find.text('Nyinkronin 3/12 buku'), findsOneWidget);
+      expect(
+        find.text('Buku dari HP lain lagi diunduh. Sambil baca juga bisa.'),
+        findsOneWidget,
+      );
+      expect(find.text('Lanjut baca yuk →'), findsOneWidget); // gak ketutup
+      expect(tester.takeException(), isNull);
+
+      syncing(tester, null);
+      await tester.pump();
+      expect(find.textContaining('Nyinkronin'), findsNothing);
+    });
+
+    testWidgets('sync banner on an empty shelf: a new phone ($b)', (
+      tester,
+    ) async {
+      await pump(tester, [], brightness: b);
+      syncing(tester, (done: 0, total: 3));
+      await tester.pump();
+      expect(find.text('Nyinkronin 1/3 buku'), findsOneWidget);
+      expect(find.text('KALIMAT PEMBUKA PALING TERKENAL'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
   }
 
   for (final b in Brightness.values) {
@@ -245,7 +287,7 @@ void main() {
     expect(find.byType(LumaNavBar), findsOneWidget);
     await tester.tap(find.bySemanticsLabel('Atur'));
     await tester.pumpAndSettle();
-    expect(find.byType(SettingsView), findsOneWidget);
+    expect(find.byType(SettingsHubView), findsOneWidget);
     // Tab, bukan push: gak ada tombol balik.
     expect(find.bySemanticsLabel('Balik'), findsNothing);
   });

@@ -3,7 +3,6 @@
 > Nama app: **Luma**
 > Desain: **Stabilo** ([design.md](design.md))
 > Status: fitur inti tersedia; dogfooding MVP (#29) dan gate integrasi chat (#124) masih terbuka
-> Terakhir diupdate: 8 November 2026
 
 > **Untuk Claude Code:** folder `docs/` adalah sumber kebenaran untuk keputusan produk, data model, dan alur. File inti ada di tabel di bawah. `docs/ideas/` adalah rencana iterasi berikutnya dan ide kasar, **jangan dikerjakan** kecuali diminta.
 
@@ -13,13 +12,15 @@
 | [data-model.md](data-model.md) | Tabel Drift, versi schema & migrasi, kunci settings |
 | [grouping.md](grouping.md) | Pengelompokan paragraf jadi grup tap/AI |
 | [architecture.md](architecture.md) | Routing, provider Riverpod, alur import & baca |
-| [i18n.md](i18n.md) | Antarmuka Indonesia / English, implementasi dan batas validasi; AI tetap Indonesia (#184) |
+| [i18n.md](i18n.md) | Antarmuka Indonesia / English; AI tetap Indonesia |
 | [llm.md](llm.md) | OpenRouter, model, aturan implementasi, prompt, Bedahin |
 | [llm-evals.md](llm-evals.md) | Hasil spike & evaluasi (#34, #41, #28, #61) |
 | [backup.md](backup.md) | Backup & restore |
 | [import-formats.md](import-formats.md) | Import Luma Markdown (foto buku fisik) & PDF lewat Markdown |
 | [discover.md](discover.md) | Cari & download buku public domain (Gutenberg OPDS, interface BookSource) |
 | [book-search.md](book-search.md) | Cari kata di dalam buku (index FTS5 paragraf, aturan pencarian, alur lompat) |
+| [backend.md](backend.md) | Backend Cloudflare (`apps/backend`): auth, kuota AI subsidi + BYOK, backup cloud, sync |
+| [dashboard.md](dashboard.md) | Dashboard admin web (`apps/dashboard`): user, ban, undangan, ringkasan |
 | [ideas/recap.md](ideas/recap.md) | Iterasi 2: Recap bacaan |
 | [ideas/raw.md](ideas/raw.md) | Catatan & ide raw dari dogfooding |
 
@@ -82,10 +83,10 @@ Semua item di sini dan di bagian "Ditunda" tiap file docs punya issue. Label sta
 - **Recap bacaan**: terjemahan + makna semua yang sudah dibaca, plus overview "sejauh ini" → **Iterasi 2, lihat [recap.md](ideas/recap.md)** ([#104](https://github.com/choiruladamm/luma/issues/104))
 - Import **Luma Markdown** + PDF lewat Markdown sudah jalan setelah MVP → lihat [import-formats.md](import-formats.md). Import PDF langsung di app direncanakan ([#83](https://github.com/choiruladamm/luma/issues/83)). Format lain (TXT, HTML, MOBI) belum ([#100](https://github.com/choiruladamm/luma/issues/100)).
 - "Open in" dari app Files / share sheet ([#105](https://github.com/choiruladamm/luma/issues/105))
-- Backend proxy untuk API key, wajib kalau app dirilis ke orang lain ([#106](https://github.com/choiruladamm/luma/issues/106))
+- Backend Cloudflare: akun, kuota AI subsidi + BYOK, backup cloud, sync ([#197](https://github.com/choiruladamm/luma/issues/197), [backend.md](backend.md)); proxy API key ditunda ([#106](https://github.com/choiruladamm/luma/issues/106))
 - Highlight, catatan, bookmark ([#107](https://github.com/choiruladamm/luma/issues/107))
 - Pilihan mode penjelasan: ringkas / detail / istilah sulit ([#108](https://github.com/choiruladamm/luma/issues/108))
-- Sinkronisasi antar device ([#109](https://github.com/choiruladamm/luma/issues/109))
+- Sinkronisasi antar device lewat backend ([#109](https://github.com/choiruladamm/luma/issues/109), [backend.md](backend.md))
 
 ---
 

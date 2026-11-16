@@ -429,7 +429,7 @@ class ImportRepository {
     }
   }
 
-  /// Import satu bab Luma Markdown (docs/ideas/import-formats.md, Logika
+  /// Import satu bab Luma Markdown (docs/import-formats.md, Logika
   /// import). Buku tujuan: [bookId] kalau ada, kalau enggak yang `book_key`-nya
   /// = [bookKey], kalau belum ada dibikin baru dengan [bookTitle] / [author].
   /// [chapter] null = bab terakhir + 1.

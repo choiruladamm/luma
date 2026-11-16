@@ -1,0 +1,98 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // Design & security: docs/dashboard.md
+  "name": "luma-admin",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-11-10",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true,
+    "logs": { "enabled": true, "head_sampling_rate": 1 }
+  },
+  // SPA: static files and an index.html fallback; only /api/* reaches the Worker.
+  // No "directory": the Vite plugin points it at the client build output.
+  "assets": {
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  },
+  // Bindings aren't inherited across envs: each env lists them all. D1 = the backend database of the same env.
+  // The only way in: the custom domain behind Cloudflare Access (no workers.dev / preview URLs).
+  "env": {
+    "dev": {
+      "name": "luma-admin-dev",
+      "routes": [{ "pattern": "luma-admin-dev.chrl.cloud", "custom_domain": true }],
+      "workers_dev": false,
+      "preview_urls": false,
+      "vars": {
+        "ENV": "dev",
+        // Comma-separated admin emails. Empty = everyone rejected (fail closed).
+        // Must be a Google account already in this env's D1: the dashboard can't create accounts.
+        "ADMIN_EMAILS": "work.adamm@gmail.com",
+        "BETTER_AUTH_URL": "https://luma-admin-dev.chrl.cloud",
+        // Google OAuth web client ID (public), same as the first entry of the backend GOOGLE_CLIENT_IDS.
+        "GOOGLE_CLIENT_ID": "366577823040-vhr2h7toc53pb891v0qoc1m62pps2v41.apps.googleusercontent.com"
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "luma-dev",
+          "database_id": "f37e0e34-a9fe-4617-a077-770cb59bd386",
+          "migrations_dir": "../backend/migrations"
+        }
+      ],
+      "ratelimits": [
+        { "name": "RATE_LIMITER", "namespace_id": "1101", "simple": { "limit": 60, "period": 60 } },
+        { "name": "ADMIN_RATE_LIMITER", "namespace_id": "1102", "simple": { "limit": 30, "period": 60 } }
+      ]
+    },
+    // Local only (make dashboard-e2e): Playwright against `vite dev` with its own D1 state
+    // (.wrangler/e2e-state) and test secrets (.dev.vars.e2e). Never deployed.
+    "e2e": {
+      "name": "luma-admin-e2e",
+      "workers_dev": false,
+      "preview_urls": false,
+      "vars": {
+        "ENV": "e2e",
+        "ADMIN_EMAILS": "admin@e2e.local",
+        "BETTER_AUTH_URL": "http://localhost:5174",
+        "GOOGLE_CLIENT_ID": "366577823040-vhr2h7toc53pb891v0qoc1m62pps2v41.apps.googleusercontent.com"
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "luma-e2e",
+          "database_id": "00000000-0000-4000-8000-0000000000e2",
+          "migrations_dir": "../backend/migrations"
+        }
+      ],
+      "ratelimits": [
+        { "name": "RATE_LIMITER", "namespace_id": "9101", "simple": { "limit": 10000, "period": 60 } },
+        { "name": "ADMIN_RATE_LIMITER", "namespace_id": "9102", "simple": { "limit": 10000, "period": 60 } }
+      ]
+    },
+    "prod": {
+      "name": "luma-admin",
+      "routes": [{ "pattern": "luma-admin.chrl.cloud", "custom_domain": true }],
+      "workers_dev": false,
+      "preview_urls": false,
+      "vars": {
+        "ENV": "prod",
+        "ADMIN_EMAILS": "work.adamm@gmail.com",
+        "BETTER_AUTH_URL": "https://luma-admin.chrl.cloud",
+        "GOOGLE_CLIENT_ID": "366577823040-vhr2h7toc53pb891v0qoc1m62pps2v41.apps.googleusercontent.com"
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "luma-prod",
+          "database_id": "efe82b84-66d5-437f-b00b-1b287a2f6dc0",
+          "migrations_dir": "../backend/migrations"
+        }
+      ],
+      "ratelimits": [
+        { "name": "RATE_LIMITER", "namespace_id": "2101", "simple": { "limit": 60, "period": 60 } },
+        { "name": "ADMIN_RATE_LIMITER", "namespace_id": "2102", "simple": { "limit": 30, "period": 60 } }
+      ]
+    }
+  }
+}

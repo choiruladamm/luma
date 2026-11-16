@@ -1,0 +1,4 @@
+{
+  "request": { "method": "DELETE", "path": "/v1/me", "headers": { "authorization": "Bearer <token>" } },
+  "response": { "status": 200, "body": { "status": "deleted" } }
+}

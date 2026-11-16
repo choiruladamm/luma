@@ -71,9 +71,16 @@ class RestoreService {
     return row.read<int>('n');
   }
 
-  Future<RestorePreview> inspect(File zip) async {
+  /// [fileName] = nama yang ditampilin (default nama zip). [fill] kepanggil
+  /// abis DB-nya lolos cek, buat ngelengkapin `books/` & `covers/` di folder
+  /// ekstrak (restore cloud: zip-nya cuma berisi DB).
+  Future<RestorePreview> inspect(
+    File zip, {
+    String? fileName,
+    Future<void> Function(Directory dir, AppDatabase snapshot)? fill,
+  }) async {
     final dir = await Directory.systemTemp.createTemp('luma-restore-');
-    final fileName = p.basename(zip.path);
+    final name = fileName ?? p.basename(zip.path);
     try {
       try {
         await Isolate.run(() => _extract(zip.path, dir.path));
@@ -105,11 +112,15 @@ class RestoreService {
         // dibangun ulang di salinan ini sebelum dipasang.
         await check.rebuildBookSearchIndex();
       } catch (_) {
+        await check.close();
         throw RestoreException(RestoreError.corrupt, manifest: manifest);
+      }
+      try {
+        await fill?.call(dir, check);
       } finally {
         await check.close();
       }
-      return RestorePreview(dir, fileName, manifest);
+      return RestorePreview(dir, name, manifest);
     } catch (_) {
       if (await dir.exists()) await dir.delete(recursive: true);
       rethrow;

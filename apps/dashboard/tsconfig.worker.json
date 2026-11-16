@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "es2024",
+    "lib": ["es2024"],
+    "module": "es2022",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noEmit": true,
+    // Config files import local .ts files with the extension (Vite native config loader).
+    "allowImportingTsExtensions": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": false,
+    // Imported backend code resolves drizzle-orm from the backend's node_modules: point the
+    // types at the dashboard copy so SQL/column classes from both copies match.
+    "paths": { "drizzle-orm": ["./node_modules/drizzle-orm"], "drizzle-orm/*": ["./node_modules/drizzle-orm/*"] },
+    "types": ["./worker-configuration.d.ts", "@cloudflare/vitest-plugin/types"]
+  },
+  "include": ["worker", "test/unit", "test/integration", "test/helpers", "test/setup.ts", "test/env.d.ts", "worker-configuration.d.ts", "vitest.config.ts", "vite.config.ts", "backend-vars.ts"]
+}

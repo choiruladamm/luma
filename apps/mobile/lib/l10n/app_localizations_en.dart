@@ -10,13 +10,6 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
-  String get interfaceLanguage => 'Interface language';
-
-  @override
-  String get interfaceLanguageNote =>
-      'This changes the interface language. Translations and AI responses stay in Indonesian.';
-
-  @override
   String get languageSaveFailed => 'Couldn’t save the language. Try again.';
 
   @override
@@ -497,7 +490,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aaDark => 'Dark';
 
   @override
-  String get aaSystem => 'System';
+  String get aaSystem => 'Follow system';
 
   @override
   String get aaScreenDisplay => 'Screen display';
@@ -578,17 +571,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsAddKey => 'Add key';
 
   @override
-  String get settingsDeleteTranslationCache => 'Delete translation cache?';
-
-  @override
-  String get settingsAllSavedTranslationsWillBeDeleted =>
-      'All saved translations will be deleted. Opening those paragraphs again will request AI and use credit again. Your book chats will stay.';
-
-  @override
-  String get settingsYourCatalogIsAlreadyUpTo =>
-      'Your catalog is already up to date';
-
-  @override
   String get settingsBack => 'Back';
 
   @override
@@ -601,21 +583,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsAiModel => 'AI model';
 
   @override
-  String get settingsChargesComeFromYourOpenrouterAccount =>
-      'Charges come from your OpenRouter account credit.';
-
-  @override
   String get settingsBackupRestore => 'Backup & restore';
-
-  @override
-  String get settingsBookCatalog => 'Book catalog';
-
-  @override
-  String get settingsAroundProjectGutenbergBooksToSearch =>
-      'Around 62,000 Project Gutenberg books to search offline. Updated weekly.';
-
-  @override
-  String get settingsStorage => 'Storage';
 
   @override
   String get settingsStoredSecurelyOnYourDeviceKeychain =>
@@ -630,18 +598,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'OpenRouter rejected the key, so it wasn’t saved. Check it and try again.';
 
   @override
-  String get settingsHangOnChecking => 'Hang on, checking...';
-
-  @override
   String get settingsYourKeyWorks => 'Your key works';
-
-  @override
-  String get settingsOpenrouterRejectedYourKey =>
-      'OpenRouter rejected your key';
-
-  @override
-  String get settingsStoredSecurelyOnYourDevice =>
-      'Stored securely on your device';
 
   @override
   String get settingsIncludesBooksReadingProgressTranslationsAnd =>
@@ -673,83 +630,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsBackUpNow => 'Back up now';
 
   @override
-  String get settingsRestoreFromBackup => 'Restore from backup';
-
-  @override
-  String get settingsDefaultMostAccurate => 'Default · most accurate';
-
-  @override
-  String get settingsTranslationCache => 'Translation cache';
-
-  @override
-  String settingsParagraphs(int p0, Object p1) {
-    final intl.NumberFormat p0NumberFormat = intl.NumberFormat.decimalPattern(
-      localeName,
-    );
-    final String p0String = p0NumberFormat.format(p0);
-
-    String _temp0 = intl.Intl.pluralLogic(
-      p0,
-      locale: localeName,
-      other: '$p0String paragraphs',
-      one: '$p0String paragraph',
-    );
-    return '$_temp0 · $p1';
-  }
-
-  @override
-  String get settingsClearCache => 'Clear cache';
-
-  @override
-  String get settingsNotDownloadedMb => 'Not downloaded · 5.6 MB';
-
-  @override
-  String settingsUpdated(Object p0) {
-    return 'Updated $p0 · ';
-  }
-
-  @override
-  String settingsBooks(Object p0, int p1) {
-    final intl.NumberFormat p1NumberFormat = intl.NumberFormat.decimalPattern(
-      localeName,
-    );
-    final String p1String = p1NumberFormat.format(p1);
-
-    String _temp0 = intl.Intl.pluralLogic(
-      p1,
-      locale: localeName,
-      other: '$p1String books',
-      one: '$p1String book',
-    );
-    return '$p0$_temp0';
-  }
-
-  @override
-  String get settingsCheckingForUpdates => 'Checking for updates…';
-
-  @override
-  String get settingsDownloading => 'Downloading…';
-
-  @override
-  String settingsDownloading2(Object p0) {
-    return 'Downloading $p0%';
-  }
-
-  @override
   String get settingsPreparingCatalog => 'Preparing catalog…';
-
-  @override
-  String get settingsFailedKeepingThePreviousCatalog =>
-      'Failed; keeping the previous catalog';
-
-  @override
-  String get settingsDownload => 'Download';
-
-  @override
-  String get settingsUpdate => 'Update';
-
-  @override
-  String get settingsGutenbergCatalog => 'Gutenberg catalog';
 
   @override
   String backupBooksReadingProgress(int p0) {
@@ -2466,5 +2347,771 @@ class AppLocalizationsEn extends AppLocalizations {
       one: '1 page without text skipped',
     );
     return '$_temp0';
+  }
+
+  @override
+  String get authLoginTitle => 'Your shelf,\nwherever you go.';
+
+  @override
+  String get authLoginSubtitle => 'One account for all your reading';
+
+  @override
+  String get authChapterOne => 'CHAPTER I';
+
+  @override
+  String get authChapterTwo => 'CHAPTER II';
+
+  @override
+  String get authChapterThree => 'CHAPTER III';
+
+  @override
+  String get authBenefitQuota => 'Free AI quota';
+
+  @override
+  String get authBenefitQuotaNote => 'Meaning, Breakdown, and Chat';
+
+  @override
+  String get authBenefitBackup => 'Cloud backup';
+
+  @override
+  String get authBenefitBackupNote => 'Your shelf and notes stay safe';
+
+  @override
+  String get authBenefitSync => 'Sync across phones';
+
+  @override
+  String get authBenefitSyncNote => 'Pick up on iPhone or Android';
+
+  @override
+  String get authSignInGoogle => 'Sign in with Google';
+
+  @override
+  String get authConnectingGoogle => 'Connecting to Google…';
+
+  @override
+  String get authGoogleWillAsk => 'Next, Google will ask which account to use.';
+
+  @override
+  String authPrivacyNote(String policy) {
+    return 'By signing in, you agree to Luma\'s $policy.';
+  }
+
+  @override
+  String get authPrivacyPolicy => 'Privacy policy';
+
+  @override
+  String get authNetworkTitle => 'Can\'t connect';
+
+  @override
+  String get authNetworkBody => 'Check your internet, then try again.';
+
+  @override
+  String get authTryAgain => 'Try again';
+
+  @override
+  String get authRejectedTitle => 'Sign-in was rejected';
+
+  @override
+  String get authRejectedBody =>
+      'This Google account can\'t be used to sign in. Try another account.';
+
+  @override
+  String get authUseAnotherAccount => 'Use another account';
+
+  @override
+  String get authEmailRejectedBody =>
+      'The server said no. Try again in a moment; if it keeps failing, use another email.';
+
+  @override
+  String get authDevBadge => 'Developer build';
+
+  @override
+  String get authDevLabel => 'Dev build';
+
+  @override
+  String get authDevTitle => 'Fill in the blanks.';
+
+  @override
+  String get authDevEmailLead => 'My email is';
+
+  @override
+  String get authDevPasswordLead => 'and my password is';
+
+  @override
+  String get authDevNote =>
+      'Developer builds only. Release builds use Google only.';
+
+  @override
+  String get authEmailLabel => 'Email';
+
+  @override
+  String get authPasswordLabel => 'Password';
+
+  @override
+  String get authSignUp => 'Sign up';
+
+  @override
+  String get authSignIn => 'Sign in';
+
+  @override
+  String get authInvalidCredentialsTitle => 'Wrong email or password';
+
+  @override
+  String get authInvalidCredentialsBody => 'Check them, then sign in again.';
+
+  @override
+  String get authUserExistsTitle => 'This email is already registered';
+
+  @override
+  String get authUserExistsBody => 'Use Sign in instead of Sign up.';
+
+  @override
+  String get authPasswordShortTitle => 'Password is too short';
+
+  @override
+  String get authPasswordShortBody => 'Use at least 8 characters.';
+
+  @override
+  String get authSignedInAs => 'Signing in as';
+
+  @override
+  String get authChange => 'Change';
+
+  @override
+  String get authInviteIntro =>
+      'Luma is in beta, so new accounts need an invite.';
+
+  @override
+  String get authInviteLead => 'My invite code:';
+
+  @override
+  String get authInviteHint => 'Case doesn\'t matter. The dash is optional.';
+
+  @override
+  String get authContinue => 'Continue';
+
+  @override
+  String get authNoteLabel => 'NOTE';
+
+  @override
+  String get authInviteUsedTitle => 'This code has been used';
+
+  @override
+  String get authInviteUsedBody =>
+      'One code per account. Ask whoever invited you for a new one.';
+
+  @override
+  String get authInviteInvalidTitle => 'That code is wrong';
+
+  @override
+  String get authInviteInvalidBody =>
+      'Check the letters again, or ask whoever invited you for a new code.';
+
+  @override
+  String get settingsAccount => 'Account';
+
+  @override
+  String get authViaGoogle => 'Signed in with Google';
+
+  @override
+  String get authViaEmail => 'Signed in with email';
+
+  @override
+  String get authSignOut => 'Sign out';
+
+  @override
+  String get authDeleteAccount => 'Delete account';
+
+  @override
+  String get authSignOutTitle => 'Sign out?';
+
+  @override
+  String get authSignOutBody =>
+      'Books, progress, and notes on this phone stay. You\'ll go back to sign-in; backup and sync pause.';
+
+  @override
+  String get authSwitchTitle => 'Switch to another account?';
+
+  @override
+  String get authSwitchOwner => 'This phone\'s data belongs to';
+
+  @override
+  String get authSwitchNew => 'Signing in with';
+
+  @override
+  String get authSwitchBodyLead => 'To keep things separate,';
+
+  @override
+  String get authSwitchBodyBold => 'this phone is cleared first';
+
+  @override
+  String get authSwitchBodyTail =>
+      ': books, progress, notes. The old account\'s data stays safe in the cloud.';
+
+  @override
+  String get authSwitchConfirm => 'Clear phone & continue';
+
+  @override
+  String get authSwitchKeep => 'Keep the old account';
+
+  @override
+  String get authDeleteTitle => 'Delete account forever?';
+
+  @override
+  String get authDeleteBody =>
+      'Tick everything so you know what\'s lost. This can\'t be undone.';
+
+  @override
+  String authDeleteCheckAccount(String email) {
+    return 'Account $email is deleted';
+  }
+
+  @override
+  String get authDeleteCheckBackup => 'All cloud backups are gone';
+
+  @override
+  String get authDeleteCheckSync => 'Sync data on all your phones is gone';
+
+  @override
+  String get authDeleteNote =>
+      'Books on this phone stay, but won\'t be backed up anymore.';
+
+  @override
+  String get authDeleteConfirm => 'Delete account forever';
+
+  @override
+  String get authSessionExpiredTitle => 'Your session expired';
+
+  @override
+  String get authSessionExpiredBody =>
+      'Reading still works; backup & sync wait.';
+
+  @override
+  String get authSignInAgain => 'Sign in again';
+
+  @override
+  String get authCloseBanner => 'Close';
+
+  @override
+  String authToastSignedIn(String name) {
+    return 'Signed in. Hi, $name!';
+  }
+
+  @override
+  String get authToastSignedOut => 'Signed out. Books on this phone stay.';
+
+  @override
+  String get authToastDeleted => 'Your account is deleted.';
+
+  @override
+  String get authToastDeleteFailed =>
+      'Couldn\'t delete the account. No internet.';
+
+  @override
+  String get quotaToday => 'AI quota today';
+
+  @override
+  String quotaResetAt(String time) {
+    return 'Resets $time';
+  }
+
+  @override
+  String quotaResetAtIn(String time, String countdown) {
+    return 'Resets $time · $countdown';
+  }
+
+  @override
+  String quotaCountdown(int hours, int minutes) {
+    return '${hours}h ${minutes}m';
+  }
+
+  @override
+  String quotaTapsLeft(int count) {
+    return '≈ $count taps left';
+  }
+
+  @override
+  String get quotaLow => 'Almost out';
+
+  @override
+  String get quotaUsedUp => 'Today\'s free quota is used up.';
+
+  @override
+  String get quotaLoading => 'Loading…';
+
+  @override
+  String get quotaLoadFailed => 'Couldn\'t check the remaining quota.';
+
+  @override
+  String get quotaSource => 'AI source';
+
+  @override
+  String get quotaOwnKey => 'Own key';
+
+  @override
+  String get quotaOwnKeyNote =>
+      'Charged to your OpenRouter balance. Free quota isn\'t used.';
+
+  @override
+  String get quotaFree => 'Free AI quota';
+
+  @override
+  String get quotaRevoked => 'Revoked';
+
+  @override
+  String get quotaBlocked => 'Blocked';
+
+  @override
+  String get quotaRevokedNote => 'AI still works with your own key.';
+
+  @override
+  String get quotaExhaustedTitle => 'Today\'s free quota is used up';
+
+  @override
+  String quotaExhaustedBody(String time, int hours, int minutes) {
+    return 'Resets at $time (in ${hours}h ${minutes}m). To keep going now, use your own OpenRouter key.';
+  }
+
+  @override
+  String get quotaResetIn => 'Resets in';
+
+  @override
+  String get quotaHoursUnit => 'h';
+
+  @override
+  String get quotaMinutesUnit => 'm';
+
+  @override
+  String quotaTapsOf(int count) {
+    return '0 of ≈ $count taps left';
+  }
+
+  @override
+  String quotaTapsOfShort(int count) {
+    return '0 of ≈ $count taps';
+  }
+
+  @override
+  String quotaPeekBody(String time) {
+    return 'The original text is still readable. Translate again after the $time reset, or use your own key.';
+  }
+
+  @override
+  String get quotaUseOwnKey => 'Use my own key';
+
+  @override
+  String get quotaOk => 'OK';
+
+  @override
+  String quotaChatClosed(String time) {
+    return 'Out of quota, back at $time';
+  }
+
+  @override
+  String get quotaBannedPill => 'Free quota blocked';
+
+  @override
+  String get quotaBannedTitle => 'Your free AI access was revoked';
+
+  @override
+  String get quotaBannedBody =>
+      'This account can\'t use Luma\'s free quota anymore. Meaning, Breakdown, and Chat still work with your own OpenRouter key.';
+
+  @override
+  String get aiSection => 'AI';
+
+  @override
+  String get aiSourceFree => 'Free quota';
+
+  @override
+  String get aiSourceOwn => 'Own key';
+
+  @override
+  String get aiOwnKeyCost =>
+      'Charged to your OpenRouter balance. Luma\'s free quota isn\'t used while this key is active.';
+
+  @override
+  String get aiKeyRejected401 => 'Key rejected (401)';
+
+  @override
+  String get aiCheckedJustNow => 'Checked just now';
+
+  @override
+  String get aiBackToFree => 'Back to free quota';
+
+  @override
+  String get aiBackToFreeTitle => 'Back to the free quota?';
+
+  @override
+  String aiBackToFreeBody(String model) {
+    return 'Your OpenRouter key is removed from this phone. The model goes back to $model, one of the 3 free models.';
+  }
+
+  @override
+  String get aiBackToFreeConfirm => 'Back to free';
+
+  @override
+  String get aiPickModel => 'Choose a model';
+
+  @override
+  String get aiFreeModelsNote =>
+      'The free quota only works with these 3 models.';
+
+  @override
+  String get aiDefaultCheapest => 'Default · cheapest';
+
+  @override
+  String get aiMoreModelsTitle => 'Want another model?';
+
+  @override
+  String get aiMoreModelsBody =>
+      'Use your own OpenRouter key to unlock hundreds of models. Charged to your balance.';
+
+  @override
+  String aiSearchModels(int count) {
+    return 'Search $count models';
+  }
+
+  @override
+  String get aiFilterAll => 'All';
+
+  @override
+  String get aiFilterCheap => 'Budget';
+
+  @override
+  String get aiFilterLong => 'Long context';
+
+  @override
+  String get aiModelsLoadFailed =>
+      'Couldn\'t load the model list. Check your internet, then try again.';
+
+  @override
+  String get aiNoModelMatch => 'No matching models.';
+
+  @override
+  String get backupUploadingToYourAccount =>
+      'Uploading to your account. Books already in the cloud are skipped.';
+
+  @override
+  String get backupCloudIsFull => 'Your cloud storage is full';
+
+  @override
+  String get cloudRestorePickTitle => 'Pick a cloud backup';
+
+  @override
+  String get cloudRestoreEmpty =>
+      'No cloud backups yet. Tap \"Back up to cloud\" first.';
+
+  @override
+  String get cloudRestoreLoadFailed =>
+      'Couldn\'t load your backups. Check your connection.';
+
+  @override
+  String get cloudRestoreDownloadFailed =>
+      'Couldn\'t download the backup. Try again.';
+
+  @override
+  String bookshelfSyncingBooks(int current, int total) {
+    return 'Syncing $current/$total books';
+  }
+
+  @override
+  String get bookshelfSyncingBody =>
+      'Pulling in books from your other device. Keep reading meanwhile.';
+
+  @override
+  String get settingsAccountPhoto => 'Profile photo';
+
+  @override
+  String get settingsAccountUsedToday => 'Used today';
+
+  @override
+  String settingsAccountUsedValue(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count taps',
+      one: '1 tap',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get settingsAccountDaily => 'Daily allowance';
+
+  @override
+  String get settingsAccountDailyValue => '± 30–50 taps';
+
+  @override
+  String get settingsAccountSignOutNote => 'Your books on this phone stay';
+
+  @override
+  String get settingsAccountDeleteNote =>
+      'Delete your account + all data on the server';
+
+  @override
+  String get settingsHubModelFree => 'AI model · Free quota';
+
+  @override
+  String get settingsHubModelOwn => 'AI model · Your own key';
+
+  @override
+  String get settingsHubChangeModel => 'Change model';
+
+  @override
+  String get settingsHubManageAi => 'AI settings';
+
+  @override
+  String settingsHubModelDefault(String id) {
+    return '$id · default';
+  }
+
+  @override
+  String get settingsHubMoreSection => 'Data & more';
+
+  @override
+  String get settingsHubTileBackup => 'Backup';
+
+  @override
+  String get settingsHubTileCatalog => 'Catalog';
+
+  @override
+  String get settingsHubTileCache => 'Cache';
+
+  @override
+  String get settingsHubTileDisplay => 'Display';
+
+  @override
+  String get settingsHubBackupNever => 'Never';
+
+  @override
+  String get settingsHubCatalogNever => 'Not downloaded';
+
+  @override
+  String settingsHubCatalogDownloading(int percent) {
+    return 'Downloaded $percent%';
+  }
+
+  @override
+  String get settingsHubCatalogWorking => 'Getting it ready…';
+
+  @override
+  String get settingsHubCatalogDone => 'Downloaded';
+
+  @override
+  String get settingsHubCatalogFailed => 'Failed, try again';
+
+  @override
+  String get settingsHubCacheEmpty => 'Empty';
+
+  @override
+  String settingsHubCacheUsed(String size) {
+    return '$size used';
+  }
+
+  @override
+  String settingsHubDisplayStatus(String theme, String language) {
+    return '$theme · $language';
+  }
+
+  @override
+  String get settingsHubSignedOut => 'Not signed in';
+
+  @override
+  String get settingsHubSignedOutNote => 'Sign in to get the free AI quota';
+
+  @override
+  String settingsHubQuotaReset(String time, String countdown) {
+    return 'Resets $time · $countdown left';
+  }
+
+  @override
+  String get settingsBackupSaveToFile => 'Save a copy to a file';
+
+  @override
+  String get settingsBackupRestoreFrom => 'Restore from';
+
+  @override
+  String get settingsBackupFile => 'File';
+
+  @override
+  String get settingsBackupCloud => 'Cloud';
+
+  @override
+  String settingsAiFreeModelsLabel(int count) {
+    return 'AI model · $count free models';
+  }
+
+  @override
+  String get settingsAiMoreModelsHint =>
+      '300+ other models open up when you use your own OpenRouter key.';
+
+  @override
+  String get settingsAiDefaultBadge => 'Default';
+
+  @override
+  String get settingsAiKeyChecking => 'Checking with OpenRouter…';
+
+  @override
+  String get settingsAiKeyRejectedBody =>
+      'OpenRouter rejected this key. Double-check it at openrouter.ai/keys, then paste it again.';
+
+  @override
+  String settingsAiKeyRejectedFallback(int percent) {
+    return 'For now AI goes back to the free quota ($percent% left) until the key is fixed.';
+  }
+
+  @override
+  String get settingsAiKeyRejectedFallbackNoQuota =>
+      'For now AI goes back to the free quota until the key is fixed.';
+
+  @override
+  String get settingsAiKeyRecheck => 'Check again';
+
+  @override
+  String settingsAiModelFallsBack(String id) {
+    return '$id · back to a free model';
+  }
+
+  @override
+  String get settingsCatalogTitle => 'Book catalog';
+
+  @override
+  String get settingsCatalogCardTitle => 'Gutenberg catalog';
+
+  @override
+  String get settingsCatalogNotDownloaded => 'Not downloaded · 5.6 MB';
+
+  @override
+  String get settingsCatalogChecking => 'Checking for updates…';
+
+  @override
+  String get settingsCatalogDownloading => 'Downloading';
+
+  @override
+  String get settingsCatalogPreparing => 'Setting up the catalog…';
+
+  @override
+  String get settingsCatalogFailed =>
+      'Failed, still using the previous catalog';
+
+  @override
+  String get settingsCatalogDownload => 'Download';
+
+  @override
+  String get settingsCatalogUpdate => 'Update';
+
+  @override
+  String get settingsCatalogCancel => 'Cancel';
+
+  @override
+  String get settingsCatalogRetry => 'Try again';
+
+  @override
+  String get settingsCatalogUpToDate => 'Your catalog is already up to date';
+
+  @override
+  String get settingsCatalogWhy => 'What\'s it for?';
+
+  @override
+  String get settingsCatalogWhySearch => 'Search titles offline';
+
+  @override
+  String get settingsCatalogWhySearchBody =>
+      'Type a title or author, results show up right away';
+
+  @override
+  String get settingsCatalogWhyBooks => 'About 62,000 Project Gutenberg books';
+
+  @override
+  String get settingsCatalogWhyBooksBody => 'All public domain, free to grab';
+
+  @override
+  String get settingsCatalogWhyWeekly => 'Updated weekly';
+
+  @override
+  String get settingsCatalogWhyWeeklyBody =>
+      'Tap Update if you want the latest';
+
+  @override
+  String get settingsCatalogBackgroundNote =>
+      'You can close this screen, the download keeps going in the background.';
+
+  @override
+  String get settingsCacheEyebrow => 'Storage';
+
+  @override
+  String get settingsCacheTitle => 'Delete the translation cache?';
+
+  @override
+  String get settingsCacheParagraphs => 'paragraphs';
+
+  @override
+  String get settingsCacheUsed => 'used';
+
+  @override
+  String get settingsCacheBody =>
+      'Saved translations will be gone from this phone. When you open them again, Luma translates them again, and that uses AI quota.';
+
+  @override
+  String get settingsCacheClear => 'Delete cache';
+
+  @override
+  String get settingsCacheCancel => 'Cancel';
+
+  @override
+  String get settingsDisplayTitle => 'Display';
+
+  @override
+  String get settingsDisplayTheme => 'Theme';
+
+  @override
+  String get settingsDisplaySystemHint => 'Matches your phone';
+
+  @override
+  String get settingsDisplayLightHint => 'Cream paper';
+
+  @override
+  String get settingsDisplayDarkHint => 'For night reading';
+
+  @override
+  String get settingsDisplayThemeNote =>
+      'This is the same setting as Theme in the Aa menu while reading. Change it in one place and both follow.';
+
+  @override
+  String get settingsDisplayLanguage => 'Display language';
+
+  @override
+  String get settingsDisplayLanguageNote =>
+      'This language is only for the interface. Translations and AI answers stay in Bahasa Indonesia.';
+
+  @override
+  String settingsCatalogBooks(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString books',
+      one: '$countString book',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String settingsCatalogBooksUpdated(int count, String date) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString books',
+      one: '$countString book',
+    );
+    return '$_temp0 · Updated $date';
   }
 }

@@ -1,8 +1,10 @@
 APP := apps/mobile
+BACKEND := apps/backend
+DASHBOARD := apps/dashboard
 FLUTTER := cd $(APP) && fvm flutter
 DART := cd $(APP) && fvm dart
 
-.PHONY: help get l10n gen brand live chat-agent-live chat-spike chat-spike-live chat-oracle-live chat-discussion-live chat-adaptive-live chat-retrieval chat-dense-live chat-dense-replay chat-heldout-live chat-refine-live chat-validation2-live chat-recovery-live chat-validation3-live watch run release dev run-android release-android dev-android apk profile test analyze format check clean
+.PHONY: help get l10n gen brand live chat-agent-live chat-spike chat-spike-live chat-oracle-live chat-discussion-live chat-adaptive-live chat-retrieval chat-dense-live chat-dense-replay chat-heldout-live chat-refine-live chat-validation2-live chat-recovery-live chat-validation3-live watch run release dev run-android release-android dev-android apk profile test analyze format check clean docs-check backend-install backend-dev backend-types backend-test backend-live backend-e2e backend-migrate backend-invite backend-ban backend-unban backend-deploy dashboard-install dashboard-dev dashboard-test dashboard-e2e dashboard-deploy
 
 help: ## list commands
 	@grep -E '^[a-z0-9-]+:.*## ' $(MAKEFILE_LIST) | awk -F ':.*## ' '{printf "  %-16s %s\n", $$1, $$2}'
@@ -108,3 +110,64 @@ check: l10n format analyze test ## format, analyze, test
 
 clean: ## flutter clean + pub get
 	$(FLUTTER) clean && fvm flutter pub get
+
+docs-check: ## docs: doc citations in code comments and links between docs still resolve
+	python3 scripts/docs_check.py
+
+backend-install: ## backend: install deps (bun)
+	cd $(BACKEND) && bun install
+
+backend-dev: ## backend: run Worker locally (env dev, http://<ip>:8787; app: --dart-define=BACKEND_URL=...)
+	cd $(BACKEND) && bunx wrangler dev --env dev --ip 0.0.0.0
+
+backend-types: ## backend: regenerate Env types after editing wrangler.jsonc
+	cd $(BACKEND) && bunx wrangler types --env dev --strict-vars false
+
+backend-test: ## backend: typecheck + vitest (workerd) + coverage
+	cd $(BACKEND) && bunx tsc --noEmit && bunx vitest run --coverage
+
+backend-live: ## backend: Flutter client calls the deployed dev Worker (network)
+	cd $(APP) && LUMA_BACKEND_LIVE=1 fvm flutter test --timeout 30s test/data/backend_live_test.dart
+
+backend-e2e: ## backend: #109 E2E, Dart client syncs through a local Worker (wrangler dev)
+	bash $(BACKEND)/scripts/e2e.sh
+
+backend-migrate: ## backend: apply D1 migrations remotely (e=dev|prod)
+	@test "$(e)" = dev -o "$(e)" = prod || { echo "pakai e=dev atau e=prod"; exit 1; }
+	cd $(BACKEND) && bunx wrangler d1 migrations apply DB --env $(e) --remote
+
+backend-invite: ## backend: bikin kode undangan acak di D1 remote (e=dev|prod, n=jumlah, default 1)
+	@test "$(e)" = dev -o "$(e)" = prod || { echo "pakai e=dev atau e=prod"; exit 1; }
+	cd $(BACKEND) && bun scripts/invite.ts $(e) $(or $(n),1)
+
+backend-ban: ## backend: cabut akses AI subsidi user (e=dev|prod email=...; butuh OPENROUTER_MANAGEMENT_KEY di env)
+	@test "$(e)" = dev -o "$(e)" = prod || { echo "pakai e=dev atau e=prod"; exit 1; }
+	@test -n "$(email)" || { echo "pakai email=..."; exit 1; }
+	cd $(BACKEND) && bun scripts/ban.ts $(e) $(email)
+
+backend-unban: ## backend: pulihkan akses AI subsidi user (e=dev|prod email=...)
+	@test "$(e)" = dev -o "$(e)" = prod || { echo "pakai e=dev atau e=prod"; exit 1; }
+	@test -n "$(email)" || { echo "pakai email=..."; exit 1; }
+	cd $(BACKEND) && bun scripts/unban.ts $(e) $(email)
+
+backend-deploy: ## backend: deploy Worker (e=dev|prod; prod only from master)
+	@test "$(e)" = dev -o "$(e)" = prod || { echo "pakai e=dev atau e=prod"; exit 1; }
+	@if [ "$(e)" = prod ]; then test "$$(git rev-parse --abbrev-ref HEAD)" = master || { echo "backend prod cuma dari master"; exit 1; }; fi
+	cd $(BACKEND) && bunx wrangler deploy --env $(e)
+
+dashboard-install: ## dashboard: install deps (bun)
+	cd $(DASHBOARD) && bun install
+
+dashboard-dev: ## dashboard: Vite dev server with the Worker (env dev, http://localhost:5173), same local D1 as backend-dev
+	cd $(DASHBOARD) && CLOUDFLARE_ENV=dev bunx vite dev
+
+dashboard-test: ## dashboard: typecheck worker + client, vitest worker (workerd) + client (happy-dom)
+	cd $(DASHBOARD) && bunx tsc --noEmit -p tsconfig.worker.json && bunx tsc --noEmit -p tsconfig.client.json && bunx vitest run && bunx vitest run -c vitest.client.config.ts
+
+dashboard-e2e: ## dashboard: Playwright e2e on installed Chrome, local e2e env with its own D1 (no remote)
+	cd $(DASHBOARD) && bunx playwright test
+
+dashboard-deploy: ## dashboard: deploy admin Worker (e=dev|prod; prod only from master)
+	@test "$(e)" = dev -o "$(e)" = prod || { echo "pakai e=dev atau e=prod"; exit 1; }
+	@if [ "$(e)" = prod ]; then test "$$(git rev-parse --abbrev-ref HEAD)" = master || { echo "dashboard prod cuma dari master"; exit 1; }; fi
+	cd $(DASHBOARD) && CLOUDFLARE_ENV=$(e) bunx vite build && bunx wrangler deploy

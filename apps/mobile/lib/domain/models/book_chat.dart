@@ -298,7 +298,7 @@ class ChatTurn {
     this.steps,
   });
 
-  /// Langkah AI attempt ini (#153); null = turn lama / belum selesai.
+  /// Langkah AI attempt ini; null = turn lama / belum selesai.
   final List<ChatStep>? steps;
   final int id, sessionId, sequence, attempt, promptVersion;
   final ChatBookRef book;
@@ -504,7 +504,7 @@ class SourceVisitRequest {
   final ChatReadingPosition returnPosition;
   final ChatScrollAnchor chatPosition;
 
-  /// Resolver #122 wajib memanggil ini sebelum jump; kunjungan tidak menulis progres.
+  /// Resolver sitasi wajib memanggil ini sebelum jump; kunjungan tidak menulis progres.
   void validate({
     required ChatSession session,
     required ChatTurn turn,

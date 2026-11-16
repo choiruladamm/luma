@@ -54,9 +54,11 @@ void main() {
         (m) => '${m[1]}transitive',
       );
     }
+    // Dibekukan ulang 14 Nov 2026 (google_sign_in). Alasan & daftar:
+    // docs/llm-evals.md (Pembekuan ulang guard).
     expect(
       sha256.convert(utf8.encode(normalized)).toString(),
-      '747b2c4613b83328ded3539fa18b8a909f866690d2f57d86a6a1cdcafe5a7b0e',
+      '02d79191e3372cc885440884a362a07615d143062216c86c935428611fb492c7',
     );
   });
 }
