@@ -40,14 +40,14 @@ export function fakeOpenRouter() {
       );
     }),
     http.patch(`${OPENROUTER_API}/keys/:hash`, async ({ params, request }) => {
-      calls.push(`PATCH /keys/${params.hash}`);
+      calls.push(`PATCH /keys/${String(params.hash)}`);
       const key = keys.get(params.hash as string);
       if (!key) return HttpResponse.json({ error: { code: 404 } }, { status: 404 });
       key.limit = ((await request.json()) as { limit: number }).limit;
       return HttpResponse.json({ data: { hash: key.hash, limit: key.limit } });
     }),
     http.get(`${OPENROUTER_API}/keys/:hash`, ({ params }) => {
-      calls.push(`GET /keys/${params.hash}`);
+      calls.push(`GET /keys/${String(params.hash)}`);
       const key = keys.get(params.hash as string);
       if (!key) return HttpResponse.json({ error: { code: 404 } }, { status: 404 });
       return HttpResponse.json({
@@ -60,7 +60,7 @@ export function fakeOpenRouter() {
       });
     }),
     http.delete(`${OPENROUTER_API}/keys/:hash`, ({ params }) => {
-      calls.push(`DELETE /keys/${params.hash}`);
+      calls.push(`DELETE /keys/${String(params.hash)}`);
       const existed = keys.delete(params.hash as string);
       return existed
         ? HttpResponse.json({ deleted: true })

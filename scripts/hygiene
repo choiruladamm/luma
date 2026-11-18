@@ -11,6 +11,8 @@ if command -v fvm >/dev/null 2>&1; then dart="fvm dart"; else dart="dart"; fi
 status=0
 python3 scripts/hygiene_check.py "$@" || status=1
 (cd apps/mobile && $dart analyze --fatal-infos) || status=1
+(cd apps/backend && bun run lint) || status=1
+(cd apps/dashboard && bun run lint) || status=1
 
 if [ "${HYGIENE_MODE:-enforce}" = "report" ]; then
   exit 0

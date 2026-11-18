@@ -29,9 +29,9 @@ type Page = {
   counts: { all: number; unused: number; used: number };
 };
 const page = async (query = "") =>
-  (await (
+  await (
     await call(`/api/invites${query}`, { headers: { cookie: await adminCookie() } })
-  ).response.json()) as Page;
+  ).response.json<Page>();
 const list = async (query = "") => (await page(query)).items;
 const db = () => createDb(env.DB);
 /** Codes stored as given (already upper case); a unique tag keeps each test's rows apart. */
@@ -50,7 +50,7 @@ describe("POST /api/invites", () => {
     const log = vi.spyOn(console, "log").mockImplementation(() => {});
     const { response, d1Queries } = await mutate("POST", "/api/invites", { count: 3 });
     expect(response.status).toBe(201);
-    const { codes, createdAt } = (await response.json()) as { codes: string[]; createdAt: string };
+    const { codes, createdAt } = await response.json<{ codes: string[]; createdAt: string }>();
     expect(codes).toHaveLength(3);
     // The dialog shows the stored date, and the list sorts by it.
     const listed = await list(`?q=${codes[0]!}`);
@@ -87,9 +87,9 @@ describe("POST /api/invites", () => {
 
 describe("GET /api/invites", () => {
   it("filters by status and shows who used a code, in one D1 batch (+1 guard)", async () => {
-    const { codes } = (await (
+    const { codes } = await (
       await mutate("POST", "/api/invites", { count: 2 })
-    ).response.json()) as { codes: string[] };
+    ).response.json<{ codes: string[] }>();
     const [free, taken] = codes as [string, string];
     const user = await createUser();
     await createDb(env.DB)
@@ -137,7 +137,7 @@ describe("GET /api/invites", () => {
       ]);
 
     const byCode = await page(`?q=${t.toLowerCase().slice(0, 3)}-${t.toLowerCase().slice(3)}`);
-    expect(byCode.items.map((i) => i.code).sort()).toEqual([
+    expect(byCode.items.map((i) => i.code).toSorted()).toEqual([
       `LUMA-${t.slice(0, 5)}-${t.slice(5)}AAAA`,
       `LUMA-${t.slice(0, 5)}-${t.slice(5)}BBBB`,
     ]);
@@ -153,7 +153,7 @@ describe("GET /api/invites", () => {
       headers: { cookie: await adminCookie() },
     });
     expect(res.response.status).toBe(200);
-    expect(((await res.response.json()) as Page).items).toEqual([]);
+    expect((await res.response.json<Page>()).items).toEqual([]);
   });
 
   it("sorts by code or date used, filters used within 7/30 days, and pages with a total", async () => {
@@ -232,9 +232,9 @@ describe("GET /api/invites", () => {
 
 describe("DELETE /api/invites/:code", () => {
   it("deletes an unused code with 204 in one query (audit), accepting the typed format", async () => {
-    const { codes } = (await (
+    const { codes } = await (
       await mutate("POST", "/api/invites", { count: 1 })
-    ).response.json()) as { codes: string[] };
+    ).response.json<{ codes: string[] }>();
     const log = vi.spyOn(console, "log").mockImplementation(() => {});
     const { response, d1Queries } = await mutate(
       "DELETE",

@@ -75,19 +75,21 @@ describe("GET /v1/sync/pull", () => {
   it("pages with limit and walks the cursor to the end", async () => {
     const { token } = await signUp();
     await exports.default.fetch(push(token, pushFixture.request.body));
-    const first = (await (await exports.default.fetch(pull(token, "?since=0&limit=2"))).json()) as {
+    const first = await (
+      await exports.default.fetch(pull(token, "?since=0&limit=2"))
+    ).json<{
       records: { seq: number }[];
       nextSeq: number;
       more: boolean;
-    };
+    }>();
     expect(first.records.map((r) => r.seq)).toEqual([1, 2]);
     expect(first).toMatchObject({ nextSeq: 2, more: true });
-    const second = (await (
+    const second = await (
       await exports.default.fetch(pull(token, "?since=2&limit=2"))
-    ).json()) as {
+    ).json<{
       records: { seq: number }[];
       more: boolean;
-    };
+    }>();
     expect(second.records.map((r) => r.seq)).toEqual([3]);
     expect(second.more).toBe(false);
   });
@@ -133,7 +135,7 @@ describe("GET /v1/sync/pull", () => {
     }));
     await exports.default.fetch(push(token, { schemaVersion: 18, records }));
     const { response, d1Queries, subrequests } = await callWithBudget(pull(token, "?since=0"));
-    const body = (await response.json()) as { records: unknown[]; more: boolean };
+    const body = await response.json<{ records: unknown[]; more: boolean }>();
     expect(body.records).toHaveLength(500);
     expect(body.more).toBe(false);
     expect(subrequests).toBe(0);

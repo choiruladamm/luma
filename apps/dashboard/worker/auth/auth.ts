@@ -55,7 +55,7 @@ export function createAuth(env: Env) {
         // signs this user in as an existing account, without an invite.
         create: {
           before: async (user) => {
-            if (!isAdmin(env, { email: user.email, emailVerified: user.emailVerified === true })) {
+            if (!isAdmin(env, { email: user.email, emailVerified: user.emailVerified })) {
               throw new APIError("FORBIDDEN", {
                 code: "FORBIDDEN",
                 message: "Dashboard creates accounts for admins only",

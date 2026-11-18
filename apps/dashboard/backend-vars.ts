@@ -20,6 +20,7 @@ export function backendVars(env: string | undefined): BackendVars {
     { config: "../backend/wrangler.jsonc", env: env === "e2e" ? "dev" : env },
     { hideWarnings: true },
   );
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- the map above checked every BACKEND_VARS name
   return Object.fromEntries(
     BACKEND_VARS.map((name) => {
       const value = vars[name];

@@ -1,7 +1,7 @@
 import { env } from "cloudflare:test";
 import { eq } from "drizzle-orm";
 import { describe, expect, it, vi } from "vitest";
-import type { KeyUsage, OpenRouterAdmin } from "../../src/clients/openrouter";
+import type { OpenRouterAdmin } from "../../src/clients/openrouter";
 import { createDb } from "../../src/db/client";
 import { aiKeys, users } from "../../src/db/schema";
 import {
@@ -21,15 +21,18 @@ const cfg = aiConfig(env);
 function fakeAdmin() {
   let n = 0;
   const admin = {
-    createKey: vi.fn(async () => ({ key: `sk-${++n}`, hash: `h-${n}` })),
-    updateLimit: vi.fn(async () => {}),
-    getUsage: vi.fn(async (): Promise<KeyUsage> => ({
+    createKey: vi.fn<OpenRouterAdmin["createKey"]>(async () => ({
+      key: `sk-${++n}`,
+      hash: `h-${n}`,
+    })),
+    updateLimit: vi.fn<OpenRouterAdmin["updateLimit"]>(async () => {}),
+    getUsage: vi.fn<OpenRouterAdmin["getUsage"]>(async () => ({
       limit: 0.02,
       limitRemaining: 0.015,
       usageDaily: 0.005,
     })),
-    keyExists: vi.fn(async () => true),
-    deleteKey: vi.fn(async () => {}),
+    keyExists: vi.fn<OpenRouterAdmin["keyExists"]>(async () => true),
+    deleteKey: vi.fn<OpenRouterAdmin["deleteKey"]>(async () => {}),
   } satisfies OpenRouterAdmin;
   return admin;
 }

@@ -110,14 +110,14 @@ export async function putBackup(
   if (stale.length > 0) await bucket.delete(stale.map((o) => o.key));
   const freed = stale.reduce((sum, o) => sum + o.size, 0);
   if (freed > 0) await addBytes(db, userId, -freed);
-  return info(prefix, { key, size: stored!.size, customMetadata: upload.metadata });
+  return info(prefix, { key, size: stored.size, customMetadata: upload.metadata });
 }
 
 /** Newest first, straight from `R2.list` + customMetadata (no D1 table). */
 export async function listBackups(bucket: R2Bucket, userId: string): Promise<BackupInfo[]> {
   const prefix = backupsPrefix(userId);
   const listed = await bucket.list({ prefix, limit: 1000, include: ["customMetadata"] });
-  return listed.objects.map((o) => info(prefix, o)).reverse();
+  return listed.objects.map((o) => info(prefix, o)).toReversed();
 }
 
 export async function getBackup(bucket: R2Bucket, userId: string, id: string) {

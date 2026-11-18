@@ -13,14 +13,18 @@ type Row = {
   schema_version: number;
 };
 
-const fromRow = (r: Row): SyncRecord => ({
-  kind: r.kind,
-  key: r.key,
-  data: r.data == null ? null : (JSON.parse(r.data) as Data),
-  updatedAt: r.updated_at,
-  deleted: r.deleted === 1,
-  schemaVersion: r.schema_version,
-});
+const fromRow = (r: Row, size: number): StoredRecord => {
+  const data: Data | null = r.data == null ? null : JSON.parse(r.data);
+  return {
+    kind: r.kind,
+    key: r.key,
+    data,
+    updatedAt: r.updated_at,
+    deleted: r.deleted === 1,
+    schemaVersion: r.schema_version,
+    size,
+  };
+};
 
 /** A record in D1 + its size (key length + JSON data, the `sync_bytes` quota formula). */
 export type StoredRecord = SyncRecord & { size: number };
@@ -40,7 +44,7 @@ export async function findRecords(
     )
     .bind(userId, JSON.stringify(ids))
     .all<Row & { size: number }>();
-  return results.map((r) => ({ ...fromRow(r), size: r.size }));
+  return results.map((r) => fromRow(r, r.size));
 }
 
 export type SyncUsage = { seq: number; bytes: number; day: number; rows: number };

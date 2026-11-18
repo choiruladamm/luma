@@ -10,8 +10,9 @@ export const SEED_USERS = [
   { id: "e2e-4", email: "nadia.halim@e2e.local", name: "Nadia Halim" },
 ];
 
+const q = (s: string) => `'${s.replaceAll("'", "''")}'`;
+
 export function seedSql(now: number) {
-  const q = (s: string) => `'${s.replaceAll("'", "''")}'`;
   const lines = [
     ...[
       "records",

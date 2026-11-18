@@ -24,7 +24,7 @@ export function pageList(page: number, count: number): (number | null)[] {
  * Table footer: "51–100 of 120", ‹ 1 … 4 5 6 … 10 ›, and an optional page size. Phones get the
  * compact "‹ Page 2 / 3 ›" (docs/dashboard.md, Screens and navigation).
  */
-export function Pagination({
+export function Pagination<S extends number = number>({
   page,
   pageCount,
   total,
@@ -38,8 +38,8 @@ export function Pagination({
   total: number;
   pageSize: number;
   onPage: (page: number) => void;
-  pageSizes?: number[];
-  onPageSize?: (size: number) => void;
+  pageSizes?: S[];
+  onPageSize?: (size: S) => void;
 }) {
   const { t, locale } = useI18n();
   const n = (v: number) => formatNumber(v, locale);
@@ -73,7 +73,10 @@ export function Pagination({
               label={t.common.perPage}
               value={String(pageSize)}
               options={pageSizes.map((size) => [String(size), String(size)] as [string, string])}
-              onChange={(v) => onPageSize(Number(v))}
+              onChange={(v) => {
+                const size = pageSizes.find((s) => String(s) === v);
+                if (size !== undefined) onPageSize(size);
+              }}
             />
             {t.common.perPage}
           </span>

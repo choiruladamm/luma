@@ -17,7 +17,7 @@ import { errorText } from "../../../lib/api-error";
 import { cn } from "../../../lib/cn";
 import { toast } from "../../../stores/toast-store";
 import type { InviteItem } from "../api/invites-api";
-import { type InviteSort, type InvitesParams, useInvitesParams } from "../hooks/use-invites-params";
+import { type InviteSort, useInvitesParams } from "../hooks/use-invites-params";
 import { DeleteInviteDialog } from "../components/delete-invite-dialog";
 import { InvitesTableSkeleton } from "../components/invites-table-skeleton";
 import { InviteCard, inviteColumns } from "../components/invite-columns";
@@ -40,6 +40,7 @@ function StatusTabs({
   const tabs: Filter[] = ["all", "unused", "used"];
   const pill = useSlidingPill(tabs.indexOf(value), tabs.length);
   return (
+    // oxlint-disable-next-line jsx-a11y/interactive-supports-focus -- focus lives on the tab buttons inside; the container only resets the hover pill
     <div
       role="tablist"
       aria-label={t.invites.filter}
@@ -112,6 +113,7 @@ export function InvitesPage() {
   const tableSort: TableSort | null =
     params.sort === "default" ? null : { id: params.sort, dir: params.dir };
   const onSort = (id: string) => {
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- ids come from this page's column definitions
     const sort = id as InviteSort;
     set({ sort, dir: params.sort === sort && params.dir === "desc" ? "asc" : "desc" });
   };
@@ -230,9 +232,7 @@ export function InvitesPage() {
                   ["30d", t.invites.within30d],
                 ]}
                 active={!!params.usedWithin}
-                onChange={(v) =>
-                  set({ usedWithin: (v || undefined) as InvitesParams["usedWithin"] })
-                }
+                onChange={(v) => set({ usedWithin: v || undefined })}
               />
               <Select
                 label={t.users.sortLabel}
@@ -241,6 +241,7 @@ export function InvitesPage() {
                 options={sorts}
                 active={params.sort !== "default"}
                 onChange={(v) => {
+                  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- the value comes from this select's own options
                   const [sort, dir] = v.split(":") as [InviteSort, "asc" | "desc"];
                   set({ sort, dir });
                 }}
@@ -329,7 +330,7 @@ export function InvitesPage() {
                 pageSize={params.limit}
                 onPage={(page) => set({ page })}
                 pageSizes={[20, 50]}
-                onPageSize={(limit) => set({ limit: limit as 20 | 50 })}
+                onPageSize={(limit) => set({ limit })}
               />
             }
           />
@@ -337,7 +338,11 @@ export function InvitesPage() {
       </section>
       <NewInviteDialog
         code={created?.code ?? null}
-        createdAt={created?.at ?? new Date().toISOString()}
+        createdAt={
+          created?.at ??
+          // oxlint-disable-next-line react/purity -- placeholder shown only while the dialog is closed
+          new Date().toISOString()
+        }
         copied={created !== null && copied === created.code}
         onCopy={() => created && void copyCode(created.code)}
         onClose={() => setCreated(null)}

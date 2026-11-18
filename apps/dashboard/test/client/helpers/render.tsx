@@ -19,7 +19,7 @@ await Promise.all(preload(routes));
 export function renderApp(path = "/") {
   const router = createMemoryRouter(routes, { initialEntries: [path] });
   // The browser reloads the page here; tests check the call instead.
-  const onAccessExpired = vi.fn();
+  const onAccessExpired = vi.fn<() => void>();
   const queryClient = createQueryClient(
     () => void router.navigate("/login", { replace: true }),
     onAccessExpired,

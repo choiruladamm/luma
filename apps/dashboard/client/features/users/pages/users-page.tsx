@@ -51,7 +51,7 @@ export function UsersPage() {
   const currentSort: UserSort =
     params.sort && (params.sort !== "relevance" || q) ? params.sort : q ? "relevance" : "created";
   const tableSort: TableSort | null = COLUMN_OF[currentSort]
-    ? { id: COLUMN_OF[currentSort]!, dir: params.dir }
+    ? { id: COLUMN_OF[currentSort], dir: params.dir }
     : null;
   // Same column flips the direction; a new column starts descending (biggest / newest first).
   const onSort = (id: string) => {
@@ -189,7 +189,7 @@ export function UsersPage() {
                 pageSize={params.limit}
                 onPage={(page) => set({ page })}
                 pageSizes={[25, 50]}
-                onPageSize={(limit) => set({ limit: limit as 25 | 50 })}
+                onPageSize={(limit) => set({ limit })}
               />
             }
           />

@@ -55,19 +55,19 @@ describe("GET /api/users", () => {
     const first = await get(`/api/users?q=${t}&sort=created&limit=2`);
     expect(first.response.status).toBe(200);
     expect(first.d1Queries).toBe(3);
-    const p1 = (await first.response.json()) as Page;
+    const p1 = await first.response.json<Page>();
     expect(p1).toMatchObject({ total: 5, page: 1, pageCount: 3 });
     expect(p1.items.map((u) => u.email)).toEqual([`${t}-4@luma.test`, `${t}-3@luma.test`]);
 
-    const p3 = (await (
+    const p3 = await (
       await get(`/api/users?q=${t}&sort=created&limit=2&page=3`)
-    ).response.json()) as Page;
+    ).response.json<Page>();
     expect(p3.items.map((u) => u.email)).toEqual([`${t}-0@luma.test`]);
-    const asc = (await (
+    const asc = await (
       await get(`/api/users?q=${t}&sort=created&dir=asc&limit=2`)
-    ).response.json()) as Page;
+    ).response.json<Page>();
     expect(asc.items.map((u) => u.email)).toEqual([`${t}-0@luma.test`, `${t}-1@luma.test`]);
-    const past = (await (await get(`/api/users?q=${t}&limit=2&page=9`)).response.json()) as Page;
+    const past = await (await get(`/api/users?q=${t}&limit=2&page=9`)).response.json<Page>();
     expect(past).toMatchObject({ items: [], total: 5, pageCount: 3 });
   });
 
@@ -91,9 +91,11 @@ describe("GET /api/users", () => {
     });
 
     const emails = async (filter: string) => {
-      const page = (await (await get(`/api/users?q=${t}&${filter}`)).response.json()) as Page;
+      const page = await (await get(`/api/users?q=${t}&${filter}`)).response.json<Page>();
       expect(page.total).toBe(page.items.length);
-      return page.items.map((u) => u.email.replace(`${t}-`, "").replace("@luma.test", "")).sort();
+      return page.items
+        .map((u) => u.email.replace(`${t}-`, "").replace("@luma.test", ""))
+        .toSorted();
     };
     expect(await emails("status=banned")).toEqual(["banned"]);
     expect(await emails("status=active")).toEqual(["key", "old", "recent"]);
@@ -124,7 +126,7 @@ describe("GET /api/users", () => {
     });
 
     const order = async (query: string) =>
-      ((await (await get(`/api/users?q=${t}&${query}`)).response.json()) as Page).items.map((u) =>
+      (await (await get(`/api/users?q=${t}&${query}`)).response.json<Page>()).items.map((u) =>
         u.email.replace(`${t}-`, "").replace("@luma.test", ""),
       );
     expect(await order("sort=r2")).toEqual(["big", "small", "idle"]);
@@ -179,18 +181,16 @@ describe("GET /api/users", () => {
     const expected = [`${t}zz@luma.test`, "name", `x.${t}@luma.test`, `ab${t}@luma.test`];
     const label = (u: Item) => (u.email.startsWith("nm") ? "name" : u.email);
 
-    const page = (await (await get(`/api/users?q=${t.toUpperCase()}`)).response.json()) as Page;
+    const page = await (await get(`/api/users?q=${t.toUpperCase()}`)).response.json<Page>();
     expect(page.items.map(label)).toEqual(expected);
 
-    const exact = (await (await get(`/api/users?q=${t}zz@luma.test`)).response.json()) as Page;
+    const exact = await (await get(`/api/users?q=${t}zz@luma.test`)).response.json<Page>();
     expect(exact.items[0]!.email).toBe(`${t}zz@luma.test`);
 
     // Relevance holds across pages too.
     const seen: string[] = [];
-    for (let page = 1; page <= 4; page++) {
-      const p = (await (
-        await get(`/api/users?q=${t}&limit=1&page=${page}`)
-      ).response.json()) as Page;
+    for (let n = 1; n <= 4; n++) {
+      const p = await (await get(`/api/users?q=${t}&limit=1&page=${n}`)).response.json<Page>();
       seen.push(...p.items.map(label));
     }
     expect(seen).toEqual(expected);
@@ -202,9 +202,7 @@ describe("GET /api/users", () => {
     await createUser({ email: `${long}@luma.test` });
     const { response } = await get(`/api/users?q=${long}`);
     expect(response.status).toBe(200);
-    expect(((await response.json()) as Page).items.map((u) => u.email)).toEqual([
-      `${long}@luma.test`,
-    ]);
+    expect((await response.json<Page>()).items.map((u) => u.email)).toEqual([`${long}@luma.test`]);
     expect((await get(`/api/users?q=${"z".repeat(100)}`)).response.status).toBe(200);
   });
 
@@ -212,9 +210,9 @@ describe("GET /api/users", () => {
     const t = tag();
     await createUser({ email: `${t}_a@luma.test` });
     await createUser({ email: `${t}xa@luma.test` });
-    const page = (await (await get(`/api/users?q=${t}_`)).response.json()) as Page;
+    const page = await (await get(`/api/users?q=${t}_`)).response.json<Page>();
     expect(page.items.map((u) => u.email)).toEqual([`${t}_a@luma.test`]);
-    const pct = (await (await get(`/api/users?q=${t}%25`)).response.json()) as Page;
+    const pct = await (await get(`/api/users?q=${t}%25`)).response.json<Page>();
     expect(pct.items).toEqual([]);
   });
 
@@ -245,7 +243,7 @@ describe("GET /api/users/:id", () => {
     // guard 1 + batch of 5 statements.
     expect(d1Queries).toBe(6);
     expect(openrouter.calls).toEqual(["GET hash-detail"]);
-    const body = (await response.json()) as Record<string, unknown>;
+    const body = await response.json<Record<string, unknown>>();
     expect(body).toMatchObject({
       id: user.id,
       ai: { limit: 0.02, usageDaily: 0.004, expiresAt: "2026-12-14T00:00:00.000Z" },
@@ -264,10 +262,9 @@ describe("GET /api/users/:id", () => {
   it("returns ai: null without any subrequest when the user has no key", async () => {
     const user = await createUser();
     const openrouter = fakeOpenRouter();
-    const body = (await (await get(`/api/users/${user.id}`)).response.json()) as Record<
-      string,
-      unknown
-    >;
+    const body = await (
+      await get(`/api/users/${user.id}`)
+    ).response.json<Record<string, unknown>>();
     expect(body.ai).toBeNull();
     expect(body.invite).toBeNull();
     expect(openrouter.calls).toEqual([]);
@@ -281,7 +278,7 @@ describe("GET /api/users/:id", () => {
 
     const { response } = await get(`/api/users/${user.id}`);
     expect(response.status).toBe(200);
-    expect(((await response.json()) as { ai: unknown }).ai).toMatchObject({
+    expect((await response.json<{ ai: unknown }>()).ai).toMatchObject({
       usageDaily: null,
       limit: 0.02,
     });
@@ -409,7 +406,7 @@ describe("admin mutation rate limit", () => {
     const keys: string[] = [];
     const deny = {
       limit: async ({ key }: { key: string }) => (keys.push(key), { success: false }),
-    } as unknown as RateLimit;
+    };
     const { response } = await post(`/api/users/${user.id}/ban`, { ADMIN_RATE_LIMITER: deny });
     expect(response.status).toBe(429);
     expect(response.headers.get("Retry-After")).toBe("60");
@@ -418,7 +415,7 @@ describe("admin mutation rate limit", () => {
   });
 
   it("does not limit reads", async () => {
-    const deny = { limit: async () => ({ success: false }) } as unknown as RateLimit;
+    const deny = { limit: async () => ({ success: false }) };
     const { response } = await call(
       "/api/users",
       { headers: { cookie: await adminCookie() } },
@@ -431,9 +428,11 @@ describe("admin mutation rate limit", () => {
 describe("GET /api/users/:id providers", () => {
   it("lists the sign-in providers of the account", async () => {
     const user = await createGoogleUser(`prov-${crypto.randomUUID().slice(0, 6)}@luma.test`);
-    const body = (await (await get(`/api/users/${user.id}`)).response.json()) as {
+    const body = await (
+      await get(`/api/users/${user.id}`)
+    ).response.json<{
       providers: string[];
-    };
+    }>();
     expect(body.providers).toEqual(["google"]);
   });
 });

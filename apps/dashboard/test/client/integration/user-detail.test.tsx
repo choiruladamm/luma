@@ -52,7 +52,7 @@ describe("Detail user", () => {
   });
 
   it("cancels the ban dialog without calling the API", async () => {
-    const ban = vi.fn();
+    const ban = vi.fn<() => void>();
     server.use(http.post(`${API}/users/:id/ban`, () => (ban(), HttpResponse.json({}))));
     const { user } = renderApp("/users/u1");
     await user.click(await screen.findByRole("button", { name: "Ban user" }));

@@ -251,7 +251,7 @@ describe("Better Auth allowlist", () => {
       headers: { cookie: await adminCookie() },
     });
     expect(response.status).toBe(200);
-    expect(((await response.json()) as { user: { email: string } }).user.email).toBe(ADMIN_EMAIL);
+    expect((await response.json<{ user: { email: string } }>()).user.email).toBe(ADMIN_EMAIL);
   });
 });
 
@@ -272,7 +272,7 @@ describe("response headers", () => {
 
 describe("rate limit", () => {
   it("answers 429 + Retry-After before auth or D1", async () => {
-    const deny = { limit: async () => ({ success: false }) } as unknown as RateLimit;
+    const deny = { limit: async () => ({ success: false }) };
     for (const path of [PROBE, "/api/auth/get-session"]) {
       const { response, d1Queries } = await call(path, {}, { RATE_LIMITER: deny });
       expect(response.status).toBe(429);
@@ -286,7 +286,7 @@ describe("rate limit", () => {
     const keys: string[] = [];
     const spy = {
       limit: async ({ key }: { key: string }) => (keys.push(key), { success: true }),
-    } as unknown as RateLimit;
+    };
     await call(PROBE, { headers: { "cf-connecting-ip": "10.1.2.3" } }, { RATE_LIMITER: spy });
     expect(keys).toEqual(["ip:10.1.2.3"]);
   });

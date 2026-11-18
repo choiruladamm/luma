@@ -1,5 +1,5 @@
 // Every D1 query of the users feature. Each function is one query-budget unit.
-import { and, asc, count, desc, eq, gte, isNotNull, isNull, or, type SQL, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, isNotNull, isNull, type SQL, sql } from "drizzle-orm";
 import type { Db } from "../../../../backend/src/db/client";
 import {
   accounts,
@@ -60,11 +60,12 @@ export type UserListQuery = {
  * bytes (a long query failed with "pattern too complex"), and `%`/`_` need no escaping. Same rows
  * read as LIKE: neither can use an index.
  */
+const at = (text: SQL, part: string) => sql`instr(${text}, ${part})`;
+
 function search(q: string) {
   const term = q.toLowerCase();
   const email = sql`lower(${users.email})`;
   const name = sql`lower(${users.name})`;
-  const at = (text: SQL, part: string) => sql`instr(${text}, ${part})`;
   const filter = sql`(${at(email, term)} > 0 or ${at(name, term)} > 0)`;
   const rank = sql<number>`case
     when ${email} = ${term} then 0

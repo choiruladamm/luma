@@ -132,7 +132,7 @@ backend-types: ## backend: regenerate Env types after editing wrangler.jsonc
 	cd $(BACKEND) && bunx wrangler types --env dev --strict-vars false
 
 backend-test: ## backend: typecheck + vitest (workerd) + coverage
-	cd $(BACKEND) && bunx tsc --noEmit && bunx vitest run --coverage
+	cd $(BACKEND) && bun run lint && bunx tsc --noEmit && bunx vitest run --coverage
 
 backend-live: ## backend: Flutter client calls the deployed dev Worker (network)
 	cd $(APP) && LUMA_BACKEND_LIVE=1 fvm flutter test --timeout 30s test/data/backend_live_test.dart
@@ -170,7 +170,7 @@ dashboard-dev: ## dashboard: Vite dev server with the Worker (env dev, http://lo
 	cd $(DASHBOARD) && CLOUDFLARE_ENV=dev bunx vite dev
 
 dashboard-test: ## dashboard: typecheck worker + client, vitest worker (workerd) + client (happy-dom)
-	cd $(DASHBOARD) && bunx tsc --noEmit -p tsconfig.worker.json && bunx tsc --noEmit -p tsconfig.client.json && bunx vitest run && bunx vitest run -c vitest.client.config.ts
+	cd $(DASHBOARD) && bun run lint && bunx tsc --noEmit -p tsconfig.worker.json && bunx tsc --noEmit -p tsconfig.client.json && bunx vitest run && bunx vitest run -c vitest.client.config.ts
 
 dashboard-e2e: ## dashboard: Playwright e2e on installed Chrome, local e2e env with its own D1 (no remote)
 	cd $(DASHBOARD) && bunx playwright test

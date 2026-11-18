@@ -1,0 +1,72 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": [
+    "typescript",
+    "unicorn",
+    "oxc",
+    "import",
+    "promise",
+    "vitest",
+    "react",
+    "react-hooks",
+    "jsx-a11y"
+  ],
+  "categories": { "correctness": "error", "suspicious": "error", "perf": "error" },
+  "ignorePatterns": ["worker-configuration.d.ts", "dist", "coverage", ".wrangler"],
+  "rules": {
+    "react/react-in-jsx-scope": "off",
+    "no-warning-comments": ["error", { "terms": ["fixme", "hack", "xxx"], "location": "start" }],
+    "no-await-in-loop": "off",
+    "typescript/consistent-return": "off",
+    "jsx-a11y/prefer-tag-over-role": "off",
+    "jsx-a11y/no-autofocus": "off",
+    "react/no-array-index-key": "off",
+    "import/no-unassigned-import": "off"
+  },
+  "overrides": [
+    {
+      "files": ["test/**", "e2e/**"],
+      "rules": {
+        "typescript/no-unsafe-type-assertion": "off",
+        "unicorn/consistent-function-scoping": "off",
+        "vitest/expect-expect": ["error", { "assertFunctionNames": ["expect"] }],
+        "vitest/valid-expect": ["error", { "maxArgs": 2 }]
+      }
+    },
+    {
+      "files": [
+        "client/components/ui/select.tsx",
+        "client/features/users/components/quick-search.tsx"
+      ],
+      "rules": {
+        "jsx-a11y/click-events-have-key-events": "off",
+        "jsx-a11y/no-noninteractive-element-to-interactive-role": "off",
+        "jsx-a11y/no-static-element-interactions": "off"
+      }
+    },
+    {
+      "files": [
+        "client/features/users/components/users-table-skeleton.tsx",
+        "client/features/invites/components/invites-table-skeleton.tsx"
+      ],
+      "rules": { "react/no-unstable-nested-components": "off" }
+    },
+    {
+      "files": [
+        "client/app/app-shell.tsx",
+        "client/features/invites/pages/invites-page.tsx",
+        "client/features/users/components/quick-search.tsx",
+        "client/features/users/hooks/use-user-search.ts",
+        "client/features/users/pages/users-page.tsx"
+      ],
+      "rules": {
+        "react-hooks/exhaustive-deps": "off",
+        "react/exhaustive-effect-dependencies": "off",
+        "react/memo-dependencies": "off",
+        "react/set-state-in-effect": "off",
+        "react/incompatible-library": "off",
+        "react/immutability": "off"
+      }
+    }
+  ]
+}

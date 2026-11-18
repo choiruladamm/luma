@@ -22,19 +22,16 @@ const codeForStatus = (status: number): ErrorCode => {
  */
 export async function normalizeAuthError(res: Response): Promise<Response> {
   if (res.ok || !res.headers.get("content-type")?.includes("application/json")) return res;
-  const body = (await res
+  const body = await res
     .clone()
-    .json()
-    .catch(() => null)) as {
-    code?: string;
-    message?: string;
-    error?: unknown;
-  } | null;
+    .json<{ code?: string; message?: string; error?: unknown } | null>()
+    .catch(() => null);
   if (!body || body.error !== undefined) return res;
   const headers = new Headers(res.headers);
   headers.delete("content-length");
   return Response.json(
     errorBody(
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Better Auth codes are passed through, not limited to ErrorCode
       (body.code as ErrorCode) ?? codeForStatus(res.status),
       body.message ?? res.statusText,
     ),

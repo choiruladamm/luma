@@ -90,7 +90,7 @@ export function invitesPage(items: InviteRow[], url: URL) {
   const status = p.get("status");
   let rows = searched.filter((i) => !status || (status === "used") === (i.usedAt !== null));
   if (p.get("sort") === "code")
-    rows = [...rows].sort(
+    rows = rows.toSorted(
       (a, b) => (p.get("dir") === "asc" ? 1 : -1) * a.code.localeCompare(b.code),
     );
   const limit = Number(p.get("limit") ?? 20);

@@ -16,7 +16,7 @@ export type UsersParams = {
 export const DEFAULT_USERS_PARAMS: UsersParams = { q: "", dir: "desc", page: 1, limit: 50 };
 
 const pick = <T extends string>(value: string | null, allowed: readonly T[]) =>
-  allowed.includes(value as T) ? (value as T) : undefined;
+  allowed.find((a) => a === value);
 
 /** URL → params. Unknown values fall back to the defaults instead of failing the screen. */
 export function parseUsersParams(search: URLSearchParams): UsersParams {

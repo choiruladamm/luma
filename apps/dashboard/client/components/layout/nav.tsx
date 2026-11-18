@@ -25,6 +25,7 @@ export function NavPills({ items, transitionName }: { items: NavItem[]; transiti
   const pill = useSlidingPill(active, items.length);
 
   return (
+    // oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- hover-only pill; every link stays keyboard-focusable
     <nav
       aria-label={t.shell.nav}
       onMouseLeave={pill.onMouseLeave}

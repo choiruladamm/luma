@@ -55,7 +55,7 @@ async function loginWithGoogle(
     overrides,
   );
   expect(start.response.status).toBe(200);
-  const { url } = (await start.response.json()) as { url: string };
+  const { url } = await start.response.json<{ url: string }>();
   const google = new URL(url);
   const state = google.searchParams.get("state")!;
 

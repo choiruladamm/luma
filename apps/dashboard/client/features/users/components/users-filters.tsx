@@ -113,7 +113,8 @@ function FilterPopover({ params, set }: { params: UsersParams; set: SetParams })
   const count = activeFilterCount(params);
   useEffect(() => {
     if (!open) return;
-    const onDown = (e: MouseEvent) => !root.current?.contains(e.target as Node) && setOpen(false);
+    const onDown = (e: MouseEvent) =>
+      e.target instanceof Node && !root.current?.contains(e.target) && setOpen(false);
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && !e.defaultPrevented && setOpen(false);
     document.addEventListener("mousedown", onDown);
     document.addEventListener("keydown", onKey);
@@ -212,6 +213,7 @@ export function UsersFilterChips({
         options={sorts}
         active={params.sort !== undefined}
         onChange={(v) => {
+          // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- the value comes from this select's own options
           const [sort, dir] = v.split(":") as [UserSort, "asc" | "desc"];
           set({ sort, dir });
         }}
@@ -288,7 +290,7 @@ export function UsersFilterSheet({
             active={params.sort !== undefined}
             label={t.users.sortLabel}
             value={currentSort}
-            onChange={(v) => set({ sort: v as UserSort })}
+            onChange={(v) => set({ sort: v })}
             options={sorts}
           />
           {currentSort !== "relevance" && (

@@ -60,11 +60,11 @@ describe("files", () => {
       filesPut,
     );
 
-    const after = (await (
+    const after = await (
       await exports.default.fetch(missing(token, filesMissing.request.body.names))
-    ).json()) as {
+    ).json<{
       missing: string[];
-    };
+    }>();
     expect(after.missing).toEqual([]);
     expect(await bytes(userId)).toBe(10);
   });
@@ -117,9 +117,11 @@ describe("files", () => {
     await exports.default.fetch(putFile(a.token, "secret.epub", "aaaaa"));
 
     expect((await exports.default.fetch(get(b.token, "/v1/files/secret.epub"))).status).toBe(404);
-    const res = (await (await exports.default.fetch(missing(b.token, ["secret.epub"]))).json()) as {
+    const res = await (
+      await exports.default.fetch(missing(b.token, ["secret.epub"]))
+    ).json<{
       missing: string[];
-    };
+    }>();
     expect(res.missing).toEqual(["secret.epub"]);
   });
 
@@ -205,13 +207,17 @@ describe("backups", () => {
   it("never shows one user's snapshots to another", async () => {
     const a = await signUp();
     const b = await signUp();
-    const { id } = (await (await exports.default.fetch(putBackup(a.token))).json()) as {
+    const { id } = await (
+      await exports.default.fetch(putBackup(a.token))
+    ).json<{
       id: string;
-    };
+    }>();
 
-    const list = (await (await exports.default.fetch(get(b.token, "/v1/backups"))).json()) as {
+    const list = await (
+      await exports.default.fetch(get(b.token, "/v1/backups"))
+    ).json<{
       backups: unknown[];
-    };
+    }>();
     expect(list.backups).toEqual([]);
     expect((await exports.default.fetch(get(b.token, `/v1/backups/${id}`))).status).toBe(404);
   });

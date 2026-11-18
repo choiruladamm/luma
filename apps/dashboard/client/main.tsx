@@ -12,7 +12,7 @@ applyTheme(useUiStore.getState().theme);
 // Indonesian instead of nothing.
 void loadLang(resolveLang(useUiStore.getState().lang))
   .catch(() => undefined)
-  .then(() => {
+  .finally(() => {
     applyLang(getI18n().lang);
     createRoot(document.getElementById("root")!).render(
       <StrictMode>

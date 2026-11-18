@@ -38,8 +38,8 @@ describe("GET /v1/me", () => {
     const b = await signUp();
     const resA = await exports.default.fetch(url("/v1/me"), { headers: auth(a.token) });
     const resB = await exports.default.fetch(url("/v1/me"), { headers: auth(b.token) });
-    expect(((await resA.json()) as { user: { id: string } }).user.id).toBe(a.userId);
-    expect(((await resB.json()) as { user: { id: string } }).user.id).toBe(b.userId);
+    expect((await resA.json<{ user: { id: string } }>()).user.id).toBe(a.userId);
+    expect((await resB.json<{ user: { id: string } }>()).user.id).toBe(b.userId);
   });
 
   it("stays inside the budget: session lookup only, no subrequest", async () => {

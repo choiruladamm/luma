@@ -49,9 +49,9 @@ describe("POST /v1/ai/key", () => {
     const a = await signUp();
     const b = await signUp();
 
-    const a1 = (await (await exports.default.fetch(postKey(a.token))).json()) as { key: string };
-    const a2 = (await (await exports.default.fetch(postKey(a.token))).json()) as { key: string };
-    const b1 = (await (await exports.default.fetch(postKey(b.token))).json()) as { key: string };
+    const a1 = await (await exports.default.fetch(postKey(a.token))).json<{ key: string }>();
+    const a2 = await (await exports.default.fetch(postKey(a.token))).json<{ key: string }>();
+    const b1 = await (await exports.default.fetch(postKey(b.token))).json<{ key: string }>();
 
     expect(a2.key).toBe(a1.key);
     expect(b1.key).not.toBe(a1.key);
@@ -61,7 +61,7 @@ describe("POST /v1/ai/key", () => {
   it("rotates on request after the app got a 401 (contract)", async () => {
     const or = fakeOpenRouter();
     const { token } = await signUp();
-    const first = (await (await exports.default.fetch(postKey(token))).json()) as { key: string };
+    const first = await (await exports.default.fetch(postKey(token))).json<{ key: string }>();
     or.keys.delete("hash-1"); // revoked on OpenRouter → the app gets 401
 
     const res = await exports.default.fetch(postKey(token, aiKeyRotate.request.body));
@@ -80,11 +80,11 @@ describe("POST /v1/ai/key", () => {
   it("returns the same key when rotate is asked for a key that still works", async () => {
     const or = fakeOpenRouter();
     const { token } = await signUp();
-    const first = (await (await exports.default.fetch(postKey(token))).json()) as { key: string };
+    const first = await (await exports.default.fetch(postKey(token))).json<{ key: string }>();
 
-    const again = (await (
+    const again = await (
       await exports.default.fetch(postKey(token, { rotate: true }))
-    ).json()) as { key: string };
+    ).json<{ key: string }>();
 
     expect(again.key).toBe(first.key);
     expect(or.calls).toEqual(["POST /keys", "GET /keys/hash-1"]);
@@ -118,7 +118,7 @@ describe("POST /v1/ai/key", () => {
       AI_KEY_ENABLED: "false",
     });
     expect(response.status).toBe(503);
-    expect((await response.json()) as unknown).toEqual({
+    expect(await response.json<unknown>()).toEqual({
       error: { ...disabled.response.body.error, message: "AI_KEY_ENABLED is off" },
     });
     expect(d1Queries).toBe(0);

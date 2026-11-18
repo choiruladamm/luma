@@ -19,7 +19,7 @@ const signIn = (token: string, invite?: string) =>
   });
 
 const errorCode = async (res: Response) =>
-  ((await res.json()) as { error: { code: string } }).error.code;
+  (await res.json<{ error: { code: string } }>()).error.code;
 
 describe("sign-in with Google idToken", () => {
   it("creates the account with an invite code and returns a bearer token (contract, budget)", async () => {
@@ -63,7 +63,7 @@ describe("sign-in with Google idToken", () => {
     expect(again.status).toBe(200);
     expect(again.headers.get("set-auth-token")).toBeTruthy();
     const ids = await Promise.all(
-      [first, again].map(async (r) => ((await r.json()) as { user: { id: string } }).user.id),
+      [first, again].map(async (r) => (await r.json<{ user: { id: string } }>()).user.id),
     );
     expect(ids[1]).toBe(ids[0]);
   });

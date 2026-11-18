@@ -29,14 +29,16 @@ export type TableSort = { id: string; dir: "asc" | "desc" };
  * `sort` marks the sorted column (ink + arrow + aria-sort); columns in `sortable` get a header
  * button that calls `onSort(id)` (the page decides the direction: same column flips it).
  */
+const NO_IDS: string[] = [];
+
 export function DataTable<T extends RowData>({
   columns,
   data,
   label,
   rowHref,
-  numeric = [],
+  numeric = NO_IDS,
   sort,
-  sortable = [],
+  sortable = NO_IDS,
   onSort,
   renderCard,
   footer,
@@ -285,7 +287,7 @@ export function TableSkeleton({
                   {c.cell(r)}
                 </td>
               ))}
-              {rowLink && <td className="border-b border-track pr-6 pl-1" />}
+              {rowLink && <td aria-hidden="true" className="border-b border-track pr-6 pl-1" />}
             </tr>
           ))}
         </tbody>

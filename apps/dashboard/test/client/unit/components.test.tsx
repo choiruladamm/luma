@@ -17,7 +17,7 @@ import { toast } from "../../../client/stores/toast-store";
 
 describe("Button / IconButton", () => {
   it("is a real button, disabled blocks clicks", async () => {
-    const onClick = vi.fn();
+    const onClick = vi.fn<() => void>();
     render(
       <Button onClick={onClick} disabled>
         Bikin kode
@@ -38,7 +38,7 @@ describe("Button loading", () => {
   const svgs = (el: HTMLElement) => [...el.querySelectorAll("svg")];
 
   it("swaps the icon for a spinner, keeps the label, and blocks clicks", async () => {
-    const onClick = vi.fn();
+    const onClick = vi.fn<() => void>();
     render(
       <Button icon="plus" loading onClick={onClick}>
         Bikin kode
@@ -111,7 +111,7 @@ describe("Chip / Avatar", () => {
 
 describe("Segmented", () => {
   it("marks the active tab and reports changes", async () => {
-    const onChange = vi.fn();
+    const onChange = vi.fn<() => void>();
     render(
       <Segmented
         label="Saring kode"
@@ -147,7 +147,7 @@ describe("Segmented", () => {
 
 describe("Dialog", () => {
   it("renders title, description and footer when open; the close button calls onClose", async () => {
-    const onClose = vi.fn();
+    const onClose = vi.fn<() => void>();
     render(
       <Dialog
         open
@@ -217,7 +217,7 @@ describe("DataTable", () => {
   });
 
   it("sortable headers are buttons that report the column; the sorted one carries aria-sort", async () => {
-    const onSort = vi.fn();
+    const onSort = vi.fn<() => void>();
     const router = createMemoryRouter([
       {
         path: "/",
@@ -252,7 +252,7 @@ describe("Select", () => {
   ];
 
   it("opens a listbox with the chosen option checked, picks with the mouse, and closes", async () => {
-    const onChange = vi.fn();
+    const onChange = vi.fn<() => void>();
     render(<Select label="Status" value="" options={options} onChange={onChange} />);
     await userEvent.click(screen.getByRole("button", { name: "Status: Semua" }));
     expect(screen.getByRole("option", { name: "Semua" })).toHaveAttribute("aria-selected", "true");
@@ -262,7 +262,7 @@ describe("Select", () => {
   });
 
   it("works from the keyboard and Esc returns focus to the trigger", async () => {
-    const onChange = vi.fn();
+    const onChange = vi.fn<() => void>();
     render(<Select label="Status" value="" options={options} onChange={onChange} />);
     const trigger = screen.getByRole("button", { name: "Status: Semua" });
     trigger.focus();
@@ -286,8 +286,8 @@ describe("Pagination", () => {
   });
 
   it("a new page glides to the table's top only when that top is off screen", async () => {
-    const onPage = vi.fn();
-    const scroll = vi.fn();
+    const onPage = vi.fn<() => void>();
+    const scroll = vi.fn<() => void>();
     const { container } = render(
       <section>
         <Pagination page={2} pageCount={3} total={45} pageSize={20} onPage={onPage} />
@@ -307,7 +307,7 @@ describe("Pagination", () => {
   });
 
   it("shows the range, marks the current page, and disables the ends", async () => {
-    const onPage = vi.fn();
+    const onPage = vi.fn<() => void>();
     render(<Pagination page={1} pageCount={3} total={45} pageSize={20} onPage={onPage} />);
     expect(screen.getByText("1–20 dari 45")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Halaman 1" })).toHaveAttribute(
@@ -322,7 +322,7 @@ describe("Pagination", () => {
 
 describe("states", () => {
   it("ErrorState is an alert with a retry", async () => {
-    const onRetry = vi.fn();
+    const onRetry = vi.fn<() => void>();
     render(<ErrorState message="Server admin gak ngejawab." onRetry={onRetry} />);
     expect(screen.getByRole("alert")).toHaveTextContent("Data gagal dimuat");
     await userEvent.click(screen.getByRole("button", { name: "Coba lagi" }));
@@ -343,19 +343,29 @@ describe("ToastHost", () => {
   it("auto-hides success after 2.5s, keeps errors until closed, runs actions", async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     render(<ToastHost />);
-    act(() => toast("Kode disalin"));
+    act(() => {
+      toast("Kode disalin");
+    });
     expect(screen.getByRole("status")).toHaveTextContent("Kode disalin");
-    act(() => vi.advanceTimersByTime(2600));
+    act(() => {
+      vi.advanceTimersByTime(2600);
+    });
     expect(screen.queryByText("Kode disalin")).toBeNull();
 
-    act(() => toast("Gagal nyalin kode. Coba lagi.", { tone: "error" }));
-    act(() => vi.advanceTimersByTime(10_000));
+    act(() => {
+      toast("Gagal nyalin kode. Coba lagi.", { tone: "error" });
+    });
+    act(() => {
+      vi.advanceTimersByTime(10_000);
+    });
     expect(screen.getByRole("alert")).toHaveTextContent("Gagal nyalin");
     await userEvent.click(screen.getByRole("button", { name: "Tutup" }));
     expect(screen.queryByRole("alert")).toBeNull();
 
-    const onClick = vi.fn();
-    act(() => toast("a@x.com di-ban", { action: { label: "Buka ban", onClick } }));
+    const onClick = vi.fn<() => void>();
+    act(() => {
+      toast("a@x.com di-ban", { action: { label: "Buka ban", onClick } });
+    });
     await userEvent.click(screen.getByRole("button", { name: "Buka ban" }));
     expect(onClick).toHaveBeenCalled();
     vi.useRealTimers();

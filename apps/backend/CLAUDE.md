@@ -4,7 +4,7 @@ Hono API under `/v1` on Workers, D1 + Drizzle, R2, Better Auth (`bearer` plugin)
 
 ## Commands
 
-- `make backend-test` (tsc + vitest in workerd + coverage) is the check for this app. Bundle limit 3 MB compressed: `bun run size` from `apps/backend`.
+- `make backend-test` (oxlint + Prettier check, tsc, vitest in workerd + coverage) is the check for this app; `bun run format` fixes formatting. Bundle limit 3 MB compressed: `bun run size` from `apps/backend`.
 - After editing `wrangler.jsonc`: `make backend-types`.
 - Deploys go through the `/backend-deploy <env>` skill. `make backend-deploy e=prod` refuses outside `master`; `make backend-migrate e=prod` doesn't check the branch, so run it from `master` only.
 

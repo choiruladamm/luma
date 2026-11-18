@@ -1,0 +1,20 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "unicorn", "oxc", "import", "promise", "vitest"],
+  "categories": { "correctness": "error", "suspicious": "error", "perf": "error" },
+  "ignorePatterns": ["worker-configuration.d.ts", "dist", "coverage", ".wrangler"],
+  "rules": {
+    "no-warning-comments": ["error", { "terms": ["fixme", "hack", "xxx"], "location": "start" }],
+    "no-await-in-loop": "off"
+  },
+  "overrides": [
+    {
+      "files": ["test/**"],
+      "rules": {
+        "typescript/no-unsafe-type-assertion": "off",
+        "vitest/expect-expect": ["error", { "assertFunctionNames": ["expect", "expectContract"] }],
+        "vitest/valid-expect": ["error", { "maxArgs": 2 }]
+      }
+    }
+  ]
+}

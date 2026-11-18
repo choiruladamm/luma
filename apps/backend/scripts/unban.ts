@@ -23,6 +23,7 @@ const run = Bun.spawnSync(
   { stderr: "inherit" },
 );
 if (run.exitCode !== 0) process.exit(run.exitCode ?? 1);
-const [user] = JSON.parse(run.stdout.toString())[0].results as { id: string }[];
+const parsed: { results: { id: string }[] }[] = JSON.parse(run.stdout.toString());
+const [user] = parsed[0]?.results ?? [];
 if (!user) throw new Error(`user ${email} gak ada di ${envName}`);
 console.log(`${email}: unbanned`);

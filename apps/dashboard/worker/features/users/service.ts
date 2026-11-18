@@ -69,7 +69,7 @@ export async function getUserDetail(
         JSON.stringify({
           message: "openrouter getUsage failed",
           requestId,
-          error: (e as Error).message,
+          error: e instanceof Error ? e.message : String(e),
         }),
       );
     }

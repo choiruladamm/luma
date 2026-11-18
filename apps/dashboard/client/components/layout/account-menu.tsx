@@ -42,7 +42,8 @@ export function AccountMenu({
   const root = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!open) return;
-    const onDown = (e: MouseEvent) => !root.current?.contains(e.target as Node) && onClose();
+    const onDown = (e: MouseEvent) =>
+      e.target instanceof Node && !root.current?.contains(e.target) && onClose();
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     document.addEventListener("mousedown", onDown);
     document.addEventListener("keydown", onKey);

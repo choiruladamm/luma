@@ -111,16 +111,12 @@ export function AppShell() {
         signingOut={signOut.isPending}
       />
     );
+  const shellVars: CSSProperties & Record<`--${string}`, string> = {
+    "--header-bottom": `${headerBottom}px`,
+    "--menu-top": `${headerBottom + 8}px`,
+  };
   return (
-    <div
-      className="min-h-dvh bg-page"
-      style={
-        {
-          "--header-bottom": `${headerBottom}px`,
-          "--menu-top": `${headerBottom + 8}px`,
-        } as CSSProperties
-      }
-    >
+    <div className="min-h-dvh bg-page" style={shellVars}>
       {/* Phone: room at the bottom for the floating tab bar. */}
       <div className="mx-auto flex max-w-[1280px] flex-col gap-7 px-4 pt-5 pb-[calc(108px+env(safe-area-inset-bottom))] md:px-8 md:pb-12">
         {/* Phone search mode: the header row becomes the search field + close, so nothing floats over it. */}

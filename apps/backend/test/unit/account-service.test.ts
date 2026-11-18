@@ -9,8 +9,11 @@ import { signUp } from "../helpers/auth";
 /** A fake bucket that always says there is another page. */
 const endlessBucket = () => {
   const bucket = {
-    list: vi.fn(async () => ({ objects: [{ key: "u/x/files/a" }], truncated: true })),
-    delete: vi.fn(async () => {}),
+    list: vi.fn<() => Promise<{ objects: { key: string }[]; truncated: boolean }>>(async () => ({
+      objects: [{ key: "u/x/files/a" }],
+      truncated: true,
+    })),
+    delete: vi.fn<() => Promise<void>>(async () => {}),
   };
   return bucket;
 };

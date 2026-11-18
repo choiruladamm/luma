@@ -30,7 +30,8 @@ export function Gauge({
 }) {
   const r = 80;
   const length = Math.PI * r;
-  let offset = 0;
+  const dashes = parts.map((p) => Math.max(0, Math.min(1, p.value)) * length);
+  const offsets = dashes.map((_, i) => dashes.slice(0, i).reduce((a, b) => a + b, 0));
   return (
     <div className="relative mx-auto h-[112px] w-[200px]">
       <svg viewBox="0 0 200 112" className="absolute inset-0" role="img" aria-label={label}>
@@ -42,7 +43,7 @@ export function Gauge({
           strokeLinecap="round"
         />
         {parts.map((p, i) => {
-          const dash = Math.max(0, Math.min(1, p.value)) * length;
+          const dash = dashes[i]!;
           const el = (
             <path
               key={i}
@@ -52,10 +53,9 @@ export function Gauge({
               strokeWidth="18"
               strokeLinecap="round"
               strokeDasharray={`${dash} ${length}`}
-              strokeDashoffset={-offset}
+              strokeDashoffset={-offsets[i]!}
             />
           );
-          offset += dash;
           return dash > 0 ? el : null;
         })}
       </svg>

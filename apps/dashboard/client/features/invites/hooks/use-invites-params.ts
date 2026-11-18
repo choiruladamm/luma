@@ -21,7 +21,7 @@ export const DEFAULT_INVITES_PARAMS: InvitesParams = {
 };
 
 const pick = <T extends string>(value: string | null, allowed: readonly T[]) =>
-  allowed.includes(value as T) ? (value as T) : undefined;
+  allowed.find((a) => a === value);
 
 /** URL → params. Unknown values fall back to the defaults instead of failing the screen. */
 export function parseInvitesParams(search: URLSearchParams): InvitesParams {

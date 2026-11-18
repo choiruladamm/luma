@@ -29,8 +29,8 @@ export function UserDetailPage() {
     unban.mutate(id, {
       onSuccess: () => {
         // getI18n, not the render's `t`: the admin may switch language while the request runs.
-        const { t } = getI18n();
-        toast(t.userDetail.unbanned(user.data?.email ?? t.userDetail.someone));
+        const msg = getI18n().t;
+        toast(msg.userDetail.unbanned(user.data?.email ?? msg.userDetail.someone));
       },
       onError: (e) => toast(errorText(e, getI18n().t), { tone: "error" }),
     });
@@ -38,9 +38,9 @@ export function UserDetailPage() {
     ban.mutate(id, {
       onSuccess: () => {
         setConfirming(false);
-        const { t } = getI18n();
-        toast(t.userDetail.bannedToast(user.data?.email ?? t.userDetail.someone), {
-          action: { label: t.userDetail.unban, onClick: doUnban },
+        const msg = getI18n().t;
+        toast(msg.userDetail.bannedToast(user.data?.email ?? msg.userDetail.someone), {
+          action: { label: msg.userDetail.unban, onClick: doUnban },
         });
       },
       onError: (e) => {

@@ -4,6 +4,11 @@ import limited from "../fixtures/contract/error-rate-limited.json";
 import { TEST_RATE_LIMIT } from "../helpers/limits";
 import { callWithBudget } from "../helpers/budget";
 
+const hit = () =>
+  exports.default.fetch("https://luma.test/v1/health", {
+    headers: { "cf-connecting-ip": "10.9.9.9" },
+  });
+
 describe("rate limit /v1/*", () => {
   it("answers 429 + Retry-After once the binding says no (contract)", async () => {
     const deny = { limit: async () => ({ success: false }) } as unknown as RateLimit;
@@ -20,10 +25,6 @@ describe("rate limit /v1/*", () => {
   // vitest.config.ts raises the limit (60 in wrangler.jsonc): what's tested here is that
   // the real binding counts per IP, not the number.
   it("enforces the real binding per IP", async () => {
-    const hit = () =>
-      exports.default.fetch("https://luma.test/v1/health", {
-        headers: { "cf-connecting-ip": "10.9.9.9" },
-      });
     const statuses: number[] = [];
     for (let i = 0; i <= TEST_RATE_LIMIT; i++) statuses.push((await hit()).status);
     expect(statuses.slice(0, TEST_RATE_LIMIT).every((s) => s === 200)).toBe(true);

@@ -10,7 +10,7 @@ type Kind = "notFound" | "update" | "crash";
 function useErrorKind(): { kind: Kind; detail?: string } {
   const error = useRouteError();
   if (isRouteErrorResponse(error) && error.status === 404) return { kind: "notFound" };
-  const message = error instanceof Error ? error.message : String(error ?? "");
+  const message = error instanceof Error ? error.message : typeof error === "string" ? error : "";
   // A tab opened before a deploy asks for chunk files that no longer exist.
   if (
     /dynamically imported module|Importing a module script failed|error loading dynamically/i.test(

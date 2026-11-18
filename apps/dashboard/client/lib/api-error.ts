@@ -21,41 +21,44 @@ export class ApiError extends Error {
 export const errorText = (error: Error, t: Messages) =>
   t.errors[error instanceof ApiError ? error.code : "INTERNAL_ERROR"];
 
+const isClientErrorCode = (code: string): code is ClientErrorCode => Object.hasOwn(id.errors, code);
+
 /** Turn a failed response (`{"error": {"code", "message"}}`) into an ApiError. */
-export async function toApiError(res: Response): Promise<ApiError> {
-  const body = (await res.json().catch(() => null)) as {
-    error?: { code?: string; message?: string };
-  } | null;
+export async function toApiError(res: { status: number; json(): Promise<any> }): Promise<ApiError> {
+  const body: { error?: { code?: string; message?: string } } | null = await res
+    .json()
+    .catch(() => null);
   const code = body?.error?.code;
   // Our worker's 401 always has a JSON code; a bare 401 is Cloudflare Access saying its own session
   // expired (it answers so, instead of redirecting, because requests send X-Requested-With).
   if (res.status === 401 && code === undefined) return new ApiError(401, "ACCESS_EXPIRED");
-  const known =
-    code !== undefined && Object.hasOwn(id.errors, code)
-      ? (code as ClientErrorCode)
-      : "INTERNAL_ERROR";
+  const known = code !== undefined && isClientErrorCode(code) ? code : "INTERNAL_ERROR";
   return new ApiError(res.status, known, body?.error?.message);
 }
 
 /** Return the JSON of an ok response, throw ApiError otherwise (network failures included). */
-export async function unwrap<T>(request: Promise<{ ok: boolean; json(): Promise<T> }>): Promise<T> {
-  let res: { ok: boolean; json(): Promise<T> };
+export async function unwrap<T>(
+  request: Promise<{ ok: boolean; status: number; json(): Promise<T> }>,
+): Promise<T> {
+  let res: { ok: boolean; status: number; json(): Promise<T> };
   try {
     res = await request;
   } catch {
     throw new ApiError(0, "NETWORK");
   }
-  if (!res.ok) throw await toApiError(res as unknown as Response);
+  if (!res.ok) throw await toApiError(res);
   return res.json();
 }
 
 /** Like `unwrap` for responses without a body (204): resolves on ok, throws ApiError otherwise. */
-export async function unwrapEmpty(request: Promise<{ ok: boolean }>): Promise<void> {
-  let res: { ok: boolean };
+export async function unwrapEmpty(
+  request: Promise<{ ok: boolean; status: number; json(): Promise<any> }>,
+): Promise<void> {
+  let res: { ok: boolean; status: number; json(): Promise<unknown> };
   try {
     res = await request;
   } catch {
     throw new ApiError(0, "NETWORK");
   }
-  if (!res.ok) throw await toApiError(res as unknown as Response);
+  if (!res.ok) throw await toApiError(res);
 }

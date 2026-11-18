@@ -12,7 +12,10 @@ const authFetch = async (path: string, init?: RequestInit) => {
     // Same Access header as the API client (expired Access session → 401, not a redirect).
     res = await fetch(`/api/auth/${path}`, {
       ...init,
-      headers: { ...init?.headers, "x-requested-with": "XMLHttpRequest" },
+      headers: {
+        ...Object.fromEntries(new Headers(init?.headers)),
+        "x-requested-with": "XMLHttpRequest",
+      },
     });
   } catch {
     throw new ApiError(0, "NETWORK");
@@ -33,11 +36,11 @@ export const getSession = async (): Promise<Session> => (await authFetch("get-se
 
 /** Start Google sign-in: the worker answers with the Google URL; errors come back as /login?error=…. */
 export async function signInWithGoogle() {
-  const { url } = (await (
+  const { url } = await (
     await postJson("sign-in/social", { provider: "google", callbackURL: "/" })
-  ).json()) as {
+  ).json<{
     url: string;
-  };
+  }>();
   window.location.assign(url);
 }
 

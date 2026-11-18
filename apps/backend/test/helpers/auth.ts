@@ -35,7 +35,7 @@ export async function signUp(email = `user-${++counter}@luma.test`): Promise<Sig
     });
   }
   if (!res.ok) throw new Error(`signUp failed: ${res.status} ${await res.text()}`);
-  const body = (await res.json()) as { token: string; user: { id: string } };
+  const body = await res.json<{ token: string; user: { id: string } }>();
   return { token: res.headers.get("set-auth-token") ?? body.token, userId: body.user.id, email };
 }
 

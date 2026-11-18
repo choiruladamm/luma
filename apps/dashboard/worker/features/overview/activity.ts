@@ -17,6 +17,6 @@ export async function monthSpendUsd(managementKey: string, workspaceId: string, 
   );
   if (!res.ok) throw new Error(`OpenRouter GET /activity: ${res.status}`);
   const month = now.toISOString().slice(0, 7);
-  const { data } = (await res.json()) as { data: ActivityRow[] };
+  const { data } = await res.json<{ data: ActivityRow[] }>();
   return data.filter((r) => r.date.startsWith(month)).reduce((sum, r) => sum + r.usage, 0);
 }

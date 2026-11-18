@@ -11,7 +11,7 @@ const managementKey = process.env.OPENROUTER_MANAGEMENT_KEY;
 if (!managementKey)
   throw new Error("OPENROUTER_MANAGEMENT_KEY belum diisi (management key workspace env ini)");
 
-const d1 = (sql: string) => {
+const d1 = <T = Record<string, unknown>>(sql: string): T[] => {
   const run = Bun.spawnSync(
     [
       "bunx",
@@ -31,13 +31,14 @@ const d1 = (sql: string) => {
     },
   );
   if (run.exitCode !== 0) process.exit(run.exitCode ?? 1);
-  return JSON.parse(run.stdout.toString())[0].results as Record<string, unknown>[];
+  const parsed: { results: T[] }[] = JSON.parse(run.stdout.toString());
+  return parsed[0]?.results ?? [];
 };
 
 const quoted = `'${email.replaceAll("'", "''")}'`;
-const [user] = d1(
+const [user] = d1<{ id: string; hash: string | null }>(
   `SELECT users.id AS id, ai_keys.key_hash AS hash FROM users LEFT JOIN ai_keys ON ai_keys.user_id = users.id WHERE users.email = ${quoted}`,
-) as { id: string; hash: string | null }[];
+);
 if (!user) throw new Error(`user ${email} gak ada di ${envName}`);
 
 if (user.hash) await openRouterAdmin(managementKey).deleteKey(user.hash);

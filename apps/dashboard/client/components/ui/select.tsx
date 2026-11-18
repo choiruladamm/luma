@@ -50,7 +50,8 @@ export function Select<T extends string>({
 
   useEffect(() => {
     if (!open) return;
-    const onDown = (e: MouseEvent) => !root.current?.contains(e.target as Node) && setOpen(false);
+    const onDown = (e: MouseEvent) =>
+      e.target instanceof Node && !root.current?.contains(e.target) && setOpen(false);
     document.addEventListener("mousedown", onDown);
     return () => document.removeEventListener("mousedown", onDown);
   }, [open]);
@@ -153,7 +154,7 @@ export function Select<T extends string>({
             block ? "inset-x-0" : "left-0 w-max",
           )}
         >
-          {options.map(([v, label], i) => (
+          {options.map(([v, optionLabel], i) => (
             <li
               key={v}
               ref={(el) => {
@@ -170,7 +171,7 @@ export function Select<T extends string>({
                 i === selected ? "font-semibold" : "font-normal",
               )}
             >
-              {label}
+              {optionLabel}
               <Icon name="check" size={16} className={i === selected ? "" : "invisible"} />
             </li>
           ))}

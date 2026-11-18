@@ -50,4 +50,4 @@ export async function call(
 }
 
 export const errorCode = async (res: Response) =>
-  ((await res.json()) as { error: { code: string } }).error.code;
+  (await res.json<{ error: { code: string } }>()).error.code;

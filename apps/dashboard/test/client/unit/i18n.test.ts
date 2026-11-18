@@ -3,7 +3,6 @@ import { en } from "../../../client/i18n/en";
 import { id } from "../../../client/i18n/id";
 import { chooseLang, getI18n, resolveLang } from "../../../client/i18n";
 import { formatBytes, formatDate, formatRelative, formatUsd } from "../../../client/lib/format";
-import { useUiStore } from "../../../client/stores/ui-store";
 
 /** Every leaf path with its kind: a string, or a function of N parameters. */
 function shape(obj: object, prefix = ""): string[] {
@@ -17,14 +16,16 @@ function shape(obj: object, prefix = ""): string[] {
 describe("i18n messages", () => {
   // tsc already checks en against Messages; this also catches a parameter dropped from a function.
   it("en has exactly the keys and parameters of id", () => {
-    expect(shape(en).sort()).toEqual(shape(id).sort());
+    expect(shape(en).toSorted()).toEqual(shape(id).toSorted());
   });
 
   it("no empty copy", () => {
     const leaves = (o: object): unknown[] =>
       Object.values(o).flatMap((v) => (typeof v === "object" ? leaves(v as object) : [v]));
-    for (const v of [...leaves(id), ...leaves(en)])
-      if (typeof v === "string") expect(v.trim()).not.toBe("");
+    const empty = [...leaves(id), ...leaves(en)].filter(
+      (v) => typeof v === "string" && v.trim() === "",
+    );
+    expect(empty).toEqual([]);
   });
 
   it("pluralizes English, Indonesian has one form", () => {
