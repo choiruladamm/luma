@@ -7,7 +7,6 @@ export const PBKDF2_ITERATIONS = 20_000;
 const SALT_BYTES = 16;
 const KEY_BITS = 256;
 
-
 async function derive(password: string, salt: Uint8Array, iterations: number) {
   const key = await crypto.subtle.importKey(
     "raw",
@@ -25,7 +24,10 @@ async function derive(password: string, salt: Uint8Array, iterations: number) {
 }
 
 /** Format `pbkdf2$<iterations>$<salt b64>$<hash b64>`: iterations are stored so they can be raised later. */
-export async function hashPassword(password: string, iterations = PBKDF2_ITERATIONS): Promise<string> {
+export async function hashPassword(
+  password: string,
+  iterations = PBKDF2_ITERATIONS,
+): Promise<string> {
   const salt = crypto.getRandomValues(new Uint8Array(SALT_BYTES));
   const hash = await derive(password, salt, iterations);
   return ["pbkdf2", iterations, b64(salt), b64(hash)].join("$");
@@ -34,7 +36,13 @@ export async function hashPassword(password: string, iterations = PBKDF2_ITERATI
 export async function verifyPassword({ hash, password }: { hash: string; password: string }) {
   const [scheme, iter, salt, expected] = hash.split("$");
   const iterations = Number(iter);
-  if (scheme !== "pbkdf2" || !salt || !expected || !Number.isInteger(iterations) || iterations < 1) {
+  if (
+    scheme !== "pbkdf2" ||
+    !salt ||
+    !expected ||
+    !Number.isInteger(iterations) ||
+    iterations < 1
+  ) {
     return false;
   }
   const actual = await derive(password, unb64(salt), iterations);

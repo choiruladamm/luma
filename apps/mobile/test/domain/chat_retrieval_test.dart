@@ -14,7 +14,7 @@ import '../support/book_chat_validation3.dart' as fixture;
 
 void main() {
   const book = (bookId: 1, contentRevision: 2);
-  const ChatParagraph paragraph = (
+  const paragraph = (
     book: book,
     chapterId: 4,
     paragraphIndex: 3,
@@ -129,12 +129,7 @@ void main() {
     'window boundaries preserve Unicode, overlap and whole quote coverage',
     () {
       final text = '🌿 word ' * 700;
-      final ChatParagraph p = (
-        book: book,
-        chapterId: 4,
-        paragraphIndex: 3,
-        text: text,
-      );
+      final p = (book: book, chapterId: 4, paragraphIndex: 3, text: text);
       final chunks = chatChunks([
         (paragraph: p, chapterTitle: 'IV', groupIndex: 1),
       ], book);

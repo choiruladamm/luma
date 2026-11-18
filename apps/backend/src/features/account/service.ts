@@ -14,7 +14,11 @@ export type DeleteResult = { status: "deleted" } | { status: "pending" };
  * Deletes all of the user's R2 objects first, then the D1 row (sessions and accounts cascade).
  * Too many objects → `pending`: the user is not deleted yet, the client calls again.
  */
-export async function deleteAccount(db: Db, bucket: R2Bucket, userId: string): Promise<DeleteResult> {
+export async function deleteAccount(
+  db: Db,
+  bucket: R2Bucket,
+  userId: string,
+): Promise<DeleteResult> {
   const prefix = userPrefix(userId);
   for (let page = 0; page < DELETE_PAGES_PER_REQUEST; page++) {
     const listed = await bucket.list({ prefix, limit: 1000 });

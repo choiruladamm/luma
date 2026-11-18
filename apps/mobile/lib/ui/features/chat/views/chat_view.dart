@@ -232,7 +232,7 @@ class _ChatViewState extends ConsumerState<ChatView> {
                                   ) ??
                                   context.l10n.chatBackToReading,
                               icon: AppIcons.back,
-                              onPressed: () => _navigate(() => _back()),
+                              onPressed: () => _navigate(_back),
                             ),
                             Expanded(
                               child: Column(

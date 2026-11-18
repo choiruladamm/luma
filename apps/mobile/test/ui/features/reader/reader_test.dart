@@ -100,10 +100,10 @@ final tall = [
 ];
 
 /// Groups already translated, per chapter (margin marks).
-var translated = <int, Set<int>>{};
+Map<int, Set<int>> translated = <int, Set<int>>{};
 
 /// Sections of a group's saved breakdown (0 = none).
-var brokenDown = <GroupRef, int>{};
+Map<GroupRef, int> brokenDown = <GroupRef, int>{};
 
 /// What the AI says for a group; tests swap it.
 late Future<AiReply> Function(GroupRef) answer;
@@ -326,7 +326,7 @@ void main() {
                 author: 'Epictetus',
                 coverName: null,
                 opened: true,
-                createdAt: DateTime(2026, 10, 1),
+                createdAt: DateTime(2026, 10),
               ),
             ]),
           ),
@@ -2676,7 +2676,7 @@ void main() {
       // Header away: fade under the grabber (from y 12). Buttons away:
       // edge-to-edge, no bottom fade at all.
       expect(f.top, const EdgeFadeSide(20, clear: 12));
-      expect(f.bottom, const EdgeFadeSide(0));
+      expect(f.bottom, EdgeFadeSide.none);
 
       await tester.drag(sheetScroll(), const Offset(0, 80));
       await tester.pumpAndSettle();
@@ -3378,7 +3378,7 @@ void main() {
         final before = sheetPixels(tester);
         expect(before, greaterThan(0));
         s.push(state(AiPhase.done, translations: [long], meaning: 'Makna.'));
-        await frames(tester, 60);
+        await frames(tester);
         expect(sheetPixels(tester), before);
         expect(
           tester

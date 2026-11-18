@@ -69,5 +69,8 @@ export const records = sqliteTable(
     seq: integer("seq").notNull(),
   },
   // Index (user_id, seq): pull reads only rows after the cursor, not all of the user's records.
-  (t) => [primaryKey({ columns: [t.userId, t.kind, t.key] }), index("records_user_seq").on(t.userId, t.seq)],
+  (t) => [
+    primaryKey({ columns: [t.userId, t.kind, t.key] }),
+    index("records_user_seq").on(t.userId, t.seq),
+  ],
 );

@@ -21,9 +21,9 @@ void main() {
 
   group('backendBaseUrl', () {
     test('dev flavor goes to the dev Worker, everything else to prod', () {
-      expect(backendBaseUrl('dev', override: ''), backendUrls['dev']);
-      expect(backendBaseUrl('prod', override: ''), backendUrls['prod']);
-      expect(backendBaseUrl(null, override: ''), backendUrls['prod']);
+      expect(backendBaseUrl('dev'), backendUrls['dev']);
+      expect(backendBaseUrl('prod'), backendUrls['prod']);
+      expect(backendBaseUrl(null), backendUrls['prod']);
     });
 
     test('BACKEND_URL override wins', () {

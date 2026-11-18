@@ -182,7 +182,6 @@ Future<void> showChatSessionMenu(
                           Expanded(
                             child: AppButton.danger(
                               label: context.l10n.bookClear,
-                              height: 48,
                               onPressed: () => Navigator.pop(dialog, true),
                             ),
                           ),

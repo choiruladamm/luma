@@ -302,6 +302,8 @@ class FakeOpenRouter implements OpenRouterService {
   /// When unset, it emits the full answer at once as complete sections, same as
   /// [explain]. Deliberately not `async*`: an error thrown through `yield*`
   /// never surfaces under `fakeAsync`.
+  // Each test assigns and drives its own controller.
+  // ignore: close_sinks
   StreamController<String>? stream;
   final streamCalls = <List<String>>[];
   final streamBooks = <AiBook?>[];
@@ -384,7 +386,9 @@ class FakeBookSearch implements BookSearchRepository {
   @override
   Future<BookSearchResult> search(int bookId, String input) async {
     searches.add(input);
-    if (failWith != null) throw failWith!;
+    if (failWith != null) {
+      Error.throwWithStackTrace(failWith!, StackTrace.current);
+    }
     if (slowFirst) {
       slowFirst = false;
       await (_firstGate = Completer<void>()).future;

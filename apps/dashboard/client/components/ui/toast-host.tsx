@@ -20,7 +20,10 @@ export function ToastHost() {
   }, [toast, hovered, dismiss]);
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-[calc(96px+env(safe-area-inset-bottom))] z-50 md:bottom-8 flex justify-center px-4" aria-live="polite">
+    <div
+      className="pointer-events-none fixed inset-x-0 bottom-[calc(96px+env(safe-area-inset-bottom))] z-50 md:bottom-8 flex justify-center px-4"
+      aria-live="polite"
+    >
       {toast && (
         <div
           role={toast.tone === "error" ? "alert" : "status"}
@@ -28,8 +31,20 @@ export function ToastHost() {
           onMouseLeave={() => setHovered(false)}
           className="pointer-events-auto inline-flex min-h-12 items-center gap-2.5 rounded-menu bg-toast py-1 pr-2 pl-3.5 text-body font-medium text-toast-ink shadow-toast"
         >
-          <span aria-hidden="true" className={cn("flex size-6 flex-none items-center justify-center rounded-full", toast.tone === "success" && "bg-accent text-on-accent", toast.tone === "error" && "bg-danger-soft text-danger-ink", toast.tone === "info" && "bg-[#46423a] text-toast-ink")}>
-            <Icon name={toast.tone === "error" ? "alert" : toast.tone === "info" ? "refresh" : "check"} size={14} strokeWidth={2.2} />
+          <span
+            aria-hidden="true"
+            className={cn(
+              "flex size-6 flex-none items-center justify-center rounded-full",
+              toast.tone === "success" && "bg-accent text-on-accent",
+              toast.tone === "error" && "bg-danger-soft text-danger-ink",
+              toast.tone === "info" && "bg-[#46423a] text-toast-ink",
+            )}
+          >
+            <Icon
+              name={toast.tone === "error" ? "alert" : toast.tone === "info" ? "refresh" : "check"}
+              size={14}
+              strokeWidth={2.2}
+            />
           </span>
           <span className="pr-1.5">{toast.message}</span>
           {toast.action && (
@@ -45,7 +60,12 @@ export function ToastHost() {
             </button>
           )}
           {toast.tone === "error" && (
-            <button type="button" aria-label={t.common.close} onClick={() => dismiss(toast.id)} className="flex size-10 items-center justify-center rounded-full hover:bg-white/10">
+            <button
+              type="button"
+              aria-label={t.common.close}
+              onClick={() => dismiss(toast.id)}
+              className="flex size-10 items-center justify-center rounded-full hover:bg-white/10"
+            >
               <Icon name="x" size={16} />
             </button>
           )}

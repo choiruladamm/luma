@@ -24,7 +24,8 @@ export type SyncRecord = {
   schemaVersion: number;
 };
 
-const time = (v: unknown) => (typeof v === "string" ? Date.parse(v) : typeof v === "number" ? v : NaN);
+const time = (v: unknown) =>
+  typeof v === "string" ? Date.parse(v) : typeof v === "number" ? v : NaN;
 
 /** The earliest non-empty time value (ISO string), null if both are empty. */
 const earliest = (a: unknown, b: unknown) => {
@@ -45,15 +46,16 @@ function aiWins(incoming: SyncRecord, existing: SyncRecord) {
 
 /** Book: newest wins, but earliest `firstOpenedAt`/`finishedAt`, largest `readingSeconds`. */
 function mergeBook(incoming: SyncRecord, existing: SyncRecord): SyncRecord {
-  const [winner, loser] = incoming.updatedAt > existing.updatedAt ? [incoming, existing] : [existing, incoming];
-  if (winner.deleted || loser.deleted || !winner.data || !loser.data) return winner;
+  const [newer, loser] =
+    incoming.updatedAt > existing.updatedAt ? [incoming, existing] : [existing, incoming];
+  if (newer.deleted || loser.deleted || !newer.data || !loser.data) return newer;
   return {
-    ...winner,
+    ...newer,
     data: {
-      ...winner.data,
-      firstOpenedAt: earliest(winner.data.firstOpenedAt, loser.data.firstOpenedAt),
-      finishedAt: earliest(winner.data.finishedAt, loser.data.finishedAt),
-      readingSeconds: Math.max(num(winner.data.readingSeconds), num(loser.data.readingSeconds)),
+      ...newer.data,
+      firstOpenedAt: earliest(newer.data.firstOpenedAt, loser.data.firstOpenedAt),
+      finishedAt: earliest(newer.data.finishedAt, loser.data.finishedAt),
+      readingSeconds: Math.max(num(newer.data.readingSeconds), num(loser.data.readingSeconds)),
     },
   };
 }

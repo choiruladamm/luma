@@ -46,7 +46,12 @@ export async function reserveBytes(db: Db, userId: string, size: number, quota: 
 }
 
 /** Runs [upload]; on failure the reserved quota is returned and the error is rethrown. */
-export async function releaseOnFailure<T>(db: Db, userId: string, size: number, upload: () => Promise<T>) {
+export async function releaseOnFailure<T>(
+  db: Db,
+  userId: string,
+  size: number,
+  upload: () => Promise<T>,
+) {
   try {
     return await upload();
   } catch (e) {

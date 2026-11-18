@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:luma/ui/features/reader/views/reader_view.dart' show ReaderView;
 
 import '../../../../domain/models/book.dart';
 import '../../../../domain/models/book_chat.dart';

@@ -2,7 +2,7 @@ import 'package:luma/domain/grouping.dart';
 import 'package:luma/domain/models/book.dart';
 import 'package:luma/domain/pdf_layout.dart';
 
-/// One node from a PDF outline (bookmark tree).  [dest] is null when the node
+/// One node from a PDF outline (bookmark tree).  `dest` is null when the node
 /// is a structural parent (e.g. "Part I") with no direct page target.
 class PdfOutlineEntry {
   const PdfOutlineEntry({
@@ -349,7 +349,7 @@ PdfParsedBook _assembleChapters(
   ];
 
   final chapters = <ParsedChapter>[];
-  int offset = 0;
+  var offset = 0;
 
   for (var i = 0; i < boundaries.length; i++) {
     final b = boundaries[i];
@@ -584,7 +584,7 @@ String _resolveTitle(String bookmarkTitle, List<RawParagraph> paragraphs) {
 /// `parserVersion`, so PDF tuning doesn't force EPUB re-imports. There is no re-import UI yet.
 const pdfParserVersion = 1;
 
-/// [pages] index 0 = page 1. [heading] = the first heading on page 1
+/// `pages` index 0 = page 1. `heading` = the first heading on page 1
 /// (book title candidate), null when there is none.
 typedef PdfLayoutResult = ({
   List<ParsedChapter> chapters,

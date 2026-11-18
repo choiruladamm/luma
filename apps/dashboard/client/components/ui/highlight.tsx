@@ -9,7 +9,9 @@ export function Highlight({ text, q }: { text: string; q?: string }) {
   return (
     <>
       {text.slice(0, at)}
-      <mark className="rounded-[3px] bg-transparent bg-[linear-gradient(transparent_var(--c-mark-from),var(--c-accent)_var(--c-mark-from))] text-[color:var(--c-mark-ink,inherit)]">{text.slice(at, at + q.length)}</mark>
+      <mark className="rounded-[3px] bg-transparent bg-[linear-gradient(transparent_var(--c-mark-from),var(--c-accent)_var(--c-mark-from))] text-[color:var(--c-mark-ink,inherit)]">
+        {text.slice(at, at + q.length)}
+      </mark>
       {text.slice(at + q.length)}
     </>
   );

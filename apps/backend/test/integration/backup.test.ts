@@ -34,24 +34,37 @@ const missing = (token: string, names: string[]) =>
 const putBackup = (token: string, body = "zipbytes") =>
   new Request(url("/v1/backups"), {
     method: "PUT",
-    headers: { ...auth(token), "content-length": String(body.length), "x-backup-manifest": manifest },
+    headers: {
+      ...auth(token),
+      "content-length": String(body.length),
+      "x-backup-manifest": manifest,
+    },
     body,
   });
 const get = (token: string, path: string) => new Request(url(path), { headers: auth(token) });
 const bytes = async (userId: string) =>
-  (await createDb(env.DB).select().from(userStorage).where(eq(userStorage.userId, userId)))[0]?.bytes ?? 0;
+  (await createDb(env.DB).select().from(userStorage).where(eq(userStorage.userId, userId)))[0]
+    ?.bytes ?? 0;
 
 describe("files", () => {
   it("reports which names are not in R2 yet, then stores them (contract)", async () => {
     const { token, userId } = await signUp();
     await exports.default.fetch(putFile(token, "3539482a.epub", "epub!"));
 
-    await expectContract(await exports.default.fetch(missing(token, filesMissing.request.body.names)), filesMissing);
-    await expectContract(await exports.default.fetch(putFile(token, "3539482a.jpg", filesPut.request.body)), filesPut);
+    await expectContract(
+      await exports.default.fetch(missing(token, filesMissing.request.body.names)),
+      filesMissing,
+    );
+    await expectContract(
+      await exports.default.fetch(putFile(token, "3539482a.jpg", filesPut.request.body)),
+      filesPut,
+    );
 
-    const after = (await (await exports.default.fetch(missing(token, filesMissing.request.body.names))).json()) as {
+    const after = await (
+      await exports.default.fetch(missing(token, filesMissing.request.body.names))
+    ).json<{
       missing: string[];
-    };
+    }>();
     expect(after.missing).toEqual([]);
     expect(await bytes(userId)).toBe(10);
   });
@@ -87,7 +100,9 @@ describe("files", () => {
 
   it("refuses uploads over the user's quota (contract)", async () => {
     const { token, userId } = await signUp();
-    await createDb(env.DB).insert(userStorage).values({ userId, bytes: Number(env.USER_STORAGE_BYTES) });
+    await createDb(env.DB)
+      .insert(userStorage)
+      .values({ userId, bytes: Number(env.USER_STORAGE_BYTES) });
     await expectContract(await exports.default.fetch(putFile(token, "big.epub", "x")), storageFull);
     const tooBig = new Request(url("/v1/files/big.epub"), {
       method: "PUT",
@@ -102,7 +117,11 @@ describe("files", () => {
     await exports.default.fetch(putFile(a.token, "secret.epub", "aaaaa"));
 
     expect((await exports.default.fetch(get(b.token, "/v1/files/secret.epub"))).status).toBe(404);
-    const res = (await (await exports.default.fetch(missing(b.token, ["secret.epub"]))).json()) as { missing: string[] };
+    const res = await (
+      await exports.default.fetch(missing(b.token, ["secret.epub"]))
+    ).json<{
+      missing: string[];
+    }>();
     expect(res.missing).toEqual(["secret.epub"]);
   });
 
@@ -123,10 +142,16 @@ describe("files", () => {
 describe("backups", () => {
   it("stores a snapshot with its manifest and lists it (contract)", async () => {
     const { token, userId } = await signUp();
-    const put = (await expectContract(await exports.default.fetch(putBackup(token)), backupsPut)) as { id: string };
+    const put = (await expectContract(
+      await exports.default.fetch(putBackup(token)),
+      backupsPut,
+    )) as { id: string };
     expect(put.id).toMatch(/^\d{8}T\d{6}Z$/);
 
-    const list = (await expectContract(await exports.default.fetch(get(token, "/v1/backups")), backupsList)) as {
+    const list = (await expectContract(
+      await exports.default.fetch(get(token, "/v1/backups")),
+      backupsList,
+    )) as {
       backups: { id: string }[];
     };
     expect(list.backups[0]!.id).toBe(put.id);
@@ -173,16 +198,26 @@ describe("backups", () => {
     });
     expect((await exports.default.fetch(noLength)).status).toBe(400);
 
-    await createDb(env.DB).insert(userStorage).values({ userId, bytes: Number(env.USER_STORAGE_BYTES) });
+    await createDb(env.DB)
+      .insert(userStorage)
+      .values({ userId, bytes: Number(env.USER_STORAGE_BYTES) });
     expect((await exports.default.fetch(putBackup(token))).status).toBe(413);
   });
 
   it("never shows one user's snapshots to another", async () => {
     const a = await signUp();
     const b = await signUp();
-    const { id } = (await (await exports.default.fetch(putBackup(a.token))).json()) as { id: string };
+    const { id } = await (
+      await exports.default.fetch(putBackup(a.token))
+    ).json<{
+      id: string;
+    }>();
 
-    const list = (await (await exports.default.fetch(get(b.token, "/v1/backups"))).json()) as { backups: unknown[] };
+    const list = await (
+      await exports.default.fetch(get(b.token, "/v1/backups"))
+    ).json<{
+      backups: unknown[];
+    }>();
     expect(list.backups).toEqual([]);
     expect((await exports.default.fetch(get(b.token, `/v1/backups/${id}`))).status).toBe(404);
   });

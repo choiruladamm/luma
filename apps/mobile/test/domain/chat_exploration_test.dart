@@ -193,7 +193,7 @@ void main() {
       }),
       jsonEncode({
         'notes': [
-          {'text': 'Fact', 'source_ids': []},
+          {'text': 'Fact', 'source_ids': <Object?>[]},
         ],
       }),
     ]) {

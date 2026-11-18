@@ -6,11 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"$CLAUDE_PROJECT_DIR/scripts/docs_check.py\" --hook"
-          },
-          {
-            "type": "command",
-            "command": "python3 \"$CLAUDE_PROJECT_DIR/scripts/comments_check.py\" --hook"
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/scripts/hygiene_check.py\" --root \"$CLAUDE_PROJECT_DIR\" --hook"
           }
         ]
       }

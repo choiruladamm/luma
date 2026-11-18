@@ -146,6 +146,7 @@ void main() {
       // Once tokens flow, the 30 s timeout does not apply.
       async.elapse(const Duration(seconds: 16));
       expect(now().phase, isNot(AiPhase.failed));
+      unawaited(c.close());
     });
   });
 
@@ -174,6 +175,7 @@ void main() {
       expect(now().draft.translations, ['Halo juga.', 'Da']);
       expect(ai.lastCancel!.isCancelled, isTrue);
       expect(cache.saved, isEmpty);
+      unawaited(c.close());
     });
   });
 
@@ -188,6 +190,7 @@ void main() {
       expect(now().phase, AiPhase.cut);
       expect(now().draft.translations, ['Halo']);
       expect(cache.saved, isEmpty);
+      unawaited(c.close());
     });
   });
 
@@ -243,6 +246,7 @@ void main() {
         c.addError(const AiException(AiError.network));
         async.flushMicrotasks(); // would throw "Ref ... after it has been disposed"
         expect(cache.saved, isEmpty);
+        unawaited(c.close());
       });
     },
   );
@@ -258,6 +262,7 @@ void main() {
       c.add(' lagi'); // would arm a stall timer that reads state
       async.elapse(const Duration(minutes: 1));
       expect(cache.saved, isEmpty);
+      unawaited(c.close());
     });
   });
 
@@ -285,6 +290,7 @@ void main() {
       expect(now().phase, AiPhase.waiting);
       expect(now().draft.translations, isEmpty);
       expect(ai.streamCalls, hasLength(2));
+      unawaited(c.close());
     });
   });
 

@@ -222,10 +222,10 @@ class _ChatHistoryState extends State<ChatHistory> {
       if (box == null || !box.attached || !box.hasSize) continue;
       final y = box.localToGlobal(Offset.zero).dy - top;
       if (y + box.size.height > 0 && y < viewport.size.height) {
-        final ChatScrollAnchor anchor = (
+        final anchor = (
           turnId: entry.key.turnId,
           blockIndex: entry.key.blockIndex,
-          alignment: (y / viewport.size.height).clamp(0, 1),
+          alignment: (y / viewport.size.height).clamp(0, 1).toDouble(),
         );
         if (anchor != _lastAnchor) {
           _lastAnchor = anchor;
@@ -556,7 +556,7 @@ class _ChatHistoryState extends State<ChatHistory> {
                 child: Center(
                   child: ChatJumpButton(
                     writing: widget.turns.last.phase.isRunning,
-                    onPressed: () => _latest(),
+                    onPressed: _latest,
                   ),
                 ),
               ),

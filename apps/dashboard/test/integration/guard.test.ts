@@ -3,7 +3,13 @@ import { describe, expect, it } from "vitest";
 import { getAuth } from "../../worker/auth/auth";
 import { app } from "../../worker/index";
 import { call, errorCode, ORIGIN } from "../helpers/app";
-import { ADMIN_EMAIL, adminCookie, createUser, sessionCookie, userCookie } from "../helpers/session";
+import {
+  ADMIN_EMAIL,
+  adminCookie,
+  createUser,
+  sessionCookie,
+  userCookie,
+} from "../helpers/session";
 
 /** A path that passes the guard then 404s: proves the guard is global, not per route. */
 const PROBE = "/api/__probe";
@@ -11,7 +17,9 @@ const PROBE = "/api/__probe";
 /** Every registered admin route (middleware and /api/auth/* removed), plus the probe. */
 const adminRoutes = () => [
   ...app.routes
-    .filter((r) => r.method !== "ALL" && r.path.startsWith("/api/") && !r.path.startsWith("/api/auth/"))
+    .filter(
+      (r) => r.method !== "ALL" && r.path.startsWith("/api/") && !r.path.startsWith("/api/auth/"),
+    )
     .map((r) => ({ method: r.method, path: r.path.replace(/:\w+/g, "x") })),
   { method: "GET", path: PROBE },
   { method: "POST", path: PROBE },
@@ -22,11 +30,17 @@ const jsonFromDashboard = { "content-type": "application/json", origin: ORIGIN }
 const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
 const adminId = async () =>
-  (await env.DB.prepare("SELECT id FROM users WHERE email = ?").bind(ADMIN_EMAIL).first<{ id: string }>())?.id ?? (await createUser({ email: ADMIN_EMAIL })).id;
+  (
+    await env.DB.prepare("SELECT id FROM users WHERE email = ?")
+      .bind(ADMIN_EMAIL)
+      .first<{ id: string }>()
+  )?.id ?? (await createUser({ email: ADMIN_EMAIL })).id;
 /** The `sessions` row behind a cookie from `sessionCookie()`. */
 const sessionRow = async (cookie: string) => {
   const token = decodeURIComponent(cookie.split("=")[1]!).split(".")[0]!;
-  const row = await env.DB.prepare("SELECT expires_at FROM sessions WHERE token = ?").bind(token).first<{ expires_at: number }>();
+  const row = await env.DB.prepare("SELECT expires_at FROM sessions WHERE token = ?")
+    .bind(token)
+    .first<{ expires_at: number }>();
   return row ? { expiresAt: new Date(row.expires_at) } : null;
 };
 
@@ -63,21 +77,29 @@ describe("guard /api/*", () => {
 
   it("rejects a cookie signed with another secret (e.g. the backend's) without D1", async () => {
     const { id } = await createUser({ email: `x-${crypto.randomUUID()}@luma.test` });
-    const cookie = await sessionCookie(id, { secret: "secret-backend-yang-lain-panjang-32-karakter" });
+    const cookie = await sessionCookie(id, {
+      secret: "secret-backend-yang-lain-panjang-32-karakter",
+    });
     const { response, d1Queries } = await call(PROBE, { headers: { cookie } });
     expect(response.status).toBe(401);
     expect(d1Queries).toBe(0);
   });
 
   it("rejects an unsigned bearer-style token (mobile session)", async () => {
-    const { response } = await call(PROBE, { headers: { authorization: "Bearer abc", cookie: "__Secure-better-auth.session_token=abc" } });
+    const { response } = await call(PROBE, {
+      headers: { authorization: "Bearer abc", cookie: "__Secure-better-auth.session_token=abc" },
+    });
     expect(response.status).toBe(401);
   });
 
   it("rejects an expired admin session", async () => {
-    const admin = await env.DB.prepare("SELECT id FROM users WHERE email = ?").bind(ADMIN_EMAIL).first<{ id: string }>();
+    const admin = await env.DB.prepare("SELECT id FROM users WHERE email = ?")
+      .bind(ADMIN_EMAIL)
+      .first<{ id: string }>();
     const id = admin?.id ?? (await createUser({ email: ADMIN_EMAIL })).id;
-    const { response } = await call(PROBE, { headers: { cookie: await sessionCookie(id, { expiresInMs: -1000 }) } });
+    const { response } = await call(PROBE, {
+      headers: { cookie: await sessionCookie(id, { expiresInMs: -1000 }) },
+    });
     expect(response.status).toBe(401);
   });
 
@@ -91,23 +113,39 @@ describe("guard /api/*", () => {
 
   it("matches emails exactly after trim + lowercase", async () => {
     const cookie = await adminCookie();
-    const ok = await call(PROBE, { headers: { cookie } }, { ADMIN_EMAILS: " other@x.com , ADMIN@Luma.TEST " });
+    const ok = await call(
+      PROBE,
+      { headers: { cookie } },
+      { ADMIN_EMAILS: " other@x.com , ADMIN@Luma.TEST " },
+    );
     expect(ok.response.status).toBe(404);
 
     const { id } = await createUser({ email: "a@x.com" });
-    const near = await call(PROBE, { headers: { cookie: await sessionCookie(id) } }, { ADMIN_EMAILS: "ba@x.com,a@x.co" });
+    const near = await call(
+      PROBE,
+      { headers: { cookie: await sessionCookie(id) } },
+      { ADMIN_EMAILS: "ba@x.com,a@x.co" },
+    );
     expect(near.response.status).toBe(403);
   });
 
   it("requires a verified email", async () => {
     const { id } = await createUser({ email: "belum@luma.test", emailVerified: false });
-    const { response } = await call(PROBE, { headers: { cookie: await sessionCookie(id) } }, { ADMIN_EMAILS: "belum@luma.test" });
+    const { response } = await call(
+      PROBE,
+      { headers: { cookie: await sessionCookie(id) } },
+      { ADMIN_EMAILS: "belum@luma.test" },
+    );
     expect(response.status).toBe(403);
   });
 
   it("drops an existing session once the email leaves ADMIN_EMAILS", async () => {
     const cookie = await adminCookie();
-    const { response } = await call(PROBE, { headers: { cookie } }, { ADMIN_EMAILS: "lain@luma.test" });
+    const { response } = await call(
+      PROBE,
+      { headers: { cookie } },
+      { ADMIN_EMAILS: "lain@luma.test" },
+    );
     expect(response.status).toBe(403);
   });
 });
@@ -119,13 +157,20 @@ describe("mutations", () => {
     ["foreign Origin", { "content-type": "application/json", origin: "https://evil.example" }],
     ["no Origin", { "content-type": "application/json" }],
   ])("answers 403 with %s", async (_, headers) => {
-    const { response } = await call(PROBE, { method: "POST", headers: { ...headers, cookie: await adminCookie() } });
+    const { response } = await call(PROBE, {
+      method: "POST",
+      headers: { ...headers, cookie: await adminCookie() },
+    });
     expect(response.status).toBe(403);
     expect(await errorCode(response)).toBe("FORBIDDEN");
   });
 
   it("passes JSON from the dashboard origin", async () => {
-    const headers = { "content-type": "application/json; charset=utf-8", origin: ORIGIN, cookie: await adminCookie() };
+    const headers = {
+      "content-type": "application/json; charset=utf-8",
+      origin: ORIGIN,
+      cookie: await adminCookie(),
+    };
     for (const method of ["POST", "DELETE", "PATCH"]) {
       const { response } = await call(PROBE, { method, headers });
       expect(response.status, method).toBe(404);
@@ -151,7 +196,10 @@ describe("Better Auth allowlist", () => {
 
   it("ends a session past the 30-day cap even while it's in use", async () => {
     const id = await adminId();
-    const cookie = await sessionCookie(id, { expiresInMs: DAY, createdAt: new Date(Date.now() - 31 * DAY) });
+    const cookie = await sessionCookie(id, {
+      expiresInMs: DAY,
+      createdAt: new Date(Date.now() - 31 * DAY),
+    });
     const { response, d1Queries } = await call(PROBE, { headers: { cookie } });
     expect(response.status).toBe(401);
     expect(d1Queries).toBe(2);
@@ -159,11 +207,20 @@ describe("Better Auth allowlist", () => {
   });
 
   it("get-session slides a used session to 7 days (row + cookie) once a day has passed", async () => {
-    const cookie = await sessionCookie(await adminId(), { expiresInMs: 5 * DAY, createdAt: new Date(Date.now() - 2 * DAY) });
+    const cookie = await sessionCookie(await adminId(), {
+      expiresInMs: 5 * DAY,
+      createdAt: new Date(Date.now() - 2 * DAY),
+    });
     const { response } = await call("/api/auth/get-session", { headers: { cookie } });
     expect(response.status).toBe(200);
-    expect(response.headers.getSetCookie().find((c) => c.startsWith("__Secure-better-auth.session_token="))).toMatch(/Max-Age=604800/);
-    expect((await sessionRow(cookie))!.expiresAt.getTime()).toBeGreaterThan(Date.now() + 7 * DAY - 60_000);
+    expect(
+      response.headers
+        .getSetCookie()
+        .find((c) => c.startsWith("__Secure-better-auth.session_token=")),
+    ).toMatch(/Max-Age=604800/);
+    expect((await sessionRow(cookie))!.expiresAt.getTime()).toBeGreaterThan(
+      Date.now() + 7 * DAY - 60_000,
+    );
   });
 
   it("get-session leaves a session refreshed less than a day ago alone", async () => {
@@ -171,21 +228,30 @@ describe("Better Auth allowlist", () => {
     const before = (await sessionRow(cookie))!.expiresAt.getTime();
     const { response } = await call("/api/auth/get-session", { headers: { cookie } });
     expect(response.status).toBe(200);
-    expect(response.headers.getSetCookie().some((c) => c.startsWith("__Secure-better-auth.session_token="))).toBe(false);
+    expect(
+      response.headers
+        .getSetCookie()
+        .some((c) => c.startsWith("__Secure-better-auth.session_token=")),
+    ).toBe(false);
     expect((await sessionRow(cookie))!.expiresAt.getTime()).toBe(before);
   });
 
   it("get-session answers no session past the 30-day cap", async () => {
-    const cookie = await sessionCookie(await adminId(), { expiresInMs: DAY, createdAt: new Date(Date.now() - 31 * DAY) });
+    const cookie = await sessionCookie(await adminId(), {
+      expiresInMs: DAY,
+      createdAt: new Date(Date.now() - 31 * DAY),
+    });
     const { response } = await call("/api/auth/get-session", { headers: { cookie } });
     expect(await response.json()).toBeNull();
     expect(await sessionRow(cookie)).toBeNull();
   });
 
   it("serves get-session for an admin cookie", async () => {
-    const { response } = await call("/api/auth/get-session", { headers: { cookie: await adminCookie() } });
+    const { response } = await call("/api/auth/get-session", {
+      headers: { cookie: await adminCookie() },
+    });
     expect(response.status).toBe(200);
-    expect(((await response.json()) as { user: { email: string } }).user.email).toBe(ADMIN_EMAIL);
+    expect((await response.json<{ user: { email: string } }>()).user.email).toBe(ADMIN_EMAIL);
   });
 });
 
@@ -197,14 +263,16 @@ describe("response headers", () => {
     ["non-api", "/"],
   ])("sets CSP + nosniff on %s", async (_, path) => {
     const { response } = await call(path);
-    expect(response.headers.get("Content-Security-Policy")).toBe("default-src 'self'; frame-ancestors 'none'");
+    expect(response.headers.get("Content-Security-Policy")).toBe(
+      "default-src 'self'; frame-ancestors 'none'",
+    );
     expect(response.headers.get("X-Content-Type-Options")).toBe("nosniff");
   });
 });
 
 describe("rate limit", () => {
   it("answers 429 + Retry-After before auth or D1", async () => {
-    const deny = { limit: async () => ({ success: false }) } as unknown as RateLimit;
+    const deny = { limit: async () => ({ success: false }) };
     for (const path of [PROBE, "/api/auth/get-session"]) {
       const { response, d1Queries } = await call(path, {}, { RATE_LIMITER: deny });
       expect(response.status).toBe(429);
@@ -216,7 +284,9 @@ describe("rate limit", () => {
 
   it("keys the limiter by client IP", async () => {
     const keys: string[] = [];
-    const spy = { limit: async ({ key }: { key: string }) => (keys.push(key), { success: true }) } as unknown as RateLimit;
+    const spy = {
+      limit: async ({ key }: { key: string }) => (keys.push(key), { success: true }),
+    };
     await call(PROBE, { headers: { "cf-connecting-ip": "10.1.2.3" } }, { RATE_LIMITER: spy });
     expect(keys).toEqual(["ip:10.1.2.3"]);
   });

@@ -10,7 +10,7 @@ void main() {
   testWidgets(
     'paces graphemes, delays sources, drains final and reopens instantly',
     (t) async {
-      List<ChatAnswerBlock> visible = [];
+      var visible = <ChatAnswerBlock>[];
       final source = fixtures.source;
       final text = '👩🏽‍💻e\u0301 ' * 100;
       Future<void> show(ChatPhase phase, {Key? key, bool reduced = false}) =>
@@ -70,7 +70,7 @@ void main() {
   testWidgets('background flushes safe tail; a new attempt starts fresh', (
     t,
   ) async {
-    List<ChatAnswerBlock> visible = [];
+    var visible = <ChatAnswerBlock>[];
     Future<void> show(int attempt, ChatPhase phase, String text) =>
         t.pumpWidget(
           MaterialApp(
@@ -116,7 +116,7 @@ void main() {
     testWidgets('$terminal reveals safe text and removes provisional sources', (
       t,
     ) async {
-      List<ChatAnswerBlock> visible = [];
+      var visible = <ChatAnswerBlock>[];
       Future<void> show(ChatPhase phase) => t.pumpWidget(
         MaterialApp(
           localizationsDelegates: AppLocalizations.localizationsDelegates,

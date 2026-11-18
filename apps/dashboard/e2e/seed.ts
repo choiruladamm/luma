@@ -10,10 +10,20 @@ export const SEED_USERS = [
   { id: "e2e-4", email: "nadia.halim@e2e.local", name: "Nadia Halim" },
 ];
 
+const q = (s: string) => `'${s.replaceAll("'", "''")}'`;
+
 export function seedSql(now: number) {
-  const q = (s: string) => `'${s.replaceAll("'", "''")}'`;
   const lines = [
-    ...["records", "ai_keys", "user_storage", "invite_codes", "sessions", "accounts", "verifications", "users"].map((t) => `DELETE FROM ${t};`),
+    ...[
+      "records",
+      "ai_keys",
+      "user_storage",
+      "invite_codes",
+      "sessions",
+      "accounts",
+      "verifications",
+      "users",
+    ].map((t) => `DELETE FROM ${t};`),
     `INSERT INTO users (id,name,email,email_verified,created_at,updated_at,banned) VALUES ('e2e-admin','E2E Admin','admin@e2e.local',1,${now - 30 * DAY},${now},0);`,
     `INSERT INTO sessions (id,expires_at,token,created_at,updated_at,user_id) VALUES ('e2e-admin-s',${now + 12 * 3_600_000},${q(ADMIN_TOKEN)},${now},${now},'e2e-admin');`,
   ];
@@ -27,6 +37,8 @@ export function seedSql(now: number) {
       `INSERT INTO invite_codes (code,used_by,used_at,created_at) VALUES (${q(`LUMA-USED${i}-E2E00`)},${q(u.id)},${created},${created - DAY});`,
     );
   });
-  lines.push(`INSERT INTO invite_codes (code,created_at) VALUES ('LUMA-FREE0-E2E00',${now - DAY}), ('LUMA-FREE1-E2E00',${now});`);
+  lines.push(
+    `INSERT INTO invite_codes (code,created_at) VALUES ('LUMA-FREE0-E2E00',${now - DAY}), ('LUMA-FREE1-E2E00',${now});`,
+  );
   return lines.join("\n");
 }

@@ -186,7 +186,7 @@ class ChatContextRepository {
         for (final row in await query.get()) {
           final p = row.readTable(_db.paragraphs),
               c = row.readTable(_db.chapters);
-          final ChatParagraph paragraph = (
+          final paragraph = (
             book: session.book,
             chapterId: c.id,
             paragraphIndex: p.paragraphIndex,
@@ -1221,7 +1221,7 @@ class ChatContextRepository {
       ]),
     );
     Future<List<List<ChatSource>>> run(ChatEmbeddingModel embedding) async {
-      final ChatIndexKey indexKey = (
+      final indexKey = (
         book: book,
         parserVersion: parserVersion,
         chunkPolicyVersion: chatChunkPolicyVersion,

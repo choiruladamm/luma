@@ -29,7 +29,7 @@ class FakeAdapter implements HttpClientAdapter {
     if (next is DioExceptionType) {
       throw DioException(requestOptions: options, type: next);
     }
-    throw next;
+    Error.throwWithStackTrace(next, StackTrace.current);
   }
 
   @override
@@ -80,7 +80,7 @@ void main() {
   Future<void> seedOld() async {
     await repo.replaceAll(const [CatalogRow(id: 1, title: 'Old', authors: [])]);
     await repo.saveMeta(
-      syncedAt: DateTime(2026, 10, 1),
+      syncedAt: DateTime(2026, 10),
       lastModified: lastModified,
       count: 1,
     );
@@ -171,7 +171,7 @@ void main() {
         ),
       ),
     );
-    expect((await repo.stats()).syncedAt, DateTime(2026, 10, 1));
+    expect((await repo.stats()).syncedAt, DateTime(2026, 10));
     expect((await repo.search('old')).single.id, 1);
   });
 

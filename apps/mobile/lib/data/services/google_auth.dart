@@ -67,9 +67,9 @@ class NativeGoogle implements GoogleIdTokenSource {
         clientId: Platform.isIOS ? iosClientId : null,
         serverClientId: serverClientId,
       )
-      .catchError((Object e) {
+      .catchError((Object e, StackTrace st) {
         _init = null;
-        throw e;
+        Error.throwWithStackTrace(e, st);
       });
 
   @override

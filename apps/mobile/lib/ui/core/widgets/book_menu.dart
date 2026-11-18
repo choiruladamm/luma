@@ -27,7 +27,6 @@ Future<T?> showBookMenu<T>(
   required List<AppMenuItem<T>> items,
 }) => showGeneralDialog<T>(
   context: context,
-  useRootNavigator: true,
   barrierDismissible: true,
   barrierLabel: context.l10n.bookCloseMenu,
   barrierColor: Colors.transparent,

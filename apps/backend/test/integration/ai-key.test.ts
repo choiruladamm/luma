@@ -37,7 +37,11 @@ describe("POST /v1/ai/key", () => {
 
     expect(or.calls).toEqual(["POST /keys"]);
     const created = [...or.keys.values()][0]!;
-    expect(created).toMatchObject({ key: body.key, limit: 0.02, workspaceId: env.OPENROUTER_WORKSPACE_ID });
+    expect(created).toMatchObject({
+      key: body.key,
+      limit: 0.02,
+      workspaceId: env.OPENROUTER_WORKSPACE_ID,
+    });
   });
 
   it("hands every device of a user the same key; users never share", async () => {
@@ -45,9 +49,9 @@ describe("POST /v1/ai/key", () => {
     const a = await signUp();
     const b = await signUp();
 
-    const a1 = (await (await exports.default.fetch(postKey(a.token))).json()) as { key: string };
-    const a2 = (await (await exports.default.fetch(postKey(a.token))).json()) as { key: string };
-    const b1 = (await (await exports.default.fetch(postKey(b.token))).json()) as { key: string };
+    const a1 = await (await exports.default.fetch(postKey(a.token))).json<{ key: string }>();
+    const a2 = await (await exports.default.fetch(postKey(a.token))).json<{ key: string }>();
+    const b1 = await (await exports.default.fetch(postKey(b.token))).json<{ key: string }>();
 
     expect(a2.key).toBe(a1.key);
     expect(b1.key).not.toBe(a1.key);
@@ -57,23 +61,30 @@ describe("POST /v1/ai/key", () => {
   it("rotates on request after the app got a 401 (contract)", async () => {
     const or = fakeOpenRouter();
     const { token } = await signUp();
-    const first = (await (await exports.default.fetch(postKey(token))).json()) as { key: string };
+    const first = await (await exports.default.fetch(postKey(token))).json<{ key: string }>();
     or.keys.delete("hash-1"); // revoked on OpenRouter → the app gets 401
 
     const res = await exports.default.fetch(postKey(token, aiKeyRotate.request.body));
     const body = (await expectContract(res, aiKeyRotate)) as { key: string };
 
     expect(body.key).not.toBe(first.key);
-    expect(or.calls).toEqual(["POST /keys", "GET /keys/hash-1", "DELETE /keys/hash-1", "POST /keys"]);
+    expect(or.calls).toEqual([
+      "POST /keys",
+      "GET /keys/hash-1",
+      "DELETE /keys/hash-1",
+      "POST /keys",
+    ]);
     expect(or.keys.size).toBe(1);
   });
 
   it("returns the same key when rotate is asked for a key that still works", async () => {
     const or = fakeOpenRouter();
     const { token } = await signUp();
-    const first = (await (await exports.default.fetch(postKey(token))).json()) as { key: string };
+    const first = await (await exports.default.fetch(postKey(token))).json<{ key: string }>();
 
-    const again = (await (await exports.default.fetch(postKey(token, { rotate: true }))).json()) as { key: string };
+    const again = await (
+      await exports.default.fetch(postKey(token, { rotate: true }))
+    ).json<{ key: string }>();
 
     expect(again.key).toBe(first.key);
     expect(or.calls).toEqual(["POST /keys", "GET /keys/hash-1"]);
@@ -96,7 +107,9 @@ describe("POST /v1/ai/key", () => {
     const { token } = await signUp();
     expect((await exports.default.fetch(postKey(token, { rotate: "ya" }))).status).toBe(400);
     expect((await exports.default.fetch(postKey(token, { extra: 1 }))).status).toBe(400);
-    expect((await exports.default.fetch(postKey(token, { pad: "x".repeat(2000) }))).status).toBe(413);
+    expect((await exports.default.fetch(postKey(token, { pad: "x".repeat(2000) }))).status).toBe(
+      413,
+    );
   });
 
   it("answers 503 without touching D1 or OpenRouter when switched off", async () => {
@@ -105,7 +118,7 @@ describe("POST /v1/ai/key", () => {
       AI_KEY_ENABLED: "false",
     });
     expect(response.status).toBe(503);
-    expect((await response.json()) as unknown).toEqual({
+    expect(await response.json<unknown>()).toEqual({
       error: { ...disabled.response.body.error, message: "AI_KEY_ENABLED is off" },
     });
     expect(d1Queries).toBe(0);
@@ -147,12 +160,14 @@ describe("GET /v1/ai/usage", () => {
 });
 
 describe("GET /v1/ai/usage when banned", () => {
-  it("answers 403 AI_BANNED so the meter shows \"Dicabut\" (contract)", async () => {
+  it('answers 403 AI_BANNED so the meter shows "Dicabut" (contract)', async () => {
     fakeOpenRouter();
     const { token, userId } = await signUp();
     await createDb(env.DB).update(users).set({ banned: true }).where(eq(users.id, userId));
 
-    const res = await exports.default.fetch(url(bannedUsage.request.path), { headers: bearer(token) });
+    const res = await exports.default.fetch(url(bannedUsage.request.path), {
+      headers: bearer(token),
+    });
     await expectContract(res, bannedUsage);
   });
 });
@@ -160,7 +175,9 @@ describe("GET /v1/ai/usage when banned", () => {
 describe("GET /v1/ai/config", () => {
   it("lists the models the subsidy guardrail allows (contract)", async () => {
     const { token } = await signUp();
-    const res = await exports.default.fetch(url(aiConfigFixture.request.path), { headers: bearer(token) });
+    const res = await exports.default.fetch(url(aiConfigFixture.request.path), {
+      headers: bearer(token),
+    });
     await expectContract(res, aiConfigFixture);
   });
 });
@@ -171,7 +188,10 @@ describe("DELETE /v1/me", () => {
     const { token } = await signUp();
     await exports.default.fetch(postKey(token));
 
-    const res = await exports.default.fetch(url("/v1/me"), { method: "DELETE", headers: bearer(token) });
+    const res = await exports.default.fetch(url("/v1/me"), {
+      method: "DELETE",
+      headers: bearer(token),
+    });
 
     expect(res.status).toBe(200);
     expect(or.keys.size).toBe(0);

@@ -73,7 +73,7 @@ void main() {
     expect(first.lastOpenedAt!.isAfter(before), isTrue);
     expect(first.firstOpenedAt, first.lastOpenedAt);
 
-    final earlier = DateTime(2026, 1, 1);
+    final earlier = DateTime(2026);
     await db
         .update(db.books)
         .write(BooksCompanion(firstOpenedAt: Value(earlier)));
@@ -118,7 +118,7 @@ void main() {
         isTrue,
       );
 
-      final earlier = DateTime(2026, 1, 1);
+      final earlier = DateTime(2026);
       await db
           .update(db.books)
           .write(BooksCompanion(finishedAt: Value(earlier)));

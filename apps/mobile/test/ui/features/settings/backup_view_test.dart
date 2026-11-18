@@ -60,10 +60,12 @@ class FakeBackup extends Fake implements BackupService {
     );
     onStart?.call('luma-backup-20261006-2130.zip', manifest);
     onProgress?.call(BackupStage.database, 0.72);
-    cancel?.then((_) => cancelled = true);
+    unawaited(cancel?.then((_) => cancelled = true));
     await Future.any([release.future, ?cancel]);
     if (cancelled) return null;
-    if (error != null) throw error!;
+    if (error != null) {
+      Error.throwWithStackTrace(error!, StackTrace.current);
+    }
     return FakeBackupFile('luma-backup-20261006-2130.zip', manifest);
   }
 }
@@ -152,7 +154,9 @@ class FakeCloud extends Fake implements CloudBackupRepository {
     );
     onProgress?.call(BackupStage.books, 0.4);
     await release.future;
-    if (error != null) throw error!;
+    if (error != null) {
+      Error.throwWithStackTrace(error!, StackTrace.current);
+    }
     return (
       at: DateTime.now(),
       name: 'luma-backup-20261113-0812.zip',

@@ -12,7 +12,11 @@ import { type UserSearch, userSearchSchema } from "../schemas/user-search-schema
 export function useUserSearch() {
   const [params, setParams] = useSearchParams();
   const q = params.get("q") ?? "";
-  const form = useForm<UserSearch>({ resolver: zodResolver(userSearchSchema), defaultValues: { q }, mode: "onChange" });
+  const form = useForm<UserSearch>({
+    resolver: zodResolver(userSearchSchema),
+    defaultValues: { q },
+    mode: "onChange",
+  });
   const typed = form.watch("q");
   const debounced = useDebounce(typed.trim(), 300);
   const invalid = form.formState.errors.q !== undefined;

@@ -13,20 +13,28 @@ type Row = {
   schema_version: number;
 };
 
-const fromRow = (r: Row): SyncRecord => ({
-  kind: r.kind,
-  key: r.key,
-  data: r.data == null ? null : (JSON.parse(r.data) as Data),
-  updatedAt: r.updated_at,
-  deleted: r.deleted === 1,
-  schemaVersion: r.schema_version,
-});
+const fromRow = (r: Row, size: number): StoredRecord => {
+  const data: Data | null = r.data == null ? null : JSON.parse(r.data);
+  return {
+    kind: r.kind,
+    key: r.key,
+    data,
+    updatedAt: r.updated_at,
+    deleted: r.deleted === 1,
+    schemaVersion: r.schema_version,
+    size,
+  };
+};
 
 /** A record in D1 + its size (key length + JSON data, the `sync_bytes` quota formula). */
 export type StoredRecord = SyncRecord & { size: number };
 
 /** 1 query: existing records for the `(kind, key)` pairs in the batch. */
-export async function findRecords(d1: D1Database, userId: string, ids: [Kind, string][]): Promise<StoredRecord[]> {
+export async function findRecords(
+  d1: D1Database,
+  userId: string,
+  ids: [Kind, string][],
+): Promise<StoredRecord[]> {
   const { results } = await d1
     .prepare(
       `SELECT kind, key, data, updated_at, deleted, schema_version,
@@ -36,7 +44,7 @@ export async function findRecords(d1: D1Database, userId: string, ids: [Kind, st
     )
     .bind(userId, JSON.stringify(ids))
     .all<Row & { size: number }>();
-  return results.map((r) => ({ ...fromRow(r), size: r.size }));
+  return results.map((r) => fromRow(r, r.size));
 }
 
 export type SyncUsage = { seq: number; bytes: number; day: number; rows: number };
@@ -44,7 +52,9 @@ export type SyncUsage = { seq: number; bytes: number; day: number; rows: number 
 /** 1 query: `seq` + the user's current sync quota usage (all 0 if never pushed). */
 export async function syncUsage(d1: D1Database, userId: string): Promise<SyncUsage> {
   const row = await d1
-    .prepare("SELECT seq, sync_bytes AS bytes, sync_day AS day, sync_rows AS rows FROM user_storage WHERE user_id = ?1")
+    .prepare(
+      "SELECT seq, sync_bytes AS bytes, sync_day AS day, sync_rows AS rows FROM user_storage WHERE user_id = ?1",
+    )
     .bind(userId)
     .first<SyncUsage>();
   return row ?? { seq: 0, bytes: 0, day: 0, rows: 0 };

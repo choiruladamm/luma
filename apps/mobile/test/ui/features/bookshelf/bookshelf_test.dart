@@ -51,7 +51,7 @@ ShelfBook book(
   author: author,
   coverName: null,
   opened: opened,
-  createdAt: created ?? DateTime(2026, 10, 1),
+  createdAt: created ?? DateTime(2026, 10),
   progress: progress,
   finished: finished,
   chapter: chapter,
@@ -340,7 +340,7 @@ void main() {
 
   group('sort', () {
     final books = [
-      book(1, 'Zeta', opened: true, created: DateTime(2026, 10, 1)),
+      book(1, 'Zeta', opened: true, created: DateTime(2026, 10)),
       book(2, 'alpha', opened: true, created: DateTime(2026, 10, 3)),
       book(3, 'Mid', created: DateTime(2026, 10, 2)),
     ];
@@ -650,7 +650,7 @@ void main() {
   group('header', () {
     final many = [
       for (var i = 1; i <= 40; i++)
-        book(i, 'Book $i', opened: i == 1, progress: 0.1, chapter: 1),
+        book(i, 'Book $i', opened: i == 1, progress: 0.1),
     ];
     final header = find.byType(ShelfHeader);
 

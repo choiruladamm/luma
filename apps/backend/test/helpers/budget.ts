@@ -12,7 +12,8 @@ export function countingD1(d1: D1Database) {
       if (prop === "prepare" || prop === "exec") {
         return (...args: unknown[]) => {
           queries++;
-          return (value as (...a: unknown[]) => unknown).apply(target, args);
+          const fn: (...a: unknown[]) => unknown = value;
+          return fn.apply(target, args);
         };
       }
       return value.bind(target);

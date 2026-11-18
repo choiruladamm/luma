@@ -69,7 +69,7 @@ void main() {
       ..replies.addAll([DioExceptionType.receiveTimeout, reply(2), reply(1)]);
     final dio = Dio(BaseOptions(baseUrl: 'https://openrouter.ai/api/v1'))
       ..httpClientAdapter = adapter;
-    addTearDown(() => dio.close());
+    addTearDown(dio.close);
     final result = await fillWithEmbeddingFallback(
       primary: primary,
       fallback: fallback,
@@ -139,7 +139,7 @@ void main() {
       ..replies.add(json({'error': 'unauthorized'}, 401));
     final dio = Dio(BaseOptions(baseUrl: 'https://openrouter.ai/api/v1'))
       ..httpClientAdapter = adapter;
-    addTearDown(() => dio.close());
+    addTearDown(dio.close);
     await expectLater(
       fillWithEmbeddingFallback(
         primary: primary,

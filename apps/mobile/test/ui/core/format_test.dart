@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:luma/ui/core/format.dart';
 
 void main() {
-  setUpAll(() => initializeDateFormatting());
+  setUpAll(initializeDateFormatting);
   test('English format and plural boundaries', () {
     expect(thousands(1240, locale: 'en'), '1,240');
     expect(fileSize((1.2 * 1024 * 1024).round(), locale: 'en'), '1.2 MB');
@@ -37,8 +37,8 @@ void main() {
     expect(ago(DateTime(2026, 10, 6, 23), now), 'kemarin');
     expect(ago(DateTime(2026, 10, 2), now), '5 hari lalu');
     expect(ago(DateTime(2026, 9, 23), now), '2 minggu lalu');
-    expect(ago(DateTime(2026, 5, 1), now), '5 bulan lalu');
-    expect(ago(DateTime(2024, 10, 1), now), '2 tahun lalu');
+    expect(ago(DateTime(2026, 5), now), '5 bulan lalu');
+    expect(ago(DateTime(2024, 10), now), '2 tahun lalu');
   });
 
   test('dateTime', () {

@@ -10,7 +10,6 @@ import '../../../core/widgets/buttons.dart';
 Future<bool> showSignOutDialog(BuildContext context) async {
   final ok = await showDialog<bool>(
     context: context,
-    useRootNavigator: true,
     builder: (context) {
       final l = context.l10n;
       return _AccountDialog(
@@ -108,7 +107,6 @@ Future<void> showSwitchAccountDialog(
   return showDialog<void>(
     context: context,
     barrierDismissible: false,
-    useRootNavigator: true,
     builder: (context) => _SwitchAccountDialog(
       from: from,
       to: to,
@@ -244,7 +242,6 @@ Future<bool> showDeleteAccountDialog(
 }) async {
   final ok = await showDialog<bool>(
     context: context,
-    useRootNavigator: true,
     builder: (context) =>
         _DeleteAccountDialog(email: email, onConfirm: onConfirm),
   );

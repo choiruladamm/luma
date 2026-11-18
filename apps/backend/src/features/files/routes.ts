@@ -21,10 +21,13 @@ export const files = new Hono<AppEnv>()
     "/missing",
     limitBody(256 * 1024),
     zValidator("json", missingBody, (result) => {
-      if (!result.success) throw new ApiError(400, "BAD_REQUEST", 'Body must be {"names": string[≤1000]}');
+      if (!result.success)
+        throw new ApiError(400, "BAD_REQUEST", 'Body must be {"names": string[≤1000]}');
     }),
     async (c) =>
-      c.json({ missing: await missingFiles(c.env.BUCKET, c.get("user").id, c.req.valid("json").names) }),
+      c.json({
+        missing: await missingFiles(c.env.BUCKET, c.get("user").id, c.req.valid("json").names),
+      }),
   )
   .put("/:name", async (c) => {
     const name = fileName(c.req.param("name"));

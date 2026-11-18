@@ -36,7 +36,6 @@ void main() {
         matchesSemantics(
           label: 'Tampilin garis progres',
           hasToggledState: true,
-          isToggled: false,
           hasTapAction: true,
         ),
       );

@@ -21,7 +21,7 @@ Future<T?> showAppSheet<T>(
   /// capsule stays visible above the scrim).
   Color? barrierColor,
 
-  /// Defaults to [dismissible]. false = the sheet handles dragging itself (e.g.
+  /// Defaults to `dismissible`. false = the sheet handles dragging itself (e.g.
   /// DraggableScrollableSheet).
   bool? enableDrag,
 

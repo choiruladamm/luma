@@ -15,7 +15,13 @@ import { AppError, NotFoundScreen, ScreenError } from "./route-error";
 // screen's queries in parallel with the chunk download instead of after it renders.
 // Shared by the browser router and the tests.
 export const routes: RouteObject[] = [
-  { path: "/login", ErrorBoundary: AppError, lazy: async () => ({ Component: (await import("../features/auth/pages/login-page")).LoginPage }) },
+  {
+    path: "/login",
+    ErrorBoundary: AppError,
+    lazy: async () => ({
+      Component: (await import("../features/auth/pages/login-page")).LoginPage,
+    }),
+  },
   {
     // The shell shows nav counts from the overview, so every admin screen warms it too.
     loader: prefetch(
@@ -31,25 +37,37 @@ export const routes: RouteObject[] = [
         index: true,
         ErrorBoundary: ScreenError,
         loader: prefetch((qc) => qc.query(usersQuery(DEFAULT_USERS_PARAMS))),
-        lazy: async () => ({ Component: (await import("../features/overview/pages/overview-page")).OverviewPage }),
+        lazy: async () => ({
+          Component: (await import("../features/overview/pages/overview-page")).OverviewPage,
+        }),
       },
       {
         path: "users",
         ErrorBoundary: ScreenError,
-        loader: prefetch((qc, { request }) => qc.query(usersQuery(parseUsersParams(new URL(request.url).searchParams)))),
-        lazy: async () => ({ Component: (await import("../features/users/pages/users-page")).UsersPage }),
+        loader: prefetch((qc, { request }) =>
+          qc.query(usersQuery(parseUsersParams(new URL(request.url).searchParams))),
+        ),
+        lazy: async () => ({
+          Component: (await import("../features/users/pages/users-page")).UsersPage,
+        }),
       },
       {
         path: "users/:id",
         ErrorBoundary: ScreenError,
         loader: prefetch((qc, { params }) => qc.query(userDetailQuery(params.id ?? ""))),
-        lazy: async () => ({ Component: (await import("../features/users/pages/user-detail-page")).UserDetailPage }),
+        lazy: async () => ({
+          Component: (await import("../features/users/pages/user-detail-page")).UserDetailPage,
+        }),
       },
       {
         path: "invites",
         ErrorBoundary: ScreenError,
-        loader: prefetch((qc, { request }) => qc.query(invitesQuery(parseInvitesParams(new URL(request.url).searchParams)))),
-        lazy: async () => ({ Component: (await import("../features/invites/pages/invites-page")).InvitesPage }),
+        loader: prefetch((qc, { request }) =>
+          qc.query(invitesQuery(parseInvitesParams(new URL(request.url).searchParams))),
+        ),
+        lazy: async () => ({
+          Component: (await import("../features/invites/pages/invites-page")).InvitesPage,
+        }),
       },
       { path: "*", Component: NotFoundScreen },
     ],

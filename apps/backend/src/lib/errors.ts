@@ -29,7 +29,9 @@ export class ApiError extends Error {
   }
 }
 
-export const errorBody = (code: ErrorCode, message: string): ErrorBody => ({ error: { code, message } });
+export const errorBody = (code: ErrorCode, message: string): ErrorBody => ({
+  error: { code, message },
+});
 
 export const errorResponse = (c: Context, e: ApiError) => {
   for (const [k, v] of Object.entries(e.headers)) c.header(k, v);
@@ -43,7 +45,11 @@ export const onError = (err: Error, c: Context) => {
     return c.json(errorBody("BAD_REQUEST", err.message || "Bad request"), err.status);
   }
   console.error(
-    JSON.stringify({ message: "unhandled error", requestId: c.get("requestId"), error: err.message }),
+    JSON.stringify({
+      message: "unhandled error",
+      requestId: c.get("requestId"),
+      error: err.message,
+    }),
   );
   return c.json(errorBody("INTERNAL_ERROR", "Internal error"), 500);
 };

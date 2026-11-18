@@ -1,4 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:luma/data/repositories/auth_repository.dart'
+    show AuthRepository;
 
 import 'backend_client.dart';
 

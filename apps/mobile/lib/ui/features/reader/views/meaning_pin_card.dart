@@ -11,7 +11,7 @@ import '../../../core/theme/stabilo_tokens.dart';
 /// translation has been read. Mounted only when the group is too long (the bottom
 /// of its text is covered by the sheet): a group that fits has nothing to scroll.
 ///
-/// Mounted in the same Stack as the chapter text ([show] coordinates are that
+/// Mounted in the same Stack as the chapter text (`show` coordinates are that
 /// Stack's). Empty until [MeaningPinCardState.show] is called.
 class MeaningPinCard extends StatefulWidget {
   const MeaningPinCard({

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:luma/ui/core/book_copy.dart';
 import 'package:luma/l10n/l10n.dart';
 
@@ -227,7 +229,7 @@ class _BookshelfViewState extends ConsumerState<BookshelfView> {
       paragraphIndex: 0,
       paragraphOffset: 0.0,
     ));
-    if (mounted) context.push(Routes.reader(bookId));
+    if (mounted) unawaited(context.push(Routes.reader(bookId)));
   }
 
   /// Result sheet closed → back to idle, unless a new import is already running.

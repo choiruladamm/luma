@@ -8,6 +8,7 @@ import { drizzle } from "drizzle-orm/d1";
 import { userAdditionalFields } from "../src/auth/user-fields";
 
 export const auth = betterAuth({
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- the CLI only reads the schema; no D1 binding exists here
   database: drizzleAdapter(drizzle({} as D1Database), { provider: "sqlite", usePlural: true }),
   emailAndPassword: { enabled: true },
   socialProviders: { google: { clientId: "x", clientSecret: "x" } },

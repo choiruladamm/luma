@@ -15,7 +15,19 @@ const EFFECTS: [IconName, "effectKey" | "effectKeeps" | "effectUndo", boolean][]
   ["check", "effectUndo", false],
 ];
 
-export function BanDialog({ user, open, onClose, onConfirm, pending }: { user: UserDetail; open: boolean; onClose: () => void; onConfirm: () => void; pending: boolean }) {
+export function BanDialog({
+  user,
+  open,
+  onClose,
+  onConfirm,
+  pending,
+}: {
+  user: UserDetail;
+  open: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  pending: boolean;
+}) {
   const { t, locale } = useI18n();
   return (
     <Dialog
@@ -52,7 +64,10 @@ export function BanDialog({ user, open, onClose, onConfirm, pending }: { user: U
         <ul className="m-0 flex list-none flex-col p-0">
           {EFFECTS.map(([icon, key, bad]) => (
             <li key={key} className="flex min-h-10 items-center gap-3">
-              <span aria-hidden="true" className={`flex size-7 flex-none items-center justify-center rounded-[9px] ${bad ? "bg-danger-soft text-danger-ink" : "bg-muted text-ink"}`}>
+              <span
+                aria-hidden="true"
+                className={`flex size-7 flex-none items-center justify-center rounded-[9px] ${bad ? "bg-danger-soft text-danger-ink" : "bg-muted text-ink"}`}
+              >
                 <Icon name={icon} size={14} strokeWidth={2.2} />
               </span>
               <span className="text-body">{t.userDetail[key]}</span>

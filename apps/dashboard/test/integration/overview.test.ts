@@ -20,7 +20,9 @@ function fakeActivity(rows: { date: string; usage: number }[] | "fail") {
   network.use(
     http.get(`${OPENROUTER_API}/activity`, ({ request }) => {
       calls.push(new URL(request.url).searchParams.get("workspace_id") ?? "");
-      return rows === "fail" ? HttpResponse.json({}, { status: 500 }) : HttpResponse.json({ data: rows });
+      return rows === "fail"
+        ? HttpResponse.json({}, { status: 500 })
+        : HttpResponse.json({ data: rows });
     }),
   );
   return calls;
@@ -52,11 +54,13 @@ describe("getOverview", () => {
       { userId: old.id, bytes: 1000, syncBytes: 10, syncDay: TODAY, syncRows: 40 },
       { userId: recent.id, bytes: 500, syncBytes: 5, syncDay: TODAY - 1, syncRows: 999 },
     ]);
-    await db.insert(inviteCodes).values([
-      { code: "LUMA-OVR1" },
-      { code: "LUMA-OVR2" },
-      { code: "LUMA-OVR3", usedAt: NOW, usedBy: recent.id },
-    ]);
+    await db
+      .insert(inviteCodes)
+      .values([
+        { code: "LUMA-OVR1" },
+        { code: "LUMA-OVR2" },
+        { code: "LUMA-OVR3", usedAt: NOW, usedBy: recent.id },
+      ]);
     const calls = fakeActivity([
       { date: "2026-10-31 00:00:00", usage: 1 },
       { date: "2026-11-01 00:00:00", usage: 0.25 },
@@ -84,14 +88,24 @@ describe("getOverview", () => {
 
   it("skips OpenRouter when no management key is set (local dev / e2e)", async () => {
     const calls = fakeActivity([]);
-    const result = await getOverview(createDb(env.DB), { ...env, OPENROUTER_MANAGEMENT_KEY: "" }, "r", NOW);
+    const result = await getOverview(
+      createDb(env.DB),
+      { ...env, OPENROUTER_MANAGEMENT_KEY: "" },
+      "r",
+      NOW,
+    );
     expect(result.ai.spendUsd).toBeNull();
     expect(calls).toEqual([]);
   });
 
   it("reads switches from the injected backend vars", async () => {
     fakeActivity([]);
-    const result = await getOverview(createDb(env.DB), { ...env, SYNC_ENABLED: "false", AI_KEY_ENABLED: "nope" }, "r", NOW);
+    const result = await getOverview(
+      createDb(env.DB),
+      { ...env, SYNC_ENABLED: "false", AI_KEY_ENABLED: "nope" },
+      "r",
+      NOW,
+    );
     expect(result.flags).toEqual({ sync: false, backup: true, aiKey: false });
   });
 });
@@ -99,11 +113,16 @@ describe("getOverview", () => {
 describe("GET /api/overview", () => {
   it("answers in one D1 batch (+1 guard) and one subrequest", async () => {
     const calls = fakeActivity([]);
-    const { response, d1Queries } = await call("/api/overview", { headers: { cookie: await adminCookie() } });
+    const { response, d1Queries } = await call("/api/overview", {
+      headers: { cookie: await adminCookie() },
+    });
     expect(response.status).toBe(200);
     // guard 1 + batch of 3 statements.
     expect(d1Queries).toBe(4);
     expect(calls).toHaveLength(1);
-    expect(await response.json()).toMatchObject({ syncToday: { limit: 100_000 }, flags: { sync: true } });
+    expect(await response.json()).toMatchObject({
+      syncToday: { limit: 100_000 },
+      flags: { sync: true },
+    });
   });
 });

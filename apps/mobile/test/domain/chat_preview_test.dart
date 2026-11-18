@@ -29,7 +29,7 @@ void main() {
         'kind': 'book',
         'source_ids': ['S1'],
       },
-      {'text': 'Lanjut', 'kind': 'external', 'source_ids': []},
+      {'text': 'Lanjut', 'kind': 'external', 'source_ids': <Object?>[]},
     ],
   }).replaceAll('😀', r'\uD83D\uDE00');
 

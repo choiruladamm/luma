@@ -36,12 +36,12 @@ Future<Map<String, Object?>?> _data(
 /// EPUB book (hash `h1`), Markdown book (`notes`), one chapter each.
 Future<void> _seed(AppDatabase db) async {
   await db.customStatement(
-    "INSERT INTO books (id, source_type, title, hash, parser_version, "
-    "total_chars, created_at, first_opened_at) "
+    'INSERT INTO books (id, source_type, title, hash, parser_version, '
+    'total_chars, created_at, first_opened_at) '
     "VALUES (1, 'epub', 'Meditations', 'h1', 9, 100, 1790000000, 1790000060)",
   );
   await db.customStatement(
-    "INSERT INTO books (id, source_type, title, book_key, parser_version, "
+    'INSERT INTO books (id, source_type, title, book_key, parser_version, '
     "total_chars) VALUES (2, 'markdown', 'Notes', 'notes', 1, 10)",
   );
   await db.customStatement(

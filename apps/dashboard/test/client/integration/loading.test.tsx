@@ -11,7 +11,13 @@ const hang = (path: string) => server.use(http.get(`${API}${path}`, () => delay(
 
 const phone = () =>
   vi.spyOn(window, "matchMedia").mockImplementation(
-    (query) => ({ matches: query === "(max-width: 767px)", media: query, addEventListener: () => {}, removeEventListener: () => {} }) as unknown as MediaQueryList,
+    (query) =>
+      ({
+        matches: query === "(max-width: 767px)",
+        media: query,
+        addEventListener: () => {},
+        removeEventListener: () => {},
+      }) as unknown as MediaQueryList,
   );
 
 afterEach(() => vi.restoreAllMocks());
@@ -22,10 +28,23 @@ describe("loading skeletons", () => {
     renderApp("/users");
     const busy = await screen.findByLabelText("Lagi muat daftar user");
     expect(busy).toHaveAttribute("aria-busy", "true");
-    for (const name of ["User", "Daftar", "Terakhir aktif", "File", "Data sync", "Key AI", "Status"]) {
-      expect(within(busy).getByRole("columnheader", { name: new RegExp(`^${name}`) })).toBeInTheDocument();
+    for (const name of [
+      "User",
+      "Daftar",
+      "Terakhir aktif",
+      "File",
+      "Data sync",
+      "Key AI",
+      "Status",
+    ]) {
+      expect(
+        within(busy).getByRole("columnheader", { name: new RegExp(`^${name}`) }),
+      ).toBeInTheDocument();
     }
-    expect(within(busy).getByRole("columnheader", { name: /^Daftar/ })).toHaveAttribute("aria-sort", "descending");
+    expect(within(busy).getByRole("columnheader", { name: /^Daftar/ })).toHaveAttribute(
+      "aria-sort",
+      "descending",
+    );
   });
 
   it("Users on a phone: card rows with the real labels, not the wide table", async () => {
@@ -54,10 +73,19 @@ describe("loading skeletons", () => {
     renderApp("/users/u1");
     const busy = await screen.findByLabelText("Lagi muat user");
     expect(busy).toHaveAttribute("aria-busy", "true");
-    for (const label of ["Daftar", "Terakhir aktif", "Masuk lewat", "Kode undangan", "File buku", "Data sync", "Kuota AI gratis"]) {
+    for (const label of [
+      "Daftar",
+      "Terakhir aktif",
+      "Masuk lewat",
+      "Kode undangan",
+      "File buku",
+      "Data sync",
+      "Kuota AI gratis",
+    ]) {
       expect(within(busy).getByText(label)).toBeInTheDocument();
     }
     expect(within(busy).getByRole("heading", { name: "Perangkat" })).toBeInTheDocument();
-    for (const b of within(busy).getAllByRole("button", { name: "Salin email" })) expect(b).toBeDisabled();
+    for (const b of within(busy).getAllByRole("button", { name: "Salin email" }))
+      expect(b).toBeDisabled();
   });
 });

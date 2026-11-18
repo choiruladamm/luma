@@ -29,8 +29,8 @@ export function UserDetailPage() {
     unban.mutate(id, {
       onSuccess: () => {
         // getI18n, not the render's `t`: the admin may switch language while the request runs.
-        const { t } = getI18n();
-        toast(t.userDetail.unbanned(user.data?.email ?? t.userDetail.someone));
+        const msg = getI18n().t;
+        toast(msg.userDetail.unbanned(user.data?.email ?? msg.userDetail.someone));
       },
       onError: (e) => toast(errorText(e, getI18n().t), { tone: "error" }),
     });
@@ -38,8 +38,10 @@ export function UserDetailPage() {
     ban.mutate(id, {
       onSuccess: () => {
         setConfirming(false);
-        const { t } = getI18n();
-        toast(t.userDetail.bannedToast(user.data?.email ?? t.userDetail.someone), { action: { label: t.userDetail.unban, onClick: doUnban } });
+        const msg = getI18n().t;
+        toast(msg.userDetail.bannedToast(user.data?.email ?? msg.userDetail.someone), {
+          action: { label: msg.userDetail.unban, onClick: doUnban },
+        });
       },
       onError: (e) => {
         setConfirming(false);
@@ -48,12 +50,17 @@ export function UserDetailPage() {
     });
 
   const crumb = (
-    <nav aria-label={t.userDetail.breadcrumb} className="flex items-center gap-2 text-body text-ink2">
+    <nav
+      aria-label={t.userDetail.breadcrumb}
+      className="flex items-center gap-2 text-body text-ink2"
+    >
       <Link to="/users" className="text-ink2 no-underline hover:underline">
         {t.shell.users}
       </Link>
       <span aria-hidden="true">/</span>
-      <span className="truncate font-semibold text-ink">{user.data ? user.data.name || user.data.email : "…"}</span>
+      <span className="truncate font-semibold text-ink">
+        {user.data ? user.data.name || user.data.email : "…"}
+      </span>
     </nav>
   );
 
@@ -64,7 +71,15 @@ export function UserDetailPage() {
         {crumb}
         <section className="rounded-card bg-sheet">
           {missing ? (
-            <EmptyState icon="user" title={t.userDetail.notFound} action={<ButtonLink to="/users" variant="secondary" icon="back">{t.userDetail.backToList}</ButtonLink>}>
+            <EmptyState
+              icon="user"
+              title={t.userDetail.notFound}
+              action={
+                <ButtonLink to="/users" variant="secondary" icon="back">
+                  {t.userDetail.backToList}
+                </ButtonLink>
+              }
+            >
               {t.userDetail.notFoundBody}
             </EmptyState>
           ) : (
@@ -105,7 +120,10 @@ export function UserDetailPage() {
       </div>
       <SessionsCard sessions={data.sessions} />
       {!data.banned && (
-        <section aria-labelledby="h-ban" className="flex flex-wrap items-center justify-between gap-4 rounded-card bg-sheet p-6">
+        <section
+          aria-labelledby="h-ban"
+          className="flex flex-wrap items-center justify-between gap-4 rounded-card bg-sheet p-6"
+        >
           <div className="flex max-w-[640px] flex-col gap-1">
             <h2 id="h-ban" className="m-0 text-card font-semibold">
               {t.userDetail.banTitle}
@@ -117,7 +135,13 @@ export function UserDetailPage() {
           </Button>
         </section>
       )}
-      <BanDialog user={data} open={confirming} onClose={() => setConfirming(false)} onConfirm={doBan} pending={ban.isPending} />
+      <BanDialog
+        user={data}
+        open={confirming}
+        onClose={() => setConfirming(false)}
+        onConfirm={doBan}
+        pending={ban.isPending}
+      />
     </>
   );
 }

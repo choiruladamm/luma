@@ -17,17 +17,34 @@ const MAX = 100; // same limit as the worker's `q`
 const SHOWN = 5;
 
 // Pasted "mailto:Name@Mail.com " → "name@mail.com"; the worker matches case-insensitively anyway.
-const normalize = (v: string) => v.trim().toLowerCase().replace(/^mailto:/, "");
+const normalize = (v: string) =>
+  v
+    .trim()
+    .toLowerCase()
+    .replace(/^mailto:/, "");
 
 const typingInField = (el: EventTarget | null) =>
-  el instanceof HTMLElement && (el.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(el.tagName));
+  el instanceof HTMLElement &&
+  (el.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(el.tagName));
 
 /**
  * Header email search (combobox): after a 300ms pause with ≥2 characters, the first 5 users by
  * email prefix, then "see all" → /users?q=. Same query as the Users page, so opening the full
  * list reuses the cache: one request per pause at most (free tier).
  */
-export function QuickSearch({ shortcut, autoFocus, onDone, tone, className }: { shortcut?: boolean; autoFocus?: boolean; onDone?: () => void; tone?: "sheet" | "canvas"; className?: string }) {
+export function QuickSearch({
+  shortcut,
+  autoFocus,
+  onDone,
+  tone,
+  className,
+}: {
+  shortcut?: boolean;
+  autoFocus?: boolean;
+  onDone?: () => void;
+  tone?: "sheet" | "canvas";
+  className?: string;
+}) {
   const { t, locale } = useI18n();
   const navigate = useNavigate();
   const listId = useId();
@@ -77,7 +94,8 @@ export function QuickSearch({ shortcut, autoFocus, onDone, tone, className }: { 
   const choose = (index: number) => {
     if (index >= 0 && index < items.length) return finish(`/users/${items[index]!.id}`);
     // Enter on a full, exact email (ranked first by the worker) opens that user directly.
-    if (index < 0 && settled && items[0]?.email.toLowerCase() === typed) return finish(`/users/${items[0].id}`);
+    if (index < 0 && settled && items[0]?.email.toLowerCase() === typed)
+      return finish(`/users/${items[0].id}`);
     seeAll();
   };
 
@@ -127,18 +145,33 @@ export function QuickSearch({ shortcut, autoFocus, onDone, tone, className }: { 
         onKeyDown={onKeyDown}
         className="[&_input]:pr-11"
       />
-      <span aria-hidden="true" className="pointer-events-none absolute top-1/2 right-4 flex -translate-y-1/2 items-center text-ink2">
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute top-1/2 right-4 flex -translate-y-1/2 items-center text-ink2"
+      >
         {loading ? (
           <Spinner size={16} />
         ) : (
           shortcut &&
-          !value && <kbd className="inline-flex h-[22px] items-center rounded-[7px] bg-muted px-[7px] font-mono text-chip font-medium text-ink shadow-[inset_0_-1px_0_var(--c-track)]">/</kbd>
+          !value && (
+            <kbd className="inline-flex h-[22px] items-center rounded-[7px] bg-muted px-[7px] font-mono text-chip font-medium text-ink shadow-[inset_0_-1px_0_var(--c-track)]">
+              /
+            </kbd>
+          )
         )}
       </span>
       {showList && (
         // mousedown keeps focus in the field, so the blur doesn't close the list before the click lands.
-        <div onMouseDown={(e) => e.preventDefault()} className="absolute inset-x-0 top-[calc(100%+8px)] z-30 md:left-auto md:w-[360px] md:min-w-full rounded-menu bg-sheet p-2 shadow-[var(--shadow-sheet),inset_0_0_0_1px_var(--c-track)]">
-          <ul id={listId} role="listbox" aria-label={t.shell.searchResults} className="m-0 flex list-none flex-col gap-0.5 p-0">
+        <div
+          onMouseDown={(e) => e.preventDefault()}
+          className="absolute inset-x-0 top-[calc(100%+8px)] z-30 md:left-auto md:w-[360px] md:min-w-full rounded-menu bg-sheet p-2 shadow-[var(--shadow-sheet),inset_0_0_0_1px_var(--c-track)]"
+        >
+          <ul
+            id={listId}
+            role="listbox"
+            aria-label={t.shell.searchResults}
+            className="m-0 flex list-none flex-col gap-0.5 p-0"
+          >
             {users.isError && settled ? (
               <li className="px-3 py-3 text-body text-danger-ink">{errorText(users.error, t)}</li>
             ) : loading && items.length === 0 ? (
@@ -163,7 +196,10 @@ export function QuickSearch({ shortcut, autoFocus, onDone, tone, className }: { 
                     aria-selected={active === i}
                     onMouseEnter={() => setActive(i)}
                     onClick={() => choose(i)}
-                    className={cn("flex cursor-pointer items-center justify-between gap-3 rounded-row px-3 py-2", active === i && "bg-canvas")}
+                    className={cn(
+                      "flex cursor-pointer items-center justify-between gap-3 rounded-row px-3 py-2",
+                      active === i && "bg-canvas",
+                    )}
                   >
                     <UserIdentity user={u} q={typed} />
                     <UserStatusChip banned={u.banned} />
@@ -176,7 +212,10 @@ export function QuickSearch({ shortcut, autoFocus, onDone, tone, className }: { 
                   aria-selected={active === items.length}
                   onMouseEnter={() => setActive(items.length)}
                   onClick={seeAll}
-                  className={cn("flex min-h-11 cursor-pointer items-center justify-between gap-3 rounded-row px-3 text-body font-medium", active === items.length && "bg-canvas")}
+                  className={cn(
+                    "flex min-h-11 cursor-pointer items-center justify-between gap-3 rounded-row px-3 text-body font-medium",
+                    active === items.length && "bg-canvas",
+                  )}
                 >
                   {t.shell.seeAllResults(total)}
                   <Icon name="arrow" size={16} />

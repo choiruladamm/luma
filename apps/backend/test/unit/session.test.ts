@@ -50,7 +50,12 @@ describe("findSessionUser", () => {
     const { token } = await signUp();
     const db = createDb(env.DB);
     const read = async () =>
-      (await db.select().from(sessions).where(eq(sessions.token, tokenOf(token))))[0]!.expiresAt.getTime();
+      (
+        await db
+          .select()
+          .from(sessions)
+          .where(eq(sessions.token, tokenOf(token)))
+      )[0]!.expiresAt.getTime();
     const before = await read();
 
     const sameDay = countingD1(env.DB);

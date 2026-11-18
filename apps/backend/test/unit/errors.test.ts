@@ -33,7 +33,9 @@ describe("onError", () => {
     const log = vi.spyOn(console, "error").mockImplementation(() => {});
     const res = await appThrowing(new Error("db exploded")).request("/");
     expect(res.status).toBe(500);
-    expect(await res.json()).toEqual({ error: { code: "INTERNAL_ERROR", message: "Internal error" } });
+    expect(await res.json()).toEqual({
+      error: { code: "INTERNAL_ERROR", message: "Internal error" },
+    });
     expect(JSON.parse(String(log.mock.calls[0]?.[0]))).toMatchObject({ error: "db exploded" });
     log.mockRestore();
   });

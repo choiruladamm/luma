@@ -17,7 +17,7 @@ import { errorText } from "../../../lib/api-error";
 import { cn } from "../../../lib/cn";
 import { toast } from "../../../stores/toast-store";
 import type { InviteItem } from "../api/invites-api";
-import { type InviteSort, type InvitesParams, useInvitesParams } from "../hooks/use-invites-params";
+import { type InviteSort, useInvitesParams } from "../hooks/use-invites-params";
 import { DeleteInviteDialog } from "../components/delete-invite-dialog";
 import { InvitesTableSkeleton } from "../components/invites-table-skeleton";
 import { InviteCard, inviteColumns } from "../components/invite-columns";
@@ -27,13 +27,35 @@ import { useCreateInvites, useDeleteInvite, useInvites } from "../queries/use-in
 type Filter = "all" | "unused" | "used";
 
 /** Desktop status tabs: label + count, an ink underline that slides to the active tab. */
-function StatusTabs({ value, counts, onChange }: { value: Filter; counts?: Record<Filter, number>; onChange: (f: Filter) => void }) {
+function StatusTabs({
+  value,
+  counts,
+  onChange,
+}: {
+  value: Filter;
+  counts?: Record<Filter, number>;
+  onChange: (f: Filter) => void;
+}) {
   const { t } = useI18n();
   const tabs: Filter[] = ["all", "unused", "used"];
   const pill = useSlidingPill(tabs.indexOf(value), tabs.length);
   return (
-    <div role="tablist" aria-label={t.invites.filter} onMouseLeave={pill.onMouseLeave} className="relative flex gap-1 border-b border-track px-4 max-md:hidden">
-      <span aria-hidden="true" style={pill.activeStyle} className={cn("absolute bottom-[-1px] left-0 h-0.5 rounded-full bg-ink", pill.slide, pill.activeVisible ? "opacity-100" : "opacity-0")} />
+    // oxlint-disable-next-line jsx-a11y/interactive-supports-focus -- focus lives on the tab buttons inside; the container only resets the hover pill
+    <div
+      role="tablist"
+      aria-label={t.invites.filter}
+      onMouseLeave={pill.onMouseLeave}
+      className="relative flex gap-1 border-b border-track px-4 max-md:hidden"
+    >
+      <span
+        aria-hidden="true"
+        style={pill.activeStyle}
+        className={cn(
+          "absolute bottom-[-1px] left-0 h-0.5 rounded-full bg-ink",
+          pill.slide,
+          pill.activeVisible ? "opacity-100" : "opacity-0",
+        )}
+      />
       {tabs.map((tab, i) => (
         <button
           key={tab}
@@ -42,10 +64,18 @@ function StatusTabs({ value, counts, onChange }: { value: Filter; counts?: Recor
           role="tab"
           aria-selected={tab === value}
           onClick={() => onChange(tab)}
-          className={cn("inline-flex h-12 items-center gap-2 rounded-t-[12px] px-3 text-body transition-colors hover:bg-muted/60", tab === value ? "font-semibold text-ink" : "font-medium text-ink2")}
+          className={cn(
+            "inline-flex h-12 items-center gap-2 rounded-t-[12px] px-3 text-body transition-colors hover:bg-muted/60",
+            tab === value ? "font-semibold text-ink" : "font-medium text-ink2",
+          )}
         >
           {tab === "all" ? t.invites.all : t.invites[tab]}
-          <span className={cn("rounded-full px-2 text-chip leading-5 tabular-nums", tab === value ? "bg-ink text-canvas" : "bg-muted text-ink2")}>
+          <span
+            className={cn(
+              "rounded-full px-2 text-chip leading-5 tabular-nums",
+              tab === value ? "bg-ink text-canvas" : "bg-muted text-ink2",
+            )}
+          >
             {counts ? counts[tab] : <Skeleton className="inline-block h-3 w-4 align-middle" />}
           </span>
         </button>
@@ -80,8 +110,10 @@ export function InvitesPage() {
   const rows = data?.items ?? [];
   const counts = data?.counts;
   const filter: Filter = params.status ?? "all";
-  const tableSort: TableSort | null = params.sort === "default" ? null : { id: params.sort, dir: params.dir };
+  const tableSort: TableSort | null =
+    params.sort === "default" ? null : { id: params.sort, dir: params.dir };
   const onSort = (id: string) => {
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- ids come from this page's column definitions
     const sort = id as InviteSort;
     set({ sort, dir: params.sort === sort && params.dir === "desc" ? "asc" : "desc" });
   };
@@ -125,8 +157,19 @@ export function InvitesPage() {
 
   const actions = (invite: InviteItem) => (
     <span className="flex justify-end gap-1.5">
-      <IconButton icon="copy" label={t.invites.copyCode(invite.code)} onClick={() => void copyCode(invite.code)} />
-      {!invite.usedAt && <IconButton icon="x" label={t.invites.deleteCode(invite.code)} variant="danger-soft" onClick={() => setDeleting(invite.code)} />}
+      <IconButton
+        icon="copy"
+        label={t.invites.copyCode(invite.code)}
+        onClick={() => void copyCode(invite.code)}
+      />
+      {!invite.usedAt && (
+        <IconButton
+          icon="x"
+          label={t.invites.deleteCode(invite.code)}
+          variant="danger-soft"
+          onClick={() => setDeleting(invite.code)}
+        />
+      )}
     </span>
   );
   // `actions` only closes over stable setters and the clipboard hook.
@@ -138,7 +181,13 @@ export function InvitesPage() {
       <PageHeader
         title={t.shell.invites}
         after={<span className="text-caption text-ink2 max-md:hidden">{t.invites.oneEach}</span>}
-        meta={<UpdatedAt at={invites.dataUpdatedAt} onRefresh={() => void invites.refetch()} refreshing={invites.isFetching} />}
+        meta={
+          <UpdatedAt
+            at={invites.dataUpdatedAt}
+            onRefresh={() => void invites.refetch()}
+            refreshing={invites.isFetching}
+          />
+        }
         actions={
           <>
             <Button variant="primary" icon="plus" onClick={makeCode} loading={create.isPending}>
@@ -147,13 +196,28 @@ export function InvitesPage() {
           </>
         }
       />
-      <section aria-label={t.invites.list} className="scroll-mt-24 overflow-hidden rounded-card bg-sheet">
+      <section
+        aria-label={t.invites.list}
+        className="scroll-mt-24 overflow-hidden rounded-card bg-sheet"
+      >
         {/* Desktop: underline tabs across the top of the card, then search left + chips right
             (same toolbar as Users). Phone: search, chips, then the segmented tabs. */}
-        <StatusTabs value={filter} counts={counts} onChange={(f) => set({ status: f === "all" ? undefined : f })} />
+        <StatusTabs
+          value={filter}
+          counts={counts}
+          onChange={(f) => set({ status: f === "all" ? undefined : f })}
+        />
         <div className="flex flex-col gap-3 px-6 py-5 md:flex-row md:items-center">
           <div className="min-w-0 md:max-w-[420px] md:flex-1">
-            <SearchInput label={t.invites.search} placeholder={`${t.invites.search}…`} tone="canvas" className="w-full" value={search} onChange={(e) => setSearch(e.target.value)} onClear={() => setSearch("")} />
+            <SearchInput
+              label={t.invites.search}
+              placeholder={`${t.invites.search}…`}
+              tone="canvas"
+              className="w-full"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onClear={() => setSearch("")}
+            />
           </div>
           <div className="md:ml-auto">
             {/* Phone: the two chips split the row; desktop: right of the search. */}
@@ -162,9 +226,13 @@ export function InvitesPage() {
                 label={t.invites.usedWithin}
                 shortLabel={t.invites.usedWithinShort}
                 value={params.usedWithin ?? ""}
-                options={[["", t.invites.anyTime], ["7d", t.invites.within7d], ["30d", t.invites.within30d]]}
+                options={[
+                  ["", t.invites.anyTime],
+                  ["7d", t.invites.within7d],
+                  ["30d", t.invites.within30d],
+                ]}
                 active={!!params.usedWithin}
-                onChange={(v) => set({ usedWithin: (v || undefined) as InvitesParams["usedWithin"] })}
+                onChange={(v) => set({ usedWithin: v || undefined })}
               />
               <Select
                 label={t.users.sortLabel}
@@ -173,6 +241,7 @@ export function InvitesPage() {
                 options={sorts}
                 active={params.sort !== "default"}
                 onChange={(v) => {
+                  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- the value comes from this select's own options
                   const [sort, dir] = v.split(":") as [InviteSort, "asc" | "desc"];
                   set({ sort, dir });
                 }}
@@ -199,25 +268,49 @@ export function InvitesPage() {
                       <span className="max-md:sr-only">{t.invites[value]}</span>
                     </>
                   ),
-                count: counts ? counts[value] : <Skeleton className="inline-block h-3 w-4 align-middle" />,
+                count: counts ? (
+                  counts[value]
+                ) : (
+                  <Skeleton className="inline-block h-3 w-4 align-middle" />
+                ),
               }))}
               className="max-w-full"
             />
           </div>
         </div>
         {invites.isError ? (
-          <ErrorState message={errorText(invites.error, t)} onRetry={() => void invites.refetch()} />
+          <ErrorState
+            message={errorText(invites.error, t)}
+            onRetry={() => void invites.refetch()}
+          />
         ) : !data ? (
           <InvitesTableSkeleton />
         ) : rows.length === 0 ? (
           counts?.all === 0 && !params.q ? (
-            <EmptyState icon="ticket" title={t.invites.empty} action={<Button variant="primary" icon="plus" onClick={makeCode}>{t.invites.create}</Button>}>
+            <EmptyState
+              icon="ticket"
+              title={t.invites.empty}
+              action={
+                <Button variant="primary" icon="plus" onClick={makeCode}>
+                  {t.invites.create}
+                </Button>
+              }
+            >
               {t.invites.emptyBody}
             </EmptyState>
           ) : params.q && counts?.all === 0 ? (
             <EmptyState icon="search" title={t.invites.noSearchMatch(params.q)} />
           ) : (
-            <EmptyState icon="ticket" title={params.usedWithin ? t.invites.noneUsedWithin : filter === "unused" ? t.invites.allUsed : t.invites.noneUsed} />
+            <EmptyState
+              icon="ticket"
+              title={
+                params.usedWithin
+                  ? t.invites.noneUsedWithin
+                  : filter === "unused"
+                    ? t.invites.allUsed
+                    : t.invites.noneUsed
+              }
+            />
           )
         ) : (
           <DataTable
@@ -229,12 +322,37 @@ export function InvitesPage() {
             sortable={["code", "createdAt", "usedAt"]}
             onSort={onSort}
             renderCard={(i) => <InviteCard invite={i} actions={actions(i)} />}
-            footer={<Pagination page={params.page} pageCount={data.pageCount} total={data.total} pageSize={params.limit} onPage={(page) => set({ page })} pageSizes={[20, 50]} onPageSize={(limit) => set({ limit: limit as 20 | 50 })} />}
+            footer={
+              <Pagination
+                page={params.page}
+                pageCount={data.pageCount}
+                total={data.total}
+                pageSize={params.limit}
+                onPage={(page) => set({ page })}
+                pageSizes={[20, 50]}
+                onPageSize={(limit) => set({ limit })}
+              />
+            }
           />
         )}
       </section>
-      <NewInviteDialog code={created?.code ?? null} createdAt={created?.at ?? new Date().toISOString()} copied={created !== null && copied === created.code} onCopy={() => created && void copyCode(created.code)} onClose={() => setCreated(null)} />
-      <DeleteInviteDialog code={deleting} onClose={() => setDeleting(null)} onConfirm={confirmDelete} pending={remove.isPending} />
+      <NewInviteDialog
+        code={created?.code ?? null}
+        createdAt={
+          created?.at ??
+          // oxlint-disable-next-line react/purity -- placeholder shown only while the dialog is closed
+          new Date().toISOString()
+        }
+        copied={created !== null && copied === created.code}
+        onCopy={() => created && void copyCode(created.code)}
+        onClose={() => setCreated(null)}
+      />
+      <DeleteInviteDialog
+        code={deleting}
+        onClose={() => setDeleting(null)}
+        onConfirm={confirmDelete}
+        pending={remove.isPending}
+      />
     </>
   );
 }

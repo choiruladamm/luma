@@ -112,7 +112,7 @@ class _BackupViewState extends ConsumerState<BackupView> {
                 : backupFileName(manifest.createdAt),
             error: picked,
           );
-        case RestorePreview preview:
+        case final RestorePreview preview:
           final current = await service.currentBooks();
           if (!mounted) return await preview.discard();
           final ok = await showRestoreSummary(
@@ -135,13 +135,15 @@ class _BackupViewState extends ConsumerState<BackupView> {
     // Settings disappears when returning to Rak; the toast goes through the root
     // navigator, which stays (still below ScaffoldMessenger & Theme).
     final app = Navigator.of(context, rootNavigator: true).context;
-    showAppSheet<void>(
-      context,
-      dismissible: false,
-      builder: (_) => RestoreProgressSheet(
-        name: preview.fileName,
-        books: preview.manifest.books,
-        stage: stage,
+    unawaited(
+      showAppSheet<void>(
+        context,
+        dismissible: false,
+        builder: (_) => RestoreProgressSheet(
+          name: preview.fileName,
+          books: preview.manifest.books,
+          stage: stage,
+        ),
       ),
     );
     var failed = false;
@@ -296,7 +298,7 @@ class _BackupCard extends StatelessWidget {
     final c = context.stabilo;
     final b = last;
     final never = loaded && b == null;
-    final small = _noteStyle(c).copyWith(height: null);
+    final small = _noteStyle(c).copyWith();
     return Container(
       padding: const EdgeInsets.all(Space.s4),
       decoration: BoxDecoration(

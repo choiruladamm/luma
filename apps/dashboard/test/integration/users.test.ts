@@ -6,7 +6,13 @@ import { createDb } from "../../../backend/src/db/client";
 import { aiKeys, sessions, users } from "../../../backend/src/db/schema";
 import { call, errorCode, ORIGIN } from "../helpers/app";
 import { fakeOpenRouter } from "../helpers/openrouter";
-import { adminCookie, createGoogleUser, createUser, giveUserData, sessionCookie } from "../helpers/session";
+import {
+  adminCookie,
+  createGoogleUser,
+  createUser,
+  giveUserData,
+  sessionCookie,
+} from "../helpers/session";
 
 type Item = {
   id: string;
@@ -22,11 +28,19 @@ type Page = { items: Item[]; total: number; page: number; pageCount: number };
 
 const get = async (path: string) => call(path, { headers: { cookie: await adminCookie() } });
 const post = async (path: string, overrides: Partial<Env> = {}) =>
-  call(path, { method: "POST", headers: { cookie: await adminCookie(), "content-type": "application/json", origin: ORIGIN } }, overrides);
+  call(
+    path,
+    {
+      method: "POST",
+      headers: { cookie: await adminCookie(), "content-type": "application/json", origin: ORIGIN },
+    },
+    overrides,
+  );
 
 const db = () => createDb(env.DB);
 const userRow = async (id: string) => (await db().select().from(users).where(eq(users.id, id)))[0]!;
-const keyRow = async (id: string) => (await db().select().from(aiKeys).where(eq(aiKeys.userId, id)))[0] ?? null;
+const keyRow = async (id: string) =>
+  (await db().select().from(aiKeys).where(eq(aiKeys.userId, id)))[0] ?? null;
 
 /** Unique email prefix per test, so searches don't hit other tests' data. */
 const tag = () => `t${crypto.randomUUID().slice(0, 8)}`;
@@ -35,20 +49,25 @@ describe("GET /api/users", () => {
   it("pages newest first with a total in one D1 batch (+1 guard)", async () => {
     const t = tag();
     const base = Date.UTC(2026, 10, 1);
-    for (let i = 0; i < 5; i++) await createUser({ email: `${t}-${i}@luma.test`, createdAt: new Date(base + i * 1000) });
+    for (let i = 0; i < 5; i++)
+      await createUser({ email: `${t}-${i}@luma.test`, createdAt: new Date(base + i * 1000) });
 
     const first = await get(`/api/users?q=${t}&sort=created&limit=2`);
     expect(first.response.status).toBe(200);
     expect(first.d1Queries).toBe(3);
-    const p1 = (await first.response.json()) as Page;
+    const p1 = await first.response.json<Page>();
     expect(p1).toMatchObject({ total: 5, page: 1, pageCount: 3 });
     expect(p1.items.map((u) => u.email)).toEqual([`${t}-4@luma.test`, `${t}-3@luma.test`]);
 
-    const p3 = (await (await get(`/api/users?q=${t}&sort=created&limit=2&page=3`)).response.json()) as Page;
+    const p3 = await (
+      await get(`/api/users?q=${t}&sort=created&limit=2&page=3`)
+    ).response.json<Page>();
     expect(p3.items.map((u) => u.email)).toEqual([`${t}-0@luma.test`]);
-    const asc = (await (await get(`/api/users?q=${t}&sort=created&dir=asc&limit=2`)).response.json()) as Page;
+    const asc = await (
+      await get(`/api/users?q=${t}&sort=created&dir=asc&limit=2`)
+    ).response.json<Page>();
     expect(asc.items.map((u) => u.email)).toEqual([`${t}-0@luma.test`, `${t}-1@luma.test`]);
-    const past = (await (await get(`/api/users?q=${t}&limit=2&page=9`)).response.json()) as Page;
+    const past = await (await get(`/api/users?q=${t}&limit=2&page=9`)).response.json<Page>();
     expect(past).toMatchObject({ items: [], total: 5, pageCount: 3 });
   });
 
@@ -62,12 +81,21 @@ describe("GET /api/users", () => {
     await sessionCookie(recent.id);
     const old = await createUser({ email: `${t}-old@luma.test` });
     const tenDaysAgo = new Date(Date.now() - 10 * 86_400_000);
-    await db().insert(sessions).values({ id: crypto.randomUUID(), token: crypto.randomUUID(), userId: old.id, expiresAt: tenDaysAgo, createdAt: tenDaysAgo, updatedAt: tenDaysAgo });
+    await db().insert(sessions).values({
+      id: crypto.randomUUID(),
+      token: crypto.randomUUID(),
+      userId: old.id,
+      expiresAt: tenDaysAgo,
+      createdAt: tenDaysAgo,
+      updatedAt: tenDaysAgo,
+    });
 
     const emails = async (filter: string) => {
-      const page = (await (await get(`/api/users?q=${t}&${filter}`)).response.json()) as Page;
+      const page = await (await get(`/api/users?q=${t}&${filter}`)).response.json<Page>();
       expect(page.total).toBe(page.items.length);
-      return page.items.map((u) => u.email.replace(`${t}-`, "").replace("@luma.test", "")).sort();
+      return page.items
+        .map((u) => u.email.replace(`${t}-`, "").replace("@luma.test", ""))
+        .toSorted();
     };
     expect(await emails("status=banned")).toEqual(["banned"]);
     expect(await emails("status=active")).toEqual(["key", "old", "recent"]);
@@ -88,15 +116,28 @@ describe("GET /api/users", () => {
     const idle = await createUser({ email: `${t}-idle@luma.test` });
     await sessionCookie(big.id);
     const dayAgo = new Date(Date.now() - 86_400_000);
-    await db().insert(sessions).values({ id: crypto.randomUUID(), token: crypto.randomUUID(), userId: small.id, expiresAt: dayAgo, createdAt: dayAgo, updatedAt: dayAgo });
+    await db().insert(sessions).values({
+      id: crypto.randomUUID(),
+      token: crypto.randomUUID(),
+      userId: small.id,
+      expiresAt: dayAgo,
+      createdAt: dayAgo,
+      updatedAt: dayAgo,
+    });
 
     const order = async (query: string) =>
-      ((await (await get(`/api/users?q=${t}&${query}`)).response.json()) as Page).items.map((u) => u.email.replace(`${t}-`, "").replace("@luma.test", ""));
+      (await (await get(`/api/users?q=${t}&${query}`)).response.json<Page>()).items.map((u) =>
+        u.email.replace(`${t}-`, "").replace("@luma.test", ""),
+      );
     expect(await order("sort=r2")).toEqual(["big", "small", "idle"]);
     expect(await order("sort=r2&dir=asc")).toEqual(["idle", "small", "big"]);
     expect(await order("sort=sync")).toEqual(["small", "big", "idle"]);
     expect(await order("sort=lastActive")).toEqual(["big", "small", "idle"]);
-    expect(await order("sort=lastActive&dir=asc")).toEqual(["small", "big", idle.email.replace(`${t}-`, "").replace("@luma.test", "")]);
+    expect(await order("sort=lastActive&dir=asc")).toEqual([
+      "small",
+      "big",
+      idle.email.replace(`${t}-`, "").replace("@luma.test", ""),
+    ]);
   });
 
   it("returns users without storage, key, or sessions, and never leaks keyEnc or tokens", async () => {
@@ -110,8 +151,18 @@ describe("GET /api/users", () => {
     const text = await response.text();
     expect(text).not.toMatch(/keyEnc|key_enc|rahasia-terenkripsi|token|keyHash|hash-full/);
     const items = (JSON.parse(text) as Page).items;
-    expect(items.find((u) => u.id === bare.id)).toMatchObject({ hasAiKey: false, r2Bytes: 0, syncBytes: 0, lastActiveAt: null, banned: false });
-    expect(items.find((u) => u.id === full.id)).toMatchObject({ hasAiKey: true, r2Bytes: 1234, syncBytes: 99 });
+    expect(items.find((u) => u.id === bare.id)).toMatchObject({
+      hasAiKey: false,
+      r2Bytes: 0,
+      syncBytes: 0,
+      lastActiveAt: null,
+      banned: false,
+    });
+    expect(items.find((u) => u.id === full.id)).toMatchObject({
+      hasAiKey: true,
+      r2Bytes: 1234,
+      syncBytes: 99,
+    });
     expect(items.find((u) => u.id === full.id)?.lastActiveAt).toMatch(/Z$/);
   });
 
@@ -122,20 +173,24 @@ describe("GET /api/users", () => {
     await createUser({ email: `${t}zz@luma.test`, createdAt: at(1) }); // 1: email prefix
     await createUser({ email: `ab${t}@luma.test`, createdAt: at(2) }); // 3: inside a word
     await createUser({ email: `x.${t}@luma.test`, createdAt: at(3) }); // 2: word start in the email
-    await createUser({ email: `nm${crypto.randomUUID().slice(0, 6)}@luma.test`, name: `Putri ${t}`, createdAt: at(4) }); // 2: word of the name
+    await createUser({
+      email: `nm${crypto.randomUUID().slice(0, 6)}@luma.test`,
+      name: `Putri ${t}`,
+      createdAt: at(4),
+    }); // 2: word of the name
     const expected = [`${t}zz@luma.test`, "name", `x.${t}@luma.test`, `ab${t}@luma.test`];
     const label = (u: Item) => (u.email.startsWith("nm") ? "name" : u.email);
 
-    const page = (await (await get(`/api/users?q=${t.toUpperCase()}`)).response.json()) as Page;
+    const page = await (await get(`/api/users?q=${t.toUpperCase()}`)).response.json<Page>();
     expect(page.items.map(label)).toEqual(expected);
 
-    const exact = (await (await get(`/api/users?q=${t}zz@luma.test`)).response.json()) as Page;
+    const exact = await (await get(`/api/users?q=${t}zz@luma.test`)).response.json<Page>();
     expect(exact.items[0]!.email).toBe(`${t}zz@luma.test`);
 
     // Relevance holds across pages too.
     const seen: string[] = [];
-    for (let page = 1; page <= 4; page++) {
-      const p = (await (await get(`/api/users?q=${t}&limit=1&page=${page}`)).response.json()) as Page;
+    for (let n = 1; n <= 4; n++) {
+      const p = await (await get(`/api/users?q=${t}&limit=1&page=${n}`)).response.json<Page>();
       seen.push(...p.items.map(label));
     }
     expect(seen).toEqual(expected);
@@ -147,7 +202,7 @@ describe("GET /api/users", () => {
     await createUser({ email: `${long}@luma.test` });
     const { response } = await get(`/api/users?q=${long}`);
     expect(response.status).toBe(200);
-    expect(((await response.json()) as Page).items.map((u) => u.email)).toEqual([`${long}@luma.test`]);
+    expect((await response.json<Page>()).items.map((u) => u.email)).toEqual([`${long}@luma.test`]);
     expect((await get(`/api/users?q=${"z".repeat(100)}`)).response.status).toBe(200);
   });
 
@@ -155,9 +210,9 @@ describe("GET /api/users", () => {
     const t = tag();
     await createUser({ email: `${t}_a@luma.test` });
     await createUser({ email: `${t}xa@luma.test` });
-    const page = (await (await get(`/api/users?q=${t}_`)).response.json()) as Page;
+    const page = await (await get(`/api/users?q=${t}_`)).response.json<Page>();
     expect(page.items.map((u) => u.email)).toEqual([`${t}_a@luma.test`]);
-    const pct = (await (await get(`/api/users?q=${t}%25`)).response.json()) as Page;
+    const pct = await (await get(`/api/users?q=${t}%25`)).response.json<Page>();
     expect(pct.items).toEqual([]);
   });
 
@@ -188,7 +243,7 @@ describe("GET /api/users/:id", () => {
     // guard 1 + batch of 5 statements.
     expect(d1Queries).toBe(6);
     expect(openrouter.calls).toEqual(["GET hash-detail"]);
-    const body = (await response.json()) as Record<string, unknown>;
+    const body = await response.json<Record<string, unknown>>();
     expect(body).toMatchObject({
       id: user.id,
       ai: { limit: 0.02, usageDaily: 0.004, expiresAt: "2026-12-14T00:00:00.000Z" },
@@ -207,7 +262,9 @@ describe("GET /api/users/:id", () => {
   it("returns ai: null without any subrequest when the user has no key", async () => {
     const user = await createUser();
     const openrouter = fakeOpenRouter();
-    const body = (await (await get(`/api/users/${user.id}`)).response.json()) as Record<string, unknown>;
+    const body = await (
+      await get(`/api/users/${user.id}`)
+    ).response.json<Record<string, unknown>>();
     expect(body.ai).toBeNull();
     expect(body.invite).toBeNull();
     expect(openrouter.calls).toEqual([]);
@@ -221,7 +278,10 @@ describe("GET /api/users/:id", () => {
 
     const { response } = await get(`/api/users/${user.id}`);
     expect(response.status).toBe(200);
-    expect(((await response.json()) as { ai: unknown }).ai).toMatchObject({ usageDaily: null, limit: 0.02 });
+    expect((await response.json<{ ai: unknown }>()).ai).toMatchObject({
+      usageDaily: null,
+      limit: 0.02,
+    });
     expect(err).toHaveBeenCalled();
     err.mockRestore();
   });
@@ -250,8 +310,14 @@ describe("POST /api/users/:id/ban", () => {
     expect(openrouter.live.has("hash-ban")).toBe(false);
     expect((await userRow(user.id)).banned).toBe(true);
     expect(await keyRow(user.id)).toBeNull();
-    const audit = log.mock.calls.map((c) => JSON.parse(c[0] as string)).find((l) => l.message === "audit");
-    expect(audit).toMatchObject({ action: "user.ban", targetId: user.id, admin: "admin@luma.test" });
+    const audit = log.mock.calls
+      .map((c) => JSON.parse(c[0] as string))
+      .find((l) => l.message === "audit");
+    expect(audit).toMatchObject({
+      action: "user.ban",
+      targetId: user.id,
+      admin: "admin@luma.test",
+    });
     log.mockRestore();
   });
 
@@ -272,8 +338,14 @@ describe("POST /api/users/:id/ban", () => {
     await giveUserData(user.id, { keyHash: "hash-dua" });
     const openrouter = fakeOpenRouter({ keys: ["hash-dua"] });
 
-    expect(await (await post(`/api/users/${user.id}/ban`)).response.json()).toEqual({ banned: true, keyRevoked: true });
-    expect(await (await post(`/api/users/${user.id}/ban`)).response.json()).toEqual({ banned: true, keyRevoked: false });
+    expect(await (await post(`/api/users/${user.id}/ban`)).response.json()).toEqual({
+      banned: true,
+      keyRevoked: true,
+    });
+    expect(await (await post(`/api/users/${user.id}/ban`)).response.json()).toEqual({
+      banned: true,
+      keyRevoked: false,
+    });
     expect(openrouter.calls).toEqual(["DELETE hash-dua"]);
 
     const noKey = await createUser();
@@ -313,7 +385,9 @@ describe("POST /api/users/:id/unban", () => {
     expect(d1Queries).toBe(2);
     // What the backend `issueKey` reads before creating a key (banned → 403 AI_BANNED).
     expect(await findUserKey(db(), user.id)).toEqual({ banned: false, key: null });
-    expect(log.mock.calls.map((c) => JSON.parse(c[0] as string)).find((l) => l.message === "audit")).toMatchObject({
+    expect(
+      log.mock.calls.map((c) => JSON.parse(c[0] as string)).find((l) => l.message === "audit"),
+    ).toMatchObject({
       action: "user.unban",
       targetId: user.id,
     });
@@ -330,7 +404,9 @@ describe("admin mutation rate limit", () => {
   it("answers 429 per admin before touching the user", async () => {
     const user = await createUser();
     const keys: string[] = [];
-    const deny = { limit: async ({ key }: { key: string }) => (keys.push(key), { success: false }) } as unknown as RateLimit;
+    const deny = {
+      limit: async ({ key }: { key: string }) => (keys.push(key), { success: false }),
+    };
     const { response } = await post(`/api/users/${user.id}/ban`, { ADMIN_RATE_LIMITER: deny });
     expect(response.status).toBe(429);
     expect(response.headers.get("Retry-After")).toBe("60");
@@ -339,8 +415,12 @@ describe("admin mutation rate limit", () => {
   });
 
   it("does not limit reads", async () => {
-    const deny = { limit: async () => ({ success: false }) } as unknown as RateLimit;
-    const { response } = await call("/api/users", { headers: { cookie: await adminCookie() } }, { ADMIN_RATE_LIMITER: deny });
+    const deny = { limit: async () => ({ success: false }) };
+    const { response } = await call(
+      "/api/users",
+      { headers: { cookie: await adminCookie() } },
+      { ADMIN_RATE_LIMITER: deny },
+    );
     expect(response.status).toBe(200);
   });
 });
@@ -348,7 +428,11 @@ describe("admin mutation rate limit", () => {
 describe("GET /api/users/:id providers", () => {
   it("lists the sign-in providers of the account", async () => {
     const user = await createGoogleUser(`prov-${crypto.randomUUID().slice(0, 6)}@luma.test`);
-    const body = (await (await get(`/api/users/${user.id}`)).response.json()) as { providers: string[] };
+    const body = await (
+      await get(`/api/users/${user.id}`)
+    ).response.json<{
+      providers: string[];
+    }>();
     expect(body.providers).toEqual(["google"]);
   });
 });

@@ -72,7 +72,7 @@ void main() {
   });
 
   test('an unindexed book shows progress, then opens', () {
-    index = FakeSearchIndex(indexed: false, chapters: 4, hold: true);
+    index = FakeSearchIndex(indexed: false, hold: true);
     run((async, c, state, vm) {
       expect(state().phase, BookSearchPhase.preparing);
       expect((state().doneChapters, state().totalChapters), (2, 4));

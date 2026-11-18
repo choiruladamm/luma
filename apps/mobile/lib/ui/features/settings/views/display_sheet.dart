@@ -354,10 +354,7 @@ class _Screen extends StatelessWidget {
             ],
           ),
           const Spacer(),
-          Align(
-            alignment: Alignment.center,
-            child: SizedBox(width: 37, child: box(8)),
-          ),
+          Align(child: SizedBox(width: 37, child: box(8))),
         ],
       ),
     );

@@ -20,7 +20,9 @@ describe("normalizeAuthError", () => {
   });
 
   it("wraps Better Auth {code, message} and keeps the status", async () => {
-    const res = await normalizeAuthError(json(422, { code: "USER_ALREADY_EXISTS", message: "dup" }));
+    const res = await normalizeAuthError(
+      json(422, { code: "USER_ALREADY_EXISTS", message: "dup" }),
+    );
     expect(res.status).toBe(422);
     expect(await res.json()).toEqual({ error: { code: "USER_ALREADY_EXISTS", message: "dup" } });
   });

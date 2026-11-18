@@ -1,5 +1,5 @@
 ---
-paths: ["apps/**/*.dart", "apps/**/*.ts", "apps/**/*.tsx", "apps/**/*.jsonc", "scripts/**"]
+paths: ["apps/**/*.dart", "apps/**/*.ts", "apps/**/*.tsx", "apps/**/*.jsonc", "apps/**/*.sh", "scripts/**"]
 ---
 
 # Code comments
@@ -43,6 +43,6 @@ Comments are English, written as complete sentences. Default to no comment: add 
 
 ## Frozen files
 
-Files hashed by the chat eval guards (`sourceHashes` in `apps/mobile/test/fixtures/book_chat_{heldout_protocol_v1,validation2_protocol,validation3_protocol}.json`) change only together with a re-freeze: see `docs/llm-evals.md`, Re-freeze the eval guards.
+Files hashed by the chat eval guards (listed under `frozen` in `hygiene.toml`) change only together with a re-freeze: see `docs/llm-evals.md`, Re-freeze the eval guards.
 
-When you edit a file, fix or delete the comments your change made stale. `make comments-check` (also run by a hook on every edit) flags non-English comments, history phrasing, and stray issue numbers.
+When you edit a file, fix or delete the comments your change made stale. `scripts/hygiene_check.py` (a Claude hook on every edit, the pre-commit hook, and CI via `scripts/hygiene`) flags non-English comments, history phrasing, and stray issue numbers.

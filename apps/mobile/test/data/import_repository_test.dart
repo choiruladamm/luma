@@ -39,7 +39,8 @@ void main() {
       ...d.listSync().map((f) => f.uri.pathSegments.last),
   ];
 
-  Future<int> count(TableInfo t) async => (await db.select(t).get()).length;
+  Future<int> count(TableInfo<Table, Object?> t) async =>
+      (await db.select(t).get()).length;
 
   test('imports book, chapters, paragraphs and files', () async {
     final result = await repo.importEpub(

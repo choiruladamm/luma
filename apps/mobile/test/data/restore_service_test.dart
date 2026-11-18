@@ -683,12 +683,12 @@ void main() {
             raw.execute(sql);
           }
           raw.execute(
-            "INSERT INTO books (source_type, title, hash, parser_version, "
-            "total_chars, reading_seconds) "
+            'INSERT INTO books (source_type, title, hash, parser_version, '
+            'total_chars, reading_seconds) '
             "VALUES ('epub', 'Meditations', 'm', 1, 100, 600)",
           );
           raw.execute(
-            "INSERT INTO chapters (book_id, sort_order, title, char_offset) "
+            'INSERT INTO chapters (book_id, sort_order, title, char_offset) '
             "VALUES (1, 0, 'I', 0)",
           );
           raw.execute(
@@ -862,8 +862,8 @@ void main() {
           raw.execute(sql);
         }
         raw.execute(
-          "INSERT INTO books (source_type, title, cover_name, hash, "
-          "parser_version, total_chars) "
+          'INSERT INTO books (source_type, title, cover_name, hash, '
+          'parser_version, total_chars) '
           "VALUES ('epub', 'Meditations', 'c.png', 'm', 1, 100)",
         );
       },

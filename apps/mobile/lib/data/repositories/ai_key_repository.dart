@@ -1,4 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:luma/data/services/openrouter_service.dart'
+    show OpenRouterService;
 
 import '../../domain/models/ai_reply.dart';
 import '../services/ai_key_service.dart';

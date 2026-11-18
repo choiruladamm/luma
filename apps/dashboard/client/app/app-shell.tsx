@@ -19,7 +19,8 @@ import { useUiStore } from "../stores/ui-store";
 // "default", so a position saved on an earlier visit in this tab would be restored there. A key
 // per load makes a fresh load start at the top; in-app back/forward still restores.
 const PAGE_LOAD = Date.now();
-const scrollKey = (location: { key: string }) => (location.key === "default" ? `load-${PAGE_LOAD}` : location.key);
+const scrollKey = (location: { key: string }) =>
+  location.key === "default" ? `load-${PAGE_LOAD}` : location.key;
 
 /**
  * Header for every admin screen (board 01–11): wordmark, nav pills, global email search, DEV
@@ -78,13 +79,19 @@ export function AppShell() {
   const [headerBottom, setHeaderBottom] = useState(76);
   useLayoutEffect(() => {
     // Scrolled past the header → menus sit at the top of the viewport.
-    if (openMenu && headerRef.current) setHeaderBottom(Math.max(0, Math.round(headerRef.current.getBoundingClientRect().bottom)));
+    if (openMenu && headerRef.current)
+      setHeaderBottom(Math.max(0, Math.round(headerRef.current.getBoundingClientRect().bottom)));
   }, [openMenu]);
 
   const items: NavItem[] = [
     { to: "/", label: t.shell.overview, icon: "grid" },
     { to: "/users", label: t.shell.users, icon: "users", count: overview.data?.users.total },
-    { to: "/invites", label: t.shell.invites, icon: "ticket", count: overview.data?.invites.unused },
+    {
+      to: "/invites",
+      label: t.shell.invites,
+      icon: "ticket",
+      count: overview.data?.invites.unused,
+    },
   ];
 
   const user = session.data?.user;
@@ -104,20 +111,36 @@ export function AppShell() {
         signingOut={signOut.isPending}
       />
     );
+  const shellVars: CSSProperties & Record<`--${string}`, string> = {
+    "--header-bottom": `${headerBottom}px`,
+    "--menu-top": `${headerBottom + 8}px`,
+  };
   return (
-    <div className="min-h-dvh bg-page" style={{ "--header-bottom": `${headerBottom}px`, "--menu-top": `${headerBottom + 8}px` } as CSSProperties}>
+    <div className="min-h-dvh bg-page" style={shellVars}>
       {/* Phone: room at the bottom for the floating tab bar. */}
       <div className="mx-auto flex max-w-[1280px] flex-col gap-7 px-4 pt-5 pb-[calc(108px+env(safe-area-inset-bottom))] md:px-8 md:pb-12">
         {/* Phone search mode: the header row becomes the search field + close, so nothing floats over it. */}
         {searching && (
-          <header ref={headerRef} role="search" className="sticky top-3 z-20 flex min-h-[52px] items-center gap-2 lg:hidden">
+          <header
+            ref={headerRef}
+            role="search"
+            className="sticky top-3 z-20 flex min-h-[52px] items-center gap-2 lg:hidden"
+          >
             <QuickSearch autoFocus onDone={() => setOpenMenu(null)} className="min-w-0 flex-1" />
-            <IconButton icon="x" label={t.shell.closeSearch} variant="sheet" onClick={() => setOpenMenu(null)} />
+            <IconButton
+              icon="x"
+              label={t.shell.closeSearch}
+              variant="sheet"
+              onClick={() => setOpenMenu(null)}
+            />
           </header>
         )}
         <header
           ref={searching ? undefined : headerRef}
-          className={cn("relative z-20 flex min-h-[52px] flex-nowrap items-center gap-2 md:gap-4", searching && "max-lg:hidden")}
+          className={cn(
+            "relative z-20 flex min-h-[52px] flex-nowrap items-center gap-2 md:gap-4",
+            searching && "max-lg:hidden",
+          )}
         >
           <Wordmark dev={isDevHost(window.location.hostname)} />
           <div className="hidden md:block">
@@ -130,10 +153,20 @@ export function AppShell() {
             </div>
           )}
           {searchable && (
-            <IconButton icon="search" label={t.shell.openSearch} variant="sheet" onClick={() => setOpenMenu("search")} className="lg:hidden" />
+            <IconButton
+              icon="search"
+              label={t.shell.openSearch}
+              variant="sheet"
+              onClick={() => setOpenMenu("search")}
+              className="lg:hidden"
+            />
           )}
           {isDevHost(window.location.hostname) && (
-            <Chip tone="pink" icon="code" className="h-7 px-2.5 text-[11.5px] font-semibold tracking-[0.06em] max-md:hidden">
+            <Chip
+              tone="pink"
+              icon="code"
+              className="h-7 px-2.5 text-[11.5px] font-semibold tracking-[0.06em] max-md:hidden"
+            >
               DEV
             </Chip>
           )}
@@ -141,7 +174,13 @@ export function AppShell() {
         </header>
         {/* Whole page dimmed (also behind a sticky field when scrolled); the field and its results sit above. */}
         {searching && (
-          <button type="button" tabIndex={-1} aria-label={t.shell.closeSearch} onClick={() => setOpenMenu(null)} className="fixed inset-0 z-10 cursor-default bg-scrim lg:hidden" />
+          <button
+            type="button"
+            tabIndex={-1}
+            aria-label={t.shell.closeSearch}
+            onClick={() => setOpenMenu(null)}
+            className="fixed inset-0 z-10 cursor-default bg-scrim lg:hidden"
+          />
         )}
         <main className="flex flex-col gap-7">
           <Outlet />
@@ -153,7 +192,9 @@ export function AppShell() {
         aria-hidden={!floating || undefined}
         className={cn(
           "fixed inset-x-0 top-3 z-30 flex justify-center px-4 transition-[transform,opacity] duration-300 ease-out motion-reduce:transition-none max-md:hidden",
-          floating ? "translate-y-0 opacity-100" : "pointer-events-none -translate-y-[calc(100%+12px)] opacity-0",
+          floating
+            ? "translate-y-0 opacity-100"
+            : "pointer-events-none -translate-y-[calc(100%+12px)] opacity-0",
         )}
       >
         <div className="flex w-full max-w-[880px] items-center gap-3 rounded-full bg-sheet/85 py-1 pr-1 pl-4 shadow-[var(--shadow-sheet),inset_0_0_0_1px_var(--c-track)] backdrop-blur-md">

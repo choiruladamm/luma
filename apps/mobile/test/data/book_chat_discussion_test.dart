@@ -58,7 +58,7 @@ void main() {
             'history',
             'sources',
           });
-          final poisoned = Map.from(row)
+          final poisoned = Map<Object?, Object?>.from(row)
             ..['gold'] = {'secret': 'GOLD_SENTINEL'}
             ..['category'] = 'CATEGORY_SENTINEL';
           expect(
@@ -523,7 +523,11 @@ void main() {
             RequestOptions(
               path: path,
               method: 'POST',
-              data: {'model': 'model', 'messages': [], 'max_tokens': 800},
+              data: {
+                'model': 'model',
+                'messages': <Object?>[],
+                'max_tokens': 800,
+              },
             ),
             null,
             null,

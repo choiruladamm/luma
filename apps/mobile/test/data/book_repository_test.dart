@@ -64,9 +64,9 @@ void main() {
   });
 
   test('shelf: last opened first, then never-opened newest first', () async {
-    await add('Old unopened', created: DateTime(2026, 1, 1));
-    await add('New unopened', created: DateTime(2026, 2, 1));
-    await add('Opened long ago', opened: DateTime(2026, 3, 1));
+    await add('Old unopened', created: DateTime(2026));
+    await add('New unopened', created: DateTime(2026, 2));
+    await add('Opened long ago', opened: DateTime(2026, 3));
     await add('Opened today', opened: DateTime(2026, 10, 7));
 
     final shelf = await BookRepository(db).watchShelf().first;

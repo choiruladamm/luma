@@ -1,2 +1,3 @@
 /** Join class names, skipping falsy ones. */
-export const cn = (...parts: (string | false | null | undefined)[]) => parts.filter(Boolean).join(" ");
+export const cn = (...parts: (string | false | null | undefined)[]) =>
+  parts.filter(Boolean).join(" ");

@@ -30,8 +30,11 @@ export type OpenRouterAdmin = {
   deleteKey(hash: string): Promise<void>;
 };
 
-export function openRouterAdmin(managementKey: string, fetcher: typeof fetch = fetch): OpenRouterAdmin {
-  const call = async (method: string, path: string, body?: unknown) => {
+export function openRouterAdmin(
+  managementKey: string,
+  fetcher: typeof fetch = fetch,
+): OpenRouterAdmin {
+  const call = async <T>(method: string, path: string, body?: unknown) => {
     const res = await fetcher(`${OPENROUTER_API}${path}`, {
       method,
       headers: {
@@ -40,13 +43,14 @@ export function openRouterAdmin(managementKey: string, fetcher: typeof fetch = f
       },
       body: body === undefined ? undefined : JSON.stringify(body),
     });
-    if (!res.ok) throw new OpenRouterError(res.status, `OpenRouter ${method} ${path}: ${res.status}`);
-    return (await res.json()) as Record<string, unknown>;
+    if (!res.ok)
+      throw new OpenRouterError(res.status, `OpenRouter ${method} ${path}: ${res.status}`);
+    return await res.json<T>();
   };
 
   return {
     async createKey({ name, limitUsd, expiresAt, workspaceId }) {
-      const res = await call("POST", "/keys", {
+      const res = await call<{ data: { hash: string }; key: string }>("POST", "/keys", {
         name,
         limit: limitUsd,
         limit_reset: "daily",
@@ -54,19 +58,20 @@ export function openRouterAdmin(managementKey: string, fetcher: typeof fetch = f
         expires_at: expiresAt.toISOString(),
         workspace_id: workspaceId,
       });
-      const data = res.data as { hash: string };
-      return { key: res.key as string, hash: data.hash };
+      return { key: res.key, hash: res.data.hash };
     },
     async updateLimit(hash, limitUsd) {
       await call("PATCH", `/keys/${hash}`, { limit: limitUsd });
     },
     async getUsage(hash) {
-      const data = (await call("GET", `/keys/${hash}`)).data as {
-        limit: number | null;
-        limit_remaining: number | null;
-        usage_daily: number;
+      const { data } = await call<{
+        data: { limit: number | null; limit_remaining: number | null; usage_daily: number };
+      }>("GET", `/keys/${hash}`);
+      return {
+        limit: data.limit,
+        limitRemaining: data.limit_remaining,
+        usageDaily: data.usage_daily,
       };
-      return { limit: data.limit, limitRemaining: data.limit_remaining, usageDaily: data.usage_daily };
     },
     async keyExists(hash) {
       try {

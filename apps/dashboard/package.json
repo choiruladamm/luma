@@ -3,6 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "lint": "oxlint --type-aware --deny-warnings && prettier --check .",
+    "format": "prettier --write . && oxlint --type-aware --fix",
     "dev": "CLOUDFLARE_ENV=dev vite dev",
     "build": "vite build",
     "types": "wrangler types --env dev --strict-vars false",
@@ -44,6 +46,9 @@
     "@vitejs/plugin-react": "^6.3.0",
     "happy-dom": "^21.0.4",
     "msw": "^3.0.5",
+    "oxlint": "^1.94.0",
+    "oxlint-tsgolint": "^7.0.2007",
+    "prettier": "^3.10.1",
     "tailwindcss": "^4.3.5",
     "typescript": "^7.0.2",
     "vite": "^8.3.8",

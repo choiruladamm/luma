@@ -127,7 +127,7 @@ void main() {
   test(
     'embedding trust boundary rejects unknown model/dimensions without retry',
     () async {
-      adapter.replies.add(json({'model': 'other', 'data': []}));
+      adapter.replies.add(json({'model': 'other', 'data': <Object?>[]}));
       await expectLater(
         service.embeddings(
           apiKey: 'key',

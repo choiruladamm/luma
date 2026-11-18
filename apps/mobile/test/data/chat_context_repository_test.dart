@@ -168,7 +168,7 @@ class ChatAdapter implements HttpClientAdapter {
         'selected': selectionsByRound != null
             ? selectionsByRound![selections - 1]
             : emptySelection
-            ? []
+            ? <Object?>[]
             : [for (var i = 1; i <= (offered < 2 ? offered : 2); i++) i],
         'missing_queries': missingQueries,
       });
@@ -190,7 +190,7 @@ class ChatAdapter implements HttpClientAdapter {
                 ? 'Penjaganya 🌿.'
                 : 'Bukti buku belum ketemu. Bagian mana yang lo maksud?',
             'kind': hasSources ? 'book' : 'conversation',
-            'source_ids': hasSources ? [answerId] : [],
+            'source_ids': hasSources ? [answerId] : <Object?>[],
           },
         ],
       });
@@ -599,7 +599,7 @@ void main() {
       'examinedWindows': 1,
       'totalWindows': 1,
       'notesAreGenerated': true,
-      'notes': [],
+      'notes': <Object?>[],
     });
     final work = ChatExploration.parse((await latest()).exploration!);
     expect(work.strategy, ChatSearchStrategy.chapters);
@@ -949,7 +949,7 @@ void main() {
       context = limitedContext();
       await context.prepare(turn, answerNow: () => groups >= 1);
       final notesRepo = ChatNotesRepository(db);
-      final cached = await (db.select(db.chatChapterNotes)).get();
+      final cached = await db.select(db.chatChapterNotes).get();
       expect(
         cached.map((n) => n.chapterId),
         contains(other.id),
@@ -1613,7 +1613,7 @@ void main() {
                 (r.data as Map)['model'] == ChatEmbeddingModel.openaiLarge.id,
           )
           .toList();
-      expect(((large.first.data as Map)['input'] as List), contains(text));
+      expect((large.first.data as Map)['input'] as List, contains(text));
       expect(
         ((large.last.data as Map)['input'] as List).every(
           (s) => !(s as String).startsWith(chatQueryPrefix),

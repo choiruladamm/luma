@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:luma/data/repositories/book_search_index.dart'
+    show BookSearchIndex;
 
 import '../../domain/book_search.dart';
 import '../../domain/models/book_search.dart';

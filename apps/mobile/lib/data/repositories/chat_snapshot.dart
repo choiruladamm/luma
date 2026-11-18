@@ -49,14 +49,14 @@ class ChatSnapshot {
     return value;
   }
 
-  static Map map(Object? value) {
+  static Map<Object?, Object?> map(Object? value) {
     if (value is! Map) {
       throw const FormatException('Objek snapshot tidak valid');
     }
     return value;
   }
 
-  static List list(Object? value) {
+  static List<Object?> list(Object? value) {
     if (value is! List) {
       throw const FormatException('Daftar snapshot tidak valid');
     }

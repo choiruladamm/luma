@@ -83,7 +83,7 @@ class SyncKind {
   final String name;
   final String table;
 
-  /// Builds the natural-key expression for row [r] (`NEW`, `OLD`, or an alias).
+  /// Builds the natural-key expression for row `r` (`NEW`, `OLD`, or an alias).
   final String Function(String r) key;
 
   /// The `json_object(...)` expression for the record data of the row aliased `r`.
@@ -94,7 +94,7 @@ class SyncKind {
   /// another device.
   final String backfillAt;
 
-  /// Builds the condition for row [r] to be synced.
+  /// Builds the condition for row `r` to be synced.
   final String Function(String r)? when;
 
   /// Whether a delete is sent as a tombstone.

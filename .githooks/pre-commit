@@ -1,0 +1,3 @@
+#!/usr/bin/env sh
+# Runs the hygiene checks on staged files. Installed with: make setup
+exec scripts/hygiene --staged

@@ -17,7 +17,7 @@ class FakeQueue extends DownloadQueue {
 class FakeNotifications extends Fake implements NotificationService {
   final shown = <(String, String?)>[];
   String? channel;
-  var permissionAsked = 0;
+  int permissionAsked = 0;
   void Function(String payload)? onTap;
 
   @override

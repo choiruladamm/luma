@@ -29,7 +29,9 @@ const setting = (value: string, updatedAt: string) => ({
 });
 
 const pull = (token: string, query: string) =>
-  new Request(`https://luma.test/v1/sync/pull${query}`, { headers: { authorization: `Bearer ${token}` } });
+  new Request(`https://luma.test/v1/sync/pull${query}`, {
+    headers: { authorization: `Bearer ${token}` },
+  });
 const path = (f: { request: { path: string } }) => f.request.path.replace("/v1/sync/pull", "");
 
 describe("GET /v1/sync/pull", () => {
@@ -44,7 +46,10 @@ describe("GET /v1/sync/pull", () => {
     const { token } = await signUp();
     await exports.default.fetch(push(token, pushFixture.request.body));
     await exports.default.fetch(push(token, tombstone.request.body));
-    await expectContract(await exports.default.fetch(pull(token, path(pullTombstone))), pullTombstone);
+    await expectContract(
+      await exports.default.fetch(pull(token, path(pullTombstone))),
+      pullTombstone,
+    );
   });
 
   it("hands newer-schema records through as-is for the client to hold (contract)", async () => {
@@ -53,7 +58,15 @@ describe("GET /v1/sync/pull", () => {
     await exports.default.fetch(
       push(token, {
         schemaVersion: 19,
-        records: [{ kind: rec.kind, key: rec.key, updatedAt: rec.updatedAt, deleted: false, data: rec.data }],
+        records: [
+          {
+            kind: rec.kind,
+            key: rec.key,
+            updatedAt: rec.updatedAt,
+            deleted: false,
+            data: rec.data,
+          },
+        ],
       }),
     );
     await expectContract(await exports.default.fetch(pull(token, path(pullNewer))), pullNewer);
@@ -62,17 +75,21 @@ describe("GET /v1/sync/pull", () => {
   it("pages with limit and walks the cursor to the end", async () => {
     const { token } = await signUp();
     await exports.default.fetch(push(token, pushFixture.request.body));
-    const first = (await (await exports.default.fetch(pull(token, "?since=0&limit=2"))).json()) as {
+    const first = await (
+      await exports.default.fetch(pull(token, "?since=0&limit=2"))
+    ).json<{
       records: { seq: number }[];
       nextSeq: number;
       more: boolean;
-    };
+    }>();
     expect(first.records.map((r) => r.seq)).toEqual([1, 2]);
     expect(first).toMatchObject({ nextSeq: 2, more: true });
-    const second = (await (await exports.default.fetch(pull(token, "?since=2&limit=2"))).json()) as {
+    const second = await (
+      await exports.default.fetch(pull(token, "?since=2&limit=2"))
+    ).json<{
       records: { seq: number }[];
       more: boolean;
-    };
+    }>();
     expect(second.records.map((r) => r.seq)).toEqual([3]);
     expect(second.more).toBe(false);
   });
@@ -96,21 +113,29 @@ describe("GET /v1/sync/pull", () => {
   });
 
   it("needs a session, honours the kill switch and the rate limit (contract)", async () => {
-    await expectContract(await exports.default.fetch("https://luma.test/v1/sync/pull?since=0"), unauthorized);
+    await expectContract(
+      await exports.default.fetch("https://luma.test/v1/sync/pull?since=0"),
+      unauthorized,
+    );
     const { token } = await signUp();
     const off = await callWithBudget(pull(token, "?since=0"), { SYNC_ENABLED: "false" });
     await expectContract(off.response, serviceDisabled);
     expect(off.d1Queries).toBe(0);
     const deny = { limit: async () => ({ success: false }) } as unknown as RateLimit;
-    expect((await callWithBudget(pull(token, "?since=0"), { RATE_LIMITER: deny })).response.status).toBe(429);
+    expect(
+      (await callWithBudget(pull(token, "?since=0"), { RATE_LIMITER: deny })).response.status,
+    ).toBe(429);
   });
 
   it("stays inside the budget: one indexed query per page", async () => {
     const { token } = await signUp();
-    const records = Array.from({ length: 500 }, (_, i) => ({ ...setting(`m${i}`, "2026-11-13T10:00:00.000Z"), key: `k${i}` }));
+    const records = Array.from({ length: 500 }, (_, i) => ({
+      ...setting(`m${i}`, "2026-11-13T10:00:00.000Z"),
+      key: `k${i}`,
+    }));
     await exports.default.fetch(push(token, { schemaVersion: 18, records }));
     const { response, d1Queries, subrequests } = await callWithBudget(pull(token, "?since=0"));
-    const body = (await response.json()) as { records: unknown[]; more: boolean };
+    const body = await response.json<{ records: unknown[]; more: boolean }>();
     expect(body.records).toHaveLength(500);
     expect(body.more).toBe(false);
     expect(subrequests).toBe(0);

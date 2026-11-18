@@ -1,4 +1,10 @@
-import { type ColumnDef, createColumnHelper, type RowData, tableFeatures, useTable } from "@tanstack/react-table";
+import {
+  type ColumnDef,
+  createColumnHelper,
+  type RowData,
+  tableFeatures,
+  useTable,
+} from "@tanstack/react-table";
 import type { ReactNode } from "react";
 import { Link, useNavigate } from "react-router";
 import { useMediaQuery } from "../../hooks/use-media-query";
@@ -23,7 +29,33 @@ export type TableSort = { id: string; dir: "asc" | "desc" };
  * `sort` marks the sorted column (ink + arrow + aria-sort); columns in `sortable` get a header
  * button that calls `onSort(id)` (the page decides the direction: same column flips it).
  */
-export function DataTable<T extends RowData>({ columns, data, label, rowHref, numeric = [], sort, sortable = [], onSort, renderCard, footer, minWidth = 1040 }: { columns: ColumnDef<Features, T, any>[]; data: T[]; label: string; rowHref?: (row: T) => string; numeric?: string[]; sort?: TableSort | null; sortable?: string[]; onSort?: (id: string) => void; renderCard?: (row: T) => ReactNode; footer?: ReactNode; minWidth?: number }) {
+const NO_IDS: string[] = [];
+
+export function DataTable<T extends RowData>({
+  columns,
+  data,
+  label,
+  rowHref,
+  numeric = NO_IDS,
+  sort,
+  sortable = NO_IDS,
+  onSort,
+  renderCard,
+  footer,
+  minWidth = 1040,
+}: {
+  columns: ColumnDef<Features, T, any>[];
+  data: T[];
+  label: string;
+  rowHref?: (row: T) => string;
+  numeric?: string[];
+  sort?: TableSort | null;
+  sortable?: string[];
+  onSort?: (id: string) => void;
+  renderCard?: (row: T) => ReactNode;
+  footer?: ReactNode;
+  minWidth?: number;
+}) {
   const table = useTable({ features, columns, data });
   const navigate = useNavigate();
   const narrow = useMediaQuery("(max-width: 767px)");
@@ -36,11 +68,16 @@ export function DataTable<T extends RowData>({ columns, data, label, rowHref, nu
           {data.map((row, i) => (
             <li key={i}>
               {rowHref ? (
-                <Link to={rowHref(row)} className="block rounded-row bg-canvas p-4 text-ink no-underline shadow-[inset_0_0_0_1px_var(--c-track)] hover:bg-muted">
+                <Link
+                  to={rowHref(row)}
+                  className="block rounded-row bg-canvas p-4 text-ink no-underline shadow-[inset_0_0_0_1px_var(--c-track)] hover:bg-muted"
+                >
                   {renderCard(row)}
                 </Link>
               ) : (
-                <div className="rounded-row bg-canvas p-4 shadow-[inset_0_0_0_1px_var(--c-track)]">{renderCard(row)}</div>
+                <div className="rounded-row bg-canvas p-4 shadow-[inset_0_0_0_1px_var(--c-track)]">
+                  {renderCard(row)}
+                </div>
               )}
             </li>
           ))}
@@ -60,18 +97,44 @@ export function DataTable<T extends RowData>({ columns, data, label, rowHref, nu
                 {group.headers.map((header, i) => {
                   const id = header.column.id;
                   const active = sort?.id === id;
-                  const arrow = active && <Icon name={sort.dir === "asc" ? "up" : "down"} size={14} className="inline align-[-2px]" />;
+                  const arrow = active && (
+                    <Icon
+                      name={sort.dir === "asc" ? "up" : "down"}
+                      size={14}
+                      className="inline align-[-2px]"
+                    />
+                  );
                   return (
                     <th
                       key={header.id}
                       scope="col"
-                      aria-sort={active ? (sort.dir === "asc" ? "ascending" : "descending") : undefined}
-                      className={cn("border-b border-track py-3 text-caption font-medium whitespace-nowrap", active ? "text-ink" : "text-ink2", numeric.includes(id) ? "text-right" : "text-left", i === 0 ? "pr-3 pl-6" : "px-3")}
+                      aria-sort={
+                        active ? (sort.dir === "asc" ? "ascending" : "descending") : undefined
+                      }
+                      className={cn(
+                        "border-b border-track py-3 text-caption font-medium whitespace-nowrap",
+                        active ? "text-ink" : "text-ink2",
+                        numeric.includes(id) ? "text-right" : "text-left",
+                        i === 0 ? "pr-3 pl-6" : "px-3",
+                      )}
                     >
                       {sortable.includes(id) && onSort ? (
-                        <button type="button" onClick={() => onSort(id)} className={cn("group/sort -mx-2 inline-flex items-center gap-1 rounded-full px-2 py-1 font-medium hover:bg-muted", numeric.includes(id) && "flex-row-reverse")}>
+                        <button
+                          type="button"
+                          onClick={() => onSort(id)}
+                          className={cn(
+                            "group/sort -mx-2 inline-flex items-center gap-1 rounded-full px-2 py-1 font-medium hover:bg-muted",
+                            numeric.includes(id) && "flex-row-reverse",
+                          )}
+                        >
                           <table.FlexRender header={header} />
-                          {arrow || <Icon name="sort" size={14} className="opacity-0 group-hover/sort:opacity-60" />}
+                          {arrow || (
+                            <Icon
+                              name="sort"
+                              size={14}
+                              className="opacity-0 group-hover/sort:opacity-60"
+                            />
+                          )}
                         </button>
                       ) : (
                         <>
@@ -94,11 +157,26 @@ export function DataTable<T extends RowData>({ columns, data, label, rowHref, nu
             {table.getRowModel().rows.map((row) => {
               const href = rowHref?.(row.original);
               return (
-                <tr key={row.id} onClick={href ? () => void navigate(href) : undefined} className={cn("group", href && "cursor-pointer hover:bg-canvas")}>
+                <tr
+                  key={row.id}
+                  onClick={href ? () => void navigate(href) : undefined}
+                  className={cn("group", href && "cursor-pointer hover:bg-canvas")}
+                >
                   {row.getAllCells().map((cell, i) => (
-                    <td key={cell.id} className={cn("h-[60px] border-b border-track py-2.5 text-body", numeric.includes(cell.column.id) ? "text-right tabular-nums" : "text-left", i === 0 ? "pr-3 pl-6" : "px-3")}>
+                    <td
+                      key={cell.id}
+                      className={cn(
+                        "h-[60px] border-b border-track py-2.5 text-body",
+                        numeric.includes(cell.column.id) ? "text-right tabular-nums" : "text-left",
+                        i === 0 ? "pr-3 pl-6" : "px-3",
+                      )}
+                    >
                       {i === 0 && href ? (
-                        <Link to={href} className="text-ink no-underline group-hover:[&_.lead]:underline" onClick={(e) => e.stopPropagation()}>
+                        <Link
+                          to={href}
+                          className="text-ink no-underline group-hover:[&_.lead]:underline"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           <table.FlexRender cell={cell} />
                         </Link>
                       ) : (
@@ -122,14 +200,34 @@ export function DataTable<T extends RowData>({ columns, data, label, rowHref, nu
   );
 }
 
-export type SkeletonColumn = { header: string; align?: "left" | "right"; sorted?: boolean; srOnly?: boolean; cell: (row: number) => ReactNode };
+export type SkeletonColumn = {
+  header: string;
+  align?: "left" | "right";
+  sorted?: boolean;
+  srOnly?: boolean;
+  cell: (row: number) => ReactNode;
+};
 
 /**
  * Loading state of a DataTable (design component 2, State; board 13): the real frame stays (column
  * headers, sort mark, open column) and only the values are sand blocks. Below 768px it renders
  * `card` rows like DataTable does, so the phone doesn't get a 1040px skeleton.
  */
-export function TableSkeleton({ label, columns, card, rows = 8, rowLink, minWidth = 1040 }: { label: string; columns: SkeletonColumn[]; card: ReactNode; rows?: number; rowLink?: boolean; minWidth?: number }) {
+export function TableSkeleton({
+  label,
+  columns,
+  card,
+  rows = 8,
+  rowLink,
+  minWidth = 1040,
+}: {
+  label: string;
+  columns: SkeletonColumn[];
+  card: ReactNode;
+  rows?: number;
+  rowLink?: boolean;
+  minWidth?: number;
+}) {
   const narrow = useMediaQuery("(max-width: 767px)");
   const { t } = useI18n();
   const list = Array.from({ length: rows }, (_, r) => r);
@@ -156,7 +254,12 @@ export function TableSkeleton({ label, columns, card, rows = 8, rowLink, minWidt
                 key={c.header}
                 scope="col"
                 aria-sort={c.sorted ? "descending" : undefined}
-                className={cn("border-b border-track py-3 text-caption font-medium whitespace-nowrap", c.sorted ? "text-ink" : "text-ink2", c.align === "right" ? "text-right" : "text-left", i === 0 ? "pr-3 pl-6" : "px-3")}
+                className={cn(
+                  "border-b border-track py-3 text-caption font-medium whitespace-nowrap",
+                  c.sorted ? "text-ink" : "text-ink2",
+                  c.align === "right" ? "text-right" : "text-left",
+                  i === 0 ? "pr-3 pl-6" : "px-3",
+                )}
               >
                 {c.srOnly ? <span className="sr-only">{c.header}</span> : c.header}
                 {c.sorted && <Icon name="down" size={14} className="ml-1 inline align-[-2px]" />}
@@ -173,11 +276,18 @@ export function TableSkeleton({ label, columns, card, rows = 8, rowLink, minWidt
           {list.map((r) => (
             <tr key={r}>
               {columns.map((c, i) => (
-                <td key={c.header} className={cn("h-[60px] border-b border-track py-2.5", i === 0 ? "pr-3 pl-6" : "px-3", c.align === "right" && "[&>*]:ml-auto")}>
+                <td
+                  key={c.header}
+                  className={cn(
+                    "h-[60px] border-b border-track py-2.5",
+                    i === 0 ? "pr-3 pl-6" : "px-3",
+                    c.align === "right" && "[&>*]:ml-auto",
+                  )}
+                >
                   {c.cell(r)}
                 </td>
               ))}
-              {rowLink && <td className="border-b border-track pr-6 pl-1" />}
+              {rowLink && <td aria-hidden="true" className="border-b border-track pr-6 pl-1" />}
             </tr>
           ))}
         </tbody>

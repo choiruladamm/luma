@@ -1,7 +1,15 @@
 import type { OpenRouterAdmin } from "../../../../backend/src/clients/openrouter";
 import type { Db } from "../../../../backend/src/db/client";
 import { ApiError } from "../../lib/errors";
-import { banUser, findUserDetail, findUserKeyHash, listUsers, type UserListQuery, type UserRow, unbanUser } from "./repo";
+import {
+  banUser,
+  findUserDetail,
+  findUserKeyHash,
+  listUsers,
+  type UserListQuery,
+  type UserRow,
+  unbanUser,
+} from "./repo";
 
 export const USERS_PAGE_SIZE = 50;
 
@@ -23,18 +31,32 @@ const userItem = (row: UserRow) => ({
  * User list page, 1 batch (rows + total). Without `q` there is no relevance, so that sort falls
  * back to newest; a page past the end returns no items (the client clamps).
  */
-export async function getUsers(db: Db, query: Omit<UserListQuery, "sort" | "now"> & { sort?: UserListQuery["sort"] }) {
+export async function getUsers(
+  db: Db,
+  query: Omit<UserListQuery, "sort" | "now"> & { sort?: UserListQuery["sort"] },
+) {
   const q = query.q || undefined;
-  const sort = query.sort && (query.sort !== "relevance" || q) ? query.sort : q ? "relevance" : "created";
+  const sort =
+    query.sort && (query.sort !== "relevance" || q) ? query.sort : q ? "relevance" : "created";
   const { rows, total } = await listUsers(db, { ...query, q, sort, now: Date.now() });
-  return { items: rows.map(userItem), total, page: query.page, pageCount: Math.max(1, Math.ceil(total / query.limit)) };
+  return {
+    items: rows.map(userItem),
+    total,
+    page: query.page,
+    pageCount: Math.max(1, Math.ceil(total / query.limit)),
+  };
 }
 
 /**
  * User detail: 1 batch + 1 `getUsage` subrequest when the user has a key. If
  * OpenRouter fails → `usageDaily: null` (logged), so the detail and ban button still open.
  */
-export async function getUserDetail(db: Db, openrouter: OpenRouterAdmin, id: string, requestId: string) {
+export async function getUserDetail(
+  db: Db,
+  openrouter: OpenRouterAdmin,
+  id: string,
+  requestId: string,
+) {
   const found = await findUserDetail(db, id);
   if (!found) throw new ApiError(404, "NOT_FOUND", "User not found");
   let ai = null;
@@ -43,7 +65,13 @@ export async function getUserDetail(db: Db, openrouter: OpenRouterAdmin, id: str
     try {
       usageDaily = (await openrouter.getUsage(found.key.keyHash)).usageDaily;
     } catch (e) {
-      console.error(JSON.stringify({ message: "openrouter getUsage failed", requestId, error: (e as Error).message }));
+      console.error(
+        JSON.stringify({
+          message: "openrouter getUsage failed",
+          requestId,
+          error: e instanceof Error ? e.message : String(e),
+        }),
+      );
     }
     ai = { limit: found.key.limitUsd, usageDaily, expiresAt: found.key.expiresAt.toISOString() };
   }

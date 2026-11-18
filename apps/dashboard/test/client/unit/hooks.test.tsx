@@ -9,13 +9,21 @@ afterEach(() => vi.useRealTimers());
 describe("useDebounce", () => {
   it("only settles after the value stops changing", () => {
     vi.useFakeTimers();
-    const { result, rerender } = renderHook(({ v }) => useDebounce(v, 300), { initialProps: { v: "a" } });
+    const { result, rerender } = renderHook(({ v }) => useDebounce(v, 300), {
+      initialProps: { v: "a" },
+    });
     rerender({ v: "ab" });
-    act(() => vi.advanceTimersByTime(200));
+    act(() => {
+      vi.advanceTimersByTime(200);
+    });
     rerender({ v: "abc" });
-    act(() => vi.advanceTimersByTime(200));
+    act(() => {
+      vi.advanceTimersByTime(200);
+    });
     expect(result.current).toBe("a");
-    act(() => vi.advanceTimersByTime(100));
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
     expect(result.current).toBe("abc");
   });
 });
@@ -23,13 +31,15 @@ describe("useDebounce", () => {
 describe("useCopyToClipboard", () => {
   it("writes to the clipboard and resets the copied state", async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
-    const writeText = vi.fn().mockResolvedValue(undefined);
+    const writeText = vi.fn<() => void>().mockResolvedValue(undefined);
     Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
     const { result } = renderHook(() => useCopyToClipboard(2000));
     await act(() => result.current.copy("LUMA-AAAAA-BBBBB"));
     expect(writeText).toHaveBeenCalledWith("LUMA-AAAAA-BBBBB");
     expect(result.current.copied).toBe("LUMA-AAAAA-BBBBB");
-    act(() => vi.advanceTimersByTime(2000));
+    act(() => {
+      vi.advanceTimersByTime(2000);
+    });
     expect(result.current.copied).toBeNull();
   });
 });
@@ -39,7 +49,15 @@ describe("useMediaQuery", () => {
     const listeners = new Set<() => void>();
     let matches = false;
     vi.spyOn(window, "matchMedia").mockImplementation(
-      (q) => ({ get matches() { return matches; }, media: q, addEventListener: (_: string, l: () => void) => listeners.add(l), removeEventListener: (_: string, l: () => void) => listeners.delete(l) }) as unknown as MediaQueryList,
+      (q) =>
+        ({
+          get matches() {
+            return matches;
+          },
+          media: q,
+          addEventListener: (_: string, l: () => void) => listeners.add(l),
+          removeEventListener: (_: string, l: () => void) => listeners.delete(l),
+        }) as unknown as MediaQueryList,
     );
     const { result } = renderHook(() => useMediaQuery("(max-width: 767px)"));
     expect(result.current).toBe(false);

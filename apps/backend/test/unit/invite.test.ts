@@ -19,7 +19,9 @@ describe("newInviteCode", () => {
     const codes = Array.from({ length: 50 }, newInviteCode);
     for (const code of codes) {
       expect(code).toMatch(/^LUMA-[2-9A-HJ-NP-Z]{5}-[2-9A-HJ-NP-Z]{5}$/);
-      expect(normalizeInviteCode(code)).toBe(normalizeInviteCode(code.toLowerCase().replaceAll("-", "")));
+      expect(normalizeInviteCode(code)).toBe(
+        normalizeInviteCode(code.toLowerCase().replaceAll("-", "")),
+      );
     }
     expect(new Set(codes).size).toBe(50);
   });

@@ -39,7 +39,7 @@ class FakeAdapter implements HttpClientAdapter {
     if (next is DioExceptionType) {
       throw DioException(requestOptions: options, type: next);
     }
-    throw next;
+    Error.throwWithStackTrace(next, StackTrace.current);
   }
 
   @override

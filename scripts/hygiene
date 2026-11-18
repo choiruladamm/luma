@@ -1,0 +1,20 @@
+#!/usr/bin/env sh
+# Docs, comment, and lint checks: the single entry for the pre-commit hook, CI, and manual runs.
+# Usage: scripts/hygiene [--staged]. HYGIENE_MODE=report prints findings without failing.
+# --staged narrows only the docs and comment checks; the linters always run on the whole app.
+set -eu
+cd "$(git rev-parse --show-toplevel)"
+
+# FVM pins the Flutter SDK locally; CI installs the same version without it.
+if command -v fvm >/dev/null 2>&1; then dart="fvm dart"; else dart="dart"; fi
+
+status=0
+python3 scripts/hygiene_check.py "$@" || status=1
+(cd apps/mobile && $dart analyze --fatal-infos) || status=1
+(cd apps/backend && bun run lint) || status=1
+(cd apps/dashboard && bun run lint) || status=1
+
+if [ "${HYGIENE_MODE:-enforce}" = "report" ]; then
+  exit 0
+fi
+exit "$status"

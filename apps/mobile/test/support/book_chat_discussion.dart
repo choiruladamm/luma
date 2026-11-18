@@ -48,7 +48,7 @@ List<SourceParagraph> discussionParagraphs(String book) {
 }
 
 List<Map<String, Object>> discussionSources(
-  Map row,
+  Map<Object?, Object?> row,
   List<SourceParagraph> paragraphs,
 ) => [
   for (final (i, ref) in (row['context'] as List).indexed)
@@ -73,7 +73,7 @@ List<Map<String, Object>> discussionSources(
 
 /// Whitelist the serialized payload; neither gold nor evaluation metadata is sent.
 String discussionUser(
-  Map row,
+  Map<Object?, Object?> row,
   String title,
   List<Map<String, Object>> sources, {
   String? draftToReview,
@@ -181,7 +181,7 @@ const discussionProvider = {
   },
 };
 
-Map<String, Object> discussionReasoning(Map modelInfo) {
+Map<String, Object> discussionReasoning(Map<Object?, Object?> modelInfo) {
   final reasoning = modelInfo['reasoning'];
   if (reasoning is! Map || reasoning['mandatory'] != true) {
     return {'enabled': false};

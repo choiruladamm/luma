@@ -1,10 +1,19 @@
 // Every D1 query of the users feature. Each function is one query-budget unit.
-import { and, asc, count, desc, eq, gte, isNotNull, isNull, or, type SQL, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, isNotNull, isNull, type SQL, sql } from "drizzle-orm";
 import type { Db } from "../../../../backend/src/db/client";
-import { accounts, aiKeys, inviteCodes, sessions, users, userStorage } from "../../../../backend/src/db/schema";
+import {
+  accounts,
+  aiKeys,
+  inviteCodes,
+  sessions,
+  users,
+  userStorage,
+} from "../../../../backend/src/db/schema";
 
 // Correlated subquery: uses the sessions(user_id) index. Also a filter and a sort key.
-const lastActive = sql<number | null>`(select max(${sessions.updatedAt}) from ${sessions} where ${sessions.userId} = ${users.id})`;
+const lastActive = sql<
+  number | null
+>`(select max(${sessions.updatedAt}) from ${sessions} where ${sessions.userId} = ${users.id})`;
 const r2Bytes = sql<number>`coalesce(${userStorage.bytes}, 0)`;
 const syncBytes = sql<number>`coalesce(${userStorage.syncBytes}, 0)`;
 
@@ -51,11 +60,12 @@ export type UserListQuery = {
  * bytes (a long query failed with "pattern too complex"), and `%`/`_` need no escaping. Same rows
  * read as LIKE: neither can use an index.
  */
+const at = (text: SQL, part: string) => sql`instr(${text}, ${part})`;
+
 function search(q: string) {
   const term = q.toLowerCase();
   const email = sql`lower(${users.email})`;
   const name = sql`lower(${users.name})`;
-  const at = (text: SQL, part: string) => sql`instr(${text}, ${part})`;
   const filter = sql`(${at(email, term)} > 0 or ${at(name, term)} > 0)`;
   const rank = sql<number>`case
     when ${email} = ${term} then 0
@@ -79,7 +89,8 @@ export async function listUsers(db: Db, query: UserListQuery) {
   if (query.status) filters.push(eq(users.banned, query.status === "banned"));
   if (query.ai) filters.push(query.ai === "yes" ? isNotNull(aiKeys.userId) : isNull(aiKeys.userId));
   if (query.activity === "never") filters.push(sql`${lastActive} is null`);
-  else if (query.activity) filters.push(gte(lastActive, query.now - (query.activity === "7d" ? 7 : 30) * DAY_MS));
+  else if (query.activity)
+    filters.push(gte(lastActive, query.now - (query.activity === "7d" ? 7 : 30) * DAY_MS));
   const where = and(...filters);
 
   const by = query.dir === "asc" ? asc : desc;
@@ -94,7 +105,8 @@ export async function listUsers(db: Db, query: UserListQuery) {
           : query.sort === "sync"
             ? [by(syncBytes)]
             : [by(users.createdAt)];
-  const tiebreak = query.sort === "created" ? [by(users.id)] : [desc(users.createdAt), desc(users.id)];
+  const tiebreak =
+    query.sort === "created" ? [by(users.id)] : [desc(users.createdAt), desc(users.id)];
 
   const [rows, [total]] = await db.batch([
     userRows(db)
@@ -102,7 +114,11 @@ export async function listUsers(db: Db, query: UserListQuery) {
       .orderBy(...order, ...tiebreak)
       .limit(query.limit)
       .offset((query.page - 1) * query.limit),
-    db.select({ n: count() }).from(users).leftJoin(aiKeys, eq(aiKeys.userId, users.id)).where(where),
+    db
+      .select({ n: count() })
+      .from(users)
+      .leftJoin(aiKeys, eq(aiKeys.userId, users.id))
+      .where(where),
   ]);
   return { rows, total: total?.n ?? 0 };
 }
@@ -132,10 +148,19 @@ export async function findUserDetail(db: Db, userId: string) {
       .from(inviteCodes)
       .where(eq(inviteCodes.usedBy, userId))
       .limit(1),
-    db.select({ providerId: accounts.providerId }).from(accounts).where(eq(accounts.userId, userId)),
+    db
+      .select({ providerId: accounts.providerId })
+      .from(accounts)
+      .where(eq(accounts.userId, userId)),
   ]);
   if (!user[0]) return null;
-  return { user: user[0], sessions: userSessions, key: key[0] ?? null, invite: invite[0] ?? null, providers: providers.map((p) => p.providerId) };
+  return {
+    user: user[0],
+    sessions: userSessions,
+    key: key[0] ?? null,
+    invite: invite[0] ?? null,
+    providers: providers.map((p) => p.providerId),
+  };
 }
 
 /** 1 query: does the user exist + AI key hash (null when there is none). */
@@ -158,6 +183,10 @@ export const banUser = (db: Db, userId: string) =>
 
 /** 1 query: `banned = 0`. False when the user doesn't exist. */
 export async function unbanUser(db: Db, userId: string) {
-  const rows = await db.update(users).set({ banned: false }).where(eq(users.id, userId)).returning({ id: users.id });
+  const rows = await db
+    .update(users)
+    .set({ banned: false })
+    .where(eq(users.id, userId))
+    .returning({ id: users.id });
   return rows.length > 0;
 }

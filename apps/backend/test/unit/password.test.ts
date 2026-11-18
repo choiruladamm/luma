@@ -19,10 +19,13 @@ describe("PBKDF2 password hashing", () => {
     expect(await verifyPassword({ hash, password: "pw-lama-123" })).toBe(true);
   });
 
-  it.each(["", "bcrypt$x", "pbkdf2$abc$c2FsdA==$aGFzaA==", "pbkdf2$0$c2FsdA==$aGFzaA==", "pbkdf2$10$$"])(
-    "rejects malformed hash %j",
-    async (hash) => {
-      expect(await verifyPassword({ hash, password: "apa-aja" })).toBe(false);
-    },
-  );
+  it.each([
+    "",
+    "bcrypt$x",
+    "pbkdf2$abc$c2FsdA==$aGFzaA==",
+    "pbkdf2$0$c2FsdA==$aGFzaA==",
+    "pbkdf2$10$$",
+  ])("rejects malformed hash %j", async (hash) => {
+    expect(await verifyPassword({ hash, password: "apa-aja" })).toBe(false);
+  });
 });

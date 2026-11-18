@@ -12,7 +12,9 @@ export default defineConfig(async () => {
           // Raised per-IP limit: every test request comes from the same IP
           // ("unknown"), so the real 60/minute would 429 a large test file.
           // 429 behavior is tested through a binding override + the rate-limit test.
-          ratelimits: { RATE_LIMITER: { namespace_id: "1001", simple: { limit: TEST_RATE_LIMIT, period: 60 } } },
+          ratelimits: {
+            RATE_LIMITER: { namespace_id: "1001", simple: { limit: TEST_RATE_LIMIT, period: 60 } },
+          },
           bindings: {
             TEST_MIGRATIONS: migrations,
             BETTER_AUTH_SECRET: "test-secret-yang-panjangnya-lebih-dari-32-karakter",

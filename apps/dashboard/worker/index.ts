@@ -34,7 +34,8 @@ app.get("/api/auth/get-session", async (c, next) => {
   if (token) await endSessionIfPastMaxAge(createDb(c.env.DB), token);
   await next();
 });
-for (const [method, path] of AUTH_ROUTES) app.on(method, path, (c) => getAuth(c.env).handler(c.req.raw));
+for (const [method, path] of AUTH_ROUTES)
+  app.on(method, path, (c) => getAuth(c.env).handler(c.req.raw));
 app.all("/api/auth/*", notFound);
 
 // Admin routes are chained after the guards so `AppType` carries their types.

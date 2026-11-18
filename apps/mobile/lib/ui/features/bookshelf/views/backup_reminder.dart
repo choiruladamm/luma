@@ -62,13 +62,7 @@ class BackupReminder extends StatelessWidget {
                 color: c.bannerTile,
                 borderRadius: BorderRadius.circular(Radii.sm),
               ),
-              child: Center(
-                child: AppIcon(
-                  AppIcons.clock,
-                  size: Layout.icon,
-                  color: c.onPink,
-                ),
-              ),
+              child: Center(child: AppIcon(AppIcons.clock, color: c.onPink)),
             ),
             Expanded(
               child: Column(

@@ -17,7 +17,7 @@ void main() {
       expect(r.translations, hasLength(2));
     });
 
-    Matcher invalid = throwsA(
+    final invalid = throwsA(
       isA<AiException>().having(
         (e) => e.error,
         'error',
@@ -128,7 +128,7 @@ void main() {
   });
 
   group('parseAiSections', () {
-    Matcher invalid = throwsA(
+    final invalid = throwsA(
       isA<AiException>().having(
         (e) => e.error,
         'error',

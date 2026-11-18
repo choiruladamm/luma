@@ -32,7 +32,9 @@ describe("English UI", () => {
     renderApp("/users");
     expect(await screen.findByRole("heading", { name: "Users", level: 1 })).toBeInTheDocument();
     expect(await screen.findByText("48 users · 1 banned")).toBeInTheDocument();
-    expect(screen.getAllByRole("button", { name: /^Sort: Newest sign-ups/ })[0]).toBeInTheDocument();
+    expect(
+      screen.getAllByRole("button", { name: /^Sort: Newest sign-ups/ })[0],
+    ).toBeInTheDocument();
     expect(await screen.findByRole("table", { name: "User list" })).toBeInTheDocument();
     expect(screen.getByRole("columnheader", { name: /Last active/ })).toBeInTheDocument();
     expect(screen.getAllByText("Never").length).toBeGreaterThan(0);
@@ -40,7 +42,9 @@ describe("English UI", () => {
 
   it("User detail: profile, AI quota, devices, ban dialog", async () => {
     const { user } = renderApp("/users/u1");
-    expect(await screen.findByRole("heading", { name: /^sekar\.ayu\s?@gmail\.com$/ })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: /^sekar\.ayu\s?@gmail\.com$/ }),
+    ).toBeInTheDocument();
     expect(screen.getByText("Signs in with")).toBeInTheDocument();
     expect(screen.getByText("Luma app 0.3.0")).toBeInTheDocument();
     expect(screen.getByText("1 session, including expired ones")).toBeInTheDocument();
@@ -55,7 +59,10 @@ describe("English UI", () => {
   it("Invites: filters, statuses, and actions", async () => {
     renderApp("/invites");
     expect(await screen.findByRole("heading", { name: "Invites", level: 1 })).toBeInTheDocument();
-    expect((await screen.findAllByRole("tab", { name: /All\s*3/ }))[0]!).toHaveAttribute("aria-selected", "true");
+    expect((await screen.findAllByRole("tab", { name: /All\s*3/ }))[0]!).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
     expect(screen.getAllByRole("tab", { name: /Unused\s*2/ })[0]!).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Copy LUMA-AAAAA-BBBBB" })).toBeInTheDocument();
     expect(screen.getByText("1–3 of 3")).toBeInTheDocument();

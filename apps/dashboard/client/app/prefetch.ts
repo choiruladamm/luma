@@ -13,7 +13,12 @@ export const registerQueryClient = (queryClient: QueryClient) => {
  * `qc.query(...)` (it rejects, unlike the deprecated `prefetchQuery`) and the catch here swallows it.
  */
 export const prefetch =
-  (...run: ((qc: QueryClient, args: { request: Request; params: Record<string, string | undefined> }) => Promise<unknown>)[]) =>
+  (
+    ...run: ((
+      qc: QueryClient,
+      args: { request: Request; params: Record<string, string | undefined> },
+    ) => Promise<unknown>)[]
+  ) =>
   (args: { request: Request; params: Record<string, string | undefined> }) => {
     if (client) for (const r of run) void r(client, args).catch(() => {});
     return null;

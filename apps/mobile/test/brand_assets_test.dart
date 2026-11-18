@@ -20,7 +20,7 @@ void main() {
                 as Map)['images']
             as List;
     final byAppearance = {
-      for (final i in images.cast<Map>())
+      for (final i in images.cast<Map<Object?, Object?>>())
         (i['appearances'] as List?)?.first['value'] ?? 'light':
             i['filename'] as String,
     };

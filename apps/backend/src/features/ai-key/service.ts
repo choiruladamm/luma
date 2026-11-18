@@ -107,7 +107,12 @@ export async function usage(
   const resetsAt = nextUtcMidnight(now).toISOString();
   const row = await allowedKey(db, userId);
   if (!row) {
-    return { dailyLimitUsd: cfg.dailyLimitUsd, remainingUsd: cfg.dailyLimitUsd, usedTodayUsd: 0, resetsAt };
+    return {
+      dailyLimitUsd: cfg.dailyLimitUsd,
+      remainingUsd: cfg.dailyLimitUsd,
+      usedTodayUsd: 0,
+      resetsAt,
+    };
   }
   const key = await admin.getUsage(row.keyHash);
   const limit = key.limit ?? cfg.dailyLimitUsd;

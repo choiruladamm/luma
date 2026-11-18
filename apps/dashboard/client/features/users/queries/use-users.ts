@@ -13,4 +13,5 @@ export const usersQuery = (params: UsersParams) => {
  * `enabled: false` for a query not worth sending yet (the header search below 2 characters). The
  * previous page stays on screen while the next one loads, so paging doesn't flash a skeleton.
  */
-export const useUsers = (params: UsersParams, enabled = true) => useQuery({ ...usersQuery(params), enabled, placeholderData: keepPreviousData });
+export const useUsers = (params: UsersParams, enabled = true) =>
+  useQuery({ ...usersQuery(params), enabled, placeholderData: keepPreviousData });

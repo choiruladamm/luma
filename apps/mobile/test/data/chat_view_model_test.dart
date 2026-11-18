@@ -453,7 +453,7 @@ void main() {
       expect(
         state().activeSession,
         isNull,
-        reason: "${state().problem}; changing=${state().changingSession}",
+        reason: '${state().problem}; changing=${state().changingSession}',
       );
       unawaited(vm().send());
       pump(time);
@@ -697,7 +697,7 @@ void main() {
       expect(
         state().activeSession,
         isNull,
-        reason: "${state().problem}; changing=${state().changingSession}",
+        reason: '${state().problem}; changing=${state().changingSession}',
       );
       expect(repo.sessions[first]!.scrollAnchor, anchor);
       expect(repo.sessions.length, 1);
@@ -742,7 +742,7 @@ void main() {
       expect(
         state().activeSession,
         isNull,
-        reason: "${state().problem}; changing=${state().changingSession}",
+        reason: '${state().problem}; changing=${state().changingSession}',
       );
       old.frames.add(const ChatStreamFrame('LATE'));
       pump(time);
@@ -768,7 +768,7 @@ void main() {
       expect(
         state().readOnly,
         false,
-        reason: "${state().problem}; changing=${state().changingSession}",
+        reason: '${state().problem}; changing=${state().changingSession}',
       );
       expect(context.calls, 1);
       close(time);

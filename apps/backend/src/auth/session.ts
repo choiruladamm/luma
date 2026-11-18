@@ -46,6 +46,11 @@ export async function findSessionUser(db: Db, header: string | undefined, now = 
       .set({ expiresAt: new Date(now.getTime() + SESSION_EXPIRES_IN_MS), updatedAt: now })
       .where(eq(sessions.id, row.sessionId));
   }
-  const user: SessionUser = { id: row.id, name: row.name, email: row.email, image: row.image ?? null };
+  const user: SessionUser = {
+    id: row.id,
+    name: row.name,
+    email: row.email,
+    image: row.image ?? null,
+  };
   return user;
 }

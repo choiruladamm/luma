@@ -74,8 +74,8 @@ extension BookSearchResultLabel on BookSearchResult {
   String get countLabel => '$total hasil di $chapterCount bab';
 }
 
-/// The result tapped in the Cari kata sheet: the reader jumps to [hit] and keeps
-/// [result] for the ↑ ↓ navigator.
+/// The result tapped in the Cari kata sheet: the reader jumps to `hit` and keeps
+/// `result` for the ↑ ↓ navigator.
 typedef BookSearchPick = ({
   String query,
   BookSearchResult result,

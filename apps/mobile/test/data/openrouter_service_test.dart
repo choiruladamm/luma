@@ -166,8 +166,8 @@ void main() {
 
   test('a reply without content is invalid', () async {
     adapter.replies
-      ..add(json({'choices': []}))
-      ..add(json({'choices': []}));
+      ..add(json({'choices': <Object?>[]}))
+      ..add(json({'choices': <Object?>[]}));
     await expectLater(explain(), fails(AiError.invalidResponse));
   });
 

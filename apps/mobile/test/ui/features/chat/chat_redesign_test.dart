@@ -352,7 +352,7 @@ void main() {
     'composer: 42 send, flat yellow when ready, stop square while running',
     (t) async {
       await open(t, ChatState(book: book, loading: false, draft: 'Halo'));
-      var send = t.widget<CircleButton>(button('Kirim pertanyaan'));
+      final send = t.widget<CircleButton>(button('Kirim pertanyaan'));
       expect(send.size, 42);
       expect(send.active, isTrue);
       expect(send.primary, isFalse);

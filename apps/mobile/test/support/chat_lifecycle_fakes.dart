@@ -92,7 +92,9 @@ class LifecycleRepo implements ChatRepository {
   }) async {
     creates++;
     await createGate?.future;
-    if (createError != null) throw createError!;
+    if (createError != null) {
+      Error.throwWithStackTrace(createError!, StackTrace.current);
+    }
     final id = sessions.length + 1;
     sessions[id] = ChatSession(
       id: id,
@@ -219,7 +221,9 @@ class LifecycleRepo implements ChatRepository {
     List<ChatStep>? steps,
   }) async {
     await finalizeGate?.future;
-    if (finalizeError != null) throw finalizeError!;
+    if (finalizeError != null) {
+      Error.throwWithStackTrace(finalizeError!, StackTrace.current);
+    }
     final t = owned(ref);
     if (t == null) return false;
     finalized.add((
@@ -319,6 +323,8 @@ class LifecycleRepo implements ChatRepository {
 }
 
 class LifecyclePrepared implements PreparedChat {
+  // The test closes it through the lifecycle repo.
+  // ignore: close_sinks
   final frames = StreamController<ChatStreamFrame>();
   void Function(ChatStep)? onStep;
   @override

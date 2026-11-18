@@ -65,7 +65,7 @@ void main() {
           source.storage,
         ).export())!;
         addTearDown(() async {
-          release.isCompleted ? null : release.complete();
+          if (!release.isCompleted) release.complete();
           sub.close();
           if (!disposed) container.dispose();
           await backup.dispose();

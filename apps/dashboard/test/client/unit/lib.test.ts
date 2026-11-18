@@ -1,31 +1,45 @@
 import { describe, expect, it } from "vitest";
 import { id } from "../../../client/i18n/id";
-import { ApiError, errorText, toApiError, unwrap, unwrapEmpty } from "../../../client/lib/api-error";
+import {
+  ApiError,
+  errorText,
+  toApiError,
+  unwrap,
+  unwrapEmpty,
+} from "../../../client/lib/api-error";
 import { isDevHost } from "../../../client/lib/env";
 import { cn } from "../../../client/lib/cn";
 import { formatBytes, formatRelative, formatUsd } from "../../../client/lib/format";
 
 describe("client api-error", () => {
   it("maps the worker error body to a code; the copy comes from the code", async () => {
-    const err = await toApiError(Response.json({ error: { code: "INVITE_CODE_USED", message: "used" } }, { status: 409 }));
+    const err = await toApiError(
+      Response.json({ error: { code: "INVITE_CODE_USED", message: "used" } }, { status: 409 }),
+    );
     expect(err).toMatchObject({ status: 409, code: "INVITE_CODE_USED", serverMessage: "used" });
     expect(errorText(err, id)).toBe("Kode undangan sudah dipakai.");
     expect(errorText(new Error("boom"), id)).toBe("Ada yang salah di server.");
   });
 
   it("falls back to INTERNAL_ERROR for unknown codes and non-JSON bodies", async () => {
-    expect((await toApiError(Response.json({ error: { code: "WAT" } }, { status: 500 }))).code).toBe("INTERNAL_ERROR");
+    expect(
+      (await toApiError(Response.json({ error: { code: "WAT" } }, { status: 500 }))).code,
+    ).toBe("INTERNAL_ERROR");
     expect((await toApiError(new Response("<html>", { status: 502 }))).code).toBe("INTERNAL_ERROR");
   });
 
   it("unwrap returns JSON, throws ApiError on failure and NETWORK when fetch rejects", async () => {
     expect(await unwrap(Promise.resolve(Response.json({ a: 1 })))).toEqual({ a: 1 });
-    await expect(unwrap(Promise.resolve(Response.json({ error: { code: "FORBIDDEN" } }, { status: 403 })))).rejects.toMatchObject({
+    await expect(
+      unwrap(Promise.resolve(Response.json({ error: { code: "FORBIDDEN" } }, { status: 403 }))),
+    ).rejects.toMatchObject({
       code: "FORBIDDEN",
       status: 403,
     });
     await expect(unwrap(Promise.reject(new TypeError("offline")))).rejects.toBeInstanceOf(ApiError);
-    await expect(unwrap(Promise.reject(new TypeError("offline")))).rejects.toMatchObject({ code: "NETWORK" });
+    await expect(unwrap(Promise.reject(new TypeError("offline")))).rejects.toMatchObject({
+      code: "NETWORK",
+    });
   });
 });
 
@@ -72,7 +86,13 @@ describe("client cn", () => {
 
 describe("client unwrapEmpty", () => {
   it("resolves on 204 and keeps the error code of a failed empty-body call", async () => {
-    await expect(unwrapEmpty(Promise.resolve(new Response(null, { status: 204 })))).resolves.toBeUndefined();
-    await expect(unwrapEmpty(Promise.resolve(Response.json({ error: { code: "INVITE_CODE_USED" } }, { status: 409 })))).rejects.toMatchObject({ code: "INVITE_CODE_USED" });
+    await expect(
+      unwrapEmpty(Promise.resolve(new Response(null, { status: 204 }))),
+    ).resolves.toBeUndefined();
+    await expect(
+      unwrapEmpty(
+        Promise.resolve(Response.json({ error: { code: "INVITE_CODE_USED" } }, { status: 409 })),
+      ),
+    ).rejects.toMatchObject({ code: "INVITE_CODE_USED" });
   });
 });

@@ -10,10 +10,18 @@ type Kind = "notFound" | "update" | "crash";
 function useErrorKind(): { kind: Kind; detail?: string } {
   const error = useRouteError();
   if (isRouteErrorResponse(error) && error.status === 404) return { kind: "notFound" };
-  const message = error instanceof Error ? error.message : String(error ?? "");
+  const message = error instanceof Error ? error.message : typeof error === "string" ? error : "";
   // A tab opened before a deploy asks for chunk files that no longer exist.
-  if (/dynamically imported module|Importing a module script failed|error loading dynamically/i.test(message)) return { kind: "update" };
-  return { kind: "crash", detail: error instanceof Error ? (error.stack ?? error.message) : message };
+  if (
+    /dynamically imported module|Importing a module script failed|error loading dynamically/i.test(
+      message,
+    )
+  )
+    return { kind: "update" };
+  return {
+    kind: "crash",
+    detail: error instanceof Error ? (error.stack ?? error.message) : message,
+  };
 }
 
 /** Design component 2, State (failed load), scaled up: soft-red tile, title, one sentence, actions, details. */
@@ -22,8 +30,13 @@ function ErrorPanel({ kind, detail }: { kind: Kind; detail?: string }) {
   const icon: IconName = kind === "notFound" ? "search" : kind === "update" ? "refresh" : "alert";
   const copy = t.appError[kind];
   return (
-    <div role={kind === "crash" ? "alert" : undefined} className="flex flex-col items-center gap-3 px-6 py-14 text-center">
-      <span className={`flex size-14 items-center justify-center rounded-tile-lg ${kind === "crash" ? "bg-danger-soft text-danger-ink" : "bg-muted text-ink2"}`}>
+    <div
+      role={kind === "crash" ? "alert" : undefined}
+      className="flex flex-col items-center gap-3 px-6 py-14 text-center"
+    >
+      <span
+        className={`flex size-14 items-center justify-center rounded-tile-lg ${kind === "crash" ? "bg-danger-soft text-danger-ink" : "bg-muted text-ink2"}`}
+      >
         <Icon name={icon} size={24} />
       </span>
       <h1 className="m-0 font-display text-[22px] font-semibold">{copy.title}</h1>
@@ -41,7 +54,9 @@ function ErrorPanel({ kind, detail }: { kind: Kind; detail?: string }) {
       {detail && (
         <details className="mt-4 w-full max-w-[560px] text-left">
           <summary className="cursor-pointer text-caption text-ink2">{t.appError.details}</summary>
-          <pre className="mt-2 max-h-48 overflow-auto rounded-row bg-canvas p-3 font-mono text-[12px] whitespace-pre-wrap text-ink2 shadow-[inset_0_0_0_1px_var(--c-track)]">{detail}</pre>
+          <pre className="mt-2 max-h-48 overflow-auto rounded-row bg-canvas p-3 font-mono text-[12px] whitespace-pre-wrap text-ink2 shadow-[inset_0_0_0_1px_var(--c-track)]">
+            {detail}
+          </pre>
         </details>
       )}
     </div>

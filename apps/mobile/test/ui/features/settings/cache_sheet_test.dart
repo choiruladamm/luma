@@ -10,6 +10,8 @@ import 'package:luma/ui/core/theme/stabilo_theme.dart';
 import 'package:luma/ui/features/settings/views/cache_sheet.dart';
 
 class _Results extends Fake implements AiResultsRepository {
+  // Lives as long as the test.
+  // ignore: close_sinks
   final stats = StreamController<AiCacheStats>.broadcast();
   int clears = 0;
 

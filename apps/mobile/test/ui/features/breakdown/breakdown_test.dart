@@ -60,7 +60,7 @@ final four = Breakdown(
 );
 
 /// Where each "Nyambung ke" card leads (by chapter; null = next group).
-var peeks = <int?, BreakdownPeek?>{};
+Map<int?, BreakdownPeek?> peeks = <int?, BreakdownPeek?>{};
 
 /// The "Artiin" (explain) peek sheet: tests push the stream states.
 class FakeArtiin extends GroupAiStream {

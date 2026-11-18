@@ -52,7 +52,7 @@ class QuotaState {
 
 /// The quota is checked at most once an hour (docs/budgets.md, Client request
 /// policy): the provider lives for the whole app, [refresh] only calls the
-/// server when the last result is stale or [force].
+/// server when the last result is stale or `force`.
 class AiQuotaController extends AsyncNotifier<QuotaState> {
   static const cacheFor = Duration(hours: 1);
 

@@ -18,10 +18,18 @@ export async function getOverview(db: Db, env: Env, requestId: string, now = new
     overviewCounts(db, { since: new Date(now.getTime() - 7 * DAY_MS), syncDay }),
     // No management key (local dev / e2e): skip the call instead of a guaranteed 401.
     env.OPENROUTER_MANAGEMENT_KEY
-      ? monthSpendUsd(env.OPENROUTER_MANAGEMENT_KEY, env.OPENROUTER_WORKSPACE_ID, now).catch((e: Error) => {
-          console.error(JSON.stringify({ message: "openrouter activity failed", requestId, error: e.message }));
-          return null;
-        })
+      ? monthSpendUsd(env.OPENROUTER_MANAGEMENT_KEY, env.OPENROUTER_WORKSPACE_ID, now).catch(
+          (e: Error) => {
+            console.error(
+              JSON.stringify({
+                message: "openrouter activity failed",
+                requestId,
+                error: e.message,
+              }),
+            );
+            return null;
+          },
+        )
       : null,
   ]);
   return {
@@ -29,7 +37,11 @@ export async function getOverview(db: Db, env: Env, requestId: string, now = new
     storage: { r2Bytes: counts.storage.r2Bytes, syncBytes: counts.storage.syncBytes },
     syncToday: { rows: counts.storage.syncRowsToday, limit: D1_DAILY_WRITE_LIMIT },
     invites: { unused: counts.invites.unused },
-    flags: { sync: on(env.SYNC_ENABLED), backup: on(env.BACKUP_ENABLED), aiKey: on(env.AI_KEY_ENABLED) },
+    flags: {
+      sync: on(env.SYNC_ENABLED),
+      backup: on(env.BACKUP_ENABLED),
+      aiKey: on(env.AI_KEY_ENABLED),
+    },
     ai: {
       spendUsd: spendUsd === null ? null : Math.round(spendUsd * 1e6) / 1e6,
       budgetUsd: Number(env.AI_MONTHLY_BUDGET_USD),

@@ -176,7 +176,7 @@ String chatWindowManifest(List<ChatSource> windows) => chatTextHash(
 
 typedef ChatExplorationNote = ({String text, List<String> sourceIds});
 
-/// Reading progress for the UI: [label] = the chapter being read, [notes] = the
+/// Reading progress for the UI: `label` = the chapter being read, `notes` = the
 /// interim notes saved so far (generative, not an answer).
 typedef ChatExplorationProgress = ({
   int completed,
@@ -276,15 +276,15 @@ class ChatExploration {
         value['revision'] is! int ||
         value['sessionId'] is! int ||
         value['turnId'] is! int ||
-        value['turnId'] <= 0 ||
+        (value['turnId'] as int) <= 0 ||
         value['cursor'] is! int ||
         value['total'] is! int ||
-        value['cursor'] < 0 ||
-        value['total'] <= 0 ||
-        value['cursor'] > value['total'] ||
-        value['bookId'] <= 0 ||
-        value['revision'] <= 0 ||
-        value['sessionId'] <= 0 ||
+        (value['cursor'] as int) < 0 ||
+        (value['total'] as int) <= 0 ||
+        (value['cursor'] as int) > (value['total'] as int) ||
+        (value['bookId'] as int) <= 0 ||
+        (value['revision'] as int) <= 0 ||
+        (value['sessionId'] as int) <= 0 ||
         value['question'] is! String ||
         value['query'] is! String ||
         value['model'] is! String ||
@@ -297,7 +297,7 @@ class ChatExploration {
         .where((s) => s.name == (value['strategy'] ?? 'global'))
         .firstOrNull;
     List<String> strings(String field, int cap) {
-      final rows = value[field] ?? [];
+      final rows = value[field] ?? <Object?>[];
       if (rows is! List ||
           rows.length > cap ||
           rows.toSet().length != rows.length ||
@@ -324,15 +324,18 @@ class ChatExploration {
       selectedIds: strings('selectedIds', chatMaxSources),
       chapterIds: chapters.cast<int>(),
       stopReason: stop is String && stop != 'complete' ? stop : null,
-      book: (bookId: value['bookId'], contentRevision: value['revision']),
-      sessionId: value['sessionId'],
-      turnId: value['turnId'],
+      book: (
+        bookId: value['bookId'] as int,
+        contentRevision: value['revision'] as int,
+      ),
+      sessionId: value['sessionId'] as int,
+      turnId: value['turnId'] as int,
       question: chatQuestion(value['question'] as String),
-      model: value['model'],
-      manifest: value['manifest'],
+      model: value['model'] as String,
+      manifest: value['manifest'] as String,
       query: chatQuestion(value['query'] as String),
-      cursor: value['cursor'],
-      total: value['total'],
+      cursor: value['cursor'] as int,
+      total: value['total'] as int,
       notes: parseChatGlobalNotes(jsonEncode({'notes': value['notes']})),
     );
   }
@@ -434,7 +437,7 @@ bool chatCanContinue(ChatTurn turn) {
 
 List<String> chatMissingQueries(String raw) {
   final value = decodeChatAnswerJson(raw);
-  final rows = (value as Map)['missing_queries'] ?? [];
+  final rows = (value as Map)['missing_queries'] ?? <Object?>[];
   if (rows is! List || rows.length > 2 || rows.any((q) => q is! String)) {
     throw const FormatException('Query lanjutan tidak valid');
   }
