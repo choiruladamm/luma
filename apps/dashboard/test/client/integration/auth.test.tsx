@@ -161,9 +161,12 @@ describe("auth", () => {
     const count = () => requests++;
     server.events.on("request:start", count);
     await user.click(screen.getByRole("radio", { name: "English" }));
-    expect(await screen.findByRole("radio", { name: "English" })).toHaveAttribute(
-      "aria-checked",
-      "true",
+    // The English bundle loads asynchronously, so the radio flips only after the import settles.
+    await waitFor(() =>
+      expect(screen.getByRole("radio", { name: "English" })).toHaveAttribute(
+        "aria-checked",
+        "true",
+      ),
     );
     expect(screen.getByRole("button", { name: "Account menu: Marcus" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Sign out" })).toBeInTheDocument();
