@@ -11,7 +11,7 @@ Target env: `$ARGUMENTS` (`dev` or `prod`). No argument → ask. Run every comma
 
 ## Preflight
 
-1. `prod` only: the branch must be `master` with a clean tree (`make backend-deploy` refuses otherwise). Confirm with the user before deploying prod; it serves real users.
+1. `prod` only: the branch must be `master` (`make backend-deploy` refuses otherwise) with a clean tree (not checked; `git status` first). Confirm with the user before deploying prod; it serves real users.
 2. `make backend-test` exits 0.
 3. Changed `wrangler.jsonc` → `make backend-types`, and commit the regenerated types.
 4. New secret needed → confirm it exists: `cd apps/backend && bunx wrangler secret list --env <env>`. Missing → ask the user to set it with `bunx wrangler secret put <NAME> --env <env>`; never echo or write secret values.

@@ -20,8 +20,7 @@ Files: `apps/mobile/lib/data/database/app_database.dart` (tables, `schemaVersion
 7. **Test** in `migration_test.dart`:
    - `vN → vN+1` test: open with `_old(vN, N)` (seeds a book, chapter, progress, AI result), assert the user data survived and new columns/tables have the expected values, then `expect(await _shape(db), await _shape(_open()))`.
    - The `v$version → now` loop must still pass for older fixtures.
-8. **Backend branch**: on `feat/backend`, the new version number comes after the latest `schemaVersion` on `master`. If `master` moves ahead, renumber the step and its test when merging `master` in.
-9. **Checks**: schema changes are wide, so run `make check`. Install on Luma Dev only (`make dev`), never the real Luma app, until merged to `master`.
+8. **Checks**: schema changes are wide, so run `make check`. Install on Luma Dev only (`make dev`), never the real Luma app, until merged to `master`.
 
 ## Don'ts
 

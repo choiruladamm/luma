@@ -641,39 +641,7 @@ Tiap issue dikerjakan utuh per fitur (vertical slice), bukan semua backend dulu 
 2. **Backend**: endpoint + test (unit, integrasi, kontrak), `make backend-test`, deploy `make backend-deploy e=dev`.
 3. **Flutter**: service → repository / ViewModel → UI, dengan test-nya. UI yang board desainnya belum ada dikerjakan setelah board jadi; backend + service jalan duluan.
 4. **Cek ujung ke ujung**: `make backend-live` + coba di Luma Dev.
-5. **Merge** branch issue ke `feat/backend`, **push** `feat/backend` ke GitHub (backup, tanpa PR ke `master`), tutup issue dengan ringkasan cek yang dijalankan. Langkah ini berlaku selama kerja backend ada di `feat/backend`.
-
-## Branch & worktree
-
-Berlaku selama kerja backend ada di `feat/backend`; section ini dihapus setelah branch itu di-merge ke `master`.
-
-```mermaid
-%%{init: {'gitGraph': {'mainBranchName': 'master'}}}%%
-gitGraph
-  commit id: "app stabil"
-  branch feat/backend
-  commit id: "docs backend"
-  branch issue-198
-  commit id: "scaffold"
-  checkout feat/backend
-  merge issue-198
-  checkout master
-  commit id: "fix app"
-  checkout feat/backend
-  merge master id: "sinkron master"
-  branch issue-199
-  commit id: "auth"
-  checkout feat/backend
-  merge issue-199
-  checkout master
-  merge feat/backend id: "MVP backend"
-```
-
-- Semua kerja backend di branch **`feat/backend`** (worktree terpisah, dibuat dari `master`). Tiap issue punya branch sendiri dari `feat/backend` dan di-merge ke sana, bukan ke `master`.
-- `master` di-merge ke `feat/backend` tiap mulai issue baru supaya tidak makin jauh.
-- Build hanya Luma Dev (`make dev`, `make run f=dev`); app Luma tidak tersentuh sampai merge.
-- **Schema Drift**: migrasi backend (#109) selalu memakai nomor setelah `schemaVersion` terbaru di `master`. Kalau `master` naik schema setelah migrasi backend dibuat, nomor dan test migrasinya disesuaikan saat merge `master` → `feat/backend`.
-- `feat/backend` di-merge ke `master` setelah #198–#201, #109, dan #210 selesai dan diuji di device.
+5. **Tutup issue** dengan ringkasan cek yang dijalankan.
 
 ## Setup & deploy
 
