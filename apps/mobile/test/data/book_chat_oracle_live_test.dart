@@ -167,7 +167,9 @@ void main() {
       checkpoint();
       expect(rows.length, jobs.length, reason: 'aborted: $abort; report $path');
       final candidate = rows.where((r) => r['variant'] == 'json_ids').toList();
-      final positive = candidate.where((r) => r['factCount'] > 0).toList();
+      final positive = candidate
+          .where((r) => (r['factCount'] as int) > 0)
+          .toList();
       expect(
         candidate.where((r) => r['valid'] == true).length / candidate.length,
         greaterThanOrEqualTo(.95),

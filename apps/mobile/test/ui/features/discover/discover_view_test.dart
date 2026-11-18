@@ -35,7 +35,7 @@ class FakeSource implements BookSource {
   final queries = <String>[];
   Object? searchError;
 
-  var sourceId = 'fake';
+  String sourceId = 'fake';
 
   @override
   String get id => sourceId;
@@ -46,7 +46,9 @@ class FakeSource implements BookSource {
   Future<CatalogPage> search(String query, {int page = 1}) async {
     queries.add('$query@$page');
     if (query.trim().isEmpty) return popular.future;
-    if (searchError case final e?) throw e;
+    if (searchError case final e?) {
+      Error.throwWithStackTrace(e, StackTrace.current);
+    }
     final hits = catalog
         .where((b) => b.title.toLowerCase().contains(query.toLowerCase()))
         .toList();

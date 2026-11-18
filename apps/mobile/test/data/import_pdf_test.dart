@@ -268,7 +268,7 @@ void main() {
 
   group('rollback', () {
     Future<void> breakParagraphs() => db.customStatement(
-      "CREATE TRIGGER boom BEFORE INSERT ON paragraphs "
+      'CREATE TRIGGER boom BEFORE INSERT ON paragraphs '
       "BEGIN SELECT RAISE(ABORT, 'boom'); END",
     );
 

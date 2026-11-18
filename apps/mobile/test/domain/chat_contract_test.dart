@@ -11,7 +11,7 @@ void main() {
   const foreign = (bookId: 2, contentRevision: 1);
   final now = DateTime.utc(2026, 10, 28);
   const original = 'A😀BC original evidence.';
-  const ChatParagraph paragraph = (
+  const paragraph = (
     book: book,
     chapterId: 7,
     paragraphIndex: 3,
@@ -199,12 +199,12 @@ void main() {
           {
             'text': 'Sebagai pengetahuan tambahan.',
             'kind': 'external',
-            'source_ids': [],
+            'source_ids': <Object?>[],
           },
           {
             'text': 'Ada bagian yang perlu lo perjelas?',
             'kind': 'conversation',
-            'source_ids': [],
+            'source_ids': <Object?>[],
           },
         ],
       }),
@@ -232,7 +232,7 @@ void main() {
             'layout': 'bullet',
             'kind': 'interpretation',
             'text': 'b',
-            'source_ids': [],
+            'source_ids': <Object?>[],
           },
           {
             'layout': 'quote',
@@ -244,15 +244,15 @@ void main() {
             'layout': 'quote',
             'kind': 'external',
             'text': 'x',
-            'source_ids': [],
+            'source_ids': <Object?>[],
           },
           {
             'layout': 'heading',
             'kind': 'conversation',
             'text': 'y',
-            'source_ids': [],
+            'source_ids': <Object?>[],
           },
-          {'kind': 'external', 'text': 'z', 'source_ids': []},
+          {'kind': 'external', 'text': 'z', 'source_ids': <Object?>[]},
         ],
       }),
     );
@@ -275,7 +275,7 @@ void main() {
             {
               'text': 'Penjelasan atau pertanyaan lanjutan.',
               'kind': 'conversation',
-              'source_ids': [],
+              'source_ids': <Object?>[],
             },
           ],
         }),
@@ -288,7 +288,7 @@ void main() {
 
   test('natural answers reject invented citations, false provenance and duplicate keys', () {
     for (final part in [
-      {'text': 'X', 'kind': 'book', 'source_ids': []},
+      {'text': 'X', 'kind': 'book', 'source_ids': <Object?>[]},
       {
         'text': 'X',
         'kind': 'book',
@@ -304,7 +304,7 @@ void main() {
         'kind': 'external',
         'source_ids': ['S1'],
       },
-      {'text': 'X', 'kind': 'unknown', 'source_ids': []},
+      {'text': 'X', 'kind': 'unknown', 'source_ids': <Object?>[]},
     ]) {
       expect(
         () => parse(
@@ -332,7 +332,7 @@ void main() {
         translation: 'NOT EVIDENCE',
       );
       final first = source(
-        a: anchor(start: 0, end: 3, snapshot: original.substring(0, 3)),
+        a: anchor(end: 3, snapshot: original.substring(0, 3)),
       );
       final second = source(
         id: 'S2',
@@ -384,7 +384,7 @@ void main() {
   test('history keeps completed conversation but excludes other sessions, nonfinal and later turns', () {
     final built = prompt(
       history: [
-        turn(id: 1, sequence: 1),
+        turn(),
         turn(id: 2, sequence: 2),
         turn(id: 3, sessionId: 11),
         turn(id: 4, owner: foreign),
@@ -410,7 +410,7 @@ void main() {
     final large = answer(text: 'x' * (chatHistoryBytes ~/ 2 + 1));
     final bounded = prompt(
       history: [
-        turn(id: 1, sequence: 1, reply: large),
+        turn(reply: large),
         turn(id: 2, sequence: 2, reply: large),
       ],
     );
@@ -497,7 +497,7 @@ void main() {
         () => supported.blocks.first.sources.clear(),
         throwsUnsupportedError,
       );
-      expect(() => s.anchors.clear(), throwsUnsupportedError);
+      expect(s.anchors.clear, throwsUnsupportedError);
     },
   );
 

@@ -275,7 +275,7 @@ List<ChatSource> parseChatSelection(
   if (utf8.encode(raw).length > chatPromptBytes) {
     throw const FormatException('Selector output budget');
   }
-  final Object? value = decodeChatAnswerJson(raw);
+  final value = decodeChatAnswerJson(raw);
   if (value is! Map || value['selected'] is! List) {
     throw const FormatException('Selector JSON');
   }

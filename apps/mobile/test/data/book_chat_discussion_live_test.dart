@@ -61,7 +61,7 @@ void main() {
       }
       final lock = File('/tmp/luma-discussion-budget.lock')
           .openSync(mode: FileMode.append);
-      lock.lockSync(FileLock.exclusive);
+      lock.lockSync();
       final metadataClient = Dio(
         BaseOptions(
           baseUrl: 'https://openrouter.ai/api/v1',

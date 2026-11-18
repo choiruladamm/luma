@@ -43,10 +43,7 @@ void main() {
         backupReminderDays(now: now, lastBackup: DateTime(2026, 10, 6, 23)),
         6,
       );
-      expect(
-        backupReminderDays(now: now, lastBackup: DateTime(2026, 9, 1)),
-        41,
-      );
+      expect(backupReminderDays(now: now, lastBackup: DateTime(2026, 9)), 41);
     });
 
     test('never backed up: counts from the first book; empty shelf = none', () {
@@ -55,10 +52,7 @@ void main() {
         backupReminderDays(now: now, firstBook: DateTime(2026, 10, 10)),
         isNull,
       );
-      expect(
-        backupReminderDays(now: now, firstBook: DateTime(2026, 10, 1)),
-        11,
-      );
+      expect(backupReminderDays(now: now, firstBook: DateTime(2026, 10)), 11);
     });
 
     test('the last backup wins over the first book', () {
@@ -66,14 +60,14 @@ void main() {
         backupReminderDays(
           now: now,
           lastBackup: DateTime(2026, 10, 11),
-          firstBook: DateTime(2026, 1, 1),
+          firstBook: DateTime(2026),
         ),
         isNull,
       );
     });
 
     test('closed today: gone until tomorrow', () {
-      final old = DateTime(2026, 9, 1);
+      final old = DateTime(2026, 9);
       expect(
         backupReminderDays(
           now: now,

@@ -335,9 +335,9 @@ Breakdown _whole(Breakdown b) {
 ///   active ([activeBlock]), its section's sentence is highlighted in the
 ///   panel, and the panel scrolls there. Tapping a number / chip jumps. The
 ///   panel is folded by default; unfolding / folding comes only from taps
-///   ([_folded]). While writing, the highlight already runs from section 1 and
+///   (`_folded`). While writing, the highlight already runs from section 1 and
 ///   follows scroll, without waiting for completion. Scrolling only changes
-///   [_active]; the panel rebuilds only when the active block changes.
+///   `_active`; the panel rebuilds only when the active block changes.
 class _Screen extends StatefulWidget {
   const _Screen({
     super.key,
@@ -585,7 +585,6 @@ class _ScreenState extends State<_Screen> with TickerProviderStateMixin {
         tops,
         line: Layout.breakdownReadLine,
         current: _active.value,
-        margin: Layout.breakdownSwitch,
         atEnd: m.maxScrollExtent > 0 && m.pixels >= m.maxScrollExtent - 1,
       ),
     );
@@ -703,7 +702,7 @@ class _ScreenState extends State<_Screen> with TickerProviderStateMixin {
                       : null,
                   term: term,
                   badges: _badges,
-                  onNumber: _interactive ? (i) => _jump(i) : null,
+                  onNumber: _interactive ? _jump : null,
                   onFold: () => _folded.value = true,
                 );
                 final child = _folded.value
@@ -1136,7 +1135,7 @@ String _countLabel(BuildContext context, int sections) => sections == 1
     ? context.l10n.breakdownIdea
     : context.l10n.breakdownSections(sections);
 
-/// Copy per error kind (table on the state board). [settings]: its yellow
+/// Copy per error kind (table on the state board). `settings`: its yellow
 /// button is "Buka Pengaturan", not "Coba lagi". An empty API key has its own
 /// screen.
 ({String title, String body, String code, bool settings}) _failureCopy(

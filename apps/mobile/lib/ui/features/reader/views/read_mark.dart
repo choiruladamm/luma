@@ -11,7 +11,7 @@ import '../../../core/theme/stabilo_tokens.dart';
 /// position ("Lanjut baca") or on a Cari kata result paragraph. With reduce
 /// motion: a 4pt left line that disappears on its own.
 ///
-/// Placed in the chapter body Stack ([show] coordinates are that Stack's), empty
+/// Placed in the chapter body Stack (`show` coordinates are that Stack's), empty
 /// until [ReadMarkState.show] is called.
 class ReadMark extends StatefulWidget {
   const ReadMark({super.key});

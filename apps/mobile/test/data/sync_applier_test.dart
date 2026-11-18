@@ -245,7 +245,7 @@ void main() {
       await files.book('h1.epub').writeAsString('epub');
       await files.cover('h1.jpg').writeAsString('jpg');
       await b.customStatement(
-        "INSERT INTO sync_inbox (kind, key, data, updated_at, schema_version) "
+        'INSERT INTO sync_inbox (kind, key, data, updated_at, schema_version) '
         "VALUES ('ai_result', 'h1/4/1', '{}', 1, 18)",
       );
 

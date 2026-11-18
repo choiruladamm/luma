@@ -9,7 +9,7 @@ import '../database/sync_schema.dart';
 import '../services/file_storage.dart';
 import '../services/sync_service.dart';
 
-/// Result of [SyncApplier.apply]; [held] counts the records kept in `sync_inbox`.
+/// Result of [SyncApplier.apply]; `held` counts the records kept in `sync_inbox`.
 typedef ApplyOutcome = ({int applied, int held});
 
 /// The order records are applied in within one page: parents first (book, then
@@ -169,8 +169,7 @@ class SyncApplier {
 
   /// Retries every held record (after a pull, after a book import, after an
   /// app update). Records that still can't be applied stay in the inbox.
-  Future<ApplyOutcome> retryInbox() async =>
-      apply(await _inbox(), cursor: null);
+  Future<ApplyOutcome> retryInbox() async => apply(await _inbox());
 
   /// Returns the book records in the inbox whose book isn't on this device yet, which forms the download queue.
   Future<List<PulledRecord>> missingBooks() async => [

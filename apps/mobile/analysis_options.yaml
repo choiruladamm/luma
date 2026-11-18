@@ -1,9 +1,64 @@
 include: package:flutter_lints/flutter.yaml
 
 analyzer:
+  language:
+    strict-casts: true
+    strict-inference: true
+    strict-raw-types: true
   exclude:
     - build/**
     - android/**
     - ios/**
     - "**/*.g.dart"
     - "**/*.freezed.dart"
+    # Eval harness files hashed by the chat eval guards (`frozen` in ../../hygiene.toml).
+    # Excluded so `dart fix` never rewrites them; `flutter test` still compiles them.
+    - test/data/book_chat_heldout_live_test.dart
+    - test/data/book_chat_refinement_live_test.dart
+    - test/data/book_chat_validation2_live_test.dart
+    - test/data/book_chat_validation3_live_test.dart
+    - test/support/book_chat_dense.dart
+    - test/support/book_chat_embedding_fallback.dart
+    - test/support/book_chat_gold.dart
+    - test/support/book_chat_heldout.dart
+    - test/support/book_chat_oracle.dart
+    - test/support/book_chat_recovery.dart
+    - test/support/book_chat_refinement.dart
+    - test/support/book_chat_retrieval.dart
+    - test/support/book_chat_spike.dart
+    - test/support/book_chat_validation2.dart
+    - test/support/book_chat_validation3.dart
+
+linter:
+  rules:
+    # Doc comments.
+    - comment_references
+    - dangling_library_doc_comments
+    - slash_for_doc_comments
+    # Async and resources.
+    - avoid_void_async
+    - cancel_subscriptions
+    - close_sinks
+    - unawaited_futures
+    # Errors.
+    - only_throw_errors
+    - throw_in_finally
+    # Types and correctness.
+    - always_declare_return_types
+    - literal_only_boolean_expressions
+    - missing_whitespace_between_adjacent_strings
+    - noop_primitive_operations
+    - test_types_in_equals
+    - type_annotate_public_apis
+    - unnecessary_statements
+    # Style the formatter doesn't cover.
+    - avoid_redundant_argument_values
+    - omit_local_variable_types
+    - prefer_final_in_for_each
+    - prefer_final_locals
+    - prefer_single_quotes
+    - unnecessary_breaks
+    - unnecessary_lambdas
+    - unnecessary_parenthesis
+    - use_named_constants
+    - use_super_parameters

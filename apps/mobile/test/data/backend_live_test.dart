@@ -9,7 +9,7 @@ void main() {
   final live = Platform.environment['LUMA_BACKEND_LIVE'] == '1';
 
   test('dev Worker answers /v1/health', () async {
-    final client = BackendClient(baseUrl: backendBaseUrl('dev', override: ''));
+    final client = BackendClient(baseUrl: backendBaseUrl('dev'));
 
     final health = await client.health();
 

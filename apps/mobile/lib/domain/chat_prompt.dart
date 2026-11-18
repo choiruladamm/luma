@@ -279,7 +279,7 @@ ChatAnswer parseChatAnswer(
     throw const FormatException('Jawaban melebihi batas');
   }
   validateChatSources(sources, current, paragraphs);
-  final Object? value = decodeChatAnswerJson(raw);
+  final value = decodeChatAnswerJson(raw);
   if (value is Map && value['parts'] is List) {
     final blocks = [
       for (final row in value['parts'] as List) chatAnswerPart(row, sources),
@@ -319,7 +319,7 @@ ChatAnswer parseChatAnswer(
   return ChatAnswer(status: status, blocks: blocks);
 }
 
-/// Model-provided [chapterIds] are accepted only if they are in [knownChapterIds].
+/// Model-provided `chapterIds` are accepted only if they are in [knownChapterIds].
 ChatQueryPlan parseChatQueryPlan(
   String raw, {
   Iterable<int> knownChapterIds = const [],
@@ -327,7 +327,7 @@ ChatQueryPlan parseChatQueryPlan(
   if (_bytes(raw) > chatPromptBytes) {
     throw const FormatException('Query plan melebihi batas');
   }
-  final Object? value = decodeChatAnswerJson(raw);
+  final value = decodeChatAnswerJson(raw);
   if (value is! Map ||
       value['query'] is! String ||
       value['needs_clarification'] is! bool) {

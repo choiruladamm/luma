@@ -43,8 +43,8 @@ void main() {
   group('Strategy 1 – outline', () {
     test('valid flat outline produces one chapter per bookmark', () {
       final blocks = [
-        heading('Chapter One', page: 1),
-        block('First chapter content.', page: 1),
+        heading('Chapter One'),
+        block('First chapter content.'),
         block('More first chapter.', page: 2),
         heading('Chapter Two', page: 3),
         block('Second chapter content.', page: 3),
@@ -73,8 +73,8 @@ void main() {
 
     test('nested outline: Part → Chapter uses child chapters', () {
       final blocks = [
-        heading('Chapter 1', page: 1),
-        block('Chapter 1 body.', page: 1),
+        heading('Chapter 1'),
+        block('Chapter 1 body.'),
         heading('Chapter 2', page: 5),
         block('Chapter 2 body.', page: 5),
       ];
@@ -102,8 +102,8 @@ void main() {
 
     test('bookmark with no destination is skipped', () {
       final blocks = [
-        heading('Preface', page: 1),
-        block('Preface body.', page: 1),
+        heading('Preface'),
+        block('Preface body.'),
         heading('Chapter 1', page: 2),
         block('Chapter 1 body.', page: 2),
       ];
@@ -111,7 +111,7 @@ void main() {
       final result = splitPdfChapters(
         blocks,
         outline: [
-          outline('Preface', page: null), // no destination
+          outline('Preface'), // no destination
           outline('Chapter 1', page: 2),
         ],
         totalPages: 5,
@@ -123,8 +123,8 @@ void main() {
 
     test('bookmark out-of-range page is ignored', () {
       final blocks = [
-        heading('Chapter 1', page: 1),
-        block('Chapter 1 body.', page: 1),
+        heading('Chapter 1'),
+        block('Chapter 1 body.'),
         heading('Chapter 2', page: 3),
         block('Chapter 2 body.', page: 3),
       ];
@@ -144,10 +144,10 @@ void main() {
 
     test('two chapters starting on the same page – split at heading', () {
       final blocks = [
-        heading('Chapter 1', page: 1),
-        block('Chapter 1 body.', page: 1),
-        heading('Chapter 2', page: 1), // same page
-        block('Chapter 2 body.', page: 1),
+        heading('Chapter 1'),
+        block('Chapter 1 body.'),
+        heading('Chapter 2'), // same page
+        block('Chapter 2 body.'),
       ];
 
       final result = splitPdfChapters(
@@ -168,8 +168,8 @@ void main() {
 
     test('duplicate bookmark pointing same block is deduplicated', () {
       final blocks = [
-        heading('Chapter 1', page: 1),
-        block('Chapter 1 body.', page: 1),
+        heading('Chapter 1'),
+        block('Chapter 1 body.'),
         heading('Chapter 2', page: 3),
         block('Chapter 2 body.', page: 3),
       ];
@@ -196,7 +196,7 @@ void main() {
 
     test('outline bookmark title matches nearby heading for precise split', () {
       final blocks = [
-        block('Some text from previous chapter.', page: 1),
+        block('Some text from previous chapter.'),
         // heading on same page as bookmark
         heading('Chapter Two', page: 2),
         block('Chapter 2 body starts here.', page: 2),
@@ -225,8 +225,8 @@ void main() {
   group('Strategy 2 – headings fallback', () {
     test('chapter/bab pattern headings become boundaries when no outline', () {
       final blocks = [
-        heading('Chapter 1', page: 1),
-        block('Chapter 1 body.', page: 1),
+        heading('Chapter 1'),
+        block('Chapter 1 body.'),
         block('More body.', page: 2),
         heading('Chapter 2', page: 3),
         block('Chapter 2 body.', page: 3),
@@ -241,8 +241,8 @@ void main() {
 
     test('Bab N headings are strong headings', () {
       final blocks = [
-        heading('Bab 1', page: 1),
-        block('Isi bab satu.', page: 1),
+        heading('Bab 1'),
+        block('Isi bab satu.'),
         heading('Bab 2', page: 2),
         block('Isi bab dua.', page: 2),
       ];
@@ -257,8 +257,8 @@ void main() {
     test('generic heading that is not strong does not become a boundary', () {
       // No "chapter/bab" pattern, no outline – single chapter expected
       final blocks = [
-        heading('Some Random Heading', page: 1),
-        block('Some body text here.', page: 1),
+        heading('Some Random Heading'),
+        block('Some body text here.'),
         block('More body text.', page: 2),
         heading('Another Heading', page: 3),
         block('More text.', page: 3),
@@ -275,8 +275,8 @@ void main() {
 
     test('ALL-CAPS short heading is treated as strong', () {
       final blocks = [
-        heading('PART ONE', page: 1),
-        block('Part One body.', page: 1),
+        heading('PART ONE'),
+        block('Part One body.'),
         heading('PART TWO', page: 5),
         block('Part Two body.', page: 5),
       ];
@@ -288,8 +288,8 @@ void main() {
 
     test('heading fallback needs at least two strong headings', () {
       final blocks = [
-        heading('Chapter 1', page: 1),
-        block('Only one chapter heading.', page: 1),
+        heading('Chapter 1'),
+        block('Only one chapter heading.'),
         block('More body.', page: 2),
       ];
 
@@ -308,11 +308,7 @@ void main() {
         for (var p = 1; p <= 60; p++) block('Body text on page $p.', page: p),
       ];
 
-      final result = splitPdfChapters(
-        blocks,
-        totalPages: 60,
-        fallbackPageSize: 20,
-      );
+      final result = splitPdfChapters(blocks, totalPages: 60);
 
       expect(result.chapters, hasLength(3));
       expect(result.chapters[0].title, 'Bagian 1');
@@ -325,11 +321,7 @@ void main() {
         for (var p = 1; p <= 10; p++) block('Content on page $p.', page: p),
       ];
 
-      final result = splitPdfChapters(
-        blocks,
-        totalPages: 10,
-        fallbackPageSize: 20,
-      );
+      final result = splitPdfChapters(blocks, totalPages: 10);
 
       expect(result.chapters, hasLength(1));
       expect(result.chapters[0].title, 'Bagian 1');
@@ -339,8 +331,8 @@ void main() {
   group('Non-content filtering', () {
     test('chapter with no body paragraphs is dropped', () {
       final blocks = [
-        heading('Chapter 1', page: 1),
-        block('Chapter 1 has real content here.', page: 1),
+        heading('Chapter 1'),
+        block('Chapter 1 has real content here.'),
         heading('Chapter 2', page: 2),
         // Only a heading and scene break – no body paragraphs
         sceneBreak(page: 2),
@@ -368,11 +360,11 @@ void main() {
 
     test('TOC page with dot-leader lines is dropped', () {
       final blocks = [
-        heading('Table of Contents', page: 1),
-        block('Chapter 1 .......... 5', page: 1),
-        block('Chapter 2 .......... 15', page: 1),
-        block('Chapter 3 .......... 25', page: 1),
-        block('Appendix .......... 45', page: 1),
+        heading('Table of Contents'),
+        block('Chapter 1 .......... 5'),
+        block('Chapter 2 .......... 15'),
+        block('Chapter 3 .......... 25'),
+        block('Appendix .......... 45'),
         heading('Chapter 1', page: 5),
         block('Real chapter 1 body text goes here.', page: 5),
         heading('Chapter 2', page: 15),
@@ -398,9 +390,9 @@ void main() {
 
     test('Introduction and Notes are retained (not filtered)', () {
       final blocks = [
-        heading('Introduction', page: 1),
-        block('This book is about an important topic.', page: 1),
-        block('The author explains the main themes.', page: 1),
+        heading('Introduction'),
+        block('This book is about an important topic.'),
+        block('The author explains the main themes.'),
         heading('Chapter 1', page: 3),
         block('Chapter 1 body.', page: 3),
         heading('Notes', page: 10),
@@ -427,8 +419,8 @@ void main() {
   group('Output contract', () {
     test('every block appears in exactly one chapter', () {
       final blocks = [
-        heading('Chapter 1', page: 1),
-        block('Para 1A.', page: 1),
+        heading('Chapter 1'),
+        block('Para 1A.'),
         block('Para 1B.', page: 2),
         heading('Chapter 2', page: 3),
         block('Para 2A.', page: 3),
@@ -459,8 +451,8 @@ void main() {
 
     test('charOffset is strictly increasing and correctly calculated', () {
       final blocks = [
-        heading('Chapter 1', page: 1),
-        block('AAAA', page: 1), // 4 chars
+        heading('Chapter 1'),
+        block('AAAA'), // 4 chars
         heading('Chapter 2', page: 2),
         block('BBBBBB', page: 2), // 6 chars
         heading('Chapter 3', page: 3),
@@ -495,9 +487,9 @@ void main() {
 
     test('groupIndex values are deterministic across repeated calls', () {
       final blocks = [
-        heading('Chapter 1', page: 1),
-        block('Short.', page: 1),
-        block('Also short.', page: 1),
+        heading('Chapter 1'),
+        block('Short.'),
+        block('Also short.'),
         heading('Chapter 2', page: 2),
         block('More content.', page: 2),
       ];
@@ -519,8 +511,8 @@ void main() {
       // A paragraph that logically continues from page 1 to page 2;
       // the layout engine merges it; here we have it as one block.
       final blocks = [
-        heading('Chapter 1', page: 1),
-        block('Paragraph that spans pages one and two.', page: 1),
+        heading('Chapter 1'),
+        block('Paragraph that spans pages one and two.'),
         heading('Chapter 2', page: 3),
         block('Chapter 2 content.', page: 3),
       ];
@@ -543,8 +535,8 @@ void main() {
 
     test('totalChars equals sum of all chapter charCounts', () {
       final blocks = [
-        heading('Chapter 1', page: 1),
-        block('A' * 50, page: 1),
+        heading('Chapter 1'),
+        block('A' * 50),
         heading('Chapter 2', page: 2),
         block('B' * 100, page: 2),
       ];
@@ -630,7 +622,7 @@ void main() {
 
     test('substantial text before the first bookmark is kept', () {
       final blocks = [
-        block(body(0), page: 1),
+        block(body(0)),
         for (var pg = 2; pg <= 5; pg++) block(body(pg), page: pg),
       ];
       final result = splitPdfChapters(
@@ -643,7 +635,7 @@ void main() {
 
     test('a bare title page before the first bookmark is dropped', () {
       final blocks = [
-        block('Title', page: 1),
+        block('Title'),
         for (var pg = 2; pg <= 5; pg++) block(body(pg), page: pg),
       ];
       final result = splitPdfChapters(
@@ -660,11 +652,11 @@ void main() {
 
     test('a chapter that just lists the other chapters is dropped', () {
       final blocks = [
-        heading('Contents', page: 1),
-        block('First Steps', page: 1),
-        block('The Second Idea', page: 1),
-        block('Third Thing Here', page: 1),
-        block('Fourth Matter', page: 1),
+        heading('Contents'),
+        block('First Steps'),
+        block('The Second Idea'),
+        block('Third Thing Here'),
+        block('Fourth Matter'),
         block(body(2), page: 2),
         block(body(3), page: 3),
         block(body(4), page: 4),
@@ -760,10 +752,10 @@ void main() {
 
     test('digit + title headings under "1 Title" are dropped, others kept', () {
       final blocks = [
-        heading('1', page: 1),
-        heading('The Surprising Power', page: 1),
-        heading('Something else entirely', page: 1),
-        block(body(1), page: 1),
+        heading('1'),
+        heading('The Surprising Power'),
+        heading('Something else entirely'),
+        block(body(1)),
         heading('2', page: 3),
         block(body(2), page: 3),
         block(body(3), page: 4),
@@ -784,8 +776,8 @@ void main() {
 
     test('a chapter of only a repeated heading keeps it', () {
       final blocks = [
-        heading('Epilogue', page: 1),
-        block(body(1), page: 1),
+        heading('Epilogue'),
+        block(body(1)),
         heading('Epilogue', page: 2),
         block(body(2), page: 2),
       ];
@@ -802,11 +794,8 @@ void main() {
 
     test('merged TOC paragraph (titles inside one paragraph) is dropped', () {
       final blocks = [
-        heading('Contents', page: 1),
-        block(
-          'First Steps The Second Idea Third Thing Here Fourth Matter',
-          page: 1,
-        ),
+        heading('Contents'),
+        block('First Steps The Second Idea Third Thing Here Fourth Matter'),
         block(body(2), page: 2),
         block(body(3), page: 3),
         block(body(4), page: 4),
@@ -833,11 +822,8 @@ void main() {
 
     test('contents text "1 Title" matches bookmarks "1 | Title"', () {
       final blocks = [
-        heading('Contents', page: 1),
-        block(
-          'Foreword 1 First Steps 2 The Second Idea 3 Third Thing Here',
-          page: 1,
-        ),
+        heading('Contents'),
+        block('Foreword 1 First Steps 2 The Second Idea 3 Third Thing Here'),
         block(body(2), page: 2),
         block(body(3), page: 3),
         block(body(4), page: 4),
@@ -908,7 +894,7 @@ void main() {
 
     test('tiny label chapters are dropped, real short ones stay', () {
       final blocks = [
-        block('Cover art', page: 1),
+        block('Cover art'),
         block('A Penguin Book. Copyright 2013.', page: 2),
         block('For my wife.', page: 3),
         for (var pg = 4; pg <= 8; pg++) block(body(pg), page: pg),
@@ -931,13 +917,13 @@ void main() {
       'a contents run inside another chapter is removed, text around stays',
       () {
         final blocks = [
-          block('The lyf so short, the craft so longe to lerne.', page: 1),
-          block('Front Notes', page: 1),
-          block('First Steps', page: 1),
-          block('The Second Idea', page: 1),
-          block('Third Thing Here', page: 1),
-          block('Fourth Matter', page: 1),
-          block(body(1), page: 1),
+          block('The lyf so short, the craft so longe to lerne.'),
+          block('Front Notes'),
+          block('First Steps'),
+          block('The Second Idea'),
+          block('Third Thing Here'),
+          block('Fourth Matter'),
+          block(body(1)),
           block(body(2), page: 2),
           block(body(3), page: 3),
           block(body(4), page: 4),
@@ -966,9 +952,9 @@ void main() {
 
     test('a few chapter titles quoted in prose are not a contents run', () {
       final blocks = [
-        block('See First Steps and The Second Idea later', page: 1),
-        block('Third Thing Here', page: 1),
-        block(body(1), page: 1),
+        block('See First Steps and The Second Idea later'),
+        block('Third Thing Here'),
+        block(body(1)),
         block(body(2), page: 2),
         block(body(3), page: 3),
         block(body(4), page: 4),

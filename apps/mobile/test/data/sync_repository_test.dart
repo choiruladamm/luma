@@ -35,7 +35,7 @@ class _Worker implements HttpClientAdapter {
 
   /// `kind key` → record + `seq`, like the `records` table.
   final server = <String, Map<String, Object?>>{};
-  var seq = 0;
+  int seq = 0;
 
   /// `since` cursor on each pull.
   final pulls = <int>[];

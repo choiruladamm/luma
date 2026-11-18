@@ -821,7 +821,7 @@ class _ReaderViewState extends ConsumerState<ReaderView>
                       onBack: () => context.pop(),
                       onToc: () => _openToc(b),
                       onMore: () => _openMenu(b),
-                      onChat: () => _openChat(),
+                      onChat: _openChat,
                       onStepSearch: (delta) => _stepSearch(b, delta),
                       onOpenSearch: () => _openSearch(b),
                       onCloseSearch: _closeSearch,

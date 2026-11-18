@@ -189,7 +189,8 @@ class ChatViewModel extends Notifier<ChatState> {
     final chatLifecycle = ref.watch(chatLifecycleProvider);
     final unregister = chatLifecycle.register(bookId, () async {
       await _stop(life);
-      if (life.flushError != null) throw life.flushError!;
+      final error = life.flushError;
+      if (error != null) Error.throwWithStackTrace(error, StackTrace.current);
     });
     final lifecycle = AppLifecycleListener(
       onStateChange: (appState) {
@@ -889,8 +890,14 @@ class _ChatLifetime {
   ChatScrollAnchor? savedAnchor;
   _ChatRun? run;
   Future<void>? transition;
+  // Cancelled in the view model's onDispose.
+  // ignore: cancel_subscriptions
   StreamSubscription<ChatBookRef?>? books;
+  // Cancelled in the view model's onDispose.
+  // ignore: cancel_subscriptions
   StreamSubscription<List<ChatSession>>? sessions;
+  // Cancelled in the view model's onDispose.
+  // ignore: cancel_subscriptions
   StreamSubscription<List<ChatTurn>>? turns;
 }
 

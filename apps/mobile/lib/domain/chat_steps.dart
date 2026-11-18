@@ -167,7 +167,7 @@ List<ChatStep> decodeChatSteps(String raw) {
   ];
 }
 
-ChatStep _step(Map item) {
+ChatStep _step(Map<Object?, Object?> item) {
   final kind = ChatStepKind.values.where((k) => k.name == item['kind']);
   final status = ChatStepStatus.values.where((s) => s.name == item['status']);
   final label = item['label'], detail = item['detail'];

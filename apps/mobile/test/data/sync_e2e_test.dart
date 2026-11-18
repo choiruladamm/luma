@@ -160,7 +160,7 @@ void main() {
         for (var i = 0; i < 1200; i++) {
           await c.db.customStatement(
             'INSERT INTO ai_results (chapter_id, group_index, translations, '
-            "meaning, model, prompt_version) VALUES (10, $i, "
+            'meaning, model, prompt_version) VALUES (10, $i, '
             "'[\"${'terjemahan ' * 40}\"]', '${'makna ' * 60}', 'm', 3)",
           );
         }

@@ -10,7 +10,7 @@ import '../database/app_database.dart';
 /// A Gutenberg bookshelf with its book count.
 typedef CatalogShelf = ({String name, int count});
 
-/// State of the local catalog; a [count] of 0 means it was never downloaded.
+/// State of the local catalog; a `count` of 0 means it was never downloaded.
 typedef CatalogStats = ({int count, DateTime? syncedAt, String? lastModified});
 
 /// Local Gutenberg catalog in the `catalog_books` table (docs/discover.md).

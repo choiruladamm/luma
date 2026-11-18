@@ -63,8 +63,10 @@ List<int> chatChapterIds(Object? raw, Iterable<int> known, {int max = 64}) {
   final parsed = [
     for (final id in raw)
       switch (id) {
-        int n => n,
-        String s when int.tryParse(s.trim()) != null => int.parse(s.trim()),
+        final int n => n,
+        final String s when int.tryParse(s.trim()) != null => int.parse(
+          s.trim(),
+        ),
         _ => throw const FormatException('ID bab dari model tidak valid'),
       },
   ];

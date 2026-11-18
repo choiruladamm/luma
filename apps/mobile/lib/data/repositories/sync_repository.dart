@@ -464,7 +464,7 @@ final syncChangesProvider = Provider<Stream<void>>((ref) {
   );
 });
 
-/// Progress of sync-driven book downloads: [done] out of [total] waiting books.
+/// Progress of sync-driven book downloads: `done` out of `total` waiting books.
 typedef SyncDownloads = ({int done, int total});
 
 class SyncDownloadsNotifier extends Notifier<SyncDownloads?> {

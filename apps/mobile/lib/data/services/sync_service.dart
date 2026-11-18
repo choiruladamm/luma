@@ -62,7 +62,7 @@ class PulledRecord {
   bool get deleted => data == null;
 }
 
-/// A page of pulled records: [nextSeq] is the next cursor and [more] says whether records remain.
+/// A page of pulled records: `nextSeq` is the next cursor and `more` says whether records remain.
 typedef PullPage = ({List<PulledRecord> records, int nextSeq, bool more});
 
 /// Calls `/v1/sync/*` (docs/sync-protocol.md, Push and pull).

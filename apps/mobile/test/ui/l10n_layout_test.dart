@@ -103,7 +103,7 @@ void main() {
                 aiCacheStatsProvider.overrideWith(
                   (_) => Stream.value((paragraphs: 3, bytes: 2048)),
                 ),
-                catalogSyncProvider.overrideWith(() => _Sync()),
+                catalogSyncProvider.overrideWith(_Sync.new),
                 catalogStatsProvider.overrideWith(
                   (ref) => Stream.value((
                     count: 0,

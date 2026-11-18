@@ -133,7 +133,8 @@ void main() {
 
       // An older prompt version counts as missing.
       await translate(g0, ['Satu.', 'Dua.']);
-      await (db.update(db.aiBreakdowns))
+      await db
+          .update(db.aiBreakdowns)
           .write(const AiBreakdownsCompanion(promptVersion: Value(0)));
       expect(await repo.find(g0, hash), isNull);
       expect(await repo.sections(g0), 0);
@@ -173,9 +174,11 @@ void main() {
 
   test('a stale quick translation leaves no input', () async {
     await translate(g0, ['Satu.', 'Dua.']);
-    await (db.update(db.aiResults)).write(
-      const AiResultsCompanion(promptVersion: Value(aiPromptVersion - 1)),
-    );
+    await db
+        .update(db.aiResults)
+        .write(
+          const AiResultsCompanion(promptVersion: Value(aiPromptVersion - 1)),
+        );
     expect(await repo.input(g0), isNull);
   });
 }

@@ -121,7 +121,12 @@ void main() {
 
     test('CatalogAuthor json round-trips', () {
       const a = CatalogAuthor('Austen, Jane', birth: 1775, death: 1817);
-      expect(CatalogAuthor.fromJson(jsonDecode(jsonEncode(a.toJson()))), a);
+      expect(
+        CatalogAuthor.fromJson(
+          jsonDecode(jsonEncode(a.toJson())) as Map<String, Object?>,
+        ),
+        a,
+      );
       expect(
         CatalogAuthor.fromJson(const {'name': 'Various'}),
         const CatalogAuthor('Various'),

@@ -148,19 +148,21 @@ class BackupService {
       entries,
       out,
     ));
-    cancel?.then((_) {
-      if (done.isCompleted) return;
-      isolate.kill(priority: Isolate.immediate);
-      done.complete(false);
-    });
+    unawaited(
+      cancel?.then((_) {
+        if (done.isCompleted) return;
+        isolate.kill(priority: Isolate.immediate);
+        done.complete(false);
+      }),
+    );
     port.listen((msg) {
       if (done.isCompleted) return;
       switch (msg) {
-        case (int stage, double fraction):
+        case (final int stage, final double fraction):
           onProgress?.call(BackupStage.values[stage], fraction);
         case null:
           done.complete(true);
-        case String error:
+        case final String error:
           done.completeError(FileSystemException(error, out));
       }
     });

@@ -117,14 +117,12 @@ void main() {
 
         await db
             .update(db.aiResults)
-            .write(
-              AiResultsCompanion(lastOpenedAt: Value(DateTime(2026, 1, 1))),
-            );
+            .write(AiResultsCompanion(lastOpenedAt: Value(DateTime(2026))));
         await repo.markOpened(group);
         await repo.markOpened(group);
         final r = await row();
         expect(r.openCount, 3);
-        expect(r.lastOpenedAt!.isAfter(DateTime(2026, 1, 1)), isTrue);
+        expect(r.lastOpenedAt!.isAfter(DateTime(2026)), isTrue);
       },
     );
 

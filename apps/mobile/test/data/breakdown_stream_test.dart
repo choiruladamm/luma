@@ -205,6 +205,7 @@ void main() {
       expect(now().draft.sections.single.title, 'A');
       expect(ai.lastCancel!.isCancelled, isTrue);
       expect(repo.saved, isEmpty);
+      unawaited(c.close());
     });
   });
 
@@ -217,6 +218,7 @@ void main() {
         ..addError(const AiException(AiError.network));
       async.flushMicrotasks();
       expect(now().phase, BreakdownPhase.cut);
+      unawaited(c.close());
     });
   });
 
@@ -234,6 +236,7 @@ void main() {
         ..addError(const AiException(AiError.network));
       async.elapse(const Duration(minutes: 1));
       expect(repo.saved, isEmpty);
+      unawaited(c.close());
     });
   });
 

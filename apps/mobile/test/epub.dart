@@ -1,3 +1,6 @@
+// The XHTML and OPF fragments are split across lines with no whitespace between them.
+// ignore_for_file: missing_whitespace_between_adjacent_strings
+
 import 'dart:typed_data';
 
 import 'package:archive/archive.dart';

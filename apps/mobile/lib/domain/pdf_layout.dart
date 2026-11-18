@@ -127,7 +127,7 @@ class PdfLayoutEngine {
   static String cleanText(String input) {
     if (input.isEmpty) return '';
 
-    var s = input
+    final s = input
         .replaceAll('\uFB00', 'ff')
         .replaceAll('\uFB01', 'fi')
         .replaceAll('\uFB02', 'fl')
@@ -643,7 +643,7 @@ class PdfLayoutEngine {
     final stats = _FlowStats.of(lines);
 
     var currentLines = <PdfLine>[];
-    ParagraphType currentType = ParagraphType.paragraph;
+    var currentType = ParagraphType.paragraph;
 
     void flushCurrent() {
       if (currentLines.isEmpty) return;

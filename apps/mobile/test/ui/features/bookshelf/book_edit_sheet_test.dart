@@ -35,7 +35,6 @@ BookInfo _info({String? epubCover, String? originalTitle}) => BookInfo(
   fileBytes: null,
   translated: 0,
   originalTitle: originalTitle,
-  originalAuthor: null,
   epubCoverName: epubCover,
 );
 

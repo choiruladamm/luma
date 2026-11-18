@@ -37,7 +37,7 @@ class ChatAnswerBlocks extends StatelessWidget {
   final bool running;
   final Widget Function(ChatSource source) chip;
 
-  /// Wraps a block with its scroll-position marker ([index] is its position in [blocks]).
+  /// Wraps a block with its scroll-position marker (`index` is its position in [blocks]).
   final Widget Function(int index, Widget child) anchor;
 
   @override

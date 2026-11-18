@@ -79,8 +79,8 @@ class ImportPdfFailed extends ImportState {
   final PdfImportError error;
 }
 
-/// Destination of a Markdown chapter import. [bookId] null = find / create via
-/// [bookKey]; [chapter] null = last chapter + 1.
+/// Destination of a Markdown chapter import. `bookId` null = find / create via
+/// `bookKey`; `chapter` null = last chapter + 1.
 typedef MarkdownChoice = ({
   int? bookId,
   String bookKey,

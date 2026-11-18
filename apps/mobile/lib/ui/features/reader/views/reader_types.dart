@@ -24,7 +24,7 @@ class SearchMode {
   int index = 0;
 }
 
-/// What [_ChapterText] needs to know about search mode: which word is highlighted,
+/// What `_ChapterText` needs to know about search mode: which word is highlighted,
 /// and which paragraph is open.
 class SearchMarks {
   const SearchMarks({

@@ -130,7 +130,7 @@ void main() {
         );
       final dio = Dio(BaseOptions(baseUrl: 'https://openrouter.ai/api/v1'))
         ..httpClientAdapter = adapter;
-      addTearDown(() => dio.close());
+      addTearDown(dio.close);
       await expectLater(
         cache.fill(['one'], live: false, apiKey: null, dio: dio),
         throwsStateError,

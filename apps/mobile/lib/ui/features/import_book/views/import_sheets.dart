@@ -442,7 +442,7 @@ class _FailedFrame extends StatelessWidget {
     required this.onPickAnother,
   });
 
-  final dynamic icon;
+  final List<List<dynamic>> icon;
   final String title, body, code;
   final VoidCallback onPickAnother;
 
@@ -658,7 +658,7 @@ class _Tile extends StatelessWidget {
 
 /// Text of the Markdown error sheet (board 6a–6d).
 extension ImportMarkdownFailedCopy on ImportMarkdownFailed {
-  /// [code] + [tail] continue after [body] (format example, mono).
+  /// `code` + `tail` continue after `body` (format example, mono).
   ({String title, String body, String chip, String? code, String? tail}) copy(
     AppLocalizations l10n,
   ) {

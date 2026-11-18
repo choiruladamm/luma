@@ -235,12 +235,12 @@ AppDatabase _old(List<String> schema, int version) => _open((raw) {
     raw.execute(sql);
   }
   raw.execute(
-    "INSERT INTO books (source_type, title, hash, parser_version, "
-    "total_chars, created_at, last_opened_at) "
+    'INSERT INTO books (source_type, title, hash, parser_version, '
+    'total_chars, created_at, last_opened_at) '
     "VALUES ('epub', 'Meditations', 'a', 1, 100, 1790000000, 1790500000)",
   );
   raw.execute(
-    "INSERT INTO chapters (book_id, sort_order, title, char_offset) "
+    'INSERT INTO chapters (book_id, sort_order, title, char_offset) '
     "VALUES (1, 0, 'I', 0)",
   );
   raw.execute(

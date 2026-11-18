@@ -58,7 +58,7 @@ void main() {
   });
 
   group('edgeFadeStops', () {
-    const s20 = EdgeFadeSide(20);
+    const s20 = EdgeFadeSide.standard;
 
     test('off: fully opaque everywhere', () {
       final g = edgeFadeStops(

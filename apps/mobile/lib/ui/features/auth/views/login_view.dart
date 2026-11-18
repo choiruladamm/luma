@@ -495,7 +495,6 @@ class _GoogleButton extends StatelessWidget {
     return Container(
       height: 56,
       decoration: BoxDecoration(
-        shape: BoxShape.rectangle,
         borderRadius: BorderRadius.circular(Radii.full),
         boxShadow: Elevation.press(c, Theme.of(context).brightness),
       ),
@@ -989,7 +988,6 @@ class _InviteBodyState extends ConsumerState<_InviteBody> {
 void showSignedInToast(BuildContext context, String name) => showAuthToast(
   context,
   context.l10n.authToastSignedIn(name.split(' ').first),
-  tone: AuthToastTone.success,
   // Called from the Masuk screen, but appears on Rak (above the bottom bar).
   overNav: true,
 );

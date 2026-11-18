@@ -26,7 +26,7 @@ typedef ParsedBook = ({
   int totalChars,
 });
 
-/// Result of an import; [duplicate] means the same file is already on the shelf, and [bookId] then points to the existing book.
+/// Result of an import; `duplicate` means the same file is already on the shelf, and `bookId` then points to the existing book.
 typedef ImportResult = ({int bookId, bool duplicate});
 
 /// Hasil [ImportRepository.importPdf].
@@ -64,7 +64,7 @@ class ChapterExists implements Exception {
   String toString() => 'ChapterExists(book $bookId, bab $chapter)';
 }
 
-/// Result of a Markdown chapter import; [created] means a new book was created, [replaced] means an existing chapter was overwritten.
+/// Result of a Markdown chapter import; `created` means a new book was created, `replaced` means an existing chapter was overwritten.
 typedef MarkdownImportResult = ({
   int bookId,
   int chapterId,
@@ -85,7 +85,10 @@ Future<ParsedBook> parseInIsolate(
   final outline = await _parseInIsolate(bytes);
   onOutline?.call();
   final port = ReceivePort();
-  final sub = port.listen((m) => onChapters?.call((m as List)[0], m[1]));
+  final sub = port.listen((m) {
+    final msg = m as List<Object?>;
+    onChapters?.call(msg[0]! as int, msg[1]! as int);
+  });
   final ParsedChapters book;
   try {
     book = await _extractInIsolate(outline, port.sendPort);
@@ -430,7 +433,6 @@ class ImportRepository {
         bookFile: bookFile,
         coverFile: coverFile,
         sourceType: SourceType.pdf,
-        version: pdf.pdfParserVersion,
       );
       return (bookId: id, duplicate: false, skippedPages: empty);
     } catch (_) {

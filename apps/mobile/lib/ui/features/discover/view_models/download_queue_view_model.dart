@@ -1,5 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:luma/ui/features/discover/views/download_toasts.dart'
+    show DownloadToasts;
 
 import '../../../../data/repositories/import_repository.dart';
 import '../../../../data/services/book_source.dart';

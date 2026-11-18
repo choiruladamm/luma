@@ -3,6 +3,10 @@ import 'dart:io';
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:luma/data/repositories/book_search_index.dart'
+    show BookSearchIndex;
+import 'package:luma/domain/catalog/catalog_row.dart' show CatalogAuthor;
+import 'package:luma/domain/reading.dart' show ReadingClock;
 
 import '../../domain/models/ai_reply.dart';
 import '../../domain/models/book.dart';
@@ -504,8 +508,8 @@ class AppDatabase extends _$AppDatabase {
   /// time `catalog_books` is replaced. `remove_diacritics 2` makes "bronte"
   /// match "Brontë".
   Future<void> createCatalogFts() => customStatement(
-    'CREATE VIRTUAL TABLE IF NOT EXISTS catalog_fts USING fts5('
-    "title, authors_text, content='catalog_books', content_rowid='id', "
+    'CREATE VIRTUAL TABLE IF NOT EXISTS catalog_fts USING '
+    "fts5(title, authors_text, content='catalog_books', content_rowid='id', "
     "tokenize='unicode61 remove_diacritics 2')",
   );
 
@@ -525,12 +529,12 @@ class AppDatabase extends _$AppDatabase {
   /// [rebuildBookSearchIndex].
   Future<void> createBookSearchFts() async {
     await customStatement(
-      'CREATE VIRTUAL TABLE IF NOT EXISTS paragraph_fts USING fts5('
-      "text, content='paragraphs', content_rowid='rowid', "
+      'CREATE VIRTUAL TABLE IF NOT EXISTS paragraph_fts USING '
+      "fts5(text, content='paragraphs', content_rowid='rowid', "
       "tokenize='unicode61 remove_diacritics 2')",
     );
     const drop =
-        "INSERT INTO paragraph_fts(paragraph_fts, rowid, text) "
+        'INSERT INTO paragraph_fts(paragraph_fts, rowid, text) '
         "SELECT 'delete', old.rowid, old.text WHERE EXISTS "
         '(SELECT 1 FROM paragraph_fts_docsize WHERE id = old.rowid);';
     await customStatement(

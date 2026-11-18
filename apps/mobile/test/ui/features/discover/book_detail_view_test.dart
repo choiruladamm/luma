@@ -101,7 +101,7 @@ void main() {
       ),
     );
     // The detail screen is always pushed from the Cari buku tab, so there is something to pop.
-    router.push('/detail');
+    unawaited(router.push('/detail'));
     await tester.pumpAndSettle();
     await tick(tester);
   }

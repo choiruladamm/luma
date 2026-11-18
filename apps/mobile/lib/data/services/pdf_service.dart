@@ -149,12 +149,7 @@ class PdfiumService implements PdfService {
     if (text == null || page.width <= 0 || page.height <= 0) return const [];
     final w = page.width, h = page.height;
     final out = <PdfGlyph>[];
-    PdfRectNormalized last = const PdfRectNormalized(
-      left: 0,
-      top: 0,
-      width: 0,
-      height: 0,
-    );
+    var last = const PdfRectNormalized(left: 0, top: 0, width: 0, height: 0);
     void whitespace(String ch) => out.add(
       PdfGlyph(
         char: ch,

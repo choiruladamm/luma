@@ -41,7 +41,9 @@ class FakePdf implements PdfService {
     void Function(int done, int total)? onPage,
   }) async {
     calls++;
-    if (error != null) throw error!;
+    if (error != null) {
+      Error.throwWithStackTrace(error!, StackTrace.current);
+    }
     onOpened?.call();
     for (var i = 1; i <= result.pageCount; i++) {
       onPage?.call(i, result.pageCount);

@@ -42,7 +42,7 @@ void main() {
       );
       final rewrites = <String, String>{};
       final needsClarification = <String>{};
-      var query = {
+      final query = {
         for (final e in primaryQuery.entries)
           e.key: embeddingQueryForModel(e.value, largeEmbeddingModel),
       };
@@ -170,7 +170,6 @@ void main() {
               cache.vector(query[c.id]!),
               c.book,
               quoteId: quote,
-              k: 40,
             );
             final translated = denseSearch(
               corpus,
@@ -178,7 +177,6 @@ void main() {
               cache.vector(rewrites[c.id]!),
               c.book,
               quoteId: quote,
-              k: 40,
             );
             final lexical = LexicalIndex(
               corpus,
