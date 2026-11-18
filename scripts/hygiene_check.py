@@ -18,11 +18,17 @@ Comments (files under `code_dirs`; comment syntax by extension; strings are skip
 Usage:
   hygiene_check.py [--root DIR] [--config FILE] [--docs] [--comments [PATH ...]] [--staged] [--report]
   hygiene_check.py --hook   # Claude Code PostToolUse: checks the edited file, exit 2 on findings
-No --docs/--comments: both. --staged checks the staged content (git index) of code files.
+  hygiene_check.py --version
+No --docs/--comments: both. --staged checks the staged content (git index) of code files in
+code_dirs/extra_files; any staged doc runs the full docs check, read from the working tree, so a
+partly staged doc is judged by its unstaged text (CI checks the commit itself).
 HYGIENE_MODE=report (or --report) prints findings and exits 0.
 """
 
 import sys
+
+# Bumped on every behavior change; the skill's check mode compares a repo's copy against it.
+VERSION = "2026.11.19"
 
 if sys.version_info < (3, 11):
     sys.exit("hygiene_check.py needs Python 3.11+ (tomllib).")
@@ -422,6 +428,9 @@ def main() -> int:
     args = sys.argv[1:]
     if "-h" in args or "--help" in args:
         print(__doc__)
+        return 0
+    if "--version" in args:
+        print(VERSION)
         return 0
     root, config = pathlib.Path.cwd(), None
     for flag in ("--root", "--config"):
