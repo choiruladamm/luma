@@ -17,6 +17,7 @@ Root `Makefile` (`make help`): mobile targets bare (`make test`), backend `backe
 - Run only the checks for what you changed (see each app's CLAUDE.md). Commit only after they exit 0, as its own command, never chained behind `grep` or `;`.
 - The hand-off states which checks ran and whether the full suite was skipped.
 - After touching `docs/` or doc citations in comments: `make docs-check`.
+- `scripts/hygiene` (`make hygiene`) runs the docs and comment checks plus every app's linter. It is the pre-commit hook (`make setup` once per clone) and the CI gate (`.github/workflows/ci.yml`, which also runs every app's tests).
 
 ## Issues
 
@@ -38,10 +39,10 @@ Root `Makefile` (`make help`): mobile targets bare (`make test`), backend `backe
 
 ## Docs and language
 
-- `docs/` describes how the system works now. A behavior change that a doc describes (names, routes, tables, limits, flows, quoted copy) updates that doc in the same commit. Structure and placement rules: `.claude/rules/docs.md` (loads when you touch `docs/`); a hook runs `make docs-check` on every docs edit.
+- `docs/` describes how the system works now. A behavior change that a doc describes (names, routes, tables, limits, flows, quoted copy) updates that doc in the same commit. Structure and placement rules: `.claude/rules/docs.md` (loads when you touch `docs/`); a Claude hook checks every edited file.
 - Docs, code, identifiers, commit messages, and CLAUDE.md files are English; issues and app copy are Indonesian.
 
 ## Code comments
 
 - English, and only for what the code can't say (why, invariants, workarounds). Full rule: `.claude/rules/code-comments.md` (loads when you touch app code).
-- Files hashed by the chat eval guards (`sourceHashes` in `apps/mobile/test/fixtures/*_protocol*.json`) stay byte-identical, comments included, unless you re-freeze them per `docs/llm-evals.md` (Re-freeze the eval guards).
+- Files hashed by the chat eval guards (`frozen` in `hygiene.toml`, from the `sourceHashes`/`sha256` maps in `apps/mobile/test/fixtures/*_protocol*.json`) stay byte-identical, comments included, unless you re-freeze them per `docs/llm-evals.md` (Re-freeze the eval guards).

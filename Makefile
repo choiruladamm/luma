@@ -1,13 +1,18 @@
 APP := apps/mobile
 BACKEND := apps/backend
 DASHBOARD := apps/dashboard
-FLUTTER := cd $(APP) && fvm flutter
-DART := cd $(APP) && fvm dart
+# CI has no FVM: it installs the pinned Flutter and runs with FVM= (empty).
+FVM ?= fvm
+FLUTTER := cd $(APP) && $(FVM) flutter
+DART := cd $(APP) && $(FVM) dart
 
-.PHONY: help get l10n gen brand live chat-agent-live chat-spike chat-spike-live chat-oracle-live chat-discussion-live chat-adaptive-live chat-retrieval chat-dense-live chat-dense-replay chat-heldout-live chat-refine-live chat-validation2-live chat-recovery-live chat-validation3-live watch run release dev run-android release-android dev-android apk profile test analyze format check clean docs-check comments-check backend-install backend-dev backend-types backend-test backend-live backend-e2e backend-migrate backend-invite backend-ban backend-unban backend-deploy dashboard-install dashboard-dev dashboard-test dashboard-e2e dashboard-deploy
+.PHONY: help setup get l10n gen brand live chat-agent-live chat-spike chat-spike-live chat-oracle-live chat-discussion-live chat-adaptive-live chat-retrieval chat-dense-live chat-dense-replay chat-heldout-live chat-refine-live chat-validation2-live chat-recovery-live chat-validation3-live watch run release dev run-android release-android dev-android apk profile test analyze format check clean hygiene docs-check backend-install backend-dev backend-types backend-test backend-live backend-e2e backend-migrate backend-invite backend-ban backend-unban backend-deploy dashboard-install dashboard-dev dashboard-test dashboard-e2e dashboard-deploy
 
 help: ## list available commands
 	@grep -E '^[a-z0-9-]+:.*## ' $(MAKEFILE_LIST) | awk -F ':.*## ' '{printf "  %-16s %s\n", $$1, $$2}'
+
+setup: ## use the repo git hooks (pre-commit runs scripts/hygiene)
+	git config core.hooksPath .githooks
 
 get: ## fetch Dart dependencies
 	$(FLUTTER) pub get
@@ -111,11 +116,11 @@ check: l10n format analyze test ## format, analyze, test
 clean: ## flutter clean + pub get
 	$(FLUTTER) clean && fvm flutter pub get
 
-docs-check: ## docs: structure, links, and citations in code comments (.claude/rules/docs.md)
-	python3 scripts/docs_check.py
+hygiene: ## docs, comments, and linters for every app (same as pre-commit and CI)
+	scripts/hygiene
 
-comments-check: ## code comments are English and follow .claude/rules/code-comments.md
-	python3 scripts/comments_check.py
+docs-check: ## docs structure and links, and comments (English, citations), no linters
+	python3 scripts/hygiene_check.py
 
 backend-install: ## backend: install deps (bun)
 	cd $(BACKEND) && bun install

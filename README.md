@@ -58,10 +58,12 @@ Your library lives on the device (SQLite via Drift). AI requests go straight fro
 Needs Flutter via [FVM](https://fvm.app), Xcode and/or the Android SDK, and [Bun](https://bun.sh) for the backend.
 
 ```bash
+make setup          # git hooks: pre-commit runs scripts/hygiene
 make get            # pub get
 make gen            # codegen (Drift, freezed)
 make run f=dev      # debug build of Luma Dev on a device / simulator
 make check          # format, analyze, test
+make hygiene        # docs, comments, and every app's linter (also CI)
 
 make backend-install
 make backend-dev    # local Worker on :8787

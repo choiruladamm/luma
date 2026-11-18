@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# E2E sync push + pull: Worker lokal (wrangler dev, D1/R2 lokal) + test Dart sync push / pull.
-# Dipanggil dari `make backend-e2e` di root repo.
+# E2E sync push and pull: a local Worker (wrangler dev, local D1/R2) driven by the Dart sync tests.
+# Run from the repo root with `make backend-e2e`.
 set -euo pipefail
 
 port=8788

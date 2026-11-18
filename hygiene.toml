@@ -1,0 +1,73 @@
+# docs-hygiene config, read by scripts/hygiene_check.py. Paths are repo-relative.
+
+docs_dir = "docs"
+index = "docs/README.md"
+max_doc_lines = 400
+
+# Folders and single files whose comments are checked and whose doc citations must resolve.
+code_dirs = [
+  "apps/mobile/lib",
+  "apps/mobile/test",
+  "apps/mobile/tool",
+  "apps/backend/src",
+  "apps/backend/test",
+  "apps/backend/scripts",
+  "apps/dashboard/worker",
+  "apps/dashboard/client",
+  "apps/dashboard/test",
+  "apps/dashboard/e2e",
+  "scripts",
+]
+extra_files = [
+  "apps/backend/wrangler.jsonc",
+  "apps/backend/vitest.config.ts",
+  "apps/backend/drizzle.config.ts",
+  "apps/dashboard/wrangler.jsonc",
+  "apps/dashboard/vite.config.ts",
+  "apps/dashboard/vitest.config.ts",
+  "apps/dashboard/vitest.client.config.ts",
+  "apps/dashboard/playwright.config.ts",
+  "apps/dashboard/backend-vars.ts",
+]
+
+skip = ["*.d.ts", "apps/mobile/lib/l10n/*"]
+
+# Files hashed by the chat eval guards; they change only with a re-freeze (docs/llm-evals.md).
+frozen = [
+  "apps/mobile/lib/data/services/chapter_extractor.dart",
+  "apps/mobile/lib/data/services/epub_parser.dart",
+  "apps/mobile/lib/data/services/openrouter_service.dart",
+  "apps/mobile/lib/domain/grouping.dart",
+  "apps/mobile/lib/domain/luma_markdown.dart",
+  "apps/mobile/pubspec.lock",
+  "apps/mobile/test/data/book_chat_heldout_live_test.dart",
+  "apps/mobile/test/data/book_chat_refinement_live_test.dart",
+  "apps/mobile/test/data/book_chat_validation2_live_test.dart",
+  "apps/mobile/test/data/book_chat_validation3_live_test.dart",
+  "apps/mobile/test/fixtures/book_chat_refined_protocol_v2.json",
+  "apps/mobile/test/fixtures/book_chat_validation2_cases.json",
+  "apps/mobile/test/fixtures/book_chat_validation3_cases.json",
+  "apps/mobile/test/support/book_chat_dense.dart",
+  "apps/mobile/test/support/book_chat_embedding_fallback.dart",
+  "apps/mobile/test/support/book_chat_gold.dart",
+  "apps/mobile/test/support/book_chat_heldout.dart",
+  "apps/mobile/test/support/book_chat_oracle.dart",
+  "apps/mobile/test/support/book_chat_recovery.dart",
+  "apps/mobile/test/support/book_chat_refinement.dart",
+  "apps/mobile/test/support/book_chat_retrieval.dart",
+  "apps/mobile/test/support/book_chat_spike.dart",
+  "apps/mobile/test/support/book_chat_validation2.dart",
+  "apps/mobile/test/support/book_chat_validation3.dart",
+]
+
+# Indonesian UI names used unquoted in English comments.
+allowed_terms = ["Nyambung ke", "Di luar buku", "Balik ke", "Tokoh & istilah", "Cari kata", "Cari buku", "Lanjut baca"]
+
+foreign_words_file = "scripts/hygiene_words.txt"
+
+# Eval harness files record which spike or evidence run they reproduce.
+evidence_paths = ["apps/mobile/test/support/book_chat_*", "apps/mobile/test/data/book_chat_*"]
+
+prose_files = [
+  "README.md", "AGENTS.md", "CLAUDE.md", ".claude/rules", ".claude/skills", "apps/mobile/CLAUDE.md", "apps/backend/CLAUDE.md", "apps/dashboard/CLAUDE.md",
+  "apps/mobile/README.md", "apps/backend/test/fixtures/contract/README.md"]
