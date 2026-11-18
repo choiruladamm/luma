@@ -13,13 +13,18 @@ export const BACKEND_VARS = [
 export type BackendVars = Record<(typeof BACKEND_VARS)[number], string>;
 
 export function backendVars(env: string | undefined): BackendVars {
-  if (env !== "dev" && env !== "prod" && env !== "e2e") throw new Error(`CLOUDFLARE_ENV must be dev, prod, or e2e, got ${env}`);
+  if (env !== "dev" && env !== "prod" && env !== "e2e")
+    throw new Error(`CLOUDFLARE_ENV must be dev, prod, or e2e, got ${env}`);
   // The local e2e env reads the backend's dev values.
-  const { vars } = unstable_readConfig({ config: "../backend/wrangler.jsonc", env: env === "e2e" ? "dev" : env }, { hideWarnings: true });
+  const { vars } = unstable_readConfig(
+    { config: "../backend/wrangler.jsonc", env: env === "e2e" ? "dev" : env },
+    { hideWarnings: true },
+  );
   return Object.fromEntries(
     BACKEND_VARS.map((name) => {
       const value = vars[name];
-      if (typeof value !== "string" || value === "") throw new Error(`backend ${env} var ${name} is missing`);
+      if (typeof value !== "string" || value === "")
+        throw new Error(`backend ${env} var ${name} is missing`);
       return [name, value];
     }),
   ) as BackendVars;

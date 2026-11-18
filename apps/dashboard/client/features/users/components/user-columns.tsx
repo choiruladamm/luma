@@ -23,7 +23,13 @@ export function UserStatusChip({ banned }: { banned: boolean }) {
 export const aiKeyLabel = (hasAiKey: boolean, t: I18n["t"]) => (hasAiKey ? t.users.freeQuota : "—");
 
 /** `q`: the search text, marked where it matches the email or name. */
-export function UserIdentity({ user, q }: { user: Pick<UserListItem, "email" | "name">; q?: string }) {
+export function UserIdentity({
+  user,
+  q,
+}: {
+  user: Pick<UserListItem, "email" | "name">;
+  q?: string;
+}) {
   // One mark per row: the email when it matches, otherwise the name.
   const inEmail = !!q && user.email.toLowerCase().includes(q.toLowerCase());
   return (
@@ -33,7 +39,9 @@ export function UserIdentity({ user, q }: { user: Pick<UserListItem, "email" | "
         <span className="lead truncate text-body font-medium text-ink">
           <Highlight text={user.email} q={q} />
         </span>
-        <span className="truncate text-caption text-ink2">{user.name ? <Highlight text={user.name} q={inEmail ? undefined : q} /> : "—"}</span>
+        <span className="truncate text-caption text-ink2">
+          {user.name ? <Highlight text={user.name} q={inEmail ? undefined : q} /> : "—"}
+        </span>
       </span>
     </span>
   );
@@ -42,14 +50,39 @@ export function UserIdentity({ user, q }: { user: Pick<UserListItem, "email" | "
 // Design component 2, Table: numbers right-aligned and tabular, empty values "—".
 export const userColumns = (i18n: I18n, q?: string) =>
   h.columns([
-  h.accessor("email", { header: i18n.t.users.user, cell: (info) => <UserIdentity user={info.row.original} q={q} /> }),
-  h.accessor("createdAt", { header: i18n.t.users.joined, cell: (info) => <span className="whitespace-nowrap">{formatDate(info.getValue(), i18n.locale)}</span> }),
-  h.accessor("lastActiveAt", { header: i18n.t.users.lastActive, cell: (info) => <span className="whitespace-nowrap">{formatRelative(info.getValue(), i18n)}</span> }),
-  h.accessor("r2Bytes", { header: i18n.t.users.files, cell: (info) => formatBytes(info.getValue(), i18n.locale) }),
-  h.accessor("syncBytes", { header: i18n.t.users.syncData, cell: (info) => formatBytes(info.getValue(), i18n.locale) }),
-  h.accessor("hasAiKey", { header: i18n.t.users.aiKey, cell: (info) => aiKeyLabel(info.getValue(), i18n.t) }),
-  h.accessor("banned", { header: i18n.t.users.status, cell: (info) => <UserStatusChip banned={info.getValue()} /> }),
-]);
+    h.accessor("email", {
+      header: i18n.t.users.user,
+      cell: (info) => <UserIdentity user={info.row.original} q={q} />,
+    }),
+    h.accessor("createdAt", {
+      header: i18n.t.users.joined,
+      cell: (info) => (
+        <span className="whitespace-nowrap">{formatDate(info.getValue(), i18n.locale)}</span>
+      ),
+    }),
+    h.accessor("lastActiveAt", {
+      header: i18n.t.users.lastActive,
+      cell: (info) => (
+        <span className="whitespace-nowrap">{formatRelative(info.getValue(), i18n)}</span>
+      ),
+    }),
+    h.accessor("r2Bytes", {
+      header: i18n.t.users.files,
+      cell: (info) => formatBytes(info.getValue(), i18n.locale),
+    }),
+    h.accessor("syncBytes", {
+      header: i18n.t.users.syncData,
+      cell: (info) => formatBytes(info.getValue(), i18n.locale),
+    }),
+    h.accessor("hasAiKey", {
+      header: i18n.t.users.aiKey,
+      cell: (info) => aiKeyLabel(info.getValue(), i18n.t),
+    }),
+    h.accessor("banned", {
+      header: i18n.t.users.status,
+      cell: (info) => <UserStatusChip banned={info.getValue()} />,
+    }),
+  ]);
 
 export const USER_NUMERIC = ["r2Bytes", "syncBytes"];
 

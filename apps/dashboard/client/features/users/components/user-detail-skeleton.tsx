@@ -5,7 +5,9 @@ import { useI18n } from "../../../i18n";
 import { NUMBER_GRID, NumberCard } from "./user-detail-cards";
 
 /** A text-shaped block inside the real text element, so the line keeps its real height. */
-const Line = ({ className }: { className: string }) => <Skeleton className={`inline-block align-middle ${className}`} />;
+const Line = ({ className }: { className: string }) => (
+  <Skeleton className={`inline-block align-middle ${className}`} />
+);
 
 /**
  * Board 05 while loading (design component 2, State): the same boxes as the loaded page (profile, the
@@ -14,7 +16,12 @@ const Line = ({ className }: { className: string }) => <Skeleton className={`inl
  */
 export function UserDetailSkeleton() {
   const { t } = useI18n();
-  const facts = [t.users.joined, t.users.lastActive, t.userDetail.signsInWith, t.userDetail.inviteCode];
+  const facts = [
+    t.users.joined,
+    t.users.lastActive,
+    t.userDetail.signsInWith,
+    t.userDetail.inviteCode,
+  ];
   return (
     <div aria-busy="true" aria-label={t.userDetail.loading} className="contents">
       <section className="flex flex-col gap-5 rounded-card bg-sheet p-5 md:gap-6 md:p-7">
@@ -34,7 +41,12 @@ export function UserDetailSkeleton() {
           <Button variant="secondary" icon="copy" disabled className="max-md:hidden">
             {t.userDetail.copyEmail}
           </Button>
-          <IconButton icon="copy" label={t.userDetail.copyEmail} disabled className="flex-none md:hidden" />
+          <IconButton
+            icon="copy"
+            label={t.userDetail.copyEmail}
+            disabled
+            className="flex-none md:hidden"
+          />
         </div>
         <dl className="m-0 grid grid-cols-2 gap-x-4 gap-y-4 border-t border-track pt-5 md:grid-cols-[repeat(auto-fit,minmax(180px,1fr))] md:gap-5">
           {facts.map((label) => (
@@ -48,16 +60,26 @@ export function UserDetailSkeleton() {
         </dl>
       </section>
       <div className={NUMBER_GRID}>
-        <NumberCard title={t.userDetail.bookFiles} value={<Line className="h-[20px] w-20 rounded-[8px] md:h-[26px]" />}>
+        <NumberCard
+          title={t.userDetail.bookFiles}
+          value={<Line className="h-[20px] w-20 rounded-[8px] md:h-[26px]" />}
+        >
           <div className="h-2 rounded-full bg-track" />
           <span className="text-caption">
             <Line className="h-3 w-44" />
           </span>
         </NumberCard>
-        <NumberCard title={t.users.syncData} value={<Line className="h-[20px] w-20 rounded-[8px] md:h-[26px]" />}>
+        <NumberCard
+          title={t.users.syncData}
+          value={<Line className="h-[20px] w-20 rounded-[8px] md:h-[26px]" />}
+        >
           <span className="text-caption text-ink2">{t.userDetail.syncNote}</span>
         </NumberCard>
-        <NumberCard wide title={t.userDetail.freeAi} value={<Line className="h-[20px] w-28 rounded-[8px] md:h-[26px]" />}>
+        <NumberCard
+          wide
+          title={t.userDetail.freeAi}
+          value={<Line className="h-[20px] w-28 rounded-[8px] md:h-[26px]" />}
+        >
           <span className="flex flex-col text-caption">
             <span>
               <Line className="h-3 w-full max-w-[280px]" />

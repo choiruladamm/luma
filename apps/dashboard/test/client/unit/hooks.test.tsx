@@ -9,7 +9,9 @@ afterEach(() => vi.useRealTimers());
 describe("useDebounce", () => {
   it("only settles after the value stops changing", () => {
     vi.useFakeTimers();
-    const { result, rerender } = renderHook(({ v }) => useDebounce(v, 300), { initialProps: { v: "a" } });
+    const { result, rerender } = renderHook(({ v }) => useDebounce(v, 300), {
+      initialProps: { v: "a" },
+    });
     rerender({ v: "ab" });
     act(() => vi.advanceTimersByTime(200));
     rerender({ v: "abc" });
@@ -39,7 +41,15 @@ describe("useMediaQuery", () => {
     const listeners = new Set<() => void>();
     let matches = false;
     vi.spyOn(window, "matchMedia").mockImplementation(
-      (q) => ({ get matches() { return matches; }, media: q, addEventListener: (_: string, l: () => void) => listeners.add(l), removeEventListener: (_: string, l: () => void) => listeners.delete(l) }) as unknown as MediaQueryList,
+      (q) =>
+        ({
+          get matches() {
+            return matches;
+          },
+          media: q,
+          addEventListener: (_: string, l: () => void) => listeners.add(l),
+          removeEventListener: (_: string, l: () => void) => listeners.delete(l),
+        }) as unknown as MediaQueryList,
     );
     const { result } = renderHook(() => useMediaQuery("(max-width: 767px)"));
     expect(result.current).toBe(false);

@@ -1,7 +1,12 @@
 import { getSignedCookie } from "hono/cookie";
 import { createDb } from "../../../backend/src/db/client";
 import { isAdmin } from "../auth/admin";
-import { endSessionIfPastMaxAge, findSession, isPastMaxAge, sessionCookieName } from "../auth/session";
+import {
+  endSessionIfPastMaxAge,
+  findSession,
+  isPastMaxAge,
+  sessionCookieName,
+} from "../auth/session";
 import { factory } from "../env";
 import { ApiError } from "../lib/errors";
 

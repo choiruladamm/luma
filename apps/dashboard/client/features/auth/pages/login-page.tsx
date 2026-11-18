@@ -16,7 +16,8 @@ function loginError(params: URLSearchParams, t: Messages) {
   const code = params.get("error");
   if (!code) return null;
   const detail = params.get("error_description") ?? "";
-  if (detail.includes("create accounts")) return { title: t.auth.notRegistered, body: t.auth.notRegisteredBody };
+  if (detail.includes("create accounts"))
+    return { title: t.auth.notRegistered, body: t.auth.notRegisteredBody };
   if (code === "FORBIDDEN") return { title: t.auth.notAdmin, body: t.auth.notAdminBody };
   return { title: t.auth.failed, body: t.auth.failedBody };
 }
@@ -59,7 +60,13 @@ export function LoginPage() {
         </div>
         {error && <Banner title={error.title}>{error.body}</Banner>}
         {signIn.isError && <Banner title={t.auth.failed}>{errorText(signIn.error, t)}</Banner>}
-        <Button variant="primary" size="lg" icon="google" onClick={() => signIn.mutate()} loading={signIn.isPending || signIn.isSuccess}>
+        <Button
+          variant="primary"
+          size="lg"
+          icon="google"
+          onClick={() => signIn.mutate()}
+          loading={signIn.isPending || signIn.isSuccess}
+        >
           {t.auth.google}
         </Button>
         <p className="m-0 text-caption text-ink2">{t.auth.sessionNote}</p>

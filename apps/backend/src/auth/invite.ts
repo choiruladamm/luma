@@ -10,9 +10,7 @@ export const INVITE_HEADER = "x-invite-code";
  */
 export function normalizeInviteCode(code: string) {
   const compact = code.toUpperCase().replace(/[^A-Z0-9]/g, "");
-  return compact.startsWith("LUMA") && compact.length > 4
-    ? `LUMA-${compact.slice(4)}`
-    : compact;
+  return compact.startsWith("LUMA") && compact.length > 4 ? `LUMA-${compact.slice(4)}` : compact;
 }
 
 /** 32 letters/digits without lookalikes (0/O, 1/I): 5 bits per character, no modulo bias. */
@@ -25,7 +23,9 @@ const INVITE_ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
  * [normalizeInviteCode] form.
  */
 export function newInviteCode() {
-  const chars = [...crypto.getRandomValues(new Uint8Array(10))].map((b) => INVITE_ALPHABET[b & 31]).join("");
+  const chars = [...crypto.getRandomValues(new Uint8Array(10))]
+    .map((b) => INVITE_ALPHABET[b & 31])
+    .join("");
   return `LUMA-${chars.slice(0, 5)}-${chars.slice(5)}`;
 }
 
@@ -36,7 +36,11 @@ export type InviteResult = "ok" | "invalid" | "used";
  * and is unused, so two concurrent sign-ups can't use the same code.
  * On failure, one more query tells "wrong code" apart from "already used".
  */
-export async function consumeInviteCode(db: Db, code: string, now = new Date()): Promise<InviteResult> {
+export async function consumeInviteCode(
+  db: Db,
+  code: string,
+  now = new Date(),
+): Promise<InviteResult> {
   const normalized = normalizeInviteCode(code);
   const rows = await db
     .update(inviteCodes)

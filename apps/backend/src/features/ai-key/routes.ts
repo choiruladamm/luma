@@ -18,7 +18,8 @@ export const ai = new Hono<AppEnv>()
     rateLimit((c) => `user:${c.get("user").id}`),
     limitBody(1024),
     zValidator("json", keyBody, (result) => {
-      if (!result.success) throw new ApiError(400, "BAD_REQUEST", "Body must be {\"rotate\"?: boolean}");
+      if (!result.success)
+        throw new ApiError(400, "BAD_REQUEST", 'Body must be {"rotate"?: boolean}');
     }),
     async (c) => {
       const { rotate } = c.req.valid("json");
@@ -29,9 +30,7 @@ export const ai = new Hono<AppEnv>()
     },
   )
   .get("/usage", async (c) =>
-    c.json(
-      await usage(c.var.db, c.var.openrouter, aiConfig(c.env), c.get("user").id),
-    ),
+    c.json(await usage(c.var.db, c.var.openrouter, aiConfig(c.env), c.get("user").id)),
   )
   .get("/config", (c) => {
     const { chatModels, embeddingModels, dailyLimitUsd } = aiConfig(c.env);

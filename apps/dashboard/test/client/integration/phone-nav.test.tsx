@@ -6,7 +6,13 @@ import { renderApp } from "../helpers/render";
 // but the scroll lock asks matchMedia itself).
 const phone = () =>
   vi.spyOn(window, "matchMedia").mockImplementation(
-    (query) => ({ matches: query.includes("max-width"), media: query, addEventListener: () => {}, removeEventListener: () => {} }) as unknown as MediaQueryList,
+    (query) =>
+      ({
+        matches: query.includes("max-width"),
+        media: query,
+        addEventListener: () => {},
+        removeEventListener: () => {},
+      }) as unknown as MediaQueryList,
   );
 
 afterEach(() => {
@@ -17,15 +23,27 @@ afterEach(() => {
 describe("phone navigation", () => {
   it("bottom tab bar: icons, labels, counts, and the current screen", async () => {
     const { user, router } = renderApp("/");
-    const bars = await screen.findAllByRole("navigation", { name: "Navigasi admin" }, { timeout: 4000 });
+    const bars = await screen.findAllByRole(
+      "navigation",
+      { name: "Navigasi admin" },
+      { timeout: 4000 },
+    );
     const tabBar = bars.at(-1)!;
     // First screen of a cold run: give the overview more than the default 1s.
     expect(await within(tabBar).findByText("48", {}, { timeout: 4000 })).toBeInTheDocument();
-    expect(within(tabBar).getByRole("link", { name: /Ringkasan/ })).toHaveAttribute("aria-current", "page");
+    expect(within(tabBar).getByRole("link", { name: /Ringkasan/ })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
     await user.click(within(tabBar).getByRole("link", { name: /Undangan/ }));
     await waitFor(() => expect(router.state.location.pathname).toBe("/invites"));
     // The route commits before NavLink re-renders its aria-current: wait for it, not the URL.
-    await waitFor(() => expect(within(tabBar).getByRole("link", { name: /Undangan/ })).toHaveAttribute("aria-current", "page"));
+    await waitFor(() =>
+      expect(within(tabBar).getByRole("link", { name: /Undangan/ })).toHaveAttribute(
+        "aria-current",
+        "page",
+      ),
+    );
   });
 
   it("search mode swaps the header row and locks the page scroll until closed", async () => {

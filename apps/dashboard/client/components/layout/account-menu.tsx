@@ -23,7 +23,18 @@ type Props = {
  * sheet shadow. Profile, "Bahasa" (language), "Tampilan" (appearance), then "Keluar" (sign out) under a divider. Both choices apply at
  * once (no Save). Closes on outside click.
  */
-export function AccountMenu({ user, open, onToggle, onClose, theme, onTheme, lang, onLang, onSignOut, signingOut }: Props) {
+export function AccountMenu({
+  user,
+  open,
+  onToggle,
+  onClose,
+  theme,
+  onTheme,
+  lang,
+  onLang,
+  onSignOut,
+  signingOut,
+}: Props) {
   const { t } = useI18n();
   const label = user.name || user.email;
   // Outside click and Esc close it from the document: the scrim below is position:fixed, which a
@@ -52,17 +63,34 @@ export function AccountMenu({ user, open, onToggle, onClose, theme, onTheme, lan
         className="inline-flex h-11 items-center gap-1.5 rounded-full bg-sheet p-1 text-ink md:pr-3"
       >
         <Avatar seed={user.email} label={label} />
-        <Icon name="chevdown" size={16} className={`text-ink2 transition-transform duration-150 max-md:hidden ${open ? "rotate-180" : ""}`} />
+        <Icon
+          name="chevdown"
+          size={16}
+          className={`text-ink2 transition-transform duration-150 max-md:hidden ${open ? "rotate-180" : ""}`}
+        />
       </button>
       {open && (
         <>
-          <button type="button" tabIndex={-1} aria-label={t.shell.closeMenu} onClick={onClose} className="fixed inset-0 z-10 cursor-default bg-scrim md:bg-transparent" />
-          <div id="menu-akun" role="group" aria-label={t.shell.accountMenu} className="fixed inset-x-3.5 top-(--menu-top) z-20 flex flex-col gap-4 rounded-menu bg-sheet p-4 shadow-[var(--shadow-sheet),inset_0_0_0_1px_var(--c-track)] md:absolute md:inset-x-auto md:top-[calc(100%+8px)] md:right-0 md:w-[304px]">
+          <button
+            type="button"
+            tabIndex={-1}
+            aria-label={t.shell.closeMenu}
+            onClick={onClose}
+            className="fixed inset-0 z-10 cursor-default bg-scrim md:bg-transparent"
+          />
+          <div
+            id="menu-akun"
+            role="group"
+            aria-label={t.shell.accountMenu}
+            className="fixed inset-x-3.5 top-(--menu-top) z-20 flex flex-col gap-4 rounded-menu bg-sheet p-4 shadow-[var(--shadow-sheet),inset_0_0_0_1px_var(--c-track)] md:absolute md:inset-x-auto md:top-[calc(100%+8px)] md:right-0 md:w-[304px]"
+          >
             <div className="flex items-center gap-3">
               <Avatar seed={user.email} label={label} size={40} />
               <div className="flex min-w-0 flex-col gap-0.5">
                 <span className="truncate text-body font-semibold">{label}</span>
-                <span className="truncate text-caption text-ink2">{user.name ? user.email : t.shell.admin}</span>
+                <span className="truncate text-caption text-ink2">
+                  {user.name ? user.email : t.shell.admin}
+                </span>
               </div>
             </div>
             <div className="h-px bg-track" />
@@ -96,14 +124,44 @@ export function AccountMenu({ user, open, onToggle, onClose, theme, onTheme, lan
                 value={theme}
                 onChange={onTheme}
                 options={[
-                  { value: "light", label: <><Icon name="sun" size={16} />{t.shell.light}</> },
-                  { value: "dark", label: <><Icon name="moon" size={16} />{t.shell.dark}</> },
-                  { value: "system", label: <><Icon name="monitor" size={16} />{t.shell.system}</> },
+                  {
+                    value: "light",
+                    label: (
+                      <>
+                        <Icon name="sun" size={16} />
+                        {t.shell.light}
+                      </>
+                    ),
+                  },
+                  {
+                    value: "dark",
+                    label: (
+                      <>
+                        <Icon name="moon" size={16} />
+                        {t.shell.dark}
+                      </>
+                    ),
+                  },
+                  {
+                    value: "system",
+                    label: (
+                      <>
+                        <Icon name="monitor" size={16} />
+                        {t.shell.system}
+                      </>
+                    ),
+                  },
                 ]}
               />
             </div>
             <div className="h-px bg-track" />
-            <button type="button" onClick={onSignOut} disabled={signingOut} aria-busy={signingOut || undefined} className="flex h-11 items-center justify-center gap-2 rounded-full bg-muted px-4 text-body font-medium text-danger-ink hover:bg-danger-soft">
+            <button
+              type="button"
+              onClick={onSignOut}
+              disabled={signingOut}
+              aria-busy={signingOut || undefined}
+              className="flex h-11 items-center justify-center gap-2 rounded-full bg-muted px-4 text-body font-medium text-danger-ink hover:bg-danger-soft"
+            >
               {signingOut ? <Spinner /> : <Icon name="logout" />}
               {t.shell.signOut}
             </button>

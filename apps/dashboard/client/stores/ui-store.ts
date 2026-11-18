@@ -28,7 +28,11 @@ export const useUiStore = create<UiState>()(
       setOpenMenu: (openMenu) => set({ openMenu }),
     }),
     // Only the theme and language choices survive a reload; menus always start closed.
-    { name: "luma-admin-ui", storage: createJSONStorage(() => localStorage), partialize: (s) => ({ theme: s.theme, lang: s.lang }) },
+    {
+      name: "luma-admin-ui",
+      storage: createJSONStorage(() => localStorage),
+      partialize: (s) => ({ theme: s.theme, lang: s.lang }),
+    },
   ),
 );
 

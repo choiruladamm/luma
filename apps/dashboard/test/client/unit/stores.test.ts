@@ -29,6 +29,9 @@ describe("ui store", () => {
   it("persists only the theme and language choices", () => {
     useUiStore.getState().setTheme("dark");
     useUiStore.getState().setOpenMenu("account");
-    expect(JSON.parse(localStorage.getItem("luma-admin-ui")!)).toEqual({ state: { theme: "dark", lang: "id" }, version: 0 });
+    expect(JSON.parse(localStorage.getItem("luma-admin-ui")!)).toEqual({
+      state: { theme: "dark", lang: "id" },
+      version: 0,
+    });
   });
 });

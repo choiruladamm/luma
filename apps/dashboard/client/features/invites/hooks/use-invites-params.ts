@@ -12,9 +12,16 @@ export type InvitesParams = {
   limit: 20 | 50;
 };
 
-export const DEFAULT_INVITES_PARAMS: InvitesParams = { q: "", sort: "default", dir: "desc", page: 1, limit: 20 };
+export const DEFAULT_INVITES_PARAMS: InvitesParams = {
+  q: "",
+  sort: "default",
+  dir: "desc",
+  page: 1,
+  limit: 20,
+};
 
-const pick = <T extends string>(value: string | null, allowed: readonly T[]) => (allowed.includes(value as T) ? (value as T) : undefined);
+const pick = <T extends string>(value: string | null, allowed: readonly T[]) =>
+  allowed.includes(value as T) ? (value as T) : undefined;
 
 /** URL → params. Unknown values fall back to the defaults instead of failing the screen. */
 export function parseInvitesParams(search: URLSearchParams): InvitesParams {
@@ -23,7 +30,8 @@ export function parseInvitesParams(search: URLSearchParams): InvitesParams {
     q: (search.get("q") ?? "").trim(),
     status: pick(search.get("status"), ["unused", "used"] as const),
     usedWithin: pick(search.get("usedWithin"), ["7d", "30d"] as const),
-    sort: pick(search.get("sort"), ["default", "createdAt", "usedAt", "code"] as const) ?? "default",
+    sort:
+      pick(search.get("sort"), ["default", "createdAt", "usedAt", "code"] as const) ?? "default",
     dir: search.get("dir") === "asc" ? "asc" : "desc",
     page: Number.isInteger(page) && page > 1 ? page : 1,
     limit: search.get("limit") === "50" ? 50 : 20,
@@ -54,9 +62,13 @@ export function useInvitesParams() {
   const set = (patch: Partial<InvitesParams>) => {
     const next = { ...params, ...patch, page: patch.page ?? 1 };
     if (patch.usedWithin) next.status = "used";
-    if ("status" in patch && patch.status !== "used" && !("usedWithin" in patch)) next.usedWithin = undefined;
+    if ("status" in patch && patch.status !== "used" && !("usedWithin" in patch))
+      next.usedWithin = undefined;
     // No router scroll reset: the table stays in view (Pagination scrolls to its top smoothly).
-    setSearch(invitesSearchEntries(next), { replace: patch.page === undefined, preventScrollReset: true });
+    setSearch(invitesSearchEntries(next), {
+      replace: patch.page === undefined,
+      preventScrollReset: true,
+    });
   };
   return { params, set };
 }

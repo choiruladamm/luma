@@ -1,10 +1,33 @@
 /** Luma mark (board header): yellow stabilo U with a pink dot. */
 export function LogoMark({ size = 28 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 100 100" fill="none" aria-hidden="true" className="block flex-none">
-      <path d="M26 34 C26 72, 74 72, 74 34" transform="translate(4 4)" stroke="#1A1A1A" strokeWidth="28" strokeLinecap="square" />
-      <path d="M26 34 C26 72, 74 72, 74 34" stroke="#1A1A1A" strokeWidth="28" strokeLinecap="square" />
-      <path d="M26 34 C26 72, 74 72, 74 34" stroke="#FFD84D" strokeWidth="20" strokeLinecap="square" />
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 100 100"
+      fill="none"
+      aria-hidden="true"
+      className="block flex-none"
+    >
+      <path
+        d="M26 34 C26 72, 74 72, 74 34"
+        transform="translate(4 4)"
+        stroke="#1A1A1A"
+        strokeWidth="28"
+        strokeLinecap="square"
+      />
+      <path
+        d="M26 34 C26 72, 74 72, 74 34"
+        stroke="#1A1A1A"
+        strokeWidth="28"
+        strokeLinecap="square"
+      />
+      <path
+        d="M26 34 C26 72, 74 72, 74 34"
+        stroke="#FFD84D"
+        strokeWidth="20"
+        strokeLinecap="square"
+      />
       <circle cx="50" cy="22" r="9" fill="#FFC2D3" stroke="#1A1A1A" strokeWidth="4" />
     </svg>
   );
@@ -19,7 +42,10 @@ export function Wordmark({ dev }: { dev?: boolean }) {
       <span className="hidden text-[15px] font-medium text-ink2 min-[380px]:inline">admin</span>
       {dev && (
         <span className="inline-flex items-center md:hidden">
-          <span aria-hidden="true" className="size-2 rounded-full bg-pink shadow-[0_0_0_2px_var(--c-page),0_0_0_3px_var(--c-on-pink)]" />
+          <span
+            aria-hidden="true"
+            className="size-2 rounded-full bg-pink shadow-[0_0_0_2px_var(--c-page),0_0_0_3px_var(--c-on-pink)]"
+          />
           <span className="sr-only">DEV</span>
         </span>
       )}

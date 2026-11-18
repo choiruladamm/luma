@@ -24,7 +24,23 @@ export function pageList(page: number, count: number): (number | null)[] {
  * Table footer: "51–100 of 120", ‹ 1 … 4 5 6 … 10 ›, and an optional page size. Phones get the
  * compact "‹ Page 2 / 3 ›" (docs/dashboard.md, Screens and navigation).
  */
-export function Pagination({ page, pageCount, total, pageSize, onPage, pageSizes, onPageSize }: { page: number; pageCount: number; total: number; pageSize: number; onPage: (page: number) => void; pageSizes?: number[]; onPageSize?: (size: number) => void }) {
+export function Pagination({
+  page,
+  pageCount,
+  total,
+  pageSize,
+  onPage,
+  pageSizes,
+  onPageSize,
+}: {
+  page: number;
+  pageCount: number;
+  total: number;
+  pageSize: number;
+  onPage: (page: number) => void;
+  pageSizes?: number[];
+  onPageSize?: (size: number) => void;
+}) {
   const { t, locale } = useI18n();
   const n = (v: number) => formatNumber(v, locale);
   const self = useRef<HTMLElement>(null);
@@ -40,17 +56,39 @@ export function Pagination({ page, pageCount, total, pageSize, onPage, pageSizes
   const from = total === 0 ? 0 : (page - 1) * pageSize + 1;
   const to = Math.min(total, page * pageSize);
   return (
-    <nav ref={self} aria-label={t.common.pagination} className="flex flex-wrap items-center justify-between gap-3 px-6 py-4">
-      <span className="text-caption text-ink2 tabular-nums">{t.common.range(n(from), n(to), n(total))}</span>
+    <nav
+      ref={self}
+      aria-label={t.common.pagination}
+      className="flex flex-wrap items-center justify-between gap-3 px-6 py-4"
+    >
+      <span className="text-caption text-ink2 tabular-nums">
+        {t.common.range(n(from), n(to), n(total))}
+      </span>
       <div className="flex items-center gap-1.5">
         {pageSizes && onPageSize && (
           <span className="mr-2 inline-flex items-center gap-2 text-caption text-ink2 max-md:hidden">
-            <Select up hideLabel label={t.common.perPage} value={String(pageSize)} options={pageSizes.map((size) => [String(size), String(size)] as [string, string])} onChange={(v) => onPageSize(Number(v))} />
+            <Select
+              up
+              hideLabel
+              label={t.common.perPage}
+              value={String(pageSize)}
+              options={pageSizes.map((size) => [String(size), String(size)] as [string, string])}
+              onChange={(v) => onPageSize(Number(v))}
+            />
             {t.common.perPage}
           </span>
         )}
-        <IconButton icon="back" label={t.common.prevPage} size="md" disabled={page <= 1} onClick={() => go(page - 1)} className={END} />
-        <span className="px-2 text-caption font-medium tabular-nums md:hidden">{t.common.pageOf(n(page), n(pageCount))}</span>
+        <IconButton
+          icon="back"
+          label={t.common.prevPage}
+          size="md"
+          disabled={page <= 1}
+          onClick={() => go(page - 1)}
+          className={END}
+        />
+        <span className="px-2 text-caption font-medium tabular-nums md:hidden">
+          {t.common.pageOf(n(page), n(pageCount))}
+        </span>
         <ol className="m-0 flex list-none items-center gap-1 p-0 max-md:hidden">
           {pageList(page, pageCount).map((p, i) =>
             p === null ? (
@@ -64,7 +102,10 @@ export function Pagination({ page, pageCount, total, pageSize, onPage, pageSizes
                   aria-label={t.common.goToPage(n(p))}
                   aria-current={p === page ? "page" : undefined}
                   onClick={() => go(p)}
-                  className={cn("h-11 min-w-11 rounded-full px-2 text-body tabular-nums", p === page ? "bg-ink font-semibold text-canvas" : "text-ink hover:bg-muted")}
+                  className={cn(
+                    "h-11 min-w-11 rounded-full px-2 text-body tabular-nums",
+                    p === page ? "bg-ink font-semibold text-canvas" : "text-ink hover:bg-muted",
+                  )}
                 >
                   {n(p)}
                 </button>
@@ -72,7 +113,14 @@ export function Pagination({ page, pageCount, total, pageSize, onPage, pageSizes
             ),
           )}
         </ol>
-        <IconButton icon="chev" label={t.common.nextPage} size="md" disabled={page >= pageCount} onClick={() => go(page + 1)} className={END} />
+        <IconButton
+          icon="chev"
+          label={t.common.nextPage}
+          size="md"
+          disabled={page >= pageCount}
+          onClick={() => go(page + 1)}
+          className={END}
+        />
       </div>
     </nav>
   );

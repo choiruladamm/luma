@@ -28,7 +28,15 @@ export function UsersTableSkeleton({ rows = 8 }: { rows?: number }) {
     { header: t.users.aiKey, cell: () => <Skeleton className="h-3 w-16" /> },
     { header: t.users.status, cell: () => <Skeleton className="h-6 w-[68px]" /> },
   ];
-  return <TableSkeleton label={t.users.loading} columns={columns} rows={rows} rowLink card={<UserCardSkeleton />} />;
+  return (
+    <TableSkeleton
+      label={t.users.loading}
+      columns={columns}
+      rows={rows}
+      rowLink
+      card={<UserCardSkeleton />}
+    />
+  );
 }
 
 /** Phone row (UserCard): avatar, email, status, then the 4 labels with value blocks. */

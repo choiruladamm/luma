@@ -16,16 +16,26 @@ describe("sync daily quota", () => {
   it("counts rows per UTC day and starts over the next day", async () => {
     const { userId } = await signUp();
     const today = new Date("2026-11-13T23:59:00Z");
-    await push(env.DB, userId, { schemaVersion: 18, records: [record("a"), record("b")] }, limits, today);
+    await push(
+      env.DB,
+      userId,
+      { schemaVersion: 18, records: [record("a"), record("b")] },
+      limits,
+      today,
+    );
 
-    await expect(push(env.DB, userId, { schemaVersion: 18, records: [record("c")] }, limits, today)).rejects.toMatchObject({
+    await expect(
+      push(env.DB, userId, { schemaVersion: 18, records: [record("c")] }, limits, today),
+    ).rejects.toMatchObject({
       status: 429,
       code: "QUOTA_EXCEEDED",
       headers: { "Retry-After": "60" },
     });
 
     const tomorrow = new Date("2026-11-14T00:00:01Z");
-    expect(await push(env.DB, userId, { schemaVersion: 18, records: [record("c")] }, limits, tomorrow)).toEqual({
+    expect(
+      await push(env.DB, userId, { schemaVersion: 18, records: [record("c")] }, limits, tomorrow),
+    ).toEqual({
       seq: 3,
       applied: 1,
     });

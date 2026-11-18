@@ -34,7 +34,10 @@ export function fakeOpenRouter() {
         expiresAt: body.expires_at as string,
       };
       keys.set(key.hash, key);
-      return HttpResponse.json({ data: { hash: key.hash, limit: key.limit }, key: key.key }, { status: 201 });
+      return HttpResponse.json(
+        { data: { hash: key.hash, limit: key.limit }, key: key.key },
+        { status: 201 },
+      );
     }),
     http.patch(`${OPENROUTER_API}/keys/:hash`, async ({ params, request }) => {
       calls.push(`PATCH /keys/${params.hash}`);

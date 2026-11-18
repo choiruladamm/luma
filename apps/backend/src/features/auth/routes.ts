@@ -22,7 +22,10 @@ const codeForStatus = (status: number): ErrorCode => {
  */
 export async function normalizeAuthError(res: Response): Promise<Response> {
   if (res.ok || !res.headers.get("content-type")?.includes("application/json")) return res;
-  const body = (await res.clone().json().catch(() => null)) as {
+  const body = (await res
+    .clone()
+    .json()
+    .catch(() => null)) as {
     code?: string;
     message?: string;
     error?: unknown;
@@ -31,7 +34,10 @@ export async function normalizeAuthError(res: Response): Promise<Response> {
   const headers = new Headers(res.headers);
   headers.delete("content-length");
   return Response.json(
-    errorBody((body.code as ErrorCode) ?? codeForStatus(res.status), body.message ?? res.statusText),
+    errorBody(
+      (body.code as ErrorCode) ?? codeForStatus(res.status),
+      body.message ?? res.statusText,
+    ),
     { status: res.status, headers },
   );
 }
@@ -42,8 +48,15 @@ export async function normalizeAuthError(res: Response): Promise<Response> {
  * surface doesn't grow each time Better Auth adds an endpoint.
  * Google goes through a native idToken (`sign-in/social`), with no redirect callback.
  */
-export const AUTH_PATHS = ["/sign-up/email", "/sign-in/email", "/sign-in/social", "/sign-out"] as const;
+export const AUTH_PATHS = [
+  "/sign-up/email",
+  "/sign-in/email",
+  "/sign-in/social",
+  "/sign-out",
+] as const;
 
 export const auth = new Hono<AppEnv>()
   .use(limitBody(AUTH_BODY_LIMIT))
-  .on("POST", [...AUTH_PATHS], async (c) => normalizeAuthError(await getAuth(c.env).handler(c.req.raw)));
+  .on("POST", [...AUTH_PATHS], async (c) =>
+    normalizeAuthError(await getAuth(c.env).handler(c.req.raw)),
+  );

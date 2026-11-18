@@ -46,7 +46,8 @@ export const en: Messages = {
     failed: "Couldn't sign in",
     failedBody: "Google sign-in didn't finish. Try again.",
     notRegistered: "This account isn't on Luma yet",
-    notRegisteredBody: "Sign in to the Luma app with this Google account first, then it can be an admin.",
+    notRegisteredBody:
+      "Sign in to the Luma app with this Google account first, then it can be an admin.",
     notAdmin: "This account isn't an admin",
     notAdminBody: "Only emails on the admin list can sign in here.",
     sessionCheckFailed: "Couldn't check the session",
@@ -143,11 +144,13 @@ export const en: Messages = {
     list: "User list",
     search: "Search email",
     searchTooLong: "100 characters max",
-    summary: (total, banned, count) => `${total} ${plural(count, "user", "users")} · ${banned} banned`,
+    summary: (total, banned, count) =>
+      `${total} ${plural(count, "user", "users")} · ${banned} banned`,
     noMatch: (q) => `No email matches “${q}”`,
     noMatchBody: "Check the spelling, or search with part of the email.",
     empty: "No users yet",
-    emptyBody: "During the beta, new users join with an invite code. They show up here once someone signs up.",
+    emptyBody:
+      "During the beta, new users join with an invite code. They show up here once someone signs up.",
     toInvites: "Go to Invites",
     loading: "Loading users",
     user: "User",
@@ -174,7 +177,8 @@ export const en: Messages = {
     emailCopied: "Email copied",
     emailCopyFailed: "Couldn't copy the email. Try again.",
     banTitle: "Ban this user",
-    banBody: "Their free AI quota is revoked and any existing key stops working right away. Sign-in, backup, and sync keep working. You can unban them anytime from this page.",
+    banBody:
+      "Their free AI quota is revoked and any existing key stops working right away. Sign-in, backup, and sync keep working. You can unban them anytime from this page.",
     ban: "Ban user",
     banConfirm: "Ban this user?",
     banConfirmBody: "Their free AI quota is revoked until you unban them.",
@@ -266,9 +270,18 @@ export const en: Messages = {
     newHint: "Just copy and send it. The code stays in the Invites list.",
   },
   appError: {
-    crash: { title: "Something went wrong", body: "This screen couldn't be shown. Try reloading; if it keeps happening, check the details below." },
-    update: { title: "A new dashboard version is out", body: "This tab is still on the old version. Reload to continue." },
-    notFound: { title: "Page not found", body: "The address may be wrong, or the page no longer exists." },
+    crash: {
+      title: "Something went wrong",
+      body: "This screen couldn't be shown. Try reloading; if it keeps happening, check the details below.",
+    },
+    update: {
+      title: "A new dashboard version is out",
+      body: "This tab is still on the old version. Reload to continue.",
+    },
+    notFound: {
+      title: "Page not found",
+      body: "The address may be wrong, or the page no longer exists.",
+    },
     reload: "Reload",
     home: "Go to Overview",
     details: "Technical details",

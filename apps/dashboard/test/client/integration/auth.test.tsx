@@ -10,11 +10,15 @@ import { server } from "../setup";
 describe("auth", () => {
   it("rechecks the session on tab focus only once it's an hour old (that slides it server side)", async () => {
     let calls = 0;
-    server.use(http.get(`${API}/auth/get-session`, () => (calls++, HttpResponse.json(fixtureAdmin))));
+    server.use(
+      http.get(`${API}/auth/get-session`, () => (calls++, HttpResponse.json(fixtureAdmin))),
+    );
     vi.useFakeTimers({ toFake: ["Date"] });
     try {
       renderApp("/");
-      expect(await screen.findByRole("heading", { name: "Ringkasan", level: 1 })).toBeInTheDocument();
+      expect(
+        await screen.findByRole("heading", { name: "Ringkasan", level: 1 }),
+      ).toBeInTheDocument();
       expect(calls).toBe(1);
       const refocus = () => {
         focusManager.setFocused(false);
@@ -55,22 +59,34 @@ describe("auth", () => {
       http.get(`${API}/auth/get-session`, () => HttpResponse.json(null)),
       http.post(`${API}/auth/sign-in/social`, async ({ request }) => {
         expect(await request.json()).toEqual({ provider: "google", callbackURL: "/" });
-        return HttpResponse.json({ url: "https://accounts.google.com/o/oauth2/v2/auth?x=1", redirect: true });
+        return HttpResponse.json({
+          url: "https://accounts.google.com/o/oauth2/v2/auth?x=1",
+          redirect: true,
+        });
       }),
     );
     const assign = vi.spyOn(window.location, "assign").mockImplementation(() => {});
     const { user } = renderApp("/login");
     await user.click(await screen.findByRole("button", { name: "Masuk pakai Google" }));
-    await waitFor(() => expect(assign).toHaveBeenCalledWith("https://accounts.google.com/o/oauth2/v2/auth?x=1"));
+    await waitFor(() =>
+      expect(assign).toHaveBeenCalledWith("https://accounts.google.com/o/oauth2/v2/auth?x=1"),
+    );
   });
 
   it("coming back from Google (back/forward cache) the button is usable again", async () => {
     server.use(
       http.get(`${API}/auth/get-session`, () => HttpResponse.json(null)),
-      http.post(`${API}/auth/sign-in/social`, () => HttpResponse.json({ url: "https://accounts.google.com/o/oauth2/v2/auth?x=1", redirect: true })),
+      http.post(`${API}/auth/sign-in/social`, () =>
+        HttpResponse.json({
+          url: "https://accounts.google.com/o/oauth2/v2/auth?x=1",
+          redirect: true,
+        }),
+      ),
     );
     vi.spyOn(window.location, "assign").mockImplementation(() => {});
-    const { user } = renderApp("/login?error=FORBIDDEN&error_description=Dashboard+cannot+create+accounts");
+    const { user } = renderApp(
+      "/login?error=FORBIDDEN&error_description=Dashboard+cannot+create+accounts",
+    );
     const button = await screen.findByRole("button", { name: "Masuk pakai Google" });
     await user.click(button);
     // Left for Google: the button stays busy so it can't be pressed twice.
@@ -102,7 +118,12 @@ describe("auth", () => {
 
   it("signs out from the account menu", async () => {
     let signedOut = false;
-    server.use(http.post(`${API}/auth/sign-out`, () => ((signedOut = true), HttpResponse.json({ success: true }))));
+    server.use(
+      http.post(
+        `${API}/auth/sign-out`,
+        () => ((signedOut = true), HttpResponse.json({ success: true })),
+      ),
+    );
     const { user, router } = renderApp("/");
     await user.click(await screen.findByRole("button", { name: "Menu akun: Marcus" }));
     server.use(http.get(`${API}/auth/get-session`, () => HttpResponse.json(null)));
@@ -140,7 +161,10 @@ describe("auth", () => {
     const count = () => requests++;
     server.events.on("request:start", count);
     await user.click(screen.getByRole("radio", { name: "English" }));
-    expect(await screen.findByRole("radio", { name: "English" })).toHaveAttribute("aria-checked", "true");
+    expect(await screen.findByRole("radio", { name: "English" })).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
     expect(screen.getByRole("button", { name: "Account menu: Marcus" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Sign out" })).toBeInTheDocument();
     await waitFor(() => expect(document.documentElement.lang).toBe("en"));

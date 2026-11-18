@@ -35,6 +35,12 @@ export const onError = (err: Error, c: Context) => {
   if (err instanceof HTTPException && err.status < 500) {
     return c.json(body("BAD_REQUEST", err.message || "Bad request"), err.status);
   }
-  console.error(JSON.stringify({ message: "unhandled error", requestId: c.get("requestId"), error: err.message }));
+  console.error(
+    JSON.stringify({
+      message: "unhandled error",
+      requestId: c.get("requestId"),
+      error: err.message,
+    }),
+  );
   return c.json(body("INTERNAL_ERROR", "Internal error"), 500);
 };

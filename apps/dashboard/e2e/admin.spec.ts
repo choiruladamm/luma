@@ -18,7 +18,9 @@ test("security headers on the SPA and the API", async ({ page }) => {
   const html = await page.request.get("/");
   const api = await page.request.get("/api/overview");
   // vite dev serves the SPA itself; public/_headers applies in production, the Worker's middleware here.
-  expect(api.headers()["content-security-policy"]).toBe("default-src 'self'; frame-ancestors 'none'");
+  expect(api.headers()["content-security-policy"]).toBe(
+    "default-src 'self'; frame-ancestors 'none'",
+  );
   expect(api.headers()["x-content-type-options"]).toBe("nosniff");
   expect(html.ok()).toBe(true);
 });
@@ -31,7 +33,11 @@ test("overview shows the seeded numbers", async ({ page }) => {
   await expect(stat("Di-ban")).toContainText("1");
   await expect(stat("Kode undangan")).toContainText("2");
   await expect(page.getByText("10.000", { exact: true })).toBeVisible();
-  await expect(page.getByRole("table", { name: "User yang baru daftar" }).getByRole("link", { name: /rara.anindya@e2e.local/ })).toBeVisible();
+  await expect(
+    page
+      .getByRole("table", { name: "User yang baru daftar" })
+      .getByRole("link", { name: /rara.anindya@e2e.local/ }),
+  ).toBeVisible();
 });
 
 test("search, open a user, ban, then unban from the banner", async ({ page }) => {
@@ -47,7 +53,9 @@ test("search, open a user, ban, then unban from the banner", async ({ page }) =>
   await expect(dialog.getByText("Masuk, backup, dan sync tetap jalan")).toBeVisible();
   await dialog.getByRole("button", { name: "Ban user" }).click();
   await expect(page.getByText("User ini lagi di-ban")).toBeVisible();
-  await expect(page.getByRole("status").filter({ hasText: "sekar.ayu@e2e.local di-ban" })).toBeVisible();
+  await expect(
+    page.getByRole("status").filter({ hasText: "sekar.ayu@e2e.local di-ban" }),
+  ).toBeVisible();
 
   await page.reload();
   await expect(page.getByText("User ini lagi di-ban")).toBeVisible();
@@ -81,9 +89,17 @@ test("create an invite code, copy it, then delete it", async ({ page, context })
 
   await expect(page.getByRole("tab", { name: /Belum dipakai\s*3/ })).toBeVisible();
   // Newest unused code first, dated today by the worker.
-  const today = new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "short", year: "numeric" }).format(new Date());
-  await expect(page.getByRole("table", { name: "Kode undangan" }).getByRole("row").nth(1)).toContainText(code);
-  await expect(page.getByRole("table", { name: "Kode undangan" }).getByRole("row").nth(1)).toContainText(today);
+  const today = new Intl.DateTimeFormat("id-ID", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(new Date());
+  await expect(
+    page.getByRole("table", { name: "Kode undangan" }).getByRole("row").nth(1),
+  ).toContainText(code);
+  await expect(
+    page.getByRole("table", { name: "Kode undangan" }).getByRole("row").nth(1),
+  ).toContainText(today);
   await page.getByRole("button", { name: `Hapus ${code}` }).click();
   await page.getByRole("dialog").getByRole("button", { name: "Hapus kode" }).click();
   await expect(page.getByRole("tab", { name: /Belum dipakai\s*2/ })).toBeVisible();
@@ -110,10 +126,17 @@ test("phone: bottom tab bar, user cards, and the header search @phone", async ({
   test.skip(test.info().project.name !== "phone", "phone layout only");
   await page.goto("/");
   const tabs = page.getByRole("navigation", { name: "Navigasi admin" });
-  await expect(tabs.getByRole("link", { name: /Ringkasan/ })).toHaveAttribute("aria-current", "page");
+  await expect(tabs.getByRole("link", { name: /Ringkasan/ })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
   await tabs.getByRole("link", { name: /User/ }).click();
   await expect(page).toHaveURL(/\/users$/);
-  await expect(page.getByRole("list", { name: "Daftar user" }).getByRole("link", { name: /rara.anindya@e2e.local/ })).toBeVisible();
+  await expect(
+    page
+      .getByRole("list", { name: "Daftar user" })
+      .getByRole("link", { name: /rara.anindya@e2e.local/ }),
+  ).toBeVisible();
 
   // Search mode replaces the header row; the page behind can't scroll while it's open.
   await page.goto("/invites");
@@ -131,7 +154,10 @@ test("users: filter, sort by a column, and the state survives a reload", async (
   test.skip(test.info().project.name !== "desktop", "desktop toolbar");
   await page.goto("/users");
   await page.getByRole("button", { name: /^Filter$/ }).click();
-  await page.getByRole("dialog", { name: "Filter user" }).getByRole("button", { name: /^Status:/ }).click();
+  await page
+    .getByRole("dialog", { name: "Filter user" })
+    .getByRole("button", { name: /^Status:/ })
+    .click();
   await page.getByRole("option", { name: "Di-ban" }).click();
   await expect(page).toHaveURL(/\?status=banned$/);
   const table = page.getByRole("table", { name: "Daftar user" });
@@ -141,13 +167,21 @@ test("users: filter, sort by a column, and the state survives a reload", async (
   await page.getByRole("button", { name: "Hapus filter Status: Di-ban" }).click();
   await page.getByRole("button", { name: /^File/ }).click();
   await expect(page).toHaveURL(/\?sort=r2$/);
-  await expect(page.getByRole("columnheader", { name: /^File/ })).toHaveAttribute("aria-sort", "descending");
+  await expect(page.getByRole("columnheader", { name: /^File/ })).toHaveAttribute(
+    "aria-sort",
+    "descending",
+  );
   await page.reload();
-  await expect(page.getByRole("columnheader", { name: /^File/ })).toHaveAttribute("aria-sort", "descending");
+  await expect(page.getByRole("columnheader", { name: /^File/ })).toHaveAttribute(
+    "aria-sort",
+    "descending",
+  );
   await expect(page.getByRole("navigation", { name: "Paginasi" })).toContainText("dari 5");
 });
 
-test("desktop: a compact nav floats in once the header scrolls away, and its tabs navigate", async ({ page }) => {
+test("desktop: a compact nav floats in once the header scrolls away, and its tabs navigate", async ({
+  page,
+}) => {
   test.skip(test.info().project.name !== "desktop", "floating nav is desktop only");
   await page.setViewportSize({ width: 1440, height: 480 });
   await page.goto("/");
@@ -164,7 +198,9 @@ test("desktop: a compact nav floats in once the header scrolls away, and its tab
   await expect(page.getByRole("heading", { name: "Undangan", level: 1 })).toBeInViewport();
 });
 
-test("tablet width: the search icon opens search mode without the floating nav", async ({ page }) => {
+test("tablet width: the search icon opens search mode without the floating nav", async ({
+  page,
+}) => {
   test.skip(test.info().project.name !== "desktop", "tablet width on the desktop project");
   await page.setViewportSize({ width: 900, height: 600 });
   await page.goto("/");

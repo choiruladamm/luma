@@ -10,7 +10,25 @@ import { Icon, type IconName } from "./icons";
  * a bottom sheet instead: full width, top corners only, a grabber, slides up, scrolls when tall,
  * and keeps clear of the home indicator.
  */
-export function Dialog({ open, onClose, title, description, icon, tone = "neutral", children, footer }: { open: boolean; onClose: () => void; title: string; description?: ReactNode; icon: IconName; tone?: "neutral" | "danger"; children?: ReactNode; footer: ReactNode }) {
+export function Dialog({
+  open,
+  onClose,
+  title,
+  description,
+  icon,
+  tone = "neutral",
+  children,
+  footer,
+}: {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  description?: ReactNode;
+  icon: IconName;
+  tone?: "neutral" | "danger";
+  children?: ReactNode;
+  footer: ReactNode;
+}) {
   const ref = useRef<HTMLDialogElement>(null);
   const { t } = useI18n();
   useEffect(() => {
@@ -35,10 +53,19 @@ export function Dialog({ open, onClose, title, description, icon, tone = "neutra
     >
       {open && (
         <div className="flex flex-col max-md:pb-[env(safe-area-inset-bottom)]">
-          <span aria-hidden="true" className="mx-auto mt-2.5 h-1 w-10 rounded-full bg-track md:hidden" />
+          <span
+            aria-hidden="true"
+            className="mx-auto mt-2.5 h-1 w-10 rounded-full bg-track md:hidden"
+          />
           <div className="flex flex-col gap-1 pt-5 pr-5 pl-6 max-md:pt-3">
             <div className="flex items-center gap-3">
-              <span aria-hidden="true" className={cn("flex size-8 flex-none items-center justify-center rounded-full", tone === "danger" ? "bg-danger-soft text-danger-ink" : "bg-muted text-ink")}>
+              <span
+                aria-hidden="true"
+                className={cn(
+                  "flex size-8 flex-none items-center justify-center rounded-full",
+                  tone === "danger" ? "bg-danger-soft text-danger-ink" : "bg-muted text-ink",
+                )}
+              >
                 <Icon name={icon} size={16} strokeWidth={2.2} />
               </span>
               <h2 id="dialog-title" className="m-0 min-w-0 flex-1 text-dialog font-semibold">
@@ -46,7 +73,9 @@ export function Dialog({ open, onClose, title, description, icon, tone = "neutra
               </h2>
               <IconButton icon="x" label={t.common.closeDialog} onClick={onClose} />
             </div>
-            {description && <p className="m-0 ml-11 text-body text-ink2 max-md:ml-0 max-md:pt-1">{description}</p>}
+            {description && (
+              <p className="m-0 ml-11 text-body text-ink2 max-md:ml-0 max-md:pt-1">{description}</p>
+            )}
           </div>
           {children && <div className="flex flex-col gap-4 px-6 pt-5">{children}</div>}
           {footer}
@@ -63,7 +92,9 @@ export function ConfirmFooter({ children }: { children: ReactNode }) {
     <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-track bg-canvas px-6 py-4">
       {/* Phones have no Esc key: the hint goes, the actions share the full width. */}
       <span className="inline-flex items-center gap-2 text-caption text-ink2 max-md:hidden">
-        <kbd className="inline-flex h-[22px] items-center rounded-[7px] bg-muted px-[7px] font-mono text-chip font-medium text-ink shadow-[inset_0_-1px_0_var(--c-track)]">Esc</kbd>
+        <kbd className="inline-flex h-[22px] items-center rounded-[7px] bg-muted px-[7px] font-mono text-chip font-medium text-ink shadow-[inset_0_-1px_0_var(--c-track)]">
+          Esc
+        </kbd>
         {t.common.escToCancel}
       </span>
       <div className="flex flex-wrap gap-2.5 max-md:w-full max-md:[&>*]:flex-1">{children}</div>

@@ -8,7 +8,11 @@ import { server } from "../setup";
 
 describe("User", () => {
   it("lists users with status, key, and totals", async () => {
-    server.use(http.get(`${API}/users`, () => HttpResponse.json(usersPage([user(1, { banned: true }), user(2, { hasAiKey: true })]))));
+    server.use(
+      http.get(`${API}/users`, () =>
+        HttpResponse.json(usersPage([user(1, { banned: true }), user(2, { hasAiKey: true })])),
+      ),
+    );
     renderApp("/users");
     const table = await screen.findByRole("table", { name: "Daftar user" });
     const rows = within(table).getAllByRole("row");
@@ -24,7 +28,9 @@ describe("User", () => {
       http.get(`${API}/users`, ({ request }) => {
         const q = new URL(request.url).searchParams.get("q");
         queries.push(q);
-        return HttpResponse.json(usersPage(q ? [user(7, { email: "sekar@luma.test" })] : [user(1)]));
+        return HttpResponse.json(
+          usersPage(q ? [user(7, { email: "sekar@luma.test" })] : [user(1)]),
+        );
       }),
     );
     const { user: u, router } = renderApp("/users");
@@ -50,7 +56,12 @@ describe("User", () => {
 
   it("rejects a query over 100 characters without calling the API", async () => {
     const queries: string[] = [];
-    server.use(http.get(`${API}/users`, ({ request }) => (queries.push(request.url), HttpResponse.json(usersPage([user(1)])))));
+    server.use(
+      http.get(
+        `${API}/users`,
+        ({ request }) => (queries.push(request.url), HttpResponse.json(usersPage([user(1)]))),
+      ),
+    );
     const { user: u } = renderApp("/users");
     await screen.findByRole("table", { name: "Daftar user" });
     const box = screen.getByRole("searchbox", { name: "Cari email" });
@@ -67,7 +78,9 @@ describe("User", () => {
       http.get(`${API}/users`, ({ request }) => {
         const page = Number(new URL(request.url).searchParams.get("page") ?? "1");
         pages.push(String(page));
-        return HttpResponse.json(usersPage(page === 3 ? [user(3)] : [user(1), user(2)], { total: 101, page }));
+        return HttpResponse.json(
+          usersPage(page === 3 ? [user(3)] : [user(1), user(2)], { total: 101, page }),
+        );
       }),
     );
     const { user: u, router } = renderApp("/users");
@@ -77,19 +90,34 @@ describe("User", () => {
     await u.click(within(nav).getByRole("button", { name: "Halaman 3" }));
     expect(await screen.findByRole("link", { name: /user3@luma.test/ })).toBeInTheDocument();
     expect(router.state.location.search).toBe("?page=3");
-    expect(within(nav).getByRole("button", { name: "Halaman 3" })).toHaveAttribute("aria-current", "page");
+    expect(within(nav).getByRole("button", { name: "Halaman 3" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
     expect(within(nav).getByRole("button", { name: "Halaman berikutnya" })).toBeDisabled();
     expect(pages).toEqual(["1", "3"]);
   });
 
   it("filters and sorts through the URL; a change goes back to page 1", async () => {
     const urls: URLSearchParams[] = [];
-    server.use(http.get(`${API}/users`, ({ request }) => (urls.push(new URL(request.url).searchParams), HttpResponse.json(usersPage([user(1)], { total: 120 })))));
+    server.use(
+      http.get(
+        `${API}/users`,
+        ({ request }) => (
+          urls.push(new URL(request.url).searchParams),
+          HttpResponse.json(usersPage([user(1)], { total: 120 }))
+        ),
+      ),
+    );
     const { user: u, router } = renderApp("/users?page=2");
     await screen.findByRole("table", { name: "Daftar user" });
 
     await u.click(screen.getByRole("button", { name: /^Filter$/, expanded: false }));
-    await u.click(within(screen.getByRole("dialog", { name: "Filter user" })).getByRole("button", { name: /^Status:/ }));
+    await u.click(
+      within(screen.getByRole("dialog", { name: "Filter user" })).getByRole("button", {
+        name: /^Status:/,
+      }),
+    );
     await u.click(screen.getByRole("option", { name: "Di-ban" }));
     await waitFor(() => expect(router.state.location.search).toBe("?status=banned"));
     expect(urls.at(-1)?.get("status")).toBe("banned");
@@ -97,9 +125,14 @@ describe("User", () => {
     const header = await screen.findByRole("button", { name: /^File/ });
     await u.click(header);
     await waitFor(() => expect(router.state.location.search).toBe("?status=banned&sort=r2"));
-    expect(screen.getByRole("columnheader", { name: /^File/ })).toHaveAttribute("aria-sort", "descending");
+    expect(screen.getByRole("columnheader", { name: /^File/ })).toHaveAttribute(
+      "aria-sort",
+      "descending",
+    );
     await u.click(screen.getByRole("button", { name: /^File/ }));
-    await waitFor(() => expect(router.state.location.search).toBe("?status=banned&sort=r2&dir=asc"));
+    await waitFor(() =>
+      expect(router.state.location.search).toBe("?status=banned&sort=r2&dir=asc"),
+    );
     expect(urls.at(-1)?.get("dir")).toBe("asc");
 
     await u.click(screen.getByRole("button", { name: "Hapus filter Status: Di-ban" }));

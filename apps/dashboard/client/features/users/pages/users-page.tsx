@@ -20,8 +20,18 @@ import { activeFilterCount, type UserSort, useUsersParams } from "../hooks/use-u
 import { useUsers } from "../queries/use-users";
 
 // Table column id ↔ worker sort key.
-const SORT_OF: Record<string, UserSort> = { createdAt: "created", lastActiveAt: "lastActive", r2Bytes: "r2", syncBytes: "sync" };
-const COLUMN_OF: Partial<Record<UserSort, string>> = { created: "createdAt", lastActive: "lastActiveAt", r2: "r2Bytes", sync: "syncBytes" };
+const SORT_OF: Record<string, UserSort> = {
+  createdAt: "created",
+  lastActiveAt: "lastActive",
+  r2Bytes: "r2",
+  syncBytes: "sync",
+};
+const COLUMN_OF: Partial<Record<UserSort, string>> = {
+  created: "createdAt",
+  lastActive: "lastActiveAt",
+  r2: "r2Bytes",
+  sync: "syncBytes",
+};
 
 /**
  * Board 02 User (+ 13 loading, empty and search-empty states from design component 2), with filters,
@@ -38,8 +48,11 @@ export function UsersPage() {
   const rows = users.data?.items ?? [];
   const pageCount = users.data?.pageCount;
   const filtered = activeFilterCount(params) > 0;
-  const currentSort: UserSort = params.sort && (params.sort !== "relevance" || q) ? params.sort : q ? "relevance" : "created";
-  const tableSort: TableSort | null = COLUMN_OF[currentSort] ? { id: COLUMN_OF[currentSort]!, dir: params.dir } : null;
+  const currentSort: UserSort =
+    params.sort && (params.sort !== "relevance" || q) ? params.sort : q ? "relevance" : "created";
+  const tableSort: TableSort | null = COLUMN_OF[currentSort]
+    ? { id: COLUMN_OF[currentSort]!, dir: params.dir }
+    : null;
   // Same column flips the direction; a new column starts descending (biggest / newest first).
   const onSort = (id: string) => {
     const next = SORT_OF[id]!;
@@ -57,16 +70,45 @@ export function UsersPage() {
     <>
       <PageHeader
         title={t.shell.users}
-        after={total !== undefined ? <Chip tone="sheet">{formatNumber(total, locale)}</Chip> : <Skeleton className="h-7 w-10" />}
-        meta={<UpdatedAt at={users.dataUpdatedAt} onRefresh={() => void users.refetch()} refreshing={users.isFetching} />}
+        after={
+          total !== undefined ? (
+            <Chip tone="sheet">{formatNumber(total, locale)}</Chip>
+          ) : (
+            <Skeleton className="h-7 w-10" />
+          )
+        }
+        meta={
+          <UpdatedAt
+            at={users.dataUpdatedAt}
+            onRefresh={() => void users.refetch()}
+            refreshing={users.isFetching}
+          />
+        }
       />
-      <section aria-label={t.users.list} className="scroll-mt-24 overflow-hidden rounded-card bg-sheet">
+      <section
+        aria-label={t.users.list}
+        className="scroll-mt-24 overflow-hidden rounded-card bg-sheet"
+      >
         <div className="flex flex-col gap-3 px-6 py-5">
           {/* Phone: search + filter icon on one row; desktop: search, then the filter chips. */}
           <div className="flex items-start gap-2 md:gap-3">
-            <form role="search" onSubmit={(e) => e.preventDefault()} className="flex min-w-0 flex-1 flex-col gap-1 md:max-w-[420px] md:flex-[1_1_280px]">
-              <SearchInput label={t.users.search} placeholder={t.shell.searchUsersPlaceholder} tone="canvas" onClear={clear} value={value} {...form.register("q")} aria-invalid={invalid || undefined} />
-              {invalid && <span className="pl-4 text-caption text-danger-ink">{t.users.searchTooLong}</span>}
+            <form
+              role="search"
+              onSubmit={(e) => e.preventDefault()}
+              className="flex min-w-0 flex-1 flex-col gap-1 md:max-w-[420px] md:flex-[1_1_280px]"
+            >
+              <SearchInput
+                label={t.users.search}
+                placeholder={t.shell.searchUsersPlaceholder}
+                tone="canvas"
+                onClear={clear}
+                value={value}
+                {...form.register("q")}
+                aria-invalid={invalid || undefined}
+              />
+              {invalid && (
+                <span className="pl-4 text-caption text-danger-ink">{t.users.searchTooLong}</span>
+              )}
             </form>
             <UsersFilterSheet params={params} set={set} currentSort={currentSort} />
             <div className="ml-auto max-md:hidden">
@@ -76,7 +118,13 @@ export function UsersPage() {
           <ActiveFilters params={params} set={set} />
           <span className="flex flex-wrap items-center gap-x-5 gap-y-1 text-caption text-ink2">
             {overview.data ? (
-              <span>{t.users.summary(formatNumber(overview.data.users.total, locale), formatNumber(overview.data.users.banned, locale), overview.data.users.total)}</span>
+              <span>
+                {t.users.summary(
+                  formatNumber(overview.data.users.total, locale),
+                  formatNumber(overview.data.users.banned, locale),
+                  overview.data.users.total,
+                )}
+              </span>
             ) : (
               <span aria-hidden="true" className="flex items-center gap-5">
                 <Skeleton className="h-3 w-[72px]" />
@@ -91,7 +139,18 @@ export function UsersPage() {
           <UsersTableSkeleton />
         ) : rows.length === 0 ? (
           filtered ? (
-            <EmptyState icon="filter" title={t.users.noFilterMatch} action={<Button variant="secondary" onClick={() => set({ status: undefined, ai: undefined, activity: undefined })}>{t.users.reset}</Button>}>
+            <EmptyState
+              icon="filter"
+              title={t.users.noFilterMatch}
+              action={
+                <Button
+                  variant="secondary"
+                  onClick={() => set({ status: undefined, ai: undefined, activity: undefined })}
+                >
+                  {t.users.reset}
+                </Button>
+              }
+            >
               {t.users.noFilterMatchBody}
             </EmptyState>
           ) : q ? (
@@ -99,7 +158,15 @@ export function UsersPage() {
               {t.users.noMatchBody}
             </EmptyState>
           ) : (
-            <EmptyState icon="users" title={t.users.empty} action={<ButtonLink to="/invites" variant="secondary" icon="ticket">{t.users.toInvites}</ButtonLink>}>
+            <EmptyState
+              icon="users"
+              title={t.users.empty}
+              action={
+                <ButtonLink to="/invites" variant="secondary" icon="ticket">
+                  {t.users.toInvites}
+                </ButtonLink>
+              }
+            >
               {t.users.emptyBody}
             </EmptyState>
           )
@@ -114,7 +181,17 @@ export function UsersPage() {
             sortable={Object.keys(SORT_OF)}
             onSort={onSort}
             renderCard={(u) => <UserCard user={u} q={q} />}
-            footer={<Pagination page={params.page} pageCount={users.data.pageCount} total={users.data.total} pageSize={params.limit} onPage={(page) => set({ page })} pageSizes={[25, 50]} onPageSize={(limit) => set({ limit: limit as 25 | 50 })} />}
+            footer={
+              <Pagination
+                page={params.page}
+                pageCount={users.data.pageCount}
+                total={users.data.total}
+                pageSize={params.limit}
+                onPage={(page) => set({ page })}
+                pageSizes={[25, 50]}
+                onPageSize={(limit) => set({ limit: limit as 25 | 50 })}
+              />
+            }
           />
         )}
       </section>

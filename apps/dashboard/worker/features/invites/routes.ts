@@ -15,13 +15,19 @@ const listQuery = z.object({
   page: z.coerce.number().int().min(1).max(10_000).default(1),
   limit: z.coerce.number().int().min(1).max(50).default(INVITES_PAGE_SIZE),
 });
-const createBody = z.object({ count: z.number().int().min(1).max(MAX_INVITES_PER_REQUEST) }).strict();
-const codeParam = z.object({ code: z.string().regex(/^[A-Za-z0-9-]{4,32}$/, "Invalid invite code") });
+const createBody = z
+  .object({ count: z.number().int().min(1).max(MAX_INVITES_PER_REQUEST) })
+  .strict();
+const codeParam = z.object({
+  code: z.string().regex(/^[A-Za-z0-9-]{4,32}$/, "Invalid invite code"),
+});
 
 // Chained so every route's types reach `AppType` (RPC client).
 export const invites = factory
   .createApp()
-  .get("/", validate("query", listQuery), async (c) => c.json(await getInvites(c.var.db, c.req.valid("query"))))
+  .get("/", validate("query", listQuery), async (c) =>
+    c.json(await getInvites(c.var.db, c.req.valid("query"))),
+  )
   .post("/", validate("json", createBody), async (c) => {
     const result = await createInvites(c.var.db, c.req.valid("json").count);
     audit(c, "invite.create", result.codes.join(","));

@@ -15,7 +15,8 @@ export type UsersParams = {
 
 export const DEFAULT_USERS_PARAMS: UsersParams = { q: "", dir: "desc", page: 1, limit: 50 };
 
-const pick = <T extends string>(value: string | null, allowed: readonly T[]) => (allowed.includes(value as T) ? (value as T) : undefined);
+const pick = <T extends string>(value: string | null, allowed: readonly T[]) =>
+  allowed.includes(value as T) ? (value as T) : undefined;
 
 /** URL → params. Unknown values fall back to the defaults instead of failing the screen. */
 export function parseUsersParams(search: URLSearchParams): UsersParams {
@@ -50,7 +51,8 @@ export function usersSearchEntries(p: UsersParams): Record<string, string> {
 }
 
 /** How many filters (not search or sort) are on, for the phone "Filter" badge and Reset. */
-export const activeFilterCount = (p: UsersParams) => [p.status, p.ai, p.activity].filter(Boolean).length;
+export const activeFilterCount = (p: UsersParams) =>
+  [p.status, p.ai, p.activity].filter(Boolean).length;
 
 /**
  * The Users list state lives in the URL (reload, back, and shared links keep it). `set` merges a
@@ -62,7 +64,10 @@ export function useUsersParams() {
   const set = (patch: Partial<UsersParams>) => {
     const next = { ...params, ...patch, page: patch.page ?? 1 };
     // No router scroll reset: the table stays in view (Pagination scrolls to its top smoothly).
-    setSearch(usersSearchEntries(next), { replace: patch.page === undefined, preventScrollReset: true });
+    setSearch(usersSearchEntries(next), {
+      replace: patch.page === undefined,
+      preventScrollReset: true,
+    });
   };
   return { params, set };
 }

@@ -6,7 +6,9 @@ import backupsPut from "../fixtures/contract/backups-put.json";
 describe("backupId", () => {
   it("is UTC yyyyMMddTHHmmssZ, so key order = time order", () => {
     expect(backupId(new Date("2026-11-13T10:04:05.678Z"))).toBe("20261113T100405Z");
-    expect(backupId(new Date("2026-01-02T03:04:05Z")) < backupId(new Date("2026-11-13T00:00:00Z"))).toBe(true);
+    expect(
+      backupId(new Date("2026-01-02T03:04:05Z")) < backupId(new Date("2026-11-13T00:00:00Z")),
+    ).toBe(true);
   });
 });
 
@@ -30,10 +32,13 @@ describe("parseManifest", () => {
     });
   });
 
-  it.each([undefined, "", "nope", "{}", '{"appVersion":"1","schemaVersion":1,"createdAt":"kemarin","counts":{"books":0,"aiResults":0}}'])(
-    "rejects %s",
-    (header) => expect(() => parseManifest(header)).toThrow(/x-backup-manifest/),
-  );
+  it.each([
+    undefined,
+    "",
+    "nope",
+    "{}",
+    '{"appVersion":"1","schemaVersion":1,"createdAt":"kemarin","counts":{"books":0,"aiResults":0}}',
+  ])("rejects %s", (header) => expect(() => parseManifest(header)).toThrow(/x-backup-manifest/));
 });
 
 describe("uploadSize", () => {

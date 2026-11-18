@@ -18,7 +18,11 @@ export function RequireSession() {
     return (
       <main className="flex min-h-dvh items-center justify-center bg-page px-4">
         <section className="w-full max-w-[480px] rounded-card bg-sheet">
-          <ErrorState title={t.auth.sessionCheckFailed} message={errorText(session.error, t)} onRetry={() => void session.refetch()} />
+          <ErrorState
+            title={t.auth.sessionCheckFailed}
+            message={errorText(session.error, t)}
+            onRetry={() => void session.refetch()}
+          />
         </section>
       </main>
     );

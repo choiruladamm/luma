@@ -26,7 +26,8 @@ function countingD1(d1: D1Database) {
       const value = Reflect.get(target, prop, target);
       if (typeof value !== "function") return value;
       if (prop === "prepare") return (sql: string) => counted(target.prepare(sql));
-      if (prop === "batch") return (stmts: D1PreparedStatement[]) => ((queries += stmts.length), target.batch(stmts));
+      if (prop === "batch")
+        return (stmts: D1PreparedStatement[]) => ((queries += stmts.length), target.batch(stmts));
       if (prop === "exec") return (sql: string) => (queries++, target.exec(sql));
       return value.bind(target);
     },
@@ -35,7 +36,11 @@ function countingD1(d1: D1Database) {
 }
 
 /** Call the app with overridable `env`, counting D1 queries. */
-export async function call(input: string | Request, init: RequestInit = {}, overrides: Partial<Env> = {}) {
+export async function call(
+  input: string | Request,
+  init: RequestInit = {},
+  overrides: Partial<Env> = {},
+) {
   const d1 = countingD1(env.DB);
   const request = typeof input === "string" ? new Request(new URL(input, ORIGIN), init) : input;
   const ctx = createExecutionContext();
@@ -44,4 +49,5 @@ export async function call(input: string | Request, init: RequestInit = {}, over
   return { response, d1Queries: d1.count() };
 }
 
-export const errorCode = async (res: Response) => ((await res.json()) as { error: { code: string } }).error.code;
+export const errorCode = async (res: Response) =>
+  ((await res.json()) as { error: { code: string } }).error.code;

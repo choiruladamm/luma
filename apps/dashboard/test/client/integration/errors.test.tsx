@@ -12,7 +12,13 @@ describe("error screens", () => {
   it("a bare 401 (Cloudflare Access session expired) reloads the page; the worker's 401 goes to login", async () => {
     const seen: (string | null)[] = [];
     server.use(
-      http.get(`${API}/overview`, ({ request }) => (seen.push(request.headers.get("x-requested-with")), new HttpResponse("", { status: 401 }))),
+      http.get(
+        `${API}/overview`,
+        ({ request }) => (
+          seen.push(request.headers.get("x-requested-with")),
+          new HttpResponse("", { status: 401 })
+        ),
+      ),
     );
     const { onAccessExpired, router } = renderApp("/");
     await vi.waitFor(() => expect(onAccessExpired).toHaveBeenCalled());
@@ -22,7 +28,9 @@ describe("error screens", () => {
 
   it("an unknown address shows 'not found' inside the shell", async () => {
     renderApp("/nope");
-    expect(await screen.findByRole("heading", { name: "Halaman gak ditemukan" })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: "Halaman gak ditemukan" }),
+    ).toBeInTheDocument();
     expect(screen.getAllByRole("navigation", { name: "Navigasi admin" }).length).toBeGreaterThan(0);
     expect(screen.getByRole("link", { name: /Ke Ringkasan/ })).toHaveAttribute("href", "/");
   });
@@ -30,7 +38,11 @@ describe("error screens", () => {
   it("a screen that crashes shows the error card in the shell, with reload and details", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
     // A malformed page (total missing) must not throw in the footer and blank the whole app.
-    server.use(http.get(`${API}/users`, () => HttpResponse.json({ items: [user(1)], total: null, page: 1, pageCount: null })));
+    server.use(
+      http.get(`${API}/users`, () =>
+        HttpResponse.json({ items: [user(1)], total: null, page: 1, pageCount: null }),
+      ),
+    );
     renderApp("/users");
     expect(await screen.findByRole("alert")).toHaveTextContent("Ada yang error");
     expect(screen.getByRole("button", { name: "Muat ulang" })).toBeInTheDocument();

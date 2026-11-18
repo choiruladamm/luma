@@ -42,7 +42,11 @@
       ],
       "ratelimits": [
         { "name": "RATE_LIMITER", "namespace_id": "1101", "simple": { "limit": 60, "period": 60 } },
-        { "name": "ADMIN_RATE_LIMITER", "namespace_id": "1102", "simple": { "limit": 30, "period": 60 } }
+        {
+          "name": "ADMIN_RATE_LIMITER",
+          "namespace_id": "1102",
+          "simple": { "limit": 30, "period": 60 }
+        }
       ]
     },
     // Local only (make dashboard-e2e): Playwright against `vite dev` with its own D1 state
@@ -66,8 +70,16 @@
         }
       ],
       "ratelimits": [
-        { "name": "RATE_LIMITER", "namespace_id": "9101", "simple": { "limit": 10000, "period": 60 } },
-        { "name": "ADMIN_RATE_LIMITER", "namespace_id": "9102", "simple": { "limit": 10000, "period": 60 } }
+        {
+          "name": "RATE_LIMITER",
+          "namespace_id": "9101",
+          "simple": { "limit": 10000, "period": 60 }
+        },
+        {
+          "name": "ADMIN_RATE_LIMITER",
+          "namespace_id": "9102",
+          "simple": { "limit": 10000, "period": 60 }
+        }
       ]
     },
     "prod": {
@@ -91,7 +103,11 @@
       ],
       "ratelimits": [
         { "name": "RATE_LIMITER", "namespace_id": "2101", "simple": { "limit": 60, "period": 60 } },
-        { "name": "ADMIN_RATE_LIMITER", "namespace_id": "2102", "simple": { "limit": 30, "period": 60 } }
+        {
+          "name": "ADMIN_RATE_LIMITER",
+          "namespace_id": "2102",
+          "simple": { "limit": 30, "period": 60 }
+        }
       ]
     }
   }

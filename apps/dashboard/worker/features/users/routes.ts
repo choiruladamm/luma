@@ -21,10 +21,14 @@ const listQuery = z.object({
 // Chained so every route's types reach `AppType` (RPC client).
 export const users = factory
   .createApp()
-  .get("/", validate("query", listQuery), async (c) => c.json(await getUsers(c.var.db, c.req.valid("query"))))
+  .get("/", validate("query", listQuery), async (c) =>
+    c.json(await getUsers(c.var.db, c.req.valid("query"))),
+  )
   .get("/:id", validate("param", userId), async (c) => {
     const openrouter = openRouterAdmin(c.env.OPENROUTER_MANAGEMENT_KEY);
-    return c.json(await getUserDetail(c.var.db, openrouter, c.req.valid("param").id, c.var.requestId));
+    return c.json(
+      await getUserDetail(c.var.db, openrouter, c.req.valid("param").id, c.var.requestId),
+    );
   })
   .post("/:id/ban", validate("param", userId), async (c) => {
     const { id } = c.req.valid("param");

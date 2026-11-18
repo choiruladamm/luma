@@ -23,7 +23,11 @@ function fakeAdmin() {
   const admin = {
     createKey: vi.fn(async () => ({ key: `sk-${++n}`, hash: `h-${n}` })),
     updateLimit: vi.fn(async () => {}),
-    getUsage: vi.fn(async (): Promise<KeyUsage> => ({ limit: 0.02, limitRemaining: 0.015, usageDaily: 0.005 })),
+    getUsage: vi.fn(async (): Promise<KeyUsage> => ({
+      limit: 0.02,
+      limitRemaining: 0.015,
+      usageDaily: 0.005,
+    })),
     keyExists: vi.fn(async () => true),
     deleteKey: vi.fn(async () => {}),
   } satisfies OpenRouterAdmin;
@@ -35,7 +39,10 @@ describe("aiConfig", () => {
     expect(cfg.dailyLimitUsd).toBe(0.02);
     expect(cfg.ttlDays).toBe(30);
     expect(cfg.chatModels).toContain("deepseek/deepseek-v4.1-flash");
-    expect(cfg.embeddingModels).toEqual(["qwen/qwen3-embedding-8b", "openai/text-embedding-3-large"]);
+    expect(cfg.embeddingModels).toEqual([
+      "qwen/qwen3-embedding-8b",
+      "openai/text-embedding-3-large",
+    ]);
   });
 });
 
@@ -162,7 +169,10 @@ describe("usage", () => {
     const admin = fakeAdmin();
     await issueKey(db, admin, cfg, userId);
 
-    expect(await usage(db, admin, cfg, userId)).toMatchObject({ remainingUsd: 0.015, usedTodayUsd: 0.005 });
+    expect(await usage(db, admin, cfg, userId)).toMatchObject({
+      remainingUsd: 0.015,
+      usedTodayUsd: 0.005,
+    });
   });
 
   it("falls back to limit - usage when OpenRouter omits limit_remaining", async () => {
@@ -172,11 +182,16 @@ describe("usage", () => {
     admin.getUsage.mockResolvedValueOnce({ limit: null, limitRemaining: null, usageDaily: 0.03 });
     await issueKey(db, admin, cfg, userId);
 
-    expect(await usage(db, admin, cfg, userId)).toMatchObject({ dailyLimitUsd: 0.02, remainingUsd: 0 });
+    expect(await usage(db, admin, cfg, userId)).toMatchObject({
+      dailyLimitUsd: 0.02,
+      remainingUsd: 0,
+    });
   });
 
   it("nextUtcMidnight rolls over months", () => {
-    expect(nextUtcMidnight(new Date("2026-11-30T23:59:00Z")).toISOString()).toBe("2026-12-01T00:00:00.000Z");
+    expect(nextUtcMidnight(new Date("2026-11-30T23:59:00Z")).toISOString()).toBe(
+      "2026-12-01T00:00:00.000Z",
+    );
   });
 });
 

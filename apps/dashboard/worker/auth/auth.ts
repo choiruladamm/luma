@@ -56,7 +56,10 @@ export function createAuth(env: Env) {
         create: {
           before: async (user) => {
             if (!isAdmin(env, { email: user.email, emailVerified: user.emailVerified === true })) {
-              throw new APIError("FORBIDDEN", { code: "FORBIDDEN", message: "Dashboard creates accounts for admins only" });
+              throw new APIError("FORBIDDEN", {
+                code: "FORBIDDEN",
+                message: "Dashboard creates accounts for admins only",
+              });
             }
           },
         },

@@ -10,12 +10,19 @@ const h = columnHelper<InviteItem>();
 
 export function InviteStatusChip({ used }: { used: boolean }) {
   const { t } = useI18n();
-  return used ? <Chip dot="filled">{t.invites.used}</Chip> : <Chip tone="sheet" dot="hollow" className="shadow-[inset_0_0_0_1px_var(--c-track)]">{t.invites.unused}</Chip>;
+  return used ? (
+    <Chip dot="filled">{t.invites.used}</Chip>
+  ) : (
+    <Chip tone="sheet" dot="hollow" className="shadow-[inset_0_0_0_1px_var(--c-track)]">
+      {t.invites.unused}
+    </Chip>
+  );
 }
 
 export function UsedBy({ invite }: { invite: InviteItem }) {
   const { t } = useI18n();
-  if (!invite.usedBy) return <span className="text-ink2">{invite.usedAt ? t.invites.accountDeleted : "—"}</span>;
+  if (!invite.usedBy)
+    return <span className="text-ink2">{invite.usedAt ? t.invites.accountDeleted : "—"}</span>;
   return (
     <Link to={`/users/${invite.usedBy.id}`} className="text-ink no-underline hover:underline">
       {invite.usedBy.email}
@@ -26,12 +33,33 @@ export function UsedBy({ invite }: { invite: InviteItem }) {
 /** Columns for board 08 plus "Dibuat" ("—" for codes made before it was recorded). Actions come from the page. */
 export function inviteColumns(i18n: I18n, actions: (invite: InviteItem) => React.ReactNode) {
   return h.columns([
-    h.accessor("code", { header: i18n.t.invites.code, cell: (info) => <span className="font-mono text-body font-medium">{info.getValue()}</span> }),
-    h.accessor("createdAt", { header: i18n.t.invites.created, cell: (info) => (info.getValue() ? formatDate(info.getValue()!, i18n.locale) : "—") }),
-    h.accessor("usedAt", { id: "status", header: i18n.t.invites.status, cell: (info) => <InviteStatusChip used={info.getValue() !== null} /> }),
-    h.accessor("usedBy", { header: i18n.t.invites.usedBy, cell: (info) => <UsedBy invite={info.row.original} /> }),
-    h.accessor("usedAt", { id: "usedAt", header: i18n.t.invites.usedAt, cell: (info) => (info.getValue() ? formatDate(info.getValue()!, i18n.locale) : "—") }),
-    h.display({ id: "actions", header: () => <span className="sr-only">{i18n.t.invites.actions}</span>, cell: (info) => actions(info.row.original) }),
+    h.accessor("code", {
+      header: i18n.t.invites.code,
+      cell: (info) => <span className="font-mono text-body font-medium">{info.getValue()}</span>,
+    }),
+    h.accessor("createdAt", {
+      header: i18n.t.invites.created,
+      cell: (info) => (info.getValue() ? formatDate(info.getValue()!, i18n.locale) : "—"),
+    }),
+    h.accessor("usedAt", {
+      id: "status",
+      header: i18n.t.invites.status,
+      cell: (info) => <InviteStatusChip used={info.getValue() !== null} />,
+    }),
+    h.accessor("usedBy", {
+      header: i18n.t.invites.usedBy,
+      cell: (info) => <UsedBy invite={info.row.original} />,
+    }),
+    h.accessor("usedAt", {
+      id: "usedAt",
+      header: i18n.t.invites.usedAt,
+      cell: (info) => (info.getValue() ? formatDate(info.getValue()!, i18n.locale) : "—"),
+    }),
+    h.display({
+      id: "actions",
+      header: () => <span className="sr-only">{i18n.t.invites.actions}</span>,
+      cell: (info) => actions(info.row.original),
+    }),
   ]);
 }
 
@@ -43,7 +71,11 @@ export function InviteCard({ invite, actions }: { invite: InviteItem; actions: R
         <span className="font-mono text-card font-semibold">{invite.code}</span>
         <InviteStatusChip used={invite.usedAt !== null} />
       </div>
-      {invite.createdAt && <span className="text-caption text-ink2">{t.invites.createdAt(formatDate(invite.createdAt, locale))}</span>}
+      {invite.createdAt && (
+        <span className="text-caption text-ink2">
+          {t.invites.createdAt(formatDate(invite.createdAt, locale))}
+        </span>
+      )}
       {invite.usedAt && (
         <span className="flex min-w-0 items-center gap-1.5 text-caption text-ink2">
           <Icon name="user" size={14} />

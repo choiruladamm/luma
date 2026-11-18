@@ -29,7 +29,10 @@ describe("sign-up (email, dev)", () => {
     );
     const body = (await expectContract(res, signUpFixture)) as { user: { id: string } };
 
-    const [invite] = await createDb(env.DB).select().from(inviteCodes).where(eq(inviteCodes.code, code));
+    const [invite] = await createDb(env.DB)
+      .select()
+      .from(inviteCodes)
+      .where(eq(inviteCodes.code, code));
     expect(invite?.usedBy).toBe(body.user.id);
     expect(invite?.usedAt).toBeInstanceOf(Date);
   });
@@ -37,7 +40,11 @@ describe("sign-up (email, dev)", () => {
   it("tells a used invite code apart from an unknown one (contract)", async () => {
     const code = await createInvite("LUMA-4HJP");
     await exports.default.fetch(
-      post("/v1/auth/sign-up/email", { name: "A", email: "a@luma.test", password: PASSWORD }, { "x-invite-code": code }),
+      post(
+        "/v1/auth/sign-up/email",
+        { name: "A", email: "a@luma.test", password: PASSWORD },
+        { "x-invite-code": code },
+      ),
     );
     const reused = await exports.default.fetch(
       post(inviteUsed.request.path, inviteUsed.request.body, inviteUsed.request.headers),
@@ -60,7 +67,11 @@ describe("sign-up (email, dev)", () => {
   it("accepts invite codes in any case and without the dash", async () => {
     await createInvite("LUMA-7Q2K");
     const res = await exports.default.fetch(
-      post("/v1/auth/sign-up/email", { name: "F", email: "f@luma.test", password: PASSWORD }, { "x-invite-code": " luma7q2k " }),
+      post(
+        "/v1/auth/sign-up/email",
+        { name: "F", email: "f@luma.test", password: PASSWORD },
+        { "x-invite-code": " luma7q2k " },
+      ),
     );
     expect(res.status).toBe(200);
   });
@@ -76,7 +87,11 @@ describe("sign-up (email, dev)", () => {
   it("rejects short passwords", async () => {
     const code = await createInvite();
     const res = await exports.default.fetch(
-      post("/v1/auth/sign-up/email", { name: "E", email: "e@luma.test", password: "pendek" }, { "x-invite-code": code }),
+      post(
+        "/v1/auth/sign-up/email",
+        { name: "E", email: "e@luma.test", password: "pendek" },
+        { "x-invite-code": code },
+      ),
     );
     expect(res.status).toBe(400);
     expect(await res.json()).toMatchObject({ error: { code: "PASSWORD_TOO_SHORT" } });
@@ -129,7 +144,10 @@ describe("sign-in (email, dev)", () => {
       new Request(`https://luma.test${path}`, {
         method,
         headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
-        body: method === "POST" ? JSON.stringify({ name: "x", image: "https://evil.test/a.png" }) : undefined,
+        body:
+          method === "POST"
+            ? JSON.stringify({ name: "x", image: "https://evil.test/a.png" })
+            : undefined,
       }),
     );
     expect(res.status).toBe(404);

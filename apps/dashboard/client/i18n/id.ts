@@ -98,7 +98,8 @@ export const id = {
     aiKey: "Key AI",
     on: "Nyala",
     off: "Mati",
-    storageGauge: (total: string, files: string, sync: string) => `Total ${total}: file buku ${files}, data sync ${sync}.`,
+    storageGauge: (total: string, files: string, sync: string) =>
+      `Total ${total}: file buku ${files}, data sync ${sync}.`,
     storageLoading: "Lagi muat penyimpanan",
     total: "total",
     bookFiles: "File buku",
@@ -106,7 +107,8 @@ export const id = {
     syncSubtitle: (limit: string) => `Hari ini · batas ${limit} baris per hari buat semua user`,
     syncRowsLeft: (left: string) => `baris hari ini · sisa ${left}`,
     syncUsed: (pct: string) => `${pct}% kepakai`,
-    syncBar: (rows: string, limit: string, pct: string) => `${rows} dari ${limit} baris sync hari ini, ${pct}% kepakai.`,
+    syncBar: (rows: string, limit: string, pct: string) =>
+      `${rows} dari ${limit} baris sync hari ini, ${pct}% kepakai.`,
     syncWritten: "Ditulis hari ini",
     syncLeft: "Sisa batas",
     syncReset: "Reset tiap 00.00 UTC (07.00 WIB)",
@@ -146,7 +148,8 @@ export const id = {
     noMatch: (q: string) => `Gak ada email yang cocok sama “${q}”`,
     noMatchBody: "Cek ejaannya, atau cari pakai sebagian email aja.",
     empty: "Belum ada user",
-    emptyBody: "Selama beta, user baru masuk lewat kode undangan. Begitu ada yang daftar, mereka muncul di sini.",
+    emptyBody:
+      "Selama beta, user baru masuk lewat kode undangan. Begitu ada yang daftar, mereka muncul di sini.",
     toInvites: "Ke Undangan",
     loading: "Lagi muat daftar user",
     user: "User",
@@ -173,7 +176,8 @@ export const id = {
     emailCopied: "Email disalin",
     emailCopyFailed: "Gagal nyalin email. Coba lagi.",
     banTitle: "Ban user ini",
-    banBody: "Kuota AI gratisnya dicabut, key yang udah ada langsung mati. Masuk, backup, dan sync tetap jalan. Bisa dibuka kapan aja dari halaman ini.",
+    banBody:
+      "Kuota AI gratisnya dicabut, key yang udah ada langsung mati. Masuk, backup, dan sync tetap jalan. Bisa dibuka kapan aja dari halaman ini.",
     ban: "Ban user",
     banConfirm: "Ban user ini?",
     banConfirmBody: "Kuota AI gratisnya dicabut sampai ban dibuka.",
@@ -198,7 +202,8 @@ export const id = {
     aiUsageFailed: "Pemakaian gagal dimuat dari OpenRouter.",
     aiTodayOf: (limit: string) => `hari ini dari ${limit}`,
     aiKeyUntil: (date: string) => `key berlaku sampai ${date}`,
-    aiNoKey: "Belum minta key subsidi, atau pakai key sendiri. Key-nya gak pernah ditampilin di sini.",
+    aiNoKey:
+      "Belum minta key subsidi, atau pakai key sendiri. Key-nya gak pernah ditampilin di sini.",
     devices: "Perangkat",
     sessions: (n: number) => `${n} sesi masuk, termasuk yang udah kedaluwarsa`,
     noSessions: "Belum ada sesi.",
@@ -265,9 +270,18 @@ export const id = {
     newHint: "Tinggal salin, terus kirim. Kodenya tetap ada di daftar Undangan.",
   },
   appError: {
-    crash: { title: "Ada yang error", body: "Layar ini gagal ditampilkan. Coba muat ulang; kalau masih, cek detail di bawah." },
-    update: { title: "Ada versi baru dashboard", body: "Tab ini masih pakai versi lama. Muat ulang buat lanjut." },
-    notFound: { title: "Halaman gak ditemukan", body: "Alamatnya mungkin salah, atau halamannya udah gak ada." },
+    crash: {
+      title: "Ada yang error",
+      body: "Layar ini gagal ditampilkan. Coba muat ulang; kalau masih, cek detail di bawah.",
+    },
+    update: {
+      title: "Ada versi baru dashboard",
+      body: "Tab ini masih pakai versi lama. Muat ulang buat lanjut.",
+    },
+    notFound: {
+      title: "Halaman gak ditemukan",
+      body: "Alamatnya mungkin salah, atau halamannya udah gak ada.",
+    },
     reload: "Muat ulang",
     home: "Ke Ringkasan",
     details: "Detail teknis",

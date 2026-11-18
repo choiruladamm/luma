@@ -18,16 +18,22 @@ export class ApiError extends Error {
 }
 
 /** Copy to show for any error, in the current UI language (`t.errors`). */
-export const errorText = (error: Error, t: Messages) => t.errors[error instanceof ApiError ? error.code : "INTERNAL_ERROR"];
+export const errorText = (error: Error, t: Messages) =>
+  t.errors[error instanceof ApiError ? error.code : "INTERNAL_ERROR"];
 
 /** Turn a failed response (`{"error": {"code", "message"}}`) into an ApiError. */
 export async function toApiError(res: Response): Promise<ApiError> {
-  const body = (await res.json().catch(() => null)) as { error?: { code?: string; message?: string } } | null;
+  const body = (await res.json().catch(() => null)) as {
+    error?: { code?: string; message?: string };
+  } | null;
   const code = body?.error?.code;
   // Our worker's 401 always has a JSON code; a bare 401 is Cloudflare Access saying its own session
   // expired (it answers so, instead of redirecting, because requests send X-Requested-With).
   if (res.status === 401 && code === undefined) return new ApiError(401, "ACCESS_EXPIRED");
-  const known = code !== undefined && Object.hasOwn(id.errors, code) ? (code as ClientErrorCode) : "INTERNAL_ERROR";
+  const known =
+    code !== undefined && Object.hasOwn(id.errors, code)
+      ? (code as ClientErrorCode)
+      : "INTERNAL_ERROR";
   return new ApiError(res.status, known, body?.error?.message);
 }
 

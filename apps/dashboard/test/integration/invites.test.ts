@@ -8,7 +8,12 @@ import { displayInviteCode } from "../../worker/features/invites/service";
 import { call, errorCode, ORIGIN } from "../helpers/app";
 import { adminCookie, createUser, giveUserData } from "../helpers/session";
 
-type Item = { code: string; createdAt: string | null; usedBy: { id: string; email: string } | null; usedAt: string | null };
+type Item = {
+  code: string;
+  createdAt: string | null;
+  usedBy: { id: string; email: string } | null;
+  usedAt: string | null;
+};
 
 const mutate = async (method: string, path: string, body?: unknown) =>
   call(path, {
@@ -16,15 +21,29 @@ const mutate = async (method: string, path: string, body?: unknown) =>
     headers: { cookie: await adminCookie(), "content-type": "application/json", origin: ORIGIN },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
-type Page = { items: Item[]; total: number; page: number; pageCount: number; counts: { all: number; unused: number; used: number } };
-const page = async (query = "") => (await (await call(`/api/invites${query}`, { headers: { cookie: await adminCookie() } })).response.json()) as Page;
+type Page = {
+  items: Item[];
+  total: number;
+  page: number;
+  pageCount: number;
+  counts: { all: number; unused: number; used: number };
+};
+const page = async (query = "") =>
+  (await (
+    await call(`/api/invites${query}`, { headers: { cookie: await adminCookie() } })
+  ).response.json()) as Page;
 const list = async (query = "") => (await page(query)).items;
 const db = () => createDb(env.DB);
 /** Codes stored as given (already upper case); a unique tag keeps each test's rows apart. */
 const tag = () => crypto.randomUUID().replaceAll("-", "").slice(0, 6).toUpperCase();
 const DAY = 86_400_000;
 const stored = async (code: string) =>
-  (await createDb(env.DB).select().from(inviteCodes).where(eq(inviteCodes.code, normalizeInviteCode(code))))[0] ?? null;
+  (
+    await createDb(env.DB)
+      .select()
+      .from(inviteCodes)
+      .where(eq(inviteCodes.code, normalizeInviteCode(code)))
+  )[0] ?? null;
 
 describe("POST /api/invites", () => {
   it("creates codes in one insert that the backend sign-up accepts (audit)", async () => {
@@ -43,7 +62,9 @@ describe("POST /api/invites", () => {
     // What /v1/auth sign-up runs on the code the user types (any case, with or without dashes).
     expect(await consumeInviteCode(createDb(env.DB), codes[0]!.toLowerCase())).toBe("ok");
     expect(await consumeInviteCode(createDb(env.DB), codes[1]!.replaceAll("-", ""))).toBe("ok");
-    expect(log.mock.calls.map((c) => JSON.parse(c[0] as string)).find((l) => l.message === "audit")).toMatchObject({
+    expect(
+      log.mock.calls.map((c) => JSON.parse(c[0] as string)).find((l) => l.message === "audit"),
+    ).toMatchObject({
       action: "invite.create",
       targetId: codes.join(","),
     });
@@ -66,7 +87,9 @@ describe("POST /api/invites", () => {
 
 describe("GET /api/invites", () => {
   it("filters by status and shows who used a code, in one D1 batch (+1 guard)", async () => {
-    const { codes } = (await (await mutate("POST", "/api/invites", { count: 2 })).response.json()) as { codes: string[] };
+    const { codes } = (await (
+      await mutate("POST", "/api/invites", { count: 2 })
+    ).response.json()) as { codes: string[] };
     const [free, taken] = codes as [string, string];
     const user = await createUser();
     await createDb(env.DB)
@@ -93,17 +116,31 @@ describe("GET /api/invites", () => {
   it("keeps a code used by a deleted account as used, with usedBy null", async () => {
     const user = await createUser();
     await giveUserData(user.id, { invite: "LUMA-HAPUSAKUN1" });
-    await createDb(env.DB).update(inviteCodes).set({ usedBy: null }).where(eq(inviteCodes.code, "LUMA-HAPUSAKUN1"));
-    expect((await list("?status=used&q=HAPUSAKUN1")).find((i) => i.code === "LUMA-HAPUS-AKUN1")).toMatchObject({ usedBy: null });
+    await createDb(env.DB)
+      .update(inviteCodes)
+      .set({ usedBy: null })
+      .where(eq(inviteCodes.code, "LUMA-HAPUSAKUN1"));
+    expect(
+      (await list("?status=used&q=HAPUSAKUN1")).find((i) => i.code === "LUMA-HAPUS-AKUN1"),
+    ).toMatchObject({ usedBy: null });
   });
 
   it("searches the code (case and dashes ignored) or the email, and counts follow the search", async () => {
     const t = tag();
     const user = await createUser({ email: `inv-${t.toLowerCase()}@luma.test` });
-    await db().insert(inviteCodes).values([{ code: `LUMA-${t}AAAA` }, { code: `LUMA-${t}BBBB` }, { code: "LUMA-OTHER00000", usedBy: user.id, usedAt: new Date() }]);
+    await db()
+      .insert(inviteCodes)
+      .values([
+        { code: `LUMA-${t}AAAA` },
+        { code: `LUMA-${t}BBBB` },
+        { code: "LUMA-OTHER00000", usedBy: user.id, usedAt: new Date() },
+      ]);
 
     const byCode = await page(`?q=${t.toLowerCase().slice(0, 3)}-${t.toLowerCase().slice(3)}`);
-    expect(byCode.items.map((i) => i.code).sort()).toEqual([`LUMA-${t.slice(0, 5)}-${t.slice(5)}AAAA`, `LUMA-${t.slice(0, 5)}-${t.slice(5)}BBBB`]);
+    expect(byCode.items.map((i) => i.code).sort()).toEqual([
+      `LUMA-${t.slice(0, 5)}-${t.slice(5)}AAAA`,
+      `LUMA-${t.slice(0, 5)}-${t.slice(5)}BBBB`,
+    ]);
     expect(byCode.counts).toEqual({ all: 2, unused: 2, used: 0 });
 
     const byEmail = await page(`?q=inv-${t.toLowerCase()}`);
@@ -112,7 +149,9 @@ describe("GET /api/invites", () => {
   });
 
   it("handles a search as long as the limit allows (D1 caps LIKE patterns at 50 bytes)", async () => {
-    const res = await call(`/api/invites?q=${"z".repeat(100)}`, { headers: { cookie: await adminCookie() } });
+    const res = await call(`/api/invites?q=${"z".repeat(100)}`, {
+      headers: { cookie: await adminCookie() },
+    });
     expect(res.response.status).toBe(200);
     expect(((await res.response.json()) as Page).items).toEqual([]);
   });
@@ -120,13 +159,16 @@ describe("GET /api/invites", () => {
   it("sorts by code or date used, filters used within 7/30 days, and pages with a total", async () => {
     const t = tag();
     const now = Date.now();
-    await db().insert(inviteCodes).values([
-      { code: `LUMA-${t}0001` }, // unused
-      { code: `LUMA-${t}0002`, usedAt: new Date(now - 2 * DAY) },
-      { code: `LUMA-${t}0003`, usedAt: new Date(now - 10 * DAY) },
-      { code: `LUMA-${t}0004`, usedAt: new Date(now - 40 * DAY) },
-    ]);
-    const codes = async (query: string) => (await list(`?q=${t}&${query}`)).map((i) => i.code.slice(-4));
+    await db()
+      .insert(inviteCodes)
+      .values([
+        { code: `LUMA-${t}0001` }, // unused
+        { code: `LUMA-${t}0002`, usedAt: new Date(now - 2 * DAY) },
+        { code: `LUMA-${t}0003`, usedAt: new Date(now - 10 * DAY) },
+        { code: `LUMA-${t}0004`, usedAt: new Date(now - 40 * DAY) },
+      ]);
+    const codes = async (query: string) =>
+      (await list(`?q=${t}&${query}`)).map((i) => i.code.slice(-4));
 
     expect(await codes("sort=default")).toEqual(["0001", "0002", "0003", "0004"]);
     expect(await codes("sort=usedAt&dir=asc")).toEqual(["0004", "0003", "0002", "0001"]);
@@ -136,7 +178,12 @@ describe("GET /api/invites", () => {
     expect(await codes("usedWithin=30d")).toEqual(["0002", "0003"]);
 
     const p2 = await page(`?q=${t}&sort=code&dir=asc&limit=3&page=2`);
-    expect(p2).toMatchObject({ total: 4, page: 2, pageCount: 2, counts: { all: 4, unused: 1, used: 3 } });
+    expect(p2).toMatchObject({
+      total: 4,
+      page: 2,
+      pageCount: 2,
+      counts: { all: 4, unused: 1, used: 3 },
+    });
     expect(p2.items.map((i) => i.code.slice(-4))).toEqual(["0004"]);
     // With a status filter, `total` and that status's count share their SQL text.
     expect(await page(`?q=${t}&status=unused`)).toMatchObject({ total: 1, pageCount: 1 });
@@ -148,13 +195,16 @@ describe("GET /api/invites", () => {
   it("returns createdAt; newest unused codes come first, and codes without a date go last", async () => {
     const t = tag();
     const now = Date.now();
-    await db().insert(inviteCodes).values([
-      { code: `LUMA-${t}000A`, createdAt: new Date(now - 5 * DAY) },
-      { code: `LUMA-${t}000B`, createdAt: new Date(now - DAY) },
-      { code: `LUMA-${t}000C`, createdAt: null }, // made before created_at existed
-      { code: `LUMA-${t}000D`, createdAt: new Date(now - 9 * DAY), usedAt: new Date(now - DAY) },
-    ]);
-    const codes = async (query: string) => (await list(`?q=${t}&${query}`)).map((i) => i.code.slice(-1));
+    await db()
+      .insert(inviteCodes)
+      .values([
+        { code: `LUMA-${t}000A`, createdAt: new Date(now - 5 * DAY) },
+        { code: `LUMA-${t}000B`, createdAt: new Date(now - DAY) },
+        { code: `LUMA-${t}000C`, createdAt: null }, // made before created_at existed
+        { code: `LUMA-${t}000D`, createdAt: new Date(now - 9 * DAY), usedAt: new Date(now - DAY) },
+      ]);
+    const codes = async (query: string) =>
+      (await list(`?q=${t}&${query}`)).map((i) => i.code.slice(-1));
 
     expect(await codes("sort=default")).toEqual(["B", "A", "C", "D"]);
     expect(await codes("sort=createdAt&dir=desc")).toEqual(["B", "A", "D", "C"]);
@@ -164,21 +214,38 @@ describe("GET /api/invites", () => {
     expect(items.at(-1)!.createdAt).toBeNull();
   });
 
-  it.each(["status=semua", "usedWithin=90d", "sort=email", "dir=up", "page=0", "limit=51", `q=${"a".repeat(101)}`])("answers 400 for %s", async (query) => {
-    const { response } = await call(`/api/invites?${query}`, { headers: { cookie: await adminCookie() } });
+  it.each([
+    "status=semua",
+    "usedWithin=90d",
+    "sort=email",
+    "dir=up",
+    "page=0",
+    "limit=51",
+    `q=${"a".repeat(101)}`,
+  ])("answers 400 for %s", async (query) => {
+    const { response } = await call(`/api/invites?${query}`, {
+      headers: { cookie: await adminCookie() },
+    });
     expect(response.status).toBe(400);
   });
 });
 
 describe("DELETE /api/invites/:code", () => {
   it("deletes an unused code with 204 in one query (audit), accepting the typed format", async () => {
-    const { codes } = (await (await mutate("POST", "/api/invites", { count: 1 })).response.json()) as { codes: string[] };
+    const { codes } = (await (
+      await mutate("POST", "/api/invites", { count: 1 })
+    ).response.json()) as { codes: string[] };
     const log = vi.spyOn(console, "log").mockImplementation(() => {});
-    const { response, d1Queries } = await mutate("DELETE", `/api/invites/${codes[0]!.toLowerCase().replaceAll("-", "")}`);
+    const { response, d1Queries } = await mutate(
+      "DELETE",
+      `/api/invites/${codes[0]!.toLowerCase().replaceAll("-", "")}`,
+    );
     expect(response.status).toBe(204);
     expect(d1Queries).toBe(2);
     expect(await stored(codes[0]!)).toBeNull();
-    expect(log.mock.calls.map((c) => JSON.parse(c[0] as string)).find((l) => l.message === "audit")).toMatchObject({
+    expect(
+      log.mock.calls.map((c) => JSON.parse(c[0] as string)).find((l) => l.message === "audit"),
+    ).toMatchObject({
       action: "invite.delete",
       targetId: normalizeInviteCode(codes[0]!),
     });

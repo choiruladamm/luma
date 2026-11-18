@@ -7,7 +7,8 @@ import { network } from "../setup";
 
 const GOOGLE_TOKEN = "https://oauth2.googleapis.com/token";
 
-const b64url = (value: object) => btoa(JSON.stringify(value)).replace(/=+$/, "").replace(/\+/g, "-").replace(/\//g, "_");
+const b64url = (value: object) =>
+  btoa(JSON.stringify(value)).replace(/=+$/, "").replace(/\+/g, "-").replace(/\//g, "_");
 
 /**
  * Fake Google code exchange: Better Auth only decodes the idToken after the
@@ -16,12 +17,23 @@ const b64url = (value: object) => btoa(JSON.stringify(value)).replace(/=+$/, "")
 function fakeGoogleToken(claims: { sub: string; email: string }) {
   const idToken = [
     b64url({ alg: "RS256", typ: "JWT" }),
-    b64url({ iss: "https://accounts.google.com", aud: env.GOOGLE_CLIENT_ID, email_verified: true, name: "Admin", ...claims }),
+    b64url({
+      iss: "https://accounts.google.com",
+      aud: env.GOOGLE_CLIENT_ID,
+      email_verified: true,
+      name: "Admin",
+      ...claims,
+    }),
     "sig",
   ].join(".");
   network.use(
     http.post(GOOGLE_TOKEN, () =>
-      HttpResponse.json({ access_token: "at", id_token: idToken, expires_in: 3600, token_type: "Bearer" }),
+      HttpResponse.json({
+        access_token: "at",
+        id_token: idToken,
+        expires_in: 3600,
+        token_type: "Bearer",
+      }),
     ),
   );
 }
@@ -29,7 +41,10 @@ function fakeGoogleToken(claims: { sub: string; email: string }) {
 const cookiesFrom = (res: Response) => res.headers.getSetCookie().map((c) => c.split(";")[0]!);
 
 /** sign-in/social → Google URL + state cookie; callback with that state. */
-async function loginWithGoogle(claims: { sub: string; email: string }, overrides: Partial<Env> = {}) {
+async function loginWithGoogle(
+  claims: { sub: string; email: string },
+  overrides: Partial<Env> = {},
+) {
   const start = await call(
     "/api/auth/sign-in/social",
     {
@@ -54,7 +69,9 @@ async function loginWithGoogle(claims: { sub: string; email: string }, overrides
 }
 
 const sessionCount = async (userId: string) =>
-  (await env.DB.prepare("SELECT COUNT(*) AS n FROM sessions WHERE user_id = ?").bind(userId).first<{ n: number }>())!.n;
+  (await env.DB.prepare("SELECT COUNT(*) AS n FROM sessions WHERE user_id = ?")
+    .bind(userId)
+    .first<{ n: number }>())!.n;
 
 describe("login with Google (redirect)", () => {
   it("sign-in/social returns the Google URL for the web client without writing D1", async () => {
@@ -68,19 +85,27 @@ describe("login with Google (redirect)", () => {
   it("gives an admin a 7-day session cookie that passes the guard", async () => {
     const admin = await createGoogleUser("admin-google@luma.test");
     const overrides = { ADMIN_EMAILS: "admin-google@luma.test" };
-    const { response, d1Queries } = (await loginWithGoogle({ sub: admin.sub, email: admin.email }, overrides)).callback;
+    const { response, d1Queries } = (
+      await loginWithGoogle({ sub: admin.sub, email: admin.email }, overrides)
+    ).callback;
     // Budget (docs/budgets.md, Per-action budgets): find account + user + admin check + token update + save session.
     expect(d1Queries).toBeLessThanOrEqual(5);
 
     expect(response.status).toBe(302);
     expect(response.headers.get("location")).toBe("/");
-    const session = response.headers.getSetCookie().find((c) => c.startsWith("__Secure-better-auth.session_token="))!;
+    const session = response.headers
+      .getSetCookie()
+      .find((c) => c.startsWith("__Secure-better-auth.session_token="))!;
     expect(session).toMatch(/HttpOnly/i);
     expect(session).toMatch(/Secure/);
     expect(session).toMatch(/SameSite=Lax/i);
     expect(session).toMatch(/Max-Age=604800/);
 
-    const probe = await call("/api/__probe", { headers: { cookie: session.split(";")[0]! } }, overrides);
+    const probe = await call(
+      "/api/__probe",
+      { headers: { cookie: session.split(";")[0]! } },
+      overrides,
+    );
     expect(probe.response.status).toBe(404);
   });
 
@@ -89,8 +114,14 @@ describe("login with Google (redirect)", () => {
     const { callback } = await loginWithGoogle({ sub: user.sub, email: user.email });
 
     expect(callback.response.status).toBe(302);
-    expect(callback.response.headers.get("location")).toBe("/login?error=FORBIDDEN&error_description=Not+an+admin");
-    expect(callback.response.headers.getSetCookie().some((c) => c.includes("session_token=") && !c.includes("Max-Age=0"))).toBe(false);
+    expect(callback.response.headers.get("location")).toBe(
+      "/login?error=FORBIDDEN&error_description=Not+an+admin",
+    );
+    expect(
+      callback.response.headers
+        .getSetCookie()
+        .some((c) => c.includes("session_token=") && !c.includes("Max-Age=0")),
+    ).toBe(false);
     expect(await sessionCount(user.id)).toBe(0);
   });
 
@@ -101,12 +132,24 @@ describe("login with Google (redirect)", () => {
 
     expect(callback.response.status).toBe(302);
     expect(callback.response.headers.get("location")).toBe("/");
-    const user = await env.DB.prepare("SELECT id, email_verified FROM users WHERE email = ?").bind(claims.email).first<{ id: string; email_verified: number }>();
+    const user = await env.DB.prepare("SELECT id, email_verified FROM users WHERE email = ?")
+      .bind(claims.email)
+      .first<{ id: string; email_verified: number }>();
     expect(user?.email_verified).toBe(1);
-    const account = await env.DB.prepare("SELECT provider_id, account_id FROM accounts WHERE user_id = ?").bind(user!.id).first();
+    const account = await env.DB.prepare(
+      "SELECT provider_id, account_id FROM accounts WHERE user_id = ?",
+    )
+      .bind(user!.id)
+      .first();
     expect(account).toEqual({ provider_id: "google", account_id: claims.sub });
-    const session = callback.response.headers.getSetCookie().find((c) => c.startsWith("__Secure-better-auth.session_token="))!;
-    const probe = await call("/api/__probe", { headers: { cookie: session.split(";")[0]! } }, overrides);
+    const session = callback.response.headers
+      .getSetCookie()
+      .find((c) => c.startsWith("__Secure-better-auth.session_token="))!;
+    const probe = await call(
+      "/api/__probe",
+      { headers: { cookie: session.split(";")[0]! } },
+      overrides,
+    );
     expect(probe.response.status).toBe(404);
   });
 

@@ -48,7 +48,11 @@ describe("openRouterAdmin", () => {
     await admin.updateLimit(hash, 0.5);
     or.keys.get(hash)!.usageDaily = 0.1;
 
-    expect(await admin.getUsage(hash)).toEqual({ limit: 0.5, limitRemaining: 0.4, usageDaily: 0.1 });
+    expect(await admin.getUsage(hash)).toEqual({
+      limit: 0.5,
+      limitRemaining: 0.4,
+      usageDaily: 0.1,
+    });
   });
 
   it("treats deleting a missing key as done, but surfaces other errors", async () => {
@@ -56,26 +60,40 @@ describe("openRouterAdmin", () => {
     const admin = openRouterAdmin("mgmt");
     await expect(admin.deleteKey("tidak-ada")).resolves.toBeUndefined();
 
-    network.use(http.delete(`${OPENROUTER_API}/keys/:hash`, () => new HttpResponse(null, { status: 500 })));
+    network.use(
+      http.delete(`${OPENROUTER_API}/keys/:hash`, () => new HttpResponse(null, { status: 500 })),
+    );
     await expect(admin.deleteKey("x")).rejects.toBeInstanceOf(OpenRouterError);
   });
 
   it("tells existing keys from missing ones, but surfaces other errors", async () => {
     fakeOpenRouter();
     const admin = openRouterAdmin("mgmt");
-    const { hash } = await admin.createKey({ name: "n", limitUsd: 0.02, expiresAt: new Date(), workspaceId: "ws" });
+    const { hash } = await admin.createKey({
+      name: "n",
+      limitUsd: 0.02,
+      expiresAt: new Date(),
+      workspaceId: "ws",
+    });
 
     expect(await admin.keyExists(hash)).toBe(true);
     expect(await admin.keyExists("tidak-ada")).toBe(false);
 
-    network.use(http.get(`${OPENROUTER_API}/keys/:hash`, () => new HttpResponse(null, { status: 500 })));
+    network.use(
+      http.get(`${OPENROUTER_API}/keys/:hash`, () => new HttpResponse(null, { status: 500 })),
+    );
     await expect(admin.keyExists(hash)).rejects.toBeInstanceOf(OpenRouterError);
   });
 
   it("throws OpenRouterError with the status on failures", async () => {
     network.use(http.post(`${OPENROUTER_API}/keys`, () => HttpResponse.json({}, { status: 401 })));
     await expect(
-      openRouterAdmin("salah").createKey({ name: "n", limitUsd: 1, expiresAt: new Date(), workspaceId: "w" }),
+      openRouterAdmin("salah").createKey({
+        name: "n",
+        limitUsd: 1,
+        expiresAt: new Date(),
+        workspaceId: "w",
+      }),
     ).rejects.toMatchObject({ status: 401 });
   });
 });

@@ -21,7 +21,8 @@ export function createQueryClient(onUnauthorized: () => void, onAccessExpired: (
         staleTime: 60_000,
         refetchOnWindowFocus: false,
         refetchOnReconnect: false,
-        retry: (failures, error) => failures < 1 && !(error instanceof ApiError && error.status >= 400 && error.status < 500),
+        retry: (failures, error) =>
+          failures < 1 && !(error instanceof ApiError && error.status >= 400 && error.status < 500),
       },
       mutations: { retry: false },
     },

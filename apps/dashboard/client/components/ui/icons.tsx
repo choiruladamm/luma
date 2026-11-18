@@ -88,7 +88,19 @@ const ICONS = {
 export type IconName = keyof typeof ICONS;
 
 /** Decorative unless `label` is given (then role="img" + aria-label). */
-export function Icon({ name, size = 18, strokeWidth = 1.8, label, className }: { name: IconName; size?: number; strokeWidth?: number; label?: string; className?: string }) {
+export function Icon({
+  name,
+  size = 18,
+  strokeWidth = 1.8,
+  label,
+  className,
+}: {
+  name: IconName;
+  size?: number;
+  strokeWidth?: number;
+  label?: string;
+  className?: string;
+}) {
   return (
     <HugeiconsIcon
       icon={ICONS[name]}
@@ -104,4 +116,6 @@ export function Icon({ name, size = 18, strokeWidth = 1.8, label, className }: {
 }
 
 /** Busy indicator for buttons: replaces the button's icon, or sits left of its label. Still under reduced motion. */
-export const Spinner = ({ size = 18 }: { size?: number }) => <Icon name="loading" size={size} className="motion-safe:animate-spin" />;
+export const Spinner = ({ size = 18 }: { size?: number }) => (
+  <Icon name="loading" size={size} className="motion-safe:animate-spin" />
+);

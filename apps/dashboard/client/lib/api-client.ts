@@ -7,4 +7,6 @@ import type { AppType } from "../../worker/index";
  * `X-Requested-With` makes Cloudflare Access answer an expired session with 401 instead of a
  * cross-origin redirect that fetch can't follow (see `toApiError`).
  */
-export const api = hc<AppType>("/", { headers: { "content-type": "application/json", "x-requested-with": "XMLHttpRequest" } }).api;
+export const api = hc<AppType>("/", {
+  headers: { "content-type": "application/json", "x-requested-with": "XMLHttpRequest" },
+}).api;

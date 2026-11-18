@@ -38,16 +38,25 @@ export const sync = new Hono<AppEnv>()
     limitBody(),
     zValidator("json", pushBody, (result) => {
       if (!result.success) {
-        throw new ApiError(400, "BAD_REQUEST", `Body must be {"schemaVersion", "records": [≤${MAX_PUSH_RECORDS}]}`);
+        throw new ApiError(
+          400,
+          "BAD_REQUEST",
+          `Body must be {"schemaVersion", "records": [≤${MAX_PUSH_RECORDS}]}`,
+        );
       }
     }),
-    async (c) => c.json(await push(c.env.DB, c.get("user").id, c.req.valid("json"), syncLimits(c.env))),
+    async (c) =>
+      c.json(await push(c.env.DB, c.get("user").id, c.req.valid("json"), syncLimits(c.env))),
   )
   .get(
     "/pull",
     zValidator("query", pullQuery, (result) => {
       if (!result.success) {
-        throw new ApiError(400, "BAD_REQUEST", `Query must be ?since=<seq>&limit=<1..${MAX_PULL_RECORDS}>`);
+        throw new ApiError(
+          400,
+          "BAD_REQUEST",
+          `Query must be ?since=<seq>&limit=<1..${MAX_PULL_RECORDS}>`,
+        );
       }
     }),
     async (c) => {

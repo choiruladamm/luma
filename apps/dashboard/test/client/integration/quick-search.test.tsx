@@ -25,7 +25,11 @@ describe("header quick search", () => {
     expect(urls.filter((u) => u.includes("q="))).toHaveLength(0);
 
     await user.type(box, "s");
-    expect(await screen.findByRole("option", { name: (n) => n.replace(/\s/g, "").includes("user1@luma.test") })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("option", {
+        name: (n) => n.replace(/\s/g, "").includes("user1@luma.test"),
+      }),
+    ).toBeInTheDocument();
     expect(urls.filter((u) => u.includes("q=us"))).toHaveLength(1);
     await user.keyboard("{ArrowDown}{Enter}");
     await waitFor(() => expect(router.state.location.pathname).toBe("/users/u1"));
@@ -41,6 +45,8 @@ describe("header quick search", () => {
     await user.click(await screen.findByRole("option", { name: /Lihat semua hasil/ }));
     await waitFor(() => expect(router.state.location.search).toBe("?q=us"));
     // The shell re-renders after the URL commits: wait for the field to go.
-    await waitFor(() => expect(screen.queryByRole("combobox", { name: "Cari email user" })).toBeNull());
+    await waitFor(() =>
+      expect(screen.queryByRole("combobox", { name: "Cari email user" })).toBeNull(),
+    );
   });
 });

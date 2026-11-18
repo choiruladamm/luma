@@ -1,4 +1,10 @@
-import { keepPreviousData, queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  queryOptions,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { createInvites, deleteInvite, listInvites } from "../api/invites-api";
 import { type InvitesParams, invitesSearchEntries } from "../hooks/use-invites-params";
 import { invitesKeys } from "./query-keys";
@@ -10,11 +16,15 @@ export const invitesQuery = (params: InvitesParams) => {
 };
 
 /** The previous page stays on screen while the next one loads, so paging doesn't flash a skeleton. */
-export const useInvites = (params: InvitesParams) => useQuery({ ...invitesQuery(params), placeholderData: keepPreviousData });
+export const useInvites = (params: InvitesParams) =>
+  useQuery({ ...invitesQuery(params), placeholderData: keepPreviousData });
 
 function useInviteMutation<T, R>(mutationFn: (input: T) => Promise<R>) {
   const queryClient = useQueryClient();
-  return useMutation({ mutationFn, onSuccess: () => queryClient.invalidateQueries({ queryKey: invitesKeys.all }) });
+  return useMutation({
+    mutationFn,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: invitesKeys.all }),
+  });
 }
 
 /** Returns `{codes}` to show and copy right after creating. */

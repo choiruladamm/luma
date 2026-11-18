@@ -9,7 +9,9 @@ import { server } from "../setup";
 describe("Detail user", () => {
   it("shows profile, sign-in provider, invite, usage, AI quota, devices", async () => {
     renderApp("/users/u1");
-    expect(await screen.findByRole("heading", { name: /^sekar\.ayu\s?@gmail\.com$/ })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: /^sekar\.ayu\s?@gmail\.com$/ }),
+    ).toBeInTheDocument();
     expect(screen.getByText("Google")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "LUMA-7KQ2" })).toHaveAttribute("href", "/invites");
     expect(screen.getByText("App Luma 0.3.0")).toBeInTheDocument();
@@ -41,7 +43,9 @@ describe("Detail user", () => {
     await user.click(within(dialog).getByRole("button", { name: "Ban user" }));
     expect(await screen.findByText("User ini lagi di-ban")).toBeInTheDocument();
     expect(calls).toEqual(["ban application/json"]);
-    const toastEl = (await screen.findByText("sekar.ayu@gmail.com di-ban")).closest<HTMLElement>("[role=status]")!;
+    const toastEl = (await screen.findByText("sekar.ayu@gmail.com di-ban")).closest<HTMLElement>(
+      "[role=status]",
+    )!;
     await user.click(within(toastEl).getByRole("button", { name: "Buka ban" }));
     await waitFor(() => expect(calls).toContain("unban"));
     await waitFor(() => expect(screen.queryByText("User ini lagi di-ban")).toBeNull());
@@ -52,7 +56,9 @@ describe("Detail user", () => {
     server.use(http.post(`${API}/users/:id/ban`, () => (ban(), HttpResponse.json({}))));
     const { user } = renderApp("/users/u1");
     await user.click(await screen.findByRole("button", { name: "Ban user" }));
-    await user.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Batal" }));
+    await user.click(
+      within(await screen.findByRole("dialog")).getByRole("button", { name: "Batal" }),
+    );
     expect(ban).not.toHaveBeenCalled();
   });
 
@@ -60,7 +66,9 @@ describe("Detail user", () => {
     server.use(http.post(`${API}/users/:id/ban`, () => apiError(502, "OPENROUTER_FAILED")));
     const { user } = renderApp("/users/u1");
     await user.click(await screen.findByRole("button", { name: "Ban user" }));
-    await user.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Ban user" }));
+    await user.click(
+      within(await screen.findByRole("dialog")).getByRole("button", { name: "Ban user" }),
+    );
     expect(await screen.findByText("OpenRouter gagal dihubungi. Coba lagi.")).toBeInTheDocument();
     expect(screen.queryByText("User ini lagi di-ban")).toBeNull();
   });
@@ -69,7 +77,10 @@ describe("Detail user", () => {
     let banned = true;
     server.use(
       http.get(`${API}/users/:id`, () => HttpResponse.json(userDetail({ banned }))),
-      http.post(`${API}/users/:id/unban`, () => ((banned = false), HttpResponse.json({ banned: false }))),
+      http.post(
+        `${API}/users/:id/unban`,
+        () => ((banned = false), HttpResponse.json({ banned: false })),
+      ),
     );
     const { user } = renderApp("/users/u1");
     await user.click(await screen.findByRole("button", { name: "Buka ban" }));

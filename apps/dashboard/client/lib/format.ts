@@ -32,7 +32,11 @@ const DAY = 24 * HOUR;
  * "Baru aja", "2 mnt lalu", "1 jam lalu", "Kemarin", "3 hari lalu", "2 minggu lalu", then the
  * date. Own copy rather than Intl.RelativeTimeFormat, whose "2 menit yang lalu" isn't the board's.
  */
-export function formatRelative(iso: string | null, { t, locale }: Pick<I18n, "t" | "locale">, now = Date.now()) {
+export function formatRelative(
+  iso: string | null,
+  { t, locale }: Pick<I18n, "t" | "locale">,
+  now = Date.now(),
+) {
   if (!iso) return t.time.never;
   const diff = now - new Date(iso).getTime();
   if (diff < MINUTE) return t.time.justNow;

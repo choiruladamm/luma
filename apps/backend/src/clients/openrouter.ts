@@ -30,7 +30,10 @@ export type OpenRouterAdmin = {
   deleteKey(hash: string): Promise<void>;
 };
 
-export function openRouterAdmin(managementKey: string, fetcher: typeof fetch = fetch): OpenRouterAdmin {
+export function openRouterAdmin(
+  managementKey: string,
+  fetcher: typeof fetch = fetch,
+): OpenRouterAdmin {
   const call = async (method: string, path: string, body?: unknown) => {
     const res = await fetcher(`${OPENROUTER_API}${path}`, {
       method,
@@ -40,7 +43,8 @@ export function openRouterAdmin(managementKey: string, fetcher: typeof fetch = f
       },
       body: body === undefined ? undefined : JSON.stringify(body),
     });
-    if (!res.ok) throw new OpenRouterError(res.status, `OpenRouter ${method} ${path}: ${res.status}`);
+    if (!res.ok)
+      throw new OpenRouterError(res.status, `OpenRouter ${method} ${path}: ${res.status}`);
     return (await res.json()) as Record<string, unknown>;
   };
 
@@ -66,7 +70,11 @@ export function openRouterAdmin(managementKey: string, fetcher: typeof fetch = f
         limit_remaining: number | null;
         usage_daily: number;
       };
-      return { limit: data.limit, limitRemaining: data.limit_remaining, usageDaily: data.usage_daily };
+      return {
+        limit: data.limit,
+        limitRemaining: data.limit_remaining,
+        usageDaily: data.usage_daily,
+      };
     },
     async keyExists(hash) {
       try {

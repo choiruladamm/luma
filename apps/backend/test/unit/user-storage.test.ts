@@ -22,7 +22,9 @@ describe("reserveBytes", () => {
     const { userId } = await signUp();
     const db = createDb(env.DB);
 
-    const results = await Promise.allSettled(Array.from({ length: 5 }, () => reserveBytes(db, userId, 30, 100)));
+    const results = await Promise.allSettled(
+      Array.from({ length: 5 }, () => reserveBytes(db, userId, 30, 100)),
+    );
 
     expect(results.filter((r) => r.status === "fulfilled")).toHaveLength(3);
     expect(await storedBytes(db, userId)).toBe(90);

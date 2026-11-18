@@ -25,6 +25,9 @@ export const saveKey = (db: Db, userId: string, values: AiKeyValues) =>
     .onConflictDoUpdate({ target: aiKeys.userId, set: values });
 
 export async function findKeyHash(db: Db, userId: string) {
-  const [row] = await db.select({ keyHash: aiKeys.keyHash }).from(aiKeys).where(eq(aiKeys.userId, userId));
+  const [row] = await db
+    .select({ keyHash: aiKeys.keyHash })
+    .from(aiKeys)
+    .where(eq(aiKeys.userId, userId));
   return row?.keyHash ?? null;
 }

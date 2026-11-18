@@ -26,7 +26,11 @@ const fromRow = (r: Row): SyncRecord => ({
 export type StoredRecord = SyncRecord & { size: number };
 
 /** 1 query: existing records for the `(kind, key)` pairs in the batch. */
-export async function findRecords(d1: D1Database, userId: string, ids: [Kind, string][]): Promise<StoredRecord[]> {
+export async function findRecords(
+  d1: D1Database,
+  userId: string,
+  ids: [Kind, string][],
+): Promise<StoredRecord[]> {
   const { results } = await d1
     .prepare(
       `SELECT kind, key, data, updated_at, deleted, schema_version,
@@ -44,7 +48,9 @@ export type SyncUsage = { seq: number; bytes: number; day: number; rows: number 
 /** 1 query: `seq` + the user's current sync quota usage (all 0 if never pushed). */
 export async function syncUsage(d1: D1Database, userId: string): Promise<SyncUsage> {
   const row = await d1
-    .prepare("SELECT seq, sync_bytes AS bytes, sync_day AS day, sync_rows AS rows FROM user_storage WHERE user_id = ?1")
+    .prepare(
+      "SELECT seq, sync_bytes AS bytes, sync_day AS day, sync_rows AS rows FROM user_storage WHERE user_id = ?1",
+    )
     .bind(userId)
     .first<SyncUsage>();
   return row ?? { seq: 0, bytes: 0, day: 0, rows: 0 };

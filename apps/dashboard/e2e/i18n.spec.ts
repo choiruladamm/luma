@@ -3,7 +3,9 @@ import { expect, test } from "@playwright/test";
 test.describe("English browser", () => {
   test.use({ locale: "en-US" });
 
-  test("opens every screen in English, switches to Indonesian, and keeps the choice after a reload @phone", async ({ page }) => {
+  test("opens every screen in English, switches to Indonesian, and keeps the choice after a reload @phone", async ({
+    page,
+  }) => {
     await page.goto("/");
     await expect(page.locator("html")).toHaveAttribute("lang", "en");
     await expect(page.getByRole("heading", { name: "Overview", level: 1 })).toBeVisible();

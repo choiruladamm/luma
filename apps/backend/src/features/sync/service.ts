@@ -36,12 +36,20 @@ const recordSize = (r: SyncRecord) => r.key.length + (r.data ? JSON.stringify(r.
  * ponytail: checked outside the write batch; parallel pushes can get at most one extra batch
  * (500 rows) past it per concurrent request. Fine as long as the per-user rate limit exists.
  */
-function assertQuota(usage: { bytes: number; day: number; rows: number }, limits: SyncLimits, rows: number, bytesDelta: number, now: Date) {
+function assertQuota(
+  usage: { bytes: number; day: number; rows: number },
+  limits: SyncLimits,
+  rows: number,
+  bytesDelta: number,
+  now: Date,
+) {
   const day = Math.floor(now.getTime() / DAY_MS);
   const rowsToday = (usage.day === day ? usage.rows : 0) + rows;
   if (rowsToday > limits.dailyWrites) {
     const retryAfter = Math.ceil(((day + 1) * DAY_MS - now.getTime()) / 1000);
-    throw new ApiError(429, "QUOTA_EXCEEDED", "Daily sync quota reached", { "Retry-After": String(retryAfter) });
+    throw new ApiError(429, "QUOTA_EXCEEDED", "Daily sync quota reached", {
+      "Retry-After": String(retryAfter),
+    });
   }
   if (bytesDelta > 0 && usage.bytes + bytesDelta > limits.storageBytes) {
     throw new ApiError(413, "STORAGE_FULL", "Sync storage is full");
@@ -103,7 +111,12 @@ export const MAX_PULL_RECORDS = 500;
  * Pull page: records with `seq` > [since] are already JSON from SQL, the Worker only
  * concatenates strings. Fetches [limit] + 1 to know whether another page exists.
  */
-export async function pull(d1: D1Database, userId: string, since: number, limit: number): Promise<string> {
+export async function pull(
+  d1: D1Database,
+  userId: string,
+  since: number,
+  limit: number,
+): Promise<string> {
   const results = await pullRows(d1, userId, since, limit + 1);
   const page = results.slice(0, limit);
   const nextSeq = page.at(-1)?.seq ?? since;

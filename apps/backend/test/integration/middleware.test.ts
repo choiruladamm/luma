@@ -36,12 +36,16 @@ describe("killSwitch", () => {
     expect(d1.count()).toBe(0);
   });
 
-  it("treats anything but \"true\" as off", async () => {
+  it('treats anything but "true" as off', async () => {
     const app = appWith(() => {});
-    const res = await app.request("/v1/sync/push", { method: "POST", body: "{}" }, {
-      ...env,
-      SYNC_ENABLED: "TRUE",
-    });
+    const res = await app.request(
+      "/v1/sync/push",
+      { method: "POST", body: "{}" },
+      {
+        ...env,
+        SYNC_ENABLED: "TRUE",
+      },
+    );
     expect(res.status).toBe(503);
   });
 

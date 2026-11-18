@@ -2,7 +2,10 @@ import { type CSSProperties, useLayoutEffect, useRef, useState } from "react";
 
 type Box = { x: number; w: number };
 
-const place = (box: Box | undefined): CSSProperties => ({ width: box?.w ?? 0, transform: `translateX(${box?.x ?? 0}px)` });
+const place = (box: Box | undefined): CSSProperties => ({
+  width: box?.w ?? 0,
+  transform: `translateX(${box?.x ?? 0}px)`,
+});
 
 /**
  * Sliding indicators for a row of tabs (nav, Segmented): one pill under the active item and one
@@ -22,7 +25,12 @@ export function useSlidingPill(active: number, count: number) {
   const [animate, setAnimate] = useState(false);
 
   useLayoutEffect(() => {
-    const measure = () => setBoxes(items.current.slice(0, count).map((el) => ({ x: el?.offsetLeft ?? 0, w: el?.offsetWidth ?? 0 })));
+    const measure = () =>
+      setBoxes(
+        items.current
+          .slice(0, count)
+          .map((el) => ({ x: el?.offsetLeft ?? 0, w: el?.offsetWidth ?? 0 })),
+      );
     measure();
     const frame = requestAnimationFrame(() => setAnimate(true));
     const observer = new ResizeObserver(measure);
@@ -53,6 +61,8 @@ export function useSlidingPill(active: number, count: number) {
     activeVisible: active >= 0 && !!boxes[active]?.w,
     hoverVisible: hover !== null && hover !== active && !!boxes[lastHover]?.w,
     /** Transition classes, only after the first measure. */
-    slide: animate ? "transition-[transform,width,opacity] duration-200 ease-out motion-reduce:transition-none" : "",
+    slide: animate
+      ? "transition-[transform,width,opacity] duration-200 ease-out motion-reduce:transition-none"
+      : "",
   };
 }
