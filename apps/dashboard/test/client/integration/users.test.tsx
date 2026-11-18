@@ -125,9 +125,12 @@ describe("User", () => {
     const header = await screen.findByRole("button", { name: /^File/ });
     await u.click(header);
     await waitFor(() => expect(router.state.location.search).toBe("?status=banned&sort=r2"));
-    expect(screen.getByRole("columnheader", { name: /^File/ })).toHaveAttribute(
-      "aria-sort",
-      "descending",
+    // The header follows the refetched page, which can land after the URL changes.
+    await waitFor(() =>
+      expect(screen.getByRole("columnheader", { name: /^File/ })).toHaveAttribute(
+        "aria-sort",
+        "descending",
+      ),
     );
     await u.click(screen.getByRole("button", { name: /^File/ }));
     await waitFor(() =>

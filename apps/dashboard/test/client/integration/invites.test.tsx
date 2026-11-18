@@ -202,9 +202,12 @@ describe("Undangan", () => {
     await user.click(screen.getAllByRole("tab", { name: /Semua/ })[0]!);
     await user.click(await screen.findByRole("button", { name: /^Kode/ }));
     await waitFor(() => expect(router.state.location.search).toBe("?sort=code"));
-    expect(screen.getByRole("columnheader", { name: /^Kode/ })).toHaveAttribute(
-      "aria-sort",
-      "descending",
+    // The header follows the refetched page, which can land after the URL changes.
+    await waitFor(() =>
+      expect(screen.getByRole("columnheader", { name: /^Kode/ })).toHaveAttribute(
+        "aria-sort",
+        "descending",
+      ),
     );
     await user.click(screen.getByRole("button", { name: /^Urutkan:/ }));
     await user.click(screen.getByRole("option", { name: "Terlama dipakai" }));
