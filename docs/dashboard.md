@@ -16,7 +16,7 @@ The dashboard in `apps/dashboard` is a Worker serving a React SPA through Static
 
 Cloudflare Access protects the deployed custom domains. The dashboard also uses Google OAuth through its own Better Auth instance and signed cookie session on the shared database. Protected requests accept a dashboard cookie signed with its own secret, not a mobile bearer token, and recheck admin membership on every request; removing an email disables existing sessions. A verified email must match `ADMIN_EMAILS`, case-insensitively after trimming; an empty string permits no admins. The binding must be a string. A verified admin's first Google sign-in can create the account without a prior app sign-in or invite.
 
-Sessions expire after seven idle days, sliding at most once per day while used, with a 30-day absolute cap from creation. `trustedOrigins` contains `BETTER_AUTH_URL`, including localhost when configured.
+Sessions expire after seven idle days, sliding at most once per day while used, with a 30-day absolute cap from creation. The login screen copy still says 12 hours (#231). `trustedOrigins` contains `BETTER_AUTH_URL`, including localhost when configured.
 
 `securityHeaders` wraps the chain first, followed by request ID and per-IP rate limiting. The allowlisted auth routes are `GET /api/auth/get-session`, `POST /api/auth/sign-in/social`, `GET /api/auth/callback/google`, and `POST /api/auth/sign-out`; they go to Better Auth; other `/api/auth/*` routes return 404. Protected API routes then require an admin session, require `application/json` and the configured origin on mutations (otherwise 403), and apply per-admin mutation limits. Successful admin mutations are audited. Worker responses and static assets carry CSP and `nosniff` headers.
 
