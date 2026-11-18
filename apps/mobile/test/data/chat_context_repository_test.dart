@@ -1771,6 +1771,8 @@ void main() {
       await expectLater(context.prepare(turn), fails(AiError.invalidResponse));
       expect(adapter.requests.where((r) => r.path == '/embeddings'), isEmpty);
     },
+    // A 310k-word chapter takes ~10 s locally and over 30 s on CI runners.
+    timeout: const Timeout(Duration(seconds: 90)),
   );
 
   test('session deleted after prepare skips answer network', () async {
