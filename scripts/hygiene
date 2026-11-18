@@ -9,10 +9,18 @@ cd "$(git rev-parse --show-toplevel)"
 if command -v fvm >/dev/null 2>&1; then dart="fvm dart"; else dart="dart"; fi
 
 status=0
+
+# Without node_modules the lint script fails with "command not found"; say what to run instead.
+need_node_modules() {
+  [ -d "$1/node_modules" ] && return 0
+  echo "hygiene: $1 has no node_modules; run make backend-install dashboard-install" >&2
+  return 1
+}
+
 python3 scripts/hygiene_check.py "$@" || status=1
 (cd apps/mobile && $dart analyze --fatal-infos) || status=1
-(cd apps/backend && bun run lint) || status=1
-(cd apps/dashboard && bun run lint) || status=1
+{ need_node_modules apps/backend && (cd apps/backend && bun run lint); } || status=1
+{ need_node_modules apps/dashboard && (cd apps/dashboard && bun run lint); } || status=1
 
 if [ "${HYGIENE_MODE:-enforce}" = "report" ]; then
   exit 0

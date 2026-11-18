@@ -9,6 +9,21 @@ Admin-only Worker `luma-admin-{env}`: Hono API under `/api` on the same D1 as th
 - After editing `wrangler.jsonc`: `bunx wrangler types --env dev --strict-vars false` from `apps/dashboard` (needs `.dev.vars` so secrets get typed).
 - Backend vars (switches, OpenRouter workspace, AI budget) come from `apps/backend/wrangler.jsonc` via `backend-vars.ts`; keep them out of this `wrangler.jsonc`.
 
+## Lint exceptions
+
+`.oxlintrc.json` can't hold comments, so every rule it turns off or scopes is listed here. Inline `oxlint-disable` comments carry their own reason. A new exception adds a line.
+
+- `no-await-in-loop`, off: deliberately sequential loops.
+- `typescript/consistent-return`, off: React effects return a cleanup on some paths only.
+- `jsx-a11y/prefer-tag-over-role`, off: the custom combobox, listbox, option, and tablist have no native element, and swapping `role="search"`/`role="status"` would change what the tests query.
+- `jsx-a11y/no-autofocus`, off: focus only moves into dialogs and search fields the user just opened.
+- `react/no-array-index-key`, off: static skeleton, gap, and session lists have no stable id.
+- `import/no-unassigned-import`, off: CSS and test-setup side-effect imports.
+- `typescript/no-unsafe-type-assertion` and `unicorn/consistent-function-scoping`, off in `test/**` and `e2e/**`: JSON bodies, msw `params`, and small local helpers. `vitest/valid-expect` there allows `maxArgs: 2`.
+- Three `jsx-a11y` click and role rules, off in `select.tsx` and `quick-search.tsx`: custom listboxes. Keyboard handling sits on the trigger or input; the options are mouse-only.
+- `react/no-unstable-nested-components`, off in the two `*-table-skeleton.tsx` files: the flagged functions are `cell` renderers in column config, not components.
+- Hook-dependency rules (`react-hooks/exhaustive-deps`, `react/exhaustive-effect-dependencies`, `react/memo-dependencies`, `react/set-state-in-effect`, `react/incompatible-library`, `react/immutability`), off in `app-shell.tsx`, `invites-page.tsx`, `quick-search.tsx`, `use-user-search.ts`, `users-page.tsx`: the unstable `set` setter stays out of the deps on purpose; adding it re-runs the effects on every render. Re-enable a file when its effects are rewritten.
+
 ## Worker rules
 
 - Middleware order: `securityHeaders → requestId → IP rateLimit → [/api/auth/* allowlist → Better Auth] → requireAdmin → requireSameOriginJson → rateLimitAdmin → validate → handler`. `requireAdmin` is global on `/api/*`: mount every route after it, with no per-route auth.

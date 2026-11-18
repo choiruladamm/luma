@@ -6,6 +6,15 @@ Hono API under `/v1` on Workers, D1 + Drizzle, R2, Better Auth (`bearer` plugin)
 
 - `make backend-test` (oxlint + Prettier check, tsc, vitest in workerd + coverage) is the check for this app; `bun run format` fixes formatting. Bundle limit 3 MB compressed: `bun run size` from `apps/backend`.
 - After editing `wrangler.jsonc`: `make backend-types`.
+
+## Lint exceptions
+
+`.oxlintrc.json` can't hold comments, so every rule it turns off or scopes is listed here. Inline `oxlint-disable` comments carry their own reason. A new exception adds a line.
+
+- `no-await-in-loop`, off: R2 pagination follows cursors, and the rate-limit tests send requests in order on purpose.
+- `typescript/no-unsafe-type-assertion`, off in `test/**`: JSON bodies and the `RateLimit`/`R2Bucket` mocks.
+- `vitest/expect-expect` in `test/**`: `expectContract` counts as an assertion.
+- `vitest/valid-expect` in `test/**`: `maxArgs: 2`, because `expect(x, message)` is intentional.
 - Deploys go through the `/backend-deploy <env>` skill. `make backend-deploy e=prod` refuses outside `master`; `make backend-migrate e=prod` doesn't check the branch, so run it from `master` only.
 
 ## Code rules
