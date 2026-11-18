@@ -16,8 +16,8 @@ import '../../../core/widgets/sheet.dart';
 import '../view_models/bookshelf_view_model.dart';
 import 'book_edit_sheet.dart';
 
-/// Board 21 Info buku: cover + judul + progres, daftar rincian, "Lanjut baca"
-/// dan "Hapus dari rak".
+/// Board 21 Info buku: cover + title + progress, details list, "Lanjut baca"
+/// and "Hapus dari rak".
 class BookInfoSheet extends ConsumerWidget {
   const BookInfoSheet({
     super.key,
@@ -26,7 +26,7 @@ class BookInfoSheet extends ConsumerWidget {
     required this.onDelete,
   });
 
-  /// Bukunya waktu sheet dibuka; dipake kalau rak belum ngirim data baru.
+  /// The book when the sheet opened; used if the shelf hasn't sent new data.
   final ShelfBook book;
   final VoidCallback onRead;
   final VoidCallback onDelete;
@@ -34,7 +34,7 @@ class BookInfoSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final c = context.stabilo;
-    // Rak nge-stream ulang abis edit judul, jadi sheet ini ikut berubah live.
+    // The shelf re-streams after a title edit, so this sheet changes live.
     final book =
         ref
             .watch(booksStreamProvider)
@@ -277,6 +277,6 @@ class _Bar extends StatelessWidget {
   }
 }
 
-/// Flutter gak punya `word-break: break-all`: sisipin word joiner biar
-/// judul tanpa spasi bisa patah di karakter mana aja.
+/// Flutter has no `word-break: break-all`: inserts word joiners so a title
+/// without spaces can break at any character.
 String _breakAll(String s) => s.split('').join('\u200B');

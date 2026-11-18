@@ -6,8 +6,8 @@ import '../../../core/theme/stabilo_tokens.dart';
 import '../../../core/theme/stabilo_type.dart';
 import '../../../core/widgets/buttons.dart';
 
-/// ReminderBanner di Rak (board 24, Komponen 04). Pink, bukan accent, biar
-/// gak rebutan sama kartu lanjut baca & tombol Import.
+/// ReminderBanner on Rak (board 24, Komponen 04). Pink, not accent, so it
+/// doesn't compete with the continue reading card & the Import button.
 class BackupReminder extends StatelessWidget {
   const BackupReminder({
     super.key,
@@ -17,7 +17,7 @@ class BackupReminder extends StatelessWidget {
     required this.onClose,
   });
 
-  /// Udah berapa hari (dari backup terakhir / buku pertama).
+  /// Number of days (since the last backup / first book).
   final int days;
   final bool neverBackedUp;
   final VoidCallback onBackup;

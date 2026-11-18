@@ -1,13 +1,12 @@
 import 'dart:math' as math;
 
-/// Opasitas 4 kata terakhir teks yang lagi ditulis (board "Artinya streaming
-/// · Opsi B"): makin ke ujung makin transparan, diem.
+/// Opacity of the last 4 words of the text being written (board "Artinya streaming
+/// · Opsi B"): more transparent toward the end, static.
 const tailAlphas = [0.8, 0.6, 0.42, 0.26];
 
-/// Pecah [text] jadi bagian solid + kata-kata ekor (maks [tailAlphas]
-/// panjangnya). Tiap kata ekor bawa spasi di belakangnya, jadi digabung
-/// lagi persis sama dengan [text]. Kata ekor dipasangin ke alpha dari
-/// belakang: 2 kata = 0,42 · 0,26.
+/// Splits [text] into a solid part + tail words (at most [tailAlphas] long). Each
+/// tail word carries its trailing space, so joining them reproduces [text] exactly.
+/// Tail words get alphas from the end: 2 words = 0.42 · 0.26.
 ({String head, List<String> tail}) splitTail(String text) {
   final words = RegExp(r'\S+').allMatches(text).toList();
   if (words.isEmpty) return (head: text, tail: const []);
@@ -24,15 +23,15 @@ const tailAlphas = [0.8, 0.6, 0.42, 0.26];
   );
 }
 
-/// Kira-kira jumlah huruf terjemahan paragraf asli sepanjang [source].
+/// Approximate number of characters of the translation of an original paragraph of length [source].
 double estimateTranslation(int source) => source * 1.05;
 
-/// Kira-kira jumlah huruf blok makna.
+/// Approximate number of characters of the meaning block.
 const estimatedMeaning = 130.0;
 
-/// Lebar baris placeholder (fraksi lebar kolom) buat teks sepanjang [chars]
-/// huruf (board perilaku): baris = ⌈huruf × lebar huruf rata-rata ÷ lebar
-/// kolom⌉, baris terakhir selebar sisanya.
+/// Width of a placeholder line (fraction of the column width) for text of [chars]
+/// characters (behavior board): lines = ⌈chars × average char width ÷ column
+/// width⌉, the last line as wide as the remainder.
 List<double> placeholderRows(double chars, double charWidth, double column) {
   if (chars <= 0 || column <= 0) return const [];
   final lines = chars * charWidth / column;

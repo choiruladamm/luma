@@ -10,9 +10,9 @@ import '../../../core/theme/stabilo_type.dart';
 import '../../../core/widgets/buttons.dart';
 import '../../../core/widgets/sheet.dart';
 
-/// Pilih snapshot cloud (belum ada board: pakai komponen yang ada). Snapshot
-/// yang dipilih langsung di-download & dicek di sini. Hasil: [RestorePreview]
-/// (lanjut ke ringkasan board 28), [RestoreException], atau null (ditutup).
+/// Pick a cloud snapshot (no board: uses existing components). The chosen
+/// snapshot is downloaded & checked right here. Result: [RestorePreview]
+/// (continues to the board 28 summary), [RestoreException], or null (closed).
 Future<Object?> showCloudRestorePicker(
   BuildContext context, {
   required Future<List<CloudBackup>> Function() load,

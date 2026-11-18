@@ -1,7 +1,7 @@
 import 'dart:convert';
 
-/// Indeks warna cover default 0..7 dari judul (board "Cover default · aturan
-/// generate"). Judul sama = warna sama, di HP mana pun.
+/// Default cover color index 0..7 from the title (board "Cover default · aturan
+/// generate"). The same title gives the same color on any phone.
 int coverIndex(String title) {
   final s = title.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
   var h = 0x811c9dc5; // FNV-1a 32-bit
@@ -12,7 +12,7 @@ int coverIndex(String title) {
   return ((h * 0x9e3779b1) & 0xffffffff) >> 29;
 }
 
-/// Huruf buat cover mini (< 64): huruf depan judul, lewatin "The", "A", "An".
+/// Letter for the mini cover (< 64): the title's first letter, skipping "The", "A", "An".
 String coverInitial(String title) {
   final words = title.trim().split(RegExp(r'\s+'));
   final skip = {'the', 'a', 'an'};
@@ -22,8 +22,8 @@ String coverInitial(String title) {
   return word.isEmpty ? '?' : word.substring(0, 1).toUpperCase();
 }
 
-/// Lebar teks [text] (kapital) di ukuran [fontSize] dan sumbu lebar huruf
-/// [width] (100 = normal, 75 = dipersempit).
+/// Width of [text] (uppercase) at [fontSize] and width axis [width] (100 = normal,
+/// 75 = condensed).
 typedef MeasureText = double Function(
   String text,
   double fontSize,
@@ -35,7 +35,7 @@ class CoverTitleLine {
 
   final String text;
 
-  /// Biasanya ukuran step; lebih kecil kalau satu kata tetep gak muat.
+  /// Usually the step size; smaller when a single word still doesn't fit.
   final double fontSize;
 }
 
@@ -50,17 +50,17 @@ class CoverTitle {
   final List<CoverTitleLine> lines;
   final double fontSize;
 
-  /// Sumbu `wdth`: 100 atau 75.
+  /// The `wdth` axis: 100 or 75.
   final double width;
 
-  /// Teks setelah ":" / ";" pertama, null kalau gak ada.
+  /// Text after the first ":" / ";", null when absent.
   final String? subtitle;
 }
 
-/// Padding cover = 0.085 × lebar di tiap sisi.
+/// Cover padding = 0.085 × width on each side.
 const coverPaddingFactor = 0.085;
 
-// (ukuran × lebar cover, sumbu wdth, maks baris), dicoba berurutan.
+// (size × cover width, wdth axis, max lines), tried in order.
 const _steps = [
   (0.160, 100.0, 3),
   (0.140, 100.0, 4),
@@ -70,10 +70,10 @@ const _steps = [
   (0.092, 75.0, 6),
 ];
 
-/// Tata letak judul cover default: kapital, pindah baris cuma di spasi, gak
-/// pernah motong kata. Step pertama yang semua katanya muat & barisnya cukup
-/// dipake. Mentok di step terakhir: kata yang tetep kepanjangan dikecilin di
-/// barisnya aja, baris kebanyakan dipotong di batas kata + "…".
+/// Default cover title layout: uppercase, wraps only at spaces, never splits a
+/// word. The first step where all words fit and the lines suffice is used. At the
+/// last step: a word that is still too long is shrunk on its own line only, and
+/// too many lines are cut at a word boundary + "…".
 CoverTitle layoutCoverTitle(
   String title,
   double coverWidth,

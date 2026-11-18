@@ -13,9 +13,9 @@ import 'book_cover.dart';
 import 'buttons.dart';
 import 'menu.dart';
 
-/// Menu tekan lama buku (board 20 Tekan lama buku): rak di-blur + veil, cover
-/// terangkat di tengah lengkap dengan stikernya, panel menu di bawahnya. Tap
-/// di luar = nutup, hasilnya null.
+/// Book long-press menu (board 20 Tekan lama buku): blurred shelf + veil,
+/// lifted cover in the middle with its sticker, menu panel below. Tapping
+/// outside closes it; the result is null.
 Future<T?> showBookMenu<T>(
   BuildContext context, {
   required String title,
@@ -68,9 +68,9 @@ class _BookMenu<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.stabilo;
-    // "Kurangi gerakan": cuma fade, cover gak membesar.
+    // Reduce Motion: fade only, the cover doesn't scale up.
     final still = MediaQuery.disableAnimationsOf(context);
-    // Route dialog gak punya Material: tanpa ini teks kena garis bawah kuning.
+    // Dialog routes have no Material: without this the text gets a yellow underline.
     return Material(
       type: MaterialType.transparency,
       child: AnimatedBuilder(
@@ -80,7 +80,7 @@ class _BookMenu<T> extends StatelessWidget {
           final blur = Layout.bookMenuBlur * t;
           return Stack(
             children: [
-              // Kerudungnya gak nangkep tap: barrier route yang nutup.
+              // The veil doesn't catch taps: the route barrier does the closing.
               Positioned.fill(
                 child: IgnorePointer(
                   child: BackdropFilter(
@@ -116,12 +116,12 @@ class _BookMenu<T> extends StatelessWidget {
     );
   }
 
-  /// Kartu 3 kolom (cover + stiker) di-scale ke [Layout.bookMenuCover], jadi
-  /// garis, sudut, dan stiker ikut membesar kayak di board.
+  /// The 3-column card (cover + sticker) is scaled to [Layout.bookMenuCover],
+  /// so lines, corners, and sticker grow as on the board.
   Widget _cover() {
     const source = Layout.bookMenuCoverSource;
     const scale = Layout.bookMenuCover / source;
-    const stickerDrop = 11.0; // stiker nongol di bawah cover
+    const stickerDrop = 11.0; // sticker sticks out below the cover
     return Semantics(
       label: title,
       image: true,
@@ -185,7 +185,7 @@ class _Panel<T> extends StatelessWidget {
         borderRadius: radius,
         boxShadow: Elevation.menu,
       ),
-      // Garis 1 di sisi dalam, di atas isi.
+      // 1px inner border, over the content.
       foregroundDecoration: BoxDecoration(
         borderRadius: radius,
         border: Border.all(color: c.menuLine),

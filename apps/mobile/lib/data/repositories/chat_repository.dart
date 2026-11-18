@@ -12,7 +12,7 @@ import '../../domain/models/book_chat.dart';
 import '../database/app_database.dart';
 import 'chat_snapshot.dart';
 
-/// Penyimpanan saja: tidak membaca API key atau memulai network/hydration request.
+/// Persists chat sessions and turns only: it never reads the API key or starts a network or hydration request.
 class ChatRepository {
   ChatRepository(this._db, {DateTime Function()? now})
     : _now = now ?? DateTime.now;
@@ -23,7 +23,7 @@ class ChatRepository {
   bool _disposed = false;
   final _pending = <ChatAttemptRef, _Checkpoint>{};
 
-  /// Panggil sebelum DB diganti/ditutup; callback repository lama menjadi no-op.
+  /// Closes the repository; call before the DB is swapped or closed. Callbacks of the old repository become no-ops.
   void dispose() {
     _disposed = true;
     _pending.clear();
@@ -33,7 +33,7 @@ class ChatRepository {
     if (_disposed) throw StateError('Repository chat sudah ditutup');
   }
 
-  /// Sekali per lifetime repository, sebelum read/write pertama. Tanpa resend.
+  /// Marks turns left in flight as interrupted. Runs once per repository lifetime, before the first read or write, and never resends.
   Future<int> recoverInterrupted() {
     _open();
     return _recovery ??=
@@ -129,7 +129,7 @@ class ChatRepository {
     );
   }
 
-  /// Current book identity for lifecycle invalidation; never starts a request.
+  /// Returns the current book identity for lifecycle invalidation; never starts a request.
   Stream<ChatBookRef?> watchBook(int bookId) =>
       (_db.select(_db.books)..where((b) => b.id.equals(bookId)))
           .watchSingleOrNull()
@@ -140,7 +140,7 @@ class ChatRepository {
           )
           .distinct();
 
-  /// Local read only: no recovery, timestamps, progress, or network side effects.
+  /// Reads local data only: no recovery, timestamps, progress, or network side effects.
   Stream<ChatSourceLocation?> watchSource(ChatSourceRef request) => _db
       .customSelect(
         'SELECT 1',
@@ -268,7 +268,7 @@ class ChatRepository {
     });
   }
 
-  /// Nomor bab (urutan 1..n lewat sortOrder) per chapter id, buat chip sitasi.
+  /// Returns each chapter's number (1..n by `sortOrder`) keyed by chapter id, for citation chips.
   Future<Map<int, int>> chapterNumbers(int bookId) async {
     final rows =
         await (_db.select(_db.chapters)
@@ -560,7 +560,7 @@ class ChatRepository {
     );
   }
 
-  /// Tidak ada sesi kosong: session + first turn berada dalam transaksi.
+  /// Creates the session and its first turn in one transaction, so no empty session exists.
   Future<ChatTurn> createFirstTurn(
     ChatBookRef book, {
     required String question,
@@ -627,7 +627,7 @@ class ChatRepository {
     });
   }
 
-  /// Explicit continuation creates a new turn; paid answers remain immutable.
+  /// An explicit continuation creates a new turn; paid answers remain immutable.
   Future<ChatTurn> continueExploration(
     ChatTurn previous, {
     required String model,
@@ -768,7 +768,7 @@ class ChatRepository {
     });
   }
 
-  /// Membuka arsip tetap boleh; tidak mengubah isi sesi.
+  /// Opening an archived session is allowed and doesn't change its contents.
   Future<void> markOpened(int bookId, int sessionId) async {
     await _ready();
     await _db.transaction(() async {
@@ -911,7 +911,7 @@ class ChatRepository {
     return (session: s, turn: t);
   }
 
-  /// Freeze the exact evidence before transport begins; cannot replace mid-stream.
+  /// Freezes the exact evidence before transport begins; it cannot be replaced mid-stream.
   Future<bool> prepareSources(
     ChatAttemptRef ref,
     List<ChatSource> sources,
@@ -960,7 +960,7 @@ class ChatRepository {
     });
   }
 
-  /// Recheck the frozen attempt before network and before exposing live citations.
+  /// Rechecks the frozen attempt before the network call and before exposing live citations.
   Future<bool> validatePrepared(
     ChatAttemptRef ref,
     List<ChatSource> sources,

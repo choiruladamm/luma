@@ -6,7 +6,7 @@ import '../../../core/theme/stabilo_tokens.dart';
 import '../../../core/theme/stabilo_type.dart';
 import '../../../core/widgets/buttons.dart';
 
-/// Board Akun 09: keluar. `true` = dikonfirmasi.
+/// Board Akun 09: log out. `true` = confirmed.
 Future<bool> showSignOutDialog(BuildContext context) async {
   final ok = await showDialog<bool>(
     context: context,
@@ -33,7 +33,7 @@ Future<bool> showSignOutDialog(BuildContext context) async {
   return ok ?? false;
 }
 
-/// Isi dialog akun: font baca 15,5.
+/// Account dialog body: reading font 15.5.
 class _DialogBody extends StatelessWidget {
   const _DialogBody(this.text);
 
@@ -50,7 +50,7 @@ class _DialogBody extends StatelessWidget {
   );
 }
 
-/// Kartu dialog akun: judul, isi, tombol bertumpuk (board Akun 09–11).
+/// Account dialog card: title, body, stacked buttons (board Akun 09–11).
 class _AccountDialog extends StatelessWidget {
   const _AccountDialog({
     required this.title,
@@ -96,8 +96,8 @@ class _AccountDialog extends StatelessWidget {
   }
 }
 
-/// Board Akun 10: akun Google beda dari akun terakhir di HP ini. Gak bisa
-/// ditutup tanpa milih.
+/// Board Akun 10: the Google account differs from the last account on this
+/// phone. Can't be closed without choosing.
 Future<void> showSwitchAccountDialog(
   BuildContext context, {
   required String from,
@@ -235,8 +235,8 @@ class _AccountRow extends StatelessWidget {
   }
 }
 
-/// Board Akun 11: hapus akun, wajib centang 3 hal. [onConfirm] balikin
-/// `true` kalau akun beneran kehapus; hasil dialog = hasil itu.
+/// Board Akun 11: delete account, requires ticking 3 items. [onConfirm] returns
+/// `true` if the account was really deleted; the dialog result = that result.
 Future<bool> showDeleteAccountDialog(
   BuildContext context, {
   required String email,
@@ -328,7 +328,7 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
   }
 }
 
-/// Baris centang di dialog hapus akun: pill abu, kotak 22 (board Akun 11).
+/// Checkbox row in the delete account dialog: gray pill, 22 box (board Akun 11).
 class _CheckRow extends StatelessWidget {
   const _CheckRow({
     required this.label,

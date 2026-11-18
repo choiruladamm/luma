@@ -1,10 +1,10 @@
 import { bodyLimit } from "hono/body-limit";
 import { ApiError } from "../lib/errors";
 
-/** Batas body JSON default (sync push maks 1MB). Upload file punya batas sendiri. */
+/** Default JSON body limit (sync push max 1MB). File uploads have their own limit. */
 export const JSON_BODY_LIMIT = 1024 * 1024;
 
-/** Ditolak sebelum `JSON.parse` supaya payload besar gak makan CPU. */
+/** Rejected before `JSON.parse` so a large payload doesn't burn CPU. */
 export const limitBody = (maxSize = JSON_BODY_LIMIT) =>
   bodyLimit({
     maxSize,

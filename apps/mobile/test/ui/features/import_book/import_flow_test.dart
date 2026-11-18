@@ -107,7 +107,7 @@ void main() {
 
   testWidgets('Import buttons start the picker', (tester) async {
     await pump(tester);
-    // Rak kosong (board Cari buku 02): link import di bawah tombol cari.
+    // Empty shelf (board Cari buku 02): the import link sits under the search button.
     await tester.tap(find.text('atau import EPUB / PDF / Markdown dari Files'));
     // The header button is inert (IgnorePointer); its tap target is the
     // GestureDetector around it.
@@ -139,7 +139,7 @@ void main() {
       await emit(tester, processing(ImportStage.chapters, 0.7));
       expect(find.text('70%'), findsOneWidget);
       expect(find.text('Lagi ngebongkar EPUB...'), findsOneWidget); // one sheet
-      // Board 13: dua langkah selesai = lingkaran 22 berisi centang 12, di tengah.
+      // Board 13: two finished steps = a 22 circle holding a 12 check, centered.
       final checks = find.byWidgetPredicate(
         (w) => w is AppIcon && w.icon == AppIcons.check,
       );
@@ -327,7 +327,7 @@ void main() {
         findsNothing,
       );
       expect(find.text('Bab terakhir di buku ini: 7'), findsOneWidget);
-      // File says bab 1 (from the name), which Atomic Habits already has.
+      // File says chapter 1 (from the name), which Atomic Habits already has.
       expect(tester.widget<TextField>(field(1)).controller!.text, '1');
 
       await tester.enterText(field(1), '8');
@@ -416,7 +416,7 @@ void main() {
       expect(find.text('Bab 7 udah ada'), findsNothing);
       expect(find.text('Masuk ke buku mana?'), findsOneWidget); // one sheet
       expect(tester.widget<TextField>(field(1)).controller!.text, '7');
-      // Batal put the cursor back on Nomor bab.
+      // "Batal" (cancel) puts the cursor back on "Nomor bab".
       expect(tester.widget<TextField>(field(1)).focusNode!.hasFocus, isTrue);
 
       await emit(
@@ -441,7 +441,7 @@ void main() {
       );
       await tester.pump();
       expect(import.replaces, 1);
-      // Ganti: spinner instead of the label, Batal off, dialog stays.
+      // "Ganti" (replace): spinner instead of the label, "Batal" off, dialog stays.
       expect(
         find.descendant(
           of: dialog,

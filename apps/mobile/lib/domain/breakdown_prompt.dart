@@ -7,9 +7,8 @@ import 'models/ai_reply.dart';
 import 'models/breakdown.dart';
 import 'sentences.dart';
 
-/// Naik tiap prompt Bedahin atau aturan [splitSentences] berubah: rentang
-/// kalimat di cache cuma berlaku buat pemecahan yang sama.
-/// 1 = awal.
+/// Bump whenever the Bedahin prompt or the [splitSentences] rules change: cached
+/// sentence ranges are only valid for the same splitting.
 const breakdownPromptVersion = 1;
 
 const breakdownSystemPrompt =
@@ -93,8 +92,8 @@ LANJUT | judul singkat | kenapa nyambung
 [PRAKTEK]
 ...''';
 
-/// Semua yang dikirim ke Bedahin buat satu grup. Terjemahan & makna dari
-/// `ai_results` grup itu (Bedahin cuma kebuka abis makna cepat selesai).
+/// Everything sent to Bedahin for one group. Translation and meaning come from
+/// that group's `ai_results` (Bedahin only opens after the quick meaning is done).
 class BreakdownInput {
   const BreakdownInput({
     required this.book,
@@ -109,35 +108,35 @@ class BreakdownInput {
 
   final AiBook book;
 
-  /// Judul semua chapter buku, urut `sortOrder`: DAFTAR BAB `[B1]..`.
+  /// Titles of all the book's chapters in `sortOrder`: the CHAPTER LIST `[B1]..`.
   final List<String> chapters;
 
-  /// Nomor bab yang dibaca di [chapters], mulai 1.
+  /// Number of the chapter being read within [chapters], starting at 1.
   final int chapter;
 
-  /// Sampe 3 paragraf sebelum grup (sama kayak makna cepat).
+  /// Up to 3 paragraphs before the group (same as the quick meaning).
   final List<String> context;
 
-  /// Paragraf asli grup.
+  /// The group's original paragraphs.
   final List<String> original;
 
-  /// Satu terjemahan per paragraf [original].
+  /// One translation per paragraph of [original].
   final List<String> translations;
 
   final String meaning;
 
-  /// Paragraf asli grup berikutnya di bab ini. Kosong = grup terakhir:
-  /// gak ada KONTEKS SESUDAH dan gak ada Lanjutan.
+  /// Original paragraphs of the next group in this chapter. Empty = last group:
+  /// no CONTEXT AFTER and no Continuation.
   final List<String> next;
 
-  /// Kalimat per paragraf terjemahan, nomornya (`K`) urut nyambung.
+  /// Sentences per translated paragraph; their numbers (`K`) run on continuously.
   List<List<String>> get sentences => [
     for (final t in translations) splitSentences(t),
   ];
 }
 
-/// Sidik terjemahan yang dibedah (`ai_breakdowns.sourceHash`): terjemahan
-/// diganti = rentang kalimat di cache gak berlaku lagi.
+/// Fingerprint of the translation being broken down (`ai_breakdowns.sourceHash`):
+/// if the translation changes, cached sentence ranges no longer apply.
 String breakdownSourceHash(List<String> translations) =>
     sha256.convert(utf8.encode(jsonEncode(translations))).toString();
 
@@ -181,7 +180,7 @@ final _marker = RegExp(
   multiLine: true,
 );
 
-/// Penanda yang kepotong di ujung ("[BAG", "[BAGIAN K1-K").
+/// A marker cut off at the end ("[BAG", "[BAGIAN K1-K").
 final _partialMarker = RegExp(r'(^|\n)[ \t]*\[[^\]\n]*$');
 
 final _field = RegExp(
@@ -228,8 +227,8 @@ BreakdownSection _section(_Block b) {
   );
 }
 
-/// Baris `a | b | c` (bullet di depan dibuang). Kolom kurung dari 3 atau ada
-/// yang kosong (selain kolom tengah) = dibuang.
+/// A `a | b | c` line (leading bullet dropped). A line with more than 3 columns,
+/// or an empty column (other than the middle one), is dropped.
 List<(String, String, String)> _rows(Iterable<_Block> blocks) => [
   for (final b in blocks)
     for (final line in b.body.split('\n'))
@@ -260,7 +259,7 @@ Breakdown _parse(
   );
 }
 
-/// `B<n>` → n, `LANJUT` → null (grup berikutnya), lainnya gak kebaca.
+/// `B<n>` → n, `LANJUT` → null (next group), anything else is unreadable.
 ({int? chapter})? _link(String target) {
   final t = target.trim().toUpperCase();
   if (t == 'LANJUT') return (chapter: null);
@@ -268,9 +267,9 @@ Breakdown _parse(
   return m == null ? null : (chapter: int.parse(m[1]!));
 }
 
-/// Baca jawaban streaming sejauh yang udah dateng, tanpa validasi. Teks
-/// sebelum penanda pertama dibuang; penanda atau nama field yang kepotong di
-/// ujung ditahan. Bagian yang penandanya udah kebaca langsung punya rentang.
+/// Parses the streamed answer received so far, without validation. Text before
+/// the first marker is dropped; a marker or field name cut off at the end is held
+/// back. A section whose marker has been read already has a range.
 Breakdown parseBreakdownDraft(String content) {
   final cut = _partialMarker.firstMatch(content);
   if (cut != null) content = content.substring(0, cut.start);
@@ -289,10 +288,10 @@ Breakdown parseBreakdownDraft(String content) {
   );
 }
 
-/// Validasi jawaban lengkap (docs/llm.md, Bedahin). Gagal keras →
-/// [AiError.invalidResponse]: gak ada bagian, > 6 bagian, rentang bolong /
-/// tumpang tindih / gak nutup sampe kalimat terakhir, Maksudnya / Logikanya
-/// kosong. Baris istilah / nyambung yang gak cocok dibuang aja.
+/// Validates a complete answer (docs/llm.md, Bedahin). Hard failures →
+/// [AiError.invalidResponse]: no sections, more than 6 sections, a range with a
+/// gap, overlap, or that doesn't reach the last sentence, an empty Maksudnya /
+/// Logikanya. Term and connection lines that don't match are simply dropped.
 Breakdown parseBreakdown(String content, BreakdownInput input) {
   final sentences = input.sentences.expand((s) => s).toList();
   AiException invalid(String why) =>

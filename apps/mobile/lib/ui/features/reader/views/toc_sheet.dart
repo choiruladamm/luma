@@ -11,10 +11,10 @@ import '../../../core/widgets/sheet.dart';
 import 'reader_capsule.dart';
 import '../../../core/widgets/edge_fade.dart';
 
-/// Daftar isi (board 08). Balikin indeks chapter yang dipilih, null kalau
-/// ditutup. Sheet-nya mulai di bawah kapsul atas; scrim digambar halaman baca
-/// di bawah kapsul, jadi barrier sheet transparan. Tap kapsul (termasuk
-/// tombol daftar isi) kena barrier = nutup sheet.
+/// Table of contents (board 08). Returns the selected chapter index, or null when
+/// dismissed. The sheet starts below the top capsule; the reading page draws the
+/// scrim under the capsule, so the sheet barrier is transparent. Tapping the
+/// capsule (including the table-of-contents button) hits the barrier and closes the sheet.
 Future<int?> showTocSheet(
   BuildContext context, {
   required ReaderBook book,
@@ -56,7 +56,7 @@ class _TocSheetState extends State<_TocSheet> {
   @override
   void initState() {
     super.initState();
-    // Buku 60 bab: langsung keliatan bab yang lagi dibaca.
+    // A 60-chapter book: the chapter being read is visible right away.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final row = _currentKey.currentContext;
       if (row != null) Scrollable.ensureVisible(row, alignment: 0.3);
@@ -115,7 +115,7 @@ class _TocSheetState extends State<_TocSheet> {
             ),
           ),
           Flexible(
-            // Tanpa tombol aksi: list jalan sampe tepi bawah, tanpa fade bawah.
+            // No action button: the list runs to the bottom edge, with no bottom fade.
             child: EdgeFadeScroll(
               bottom: EdgeFadeSide.none,
               child: SingleChildScrollView(

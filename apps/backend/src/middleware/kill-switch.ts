@@ -2,10 +2,10 @@ import { createMiddleware } from "hono/factory";
 import type { AppEnv, FeatureFlag } from "../env";
 import { ApiError } from "../lib/errors";
 
-/** Retry-After saat fitur dimatikan: client berhenti sampai pemicu berikutnya setelah jeda ini. */
+/** Retry-After when a feature is off: the client stops until the next trigger after this delay. */
 export const DISABLED_RETRY_AFTER_SECONDS = 3600;
 
-/** Saklar darurat: `false` → 503 sebelum D1/R2 disentuh. Hanya "true" yang dianggap nyala. */
+/** Kill switch: `false` → 503 before D1/R2 is touched. Only "true" counts as on. */
 export const killSwitch = (flag: FeatureFlag) =>
   createMiddleware<AppEnv>(async (c, next) => {
     if (c.env[flag] !== "true") {

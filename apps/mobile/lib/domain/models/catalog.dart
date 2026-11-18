@@ -4,22 +4,22 @@ import '../catalog/catalog_row.dart';
 
 part 'catalog.freezed.dart';
 
-/// Satu halaman hasil `BookSource.search` (docs/discover.md, Sources and discovery).
+/// One page of `BookSource.search` results (docs/discover.md, Sources and discovery).
 @freezed
 abstract class CatalogPage with _$CatalogPage {
   const factory CatalogPage({
     required List<CatalogBook> items,
     required bool hasMore,
 
-    /// Jumlah total hasil ("7 hasil"). Null = sumbernya gak tau (populer OPDS).
+    /// Total number of results ("7 hasil"). Null = the source doesn't know (OPDS popular).
     int? total,
   }) = _CatalogPage;
 
   static const empty = CatalogPage(items: [], hasMore: false, total: 0);
 }
 
-/// Buku di katalog sumber luar. `sourceId + externalId` = identitas lintas
-/// sumber, dipakai buat badge "udah di rak" (`books.sourceId/externalId`).
+/// A book in an external source's catalog. `sourceId + externalId` = identity across
+/// sources, used for the "already on the shelf" badge (`books.sourceId/externalId`).
 @freezed
 abstract class CatalogBook with _$CatalogBook {
   const factory CatalogBook({
@@ -32,7 +32,7 @@ abstract class CatalogBook with _$CatalogBook {
   }) = _CatalogBook;
 }
 
-/// Detail dari `BookSource.fetchDetail`. Semua opsional: tiap sumber beda.
+/// Detail from `BookSource.fetchDetail`. All optional: each source differs.
 @freezed
 abstract class CatalogBookDetail with _$CatalogBookDetail {
   const factory CatalogBookDetail({
@@ -40,11 +40,11 @@ abstract class CatalogBookDetail with _$CatalogBookDetail {
     @Default([]) List<String> subjects,
     @Default([]) List<String> bookshelves,
 
-    /// Ukuran EPUB dalam byte.
+    /// EPUB size in bytes.
     int? fileSize,
 
-    /// Tanggal masuk ke sumber (Gutenberg: tanggal rilis digital, bukan
-    /// tahun terbit asli). ISO 8601.
+    /// Date it entered the source (Gutenberg: digital release date, not the original
+    /// publication year). ISO 8601.
     String? issued,
     String? wikipediaUrl,
   }) = _CatalogBookDetail;

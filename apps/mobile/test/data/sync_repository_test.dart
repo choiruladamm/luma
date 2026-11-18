@@ -28,27 +28,27 @@ class _Auth extends Fake implements AuthRepository {
   Future<String?> lastUserId() async => user;
 }
 
-/// Worker palsu: `/v1/sync/push|pull` + `/v1/files/*`, simpan semua di
-/// memori. Server-nya disederhanakan: record terakhir per kunci menang.
+/// Fake Worker: `/v1/sync/push|pull` + `/v1/files/*`, all stored in
+/// memory. The server is simplified: the last record per key wins.
 class _Worker implements HttpClientAdapter {
   final pushes = <Map<String, Object?>>[];
 
-  /// `kind key` → record + `seq`, kayak tabel `records`.
+  /// `kind key` → record + `seq`, like the `records` table.
   final server = <String, Map<String, Object?>>{};
   var seq = 0;
 
-  /// Cursor `since` tiap pull.
+  /// `since` cursor on each pull.
   final pulls = <int>[];
   final files = <String, Uint8List>{};
   final log = <String>[];
 
-  /// Dibalas duluan sebelum logika server, per request.
+  /// Responses returned before the server logic runs, per request.
   final queue = <ResponseBody>[];
 
-  /// Jalan di tengah push (sebelum respons): simulasi perubahan lokal.
+  /// Runs in the middle of a push (before the response): simulates a local change.
   Future<void> Function()? duringPush;
 
-  /// Nama file yang upload-nya dibalas 500.
+  /// File names whose upload gets a 500.
   final failUploads = <String>{};
 
   @override
@@ -84,7 +84,7 @@ class _Worker implements HttpClientAdapter {
         if (had != null &&
             DateTime.parse(had)
                 .isAfter(DateTime.parse(rec['updatedAt']! as String))) {
-          continue; // last-write-wins kayak server asli
+          continue; // last-write-wins, like the real server
         }
         server[id] = {
           ...rec,
@@ -148,10 +148,10 @@ void main() {
   late SyncRepository repo;
   late BackendClient client;
 
-  /// Progres download yang dilaporin buat indikator Rak.
+  /// Download progress reported for the shelf indicator.
   final downloads = <SyncDownloads?>[];
 
-  /// Satu "device" yang ngobrol ke [worker] yang sama.
+  /// One "device" talking to the same [worker].
   SyncRepository phone(AppDatabase db, FileStorage storage) => SyncRepository(
     db: db,
     service: SyncService(client),
@@ -218,7 +218,7 @@ void main() {
       for (final r in worker.records) '${r['kind']} ${r['key']}': r,
     };
     expect(sent.keys, unorderedEquals(['book h1', 'reading_progress h1']));
-    // Bentuk record sama dengan fixture kontrak (field data ikut dicek).
+    // Record shape matches the contract fixture (the data field is checked too).
     final fixtureBook = (fixture['records']! as List).first as Map;
     expect(sent['book h1']!.keys, unorderedEquals(fixtureBook.keys));
     expect(
@@ -428,7 +428,7 @@ void main() {
       storageB = FileStorage(await tmp.createTemp('b-'));
       await storageB.ensureDirs();
       b = phone(dbB, storageB);
-      // Buku contoh di setUp utama gak punya file: gak ikut skenario ini.
+      // The sample book in the main setUp has no file, so it is not part of this scenario.
       await db.customStatement('DELETE FROM books');
       await db.delete(db.syncOutbox).go();
     });
@@ -471,7 +471,7 @@ void main() {
       downloads.clear();
       await b.sync();
 
-      // Indikator Rak: 0/1 selama download, lalu ilang.
+      // Shelf indicator: 0/1 during the download, then gone.
       expect(downloads, [(done: 0, total: 1), null]);
       final got = await dbB.select(dbB.books).getSingle();
       expect(got.title, 'Alice (edit)');
@@ -484,10 +484,10 @@ void main() {
       expect((bChapter.sortOrder, progress.paragraphIndex), (2, 7));
       expect((await dbB.select(dbB.aiResults).getSingle()).groupIndex, 2);
       expect(await dbB.select(dbB.syncInbox).get(), isEmpty);
-      // Gak ada yang di-push balik dari B.
+      // Nothing is pushed back from B.
       expect(await dbB.select(dbB.syncOutbox).get(), isEmpty);
 
-      // Pull berikutnya lanjut dari cursor, gak dari 0.
+      // The next pull continues from the cursor, not from 0.
       worker.pulls.clear();
       now = now.add(const Duration(minutes: 6));
       await b.sync();
@@ -561,13 +561,13 @@ void main() {
       worker.pulls.clear();
       now = now.add(const Duration(minutes: 6));
       await b.sync();
-      expect(worker.pulls.first, greaterThan(0)); // akun sama: lanjut
+      expect(worker.pulls.first, greaterThan(0)); // same account: continue
 
       auth.user = 'u2';
       worker.pulls.clear();
       now = now.add(const Duration(minutes: 6));
       await b.sync();
-      expect(worker.pulls.first, 0); // akun lain: mulai dari 0
+      expect(worker.pulls.first, 0); // other account: starts from 0
     });
   });
 }

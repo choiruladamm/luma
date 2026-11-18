@@ -10,61 +10,68 @@ import 'sync_schema.dart';
 
 part 'app_database.g.dart';
 
-// docs/data-model.md. Path file disimpen sebagai nama file aja; path absolut
-// di-resolve saat runtime (container iOS berubah tiap install ulang).
+// Schema: docs/data-model.md. File paths are stored as file names only;
+// absolute paths are resolved at runtime because the iOS container changes on
+// every reinstall.
 
 class Books extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get sourceType => textEnum<SourceType>()();
 
-  /// Slug buat nyocokin import Markdown ke buku yang sama. Null buat EPUB.
+  /// Slug that matches a Markdown import to the same book; null for EPUB.
   TextColumn get bookKey => text().nullable().unique()();
   TextColumn get title => text()();
   TextColumn get author => text().nullable()();
   TextColumn get fileName => text().nullable()();
 
-  /// Null = pake cover default.
+  /// The cover file name; null means the default cover.
   TextColumn get coverName => text().nullable()();
 
-  /// Judul/penulis asli EPUB, diisi sekali pas edit pertama. Null =
-  /// belum pernah diedit (`originalAuthor` null + `originalTitle` terisi =
-  /// aslinya tanpa penulis). Re-import gak boleh nimpa `title`/`author`
-  /// kalau `originalTitle` terisi.
+  /// The EPUB's original title and author, filled once on the first edit.
+  ///
+  /// Null means never edited (`originalAuthor` null with `originalTitle` set
+  /// means the original had no author). A re-import must not overwrite
+  /// `title` or `author` when `originalTitle` is set.
   TextColumn get originalTitle => text().nullable()();
   TextColumn get originalAuthor => text().nullable()();
 
-  /// true = cover EPUB disembunyiin; `coverName` tetap utuh di DB + disk.
+  /// Whether the EPUB cover is hidden; `coverName` stays intact in the database and on disk.
   BoolColumn get useDefaultCover =>
       boolean().withDefault(const Constant(false))();
 
-  /// SHA-256 isi file EPUB, cegah import dobel.
+  /// SHA-256 of the EPUB file content, that prevents duplicate imports.
   TextColumn get hash => text().nullable().unique()();
 
-  /// Identitas di katalog luar (`BookSource.id` + id di sumbernya), buat
-  /// badge "udah di rak". Null = import manual (docs/discover.md).
+  /// Identity in an external catalog (`BookSource.id` plus the id at that
+  /// source), which drives the "already on the shelf" badge.
+  ///
+  /// Null means a manual import (docs/discover.md).
   TextColumn get sourceId => text().nullable()();
   TextColumn get externalId => text().nullable()();
 
-  /// Naik = re-import + hapus ai_results buku itu.
+  /// Raising it triggers a re-import and deletes that book's `ai_results`.
   IntColumn get parserVersion => integer()();
 
-  /// Snapshot isi/urutan untuk chat; metadata tidak menaikkan revision.
+  /// Snapshot of content and order for chat; metadata changes don't raise the revision.
   IntColumn get contentRevision => integer().withDefault(const Constant(1))();
   IntColumn get totalChars => integer()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
   DateTimeColumn get lastOpenedAt => dateTime().nullable()();
   DateTimeColumn get firstOpenedAt => dateTime().nullable()();
 
-  /// Total waktu baca aktif (halaman baca kebuka, app di depan, belum idle).
+  /// Total active reading time: reader page open, app in the foreground, not yet idle.
   IntColumn get readingSeconds => integer().withDefault(const Constant(0))();
 
-  /// Pertama kali layar akhir buku kebuka. Diisi sekali, gak ditimpa. Gak
-  /// disimpulin dari sesi: lompat ke bab terakhir bisa ngelabuin.
+  /// When the end-of-book screen was first reached; set once and never
+  /// overwritten.
+  ///
+  /// It isn't inferred from sessions because jumping to the last chapter
+  /// would fool it.
   DateTimeColumn get finishedAt => dateTime().nullable()();
 }
 
-/// `id` = kunci stabil yang dirujuk tabel lain; urutan tampil dari
-/// [sortOrder], bukan dari id.
+/// The `id` is the stable key other tables reference; the display order comes
+/// from [sortOrder], not from the id.
 @TableIndex(name: 'chapters_book_order', columns: {#bookId, #sortOrder})
 class Chapters extends Table {
   IntColumn get id => integer().autoIncrement()();
@@ -72,15 +79,18 @@ class Chapters extends Table {
       integer().references(Books, #id, onDelete: KeyAction.cascade)();
   IntColumn get sortOrder => integer()();
 
-  /// Nomor bab asli (Markdown / daftar isi).
+  /// The original chapter number (Markdown or table of contents).
   IntColumn get chapterNumber => integer().nullable()();
   TextColumn get title => text()();
 
-  /// Label induk TOC EPUB ("Discourses › Book I"), buat resolusi "bab III"
-  /// di Ngobrol. Null = belum diperiksa (buku lama), '' = diperiksa, gak ada.
+  /// The parent label from the EPUB TOC ("Discourses › Book I"), which lets
+  /// Ngobrol resolve "bab III".
+  ///
+  /// Null means not checked yet (a book imported before this column existed),
+  /// and '' means checked with no parent label.
   TextColumn get section => text().nullable()();
 
-  /// Jumlah karakter sebelum chapter ini, buat persentase baca.
+  /// The number of characters before this chapter, used for the reading percentage.
   IntColumn get charOffset => integer()();
 }
 
@@ -93,18 +103,18 @@ class Paragraphs extends Table {
       integer().references(Chapters, #id, onDelete: KeyAction.cascade)();
   IntColumn get paragraphIndex => integer()();
 
-  /// Null buat heading & scene break.
+  /// Null for headings and scene breaks.
   IntColumn get groupIndex => integer().nullable()();
   TextColumn get type => textEnum<ParagraphType>()();
 
-  /// Teks polos yang udah dinormalisasi. (`text` bentrok sama builder Drift.)
+  /// The normalized plain text. The Dart name is `content` because `text` clashes with the Drift builder.
   TextColumn get content => text().named('text')();
 
   @override
   Set<Column> get primaryKey => {chapterId, paragraphIndex};
 }
 
-/// Posisi baca terakhir, satu baris per buku.
+/// The last reading position, one row per book.
 class ReadingProgress extends Table {
   IntColumn get bookId =>
       integer().references(Books, #id, onDelete: KeyAction.cascade)();
@@ -112,8 +122,9 @@ class ReadingProgress extends Table {
       integer().references(Chapters, #id, onDelete: KeyAction.cascade)();
   IntColumn get paragraphIndex => integer()();
 
-  /// Bagian paragraf yang udah lewat garis atas, 0..1 dari tingginya. Fraksi,
-  /// bukan piksel: tinggi paragraf berubah kalau font/ukuran diganti di Aa.
+  /// The part of the paragraph already past the top line, as a 0..1 fraction
+  /// of its height. It is a fraction, not pixels, because the paragraph height
+  /// changes when the font or size is changed in Aa.
   RealColumn get paragraphOffset => real().withDefault(const Constant(0.0))();
   DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
 
@@ -121,25 +132,27 @@ class ReadingProgress extends Table {
   Set<Column> get primaryKey => {bookId};
 }
 
-/// Cache hasil LLM per grup. Grup yang udah ada di sini gak manggil LLM lagi.
+/// Cache of LLM results per group; a group that is already here doesn't call the LLM again.
 class AiResults extends Table {
   IntColumn get chapterId =>
       integer().references(Chapters, #id, onDelete: KeyAction.cascade)();
   IntColumn get groupIndex => integer()();
 
-  /// JSON array string, satu item per paragraf di grup (urut).
+  /// A JSON array of strings, one item per paragraph in the group, in order.
   TextColumn get translations => text()();
 
-  /// Satu penjelasan buat seluruh grup.
+  /// One explanation for the whole group.
   TextColumn get meaning => text()();
   TextColumn get model => text()();
 
-  /// `aiPromptVersion` waktu dibikin. Lebih lama dari yang sekarang = dianggap
-  /// belum ada, diterjemahin ulang pas grupnya dibuka.
+  /// The `aiPromptVersion` at creation time.
+  ///
+  /// A result older than the current version counts as missing and is
+  /// translated again when its group is opened.
   IntColumn get promptVersion => integer().withDefault(const Constant(1))();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 
-  /// Berapa kali hasil ini dibuka. Penanda grup yang sering dibaca ulang.
+  /// How many times this result was opened; marks groups that are reread often.
   IntColumn get openCount => integer().withDefault(const Constant(0))();
   DateTimeColumn get lastOpenedAt => dateTime().nullable()();
 
@@ -147,22 +160,26 @@ class AiResults extends Table {
   Set<Column> get primaryKey => {chapterId, groupIndex};
 }
 
-/// Cache Bedahin per grup (docs/data-model.md). [body] di-parse ulang pas
-/// dibaca, jadi `parseBreakdown` tetep satu-satunya sumber kebenaran.
+/// Cache of Bedahin results per group (docs/data-model.md).
+///
+/// [body] is parsed again on every read, so `parseBreakdown` stays the single
+/// source of truth.
 class AiBreakdowns extends Table {
   IntColumn get chapterId =>
       integer().references(Chapters, #id, onDelete: KeyAction.cascade)();
   IntColumn get groupIndex => integer()();
 
-  /// Teks mentah balasan model yang udah lolos `parseBreakdown`.
+  /// The raw model reply text that passed `parseBreakdown`.
   TextColumn get body => text()();
 
-  /// `breakdownSourceHash` terjemahan `ai_results` yang dipake. Beda =
-  /// terjemahannya udah diganti, rentang kalimat gak berlaku lagi.
+  /// The `breakdownSourceHash` of the `ai_results` translation that was used.
+  ///
+  /// A mismatch means the translation was replaced, so the sentence ranges no
+  /// longer apply.
   TextColumn get sourceHash => text()();
   TextColumn get model => text()();
 
-  /// `breakdownPromptVersion`. Lebih lama = dianggap belum ada.
+  /// The `breakdownPromptVersion`; an older result counts as missing.
   IntColumn get promptVersion => integer()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 
@@ -170,9 +187,11 @@ class AiBreakdowns extends Table {
   Set<Column> get primaryKey => {chapterId, groupIndex};
 }
 
-/// Potongan waktu baca aktif. Log append-only: streak, heatmap, kecepatan
-/// baca dihitung lewat query. Satu potongan gak pernah lintas bab (pindah bab
-/// selalu nyimpen dulu), jadi lompat lewat daftar isi gak ikut keitung.
+/// Slices of active reading time, kept as an append-only log; streaks,
+/// heatmaps, and reading speed are computed by queries.
+///
+/// A slice never spans chapters (changing chapter always saves first), so
+/// jumping through the table of contents isn't counted.
 @TableIndex(name: 'reading_sessions_book_time', columns: {#bookId, #startedAt})
 @TableIndex(name: 'reading_sessions_time', columns: {#startedAt})
 class ReadingSessions extends Table {
@@ -183,20 +202,25 @@ class ReadingSessions extends Table {
       integer().references(Chapters, #id, onDelete: KeyAction.cascade)();
   DateTimeColumn get startedAt => dateTime()();
 
-  /// Waktu aktif ([ReadingClock] di domain/reading.dart).
+  /// Active seconds, as measured by [ReadingClock] in domain/reading.dart.
   IntColumn get seconds => integer()();
 
-  /// Posisi absolut di buku (karakter) di awal dan akhir potongan. Dua ujung,
-  /// bukan satu angka: aturan "berapa yang dianggap beneran dibaca" ada di
-  /// query, jadi bisa diganti tanpa ngubah data.
+  /// Absolute book positions (in characters) at the start and end of the
+  /// slice.
+  ///
+  /// Two endpoints rather than one number: the rule for how much counts as
+  /// actually read lives in the queries, so it can change without changing the
+  /// data.
   IntColumn get startChar => integer()();
   IntColumn get endChar => integer()();
 }
 
-/// Log request LLM, terpisah dari cache `ai_results` (yang `createdAt`-nya
-/// ke-reset tiap retranslate dan barisnya ikut kehapus pas re-import). Dasar
-/// statistik biaya dan bantuan AI. FK `setNull`: biaya bulanan gak berubah
-/// waktu buku dihapus.
+/// Log of LLM requests, separate from the `ai_results` cache (whose
+/// `createdAt` resets on every retranslate and whose rows are deleted on
+/// re-import).
+///
+/// It is the basis of the cost and AI-help statistics. The foreign keys use
+/// `setNull` so the monthly cost doesn't change when a book is deleted.
 class AiCalls extends Table {
   IntColumn get id => integer().autoIncrement()();
   IntColumn get bookId => integer().nullable().references(
@@ -214,23 +238,25 @@ class AiCalls extends Table {
   TextColumn get model => text()();
   IntColumn get promptVersion => integer()();
 
-  /// Panjang teks target, buat "per 1.000 karakter".
+  /// Length of the target text, used for "per 1.000 karakter" figures.
   IntColumn get chars => integer()();
 
-  /// Null = model gak ngirim usage.
+  /// Null when the model didn't report usage.
   IntColumn get promptTokens => integer().nullable()();
   IntColumn get completionTokens => integer().nullable()();
   RealColumn get costUsd => real().nullable()();
   IntColumn get firstTokenMs => integer().nullable()();
   IntColumn get totalMs => integer().nullable()();
 
-  /// `AiError.name`. Null = sukses.
+  /// The `AiError.name`; null means success.
   TextColumn get error => text().nullable()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 }
 
-/// Pengaturan yang ikut backup (model ID, preferensi Aa, lastBackupAt).
-/// API key gak di sini: di flutter_secure_storage.
+/// Settings that are included in backups (model ID, Aa preferences,
+/// lastBackupAt).
+///
+/// API keys aren't stored here; they live in flutter_secure_storage.
 class Settings extends Table {
   TextColumn get key => text()();
   TextColumn get value => text()();
@@ -239,16 +265,19 @@ class Settings extends Table {
   Set<Column> get primaryKey => {key};
 }
 
-/// Katalog Project Gutenberg dari dump `pg_catalog.csv` (docs/discover.md,
-/// Local catalog and search). Bukan data user: diganti utuh tiap sync, gak ikut backup.
-/// List disimpen JSON; `authorsText` buat tampil + index FTS. Pencarian
-/// lewat virtual table `catalog_fts` ([AppDatabase.createCatalogFts]), yang
-/// gak bisa dideklarasiin sebagai tabel Drift.
+/// The Project Gutenberg catalog from the `pg_catalog.csv` dump (docs/discover.md,
+/// Local catalog and search).
+///
+/// It isn't user data: every sync replaces it entirely and backups skip it.
+/// Lists are stored as JSON; `authorsText` is for display and the FTS index.
+/// Search goes through the virtual table `catalog_fts`
+/// ([AppDatabase.createCatalogFts]), which can't be declared as a Drift
+/// table.
 @TableIndex(name: 'catalog_books_title', columns: {#title})
 @TableIndex(name: 'catalog_books_authors', columns: {#authorsText})
 @DataClassName('CatalogBookRow')
 class CatalogBooks extends Table {
-  /// `Text#` Gutenberg.
+  /// The Gutenberg `Text#`.
   IntColumn get id => integer()();
   TextColumn get title => text()();
   TextColumn get authorsText => text()();
@@ -258,7 +287,7 @@ class CatalogBooks extends Table {
   TextColumn get subjectsJson => text()();
   TextColumn get bookshelvesJson => text()();
 
-  /// `YYYY-MM-DD`, null kalau kosong di dump.
+  /// `YYYY-MM-DD`; null when the dump leaves it empty.
   TextColumn get issued => text().nullable()();
 
   @override
@@ -281,7 +310,7 @@ class ChatSessions extends Table {
   DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
   DateTimeColumn get lastOpenedAt => dateTime().nullable()();
 
-  /// JSON ChatScrollAnchor (turnId/blockIndex/alignment), bukan offset pixel.
+  /// A JSON ChatScrollAnchor (turnId/blockIndex/alignment), not a pixel offset.
   TextColumn get scrollAnchor => text().nullable()();
 }
 
@@ -293,17 +322,17 @@ class ChatTurns extends Table {
   IntColumn get sequence => integer()();
   TextColumn get question => text()();
 
-  /// Snapshot JSON tidak menunjuk chapter lewat FK: re-import menjaga arsip.
+  /// Snapshot JSON that doesn't reference chapters through a foreign key, so a re-import keeps the archive.
   TextColumn get quote => text().nullable()();
   TextColumn get answer => text().nullable()();
   TextColumn get sources => text().withDefault(const Constant('[]'))();
   TextColumn get draft => text().withDefault(const Constant(''))();
   TextColumn get exploration => text().nullable()();
 
-  /// Langkah AI, JSON; ditulis sekali di finalize, null pada turn lama.
+  /// The AI steps as JSON, written once at finalize; null on turns created before this column existed.
   TextColumn get steps => text().nullable()();
 
-  /// Teks mentah supaya mapper chat bisa menangani enum backup yang rusak.
+  /// Stored as raw text so the chat mapper can handle a corrupt enum value from a backup.
   TextColumn get phase => text()();
   IntColumn get attempt => integer().withDefault(const Constant(1))();
   TextColumn get model => text()();
@@ -330,9 +359,11 @@ class ChatIndexes extends Table {
   BoolColumn get ready => boolean().withDefault(const Constant(false))();
 }
 
-/// Catatan generatif per bab untuk pertanyaan seluruh buku: dipakai
-/// ulang lintas pertanyaan selama revision + manifest window bab sama. Data
-/// turunan: ikut backup, dihapus saat isi berubah atau buku dihapus.
+/// Generated notes per chapter for whole-book questions, reused across
+/// questions while the revision and the chapter window manifest stay the same.
+///
+/// This is derived data: it is included in backups, and deleted when the
+/// content changes or the book is deleted.
 @DataClassName('ChatChapterNoteRow')
 class ChatChapterNotes extends Table {
   IntColumn get id => integer().autoIncrement()();
@@ -365,28 +396,30 @@ class ChatVectors extends Table {
   Set<Column> get primaryKey => {indexId, ordinal};
 }
 
-/// Perubahan lokal yang belum di-push (docs/sync-protocol.md, Push and pull).
-/// Diisi trigger SQLite dari [syncKinds], bukan repository. Satu baris per
-/// `(kind, key)`: 100 update posisi baca = 1 record. Baris yang udah gak ada
-/// saat push = tombstone (kind yang punya tombstone) atau dibuang.
+/// Local changes that haven't been pushed yet (docs/sync-protocol.md, Push and pull).
+///
+/// SQLite triggers generated from [syncKinds] fill it, not the repository.
+/// There is one row per `(kind, key)`, so 100 reading-position updates become
+/// one record. A row whose source is gone at push time becomes a tombstone
+/// (for kinds that have one) or is dropped.
 class SyncOutbox extends Table {
   TextColumn get kind => text()();
   TextColumn get key => text()();
 
-  /// ms epoch saat perubahan terakhir (jam device).
+  /// Time of the last change in epoch milliseconds, from the device clock.
   IntColumn get updatedAt => integer()();
 
   @override
   Set<Column> get primaryKey => {kind, key};
 }
 
-/// Record pull yang belum bisa diterapkan (buku belum ada, `parserVersion`
-/// beda, atau schema record lebih baru dari app). Dipakai pull.
+/// Pulled records that can't be applied yet because the book is missing, the
+/// `parserVersion` differs, or the record's schema is newer than the app.
 class SyncInbox extends Table {
   TextColumn get kind => text()();
   TextColumn get key => text()();
 
-  /// JSON data record, null = tombstone.
+  /// The record data as JSON; null means a tombstone.
   TextColumn get data => text().nullable()();
   IntColumn get updatedAt => integer()();
   IntColumn get schemaVersion => integer()();
@@ -420,8 +453,12 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor])
     : super(executor ?? driftDatabase(name: 'luma'));
 
-  /// Call inside the content mutation transaction; EPUB re-import must reuse it.
-  /// Snapshots survive paragraph replacement; old attempts become read-only.
+  /// Invalidates chat state derived from a book's content and bumps its
+  /// `content_revision`.
+  ///
+  /// Call it inside the content mutation transaction; an EPUB re-import must
+  /// reuse it. Snapshots survive paragraph replacement; old attempts become
+  /// read-only.
   Future<void> contentChanged(int bookId) => transaction(() async {
     await (delete(chatIndexes)..where((i) => i.bookId.equals(bookId))).go();
     await (delete(
@@ -445,13 +482,13 @@ class AppDatabase extends _$AppDatabase {
     );
   });
 
-  // Ubah tabel: naikin versi, tambah langkah di onUpgrade, tambah test di
-  // test/data/migration_test.dart. Backup dari versi lama ikut dimigrasi pas
-  // di-restore.
+  // A table change needs a version bump, a new step in onUpgrade, and a test
+  // in test/data/migration_test.dart. Backups from older versions are migrated
+  // on restore.
   @override
   int get schemaVersion => 18;
 
-  /// Trigger outbox sync di tiap tabel yang di-sync ([syncKinds]).
+  /// Creates the sync outbox triggers on every synced table ([syncKinds]).
   Future<void> createSyncTriggers() async {
     for (final kind in syncKinds) {
       for (final sql in kind.triggers) {
@@ -460,9 +497,12 @@ class AppDatabase extends _$AppDatabase {
     }
   }
 
-  /// FTS5 external-content di atas `catalog_books` (teks gak dobel). Isinya
-  /// gak otomatis ikut: [rebuildCatalogFts] tiap `catalog_books` diganti.
-  /// `remove_diacritics 2`: "bronte" ketemu "Brontë".
+  /// Creates the FTS5 external-content table over `catalog_books`, so the text
+  /// isn't stored twice.
+  ///
+  /// Its content doesn't follow automatically: call [rebuildCatalogFts] every
+  /// time `catalog_books` is replaced. `remove_diacritics 2` makes "bronte"
+  /// match "Brontë".
   Future<void> createCatalogFts() => customStatement(
     'CREATE VIRTUAL TABLE IF NOT EXISTS catalog_fts USING fts5('
     "title, authors_text, content='catalog_books', content_rowid='id', "
@@ -472,14 +512,17 @@ class AppDatabase extends _$AppDatabase {
   Future<void> rebuildCatalogFts() =>
       customStatement("INSERT INTO catalog_fts(catalog_fts) VALUES('rebuild')");
 
-  /// FTS5 external-content di atas `paragraphs` buat Cari kata
-  /// (docs/book-search.md). Trigger yang ngejaga isinya, jadi import dan
-  /// re-import otomatis ke-index; `scene_break` gak masuk. Baris lama
-  /// (sebelum v17) belum ke-index: [BookSearchIndex.ensureIndexed] ngisinya
-  /// lazy. Trigger hapus/ubah cuma ngirim `'delete'` buat baris yang
-  /// beneran ada di index (docsize), kalau nggak index FTS5 rusak.
-  /// Index nempel ke rowid `paragraphs`; `VACUUM INTO` (backup) bisa nggeser
-  /// rowid, jadi restore wajib [rebuildBookSearchIndex].
+  /// Creates the FTS5 external-content table over `paragraphs` for Cari kata
+  /// (docs/book-search.md).
+  ///
+  /// Triggers keep it current, so imports and re-imports are indexed
+  /// automatically; `scene_break` rows are excluded. Rows that predate schema
+  /// 17 aren't indexed; [BookSearchIndex.ensureIndexed] fills them lazily. The
+  /// delete and update triggers send `'delete'` only for rows that really are
+  /// in the index (checked via docsize); otherwise the FTS5 index gets
+  /// corrupted. The index is tied to the `paragraphs` rowid and `VACUUM INTO`
+  /// (backup) can shift rowids, so a restore must call
+  /// [rebuildBookSearchIndex].
   Future<void> createBookSearchFts() async {
     await customStatement(
       'CREATE VIRTUAL TABLE IF NOT EXISTS paragraph_fts USING fts5('
@@ -508,7 +551,7 @@ class AppDatabase extends _$AppDatabase {
     );
   }
 
-  /// Bangun ulang seluruh index dari `paragraphs` (satu statement).
+  /// Rebuilds the whole index from `paragraphs` in a single statement.
   Future<void> rebuildBookSearchIndex() => customStatement(
     "INSERT INTO paragraph_fts(paragraph_fts) VALUES('rebuild')",
   );
@@ -578,33 +621,35 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 15) {
         await createCatalogFts();
-        await rebuildCatalogFts(); // v14 bisa udah punya isi katalog
+        // A v14 database may already hold catalog rows.
+        await rebuildCatalogFts();
       }
       if (from < 16) {
         await m.addColumn(books, books.sourceId);
         await m.addColumn(books, books.externalId);
       }
       if (from < 17) {
-        await createBookSearchFts(); // buku lama di-index lazy
+        await createBookSearchFts(); // Existing books are indexed lazily.
       }
       if (from < 18) {
         await m.createTable(syncOutbox);
         await m.createTable(syncInbox);
-        // Data lama ikut antrean sync pertama (dicicil per pemicu).
+        // Existing data joins the first sync queue, which is spread over several triggers.
         for (final kind in syncKinds) {
           await customStatement(kind.backfill);
         }
         await createSyncTriggers();
       }
     },
-    // SQLite matiin foreign key secara default; cascade butuh ini.
+    // SQLite disables foreign keys by default, and the cascades need them.
     beforeOpen: (_) => customStatement('PRAGMA foreign_keys = ON'),
   );
 }
 
 final appDatabaseProvider = Provider<AppDatabase>((ref) {
-  // Test yang lupa override bakal buka DB beneran: koneksinya nahan proses
-  // `flutter test` sampe nyangkut. Gagal cepat dengan pesan jelas aja.
+  // A test that forgets the override would open the real database, and its
+  // connection keeps the `flutter test` process from exiting. Fail fast with a
+  // clear message instead.
   if (Platform.environment.containsKey('FLUTTER_TEST')) {
     throw StateError(
       'Tests must override appDatabaseProvider (in-memory DB) or the '

@@ -14,7 +14,7 @@ AppDatabase _open() => AppDatabase(
   DatabaseConnection(NativeDatabase.memory(), closeStreamsSynchronously: true),
 );
 
-/// Buku EPUB `h1` (parser 9), bab sortOrder 4 → id [chapterId].
+/// EPUB book `h1` (parser 9), chapter sortOrder 4 → id [chapterId].
 Future<void> _book(AppDatabase db, {int parser = 9, int chapterId = 10}) async {
   await db.customStatement(
     'INSERT INTO books (id, source_type, title, hash, parser_version, '
@@ -27,7 +27,7 @@ Future<void> _book(AppDatabase db, {int parser = 9, int chapterId = 10}) async {
   );
 }
 
-/// Record push device [db] (spec yang sama dengan push), dijadiin record pull.
+/// Record pushed from device [db] (same spec as the push), turned into a pull record.
 Future<List<PulledRecord>> _records(AppDatabase db, {int? schema}) async {
   final out = <PulledRecord>[];
   for (final o in await db.select(db.syncOutbox).get()) {
@@ -70,7 +70,7 @@ void main() {
   late Directory tmp;
   late SyncApplier apply;
 
-  /// Data baca + AI + chat di device A.
+  /// Reading, AI, and chat data on device A.
   Future<void> readOnA() async {
     await a.customStatement(
       'INSERT INTO reading_progress (book_id, chapter_id, paragraph_index, '
@@ -113,7 +113,7 @@ void main() {
     await files.ensureDirs();
     apply = SyncApplier(b, files);
     await _book(a);
-    await _book(b, chapterId: 77); // ID lokal beda, kunci alami sama
+    await _book(b, chapterId: 77); // local IDs differ, natural keys match
     await b.delete(b.syncOutbox).go();
   });
 
@@ -148,7 +148,7 @@ void main() {
     };
     expect(settings['ai.model'], 'm1');
     expect(settings[pullCursorKey], 'u1:7');
-    // Yang baru diterapin gak di-push balik.
+    // What was just applied is not pushed back.
     expect(await _outbox(b), isEmpty);
   });
 
@@ -168,11 +168,11 @@ void main() {
 
     final outcome = await apply.apply(await _records(a));
 
-    expect(outcome.applied, 1); // cuma setting
+    expect(outcome.applied, 1); // settings only
     expect(await _inbox(b), containsAll(['book h1', 'ai_result h1/4/12']));
     expect((await apply.missingBooks()).single.key, 'h1');
 
-    // Bukunya keimpor → coba lagi → semua masuk.
+    // The book is imported → retry → everything applies.
     await _book(b, chapterId: 88);
     await apply.retryInbox();
     expect(await _inbox(b), isEmpty);
@@ -201,7 +201,7 @@ void main() {
 
   test('an unpushed newer local change wins and stays queued', () async {
     await readOnA();
-    // Record A dari jam 1000, perubahan lokal B (belum di-push) jam 2000.
+    // Record A at t=1000, B's local change (not pushed yet) at t=2000.
     await a.customStatement('UPDATE sync_outbox SET updated_at = 1000');
     final records = await _records(a);
     await b.customStatement(
@@ -234,7 +234,7 @@ void main() {
       expect(book.title, 'Renungan');
       expect(book.readingSeconds, 900);
       expect(book.firstOpenedAt!.millisecondsSinceEpoch ~/ 1000, 1790000000);
-      expect(await _outbox(b), ['book h1']); // hasil merge ke server
+      expect(await _outbox(b), ['book h1']); // merge result on the server
     },
   );
 
@@ -262,7 +262,7 @@ void main() {
       expect(await files.book('h1.epub').exists(), isFalse);
       expect(await files.cover('h1.jpg').exists(), isFalse);
       expect(await _inbox(b), isEmpty);
-      expect(await _outbox(b), isEmpty); // gak di-push balik
+      expect(await _outbox(b), isEmpty); // not pushed back
     },
   );
 

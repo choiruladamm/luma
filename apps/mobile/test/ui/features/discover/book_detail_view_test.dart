@@ -100,7 +100,7 @@ void main() {
         ),
       ),
     );
-    // Di app detail selalu di-push dari tab Cari buku: ada yang bisa di-pop.
+    // The detail screen is always pushed from the Cari buku tab, so there is something to pop.
     router.push('/detail');
     await tester.pumpAndSettle();
     await tick(tester);
@@ -129,7 +129,7 @@ void main() {
     expect(find.text('Public domain di AS'), findsOneWidget);
     expect(find.text('#158'), findsOneWidget);
 
-    // Chip selebar isinya, bukan selebar layar (900 di test).
+    // Chip is as wide as its content, not the screen width (900 in tests).
     for (final label in ['Young women', 'Love stories', 'Best Books Ever']) {
       final chip = find.ancestor(
         of: find.text(label),
@@ -245,7 +245,7 @@ void main() {
     );
     final sub = container.listen(discoverProvider, (_, _) {});
     addTearDown(sub.close);
-    await tester.pump(Duration.zero); // jumlah buku penulis kebaca
+    await tester.pump(Duration.zero); // reads the author's book count
     await tester.tap(find.textContaining('buku lain di katalog'));
     await tester.pumpAndSettle();
     expect(container.read(discoverProvider).query, 'Jane Austen');

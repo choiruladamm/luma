@@ -6,7 +6,7 @@ import 'package:luma/data/repositories/book_search_index.dart';
 import 'package:luma/domain/models/ai_reply.dart';
 import 'package:luma/domain/models/book.dart';
 
-/// Schema lama persis kayak yang kebuat di iPhone (dan di backup lama).
+/// The old schema, exactly as created on an iPhone (and in old backups).
 const v1 = [
   '''CREATE TABLE "books" ("id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, "source_type" TEXT NOT NULL, "book_key" TEXT NULL UNIQUE, "title" TEXT NOT NULL, "author" TEXT NULL, "file_name" TEXT NULL, "cover_name" TEXT NULL, "hash" TEXT NULL UNIQUE, "parser_version" INTEGER NOT NULL, "total_chars" INTEGER NOT NULL, "created_at" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)), "last_opened_at" INTEGER NULL)''',
   '''CREATE TABLE "chapters" ("id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, "book_id" INTEGER NOT NULL REFERENCES books (id) ON DELETE CASCADE, "sort_order" INTEGER NOT NULL, "chapter_number" INTEGER NULL, "title" TEXT NOT NULL, "char_offset" INTEGER NOT NULL)''',
@@ -18,13 +18,13 @@ const v1 = [
   'CREATE INDEX paragraphs_chapter_group ON paragraphs (chapter_id, group_index)',
 ];
 
-/// v2: books dapet firstOpenedAt & readingSeconds (install baru v2).
+/// v2: books gain firstOpenedAt & readingSeconds (fresh v2 installs too).
 final v2 = [
   '''CREATE TABLE "books" ("id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, "source_type" TEXT NOT NULL, "book_key" TEXT NULL UNIQUE, "title" TEXT NOT NULL, "author" TEXT NULL, "file_name" TEXT NULL, "cover_name" TEXT NULL, "hash" TEXT NULL UNIQUE, "parser_version" INTEGER NOT NULL, "total_chars" INTEGER NOT NULL, "created_at" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)), "last_opened_at" INTEGER NULL, "first_opened_at" INTEGER NULL, "reading_seconds" INTEGER NOT NULL DEFAULT 0)''',
   ...v1.skip(1),
 ];
 
-/// v3: reading_progress dapet paragraph_offset.
+/// v3: reading_progress gains paragraph_offset.
 final v3 = [
   for (final sql in v2)
     sql.startsWith('CREATE TABLE "reading_progress"')
@@ -35,7 +35,7 @@ final v3 = [
         : sql,
 ];
 
-/// v4: ai_results dapet prompt_version.
+/// v4: ai_results gains prompt_version.
 final v4 = [
   for (final sql in v3)
     sql.startsWith('CREATE TABLE "ai_results"')
@@ -46,7 +46,7 @@ final v4 = [
         : sql,
 ];
 
-/// v5 (install baru): statistik. books.finished_at, ai_results
+/// v5 (fresh installs): stats. books.finished_at, ai_results
 /// open_count + last_opened_at, reading_sessions + index, ai_calls.
 const v5 = [
   '''CREATE TABLE "books" ("id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, "source_type" TEXT NOT NULL, "book_key" TEXT NULL UNIQUE, "title" TEXT NOT NULL, "author" TEXT NULL, "file_name" TEXT NULL, "cover_name" TEXT NULL, "hash" TEXT NULL UNIQUE, "parser_version" INTEGER NOT NULL, "total_chars" INTEGER NOT NULL, "created_at" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)), "last_opened_at" INTEGER NULL, "first_opened_at" INTEGER NULL, "reading_seconds" INTEGER NOT NULL DEFAULT 0, "finished_at" INTEGER NULL)''',
@@ -69,7 +69,7 @@ const v6 = [
   '''CREATE TABLE "ai_breakdowns" ("chapter_id" INTEGER NOT NULL REFERENCES chapters (id) ON DELETE CASCADE, "group_index" INTEGER NOT NULL, "body" TEXT NOT NULL, "source_hash" TEXT NOT NULL, "model" TEXT NOT NULL, "prompt_version" INTEGER NOT NULL, "created_at" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)), PRIMARY KEY ("chapter_id", "group_index"))''',
 ];
 
-/// v7 install baru: metadata EPUB. Fixture tidak memakai model schema baru.
+/// v7 (fresh install): EPUB metadata. The fixture does not use the new schema model.
 final v7 = [
   '''CREATE TABLE "books" ("id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, "source_type" TEXT NOT NULL, "book_key" TEXT NULL UNIQUE, "title" TEXT NOT NULL, "author" TEXT NULL, "file_name" TEXT NULL, "cover_name" TEXT NULL, "original_title" TEXT NULL, "original_author" TEXT NULL, "use_default_cover" INTEGER NOT NULL DEFAULT 0 CHECK ("use_default_cover" IN (0, 1)), "hash" TEXT NULL UNIQUE, "parser_version" INTEGER NOT NULL, "total_chars" INTEGER NOT NULL, "created_at" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)), "last_opened_at" INTEGER NULL, "first_opened_at" INTEGER NULL, "reading_seconds" INTEGER NOT NULL DEFAULT 0, "finished_at" INTEGER NULL)''',
   ...v6.skip(1),
@@ -143,7 +143,7 @@ final v14 = [
   'CREATE INDEX catalog_books_authors ON catalog_books (authors_text)',
 ];
 
-// Frozen schema 15: catalog_fts virtual table (shadow tables ikut dibuat).
+// Frozen schema 15: catalog_fts virtual table (its shadow tables are created too).
 final v15 = [
   ...v14,
   "CREATE VIRTUAL TABLE catalog_fts USING fts5(title, authors_text, content='catalog_books', content_rowid='id', tokenize='unicode61 remove_diacritics 2')",
@@ -160,7 +160,7 @@ final v16 = [
         : sql,
 ];
 
-// Frozen schema 17: paragraph_fts + trigger-nya, sebelum sync outbox.
+// Frozen schema 17: paragraph_fts and its trigger, before the sync outbox.
 final v17 = [
   ...v16,
   "CREATE VIRTUAL TABLE paragraph_fts USING fts5(text, content='paragraphs', content_rowid='rowid', tokenize='unicode61 remove_diacritics 2')",
@@ -176,7 +176,7 @@ AppDatabase _open([void Function(dynamic raw)? setup]) => AppDatabase(
   ),
 );
 
-/// Kolom tiap tabel + index, buat bandingin hasil migrasi sama DB baru.
+/// Columns and indexes of every table, to compare the migrated result with a fresh DB.
 Future<Map<String, List<String>>> _shape(AppDatabase db) async {
   final shape = <String, List<String>>{};
   final entities = await db
@@ -206,7 +206,7 @@ Future<Map<String, List<String>>> _shape(AppDatabase db) async {
           ];
   }
   for (final cols in shape.values) {
-    cols.sort(); // ALTER nambah kolom di akhir; urutan gak ngaruh ke Drift
+    cols.sort(); // ALTER appends columns at the end; column order does not matter to Drift
   }
   for (final e in entities.where((e) => e.read<String>('type') == 'table')) {
     final name = e.read<String>('name');
@@ -229,7 +229,7 @@ Future<Map<String, List<String>>> _shape(AppDatabase db) async {
   return shape;
 }
 
-/// DB versi lama berisi satu buku, satu chapter, posisi baca di paragraf 3.
+/// Old-version DB with one book, one chapter, and the reading position at paragraph 3.
 AppDatabase _old(List<String> schema, int version) => _open((raw) {
   for (final sql in schema) {
     raw.execute(sql);
@@ -294,7 +294,7 @@ void main() {
         // Translations from before the prompt version column count as the old prompt.
         final cached = await migrated.select(migrated.aiResults).getSingle();
         expect(cached.promptVersion, 1);
-        // Statistik baru mulai dari nol: gak ada riwayat buat di-backfill.
+        // New stats start at zero: there is no history to backfill.
         expect(cached.openCount, 0);
         expect(cached.lastOpenedAt, isNull);
         expect(await migrated.select(migrated.readingSessions).get(), isEmpty);
@@ -369,8 +369,8 @@ void main() {
       "INSERT INTO settings (key, value) VALUES ('ai.model', 'm'), "
       "('backup.lastAt', 'x')",
     );
-    // _old nulis data sebelum migrasi; settings di atas ditulis setelahnya
-    // (lewat trigger), jadi dicek terpisah.
+    // _old writes data before the migration; the settings above are written afterwards
+    // (via trigger), so they are checked separately.
     final outbox = {
       for (final r in await db.select(db.syncOutbox).get())
         '${r.kind} ${r.key}': r.updatedAt,
@@ -381,7 +381,7 @@ void main() {
     expect(outbox.keys, isNot(contains('setting backup.lastAt')));
     expect(await db.select(db.syncInbox).get(), isEmpty);
 
-    // Data user utuh.
+    // User data intact.
     expect((await db.select(db.books).getSingle()).title, 'Meditations');
     expect((await db.select(db.readingProgress).getSingle()).paragraphIndex, 3);
 
@@ -444,7 +444,7 @@ void main() {
                 .get())
             .length;
 
-    // Baris lama belum ke-index, tapi datanya utuh.
+    // Old rows are not indexed yet, but their data is intact.
     expect(await hits('netherfield'), 0);
     expect(await index.isIndexed(1), isFalse);
     expect(await db.select(db.paragraphs).get(), hasLength(2));

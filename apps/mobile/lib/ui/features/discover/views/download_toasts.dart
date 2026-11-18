@@ -8,11 +8,11 @@ import '../../../core/theme/stabilo_tokens.dart';
 import '../../../core/widgets/toast.dart';
 import '../view_models/download_queue_view_model.dart';
 
-/// Kabar download selesai / gagal, dari mana pun user lagi berada (board 15 /
-/// 16): toast "Emma udah masuk rak" + Buka (di layar baca) / Baca. App di
-/// latar: notifikasi lokal dengan kalimat yang sama, tap = buka buku.
-/// Dipasang di `builder` MaterialApp (di bawah ScaffoldMessenger, di atas
-/// router), jadi navigasinya lewat [routerProvider], bukan context.
+/// Download done / failed notices, wherever the user is (boards 15 / 16): toast
+/// "Emma udah masuk rak" + Buka (on the reading screen) / Baca. App in the
+/// background: a local notification with the same sentence, tap = open the
+/// book. Mounted in MaterialApp's `builder` (below ScaffoldMessenger, above the
+/// router), so it navigates via [routerProvider], not context.
 class DownloadToasts extends ConsumerStatefulWidget {
   const DownloadToasts({super.key, required this.child});
 
@@ -52,7 +52,7 @@ class _DownloadToastsState extends ConsumerState<DownloadToasts> {
       final notifications = ref.read(notificationServiceProvider);
       for (final item in next) {
         if (before[item.key] == item.status) continue;
-        // Download pertama mulai = saat yang pas minta izin notifikasi.
+        // The first download starting is the right moment to ask for notification permission.
         if (item.status == DownloadStatus.downloading && !_asked) {
           _asked = true;
           notifications

@@ -154,7 +154,6 @@ describe("Better Auth allowlist", () => {
     const cookie = await sessionCookie(id, { expiresInMs: DAY, createdAt: new Date(Date.now() - 31 * DAY) });
     const { response, d1Queries } = await call(PROBE, { headers: { cookie } });
     expect(response.status).toBe(401);
-    // find + delete.
     expect(d1Queries).toBe(2);
     expect(await sessionRow(cookie)).toBeNull();
   });

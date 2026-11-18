@@ -16,12 +16,12 @@ import 'auth_repository.dart';
 import 'import_repository.dart';
 import 'sync_applier.dart';
 
-/// Nama dump buku Markdown di folder file cloud (docs/sync-protocol.md, Book files and Markdown dumps).
+/// Returns the name of a Markdown book dump in the cloud file folder (docs/sync-protocol.md, Book files and Markdown dumps).
 String markdownDumpName(String bookKey, int contentRevision) =>
     'md-$bookKey-$contentRevision.json.gz';
 
-/// Top-level: closure di dalam method bisa ikut nangkep objek yang gak bisa
-/// dikirim ke isolate.
+/// Top-level because a closure inside a method could capture objects that
+/// can't be sent to an isolate.
 Future<List<int>> _gzipJson(Object json) =>
     Isolate.run(() => gzip.encode(utf8.encode(jsonEncode(json))));
 
@@ -31,10 +31,12 @@ Future<Map<String, Object?>> _readGzipJson(String path) => Isolate.run(
   ) as Map).cast<String, Object?>(),
 );
 
-/// Sync antar device (docs/sync-protocol.md, Push and pull): push perubahan lokal (`sync_outbox`),
-/// pull perubahan device lain ([SyncApplier]), download + impor buku yang
-/// belum ada. Tanpa polling: dipanggil cuma dari pemicu (login, resume,
-/// debounce perubahan lokal). Error diam-diam; pemicu berikutnya coba lagi.
+/// Syncs between devices (docs/sync-protocol.md, Push and pull).
+///
+/// Pushes local changes (`sync_outbox`), pulls changes from other devices
+/// ([SyncApplier]), and downloads and imports books that are missing. There is
+/// no polling: it runs only from triggers (login, resume, debounced local
+/// changes). Errors are swallowed; the next trigger retries.
 class SyncRepository {
   SyncRepository({
     required this._db,
@@ -58,16 +60,16 @@ class SyncRepository {
   final SyncApplier _applier;
   final ImportRepository _import;
 
-  /// Progres download buku buat indikator Rak ([syncDownloadsProvider]);
-  /// null = gak ada yang lagi di-download.
+  /// Reports book download progress for the shelf indicator
+  /// ([syncDownloadsProvider]); null means nothing is downloading.
   final void Function(SyncDownloads? progress) _onDownloads;
   final DateTime Function() _clock;
 
-  /// Jarak minimum sync dari resume.
+  /// Minimum gap between syncs triggered by resume.
   static const resumeGap = Duration(minutes: 5);
 
-  /// Batch per pemicu: sync pertama (backfill) dicicil biar satu user gak
-  /// ngabisin kuota tulis D1 harian.
+  /// Batches per trigger. The first sync (backfill) is spread over several
+  /// triggers so one user can't use up the daily D1 write quota.
   static const maxBatches = 10;
 
   Future<int>? _running;
@@ -75,7 +77,7 @@ class SyncRepository {
   DateTime? _lastSync;
   DateTime? _pausedUntil;
 
-  /// Pemicu resume: paling cepat [resumeGap] sekali.
+  /// Resume trigger; syncs at most once per [resumeGap].
   Future<void> syncIfDue() async {
     if (_lastSync case final at? when _clock().difference(at) < resumeGap) {
       return;
@@ -83,8 +85,8 @@ class SyncRepository {
     return sync();
   }
 
-  /// Login / resume: push dulu, baru pull, lalu download buku yang belum
-  /// ada. Satu sync jalan sekaligus.
+  /// Syncs on login or resume: pushes first, then pulls, then downloads the
+  /// missing books. Only one sync runs at a time.
   Future<void> sync() =>
       _syncing ??= _sync().whenComplete(() => _syncing = null);
 
@@ -103,8 +105,9 @@ class SyncRepository {
     await _downloadBooks(token);
   }
 
-  /// Halaman demi halaman dari cursor (`sync.pullSeq`, per user: ganti akun =
-  /// mulai dari 0), maks [maxBatches] per pemicu. Abis itu inbox dicoba lagi.
+  /// Pulls page by page from the cursor (`sync.pullSeq`, kept per user, so an
+  /// account switch starts from 0), at most [maxBatches] per trigger, then
+  /// retries the inbox.
   Future<void> _pull(String token) async {
     final user = await _auth.lastUserId() ?? '';
     var since = await _cursor(user);
@@ -127,9 +130,12 @@ class SyncRepository {
     return int.tryParse(value.substring(i + 1)) ?? 0;
   }
 
-  /// Buku yang record-nya nunggu di inbox: download dari folder file cloud,
-  /// impor, lalu inbox dicoba lagi (metadata + data baca nyusul masuk). Satu
-  /// per satu; yang gagal tetap di inbox buat pemicu berikutnya.
+  /// Downloads the books whose records wait in the inbox from the cloud file
+  /// folder, imports them, then retries the inbox so the metadata and reading
+  /// data follow.
+  ///
+  /// Books go one at a time; a failed one stays in the inbox for the next
+  /// trigger.
   Future<void> _downloadBooks(String token) async {
     final books = await _applier.missingBooks();
     if (books.isEmpty) return;
@@ -146,15 +152,16 @@ class SyncRepository {
   Future<void> _downloadOne(String token, PulledRecord r) async {
     try {
       await _downloadBook(token, r.data!);
-      // Impor hasil sync bukan perubahan lokal: entri outbox-nya (waktu
-      // impor) bakal ngalahin metadata device lain dan ke-push balik.
+      // A sync-driven import isn't a local change: its outbox entry (stamped
+      // with the import time) would beat the other device's metadata and get
+      // pushed back.
       await _db.customStatement(
         "DELETE FROM sync_outbox WHERE kind = 'book' AND key = ?",
         [r.key],
       );
       await _applier.retryInbox();
     } on Object {
-      // diam-diam: dicoba lagi pemicu berikutnya
+      // Swallowed: the next trigger retries.
     }
   }
 
@@ -186,8 +193,10 @@ class SyncRepository {
     }
   }
 
-  /// Push sampai outbox kosong atau [maxBatches]. Satu push jalan sekaligus.
-  /// Balikin jumlah record yang terkirim.
+  /// Pushes until the outbox is empty or [maxBatches] is reached, and returns
+  /// the number of records sent.
+  ///
+  /// Only one push runs at a time.
   Future<int> push() =>
       _running ??= _push().whenComplete(() => _running = null);
 
@@ -195,9 +204,9 @@ class SyncRepository {
     if (_pausedUntil case final until? when _clock().isBefore(until)) return 0;
     final token = await _auth.token();
     if (token == null) return 0;
-    // Satu putaran cuma ngirim perubahan sebelum mulai, maju lewat cursor:
-    // yang berubah selama push nunggu pemicu berikutnya (debounce), yang
-    // gagal gak diulang di putaran yang sama.
+    // One round sends only the changes that existed when it started, advancing
+    // by cursor: changes made during the push wait for the next trigger
+    // (debounce), and a failed record isn't retried in the same round.
     final start = (await _db.customSelect('SELECT $sqlNowMs AS t').getSingle())
         .read<int>('t');
     var cursor = (0, '', '');
@@ -210,13 +219,14 @@ class SyncRepository {
         cursor = batch.cursor;
       }
     } on BackendException catch (e) {
-      // 429 / 503 saklar darurat: tunggu `Retry-After` sebelum coba lagi.
+      // 429 or a 503 kill switch: wait for `Retry-After` before retrying.
       if (e.retryAfter case final wait?) _pausedUntil = _clock().add(wait);
     }
     return sent;
   }
 
-  /// Satu batch outbox (≤ [start], setelah [cursor]) → server. null = habis.
+  /// Sends one outbox batch (entries up to [start], after [cursor]) to the
+  /// server, or returns null when the outbox is exhausted.
   Future<({int sent, (int, String, String) cursor})?> _pushBatch(
     String token,
     int start,
@@ -268,13 +278,14 @@ class SyncRepository {
       final json = data[(o.kind, o.key)];
       final tombstone = syncKindsByName[o.kind]?.tombstone ?? false;
       final size = utf8.encode(json ?? '').length + o.key.length + 100;
-      // Baris anak yang udah kehapus, kind gak dikenal, atau satu record yang
-      // sendirian lewat batas body: dibuang, gak bisa dikirim.
+      // A child row that was already deleted, an unknown kind, or a single
+      // record that alone exceeds the body limit: drop it, it can't be sent.
       if ((json == null && !tombstone) || size > SyncService.maxBytes) {
         done.add(o);
         continue;
       }
-      if (bytes + size > SyncService.maxBytes) break; // sisanya batch berikut
+      // The rest goes in the next batch.
+      if (bytes + size > SyncService.maxBytes) break;
       bytes += size;
       records.add(
         SyncRecord(
@@ -291,9 +302,10 @@ class SyncRepository {
       await _service.push(token, _db.schemaVersion, records);
     }
     final failed = await _uploadBookFiles(token, records);
-    // Hapus yang terkirim, kecuali yang berubah lagi selama push (updatedAt
-    // beda) atau file bukunya gagal di-upload (record buku dikirim ulang
-    // pemicu berikutnya; server gak nulis ulang data yang sama).
+    // Delete what was sent, except entries that changed again during the push
+    // (different updatedAt) or whose book file failed to upload (the next
+    // trigger resends the book record; the server doesn't rewrite identical
+    // data).
     await _db.customStatement(
       'DELETE FROM sync_outbox WHERE (kind, key, updated_at) IN '
       "(SELECT json_extract(value, '\$[0]'), json_extract(value, '\$[1]'), "
@@ -313,13 +325,15 @@ class SyncRepository {
     );
   }
 
-  /// File buku yang belum ada di cloud (file, cover, dump Markdown), biar
-  /// device lain bisa download. Balikin kunci buku yang gagal.
+  /// Uploads the book files that aren't in the cloud yet (file, cover,
+  /// Markdown dump) so other devices can download them.
+  ///
+  /// Returns the keys of the books that failed.
   Future<Set<String>> _uploadBookFiles(
     String token,
     List<SyncRecord> records,
   ) async {
-    // temp = file dibikin di folder sementara, dihapus habis upload.
+    // temp means the file was created in a temporary folder and is deleted after the upload.
     final wanted =
         <String, ({String book, bool temp, Future<File?> Function() file})>{};
     for (final r in records) {
@@ -387,8 +401,11 @@ class SyncRepository {
 
   static Future<File?> _existing(File f) async => await f.exists() ? f : null;
 
-  /// Buku Markdown gak punya file sumber: bab + paragraf (dengan
-  /// `groupIndex`) di-dump ke JSON gzip bernama [name] di folder sementara.
+  /// Dumps a Markdown book to a gzipped JSON file named [name] in a temporary
+  /// folder.
+  ///
+  /// Markdown books have no source file, so the chapters and paragraphs (with
+  /// `groupIndex`) are dumped instead.
   Future<File?> _markdownDump(String bookKey, String name) async {
     final book = await (_db.select(
       _db.books,
@@ -432,8 +449,10 @@ class SyncRepository {
   }
 }
 
-/// Event tiap tabel yang di-sync berubah lewat Drift. Outbox diisi trigger
-/// SQLite yang gak keliatan stream Drift, jadi yang didengerin tabel asalnya.
+/// Emits an event whenever a synced table changes through Drift.
+///
+/// The outbox is filled by SQLite triggers that Drift streams can't see, so
+/// this listens to the source tables instead.
 final syncChangesProvider = Provider<Stream<void>>((ref) {
   final db = ref.watch(appDatabaseProvider);
   final synced = {for (final k in syncKinds) k.table};
@@ -445,7 +464,7 @@ final syncChangesProvider = Provider<Stream<void>>((ref) {
   );
 });
 
-/// Download buku hasil sync: [done] dari [total] buku yang nunggu.
+/// Progress of sync-driven book downloads: [done] out of [total] waiting books.
 typedef SyncDownloads = ({int done, int total});
 
 class SyncDownloadsNotifier extends Notifier<SyncDownloads?> {
@@ -456,7 +475,7 @@ class SyncDownloadsNotifier extends Notifier<SyncDownloads?> {
   void set(SyncDownloads? progress) => state = progress;
 }
 
-/// Indikator "Nyinkronin 3/12 buku" di Rak. null = gak ada download.
+/// Drives the "Nyinkronin 3/12 buku" indicator on the shelf; null means no download is running.
 final syncDownloadsProvider =
     NotifierProvider<SyncDownloadsNotifier, SyncDownloads?>(
       SyncDownloadsNotifier.new,

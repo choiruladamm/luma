@@ -7,7 +7,7 @@ import { formatDateTime } from "../../../lib/format";
 
 /**
  * Board 09: the new code on an invite ticket (ink 1.5 outline, dashed tear with notches, pink
- * stabilo), copy status announced (aria-live), two equal buttons; yellow turns "Udah disalin".
+ * stabilo), copy status announced (aria-live), two equal buttons; yellow turns "Udah disalin" ("already copied").
  */
 export function NewInviteDialog({ code, createdAt, copied, onCopy, onClose }: { code: string | null; createdAt: string; copied: boolean; onCopy: () => void; onClose: () => void }) {
   const { t, locale } = useI18n();

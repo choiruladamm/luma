@@ -7,8 +7,8 @@ import '../theme/stabilo_tokens.dart';
 import '../theme/stabilo_type.dart';
 import 'buttons.dart';
 
-/// Field input pengaturan (board Komponen 04, SecureField). [secret] =
-/// disembunyiin + tombol liat; teks pake font mono.
+/// Settings input field (board Komponen 04, SecureField). [secret] = hidden
+/// + a show button; text uses the mono font.
 class AppField extends StatefulWidget {
   const AppField({
     super.key,
@@ -33,13 +33,13 @@ class AppField extends StatefulWidget {
   final String? helper;
   final bool showLabel;
 
-  /// Placeholder waktu kosong.
+  /// Placeholder when empty.
   final String? hint;
 
-  /// Non-null = garis merah + pesan (ikon alert) gantiin [helper].
+  /// Non-null = red border + message (alert icon) replacing [helper].
   final String? error;
 
-  /// false = teks biasa (judul, nama), bukan font mono kayak API key.
+  /// false = plain text (title, name), not mono like an API key.
   final bool mono;
   final bool secret;
   final ValueChanged<String>? onChanged;
@@ -48,7 +48,7 @@ class AppField extends StatefulWidget {
   final TextInputType? keyboardType;
   final FocusNode? focusNode;
 
-  /// Ada = tombol hapus nongol selama field ada isinya.
+  /// When set, a clear button shows while the field has content.
   final VoidCallback? onClear;
 
   @override

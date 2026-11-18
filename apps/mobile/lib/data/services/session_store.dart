@@ -1,8 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-/// Token sesi backend + id akun terakhir di Keychain / Keystore. Gak di Drift:
-/// gak ikut backup (docs/backend.md, Authentication and accounts).
+/// Keeps the backend session token and last account id in Keychain / Keystore.
+///
+/// Not in Drift, so it stays out of backups (docs/backend.md, Authentication and accounts).
 class SessionStore {
   SessionStore([this._storage = const FlutterSecureStorage()]);
 
@@ -13,7 +14,7 @@ class SessionStore {
   static const _subsidyKey = 'ai_subsidy_key';
   static const _subsidyExpiresKey = 'ai_subsidy_key_expires_at';
 
-  /// Null = belum login → app buka layar Masuk.
+  /// Returns the session token, or null when not signed in (the app opens the Masuk screen).
   Future<String?> readToken() async {
     final token = await _storage.read(key: _tokenKey);
     return token == null || token.isEmpty ? null : token;
@@ -22,14 +23,15 @@ class SessionStore {
   Future<void> writeToken(String token) =>
       _storage.write(key: _tokenKey, value: token);
 
-  /// Logout: token + key AI subsidi milik akun itu ikut dibuang.
+  /// Clears the token on logout, together with that account's subsidized AI key.
   Future<void> clearToken() async {
     await _storage.delete(key: _tokenKey);
     await clearSubsidyKey();
   }
 
-  /// Key OpenRouter subsidi dari backend (docs/backend.md, AI subsidy). Null kalau
-  /// belum pernah diambil atau formatnya rusak.
+  /// Returns the subsidized OpenRouter key from the backend (docs/backend.md, AI subsidy).
+  ///
+  /// Null when it was never fetched or its stored format is corrupt.
   Future<SubsidyKey?> readSubsidyKey() async {
     final key = await _storage.read(key: _subsidyKey);
     final expires = DateTime.tryParse(
@@ -52,8 +54,10 @@ class SessionStore {
     await _storage.delete(key: _subsidyExpiresKey);
   }
 
-  /// Akun yang terakhir login di HP ini, tetap ada setelah logout: dipakai
-  /// untuk deteksi ganti akun (data lokal milik akun lain).
+  /// Returns the account that last signed in on this phone.
+  ///
+  /// It survives logout so the app can detect an account switch (local data
+  /// that belongs to another account).
   Future<String?> readLastUserId() => _storage.read(key: _lastUserKey);
 
   Future<void> writeLastUserId(String id) =>
@@ -64,7 +68,7 @@ class SessionStore {
     await _storage.delete(key: _lastEmailKey);
   }
 
-  /// Email akun terakhir, buat dialog ganti akun ("Isi HP ini punya …").
+  /// Returns the last account's email, shown in the account-switch dialog ("Isi HP ini punya …").
   Future<String?> readLastUserEmail() => _storage.read(key: _lastEmailKey);
 
   Future<void> writeLastUserEmail(String email) =>

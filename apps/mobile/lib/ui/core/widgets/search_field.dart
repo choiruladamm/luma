@@ -6,8 +6,8 @@ import '../theme/stabilo_tokens.dart';
 import '../theme/stabilo_type.dart';
 import 'buttons.dart';
 
-/// Kolom cari pill 44 (board Cari kata 1–5). Diam: latar muted. Fokus:
-/// garis tinta 1,5 + cincin kuning 4. Tombol × muncul selama ada isi.
+/// Pill search field 44 (board Cari kata 1–5). Idle: muted background. Focused:
+/// 1.5 ink border + 4 yellow ring. The × button shows while there is content.
 class SearchField extends StatefulWidget {
   const SearchField({
     super.key,
@@ -123,8 +123,8 @@ class _SearchFieldState extends State<SearchField> {
                             color: c.track,
                             shape: BoxShape.circle,
                           ),
-                          // Center: tanpa ini constraint ketat Container maksa
-                          // ikon sebesar lingkarannya.
+                          // Center: without it the tight Container constraints force the icon to
+                          // the circle's size.
                           child: Center(
                             child: AppIcon(
                               AppIcons.close,

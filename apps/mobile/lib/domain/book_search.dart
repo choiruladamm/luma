@@ -1,40 +1,40 @@
-/// Logika murni Cari kata (docs/book-search.md): input user → ekspresi MATCH
-/// FTS5, lokasi kata cocok di teks, dan cuplikan. Dipakai repository
-/// (cuplikan) dan reader (stabilo inline).
+/// Pure logic of word search (docs/book-search.md): user input → FTS5 MATCH
+/// expression, match locations in the text, and snippets. Used by the repository
+/// (snippets) and the reader (inline highlight).
 library;
 
-/// Minimal huruf/angka buat mulai nyari.
+/// Minimum letters/digits before a search runs.
 const bookSearchMinChars = 2;
 
-/// Batas hasil yang ditampilin.
+/// Maximum number of results shown.
 const bookSearchMaxHits = 500;
 
-/// Riwayat per buku.
+/// Search history size per book.
 const bookSearchMaxRecents = 5;
 
-/// Panjang konteks kiri-kanan kata cocok di cuplikan.
+/// Context length on each side of the match in a snippet.
 const bookSearchSnippetContext = 60;
 
-/// Key `settings` buat riwayat cari satu buku (ikut backup).
+/// `settings` key for one book's search history (included in backups).
 String bookSearchRecentKey(int bookId) => 'search.recent.$bookId';
 
-/// Satu rentang `[start, end)` di teks asli.
+/// One `[start, end)` range in the original text.
 typedef TextRange = ({int start, int end});
 
-/// Query yang udah divalidasi: [match] aman dipakai di `MATCH`, [ranges]
-/// nyari kata yang sama di teks buat cuplikan / stabilo.
+/// A validated query: [match] is safe to use in `MATCH`; [ranges] finds the same
+/// words in the text for snippets and highlights.
 class BookSearchQuery {
   const BookSearchQuery._(this.words);
 
-  /// Kata ter-lipat (huruf kecil, tanpa aksen), urutan sama kayak input.
+  /// Folded words (lowercase, accents removed), in input order.
   final List<String> words;
 
-  /// Null kalau input kurang dari [bookSearchMinChars] huruf/angka.
+  /// Null when the input has fewer than [bookSearchMinChars] letters/digits.
   ///
-  /// Beberapa kata = frasa (berurutan), kata terakhir prefix: `netherfield
-  /// par` ketemu "Netherfield Park". Pemisah kata: apa pun selain huruf /
-  /// angka, termasuk kutip lurus dan miring, jadi `don’t` = `don't` (sama
-  /// kayak tokenizer unicode61 di index).
+  /// Several words form a phrase (in order) and the last word is a prefix:
+  /// `netherfield par` finds "Netherfield Park". Word separators: anything but
+  /// letters/digits, including straight and curly quotes, so `don’t` = `don't`
+  /// (same as the unicode61 tokenizer in the index).
   static BookSearchQuery? parse(String input) {
     final words = _words(fold(input)).map((w) => w.text).toList();
     final letters = words.fold<int>(0, (n, w) => n + w.length);
@@ -42,12 +42,12 @@ class BookSearchQuery {
     return BookSearchQuery._(words);
   }
 
-  /// Ekspresi FTS5: `"netherfield par"*`. Kata dipecah di non-huruf/angka,
-  /// jadi `"`, `*`, `-`, `OR`, `NEAR` dari user gak pernah jadi sintaks.
+  /// FTS5 expression: `"netherfield par"*`. Words are split at non-letters/digits,
+  /// so `"`, `*`, `-`, `OR`, `NEAR` from the user never become syntax.
   String get match => '"${words.join(' ')}"*';
 
-  /// Rentang tiap kemunculan frasa di [text] (kata utuh; kata terakhir
-  /// boleh lanjut ke ujung kata, kayak prefix di index). Urut, gak numpuk.
+  /// Range of each occurrence of the phrase in [text] (whole words; the last word
+  /// may continue to the end of the word, like a prefix in the index). Sorted, non-overlapping.
   List<TextRange> ranges(String text) {
     final found = _words(fold(text));
     final last = words.length - 1;
@@ -59,18 +59,18 @@ class BookSearchQuery {
       }
       if (ok && found[i + last].text.startsWith(words[last])) {
         out.add((start: found[i].start, end: found[i + last].end));
-        i += last; // gak numpuk
+        i += last; // skip overlapping matches
       }
     }
     return out;
   }
 }
 
-/// Teks pendek di sekitar kemunculan pertama + posisi kata cocok di dalamnya.
+/// A short text around the first occurrence + the match position inside it.
 typedef BookSearchSnippet = ({String text, int matchStart, int matchEnd});
 
-/// [bookSearchSnippetContext] huruf kiri-kanan [match], dipotong "…" di sisi
-/// yang kepotong. Tanpa [match] (gak ketemu di teks): awal paragraf.
+/// [bookSearchSnippetContext] characters on each side of [match], cut with "…" on
+/// the side that was truncated. Without [match] (not found in the text): the start of the paragraph.
 BookSearchSnippet bookSearchSnippet(String text, TextRange? match) {
   const ctx = bookSearchSnippetContext;
   if (match == null) {
@@ -106,8 +106,8 @@ List<({String text, int start, int end})> _words(String folded) => [
     (text: m.group(0)!, start: m.start, end: m.end),
 ];
 
-/// Huruf kecil + buang aksen, panjangnya sama kayak input (indeks cocok sama
-/// teks asli). Cukup buat Latin; sisanya cuma di-lowercase.
+/// Lowercases and strips accents while keeping the input length (match indices
+/// stay valid in the original text). Enough for Latin; other scripts are only lowercased.
 String fold(String s) {
   final b = StringBuffer();
   for (final unit in s.runes) {
@@ -115,8 +115,8 @@ String fold(String s) {
     b.write(_accents[c] ?? c.toLowerCase());
   }
   final out = b.toString();
-  // lowercase bisa ngubah panjang (mis. "İ"): kalau iya, jangan percaya
-  // indeksnya, pakai versi tanpa lowercase buat yang berubah.
+  // Lowercasing can change the length (e.g. "İ"): if so, don't trust its
+  // indices; use the non-lowercased version for the characters that changed.
   return out.length == s.length ? out : s;
 }
 

@@ -6,7 +6,7 @@ import '../../../core/theme/stabilo_tokens.dart';
 import '../../../core/theme/stabilo_type.dart';
 import '../../../core/widgets/buttons.dart';
 
-/// Kotak muted dengan ikon tile 36, judul, isi, tombol (board 07 / 08).
+/// Muted box with a 36 icon tile, title, body, button (board 07 / 08).
 class DiscoverNotice extends StatelessWidget {
   const DiscoverNotice({
     super.key,
@@ -85,7 +85,7 @@ class DiscoverNotice extends StatelessWidget {
                               color: c.sheet,
                               borderRadius: BorderRadius.circular(Radii.full),
                             ),
-                            // widthFactor: 1 = selebar teks (alignment melar).
+                            // widthFactor: 1 = as wide as the text (alignment stretches it).
                             child: Center(
                               widthFactor: 1,
                               child: Text(
@@ -107,7 +107,7 @@ class DiscoverNotice extends StatelessWidget {
   }
 }
 
-/// Tiga baris skeleton (cover 52 muted + dua garis), tanpa animasi.
+/// Three skeleton rows (muted 52 cover + two lines), no animation.
 class SkeletonRows extends StatelessWidget {
   const SkeletonRows({super.key});
 
@@ -161,7 +161,7 @@ class SkeletonRows extends StatelessWidget {
   }
 }
 
-/// Ikon tile 64 + judul 19 + isi (board 06 / 09).
+/// 64 icon tile + 19 title + body (board 06 / 09).
 class DiscoverEmpty extends StatelessWidget {
   const DiscoverEmpty({
     super.key,

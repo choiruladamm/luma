@@ -15,7 +15,7 @@ type ToastState = {
 
 let seq = 0;
 
-/** One toast at a time (komponen 2, Toast): a new one replaces the current one. */
+/** One toast at a time (design component 2, Toast): a new one replaces the current one. */
 export const useToastStore = create<ToastState>()((set) => ({
   toast: null,
   show: (toast) => set({ toast: { ...toast, id: ++seq } }),

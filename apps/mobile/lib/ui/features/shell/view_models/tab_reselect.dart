@@ -2,8 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/widgets/nav_bar.dart';
 
-/// Naik tiap tab aktif ditap lagi (board NavBar: scroll ke atas). Layar tab
-/// `ref.listen` dan gulung ke atas sendiri.
+/// Increments each time the active tab is tapped again (board NavBar: scroll to
+/// top). Tab screens `ref.listen` and scroll up themselves.
 class TabReselect extends Notifier<int> {
   @override
   int build() => 0;

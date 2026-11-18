@@ -12,11 +12,12 @@ import '../../domain/models/backup.dart';
 import '../database/app_database.dart';
 import 'file_storage.dart';
 
-/// Tahap yang lagi dibungkus (centang di sheet backup).
+/// The stage currently being packed (checked off in the backup sheet).
 enum BackupStage { books, database, settings }
 
-/// Zip backup yang udah jadi, nunggu di-share. [dispose] buang folder
-/// sementaranya.
+/// Represents a finished backup zip waiting to be shared.
+///
+/// [dispose] deletes its temporary folder.
 class BackupFile {
   BackupFile(this._dir, this.file, this.manifest);
 
@@ -32,19 +33,23 @@ class BackupFile {
   }
 }
 
-/// Export semua data ke satu zip (docs/backup.md): snapshot DB + manifest +
-/// EPUB & cover. API key gak ikut (di Keychain, bukan di DB).
+/// Exports all data into one zip (docs/backup.md): a DB snapshot, the manifest,
+/// and the EPUB and cover files.
+///
+/// API keys are not included; they live in the Keychain, not in the DB.
 class BackupService {
   BackupService(this._db, this._storage);
 
   final AppDatabase _db;
   final FileStorage _storage;
 
-  /// [onStart] kepanggil sekali abis DB di-snapshot (nama file & jumlah
-  /// buku/terjemahan udah ketauan). [isCancelled] dicek di sela tahap;
-  /// pas ngezip, [cancel] selesai = isolate-nya dimatiin. [snapshotOnly]:
-  /// cuma manifest + DB, buat backup cloud (file buku & cover diunggah
-  /// terpisah, docs/backup.md, Archive contents and manifest).
+  /// Builds the backup zip, or returns null when cancelled.
+  ///
+  /// [onStart] fires once after the DB snapshot (the file name and the book and
+  /// translation counts are known by then). While zipping, completing [cancel]
+  /// kills the zip isolate. With [snapshotOnly] the zip holds just the manifest
+  /// and the DB, for cloud backup (book and cover files upload separately,
+  /// docs/backup.md, Archive contents and manifest).
   Future<BackupFile?> export({
     bool snapshotOnly = false,
     DateTime? now,
@@ -55,7 +60,7 @@ class BackupService {
     final created = now ?? DateTime.now();
     final dir = await Directory.systemTemp.createTemp('luma-backup-');
     try {
-      // Snapshot konsisten walaupun DB lagi dipake / mode WAL.
+      // VACUUM INTO gives a consistent snapshot even while the DB is in use or in WAL mode.
       final snapshot = p.join(dir.path, 'luma.sqlite');
       await _db.customStatement('VACUUM INTO ?', [snapshot]);
 
@@ -73,7 +78,7 @@ class BackupService {
       final name = backupFileName(created);
       onStart?.call(name, manifest);
 
-      // EPUB & gambar udah kekompres: disimpen apa adanya. DB dikompres.
+      // EPUBs and images are already compressed, so they are stored as-is; the DB and manifest are compressed.
       final entries = <_Entry>[
         if (!snapshotOnly) ...[
           for (final f in await _files(_storage.booksDir))
@@ -109,7 +114,7 @@ class BackupService {
     }
   }
 
-  /// Jumlah buku di rak (tanpa snapshot).
+  /// Returns the number of books on the shelf, without taking a snapshot.
   Future<int> bookCount() => _count(_db.books);
 
   Future<int> _count(TableInfo<Table, Object?> table) async {
@@ -129,7 +134,7 @@ class BackupService {
               ]
         ..sort((a, b) => a.path.compareTo(b.path));
 
-  /// Ngezip di isolate (EPUB bisa gede). false = dibatalin.
+  /// Zips in an isolate (EPUBs can be large); returns false when cancelled.
   static Future<bool> _zip(
     List<_Entry> entries,
     String out,
@@ -187,8 +192,8 @@ class BackupService {
   }
 }
 
-/// File yang dimasukin ke zip: path asli, nama di zip, level kompresi,
-/// tahap (indeks [BackupStage]).
+/// A file going into the zip: its real path, its name in the zip, its
+/// compression level, and its stage (a [BackupStage] index).
 typedef _Entry = ({String path, String name, int level, int stage});
 
 final backupServiceProvider = Provider<BackupService>(

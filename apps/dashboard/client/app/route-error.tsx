@@ -16,7 +16,7 @@ function useErrorKind(): { kind: Kind; detail?: string } {
   return { kind: "crash", detail: error instanceof Error ? (error.stack ?? error.message) : message };
 }
 
-/** Komponen 2 State (failed load), scaled up: soft-red tile, title, one sentence, actions, details. */
+/** Design component 2, State (failed load), scaled up: soft-red tile, title, one sentence, actions, details. */
 function ErrorPanel({ kind, detail }: { kind: Kind; detail?: string }) {
   const { t } = useI18n();
   const icon: IconName = kind === "notFound" ? "search" : kind === "update" ? "refresh" : "alert";

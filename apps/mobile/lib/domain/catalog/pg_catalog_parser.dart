@@ -3,12 +3,12 @@ import 'dart:typed_data';
 
 import 'catalog_row.dart';
 
-/// Kolom `pg_catalog.csv`, urutannya tetap:
+/// `pg_catalog.csv` columns, in fixed order:
 /// `Text#,Type,Issued,Title,Language,Authors,Subjects,LoCC,Bookshelves`.
 const _columns = 9;
 
-/// CSV (udah di-gunzip) → baris teks Inggris. Baris rusak (kolom kurang, id
-/// bukan angka) dilewatin. Pure, aman dipanggil dari `Isolate.run`.
+/// CSV (already gunzipped) → English text rows. Malformed rows (missing columns,
+/// non-numeric id) are skipped. Pure; safe to call from `Isolate.run`.
 List<CatalogRow> parsePgCatalog(Uint8List csv) {
   final records = _parseCsv(utf8.decode(csv, allowMalformed: true));
   final rows = <CatalogRow>[];
@@ -30,9 +30,9 @@ List<CatalogRow> parsePgCatalog(Uint8List csv) {
   return rows;
 }
 
-/// `Austen, Jane, 1775-1817; Leech, John, 1817-1864 [Illustrator]`. Peran
-/// dalam `[...]` dibuang, orangnya tetep. Tahun = bagian terakhir setelah
-/// koma yang bentuknya `1775-1817` / `1900-` / `-1468`, tanda `?` diabaikan.
+/// `Austen, Jane, 1775-1817; Leech, John, 1817-1864 [Illustrator]`. The role in
+/// `[...]` is dropped, the person stays. Years = the last part after a comma
+/// shaped like `1775-1817` / `1900-` / `-1468`; `?` is ignored.
 List<CatalogAuthor> parseAuthors(String field) => [
   for (final part in field.split(';'))
     if (part.replaceAll(_role, '').trim() case final s when s.isNotEmpty)
@@ -63,8 +63,8 @@ List<String> splitList(String field) => [
     if (s.trim() case final t when t.isNotEmpty) t,
 ];
 
-/// Parser CSV RFC 4180: quote `"`, escape `""`, koma + newline di dalam quote.
-/// Baris kosong dilewatin.
+/// RFC 4180 CSV parser: `"` quoting, `""` escape, commas and newlines inside quotes.
+/// Blank lines are skipped.
 List<List<String>> _parseCsv(String text) {
   final records = <List<String>>[];
   var fields = <String>[];

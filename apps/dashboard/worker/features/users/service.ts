@@ -79,7 +79,7 @@ export async function ban(db: Db, openrouter: OpenRouterAdmin, id: string) {
     }
   }
   // ponytail: if the app creates a new key between deleteKey and this batch, that key is
-  // orphaned until it expires (at most the daily limit). Same as ban.ts; add a per-user lock if it happens.
+  // orphaned until it expires (at most the daily limit). Same as the backend's scripts/ban.ts; add a per-user lock if it happens.
   await banUser(db, id);
   return { banned: true as const, keyRevoked: found.keyHash !== null };
 }

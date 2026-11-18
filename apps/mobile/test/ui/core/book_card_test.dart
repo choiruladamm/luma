@@ -18,7 +18,7 @@ void main() {
         );
     expect(s(0, opened: false), 'Baru');
     expect(s(0), '0%');
-    expect(s(0.004), '1%'); // 0,4% still shows
+    expect(s(0.004), '1%'); // 0.4% still shows
     expect(s(0.489), '48%'); // rounded down
     expect(s(0.999), '99%');
     expect(s(1), '99%'); // only the last page makes it "Kelar!"

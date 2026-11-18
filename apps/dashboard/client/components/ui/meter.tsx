@@ -9,7 +9,7 @@ export function ProgressBar({ value, label }: { value: number; label: string }) 
 }
 
 /**
- * Half-circle gauge (komponen 2): track arc, ink part, pink part. `parts` are fractions
+ * Half-circle gauge (design component 2): track arc, ink part, pink part. `parts` are fractions
  * of the whole arc, drawn in order.
  */
 export function Gauge({ parts, label, children }: { parts: { value: number; color: string }[]; label: string; children?: React.ReactNode }) {

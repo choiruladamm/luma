@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import '../../../domain/models/reader_prefs.dart';
 import 'stabilo_type.dart';
 
-/// Font bacaan buat [ReadingFont]. Bawaan sistem = SF di iOS, Roboto di
-/// Android ('CupertinoSystemText' cuma ada di iOS; null gak ngosongin family).
+/// Reading font for [ReadingFont]. System default = SF on iOS, Roboto on
+/// Android ('CupertinoSystemText' exists only on iOS; null doesn't blank the family).
 String readingFamily(ReadingFont font) => switch (font) {
   ReadingFont.clear => StabiloType.readingFont,
   ReadingFont.book => StabiloType.bookFont,
@@ -15,9 +15,9 @@ String readingFamily(ReadingFont font) => switch (font) {
         : 'Roboto',
 };
 
-/// Tipografi teks bacaan dari pengaturan Aa (font, ukuran, jarak baris,
-/// margin). Satu sumber buat halaman baca dan isi sheet Artinya, jadi
-/// keduanya selalu sama.
+/// Typography of the reading text from the Aa settings (font, size, line spacing,
+/// margin). One source for the reading page and the Artinya sheet body, so the
+/// two always match.
 @immutable
 class ReaderTypography {
   ReaderTypography(ReaderPrefs prefs, Brightness brightness)
@@ -35,16 +35,16 @@ class ReaderTypography {
 
   const ReaderTypography._(this.style, this.margin);
 
-  /// Tanpa warna: pemakai nambahin `ink` / `onHighlight` sendiri.
+  /// Has no color: callers add `ink` / `onHighlight` themselves.
   final TextStyle style;
 
-  /// Margin kiri-kanan teks.
+  /// Horizontal margin of the text.
   final double margin;
 
-  /// Jarak antar paragraf: 1em ukuran Aa, sama kayak halaman baca.
+  /// Gap between paragraphs: 1em of the Aa size, same as the reading page.
   double get paragraphGap => style.fontSize!;
 
-  /// Tinggi satu baris teks.
+  /// Height of one text line.
   double get lineExtent => style.fontSize! * style.height!;
 
   @override

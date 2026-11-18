@@ -7,47 +7,47 @@ import '../../../../data/services/openrouter_service.dart';
 import '../../../../domain/api_key.dart';
 import '../../../../domain/models/ai_reply.dart';
 
-/// Keadaan field API key di Pengaturan.
+/// State of the API key field in Settings.
 enum KeyStatus {
-  /// Belum ada key, atau gak bisa ngecek (offline): cukup keterangan tempat
-  /// nyimpennya, gak usah bikin panik.
+  /// No key yet, or it can't be checked (offline): just a note about where it's
+  /// stored, nothing alarming.
   idle,
 
-  /// Pengaturan baru dibuka, key yang kesimpen lagi dibaca & dicek ulang.
-  /// Ditahan di sini supaya teks gak ganti-ganti: idle → valid.
+  /// Settings just opened, the stored key is being re-read & re-checked. Held here
+  /// so the text doesn't flip: idle → valid.
   checking,
 
-  /// Diterima OpenRouter (dan kesimpen).
+  /// Accepted by OpenRouter (and saved).
   valid,
 
-  /// Key yang udah kesimpen ditolak (401/403), mungkin udah dicabut.
+  /// The stored key was rejected (401/403), probably revoked.
   rejected,
 
-  /// Key yang baru dimasukin ditolak OpenRouter, jadi gak disimpen.
+  /// The newly entered key was rejected by OpenRouter, so it isn't saved.
   refused,
 
-  /// Teksnya bukan bentuk API key OpenRouter, gak disimpen.
+  /// The text isn't the shape of an OpenRouter API key, not saved.
   badFormat,
 }
 
-/// Hasil cek OpenRouter terakhir buat key yang kesimpen. Hidup selama app
-/// jalan, jadi buka Pengaturan lagi langsung nampilin hasilnya tanpa nunggu
-/// cek ulang.
+/// Last OpenRouter check result for the stored key. Lives while the app runs,
+/// so reopening Settings shows the result at once without waiting for a
+/// re-check.
 class KeyVerdict {
   ({String key, bool ok})? last;
 }
 
 final keyVerdictProvider = Provider<KeyVerdict>((ref) => KeyVerdict());
 
-/// Isi field API key: nerima teks, ngecek bentuknya, nanya OpenRouter, baru
-/// nyimpen ke secure storage. Teks ngawur dan key yang ditolak gak pernah
-/// nimpa key yang udah kesimpen. Kosong = dihapus.
+/// API key field content: accepts text, checks its shape, asks OpenRouter, then
+/// saves to secure storage. Garbage text and rejected keys never overwrite the
+/// stored key. Empty = deleted.
 class ApiKeyEntry extends Notifier<KeyStatus> {
   static const pause = Duration(milliseconds: 600);
 
   Timer? _later;
 
-  /// Tiap ketikan / hapus naikin angka ini; hasil cek yang telat dibuang.
+  /// Every keystroke / delete increments this; a late check result is discarded.
   int _round = 0;
 
   ApiKeyStore get _store => ref.read(apiKeyStoreProvider);
@@ -56,7 +56,7 @@ class ApiKeyEntry extends Notifier<KeyStatus> {
   KeyStatus build() {
     ref.onDispose(() {
       _later?.cancel();
-      _round++; // hasil cek yang telat jangan nyentuh state yang udah mati
+      _round++; // a late check result must not touch dead state
     });
     unawaited(_checkStored());
     return switch (_verdict.last?.ok) {
@@ -68,9 +68,9 @@ class ApiKeyEntry extends Notifier<KeyStatus> {
 
   KeyVerdict get _verdict => ref.read(keyVerdictProvider);
 
-  /// Key yang udah kesimpen dicek ulang pas Pengaturan dibuka. Kalau hasil
-  /// sebelumnya buat key yang sama udah ada, tampilannya tetap dan cek ulang
-  /// jalan diam-diam (state cuma berubah kalau hasilnya beda).
+  /// Re-checks the stored key when Settings opens. If a previous result for the
+  /// same key exists, the display stays and the re-check runs quietly (state
+  /// only changes if the result differs).
   Future<void> _checkStored() async {
     final round = _round;
     final saved = await _store.read();
@@ -99,7 +99,7 @@ class ApiKeyEntry extends Notifier<KeyStatus> {
     };
   }
 
-  /// Teks field berubah (biasanya sekali paste).
+  /// Field text changed (usually once, on paste).
   void edit(String text) {
     _later?.cancel();
     final round = ++_round;
@@ -122,7 +122,7 @@ class ApiKeyEntry extends Notifier<KeyStatus> {
         state = KeyStatus.refused;
         return;
       }
-      // Bentuknya bener dan gak ditolak (atau lagi offline): simpen.
+      // Right shape and not rejected (or offline): save.
       await _store.write(key);
       if (round != _round) return;
       _remember(key, ok);
@@ -130,14 +130,14 @@ class ApiKeyEntry extends Notifier<KeyStatus> {
     });
   }
 
-  /// Offline (null) gak dicatat: gak ada hasil buat ditampilin.
+  /// Offline (null) isn't recorded: there's no result to show.
   void _remember(String key, bool? ok) =>
       _verdict.last = ok == null ? null : (key: key, ok: ok);
 
-  /// Tombol hapus: key di secure storage ikut kehapus.
+  /// Delete button: the key in secure storage is deleted too.
   void clear() => edit('');
 
-  /// true = diterima, false = ditolak, null = gak bisa ngecek.
+  /// true = accepted, false = rejected, null = can't check.
   Future<bool?> _check(String key) async {
     try {
       return await ref.read(openRouterServiceProvider).checkKey(key);

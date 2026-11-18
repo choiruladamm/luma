@@ -3,8 +3,8 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:luma/data/services/backend_client.dart';
 
-/// Panggil Worker env dev beneran (`make backend-live`). Tanpa
-/// `LUMA_BACKEND_LIVE=1` di-skip, jadi `make test` gak nyentuh jaringan.
+/// Calls the real dev Worker (`make backend-live`). Without
+/// `LUMA_BACKEND_LIVE=1` it is skipped, so `make test` never touches the network.
 void main() {
   final live = Platform.environment['LUMA_BACKEND_LIVE'] == '1';
 

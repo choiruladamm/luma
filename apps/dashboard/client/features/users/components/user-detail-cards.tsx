@@ -70,7 +70,7 @@ export function deviceLabel(userAgent: string | null, t: Messages) {
   return userAgent.split(" ")[0]!;
 }
 
-/** Sessions per device (in scope, not on the board): newest first, max 50 from the API. */
+/** Sessions per device, newest first, capped at the 50 the API returns. The design board doesn't show this card. */
 export function SessionsCard({ sessions }: { sessions: UserDetail["sessions"] }) {
   const i18n = useI18n();
   const { t, locale } = i18n;

@@ -57,11 +57,12 @@ void main() {
       final field = current.containsKey('sourceHashes')
           ? 'sourceHashes'
           : 'sha256';
-      // Transport and parser files may move on (TOC sections were added), and
-      // so may the lockfile (cached_network_image was added, UI only); the
-      // chunk/range test below proves the frozen corpus is unchanged.
-      // luma_markdown.dart: only a doc citation comment changed.
+      // Files in `mutable` may change; the chunk/range test below checks that the
+      // frozen corpus is unchanged.
+      // luma_markdown.dart and grouping.dart may change comments only; the
+      // chunk/range test below covers their behavior.
       const mutable = [
+        'lib/domain/grouping.dart',
         'lib/data/services/openrouter_service.dart',
         'lib/data/services/epub_parser.dart',
         'lib/data/services/chapter_extractor.dart',

@@ -7,24 +7,24 @@ import '../../../../data/repositories/book_search_repository.dart';
 import '../../../../domain/book_search.dart';
 import '../../../../domain/models/book_search.dart';
 
-/// Tahap sheet Cari kata (board layar 1–5).
+/// Phases of the Cari kata sheet (board screens 1–5).
 enum BookSearchPhase {
-  /// Ngecek index buku (sekejap, tanpa tampilan).
+  /// Checking the book index (instant, nothing shown).
   checking,
 
-  /// Buku lama lagi di-index (layar 5).
+  /// An older book is being indexed (screen 5).
   preparing,
 
-  /// Belum ada query yang bisa dicari: riwayat (layar 1).
+  /// No searchable query yet: history (screen 1).
   idle,
 
-  /// Hasil (layar 2–3).
+  /// Results (screens 2–3).
   results,
 
-  /// Gak ketemu (layar 4).
+  /// Not found (screen 4).
   empty,
 
-  /// Pencarian error.
+  /// The search failed.
   failed,
 }
 
@@ -40,14 +40,14 @@ class BookSearchState {
 
   final BookSearchPhase phase;
 
-  /// Isi kolom cari apa adanya.
+  /// The search field content as typed.
   final String query;
 
-  /// Hasil buat [query]; kosong di luar [BookSearchPhase.results].
+  /// Results for [query]; empty outside [BookSearchPhase.results].
   final BookSearchResult result;
   final List<String> recents;
 
-  /// Progres [BookSearchPhase.preparing].
+  /// Progress of [BookSearchPhase.preparing].
   final int doneChapters;
   final int totalChapters;
 
@@ -69,20 +69,20 @@ class BookSearchState {
 }
 
 extension BookSearchStateLabel on BookSearchState {
-  /// Progres nyiapin index 0..1.
+  /// Index preparation progress, 0..1.
   double get prepareFraction =>
       totalChapters == 0 ? 0 : doneChapters / totalChapters;
 }
 
-/// ViewModel sheet Cari kata satu buku: nyiapin index kalau perlu, nyari
-/// 250 ms abis berhenti ngetik, riwayat. Kolom cari-nya sendiri dipegang
-/// view; yang dikirim ke sini [setQuery].
+/// View model of one book's Cari kata sheet: prepares the index when needed,
+/// searches 250 ms after typing stops, keeps history. The search field itself is
+/// owned by the view, which sends its text here with [setQuery].
 class BookSearchViewModel extends Notifier<BookSearchState> {
   BookSearchViewModel(this.bookId);
 
   final int bookId;
 
-  /// Jeda abis berhenti ngetik.
+  /// Pause after typing stops.
   static const debounce = Duration(milliseconds: 250);
 
   Timer? _timer;
@@ -124,8 +124,8 @@ class BookSearchViewModel extends Notifier<BookSearchState> {
     }
   }
 
-  /// Isi kolom berubah: cari 250 ms lagi. Kurang dari 2 huruf = balik ke
-  /// riwayat.
+  /// The field content changed: search again after 250 ms. Fewer than 2 letters =
+  /// back to history.
   void setQuery(String raw) {
     state = state.copyWith(query: raw);
     _timer?.cancel();
@@ -141,7 +141,7 @@ class BookSearchViewModel extends Notifier<BookSearchState> {
     _timer = Timer(debounce, _run);
   }
 
-  /// Tap riwayat: langsung cari, tanpa jeda.
+  /// History row tapped: search right away, without the pause.
   Future<void> searchNow(String raw) {
     _timer?.cancel();
     state = state.copyWith(query: raw);
@@ -166,7 +166,7 @@ class BookSearchViewModel extends Notifier<BookSearchState> {
     }
   }
 
-  /// Dipanggil pas hasil di-tap: query masuk riwayat (bukan tiap ketikan).
+  /// Called when a result is tapped: the query enters history (not every keystroke).
   Future<void> remember() async {
     final repo = ref.read(bookSearchRepositoryProvider);
     await repo.saveRecent(bookId, state.query);

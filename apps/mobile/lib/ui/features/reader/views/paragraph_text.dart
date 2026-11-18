@@ -6,9 +6,9 @@ import '../../../core/theme/stabilo_theme.dart';
 import '../../../core/theme/stabilo_tokens.dart';
 import 'reader_types.dart';
 
-/// Teks satu paragraf: kata hasil Cari kata di-stabilo (yang lagi dibuka
-/// penuh + garis, sisanya setengah), atau kutipan sumber obrolan pas ngintip.
-/// Tanpa penanda = [Text] biasa.
+/// Text of one paragraph: Cari kata results are highlighted (the open one fully +
+/// underline, the rest at half strength), or the chat source quote while peeking.
+/// Without marks it is a plain [Text].
 Text buildParagraphText({
   required ReaderParagraph paragraph,
   required TextStyle style,
@@ -27,8 +27,7 @@ Text buildParagraphText({
       final spans = <TextSpan>[];
       var end = 0;
       for (final (i, r) in found.indexed) {
-        // Kata yang lagi dibuka: stabilo penuh + garis 1,5. Yang lain
-        // yang keliatan: stabilo setengah.
+        // The open word: full highlight + 1.5 underline. The other visible ones: half highlight.
         final current = active && i == 0;
         spans.add(TextSpan(text: paragraph.text.substring(end, r.start)));
         spans.add(

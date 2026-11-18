@@ -52,7 +52,7 @@ describe("POST /v1/sync/push", () => {
   it("stores a tombstone and bumps seq only for what changed (contract)", async () => {
     const { token, userId } = await signUp();
     await exports.default.fetch(push(token, pushFixture.request.body));
-    // Push ulang yang sama persis: gak nulis, seq tetap.
+    // Pushing the exact same thing again: no write, seq stays the same.
     const again = await exports.default.fetch(push(token, pushFixture.request.body));
     expect(await again.json()).toEqual({ seq: 3, applied: 0 });
 
@@ -185,7 +185,7 @@ describe("POST /v1/sync/push", () => {
     expect(full.response.status).toBe(413);
     expect(await full.response.json()).toEqual({ error: { code: "STORAGE_FULL", message: "Sync storage is full" } });
 
-    // Udah lewat kuota (kuota diturunin): yang mengecilkan data tetap boleh.
+    // Already over quota (quota lowered): a batch that shrinks data is still allowed.
     expect((await send("d", "2026-11-13T10:03:00.000Z", "1")).response.status).toBe(200);
     await storedSize();
   });
@@ -199,7 +199,7 @@ describe("POST /v1/sync/push", () => {
     const { response, d1Queries, subrequests } = await callWithBudget(push(token, { schemaVersion: 18, records }));
     expect(await response.json()).toEqual({ seq: 500, applied: 500 });
     expect(subrequests).toBe(0);
-    // sesi (≤2) + SELECT lama + kuota + batch 2 statement
+    // session (≤2) + old SELECT + quota + 2-statement batch
     expect(d1Queries).toBeLessThanOrEqual(6);
   });
 });

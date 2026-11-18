@@ -169,7 +169,7 @@ class FakeChat extends ChatViewModel {
   }
 }
 
-/// Label bab dengan ikon chevron: " › " jadi satu placeholder di teks.
+/// Chapter label with a chevron icon: " › " becomes one placeholder in the text.
 Finder labelText(String text) => find.text(text.replaceAll(' › ', '\uFFFC'));
 
 Finder labelContaining(String text) =>
@@ -335,7 +335,7 @@ void main() {
       await t.pump();
       expect(labelContaining('Baca Book II › IV'), findsOneWidget);
       expect(find.text('lihat 2 lagi'), findsNothing);
-      // Catatan sementara block with the text button and caption.
+      // "Catatan sementara" block with the text button and caption.
       expect(find.text('CATATAN SEMENTARA'), findsOneWidget);
       expect(find.text('Jawab sekarang'), findsOneWidget);
       expect(

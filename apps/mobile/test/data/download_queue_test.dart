@@ -12,8 +12,8 @@ import 'package:luma/data/services/file_storage.dart';
 import 'package:luma/domain/models/catalog.dart';
 import 'package:luma/ui/features/discover/view_models/download_queue_view_model.dart';
 
-/// Sumber palsu: ngasih [bytes] dalam 4 chunk, satu event loop per chunk,
-/// biar cancel / antrian keliatan. [fail] = lempar error jaringan.
+/// Fake source: serves [bytes] in 4 chunks, one event-loop turn per chunk,
+/// so cancel and queueing are observable. [fail] = throws a network error.
 class FakeSource implements BookSource {
   FakeSource(this.bytes, {this.fail = false});
 

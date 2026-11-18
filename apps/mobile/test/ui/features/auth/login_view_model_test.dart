@@ -24,7 +24,7 @@ void main() {
     h = AuthHarness();
     container = ProviderContainer(overrides: h.overrides);
     addTearDown(container.dispose);
-    // autoDispose: tetap hidup sepanjang test.
+    // autoDispose: stays alive for the whole test.
     container.listen(loginViewModelProvider, (_, _) {});
     expect((await auth()).status, AuthStatus.signedOut);
   });

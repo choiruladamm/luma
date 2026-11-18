@@ -1,9 +1,10 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Notifikasi lokal (docs/discover.md): dipakai cuma buat "X udah masuk
-/// rak" pas app di latar. Izin diminta pas download pertama mulai, bukan pas
-/// app dibuka.
+/// Shows local notifications (docs/discover.md), used only for the "book is on
+/// the shelf" message while the app is in the background.
+///
+/// Permission is requested when the first download starts, not when the app opens.
 class NotificationService {
   NotificationService({FlutterLocalNotificationsPlugin? plugin})
     : _plugin = plugin ?? FlutterLocalNotificationsPlugin();
@@ -11,7 +12,7 @@ class NotificationService {
   final FlutterLocalNotificationsPlugin _plugin;
   var _ready = false;
 
-  /// [onTap] dapet payload notifikasi yang ditap pas app lagi jalan.
+  /// Initializes the plugin; [onTap] receives the payload of a notification tapped while the app is running.
   Future<void> init(void Function(String payload) onTap) async {
     if (_ready) return;
     _ready = true;
@@ -30,8 +31,10 @@ class NotificationService {
     );
   }
 
-  /// iOS: alert + suara. Android 13+: POST_NOTIFICATIONS. Di bawah itu /
-  /// platform lain: dianggap boleh.
+  /// Requests notification permission and returns whether it is granted.
+  ///
+  /// Asks for alert + sound on iOS and POST_NOTIFICATIONS on Android 13+; older
+  /// Android and other platforms count as granted.
   Future<bool> requestPermission() async {
     final ios = await _plugin
         .resolvePlatformSpecificImplementation<

@@ -15,12 +15,12 @@ import '../theme/stabilo_type.dart';
 import 'book_cover.dart';
 import 'buttons.dart';
 
-/// Stiker di pojok cover (board "Kartu buku · anatomi & state").
+/// Sticker on the cover corner (board "Kartu buku · anatomi & state").
 ///
-/// - belum pernah dibuka → "Baru" (pink)
-/// - [finished] → "Kelar!" (kuning + centang)
-/// - [chapters] (buku Markdown) → "N bab" gantiin persen
-/// - selain itu → persen, dibulatin ke bawah, 0,4% tetep 1%, maks 99%
+/// - never opened → "Baru" (pink)
+/// - [finished] → "Kelar!" (yellow + check)
+/// - [chapters] (Markdown book) → "N bab" instead of the percent
+/// - otherwise → percent, rounded down, 0.4% still shows 1%, max 99%
 String bookSticker({
   required AppLocalizations l10n,
   required double progress,
@@ -35,9 +35,9 @@ String bookSticker({
   return '${math.min(99, math.max(1, (progress * 100).floor()))}%';
 }
 
-/// Tile buku di rak: cover + pita progres + stiker, judul + penulis di bawah.
-/// Tinggi = lebar × 1,5 + 67. Tahan 350 ms = cincin stabilo + haptic, lepas =
-/// [onLongPress] (menu buku).
+/// Book tile on the shelf: cover + progress ribbon + sticker, title + author
+/// below. Height = width × 1.5 + 67. Holding 350 ms = stabilo ring + haptic,
+/// release = [onLongPress] (book menu).
 class BookCard extends StatefulWidget {
   const BookCard({
     super.key,
@@ -52,7 +52,7 @@ class BookCard extends StatefulWidget {
     this.onLongPress,
   }) : importing = false;
 
-  /// Lagi diimport: nama file dulu, belum bisa di-tap / ditekan lama.
+  /// Being imported: shows the filename, can't be tapped / long-pressed yet.
   const BookCard.importing({super.key, required String fileName})
     : title = fileName,
       author = null,
@@ -74,7 +74,7 @@ class BookCard extends StatefulWidget {
   final bool opened;
   final bool finished;
 
-  /// Buku Markdown: strip bab + "N bab" gantiin pita dan persen.
+  /// Markdown book: chapter strip + "N bab" replace the ribbon and percent.
   final MarkdownShelf? markdown;
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
@@ -116,7 +116,7 @@ class _BookCardState extends State<BookCard> {
                 children: [
                   Text(
                     widget.title,
-                    textScaler: TextScaler.noScaling, // blok dikunci 51
+                    textScaler: TextScaler.noScaling, // text block fixed at 51
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: StabiloType.caption.copyWith(
@@ -156,7 +156,7 @@ class _BookCardState extends State<BookCard> {
           label:
               widget.markdown?.semanticLabel(widget.title, context.l10n) ??
               widget.title,
-          // Buku Markdown: satu label utuh, strip + chip gak dibaca terpisah.
+          // Markdown book: one single label; strip + chip aren't read separately.
           excludeSemantics: widget.markdown != null,
           onTap: widget.onTap,
           onLongPress: widget.onLongPress,
@@ -215,7 +215,7 @@ class _BookCardState extends State<BookCard> {
         : null,
   );
 
-  /// Cincin stabilo pas ditekan lama: 3 accent + 1,5 outline di luar cover.
+  /// Stabilo ring on long press: 3 accent + 1.5 outline outside the cover.
   Widget _ring(double w, Widget cover) {
     if (!_pressed) return cover;
     final c = context.stabilo;
@@ -249,7 +249,7 @@ class _BookCardState extends State<BookCard> {
   }
 }
 
-/// Stiker [bookSticker] di pojok cover: dipake kartu rak dan menu tekan lama.
+/// Sticker [bookSticker] on the cover corner: used by the shelf card and the long-press menu.
 class ProgressSticker extends StatelessWidget {
   const ProgressSticker({
     super.key,
@@ -263,7 +263,7 @@ class ProgressSticker extends StatelessWidget {
   final bool opened;
   final bool finished;
 
-  /// Jumlah bab buku Markdown; null = EPUB.
+  /// Chapter count of a Markdown book; null = EPUB.
   final int? chapters;
 
   @override
@@ -337,7 +337,7 @@ class _StickerBox extends StatelessWidget {
   }
 }
 
-/// Kotak putus-putus "Lagi diproses" selama import.
+/// Dashed box "Lagi diproses" during import.
 class _ImportingCover extends StatelessWidget {
   const _ImportingCover(this.width);
 
@@ -377,8 +377,8 @@ class _ImportingCover extends StatelessWidget {
   }
 }
 
-/// Garis putus-putus 1,5 di sekeliling kotak bersudut [radius] (cover yang
-/// lagi diimport).
+/// Dashed 1.5 line around a box with corner [radius] (the cover being
+/// imported).
 class DashedBorder extends CustomPainter {
   const DashedBorder({required this.color, required this.radius});
 

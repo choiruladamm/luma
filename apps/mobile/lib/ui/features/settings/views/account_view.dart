@@ -17,12 +17,12 @@ import '../view_models/ai_quota_view_model.dart';
 import 'ai_shared.dart';
 import 'settings_page.dart';
 
-/// Pengaturan → Akun (board "Pengaturan · 02 Akun"): profil, kartu kuota AI,
-/// Keluar dan Hapus akun.
+/// Settings → Akun (board "Pengaturan · 02 Akun"): profile, AI quota card,
+/// Keluar and Hapus akun.
 class AccountView extends ConsumerWidget {
   const AccountView({super.key});
 
-  // Ukuran khusus board Akun.
+  // Sizes specific to the Akun board.
   static const _avatar = 72.0;
   static const _ring = 84.0;
   static const _ringStroke = 8.0;
@@ -130,7 +130,7 @@ class AccountView extends ConsumerWidget {
     final messenger = ScaffoldMessenger.of(context);
     await ref.read(authControllerProvider.notifier).signOut();
     if (messenger.mounted && context.mounted) {
-      // Muncul di layar Masuk (tanpa bottom bar).
+      // Shown on the Masuk screen (no bottom bar).
       showAuthToast(
         context,
         message,
@@ -268,8 +268,8 @@ class _ActionRow extends StatelessWidget {
   }
 }
 
-/// Kartu kuota: cincin + sisa tap + dua kartu mini. State selain "ada data"
-/// (loading, gagal, key sendiri, dicabut) jatuh ke [QuotaMeter].
+/// Quota card: ring + remaining taps + two mini cards. States other than "has
+/// data" (loading, failed, own key, revoked) fall back to [QuotaMeter].
 class _QuotaCard extends ConsumerStatefulWidget {
   const _QuotaCard();
 
@@ -281,7 +281,7 @@ class _QuotaCardState extends ConsumerState<_QuotaCard> {
   @override
   void initState() {
     super.initState();
-    // Buka halaman = cek kuota, paling sering sejam sekali (cache provider).
+    // Opening the page = quota check, at most once an hour (provider cache).
     Future.microtask(() {
       if (mounted) ref.read(aiQuotaProvider.notifier).refresh();
     });

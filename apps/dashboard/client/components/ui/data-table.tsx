@@ -12,7 +12,7 @@ export type Features = typeof features;
 export const columnHelper = <T extends RowData>() => createColumnHelper<Features, T>();
 
 /**
- * Komponen 2, Tabel: sheet card radius 20, horizontal scroll (min 1040), header 13/500 ink2,
+ * Design component 2, Table: sheet card radius 20, horizontal scroll (min 1040), header 13/500 ink2,
  * rows 60 tall with a track divider. With `rowHref` a whole row is one link (hover canvas +
  * underlined lead text, arrow at the end). Below 768px rows render as cards (`renderCard`) with a
  * track ring: canvas alone is nearly the sheet's color in light mode.
@@ -125,7 +125,7 @@ export function DataTable<T extends RowData>({ columns, data, label, rowHref, nu
 export type SkeletonColumn = { header: string; align?: "left" | "right"; sorted?: boolean; srOnly?: boolean; cell: (row: number) => ReactNode };
 
 /**
- * Loading state of a DataTable (komponen 2, State; board 13): the real frame stays (column
+ * Loading state of a DataTable (design component 2, State; board 13): the real frame stays (column
  * headers, sort mark, open column) and only the values are sand blocks. Below 768px it renders
  * `card` rows like DataTable does, so the phone doesn't get a 1040px skeleton.
  */

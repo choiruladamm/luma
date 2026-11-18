@@ -7,14 +7,14 @@ import '../theme/stabilo_tokens.dart';
 import '../theme/stabilo_type.dart';
 import 'buttons.dart';
 
-/// Reset kuota harian OpenRouter: tengah malam UTC (07.00 WIB), dihitung lokal
-/// tanpa jaringan (docs/backend.md, AI subsidy).
+/// Daily OpenRouter quota reset: midnight UTC (07.00 WIB), computed locally
+/// without network (docs/backend.md, AI subsidy).
 DateTime nextQuotaReset(DateTime now) {
   final utc = now.toUtc();
   return DateTime.utc(utc.year, utc.month, utc.day + 1).toLocal();
 }
 
-/// Sisa waktu ke reset, dibulatkan ke menit.
+/// Time left until reset, rounded to the minute.
 ({int hours, int minutes}) untilReset(DateTime now, DateTime reset) {
   final left = reset.difference(now);
   final minutes = left.isNegative ? 0 : (left.inSeconds / 60).ceil();
@@ -23,7 +23,7 @@ DateTime nextQuotaReset(DateTime now) {
 
 enum QuotaTone { normal, low, empty, loading }
 
-/// 10 segmen kuota (board Kuota AI 01).
+/// 10 quota segments (board Kuota AI 01).
 class QuotaSegments extends StatelessWidget {
   const QuotaSegments({
     super.key,
@@ -63,7 +63,7 @@ class QuotaSegments extends StatelessWidget {
   }
 }
 
-/// Pil kecil dengan ikon: "Reset 07.00", "OpenRouter", "Diblokir".
+/// Small pill with an icon: "Reset 07.00", "OpenRouter", "Diblokir".
 class QuotaPill extends StatelessWidget {
   const QuotaPill({
     super.key,
@@ -76,7 +76,7 @@ class QuotaPill extends StatelessWidget {
   final String label;
   final List<List<dynamic>> icon;
 
-  /// Kuning bergaris (kuota abis).
+  /// Yellow with border (quota exhausted).
   final bool highlight;
   final bool pink;
 
@@ -118,7 +118,7 @@ class QuotaPill extends StatelessWidget {
   }
 }
 
-/// Isi meter kuota di pelat Ex libris (board Kuota AI 01, 7 state).
+/// Quota meter content on the Ex libris plate (board Kuota AI 01, 7 states).
 sealed class QuotaMeterData {
   const QuotaMeterData();
 }
@@ -298,8 +298,8 @@ String _countdown(AppLocalizations l, DateTime now, DateTime reset) {
   return l.quotaCountdown(left.hours, left.minutes);
 }
 
-/// Kartu "Kuota gratis hari ini abis" (board Kuota AI 08–11). [large] =
-/// sheet Artinya / layar Bedahin (hitung mundur gede); kecil = intip / chat.
+/// Card "Kuota gratis hari ini abis" (board Kuota AI 08–11). [large] = Artinya
+/// sheet / Bedahin screen (big countdown); small = peek / chat.
 class QuotaExhaustedCard extends StatelessWidget {
   const QuotaExhaustedCard({
     super.key,
@@ -319,7 +319,7 @@ class QuotaExhaustedCard extends StatelessWidget {
   /// "0 dari ± N tap".
   final int tapsPerDay;
 
-  /// Sheet intip: teks aslinya tetap kebaca, isi kartu beda.
+  /// Peek sheet: the original text stays readable, the card content differs.
   final bool peek;
 
   @override
@@ -407,7 +407,7 @@ class QuotaExhaustedCard extends StatelessWidget {
   }
 }
 
-/// Kartu "Akses AI gratis lo dicabut" (board Kuota AI 12).
+/// Card "Akses AI gratis lo dicabut" (board Kuota AI 12).
 class QuotaBannedCard extends StatelessWidget {
   const QuotaBannedCard({super.key, required this.onUseOwnKey, this.onOk});
 

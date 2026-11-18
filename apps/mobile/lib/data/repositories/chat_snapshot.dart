@@ -7,10 +7,10 @@ import '../../domain/models/ai_reply.dart';
 import '../../domain/models/book_chat.dart';
 import '../database/app_database.dart';
 
-// Decoder arsip memeriksa struktur/ownership, bukan keberadaan paragraf terbaru.
-// Validasi hash/range terhadap buku aktif dilakukan lagi sebelum prompt/jump.
+// The archive decoder checks structure and ownership, not whether the latest paragraphs still exist.
+// Hashes and ranges are validated against the active book again before a prompt or jump.
 class ChatSnapshot {
-  /// Langkah AI: rusak → null, turn tetap terbaca.
+  /// Returns null for a corrupt Langkah AI payload, so the turn stays readable.
   static List<ChatStep>? steps(String? raw) {
     if (raw == null) return null;
     try {

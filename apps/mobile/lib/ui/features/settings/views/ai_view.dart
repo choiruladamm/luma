@@ -24,8 +24,8 @@ String _modelLabel(String id) {
   return id;
 }
 
-/// Pengaturan → AI (board "Pengaturan · 03–06"): sumber AI, model gratis atau
-/// key sendiri + status key.
+/// Settings → AI (board "Pengaturan · 03–06"): AI source, free model or own
+/// key + key status.
 class AiView extends ConsumerStatefulWidget {
   const AiView({super.key});
 
@@ -37,7 +37,7 @@ class _AiViewState extends ConsumerState<AiView> {
   final _key = TextEditingController();
   final _focus = FocusNode();
 
-  /// Tab yang dipilih. Null = ikut sumber yang kesimpen (ada key = Key sendiri).
+  /// Selected tab. Null = follows the stored source (has a key = Key sendiri).
   AiSource? _picked;
 
   ApiKeyEntry get _entry => ref.read(apiKeyEntryProvider.notifier);
@@ -45,7 +45,7 @@ class _AiViewState extends ConsumerState<AiView> {
   @override
   void initState() {
     super.initState();
-    // Key yang kesimpen ditampilin di field (disamarin).
+    // The stored key is shown in the field (masked).
     ref.read(apiKeyStoreProvider).read().then((key) {
       if (mounted && _key.text.isEmpty) _key.text = key ?? '';
     });
@@ -70,7 +70,7 @@ class _AiViewState extends ConsumerState<AiView> {
 
   Future<void> _selectSource(AiSource source, AiSource stored) async {
     if (source == AiSource.own) return _openOwnKey(focus: true);
-    // Masih ada key kesimpen: balik ke gratis = hapus key.
+    // A key is still stored: going back to free = delete the key.
     if (stored == AiSource.own) return _backToFree();
     setState(() => _picked = AiSource.subsidy);
   }
@@ -98,8 +98,8 @@ class _AiViewState extends ConsumerState<AiView> {
     }
   }
 
-  /// "Cek lagi": key kesimpen = cek ulang yang kesimpen, key baru yang
-  /// ditolak = kirim ulang teks di field.
+  /// "Cek lagi": stored key = re-check the stored one, a newly entered rejected
+  /// key = resend the field text.
   void _recheck(KeyStatus status) {
     if (status == KeyStatus.refused) {
       _entry.edit(_key.text);
@@ -112,12 +112,12 @@ class _AiViewState extends ConsumerState<AiView> {
   Widget build(BuildContext context) {
     ref.listen(ownKeyRequestProvider, (_, _) => _openOwnKey(focus: true));
     ref.listen(apiKeyEntryProvider, (prev, next) {
-      // Key kesimpen / kehapus: sumber AI ikut berubah.
+      // Key saved / deleted: the AI source changes with it.
       if (next == KeyStatus.valid || next == KeyStatus.idle) {
         ref.invalidate(aiSourceProvider);
       }
-      // Key dihapus lewat ×: model di luar model gratis bakal ditolak
-      // guardrail, jadi balik ke default.
+      // Key deleted via ×: a model outside the free models would be rejected by
+      // the guardrail, so return to the default.
       if (next == KeyStatus.idle && _key.text.isEmpty) {
         final model = ref.read(aiModelProvider).value ?? defaultAiModel;
         final allowed =
@@ -174,8 +174,8 @@ class _AiViewState extends ConsumerState<AiView> {
                   inputFormatters: [
                     FilteringTextInputFormatter.deny(RegExp(r'\s')),
                   ],
-                  // Lagi ngedit key: tab Key sendiri tetap kebuka walau field
-                  // dikosongin (sumber yang kesimpen jadi kuota gratis).
+                  // Editing the key: the Key sendiri tab stays open even if the field is
+                  // emptied (the stored source becomes the free quota).
                   onChanged: (text) {
                     _picked = AiSource.own;
                     _entry.edit(text);
@@ -251,7 +251,7 @@ class _Labeled extends StatelessWidget {
 class _SourceTabs extends StatelessWidget {
   const _SourceTabs({required this.selected, required this.onSelect});
 
-  /// Tinggi tab 38 di dalam trek 46 (board: padding 4).
+  /// Tab height 38 inside a 46 track (board: padding 4).
   static const _track = 46.0;
 
   final AiSource selected;
@@ -311,7 +311,7 @@ class _SourceTabs extends StatelessWidget {
   }
 }
 
-/// Kartu tiga model gratis, satu radio per baris (board 03).
+/// Card of three free models, one radio per row (board 03).
 class _FreeModelList extends StatelessWidget {
   const _FreeModelList({
     required this.ids,
@@ -462,7 +462,7 @@ class _ModelRadio extends StatelessWidget {
   }
 }
 
-/// Kotak keterangan: ikon + teks di atas chip (board 03 / 04).
+/// Info box: icon + text above a chip (board 03 / 04).
 class _Note extends StatelessWidget {
   const _Note({required this.icon, required this.text});
 
@@ -502,8 +502,9 @@ class _Note extends StatelessWidget {
   }
 }
 
-/// Key ditolak (board 06). [fallback]: key kesimpen yang ditolak, AI sementara
-/// pakai kuota gratis; key baru yang ditolak gak pernah kesimpen.
+/// Key rejected (board 06). [fallback]: a stored key that was rejected, AI
+/// temporarily uses the free quota; a newly entered rejected key is never
+/// stored.
 class _RejectedBox extends ConsumerWidget {
   const _RejectedBox({required this.fallback});
 
@@ -551,7 +552,7 @@ class _RejectedBox extends ConsumerWidget {
   }
 }
 
-/// Status key sendiri (board 04–06): lagi dicek, jalan, ditolak.
+/// Own-key status (board 04–06): checking, working, rejected.
 class _KeyStatusRow extends StatelessWidget {
   const _KeyStatusRow({required this.status, required this.onRecheck});
 
@@ -643,7 +644,7 @@ class _KeyStatusRow extends StatelessWidget {
   }
 }
 
-/// Model buat key sendiri: buka pemilih katalog (board 04–06).
+/// Model for the own key: opens the catalog picker (board 04–06).
 class _ModelRow extends StatelessWidget {
   const _ModelRow({
     required this.id,

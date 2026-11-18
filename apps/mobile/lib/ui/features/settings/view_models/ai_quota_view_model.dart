@@ -7,8 +7,8 @@ import '../../../../data/services/api_key_store.dart';
 import '../../../../data/services/backend_client.dart';
 import '../../../../domain/models/ai_model.dart';
 
-/// Dari mana key AI: kuota gratis Luma atau key OpenRouter sendiri
-/// (docs/backend.md, AI subsidy). Ada key sendiri = key sendiri.
+/// Where the AI key comes from: Luma's free quota or the user's own OpenRouter
+/// key (docs/backend.md, AI subsidy). Having your own key = own key.
 enum AiSource { subsidy, own }
 
 final aiSourceProvider = FutureProvider<AiSource>((ref) async {
@@ -16,43 +16,43 @@ final aiSourceProvider = FutureProvider<AiSource>((ref) async {
   return own == null ? AiSource.subsidy : AiSource.own;
 });
 
-/// Biaya rata-rata satu tap Artinya (board Kuota AI: $0,02 ≈ 30–50 tap).
-// shortcut: konstanta, `ai_calls` belum diisi; hitung dari biaya asli kalau
-// log biaya udah jalan.
+/// Average cost of one Artinya tap (board Kuota AI: $0.02 ≈ 30–50 taps).
+// ponytail: constant, `ai_calls` isn't populated yet; compute from the real
+// cost once cost logging runs.
 const estimatedTapCostUsd = 0.0005;
 
-/// Sisa kuota gratis hari ini (board Kuota AI 01).
+/// Remaining free quota today (board Kuota AI 01).
 class QuotaState {
   const QuotaState({this.usage, this.banned = false});
 
   final AiUsage? usage;
 
-  /// Akun diblokir dari kuota gratis.
+  /// Account is blocked from the free quota.
   final bool banned;
 
-  /// 0–100, dibulatkan.
+  /// 0–100, rounded.
   int get percent {
     final u = usage;
     if (u == null || u.dailyLimitUsd <= 0) return 0;
     return (u.remainingUsd / u.dailyLimitUsd * 100).clamp(0, 100).round();
   }
 
-  /// Segmen terisi dari 10.
+  /// Filled segments out of 10.
   int get segments => (percent / 10).ceil().clamp(0, 10);
 
   /// "± N tap lagi".
   int get tapsLeft =>
       ((usage?.remainingUsd ?? 0) / estimatedTapCostUsd).floor();
 
-  /// Sisa < 20% (board: "Hampir abis").
+  /// Remaining < 20% (board: "Hampir abis").
   bool get low => percent > 0 && percent < 20;
 
   bool get exhausted => usage != null && percent == 0;
 }
 
-/// Kuota dicek paling sering sejam sekali (docs/budgets.md, Client request policy):
-/// provider hidup sepanjang app, [refresh] cuma manggil server kalau hasil
-/// terakhir udah basi atau [force].
+/// The quota is checked at most once an hour (docs/budgets.md, Client request
+/// policy): the provider lives for the whole app, [refresh] only calls the
+/// server when the last result is stale or [force].
 class AiQuotaController extends AsyncNotifier<QuotaState> {
   static const cacheFor = Duration(hours: 1);
 
@@ -93,8 +93,8 @@ final aiQuotaProvider = AsyncNotifierProvider<AiQuotaController, QuotaState>(
   AiQuotaController.new,
 );
 
-/// Model yang boleh dipilih di mode kuota gratis (`/v1/ai/config`, cache
-/// sepanjang app). Gagal / offline → daftar cadangan [subsidyModelIds].
+/// Models selectable in free quota mode (`/v1/ai/config`, cached for the whole
+/// app). Failure / offline → fallback list [subsidyModelIds].
 final subsidyModelsProvider = FutureProvider<List<String>>((ref) async {
   final token = await ref.watch(authRepositoryProvider).token();
   if (token == null) return subsidyModelIds;

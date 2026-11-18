@@ -122,19 +122,19 @@ void main() {
     expect(find.bySemanticsLabel('Batalin'), findsOneWidget);
     expect(find.bySemanticsLabel('Hapus dari antrian'), findsOneWidget);
 
-    // Hapus yang antri: hilang + toast.
+    // Remove the queued one: it disappears + a toast.
     await tester.tap(find.bySemanticsLabel('Hapus dari antrian'));
     await tester.pump();
     expect(find.text('Unduhan Persuasion dibatalin'), findsOneWidget);
     expect(find.text('Antri, abis Emma'), findsNothing);
 
-    // Selesai: Baca; ditutup → entri selesai dibuang.
+    // Done: Baca; closed → the finished entry is dropped.
     queue.emit([
       const DownloadItem(book: book, status: DownloadStatus.done, bookId: 1),
     ]);
     await tester.pump();
     expect(find.text('Udah masuk rak'), findsOneWidget);
-    expect(find.text('Baca'), findsWidgets); // baris sheet + toast
+    expect(find.text('Baca'), findsWidgets); // sheet row + toast
     await tester.tap(find.bySemanticsLabel('Tutup'));
     await tester.pumpAndSettle();
     expect(queue.state, isEmpty);
@@ -160,7 +160,7 @@ void main() {
       ),
     ]);
     await tester.pump();
-    // Di luar Material, DefaultTextStyle jatuh ke garis bawah kuning ganda.
+    // Outside Material, DefaultTextStyle falls back to a double yellow underline.
     for (final text in ['Rak', 'Ngunduh 1 buku · 43%']) {
       final style = DefaultTextStyle.of(tester.element(find.text(text)));
       expect(

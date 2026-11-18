@@ -27,8 +27,8 @@ import 'chapter_heading.dart';
 import 'reader_types.dart';
 import 'scrim_hole.dart';
 
-/// Isi satu bab: scroll, tap paragraf, restore posisi, highlight grup Artinya
-/// dan hasil Cari kata. API publik state-nya dipanggil [ReaderView] lewat key.
+/// Body of one chapter: scrolling, paragraph taps, position restore, highlights for the
+/// Artinya group and Cari kata results. [ReaderView] calls its public state API through a key.
 class ChapterText extends ConsumerStatefulWidget {
   const ChapterText({
     super.key,
@@ -55,32 +55,32 @@ class ChapterText extends ConsumerStatefulWidget {
   final ReaderChrome chrome;
   final ReaderPrefs prefs;
 
-  /// Titik yang langsung dituju pas kebuka (posisi tersimpan).
+  /// The point to jump to when opened (saved position).
   final Spot? restoreTo;
 
-  /// Titik paling atas yang keliatan, tiap user selesai scroll.
+  /// The top-most visible point, reported each time the user finishes scrolling.
   final ValueChanged<Spot> onPosition;
 
-  /// Tap paragraf → sheet Artinya.
+  /// Paragraph tap → Artinya sheet.
   final ValueChanged<ReaderParagraph> onParagraphTap;
 
-  /// Grup yang lagi dibuka di sheet Artinya: distabilo, scrim dibolongin di
-  /// situ.
+  /// The group open in the Artinya sheet: highlighted, with a hole cut in the scrim
+  /// there.
   final int? openGroup;
   final ChatSource? sourceVisit;
   final VoidCallback onNext;
 
-  /// Mode Cari kata: kata cocok di-stabilo di semua paragraf bab ini.
+  /// Cari kata mode: matching words are highlighted in every paragraph of this chapter.
   final SearchMarks? search;
 
-  /// Lagi mode cari: kedatangan di [restoreTo] = lompat dari hasil (kedip
-  /// paragraf), bukan "Lanjut baca".
+  /// In search mode: arriving at [restoreTo] = a jump from a result (paragraph flash),
+  /// not "Lanjut baca".
   final bool flashSearch;
 
-  /// Scroll jari mulai (true) / berhenti (false).
+  /// Finger scroll started (true) / stopped (false).
   final ValueChanged<bool>? onScrollActive;
 
-  /// User udah scroll 1 layar dari paragraf hasil.
+  /// The user has scrolled one screen away from the result paragraph.
   final VoidCallback? onSearchRead;
 
   @override
@@ -93,17 +93,17 @@ class ChapterTextState extends ConsumerState<ChapterText> {
   final _markKey = GlobalKey<ReadMarkState>();
   Timer? _introTimer;
 
-  /// Satu key per paragraf (indeks paragraf di DB) buat ngukur & lompat.
-  // ponytail: satu chapter dirender utuh (Column), bukan lazy. Aman buat
-  // chapter ratusan paragraf; ganti ke list yang bisa lompat ke item kalau
-  // ada buku dengan chapter raksasa yang kerasa berat.
+  /// One key per paragraph (paragraph index in the DB) for measuring and jumping.
+  // ponytail: one chapter is rendered whole (Column), not lazily. Fine for
+  // chapters of hundreds of paragraphs; switch to a list that can jump to an item if
+  // a book with a giant chapter feels heavy.
   final _keys = <int, GlobalKey>{};
   bool _restored = false;
 
-  /// Scroll dari jari (bukan lompatan restore) yang belum dilaporin.
+  /// Finger scroll (not a restore jump) not yet reported.
   bool _userScrolled = false;
 
-  /// Posisi scroll waktu lompat dari hasil cari; null = gak lagi nunggu.
+  /// Scroll position when jumping from a search result; null = not waiting.
   double? _searchAnchor;
 
   @override
@@ -124,8 +124,8 @@ class ChapterTextState extends ConsumerState<ChapterText> {
     return box != null && box.hasSize ? box : null;
   }
 
-  /// Paragraf paling atas yang keliatan di bawah safe area atas, plus bagian
-  /// paragraf itu yang udah lewat garis tersebut.
+  /// The top-most paragraph visible below the top safe area, plus the part of that
+  /// paragraph already past that line.
   Spot? _topSpot(List<ReaderParagraph> paras) {
     final area = context.findRenderObject() as RenderBox?;
     if (area == null || !area.hasSize || paras.isEmpty) return null;
@@ -142,12 +142,12 @@ class ChapterTextState extends ConsumerState<ChapterText> {
         return (index: p.index, offset: ((line - top) / h).clamp(0.0, 1.0));
       }
     }
-    // Udah lewat semua paragraf (kartu akhir bab): akhir paragraf terakhir.
+    // Past all paragraphs (chapter-end card): the end of the last paragraph.
     return (index: paras.last.index, offset: 1);
   }
 
-  /// Kapsul ngikutin scroll dari jari. Awal bab (80pt pertama) & akhir bab
-  /// (paragraf terakhir keliatan) kapsulnya muncul sendiri.
+  /// The capsules follow finger scrolling. At the chapter start (first 80pt) and end
+  /// (last paragraph visible) the capsules appear on their own.
   void _moveChrome(ScrollUpdateNotification n, List<ReaderParagraph> paras) {
     final last = paras.isEmpty ? null : _box(paras.last.index);
     final atEnd =
@@ -165,12 +165,12 @@ class ChapterTextState extends ConsumerState<ChapterText> {
 
   static const _chapterStart = 80.0;
 
-  /// Tap paragraf → Artinya; selain itu (margin, sela, bawah teks terakhir,
-  /// heading) → munculin/ngumpetin kapsul. Kotak paragraf selebar kolom,
-  /// tapi area tap margin minimal [_minTapMargin]: di margin Sempit (16),
-  /// 8pt pinggir kolom ikut diitung kosong.
+  /// Paragraph tap → Artinya; anything else (margin, gap, below the last text,
+  /// heading) → shows/hides the capsules. The paragraph box is as wide as the column,
+  /// but the margin tap area is at least [_minTapMargin]: with the "Sempit" margin (16),
+  /// 8pt at the column edge counts as empty.
   void _onTap(Offset point, List<ReaderParagraph> paras) {
-    _introTimer?.cancel(); // udah pegang kendali sendiri
+    _introTimer?.cancel(); // the finger has taken over
     final edge = math.max(0.0, _minTapMargin - widget.prefs.marginWidth);
     for (final p in paras) {
       if (p.type != ParagraphType.paragraph) continue;
@@ -194,8 +194,8 @@ class ChapterTextState extends ConsumerState<ChapterText> {
 
   ReaderParagraph? get lastParagraph => _paras.lastOrNull;
 
-  /// Paragraf terakhir yang dirender, buat ngukur posisi pas setelan Aa
-  /// diganti (layout lama masih ada di [didUpdateWidget]).
+  /// The last rendered paragraph, to measure the position when the Aa settings change
+  /// (the old layout still exists in [didUpdateWidget]).
   List<ReaderParagraph> _paras = const [];
 
   @override
@@ -208,7 +208,7 @@ class ChapterTextState extends ConsumerState<ChapterText> {
         p.lineHeight != oldWidget.prefs.lineHeight ||
         p.marginWidth != oldWidget.prefs.marginWidth;
     if (!changed || !_restored) return;
-    // Tinggi paragraf berubah: titik yang lagi di garis atas tetep di situ.
+    // Paragraph heights changed: the point at the top line stays there.
     final spot = _topSpot(_paras);
     if (spot == null) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -218,7 +218,7 @@ class ChapterTextState extends ConsumerState<ChapterText> {
     });
   }
 
-  /// Geser scroll sampe [spot] ada di [y] (global). Mentok di ujung scroll.
+  /// Scrolls until [spot] is at [y] (global). Stops at the scroll extent.
   bool _place(Spot spot, double y) {
     final box = _box(spot.index);
     if (box == null || !_scroll.hasClients) return false;
@@ -231,7 +231,7 @@ class ChapterTextState extends ConsumerState<ChapterText> {
     return true;
   }
 
-  /// Taruh titik tersimpan di ±⅓ tinggi layar, biar ada konteks di atasnya.
+  /// Places the saved point at about ⅓ of the screen height, leaving context above it.
   void _restore(List<ReaderParagraph> paras) {
     final spot = widget.restoreTo;
     if (spot != null) {
@@ -267,11 +267,11 @@ class ChapterTextState extends ConsumerState<ChapterText> {
       }
     }
     if (_scroll.hasClients) _track();
-    // Baru keliatan setelah di posisi yang bener (lihat AnimatedOpacity).
+    // Only visible once at the right position (see AnimatedOpacity).
     setState(() => _restored = true);
   }
 
-  /// Kotak paragraf-paragraf satu grup, di koordinat [ancestor] (null =
+  /// Boxes of the paragraphs of one group, in [ancestor] coordinates (null =
   /// global).
   Rect? _groupRect(int group, [RenderObject? ancestor]) {
     Rect? rect;
@@ -284,7 +284,7 @@ class ChapterTextState extends ConsumerState<ChapterText> {
     return rect;
   }
 
-  /// Blok stabilo grup: melebar setengah margin ke samping, 8pt atas-bawah.
+  /// Highlight block of a group: extends half a margin sideways, 8pt above and below.
   Rect _highlight(Rect group) {
     final side = widget.prefs.marginWidth / 2;
     return Rect.fromLTRB(
@@ -295,7 +295,7 @@ class ChapterTextState extends ConsumerState<ChapterText> {
     );
   }
 
-  /// Grup sesudah [group] di bab ini, null kalau udah yang terakhir.
+  /// The group after [group] in this chapter, null when it is the last.
   int? groupAfter(int group) => _paras
       .map((p) => p.groupIndex)
       .whereType<int>()
@@ -304,8 +304,8 @@ class ChapterTextState extends ConsumerState<ChapterText> {
 
   double get pixels => _scroll.hasClients ? _scroll.offset : 0;
 
-  /// Sheet Artinya: halaman ikut naik barengan sheet sampe bawah blok grup =
-  /// atas sheet − 16. Grup kepanjangan: atas bloknya = safe area + 16.
+  /// Artinya sheet: the page rises together with the sheet until the bottom of the
+  /// group block = sheet top − 16. A too-long group: the block top = safe area + 16.
   Future<void> showGroupAbove(int group, double sheetTop) async {
     final r = _groupRect(group);
     if (r == null || !_scroll.hasClients) return;
@@ -318,9 +318,9 @@ class ChapterTextState extends ConsumerState<ChapterText> {
     await _animateTo(pixels + delta, Motion.sheetOpen, Motion.sheetOpenCurve);
   }
 
-  /// Sheet Artinya baru dibuka: atas blok grup = safe area, selalu. Grup
-  /// rata-rata lebih tinggi dari ruang di atas sheet, jadi bawahnya ketutup
-  /// sheet (sama kayak cabang grup kepanjangan di [showGroupAbove]).
+  /// Artinya sheet just opened: the group block top = safe area, always. The average
+  /// group is taller than the space above the sheet, so its bottom is covered by the
+  /// sheet (same as the too-long branch in [showGroupAbove]).
   Future<void> showGroupAtTop(int group) async {
     final r = _groupRect(group);
     if (r == null || !_scroll.hasClients) return;
@@ -330,10 +330,10 @@ class ChapterTextState extends ConsumerState<ChapterText> {
 
   final _pinCard = GlobalKey<MeaningPinCardState>();
 
-  /// Card tetap buat grup kepanjangan (lihat [MeaningPinCard]): dipasang
-  /// cuma kalau teks grupnya ketutup sheet.
+  /// Fixed card for a too-long group (see [MeaningPinCard]): mounted only when the
+  /// group text is covered by the sheet.
   void pinGroup(int group, double sheetTop) {
-    // Sheet bisa udah ditutup pas halaman masih naik.
+    // The sheet may already be closed while the page is still rising.
     if (!mounted || widget.openGroup != group) return;
     final area = context.findRenderObject();
     final r = _groupRect(group, area);
@@ -341,9 +341,9 @@ class ChapterTextState extends ConsumerState<ChapterText> {
     if (area is! RenderBox || r == null || paras.isEmpty) return;
     final block = _highlight(r);
     final sheetLocal = sheetTop - area.localToGlobal(Offset.zero).dy;
-    // Teks (tanpa padding bawah blok) muat di atas sheet: gak ada yang di-scroll.
+    // The text (without the block bottom padding) fits above the sheet: nothing to scroll.
     if (block.bottom - Space.s2 <= sheetLocal - Layout.followGap) return;
-    // Kartu terus ke bawah sheet; yang kelihatan cuma sampe atas sheet.
+    // The card continues below the sheet; only the part up to the sheet top is visible.
     _pinCard.currentState?.show(
       Rect.fromLTWH(
         block.left,
@@ -361,7 +361,7 @@ class ChapterTextState extends ConsumerState<ChapterText> {
   void followProgress(double progress, double sheetTop) =>
       _pinCard.currentState?.follow(progress, sheetTop);
 
-  /// Balik ke posisi sebelum sheet dibuka.
+  /// Returns to the position from before the sheet opened.
   Future<void> scrollBack(double to) =>
       _animateTo(to, Motion.sheetClose, Motion.sheetCloseCurve);
 
@@ -369,7 +369,7 @@ class ChapterTextState extends ConsumerState<ChapterText> {
     final p = _scroll.position;
     final target = to.clamp(p.minScrollExtent, p.maxScrollExtent);
     if ((target - p.pixels).abs() < 0.5) return Future.value();
-    // Kurangi gerakan: langsung pindah (animateTo gak mau durasi nol).
+    // Reduce motion: jump directly (animateTo rejects a zero duration).
     if (MediaQuery.disableAnimationsOf(context)) {
       _scroll.jumpTo(target);
       return Future.value();
@@ -377,7 +377,7 @@ class ChapterTextState extends ConsumerState<ChapterText> {
     return _scroll.animateTo(target, duration: d, curve: curve);
   }
 
-  /// Simpen titik yang sekarang di atas (abis halaman digeser sheet).
+  /// Saves the point now at the top (after the sheet moved the page).
   void stopAndReportPosition() {
     if (_scroll.hasClients) _scroll.jumpTo(_scroll.offset);
     reportPosition();
@@ -388,11 +388,11 @@ class ChapterTextState extends ConsumerState<ChapterText> {
     if (spot != null) widget.onPosition(spot);
   }
 
-  /// Blok grup yang perlu digambar (dibuka + penanda udah diterjemahin), di
-  /// koordinat isi bab. Diukur abis layout.
+  /// Group blocks that need drawing (the open one + the translated markers), in
+  /// chapter-body coordinates. Measured after layout.
   Map<int, Rect> _groupRects = const {};
 
-  /// Grup yang dibolongin di scrim Artinya.
+  /// The group cut out of the Artinya scrim.
   int? _scrimGroup;
 
   void _measureGroups(Set<int> groups) {
@@ -402,8 +402,8 @@ class ChapterTextState extends ConsumerState<ChapterText> {
     if (!mapEquals(rects, _groupRects)) setState(() => _groupRects = rects);
   }
 
-  /// Abis lanjut baca: kapsul muncul bentar buat orientasi terus ngumpet,
-  /// grup tersimpan dikasih kilatan sekali (Kurangi gerakan: garis kiri 4pt).
+  /// After continuing reading: the capsules appear briefly for orientation then hide,
+  /// and the saved group gets a one-time flash (Reduce motion: 4pt left line).
   void _greet(List<ReaderParagraph> paras, Spot spot) {
     widget.chrome.show();
     _introTimer = Timer(Motion.capsuleIntro, widget.chrome.hide);
@@ -419,8 +419,8 @@ class ChapterTextState extends ConsumerState<ChapterText> {
     _markKey.currentState?.show(rect, Motion.flash);
   }
 
-  /// Kedip muted di paragraf hasil cari ([Motion.searchFlash]); Kurangi
-  /// gerakan: garis kiri 4pt kayak "Lanjut baca".
+  /// Muted flash on the search result paragraph ([Motion.searchFlash]); Reduce
+  /// motion: a 4pt left line like "Lanjut baca".
   void flashParagraph(int index) {
     final content = _contentKey.currentContext?.findRenderObject();
     final box = _box(index);
@@ -429,8 +429,8 @@ class ChapterTextState extends ConsumerState<ChapterText> {
     _markKey.currentState?.show(r, Motion.searchFlash);
   }
 
-  /// Lompat dari hasil cari (bab ini): paragraf ke ±⅓ tinggi layar, kedip.
-  /// Paragraf gak ada (mis. judul bab yang gak dirender dobel) = ke awal bab.
+  /// Jump from a search result (this chapter): paragraph to ~⅓ of the screen height,
+  /// flash. Paragraph missing (e.g. a chapter title not rendered twice) = chapter start.
   void jumpToParagraph(int index) {
     if (!_scroll.hasClients) return;
     final placed = _place((
@@ -463,7 +463,7 @@ class ChapterTextState extends ConsumerState<ChapterText> {
       widget.prefs,
       Theme.of(context).brightness,
     ).style.copyWith(color: c.ink);
-    final gap = reading.fontSize!; // 1em antar paragraf
+    final gap = reading.fontSize!; // 1em between paragraphs
     final pad = MediaQuery.paddingOf(context);
     final labelHeight = math.max(
       32.0,
@@ -516,21 +516,21 @@ class ChapterTextState extends ConsumerState<ChapterText> {
       });
     }
     final onOpen = reading.copyWith(color: c.onHighlight);
-    // Inget grup terakhir biar bolongnya gak ilang pas scrim lagi fade out.
+    // Remember the last group so the hole does not vanish while the scrim fades out.
     if (open != null) _scrimGroup = open;
 
     if (loaded) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted || !_scroll.hasClients) return;
-        // Lompat ke posisi tersimpan sekali; chapter pendek yang gak perlu
-        // di-scroll langsung dianggap kebaca.
+        // Jump to the saved position once; a short chapter that needs no scrolling is
+        // treated as read right away.
         _restored ? _track() : _restore(paras);
       });
     }
 
-    // Isi disembunyiin sampe teksnya kebaca & udah lompat ke posisi
-    // tersimpan, terus fade in. Tanpa ini keliatan kedip: mulai dari atas,
-    // lompat ke tengah, kartu akhir bab nongol duluan.
+    // The body stays hidden until the text is readable and has jumped to the saved
+    // position, then fades in. Without this you would see a flicker: starts at the top,
+    // jumps to the middle, the chapter-end card appears first.
     final fade = MediaQuery.disableAnimationsOf(context)
         ? Duration.zero
         : Motion.contentFade;
@@ -543,7 +543,7 @@ class ChapterTextState extends ConsumerState<ChapterText> {
             curve: Curves.easeOut,
             child: AnimatedBuilder(
               animation: widget.chrome.hidden,
-              // Tepi teks ikut varian kapsul ↔ imersif sepanjang animasi kapsul.
+              // The text edge follows the capsule ↔ immersive variant throughout the capsule animation.
               builder: (context, child) {
                 final edges = readerEdgeFade(
                   pad,
@@ -571,7 +571,7 @@ class ChapterTextState extends ConsumerState<ChapterText> {
                   if (n is UserScrollNotification &&
                       n.direction != ScrollDirection.idle) {
                     _userScrolled = true;
-                    _introTimer?.cancel(); // udah pegang kendali sendiri
+                    _introTimer?.cancel(); // the finger has taken over
                     widget.onScrollActive?.call(true);
                   } else if (n is ScrollUpdateNotification &&
                       (_userScrolled || n.dragDetails != null)) {
@@ -592,8 +592,8 @@ class ChapterTextState extends ConsumerState<ChapterText> {
                   }
                   return false;
                 },
-                // Tap area kosong (margin, sela, bawah teks terakhir) = munculin /
-                // ngumpetin kapsul. Paragraf nangkep tap-nya sendiri.
+                // Tap on empty area (margin, gap, below the last text) = shows / hides the
+                // capsules. A paragraph catches its own tap.
                 child: GestureDetector(
                   behavior: HitTestBehavior.opaque,
                   onTapUp: (d) => _onTap(d.globalPosition, paras),
@@ -613,11 +613,11 @@ class ChapterTextState extends ConsumerState<ChapterText> {
                     ),
                     child: Stack(
                       key: _contentKey,
-                      // Penanda grup nongol di margin kiri, di luar kolom teks.
+                      // Group markers appear in the left margin, outside the text column.
                       clipBehavior: Clip.none,
                       children: [
-                        // Penanda grup yang udah diterjemahin: garis 4pt warna mark
-                        // di tengah margin kiri, sepanjang grupnya.
+                        // Marker of an already-translated group: a 4pt line in the mark color, in the
+                        // middle of the left margin, along the group.
                         for (final g in translated)
                           if (g != open && _groupRects[g] != null)
                             Positioned(
@@ -668,16 +668,16 @@ class ChapterTextState extends ConsumerState<ChapterText> {
                             for (final p in paras)
                               Padding(
                                 padding: EdgeInsets.only(bottom: gap),
-                                // Key di isinya, bukan di sela bawah: offset = fraksi tinggi
-                                // paragraf doang.
+                                // The key sits on the content, not the bottom gap: the offset is a fraction of the
+                                // paragraph height only.
                                 child: KeyedSubtree(
                                   key: _keys.putIfAbsent(
                                     p.index,
                                     GlobalKey.new,
                                   ),
                                   child: switch (p.type) {
-                                    // Kotak paragraf selebar kolom, termasuk sisa baris
-                                    // pendek. Sela antar paragraf & margin = area kosong.
+                                    // Paragraph box as wide as the column, including the rest of a short line. The gaps
+                                    // between paragraphs and the margins = empty area.
                                     ParagraphType.paragraph => _paragraphText(
                                       p,
                                       p.groupIndex == open && open != null
@@ -706,8 +706,8 @@ class ChapterTextState extends ConsumerState<ChapterText> {
                                   },
                                 ),
                               ),
-                            // Kartu akhir bab baru muncul bareng teks, biar gak nongol di atas
-                            // terus kedorong ke bawah.
+                            // The chapter-end card only appears together with the text, so it does not show
+                            // up at the top and then get pushed down.
                             if (loaded)
                               Padding(
                                 padding: const EdgeInsets.only(top: 14),
@@ -730,8 +730,8 @@ class ChapterTextState extends ConsumerState<ChapterText> {
             ),
           ),
         ),
-        // Sheet Artinya: scrim nutup halaman kecuali blok grup yang dibuka
-        // (grupnya kebaca di atas scrim). Ikut gerak pas halaman di-scroll.
+        // Artinya sheet: the scrim covers the page except the open group block (the group
+        // is readable above the scrim). Moves along when the page scrolls.
         Positioned.fill(
           child: IgnorePointer(
             child: AnimatedOpacity(
@@ -752,7 +752,7 @@ class ChapterTextState extends ConsumerState<ChapterText> {
             ),
           ),
         ),
-        // Card kuning tetap (halaman gak geser): isinya yang di-scroll.
+        // Fixed yellow card (the page does not move): its content is what scrolls.
         MeaningPinCard(
           key: _pinCard,
           marginWidth: widget.prefs.marginWidth,
@@ -773,8 +773,8 @@ class ChapterTextState extends ConsumerState<ChapterText> {
         sourceVisit: widget.sourceVisit,
       );
 
-  /// Heading pertama yang isinya sama kayak judul chapter udah ditampilin di
-  /// [ChapterHeading], gak usah dobel.
+  /// The first heading whose content equals the chapter title is already shown in
+  /// [ChapterHeading], so don't duplicate it.
   static List<ReaderParagraph> _withoutTitleHeading(
     List<ReaderParagraph> paras,
     String title,

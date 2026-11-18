@@ -16,8 +16,8 @@ import '../../../core/widgets/toast.dart';
 import 'catalog_cover.dart';
 import '../view_models/download_queue_view_model.dart';
 
-/// Chip "Ngunduh N buku · 43%" 12 di atas bar (board Komponen · NavBar).
-/// Ilang kalau gak ada yang jalan / antri. Tap = sheet Unduhan.
+/// Chip "Ngunduh N buku · 43%" 12 above the bar (board Komponen · NavBar).
+/// Disappears when nothing is running / queued. Tap = Unduhan sheet.
 class DownloadChip extends ConsumerWidget {
   const DownloadChip({super.key});
 
@@ -86,9 +86,9 @@ class DownloadChip extends ConsumerWidget {
   }
 }
 
-/// Sheet Unduhan (board 14): baris lagi diunduh (Batalin), antri ("Antri,
-/// abis Emma" + Hapus dari antrian), gagal (Coba lagi), selesai (Baca).
-/// Yang selesai / gagal di-`dismiss` pas sheet ditutup.
+/// "Unduhan" sheet (board 14): rows downloading ("Batalin"), queued
+/// ("Antri, abis Emma" + "Hapus dari antrian"), failed ("Coba lagi"), done ("Baca").
+/// Done / failed entries are dismissed when the sheet closes.
 class _DownloadsSheet extends ConsumerStatefulWidget {
   const _DownloadsSheet();
 
@@ -97,7 +97,7 @@ class _DownloadsSheet extends ConsumerStatefulWidget {
 }
 
 class _DownloadsSheetState extends ConsumerState<_DownloadsSheet> {
-  // `ref` gak boleh dipakai di dispose: simpen notifier + daftar terakhir.
+  // `ref` must not be used in dispose: keep the notifier + the last list.
   late final DownloadQueue _queue;
   var _last = const <DownloadItem>[];
 
@@ -109,7 +109,7 @@ class _DownloadsSheetState extends ConsumerState<_DownloadsSheet> {
 
   @override
   void dispose() {
-    // Provider gak boleh diubah pas tree lagi dibongkar: tunda satu microtask.
+    // A provider must not be modified while the tree is being torn down: defer by one microtask.
     final finished = [
       for (final i in _last)
         if (i.finished) i.key,

@@ -47,25 +47,26 @@ class ChatState {
     this.steps,
   }) : turns = List.unmodifiable(turns);
 
-  /// Langkah AI attempt yang sedang/baru jalan; turn lama membawa
-  /// langkahnya sendiri lewat `ChatTurn.steps`.
+  /// AI steps of the attempt that is running or just ran.
+  ///
+  /// Older turns carry their own steps in `ChatTurn.steps`.
   final ({ChatAttemptRef attempt, List<ChatStep> steps})? steps;
 
   final ({int completed, int total})? indexProgress;
 
-  /// Bab yang sedang dibaca + catatan sementara.
+  /// The chapter being read and the interim notes so far.
   final ChatExplorationProgress? explorationProgress;
 
-  /// Jawab sekarang sudah ditekan pada attempt berjalan.
+  /// Whether "answer now" was already pressed for the running attempt.
   final bool answerRequested;
 
-  /// Pembacaan sedang jalan dan belum diminta berhenti.
+  /// Whether reading is in progress and hasn't been asked to stop.
   bool get canAnswerNow =>
       (phase == ChatPhase.retrieving || phase == ChatPhase.slow) &&
       explorationProgress != null &&
       !answerRequested;
 
-  /// Perbaikan otomatis ke-n (1..2) atas jawaban invalid pada attempt berjalan.
+  /// Which automatic repair (1..2) of an invalid answer the running attempt is on.
   final int repairAttempt;
   bool get canContinue =>
       !loading &&
@@ -168,8 +169,10 @@ class ChatViewModel extends Notifier<ChatState> {
   ChatViewModel(this.bookId);
   final int bookId;
 
-  /// Budget kiriman (`chat_budget.dart`) menghentikan putaran pada 5 menit; ini pagar kalau request
-  /// terakhir menggantung.
+  /// Upper bound on a retrieval round.
+  ///
+  /// The send budget (`chat_budget.dart`) ends a round at 5 minutes; this is the
+  /// backstop if the last request hangs.
   static const retrievalTimeout = Duration(minutes: 6);
   late _ChatLifetime _life;
 
@@ -217,7 +220,7 @@ class ChatViewModel extends Notifier<ChatState> {
       await life.repo.recoverInterrupted();
       if (!_live(life)) return;
       try {
-        // Lokal, gratis, sekali per buku lama; chat tetap jalan tanpa section.
+        // Local and free, runs once per older book; chat works without sections.
         await ref.read(chapterSectionBackfillProvider)(bookId);
       } catch (_) {
         /* Tests without a DB and unreadable files fall back to titles. */
@@ -332,8 +335,8 @@ class ChatViewModel extends Notifier<ChatState> {
 
   Future<void> _saveAnchor(_ChatLifetime life) async {
     final session = life.session, anchor = life.anchor;
-    // Skip kalau udah tersimpan: stop() dipanggil lagi pas rute chat keluar
-    // (onExit), dan tulis DB di situ nahan pop chat beberapa frame.
+    // Skip when already saved: stop() runs again as the chat route exits
+    // (onExit), and a DB write there would hold the chat pop for several frames.
     if (session != null && anchor != null && anchor != life.savedAnchor) {
       await life.repo.saveScrollAnchor(bookId, session.id, anchor);
       if (identical(life.session, session)) life.savedAnchor = anchor;
@@ -444,8 +447,8 @@ class ChatViewModel extends Notifier<ChatState> {
     return _start(_life, question: question, quote: state.selectedQuote);
   }
 
-  /// Hentikan pembacaan setelah batch berjalan tersimpan, lalu jawab dari
-  /// catatan yang ada (partial + Lanjutkan tetap tersedia).
+  /// Stops reading once the running batch is saved, then answers from the notes
+  /// gathered so far (the partial answer and Lanjutkan stay available).
   void answerNow() {
     final run = _life.run;
     if (run == null || !state.canAnswerNow) return;
@@ -591,7 +594,7 @@ class ChatViewModel extends Notifier<ChatState> {
           if (!_running(life, run)) return;
           state = state.copyWith(explorationProgress: progress);
           if (progress.notes.isNotEmpty) {
-            // Catatan sementara tampil sebagai draf provisional, tanpa sumber.
+            // Interim notes show as a provisional draft, without sources.
             run.preview = [
               for (final n in progress.notes)
                 ChatAnswerBlock(
@@ -636,8 +639,8 @@ class ChatViewModel extends Notifier<ChatState> {
           return;
         }
         if (frame.repair > run.repair) {
-          // Jawaban invalid dikirim ulang: status singkat di turn yang sama,
-          // preview lama tetap tampil sampai teks baru masuk.
+          // An invalid answer is resent: show a short status on the same turn and
+          // keep the previous preview until new text arrives.
           run.repair = frame.repair;
           state = state.copyWith(
             repairAttempt: frame.repair,
@@ -646,7 +649,7 @@ class ChatViewModel extends Notifier<ChatState> {
           _arm(life, run, GroupAiStream.timeoutAfter);
           continue;
         }
-        // Catatan sementara/preview lama tetap tampil sampai teks baru masuk.
+        // Interim notes and the previous preview stay until new text arrives.
         if (frame.preview.isNotEmpty) run.preview = frame.preview;
         if (run.raw.isEmpty) continue;
         run.clearTimers();

@@ -6,22 +6,25 @@ import '../../domain/models/catalog.dart';
 import '../repositories/catalog_repository.dart';
 import 'gutenberg_source.dart';
 
-/// Satu sumber buku public domain (docs/discover.md). Adapter per sumber di
-/// `data/services/`, didaftarin lewat [bookSourcesProvider].
+/// Represents one public-domain book source (docs/discover.md).
+///
+/// Each source has an adapter in `data/services/`, registered through
+/// [bookSourcesProvider].
 abstract interface class BookSource {
-  /// 'gutenberg', 'standard_ebooks', ... Disimpen di `books.sourceId`.
+  /// Stable source key such as 'gutenberg' or 'standard_ebooks'; stored in `books.sourceId`.
   String get id;
 
-  /// Label UI.
+  /// Display label shown in the UI.
   String get name;
 
-  /// query '' = daftar populer, selain itu hasil cari.
+  /// Returns popular books for an empty [query], search results otherwise.
   Future<CatalogPage> search(String query, {int page = 1});
 
   Future<CatalogBookDetail> fetchDetail(String externalId);
 
-  /// Bytes EPUB buat `ImportRepository.importEpub`. [isCancelled] dicek di
-  /// tiap chunk; batal = lempar.
+  /// Returns the EPUB bytes for `ImportRepository.importEpub`.
+  ///
+  /// [isCancelled] is checked on every chunk; cancelling throws.
   Future<Uint8List> download(
     CatalogBook book, {
     void Function(double progress)? onProgress,
@@ -29,7 +32,7 @@ abstract interface class BookSource {
   });
 }
 
-/// Registry sumber. Nambah sumber = satu file adapter + satu baris di sini.
+/// Registry of sources; adding one takes an adapter file plus one line here.
 final bookSourcesProvider = Provider<List<BookSource>>(
   (ref) => [GutenbergSource(ref.watch(catalogRepositoryProvider))],
 );

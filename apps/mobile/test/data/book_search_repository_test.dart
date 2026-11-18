@@ -69,7 +69,7 @@ void main() {
 
   test('hits come per chapter in book order, then paragraph order', () async {
     final id = await book('a');
-    // Sengaja dimasukin kebalik: urutan baca ditentuin sort_order, bukan id.
+    // Inserted out of order on purpose: reading order comes from sort_order, not id.
     final c2 = await chapter(id, 1, 'Chapter II');
     final c1 = await chapter(id, 0, 'Chapter I');
     await para(c2, 0, 'Bingley called on Mr. Bennet.');
@@ -119,7 +119,7 @@ void main() {
       expect((await repo.search(id, q)).chapters, isEmpty, reason: q);
     }
     expect((await repo.search(id, 'hel')).total, 1); // prefix
-    expect((await repo.search(id, '"hel')).total, 1); // kutip dibuang
+    expect((await repo.search(id, '"hel')).total, 1); // quote character dropped
     expect((await repo.search(id, '"hello" OR zzz')).total, 0);
   });
 
@@ -168,7 +168,7 @@ void main() {
       (await repo.recentSearches(id)).where((q) => q.toLowerCase() == 'four'),
       hasLength(1),
     );
-    await repo.saveRecent(id, 'x'); // terlalu pendek
+    await repo.saveRecent(id, 'x'); // too short
     expect((await repo.recentSearches(id)).first, 'FOUR');
   });
 

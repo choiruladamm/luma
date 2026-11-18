@@ -114,7 +114,7 @@ describe("GET /v1/sync/pull", () => {
     expect(body.records).toHaveLength(500);
     expect(body.more).toBe(false);
     expect(subrequests).toBe(0);
-    expect(d1Queries).toBeLessThanOrEqual(3); // sesi (≤2) + 1 pull
+    expect(d1Queries).toBeLessThanOrEqual(3); // session (≤2) + 1 pull
     const plan = await env.DB.prepare(
       "EXPLAIN QUERY PLAN SELECT seq FROM records WHERE user_id = ?1 AND seq > ?2 ORDER BY seq LIMIT 501",
     )

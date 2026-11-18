@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 
 import '../theme/stabilo_theme.dart';
 
-/// Logo "Senyum Stabilo": coretan stabilo jadi huruf u + titik pink.
+/// "Senyum Stabilo" logo: a stabilo stroke forming the letter u + a pink dot.
 ///
-/// Default = logo jadi. Buat animasi splash: [draw] 0..1 = seberapa jauh
-/// coretan u digambar (kiri ke kanan), [dot] = skala titik pink (0 = belum
-/// ada, boleh > 1 buat efek pop), [shadow] 0..1 = bayangan offset 4 di
-/// belakang coretan (board Splash terang; header & mode gelap tanpa).
+/// Default = the finished logo. For the splash animation: [draw] 0..1 = how
+/// much of the u stroke is drawn (left to right), [dot] = pink dot scale (0 =
+/// absent, may exceed 1 for a pop effect), [shadow] 0..1 = offset-4 shadow
+/// behind the stroke (board Splash light; header & dark mode have none).
 class LumaLogo extends StatelessWidget {
   const LumaLogo({
     super.key,
@@ -58,7 +58,7 @@ class _LogoPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // Digambar di grid 100×100 kayak SVG aslinya.
+    // Drawn on a 100×100 grid like the original SVG.
     canvas.scale(size.width / 100);
     final smile = Path()
       ..moveTo(26, 34)

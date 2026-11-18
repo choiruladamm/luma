@@ -4,31 +4,31 @@ DASHBOARD := apps/dashboard
 FLUTTER := cd $(APP) && fvm flutter
 DART := cd $(APP) && fvm dart
 
-.PHONY: help get l10n gen brand live chat-agent-live chat-spike chat-spike-live chat-oracle-live chat-discussion-live chat-adaptive-live chat-retrieval chat-dense-live chat-dense-replay chat-heldout-live chat-refine-live chat-validation2-live chat-recovery-live chat-validation3-live watch run release dev run-android release-android dev-android apk profile test analyze format check clean docs-check backend-install backend-dev backend-types backend-test backend-live backend-e2e backend-migrate backend-invite backend-ban backend-unban backend-deploy dashboard-install dashboard-dev dashboard-test dashboard-e2e dashboard-deploy
+.PHONY: help get l10n gen brand live chat-agent-live chat-spike chat-spike-live chat-oracle-live chat-discussion-live chat-adaptive-live chat-retrieval chat-dense-live chat-dense-replay chat-heldout-live chat-refine-live chat-validation2-live chat-recovery-live chat-validation3-live watch run release dev run-android release-android dev-android apk profile test analyze format check clean docs-check comments-check backend-install backend-dev backend-types backend-test backend-live backend-e2e backend-migrate backend-invite backend-ban backend-unban backend-deploy dashboard-install dashboard-dev dashboard-test dashboard-e2e dashboard-deploy
 
-help: ## list commands
+help: ## list available commands
 	@grep -E '^[a-z0-9-]+:.*## ' $(MAKEFILE_LIST) | awk -F ':.*## ' '{printf "  %-16s %s\n", $$1, $$2}'
 
-get: ## pub get
+get: ## fetch Dart dependencies
 	$(FLUTTER) pub get
 
-l10n: ## generate ID/EN localizations
+l10n: ## generate Indonesian and English localizations
 	$(FLUTTER) gen-l10n
 
-gen: l10n ## codegen: drift, riverpod, freezed (build_runner)
+gen: l10n ## generate code: Drift, Riverpod, and Freezed (build_runner)
 	$(DART) run build_runner build
 
 brand: ## re-render app icon, launch logo, wordmark from assets/brand/*.svg (Chrome + ImageMagick)
 	cd $(APP) && sh tool/brand.sh
 
-watch: ## codegen in watch mode
+watch: ## generate code in watch mode
 	$(DART) run build_runner watch
 
 run: ## run Luma in debug (device: d=<id>; f=dev for Luma Dev)
 	$(FLUTTER) run $(if $(f),--flavor $(f)) $(if $(d),-d $(d))
 
 release: ## install release build on iPhone, redo every 7 days, data kept (d=<id>), master only
-	@test "$$(git rev-parse --abbrev-ref HEAD)" = master || { echo "make release cuma dari master (app Luma, data asli). Fitur: Luma Dev"; exit 1; }
+	@test "$$(git rev-parse --abbrev-ref HEAD)" = master || { echo "make release is only allowed from master (Luma app, real data). Use Luma Dev for testing."; exit 1; }
 	$(FLUTTER) run --release $(if $(d),-d $(d))
 
 dev: ## install release build of Luma Dev (own data & Keychain), any branch (d=<id>)
@@ -38,14 +38,14 @@ run-android: ## run Luma on Android in debug (device: d=<id>; f=dev for Luma Dev
 	$(FLUTTER) run --flavor $(or $(f),prod) $(if $(d),-d $(d))
 
 release-android: ## install release build of Luma on Android, signed with the fixed keystore (d=<id>), master only
-	@test "$$(git rev-parse --abbrev-ref HEAD)" = master || { echo "make release-android cuma dari master (app Luma, data asli). Fitur: make dev-android"; exit 1; }
+	@test "$$(git rev-parse --abbrev-ref HEAD)" = master || { echo "make release-android is only allowed from master (Luma app, real data). Use make dev-android for testing."; exit 1; }
 	$(FLUTTER) run --release --flavor prod $(if $(d),-d $(d))
 
 dev-android: ## install release build of Luma Dev on Android (own data & Keystore), any branch (d=<id>)
 	$(FLUTTER) run --release --flavor dev $(if $(d),-d $(d))
 
 apk: ## build release APK of Luma (prod) for sideload, master only
-	@test "$$(git rev-parse --abbrev-ref HEAD)" = master || { echo "make apk cuma dari master (app Luma, data asli)"; exit 1; }
+	@test "$$(git rev-parse --abbrev-ref HEAD)" = master || { echo "make apk is only allowed from master (Luma app, real data)."; exit 1; }
 	$(FLUTTER) build apk --release --flavor prod
 	@echo "APK: $(APP)/build/app/outputs/flutter-apk/app-prod-release.apk"
 
@@ -111,8 +111,11 @@ check: l10n format analyze test ## format, analyze, test
 clean: ## flutter clean + pub get
 	$(FLUTTER) clean && fvm flutter pub get
 
-docs-check: ## docs: doc citations in code comments and links between docs still resolve
+docs-check: ## docs: structure, links, and citations in code comments (.claude/rules/docs.md)
 	python3 scripts/docs_check.py
+
+comments-check: ## code comments are English and follow .claude/rules/code-comments.md
+	python3 scripts/comments_check.py
 
 backend-install: ## backend: install deps (bun)
 	cd $(BACKEND) && bun install
@@ -133,26 +136,26 @@ backend-e2e: ## backend: #109 E2E, Dart client syncs through a local Worker (wra
 	bash $(BACKEND)/scripts/e2e.sh
 
 backend-migrate: ## backend: apply D1 migrations remotely (e=dev|prod)
-	@test "$(e)" = dev -o "$(e)" = prod || { echo "pakai e=dev atau e=prod"; exit 1; }
+	@test "$(e)" = dev -o "$(e)" = prod || { echo "use e=dev or e=prod"; exit 1; }
 	cd $(BACKEND) && bunx wrangler d1 migrations apply DB --env $(e) --remote
 
-backend-invite: ## backend: bikin kode undangan acak di D1 remote (e=dev|prod, n=jumlah, default 1)
-	@test "$(e)" = dev -o "$(e)" = prod || { echo "pakai e=dev atau e=prod"; exit 1; }
+backend-invite: ## backend: create random invite codes in remote D1 (e=dev|prod, n=count, default 1)
+	@test "$(e)" = dev -o "$(e)" = prod || { echo "use e=dev or e=prod"; exit 1; }
 	cd $(BACKEND) && bun scripts/invite.ts $(e) $(or $(n),1)
 
-backend-ban: ## backend: cabut akses AI subsidi user (e=dev|prod email=...; butuh OPENROUTER_MANAGEMENT_KEY di env)
-	@test "$(e)" = dev -o "$(e)" = prod || { echo "pakai e=dev atau e=prod"; exit 1; }
-	@test -n "$(email)" || { echo "pakai email=..."; exit 1; }
+backend-ban: ## backend: revoke a user's subsidized AI access (e=dev|prod email=...; needs OPENROUTER_MANAGEMENT_KEY in env)
+	@test "$(e)" = dev -o "$(e)" = prod || { echo "use e=dev or e=prod"; exit 1; }
+	@test -n "$(email)" || { echo "use email=..."; exit 1; }
 	cd $(BACKEND) && bun scripts/ban.ts $(e) $(email)
 
-backend-unban: ## backend: pulihkan akses AI subsidi user (e=dev|prod email=...)
-	@test "$(e)" = dev -o "$(e)" = prod || { echo "pakai e=dev atau e=prod"; exit 1; }
-	@test -n "$(email)" || { echo "pakai email=..."; exit 1; }
+backend-unban: ## backend: restore a user's subsidized AI access (e=dev|prod email=...)
+	@test "$(e)" = dev -o "$(e)" = prod || { echo "use e=dev or e=prod"; exit 1; }
+	@test -n "$(email)" || { echo "use email=..."; exit 1; }
 	cd $(BACKEND) && bun scripts/unban.ts $(e) $(email)
 
 backend-deploy: ## backend: deploy Worker (e=dev|prod; prod only from master)
-	@test "$(e)" = dev -o "$(e)" = prod || { echo "pakai e=dev atau e=prod"; exit 1; }
-	@if [ "$(e)" = prod ]; then test "$$(git rev-parse --abbrev-ref HEAD)" = master || { echo "backend prod cuma dari master"; exit 1; }; fi
+	@test "$(e)" = dev -o "$(e)" = prod || { echo "use e=dev or e=prod"; exit 1; }
+	@if [ "$(e)" = prod ]; then test "$$(git rev-parse --abbrev-ref HEAD)" = master || { echo "backend production deploys are only allowed from master"; exit 1; }; fi
 	cd $(BACKEND) && bunx wrangler deploy --env $(e)
 
 dashboard-install: ## dashboard: install deps (bun)
@@ -168,6 +171,6 @@ dashboard-e2e: ## dashboard: Playwright e2e on installed Chrome, local e2e env w
 	cd $(DASHBOARD) && bunx playwright test
 
 dashboard-deploy: ## dashboard: deploy admin Worker (e=dev|prod; prod only from master)
-	@test "$(e)" = dev -o "$(e)" = prod || { echo "pakai e=dev atau e=prod"; exit 1; }
-	@if [ "$(e)" = prod ]; then test "$$(git rev-parse --abbrev-ref HEAD)" = master || { echo "dashboard prod cuma dari master"; exit 1; }; fi
+	@test "$(e)" = dev -o "$(e)" = prod || { echo "use e=dev or e=prod"; exit 1; }
+	@if [ "$(e)" = prod ]; then test "$$(git rev-parse --abbrev-ref HEAD)" = master || { echo "dashboard production deploys are only allowed from master"; exit 1; }; fi
 	cd $(DASHBOARD) && CLOUDFLARE_ENV=$(e) bunx vite build && bunx wrangler deploy

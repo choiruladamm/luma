@@ -8,8 +8,10 @@ import '../../../core/theme/stabilo_type.dart';
 import '../../../core/widgets/buttons.dart';
 import 'chat_copy.dart';
 
-/// Label bab "Book I › III: Of Providence": pemisah " › " jadi ikon chevron
-/// kecil (board Langkah AI), bukan karakter. [color] = warna ikon.
+/// Builds a chapter label such as "Book I › III: Of Providence".
+///
+/// The " › " separator becomes a small chevron icon (board Langkah AI) rather
+/// than a character; [color] is the icon color.
 InlineSpan chatLabelSpan(String text, Color color) {
   final parts = text.split(' › ');
   return TextSpan(
@@ -29,11 +31,13 @@ InlineSpan chatLabelSpan(String text, Color color) {
   );
 }
 
-/// Langkah AI (board "Langkah AI · baris status di atas jawaban"):
-/// baris status 40pt (dot kuning berdenyut + "Lagi baca …" + "Langkah 7" +
-/// chevron saat jalan; centang + "12 langkah selesai" setelah selesai), dan
-/// daftar langkah yang bisa dibuka/ditutup per turn. Default terbuka saat
-/// jalan, tertutup setelah selesai; toggle user menang sampai turn-nya ganti.
+/// AI steps (board "Langkah AI · baris status di atas jawaban"): a 40pt status
+/// row (pulsing yellow dot + "Lagi baca …" + "Langkah 7" + chevron while
+/// running; check + "12 langkah selesai" when done) and a per-turn step list
+/// that can be expanded or collapsed.
+///
+/// It defaults to open while running and closed once finished; the user's
+/// toggle wins until the turn changes.
 class ChatStepsRow extends StatefulWidget {
   const ChatStepsRow({super.key, required this.steps, required this.running});
   final List<ChatStep> steps;
@@ -208,8 +212,8 @@ class _StepLine extends StatelessWidget {
   }
 }
 
-/// Dot 8pt accent dengan garis outline 1,5; denyut 1,2 dtk (skala 1 ↔ 0,6,
-/// opasitas 1 ↔ 0,5). Kurangi gerakan: diam.
+/// An 8pt accent dot with a 1.5 outline that pulses over 1.2 s (scale 1 ↔ 0.6,
+/// opacity 1 ↔ 0.5); it stays still under reduce-motion.
 class _PulseDot extends StatefulWidget {
   const _PulseDot({required this.color, required this.outline});
   final Color color, outline;
@@ -265,8 +269,10 @@ class _PulseDotState extends State<_PulseDot>
   );
 }
 
-/// Blok "CATATAN SEMENTARA" bagian bawah: tombol teks "Jawab sekarang →" dan
-/// caption jumlah catatan. Catatannya sendiri dirender sebagai preview turn.
+/// Bottom part of the "CATATAN SEMENTARA" block: the "Jawab sekarang →" text
+/// button and a note-count caption.
+///
+/// The notes themselves render as the turn's preview.
 class ChatAnswerNow extends StatelessWidget {
   const ChatAnswerNow({
     super.key,

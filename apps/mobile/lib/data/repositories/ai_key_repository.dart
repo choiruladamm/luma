@@ -6,12 +6,12 @@ import '../services/backend_client.dart';
 import '../services/api_key_store.dart';
 import '../services/session_store.dart';
 
-/// Key OpenRouter yang dipakai panggilan AI: `key = byok ?? subsidi`
-/// (docs/backend.md, AI subsidy). Bentuknya [ApiKeyStore] supaya
-/// pemanggil lama cukup ganti provider; [write] tetap nulis key BYOK.
+/// Resolves the OpenRouter key used by AI calls: `key = byok ?? subsidy`
+/// (docs/backend.md, AI subsidy). It implements [ApiKeyStore] so existing callers
+/// only swap the provider; [write] still stores the BYOK key.
 ///
-/// Key subsidi diambil dari backend cuma kalau perlu (belum ada, hampir
-/// kedaluwarsa, atau ditolak OpenRouter), jadi gak ada polling.
+/// The subsidy key is fetched from the backend only when needed (missing, close
+/// to expiry, or rejected by OpenRouter), so nothing polls.
 class AiKeyRepository implements ApiKeyStore {
   AiKeyRepository(
     this._byok,
@@ -25,10 +25,10 @@ class AiKeyRepository implements ApiKeyStore {
   final AiKeyService _service;
   final DateTime Function() _now;
 
-  /// Diminta baru sehari sebelum kedaluwarsa (sama dengan rotasi server).
+  /// Refetched one day before expiry, matching the server's rotation.
   static const refreshBefore = Duration(days: 1);
 
-  /// Key subsidi yang barusan ditolak OpenRouter (401): baca berikutnya rotasi.
+  /// Subsidy key OpenRouter just rejected (401); the next read fetches a fresh one.
   String? _rejected;
   Future<String?>? _inFlight;
 
@@ -39,14 +39,14 @@ class AiKeyRepository implements ApiKeyStore {
   Future<String?> read() async {
     final own = await _byok.read();
     if (own != null) return own;
-    // Beberapa layar bisa minta bersamaan: satu panggilan backend aja.
+    // Several screens can ask at once; share a single backend call.
     return _inFlight ??= _subsidy().whenComplete(() => _inFlight = null);
   }
 
-  /// Dipanggil [OpenRouterService] saat OpenRouter balas 401 untuk [key].
+  /// Called by [OpenRouterService] when OpenRouter replies 401 for [key].
   void markRejected(String key) => _rejected = key;
 
-  /// True kalau [key] adalah key subsidi (bukan BYOK): buat pesan 402.
+  /// Returns true when [key] is the subsidy key (not BYOK), to pick the 402 message.
   Future<bool> isSubsidy(String key) async =>
       (await _session.readSubsidyKey())?.key == key;
 
@@ -66,8 +66,8 @@ class AiKeyRepository implements ApiKeyStore {
       _rejected = null;
       return issued.key;
     } on BackendException catch (e) {
-      // Akses kuota gratis dicabut: kartu "Akses AI gratis lo dicabut"
-      // (board Kuota AI 12), bukan "API key belum diisi".
+      // Free-quota access was revoked: the UI shows the "Akses AI gratis lo dicabut"
+      // card (board Kuota AI 12), not "API key belum diisi".
       if (e.code == aiBannedCode) {
         throw const AiException(
           AiError.http,
@@ -77,28 +77,28 @@ class AiKeyRepository implements ApiKeyStore {
       }
       final usable = stored != null && stored.expiresAt.isAfter(_now());
       if (usable) return stored.key;
-      // Ada sesi tapi backend gak kejangkau: layar AI nampilin error
-      // jaringan, bukan minta key.
+      // A session exists but the backend is unreachable: AI screens show a network
+      // error instead of asking for a key.
       if (e.code == 'NETWORK') throw const AiException(AiError.network);
       return null;
     } on Object {
-      // Secure storage gagal dibaca dll: key lama yang belum kedaluwarsa
-      // masih kepake.
+      // Secure storage unreadable, etc.: a stored key that hasn't expired is still
+      // usable.
       final usable = stored != null && stored.expiresAt.isAfter(_now());
       return usable ? stored.key : null;
     }
   }
 }
 
-/// Kode server saat akun gak boleh pakai kuota gratis (docs/backend.md, AI subsidy).
-/// Dipakai juga sebagai [AiException.detail] supaya UI bisa ngenalin.
+/// Server code for an account barred from the free quota (docs/backend.md, AI
+/// subsidy). Also used as [AiException.detail] so the UI can recognize it.
 const aiBannedCode = 'AI_BANNED';
 
-/// AI gagal karena kuota gratis abis (402 dengan key subsidi) atau akses
-/// dicabut. Null = error biasa, pakai pesan lama.
+/// Why an AI call failed on the free quota: exhausted (402 with the subsidy key)
+/// or access revoked. A null result means an ordinary error with the usual message.
 enum SubsidyFailure { exhausted, banned }
 
-/// [usingSubsidy] = gak ada key sendiri waktu error terjadi.
+/// [usingSubsidy] is true when the user had no key of their own when the error occurred.
 SubsidyFailure? subsidyFailureOf(Object? error, {required bool usingSubsidy}) {
   if (error is! AiException || error.error != AiError.http) return null;
   if (error.detail == aiBannedCode) return SubsidyFailure.banned;

@@ -6,16 +6,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../data/repositories/sync_repository.dart';
 import '../../auth/view_models/auth_view_model.dart';
 
-/// Sync otomatis (docs/budgets.md, Client request policy), tanpa polling: sync
-/// penuh saat login dan tiap resume (jarak min 5 menit di
-/// [SyncRepository.syncIfDue]); push aja [debounce] setelah perubahan lokal
-/// terakhir ([syncChangesProvider]).
+/// Automatic sync (docs/budgets.md, Client request policy), no polling: full
+/// sync on login and every resume (at least 5 minutes apart in
+/// [SyncRepository.syncIfDue]); push only [debounce] after the last local
+/// change ([syncChangesProvider]).
 class SyncTrigger extends ConsumerStatefulWidget {
   const SyncTrigger({super.key, required this.child});
 
   final Widget child;
 
-  /// Jeda setelah perubahan lokal terakhir (docs/budgets.md, Client request policy).
+  /// Delay after the last local change (docs/budgets.md, Client request policy).
   static const debounce = Duration(seconds: 60);
 
   @override
@@ -33,8 +33,8 @@ class _SyncTriggerState extends ConsumerState<SyncTrigger> {
     _lifecycle = AppLifecycleListener(
       onResume: () => _run(trigger: _Trigger.resume),
     );
-    // fireImmediately: auth udah kelar sebelum widget ini dipasang (app
-    // dibuka dalam kondisi login) juga dihitung login.
+    // fireImmediately: auth finished before this widget was mounted (app opened
+    // while logged in) also counts as logged in.
     ref.listenManual(authControllerProvider, (prev, next) {
       if (next.value?.status == AuthStatus.signedIn &&
           prev?.value?.status != AuthStatus.signedIn) {
@@ -55,8 +55,8 @@ class _SyncTriggerState extends ConsumerState<SyncTrigger> {
     super.dispose();
   }
 
-  /// Debounce perubahan lokal: push aja. Resume / login: sync penuh (push +
-  /// pull + download buku).
+  /// Debounced local change: push only. Resume / login: full sync (push + pull
+  /// + book download).
   void _run({_Trigger trigger = _Trigger.change}) {
     final auth = ref.read(authControllerProvider).value;
     if (auth?.status != AuthStatus.signedIn) return;

@@ -25,9 +25,9 @@ enum LumaTab {
   final List<List<dynamic>> icon;
 }
 
-/// Bottom bar (board Komponen · NavBar): pill melayang, tab aktif pill accent
-/// + label, tab diem ikon doang. [downloads] = lencana di tab Cari buku.
-/// Dipasang lewat `Stack` (bukan `bottomNavigationBar`) biar melayang.
+/// Bottom bar (board Komponen · NavBar): floating pill, active tab = accent
+/// pill + label, idle tabs = icon only. [downloads] = badge on the Cari buku
+/// tab. Placed via `Stack` (not `bottomNavigationBar`) so it floats.
 class LumaNavBar extends StatelessWidget {
   const LumaNavBar({
     super.key,
@@ -107,10 +107,10 @@ class _Tab extends StatelessWidget {
           duration: duration,
           curve: Curves.easeOut,
           height: Layout.navTab,
-          // Padding tetap: ikon 20 + 14 kiri-kanan = lingkaran 48, jadi cuma
-          // label yang nambah lebar pas aktif. Warna & garis difade dengan
-          // rona yang sama (bukan ke Colors.transparent / border null): kalau
-          // enggak, kuning nyisa jadi coklat dan garisnya ngecil dulu.
+          // Fixed padding: icon 20 + 14 on each side = a 48 circle, so only the
+          // label adds width when active. Color & border fade with the same hue
+          // (not to Colors.transparent / a null border): otherwise yellow
+          // leaves a brown tint and the border shrinks first.
           padding: const EdgeInsets.symmetric(horizontal: 14),
           decoration: BoxDecoration(
             color: active ? c.accent : c.accent.withValues(alpha: 0),
@@ -137,8 +137,8 @@ class _Tab extends StatelessWidget {
                     ),
                 ],
               ),
-              // Label ikut melebar + muncul pas aktif, ngecil + pudar pas
-              // pindah, jadi gak ada kapsul kuning kosong yang nyusut.
+              // Label widens + appears when active, shrinks + fades when
+              // switching away, so no empty yellow capsule shrinks.
               TweenAnimationBuilder<double>(
                 tween: Tween(end: active ? 1 : 0),
                 duration: duration,

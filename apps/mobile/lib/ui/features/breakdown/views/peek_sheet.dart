@@ -22,25 +22,27 @@ import '../../../core/widgets/quota.dart';
 import '../../settings/view_models/ai_quota_view_model.dart';
 import '../../settings/views/ai_shared.dart';
 
-/// Hasil sheet intip: mau ngapain abis ditutup.
+/// Result of the peek sheet: what to do after it closes.
 sealed class PeekResult {
   const PeekResult();
 }
 
-/// "Bedahin ini juga": push Bedahin [group] di atas yang sekarang.
+/// "Bedahin ini juga": pushes Bedahin for [group] on top of the current one.
 class PeekBreakdown extends PeekResult {
   const PeekBreakdown(this.group);
 
   final GroupRef group;
 }
 
-/// Link "Buka Pengaturan" di baris error Artiin.
+/// The "Buka Pengaturan" link in the Artiin error row.
 class PeekSettings extends PeekResult {
   const PeekSettings();
 }
 
-/// Sheet intip kartu Nyambung ke (board "Bedahin · Nyambung ke · intip"
-/// 1a–1d, state C3/C4). [where] = label kartu ("XVII" / "Lanjutan V").
+/// Shows the peek sheet for a Nyambung ke card (board "Bedahin · Nyambung ke ·
+/// intip" 1a–1d, states C3/C4).
+///
+/// [where] is the card label ("XVII" / "Lanjutan V").
 Future<PeekResult?> showPeekSheet(
   BuildContext context, {
   required PeekKey peek,
@@ -51,11 +53,14 @@ Future<PeekResult?> showPeekSheet(
   builder: (_) => PeekSheet(peek: peek, link: link, where: where),
 );
 
-/// Teks asli grup tujuan selalu ada (lokal, aman offline); terjemahan kalau
-/// udah pernah diartiin. Belum: "Artiin" nge-stream lewat
-/// `groupAiStreamProvider` grup tujuan (hasilnya masuk cache biasa), status
-/// di tombol Artiin, ujung 4 kata memudar. "Bedahin ini juga" butuh makna
-/// cepat dulu: belum diartiin = diartiin dulu, selesai langsung lanjut.
+/// Peek sheet for the target group of a Nyambung ke card.
+///
+/// The target's original text is always shown (local, safe offline); the
+/// translation shows only if it was already translated. If not, "Artiin"
+/// streams through the target group's `groupAiStreamProvider` (the result lands
+/// in the normal cache), status shows on the Artiin button, and the last 4
+/// words fade. "Bedahin ini juga" needs the meaning first: an untranslated
+/// group is translated first, then the breakdown continues right after.
 class PeekSheet extends ConsumerStatefulWidget {
   const PeekSheet({
     super.key,
@@ -91,10 +96,10 @@ class _PeekSheetState extends ConsumerState<PeekSheet> {
           );
   }
 
-  /// Artiin udah di-tap: stream grup tujuan ditonton (dan jalan).
+  /// Whether Artiin was tapped: the target group's stream is watched (and runs).
   bool _asked = false;
 
-  /// "Bedahin ini juga" ditap sebelum diartiin: lanjut pas selesai.
+  /// Whether "Bedahin ini juga" was tapped before translating: continue once it finishes.
   bool _thenBreakdown = false;
 
   void _artiin({bool thenBreakdown = false}) {
@@ -124,7 +129,7 @@ class _PeekSheetState extends ConsumerState<PeekSheet> {
     if (ai != null) {
       ref.listen(groupAiStreamProvider(target), (_, next) {
         if (next.phase != AiPhase.done) return;
-        // Card / buka lagi: sekarang "udah diartiin".
+        // Reopening the card now finds it already translated.
         ref.invalidate(breakdownPeekProvider(widget.peek));
         if (_thenBreakdown) _breakdown(target);
       });
@@ -251,8 +256,8 @@ class _PeekSheetState extends ConsumerState<PeekSheet> {
                         usingSubsidy:
                             ref.watch(aiSourceProvider).value != AiSource.own,
                       )) {
-                        // Kuota abis / dicabut (board Kuota AI 10, 12): teks
-                        // asli tetap kebaca di atas kartu.
+                        // Quota used up or revoked (board Kuota AI 10, 12): the
+                        // original text stays readable above the card.
                         final kind? => _quotaCard(kind),
                         null => _ErrorRow(
                           stream: ai,
@@ -312,9 +317,9 @@ class _PeekSheetState extends ConsumerState<PeekSheet> {
   }
 }
 
-/// Terjemahan grup tujuan; selama di-stream 4 kata terakhir memudar.
-// ponytail: tanpa ritme `Pacer` kayak sheet Artinya, teks muncul per token.
-// Pindahin pacing `_Answer` ke widget shared kalau keliatan patah-patah.
+/// Translation of the target group; the last 4 words fade while streaming.
+// ponytail: no `Pacer` rhythm like the Artinya sheet, so text appears per
+// token. Move the `_Answer` pacing into a shared widget if it looks choppy.
 class _Translation extends StatelessWidget {
   const _Translation(
     this.translations, {
@@ -354,8 +359,10 @@ class _Translation extends StatelessWidget {
   }
 }
 
-/// Artiin gagal / kepotong: baris pink kecil di bawah teks, bukan layar
-/// error penuh (teks asli tetep isi utamanya). Key / saldo: link Pengaturan.
+/// Artiin failed or was cut off: a small pink row under the text rather than a
+/// full error screen (the original text stays the main content).
+///
+/// Key or balance errors link to Pengaturan.
 class _ErrorRow extends StatelessWidget {
   const _ErrorRow({required this.stream, required this.onSettings});
 

@@ -8,25 +8,27 @@ import '../../domain/pdf_chapters.dart';
 import '../../domain/pdf_layout.dart';
 import 'epub_parser.dart';
 
-/// Kenapa import PDF gagal (docs/import-formats.md, Limits). Cancel bukan
-/// error: dilempar `ImportCancelled` dari callback progres.
+/// Why a PDF import failed (docs/import-formats.md, Limits).
+///
+/// Cancelling is not an error: the progress callback throws `ImportCancelled`.
 enum PdfImportError {
-  /// Ber-password (input password ditunda, #90).
+  /// The PDF is password-protected.
+  // TODO(#90): ask for the password instead of failing.
   password,
 
-  /// Mayoritas halaman tanpa teks (kemungkinan scan).
+  /// Most pages have no text (probably a scan).
   scan,
 
-  /// Rusak atau gagal dibuka.
+  /// The file is damaged or failed to open.
   corrupt,
 
-  /// Bukan `.pdf`.
+  /// The file is not a `.pdf`.
   notPdf,
 
-  /// Bisa dibaca tapi gak ada teks yang jadi bab.
+  /// The file is readable but has no text that becomes a chapter.
   empty,
 
-  /// File gak kebaca / gak bisa disalin.
+  /// The file could not be read or copied.
   io,
 }
 
@@ -41,10 +43,12 @@ class PdfImportException implements Exception {
       'PdfImportException(${error.name}${detail == null ? '' : ': $detail'})';
 }
 
-/// Hasil baca PDF mentah: baris per halaman (indeks 0 = halaman 1; halaman
-/// tanpa teks = list kosong), outline, dan cover. Baris dibentuk per halaman
-/// di service, jadi huruf satu buku gak pernah numpuk di memori. Layout
-/// antar-halaman (header/footer, paragraf, bab) belum.
+/// Holds the raw result of reading a PDF: lines per page (index 0 is page 1; a
+/// page with no text is an empty list), the outline, and the cover.
+///
+/// The service builds lines page by page, so a whole book's glyphs never pile
+/// up in memory. Cross-page layout (headers and footers, paragraphs, chapters)
+/// is not done here.
 typedef PdfExtraction = ({
   int pageCount,
   List<List<PdfLine>> pages,
@@ -52,14 +56,17 @@ typedef PdfExtraction = ({
   EpubCover? cover,
 });
 
-/// Pembungkus pdfrx. Test pakai fake, jadi native lib gak pernah kepanggil di
-/// `flutter test`.
+/// Wraps pdfrx.
+///
+/// Tests use a fake, so the native library is never called in `flutter test`.
 abstract class PdfService {
-  /// Buka lewat path (PDF bisa ratusan MB). [onOpened] dipanggil sekali abis
-  /// dokumen + outline + cover kebaca; [onPage] tiap halaman selesai. Callback
-  /// boleh lempar (mis. cancel): dokumen tetap ditutup.
+  /// Opens the PDF at [path] (it can be hundreds of MB) and extracts its text.
   ///
-  /// Lempar [PdfImportException] (`password`, `corrupt`).
+  /// [onOpened] fires once after the document, outline, and cover are read;
+  /// [onPage] fires after each page. Callbacks may throw (for example to
+  /// cancel); the document is still closed.
+  ///
+  /// Throws [PdfImportException] (`password`, `corrupt`).
   Future<PdfExtraction> extract(
     String path, {
     void Function()? onOpened,
@@ -67,9 +74,10 @@ abstract class PdfService {
   });
 }
 
-// ponytail: pdfrx 2.12 gak punya API metadata (judul/penulis), jadi judul jatuh
-// ke heading halaman 1 → nama file, penulis null. Tambah kalau pdfrx nyediain,
-// jangan pasang FFI langsung diam-diam (keputusan #84).
+// ponytail: pdfrx 2.12 has no metadata API (title/author), so the title falls
+// back to the page-1 heading, then the file name, and the author is null. Add
+// it once pdfrx provides it; don't bind to FFI directly without an explicit
+// decision.
 class PdfiumService implements PdfService {
   const PdfiumService();
 
@@ -87,7 +95,7 @@ class PdfiumService implements PdfService {
     try {
       doc = await pdfrx.PdfDocument.openFile(
         path,
-        // Tanpa passwordProvider: PDF terkunci gagal, bukan minta input.
+        // Returning null makes a locked PDF fail instead of prompting for a password.
         passwordProvider: () => null,
       );
     } on pdfrx.PdfPasswordException {
@@ -128,13 +136,14 @@ class PdfiumService implements PdfService {
       ),
   ];
 
-  // ponytail: rect dianggap satu ruang dengan page.width/height (rotasi
-  // dinormalisasi pdfrx). Spread 2-up / rotasi aneh dicek di korpus (#89).
+  // ponytail: rects are assumed to share one coordinate space with
+  // page.width/height (pdfrx normalizes rotation). TODO(#89): check 2-up
+  // spreads and unusual rotations against the corpus.
   //
-  // Kotak huruf dari PDFium itu *ketat* (titik kecil, `h` lebih tinggi dari
-  // `a`), jadi pengelompokan baris pakai geometri gagal. Pemisah baris PDFium
-  // sendiri ('\n' di fullText) dibawa sebagai glyph '\n', spasi juga: layout
-  // memakai keduanya apa adanya (`PdfLayoutEngine`, mode stream-run).
+  // PDFium glyph boxes are *tight* (a dot is tiny, `h` is taller than `a`), so
+  // grouping lines by geometry fails. PDFium's own line separator ('\n' in
+  // fullText) is carried as a '\n' glyph, and so are spaces: layout uses both
+  // as-is (`PdfLayoutEngine`, stream-run mode).
   Future<List<PdfGlyph>> _glyphs(pdfrx.PdfPage page) async {
     final text = await page.loadText();
     if (text == null || page.width <= 0 || page.height <= 0) return const [];
@@ -185,7 +194,7 @@ class PdfiumService implements PdfService {
     return out;
   }
 
-  /// Render halaman 1 → PNG. Gagal apa pun = null (cover default).
+  /// Renders page 1 to PNG; any failure returns null (the default cover is used).
   Future<EpubCover?> _cover(pdfrx.PdfDocument doc) async {
     try {
       final page = doc.pages.first;

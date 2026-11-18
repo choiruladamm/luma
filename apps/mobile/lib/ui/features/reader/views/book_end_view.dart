@@ -16,7 +16,7 @@ import '../../../core/widgets/book_cover.dart';
 import '../../../core/widgets/buttons.dart';
 import '../view_models/reader_view_model.dart';
 
-/// Layar akhir buku (board 12 Akhir buku). Dibuka dari kartu bab terakhir.
+/// End-of-book screen (board 12 Akhir buku). Opened from the last chapter card.
 class BookEndView extends ConsumerWidget {
   const BookEndView({
     super.key,
@@ -162,7 +162,7 @@ class BookEndView extends ConsumerWidget {
   );
 }
 
-/// Cover agak miring di atas tiga coretan stabilo.
+/// Cover tilted slightly above three highlighter strokes.
 class _Art extends StatelessWidget {
   const _Art({required this.title, this.author, this.cover});
 
@@ -249,7 +249,7 @@ class _Stat extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         spacing: 2,
         children: [
-          // "6 jam 20 mnt" gak muat di 26: dikecilin, bukan turun baris.
+          // "6 jam 20 mnt" does not fit in 26: scaled down instead of wrapping.
           FittedBox(
             fit: BoxFit.scaleDown,
             alignment: Alignment.centerLeft,

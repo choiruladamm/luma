@@ -6,7 +6,7 @@ import { users } from "../../src/db/schema";
 import { DELETE_PAGES_PER_REQUEST, deleteAccount } from "../../src/features/account/service";
 import { signUp } from "../helpers/auth";
 
-/** Bucket palsu yang selalu bilang masih ada halaman berikutnya. */
+/** A fake bucket that always says there is another page. */
 const endlessBucket = () => {
   const bucket = {
     list: vi.fn(async () => ({ objects: [{ key: "u/x/files/a" }], truncated: true })),

@@ -130,7 +130,7 @@ void main() {
         await t.pumpAndSettle();
         expect(find.byType(ChatNotice), findsOneWidget);
         final originalTop = t.getTopLeft(button('Balik baca')).dy;
-        // Header selalu lengkap, gak ngeringkas pas di-scroll.
+        // The header stays complete and does not collapse while scrolling.
         expect(find.text('Ngobrolin buku'), findsOneWidget);
         expect(find.text('Buku ini'), findsOneWidget);
         await t.drag(scroll, const Offset(0, -200));

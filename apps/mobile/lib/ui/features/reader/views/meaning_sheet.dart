@@ -33,14 +33,14 @@ import '../../settings/view_models/ai_quota_view_model.dart';
 import '../../settings/views/ai_shared.dart';
 import 'meaning_chrome.dart';
 
-/// Sheet Artinya (board 05 hasil, 06 error, 09 udah disalin, 10 API key
-/// kosong, "Artinya streaming · Opsi B" + "· perilaku"). [group] = grup yang lagi dibuka; "Lanjut" manggil
-/// [onNext] yang mindahin [group] ke grup berikutnya. [onHeight] dipanggil
-/// sekali dengan tinggi sheet (tetap 528 di 844, semua state), biar halaman
-/// di belakang bisa nyesuain. Barrier transparan: scrim (yang bolongin grup)
-/// digambar halaman baca. [onProgress] (0–1) dipanggil pas sheet di-scroll:
-/// seberapa jauh terjemahan udah kebaca, biar isi card kuning ngikutin.
-/// [onBreakdown]: entri "Masih bingung? Bedahin" di akhir isi di-tap.
+/// Artinya sheet (boards "05 hasil", "06 error", "09 udah disalin", "10 API key kosong",
+/// "Artinya streaming · Opsi B" + "· perilaku"). [group] = the open group; "Lanjut"
+/// calls [onNext], which moves [group] to the next group. [onHeight] is called once
+/// with the sheet height (fixed 528 on 844, every state) so the page behind can
+/// adjust. Transparent barrier: the scrim (which cuts a hole for the group) is drawn
+/// by the reading page. [onProgress] (0–1) is called as the sheet scrolls: how far
+/// the translation has been read, so the yellow card content follows.
+/// [onBreakdown]: the "Masih bingung? Bedahin" entry at the end of the content was tapped.
 Future<void> showMeaningSheet(
   BuildContext context, {
   required ValueListenable<GroupRef> group,
@@ -59,12 +59,12 @@ Future<void> showMeaningSheet(
   final sheet = DraggableScrollableController();
   return showAppSheet<void>(
     context,
-    maxHeight: 1, // tingginya diatur DraggableScrollableSheet
+    maxHeight: 1, // height is managed by DraggableScrollableSheet
     enableDrag: false,
     backgroundColor: Colors.transparent,
     barrierColor: Colors.transparent,
-    // Material bawaan sheet (transparan) nutupin seluruh layar dan nelen tap,
-    // jadi tap area kosong di atas sheet ditangkep lapisan di belakangnya.
+    // The sheet's built-in Material (transparent) covers the whole screen and swallows
+    // taps, so a tap on the empty area above the sheet is caught by the layer behind it.
     builder: (context) => _ClosingWatcher(
       onClosing: onClosing,
       child: Stack(
@@ -76,7 +76,7 @@ Future<void> showMeaningSheet(
             ),
           ),
           DraggableScrollableSheet(
-            // Tarik turun di isi pas offset 0 nutup sheet; di grabber lewat [_Drag].
+            // Dragging down on the content at offset 0 closes the sheet; on the grabber via [_Drag].
             controller: sheet,
             initialChildSize: Layout.artinyaHeight,
             minChildSize: 0,
@@ -119,8 +119,8 @@ Future<void> showMeaningSheet(
   ).whenComplete(sheet.dispose);
 }
 
-/// Ngabarin [onClosing] begitu route sheet mulai nutup, lewat tombol, tap di
-/// luar, atau tarik turun.
+/// Reports [onClosing] as soon as the sheet route starts closing, via the button, a
+/// tap outside, or a drag down.
 class _ClosingWatcher extends StatefulWidget {
   const _ClosingWatcher({required this.onClosing, required this.child});
 
@@ -157,9 +157,9 @@ class _ClosingWatcherState extends State<_ClosingWatcher> {
   Widget build(BuildContext context) => widget.child;
 }
 
-/// Drag di grabber: sheet ngikutin jari ke bawah; dilepas, nutup kalau
-/// di-fling atau udah ditarik jauh, kalau nggak balik ke atas. (Grabber
-/// lapisan di atas isi, jadi dragnya gak sampe ke scroll view.)
+/// Drag on the grabber: the sheet follows the finger down; on release it closes if
+/// flung or pulled far enough, otherwise returns to the top. (The grabber is a layer
+/// above the content, so its drag never reaches the scroll view.)
 class _Drag extends InheritedWidget {
   const _Drag({
     required this.sheet,
@@ -213,7 +213,7 @@ class MeaningSheet extends ConsumerStatefulWidget {
 
   final GroupRef group;
 
-  /// Null = grup terakhir di bab ini.
+  /// Null = the last group in this chapter.
   final VoidCallback? onNext;
   final ValueChanged<double> onProgress;
   final VoidCallback onSettings;
@@ -245,7 +245,7 @@ class _MeaningSheetState extends ConsumerState<MeaningSheet> {
   @override
   Widget build(BuildContext context) {
     final ai = ref.watch(groupAiStreamProvider(widget.group));
-    // Teks isi ikut Aa; ganti pengaturan langsung kebawa tanpa nutup sheet.
+    // Content text follows Aa; changing the settings carries over without closing the sheet.
     final prefs = ref.watch(readerPrefsProvider).value ?? const ReaderPrefs();
     final typo = ReaderTypography(prefs, Theme.of(context).brightness);
     void retry() => ref.invalidate(groupAiStreamProvider(widget.group));
@@ -300,7 +300,7 @@ class _MeaningSheetState extends ConsumerState<MeaningSheet> {
     };
   }
 
-  /// Kode kecil buat debug di state error.
+  /// Small code for debugging in the error state.
   String _errorCode(Object error) => switch (error) {
     AiException(error: AiError.timeout) => context.l10n.meaningTimeoutSeconds,
     AiException(error: AiError.network) =>
@@ -317,11 +317,12 @@ class _MeaningSheetState extends ConsumerState<MeaningSheet> {
   };
 }
 
-/// Rangka semua state: isi scroll setinggi sheet (528) dengan padding atas 91
-/// / bawah 102, header + grabber + tombol lapisan di atasnya (board Ngumpet ·
-/// Opsi A). Scroll view-nya pakai controller dari DraggableScrollableSheet
-/// (`PrimaryScrollController`), jadi tarik turun di offset 0 nutup sheet.
-/// [hideable]: header dan tombol ngumpet ngikutin scroll jari ([MeaningChrome]).
+/// Skeleton of all states: content scrolls at the sheet height (528) with 91 top /
+/// 102 bottom padding, with the header + grabber + buttons as layers above it (board
+/// Ngumpet · Opsi A). The scroll view uses the controller from
+/// DraggableScrollableSheet (`PrimaryScrollController`), so dragging down at offset 0
+/// closes the sheet. [hideable]: the header and buttons hide as the finger scrolls
+/// ([MeaningChrome]).
 class _ScrollFrame extends StatefulWidget {
   const _ScrollFrame({
     required this.header,
@@ -339,21 +340,21 @@ class _ScrollFrame extends StatefulWidget {
   final List<Widget> content;
   final List<Widget> actions;
 
-  /// Margin teks Aa. Padding dasar sheet (24) jadi batas bawahnya; isi cuma
-  /// dilebarin kalau margin-nya lebih besar (Lega 32).
+  /// Aa text margin. The base sheet padding (24) is its lower bound; the content is
+  /// only widened when the margin is larger ("Lega" 32).
   final double margin;
   final double gap;
   final bool hideable;
 
-  /// Lagi streaming: tombol dikunci keliatan, header ikut isi 1:1 kayak
-  /// bagian dari isi scroll.
+  /// Streaming: the buttons are locked visible and the header moves 1:1 with the
+  /// content, as if part of the scrolling content.
   final bool locked;
 
-  /// Belum ada teks (nunggu token): isi gak bisa di-scroll. Nutup tetep
-  /// lewat X, grabber, atau tap di atas sheet.
+  /// No text yet (waiting for a token): the content can't scroll. Closing still works
+  /// via X, the grabber, or a tap above the sheet.
   final bool frozen;
 
-  /// Jarak isi dari atas sheet (ruang buat header yang jadi lapisan).
+  /// Distance of the content from the sheet top (room for the layered header).
   final double topInset;
 
   @override
@@ -364,7 +365,7 @@ class _ScrollFrameState extends State<_ScrollFrame>
     with TickerProviderStateMixin {
   late final _chrome = MeaningChrome(vsync: this);
 
-  /// Scroll-nya dari jari (bukan scroll programatik).
+  /// The scroll came from the finger (not a programmatic scroll).
   bool _user = false;
 
   @override
@@ -380,9 +381,9 @@ class _ScrollFrameState extends State<_ScrollFrame>
     _syncEnabled();
   }
 
-  /// Gak pernah ngumpet kalau VoiceOver nyala, bukan state hasil, atau lagi
-  /// streaming. Abis streaming, header yang udah ke-scroll keluar tetep di
-  /// luar (aturan ngumpet biasa nerusin).
+  /// Never hides when VoiceOver is on, in a non-result state, or while streaming.
+  /// After streaming, a header that has already scrolled out stays out (the normal
+  /// hiding rule continues).
   void _syncEnabled() {
     _chrome.enabled =
         widget.hideable &&
@@ -431,16 +432,16 @@ class _ScrollFrameState extends State<_ScrollFrame>
     final pad = Layout.sheetPadding;
     final inset = math.max(0.0, widget.margin - pad.left);
     final reduced = _chrome.reduceMotion;
-    // Titik tempel header: di bawah grabber (padding atas 10 + 5 + 16).
+    // Header anchor point: below the grabber (top padding 10 + 5 + 16).
     final headerTop = Layout.artinyaHeader - Space.s4 - Layout.touch;
-    final headerBottom = Layout.artinyaHeader - Space.s4; // header 44 tinggi
+    final headerBottom = Layout.artinyaHeader - Space.s4; // header is 44 tall
     return Stack(
       children: [
         NotificationListener<ScrollNotification>(
           onNotification: _onScroll,
-          // Tepi isi ikut animasi chrome: fade atas mulai di bawah header
-          // (atau di bawah grabber kalau header ngumpet), fade bawah cuma ada
-          // selama tombol keliatan; tombol ngumpet = edge-to-edge.
+          // The content edge follows the chrome animation: the top fade starts below the
+          // header (or below the grabber when the header is hidden), the bottom fade only
+          // exists while the buttons are visible; buttons hidden = edge-to-edge.
           child: AnimatedBuilder(
             animation: Listenable.merge([_chrome.header, _chrome.actions]),
             builder: (context, scroll) {
@@ -454,7 +455,7 @@ class _ScrollFrameState extends State<_ScrollFrame>
                     headerBottom - Layout.artinyaHeader * hidden,
                   ),
                 ),
-                // Tombol + safe area (86) bening, fade 20pt tepat di atasnya.
+                // Buttons + safe area (86) are transparent, with a 20pt fade right above them.
                 bottom: EdgeFadeSide(
                   20 * (1 - away),
                   clear: (Layout.artinyaActions - Space.s4) * (1 - away),
@@ -530,9 +531,9 @@ class _ScrollFrameState extends State<_ScrollFrame>
   }
 }
 
-/// Geser [child] sejauh [travel] ngikutin [animation] (0 keliatan, 1
-/// ngumpet). Kurangi gerakan: gak geser, cuma fade. Yang ngumpet gak bisa
-/// di-tap dan gak kebaca VoiceOver.
+/// Slides [child] by [travel] following [animation] (0 visible, 1 hidden). Reduce
+/// motion: no sliding, fade only. A hidden child can't be tapped and isn't read by
+/// VoiceOver.
 class _Chrome extends StatelessWidget {
   const _Chrome({
     required this.animation,
@@ -609,21 +610,22 @@ class _Section extends StatelessWidget {
   );
 }
 
-/// Terjemahan + makna, dari nunggu token sampai selesai (board "Artinya
-/// streaming · Opsi B" + "· perilaku"), atau langsung jadi kalau dari cache.
-/// Satu widget buat semua tahap, jadi pas selesai gak ada loncatan layout dan
-/// posisi scroll gak di-reset.
+/// Translation + meaning, from waiting for a token to done (board "Artinya
+/// streaming · Opsi B" + "· perilaku"), or complete immediately when from cache.
+/// One widget for all phases, so there is no layout jump on completion and the
+/// scroll position is not reset.
 ///
-/// - Teks keluar ngikutin [Pacer], per frame. Kurangi gerakan: per bagian
-///   utuh (satu paragraf, lalu makna), tanpa pudar.
-/// - Ujung teks yang lagi ditulis: 4 kata terakhir makin transparan, diem.
-///   Selesai → jadi solid pelan. (Deviasi dari board: tanpa fade-in per
-///   potongan, satu mekanisme aja.)
-/// - Selama belum selesai: tombol dikunci keliatan. Isi gak di-scroll
-///   otomatis: tetep di awal terjemahan biar bisa dibaca dari atas sambil
-///   sisanya ditulis (deviasi dari board, yang ikut turun).
-/// - Kelamaan: kartu di atas isi. Kepotong: teks yang udah masuk + banner,
-///   placeholder dibuang.
+/// - Text appears following [Pacer], per frame. Reduce motion: one whole part at a
+///   time (one paragraph, then the meaning), without fading.
+/// - The tip of the text being written: the last 4 words get progressively more
+///   transparent, static. When done it fades slowly to solid. (Deviation from the
+///   board: no per-chunk fade-in, one mechanism only.)
+/// - While unfinished: the buttons are locked visible. The content is not scrolled
+///   automatically: it stays at the start of the translation so it can be read from
+///   the top while the rest is written (a deviation from the board, which follows
+///   down).
+/// - Too slow: a card above the content. Cut off: the text received so far + a banner,
+///   the placeholder is dropped.
 class _Answer extends StatefulWidget {
   const _Answer({
     required this.typo,
@@ -647,7 +649,7 @@ class _Answer extends StatefulWidget {
   final VoidCallback onClose;
   final VoidCallback onRetry;
 
-  /// Entri Bedahin, item terakhir isi; cuma pas jawabannya lengkap.
+  /// Bedahin entry, the last content item; only when the answer is complete.
   final Widget breakdown;
   final VoidCallback? onChat;
 
@@ -661,13 +663,13 @@ class _AnswerState extends State<_Answer> with TickerProviderStateMixin {
   Duration _last = Duration.zero;
   int _shown = 0;
 
-  /// Ujung teks: 0 = pudar, 1 = solid.
+  /// Text tip: 0 = faded, 1 = solid.
   late final _solid = AnimationController(
     vsync: this,
     duration: Motion.tailFade,
   );
 
-  /// Jawaban lengkap dan semua hurufnya udah tampil.
+  /// The answer is complete and all its letters are shown.
   bool _finished = false;
 
   AiStream get _ai => widget.ai;
@@ -686,8 +688,8 @@ class _AnswerState extends State<_Answer> with TickerProviderStateMixin {
     _sync();
   }
 
-  /// Nyalain ticker begitu ada huruf; kepotong = tampilin semua yang masuk.
-  /// Dari cache = langsung jadi, tanpa ritme dan tanpa ikut turun.
+  /// Starts the ticker as soon as there are letters; cut off = show everything that
+  /// arrived. From cache = complete right away, with no rhythm and no following down.
   void _sync() {
     if (_finished) return;
     final available = _ai.draft.length;
@@ -743,8 +745,8 @@ class _AnswerState extends State<_Answer> with TickerProviderStateMixin {
     }
   }
 
-  /// Kotak tiap terjemahan: akhir yang terakhir nentuin seberapa jauh
-  /// terjemahan udah kebaca.
+  /// Box of each translation: the last end decides how far the translation has been
+  /// read.
   final _boxes = <GlobalKey>[];
   double _progress = 0;
 
@@ -762,10 +764,10 @@ class _AnswerState extends State<_Answer> with TickerProviderStateMixin {
     return false;
   }
 
-  /// Sinkron sheet → isi card: progres baca terjemahan, 0 di awal sheet sampe 1
-  /// pas bawah terjemahan terakhir nyampe tepi bawah area isi. Blok makna gak
-  /// dihitung: lewat itu progresnya tetap 1. Linear terhadap scroll, jadi
-  /// ngikutin jari, dan berlaku juga buat grup satu paragraf panjang.
+  /// Syncs sheet → card content: the translation reading progress, 0 at the sheet start
+  /// to 1 when the bottom of the last translation reaches the bottom edge of the content
+  /// area. The meaning block is not counted: past it the progress stays 1. Linear in
+  /// the scroll, so it follows the finger, and it also applies to a group of one long paragraph.
   void _follow(double pixels) {
     final root = context.findRenderObject();
     final count = math.max(_ai.sources.length, _ai.draft.translations.length);
@@ -780,7 +782,7 @@ class _AnswerState extends State<_Answer> with TickerProviderStateMixin {
       0.0,
       last.localToGlobal(Offset.zero).dy + last.size.height - visibleBottom,
     );
-    // Scroll yang udah dijalanin + sisanya = total sampe terjemahan kebaca.
+    // Scroll done so far + what remains = the total until the translation is read.
     final total = pixels + remaining;
     final next = total <= 0 ? 0.0 : (pixels / total).clamp(0.0, 1.0);
     if ((next - _progress).abs() < 0.001) return;
@@ -795,12 +797,12 @@ class _AnswerState extends State<_Answer> with TickerProviderStateMixin {
     super.dispose();
   }
 
-  /// Yang boleh tampil sekarang.
+  /// What may be shown now.
   AiDraft _visible() {
     final draft = _ai.draft;
     if (_finished || _cut) return draft;
     if (!MediaQuery.disableAnimationsOf(context)) return draft.take(_shown);
-    // Kurangi gerakan: cuma bagian yang udah utuh.
+    // Reduce motion: only the parts that are already complete.
     if (draft.meaning != null) return AiDraft(translations: draft.translations);
     final whole = math.max(0, draft.translations.length - 1);
     return AiDraft(translations: draft.translations.take(whole).toList());
@@ -819,7 +821,7 @@ class _AnswerState extends State<_Answer> with TickerProviderStateMixin {
         writing &&
         _ai.draft.length == 0 &&
         (_ai.phase == AiPhase.waiting || _ai.phase == AiPhase.slow);
-    // Bagian terakhir yang keliatan = yang lagi ditulis (ujungnya pudar).
+    // The last visible part = the one being written (its tip is faded).
     final lastMeaning = draft.meaning != null;
     final last = lastMeaning ? -1 : draft.translations.length - 1;
 
@@ -827,7 +829,7 @@ class _AnswerState extends State<_Answer> with TickerProviderStateMixin {
       if (!isLast) return Text(t, style: style);
       final faded = !_cut && !reduced;
       return ExcludeSemantics(
-        // VoiceOver baca per bagian yang udah utuh, bukan per huruf.
+        // VoiceOver reads per completed part, not per letter.
         excluding: writing,
         child: AnimatedBuilder(
           animation: _solid,
@@ -884,7 +886,7 @@ class _AnswerState extends State<_Answer> with TickerProviderStateMixin {
               _SlowCard(onCancel: widget.onClose, onRetry: widget.onRetry),
             _Section(
               tag: Tag.section(context.l10n.meaningTranslation),
-              // Satu blok per paragraf, biar jeda dialognya sama kayak aslinya.
+              // One block per paragraph, so the dialogue pauses match the original.
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 spacing: Space.s2,
@@ -954,7 +956,7 @@ class _AnswerState extends State<_Answer> with TickerProviderStateMixin {
                       ),
               ),
             Expanded(
-              // Mati selama masih diproses; aktif lagi pas selesai / kepotong.
+              // Disabled while still processing; active again when done / cut off.
               child: AppButton.primary(
                 label: context.l10n.meaningNext,
                 icon: AppIcons.down,
@@ -969,15 +971,15 @@ class _AnswerState extends State<_Answer> with TickerProviderStateMixin {
   }
 }
 
-/// Placeholder satu bagian yang belum ditulis, kira-kira setinggi teksnya
-/// nanti (ikut Aa): baris dari [placeholderRows], tinggi baris = baris teks.
+/// Placeholder for one part not yet written, about as tall as its eventual text (follows
+/// Aa): rows from [placeholderRows], row height = text line height.
 class _Placeholder extends StatelessWidget {
   const _Placeholder({required this.chars, required this.style});
 
   final double chars;
   final TextStyle style;
 
-  /// Lebar huruf rata-rata per font + ukuran, diukur sekali.
+  /// Average letter width per font + size, measured once.
   static final _widths = <(String?, double?), double>{};
   static const _sample =
       'Sayangku Mr. Bennet, kata istrinya suatu hari, sudah dengar belum '
@@ -1002,8 +1004,8 @@ class _Placeholder extends StatelessWidget {
   );
 }
 
-/// 15 detik belum ada token. Request tetep jalan; token masuk = kartunya
-/// ilang sendiri.
+/// 15 seconds without a token. The request keeps running; when a token arrives the card
+/// disappears on its own.
 class _SlowCard extends StatelessWidget {
   const _SlowCard({required this.onCancel, required this.onRetry});
 
@@ -1045,7 +1047,7 @@ class _SlowCard extends StatelessWidget {
   }
 }
 
-/// Koneksi putus / mandek di tengah: yang udah masuk tetep di atasnya.
+/// Connection dropped / stalled midway: what has arrived stays above it.
 class _CutBanner extends StatelessWidget {
   const _CutBanner({required this.onRetry});
 
@@ -1079,12 +1081,12 @@ class _CutBanner extends StatelessWidget {
   }
 }
 
-/// Kotak ikon di pojok state error / API key kosong, dan jarak isi di
-/// bawahnya: isi mulai [_tileInset] dari atas sheet (di bawah kotak, lega).
+/// Icon box in the corner of the error / empty API key states, and the content spacing
+/// below it: the content starts [_tileInset] from the sheet top (below the box, roomy).
 const _tileInset =
     Layout.artinyaHeader - Space.s4 - Layout.touch + IconTile.size + Space.s6;
 
-/// Header state error / API key kosong: kotak ikon kiri, tutup kanan.
+/// Header of the error / empty API key states: icon box on the left, close on the right.
 class _TileHeader extends StatelessWidget {
   const _TileHeader({required this.tile, required this.onClose});
 
@@ -1187,7 +1189,7 @@ class _Failed extends StatelessWidget {
   }
 }
 
-/// Kuota gratis abis / akses dicabut (board Kuota AI 08, 12).
+/// Free quota used up / access revoked (board Kuota AI 08, 12).
 class _Quota extends StatelessWidget {
   const _Quota({
     required this.kind,
@@ -1282,10 +1284,10 @@ class _NoKey extends StatelessWidget {
   }
 }
 
-/// "Masih bingung? Bedahin" di akhir isi sheet (board Opsi C · C1, state B3 /
-/// B4): udah pernah dibedah = "Buka bedahan · N bagian". Muncul cuma pas
-/// makna lengkap, fade 150ms kalau abis di-stream. Nunggu jumlah bagian dari
-/// DB dulu biar copy-nya gak ganti di depan mata.
+/// "Masih bingung? Bedahin" at the end of the sheet content (board Opsi C · C1, state
+/// B3 / B4): already broken down = "Buka bedahan · N bagian". Shown only when the meaning
+/// is complete, with a 150ms fade after a stream. Waits for the part count from the DB
+/// first so the copy does not change before the eyes.
 class _BreakdownEntry extends ConsumerWidget {
   const _BreakdownEntry({
     required this.group,

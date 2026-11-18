@@ -14,8 +14,9 @@ import '../../../core/widgets/quota.dart';
 import '../../../core/widgets/sheet.dart';
 import '../view_models/ai_quota_view_model.dart';
 
-/// Permintaan "Pakai key sendiri" dari layar kuota abis / dicabut: Pengaturan
-/// buka mode Key sendiri dengan field key fokus (board Kuota AI, Aturan).
+/// "Pakai key sendiri" request from the quota-exhausted / revoked screen:
+/// Settings opens Key sendiri mode with the key field focused (board Kuota AI,
+/// Aturan).
 class OwnKeyRequest extends Notifier<int> {
   @override
   int build() => 0;
@@ -27,8 +28,8 @@ final ownKeyRequestProvider = NotifierProvider<OwnKeyRequest, int>(
   OwnKeyRequest.new,
 );
 
-/// Dari kartu kuota abis / dicabut ke Pengaturan → AI, mode Key sendiri.
-/// [closeSheet]: tutup sheet tempat kartunya dulu (Artinya, intip).
+/// From the quota-exhausted / revoked card to Settings → AI, Key sendiri mode.
+/// [closeSheet]: closes the sheet hosting the card (Artinya, peek).
 void openOwnKeySettings(
   BuildContext context,
   WidgetRef ref, {
@@ -84,7 +85,7 @@ class _SheetQuotaMeter extends ConsumerWidget {
       QuotaMeter(data: quotaMeterData(ref, source: AiSource.subsidy));
 }
 
-/// Isi meter kuota dari provider (dipakai pelat Ex libris + sheet).
+/// Quota meter content from the provider (used by the Ex libris plate + sheet).
 QuotaMeterData quotaMeterData(WidgetRef ref, {required AiSource source}) {
   if (source == AiSource.own) return const QuotaMeterOwnKey();
   final quota = ref.watch(aiQuotaProvider);
@@ -105,7 +106,7 @@ QuotaMeterData quotaMeterData(WidgetRef ref, {required AiSource source}) {
   };
 }
 
-/// Board Kuota AI 06–07. Hasil = id model yang dipilih.
+/// Board Kuota AI 06–07. Result = the chosen model id.
 Future<String?> showModelPickerSheet(
   BuildContext context, {
   required AiSource source,

@@ -50,7 +50,7 @@ class ChatContextCard extends StatefulWidget {
   });
   final ChatQuote quote;
 
-  /// "Buku II · bagian 1".
+  /// Returns the quote location, e.g. "Buku II · bagian 1".
   String where(BuildContext context) {
     final paragraph = context.l10n.chatParagraph(
       quote.anchors.first.paragraphIndex + 1,
@@ -61,7 +61,7 @@ class ChatContextCard extends StatefulWidget {
 
   final VoidCallback? onRead;
 
-  /// Tipografi Aa; kosong = default Aa.
+  /// Aa typography; null uses the default.
   final ReaderTypography? typo;
   final int collapseOn;
   @override

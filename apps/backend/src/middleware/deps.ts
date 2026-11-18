@@ -4,9 +4,9 @@ import { createDb } from "../db/client";
 import type { AppEnv } from "../env";
 
 /**
- * Dependency per request di `c.var` (`db` Drizzle, `openrouter`), dirakit
- * sekali di sini, bukan di tiap handler. Murah: cuma objek pembungkus, belum
- * ada query / subrequest.
+ * Per-request dependencies on `c.var` (Drizzle `db`, `openrouter`), assembled
+ * once here instead of in every handler. Cheap: just wrapper objects, no
+ * query or subrequest yet.
  */
 export const deps = createMiddleware<AppEnv>(async (c, next) => {
   c.set("db", createDb(c.env.DB));

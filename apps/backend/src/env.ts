@@ -5,9 +5,9 @@ export type SessionUser = { id: string; name: string; email: string; image: stri
 
 export type AppEnv = {
   Bindings: Env;
-  /** `db` + `openrouter` dari middleware `deps`, `user` dari `requireSession`. */
+  /** `db` + `openrouter` from the `deps` middleware, `user` from `requireSession`. */
   Variables: { requestId: string; user: SessionUser; db: Db; openrouter: OpenRouterAdmin };
 };
 
-/** Saklar darurat di `vars` (docs/backend.md, Request pipeline and API conventions). */
+/** Kill switches in `vars` (docs/backend.md, Request pipeline and API conventions). */
 export type FeatureFlag = "SYNC_ENABLED" | "BACKUP_ENABLED" | "AI_KEY_ENABLED";

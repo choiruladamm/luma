@@ -4,10 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
-/// File EPUB & cover di `Documents/books/` dan `Documents/covers/`.
+/// Locates EPUB and cover files in `Documents/books/` and `Documents/covers/`.
 ///
-/// DB cuma nyimpen nama file; path absolut dirakit di sini tiap kali, soalnya
-/// container app iOS bisa pindah tiap update / install ulang.
+/// The DB stores only file names; absolute paths are rebuilt here every time
+/// because the iOS app container can move on each update or reinstall.
 class FileStorage {
   FileStorage(this.root);
 
@@ -36,7 +36,7 @@ class FileStorage {
   Future<File> writeCover(String coverName, List<int> bytes) =>
       cover(coverName).writeAsBytes(bytes, flush: true);
 
-  /// Hapus file buku & cover-nya. File yang udah gak ada dilewatin.
+  /// Deletes a book file and its cover, skipping files that are already gone.
   Future<void> deleteBookFiles({String? fileName, String? coverName}) async {
     for (final f in [
       if (fileName != null) book(fileName),
@@ -46,8 +46,8 @@ class FileStorage {
     }
   }
 
-  // Nama dari DB (atau dari backup yang di-restore) gak boleh nyasar keluar
-  // folder lewat "../" atau path absolut.
+  // Names from the DB (or a restored backup) must not escape the folder via
+  // "../" or an absolute path.
   static String _name(String name) {
     if (name.isEmpty ||
         name == '.' ||
@@ -59,7 +59,7 @@ class FileStorage {
   }
 }
 
-/// Di-override di `main()` setelah [FileStorage.open].
+/// Provides the [FileStorage]; `main()` overrides it after [FileStorage.open].
 final fileStorageProvider = Provider<FileStorage>(
   (ref) => throw UnimplementedError('override with FileStorage.open()'),
 );

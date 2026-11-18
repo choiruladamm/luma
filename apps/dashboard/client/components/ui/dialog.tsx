@@ -5,7 +5,7 @@ import { IconButton } from "./button";
 import { Icon, type IconName } from "./icons";
 
 /**
- * Komponen 1, Dialog: width 480, radius 28, sheet shadow over an ink scrim. Native <dialog>
+ * Design component 1, Dialog: width 480, radius 28, sheet shadow over an ink scrim. Native <dialog>
  * with showModal() gives the focus trap, inert background, and Esc-to-close. Below 768px it is
  * a bottom sheet instead: full width, top corners only, a grabber, slides up, scrolls when tall,
  * and keeps clear of the home indicator.

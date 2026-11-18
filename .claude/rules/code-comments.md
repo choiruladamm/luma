@@ -45,4 +45,4 @@ Comments are English, written as complete sentences. Default to no comment: add 
 
 Files hashed by the chat eval guards (`sourceHashes` in `apps/mobile/test/fixtures/book_chat_{heldout_protocol_v1,validation2_protocol,validation3_protocol}.json`) change only together with a re-freeze: see `docs/llm-evals.md`, Re-freeze the eval guards.
 
-When you edit a file, fix or delete the comments your change made stale.
+When you edit a file, fix or delete the comments your change made stale. `make comments-check` (also run by a hook on every edit) flags non-English comments, history phrasing, and stray issue numbers.

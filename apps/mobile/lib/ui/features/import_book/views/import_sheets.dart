@@ -18,8 +18,8 @@ import '../../../core/widgets/buttons.dart';
 import '../../../core/widgets/sheet.dart';
 import '../view_models/import_view_model.dart';
 
-/// Board 13: "Lagi ngebongkar EPUB...". Ditutup sama listener di rak begitu
-/// state-nya bukan [ImportProcessing] lagi.
+/// Board 13: "Lagi ngebongkar EPUB...". Closed by the shelf listener once the
+/// state is no longer [ImportProcessing].
 class ImportProgressSheet extends ConsumerWidget {
   const ImportProgressSheet({super.key});
 
@@ -69,8 +69,8 @@ class ImportProgressSheet extends ConsumerWidget {
               ),
             ],
           ),
-          // Angka + bar nyusul dari nilai sebelumnya; "Kurangi gerakan" nyala =
-          // loncat langsung, persen tetep muncul.
+          // The number + bar catch up from the previous value; with Reduce Motion on =
+          // jump directly, the percent still shows.
           Semantics(
             value: '${(state.progress * 100).round()}%',
             child: ExcludeSemantics(
@@ -158,7 +158,7 @@ class _Step extends StatelessWidget {
                     color: c.muted,
                     shape: BoxShape.circle,
                   ),
-                  // Center: tanpa ini ikon dipaksa tight 22×22 sama SizedBox.
+                  // Center: without it the SizedBox forces the icon to a tight 22×22.
                   child: Center(
                     child: AppIcon(AppIcons.check, size: 12, color: c.ink),
                   ),
@@ -186,7 +186,7 @@ class _Step extends StatelessWidget {
   }
 }
 
-/// Titik "lagi jalan" yang denyut. Diem kalau iOS "Kurangi gerakan" nyala.
+/// Pulsing "in progress" dot. Still when iOS Reduce Motion is on.
 class _PulseDot extends StatefulWidget {
   const _PulseDot();
 
@@ -239,7 +239,7 @@ class _PulseDotState extends State<_PulseDot>
   }
 }
 
-/// Board 15: buku yang sama udah ada di rak.
+/// Board 15: the same book is already on the shelf.
 class ImportDuplicateSheet extends ConsumerWidget {
   const ImportDuplicateSheet({
     super.key,
@@ -333,7 +333,7 @@ class ImportDuplicateSheet extends ConsumerWidget {
   }
 }
 
-/// Board 16–18: file rusak, bukan EPUB, atau dikunci DRM.
+/// Boards 16–18: corrupt file, not an EPUB, or DRM-locked.
 class ImportFailedSheet extends StatelessWidget {
   const ImportFailedSheet({
     super.key,
@@ -378,8 +378,8 @@ class ImportFailedSheet extends StatelessWidget {
   }
 }
 
-/// Gagal import PDF: password, scan / hampir tanpa teks, rusak, kosong, IO.
-/// Sheet-nya sama kayak [ImportFailedSheet]; cuma copy yang beda.
+/// PDF import failure: password, scan / almost no text, corrupt, empty, IO.
+/// The sheet is the same as [ImportFailedSheet]; only the copy differs.
 class ImportPdfFailedSheet extends StatelessWidget {
   const ImportPdfFailedSheet({
     super.key,
@@ -401,7 +401,7 @@ class ImportPdfFailedSheet extends StatelessWidget {
         l10n.importPdfPasswordTitle,
         l10n.importPdfPasswordBody,
       ),
-      // Halaman kosong belum bukti pasti scan: copy-nya hati-hati.
+      // An empty page isn't definite proof of a scan: careful copy.
       PdfImportError.scan => (
         HugeIcons.strokeRoundedFileRemove,
         l10n.importPdfScanTitle,
@@ -507,7 +507,7 @@ class _FailedFrame extends StatelessWidget {
   }
 }
 
-/// Board Import Markdown 6a–6d: file kosong, header salah, atau gak kebaca.
+/// Board Import Markdown 6a–6d: empty file, wrong header, or unreadable.
 class ImportMarkdownFailedSheet extends StatelessWidget {
   const ImportMarkdownFailedSheet({
     super.key,
@@ -595,7 +595,7 @@ class _Heading extends StatelessWidget {
   final String title;
   final String body;
 
-  /// Contoh format (mono) + lanjutan kalimat di belakang [body].
+  /// Format example (mono) + the sentence continuing after [body].
   final String? code, tail;
 
   @override
@@ -656,9 +656,9 @@ class _Tile extends StatelessWidget {
   );
 }
 
-/// Teks sheet error Markdown (board 6a–6d).
+/// Text of the Markdown error sheet (board 6a–6d).
 extension ImportMarkdownFailedCopy on ImportMarkdownFailed {
-  /// [code] + [tail] nyambung di belakang [body] (contoh format, mono).
+  /// [code] + [tail] continue after [body] (format example, mono).
   ({String title, String body, String chip, String? code, String? tail}) copy(
     AppLocalizations l10n,
   ) {

@@ -4,9 +4,9 @@ import '../../../../domain/models/book_search.dart';
 
 enum ReaderSheet { toc, menu, aa }
 
-/// Mode Cari kata di reader: hasil yang dibuka ([hits] urut baca, tiap hit
-/// bareng judul babnya), [index] hasil yang lagi tampil, [back] posisi baca
-/// sebelum nyari.
+/// Cari kata mode in the reader: the opened results ([hits] in reading order, each
+/// hit together with its chapter title), [index] the result being shown, [back]
+/// the reading position before searching.
 class SearchMode {
   SearchMode({
     required this.raw,
@@ -24,8 +24,8 @@ class SearchMode {
   int index = 0;
 }
 
-/// Yang perlu diketahui [_ChapterText] soal mode cari: kata apa yang
-/// di-stabilo, dan paragraf mana yang lagi dibuka.
+/// What [_ChapterText] needs to know about search mode: which word is highlighted,
+/// and which paragraph is open.
 class SearchMarks {
   const SearchMarks({
     required this.query,
@@ -38,5 +38,5 @@ class SearchMarks {
   final int paragraph;
 }
 
-/// Titik di chapter: indeks paragraf + bagiannya yang udah lewat garis atas.
+/// A point in a chapter: paragraph index + the part of it already past the top line.
 typedef Spot = ({int index, double offset});

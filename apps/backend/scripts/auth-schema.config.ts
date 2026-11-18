@@ -1,5 +1,5 @@
-// Config khusus `npx auth@latest generate` (CLI butuh instance statis).
-// Plugin dan opsi yang mempengaruhi schema harus sama dengan src/auth/auth.ts.
+// Config for `npx auth@latest generate`, whose CLI needs a static instance.
+// Plugins and options that affect the schema must match src/auth/auth.ts.
 // Jalankan: bunx auth@latest generate --config scripts/auth-schema.config.ts --output src/db/auth-schema.ts -y
 import { drizzleAdapter } from "@better-auth/drizzle-adapter";
 import { betterAuth } from "better-auth";

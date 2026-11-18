@@ -6,7 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/models/backup.dart';
 import 'backend_client.dart';
 
-/// Satu snapshot DB di cloud (`GET /v1/backups`).
+/// Represents a cloud database snapshot (`GET /v1/backups`).
 class CloudBackup {
   const CloudBackup({
     required this.id,
@@ -45,14 +45,15 @@ class CloudBackup {
   );
 }
 
-/// Panggilan `/v1/files/*` dan `/v1/backups*` (docs/backend.md, Files and cloud backups).
-/// Kode error `STORAGE_FULL` = kuota cloud habis.
+/// Calls `/v1/files/*` and `/v1/backups*` (docs/backend.md, Files and cloud backups).
+///
+/// The `STORAGE_FULL` error means the cloud quota is exhausted.
 class CloudBackupService {
   CloudBackupService(this._client);
 
   final BackendClient _client;
 
-  /// Batas nama per panggilan `files/missing` di server.
+  /// Maximum names the server accepts per `files/missing` call.
   static const missingBatch = 1000;
 
   Future<List<String>> missing(String token, List<String> names) async {
@@ -76,8 +77,9 @@ class CloudBackupService {
     onProgress: onProgress,
   );
 
-  /// [zip] = manifest + `luma.sqlite`; manifest-nya juga dikirim lewat header
-  /// supaya daftar snapshot gak perlu buka zip.
+  /// Uploads [zip], which contains a manifest and `luma.sqlite`.
+  ///
+  /// The manifest is also sent in a header so listing snapshots need not open the zip.
   Future<CloudBackup> uploadSnapshot(
     String token,
     File zip,
@@ -93,7 +95,7 @@ class CloudBackupService {
     ),
   );
 
-  /// Terbaru dulu.
+  /// Returns snapshots newest first.
   Future<List<CloudBackup>> list(String token) async {
     final res = await _client.request('GET', '/v1/backups', token: token);
     return [

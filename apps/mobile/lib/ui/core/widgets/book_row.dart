@@ -17,9 +17,9 @@ import 'buttons.dart';
 import 'chapter_slots.dart';
 import 'tag.dart';
 
-/// Baris buku di tampilan list (board "Rak · tampilan list"): cover mini
-/// 48×72, judul 1 baris, penulis, progres. State-nya sama kayak [BookCard]:
-/// progres, "Baru", "Kelar!", lagi diimport. Tinggi [Layout.rowHeight].
+/// Book row in list view (board "Rak · tampilan list"): 48×72 mini cover,
+/// 1-line title, author, progress. Same states as [BookCard]: progress, "Baru",
+/// "Kelar!", being imported. Height [Layout.rowHeight].
 class BookRow extends StatelessWidget {
   const BookRow({
     super.key,
@@ -34,7 +34,7 @@ class BookRow extends StatelessWidget {
     this.onLongPress,
   }) : importing = false;
 
-  /// Lagi diimport: nama file dulu, belum bisa di-tap / ditekan lama.
+  /// Being imported: shows the filename, can't be tapped / long-pressed yet.
   const BookRow.importing({super.key, required String fileName})
     : title = fileName,
       author = null,
@@ -56,8 +56,8 @@ class BookRow extends StatelessWidget {
   final bool opened;
   final bool finished;
 
-  /// Buku Markdown: baris ke-2 nulis bab yang ada (kalau gak ada penulis),
-  /// bar jadi strip bab, label "N bab".
+  /// Markdown book: the 2nd line shows the chapters present (when there's no
+  /// author), the bar becomes a chapter strip, label "N bab".
   final MarkdownShelf? markdown;
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
@@ -86,7 +86,7 @@ class BookRow extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Baris dikunci 84: teks gak ikut Dynamic Type.
+                  // Row fixed at 84: text ignores Dynamic Type.
                   Text(
                     title,
                     textScaler: TextScaler.noScaling,
@@ -128,7 +128,7 @@ class BookRow extends StatelessWidget {
     return Semantics(
       button: true,
       label: markdown?.semanticLabel(title, context.l10n) ?? title,
-      // Buku Markdown: satu label utuh, strip + label gak dibaca terpisah.
+      // Markdown book: one single label; strip + label aren't read separately.
       excludeSemantics: markdown != null,
       onTap: onTap,
       onLongPress: onLongPress,
@@ -140,7 +140,7 @@ class BookRow extends StatelessWidget {
                 TapGestureRecognizer.new,
                 (r) => r.onTap = onTap,
               ),
-          // Sama kayak kartu grid: tahan 350 ms.
+          // Same as the grid card: hold 350 ms.
           LongPressGestureRecognizer:
               GestureRecognizerFactoryWithHandlers<LongPressGestureRecognizer>(
                 () => LongPressGestureRecognizer(
@@ -215,7 +215,7 @@ class BookRow extends StatelessWidget {
     );
   }
 
-  /// Strip bab + "N bab"; belum dibuka: "Baru" gantiin label, strip tetap.
+  /// Chapter strip + "N bab"; not yet opened: "Baru" replaces the label, strip stays.
   Widget _markdownStatus(BuildContext context, MarkdownShelf md) {
     final c = context.stabilo;
     return Row(
@@ -283,7 +283,7 @@ class _Bar extends StatelessWidget {
   }
 }
 
-/// Kotak putus-putus 48×72 selama import.
+/// Dashed 48×72 box during import.
 class _ImportingCover extends StatelessWidget {
   const _ImportingCover();
 

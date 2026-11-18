@@ -58,7 +58,7 @@ describe("POST /v1/ai/key", () => {
     const or = fakeOpenRouter();
     const { token } = await signUp();
     const first = (await (await exports.default.fetch(postKey(token))).json()) as { key: string };
-    or.keys.delete("hash-1"); // dicabut di OpenRouter → app dapat 401
+    or.keys.delete("hash-1"); // revoked on OpenRouter → the app gets 401
 
     const res = await exports.default.fetch(postKey(token, aiKeyRotate.request.body));
     const body = (await expectContract(res, aiKeyRotate)) as { key: string };

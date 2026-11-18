@@ -226,7 +226,7 @@ class FakeOpenRouter implements OpenRouterService {
 
   bool? keyOk = true;
 
-  /// Kalau diisi, checkKey nunggu sampai selesai (cek yang lagi jalan).
+  /// When set, checkKey waits for this completer before it returns.
   Completer<void>? gate;
   final checked = <String>[];
   final calls =
@@ -249,8 +249,8 @@ class FakeOpenRouter implements OpenRouterService {
     return keyOk!;
   }
 
-  /// Satu per request Bedahin, urut (test yang ngatur jalannya stream). Abis
-  /// = jawaban valid satu bagian sekaligus.
+  /// One per Bedahin request, in call order (the test drives the stream).
+  /// Each closed controller is a complete, valid answer in one section.
   final breakdowns = <StreamController<String>>[];
   final breakdownCalls = <BreakdownInput>[];
 
@@ -298,10 +298,10 @@ class FakeOpenRouter implements OpenRouterService {
     );
   }
 
-  /// Kalau diisi, explainStream ngalirin potongan dari sini (test yang
-  /// ngatur jalannya stream). Kalau nggak, jawaban bersection lengkap
-  /// sekaligus, isinya sama kayak [explain]. Sengaja bukan `async*`: error
-  /// lewat `yield*` gak pernah nyampe di bawah `fakeAsync`.
+  /// When set, explainStream emits chunks from here (the test drives the stream).
+  /// When unset, it emits the full answer at once as complete sections, same as
+  /// [explain]. Deliberately not `async*`: an error thrown through `yield*`
+  /// never surfaces under `fakeAsync`.
   StreamController<String>? stream;
   final streamCalls = <List<String>>[];
   final streamBooks = <AiBook?>[];
@@ -333,8 +333,8 @@ class FakeOpenRouter implements OpenRouterService {
   }
 }
 
-/// Layar Bedahin tanpa DB/LLM: mulai dari [initial], tes nge-[push] state.
-/// [builds] naik tiap provider dibikin ulang (Coba lagi = `invalidate`).
+/// Bedahin screen without DB/LLM: starts from [initial]; tests drive state via [push].
+/// [builds] counts provider rebuilds; the "Coba lagi" (retry) button calls `invalidate`.
 class FakeBreakdown extends BreakdownStream {
   FakeBreakdown(super.group);
 
@@ -358,7 +358,7 @@ class FakeBreakdown extends BreakdownStream {
   void push(BreakdownState next) => state = next;
 }
 
-/// Cari kata without a database: serves [results] by trimmed, lower-cased
+/// Word search without a database: serves [results] by trimmed, lower-cased
 /// input, keeps [recents] in memory, logs every [searches].
 class FakeBookSearch implements BookSearchRepository {
   FakeBookSearch({

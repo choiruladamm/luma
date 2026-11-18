@@ -1,15 +1,15 @@
-/// Font bacaan di Aa: Jelas (Atkinson), Kayak buku (Literata), Bawaan sistem.
+/// Reading font in Aa: Jelas (Atkinson), Kayak buku (Literata), System default.
 enum ReadingFont { clear, book, system }
 
 enum LineSpacing { tight, normal, loose }
 
 enum TextMargin { narrow, normal, wide }
 
-/// Tema app: Terang / Gelap / Ikut sistem.
+/// App theme: Terang / Gelap / Ikut sistem.
 enum AppTheme { light, dark, system }
 
-/// Setelan bacaan dari sheet Aa (board 07 Atur bacaan, 02 Tipografi). Disimpen
-/// di tabel `settings` biar ikut backup; per perangkat, bukan per buku.
+/// Reading settings from the Aa sheet (board 07 Atur bacaan, 02 Tipografi). Stored
+/// in the `settings` table so they are included in backups; per device, not per book.
 class ReaderPrefs {
   const ReaderPrefs({
     this.sizeStep = defaultSizeStep,
@@ -21,27 +21,27 @@ class ReaderPrefs {
     this.showProgressLine = true,
   });
 
-  /// 7 step ukuran huruf, default 18,5.
+  /// 7 font-size steps, default 18.5.
   static const sizes = [16.0, 17.0, 18.0, 18.5, 20.0, 22.0, 24.0];
   static const defaultSizeStep = 3;
 
-  /// Indeks ke [sizes].
+  /// Index into [sizes].
   final int sizeStep;
   final ReadingFont font;
   final LineSpacing spacing;
   final TextMargin margin;
   final AppTheme theme;
 
-  /// Status bar ngumpet bareng kapsul baca.
+  /// The status bar hides together with the reading capsule.
   final bool hideStatusBar;
 
-  /// Garis progres 2pt di bawah layar baca.
+  /// 2pt progress line at the bottom of the reading screen.
   final bool showProgressLine;
 
   double get fontSize => sizes[sizeStep];
 
-  /// Jarak baris mode terang; gelap +0,05 (lihat `StabiloType.forBrightness`).
-  /// Literata butuh +0,05 lagi (board: 1,7 di "Pas").
+  /// Line spacing in light mode; dark adds 0.05 (see `StabiloType.forBrightness`).
+  /// Literata needs another +0.05 (board: 1.7 at "Pas").
   double get lineHeight =>
       switch (spacing) {
         LineSpacing.tight => 1.5,
@@ -50,7 +50,7 @@ class ReaderPrefs {
       } +
       (font == ReadingFont.book ? 0.05 : 0);
 
-  /// Margin kiri-kanan teks bacaan.
+  /// Left/right margin of the reading text.
   double get marginWidth => switch (margin) {
     TextMargin.narrow => 16,
     TextMargin.normal => 24,
@@ -75,7 +75,7 @@ class ReaderPrefs {
     showProgressLine: showProgressLine ?? this.showProgressLine,
   );
 
-  // Kunci di tabel settings. Nilai enum disimpen pake namanya.
+  // Keys in the settings table. Enum values are stored by name.
   static const _size = 'reader.size';
   static const _font = 'reader.font';
   static const _spacing = 'reader.spacing';
@@ -94,7 +94,7 @@ class ReaderPrefs {
     _showProgressLine: '$showProgressLine',
   };
 
-  /// Nilai yang gak dikenal (backup lama/rusak) balik ke default.
+  /// An unknown value (old/corrupt backup) falls back to the default.
   factory ReaderPrefs.fromSettings(Map<String, String> s) {
     T pick<T extends Enum>(List<T> values, String key, T fallback) =>
         values.where((v) => v.name == s[key]).firstOrNull ?? fallback;

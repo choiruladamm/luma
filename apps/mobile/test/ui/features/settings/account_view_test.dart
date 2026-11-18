@@ -11,7 +11,7 @@ import 'package:luma/data/services/ai_key_service.dart';
 import 'package:luma/ui/features/settings/view_models/ai_quota_view_model.dart';
 import 'package:luma/ui/features/settings/views/account_view.dart';
 
-/// Sesi palsu: catat Keluar / Hapus akun tanpa backend.
+/// Fake session: records the "Keluar" (sign out) and "Hapus akun" (delete account) actions without a backend.
 class FakeAuthController extends AuthController {
   FakeAuthController(this.initial, {this.deleteFails = false});
 

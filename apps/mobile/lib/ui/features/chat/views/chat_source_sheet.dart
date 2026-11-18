@@ -45,13 +45,13 @@ class ChatSourceSheet extends ConsumerWidget {
     final source = location?.source ?? snapshot;
     final available = location?.available ?? false;
     final pad = Layout.sheetPadding;
-    // Kutipan + konteks ikut Aa, termasuk margin kiri-kanan persis Aa.
+    // The quote and its context follow Aa, including its exact horizontal margins.
     final typo = ReaderTypography(
       ref.watch(readerPrefsProvider).value ?? const ReaderPrefs(),
       Theme.of(context).brightness,
     );
-    // Konteks di luar blok kutipan: abu di terang, teks penuh di gelap (ink2
-    // kebaca terlalu pudar di latar sheet gelap).
+    // Context outside the quote block: grey in light mode, full ink in dark mode
+    // (ink2 reads too faint on the dark sheet background).
     final surround = Theme.of(context).brightness == Brightness.dark
         ? context.stabilo.ink
         : context.stabilo.ink2;

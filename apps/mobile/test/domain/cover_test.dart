@@ -7,7 +7,7 @@ double fake(String text, double size, double width) =>
 
 void main() {
   test('coverIndex matches the board colours', () {
-    // 0 kuning · 1 pink · 2 peach · 3 mint · 4 periwinkle · 5 lilac · 6 langit · 7 sage
+    // 0 yellow · 1 pink · 2 peach · 3 mint · 4 periwinkle · 5 lilac · 6 sky · 7 sage
     expect(coverIndex('Pride and Prejudice'), 1);
     expect(coverIndex('Frankenstein'), 5);
     expect(coverIndex('The Adventures of Sherlock Holmes'), 7);

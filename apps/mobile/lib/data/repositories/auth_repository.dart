@@ -4,9 +4,9 @@ import '../services/auth_service.dart';
 import '../services/backend_client.dart';
 import '../services/session_store.dart';
 
-/// Hasil login. [switchedAccount] true = HP ini terakhir dipakai akun lain:
-/// sesi BELUM disimpan, pemanggil konfirmasi dulu (board Akun 10) lalu
-/// [AuthRepository.commit] atau [AuthRepository.discard].
+/// Result of a sign-in. [switchedAccount] true means this phone last belonged to a
+/// different account: the session is NOT stored yet, and the caller confirms first
+/// (board Akun 10), then calls [AuthRepository.commit] or [AuthRepository.discard].
 class SignInResult {
   const SignInResult({
     required this.session,
@@ -17,22 +17,22 @@ class SignInResult {
   final AuthSession session;
   final bool switchedAccount;
 
-  /// Email akun lama di HP ini (dialog ganti akun).
+  /// Email of the previous account on this phone (shown in the account-switch dialog).
   final String? previousEmail;
 
   AuthUser get user => session.user;
 }
 
-/// Sumber kebenaran sesi di HP: token di secure storage, login wajib
-/// (docs/backend.md, Authentication and accounts). Cek "sudah login" gak memanggil server,
-/// jadi app kebuka offline.
+/// Source of truth for the session on the phone: the token lives in secure storage
+/// and sign-in is required (docs/backend.md, Authentication and accounts). The
+/// "already signed in" check never calls the server, so the app opens offline.
 class AuthRepository {
   AuthRepository(this._service, this._store);
 
   final AuthService _service;
   final SessionStore _store;
 
-  /// Batas panggilan hapus akun saat server balas "masih membersihkan".
+  /// Maximum account-deletion calls while the server keeps answering "still cleaning up".
   static const deleteAttempts = 5;
 
   Future<bool> hasSession() async => await _store.readToken() != null;
@@ -69,32 +69,33 @@ class AuthRepository {
     await _service.signInGoogle(idToken: idToken, inviteCode: inviteCode),
   );
 
-  /// Simpan sesi setelah ganti akun dikonfirmasi.
+  /// Stores the session once the account switch is confirmed.
   Future<void> commit(AuthSession session) async {
     await _store.writeToken(session.token);
     await _store.writeLastUserId(session.user.id);
     await _store.writeLastUserEmail(session.user.email);
   }
 
-  /// Ganti akun dibatalin: sesi baru dibuang di server (best effort), HP tetap
-  /// milik akun lama.
+  /// Cancels an account switch: the new session is dropped on the server (best
+  /// effort) and the phone stays with the previous account.
   Future<void> discard(AuthSession session) async {
     try {
       await _service.signOut(session.token);
     } on BackendException {
-      // Offline: token baru cuma hidup di server sampai kedaluwarsa.
+      // Offline: the new token only lives on the server until it expires.
     }
   }
 
-  /// User dari server sekalian cek token. 401 dilempar apa adanya: token
-  /// TETAP disimpan supaya app gak kekunci (banner "Login lagi", board Akun 12).
+  /// Fetches the user from the server, which also validates the token. A 401 is
+  /// thrown as is: the token stays stored so the app isn't locked out ("Login lagi"
+  /// banner, board Akun 12).
   Future<AuthUser?> currentUser() async {
     final token = await _store.readToken();
     if (token == null) return null;
     return _service.me(token);
   }
 
-  /// Logout: token lokal selalu dihapus walau server gak kejangkau. Data lokal tetap.
+  /// Signs out: the local token is always deleted, even if the server is unreachable. Local data stays.
   Future<void> signOut() async {
     final token = await _store.readToken();
     await _store.clearToken();
@@ -102,11 +103,11 @@ class AuthRepository {
     try {
       await _service.signOut(token);
     } on BackendException {
-      // Offline / sesi udah mati: cukup token lokal yang hilang.
+      // Offline or session already dead: deleting the local token is enough.
     }
   }
 
-  /// Hapus akun + data server. Sukses → token dan penanda akun terakhir dihapus.
+  /// Deletes the account and its server data. On success the token and the last-account marker are deleted.
   Future<void> deleteAccount() async {
     final token = await _store.readToken();
     if (token == null) return;

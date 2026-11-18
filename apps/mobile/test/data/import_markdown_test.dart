@@ -141,7 +141,7 @@ void main() {
       );
       expect(await db.select(db.paragraphs).get(), hasLength(2));
 
-      // Hasil AI + posisi baca + sesi baca di bab itu.
+      // The AI result, reading position, and reading session in that chapter.
       await db
           .into(db.aiResults)
           .insert(

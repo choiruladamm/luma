@@ -1,25 +1,25 @@
-/// Tahap Bedahin satu grup. Ambang waktunya sama kayak makna cepat.
+/// Stage of one group's Bedahin. Same time thresholds as the quick meaning.
 enum BreakdownPhase {
-  /// Nunggu token pertama.
+  /// Waiting for the first token.
   waiting,
 
-  /// Lagi nulis; bagian yang penandanya udah masuk langsung punya rentang.
+  /// Writing; a section whose marker has arrived already has a range.
   writing,
 
-  /// Lengkap, valid, udah di-cache.
+  /// Complete, valid, cached.
   done,
 
-  /// 15 detik tanpa token. Request tetep jalan.
+  /// 15 seconds without a token. The request keeps running.
   slow,
 
-  /// Putus / mandek di tengah; yang udah masuk tetep ada.
+  /// Dropped / stalled midway; what already arrived stays.
   cut,
 
-  /// Gagal sebelum ada token, atau jawaban gak valid dua kali.
+  /// Failed before any token, or the answer was invalid twice.
   failed,
 }
 
-/// Hasil Bedahin satu grup (docs/llm.md, Bedahin).
+/// Bedahin result for one group (docs/llm.md, Bedahin).
 class Breakdown {
   const Breakdown({
     this.sections = const [],
@@ -28,21 +28,21 @@ class Breakdown {
     this.practice,
   });
 
-  /// 1–6 bagian per langkah argumen, rentangnya urut nutup `K1..Kn`.
+  /// 1–6 sections, one per argument step; their ranges consecutively cover `K1..Kn`.
   final List<BreakdownSection> sections;
 
-  /// Tokoh & istilah. Kosong = blok gak tampil.
+  /// Tokoh & istilah. Empty = the block isn't shown.
   final List<BreakdownTerm> terms;
 
-  /// Nyambung ke. Kosong = blok gak tampil.
+  /// Nyambung ke. Empty = the block isn't shown.
   final List<BreakdownLink> links;
 
-  /// Praktekinnya gini. Null = blok gak tampil.
+  /// Praktekinnya gini. Null = the block isn't shown.
   final String? practice;
 }
 
-/// Satu langkah argumen: kalimat terjemahan `K[from]..K[to]` (mulai 1,
-/// nomornya nyambung lintas paragraf grup).
+/// One argument step: translated sentences `K[from]..K[to]` (starting at 1, numbers
+/// continue across the group's paragraphs).
 class BreakdownSection {
   const BreakdownSection({
     required this.from,
@@ -55,7 +55,7 @@ class BreakdownSection {
   final int from;
   final int to;
 
-  /// Ditampilin cuma kalau bagiannya ≥ 2.
+  /// Shown only when there are ≥ 2 sections.
   final String title;
   final String meaning;
   final String logic;
@@ -71,27 +71,27 @@ class BreakdownTerm {
 
   final String label;
 
-  /// Kata persis di terjemahan, buat sorotan. Null = gak ketemu: istilahnya
-  /// tetep tampil, tanpa sorot.
+  /// The exact words in the translation, for highlighting. Null = not found: the
+  /// term is still shown, without a highlight.
   final String? exact;
   final String explanation;
 
-  /// Kalimat (`K`, mulai 1) pertama yang memuat [exact].
+  /// First sentence (`K`, starting at 1) containing [exact].
   final int? sentence;
 }
 
 class BreakdownLink {
   const BreakdownLink({this.chapter, required this.title, required this.why});
 
-  /// Nomor bab di DAFTAR BAB (`B<n>`, mulai 1, urut `sortOrder`). Null =
-  /// lanjutan: grup berikutnya di bab yang sama.
+  /// Chapter number in the CHAPTER LIST (`B<n>`, starting at 1, in `sortOrder`). Null =
+  /// continuation: the next group in the same chapter.
   final int? chapter;
   final String title;
   final String why;
 }
 
-/// Tujuan kartu Nyambung ke yang di-intip: grup pertama bab [B<n>],
-/// atau grup berikutnya di bab yang sama (lanjutan).
+/// Destination of the previewed Nyambung ke card: the first group of chapter [B<n>],
+/// or the next group in the same chapter (continuation).
 class BreakdownPeek {
   const BreakdownPeek({
     required this.group,
@@ -101,9 +101,9 @@ class BreakdownPeek {
 
   final ({int chapterId, int groupIndex}) group;
 
-  /// Teks asli grup tujuan: selalu ada, lokal.
+  /// The destination group's original text: always present, local.
   final List<String> original;
 
-  /// Terjemahan dari cache makna cepat. Null = belum diartiin.
+  /// Translation from the quick-meaning cache. Null = not explained yet.
   final List<String>? translations;
 }

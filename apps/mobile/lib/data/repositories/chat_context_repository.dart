@@ -24,11 +24,11 @@ import 'chat_index_repository.dart';
 import 'chat_notes_repository.dart';
 import 'chat_snapshot.dart';
 
-/// Token + waktu yang disisakan untuk jawaban akhir sebelum putaran baru.
+/// Tokens and time reserved for the final answer before starting another round.
 const chatAnswerReserveTokens = 40000;
 const chatAnswerReserveTime = Duration(seconds: 45);
 
-/// Perbaikan otomatis maksimal per kiriman untuk output jawaban yang invalid.
+/// Maximum automatic repairs per send when the answer output is invalid.
 const chatMaxRepairs = 2;
 
 /// Each send reads credentials afresh. Document vectors survive in the local DB.
@@ -42,7 +42,7 @@ class ChatContextRepository {
     this.deadline = chatQuestionDeadline,
   });
 
-  /// Budget per kiriman; test memakai angka kecil untuk memaksa partial.
+  /// Token budget per send; tests use small numbers to force partial results.
   final int tokenBudget;
   final Duration deadline;
   final AppDatabase _db;
@@ -77,8 +77,8 @@ class ChatContextRepository {
     return row?.value ?? defaultAiModel;
   }
 
-  /// Context window dari provider (gratis), di-cache per model selama hidup
-  /// repository; gagal → fallback konservatif yang tercatat di ledger.
+  /// Context window reported by the provider (free), cached per model for the
+  /// repository's lifetime; on failure a conservative fallback is used and recorded in the ledger.
   Future<ChatModelInfo> _modelInfo(String model, CancelToken? cancel) async {
     final cached = _models[model];
     if (cached != null) return cached;
@@ -96,8 +96,8 @@ class ChatContextRepository {
 
   /// Document batches may be cached before evidence is frozen. A stale attempt
   /// never sends an answer. Caller owns checkpoint/finalize and stop lifecycle.
-  /// [readingChapterId] = bab yang sedang dibaca saat masuk chat, hanya untuk
-  /// menyelesaikan rujukan "bab ini"/"bab III"; bukan sumber fakta.
+  /// [readingChapterId] is the chapter being read when the chat was opened. It only
+  /// resolves references like "this chapter" or "chapter III" and is never a source of facts.
   Future<PreparedChat?> prepare(
     ChatTurn target, {
     CancelToken? cancel,
@@ -250,7 +250,7 @@ class ChatContextRepository {
       Future<bool> guard() => _chat.validateRetrieval(target.attemptRef, []);
       final current = input.session.book;
       final toc = input.toc;
-      // Jawaban akhir harus muat context model: sumber dan history mengikuti.
+      // The final answer must fit the model's context window; sources and history shrink to match.
       final answerInput = [
         chatPromptBytes,
         budget.inputBytesFor(chatAnswerMaxTokens),
@@ -296,7 +296,7 @@ class ChatContextRepository {
       final saved = input.turn.exploration == null
           ? null
           : ChatExploration.parse(input.turn.exploration!);
-      // Urutan [ids] = urutan baca (bab dari cache di depan).
+      // The order of [ids] is the reading order (cached chapters first).
       List<ChatSource> scopedWindows(List<int> ids) {
         final scoped = [
           for (final id in ids)
@@ -341,7 +341,7 @@ class ChatContextRepository {
               chapterIds: saved.chapterIds,
             );
       _check(cancel);
-      // Nomor bab yang ada di beberapa Book tidak boleh ditebak model.
+      // The model must not guess a chapter number that exists in several Books.
       final ambiguous = rawPlan.strategy == ChatSearchStrategy.chapters
           ? chatAmbiguousSections(
               input.turn.question,
@@ -363,8 +363,8 @@ class ChatContextRepository {
       ChatExploration? exploration;
       var noteSourceIds = <String, String>{};
       var cachedChapterCount = 0;
-      // Bab isi = semua bab minus front/back matter dari planner (skip_ids);
-      // subset chapter_ids eksplisit tetap dihormati.
+      // Content chapters = all chapters minus the planner's front/back matter
+      // (skip_ids); an explicit chapter_ids subset is still honored.
       final content = [
         for (final c in toc)
           if (!plan.skipIds.contains(c.id)) c.id,
@@ -382,7 +382,7 @@ class ChatContextRepository {
         ...ids.take(4).map(labelOfId),
         if (ids.length > 4) '+${ids.length - 4} lagi',
       ].join(', ');
-      // Langkah AI: dicatat tanpa request tambahan.
+      // Langkah AI steps are recorded without an extra request.
       if (plan.needsClarification) {
         onStep?.call(ChatStep.plan('tanya balik dulu'));
       } else if (plan.strategy == ChatSearchStrategy.offTopic) {
@@ -409,9 +409,9 @@ class ChatContextRepository {
       if (!plan.needsClarification &&
           plan.strategy.reads &&
           scopedWindows(requested).isNotEmpty) {
-        // Seluruh buku: bab yang catatannya masih cocok di cache tidak dibaca
-        // ulang; urutan baca menaruh bab cache di depan supaya cursor tetap
-        // prefix. Continuation memakai urutan yang tersimpan di checkpoint.
+        // Whole book: chapters whose cached notes still match are not re-read. The
+        // reading order puts cached chapters first so the cursor stays a prefix.
+        // A continuation uses the order stored in the checkpoint.
         final chapterManifests = <int, String>{
           for (final id in requested)
             id: chatWindowManifest(scopedWindows([id])),
@@ -567,8 +567,8 @@ class ChatContextRepository {
               var bytes = 0;
               for (final window in windows.skip(cursor)) {
                 final size = utf8.encode(jsonEncode(_source(window))).length;
-                // Batch berhenti di batas bab begitu cukup penuh: satu label
-                // per batch dan catatan rapi per bab.
+                // A batch stops at a chapter boundary once it is full enough: one label per
+                // batch and tidy notes per chapter.
                 if (batch.isNotEmpty &&
                     (bytes + size > batchBytes ||
                         batch.length == chatGlobalBatchWindows ||
@@ -649,9 +649,8 @@ class ChatContextRepository {
                   batch: true,
                 );
               } on FormatException catch (e) {
-                // Catatan kepanjangan/terpotong/ID asing: ulang sekali per
-                // batch dalam ledger yang sama; ini langkah baca, bukan jatah
-                // perbaikan jawaban.
+                // Overlong, truncated, or foreign-ID notes are retried once per batch within the
+                // same ledger; this is a read step, not part of the answer-repair allowance.
                 if (budget.batchRetries >= chatMaxBatchRetries) rethrow;
                 budget.batchRetries++;
                 onStep?.call(ChatStep.retry(labelOf(g.batch) ?? 'bab'));
@@ -707,7 +706,7 @@ class ChatContextRepository {
                   detail: '${fresh.length} catatan',
                 ),
               );
-              // Bab yang baru selesai dibaca masuk cache (seluruh buku saja).
+              // A chapter that was just read goes into the cache (whole-book questions only).
               if (plan.strategy == ChatSearchStrategy.global) {
                 for (final entry in chapterLastIndex.entries) {
                   if (entry.value < work.cursor && cachedIds.add(entry.key)) {
@@ -734,7 +733,7 @@ class ChatContextRepository {
               );
             }
           }
-          // Alasan berhenti ikut tersimpan supaya Lanjutkan/UI membacanya.
+          // The stop reason is stored too, so Lanjutkan and the UI can read it.
           if (!work.complete &&
               work.stopReason != null &&
               !await _chat.saveExploration(target.attemptRef, work)) {
@@ -781,7 +780,7 @@ class ChatContextRepository {
           plan.strategy != ChatSearchStrategy.offTopic &&
           input.chunks.isNotEmpty) {
         final searched = <String>{...?saved?.searchedQueries};
-        // Bab yang boleh jadi kandidat; tersimpan di checkpoint untuk Lanjutkan.
+        // Chapters that may be candidates; stored in the checkpoint for Lanjutkan.
         final allowedChapters = plan.chapterIds.isEmpty
             ? content
             : plan.chapterIds;
@@ -856,8 +855,8 @@ class ChatContextRepository {
             onIndexProgress,
             budget,
           );
-          // Front/back matter (Endnotes, Imprint) keluar dari kandidat kalau
-          // planner membatasi bab isi; index embedding tetap seluruh buku.
+          // Front/back matter (Endnotes, Imprint) leaves the candidates when the planner
+          // restricts to content chapters; the embedding index still covers the whole book.
           final allowed = allowedChapters.toSet();
           final found = [
             for (final s in chatFuseRanks(rankings, quoteSources: input.quoted))
@@ -918,8 +917,8 @@ class ChatContextRepository {
             budget,
             guard,
           );
-          // Putaran lanjutan menambah bukti; pilihan putaran sebelumnya tidak
-          // hilang hanya karena query baru tidak menemukan apa pun.
+          // A later round adds evidence; the previous round's picks aren't dropped just
+          // because the new query finds nothing.
           selected = fitChatSources(
             _uniqueSources([
               ...parseChatSelection(raw, candidates, input.quoted),
@@ -1251,8 +1250,8 @@ class ChatContextRepository {
         );
         final vectors = cached.vectors;
         onProgress?.call(vectors.length, documents.length);
-        // Sampai tiga batch dokumen dikirim bersamaan; disimpan urut ordinal
-        // supaya prefix index tetap valid saat cancel/gagal di tengah.
+        // Up to three document batches are sent at once, stored in ordinal order so the
+        // index prefix stays valid if the run is cancelled or fails midway.
         while (vectors.length < documents.length) {
           await guard();
           final inputs = <List<String>>[];
@@ -1345,7 +1344,7 @@ String _rangeKey(ChatSource s) => jsonEncode([
 String _anchorKey(SourceAnchor a) =>
     '${a.chapterId}:${a.paragraphIndex}:${a.start}:${a.end}';
 
-/// [outer] memuat seluruh range [inner] (window asli yang dikutip catatan).
+/// Returns whether [outer] covers the whole range of [inner] (the original window the note quoted).
 bool _contains(ChatSource outer, ChatSource inner) => inner.anchors.every(
   (a) => outer.anchors.any(
     (o) =>
@@ -1370,8 +1369,8 @@ List<ChatSource> _uniqueSources(List<ChatSource> sources) {
 }
 
 /// Raw draft is durable transport data; preview is provisional, answer is final.
-/// [repair] > 0 berarti output sebelumnya invalid dan jawaban dikirim ulang;
-/// [repairReason] menjelaskan kegagalan yang sedang diperbaiki.
+/// [repair] > 0 means the previous output was invalid and the answer was resent;
+/// [repairReason] describes the failure being repaired.
 class ChatStreamFrame {
   const ChatStreamFrame(
     this.draft, {
@@ -1421,8 +1420,8 @@ class PreparedChat {
       if (cancel?.isCancelled ?? false) throw cancel!.cancelError!;
       var history = const <Map<String, String>>[];
       String? reason;
-      // Draft durable hanya boleh bertambah (checkpoint memeriksa prefix):
-      // output attempt sebelumnya tetap di depan, perbaikan ditambahkan.
+      // A durable draft may only grow (the checkpoint checks the prefix): the previous
+      // attempt's output stays first and the repair is appended.
       var prefix = '';
       for (var attempt = 0; ; attempt++) {
         onStep?.call(ChatStep.answer(status: ChatStepStatus.running));
@@ -1469,8 +1468,8 @@ class PreparedChat {
         try {
           answer = decoder.finish();
         } on FormatException catch (e) {
-          // Format/sumber invalid: perbaiki maksimal dua kali dalam ledger
-          // yang sama. HTTP/saldo/kunci tidak pernah diulang otomatis.
+          // Invalid format or sources: repair at most twice within the same ledger.
+          // HTTP, balance, and key errors are never retried automatically.
           if (attempt >= chatMaxRepairs || _budget.expired) rethrow;
           _budget.repairs++;
           onStep?.call(ChatStep.repair(attempt + 1, chatMaxRepairs));

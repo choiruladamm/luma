@@ -88,7 +88,6 @@ describe("User", () => {
     const { user: u, router } = renderApp("/users?page=2");
     await screen.findByRole("table", { name: "Daftar user" });
 
-    // Desktop: the Filter button opens the panel with every filter.
     await u.click(screen.getByRole("button", { name: /^Filter$/, expanded: false }));
     await u.click(within(screen.getByRole("dialog", { name: "Filter user" })).getByRole("button", { name: /^Status:/ }));
     await u.click(screen.getByRole("option", { name: "Di-ban" }));
@@ -103,7 +102,6 @@ describe("User", () => {
     await waitFor(() => expect(router.state.location.search).toBe("?status=banned&sort=r2&dir=asc"));
     expect(urls.at(-1)?.get("dir")).toBe("asc");
 
-    // The active filter shows as a removable chip under the toolbar.
     await u.click(screen.getByRole("button", { name: "Hapus filter Status: Di-ban" }));
     await waitFor(() => expect(router.state.location.search).toBe("?sort=r2&dir=asc"));
 

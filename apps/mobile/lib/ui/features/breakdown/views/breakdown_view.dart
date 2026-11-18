@@ -38,13 +38,15 @@ import '../../settings/view_models/ai_quota_view_model.dart';
 import '../../settings/views/ai_shared.dart';
 import 'peek_sheet.dart';
 
-/// Layar Bedahin (board "Terpilih · Bedahin · Opsi C · layar bedah" + "Spek ·
-/// Bedahin · state"). Di-push dari sheet Artinya: balik = ke sheet, "Balik
-/// baca" = `pop(ReaderReturn.reading)`, sheet-nya ikut ditutup sama yang manggil. Ditutup di
-/// tengah proses = request dibatalin (provider autoDispose). Bisa numpuk:
-/// "Bedahin ini juga" dari intip push Bedahin lain di atasnya; balik =
-/// mundur satu lapis, "Balik baca" dari lapis mana pun nerusin `pop(ReaderReturn.reading)`
-/// sampe ke halaman.
+/// The Bedahin screen (board "Terpilih · Bedahin · Opsi C · layar bedah" +
+/// "Spek · Bedahin · state").
+///
+/// Pushed from the Artinya sheet: back returns to the sheet, and "Balik baca"
+/// is `pop(ReaderReturn.reading)`, which the caller also uses to close the
+/// sheet. Closing mid-process cancels the request (autoDispose provider). It
+/// can stack: "Bedahin ini juga" from the peek pushes another Bedahin on top;
+/// back pops one layer, and "Balik baca" from any layer keeps propagating
+/// `pop(ReaderReturn.reading)` up to the page.
 class BreakdownView extends ConsumerStatefulWidget {
   const BreakdownView({
     super.key,
@@ -62,7 +64,7 @@ class BreakdownView extends ConsumerStatefulWidget {
 }
 
 class _BreakdownViewState extends ConsumerState<BreakdownView> {
-  /// Naik tiap Coba lagi: ritme nulis mulai dari nol.
+  /// Increments on every retry so the writing rhythm restarts from zero.
   int _attempt = 0;
   bool _copied = false;
 
@@ -71,13 +73,13 @@ class _BreakdownViewState extends ConsumerState<BreakdownView> {
     setState(() => _attempt++);
   }
 
-  /// Abis key diisi di Pengaturan, Bedahin langsung jalan lagi.
+  /// Once the key is filled in on Pengaturan, Bedahin runs again immediately.
   Future<void> _settings() async {
     await context.push(Routes.settings);
     if (mounted) _retry();
   }
 
-  /// Kartu Nyambung ke di-tap: sheet intip, lalu mungkin satu lapis lagi.
+  /// A Nyambung ke card tap opens the peek sheet, then possibly one more layer.
   Future<void> _peek(BreakdownLink link, String where) async {
     final result = await showPeekSheet(
       context,
@@ -197,8 +199,11 @@ class _BreakdownViewState extends ConsumerState<BreakdownView> {
   }
 }
 
-/// Isi Salin (board state, "Isi Salin"): teks polos, baris pertama sumbernya.
-/// Tanpa terjemahan dan Nyambung ke. Satu bagian = tanpa nomor dan judul.
+/// Builds the Salin text (board state, "Isi Salin"): plain text with the source
+/// on the first line.
+///
+/// It has no translation or Nyambung ke. A single section has no number or
+/// title.
 String breakdownCopy(BreakdownInput input, Breakdown b) {
   final numbered = b.sections.length >= 2;
   return [
@@ -223,12 +228,13 @@ String _chapterLabel(BreakdownInput input) {
   return title.isEmpty ? 'Bab ${input.chapter}' : title;
 }
 
-/// Isi yang boleh tampil sekarang + bagian yang lagi ditulis.
+/// The content allowed to show now, plus the section currently being written.
 typedef _Visible = ({Breakdown draft, int tail});
 
-/// Teks bedahan urut tampil, buat ritme nulis: per bagian judul, maksud,
-/// logika; tiap istilah label + penjelasan; tiap nyambung judul + kenapa;
-/// praktek. Indeks di sini = indeks "ujung" di [_Visible].
+/// Breakdown text in display order, which paces the writing: per section the
+/// title, intent and logic; per term a label and explanation; per link a title
+/// and the reason; then practice. An index here is the "tip" index in
+/// [_Visible].
 List<String> _fields(Breakdown b) => [
   for (final s in b.sections) ...[s.title, s.meaning, s.logic],
   for (final t in b.terms) ...[t.label, t.explanation],
@@ -238,8 +244,8 @@ List<String> _fields(Breakdown b) => [
 
 int _length(Breakdown b) => _fields(b).fold(0, (n, f) => n + f.length);
 
-/// [b] dipotong jadi [n] huruf pertama (urutan [_fields]). Item yang belum
-/// kebagian huruf gak ikut.
+/// [b] truncated to its first [n] letters (in [_fields] order). Items not yet
+/// reached by any letters are left out.
 _Visible _take(Breakdown b, int n) {
   var left = n;
   var index = 0;
@@ -299,32 +305,39 @@ _Visible _take(Breakdown b, int n) {
   );
 }
 
-/// Cuma bagian yang udah utuh: bagian terakhir masih ditulis, kecuali blok
-/// sesudahnya udah mulai. Blok opsional dibuang.
+/// Only the complete sections: the last section is still being written, unless
+/// the following block has already started. Optional blocks are dropped.
 Breakdown _whole(Breakdown b) {
   final later = b.terms.isNotEmpty || b.links.isNotEmpty || b.practice != null;
   final n = later ? b.sections.length : math.max(0, b.sections.length - 1);
   return Breakdown(sections: b.sections.take(n).toList());
 }
 
-/// Semua tahap di satu widget: nunggu → nulis → selesai tanpa loncatan layout.
+/// Renders every stage in one widget: waiting → writing → done, with no layout
+/// jumps.
 ///
-/// - Teks penjelasan keluar ngikutin [Pacer]; 4 kata terakhir yang lagi
-///   ditulis memudar. Kurangi gerakan: per bagian utuh, tanpa pudar.
-/// - Panel atas langsung nampilin terjemahan (udah ada dari makna cepat).
-///   Nomor bagian di teks muncul bareng penjelasannya, mulai ada 2 bagian.
-/// - Layout ikut jumlah bagian: 1 bagian (selesai) = panel ikut ke-scroll +
-///   kalimat asli; selain itu panel nempel di atas, maks 40% layar, scroll
-///   sendiri kalau lebih.
-/// - Tombol ngumpet pas scroll penjelasan (aturan [ScrollRun]), kecuali
-///   selama proses atau VoiceOver nyala.
-/// - Sinkron (≥ 2 bagian): blok yang lewat garis baca jadi aktif
-///   ([activeBlock]), kalimat bagiannya disorot di panel dan panel scroll
-///   ke situ. Tap nomor / chip = lompat. Panel kelipet by default, buka /
-///   lipet cuma dari tap ([_folded]). Selama nulis sorotannya udah jalan dari
-///   bagian 1 dan ngikut scroll, gak nunggu lengkap. Scroll cuma ngubah
-///   [_active]; panel cuma dibangun ulang
-///   pas blok aktifnya ganti.
+/// - Explanation text follows the [Pacer]; the last 4 words being written fade.
+///   Under reduce-motion it shows per complete section, without the fade.
+///
+/// - The top panel shows the translation right away (it already exists from the
+///   quick meaning). Section numbers in the text appear together with their
+///   explanation, from 2 sections on.
+///
+/// - Layout follows the section count: 1 section (done) = the panel scrolls
+///   with the content, plus the original sentence; otherwise the panel is
+///   pinned on top, at most 40% of the screen, and scrolls on its own if
+///   longer.
+///
+/// - The button hides while the explanation scrolls ([ScrollRun] rule), except
+///   during processing or when VoiceOver is on.
+///
+/// - Sync (≥ 2 sections): the block that crosses the reading line becomes
+///   active ([activeBlock]), its section's sentence is highlighted in the
+///   panel, and the panel scrolls there. Tapping a number / chip jumps. The
+///   panel is folded by default; unfolding / folding comes only from taps
+///   ([_folded]). While writing, the highlight already runs from section 1 and
+///   follows scroll, without waiting for completion. Scrolling only changes
+///   [_active]; the panel rebuilds only when the active block changes.
 class _Screen extends StatefulWidget {
   const _Screen({
     super.key,
@@ -346,7 +359,8 @@ class _Screen extends StatefulWidget {
   final GroupRef group;
   final BreakdownState state;
 
-  /// Gagal karena kuota gratis abis / dicabut (board Kuota AI 09, 12).
+  /// Whether the failure was the free quota running out or being revoked (board
+  /// Kuota AI 09, 12).
   final SubsidyFailure? subsidy;
   final VoidCallback? onUseOwnKey;
   final ReaderTypography typo;
@@ -369,13 +383,13 @@ class _ScreenState extends State<_Screen> with TickerProviderStateMixin {
   Duration _last = Duration.zero;
   int _shown = 0;
 
-  /// Ujung teks: 0 = pudar, 1 = solid.
+  /// Opacity of the text tip: 0 = faded, 1 = solid.
   late final _solid = AnimationController(
     vsync: this,
     duration: Motion.tailFade,
   );
 
-  /// Tombol bawah: 0 keliatan, 1 ngumpet.
+  /// Bottom button: 0 = visible, 1 = hidden.
   late final _actions = AnimationController(
     vsync: this,
     duration: Motion.sheetChrome,
@@ -383,35 +397,38 @@ class _ScreenState extends State<_Screen> with TickerProviderStateMixin {
   final _run = ScrollRun();
   bool _user = false;
 
-  // Sinkron penjelasan ↔ panel teks.
+  // Sync between the explanation and the text panel.
   final _explain = ScrollController();
   final _viewport = GlobalKey();
 
-  /// Blok aktif: bagian 0..n-1, lalu Tokoh & istilah, Praktekinnya gini.
+  /// The active block: sections 0..n-1, then Tokoh & istilah, Praktekinnya
+  /// gini.
   final _active = ValueNotifier(0);
 
-  /// Istilah yang di-tap: kata persisnya disorot gantiin sorotan bagian.
+  /// The tapped term: its exact word is highlighted in place of the section
+  /// highlight.
   final _term = ValueNotifier<BreakdownTerm?>(null);
 
-  /// Panel teks kelipet. Default kelipet di semua state (terjemahannya udah
-  /// dibaca di sheet Artinya); buka / lipet cuma dari tap. Gak diinget antar
-  /// layar.
+  /// Whether the text panel is folded. Folded by default in every state (the
+  /// translation was already read in the Artinya sheet); unfolding / folding
+  /// comes only from taps. Not remembered between screens.
   final _folded = ValueNotifier(true);
 
-  /// Abis lompat: blok aktif gak diitung ulang sampe jari scroll lagi.
+  /// After a jump, the active block isn't recomputed until the finger scrolls
+  /// again.
   bool _locked = false;
   final _blocks = <GlobalKey>[];
   final _badges = <GlobalKey>[];
   int _sections = 0;
   int _blockCount = 0;
 
-  /// Sinkron nyala dan bisa disentuh (≥ 2 bagian, lengkap / kepotong).
+  /// Sync is on and touchable (≥ 2 sections, complete or cut off).
   bool _interactive = false;
 
-  /// Sorotan ngikut scroll (≥ 2 bagian), termasuk selama nulis.
+  /// The highlight follows scroll (≥ 2 sections), including while writing.
   bool _following = false;
 
-  /// Lengkap dan semua hurufnya udah tampil.
+  /// Complete, with every letter already displayed.
   bool _finished = false;
 
   BreakdownState get _s => widget.state;
@@ -435,7 +452,8 @@ class _ScreenState extends State<_Screen> with TickerProviderStateMixin {
     _sync();
   }
 
-  /// Dari cache = langsung jadi. Kepotong = semua yang masuk, ticker berhenti.
+  /// From cache = done immediately. Cut off = everything received so far, with
+  /// the ticker stopped.
   void _sync() {
     if (_finished) return;
     final available = _length(_s.draft);
@@ -552,7 +570,8 @@ class _ScreenState extends State<_Screen> with TickerProviderStateMixin {
     return box.localToGlobal(Offset.zero, ancestor: view).dy;
   }
 
-  /// Hitung ulang blok aktif dari posisi tiap blok terhadap garis baca.
+  /// Recomputes the active block from each block's position relative to the
+  /// reading line.
   void _follow(ScrollMetrics m) {
     if (!_following || _locked) return;
     final tops = <double>[];
@@ -578,7 +597,7 @@ class _ScreenState extends State<_Screen> with TickerProviderStateMixin {
     if (i < _sections) _reveal(i);
   }
 
-  /// Panel teks scroll biar nomor bagian [i] keliatan.
+  /// Scrolls the text panel so section number [i] is visible.
   void _reveal(int i) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final badge = i < _badges.length ? _badges[i].currentContext : null;
@@ -592,8 +611,9 @@ class _ScreenState extends State<_Screen> with TickerProviderStateMixin {
     });
   }
 
-  /// Tap nomor / chip: penjelasan lompat ke blok [i], blok aktifnya dikunci
-  /// (blok pendek di ujung gak bisa nyampe garis baca).
+  /// Handles a tap on a number / chip: the explanation jumps to block [i] and
+  /// that block is locked as active (a short block at the end can't reach the
+  /// reading line).
   void _jump(int i) {
     final top = _topOf(_blocks[i]);
     if (top == null || !_explain.hasClients) return;
@@ -609,7 +629,8 @@ class _ScreenState extends State<_Screen> with TickerProviderStateMixin {
     }
   }
 
-  /// Tap istilah: kata persisnya disorot, panel dibuka kalau lagi ngelipet.
+  /// Handles a tap on a term: its exact word is highlighted, and the panel
+  /// opens if folded.
   void _focusTerm(BreakdownTerm t, int section) {
     _term.value = t;
     _folded.value = false;
@@ -638,7 +659,8 @@ class _ScreenState extends State<_Screen> with TickerProviderStateMixin {
     final count = shown.sections.length;
     final numbered = count >= 2;
     final thinking = _busy && _length(_s.draft) == 0;
-    // 1 bagian (selesai / kepotong): panel ikut ke-scroll + kalimat asli.
+    // 1 section (done or cut off): the panel scrolls with the content, plus the
+    // original sentence.
     final inline = !_busy && !failed && count == 1;
     final screen = MediaQuery.sizeOf(context);
     final top = MediaQuery.paddingOf(context).top;
@@ -658,7 +680,7 @@ class _ScreenState extends State<_Screen> with TickerProviderStateMixin {
     _grow(_blocks, _blockCount);
     _grow(_badges, count);
 
-    // Dibangun ulang cuma pas blok aktif / istilah / buka manual ganti.
+    // Rebuilt only when the active block, term, or manual open state changes.
     final panel = input == null
         ? null
         : ValueListenableBuilder(
@@ -907,8 +929,8 @@ class _ScreenState extends State<_Screen> with TickerProviderStateMixin {
     );
   }
 
-  /// Area scroll penjelasan: fade atas 20, fade bawah di atas tombol cuma
-  /// selama tombolnya keliatan.
+  /// Scroll area of the explanation: top fade 20, bottom fade above the button
+  /// only while the button is visible.
   Widget _scroll({required bool frozen, required Widget child}) =>
       NotificationListener<ScrollNotification>(
         onNotification: _onScroll,
@@ -935,8 +957,8 @@ class _ScreenState extends State<_Screen> with TickerProviderStateMixin {
         ),
       );
 
-  /// Tebakan jumlah bagian yang belum ditulis (dari jumlah kalimat), minimal
-  /// satu selama blok penutup belum mulai.
+  /// Guess at how many sections are still unwritten (from the sentence count),
+  /// at least one until the closing blocks start.
   int _placeholders(BreakdownInput? input, Breakdown shown) {
     if (shown.terms.isNotEmpty ||
         shown.links.isNotEmpty ||
@@ -954,7 +976,7 @@ class _ScreenState extends State<_Screen> with TickerProviderStateMixin {
     final s = _s;
     final reduced = _reduced;
     if (s.phase == BreakdownPhase.failed && widget.subsidy != null) {
-      // Kartu kuota punya aksi sendiri ("Pakai key sendiri").
+      // The quota card has its own action ("Pakai key sendiri").
       return [
         Expanded(
           child: AppButton.secondary(
@@ -1024,8 +1046,8 @@ class _ScreenState extends State<_Screen> with TickerProviderStateMixin {
     ];
   }
 
-  /// Gagal sebelum ada isi: gantiin panel penjelasan (bentuk 06 Artinya ·
-  /// error / 10 API key kosong). Panel teks tetep ada.
+  /// Failure before any content: replaces the explanation panel (shape 06
+  /// Artinya · error / 10 empty API key). The text panel stays.
   Widget _failure(StabiloColors c) {
     if (widget.subsidy case final kind?) {
       return Padding(
@@ -1114,8 +1136,9 @@ String _countLabel(BuildContext context, int sections) => sections == 1
     ? context.l10n.breakdownIdea
     : context.l10n.breakdownSections(sections);
 
-/// Copy per jenis error (tabel di board state). [settings]: tombol kuningnya
-/// "Buka Pengaturan", bukan "Coba lagi". API key kosong punya layar sendiri.
+/// Copy per error kind (table on the state board). [settings]: its yellow
+/// button is "Buka Pengaturan", not "Coba lagi". An empty API key has its own
+/// screen.
 ({String title, String body, String code, bool settings}) _failureCopy(
   BuildContext context,
   AiException? e,
@@ -1171,7 +1194,7 @@ String _countLabel(BuildContext context, int sections) => sections == 1
   };
 }
 
-/// Balik + judul layar (status) + buku · bab · jumlah bagian.
+/// Back button, screen title (status), and book · chapter · section count.
 class _Header extends StatelessWidget {
   const _Header({
     required this.title,
@@ -1227,12 +1250,15 @@ class _Header extends StatelessWidget {
   );
 }
 
-/// Panel terjemahan. Nomor bagian di depan kalimat pertama tiap bagian
-/// ([sections] kosong = tanpa nomor). Grup > 1 paragraf: jarak 12 + `¶n` di
-/// kolom kiri. [inline]: setinggi teks + kalimat asli di bawahnya; kalau
-/// nggak, maks [maxHeight] dan scroll sendiri. [highlight] (indeks bagian)
-/// disorot kuning; [term] = kata persis istilah yang di-tap disorot (gantiin
-/// sorotan bagian). [onNumber]: nomor bisa di-tap (indeks bagian).
+/// The translation panel.
+///
+/// Section numbers precede each section's first sentence ([sections] empty = no
+/// numbers). A group of more than one paragraph gets spacing 12 and `¶n` in the
+/// left column. [inline]: as tall as the text, with the original sentence below
+/// it; otherwise at most [maxHeight] and it scrolls on its own. [highlight]
+/// (section index) is highlighted yellow; [term] highlights the tapped term's
+/// exact word instead of the section. [onNumber]: numbers are tappable (section
+/// index).
 class _TextPanel extends StatelessWidget {
   const _TextPanel({
     required this.input,
@@ -1259,10 +1285,11 @@ class _TextPanel extends StatelessWidget {
   final List<GlobalKey> badges;
   final ValueChanged<int>? onNumber;
 
-  /// Tap kotak (selain nomor) / chevron pojok bawah = panel dilipet.
+  /// Tapping the box (other than the number) or the bottom-corner chevron folds
+  /// the panel.
   final VoidCallback? onFold;
 
-  /// Kalimat [s] (nomor [k]) dengan sorotan bagian / kata istilah.
+  /// Sentence [s] (number [k]) with section / term-word highlighting.
   List<InlineSpan> _sentence(String s, int k, TextStyle marked) {
     final t = term;
     if (t != null && t.sentence == k && t.exact != null) {
@@ -1372,7 +1399,7 @@ class _TextPanel extends StatelessWidget {
     final label = sections.isEmpty
         ? context.l10n.breakdownTranslatedText
         : context.l10n.breakdownTranslatedTextSections(sections.length);
-    // Ujung kotak: tanda bisa dilipet (seluruh kotak juga).
+    // Box tip: signals it can be folded (the whole box folds too).
     final strip = onFold == null
         ? null
         : Semantics(
@@ -1456,7 +1483,7 @@ class _TextPanel extends StatelessWidget {
   }
 }
 
-/// Bulatan nomor bagian (ink di atas canvas).
+/// Section number circle (ink on canvas).
 class _Number extends StatelessWidget {
   const _Number(
     this.n, {
@@ -1471,7 +1498,7 @@ class _Number extends StatelessWidget {
   final double fontSize;
   final String label;
 
-  /// Cuma buat VoiceOver; tap jari ditangkep pembungkusnya.
+  /// For VoiceOver only; finger taps are captured by the wrapper.
   final VoidCallback? onTap;
 
   @override
@@ -1500,9 +1527,9 @@ class _Number extends StatelessWidget {
   }
 }
 
-/// Panel bawah: bagian-bagian, lalu Tokoh & istilah, Nyambung ke,
-/// Praktekinnya gini (blok kosong gak tampil). Placeholder buat bagian yang
-/// belum ditulis, kartu kelamaan di atas, banner kepotong di bawah.
+/// Bottom panel: the sections, then Tokoh & istilah, Nyambung ke, Praktekinnya
+/// gini (empty blocks aren't shown). Placeholders stand in for sections not yet
+/// written, the card lingers on top, and the cut-off banner sits at the bottom.
 class _Explanation extends StatelessWidget {
   const _Explanation({
     required this.visible,
@@ -1532,16 +1559,18 @@ class _Explanation extends StatelessWidget {
   final bool faded;
   final int placeholders;
 
-  /// Kunci posisi tiap blok buat sinkron: bagian, Tokoh & istilah, Praktek.
+  /// Position key of each block for sync: sections, Tokoh & istilah, Praktek.
   final List<GlobalKey> blocks;
 
-  /// Istilah di-tap (indeks bagian asalnya). Null = gak bisa di-tap.
+  /// Called when a term is tapped (with its source section index). Null = not
+  /// tappable.
   final void Function(BreakdownTerm, int section)? onTerm;
 
-  /// Grup yang dibedah, buat nyari tujuan kartu Nyambung ke.
+  /// The group being broken down; locates the target of Nyambung ke cards.
   final GroupRef from;
 
-  /// Kartu di-tap. Null = kartunya belum bisa di-tap (lagi proses).
+  /// Called when a card is tapped. Null = cards aren't tappable yet
+  /// (processing).
   final void Function(BreakdownLink, String where)? onPeek;
   final bool slow;
   final bool cut;
@@ -1552,17 +1581,17 @@ class _Explanation extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.stabilo;
     final b = visible.draft;
-    // Kunci cuma ada kalau sinkronnya nyala (dipasang [_ScreenState]).
+    // Keys exist only when sync is on (installed by [_ScreenState]).
     GlobalKey? key(int i) => i < blocks.length ? blocks[i] : null;
     final termsBlock = b.sections.length;
     final practiceBlock = termsBlock + (b.terms.isNotEmpty ? 1 : 0);
     final style = typo.style.copyWith(color: c.ink);
     final count = b.sections.length;
-    // Indeks field urut [_fields], buat nyari ujung yang lagi ditulis.
+    // Index into the ordered [_fields]; locates the tip being written.
     final termsAt = b.sections.length * 3;
     final practiceAt = termsAt + b.terms.length * 2 + b.links.length * 2;
 
-    /// Teks isi; yang lagi ditulis ujungnya pudar dan gak dibacain VoiceOver.
+    /// Body text; the tip being written fades and isn't read by VoiceOver.
     Widget body(String t, int field) {
       if (!writing || field != visible.tail) return Text(t, style: style);
       return ExcludeSemantics(
@@ -1754,7 +1783,7 @@ class _Explanation extends StatelessWidget {
     );
   }
 
-  /// `¶a–b` kalau bagian [s] nyebrang paragraf.
+  /// Returns `¶a–b` when section [s] crosses paragraphs.
   static String? _paragraphs(List<int> paragraphOf, BreakdownSection s) {
     if (s.to > paragraphOf.length || s.from < 1) return null;
     final a = paragraphOf[s.from - 1] + 1;
@@ -1762,7 +1791,7 @@ class _Explanation extends StatelessWidget {
     return a == b ? null : '¶$a–$b';
   }
 
-  /// Nomor bagian (mulai 1) yang memuat kalimat [sentence].
+  /// Returns the section number (1-based) that contains [sentence].
   static int? _sectionOf(List<BreakdownSection> sections, int? sentence) {
     if (sentence == null) return null;
     for (final (i, s) in sections.indexed) {
@@ -1808,8 +1837,8 @@ class _Block extends StatelessWidget {
   );
 }
 
-/// Kartu Nyambung ke. Tujuannya ketemu = garis + chevron, tap = intip;
-/// gak ketemu = teks biasa.
+/// Nyambung ke card. When the target is found it shows a line + chevron and a
+/// tap opens the peek; otherwise it is plain text.
 class _LinkCard extends ConsumerWidget {
   const _LinkCard({
     required this.link,
@@ -1900,7 +1929,7 @@ class _LinkCard extends ConsumerWidget {
   }
 }
 
-/// Bagian yang belum ditulis: bulatan + judul + baris, setinggi teks Aa.
+/// An unwritten section: circle + title + lines, as tall as the Aa text.
 class _SectionPlaceholder extends StatelessWidget {
   const _SectionPlaceholder({required this.typo});
 
@@ -1941,8 +1970,9 @@ class _SectionPlaceholder extends StatelessWidget {
   }
 }
 
-/// 15 detik belum ada token: request tetep jalan, token masuk = ilang sendiri.
-/// Satu layar satu kuning ("Balik baca"), jadi tombol kartunya muted.
+/// Shown when no token has arrived after 15 seconds: the request keeps running,
+/// and this clears itself once a token arrives. One yellow button per screen
+/// ("Balik baca"), so the card button is muted.
 class _SlowCard extends StatelessWidget {
   const _SlowCard({required this.onCancel, required this.onRetry});
 
@@ -1983,7 +2013,7 @@ class _SlowCard extends StatelessWidget {
   }
 }
 
-/// Putus di tengah: bagian yang udah utuh ([kept]) tetep di atasnya.
+/// Cut off midway: the complete sections ([kept]) stay above it.
 class _CutBanner extends StatelessWidget {
   const _CutBanner({required this.kept, required this.onRetry});
 
@@ -2024,7 +2054,7 @@ class _CutBanner extends StatelessWidget {
   }
 }
 
-/// Istilah yang bisa di-tap: sorot kata persisnya di panel teks.
+/// A tappable term: highlights its exact word in the text panel.
 class _TermTap extends StatelessWidget {
   const _TermTap({
     required this.onTap,
@@ -2050,11 +2080,11 @@ class _TermTap extends StatelessWidget {
         );
 }
 
-/// Panel teks yang kelipet (default): satu baris, tap = buka.
+/// The folded text panel (default): one row, tap to open.
 class _FoldedPanel extends StatelessWidget {
   const _FoldedPanel({required this.count, required this.onTap});
 
-  /// "4 bagian" / "1 gagasan"; null = belum ketauan (lagi proses, error).
+  /// "4 bagian" / "1 gagasan"; null = not yet known (processing, error).
   final String? count;
   final VoidCallback onTap;
 
@@ -2108,8 +2138,9 @@ class _FoldedPanel extends StatelessWidget {
   }
 }
 
-/// Chip lompat (3+ bagian): nomor bulet 44, Istilah / Praktek pill. Yang
-/// aktif ink. Gak muat = geser ke samping, tepi kanan mudar.
+/// Jump chips (3+ sections): a 44 round number, plus Istilah / Praktek pills.
+/// The active one is ink. If they don't fit they scroll sideways and the right
+/// edge fades.
 class _Chips extends StatelessWidget {
   const _Chips({
     required this.labels,

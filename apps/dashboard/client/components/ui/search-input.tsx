@@ -3,7 +3,7 @@ import { useI18n } from "../../i18n";
 import { cn } from "../../lib/cn";
 import { Icon } from "./icons";
 
-/** Pill search field, height 44, icon left; optional clear button (cari kosong state). */
+/** Pill search field, height 44, icon left; optional clear button (empty-search state). */
 export const SearchInput = forwardRef<HTMLInputElement, { label: string; onClear?: () => void; tone?: "sheet" | "canvas" } & InputHTMLAttributes<HTMLInputElement>>(
   function SearchInput({ label, onClear, tone = "sheet", className, id, ...props }, ref) {
     const { t } = useI18n();

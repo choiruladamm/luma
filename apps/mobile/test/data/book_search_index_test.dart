@@ -72,8 +72,8 @@ void main() {
       r.read<String>('text'),
   ];
 
-  // Cek internal index aja: sengaja parsial (scene break, buku belum ke-index),
-  // jadi gak dibandingin sama isi `paragraphs` (mode rank = 1).
+  // Checks the internal index only: it is deliberately partial (scene breaks, book not yet indexed),
+  // so it is not compared with the `paragraphs` content (rank mode = 1).
   Future<void> integrity() => db.customStatement(
     "INSERT INTO paragraph_fts(paragraph_fts) VALUES('integrity-check')",
   );
@@ -127,7 +127,7 @@ void main() {
     final ca = await chapter(a, 0);
     final ca2 = await chapter(a, 1);
     final cb = await chapter(b, 0);
-    // Simulasi baris lama: trigger dimatiin pas insert.
+    // Simulates old rows: the trigger is turned off during insert.
     await db.customStatement('DROP TRIGGER paragraph_fts_ai');
     await para(ca, 0, 'wickham in meryton');
     await para(ca2, 0, 'wickham again');
@@ -167,7 +167,8 @@ void main() {
     await para(c, 0, 'alpha');
     await para(c, 1, 'beta');
     await db.customStatement('UPDATE paragraphs SET rowid = rowid + 10');
-    expect(await hits('"alpha"'), isEmpty); // index masih nunjuk rowid lama
+    // Index still points at the old rowid.
+    expect(await hits('"alpha"'), isEmpty);
     await db.rebuildBookSearchIndex();
     expect(await hits('"alpha"'), ['alpha']);
     expect(await hits('"beta"'), ['beta']);

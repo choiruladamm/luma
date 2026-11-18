@@ -143,7 +143,7 @@ void main() {
       c.add('[T1]\nHalo');
       async.flushMicrotasks();
       expect(now().phase, AiPhase.translating);
-      // The 30 s timeout no longer applies once tokens flow.
+      // Once tokens flow, the 30 s timeout does not apply.
       async.elapse(const Duration(seconds: 16));
       expect(now().phase, isNot(AiPhase.failed));
     });

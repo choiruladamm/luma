@@ -5,7 +5,7 @@ import { useI18n } from "../../../i18n";
 const USED_BY_WIDTHS = [0, 0, 152, 128, 176];
 
 /**
- * No loading board for Undangan: same rule as board 13 (komponen 2, State). Real headers of
+ * No loading board for Invites (Undangan): same rule as board 13 (design component 2, State). Real headers of
  * invite-columns.tsx, sand blocks for the code, status chip, user, date, and the two actions.
  */
 export function InvitesTableSkeleton({ rows = 5 }: { rows?: number }) {

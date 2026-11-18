@@ -34,9 +34,9 @@ import 'reader_overlay.dart';
 import 'reader_system_ui.dart';
 import 'reader_types.dart';
 
-/// Halaman baca (board 03 Baca, 11 Akhir bab, 12 Akhir buku). Satu chapter per
-/// layar; ujung chapter ada kartu lanjut ke chapter berikutnya, ujung bab
-/// terakhir ke layar akhir buku.
+/// Reading page (board 03 Baca, 11 Akhir bab, 12 Akhir buku). One chapter per screen;
+/// at a chapter end a card continues to the next chapter, and at the last
+/// chapter to the end-of-book screen.
 class ReaderView extends ConsumerStatefulWidget {
   const ReaderView({
     super.key,
@@ -70,63 +70,63 @@ class _ReaderViewState extends ConsumerState<ReaderView>
     mounted: () => mounted,
   );
 
-  /// Setelan Aa terakhir (status bar, garis progres, gaya teks).
+  /// The last Aa settings (status bar, progress line, text style).
   ReaderPrefs _prefs = const ReaderPrefs();
 
-  /// Null sampai posisi tersimpan kebaca.
+  /// Null until the saved position has been read.
   int? _chapter;
   int? _chapterId;
 
-  /// Paragraf paling atas yang keliatan + bagiannya yang udah lewat garis
-  /// atas; ini yang disimpen.
+  /// The top-most visible paragraph + the part of it already past the top line;
+  /// this is what gets saved.
   Spot _spot = (index: 0, offset: 0);
 
-  /// Titik yang dituju pas buku dibuka lagi.
+  /// The point to go to when the book is opened again.
   Spot? _restoreTo;
 
-  /// Nulis posisi ke DB nunggu scroll diem bentar, bukan tiap scroll.
+  /// Writing the position to the DB waits for scrolling to pause briefly, not on every scroll.
   Timer? _saveLater;
   static const _saveDelay = Duration(milliseconds: 500);
 
-  /// Seberapa jauh chapter ini udah di-scroll, 0..1.
+  /// How far this chapter has been scrolled, 0..1.
   final _fraction = ValueNotifier<double>(0);
 
-  /// Buku yang lagi dibaca, buat ngubah [_fraction] jadi posisi karakter.
+  /// The book being read, to turn [_fraction] into a character position.
   ReaderBook? _book;
 
-  /// Posisi karakter (absolut di buku) waktu terakhir waktu baca disimpen:
-  /// awal potongan sesi berikutnya. Null sampai posisi pertama kebaca.
+  /// Character position (absolute in the book) when reading time was last saved:
+  /// the start of the next session slice. Null until the first position is read.
   int? _lastChar;
 
-  /// Lagi nampilin layar akhir buku.
+  /// Showing the end-of-book screen.
   bool _finished = false;
 
-  /// Sheet dari kapsul (daftar isi / Aa) lagi kebuka: kapsul atas tetep
-  /// keliatan di atas scrim, tombolnya kuning. [_lastSheet] nentuin warna
-  /// scrim, termasuk pas lagi fade out.
+  /// A capsule sheet (table of contents / Aa) is open: the top capsule stays visible
+  /// above the scrim, its button yellow. [_lastSheet] decides the scrim color, including
+  /// while fading out.
   bool _sheetOpen = false;
   ReaderSheet _lastSheet = ReaderSheet.toc;
 
-  /// Teks bab yang lagi tampil; diganti tiap pindah bab.
+  /// The chapter text currently shown; replaced on every chapter change.
   var _text = GlobalKey<ChapterTextState>();
 
-  /// Grup yang lagi dibuka di sheet Artinya.
+  /// The group open in the Artinya sheet.
   int? _openGroup;
 
-  /// Mode Cari kata (docs/book-search.md): hasil yang dibuka lewat sheet.
-  /// Null = gak lagi nyari.
+  /// Cari kata mode (docs/book-search.md): results opened via the sheet.
+  /// Null = not searching.
   SearchMode? _search;
 
-  /// Abis lompat dari hasil, posisi baca gak ikut pindah sampe user scroll
-  /// 1 layar dari situ ([_onSearchRead]).
+  /// After jumping from a result, the reading position does not follow until the user
+  /// scrolls one screen from there ([_onSearchRead]).
   bool _jumpHeld = false;
 
-  /// User lagi scroll: navigator hasil ngecil, balik penuh
-  /// [Motion.searchRegrow] abis berhenti.
+  /// The user is scrolling: the result navigator shrinks, and returns to full size
+  /// [Motion.searchRegrow] after stopping.
   final _scrolling = ValueNotifier<bool>(false);
   Timer? _regrow;
 
-  /// Posisi scroll daftar hasil di sheet, diinget pas balik dari navigator.
+  /// Scroll position of the result list in the sheet, remembered when returning from the navigator.
   double _listOffset = 0;
 
   @override
@@ -169,11 +169,11 @@ class _ReaderViewState extends ConsumerState<ReaderView>
     });
   }
 
-  /// Posisi pertama yang kebaca (buku kebuka di titik tersimpan) = awal
-  /// potongan sesi pertama.
+  /// The first position read (the book opened at the saved point) = the start of the
+  /// first session slice.
   void _anchor() => _lastChar ??= _charNow();
 
-  /// Posisi karakter sekarang; null sebelum bukunya kebaca.
+  /// The current character position; null before the book is read.
   int? _charNow() {
     final book = _book, i = _chapter;
     if (book == null || i == null) return null;
@@ -185,8 +185,8 @@ class _ReaderViewState extends ConsumerState<ReaderView>
     );
   }
 
-  /// Layar lain (Bedahin, Pengaturan) bukan layar baca: di Android bar
-  /// sistem tampil selama di sana, balik ngikutin kapsul sesudahnya.
+  /// Other screens (Bedahin, Pengaturan) are not reading screens: on Android the
+  /// system bar shows while there, and follows the capsules again afterwards.
   Future<T?> _pushOffReader<T>(String route, {Object? extra}) async {
     _saveLater?.cancel();
     _clock.pause(_now());
@@ -253,7 +253,7 @@ class _ReaderViewState extends ConsumerState<ReaderView>
     if (group == null) _text.currentState?.stopAndReportPosition();
     final initial = _chatContext();
     if (initial == null) return null;
-    // Tanpa setState: tombol Ngobrol gak boleh kedip abu pas layar pindah.
+    // No setState: the Ngobrol button must not flash gray while the screen switches.
     _openingChat = true;
     try {
       ChatQuote? quote;
@@ -300,7 +300,7 @@ class _ReaderViewState extends ConsumerState<ReaderView>
       return;
     }
     _clock.pause(_now());
-    // OS bisa matiin app kapan aja pas di background: simpen sekarang.
+    // The OS can kill the app at any time in the background: save now.
     _saveLater?.cancel();
     _save().ignore();
   }
@@ -319,10 +319,10 @@ class _ReaderViewState extends ConsumerState<ReaderView>
     super.dispose();
   }
 
-  /// Waktu baca aktif sejak simpan terakhir → total buku + satu potongan sesi
-  /// di bab dan posisi sekarang. Pindah bab harus manggil ini SEBELUM state
-  /// bab diganti, biar potongannya masuk ke bab yang bener dan lompatan lewat
-  /// daftar isi gak ikut keitung sebagai karakter terbaca.
+  /// Active reading time since the last save → the book total + one session slice at
+  /// the current chapter and position. A chapter change must call this BEFORE the chapter
+  /// state is replaced, so the slice lands in the right chapter and jumps via the
+  /// table of contents are not counted as characters read.
   Future<void> _flushReading() async {
     if (widget.sourceVisit != null) return;
     final now = _now();
@@ -346,7 +346,7 @@ class _ReaderViewState extends ConsumerState<ReaderView>
       paragraphIndex: _spot.index,
       paragraphOffset: _spot.offset,
     );
-    // Abis lompat dari hasil cari: waktu baca tetep dicatat, posisi nggak.
+    // After jumping from a search result: reading time is still recorded, the position is not.
     final hold = _jumpHeld && !force;
     final previous = _pendingSave;
     final reading = _flushReading();
@@ -359,10 +359,10 @@ class _ReaderViewState extends ConsumerState<ReaderView>
   }
 
   void _goTo(ReaderBook book, int chapter) {
-    _flushReading().ignore(); // masih di bab lama
+    _flushReading().ignore(); // still in the old chapter
     setState(() {
       _text = GlobalKey();
-      _chrome.show(); // awal bab
+      _chrome.show(); // chapter start
       _finished = false;
       _chapter = chapter;
       _chapterId = book.chapters[chapter].id;
@@ -395,8 +395,8 @@ class _ReaderViewState extends ConsumerState<ReaderView>
     if (picked != null && picked != _chapter && mounted) _goTo(book, picked);
   }
 
-  /// Menu ⋯: Cari kata (atau "Lihat hasil" pas lagi mode cari) / Atur
-  /// tampilan. Layar diredupin tipis, ⋯ kuning.
+  /// The ⋯ menu: Cari kata (or "Lihat hasil" in search mode) / Atur tampilan.
+  /// The screen is dimmed slightly, ⋯ yellow.
   Future<void> _openMenu(ReaderBook book) async {
     final action = await _withSheet(
       ReaderSheet.menu,
@@ -412,8 +412,8 @@ class _ReaderViewState extends ConsumerState<ReaderView>
     }
   }
 
-  /// Sheet Cari kata. Pas lagi mode cari kebuka dengan kata + posisi daftar
-  /// yang sama. Hasil yang di-tap → [_enterSearch].
+  /// Cari kata sheet. In search mode it opens with the same word + list position.
+  /// A tapped result → [_enterSearch].
   Future<void> _openSearch(ReaderBook book) async {
     final mode = _search;
     if (mode == null) _listOffset = 0;
@@ -428,8 +428,8 @@ class _ReaderViewState extends ConsumerState<ReaderView>
     if (pick != null && mounted) _enterSearch(book, pick);
   }
 
-  /// Hasil di-tap: mode cari nyala, lompat ke situ. Posisi sebelum nyari
-  /// (buat "Balik ke posisi tadi?") dicatat sekali, bukan tiap ganti kata.
+  /// Result tapped: search mode turns on, jump there. The position before searching
+  /// (for "Balik ke posisi tadi?") is recorded once, not on every word change.
   void _enterSearch(ReaderBook book, BookSearchPick pick) {
     final query = BookSearchQuery.parse(pick.query);
     final chapterId = _chapterId;
@@ -461,8 +461,8 @@ class _ReaderViewState extends ConsumerState<ReaderView>
     _jumpToHit(book, i);
   }
 
-  /// Lompat ke hasil ke-[i]: paragrafnya ke ±⅓ tinggi layar, kedip, kata
-  /// cocok di-stabilo. Bab lain = pindah bab dulu. Posisi baca ditahan.
+  /// Jump to result [i]: its paragraph to ~⅓ of the screen height, flash, matching word
+  /// highlighted. Another chapter = change chapter first. The reading position is held.
   void _jumpToHit(ReaderBook book, int i) {
     final mode = _search;
     if (mode == null) return;
@@ -472,7 +472,8 @@ class _ReaderViewState extends ConsumerState<ReaderView>
     _regrow?.cancel();
     _scrolling.value = false;
     _saveLater?.cancel();
-    _flushReading().ignore(); // waktu baca ke tempat lama, bukan loncatannya
+    _flushReading()
+        .ignore(); // reading time goes to the old place, not the jump
     _lastChar = null;
     _jumpHeld = true;
     setState(() {
@@ -500,7 +501,7 @@ class _ReaderViewState extends ConsumerState<ReaderView>
     if (i >= 0 && i < mode.hits.length) _jumpToHit(book, i);
   }
 
-  /// × di navigator: keluar mode cari, tawarin balik ke posisi sebelum nyari.
+  /// × on the navigator: leaves search mode, offers to return to the position before searching.
   void _closeSearch() {
     final mode = _search;
     if (mode == null) return;
@@ -518,7 +519,7 @@ class _ReaderViewState extends ConsumerState<ReaderView>
     );
   }
 
-  /// "Balik": ke posisi sebelum nyari, lanjut baca biasa dari situ.
+  /// "Balik": to the position before searching, continue reading normally from there.
   void _returnTo(ReadingPosition back) {
     final book = _book;
     if (book == null || !mounted) return;
@@ -540,7 +541,7 @@ class _ReaderViewState extends ConsumerState<ReaderView>
     _save().ignore();
   }
 
-  /// Scroll jari mulai / berhenti: navigator ngecil / balik penuh.
+  /// Finger scroll started / stopped: the navigator shrinks / returns to full size.
   void _onScrollActive(bool active) {
     if (_search == null) return;
     _regrow?.cancel();
@@ -551,16 +552,16 @@ class _ReaderViewState extends ConsumerState<ReaderView>
     }
   }
 
-  /// User udah scroll 1 layar dari hasil: sekarang baru itu posisi bacanya.
+  /// The user has scrolled one screen from the result: only now is that the reading position.
   void _onSearchRead() {
     if (!_jumpHeld) return;
     _jumpHeld = false;
     _save().ignore();
   }
 
-  /// Tap paragraf → sheet Artinya buat grupnya. Kapsul ngumpet, halaman naik
-  /// barengan sheet. Ditutup: kalau udah pake "Lanjut", halaman diem di grup
-  /// terakhir; kalau cuma satu grup, balik ke posisi sebelum sheet dibuka.
+  /// Paragraph tap → Artinya sheet for its group. The capsules hide, the page rises
+  /// together with the sheet. On close: if "Lanjut" was used, the page stays at the last
+  /// group; if only one group, returns to the position from before the sheet opened.
   Future<void> _openMeaning(ReaderParagraph p) async {
     if (widget.sourceVisit != null) return;
     final g = p.groupIndex;
@@ -588,7 +589,7 @@ class _ReaderViewState extends ConsumerState<ReaderView>
         opened++;
         group.value = (chapterId: chapterId, groupIndex: next);
         setState(() => _openGroup = next);
-        // Abis highlight pindah & keukur, grup berikutnya naik ke atas sheet.
+        // After the highlight moves and is measured, the next group rises to the sheet top.
         WidgetsBinding.instance.addPostFrameCallback((_) async {
           await text.unpinGroup(animate: false);
           await text.showGroupAbove(next, sheetTop);
@@ -603,15 +604,15 @@ class _ReaderViewState extends ConsumerState<ReaderView>
         }());
       },
       onProgress: (t) => text.followProgress(t, sheetTop),
-      // Overlay langsung dibuang pas sheet mulai turun: yang kebuka di bawah
-      // sheet itu card halaman asli, dan dua versi teks gak boleh numpuk.
+      // The overlay is removed as soon as the sheet starts going down: what opens beneath
+      // the sheet is the original page card, and two versions of the text must not stack.
       onClosing: () => unawaited(text.unpinGroup(animate: false)),
       onSettings: () {
         Navigator.of(context).pop();
         unawaited(_pushOffReader<void>(Routes.settings));
       },
-      // Sheet tetep di bawah layar Bedahin. "Balik baca" (`pop(ReaderReturn.reading)`) =
-      // sheet-nya ikut ditutup, langsung ke halaman.
+      // The sheet stays beneath the Bedahin screen. "Balik baca" (`pop(ReaderReturn.reading)`) =
+      // the sheet is closed too, straight to the page.
       onChat: (g, translation) async {
         final result = await _openChat(group: g, translation: translation);
         if (result == ReaderReturn.reading && mounted) {
@@ -640,8 +641,8 @@ class _ReaderViewState extends ConsumerState<ReaderView>
     }
   }
 
-  /// Buka sheet dari kapsul: kapsul dimunculin & tombolnya kuning selama
-  /// sheet kebuka.
+  /// Opens a sheet from the capsule: the capsules are shown and the button is yellow
+  /// while the sheet is open.
   Future<T?> _withSheet<T>(
     ReaderSheet sheet,
     Future<T?> Function() open,
@@ -656,7 +657,7 @@ class _ReaderViewState extends ConsumerState<ReaderView>
     return result;
   }
 
-  /// Sekali aja: buka di chapter & paragraf tersimpan (atau bab 1).
+  /// Only once: open at the saved chapter & paragraph (or chapter 1).
   void _start(ReaderBook book, ReadingPosition? saved) {
     final source = widget.sourceVisit?.anchors.first;
     if (source != null) {
@@ -685,7 +686,7 @@ class _ReaderViewState extends ConsumerState<ReaderView>
     ref.listen(readerPrefsProvider, (_, _) => _ui.sync());
     return Scaffold(
       body: Listener(
-        // Scroll & tap sama-sama mulai dari sini.
+        // Scroll & tap both start from here.
         onPointerDown: (_) {
           if (widget.sourceVisit == null) _clock.interact(_now());
         },
@@ -790,15 +791,14 @@ class _ReaderViewState extends ConsumerState<ReaderView>
                                 context.pop();
                                 return;
                               }
-                              // Posisi tersimpan = ujung buku, rak: "Kelar!".
+                              // Saved position = end of the book, shelf: "Kelar!".
                               final last = _text.currentState?.lastParagraph;
                               if (last != null) {
                                 _spot = (index: last.index, offset: 1);
                               }
-                              _save()
-                                  .ignore(); // waktu baca terbaru buat rekapnya
+                              _save().ignore(); // latest reading time for the recap
                               _progress.markFinished(widget.bookId).ignore();
-                              _chrome.show(); // status bar balik
+                              _chrome.show(); // the status bar returns
                               setState(() => _finished = true);
                             },
                     ),
@@ -838,7 +838,7 @@ class _ReaderViewState extends ConsumerState<ReaderView>
     );
   }
 
-  /// Belum ada buku buat ditampilin: kapsul atas buat balik doang.
+  /// No book to show yet: the top capsule is only for going back.
   Widget _bare([String? message]) => Stack(
     children: [
       if (message != null)

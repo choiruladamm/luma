@@ -2,14 +2,13 @@ import 'grouping.dart';
 import 'models/book.dart';
 
 enum LumaMarkdownError {
-  /// Header (frontmatter) ada tapi isinya salah: `book_key` bukan slug,
-  /// `chapter` bukan angka.
+  /// Frontmatter has an invalid `book_key` slug or non-numeric `chapter`.
   badFrontmatter,
 
-  /// Gak ada satu pun paragraf bacaan.
+  /// The file has no readable paragraphs.
   empty,
 
-  /// Filenya gak kebaca (dipakai pemanggil, bukan parser).
+  /// The file could not be read; used by the caller, not the parser.
   unreadable,
 }
 
@@ -18,20 +17,20 @@ class LumaMarkdownException implements Exception {
 
   final LumaMarkdownError error;
 
-  /// Kunci frontmatter yang salah (`book_key`, `chapter`).
+  /// The invalid frontmatter key (`book_key` or `chapter`).
   final String? detail;
 
-  /// Isi mentah kunci itu, buat ditampilin ke user.
+  /// The raw value, for display to the user.
   final String? value;
 
   @override
   String toString() => 'LumaMarkdownException($error, $detail)';
 }
 
-/// Satu file `.md` = satu chapter (docs/import-formats.md).
+/// Represents one Markdown chapter (docs/import-formats.md).
 ///
-/// Field meta diisi dari frontmatter, kalau kosong dari tebakan (heading
-/// pertama, nama file). Yang gak bisa ditebak tetap null, diisi UI / importer.
+/// Missing frontmatter is inferred from the first heading and filename;
+/// fields that cannot be inferred remain null for the UI or importer.
 class ParsedMarkdown {
   const ParsedMarkdown({
     required this.paragraphs,
@@ -46,11 +45,10 @@ class ParsedMarkdown {
 
   final List<RawParagraph> paragraphs;
 
-  /// `groupIndex` per paragraf, dari [assignGroups].
+  /// The `groupIndex` for each paragraph, from [assignGroups].
   final List<int?> groups;
 
-  /// Frontmatter ngasih `book_key` dan `chapter` sendiri: gak perlu nanya
-  /// user, langsung import.
+  /// Whether frontmatter supplies both `book_key` and `chapter`, allowing direct import.
   final bool complete;
 
   final String? bookKey;
@@ -62,11 +60,10 @@ class ParsedMarkdown {
   int get charCount => paragraphs.fold(0, (n, p) => n + p.text.length);
 }
 
-/// Parse isi file Luma Markdown. Frontmatter opsional; body toleran sama
-/// Markdown umum supaya hasil konversi PDF (Marker/Docling) langsung kebaca.
-///
-/// Lempar [LumaMarkdownException] kalau frontmatter salah atau gak ada
-/// paragraf bacaan. [fileName] dipakai buat tebakan judul & nomor bab.
+/// Parses Luma Markdown with optional frontmatter and common Markdown syntax.
+/// This accepts PDF conversion output from Marker and Docling.
+/// Throws [LumaMarkdownException] for invalid frontmatter or no readable paragraphs.
+/// Uses [fileName] to infer the title and chapter number.
 ParsedMarkdown parseLumaMarkdown(String source, {String? fileName}) {
   final lines = source.replaceAll('\r\n', '\n').split('\n');
   final (front, bodyStart) = _frontmatter(lines);
@@ -92,9 +89,8 @@ ParsedMarkdown parseLumaMarkdown(String source, {String? fileName}) {
   );
 }
 
-/// Slug huruf kecil + strip buat `book_key`: "Atomic Habits!" → "atomic-habits".
-// ponytail: cuma a-z0-9, huruf non-latin kebuang. Tambah transliterasi kalau
-// ada judul non-latin yang kepake.
+/// Converts a title to a lowercase, hyphenated `book_key` slug.
+// ponytail: non-Latin characters are discarded; add transliteration when needed.
 String slugify(String s) => s
     .toLowerCase()
     .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
@@ -103,8 +99,8 @@ String slugify(String s) => s
 final _slug = RegExp(r'^[a-z0-9]+(-[a-z0-9]+)*$');
 final _keyLine = RegExp(r'^([A-Za-z_][\w-]*)\s*:(.*)$');
 
-/// Frontmatter = `---` di baris pertama, `key: value` semua, ditutup `---`.
-/// Selain itu dianggap body (`---` di awal file bisa pemisah adegan).
+/// Parses frontmatter only when the first and closing lines are `---` and
+/// every intervening line is `key: value`; otherwise treats it as body.
 (Map<String, String>, int) _frontmatter(List<String> lines) {
   if (lines.isEmpty || lines.first.trim() != '---') return (const {}, 0);
   final end = lines.indexWhere((l) => l.trim() == '---', 1);
@@ -148,8 +144,7 @@ final _link = RegExp(r'\[([^\]]*)\]\([^)]*\)');
 final _bold = RegExp(r'(\*\*|__)(.+?)\1');
 final _italic = RegExp(r'\*(.+?)\*|(?<!\w)_(.+?)_(?!\w)');
 
-/// Teks polos: gambar dibuang, link sisa teksnya, penanda tebal/miring/kode
-/// dilepas (`paragraphs.text` teks polos, sama kayak EPUB).
+/// Extracts plain text, dropping images and formatting while retaining link text.
 String _inline(String s) => s
     .replaceAll(_image, '')
     .replaceAllMapped(_link, (m) => m[1]!)
@@ -159,8 +154,8 @@ String _inline(String s) => s
     .replaceAll(RegExp(r'\s+'), ' ')
     .trim();
 
-/// Paragraf + teks `#` (level 1) pertama, buat tebakan judul buku. Level
-/// heading gak disimpen di [RawParagraph].
+/// Returns paragraphs and the first level-one heading for title inference.
+/// Heading levels are not stored in [RawParagraph].
 (List<RawParagraph>, String?) _body(Iterable<String> lines) {
   final out = <RawParagraph>[];
   final buf = <String>[];
@@ -194,7 +189,7 @@ String _inline(String s) => s
       out.add((type: ParagraphType.heading, text: text));
       if (h[1] == '#') h1 ??= text;
     } else if (line.startsWith('|')) {
-      flush(); // tabel dibuang
+      flush(); // Tables are dropped.
     } else if (_listItem.hasMatch(line)) {
       flush();
       buf.add(line.replaceFirst(_listItem, ''));
@@ -219,7 +214,7 @@ String _fileStem(String fileName) {
   return dot > 0 ? base.substring(0, dot) : base;
 }
 
-/// "atomic-habits_bab3" → "Atomic Habits Bab3".
+/// Converts a filename to a title, such as "atomic-habits_bab3" to "Atomic Habits Bab3".
 String _titleCase(String stem) => stem
     .split(RegExp(r'[-_\s]+'))
     .where((w) => w.isNotEmpty)
@@ -228,14 +223,14 @@ String _titleCase(String stem) => stem
 
 int? _chapter(String? s) => s == null ? null : int.tryParse(s);
 
-// Kata utuh, bukan potongan: "catch-22" bukan bab 22.
+// Match whole words so "catch-22" is not interpreted as chapter 22.
 final _chapterName = RegExp(
   r'(?<![a-z])(?:bab|chapter|chap|ch)[\s_-]*0*(\d+)',
   caseSensitive: false,
 );
 
-/// Judul buku dari nama file tanpa token bab: "bab-1-deep-work" → "Deep Work".
-/// Isinya cuma token bab ("bab-3") → nama file utuh.
+/// Infers a book title from a filename without chapter tokens.
+/// Uses the full filename when it contains only a chapter token.
 String _bookFromName(String stem) {
   final rest = _titleCase(stem.replaceFirst(_chapterName, ' '));
   return rest.isEmpty ? _titleCase(stem) : rest;

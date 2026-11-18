@@ -36,7 +36,7 @@ String chatQuestion(String text) {
   return value;
 }
 
-/// Batas judul memakai Unicode code points, bukan byte atau UTF-16 units.
+/// Title limit counts Unicode code points, not bytes or UTF-16 units.
 String chatTitle(String text, {bool automatic = false}) {
   final value = text.trim().replaceAll(RegExp(r'\s+'), ' ');
   if (value.isEmpty || !chatValidUnicode(value)) {
@@ -82,7 +82,7 @@ Map<String, String> _sourceData(ChatSource s) => {
   'text': s.text,
 };
 
-/// Buang utuh sumber yang tidak muat; quote wajib dicek setelah pemilihan.
+/// Drops a source that doesn't fit entirely; the quote must be checked after selection.
 List<ChatSource> fitChatSources(
   List<ChatSource> ranked, {
   int maxBytes = chatSourceBytes,
@@ -319,7 +319,7 @@ ChatAnswer parseChatAnswer(
   return ChatAnswer(status: status, blocks: blocks);
 }
 
-/// [chapterIds] dari model hanya diterima bila ada di [knownChapterIds].
+/// Model-provided [chapterIds] are accepted only if they are in [knownChapterIds].
 ChatQueryPlan parseChatQueryPlan(
   String raw, {
   Iterable<int> knownChapterIds = const [],

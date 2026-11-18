@@ -8,8 +8,8 @@ import '../../../../data/services/book_source.dart';
 import '../../../../domain/models/catalog.dart';
 import 'discover_view_model.dart';
 
-/// Isi detail dari `fetchDetail` (board 10–13). Kepala layar gak nunggu ini:
-/// judul, penulis, cover udah ada di `CatalogBook`.
+/// Detail content from `fetchDetail` (boards 10–13). The screen header doesn't
+/// wait for this: title, author, cover are already in `CatalogBook`.
 sealed class DetailState {
   const DetailState();
 }
@@ -76,16 +76,17 @@ final bookDetailProvider = NotifierProvider.autoDispose
       BookDetailViewModel.new,
     );
 
-/// "N buku lain di katalog": jumlah buku penulis di katalog lokal dikurangi
-/// buku ini. Provider sendiri biar widget test bisa override tanpa Drift.
+/// "N buku lain di katalog": the author's book count in the local catalog minus
+/// this book. Its own provider so widget tests can override it without Drift.
 final authorBookCountProvider = FutureProvider.autoDispose.family<int, String>(
   (ref, author) async =>
       (await ref.watch(catalogRepositoryProvider).countByAuthor(author) - 1)
           .clamp(0, 1 << 31),
 );
 
-/// Id buku di rak buat identitas katalog ini; null = belum ada. Dibaca ulang
-/// tiap rak berubah (download kelar → "Baca sekarang" / "Lanjut baca").
+/// Shelf book id for this catalog identity; null = not on the shelf. Re-read
+/// every time the shelf changes (download finishes → "Baca sekarang" / "Lanjut
+/// baca").
 final shelfBookIdProvider = FutureProvider.autoDispose
     .family<int?, CatalogBook>((ref, book) {
       ref.watch(shelfExternalIdsProvider(book.sourceId));

@@ -35,7 +35,7 @@ String dateTime(DateTime t, {String locale = 'id'}) =>
 String date(DateTime t, {String locale = 'id'}) =>
     DateFormat('d MMM y', locale).format(t);
 
-/// Jam lokal: `07.00` (id) / `07:00` (en).
+/// Local time: `07.00` (id) / `07:00` (en).
 String clockTime(DateTime t, {String locale = 'id'}) => _time(t, locale);
 
 String _time(DateTime t, String locale) =>

@@ -8,16 +8,16 @@ import '../../domain/models/ai_reply.dart';
 import '../../domain/models/book.dart';
 import '../database/app_database.dart';
 
-/// Isi cache terjemahan buat Pengaturan.
+/// Size of the translation cache, shown in Pengaturan.
 typedef AiCacheStats = ({int paragraphs, int bytes});
 
-/// Cache hasil LLM (`ai_results`).
+/// Caches LLM results (`ai_results`).
 class AiResultsRepository {
   AiResultsRepository(this._db);
 
   final AppDatabase _db;
 
-  /// Paragraf yang udah ada terjemahannya + kira-kira ukuran teksnya.
+  /// Counts paragraphs that already have a translation, with their approximate text size.
   Stream<AiCacheStats> watchStats() => _db
       .customSelect(
         'SELECT '
@@ -31,7 +31,7 @@ class AiResultsRepository {
       .watchSingle()
       .map((r) => (paragraphs: r.read<int>('n'), bytes: r.read<int>('bytes')));
 
-  /// Grup di chapter ini yang udah punya terjemahan (penanda di margin).
+  /// Returns the groups in this chapter that already have a translation (margin markers).
   Stream<Set<int>> watchGroups(int chapterId) =>
       (_db.selectOnly(_db.aiResults)
             ..addColumns([_db.aiResults.groupIndex])
@@ -41,8 +41,8 @@ class AiResultsRepository {
             (rows) => {for (final r in rows) r.read(_db.aiResults.groupIndex)!},
           );
 
-  /// Hasil yang udah ke-cache, atau null. Hasil dari prompt versi lama
-  /// ([aiPromptVersion]) dianggap belum ada, biar diterjemahin ulang.
+  /// Returns the cached result, or null. A result from an older prompt version
+  /// ([aiPromptVersion]) counts as missing so it is translated again.
   Future<AiReply?> find(GroupRef group) async {
     final row =
         await (_db.select(_db.aiResults)..where(
@@ -59,8 +59,8 @@ class AiResultsRepository {
     );
   }
 
-  /// Simpan = kebuka pertama (`openCount` 1). Nimpa hasil prompt versi lama
-  /// ngulang hitungannya dari 1.
+  /// Saving counts as the first open (`openCount` 1). Overwriting a result from an
+  /// older prompt version restarts the count at 1.
   Future<void> save(GroupRef group, AiReply reply, {required String model}) =>
       _db
           .into(_db.aiResults)
@@ -77,7 +77,7 @@ class AiResultsRepository {
             ),
           );
 
-  /// Sheet Artinya kebuka dari cache: grup ini dibaca ulang sekali lagi.
+  /// Records that the Artinya sheet opened from cache: the group was read once more.
   Future<void> markOpened(GroupRef group) =>
       (_db.update(_db.aiResults)..where(
             (a) =>
@@ -91,9 +91,9 @@ class AiResultsRepository {
             ),
           );
 
-  /// Teks yang dikirim ke LLM: buku + bab, paragraf grup (urut), dan sampe
-  /// [contextCount] paragraf sebelum paragraf pertama grup, di chapter yang
-  /// sama.
+  /// Returns the text sent to the LLM: book and chapter, the group's paragraphs (in
+  /// order), and up to [contextCount] paragraphs before the group's first paragraph
+  /// in the same chapter.
   Future<({AiBook? book, List<String> target, List<String> context})>
   promptText(GroupRef group, {int contextCount = 3}) async {
     final target =
@@ -137,7 +137,7 @@ class AiResultsRepository {
     );
   }
 
-  /// Hapus semua terjemahan; grup yang dibuka lagi bakal manggil LLM ulang.
+  /// Deletes every translation; groups opened later call the LLM again.
   Future<void> clear() => _db.delete(_db.aiResults).go();
 }
 

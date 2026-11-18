@@ -3,9 +3,10 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
-/// Status bar (dan navbar Android) ngikutin kapsul baca. Android: immersive
-/// sticky, bar yang kebuka swipe tepi ngumpet lagi sesudah jeda. iOS: bar
-/// bawah (home indicator) dibiarin.
+/// Keeps system bars in sync with the reading capsule.
+///
+/// On Android, bars revealed by an edge swipe hide again after a delay.
+/// On iOS, the home indicator remains visible.
 class ReaderSystemUi {
   ReaderSystemUi({
     required this.isVisit,
@@ -14,13 +15,13 @@ class ReaderSystemUi {
     required this.mounted,
   });
 
-  /// Lagi ngintip sumber obrolan: sistem UI gak diatur layar ini.
+  /// Whether this reader is previewing a chat source and leaves system UI alone.
   final bool isVisit;
 
-  /// Kapsul keliatan atau setelan "ngumpetin status bar" mati.
+  /// Whether the capsule is visible or hiding the status bar is disabled.
   final bool Function() barsShown;
 
-  /// Layar lain (Bedahin, Pengaturan) lagi di atas layar baca.
+  /// Whether another screen is above the reader.
   final bool Function() offReader;
   final bool Function() mounted;
 
@@ -37,7 +38,7 @@ class ReaderSystemUi {
     });
   }
 
-  /// Layar lain bukan layar baca: bar sistem tampil selama di sana.
+  /// Shows system bars while another screen is open.
   void edgeToEdge() =>
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
@@ -56,7 +57,7 @@ class ReaderSystemUi {
     );
   }
 
-  /// Keluar dari layar baca: bar balik normal.
+  /// Restores system bars when leaving the reader.
   void release() {
     _rehide?.cancel();
     if (_android && !isVisit) SystemChrome.setSystemUIChangeCallback(null);

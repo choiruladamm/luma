@@ -12,7 +12,7 @@ import { userAdditionalFields } from "./user-fields";
 
 const inviteFrom = (headers: Headers | undefined) => headers?.get(INVITE_HEADER)?.trim() ?? "";
 
-/** Google aktif kalau client ID diisi (web,ios,android dipisah koma). */
+/** Google is enabled when client IDs are set (web, iOS, Android, comma-separated). */
 const googleProvider = (env: Env) =>
   env.GOOGLE_CLIENT_IDS
     ? {
@@ -26,16 +26,16 @@ const googleProvider = (env: Env) =>
 let cached: { env: Env; auth: Auth } | undefined;
 
 /**
- * Bikin instance Better Auth itu mahal (puluhan ms CPU), jadi dipakai ulang per
- * isolate selama objek `env` sama. Bukan state per request: isinya cuma konfigurasi
- * dan binding.
+ * Creating a Better Auth instance is expensive (tens of ms of CPU), so it is reused per
+ * isolate while the `env` object stays the same. Not per-request state: it holds only
+ * configuration and bindings.
  */
 export function getAuth(env: Env): Auth {
   if (cached?.env !== env) cached = { env, auth: createAuth(env) };
   return cached.auth;
 }
 
-/** Opsi yang mempengaruhi schema harus sama dengan scripts/auth-schema.config.ts. */
+/** Options that affect the schema must match scripts/auth-schema.config.ts. */
 export function createAuth(env: Env) {
   const db = createDb(env.DB);
   const inviteRequired = env.INVITE_REQUIRED === "true";
@@ -54,9 +54,9 @@ export function createAuth(env: Env) {
     socialProviders: googleProvider(env),
     plugins: [bearer()],
     user: { additionalFields: userAdditionalFields },
-    // Rate limit pakai binding Workers per IP (middleware app), bukan storage Better Auth.
+    // Rate limiting uses the Workers binding per IP (app middleware), not Better Auth storage.
     rateLimit: { enabled: false },
-    // Login wajib + offline: sesi panjang, diperpanjang paling sering sekali sehari (1 tulis D1).
+    // Long sessions for login-required offline use: refreshed at most once a day (one D1 write).
     session: { expiresIn: SESSION_EXPIRES_IN_MS / 1000, updateAge: SESSION_UPDATE_AGE_MS / 1000 },
     databaseHooks: {
       user: {

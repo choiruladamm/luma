@@ -3,9 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../database/app_database.dart';
 
-/// Isi index Cari kata buat buku yang udah ada sebelum schema 17
-/// (docs/book-search.md). Buku baru / re-import ke-index otomatis lewat
-/// trigger di `paragraphs`; yang di sini cuma backfill lazy.
+/// Fills the Cari kata index for books that existed before schema 17
+/// (docs/book-search.md). New and re-imported books are indexed automatically by
+/// triggers on `paragraphs`; this class only does a lazy backfill.
 class BookSearchIndex {
   BookSearchIndex(this._db);
 
@@ -15,7 +15,7 @@ class BookSearchIndex {
       "p.type != 'sceneBreak' AND NOT EXISTS "
       '(SELECT 1 FROM paragraph_fts_docsize d WHERE d.id = p.rowid)';
 
-  /// True kalau semua paragraf buku ini yang perlu di-index udah masuk.
+  /// Returns true when every paragraph of this book that needs indexing is indexed.
   Future<bool> isIndexed(int bookId) async {
     final row = await _db
         .customSelect(
@@ -29,8 +29,8 @@ class BookSearchIndex {
     return row.read<int>('missing') == 0;
   }
 
-  /// Index paragraf yang belum masuk, per bab (aman diulang / dilanjut kalau
-  /// kepotong). [onProgress] dapet (bab selesai, jumlah bab).
+  /// Indexes the paragraphs still missing, chapter by chapter (safe to repeat or
+  /// resume after an interruption). [onProgress] receives (chapters done, chapter count).
   Future<void> ensureIndexed(
     int bookId, {
     void Function(int done, int total)? onProgress,

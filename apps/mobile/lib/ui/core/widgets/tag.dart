@@ -7,10 +7,10 @@ import 'buttons.dart';
 
 enum TagTone { accent, pink, muted }
 
-/// Label kecil berbentuk pill (board Komponen 01, Tag & chip).
+/// Small pill-shaped label (board Komponen 01, Tag & chip).
 ///
-/// - [Tag.section]: judul section di sheet ("TERJEMAHAN"), CAPS.
-/// - [Tag.status]: chip progres di tile buku ("72%", "Kelar!", "Baru").
+/// - [Tag.section]: section title in a sheet ("TERJEMAHAN"), CAPS.
+/// - [Tag.status]: progress chip on a book tile ("72%", "Kelar!", "Baru").
 class Tag extends StatelessWidget {
   const Tag.section(this.label, {super.key, this.tone = TagTone.accent})
     : _section = true,
@@ -25,7 +25,7 @@ class Tag extends StatelessWidget {
 
   final String label;
 
-  /// Ikon kecil di depan teks ("Kelar!" + centang). Cuma [Tag.status].
+  /// Small icon before the text ("Kelar!" + check). [Tag.status] only.
   final List<List<dynamic>>? icon;
   final TagTone tone;
   final bool _section;
@@ -38,9 +38,9 @@ class Tag extends StatelessWidget {
       TagTone.pink => (c.pink, c.onPink),
       TagTone.muted => (c.muted, c.ink),
     };
-    // Selebar teksnya aja, di parent mana pun. Container & Align `widthFactor`
-    // gak cukup di Column(stretch): constraint ketat dari parent menang. Align
-    // terluar ngelonggarin constraint-nya dulu.
+    // Only as wide as its text, under any parent. Container & Align
+    // `widthFactor` aren't enough in a Column(stretch): the parent's tight
+    // constraints win. The outermost Align loosens the constraints first.
     return Align(
       alignment: Alignment.centerLeft,
       widthFactor: 1,

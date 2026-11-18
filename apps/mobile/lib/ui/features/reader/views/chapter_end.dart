@@ -25,7 +25,7 @@ class ChapterEnd extends ConsumerWidget {
   final int chapterId;
   final String title;
 
-  /// Null = ini bab terakhir; tombolnya ke layar akhir buku.
+  /// Null = this is the last chapter; the button goes to the end-of-book screen.
   final ChapterInfo? next;
   final int nextNumber;
   final int total;
@@ -54,7 +54,7 @@ class ChapterEnd extends ConsumerWidget {
             Row(
               spacing: Space.s2,
               children: [
-                // Judul bab bisa kalimat panjang: chip dipotong "…".
+                // A chapter title can be a long sentence: the chip is truncated with "…".
                 Flexible(
                   child: Container(
                     height: 24,

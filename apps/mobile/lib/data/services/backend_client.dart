@@ -6,27 +6,31 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'http_client.dart';
 
-/// URL Worker per flavor (docs/backend.md, Environments and bindings). Env prod baru ada
-/// setelah backend di-merge ke master (`make backend-deploy e=prod`).
+/// Worker URL per flavor (docs/backend.md, Environments and bindings).
+///
+/// The prod environment exists only after the backend is merged to master
+/// (`make backend-deploy e=prod`).
 const backendUrls = {
-  // Custom domain: `*.workers.dev` diblok sebagian ISP (XL).
+  // Custom domain: some ISPs (XL) block `*.workers.dev`.
   'dev': 'https://luma-api-dev.chrl.cloud',
   'prod': 'https://luma-api.chrl.cloud',
 };
 
-/// `--dart-define=BACKEND_URL=http://<ip>:8787` menimpa URL flavor, buat
-/// nyobain ke `make backend-dev` dari device.
+/// Overrides the flavor URL via `--dart-define=BACKEND_URL=http://<ip>:8787`,
+/// to reach `make backend-dev` from a device.
 const _backendUrlOverride = String.fromEnvironment('BACKEND_URL');
 
-/// Flavor `dev` → Worker env dev; lainnya (prod / tanpa flavor) → prod.
+/// Returns the Worker URL: flavor `dev` maps to env dev; anything else (prod or no flavor) maps to prod.
 String backendBaseUrl(String? flavor, {String override = _backendUrlOverride}) {
   if (override.isNotEmpty) return override;
   if (flavor == 'dev') return backendUrls['dev']!;
   return backendUrls['prod']!;
 }
 
-/// Error dari backend, `code` = kode `UPPER_SNAKE_CASE` server
-/// (`{"error": {"code", "message"}}`) atau `NETWORK` / `UNKNOWN` dari client.
+/// Represents an error from the backend.
+///
+/// [code] is the server's `UPPER_SNAKE_CASE` code (`{"error": {"code", "message"}}`),
+/// or `NETWORK` / `UNKNOWN` when the client produced it.
 class BackendException implements Exception {
   const BackendException({
     required this.code,
@@ -39,8 +43,8 @@ class BackendException implements Exception {
   final String message;
   final int? statusCode;
 
-  /// Dari header `Retry-After`: pemicu otomatis berikutnya nunggu minimal
-  /// selama ini (docs/budgets.md, Client request policy).
+  /// Comes from the `Retry-After` header: the next automatic trigger waits at
+  /// least this long (docs/budgets.md, Client request policy).
   final Duration? retryAfter;
 
   @override
@@ -59,16 +63,17 @@ class BackendHealth {
   final String env;
 }
 
-/// Maksimal percobaan per pemanggilan (1 + 2 ulang).
+/// Maximum attempts per call: the first try plus two retries.
 const backendMaxAttempts = 3;
 
-/// Jeda sebelum percobaan ke-[attempt] + 1: 0,5 s lalu 1 s.
+/// Returns the delay before attempt [attempt] + 1: 0.5 s, then 1 s.
 Duration backendBackoff(int attempt) =>
     Duration(milliseconds: 500 * (1 << (attempt - 1)));
 
-/// Ulang cuma jaringan putus/timeout dan 5xx tanpa `Retry-After`. 4xx, 429,
-/// dan 503 saklar darurat (bawa `Retry-After`) langsung dilempar: pemicu
-/// otomatis nunggu pemicu berikutnya, bukan loop.
+/// Returns true only for network drops/timeouts and 5xx without `Retry-After`.
+///
+/// 4xx, 429, and the 503 kill switch (which carries `Retry-After`) are thrown
+/// immediately: automatic triggers wait for the next trigger instead of looping.
 bool backendShouldRetry(DioException e) {
   final response = e.response;
   if (response == null) {
@@ -97,8 +102,10 @@ BackendException backendExceptionFrom(DioException e) {
   );
 }
 
-/// Client HTTP ke Worker Luma. Tanpa polling: dipanggil cuma dari pemicu
-/// (buka/resume, aksi user, perubahan lokal).
+/// HTTP client for the Luma Worker.
+///
+/// Never polls: calls come only from triggers (open/resume, user actions,
+/// local changes).
 class BackendClient {
   BackendClient({
     required String baseUrl,
@@ -119,9 +126,10 @@ class BackendClient {
     return BackendHealth.fromJson(res.data!);
   }
 
-  /// Satu panggilan JSON ke Worker. [token] → `Authorization: Bearer`.
-  /// [retry] false untuk aksi yang gak aman diulang (daftar akun): request yang
-  /// putus di tengah bisa aja udah diproses server.
+  /// Sends one JSON call to the Worker; [token] becomes `Authorization: Bearer`.
+  ///
+  /// Pass [retry] false for actions that are unsafe to repeat (account
+  /// sign-up): a request cut off midway may already have been processed.
   Future<Response<Map<String, Object?>>> request(
     String method,
     String path, {
@@ -144,8 +152,9 @@ class BackendClient {
     retry: retry,
   );
 
-  /// Upload isi [file] apa adanya (`PUT`, di-stream dengan `Content-Length`).
-  /// Tiap percobaan ulang baca file dari awal.
+  /// Uploads [file] as-is (`PUT`, streamed with `Content-Length`).
+  ///
+  /// Each retry reads the file from the start.
   Future<Map<String, Object?>> upload(
     String path,
     File file, {
@@ -172,7 +181,7 @@ class BackendClient {
     return res.data!;
   }
 
-  /// Download body [path] ke [savePath].
+  /// Downloads the response body of [path] to [savePath].
   Future<void> download(
     String path,
     String savePath, {

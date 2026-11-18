@@ -72,7 +72,7 @@ void main() {
     picker.next = picked('pg45109-images-3.epub', epub);
     await controller().pick();
 
-    // "Baca file" sekejap, gak ditampilin (biar duplikat gak kedip).
+    // The "Baca file" stage is not shown, so the duplicate check does not flicker.
     expect(
       seen.toSet(),
       ImportStage.values.toSet()..remove(ImportStage.reading),
@@ -179,7 +179,7 @@ void main() {
       for (final (_, s) in seen)
         if (s is ImportProcessing) s.progress,
     ];
-    expect(progress.first, lessThan(0.3)); // nongol setelah baca + hash
+    expect(progress.first, lessThan(0.3)); // appears after read + hash
     expect(progress.last, 1);
     expect(progress.toSet().length, greaterThan(4)); // stages + per chapter
     for (var i = 1; i < progress.length; i++) {
@@ -202,7 +202,7 @@ void main() {
       if (s is ImportProcessing) flashed = true;
     });
     await controller().pick();
-    expect(flashed, isFalse); // gak ada sheet proses sebelum sheet duplikat
+    expect(flashed, isFalse); // no processing sheet before the duplicate sheet
     expect((state() as ImportDuplicate).book.id, first);
     expect(clock.elapsed, lessThan(Motion.importMin)); // not held
   });

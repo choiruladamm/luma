@@ -1,9 +1,9 @@
-// Helper kecil yang dipakai bareng: base64 buat crypto.subtle, daftar `vars`.
+// Small shared helpers: base64 for crypto.subtle, `vars` lists.
 
 export const b64 = (bytes: Uint8Array) => btoa(String.fromCharCode(...bytes));
 export const unb64 = (text: string) => Uint8Array.from(atob(text), (c) => c.charCodeAt(0));
 
-/** Daftar dipisah koma dari `vars` (model, client ID): spasi & entri kosong dibuang. */
+/** A comma-separated list from `vars` (models, client IDs): whitespace and empty entries are dropped. */
 export const csv = (value: string | undefined) =>
   (value ?? "")
     .split(",")

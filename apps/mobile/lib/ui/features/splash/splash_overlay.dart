@@ -5,15 +5,15 @@ import '../../core/theme/stabilo_tokens.dart';
 import '../../core/theme/stabilo_type.dart';
 import '../../core/widgets/luma_logo.dart';
 
-/// Lama animasi splash → rak (board Splash → Rak · transisi): "Stabilo
-/// kegores" 0–450, "Nyala!" 450–700, meluncur ke judul 700–1000.
+/// Splash → shelf animation duration (board Splash → Rak · transisi): "Stabilo
+/// kegores" 0–450, "Nyala!" 450–700, glides to the title 700–1000.
 const splashDuration = Duration(milliseconds: 1000);
 
-/// Kalau "Kurangi gerakan" nyala: logo diam, fade 200 ms ke rak.
+/// With Reduce Motion on: logo stays still, 200 ms fade to the shelf.
 const splashReducedDuration = Duration(milliseconds: 200);
 
-/// Lapisan splash di atas aplikasi, sekali per start. Launch screen iOS
-/// statis (logo jadi); animasinya jalan di sini begitu Flutter udah kebuka.
+/// Splash layer above the app, once per start. The iOS launch screen is static
+/// (the finished logo); the animation runs here once Flutter is up.
 class SplashGate extends StatefulWidget {
   const SplashGate({super.key, required this.enabled, required this.child});
 
@@ -51,8 +51,8 @@ class SplashOverlay extends StatefulWidget {
 
 class _SplashOverlayState extends State<SplashOverlay>
     with SingleTickerProviderStateMixin {
-  // `preserve`: "Kurangi gerakan" gak boleh nge-skip fade 200 ms-nya sendiri
-  // (default controller jalan 20× lebih cepat pas animasi dimatiin).
+  // `preserve`: Reduce Motion must not skip its own 200 ms fade (the default
+  // controller runs 20× faster when animations are disabled).
   late final AnimationController _ctrl = AnimationController(
     vsync: this,
     animationBehavior: AnimationBehavior.preserve,
@@ -78,15 +78,15 @@ class _SplashOverlayState extends State<SplashOverlay>
     super.dispose();
   }
 
-  /// [from]..[to] (ms dari awal) jadi 0..1.
+  /// Maps [from]..[to] (ms from the start) to 0..1.
   static double _span(double ms, double from, double to) =>
       ((ms - from) / (to - from)).clamp(0.0, 1.0);
 
   @override
   Widget build(BuildContext context) => Theme(
-    // Ngikut iPhone, bukan tema Aa: launch screen iOS juga ngikut iPhone, dan
-    // tema Aa baru kebaca beberapa frame setelah start. Rak di bawahnya
-    // tertutup penuh sampe animasinya lepas.
+    // Follows the iPhone, not the Aa theme: the iOS launch screen also follows
+    // the iPhone, and the Aa theme is only read a few frames after start. The
+    // shelf below is fully covered until the animation is released.
     data: stabiloTheme(MediaQuery.platformBrightnessOf(context)),
     child: Builder(builder: _frames),
   );
@@ -97,11 +97,11 @@ class _SplashOverlayState extends State<SplashOverlay>
     final screen = MediaQuery.sizeOf(context);
     final top = MediaQuery.paddingOf(context).top;
 
-    // Grup logo (simbol 128 + 18 + wordmark 37 = 183) di tengah layar, tapi
-    // margin-top −30 di board Splash bikin pusatnya naik 15.
+    // The logo group (symbol 128 + 18 + wordmark 37 = 183) is centered on screen,
+    // but the board Splash's margin-top −30 raises its center by 15.
     final symbolTop = screen.height / 2 - 15 - 183 / 2;
     final start = Offset(screen.width / 2, symbolTop + 64);
-    // Mendarat di slot simbol header rak.
+    // Lands in the shelf header's symbol slot.
     final end = Offset(
       Layout.margin - 3 + 14,
       top + (Layout.topBar - 28) / 2 + 14,
@@ -111,7 +111,7 @@ class _SplashOverlayState extends State<SplashOverlay>
       animation: _ctrl,
       builder: (context, _) {
         final ms = _ctrl.value * (_reduced ? 200 : 1000);
-        // Kurva coretan dari board Splash: cubic-bezier(.3, .7, .2, 1).
+        // Stroke curve from the board Splash: cubic-bezier(.3, .7, .2, 1).
         final draw = _reduced
             ? 1.0
             : const Cubic(.3, .7, .2, 1).transform(_span(ms, 0, 450));
@@ -126,8 +126,8 @@ class _SplashOverlayState extends State<SplashOverlay>
         final leave = _reduced ? 0.0 : _span(ms, 700, 1000);
         final fly = Curves.easeInOut.transform(leave);
         final fade = _reduced ? _span(ms, 0, 200) : leave;
-        // Wordmark + tagline naik pelan bareng titik (450–700), terus mudar
-        // pas simbol meluncur. Sebelum simbolnya jadi, belum ada.
+        // Wordmark + tagline rise slowly with the dot (450–700), then fade as the
+        // symbol glides away. Absent before the symbol is done.
         final word = _reduced
             ? 1.0
             : Curves.easeOut.transform(pop) * (1 - leave);
@@ -146,7 +146,7 @@ class _SplashOverlayState extends State<SplashOverlay>
               ),
               Positioned(
                 left: start.dx - 103.6 / 2,
-                // Naik 8 → 0 pelan bareng fade in.
+                // Rises 8 → 0 slowly with the fade in.
                 top: symbolTop + 146 + (_reduced ? 0 : 8 * (1 - pop)),
                 width: 103.6,
                 child: Opacity(
@@ -182,7 +182,7 @@ class _SplashOverlayState extends State<SplashOverlay>
                 left: center.dx - size / 2,
                 top: center.dy - size / 2,
                 child: Opacity(
-                  // Pas "Kurangi gerakan" simbol ikut memudar bareng latar.
+                  // With Reduce Motion the symbol fades with the background.
                   opacity: _reduced ? 1 - fade : 1,
                   child: LumaLogo(
                     size: size,

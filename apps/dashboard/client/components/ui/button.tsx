@@ -3,7 +3,7 @@ import { Link, type LinkProps } from "react-router";
 import { cn } from "../../lib/cn";
 import { Icon, type IconName, Spinner } from "./icons";
 
-// Komponen 1, Tombol: one yellow primary per screen; full danger only inside confirm dialogs.
+// Design component 1, Button: one yellow primary per screen; full danger only inside confirm dialogs.
 export type ButtonVariant = "primary" | "secondary" | "sheet" | "danger" | "danger-soft";
 
 const VARIANTS: Record<ButtonVariant, string> = {

@@ -2,8 +2,8 @@ import '../../../data/services/gutenberg_source.dart';
 import '../../../domain/catalog/catalog_row.dart';
 import '../../../domain/models/catalog.dart';
 
-/// Buku kurasi buat rak kosong (board 02 / 17): kalimat pembuka + artinya
-/// di-hardcode. Buku lain pakai Pride and Prejudice.
+/// Curated books for the empty shelf (board 02 / 17): opening sentence + its
+/// meaning, hardcoded. Other books use Pride and Prejudice.
 class CuratedBook {
   const CuratedBook({
     required this.book,
@@ -64,7 +64,7 @@ final curatedBooks = [
   ),
 ];
 
-/// Kutipan buat buku yang lagi diunduh; bukan kurasi = Pride and Prejudice.
+/// Quote for a book being downloaded; non-curated = Pride and Prejudice.
 CuratedBook curatedFor(CatalogBook book) => curatedBooks.firstWhere(
   (c) =>
       c.book.sourceId == book.sourceId && c.book.externalId == book.externalId,

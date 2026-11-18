@@ -11,18 +11,18 @@ import '../../discover/view_models/download_queue_view_model.dart';
 import '../../discover/views/download_chip.dart';
 import '../view_models/tab_reselect.dart';
 
-/// Rak · Cari buku · Atur di bawah [LumaNavBar] melayang (board Komponen ·
-/// NavBar). Konten tab dapet ruang bawah [Layout.navSpace] lewat padding
-/// MediaQuery, jadi list tiap tab gak perlu tau soal bar. Bar ke-hide pas
-/// keyboard naik; layar baca & detail buku ada di luar shell.
+/// Rak · Cari buku · Atur under the floating [LumaNavBar] (board Komponen ·
+/// NavBar). Tab content gets [Layout.navSpace] of bottom room via MediaQuery
+/// padding, so each tab's list needn't know about the bar. The bar hides when
+/// the keyboard rises; the reading screen & book detail are outside the shell.
 class AppShell extends ConsumerWidget {
   const AppShell({super.key, required this.shell});
 
   final StatefulNavigationShell shell;
 
-  /// true kalau [context] ada di tab yang lagi keliatan (atau di luar shell).
-  /// Tab lain tetep hidup di IndexedStack, jadi listener global (backup,
-  /// import) cuma boleh jalan di tab ini.
+  /// true if [context] is in the currently visible tab (or outside the shell).
+  /// Other tabs stay alive in the IndexedStack, so global listeners (backup,
+  /// import) may only run in this tab.
   static bool isVisible(BuildContext context) {
     final shell = StatefulNavigationShell.maybeOf(context);
     if (shell == null) return true;
@@ -56,8 +56,8 @@ class AppShell extends ConsumerWidget {
             left: 0,
             right: 0,
             bottom: bottom,
-            // Lapisan ini di atas semua Scaffold: tanpa Material, Text-nya
-            // jatuh ke gaya darurat Flutter (garis bawah kuning).
+            // This layer is above every Scaffold: without Material, the Text falls back
+            // to Flutter's emergency style (yellow underline).
             child: Material(
               type: MaterialType.transparency,
               child: Column(

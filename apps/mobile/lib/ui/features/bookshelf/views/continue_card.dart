@@ -12,9 +12,9 @@ import '../../../core/theme/stabilo_type.dart';
 import '../../../core/widgets/book_card.dart';
 import '../../../core/widgets/book_cover.dart';
 
-/// Kartu "Lanjut baca yuk" di atas rak (board Komponen Buku · ContinueCard).
-/// Terang: kartu accent + outline. Gelap: kartu muted, accent cuma di kicker
-/// & progres.
+/// "Lanjut baca yuk" card above the shelf (board Komponen Buku · ContinueCard).
+/// Light: accent card + outline. Dark: muted card, accent only on the kicker &
+/// progress.
 class ContinueCard extends StatelessWidget {
   const ContinueCard({
     super.key,

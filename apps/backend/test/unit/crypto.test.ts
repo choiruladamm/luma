@@ -17,7 +17,7 @@ describe("AES-GCM text sealing", () => {
     const sealed = await encryptText(SECRET, "sk-or-v1-rahasia");
     expect(await decryptText(OTHER, sealed)).toBeNull();
     const [v, iv, ct] = sealed.split(".");
-    // Karakter pertama (6 bit data penuh), bukan karakter terakhir yang sebagian bit-nya padding.
+    // The first character (all 6 data bits), not the last one, whose trailing bits are partly padding.
     const flipped = `${ct!.startsWith("A") ? "B" : "A"}${ct!.slice(1)}`;
     expect(await decryptText(SECRET, [v, iv, flipped].join("."))).toBeNull();
   });

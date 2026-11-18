@@ -39,7 +39,7 @@ export function UserIdentity({ user, q }: { user: Pick<UserListItem, "email" | "
   );
 }
 
-// Komponen 2, Tabel: numbers right-aligned and tabular, empty values "—".
+// Design component 2, Table: numbers right-aligned and tabular, empty values "—".
 export const userColumns = (i18n: I18n, q?: string) =>
   h.columns([
   h.accessor("email", { header: i18n.t.users.user, cell: (info) => <UserIdentity user={info.row.original} q={q} /> }),

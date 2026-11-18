@@ -1,6 +1,6 @@
-/// Bentuk API key OpenRouter: `sk-or-` + huruf/angka/`-`/`_`, tanpa spasi.
-/// Cuma ngecek bentuk (gak nanya server), buat nolak teks ngawur sebelum
-/// disimpen. Null = bukan bentuk key.
+/// Shape of an OpenRouter API key: `sk-or-` + letters/digits/`-`/`_`, no spaces.
+/// Checks the shape only (no server call), to reject garbage text before it is
+/// saved. Null = not a key shape.
 String? parseApiKey(String raw) {
   final key = raw.trim();
   return _shape.hasMatch(key) ? key : null;

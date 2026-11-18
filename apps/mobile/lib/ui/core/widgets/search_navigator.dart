@@ -6,10 +6,10 @@ import '../theme/stabilo_tokens.dart';
 import '../theme/stabilo_type.dart';
 import 'buttons.dart';
 
-/// Navigator hasil Cari kata, nempel di bawah gantiin pill progres (board
-/// "Cari kata 6" dan "navigator pas scroll"): `↑ · kata + "1 dari 68 · Bab" ·
-/// ↓ | ×`. [compact] (pas lagi scroll): pill 46, cuma "1/68", tanpa kata,
-/// lebih sempit. Tap tengah = balik ke daftar hasil.
+/// Cari kata result navigator, pinned at the bottom in place of the progress
+/// pill (boards "Cari kata 6" and "navigator pas scroll"):
+/// `↑ · word + "1 dari 68 · Bab" · ↓ | ×`. [compact] (while scrolling): pill 46,
+/// only "1/68", no word, narrower. Tapping the middle returns to the result list.
 class SearchNavigator extends StatelessWidget {
   const SearchNavigator({
     super.key,
@@ -25,21 +25,21 @@ class SearchNavigator extends StatelessWidget {
     required this.onClose,
   });
 
-  /// Kata yang dicari, apa adanya dari kolom cari.
+  /// The searched word, as typed in the search field.
   final String word;
 
-  /// Hasil yang lagi dibuka, mulai 1.
+  /// The currently open result, starting at 1.
   final int position;
   final int total;
 
-  /// Bab hasil yang lagi dibuka, di baris kedua ("1 dari 68 · Chapter I").
+  /// Chapter of the currently open result, on the second line ("1 dari 68 · Chapter I").
   final String? chapterTitle;
   final bool compact;
 
-  /// Hasil lebih dari yang ditampilin (500): "dari 500+".
+  /// More results than displayed (500): "dari 500+".
   final bool truncated;
 
-  /// Null = gak ada hasil sebelum / sesudahnya (tombol redup).
+  /// Null = no result before / after (button dimmed).
   final VoidCallback? onPrevious;
   final VoidCallback? onNext;
   final VoidCallback onList;
@@ -53,7 +53,7 @@ class SearchNavigator extends StatelessWidget {
         ? Layout.searchNavCompactHeight
         : Layout.searchNavHeight;
     final count = truncated ? '$total+' : '$total';
-    // Tinggi pill tetap (kayak kapsul baca): teks dibatasin biar gak meluap.
+    // Fixed pill height (like the reading capsule): text is bounded so it doesn't overflow.
     final media = MediaQuery.of(context);
     return MediaQuery(
       data: media.copyWith(
@@ -189,7 +189,7 @@ class SearchNavigator extends StatelessWidget {
   }
 }
 
-/// Tombol bulat [Layout.searchNavButton] (area sentuh 44, bukan visual).
+/// Round [Layout.searchNavButton] button (44 tap area, not visual).
 class _NavButton extends StatelessWidget {
   const _NavButton({
     required this.label,

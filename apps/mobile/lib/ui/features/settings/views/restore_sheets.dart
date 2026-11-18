@@ -13,7 +13,7 @@ import '../../../core/widgets/edge_fade.dart';
 import '../../../core/widgets/sheet.dart';
 import 'backup_sheet.dart';
 
-/// Ringkasan & konfirmasi (board 28). true = "Ganti & pulihin".
+/// Summary & confirmation (board 28). true = "Ganti & pulihin".
 Future<bool> showRestoreSummary(
   BuildContext context, {
   required RestorePreview preview,
@@ -212,7 +212,7 @@ class _BackupInfo extends StatelessWidget {
             spacing: Space.s2,
             children: [
               stat(manifest.books, context.l10n.restoreBooksOnShelf),
-              // Manifest ngitung grup yang udah diterjemahin.
+              // The manifest counts translated groups.
               stat(manifest.aiResults, context.l10n.restoreTranslations),
             ],
           ),
@@ -277,7 +277,7 @@ class _Warning extends StatelessWidget {
   }
 }
 
-/// ConfirmCheck: tombol danger baru aktif kalau dicentang.
+/// ConfirmCheck: the danger button is only active once ticked.
 class _Check extends StatelessWidget {
   const _Check({required this.value, required this.onChanged});
 
@@ -336,8 +336,8 @@ class _Check extends StatelessWidget {
   }
 }
 
-/// Lagi mulihin (board 29). [stage]: 1 = buku, 2 = progres & terjemahan,
-/// 3 = beres. Gak bisa dibatalin (lagi ganti data).
+/// Restoring (board 29). [stage]: 1 = books, 2 = progress & translations, 3 =
+/// done. Can't be cancelled (data is being replaced).
 class RestoreProgressSheet extends StatelessWidget {
   const RestoreProgressSheet({
     super.key,
@@ -458,7 +458,7 @@ class RestoreProgressSheet extends StatelessWidget {
   }
 }
 
-/// Kenapa gagal mulihin (board 31, 32). true = "Pilih file lain".
+/// Why restoring failed (boards 31, 32). true = "Pilih file lain".
 Future<bool> showRestoreFailed(
   BuildContext context, {
   required String fileName,
@@ -475,7 +475,7 @@ class _Failed extends StatelessWidget {
 
   final String fileName;
 
-  /// Null = gagal pas ganti data (udah dibalikin).
+  /// Null = failed while replacing data (already rolled back).
   final RestoreException? error;
 
   @override

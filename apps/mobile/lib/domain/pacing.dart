@@ -1,32 +1,31 @@
 import 'dart:math' as math;
 
-/// Ritme teks streaming (docs/llm.md): huruf dari jaringan ditampung,
-/// dikeluarin rata, bukan per potongan. Aturan adaptif dari spike #34:
-/// model ngalir 90–1000 huruf/detik (median 220–430), jadi batas 2× baseline
-/// dari board bikin ketinggalan sampe 5 detik. Di sini kecepatan ngikutin
-/// buffer, ketinggalan maks ±1 detik.
+/// Rhythm of streamed text (docs/llm.md): characters from the network are
+/// buffered and released evenly, not per chunk. Adaptive rule from spike #34:
+/// models stream 90–1000 chars/s (median 220–430), so the board's 2× baseline cap
+/// lagged up to 5 seconds. Here the speed follows the buffer, lagging at most ±1 second.
 class Pacer {
-  /// Huruf/detik minimal.
+  /// Minimum characters per second.
   static const baseline = 45.0;
 
-  /// Kecepatan = buffer / ini, jadi ketinggalan gak lebih dari segini.
+  /// Speed = buffer / this, so the lag never exceeds this many seconds.
   static const lag = 1.0;
 
-  /// Server selesai: sisa buffer abis dalam segini.
+  /// Server finished: the remaining buffer drains within this many seconds.
   static const drain = 0.6;
 
-  /// Jawaban yang lengkap dalam segini sejak huruf pertama tampil langsung.
+  /// An answer that is complete within this many seconds of the first shown character appears immediately.
   static const instant = 1.5;
 
   double _shown = 0;
   double _elapsed = 0;
   double? _drainRate;
 
-  /// Huruf yang boleh ditampilin.
+  /// Characters allowed to be shown.
   int get shown => _shown.floor();
 
-  /// Maju [dt] detik. [available] = huruf yang udah dateng, [done] = server
-  /// udah selesai. Balikin [shown].
+  /// Advances [dt] seconds. [available] = characters that have arrived, [done] = the
+  /// server has finished. Returns [shown].
   int step(double dt, int available, {required bool done}) {
     _shown = math.min(_shown, available.toDouble());
     if (available <= 0) return shown;
@@ -44,6 +43,6 @@ class Pacer {
     return shown;
   }
 
-  /// Tampilin semua sekarang (kepotong, kurangi gerakan).
+  /// Show everything now (truncated, reduce motion).
   void finish(int available) => _shown = available.toDouble();
 }

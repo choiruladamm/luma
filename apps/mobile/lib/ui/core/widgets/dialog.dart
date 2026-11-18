@@ -6,11 +6,11 @@ import '../theme/stabilo_tokens.dart';
 import '../theme/stabilo_type.dart';
 import 'buttons.dart';
 
-/// Dialog konfirmasi buat aksi yang gak bisa dibalikin (board Komponen 04).
-/// `true` = dikonfirmasi; ditutup / Batal = `false`.
+/// Confirmation dialog for irreversible actions (board Komponen 04).
+/// `true` = confirmed; dismissed / Batal = `false`.
 ///
-/// Dengan [icon] ukurannya ngikut board 22 Konfirmasi hapus: selebar layar
-/// dikurangi margin 32, sudut 26, judul 22, tombol 50.
+/// With [icon] the size follows board 22 Konfirmasi hapus: screen width minus
+/// 32 margin, corner 26, title 22, button 50.
 Future<bool> showConfirmDialog(
   BuildContext context, {
   required String title,
@@ -19,12 +19,12 @@ Future<bool> showConfirmDialog(
   String? cancelLabel,
   bool destructive = true,
 
-  /// Tile ikon di atas judul (board Konfirmasi hapus).
+  /// Icon tile above the title (board Konfirmasi hapus).
   List<List<dynamic>>? icon,
 
-  /// Ada = tombol konfirmasi jadi spinner sampai Future-nya selesai, Batal
-  /// mati, dan dialog gak nutup sendiri: pemanggil yang nutup (mis. ikut
-  /// nutup sheet di bawahnya) begitu hasilnya ada.
+  /// When set, the confirm button becomes a spinner until the Future completes,
+  /// Batal is disabled, and the dialog doesn't close itself: the caller closes
+  /// it (e.g. along with the sheet below) once the result is in.
   Future<void> Function()? onConfirm,
 }) async {
   var loading = false;
@@ -74,8 +74,8 @@ Future<bool> showConfirmDialog(
                   spacing: tall ? 10 : Space.s2,
                   children: [
                     if (icon != null)
-                      // Ukuran sendiri, nempel kiri: di Column(stretch) Container
-                      // tanpa Align ikut melebar ke lebar dialog.
+                      // Own size, pinned left: in a Column(stretch) a Container without Align
+                      // stretches to the dialog width.
                       Align(
                         alignment: Alignment.centerLeft,
                         child: Padding(

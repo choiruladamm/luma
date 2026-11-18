@@ -1,6 +1,6 @@
 import 'models/book.dart';
 
-/// [books] datang urut terakhir dibuka (urutan stream rak).
+/// [books] arrive ordered by last opened (the shelf stream order).
 List<ShelfBook> sortShelf(List<ShelfBook> books, ShelfSort sort) =>
     switch (sort) {
       ShelfSort.lastOpened => books,

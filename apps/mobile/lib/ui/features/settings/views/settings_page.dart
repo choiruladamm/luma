@@ -7,15 +7,15 @@ import '../../../core/theme/stabilo_type.dart';
 import '../../../core/widgets/buttons.dart';
 import '../../../core/widgets/edge_fade.dart';
 
-/// Kerangka halaman detail Pengaturan: tombol balik + judul, isi scroll yang
-/// lega dari bar tab melayang di bawah (board "Pengaturan · 02–10").
+/// Frame of a Settings detail page: back button + title, scrolling content with
+/// room above the floating tab bar at the bottom (board "Pengaturan · 02–10").
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key, required this.title, required this.children});
 
   final String title;
   final List<Widget> children;
 
-  /// Tinggi bar tab melayang + jarak bawahnya (board: padding-bottom 110).
+  /// Height of the floating tab bar + its bottom gap (board: padding-bottom 110).
   static const navClearance = 110.0;
 
   @override

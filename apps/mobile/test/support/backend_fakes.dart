@@ -1,12 +1,12 @@
-// Fake HTTP + fixture kontrak backend untuk test data Flutter.
+// Fake HTTP + backend contract fixtures for the Flutter test data.
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 
-/// Placeholder fixture (`<token>`, `<id>`, `<iso>`) diganti nilai contoh yang
-/// realistis supaya client bisa parse respons dari fixture apa adanya.
+/// Placeholders in the fixtures (`<token>`, `<id>`, `<iso>`) are replaced with
+/// realistic sample values so the client can parse fixture responses as they are.
 Object? fillPlaceholders(Object? value) => switch (value) {
   '<token>' => 'tok123.sig456',
   '<id>' => 'user-1',
@@ -18,7 +18,7 @@ Object? fillPlaceholders(Object? value) => switch (value) {
   _ => value,
 };
 
-/// Fixture kontrak bersama backend (apps/backend/test/fixtures/contract).
+/// Shared backend contract fixtures (apps/backend/test/fixtures/contract).
 Map<String, Object?> contract(String name) => jsonDecode(
   File('../backend/test/fixtures/contract/$name.json').readAsStringSync(),
 ) as Map<String, Object?>;
@@ -59,7 +59,7 @@ ResponseBody json(
   },
 );
 
-/// Respons dari fixture kontrak, apa adanya.
+/// Responses from the contract fixtures, unchanged.
 ResponseBody fromContract(Map<String, Object?> fixture) {
   final res = fixture['response']! as Map<String, Object?>;
   final headers = (res['headers'] as Map<String, Object?>? ?? {})

@@ -102,7 +102,7 @@ void main() {
     ]);
     await tester.pump();
     expect(find.byType(SnackBar), findsNothing);
-    // Download pertama = minta izin notifikasi sekali.
+    // The first download asks for notification permission, once.
     expect(notifications.permissionAsked, 1);
 
     queue.emit([
@@ -149,7 +149,7 @@ void main() {
       const DownloadItem(book: book, status: DownloadStatus.downloading),
     ]);
     await tester.pump();
-    // Urutan sah: resumed → inactive → hidden → paused.
+    // Valid order: resumed → inactive → hidden → paused.
     for (final s in [
       AppLifecycleState.inactive,
       AppLifecycleState.hidden,
@@ -164,7 +164,7 @@ void main() {
     expect(find.byType(SnackBar), findsNothing);
     expect(notifications.shown, [('Enchiridion udah masuk rak', '7')]);
 
-    // Tap notifikasi = buka bukunya.
+    // Tapping the notification opens its book.
     notifications.onTap!('7');
     await tester.pumpAndSettle();
     expect(router.routeInformationProvider.value.uri.path, '/reader/7');

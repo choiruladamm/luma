@@ -11,8 +11,9 @@ import '../../../core/theme/stabilo_type.dart';
 import '../../../core/widgets/buttons.dart';
 import '../../../core/widgets/sheet.dart';
 
-/// Sheet "Hapus cache terjemahan?" (board Atur · Cache): isi cache + konfirmasi
-/// dalam satu langkah. Tombol Hapus nyalain dua repo sekaligus lalu nutup.
+/// "Hapus cache terjemahan?" sheet (board Atur · Cache): cache contents +
+/// confirmation in one step. The Hapus button clears both repositories, then
+/// closes.
 Future<void> showCacheSheet(BuildContext context) =>
     showAppSheet<void>(context, builder: (_) => const _CacheSheet());
 

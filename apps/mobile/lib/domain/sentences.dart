@@ -1,24 +1,24 @@
-/// Akhir kalimat: `.` `!` `?` `…` (boleh beruntun), tanda kutip / kurung
-/// tutup ikut kalimat itu, terus spasi dan awal kalimat baru (huruf besar
-/// atau tanda kutip / kurung buka).
+/// Sentence end: `.` `!` `?` `…` (may repeat), a closing quote / bracket belongs to
+/// that sentence, then whitespace and the start of a new sentence (a capital letter
+/// or an opening quote / bracket).
 final _end = RegExp(
   r'''[.!?…]+["”’'\)\]]*(?=\s+[\p{Lu}"“‘'(\[])''',
   unicode: true,
 );
 
-/// Kata sebelum titik yang bukan akhir kalimat (huruf kecil semua).
+/// Words before a period that don't end a sentence (all lowercase).
 const _abbreviations = {
   'mr', 'mrs', 'ms', 'dr', 'st', 'prof', 'jr', 'sr', 'vs', 'no', //
   'dll', 'dsb', 'dst', 'mis', 'dkk', 'sdr', 'tn', 'ny', 'yth',
 };
 
-/// Penomoran di awal teks (`IX.`, `3.`).
+/// Numbering at the start of the text (`IX.`, `3.`).
 final _numbering = RegExp(r'^\s*([IVXLCDM]+|\d+)$');
 
-/// Pecah [text] (satu paragraf terjemahan) jadi kalimat, buat penomoran
-/// `K1..Kn` Bedahin. Gak pecah di singkatan, inisial (`J.`), angka desimal,
-/// dan penomoran di awal. Hasilnya jadi kunci cache (rentang kalimat):
-/// aturan berubah = naikin `breakdownPromptVersion`.
+/// Splits [text] (one translated paragraph) into sentences, for Bedahin's `K1..Kn`
+/// numbering. Doesn't split at abbreviations, initials (`J.`), decimal numbers, or
+/// leading numbering. The result keys the cache (sentence ranges): changing the
+/// rules means bumping `breakdownPromptVersion`.
 List<String> splitSentences(String text) {
   final out = <String>[];
   var start = 0;

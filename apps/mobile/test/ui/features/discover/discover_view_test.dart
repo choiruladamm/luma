@@ -20,9 +20,9 @@ import 'package:luma/ui/features/discover/view_models/discover_view_model.dart';
 import 'package:luma/ui/features/discover/view_models/download_queue_view_model.dart';
 import 'package:luma/ui/features/discover/views/discover_view.dart';
 
-/// Populer nunggu [popular] diselesaikan; cari langsung dari [catalog].
-/// Completer dibikin pas dipakai (di dalam zone FakeAsync test widget),
-/// bukan di setUp: kalau gak, microtask-nya jatuh ke event loop asli.
+/// The Populer tab waits for [popular] to complete; search reads [catalog] directly.
+/// The Completer is created at use time (inside the FakeAsync zone of the widget test),
+/// not in setUp: otherwise its microtasks fall onto the real event loop.
 class FakeSource implements BookSource {
   Completer<CatalogPage>? _popular;
   Completer<CatalogPage> get popular => _popular ??= Completer();
@@ -65,7 +65,7 @@ class FakeSource implements BookSource {
     return detail.future;
   }
 
-  /// Gak pernah selesai: status antrian digerakin dari test.
+  /// Never completes: the test drives the queue status.
   @override
   Future<Uint8List> download(
     CatalogBook book, {
@@ -146,8 +146,8 @@ void main() {
     await tester.pump(Duration.zero);
   }
 
-  /// `pump()` tanpa durasi cuma ngejalanin microtask; `Future(...)` dan
-  /// jawaban async butuh timer 0 → dua frame berdurasi nol.
+  /// `pump()` without a duration only runs microtasks; `Future(...)` and
+  /// async answers need a zero-duration timer → two zero-duration frames.
   Future<void> tick(WidgetTester tester) async {
     await tester.pump(Duration.zero);
     await tester.pump(Duration.zero);
@@ -172,7 +172,7 @@ void main() {
     await tick(tester);
     expect(find.text('#1 lagi rame'), findsOneWidget);
     expect(find.text('Pride and Prejudice'), findsOneWidget);
-    expect(find.text('Jane Austen'), findsWidgets); // kartu + cover default
+    expect(find.text('Jane Austen'), findsWidgets); // card + default cover
     expect(find.text('Frankenstein'), findsWidgets);
     expect(find.text('Moby Dick'), findsWidgets);
     expect(find.text('Sherlock Holmes'), findsOneWidget); // preset chip
@@ -248,7 +248,7 @@ void main() {
     ]);
     shelfIds = {'1342'};
     await pump(tester);
-    containerOf(tester).read(downloadQueueProvider); // bangun notifier-nya
+    containerOf(tester).read(downloadQueueProvider); // builds the notifier
     queue.emit([
       DownloadItem(
         book: book(105, 'Persuasion'),
@@ -318,7 +318,7 @@ void main() {
     await tick(tester);
     expect(find.text('30 hasil · urut paling cocok'), findsOneWidget);
 
-    // Mentok bawah = ngambil halaman 2; kali ini gagal.
+    // Scrolled to the bottom = fetch page 2; this time it fails.
     source.searchError = Exception('boom');
     await tester.drag(find.byType(ListView).last, const Offset(0, -3000));
     await tick(tester);
@@ -344,7 +344,7 @@ void main() {
     await tester.tap(find.text('Dickens'));
     await tick(tester);
     expect(find.text('Gak nemu “Dickens”'), findsOneWidget);
-    expect(find.text('Dickens'), findsOneWidget); // isi kolom cari
+    expect(find.text('Dickens'), findsOneWidget); // search field content
   });
 
   testWidgets('no catalog yet: setup runs, progress, failure → Coba lagi', (

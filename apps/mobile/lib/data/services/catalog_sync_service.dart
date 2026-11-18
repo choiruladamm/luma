@@ -10,18 +10,20 @@ import '../repositories/catalog_repository.dart';
 import 'http_client.dart';
 
 enum CatalogSyncResult {
-  /// Masih segar (< 7 hari), gak ke server.
+  /// The local catalog is still fresh (under 7 days old), so the server is not contacted.
   skipped,
 
-  /// Server bilang 304: dump belum berubah, cuma `syncedAt` yang maju.
+  /// The server answered 304: the dump is unchanged and only `syncedAt` advances.
   notModified,
 
-  /// Tabel diganti isi dump baru.
+  /// The table was replaced with the new dump.
   updated,
 }
 
-/// Ngunduh `pg_catalog.csv.gz` → `CatalogRepository.replaceAll`
-/// (docs/discover.md, Local catalog and search). Gagal apa pun = tabel lama utuh.
+/// Downloads `pg_catalog.csv.gz` and loads it via `CatalogRepository.replaceAll`
+/// (docs/discover.md, Local catalog and search).
+///
+/// Any failure leaves the old table intact.
 class CatalogSyncService {
   CatalogSyncService(
     this._repo, {
@@ -35,16 +37,18 @@ class CatalogSyncService {
   final Dio _dio;
   final DateTime Function() _now;
 
-  /// Jeda retry ke-n = [retryDelay] × n.
+  /// Delay before retry n is [retryDelay] × n.
   final Duration retryDelay;
 
   static const url =
       'https://www.gutenberg.org/cache/epub/feeds/pg_catalog.csv.gz';
   static const maxAge = Duration(days: 7);
 
-  /// [onProgress] 0–1 selama unduh (−1 kalau server gak kasih panjang),
-  /// [onImporting] pas unduhan selesai dan parse mulai. Batal lewat
-  /// [cancel] → `DioException` tipe `cancel`.
+  /// Syncs the catalog and returns what happened.
+  ///
+  /// [onProgress] reports 0–1 while downloading (−1 when the server sends no
+  /// length); [onImporting] fires when the download ends and parsing starts.
+  /// Cancelling through [cancel] throws a `DioException` of type `cancel`.
   Future<CatalogSyncResult> sync({
     bool force = false,
     void Function(double progress)? onProgress,
@@ -63,7 +67,7 @@ class CatalogSyncService {
       final path = '${dir.path}/pg_catalog.csv.gz';
       final response = await _download(
         path,
-        // Tabel kosong harus ngunduh walau server bilang belum berubah.
+        // An empty table must download even if the server says nothing changed.
         since: stats.count > 0 ? stats.lastModified : null,
         onProgress: onProgress,
         cancel: cancel,
@@ -90,12 +94,12 @@ class CatalogSyncService {
       try {
         await dir.delete(recursive: true);
       } on FileSystemException {
-        // Udah keburu kehapus; bukan masalah.
+        // Already gone; not a problem.
       }
     }
   }
 
-  /// Streaming ke [path]. 429/503 dicoba ulang sampe 3×; status lain lempar.
+  /// Streams the download to [path]; retries 429/503 up to 3 times and throws on any other status.
   Future<Response<dynamic>> _download(
     String path, {
     String? since,
@@ -121,8 +125,9 @@ final catalogSyncServiceProvider = Provider<CatalogSyncService>(
   (ref) => CatalogSyncService(ref.watch(catalogRepositoryProvider)),
 );
 
-/// Keadaan sync katalog; teks idle (tanggal, jumlah) dari
-/// [catalogStatsProvider], bukan dari sini.
+/// Catalog sync state.
+///
+/// The idle text (date, count) comes from [catalogStatsProvider], not from here.
 sealed class CatalogSyncState {
   const CatalogSyncState();
 }
@@ -131,7 +136,7 @@ class CatalogSyncIdle extends CatalogSyncState {
   const CatalogSyncIdle();
 }
 
-/// Nanya server (If-Modified-Since), belum ada byte.
+/// Asking the server (If-Modified-Since); no bytes received yet.
 class CatalogSyncChecking extends CatalogSyncState {
   const CatalogSyncChecking();
 }
@@ -139,16 +144,16 @@ class CatalogSyncChecking extends CatalogSyncState {
 class CatalogSyncDownloading extends CatalogSyncState {
   const CatalogSyncDownloading(this.progress);
 
-  /// 0–1; −1 = server gak kasih panjang.
+  /// Fraction from 0 to 1; −1 means the server sent no length.
   final double progress;
 }
 
-/// Gunzip + parse + ganti tabel; gak bisa dibatalin.
+/// Gunzipping, parsing, and replacing the table; cannot be cancelled.
 class CatalogSyncImporting extends CatalogSyncState {
   const CatalogSyncImporting();
 }
 
-/// 304: cuma sekali tampil sebagai toast, lalu [CatalogSyncController.dismiss].
+/// The server answered 304; shown once as a toast, then [CatalogSyncController.dismiss].
 class CatalogSyncUpToDate extends CatalogSyncState {
   const CatalogSyncUpToDate();
 }
@@ -156,12 +161,13 @@ class CatalogSyncUpToDate extends CatalogSyncState {
 class CatalogSyncFailed extends CatalogSyncState {
   const CatalogSyncFailed(this.reason);
 
-  /// Buat log/debug; UI nampilin copy tetap.
+  /// For logs and debugging; the UI shows fixed copy.
   final String reason;
 }
 
-/// Satu sync jalan sekaligus; `sync()` pas lagi jalan = no-op. Tanpa
-/// autoDispose: pindah layar gak motong unduhan.
+/// Runs one sync at a time; `sync()` while one is running is a no-op.
+///
+/// Not autoDispose, so leaving the screen does not cut the download.
 class CatalogSyncController extends Notifier<CatalogSyncState> {
   CancelToken? _cancel;
 
@@ -206,12 +212,12 @@ class CatalogSyncController extends Notifier<CatalogSyncState> {
     }
   }
 
-  /// Cuma pas ngunduh; parse/ganti tabel dibiarin selesai.
+  /// Cancels only while downloading; parsing and the table swap are left to finish.
   void cancel() {
     if (state is CatalogSyncDownloading) _cancel?.cancel();
   }
 
-  /// Toast "udah yang terbaru" udah tampil.
+  /// Clears the up-to-date state once its toast has been shown.
   void dismiss() {
     if (state is CatalogSyncUpToDate) state = const CatalogSyncIdle();
   }

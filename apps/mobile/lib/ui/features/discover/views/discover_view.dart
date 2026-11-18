@@ -18,8 +18,8 @@ import '../view_models/download_queue_view_model.dart';
 import 'catalog_cover.dart';
 import 'discover_states.dart';
 
-/// Tab Cari buku (board 09 · Cari buku, layar 03–09). Katalog lokal belum ada
-/// = nyiapin dulu (layout layar 07); kolom kosong = Top chart; ketik = hasil.
+/// Cari buku tab (board 09 · Cari buku, screens 03–09). No local catalog yet =
+/// prepare first (screen 07 layout); empty field = Top chart; typing = results.
 class DiscoverView extends ConsumerStatefulWidget {
   const DiscoverView({super.key});
 
@@ -56,7 +56,7 @@ class _DiscoverViewState extends ConsumerState<DiscoverView> {
 
   @override
   Widget build(BuildContext context) {
-    // Query bisa diisi dari luar (tap penulis di detail buku): kolomnya ikut.
+    // The query can be filled from outside (tapping an author in book detail): the field follows.
     ref.listen(discoverProvider.select((s) => s.query), (_, q) {
       if (_field.text != q) _field.text = q;
     });
@@ -72,8 +72,9 @@ class _DiscoverViewState extends ConsumerState<DiscoverView> {
     return Scaffold(
       body: SafeArea(
         bottom: false,
-        // Tanpa inset di sini: baris rekomendasi harus mentok tepi layar pas
-        // digeser. Header, kolom cari, dan tiap blok isi nambah 24-nya sendiri.
+        // No inset here: the recommendation row must reach the screen edge when
+        // swiped. Header, search field, and each content block add their own
+        // 24.
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           spacing: Space.s4,
@@ -129,13 +130,13 @@ class _DiscoverViewState extends ConsumerState<DiscoverView> {
   }
 }
 
-/// Inset 24 di kiri-kanan satu blok isi layar Cari buku.
+/// 24 left-right inset for one content block of the Cari buku screen.
 Widget _inset(Widget child) => Padding(
   padding: const EdgeInsets.symmetric(horizontal: Layout.margin),
   child: child,
 );
 
-/// Kolom cari 56, kapsul outline (board 03). Tombol × 26 pas ada isi.
+/// 56 search field, outline capsule (board 03). The × 26 button shows when there is content.
 class _SearchField extends StatelessWidget {
   const _SearchField({
     required this.controller,
@@ -170,8 +171,9 @@ class _SearchField extends StatelessWidget {
               enabled: enabled,
               onChanged: onChanged,
               textInputAction: TextInputAction.search,
-              // Hasil udah muncul tiap ketikan: tombol Cari / ketuk di luar
-              // cukup nutup keyboard. (Di HP, TextField gak nutup sendiri.)
+              // Results already appear on every keystroke: the Cari button /
+              // tapping outside only needs to dismiss the keyboard. (On a
+              // phone, TextField doesn't dismiss itself.)
               onSubmitted: (_) => FocusManager.instance.primaryFocus?.unfocus(),
               onTapOutside: (_) =>
                   FocusManager.instance.primaryFocus?.unfocus(),
@@ -208,8 +210,8 @@ class _SearchField extends StatelessWidget {
                           color: c.muted,
                           shape: BoxShape.circle,
                         ),
-                        // Center: tanpa ini constraint ketat Container maksa
-                        // ikon sebesar lingkarannya.
+                        // Center: without it the tight Container constraints force the icon to the
+                        // circle's size.
                         child: Center(
                           child: AppIcon(
                             AppIcons.close,
@@ -228,8 +230,8 @@ class _SearchField extends StatelessWidget {
   }
 }
 
-/// Katalog lokal belum ada: layout layar 07 dengan copy "Nyiapin katalog
-/// buku…", gagal = layar 08 (docs/discover.md, Local catalog and search).
+/// No local catalog yet: screen 07 layout with the copy "Nyiapin katalog
+/// buku…", failure = screen 08 (docs/discover.md, Local catalog and search).
 class _CatalogSetup extends StatelessWidget {
   const _CatalogSetup({
     required this.state,
@@ -274,7 +276,7 @@ class _CatalogSetup extends StatelessWidget {
   }
 }
 
-/// Layar 03 (+ 07 / 08 / 09 buat jalur jaringan).
+/// Screen 03 (+ 07 / 08 / 09 for the network path).
 class _TopChart extends ConsumerWidget {
   const _TopChart({
     required this.popular,
@@ -365,8 +367,9 @@ class _TopChart extends ConsumerWidget {
               ],
             ),
           ),
-          // Baris #2… mentok tepi layar, 24 pertama ikut kegeser (bukan
-          // inset luar), jadi pas digeser kartunya nabrak tepi kiri.
+          // Rows from the second on run to the screen edge; the first 24 scrolls with the
+          // content (not an outer inset), so when swiped the card hits the left
+          // edge.
           if (popular case PopularReady() when items.length > 1)
             Padding(
               padding: const EdgeInsets.only(top: Space.s4),
@@ -402,7 +405,7 @@ class _TopChart extends ConsumerWidget {
                               color: c.muted,
                               borderRadius: BorderRadius.circular(Radii.full),
                             ),
-                            // widthFactor: 1 = selebar teks (alignment bikin melar).
+                            // widthFactor: 1 = as wide as the text (alignment makes it stretch).
                             child: Center(
                               widthFactor: 1,
                               child: Text(
@@ -427,7 +430,7 @@ class _TopChart extends ConsumerWidget {
   }
 }
 
-/// Kartu kuning "#1 lagi rame" (board 03).
+/// Yellow card "#1 lagi rame" (board 03).
 class _TopCard extends StatelessWidget {
   const _TopCard({required this.book});
 
@@ -514,7 +517,7 @@ class _TopCard extends StatelessWidget {
   }
 }
 
-/// Baris geser #2… (board 03): angka outline besar nempel kiri bawah cover.
+/// Swipe rows after the first (board 03): big outline number pinned to the bottom left of the cover.
 class _RankRow extends StatelessWidget {
   const _RankRow({required this.books});
 
@@ -524,8 +527,8 @@ class _RankRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.stabilo;
     return SizedBox(
-      // Cover 132 + jarak 6 + judul 30, plus ruang buat bayangan cover (gak
-      // bisa lagi nimpa di luar kotak: list ini dipotong di tepinya).
+      // Cover 132 + gap 6 + title 30, plus room for the cover shadow (it can no
+      // longer paint outside the box: this list is clipped at its edges).
       height: 4 + 132 + 6 + 30 + 14,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
@@ -584,7 +587,7 @@ class _RankRow extends StatelessWidget {
   }
 }
 
-/// Angka peringkat: isi sheet + garis outline 2 (board 03).
+/// Rank number: sheet fill + 2 outline (board 03).
 class _RankNumber extends StatelessWidget {
   const _RankNumber(this.n, {required this.size});
 
@@ -621,7 +624,7 @@ class _RankNumber extends StatelessWidget {
   }
 }
 
-/// Layar 04 / 05 / 06.
+/// Screens 04 / 05 / 06.
 class _Results extends ConsumerWidget {
   const _Results({
     required this.results,
@@ -702,7 +705,7 @@ class _Results extends ConsumerWidget {
   }
 }
 
-/// Hasil teratas: kartu putih outline "Paling cocok" (board 05).
+/// Top result: white outlined card "Paling cocok" (board 05).
 class _BestMatch extends StatelessWidget {
   const _BestMatch({required this.book});
 
@@ -775,7 +778,7 @@ class _BestMatch extends StatelessWidget {
   }
 }
 
-/// Baris hasil: cover 60, judul, penulis, status (board 05).
+/// Result row: 60 cover, title, author, status (board 05).
 class _ResultRow extends StatelessWidget {
   const _ResultRow({required this.book});
 
@@ -830,7 +833,7 @@ class _ResultRow extends StatelessWidget {
   }
 }
 
-/// "Udah di rak" / "Lagi diunduh · 43%" / "Antri"; kosong kalau gak ada.
+/// "Udah di rak" / "Lagi diunduh · 43%" / "Antri"; empty when none applies.
 class _BookStatus extends ConsumerWidget {
   const _BookStatus({required this.book, this.topGap = 0});
 

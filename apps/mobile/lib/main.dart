@@ -24,14 +24,13 @@ Future<void> main() async {
 }
 
 class LumaApp extends ConsumerWidget {
-  /// [splash] = animasi splash → rak di atas app (cuma dari `main`, test
-  /// gak mau ketutup lapisannya).
+  /// [splash] = splash animation → shelf over the app (only from `main`; tests
+  /// don't want their layer covered).
   const LumaApp({super.key, this.splash = false, this.autoBackup = false});
 
   final bool splash;
 
-  /// Backup cloud + sync push otomatis (cuma dari `main`: test gak punya DB
-  /// asli).
+  /// Automatic cloud backup + sync push (only from `main`: tests have no real DB).
   final bool autoBackup;
 
   @override
@@ -45,7 +44,7 @@ class LumaApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       theme: stabiloTheme(Brightness.light),
       darkTheme: stabiloTheme(Brightness.dark),
-      // Tema dari Aa. Sebelum setelan kebaca: ikut sistem.
+      // Theme from Aa. Before the settings are read: follow the system.
       themeMode: switch (ref.watch(readerPrefsProvider).value?.theme) {
         AppTheme.light => ThemeMode.light,
         AppTheme.dark => ThemeMode.dark,

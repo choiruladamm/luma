@@ -4,13 +4,13 @@ import { sessions, users } from "../db/schema";
 import type { SessionUser } from "../env";
 import { DAY_MS } from "../lib/encoding";
 
-/** Sama dengan opsi `session` Better Auth (auth.ts): sesi 60 hari, diperpanjang maks sekali sehari. */
+/** Matches Better Auth's `session` options (auth.ts): 60-day sessions, renewed at most once a day. */
 export const SESSION_EXPIRES_IN_MS = 60 * DAY_MS;
 export const SESSION_UPDATE_AGE_MS = DAY_MS;
 
 /**
- * Token dari `Authorization: Bearer <token>`. Header `set-auth-token` berbentuk
- * `<token>.<signature>`; yang dicocokkan ke D1 cuma bagian token (acak, rahasia).
+ * Token from `Authorization: Bearer <token>`. The `set-auth-token` header has the form
+ * `<token>.<signature>`; only the token part (random, secret) is matched against D1.
  */
 export function bearerToken(header: string | undefined): string | null {
   const match = header?.match(/^Bearer\s+(\S+)$/i);
@@ -19,8 +19,8 @@ export function bearerToken(header: string | undefined): string | null {
 }
 
 /**
- * Cek sesi untuk route Luma (bukan /v1/auth): satu query join, tanpa membangun
- * instance Better Auth yang berat. Perpanjangan sesi menulis D1 paling sering sekali sehari.
+ * Checks the session for Luma routes (not /v1/auth): one join query, without building
+ * the heavy Better Auth instance. Session renewal writes D1 at most once a day.
  */
 export async function findSessionUser(db: Db, header: string | undefined, now = new Date()) {
   const token = bearerToken(header);

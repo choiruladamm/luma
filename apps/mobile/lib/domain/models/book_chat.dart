@@ -5,7 +5,7 @@ import 'package:crypto/crypto.dart';
 import '../chat_steps.dart';
 import 'ai_reply.dart';
 
-/// Revision isi/urutan; perubahan metadata tidak membuat snapshot baru.
+/// Revision of content/order; a metadata change doesn't create a new snapshot.
 typedef ChatBookRef = ({int bookId, int contentRevision});
 typedef ChatParagraphRef = ({int chapterId, int paragraphIndex});
 typedef ChatReadingPosition = ({
@@ -55,14 +55,14 @@ class ChatSession {
   final DateTime? lastOpenedAt;
   final ChatScrollAnchor? scrollAnchor;
 
-  /// Jawaban terakhir yang valid; fallback pertanyaan jika belum tersedia.
+  /// The last valid answer; falls back to the question when none is available yet.
   final String? preview;
   final bool invalid;
 
   bool isArchived(ChatBookRef current) => book != current;
 }
 
-/// Offset UTF-16, end eksklusif. Hash selalu seluruh paragraf, snapshot hanya range.
+/// UTF-16 offsets, end exclusive. The hash always covers the whole paragraph; the snapshot only the range.
 class SourceAnchor {
   const SourceAnchor({
     required this.book,
@@ -131,7 +131,7 @@ class ChatQuote {
 
   final List<SourceAnchor> anchors;
 
-  /// Pendamping UI saja; bukan bukti dan tidak dikirim sebagai selectedQuote.
+  /// UI companion only; not evidence and not sent as selectedQuote.
   final String? translation, chapterTitle;
   String get text => anchors.map((a) => a.snapshot).join('\n\n');
 }
@@ -175,16 +175,16 @@ enum ChatAnswerKind {
   };
 }
 
-/// Bentuk blok di layar: paragraf, butir bernomor (nomor dihitung aplikasi dari
-/// butir berurutan), butir tanpa nomor, atau kutipan langsung dari buku.
+/// Shape of a block on screen: a paragraph, a numbered item (the number is counted
+/// by the app from consecutive items), an unnumbered item, or a direct quote from the book.
 enum ChatAnswerLayout {
   paragraph,
   item,
   bullet,
   quote;
 
-  /// Gak ada / gak dikenal = paragraf: jawaban lama dan output model yang
-  /// melenceng tetap kebaca.
+  /// Missing / unknown = paragraph: older answers and off-spec model output
+  /// stay readable.
   static ChatAnswerLayout parse(Object? value) => switch (value) {
     'item' => item,
     'bullet' => bullet,
@@ -268,7 +268,7 @@ enum ChatPhase {
     _ => false,
   };
 
-  /// Nilai backup rusak tidak boleh memulai request atau menjadi history terpercaya.
+  /// A corrupt backup value must not start a request or become trusted history.
   static ChatPhase restore(Object? value) => ChatPhase.values.firstWhere(
     (p) => p.name == value,
     orElse: () => interrupted,
@@ -298,7 +298,7 @@ class ChatTurn {
     this.steps,
   });
 
-  /// Langkah AI attempt ini; null = turn lama / belum selesai.
+  /// AI steps of this attempt; null = an old turn / not finished yet.
   final List<ChatStep>? steps;
   final int id, sessionId, sequence, attempt, promptVersion;
   final ChatBookRef book;
@@ -386,7 +386,7 @@ class ChatTurn {
   );
 }
 
-/// chapters = baca bab/bagian yang dirujuk langsung; global = seluruh isi.
+/// chapters = read the referenced chapters/sections directly; global = the whole content.
 enum ChatSearchStrategy {
   specific,
   crossChapter,
@@ -395,7 +395,7 @@ enum ChatSearchStrategy {
   offTopic,
   chapters;
 
-  /// Membaca window teks berurutan (bukan pencarian semantik).
+  /// Reads consecutive text windows (not semantic search).
   bool get reads => this == global || this == chapters;
 }
 
@@ -410,19 +410,19 @@ class ChatQueryPlan {
     this.clarification,
   });
 
-  /// Bab non-isi (front/back matter) yang dikecualikan dari baca seluruh
-  /// buku dan pencarian; sudah divalidasi ke TOC.
+  /// Non-content chapters (front/back matter) excluded from whole-book reading
+  /// and search; already validated against the TOC.
   final List<int> skipIds;
   final String englishQuery;
   final bool needsClarification;
   final ChatSearchStrategy strategy;
   final List<String> queries;
 
-  /// Bab asli (chapters.id) yang dibaca untuk chapters (atau subset global);
-  /// sudah divalidasi.
+  /// Real chapters (chapters.id) read for chapters (or a global subset);
+  /// already validated.
   final List<int> chapterIds;
 
-  /// Pertanyaan klarifikasi singkat dari planner ("Book I bab III atau Book III?").
+  /// Short clarifying question from the planner ("Book I bab III atau Book III?").
   final String? clarification;
 }
 
@@ -435,7 +435,7 @@ enum ChatEmbeddingModel {
   final int dimensions;
 }
 
-/// Identik per nilai; model/dimensi/template/revision tidak pernah tercampur.
+/// Equal by value; model/dimension/template/revision are never mixed.
 typedef ChatIndexKey = ({
   ChatBookRef book,
   int parserVersion,
@@ -504,7 +504,7 @@ class SourceVisitRequest {
   final ChatReadingPosition returnPosition;
   final ChatScrollAnchor chatPosition;
 
-  /// Resolver sitasi wajib memanggil ini sebelum jump; kunjungan tidak menulis progres.
+  /// Citation resolvers must call this before jumping; a visit never writes progress.
   void validate({
     required ChatSession session,
     required ChatTurn turn,

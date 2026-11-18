@@ -1,6 +1,6 @@
-/// Daftar isi asli buku untuk perencanaan Ngobrol: identitas bab dari
-/// `chapters.id`, label TOC asli, section induk ("Discourses › Book I"), dan
-/// ukuran. Model memilih bab lewat `id`; aplikasi memvalidasi, bukan percaya.
+/// The book's real table of contents for Ngobrol planning: chapter identity from
+/// `chapters.id`, the real TOC label, the parent section ("Discourses › Book I"),
+/// and size. The model picks chapters by `id`; the app validates instead of trusting.
 typedef ChatChapterInfo = ({int id, String title, String? section, int chars});
 
 const _roman = {
@@ -13,8 +13,8 @@ const _roman = {
   'I': 1,
 };
 
-/// Angka Romawi/Arab di awal label ("III: Of…", "XXIX.", "Chapter 7") → 7.
-/// Null kalau tidak ada nomor di depan.
+/// Roman/Arabic number at the start of a label ("III: Of…", "XXIX.", "Chapter 7") → 7.
+/// Null when there is no leading number.
 int? chatChapterNumber(String title) {
   final m = RegExp(
     r'^(?:(?:chapter|bab|book|buku|part|bagian)\s+)?([IVXLCDM]+|\d+)\b',
@@ -39,8 +39,8 @@ int? chatChapterNumber(String title) {
   return total;
 }
 
-/// Data TOC untuk prompt planner. `number` membantu model mencocokkan
-/// "bab 3" dengan "III"; `section` membedakan Book I bab III dari Book III.
+/// TOC data for the planner prompt. `number` helps the model match "bab 3" with
+/// "III"; `section` tells Book I chapter III from Book III.
 List<Map<String, Object?>> chatTocData(List<ChatChapterInfo> toc) => [
   for (final c in toc)
     {
@@ -52,8 +52,8 @@ List<Map<String, Object?>> chatTocData(List<ChatChapterInfo> toc) => [
     },
 ];
 
-/// ID bab dari model: harus ada di TOC, unik, maksimal [max].
-/// Angka dalam string ("4") diterima; ID di luar TOC atau ganda ditolak.
+/// Chapter IDs from the model: must be in the TOC, unique, at most [max].
+/// A number inside a string ("4") is accepted; IDs outside the TOC or duplicated are rejected.
 List<int> chatChapterIds(Object? raw, Iterable<int> known, {int max = 64}) {
   if (raw == null) return const [];
   final ids = known.toSet();
@@ -75,7 +75,7 @@ List<int> chatChapterIds(Object? raw, Iterable<int> known, {int max = 64}) {
   return parsed;
 }
 
-/// Label bab untuk prompt/sitasi: "Book I › III: Of Providence".
+/// Chapter label for prompts/citations: "Book I › III: Of Providence".
 String chatChapterLabel(ChatChapterInfo c) {
   final section = c.section;
   if (section == null || section.isEmpty) return c.title;
@@ -91,9 +91,9 @@ const _romanLiterals = {
   28: 'xxviii', 29: 'xxix', 30: 'xxx',
 };
 
-/// "bab III"/"chapter 3" tanpa Book/bagian, sementara nomor itu ada di beberapa
-/// section dan posisi baca tidak menentukan: kembalikan label section kandidat
-/// supaya aplikasi bertanya, bukan menebak. Kosong = tidak ambigu.
+/// "bab III"/"chapter 3" without a Book/section, while that number exists in several
+/// sections and the reading position doesn't decide: returns the candidate section
+/// labels so the app asks instead of guessing. Empty = not ambiguous.
 List<String> chatAmbiguousSections(
   String question,
   List<int> chosenIds,

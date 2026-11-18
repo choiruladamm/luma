@@ -3,14 +3,14 @@ import 'package:flutter/material.dart';
 import '../../../domain/models/markdown_shelf.dart';
 import '../theme/stabilo_tokens.dart';
 
-/// Strip bab buku Markdown (board Import Markdown 49): satu slot per nomor
-/// bab dari 1 sampai nomor tertinggi yang udah masuk. Nomor tertinggi >
-/// [MarkdownShelf.maxSlots] = satu bar aja. Tingginya ikut parent.
+/// Chapter strip of a Markdown book (board Import Markdown 49): one slot per
+/// chapter number from 1 to the highest imported. Highest number >
+/// [MarkdownShelf.maxSlots] = a single bar. Height follows the parent.
 ///
-/// - [done]: bab udah dibaca, dan isi bab yang lagi dibaca.
-/// - [todo]: bab udah masuk tapi belum dibaca.
-/// - [missing]: garis putus di bab yang belum di-import.
-/// - [track]: latar bar fallback; null = ikut latar strip.
+/// - [done]: chapter already read, and the fill of the chapter being read.
+/// - [todo]: chapter imported but not read yet.
+/// - [missing]: dashed line for a chapter not imported.
+/// - [track]: fallback bar background; null = follows the strip background.
 class ChapterSlots extends StatelessWidget {
   const ChapterSlots({
     super.key,
@@ -85,7 +85,7 @@ class ChapterSlots extends StatelessWidget {
   );
 }
 
-/// Garis putus 2/2 di tengah slot kosong.
+/// Dashed 2/2 line in the middle of an empty slot.
 class _Dashes extends CustomPainter {
   const _Dashes(this.color);
 

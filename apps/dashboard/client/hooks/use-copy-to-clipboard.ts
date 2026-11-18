@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 
-/** Copy text; `copied` holds the last copied value for `resetMs` (for a "Tersalin" state). */
+/** Copy text; `copied` holds the last copied value for `resetMs` (for a "Tersalin" (copied) state). */
 export function useCopyToClipboard(resetMs = 2000) {
   const [copied, setCopied] = useState<string | null>(null);
   useEffect(() => {

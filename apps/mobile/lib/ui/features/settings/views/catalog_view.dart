@@ -13,9 +13,9 @@ import '../../../core/widgets/buttons.dart';
 import '../../../core/widgets/toast.dart';
 import 'settings_page.dart';
 
-/// Pengaturan · Katalog buku (board 08 Katalog): kartu status + tombol yang
-/// ikut keadaan (Unduh / Batal / Perbarui / Coba lagi), progres pas ngunduh,
-/// dan penjelasan "Buat apa?".
+/// Settings · Katalog buku (board 08 Katalog): a status card + buttons that
+/// follow the state ("Unduh" / "Batal" / "Perbarui" / "Coba lagi"), progress while
+/// downloading, and the "Buat apa?" explanation.
 class CatalogView extends ConsumerWidget {
   const CatalogView({super.key});
 
@@ -92,7 +92,7 @@ class _CatalogCard extends StatelessWidget {
     required this.onCancel,
   });
 
-  /// Null = belum kebaca dari DB.
+  /// Null = not yet read from the DB.
   final CatalogStats? stats;
   final CatalogSyncState state;
   final VoidCallback onSync;
@@ -121,7 +121,7 @@ class _CatalogCard extends StatelessWidget {
     CatalogSyncFailed() => context.l10n.settingsCatalogFailed,
   };
 
-  /// Null = lagi kerja tanpa bisa dibatalin → spinner.
+  /// Null = working and can't be cancelled → spinner.
   (String, VoidCallback)? _button(BuildContext context) => switch (state) {
     CatalogSyncIdle() || CatalogSyncUpToDate() => (
       _never
@@ -212,8 +212,8 @@ class _CatalogCard extends StatelessWidget {
             ],
           ),
           if (downloading != null) ...[
-            // ponytail: board juga nunjukin "2,4 dari 5,6 MB · ± 20 detik
-            // lagi"; sync cuma ngasih fraksi 0–1, jadi cuma persen + bar.
+            // ponytail: the board also shows "2,4 dari 5,6 MB · ± 20 detik lagi"; sync
+            // only gives a 0–1 fraction, so only percent + bar.
             if (downloading.progress >= 0)
               Text(
                 '${(downloading.progress * 100).round()}%',
@@ -227,7 +227,7 @@ class _CatalogCard extends StatelessWidget {
             ClipRRect(
               borderRadius: BorderRadius.circular(4),
               child: LinearProgressIndicator(
-                // Null = server gak kasih panjang → bar berjalan.
+                // Null = the server gave no length → indeterminate bar.
                 value: downloading.progress < 0 ? null : downloading.progress,
                 minHeight: 8,
                 color: c.progressFill,

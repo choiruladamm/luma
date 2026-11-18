@@ -59,10 +59,10 @@ final four = Breakdown(
   sections: [for (var i = 1; i <= 4; i++) section(i, i, '$i')],
 );
 
-/// Where each Nyambung ke card leads (by chapter, null = next group).
+/// Where each "Nyambung ke" card leads (by chapter; null = next group).
 var peeks = <int?, BreakdownPeek?>{};
 
-/// Artiin in the peek sheet: tests push the stream states.
+/// The "Artiin" (explain) peek sheet: tests push the stream states.
 class FakeArtiin extends GroupAiStream {
   FakeArtiin(super.group);
 

@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'backend_client.dart';
 
-/// Satu record sync (`POST /v1/sync/push`). [data] null = tombstone.
+/// Represents a sync record (`POST /v1/sync/push`). A null [data] is a tombstone.
 class SyncRecord {
   const SyncRecord({
     required this.kind,
@@ -14,7 +14,7 @@ class SyncRecord {
   final String kind;
   final String key;
 
-  /// ms epoch, jam device saat perubahan.
+  /// Device clock time of the change, in milliseconds since the epoch.
   final int updatedAt;
   final Map<String, Object?>? data;
 
@@ -32,7 +32,7 @@ class SyncRecord {
   };
 }
 
-/// Satu record dari `GET /v1/sync/pull`. [data] null = tombstone.
+/// Represents a record from `GET /v1/sync/pull`. A null [data] is a tombstone.
 class PulledRecord {
   const PulledRecord({
     required this.kind,
@@ -54,7 +54,7 @@ class PulledRecord {
   final String kind;
   final String key;
 
-  /// ms epoch.
+  /// Time of the change, in milliseconds since the epoch.
   final int updatedAt;
   final int schemaVersion;
   final Map<String, Object?>? data;
@@ -62,22 +62,22 @@ class PulledRecord {
   bool get deleted => data == null;
 }
 
-/// Satu halaman pull: [nextSeq] = cursor berikutnya, [more] = masih ada.
+/// A page of pulled records: [nextSeq] is the next cursor and [more] says whether records remain.
 typedef PullPage = ({List<PulledRecord> records, int nextSeq, bool more});
 
-/// Panggilan `/v1/sync/*` (docs/sync-protocol.md, Push and pull).
+/// Calls `/v1/sync/*` (docs/sync-protocol.md, Push and pull).
 class SyncService {
   SyncService(this._client);
 
   final BackendClient _client;
 
-  /// Batas server per push / halaman pull.
+  /// Maximum records the server accepts per push or pull page.
   static const maxRecords = 500;
 
-  /// Body maks server 1MB; sisain ruang buat envelope.
+  /// Maximum push body size; the server's limit is 1 MB, so this leaves room for the envelope.
   static const maxBytes = 900 * 1024;
 
-  /// Record dengan `seq` > [since], maks [maxRecords] per halaman.
+  /// Returns records with `seq` greater than [since], up to [maxRecords] per page.
   Future<PullPage> pull(String token, int since) async {
     final res = await _client.request(
       'GET',
@@ -95,7 +95,7 @@ class SyncService {
     );
   }
 
-  /// `seq` server setelah push + jumlah record yang beneran ditulis.
+  /// Returns the server sequence after pushing and the number of records actually written.
   Future<({int seq, int applied})> push(
     String token,
     int schemaVersion,

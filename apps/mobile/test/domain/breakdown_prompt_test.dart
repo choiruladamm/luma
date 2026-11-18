@@ -173,7 +173,7 @@ Is anyone preferred before you?''');
         () => parseBreakdown('${section('K1-K3')}${section('K5-K4')}', input),
         invalid,
       );
-      // Empty Maksudnya / Logikanya.
+      // Empty "Maksudnya" / "Logikanya" (meaning / logic) fields.
       expect(() => parseBreakdown(section('K1-K6', m: ''), input), invalid);
       expect(
         () => parseBreakdown('[BAGIAN K1-K6]\nJudul: X\nMaksudnya: M', input),

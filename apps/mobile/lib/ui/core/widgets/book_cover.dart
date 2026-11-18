@@ -9,10 +9,10 @@ import '../theme/stabilo_tokens.dart';
 import '../theme/stabilo_type.dart';
 import 'chapter_slots.dart';
 
-/// Cover buku rasio 2:3 (board "Cover default" & "Kartu buku"). Cover asli
-/// EPUB di-crop rata atas; gak ada / rusak / < 200px → cover default dari
-/// judul. [progress] non-null = pita progres di bawah cover; [chapters]
-/// (buku Markdown) = strip bab di tempat yang sama.
+/// 2:3 book cover (boards "Cover default" & "Kartu buku"). A real EPUB cover
+/// is cropped top-aligned; missing / broken / < 200px → default cover from
+/// the title. Non-null [progress] = progress ribbon under the cover; [chapters]
+/// (Markdown book) = chapter strip in the same spot.
 class BookCover extends StatelessWidget {
   const BookCover({
     super.key,
@@ -30,14 +30,14 @@ class BookCover extends StatelessWidget {
   final File? file;
   final double width;
 
-  /// 0..1. Pita keisi segini; null = gak ada pita.
+  /// 0..1. The ribbon fills this much; null = no ribbon.
   final double? progress;
   final MarkdownShelf? chapters;
 
-  /// Gantiin bayangan bawaan (terang: [Elevation.cover], gelap: gak ada).
+  /// Replaces the default shadow (light: [Elevation.cover], dark: none).
   final List<BoxShadow>? shadows;
 
-  /// Sudut ngikut ukuran: grid 12, kartu lanjut baca 10, list 7.
+  /// Corner follows size: grid 12, continue-reading card 10, list 7.
   static double radiusFor(double width) => width >= 100
       ? Radii.sm
       : width >= 64
@@ -64,7 +64,7 @@ class BookCover extends StatelessWidget {
         borderRadius: radius,
         boxShadow: shadows ?? (dark ? null : Elevation.cover),
       ),
-      // Garis di atas isi, biar gak ketutup cover asli.
+      // Line over the content, so the real cover doesn't cover it.
       foregroundDecoration: BoxDecoration(
         borderRadius: radius,
         border: Border.all(color: c.outline, width: Layout.outline),
@@ -130,7 +130,7 @@ class _Band extends StatelessWidget {
   }
 }
 
-/// Cover asli. Mode gelap diredupin 0.85.
+/// Real cover. Dark mode dims it to 0.85.
 class _FileCover extends StatefulWidget {
   const _FileCover(this.file, this.fallback, this.dark);
 
@@ -205,7 +205,7 @@ class _FileCoverState extends State<_FileCover> {
   }
 }
 
-/// Style judul cover default: Bricolage variable 800, lebar huruf [width].
+/// Default cover title style: Bricolage variable 800, font width axis [width].
 TextStyle coverTitleStyle(double size, double width) => TextStyle(
   fontFamily: 'Bricolage Cover',
   fontSize: size,
@@ -219,7 +219,7 @@ TextStyle coverTitleStyle(double size, double width) => TextStyle(
   ],
 );
 
-/// Ukur pake style yang sama persis kayak yang dirender.
+/// Measure with exactly the same style that gets rendered.
 double measureCoverText(String text, double size, double width) {
   final painter = TextPainter(
     text: TextSpan(text: text, style: coverTitleStyle(size, width)),
@@ -339,8 +339,8 @@ class _DefaultCover extends StatelessWidget {
   }
 }
 
-/// Satu baris dengan coretan stabilo di 50–90% tinggi baris, melebar 0.12em
-/// ke kiri-kanan.
+/// One line with a stabilo stroke at 50–90% of the line height, extending 0.12em
+/// to the left and right.
 class _Stroked extends StatelessWidget {
   const _Stroked(this.text, {required this.style, required this.color});
 

@@ -50,7 +50,7 @@ class ChatAdapter implements HttpClientAdapter {
   Future<void> Function()? onSelect;
   Future<void> Function()? onEmbedding;
 
-  /// Context window kecil supaya pembacaan terbagi beberapa batch.
+  /// A small context window splits the reading into several batches.
   int contextLength = 32000;
   bool modelsFail = false;
   bool longNotesOnce = false;
@@ -337,8 +337,8 @@ void main() {
     keys,
   );
 
-  /// Context kecil memecah 34 window jadi beberapa batch; budget token kecil
-  /// memaksa berhenti sebelum selesai (partial + Lanjutkan).
+  /// A small context splits the 34 windows into several batches; a small token budget
+  /// forces a stop before completion (partial result + the "Lanjutkan" button).
   ChatContextRepository limitedContext() => ChatContextRepository(
     db,
     chat,

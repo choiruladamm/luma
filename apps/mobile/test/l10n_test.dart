@@ -54,8 +54,7 @@ void main() {
         (m) => '${m[1]}transitive',
       );
     }
-    // Dibekukan ulang 14 Nov 2026 (google_sign_in). Alasan & daftar:
-    // docs/llm-evals.md (Re-freeze the eval guards).
+    // Re-frozen for google_sign_in; see docs/llm-evals.md, Re-freeze the eval guards.
     expect(
       sha256.convert(utf8.encode(normalized)).toString(),
       '02d79191e3372cc885440884a362a07615d143062216c86c935428611fb492c7',

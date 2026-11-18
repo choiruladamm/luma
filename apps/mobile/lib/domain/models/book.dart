@@ -1,17 +1,18 @@
 import 'markdown_shelf.dart';
 
-/// Asal buku (docs/import-formats.md). Disimpan sebagai nama enum (`textEnum`),
-/// jadi nambah nilai gak ngubah schema. Binary lama gak ngenalin `pdf`:
-/// backup berisi buku PDF jangan di-restore ke app versi sebelum import PDF.
+/// Where a book came from (docs/import-formats.md). Stored as the enum name
+/// (`textEnum`), so adding a value doesn't change the schema. Older binaries don't
+/// know `pdf`: don't restore a backup containing PDF books into an app version
+/// from before PDF import.
 enum SourceType { epub, markdown, pdf }
 
-/// Jenis blok di chapter. Heading & sceneBreak gak punya grup, gak bisa di-tap.
+/// Kind of block in a chapter. Heading and sceneBreak have no group and can't be tapped.
 enum ParagraphType { paragraph, heading, sceneBreak }
 
-/// Satu blok hasil parse chapter, sebelum dikasih grup.
+/// One block from parsing a chapter, before it gets a group.
 typedef RawParagraph = ({ParagraphType type, String text});
 
-/// Satu buku di rak.
+/// One book on the shelf.
 class ShelfBook {
   const ShelfBook({
     required this.id,
@@ -31,42 +32,42 @@ class ShelfBook {
   final String title;
   final String? author;
 
-  /// Nama file cover di `covers/`; null = cover default.
+  /// Cover file name in `covers/`; null = default cover.
   final String? coverName;
 
-  /// Udah pernah dibuka (stiker "Baru" ilang).
+  /// Has been opened before (the "Baru" sticker goes away).
   final bool opened;
 
-  /// Kapan diimport.
+  /// When it was imported.
   final DateTime createdAt;
 
-  /// Persentase baca 0..1 dari posisi tersimpan (docs/architecture.md).
+  /// Reading percentage 0..1 from the saved position (docs/architecture.md).
   final double progress;
 
-  /// Posisi tersimpan di ujung paragraf terakhir bab terakhir: layar akhir
-  /// buku udah kebuka.
+  /// The saved position is at the end of the last paragraph of the last chapter:
+  /// the end-of-book screen has been opened.
   final bool finished;
 
-  /// Bab posisi tersimpan (urutan 1-based) dari [chapterCount] bab.
+  /// Chapter of the saved position (1-based order) out of [chapterCount] chapters.
   final int chapter, chapterCount;
 
-  /// Bab yang udah masuk + posisi baca; null buat EPUB.
+  /// Chapters imported so far + reading position; null for EPUB.
   final MarkdownShelf? markdown;
 }
 
 extension ShelfBookLabels on ShelfBook {
-  /// Judul mirip nama file (tanpa spasi, panjang): tampil lebih kecil dan
-  /// dipecah per karakter di sheet Info buku.
+  /// Title that looks like a file name (no spaces, long): shown smaller and
+  /// broken per character in the book Info sheet.
   bool get titleLooksLikeFileName => !title.contains(' ') && title.length >= 16;
 }
 
-/// Urutan rak (menu "Urutin pake"). Default [lastOpened].
+/// Shelf order (menu "Urutin pake"). Defaults to [lastOpened].
 enum ShelfSort { lastOpened, title, added }
 
-/// Tampilan rak: grid kartu atau daftar baris. Default [grid].
+/// Shelf layout: card grid or row list. Defaults to [grid].
 enum ShelfView { grid, list }
 
-/// Isi sheet Info buku yang gak dibawa tiap baris rak.
+/// Contents of the book Info sheet that shelf rows don't carry.
 class BookInfo {
   const BookInfo({
     required this.lastOpenedAt,
@@ -80,10 +81,10 @@ class BookInfo {
     this.useDefaultCover = false,
   });
 
-  /// Judul/penulis asli EPUB; null = belum pernah diedit.
+  /// The EPUB's original title/author; null = never edited.
   final String? originalTitle, originalAuthor;
 
-  /// `coverName` mentah (tetap ada walau cover default dipake).
+  /// Raw `coverName` (kept even when the default cover is used).
   final String? epubCoverName;
   final bool useDefaultCover;
 
@@ -91,10 +92,10 @@ class BookInfo {
   final DateTime createdAt;
   final String? fileName;
 
-  /// Ukuran EPUB di Documents; null kalau file-nya gak ada.
+  /// EPUB size in Documents; null when the file doesn't exist.
   final int? fileBytes;
 
-  /// Paragraf yang udah diartiin di seluruh buku.
+  /// Paragraphs already explained across the whole book.
   final int translated;
 }
 
@@ -109,12 +110,12 @@ class ChapterInfo {
   final int id;
   final String title;
 
-  /// Karakter sebelum chapter ini & panjang chapter ini, buat persentase.
+  /// Characters before this chapter and this chapter's length, for the percentage.
   final int charOffset;
   final int chars;
 }
 
-/// Buku yang lagi dibaca: judul + daftar chapter urut `sortOrder`.
+/// The book being read: title + chapter list in `sortOrder`.
 class ReaderBook {
   const ReaderBook({
     required this.id,
@@ -141,13 +142,13 @@ class ReaderParagraph {
 
   final int index;
 
-  /// Null buat heading & scene break.
+  /// Null for headings and scene breaks.
   final int? groupIndex;
   final ParagraphType type;
   final String text;
 }
 
-/// Rekap buat layar akhir buku (board 12 Akhir buku).
+/// Recap for the end-of-book screen (board 12 Akhir buku).
 class BookEnd {
   const BookEnd({
     required this.author,
@@ -159,9 +160,9 @@ class BookEnd {
   final String? author;
   final String? coverName;
 
-  /// Total waktu baca aktif.
+  /// Total active reading time.
   final int readingSeconds;
 
-  /// Paragraf yang udah diartiin di seluruh buku.
+  /// Paragraphs already explained across the whole book.
   final int translated;
 }

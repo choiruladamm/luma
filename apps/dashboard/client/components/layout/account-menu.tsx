@@ -19,8 +19,8 @@ type Props = {
 };
 
 /**
- * Komponen 1, Dropdown akun: 44 pill trigger (avatar 36 + chevron); 304 wide menu, radius 24,
- * sheet shadow. Profile, Bahasa, Tampilan, then Keluar under a divider. Both choices apply at
+ * Design component 1, account dropdown: 44 pill trigger (avatar 36 + chevron); 304 wide menu, radius 24,
+ * sheet shadow. Profile, "Bahasa" (language), "Tampilan" (appearance), then "Keluar" (sign out) under a divider. Both choices apply at
  * once (no Save). Closes on outside click.
  */
 export function AccountMenu({ user, open, onToggle, onClose, theme, onTheme, lang, onLang, onSignOut, signingOut }: Props) {

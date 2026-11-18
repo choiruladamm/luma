@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
-/// Skala teks Stabilo (board Foundations · 02 Tipografi). Tanpa warna: warna
-/// ikut theme / `context.stabilo`.
-// ponytail: font statis per weight, jadi optical size (opsz) Bricolage &
-// Literata gak ikut ukuran. Ganti ke font variable + FontVariation kalau
-// judul besar keliatan beda dari board.
+/// Stabilo type scale (board Foundations · 02 Tipografi). No color: color
+/// follows the theme / `context.stabilo`.
+// ponytail: static font per weight, so the optical size (opsz) of Bricolage &
+// Literata doesn't follow the font size. Switch to a variable font +
+// FontVariation if large titles look different from the board.
 abstract final class StabiloType {
   static const ui = 'Bricolage Grotesque';
   static const readingFont = 'Atkinson Hyperlegible';
@@ -40,7 +40,7 @@ abstract final class StabiloType {
     letterSpacing: -0.01 * 19,
   );
 
-  /// Judul header sheet bertumpuk (Ubah judul & penulis).
+  /// Title of stacked sheet headers (Ubah judul & penulis).
   static const titleXs = TextStyle(
     fontFamily: ui,
     fontSize: 16,
@@ -66,7 +66,7 @@ abstract final class StabiloType {
     fontWeight: FontWeight.w500,
   );
 
-  /// Teksnya di-`toUpperCase()` sendiri (TextStyle gak bisa CAPS).
+  /// The caller uppercases the text with `toUpperCase()` (TextStyle can't do CAPS).
   static const tag = TextStyle(
     fontFamily: ui,
     fontSize: 12,
@@ -81,7 +81,7 @@ abstract final class StabiloType {
     fontWeight: FontWeight.w700,
   );
 
-  // Bacaan. Ukuran & jarak baris default; pilihan Aa menimpa lewat copyWith.
+  // Reading. Default size & line spacing; the Aa choice overrides via copyWith.
   static const reading = TextStyle(
     fontFamily: readingFont,
     fontSize: 18.5,
@@ -93,26 +93,26 @@ abstract final class StabiloType {
     height: 1.7,
   );
 
-  /// Terjemahan di sheet artinya.
+  /// Translation in the Artinya sheet.
   static const readingSheet = TextStyle(
     fontFamily: readingFont,
     fontSize: 15.5,
     height: 1.5,
   );
 
-  /// Kode error, API key, model ID.
+  /// Error codes, API keys, model IDs.
   static const mono = TextStyle(
     fontFamily: 'Menlo',
     fontFamilyFallback: ['Courier', 'monospace'],
     fontSize: 15,
   );
 
-  /// Mode gelap: jarak baris bacaan +0,05 (teks terang di latar gelap
-  /// keliatan lebih tebel).
+  /// Dark mode: reading line spacing +0.05 (light text on a dark background
+  /// looks bolder).
   static TextStyle forBrightness(TextStyle s, Brightness b) =>
       b == Brightness.dark ? s.copyWith(height: s.height! + 0.05) : s;
 
-  /// Skala UI dipetakan ke slot Material, biar widget bawaan ikut Bricolage.
+  /// Maps the UI scale onto Material slots so stock widgets follow Bricolage.
   static const textTheme = TextTheme(
     headlineLarge: display,
     headlineMedium: titleLg,

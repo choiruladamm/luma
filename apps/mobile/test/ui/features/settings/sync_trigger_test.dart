@@ -66,7 +66,7 @@ void main() {
 
     changes.add(null);
     await tester.pump(const Duration(seconds: 30));
-    changes.add(null); // perubahan baru ngulang jeda
+    changes.add(null); // a new change restarts the debounce
     await tester.pump(const Duration(seconds: 59));
     expect(sync.calls, isEmpty);
 
@@ -104,8 +104,8 @@ void main() {
   });
 
   testWidgets('opening the app already signed in syncs once', (tester) async {
-    // Auth kelar sebelum SyncTrigger dipasang (router nge-watch duluan):
-    // gak ada perubahan status yang bisa didengerin.
+    // Auth finishes before SyncTrigger is mounted (the router watches first):
+    // there is no status change to listen to.
     auth = _Auth(const AuthState(AuthStatus.signedIn));
     final container = ProviderContainer(
       overrides: [

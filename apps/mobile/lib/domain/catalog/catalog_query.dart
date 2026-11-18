@@ -1,7 +1,7 @@
-/// Input user → ekspresi MATCH FTS5, `"jane"* "austen"*` (prefix per kata,
-/// AND implisit). Batas kepercayaan: kata dipecah di non-huruf/angka, jadi
-/// kutip, `*`, `-`, `OR`, `NEAR` dari user gak pernah jadi sintaks. Null =
-/// gak ada kata yang bisa dicari.
+/// User input → FTS5 MATCH expression, `"jane"* "austen"*` (prefix per word,
+/// implicit AND). Trust boundary: words are split at non-letters/digits, so quotes,
+/// `*`, `-`, `OR`, `NEAR` from the user never become syntax. Null = no searchable
+/// word.
 String? catalogMatchQuery(String input) {
   final words = input.split(_separator).where((w) => w.isNotEmpty);
   if (words.isEmpty) return null;

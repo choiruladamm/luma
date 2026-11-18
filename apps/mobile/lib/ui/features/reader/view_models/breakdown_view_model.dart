@@ -11,7 +11,7 @@ import '../../../../domain/models/ai_reply.dart';
 import '../../../../domain/models/breakdown.dart';
 import 'reader_view_model.dart';
 
-/// Bedahin satu grup yang lagi di-stream / dari cache.
+/// Bedahin of one group, streaming or from the cache.
 class BreakdownState {
   const BreakdownState({
     this.phase = BreakdownPhase.waiting,
@@ -23,16 +23,16 @@ class BreakdownState {
 
   final BreakdownPhase phase;
 
-  /// Terjemahan yang dibedah (panel teks). Null = belum kebaca dari DB.
+  /// The translation being broken down (text panel). Null = not yet read from the DB.
   final BreakdownInput? input;
 
-  /// [BreakdownPhase.done]: isinya hasil akhir yang valid.
+  /// [BreakdownPhase.done]: holds the final valid result.
   final Breakdown draft;
 
   /// [BreakdownPhase.failed].
   final AiException? error;
 
-  /// Langsung dari cache, gak ada yang di-stream.
+  /// Straight from the cache, nothing streamed.
   final bool cached;
 
   BreakdownState withPhase(BreakdownPhase phase) => BreakdownState(
@@ -44,12 +44,12 @@ class BreakdownState {
   );
 }
 
-/// Sumber layar Bedahin (docs/architecture.md). Cache `ai_breakdowns` dulu
-/// (versi prompt + terjemahan sama); kalau belum ada, di-stream dengan
-/// ambang yang sama kayak [GroupAiStream]. Jawaban lengkap divalidasi; gak
-/// valid → di-stream sekali lagi, masih gagal → `invalidResponse`. Cuma yang
-/// valid yang disimpen. Ke-dispose = request dibatalin, gak ada yang
-/// disimpen. Coba lagi = `ref.invalidate`.
+/// Source of the Bedahin screen (docs/architecture.md). Checks the `ai_breakdowns`
+/// cache first (same prompt version + translation); if absent, streams with the
+/// same thresholds as [GroupAiStream]. A complete answer is validated; if invalid
+/// it streams once more, and if that also fails: `invalidResponse`. Only valid
+/// answers are saved. Disposal cancels the request and saves nothing. Retry =
+/// `ref.invalidate`.
 class BreakdownStream extends Notifier<BreakdownState> {
   BreakdownStream(this.group);
 
@@ -64,7 +64,7 @@ class BreakdownStream extends Notifier<BreakdownState> {
   }
 
   Future<void> _run(AiRun run) async {
-    // Ambil semua sebelum await.
+    // Read everything before the await.
     final repo = ref.read(aiBreakdownsRepositoryProvider);
     final ai = ref.read(openRouterServiceProvider);
     final keys = ref.read(aiKeyRepositoryProvider);
@@ -84,7 +84,7 @@ class BreakdownStream extends Notifier<BreakdownState> {
     try {
       input = await repo.input(group);
       if (input == null) {
-        // Bedahin cuma kebuka abis makna cepat selesai.
+        // Bedahin only opens after the quick meaning has finished.
         throw const AiException(
           AiError.invalidResponse,
           detail: 'no quick meaning',
@@ -135,7 +135,7 @@ class BreakdownStream extends Notifier<BreakdownState> {
           input: input,
           cancel: run.cancel,
         )) {
-          // Token telat abis layar ditutup: jangan pasang timer yang baca
+          // A token arriving after the screen closed: don't set a timer that reads
           // `state`.
           if (!run.live) return;
           if (content.isEmpty) run.clearTimers();
@@ -178,8 +178,8 @@ class BreakdownStream extends Notifier<BreakdownState> {
         );
       }
     } on AiException catch (e) {
-      // Layar ditutup: request yang dibatalin ngelempar error, dan `state`
-      // udah gak boleh dibaca.
+      // The screen closed: a cancelled request throws, and `state` must not be
+      // read.
       if (!run.live) return;
       if (streaming && state.phase == BreakdownPhase.writing) {
         finish(state.withPhase(BreakdownPhase.cut));
@@ -195,17 +195,17 @@ class BreakdownStream extends Notifier<BreakdownState> {
 final breakdownStreamProvider = NotifierProvider.autoDispose
     .family<BreakdownStream, BreakdownState, GroupRef>(BreakdownStream.new);
 
-/// Jumlah bagian bedahan grup ini yang masih berlaku (0 = belum ada): > 0,
-/// entri di sheet Artinya jadi "Buka bedahan · N bagian".
+/// Number of this group's breakdown parts that are still valid (0 = none yet): when
+/// > 0, the Artinya sheet entry reads "Buka bedahan · N bagian".
 final breakdownSectionsProvider = FutureProvider.autoDispose
     .family<int, GroupRef>(
       (ref, group) => ref.watch(aiBreakdownsRepositoryProvider).sections(group),
     );
 
-/// Kartu Nyambung ke: dari grup mana, ke bab ke berapa (null = lanjutan).
+/// The Nyambung ke card: from which group, to which chapter (null = a continuation).
 typedef PeekKey = ({GroupRef from, int? chapter});
 
-/// Isi sheet intip. Null = tujuannya gak ada, kartu jadi teks biasa.
+/// Content of the peek sheet. Null = the target does not exist, the card becomes plain text.
 final breakdownPeekProvider = FutureProvider.autoDispose
     .family<BreakdownPeek?, PeekKey>(
       (ref, key) =>

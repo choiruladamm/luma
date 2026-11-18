@@ -7,8 +7,8 @@ import '../../domain/book_search.dart';
 import '../../domain/models/book_search.dart';
 import '../database/app_database.dart';
 
-/// Cari kata di satu buku lewat `paragraph_fts` + riwayat cari
-/// (docs/book-search.md). Index-nya diisi [BookSearchIndex].
+/// Searches one book through `paragraph_fts` and keeps the search history
+/// (docs/book-search.md). [BookSearchIndex] fills the index.
 class BookSearchRepository {
   BookSearchRepository(this._db);
 
@@ -20,9 +20,9 @@ class BookSearchRepository {
       'JOIN chapters c ON c.id = p.chapter_id '
       'WHERE paragraph_fts MATCH ? AND c.book_id = ?';
 
-  /// Paragraf yang cocok, urut bab sesuai buku lalu urut paragraf. Query
-  /// kurang dari 2 huruf/angka = kosong. Maks [bookSearchMaxHits] paragraf
-  /// dikembaliin; [BookSearchResult.total] tetap jumlah sebenarnya.
+  /// Returns matching paragraphs, ordered by the book's chapter order and then paragraph
+  /// order. A query shorter than 2 letters/digits returns nothing. At most
+  /// [bookSearchMaxHits] paragraphs are returned; [BookSearchResult.total] still holds the real count.
   Future<BookSearchResult> search(int bookId, String input) async {
     final query = BookSearchQuery.parse(input);
     if (query == null) return BookSearchResult.empty;
@@ -90,7 +90,7 @@ class BookSearchRepository {
     );
   }
 
-  /// Pencarian terakhir buku ini, terbaru dulu (maks 5).
+  /// Returns this book's latest searches, newest first (at most 5).
   Future<List<String>> recentSearches(int bookId) async {
     final row =
         await (_db.select(_db.settings)
@@ -100,12 +100,12 @@ class BookSearchRepository {
     try {
       return [for (final q in jsonDecode(row.value) as List) q as String];
     } on Object {
-      return const []; // rusak = anggap kosong, gak perlu crash
+      return const []; // Corrupt history counts as empty rather than crashing.
     }
   }
 
-  /// Dipanggil pas user tap hasil (bukan tiap ketikan). Query yang sama
-  /// (abaikan besar/kecil) naik ke paling atas.
+  /// Records a search when the user taps a result (not on every keystroke). The same
+  /// query (ignoring case) moves to the top.
   Future<void> saveRecent(int bookId, String input) async {
     final q = input.trim();
     if (BookSearchQuery.parse(q) == null) return;

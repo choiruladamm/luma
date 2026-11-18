@@ -5,7 +5,7 @@ import { Icon } from "./icons";
 export type SelectOption<T extends string> = [value: T, text: string];
 
 /**
- * Stabilo select (komponen 1 menu style): a pill trigger showing `label` + the chosen text, and a
+ * Stabilo select (design component 1, menu style): a pill trigger showing `label` + the chosen text, and a
  * listbox popover (radius 24, sheet shadow, track ring) with a check on the chosen option.
  * Keyboard: ↑/↓ open and move, Home/End, Enter/Space choose, Esc closes back to the trigger.
  * `active` paints the trigger ink (a filter that differs from its default). The menu opens below,
@@ -23,7 +23,6 @@ export function Select<T extends string>({ label, shortLabel, value, options, on
   const selected = Math.max(0, options.findIndex(([v]) => v === value));
   const text = options[selected]?.[1] ?? "";
 
-  // Click outside closes.
   useEffect(() => {
     if (!open) return;
     const onDown = (e: MouseEvent) => !root.current?.contains(e.target as Node) && setOpen(false);

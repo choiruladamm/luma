@@ -160,7 +160,7 @@ void main() {
     expect(reader.blocks.single.layout, ChatAnswerLayout.item);
     expect(reader.blocks.single.kind, ChatAnswerKind.interpretation);
     reader.add('.** isi"},{"layout":"quote","kind":"external","text":"x');
-    // Kutipan bukan dari buku jatuh ke paragraf.
+    // A quote not from the book falls back to the paragraph.
     expect(reader.blocks.last.layout, ChatAnswerLayout.paragraph);
     final odd = ChatPreviewDecoder()
       ..add('{"parts":[{"layout":"huh","kind":"???","text":"ok');

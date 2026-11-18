@@ -6,9 +6,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../data/repositories/cloud_backup_repository.dart';
 import '../../auth/view_models/auth_view_model.dart';
 
-/// Backup cloud otomatis (docs/backup.md): saat app kebuka (sesi kebaca) dan
-/// tiap resume, kalau login. Jeda 24 jam & coba lagi ada di
-/// [CloudBackupRepository.backupIfDue]. Tanpa polling.
+/// Automatic cloud backup (docs/backup.md): when the app opens (session read)
+/// and on every resume, if logged in. The 24-hour interval & retry live in
+/// [CloudBackupRepository.backupIfDue]. No polling.
 class CloudBackupTrigger extends ConsumerStatefulWidget {
   const CloudBackupTrigger({super.key, required this.child});
 
@@ -25,8 +25,8 @@ class _CloudBackupTriggerState extends ConsumerState<CloudBackupTrigger> {
   void initState() {
     super.initState();
     _lifecycle = AppLifecycleListener(onResume: _run);
-    // fireImmediately: auth udah kelar sebelum widget ini dipasang (app
-    // dibuka dalam kondisi login) juga dihitung login.
+    // fireImmediately: auth finished before this widget was mounted (app opened
+    // while logged in) also counts as logged in.
     ref.listenManual(authControllerProvider, (prev, next) {
       if (next.value?.status == AuthStatus.signedIn &&
           prev?.value?.status != AuthStatus.signedIn) {

@@ -7,8 +7,8 @@ import '../../../core/theme/stabilo_theme.dart';
 import '../../../core/theme/stabilo_tokens.dart';
 import '../../../core/widgets/book_cover.dart';
 
-/// Cover dari jaringan (`cached_network_image`, docs/discover.md). Belum
-/// kemuat = kotak muted; gagal / gak ada URL = cover default dari judul.
+/// Cover from the network (`cached_network_image`, docs/discover.md). Not yet
+/// loaded = muted box; failed / no URL = default cover from the title.
 class CatalogCover extends StatelessWidget {
   const CatalogCover({super.key, required this.book, required this.width});
 
@@ -60,20 +60,20 @@ class CatalogCover extends StatelessWidget {
 }
 
 extension CatalogBookLabels on CatalogBook {
-  /// "Jane Austen" dari "Austen, Jane"; beberapa penulis dipisah " · ".
+  /// "Jane Austen" from "Austen, Jane"; multiple authors are separated by " · ".
   String? get authorsLabel =>
       authors.isEmpty ? null : authors.map((a) => a.displayName).join(' · ');
 }
 
 extension CatalogAuthorLabels on CatalogAuthor {
-  /// "Austen, Jane" → "Jane Austen". Nama tanpa koma dibiarin.
+  /// "Austen, Jane" → "Jane Austen". Names without a comma are left alone.
   String get displayName {
     final i = name.indexOf(', ');
     if (i < 0) return name;
     return '${name.substring(i + 2)} ${name.substring(0, i)}';
   }
 
-  /// "1775–1817", "1900–", "–1468"; null kalau dua-duanya gak ada.
+  /// "1775–1817", "1900–", "–1468"; null when neither exists.
   String? get years =>
       birth == null && death == null ? null : '${birth ?? ''}–${death ?? ''}';
 }

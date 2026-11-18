@@ -9,7 +9,7 @@ import '../../../core/theme/stabilo_tokens.dart';
 import '../../../core/theme/stabilo_type.dart';
 import '../../../core/widgets/buttons.dart';
 
-/// Gelembung hint sekali tampil di atas tombol Ngobrol.
+/// One-time hint bubble above the Ngobrol button.
 class ChatHintBubble extends StatelessWidget {
   const ChatHintBubble({super.key});
 
@@ -54,7 +54,7 @@ class ChatHintBubble extends StatelessWidget {
   }
 }
 
-/// Pill di atas layar pas ngintip sumber dari obrolan ("Lagi ngintip · ...").
+/// Pill at the top of the screen while peeking at a source from the chat ("Lagi ngintip · ...").
 class SourceVisitBanner extends StatelessWidget {
   const SourceVisitBanner({super.key, required this.label});
 
@@ -93,7 +93,7 @@ class SourceVisitBanner extends StatelessWidget {
   }
 }
 
-/// Kapsul bawah pas ngintip sumber: balik ke obrolan / lanjut baca.
+/// Bottom capsule while peeking at a source: back to the chat / continue reading.
 class SourceVisitActions extends StatelessWidget {
   const SourceVisitActions({
     super.key,

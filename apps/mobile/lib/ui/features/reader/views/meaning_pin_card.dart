@@ -6,13 +6,13 @@ import '../../../../domain/models/book.dart';
 import '../../../core/theme/stabilo_theme.dart';
 import '../../../core/theme/stabilo_tokens.dart';
 
-/// Card kuning tetap pas sheet Artinya kebuka (halaman gak geser): jendela di
-/// posisi grup, isinya teks grup yang di-scroll ngikutin seberapa jauh
-/// terjemahan kebaca. Dipasang cuma kalau grupnya kepanjangan (bawah teksnya
-/// ketutup sheet): yang muat gak ada yang perlu di-scroll.
+/// Fixed yellow card while the Artinya sheet is open (the page does not move): a window
+/// at the group position whose content is the group text, scrolled as far as the
+/// translation has been read. Mounted only when the group is too long (the bottom
+/// of its text is covered by the sheet): a group that fits has nothing to scroll.
 ///
-/// Dipasang di Stack yang sama dengan teks bab (koordinat [show] = koordinat
-/// Stack itu). Kosong sampai [MeaningPinCardState.show] dipanggil.
+/// Mounted in the same Stack as the chapter text ([show] coordinates are that
+/// Stack's). Empty until [MeaningPinCardState.show] is called.
 class MeaningPinCard extends StatefulWidget {
   const MeaningPinCard({
     super.key,
@@ -23,10 +23,10 @@ class MeaningPinCard extends StatefulWidget {
 
   final double marginWidth;
 
-  /// Jarak antar paragraf.
+  /// Spacing between paragraphs.
   final double gap;
 
-  /// Gaya teks di atas highlight.
+  /// Text style on top of the highlight.
   final TextStyle style;
 
   @override
@@ -43,9 +43,9 @@ class MeaningPinCardState extends State<MeaningPinCard> {
   void show(Rect rect, List<ReaderParagraph> paras) =>
       setState(() => _pin = (rect: rect, paras: paras));
 
-  /// Tutup card tetap: isinya balik ke awal dulu biar gak loncat ke teks
-  /// halaman di bawahnya. Dipanggil dua kali (sheet mulai nutup, sheet udah
-  /// hilang) nunggu proses yang sama.
+  /// Closes the fixed card: its content returns to the start first so it does not
+  /// jump onto the page text below. Called twice (the sheet starts closing, the sheet
+  /// is gone); both calls wait for the same process.
   Future<void> unpin({bool animate = true}) => _pin == null
       ? Future.value()
       : _unpinning ??= _unpin(animate).whenComplete(() => _unpinning = null);
@@ -63,9 +63,9 @@ class MeaningPinCardState extends State<MeaningPinCard> {
     if (mounted) setState(() => _pin = null);
   }
 
-  /// Sinkron sheet → card: [progress] (0–1) = seberapa jauh terjemahan kebaca.
-  /// 0 = posisi awal, 1 = bawah teks grup tepat [Layout.followGap] di atas
-  /// sheet. Di antaranya linear, dikejar dengan animasi pendek.
+  /// Syncs sheet → card: [progress] (0–1) = how far the translation has been read.
+  /// 0 = start position, 1 = the bottom of the group text sits exactly
+  /// [Layout.followGap] above the sheet. Linear in between, chased by a short animation.
   void follow(double progress, double sheetTop) {
     final view = _view.currentContext?.findRenderObject();
     final pin = _pin;
@@ -76,8 +76,7 @@ class MeaningPinCardState extends State<MeaningPinCard> {
       return;
     }
     final viewTop = view.localToGlobal(Offset.zero).dy;
-    final shown =
-        sheetTop - Layout.followGap - viewTop; // tinggi yang kelihatan
+    final shown = sheetTop - Layout.followGap - viewTop; // visible height
     final textBottom =
         last.localToGlobal(Offset.zero).dy -
         viewTop +
@@ -92,8 +91,8 @@ class MeaningPinCardState extends State<MeaningPinCard> {
       _scroll.jumpTo(target);
       return;
     }
-    // Dikejar halus, bukan loncat: tiap update restart animasi pendek dari
-    // posisi sekarang, jadi fling di sheet gak bikin teks tersentak.
+    // Chased smoothly instead of jumping: each update restarts a short animation from
+    // the current position, so a fling on the sheet does not make the text jerk.
     unawaited(
       _scroll.animateTo(target, duration: Motion.follow, curve: Curves.easeOut),
     );
@@ -109,7 +108,7 @@ class MeaningPinCardState extends State<MeaningPinCard> {
   Widget build(BuildContext context) {
     final pin = _pin;
     if (pin == null) {
-      // Stack induk cuma boleh isi Positioned: ukurannya gak ikut kena.
+      // The parent Stack may only hold Positioned children: its size is not affected.
       return const Positioned(width: 0, height: 0, child: SizedBox.shrink());
     }
     final c = context.stabilo;
@@ -119,13 +118,13 @@ class MeaningPinCardState extends State<MeaningPinCard> {
       child: IgnorePointer(
         child: ClipRRect(
           key: _view,
-          // Bawahnya lurus: kartu terus ke bawah sheet, nyatu sama card
-          // halaman, bukan kotak yang berhenti di atas sheet.
+          // Straight bottom: the card continues below the sheet and merges with the page
+          // card, instead of a box that stops above the sheet.
           borderRadius: const BorderRadius.vertical(
             top: Radius.circular(Radii.md),
           ),
-          // Canvas dulu: highlight gelap tembus pandang, tanpa ini teks
-          // halaman di belakangnya kelihatan dobel.
+          // Canvas first: the dark highlight is translucent, and without this the page text
+          // behind it would show doubled.
           child: ColoredBox(
             color: c.canvas,
             child: ColoredBox(
@@ -133,8 +132,8 @@ class MeaningPinCardState extends State<MeaningPinCard> {
               child: SingleChildScrollView(
                 controller: _scroll,
                 physics: const NeverScrollableScrollPhysics(),
-                // Bawah selebar jarak ke sheet: paragraf terakhir bisa naik
-                // sampe kelihatan penuh di atas sheet.
+                // Bottom as wide as the distance to the sheet: the last paragraph can scroll up
+                // until it is fully visible above the sheet.
                 padding: EdgeInsets.fromLTRB(
                   widget.marginWidth / 2,
                   Space.s2,

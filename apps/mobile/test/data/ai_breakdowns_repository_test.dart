@@ -123,7 +123,7 @@ void main() {
       expect(await repo.find(g0, hash), 'B2');
       expect(await db.select(db.aiBreakdowns).get(), hasLength(1));
 
-      // Retranslated: the sentence ranges no longer apply.
+      // After a retranslation, the sentence ranges do not apply.
       await translate(g0, ['Satu lagi.', 'Dua.']);
       expect(
         await repo.find(g0, breakdownSourceHash(['Satu lagi.', 'Dua.'])),
@@ -141,7 +141,7 @@ void main() {
   );
 
   test('peek: next group, or the first group of chapter B<n>', () async {
-    // Lanjutan: group 1 of V, not translated yet.
+    // Next: group 1 of V, not translated yet.
     var peek = (await repo.peek(g0, null))!;
     expect(peek.group, (chapterId: ch, groupIndex: 1));
     expect(peek.original, ['p3']);

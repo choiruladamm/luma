@@ -1,7 +1,7 @@
-// Cabut akses AI subsidi satu user: `make backend-ban e=dev email=a@b.c`.
-// Key OpenRouter dihapus duluan (key yang udah diekstrak dari device langsung
-// mati, bukan nunggu kedaluwarsa 30 hari), baru `banned` + baris `ai_keys` di D1.
-// Butuh management key di env: OPENROUTER_MANAGEMENT_KEY=... make backend-ban ...
+// Revokes subsidized AI access for one user: `make backend-ban e=dev email=a@b.c`.
+// The OpenRouter key is deleted first so a key already extracted from a device dies
+// immediately instead of living out its 30-day expiry; then `banned` and the `ai_keys` row in D1.
+// Needs the management key in the env: OPENROUTER_MANAGEMENT_KEY=... make backend-ban ...
 import { openRouterAdmin } from "../src/clients/openrouter";
 
 const [envName, email] = process.argv.slice(2);

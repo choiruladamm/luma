@@ -2,10 +2,6 @@ import 'package:luma/domain/grouping.dart';
 import 'package:luma/domain/models/book.dart';
 import 'package:luma/domain/pdf_layout.dart';
 
-// ---------------------------------------------------------------------------
-// Public input types (plain Dart – no pdfrx dependency)
-// ---------------------------------------------------------------------------
-
 /// One node from a PDF outline (bookmark tree).  [dest] is null when the node
 /// is a structural parent (e.g. "Part I") with no direct page target.
 class PdfOutlineEntry {
@@ -21,10 +17,6 @@ class PdfOutlineEntry {
   final int? pageNumber;
   final List<PdfOutlineEntry> children;
 }
-
-// ---------------------------------------------------------------------------
-// Output – same ParsedChapter used by EPUB importer
-// ---------------------------------------------------------------------------
 
 class ParsedChapter {
   const ParsedChapter({
@@ -45,10 +37,6 @@ class ParsedChapter {
 }
 
 typedef PdfParsedBook = ({List<ParsedChapter> chapters, int totalChars});
-
-// ---------------------------------------------------------------------------
-// Main entry point
-// ---------------------------------------------------------------------------
 
 /// Splits [blocks] (output of [PdfLayoutEngine.processToBlocks]) into
 /// [ParsedChapter]s using three fallback strategies in priority order:
@@ -77,17 +65,13 @@ PdfParsedBook splitPdfChapters(
   return _assembleChapters(blocks, boundaries);
 }
 
-// ---------------------------------------------------------------------------
-// Step 1 – choose chapter boundaries
-// ---------------------------------------------------------------------------
-
 class _Boundary {
   const _Boundary({
     required this.blockIndex,
     required this.title,
     this.section,
   });
-  final int blockIndex; // first block index of this chapter
+  final int blockIndex;
   final String title;
   final String? section;
 }
@@ -98,21 +82,14 @@ List<_Boundary> _chooseBoundaries({
   required int totalPages,
   required int fallbackPageSize,
 }) {
-  // --- Strategy 1: outline ---
   final outlineBoundaries = _boundariesFromOutline(blocks, outline);
   if (outlineBoundaries.length >= 2) return outlineBoundaries;
 
-  // --- Strategy 2: headings ---
   final headingBoundaries = _boundariesFromHeadings(blocks);
   if (headingBoundaries.length >= 2) return headingBoundaries;
 
-  // --- Strategy 3: page fallback ---
   return _boundariesFromPageFallback(blocks, totalPages, fallbackPageSize);
 }
-
-// ---------------------------------------------------------------------------
-// Strategy 1 – outline
-// ---------------------------------------------------------------------------
 
 /// Returns validated boundaries from [outline], or empty list when unusable.
 List<_Boundary> _boundariesFromOutline(
@@ -125,7 +102,6 @@ List<_Boundary> _boundariesFromOutline(
       ? 0
       : blocks.map((b) => b.pageNumber).reduce((a, b) => a > b ? a : b);
 
-  // Flatten outline choosing the best level
   final flat = _flattenOutline(
     outline,
     totalPages: totalPages,
@@ -133,7 +109,6 @@ List<_Boundary> _boundariesFromOutline(
   );
   if (flat.isEmpty) return const [];
 
-  // Validate: at least 2 entries, page numbers in ascending order
   if (flat.length < 2) return const [];
 
   final boundaries = <_Boundary>[];
@@ -141,7 +116,6 @@ List<_Boundary> _boundariesFromOutline(
     if (entry.pageNumber == null) continue;
     final blockIdx = _firstBlockOnOrAfterPage(blocks, entry.pageNumber!);
     if (blockIdx < 0) continue;
-    // Try to find a heading in the first few blocks that matches bookmark title
     final adjustedIdx = _matchHeadingNearBlock(blocks, blockIdx, entry.title);
     boundaries.add(
       _Boundary(
@@ -189,7 +163,6 @@ List<({String title, int? pageNumber, String? section})> _flattenOutline(
 }) {
   if (nodes.isEmpty) return const [];
 
-  // Check if this level contains only "Part"/"Book" parents
   final allPartsOrBooks = nodes.every(
     (n) => RegExp(
       r'^(part|book|volume|section)\s',
@@ -219,7 +192,6 @@ List<({String title, int? pageNumber, String? section})> _flattenOutline(
         nodeEnd - node.pageNumber! > _containerPages;
 
     if ((allPartsOrBooks || oversize) && node.children.isNotEmpty) {
-      // Treat this node as a section and use children as actual chapters
       final childResults = _flattenOutline(
         node.children,
         totalPages: totalPages,
@@ -229,7 +201,6 @@ List<({String title, int? pageNumber, String? section})> _flattenOutline(
       );
       result.addAll(childResults);
     } else if (node.children.isNotEmpty && !validDest) {
-      // Structural parent without destination – use children
       final childResults = _flattenOutline(
         node.children,
         totalPages: totalPages,
@@ -281,10 +252,6 @@ int _matchHeadingNearBlock(
   return startIdx;
 }
 
-// ---------------------------------------------------------------------------
-// Strategy 2 – headings
-// ---------------------------------------------------------------------------
-
 List<_Boundary> _boundariesFromHeadings(List<PdfLocatedBlock> blocks) {
   final boundaries = <_Boundary>[];
 
@@ -302,23 +269,17 @@ List<_Boundary> _boundariesFromHeadings(List<PdfLocatedBlock> blocks) {
 /// Returns true if [text] looks like a chapter heading (not just any heading).
 bool _isStrongHeading(String text) {
   final t = text.trim();
-  // Pattern: "Chapter N", "Bab N", "Part N", etc.
   if (RegExp(
     r'^(chapter|bab|part|bagian|act|scene|section|volume|livre)\s+(\d+|[ivxlcdm]+)',
     caseSensitive: false,
   ).hasMatch(t)) {
     return true;
   }
-  // All-caps short heading that looks like a chapter title
   if (t == t.toUpperCase() && t.length <= 60 && t.split(' ').length <= 8) {
     return true;
   }
   return false;
 }
-
-// ---------------------------------------------------------------------------
-// Strategy 3 – page fallback
-// ---------------------------------------------------------------------------
 
 List<_Boundary> _boundariesFromPageFallback(
   List<PdfLocatedBlock> blocks,
@@ -357,10 +318,6 @@ List<_Boundary> _boundariesFromPageFallback(
   return boundaries;
 }
 
-// ---------------------------------------------------------------------------
-// Step 2 – assemble ParsedChapters from boundaries
-// ---------------------------------------------------------------------------
-
 const _minFrontMatterChars = 300;
 
 PdfParsedBook _assembleChapters(
@@ -368,7 +325,6 @@ PdfParsedBook _assembleChapters(
   List<_Boundary> boundaries,
 ) {
   if (boundaries.isEmpty) {
-    // Everything in one chapter
     return _buildSingleChapter(blocks, 'Bagian 1');
   }
 
@@ -404,7 +360,6 @@ PdfParsedBook _assembleChapters(
     final chapterBlocks = blocks.sublist(b.blockIndex, endIdx);
     final paragraphs = _blocksToRawParagraphs(chapterBlocks);
 
-    // Skip empty chapters and TOC/index pages
     if (!_isContentChapter(paragraphs, chapterBlocks)) continue;
     if (_listsChapterTitles(paragraphs, titles, b.title)) continue;
     if (_dropLabel.hasMatch(b.title.trim()) &&
@@ -431,7 +386,6 @@ PdfParsedBook _assembleChapters(
   }
 
   if (chapters.isEmpty) {
-    // Fallback: nothing was content; keep everything in one chapter
     return _buildSingleChapter(blocks, 'Bagian 1');
   }
 
@@ -624,18 +578,14 @@ String _resolveTitle(String bookmarkTitle, List<RawParagraph> paragraphs) {
   return bookmarkTitle.trim();
 }
 
-// ---------------------------------------------------------------------------
-// Whole-document glue (runs in an isolate, pure Dart)
-// ---------------------------------------------------------------------------
-
-/// Versi logika layout + pecah bab PDF, disimpan di `books.parserVersion`.
-/// Naik = re-import dari `$hash.pdf` + hapus `ai_results` buku itu (indeks
-/// paragraf/grup bisa geser). Terpisah dari `parserVersion` EPUB, jadi tuning
-/// PDF gak maksa re-import EPUB. Re-import UI belum ada.
+/// Version of the PDF layout + chapter-splitting logic, stored in
+/// `books.parserVersion`. Bumping it re-imports from `$hash.pdf` and deletes that
+/// book's `ai_results` (paragraph/group indices may shift). Separate from the EPUB
+/// `parserVersion`, so PDF tuning doesn't force EPUB re-imports. There is no re-import UI yet.
 const pdfParserVersion = 1;
 
-/// [pages] indeks 0 = halaman 1. [heading] = heading pertama di halaman 1
-/// (kandidat judul buku), null kalau gak ada.
+/// [pages] index 0 = page 1. [heading] = the first heading on page 1
+/// (book title candidate), null when there is none.
 typedef PdfLayoutResult = ({
   List<ParsedChapter> chapters,
   int totalChars,
@@ -717,9 +667,9 @@ PdfLayoutResult layoutPdf(
     outline: outline,
     totalPages: pages.length,
   );
-  // ponytail: heading pertama di 5 halaman awal yang bukan label front matter
-  // (sampul gambar = halaman 1 tanpa teks, judul ada di halaman judul), bukan
-  // yang font-nya terbesar; cadangan sampai pdfrx punya API metadata.
+  // ponytail: first heading in the first 5 pages that isn't a front-matter label
+  // (an image cover = page 1 without text, the title is on the title page), not the
+  // one with the largest font; stopgap until pdfrx has a metadata API.
   final heading = _titleCandidate(
     blocks
         .where(

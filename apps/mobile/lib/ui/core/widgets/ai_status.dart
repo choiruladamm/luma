@@ -9,16 +9,16 @@ import '../theme/stabilo_tokens.dart';
 import '../theme/stabilo_type.dart';
 import 'buttons.dart';
 
-// Potongan UI jawaban AI yang dipake sheet Artinya dan layar Bedahin.
+// Pieces of the AI answer UI used by the Artinya sheet and the Bedahin screen.
 
-/// Salin yang lagi nunggu jawaban: tiga titik berdenyut + "Lagi mikir" /
-/// "Lagi nulis". Nonaktif, warna ink2 di atas muted.
+/// Copy button while waiting for an answer: three pulsing dots + "Lagi mikir" /
+/// "Lagi nulis". Disabled, ink2 over muted.
 class StatusButton extends StatelessWidget {
   const StatusButton({super.key, required this.label, this.action});
 
   final String label;
 
-  /// Tombol yang lagi nunggu (VoiceOver: "Salin, belum bisa: lagi mikir").
+  /// Button while waiting (VoiceOver: "Salin, belum bisa: lagi mikir").
   final String? action;
 
   @override
@@ -41,7 +41,7 @@ class StatusButton extends StatelessWidget {
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
-          // Dibentang (mis. di Expanded): isinya di tengah.
+          // Stretched (e.g. in Expanded): content is centered.
           mainAxisAlignment: MainAxisAlignment.center,
           spacing: 9,
           children: [
@@ -61,8 +61,8 @@ class StatusButton extends StatelessWidget {
   }
 }
 
-/// Tiga titik 4pt, opasitas 30 ↔ 85% tiap [Motion.writingDots], bergiliran.
-/// Kurangi gerakan: diem.
+/// Three 4pt dots, opacity 30 ↔ 85% every [Motion.writingDots], in turn.
+/// Reduce Motion: still.
 class WritingDots extends StatefulWidget {
   const WritingDots({super.key, required this.color});
 
@@ -123,8 +123,8 @@ class WritingDotsState extends State<WritingDots>
   );
 }
 
-/// Kartu status di dalam isi scroll (board perilaku): kotak ikon 36, judul,
-/// keterangan, tombol 40.
+/// Status card inside scroll content (behavior board): 36 icon box, title,
+/// caption, 40 button.
 class StatusCard extends StatelessWidget {
   const StatusCard({
     super.key,
@@ -203,7 +203,7 @@ class StatusCard extends StatelessWidget {
   }
 }
 
-/// Kotak ikon di pojok state error / API key kosong.
+/// Icon box in the corner of the error / empty API key state.
 class IconTile extends StatelessWidget {
   const IconTile({
     super.key,
@@ -230,13 +230,13 @@ class IconTile extends StatelessWidget {
   );
 }
 
-/// Baris skeleton 12pt di tengah baris teks setinggi [lineExtent] (ikut Aa,
-/// biar gak loncat pas hasilnya muncul), shimmer 1,4 detik. Kurangi gerakan:
-/// diem.
+/// 12pt skeleton row centered in a text row [lineExtent] tall (follows Aa, so
+/// nothing jumps when the result appears), 1.4 s shimmer. Reduce Motion:
+/// still.
 class Skeleton extends StatefulWidget {
   const Skeleton({super.key, required this.widths, required this.lineExtent});
 
-  /// Lebar tiap baris, fraksi lebar kolom.
+  /// Width of each row, as a fraction of the column width.
   final List<double> widths;
   final double lineExtent;
 
@@ -271,7 +271,7 @@ class _SkeletonState extends State<Skeleton>
     return AnimatedBuilder(
       animation: _shimmer,
       builder: (context, _) {
-        // Sorot geser dari kanan ke kiri.
+        // Highlight sweeps from right to left.
         final x = 1 - 2 * _shimmer.value;
         final gradient = LinearGradient(
           begin: Alignment(x - 1, 0),

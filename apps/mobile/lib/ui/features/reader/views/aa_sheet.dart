@@ -13,13 +13,13 @@ import '../../../core/widgets/sheet.dart';
 import '../../../core/widgets/switch.dart';
 import '../../../core/widgets/edge_fade.dart';
 
-/// Atur bacaan (board 07 Atur bacaan). Tiap pilihan langsung disimpen dan
-/// langsung keliatan di teks di belakang sheet (scrim-nya tipis). Kayak
-/// daftar isi: kapsul atas tetep keliatan, barrier sheet transparan.
+/// Reading settings (board 07 Atur bacaan). Each choice is saved immediately and
+/// shows right away in the text behind the sheet (its scrim is thin). Like the
+/// table of contents: the top capsule stays visible, the sheet barrier is transparent.
 Future<void> showAaSheet(BuildContext context) {
   final height = MediaQuery.sizeOf(context).height;
-  // Board: sheet mulai 238 di iPhone (safe area 54), teks bab pertama masih
-  // keliatan buat preview.
+  // Board: the sheet starts at 238 on iPhone (safe area 54), the first chapter text
+  // is still visible for the preview.
   final top = MediaQuery.paddingOf(context).top + 184;
   return showAppSheet<void>(
     context,
@@ -39,7 +39,7 @@ class _AaSheet extends ConsumerWidget {
     void set(ReaderPrefs p) =>
         ref.read(settingsRepositoryProvider).saveReaderPrefs(p).ignore();
 
-    // Tanpa tombol aksi: isi jalan sampe tepi bawah, tanpa fade bawah.
+    // No action button: the content runs to the bottom edge, with no bottom fade.
     return Padding(
       padding: Layout.sheetPadding.copyWith(bottom: 0),
       child: Column(
@@ -283,7 +283,7 @@ class _SizeStepper extends StatelessWidget {
   }
 }
 
-/// Tombol bulet 44 isinya huruf "A" kecil / gede.
+/// Round 44 button containing a small / large letter "A".
 class _LetterButton extends StatelessWidget {
   const _LetterButton({required this.label, required this.size, this.onTap});
 
@@ -324,7 +324,7 @@ class _LetterButton extends StatelessWidget {
   }
 }
 
-/// Pilihan kuning bergaris (font, tema).
+/// Yellow outlined choice (font, theme).
 BoxDecoration _choice(StabiloColors c, bool selected, double radius) =>
     BoxDecoration(
       color: selected ? c.accent : c.muted,
@@ -480,7 +480,7 @@ class _ThemePill extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             spacing: Space.s2,
             children: [
-              // Contoh warna kanvas; "Ikut sistem" separo-separo.
+              // Canvas color swatch; "Ikut sistem" is split half and half.
               Container(
                 width: 18,
                 height: 18,
@@ -489,7 +489,7 @@ class _ThemePill extends StatelessWidget {
                   border: Border.all(
                     color: const Color(
                       0x73808080,
-                    ), // abu 45%, kebaca di dua tema
+                    ), // gray 45%, legible on both themes
                     width: Layout.outline,
                   ),
                   color: switch (theme) {

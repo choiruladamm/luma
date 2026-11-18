@@ -2,8 +2,8 @@ import 'package:xml/xml.dart';
 
 import '../models/catalog.dart';
 
-/// Entri buku di feed OPDS Gutenberg (populer). Entri navigasi (Subjects,
-/// Authors, ...) gak punya id `/ebooks/{n}.opds`, jadi dibuang.
+/// A book entry in the Gutenberg OPDS feed (popular). Navigation entries (Subjects,
+/// Authors, ...) have no `/ebooks/{n}.opds` id, so they are dropped.
 typedef OpdsEntry = ({int id, String title, String? author});
 typedef OpdsFeed = ({List<OpdsEntry> entries, bool hasMore});
 
@@ -12,8 +12,8 @@ final _wikipedia = RegExp(r'https?://\S*wikipedia\.org/\S+');
 final _spaces = RegExp(r'\s+');
 const _autoSummaryNote = '(This is an automatically generated summary.)';
 
-/// Feed `/ebooks/search.opds/`: id + judul + penulis (dari `content`, bentuk
-/// tampil "Jane Austen"; `content` "N downloads" = gak ada penulis).
+/// `/ebooks/search.opds/` feed: id + title + author (from `content`, display form
+/// "Jane Austen"; `content` "N downloads" = no author).
 OpdsFeed parseOpdsFeed(String xml) {
   final feed = XmlDocument.parse(xml).rootElement;
   final hasMore = feed
@@ -38,10 +38,10 @@ OpdsFeed parseOpdsFeed(String xml) {
   return (entries: entries, hasMore: hasMore);
 }
 
-/// Feed per buku `/ebooks/{id}.opds` → detail. Sinopsis dari paragraf
-/// `Summary:` di `content` (gak semua buku punya), link Wikipedia dari
-/// paragraf `Note:`, subjek dari `category` LCSH, bookshelves dari link
-/// `related` `/ebooks/bookshelf/`, ukuran dari `length` link EPUB noimages.
+/// Per-book `/ebooks/{id}.opds` feed → detail. Synopsis from the `Summary:`
+/// paragraph in `content` (not every book has one), Wikipedia link from the
+/// `Note:` paragraph, subjects from `category` LCSH, bookshelves from `related`
+/// `/ebooks/bookshelf/` links, size from the `length` of the noimages EPUB link.
 CatalogBookDetail parseOpdsBook(String xml) {
   final entry = XmlDocument.parse(xml).rootElement.findElements('entry').first;
   String? summary, wikipediaUrl;

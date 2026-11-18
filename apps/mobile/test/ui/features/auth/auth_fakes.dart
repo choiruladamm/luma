@@ -10,7 +10,7 @@ import 'package:luma/data/services/session_store.dart';
 
 import '../../../support/backend_fakes.dart';
 
-/// Google palsu: idToken tetap, batal (null), atau lempar error.
+/// Fake Google sign-in: keeps the idToken, cancels (null), or throws an error.
 class FakeGoogle implements GoogleIdTokenSource {
   FakeGoogle([this.result = 'id-token']);
 
@@ -31,7 +31,7 @@ class FakeLocalData extends Fake implements LocalDataRepository {
   Future<void> wipeBooks() async => wipes++;
 }
 
-/// Backend palsu lewat [FakeAdapter] + secure storage mock.
+/// Fake backend through [FakeAdapter] + a mocked secure storage.
 class AuthHarness {
   AuthHarness() {
     client = BackendClient(

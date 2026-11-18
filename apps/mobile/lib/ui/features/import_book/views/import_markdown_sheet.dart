@@ -19,11 +19,11 @@ import '../../../core/widgets/field.dart';
 import '../../../core/widgets/sheet.dart';
 import '../view_models/import_view_model.dart';
 
-/// Sheet "Masuk ke buku mana?" (board Import Markdown 1–3): file `.md` tanpa
-/// header lengkap. Tebakan dari [ImportMarkdownAsk.parsed] udah ngisi field.
+/// "Masuk ke buku mana?" sheet (board Import Markdown 1–3): a `.md` file without
+/// a complete header. The guess from [ImportMarkdownAsk.parsed] pre-fills the fields.
 ///
-/// Sheet tetap kebuka selama dialog bab dobel nongol di atasnya, jadi isian
-/// utuh pas user Batal.
+/// The sheet stays open while the duplicate chapter dialog shows above it, so the
+/// input is intact when the user taps Batal.
 class ImportMarkdownSheet extends ConsumerStatefulWidget {
   const ImportMarkdownSheet({super.key, required this.ask});
 
@@ -44,11 +44,11 @@ class _ImportMarkdownSheetState extends ConsumerState<ImportMarkdownSheet> {
   final _bookFocus = FocusNode();
   final _numberFocus = FocusNode();
 
-  /// Buku Markdown yang dipilih; null = "Buku baru".
+  /// The chosen Markdown book; null = "Buku baru".
   MarkdownBook? _picked;
   var _saving = false;
 
-  /// Field yang udah disentuh: error baru muncul setelah itu.
+  /// Fields already touched: errors only appear after that.
   final _touched = <String>{};
 
   ParsedMarkdown get _parsed => widget.ask.parsed;
@@ -60,7 +60,7 @@ class _ImportMarkdownSheetState extends ConsumerState<ImportMarkdownSheet> {
     _numberFocus.addListener(() => _blur(_numberFocus, 'number'));
   }
 
-  /// Error baru muncul pas field ditinggal (atau pas diketik).
+  /// Errors only appear when the field is left (or while typing).
   void _blur(FocusNode node, String key) {
     if (!node.hasFocus && mounted) setState(() => _touched.add(key));
   }
@@ -106,10 +106,10 @@ class _ImportMarkdownSheetState extends ConsumerState<ImportMarkdownSheet> {
       _chapterNumber != null &&
       (_picked != null || _book.text.trim().isNotEmpty);
 
-  /// `book_key` buku baru: dari header kalau judulnya gak diubah, kalau
-  /// enggak dari slug judul.
-  // ponytail: judul tanpa huruf latin (slug kosong) pakai penanda waktu.
-  // Kasih input slug eksplisit kalau ada yang pakai judul non-latin.
+  /// `book_key` of a new book: from the header if the title wasn't changed,
+  /// otherwise from the title slug.
+  // ponytail: a title without Latin letters (empty slug) uses a timestamp marker.
+  // Add an explicit slug input if anyone uses non-Latin titles.
   String _newKey(String title) {
     if (title == _parsed.book && _parsed.bookKey != null) {
       return _parsed.bookKey!;
@@ -142,11 +142,11 @@ class _ImportMarkdownSheetState extends ConsumerState<ImportMarkdownSheet> {
     final picked = _picked;
     final canSubmit = _valid && !_saving;
 
-    // Batal di dialog bab dobel: fokus balik ke Nomor bab biar gampang diganti.
+    // Batal in the duplicate chapter dialog: focus returns to Nomor bab so it's easy to change.
     ref.listen(importControllerProvider, (prev, next) {
       if (prev is ImportMarkdownConflict && next is ImportMarkdownAsk) {
-        // ponytail: sheet baru boleh nerima fokus satu frame setelah dialog
-        // turun (route-nya gak `isCurrent` dulu), jadi nunggu dua frame.
+        // ponytail: the new sheet may only accept focus one frame after the dialog
+        // goes down (its route isn't `isCurrent` yet), so wait two frames.
         WidgetsBinding.instance.addPostFrameCallback(
           (_) => WidgetsBinding.instance.addPostFrameCallback(
             (_) => mounted ? _numberFocus.requestFocus() : null,
@@ -249,8 +249,8 @@ class _ImportMarkdownSheetState extends ConsumerState<ImportMarkdownSheet> {
   }
 }
 
-/// Radio list: "Buku baru" paling atas, lalu buku Markdown. 3 baris
-/// keliatan penuh, sisanya scroll dengan baris ke-4 ngintip + fade.
+/// Radio list: "Buku baru" first, then Markdown books. 3 rows fully visible,
+/// the rest scrolls with the 4th row peeking + fade.
 class _BookList extends StatelessWidget {
   const _BookList({
     required this.books,
@@ -369,7 +369,7 @@ class _PickRow extends StatelessWidget {
   }
 }
 
-/// Kosong = ring `fieldLine`, kepilih = accent + centang (pasangan Switch).
+/// Empty = `fieldLine` ring, selected = accent + check (pair of Switch).
 class _Radio extends StatelessWidget {
   const _Radio({required this.selected});
 
@@ -398,7 +398,7 @@ class _Radio extends StatelessWidget {
   }
 }
 
-/// Kotak putus-putus + ikon tambah, ganti cover buat "Buku baru".
+/// Dashed box + plus icon, replaces the cover for "Buku baru".
 class _NewBookTile extends StatelessWidget {
   const _NewBookTile();
 

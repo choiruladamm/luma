@@ -55,7 +55,7 @@ function StatusTabs({ value, counts, onChange }: { value: Filter; counts?: Recor
 }
 
 /**
- * Board 08 Undangan + 09 new code. Search, status tabs (with counts), "used within", sort, and
+ * Board 08 (Undangan, Invites) + 09 new code. Search, status tabs (with counts), "used within", sort, and
  * pages run on the worker (1 batch per change); all of it lives in the URL (useInvitesParams).
  */
 export function InvitesPage() {

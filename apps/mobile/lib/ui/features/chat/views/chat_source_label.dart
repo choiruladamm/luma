@@ -8,7 +8,9 @@ final chatChapterNumbersProvider = FutureProvider.autoDispose
       (ref, bookId) => ref.watch(chatRepositoryProvider).chapterNumbers(bookId),
     );
 
-/// "2.4" = bab 2, bagian 4. Nomor bab belum kebaca: pakai judul bab.
+/// Returns the source label, e.g. "2.4" for chapter 2, paragraph 4.
+///
+/// Falls back to the chapter title while chapter numbers haven't loaded.
 String chatSourceLabel(ChatSource source, Map<int, int>? chapters) {
   final first = source.anchors.first;
   final chapter = chapters?[first.chapterId];

@@ -1,5 +1,5 @@
-// Tabel `user_storage` dipakai bareng: kuota R2 (`bytes`, file buku + backup)
-// dan cursor sync (`seq`, lihat features/sync/repo.ts).
+// The `user_storage` table is shared: R2 quota (`bytes`, book files + backups)
+// and the sync cursor (`seq`, see features/sync/repo.ts).
 import { eq, sql } from "drizzle-orm";
 import { ApiError } from "../lib/errors";
 import type { Db } from "./client";
@@ -23,10 +23,10 @@ export const addBytes = (db: Db, userId: string, delta: number) =>
     });
 
 /**
- * Pesan [size] byte kuota sebelum upload, atomik: satu upsert yang cuma nambah
- * kalau `bytes + size ≤ quota`. Upload paralel gak bisa lolos cek bareng-bareng
- * lalu bareng-bareng lewat kuota. Gak muat → 413 STORAGE_FULL. Upload gagal →
- * kembalikan lewat `addBytes(db, userId, -size)`.
+ * Reserves [size] bytes of quota before an upload, atomically: one upsert that adds
+ * only if `bytes + size ≤ quota`. Parallel uploads can't all pass the check and then
+ * together exceed the quota. Doesn't fit → 413 STORAGE_FULL. Upload fails →
+ * return it via `addBytes(db, userId, -size)`.
  */
 export async function reserveBytes(db: Db, userId: string, size: number, quota: number) {
   const reserved =
@@ -45,7 +45,7 @@ export async function reserveBytes(db: Db, userId: string, size: number, quota: 
   if (!reserved) throw new ApiError(413, "STORAGE_FULL", "Cloud storage is full");
 }
 
-/** Jalanin [upload]; gagal → kuota yang udah dipesan dikembalikan, error dilempar ulang. */
+/** Runs [upload]; on failure the reserved quota is returned and the error is rethrown. */
 export async function releaseOnFailure<T>(db: Db, userId: string, size: number, upload: () => Promise<T>) {
   try {
     return await upload();

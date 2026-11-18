@@ -1,7 +1,7 @@
-// Query `records` + `user_storage.seq` (docs/sync-protocol.md, Push and pull).
-// SQL mentah, bukan Drizzle, dengan sengaja: batas D1 free (50 query + 100
-// parameter per request) bikin batch 500 record harus lewat `json_each` dalam
-// satu statement. Tiap fungsi = satu unit anggaran query (lihat komentarnya).
+// Queries for `records` + `user_storage.seq` (docs/sync-protocol.md, Push and pull).
+// Raw SQL, not Drizzle, on purpose: the D1 free limits (50 queries + 100
+// parameters per request) force a 500-record batch through `json_each` in
+// a single statement. Each function = one query-budget unit (see its comment).
 import type { Data, Kind, SyncRecord } from "./merge";
 
 type Row = {
@@ -22,10 +22,10 @@ const fromRow = (r: Row): SyncRecord => ({
   schemaVersion: r.schema_version,
 });
 
-/** Record di D1 + ukurannya (panjang key + JSON data, rumus kuota `sync_bytes`). */
+/** A record in D1 + its size (key length + JSON data, the `sync_bytes` quota formula). */
 export type StoredRecord = SyncRecord & { size: number };
 
-/** 1 query: record yang udah ada buat pasangan `(kind, key)` di batch. */
+/** 1 query: existing records for the `(kind, key)` pairs in the batch. */
 export async function findRecords(d1: D1Database, userId: string, ids: [Kind, string][]): Promise<StoredRecord[]> {
   const { results } = await d1
     .prepare(
@@ -41,7 +41,7 @@ export async function findRecords(d1: D1Database, userId: string, ids: [Kind, st
 
 export type SyncUsage = { seq: number; bytes: number; day: number; rows: number };
 
-/** 1 query: `seq` + pemakaian kuota sync user sekarang (semua 0 kalau belum pernah push). */
+/** 1 query: `seq` + the user's current sync quota usage (all 0 if never pushed). */
 export async function syncUsage(d1: D1Database, userId: string): Promise<SyncUsage> {
   const row = await d1
     .prepare("SELECT seq, sync_bytes AS bytes, sync_day AS day, sync_rows AS rows FROM user_storage WHERE user_id = ?1")
@@ -51,10 +51,10 @@ export async function syncUsage(d1: D1Database, userId: string): Promise<SyncUsa
 }
 
 /**
- * 1 `db.batch()` atomik (2 statement): `seq += n` + kuota (`sync_bytes +=
- * [bytesDelta]`, `sync_rows += n` di hari UTC [day], reset kalau ganti hari) +
- * satu `INSERT … SELECT FROM json_each` yang ngasih tiap record `seq` baru
- * berurutan. Balikin `seq` terakhir.
+ * 1 atomic `db.batch()` (2 statements): `seq += n` + quota (`sync_bytes +=
+ * [bytesDelta]`, `sync_rows += n` on UTC day [day], reset when the day changes) +
+ * one `INSERT … SELECT FROM json_each` that gives each record a new sequential
+ * `seq`. Returns the last `seq`.
  */
 export async function writeRecords(
   d1: D1Database,
@@ -90,9 +90,9 @@ export async function writeRecords(
 }
 
 /**
- * 1 query lewat index `records_user_seq`: record dengan `seq` > [since], udah
- * dibentuk jadi JSON di SQL (`data` udah JSON), jadi Worker gak perlu
- * `JSON.parse` 500 record (batas CPU 10ms). Ambil [limit] baris.
+ * 1 query through the `records_user_seq` index: records with `seq` > [since], already
+ * built into JSON in SQL (`data` is already JSON), so the Worker doesn't need to
+ * `JSON.parse` 500 records (10ms CPU limit). Takes [limit] rows.
  */
 export async function pullRows(d1: D1Database, userId: string, since: number, limit: number) {
   const { results } = await d1

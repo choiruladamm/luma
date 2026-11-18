@@ -3,37 +3,38 @@ import 'package:flutter/animation.dart';
 import '../../../core/scroll_run.dart';
 import '../../../core/theme/stabilo_tokens.dart';
 
-/// Header (judul + X) dan tombol (Salin / Lanjut) sheet Artinya ngumpet
-/// ngikutin scroll jari (board Ngumpet · Opsi A). Ambang di [ScrollRun].
+/// Hides the header (title + X) and the buttons (Salin / Lanjut) of the Artinya
+/// sheet as the finger scrolls (board Ngumpet · Opsi A). Thresholds in [ScrollRun].
 ///
-/// - Header: ikut isi 1:1 pas turun, ilang setelah [Layout.artinyaHeader].
-///   Naik ≥ 12pt: turun lagi ngikut jari dari atas, dilepas di tengah snap ke
-///   yang terdekat. Cuma balik lewat scroll naik, atau balik ke paling atas.
-/// - Tombol: geser keluar setelah turun ≥ 24pt, balik pas naik ≥ 12pt atau
-///   mentok bawah.
+/// - Header: follows the content 1:1 while scrolling down, gone after
+///   [Layout.artinyaHeader]. Scrolling up ≥ 12pt: comes back down from the top
+///   following the finger, and on release in the middle snaps to the nearest end.
+///   It only returns by scrolling up, or at the very top.
+/// - Buttons: slide out after scrolling down ≥ 24pt, return on scrolling up ≥ 12pt
+///   or at the bottom.
 ///
-/// Gak pernah ngumpet kalau [enabled] false, atau isinya muat semua.
-/// Kurangi gerakan: gak geser dan gak ngikutin jari, cuma fade.
+/// Never hides when [enabled] is false, or when all content fits.
+/// Reduce motion: no sliding and no following the finger, fade only.
 class MeaningChrome {
   MeaningChrome({required TickerProvider vsync})
     : header = AnimationController(vsync: vsync, duration: Motion.sheetChrome),
       actions = AnimationController(vsync: vsync, duration: Motion.sheetChrome);
 
-  /// 0 = keliatan, 1 = ngumpet.
+  /// 0 = visible, 1 = hidden.
   final AnimationController header;
   final AnimationController actions;
 
-  /// false = gak pernah ngumpet (state non-hasil, VoiceOver).
+  /// false = never hides (non-result states, VoiceOver).
   bool enabled = true;
   bool reduceMotion = false;
 
   final _run = ScrollRun();
 
-  /// Lagi naik dan header ngikutin jari.
+  /// Scrolling up while the header follows the finger.
   bool _following = false;
 
-  /// Tinggi area baca yang keliatan di sheet setinggi [sheetHeight]: sheet
-  /// dikurangi chrome yang keliatan (board: 335 lengkap, 516 pas ngumpet).
+  /// Visible reading height in a sheet of [sheetHeight]: the sheet minus the visible
+  /// chrome (board: 335 with full chrome, 516 when hidden).
   double readHeight(double sheetHeight) {
     final top =
         Layout.artinyaGrabberZone +
@@ -42,7 +43,7 @@ class MeaningChrome {
     return sheetHeight - top - bottom;
   }
 
-  /// Scroll dari jari. [delta] > 0 = turun.
+  /// Scroll from the finger. [delta] > 0 = scrolling down.
   void scrolled({
     required double pixels,
     required double max,
@@ -75,8 +76,8 @@ class MeaningChrome {
     }
   }
 
-  /// Jari dilepas / scroll berhenti: header yang ngegantung di tengah snap ke
-  /// yang terdekat (cuma pas udah lewat zona header).
+  /// Finger released / scroll stopped: a header left hanging mid-way snaps to the
+  /// nearest end (only once past the header zone).
   void release(double pixels) {
     _following = false;
     if (reduceMotion || pixels < Layout.artinyaHeader) return;

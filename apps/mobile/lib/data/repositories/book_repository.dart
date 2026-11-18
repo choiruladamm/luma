@@ -9,7 +9,7 @@ import '../../domain/models/markdown_shelf.dart';
 import '../database/app_database.dart';
 import '../services/file_storage.dart';
 
-/// Buku Markdown di rak + nomor bab yang udah ada (urut tampil).
+/// Markdown books on the shelf plus the chapter numbers already present (in display order).
 typedef MarkdownBook = ({ShelfBook book, List<int> chapters});
 
 class BookRepository {
@@ -17,9 +17,9 @@ class BookRepository {
 
   final AppDatabase _db;
 
-  /// Rak: terakhir dibuka dulu, yang belum pernah dibuka urut baru ditambah.
-  /// Progres dihitung dari posisi tersimpan: karakter sebelum bab + karakter
-  /// paragraf sebelum posisi + bagian paragraf yang udah lewat.
+  /// Returns the shelf: most recently opened first, never-opened books by when they were added.
+  /// Progress comes from the saved position: characters before the chapter, plus characters
+  /// of earlier paragraphs, plus the part of the current paragraph already passed.
   Stream<List<ShelfBook>> watchShelf() => _db
       .customSelect(
         'SELECT b.id, b.title, b.author, b.source_type AS src, '
@@ -61,8 +61,8 @@ class BookRepository {
       .watch()
       .map((rows) => rows.map(_shelfBook).toList());
 
-  /// Buku Markdown + nomor bab yang udah masuk, terakhir dibuka dulu. Buat
-  /// pilihan "masuk ke buku mana" pas import.
+  /// Returns Markdown books with their existing chapter numbers, most recently opened first.
+  /// Backs the "which book to add to" choice during import.
   Future<List<MarkdownBook>> markdownBooks() async {
     final rows =
         await (_db.select(_db.books)
@@ -109,8 +109,8 @@ class BookRepository {
           );
   }
 
-  /// Id buku di rak yang asalnya dari katalog luar (badge "udah di rak",
-  /// docs/discover.md). Null = belum ada.
+  /// Returns the shelf id of a book that came from an external catalog (drives the
+  /// "already on shelf" badge, docs/discover.md), or null when it isn't on the shelf.
   Future<int?> idFromSource(String sourceId, String externalId) async {
     final row =
         await (_db.selectOnly(_db.books)
@@ -123,8 +123,8 @@ class BookRepository {
     return row?.read(_db.books.id);
   }
 
-  /// Semua `externalId` dari [sourceId] yang udah di rak, live: badge "Udah di
-  /// rak" di daftar hasil cari tanpa query per baris.
+  /// Watches every `externalId` from [sourceId] that is already on the shelf, so the
+  /// "Udah di rak" badge in search results needs no per-row query.
   Stream<Set<String>> watchExternalIds(String sourceId) =>
       (_db.selectOnly(_db.books)
             ..addColumns([_db.books.externalId])
@@ -132,7 +132,7 @@ class BookRepository {
           .watch()
           .map((rows) => {for (final r in rows) ?r.read(_db.books.externalId)});
 
-  /// Buku + chapter-nya buat halaman baca. Null kalau bukunya udah dihapus.
+  /// Returns the book and its chapters for the reading page, or null if the book was deleted.
   Future<ReaderBook?> readerBook(int id) async {
     final book = await (_db.select(
       _db.books,
@@ -181,7 +181,7 @@ class BookRepository {
     ];
   }
 
-  /// Paragraf di chapter ini yang udah diartiin (grupnya ada di ai_results).
+  /// Returns paragraphs in this chapter that already have a translation (their group is in ai_results).
   Future<int> translatedInChapter(int chapterId) =>
       _translated('p.chapter_id = ?', chapterId);
 
@@ -198,7 +198,7 @@ class BookRepository {
     );
   }
 
-  /// Sheet Info buku. Null kalau bukunya udah dihapus.
+  /// Returns the data for the book Info sheet, or null if the book was deleted.
   Future<BookInfo?> bookInfo(int id, FileStorage files) async {
     final book = await (_db.select(
       _db.books,
@@ -221,8 +221,8 @@ class BookRepository {
     );
   }
 
-  /// Edit judul/penulis/cover. Nilai asli EPUB disimpen sekali di `original*`
-  /// (edit pertama); hasil edit sama dengan aslinya = balik ke "belum diedit".
+  /// Edits title, author, or cover. The original EPUB values are stored once in
+  /// `original*` (on the first edit); an edit equal to the original reverts to "not edited".
   Future<void> updateMetadata(
     int id, {
     required String title,
@@ -253,16 +253,16 @@ class BookRepository {
     });
   }
 
-  /// Hapus buku: row (chapter, paragraf, posisi baca, hasil AI ikut lewat
-  /// cascade) dulu, baru EPUB & cover-nya. Gagal hapus file = file yatim,
-  /// bukan row yatim.
+  /// Deletes a book: rows first (chapters, paragraphs, reading position, and AI
+  /// results go via cascade), then the EPUB and cover files. A failed file delete
+  /// leaves an orphan file, never an orphan row.
   Future<void> delete(int id, FileStorage files) async {
     final book = await (_db.select(
       _db.books,
     )..where((b) => b.id.equals(id))).getSingleOrNull();
     if (book == null) return;
     await (_db.delete(_db.books)..where((b) => b.id.equals(id))).go();
-    // Riwayat Cari kata buku ini ikut dibuang.
+    // This book's Cari kata history goes too.
     await (_db.delete(
       _db.settings,
     )..where((s) => s.key.equals(bookSearchRecentKey(id)))).go();
@@ -289,7 +289,7 @@ class BookRepository {
 
   static ShelfBook _shelfBook(QueryRow r) {
     final total = r.read<int>('total_chars');
-    // Belum ada posisi tersimpan: semua kolom rp/c kosong, progres 0.
+    // No saved position: all rp/c columns are null and progress is 0.
     final spot =
         (r.readNullable<int>('ch_off') ?? 0) +
         r.read<int>('before') +
@@ -310,7 +310,7 @@ class BookRepository {
           : total <= 0
           ? 0
           : (spot / total).clamp(0, 1).toDouble(),
-      // Buku Markdown gak punya akhir: total bab gak diketahui.
+      // A Markdown book has no end, so the total chapter count is unknown.
       finished: done && markdown == null,
       chapter: math.max(1, r.read<int>('ch_n')),
       chapterCount: math.max(1, r.read<int>('ch_count')),

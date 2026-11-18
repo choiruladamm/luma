@@ -471,7 +471,7 @@ void main() {
   );
 
   test('restore rebuilds the Cari kata index (VACUUM can shift rowids)', () async {
-    // Gap di rowid `paragraphs`: VACUUM INTO nomerin ulang baris yang tersisa.
+    // Gap in `paragraphs` rowids: VACUUM INTO renumbers the rows that are left.
     await (a.db.delete(
       a.db.books,
     )..where((x) => x.title.equals('Walden'))).go();

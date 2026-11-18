@@ -11,9 +11,9 @@ import '../../shell/views/app_shell.dart';
 import '../view_models/backup_view_model.dart';
 import 'backup_sheet.dart';
 
-/// Nampilin sheet "Lagi ngebungkus backup" & toast hasilnya di layar yang
-/// lagi paling atas. Dipasang di Pengaturan & Rak (banner pengingat), jadi
-/// backup bisa dimulai dari mana aja.
+/// Shows the "Lagi ngebungkus backup" sheet & its result toast on the topmost
+/// screen. Mounted in Settings & Rak (reminder banner), so a backup can start
+/// from anywhere.
 class BackupListener extends ConsumerStatefulWidget {
   const BackupListener({super.key, required this.child});
 
@@ -24,7 +24,7 @@ class BackupListener extends ConsumerStatefulWidget {
 }
 
 class _BackupListenerState extends ConsumerState<BackupListener> {
-  /// Sheet progres kebuka dari layar ini; ditutup dari sini juga.
+  /// The progress sheet was opened from this screen; closed from here too.
   bool _open = false;
 
   void _onBackup(BackupState? prev, BackupState next) {
@@ -32,8 +32,8 @@ class _BackupListenerState extends ConsumerState<BackupListener> {
       _open = false;
       Navigator.of(context, rootNavigator: true).pop();
     }
-    // Rak dan Pengaturan dua-duanya hidup di shell tab: cuma tab yang keliatan
-    // (atau layar paling atas) yang ngurus.
+    // Rak and Settings both live in the tab shell: only the visible tab (or the
+    // topmost screen) handles it.
     if (!_open &&
         (!(ModalRoute.of(context)?.isCurrent ?? true) ||
             !AppShell.isVisible(context))) {

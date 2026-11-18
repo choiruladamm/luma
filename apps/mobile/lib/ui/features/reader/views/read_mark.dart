@@ -7,12 +7,12 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/stabilo_theme.dart';
 import '../../../core/theme/stabilo_tokens.dart';
 
-/// Penanda sesaat di isi bab: kilatan stabilo di grup tempat posisi tersimpan
-/// ("Lanjut baca") atau di paragraf hasil Cari kata. Kurangi gerakan nyala =
-/// garis kiri 4pt, hilang sendiri.
+/// Momentary mark in the chapter body: a highlighter flash on the group at the saved
+/// position ("Lanjut baca") or on a Cari kata result paragraph. With reduce
+/// motion: a 4pt left line that disappears on its own.
 ///
-/// Dipasang di Stack isi bab (koordinat [show] = koordinat Stack itu), kosong
-/// sampai [ReadMarkState.show] dipanggil.
+/// Placed in the chapter body Stack ([show] coordinates are that Stack's), empty
+/// until [ReadMarkState.show] is called.
 class ReadMark extends StatefulWidget {
   const ReadMark({super.key});
 
@@ -29,7 +29,7 @@ class ReadMarkState extends State<ReadMark>
       if (s == AnimationStatus.completed) setState(() => _rect = null);
     });
 
-  /// 0 → 60% → 0 (board: tahan di puncak, turun pelan).
+  /// 0 → 60% → 0 (board: holds at the peak, falls slowly).
   static final _curve = TweenSequence<double>([
     TweenSequenceItem(tween: ConstantTween(0), weight: 6),
     TweenSequenceItem(
@@ -81,7 +81,7 @@ class ReadMarkState extends State<ReadMark>
   Widget build(BuildContext context) {
     final rect = _rect;
     if (rect == null) {
-      // Stack induk punya anak lain: ukurannya gak ikut kena.
+      // The parent Stack has other children: its size is not affected.
       return const Positioned(width: 0, height: 0, child: SizedBox.shrink());
     }
     final c = context.stabilo;

@@ -3,15 +3,15 @@ import { releaseOnFailure, reserveBytes } from "../../db/user-storage";
 import { ApiError } from "../../lib/errors";
 import { fixedLength, userPrefix } from "../../lib/storage";
 
-/** Nama file buku/cover di app sudah berbasis hash; selain pola ini ditolak. */
+/** The app's book/cover file names are hash-based; anything outside this pattern is rejected. */
 export const FILE_NAME = /^[A-Za-z0-9._-]{1,200}$/;
 
 export const filesPrefix = (userId: string) => `${userPrefix(userId)}files/`;
 
 /**
- * Nama yang belum ada di R2. Satu `list` per 1000 objek (bukan HEAD per file:
- * batas 50 subrequest). ponytail: halaman gak dibatasi; kuota 1GB yang membatasi
- * jumlah file, pasang batas kalau kuota naik jauh.
+ * Names not yet in R2. One `list` per 1000 objects (not a HEAD per file: the
+ * 50-subrequest limit). ponytail: pages are unbounded; the 1 GB quota limits the
+ * number of files, add a cap if the quota grows a lot.
  */
 export async function missingFiles(bucket: R2Bucket, userId: string, names: string[]) {
   const prefix = filesPrefix(userId);
@@ -28,8 +28,8 @@ export async function missingFiles(bucket: R2Bucket, userId: string, names: stri
 export type StoredFile = { name: string; size: number };
 
 /**
- * Simpan satu file. Nama berbasis hash: file yang udah ada gak diunggah ulang
- * (kuota gak dihitung dobel), body-nya dibuang.
+ * Stores one file. Names are hash-based: a file that already exists isn't uploaded
+ * again (quota isn't counted twice), and the body is discarded.
  */
 export async function putFile(
   db: Db,

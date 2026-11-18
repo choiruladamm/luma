@@ -9,7 +9,7 @@ import '../../../../data/services/backup_service.dart';
 import '../../../../data/services/share_service.dart';
 import '../../../../domain/models/backup.dart';
 
-/// Alur backup (board 26 lagi dibungkus, 27 berhasil).
+/// Backup flow (board 26 packing, 27 success).
 sealed class BackupState {
   const BackupState();
 }
@@ -18,8 +18,8 @@ class BackupIdle extends BackupState {
   const BackupIdle();
 }
 
-/// Lagi dibungkus. [name] & [manifest] null sampe DB-nya ke-snapshot.
-/// [cloud] = diunggah ke akun (gak bisa dibatalin, tanpa menu share).
+/// Packing. [name] & [manifest] are null until the DB is snapshotted. [cloud] =
+/// uploaded to the account (can't be cancelled, no share menu).
 class BackupRunning extends BackupState {
   const BackupRunning({
     this.name,
@@ -45,7 +45,7 @@ class BackupDone extends BackupState {
 class BackupFailed extends BackupState {
   const BackupFailed({this.storageFull = false});
 
-  /// Kuota cloud habis (`STORAGE_FULL`).
+  /// Cloud quota exhausted (`STORAGE_FULL`).
   final bool storageFull;
 }
 
@@ -56,8 +56,8 @@ class BackupController extends Notifier<BackupState> {
   @override
   BackupState build() => const BackupIdle();
 
-  /// Bungkus → menu share → kalau beneran disimpen, catet sebagai backup
-  /// terakhir. Zip sementaranya selalu dibuang di akhir.
+  /// Pack → share menu → if actually saved, record as the last backup. The
+  /// temporary zip is always discarded at the end.
   Future<void> start() async {
     if (_busy) return;
     _busy = true;
@@ -83,10 +83,10 @@ class BackupController extends Notifier<BackupState> {
             },
           );
       if (file == null) {
-        state = const BackupIdle(); // dibatalin
+        state = const BackupIdle(); // cancelled
         return;
       }
-      // Sheet progres ditutup dulu, baru menu share-nya muncul.
+      // The progress sheet closes first, then the share menu appears.
       state = const BackupIdle();
       if (!await ref.read(shareServiceProvider).shareFile(file.file)) return;
       final last = (at: DateTime.now(), name: file.name, size: file.size);
@@ -100,8 +100,8 @@ class BackupController extends Notifier<BackupState> {
     }
   }
 
-  /// Backup ke cloud (docs/backup.md): snapshot DB + file yang belum ada di
-  /// cloud. Hasilnya lewat toast yang sama dengan backup biasa.
+  /// Cloud backup (docs/backup.md): DB snapshot + files not yet in the cloud.
+  /// The result goes through the same toast as a regular backup.
   Future<void> startCloud() async {
     if (_busy) return;
     _busy = true;
@@ -141,7 +141,7 @@ class BackupController extends Notifier<BackupState> {
     if (!(_cancel?.isCompleted ?? true)) _cancel!.complete();
   }
 
-  /// Toast hasil udah ditampilin.
+  /// The result toast has been shown.
   void dismiss() => state = const BackupIdle();
 }
 

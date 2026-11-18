@@ -9,8 +9,10 @@ import '../repositories/catalog_repository.dart';
 import 'book_source.dart';
 import 'http_client.dart';
 
-/// Project Gutenberg (docs/discover.md, Sources and discovery): cari dari
-/// katalog lokal, populer / detail / download dari OPDS + URL rakitan.
+/// Project Gutenberg as a [BookSource] (docs/discover.md, Sources and discovery).
+///
+/// Search runs against the local catalog; popular lists and details come from
+/// OPDS, and downloads use constructed URLs.
 class GutenbergSource implements BookSource {
   GutenbergSource(
     this._catalog, {
@@ -25,8 +27,9 @@ class GutenbergSource implements BookSource {
   static const base = 'https://www.gutenberg.org';
   static const downloadTimeout = Duration(seconds: 60);
 
-  /// Konvensi URL gutenberg.org, stabil bertahun-tahun; gak perlu request
-  /// per item. `.epub.noimages`: parser kita buang gambar (chapter_extractor).
+  // These follow gutenberg.org's long-stable URL convention, so no per-item
+  // request is needed. `.epub.noimages` is used because our parser drops
+  // images (chapter_extractor).
   static String coverUrl(int id) =>
       '$base/cache/epub/$id/pg$id.cover.medium.jpg';
   static String epubUrl(int id) => '$base/ebooks/$id.epub.noimages';
@@ -49,9 +52,11 @@ class GutenbergSource implements BookSource {
     );
   }
 
-  /// `sort_order=downloads`, 25/halaman. Penulis diambil dari katalog lokal
-  /// kalau ada (bentuk "Austen, Jane" + tahun hidup, konsisten sama hasil
-  /// cari); fallback nama tampil dari feed.
+  /// Returns the popular list (`sort_order=downloads`, 25 per page).
+  ///
+  /// Authors come from the local catalog when the book is there ("Austen, Jane"
+  /// plus life years, consistent with search results); otherwise the feed's
+  /// display name is used.
   Future<CatalogPage> _popular(int page) async {
     final xml = await _get(
       '$base/ebooks/search.opds/',
@@ -83,7 +88,7 @@ class GutenbergSource implements BookSource {
   Future<CatalogBookDetail> fetchDetail(String externalId) async =>
       parseOpdsBook(await _get('$base/ebooks/$externalId.opds'));
 
-  /// Batal → `DioException` tipe `cancel`, sama kayak sync katalog.
+  /// Cancelling throws a `DioException` of type `cancel`, like the catalog sync.
   @override
   Future<Uint8List> download(
     CatalogBook book, {

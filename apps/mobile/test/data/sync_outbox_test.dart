@@ -33,7 +33,7 @@ Future<Map<String, Object?>?> _data(
       : jsonDecode(row.read<String>('data')) as Map<String, Object?>;
 }
 
-/// Buku EPUB (hash `h1`), Markdown (`notes`), satu bab tiap buku.
+/// EPUB book (hash `h1`), Markdown book (`notes`), one chapter each.
 Future<void> _seed(AppDatabase db) async {
   await db.customStatement(
     "INSERT INTO books (id, source_type, title, hash, parser_version, "
@@ -148,7 +148,7 @@ void main() {
     await db.customStatement('DELETE FROM books WHERE id = 1');
 
     expect((await _outbox(db)).keys, ['book h1']);
-    expect(await _data(db, 'book', 'h1'), isNull); // baris hilang = tombstone
+    expect(await _data(db, 'book', 'h1'), isNull); // a missing row = tombstone
   });
 
   test('deleting one chat session queues its tombstone', () async {
@@ -162,7 +162,7 @@ void main() {
   });
 
   test('Drift upserts on a queued key do not trip the outbox PK', () async {
-    // Regresi: `INSERT OR REPLACE` di trigger ditimpa policy upsert luar.
+    // Regression: `INSERT OR REPLACE` in the trigger was overridden by the outer upsert policy.
     for (var i = 0; i < 2; i++) {
       await db
           .into(db.settings)

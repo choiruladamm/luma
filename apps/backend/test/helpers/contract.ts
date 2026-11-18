@@ -3,8 +3,8 @@ import { expect } from "vitest";
 const ISO = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z$/;
 
 /**
- * Ubah body fixture kontrak jadi matcher: placeholder `<token>` / `<id>` = string
- * tidak kosong, `<iso>` = waktu ISO 8601 UTC; nilai lain harus sama persis.
+ * Turns a contract fixture body into a matcher: the placeholders `<token>` / `<id>` = a
+ * non-empty string, `<iso>` = an ISO 8601 UTC time; any other value must match exactly.
  */
 export function contractMatcher(value: unknown): unknown {
   if (value === "<token>" || value === "<id>") return expect.stringMatching(/.+/);
@@ -18,7 +18,7 @@ export function contractMatcher(value: unknown): unknown {
 
 type Fixture = { response: { status: number; headers?: Record<string, string>; body: unknown } };
 
-/** Cek status, header, dan body respons terhadap fixture kontrak. */
+/** Checks a response's status, headers, and body against a contract fixture. */
 export async function expectContract(res: Response, fixture: Fixture) {
   expect(res.status).toBe(fixture.response.status);
   for (const [name, value] of Object.entries(fixture.response.headers ?? {})) {

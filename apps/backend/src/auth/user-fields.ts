@@ -1,7 +1,7 @@
-// Kolom tambahan tabel users milik Luma. Dipakai src/auth/auth.ts dan
-// scripts/auth-schema.config.ts supaya schema hasil generate selalu sama.
+// Extra columns on Luma's users table. Shared by src/auth/auth.ts and
+// scripts/auth-schema.config.ts so the generated schema always matches.
 
 export const userAdditionalFields = {
-  /** Cabut akses AI subsidi (docs/backend.md, AI subsidy). Gak bisa diisi dari sign-up. */
+  /** Revokes subsidized AI access (docs/backend.md, AI subsidy). Can't be set at sign-up. */
   banned: { type: "boolean", defaultValue: false, required: false, input: false, returned: false },
 } as const;

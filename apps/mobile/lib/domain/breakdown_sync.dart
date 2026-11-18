@@ -1,12 +1,12 @@
-/// Blok aktif di penjelasan Bedahin: yang lagi lewat garis baca.
+/// The active block in a Bedahin explanation: the one crossing the reading line.
 ///
-/// [tops] = posisi atas tiap blok (bagian 1..n, lalu Tokoh & istilah dan
-/// Praktekinnya gini kalau ada), relatif ke atas area scroll, urut. Pindah ke
-/// blok berikutnya cuma kalau atasnya udah lewat [line] sejauh [margin];
-/// balik ke blok sebelumnya cuma kalau atas blok aktif udah turun [margin]
-/// di bawah [line]. Jadi scroll bolak-balik tipis di sekitar batas gak bikin
-/// sorotan kedip. [atEnd] (mentok bawah, isinya emang ke-scroll) = blok
-/// terakhir, biar blok pendek di ujung tetep bisa aktif.
+/// [tops] = top position of each block (sections 1..n, then Tokoh & istilah and
+/// Praktekinnya if present), relative to the top of the scroll area, in order.
+/// Moves to the next block only when its top has passed [line] by [margin]; goes
+/// back to the previous block only when the active block's top has dropped [margin]
+/// below [line]. So small back-and-forth scrolling near a boundary doesn't make
+/// the highlight flicker. [atEnd] (scrolled to the bottom, content really scrolls)
+/// = last block, so a short block at the end can still become active.
 int activeBlock(
   List<double> tops, {
   required double line,

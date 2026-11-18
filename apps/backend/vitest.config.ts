@@ -9,16 +9,16 @@ export default defineConfig(async () => {
       cloudflareTest({
         wrangler: { configPath: "./wrangler.jsonc", environment: "dev" },
         miniflare: {
-          // Limit per IP dinaikin: semua request test datang dari IP yang sama
-          // ("unknown"), jadi 60/menit asli bikin file test gede kena 429.
-          // Perilaku 429 dites lewat override binding + test rate-limit.
+          // Raised per-IP limit: every test request comes from the same IP
+          // ("unknown"), so the real 60/minute would 429 a large test file.
+          // 429 behavior is tested through a binding override + the rate-limit test.
           ratelimits: { RATE_LIMITER: { namespace_id: "1001", simple: { limit: TEST_RATE_LIMIT, period: 60 } } },
           bindings: {
             TEST_MIGRATIONS: migrations,
             BETTER_AUTH_SECRET: "test-secret-yang-panjangnya-lebih-dari-32-karakter",
             GOOGLE_CLIENT_SECRET: "",
             OPENROUTER_MANAGEMENT_KEY: "test-management-key",
-            // 32 byte nol, base64: cuma buat test
+            // 32 zero bytes, base64; test only.
             AI_KEY_ENC_SECRET: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
           },
         },

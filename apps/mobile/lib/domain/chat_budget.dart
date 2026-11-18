@@ -1,22 +1,22 @@
 import 'dart:convert';
 
-/// Budget satu kiriman Ngobrol: token gabungan input + output lintas
-/// semua request, dan tenggat total. Angka reservasi konservatif dipakai
-/// sampai usage asli dari provider tersedia; unknown tidak pernah dihitung 0.
+/// Budget for one Ngobrol send: combined input + output tokens across all
+/// requests, and the total deadline. Conservative reservation figures are used
+/// until real usage from the provider is available; unknown is never counted as 0.
 const chatQuestionTokens = 2000000;
 const chatQuestionDeadline = Duration(minutes: 5);
 
-/// Context window kalau metadata model tidak terbaca: konservatif.
+/// Context window when the model metadata can't be read: conservative.
 const chatFallbackContextTokens = 128000;
 
-/// Cadangan context untuk system prompt + overhead JSON per request.
+/// Context reserved for the system prompt + JSON overhead per request.
 const chatContextMargin = 4000;
 
-/// Batas praktis input per request walau context model lebih besar: menjaga
-/// latensi prompt processing di bawah tenggat dan kualitas pembacaan.
+/// Practical per-request input cap even when the model context is larger: keeps
+/// prompt-processing latency under the deadline and reading quality up.
 const chatRequestInputBytes = 240000;
 
-/// Batas embedding terpisah dari chat (dicatat, tidak digabung ke angka chat).
+/// Embedding limit, separate from chat (recorded, not merged into the chat figures).
 const chatEmbeddingRequests = 90;
 const chatEmbeddingBytes = 3200000;
 
@@ -37,7 +37,7 @@ ChatUsage? parseChatUsage(Object? value) {
   );
 }
 
-/// Metadata model dari provider; `contextTokens` menentukan ukuran batch.
+/// Model metadata from the provider; `contextTokens` decides the batch size.
 typedef ChatModelInfo = ({String id, int contextTokens, bool fromProvider});
 
 const chatFallbackModelInfo = (
@@ -50,7 +50,7 @@ class ChatBudgetExceeded extends FormatException {
   const ChatBudgetExceeded(super.message);
 }
 
-/// Estimasi konservatif: prosa ≈ 4 byte/token, dihitung 2 byte/token.
+/// Conservative estimate: prose ≈ 4 bytes/token, counted as 2 bytes/token.
 int chatEstimateTokens(String text) => (utf8.encode(text).length + 1) ~/ 2;
 
 class ChatBudget {
@@ -69,7 +69,7 @@ class ChatBudget {
   final _settled = <int, ChatUsage>{};
   int completions = 0, embeddings = 0, embeddingBytes = 0, repairs = 0;
 
-  /// Pengulangan langkah baca (catatan batch invalid); bukan perbaikan jawaban.
+  /// Retries of the reading step (invalid batch notes); not answer repair.
   int batchRetries = 0;
   double? _cost;
 
@@ -78,7 +78,7 @@ class ChatBudget {
       deadline - elapsed < Duration.zero ? Duration.zero : deadline - elapsed;
   bool get expired => elapsed >= deadline;
 
-  /// Token terpakai: usage asli bila ada, selain itu reservasi tetap dihitung.
+  /// Tokens used: real usage when present, otherwise the reservation still counts.
   int get used {
     var sum = 0;
     for (final (i, held) in _held.indexed) {
@@ -91,11 +91,11 @@ class ChatBudget {
   int get left => tokens - used < 0 ? 0 : tokens - used;
   bool get unknownUsage => _held.length > _settled.length;
 
-  /// Biaya provider yang diketahui; null jika ada request tanpa usage.
+  /// Known provider cost; null if any request had no usage.
   double? get cost => unknownUsage ? null : _cost;
 
-  /// Input maksimal (byte) untuk satu request dengan output [maxTokens]:
-  /// mengikuti context model, batas praktis, dan sisa budget kiriman.
+  /// Maximum input (bytes) for one request with output [maxTokens]: bounded by
+  /// the model context, the practical cap, and the send's remaining budget.
   int inputBytesFor(int maxTokens) {
     final context = (model.contextTokens - maxTokens - chatContextMargin) * 2;
     final budget = (left - maxTokens) * 2;
@@ -106,8 +106,8 @@ class ChatBudget {
     ].reduce((a, b) => a < b ? a : b).clamp(0, chatRequestInputBytes);
   }
 
-  /// Reservasi sebelum dispatch. Melempar bila budget/tenggat habis atau
-  /// request tidak muat context; tidak pernah menunggu banyak request dulu.
+  /// Reservation before dispatch. Throws when the budget or deadline is exhausted
+  /// or the request doesn't fit the context; never waits on many requests first.
   int reserveCompletion(String system, String user, int maxTokens) {
     final input = chatEstimateTokens(system) + chatEstimateTokens(user);
     if (expired) throw const ChatBudgetExceeded('Tenggat kiriman habis');
@@ -122,7 +122,7 @@ class ChatBudget {
     return _held.length - 1;
   }
 
-  /// Usage asli menggantikan reservasi; null membiarkan reservasi berlaku.
+  /// Real usage replaces the reservation; null keeps the reservation.
   void settle(int reservation, ChatUsage? usage) {
     if (reservation < 0 ||
         reservation >= _held.length ||
@@ -134,7 +134,7 @@ class ChatBudget {
     if (usage.cost != null) _cost = (_cost ?? 0) + usage.cost!;
   }
 
-  /// Embedding dibatasi dan dicatat terpisah dari token chat.
+  /// Embeddings are limited and recorded separately from chat tokens.
   void reserveEmbedding(List<String> inputs) {
     if (expired) throw const ChatBudgetExceeded('Tenggat kiriman habis');
     embeddings++;
@@ -147,7 +147,7 @@ class ChatBudget {
     }
   }
 
-  /// Sisa token masih cukup untuk satu request berukuran [inputBytes]?
+  /// Are the remaining tokens enough for one request of [inputBytes]?
   bool fits(int inputBytes, int maxTokens) =>
       !expired && (inputBytes + 1) ~/ 2 + maxTokens <= left;
 

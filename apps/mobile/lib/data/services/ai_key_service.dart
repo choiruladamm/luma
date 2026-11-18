@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'backend_client.dart';
 import 'session_store.dart';
 
-/// Sisa kuota AI subsidi hari ini (`GET /v1/ai/usage`).
+/// Represents today’s remaining subsidized AI quota (`GET /v1/ai/usage`).
 class AiUsage {
   const AiUsage({
     required this.dailyLimitUsd,
@@ -25,7 +25,7 @@ class AiUsage {
   final DateTime resetsAt;
 }
 
-/// Model yang diizinkan guardrail subsidi (`GET /v1/ai/config`).
+/// Represents a model allowed by the subsidy guardrail (`GET /v1/ai/config`).
 class AiSubsidyConfig {
   const AiSubsidyConfig({
     required this.chatModels,
@@ -45,14 +45,14 @@ class AiSubsidyConfig {
   final double dailyLimitUsd;
 }
 
-/// Panggilan `/v1/ai/*` (docs/backend.md, AI subsidy). Kode error `AI_BANNED` = akses
-/// AI dicabut.
+/// Calls `/v1/ai/*` (docs/backend.md, AI subsidy).
+/// The `AI_BANNED` error means AI access was revoked.
 class AiKeyService {
   AiKeyService(this._client);
 
   final BackendClient _client;
 
-  /// [rotate] true setelah OpenRouter nolak key subsidi (401).
+  /// Sets [rotate] after OpenRouter rejects the subsidized key (401).
   Future<SubsidyKey> issueKey(String token, {bool rotate = false}) async {
     final res = await _client.request(
       'POST',

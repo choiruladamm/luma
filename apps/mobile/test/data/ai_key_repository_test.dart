@@ -17,7 +17,7 @@ void main() {
   late DateTime now;
   late AiKeyRepository repo;
 
-  /// Respons `POST /v1/ai/key` dengan key & kedaluwarsa tertentu.
+  /// Stubs the `POST /v1/ai/key` response with the given key and expiry.
   ResponseBody issued(String key, DateTime expiresAt) => json(200, {
     'key': key,
     'expiresAt': expiresAt.toUtc().toIso8601String(),
@@ -29,8 +29,8 @@ void main() {
     adapter = FakeAdapter();
     session = SessionStore();
     byok = ApiKeyStore();
-    // Jauh sebelum tanggal `<iso>` fixture kontrak (2026-11-12), supaya key
-    // dari fixture masih segar.
+    // Well before the `<iso>` date in the contract fixture (2026-11-12), so the
+    // fixture's key is still fresh.
     now = DateTime.utc(2026, 10, 1, 15);
     final client = BackendClient(
       baseUrl: 'https://luma.test',

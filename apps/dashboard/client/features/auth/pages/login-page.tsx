@@ -21,7 +21,7 @@ function loginError(params: URLSearchParams, t: Messages) {
   return { title: t.auth.failed, body: t.auth.failedBody };
 }
 
-// No board for Login: built from the foundation (sheet card, primary button, danger banner).
+// No design board covers Login: it is built from the foundation components (sheet card, primary button, danger banner).
 export function LoginPage() {
   const session = useSession();
   const [params] = useSearchParams();

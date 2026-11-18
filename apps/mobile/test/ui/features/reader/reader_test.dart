@@ -282,8 +282,8 @@ void main() {
     FakeProgress? progressOverride,
     ChatSource? visitSource,
     bool showChatHint = false,
-    // Key sendiri: pesan 402 = saldo OpenRouter (kuota gratis punya kartunya
-    // sendiri, board Kuota AI 08).
+    // Own key: a 402 means the OpenRouter balance is empty (the free quota has its own
+    // card, board Kuota AI 08).
     AiSource aiSource = AiSource.own,
   }) async {
     progress = progressOverride ?? FakeProgress(saved);
@@ -1313,7 +1313,7 @@ void main() {
   });
 
   group('Aa', () {
-    // Aa pindah ke menu ⋯ di kapsul (Cari kata).
+    // "Aa" moves to the ⋯ menu in the capsule ("Cari kata").
     final aaButton = find.byWidgetPredicate(
       (w) => w is CircleButton && w.semanticLabel == 'Aksi lain',
     );
@@ -1377,7 +1377,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(styleOf(tester, para).fontFamily, 'Literata');
 
-      await tester.tap(find.text('Lega').first); // Jarak baris
+      await tester.tap(find.text('Lega').first); // line spacing row
       await tester.pumpAndSettle();
       expect(styleOf(tester, para).height, closeTo(1.9, 1e-9));
 

@@ -5,7 +5,7 @@ import { API } from "../helpers/handlers";
 import { renderApp } from "../helpers/render";
 import { server } from "../setup";
 
-// Komponen 2, State: while loading, the real frame (titles, labels, column headers) stays and
+// Design component 2, State: while loading, the real frame (titles, labels, column headers) stays and
 // only the values are sand blocks inside an aria-busy container.
 const hang = (path: string) => server.use(http.get(`${API}${path}`, () => delay("infinite")));
 

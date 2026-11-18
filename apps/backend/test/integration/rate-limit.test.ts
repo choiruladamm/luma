@@ -17,8 +17,8 @@ describe("rate limit /v1/*", () => {
     expect(d1Queries).toBe(0);
   });
 
-  // vitest.config.ts naikin limit-nya (60 di wrangler.jsonc): yang dites di sini
-  // binding beneran ngitung per IP, bukan angkanya.
+  // vitest.config.ts raises the limit (60 in wrangler.jsonc): what's tested here is that
+  // the real binding counts per IP, not the number.
   it("enforces the real binding per IP", async () => {
     const hit = () =>
       exports.default.fetch("https://luma.test/v1/health", {

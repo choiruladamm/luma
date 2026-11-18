@@ -14,10 +14,10 @@ import '../../domain/models/book_chat.dart';
 import '../../domain/models/ai_reply.dart';
 import '../repositories/ai_key_repository.dart';
 
-/// OpenRouter (API OpenAI-compatible, docs/llm.md).
+/// Calls the OpenAI-compatible OpenRouter API (docs/llm.md).
 class OpenRouterService {
-  /// [onKeyRejected] dipanggil saat OpenRouter balas 401 untuk sebuah key,
-  /// supaya key subsidi dirotasi di baca berikutnya (docs/backend.md, AI).
+  /// Calls [onKeyRejected] on a 401 so the subsidized key rotates on the next read
+  /// (docs/backend.md, AI).
   OpenRouterService([Dio? dio, void Function(String apiKey)? onKeyRejected])
     : _dio =
           dio ??
@@ -46,9 +46,9 @@ class OpenRouterService {
   final Dio _dio;
   static const _timeout = Duration(seconds: 30);
 
-  /// Terjemahan per paragraf [target] + maknanya. [context] = 2–3 paragraf
-  /// sebelumnya, cuma buat bantu paham. Jawaban yang gak valid (bukan JSON,
-  /// jumlah terjemahan gak cocok) dicoba ulang sampe total [attempts] kali.
+  /// Translates [target] paragraphs and explains their meaning.
+  /// [context] supplies 2–3 preceding paragraphs for context only. Invalid
+  /// responses are retried up to [attempts] times.
   Future<AiReply> explain({
     required String? apiKey,
     required String model,
@@ -74,10 +74,9 @@ class OpenRouterService {
     }
   }
 
-  /// Jawaban format bersection ([aiStreamSystemPrompt]) potongan demi
-  /// potongan, sampe `data: [DONE]`. Koneksi putus / ditutup sebelum itu →
-  /// [AiError.network]; error di tengah stream → [AiError.http]. Validasi di
-  /// pemanggil. [cancel] = tutup sheet / Lanjut.
+  /// Streams a sectioned answer ([aiStreamSystemPrompt]) until `data: [DONE]`.
+  /// A premature disconnect yields [AiError.network]; stream errors yield
+  /// [AiError.http]. The caller validates output and [cancel] closes the stream.
   Stream<String> explainStream({
     required String? apiKey,
     required String model,
@@ -93,8 +92,8 @@ class OpenRouterService {
     cancel,
   );
 
-  /// Bedahin satu grup, format bersection ([breakdownSystemPrompt]); sama
-  /// kayak [explainStream], validasi ([parseBreakdown]) di pemanggil.
+  /// Streams a sectioned group breakdown ([breakdownSystemPrompt]).
+  /// As with [explainStream], the caller validates it with [parseBreakdown].
   Stream<String> breakdownStream({
     required String? apiKey,
     required String model,
@@ -108,11 +107,9 @@ class OpenRouterService {
     cancel,
   );
 
-  /// Chat/rewrite/selector share SSE and bounded pre-content reasoning fallback.
-  /// History can be supplied as native user/assistant messages by other callers.
-  /// [inputBytes] = batas byte messages untuk request ini (dari ledger #143;
-  /// default batas selector lama). [onUsage] menerima usage asli dari event
-  /// SSE terakhir bila provider mengirimnya.
+  /// Streams chat, rewrite, or selector output with bounded reasoning fallback.
+  /// History can be supplied as native user/assistant messages. [inputBytes]
+  /// limits request message bytes; [onUsage] receives final SSE usage when available.
   Stream<String> chatStream({
     required String? apiKey,
     required String model,
@@ -158,8 +155,8 @@ class OpenRouterService {
     );
   }
 
-  /// Metadata model dari provider (gratis, tanpa kunci): context window untuk
-  /// ukuran batch #143. Gagal → null, pemanggil memakai fallback konservatif.
+  /// Fetches free provider model metadata without a key.
+  /// Returns null on failure so callers can use a conservative fallback.
   Future<ChatModelInfo?> modelInfo(String model, {CancelToken? cancel}) async {
     try {
       final res = await _dio.get<Object?>('/models', cancelToken: cancel);
@@ -264,14 +261,13 @@ class OpenRouterService {
     } on AiException {
       rethrow;
     } catch (e) {
-      // Socket ditutup di tengah jalan.
+      // The socket closed midstream.
       throw AiException(AiError.network, detail: '$e');
     }
     throw const AiException(AiError.network, detail: 'stream ended early');
   }
 
-  /// true = key diterima OpenRouter, false = ditolak (401/403). Masalah lain
-  /// (offline, timeout) dilempar sebagai [AiException].
+  /// Returns whether OpenRouter accepts the key; throws [AiException] for other errors.
   Future<bool> checkKey(String apiKey) async {
     try {
       await _dio.get<Object?>('/key', options: _auth(apiKey));
@@ -322,8 +318,7 @@ class OpenRouterService {
                 {'role': 'system', 'content': system},
                 {'role': 'user', 'content': user},
               ],
-          // Token reasoning dihitung output dan bikin lambat: matiin. Model
-          // yang gak bisa dimatiin dapet yang paling minim, gak ikut dibalikin.
+          // Reasoning counts as output and adds latency; disable it or request the minimum.
           'reasoning': reasoningOff
               ? {'enabled': false}
               : {'effort': 'minimal', 'exclude': true},
@@ -355,7 +350,7 @@ class OpenRouterService {
     }
   }
 
-  /// Isi `delta.content` satu event SSE; event error → [AiError.http].
+  /// Extracts `delta.content` from an SSE event; errors yield [AiError.http].
   static ({String delta, ChatUsage? usage}) _event(String data) {
     final Object? json;
     try {
@@ -381,8 +376,7 @@ class OpenRouterService {
     );
   }
 
-  /// Sebagian model (mis. GLM 5.3 Flash) nolak reasoning dimatiin: 400
-  /// "Reasoning is mandatory for this endpoint and cannot be disabled."
+  /// Detects providers that require reasoning despite a request to disable it.
   static bool _reasoningMandatory(AiException e) =>
       e.status == 400 &&
       '${e.detail}'.toLowerCase().contains('reasoning is mandatory');
@@ -402,14 +396,13 @@ class OpenRouterService {
     _ => AiException(AiError.network, detail: e.message),
   };
 
-  /// Body error; request streaming dapetnya [ResponseBody] yang belum dibaca.
+  /// Reads an error body, including unread streaming [ResponseBody] instances.
   static Future<String> _body(Object? data) async =>
       data is ResponseBody ? await utf8.decodeStream(data.stream) : '$data';
 }
 
-/// Pemotong Server-Sent Events: potongan teks masuk, isi baris `data:` yang
-/// udah utuh keluar. Baris yang kepotong di batas chunk ditahan; baris
-/// komentar (`: OPENROUTER PROCESSING`) dan field lain dibuang.
+/// Splits Server-Sent Events into complete `data:` lines.
+/// Holds partial lines across chunks and discards comments and other fields.
 class SseDecoder {
   String _buffer = '';
 

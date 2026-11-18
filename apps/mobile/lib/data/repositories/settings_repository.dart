@@ -6,7 +6,8 @@ import '../../domain/models/backup.dart';
 import '../../domain/models/reader_prefs.dart';
 import '../database/app_database.dart';
 
-/// Setelan yang ikut backup, di tabel `settings` (key-value).
+/// Reads and writes the settings that are included in backups, stored in the
+/// key-value `settings` table.
 class SettingsRepository {
   SettingsRepository(this._db);
 
@@ -38,7 +39,7 @@ class SettingsRepository {
         );
   }
 
-  /// Model LLM dari Pengaturan; default kalau belum dipilih.
+  /// Emits the LLM model chosen in Settings, or [defaultAiModel] if none is chosen.
   Stream<String> watchModel() =>
       (_db.select(_db.settings)..where((s) => s.key.equals(_model)))
           .watchSingleOrNull()
@@ -63,7 +64,7 @@ class SettingsRepository {
         SettingsCompanion.insert(key: _chatHint, value: '1'),
       );
 
-  /// Urutan rak; default terakhir dibuka.
+  /// Emits the shelf sort order, defaulting to [ShelfSort.lastOpened].
   Stream<ShelfSort> watchShelfSort() =>
       (_db.select(_db.settings)..where((s) => s.key.equals(_shelfSort)))
           .watchSingleOrNull()
@@ -83,7 +84,7 @@ class SettingsRepository {
 
   static const _shelfSort = 'shelf.sort';
 
-  /// Tampilan rak (grid / list); default grid, gak auto-ganti.
+  /// Emits the shelf layout (grid or list), defaulting to grid; it never switches automatically.
   Stream<ShelfView> watchShelfView() =>
       (_db.select(_db.settings)..where((s) => s.key.equals(_shelfView)))
           .watchSingleOrNull()
@@ -103,7 +104,7 @@ class SettingsRepository {
 
   static const _shelfView = 'shelf.view';
 
-  /// Backup terakhir yang berhasil disimpen user; null = belum pernah.
+  /// Emits the last backup the user saved successfully, or null if there is none.
   Stream<LastBackup?> watchLastBackup() =>
       (_db.select(_db.settings)
             ..where((s) => s.key.isIn([_backupAt, _backupName, _backupSize])))
@@ -127,14 +128,16 @@ class SettingsRepository {
     ]),
   );
 
-  /// Backup cloud terakhir yang sukses (pemicu otomatis 24 jam, pelat Ex
-  /// libris); null = belum pernah.
+  /// Emits the time of the last successful cloud backup, or null if there is
+  /// none.
+  ///
+  /// It drives the 24-hour automatic trigger and the Ex libris plate.
   Stream<DateTime?> watchCloudBackupAt() =>
       (_db.select(_db.settings)..where((s) => s.key.equals(_cloudAt)))
           .watchSingleOrNull()
           .map((row) => DateTime.tryParse(row?.value ?? ''));
 
-  /// Backup cloud sukses: sekaligus jadi backup terakhir (pengingat tenang).
+  /// Records a successful cloud backup; it also counts as the last backup, which keeps the reminder quiet.
   Future<void> saveCloudBackup(LastBackup b) => _db.batch(
     (batch) => batch.insertAllOnConflictUpdate(_db.settings, [
       SettingsCompanion.insert(key: _backupAt, value: b.at.toIso8601String()),
@@ -144,7 +147,7 @@ class SettingsRepository {
     ]),
   );
 
-  /// Kapan banner pengingat backup terakhir ditutup.
+  /// Emits when the backup reminder banner was last dismissed.
   Stream<DateTime?> watchReminderDismissed() =>
       (_db.select(_db.settings)..where((s) => s.key.equals(_dismissed)))
           .watchSingleOrNull()
@@ -174,32 +177,32 @@ final settingsRepositoryProvider = Provider<SettingsRepository>(
   (ref) => SettingsRepository(ref.watch(appDatabaseProvider)),
 );
 
-/// Setelan Aa + tema. Dipake halaman baca dan root app (themeMode).
+/// Aa and theme settings, used by the reading page and the app root (themeMode).
 final readerPrefsProvider = StreamProvider<ReaderPrefs>(
   (ref) => ref.watch(settingsRepositoryProvider).watchReaderPrefs(),
 );
 
-/// Model LLM yang dipake (dibaca tiap manggil OpenRouter, bukan di-hardcode).
+/// The selected LLM model, read on every OpenRouter call instead of being hardcoded.
 final aiModelProvider = StreamProvider<String>(
   (ref) => ref.watch(settingsRepositoryProvider).watchModel(),
 );
 
-/// Urutan rak yang dipilih.
+/// The selected shelf sort order.
 final shelfSortProvider = StreamProvider<ShelfSort>(
   (ref) => ref.watch(settingsRepositoryProvider).watchShelfSort(),
 );
 
-/// Tampilan rak yang dipilih.
+/// The selected shelf layout.
 final shelfViewProvider = StreamProvider<ShelfView>(
   (ref) => ref.watch(settingsRepositoryProvider).watchShelfView(),
 );
 
-/// Backup terakhir (Pengaturan, pengingat backup).
+/// The last backup, shown in Settings and used by the backup reminder.
 final lastBackupProvider = StreamProvider<LastBackup?>(
   (ref) => ref.watch(settingsRepositoryProvider).watchLastBackup(),
 );
 
-/// Backup cloud terakhir (pelat Ex libris).
+/// The last cloud backup, shown on the Ex libris plate.
 final cloudBackupAtProvider = StreamProvider<DateTime?>(
   (ref) => ref.watch(settingsRepositoryProvider).watchCloudBackupAt(),
 );

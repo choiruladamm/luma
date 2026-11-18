@@ -5,7 +5,7 @@ import 'package:archive/archive.dart';
 import 'package:path/path.dart' as p;
 import 'package:xml/xml.dart';
 
-/// Kenapa EPUB gak bisa diimport (layar 16–18 di board Import).
+/// Describes why an EPUB cannot be imported (Import board screens 16–18).
 enum EpubError { corrupt, notEpub, drm }
 
 class EpubException implements Exception {
@@ -24,13 +24,12 @@ class EpubCover {
 
   final Uint8List bytes;
 
-  /// `jpg`, `png`, `gif`, `webp`, ... buat nama file cover.
+  /// The cover filename extension, such as `jpg` or `png`.
   final String extension;
 }
 
-/// Satu chapter = satu entri TOC. Isinya mulai dari [startAnchor] di
-/// `files.first`, nyambung lintas file spine, berhenti sebelum [endAnchor] di
-/// `files.last`. Anchor null = dari awal / sampe akhir file.
+/// Represents one TOC chapter spanning files from [startAnchor] to [endAnchor].
+/// Null anchors indicate the start or end of the corresponding file.
 class ChapterSource {
   const ChapterSource({
     required this.title,
@@ -42,15 +41,15 @@ class ChapterSource {
 
   final String title;
 
-  /// Label induk di TOC bersarang, dari luar ke dalam, dipisah ` › `
-  /// ("Discourses › Book I"). Null kalau entri ini di level teratas.
+  /// The nested parent TOC labels, outermost first, separated by ` › `.
+  /// Null for top-level entries.
   final String? section;
   final List<String> files;
   final String? startAnchor;
   final String? endAnchor;
 }
 
-/// Hasil parse EPUB: data polos, aman dikirim balik dari `Isolate.run`.
+/// Holds plain EPUB data safe to return from `Isolate.run`.
 class EpubOutline {
   const EpubOutline({
     required this.title,
@@ -60,15 +59,15 @@ class EpubOutline {
     required this.html,
   });
 
-  /// Null kalau metadata kosong; pemanggil fallback ke nama file.
+  /// Null when metadata is empty; the caller falls back to the filename.
   final String? title;
   final String? author;
   final EpubCover? cover;
 
-  /// Urut TOC = `sortOrder`.
+  /// Chapters in TOC order, matching `sortOrder`.
   final List<ChapterSource> chapters;
 
-  /// Isi HTML per file yang dipake [chapters], key = path di dalam zip.
+  /// HTML used by [chapters], keyed by path inside the zip.
   final Map<String, String> html;
 }
 
@@ -79,11 +78,10 @@ const _fontObfuscation = {
 const _epubNs = 'http://www.idpf.org/2007/ops';
 final _path = p.posix;
 
-/// Parse [bytes] EPUB 2/3: metadata, cover, dan chapter dari TOC (nav EPUB3,
-/// fallback NCX EPUB2, fallback satu chapter per file spine). Sinkron, jalanin
-/// lewat `Isolate.run(() => parseEpub(bytes))`.
-///
-/// Entri TOC yang rusak dilewatin, bukan bikin seluruh import gagal.
+/// Parses EPUB 2/3 metadata, cover, and chapters from the TOC.
+/// Falls back from EPUB3 navigation to EPUB2 NCX, then to spine files.
+/// Run synchronously through `Isolate.run(() => parseEpub(bytes))`.
+/// Malformed TOC entries are skipped without failing the import.
 EpubOutline parseEpub(Uint8List bytes) {
   final Archive zip;
   try {
@@ -101,8 +99,7 @@ EpubOutline parseEpub(Uint8List bytes) {
 
   final container = read('META-INF/container.xml');
   if (container == null) {
-    // EPUB wajib diawali file `mimetype` (gak dikompres), jadi tandanya masih
-    // ada walau ekor zip-nya kepotong: itu file rusak, bukan file lain.
+    // EPUB starts with an uncompressed `mimetype` file, even if the zip is truncated.
     throw _looksLikeEpub(bytes)
         ? const EpubException(EpubError.corrupt, 'unreadable EPUB zip')
         : const EpubException(EpubError.notEpub, 'no META-INF/container.xml');
@@ -130,7 +127,7 @@ void _checkDrm(Archive zip, String? encryption) {
     throw const EpubException(EpubError.drm);
   }
   if (encryption == null) return;
-  // Obfuscation font itu legal & umum; enkripsi lain = konten kekunci.
+  // Font obfuscation is legal and common; other encryption locks the content.
   final algorithms = XmlDocument.parse(encryption)
       .findAllElements('EncryptionMethod', namespaceUri: '*')
       .map((e) => e.getAttribute('Algorithm'));
@@ -168,11 +165,9 @@ EpubOutline _parse(
     return t == null || t.isEmpty ? null : t;
   }
 
-  // Metadata
   final title = all(opf, 'title').map((e) => clean(e.innerText)).nonNulls;
   final authors = all(opf, 'creator').map((e) => clean(e.innerText)).nonNulls;
 
-  // Manifest & spine
   final items = <String, _Item>{
     for (final e in all(opf, 'item'))
       if (e.getAttribute('id') case final id?
@@ -194,7 +189,7 @@ EpubOutline _parse(
   ];
   final spineIndex = {for (final (i, f) in spine.indexed) f: i};
 
-  // TOC: nav EPUB3, kalau kosong NCX EPUB2.
+  // Prefer EPUB3 navigation, falling back to EPUB2 NCX.
   List<_TocEntry> navToc() {
     final nav = items.values.where((i) => i.props.contains('nav')).firstOrNull;
     final doc = nav == null ? null : read(nav.path);
@@ -209,7 +204,7 @@ EpubOutline _parse(
         navs.firstOrNull;
     if (toc == null) return const [];
     final out = <_TocEntry>[];
-    // <ol><li><a>label</a><ol>…</ol></li></ol>: label induk jadi section.
+    // Nested list labels become parent sections.
     void walk(XmlElement list, List<String> parents) {
       for (final li in list.findElements('li', namespaceUri: '*')) {
         final a = li.findElements('a', namespaceUri: '*').firstOrNull;
@@ -238,7 +233,7 @@ EpubOutline _parse(
       walk(list, const []);
     }
     if (out.isEmpty) {
-      // TOC tanpa <ol>/<li> yang rapi: ambil semua link, tanpa hierarki.
+      // Fall back to all links without hierarchy for malformed TOCs.
       return [
         for (final a in all(toc, 'a'))
           if (a.getAttribute('href') case final href?)
@@ -293,9 +288,7 @@ EpubOutline _parse(
   var toc = navToc();
   if (toc.isEmpty) toc = ncxToc();
 
-  // Entri yang nunjuk ke file di luar spine dibuang; urut ikut spine, entri di
-  // file yang sama tetep urut TOC. List.sort gak stabil, jadi urutan TOC
-  // dijadiin pembanding kedua.
+  // List.sort is unstable, so TOC order breaks ties within the same spine file.
   final seen = <String>{};
   final ordered = [
     for (final (i, e) in toc.indexed)
@@ -369,7 +362,7 @@ String _resolve(String baseDir, String href) =>
     _path.normalize(_path.join(baseDir, Uri.decodeFull(href)));
 
 EpubCover? _cover(Archive zip, XmlDocument opf, Map<String, _Item> items) {
-  // EPUB3: properties="cover-image". EPUB2: <meta name="cover" content=id>.
+  // EPUB3 uses cover-image properties; EPUB2 uses a cover meta tag.
   final coverId = opf
       .findAllElements('meta', namespaceUri: '*')
       .where((m) => m.getAttribute('name') == 'cover')
@@ -383,7 +376,7 @@ EpubCover? _cover(Archive zip, XmlDocument opf, Map<String, _Item> items) {
   if (file == null) return null;
   final ext = switch (item.type) {
     'image/jpeg' => 'jpg',
-    'image/svg+xml' => null, // gak bisa dipake Image.file
+    'image/svg+xml' => null, // Image.file can't render SVG.
     final t => t.substring('image/'.length),
   };
   return ext == null ? null : EpubCover(file.content, ext);

@@ -10,10 +10,10 @@ enum DownloadStatus {
   downloading,
   importing,
 
-  /// Udah di rak, [DownloadItem.bookId] buku barunya.
+  /// Already on the shelf; [DownloadItem.bookId] is the new book.
   done,
 
-  /// File yang sama udah ada; [DownloadItem.bookId] nunjuk yang lama.
+  /// The same file already exists; [DownloadItem.bookId] points to the old one.
   duplicate,
   failed,
 }
@@ -30,11 +30,11 @@ class DownloadItem {
   final CatalogBook book;
   final DownloadStatus status;
 
-  /// 0–1 selama unduh (−1 kalau server gak kasih panjang).
+  /// 0–1 while downloading (−1 when the server gives no length).
   final double progress;
   final int? bookId;
 
-  /// `DioException` (jaringan) atau `EpubException` (file rusak).
+  /// `DioException` (network) or `EpubException` (corrupt file).
   final Object? error;
 
   String get key => '${book.sourceId}/${book.externalId}';
@@ -62,9 +62,9 @@ class DownloadItem {
   );
 }
 
-/// Antrian download level app (docs/discover.md, Download and import): satu jalan,
-/// sisanya nunggu; pindah layar gak batal, cuma app kill yang motong.
-/// Selesai → `importEpub` (dedup sha256) → toast lewat [DownloadToasts].
+/// App-level download queue (docs/discover.md, Download and import): one runs,
+/// the rest wait; navigating away doesn't cancel, only an app kill cuts it off.
+/// Done → `importEpub` (sha256 dedup) → toast via [DownloadToasts].
 class DownloadQueue extends Notifier<List<DownloadItem>> {
   @override
   List<DownloadItem> build() => const [];
@@ -72,8 +72,8 @@ class DownloadQueue extends Notifier<List<DownloadItem>> {
   bool _running = false;
   String? _cancelKey;
 
-  /// Buku yang lagi antri / jalan gak ditambah dua kali; yang udah selesai
-  /// diganti entri baru.
+  /// A book that is queued / running isn't added twice; a finished one is
+  /// replaced by a new entry.
   void enqueue(CatalogBook book) {
     final key = '${book.sourceId}/${book.externalId}';
     final current = _find(key);
@@ -86,8 +86,8 @@ class DownloadQueue extends Notifier<List<DownloadItem>> {
     _pump();
   }
 
-  /// Antri → langsung hilang. Lagi jalan → ditandain, unduhan / import
-  /// berhenti di checkpoint berikutnya lalu entrinya hilang.
+  /// Queued → removed immediately. Running → marked; the download / import
+  /// stops at the next checkpoint, then the entry is removed.
   void cancel(String key) {
     final item = _find(key);
     if (item == null) return;
@@ -98,7 +98,7 @@ class DownloadQueue extends Notifier<List<DownloadItem>> {
     }
   }
 
-  /// Buang entri yang udah selesai / gagal dari daftar.
+  /// Removes finished / failed entries from the list.
   void dismiss(String key) {
     if (_find(key)?.finished ?? false) _remove(key);
   }
@@ -106,8 +106,8 @@ class DownloadQueue extends Notifier<List<DownloadItem>> {
   DownloadItem? _find(String key) =>
       state.where((i) => i.key == key).firstOrNull;
 
-  // Dicek `ref.mounted`: download jalan nyebrang async gap, container bisa
-  // keburu dispose (test / app kill).
+  // Checked with `ref.mounted`: the download runs across an async gap and the
+  // container may already be disposed (tests / app kill).
   void _remove(String key) {
     if (!ref.mounted) return;
     state = [

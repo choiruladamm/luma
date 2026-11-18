@@ -5,7 +5,7 @@ import { useToastStore } from "../../stores/toast-store";
 import { Icon } from "./icons";
 
 /**
- * Komponen 2, Toast: bottom center, 32 from the edge. Auto-hides after 2.5s (5s with an
+ * Design component 2, Toast: bottom center, 32 from the edge. Auto-hides after 2.5s (5s with an
  * action), pauses on hover; errors stay until closed.
  */
 export function ToastHost() {

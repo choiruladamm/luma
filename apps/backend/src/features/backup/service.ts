@@ -4,10 +4,10 @@ import { addBytes, releaseOnFailure, reserveBytes } from "../../db/user-storage"
 import { ApiError } from "../../lib/errors";
 import { fixedLength, userPrefix } from "../../lib/storage";
 
-/** Snapshot yang disimpan; sisanya dihapus di `PUT` yang sama (docs/backend.md, Files and cloud backups). */
+/** Snapshots kept; the rest are deleted in the same `PUT` (docs/backend.md, Files and cloud backups). */
 export const BACKUP_RETENTION = 10;
 
-/** `yyyyMMddTHHmmssZ`: urut leksikal = urut waktu, jadi `R2.list` udah kronologis. */
+/** `yyyyMMddTHHmmssZ`: lexical order = chronological order, so `R2.list` is already chronological. */
 export const BACKUP_ID = /^\d{8}T\d{6}Z$/;
 
 export const backupId = (now: Date) => now.toISOString().replace(/[-:]/g, "").replace(/\.\d+Z$/, "Z");
@@ -21,7 +21,7 @@ const manifestSchema = z.object({
   counts: z.object({ books: z.number().int().nonnegative(), aiResults: z.number().int().nonnegative() }),
 });
 
-/** Header `x-backup-manifest` = isi `manifest.json` di zip (JSON satu baris). */
+/** The `x-backup-manifest` header = contents of `manifest.json` in the zip (single-line JSON). */
 export function parseManifest(header: string | undefined): Record<string, string> {
   let parsed: z.infer<typeof manifestSchema> | undefined;
   try {
@@ -65,14 +65,14 @@ const info = (prefix: string, o: { key: string; size: number; customMetadata?: R
   };
 };
 
-/** Objek terlama di luar [keep] terbaru. [objects] urut naik (urutan `R2.list`). */
+/** The oldest objects beyond the newest [keep]. [objects] is ascending (`R2.list` order). */
 export const staleBackups = <T>(objects: T[], keep = BACKUP_RETENTION) =>
   objects.slice(0, Math.max(0, objects.length - keep));
 
 /**
- * Simpan snapshot DB + metadata manifest, lalu buang yang lewat retensi.
- * ponytail: dua backup di detik yang sama menimpa key yang sama dan `bytes`
- * terhitung dobel; pemicu cuma 1×/hari + tombol manual, jadi dibiarkan.
+ * Stores a DB snapshot + manifest metadata, then removes those past retention.
+ * ponytail: two backups in the same second overwrite the same key and `bytes`
+ * is counted twice; the trigger is once a day + a manual button, so it's left alone.
  */
 export async function putBackup(
   db: Db,
@@ -98,7 +98,7 @@ export async function putBackup(
   return info(prefix, { key, size: stored!.size, customMetadata: upload.metadata });
 }
 
-/** Terbaru dulu, langsung dari `R2.list` + customMetadata (tanpa tabel D1). */
+/** Newest first, straight from `R2.list` + customMetadata (no D1 table). */
 export async function listBackups(bucket: R2Bucket, userId: string): Promise<BackupInfo[]> {
   const prefix = backupsPrefix(userId);
   const listed = await bucket.list({ prefix, limit: 1000, include: ["customMetadata"] });

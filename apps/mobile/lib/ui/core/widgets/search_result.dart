@@ -6,8 +6,8 @@ import '../theme/stabilo_tokens.dart';
 import '../theme/stabilo_type.dart';
 import 'tag.dart';
 
-/// Header grup per bab di daftar hasil Cari kata: judul, chip "Lagi dibaca"
-/// buat bab yang lagi dibaca, jumlah hasil di kanan.
+/// Per-chapter group header in the Cari kata result list: title, a
+/// "Lagi dibaca" chip for the chapter being read, result count on the right.
 class SearchGroupHeader extends StatelessWidget {
   const SearchGroupHeader({
     super.key,
@@ -19,7 +19,7 @@ class SearchGroupHeader extends StatelessWidget {
   final String title;
   final int count;
 
-  /// Bab yang lagi dibaca (gak dipindah ke atas, cuma dikasih chip).
+  /// Chapter being read (not moved to the top, just given a chip).
   final bool current;
 
   @override
@@ -30,8 +30,9 @@ class SearchGroupHeader extends StatelessWidget {
       child: Row(
         spacing: Space.s2,
         children: [
-          // Kiri makan sisa ruang (justify-between): jumlah hasil mentok
-          // kanan. Flexible + Spacer bagi sisa 50:50, jumlahnya gak nempel.
+          // The left side takes the remaining space (justify-between): the
+          // count sits flush right. Flexible + Spacer split the rest 50:50, so
+          // the count doesn't hug the title.
           Expanded(
             child: Row(
               spacing: Space.s2,
@@ -68,9 +69,10 @@ class SearchGroupHeader extends StatelessWidget {
   }
 }
 
-/// Satu hasil: cuplikan paling banyak 3 baris, kata cocok di-stabilo inline
-/// (pengecualian aturan highlight, docs/design.md). [matchStart]/[matchEnd]
-/// = posisi di [snippet]; sama-sama 0 = gak ada yang di-stabilo.
+/// One result: a snippet of at most 3 lines, the matching word highlighted
+/// inline (an exception to the highlight rule, docs/design.md).
+/// [matchStart]/[matchEnd] = positions in [snippet]; both 0 = nothing
+/// highlighted.
 class SearchHitTile extends StatelessWidget {
   const SearchHitTile({
     super.key,

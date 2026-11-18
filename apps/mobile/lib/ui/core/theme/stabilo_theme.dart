@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'stabilo_tokens.dart';
 import 'stabilo_type.dart';
 
-/// Token warna Stabilo (board Foundations · 01 Warna). Satu nama, dua nilai.
+/// Stabilo color tokens (board Foundations · 01 Warna). One name, two values.
 @immutable
 class StabiloColors extends ThemeExtension<StabiloColors> {
   const StabiloColors({
@@ -49,35 +49,35 @@ class StabiloColors extends ThemeExtension<StabiloColors> {
     required this.continueTrack,
   });
 
-  // Permukaan
+  // Surfaces
   final Color canvas, sheet, muted, track, outline;
-  // Teks. ink3 khusus disabled.
+  // Text. ink3 is for disabled only.
   final Color ink, ink2, ink3;
-  // Aksen. highlight cuma buat grup paragraf yang lagi dibuka di sheet dan
-  // kata hasil Cari kata (docs/design.md, Color).
-  // accentBorder: outline tombol/opsi accent (gelap: sewarna accent).
+  // Accent. highlight is only for the paragraph group open in the sheet and
+  // the word found by Cari kata (docs/design.md, Color).
+  // accentBorder: outline of accent buttons/options (dark: same color as accent).
   final Color accent, onAccent, accentBorder, pink, onPink;
-  // Latar banner pink lembut (Artinya kepotong), garisnya [pink].
+  // Soft pink banner background (Artinya cut off), its border is [pink].
   final Color pinkSoft;
   final Color highlight, onHighlight;
-  // Status & feedback. mark = penanda grup yang udah diterjemahin.
+  // Status & feedback. mark = marker for already-translated groups.
   final Color danger, onDanger, dangerSoft, dangerInk, toastBg, toastInk, mark;
-  // Overlay. veil = kerudung di atas rak yang di-blur (menu tekan lama buku).
+  // Overlay. veil = scrim over the blurred shelf (book long-press menu).
   final Color scrim, veil, grabber;
-  // Garis pemisah di menu/list, garis field input.
+  // Divider lines in menus/lists, input field borders.
   final Color menuLine, fieldLine;
-  // Isi progress bar (terang: tinta, gelap: accent).
+  // Progress bar fill (light: ink, dark: accent).
   final Color progressFill;
-  // Halaman baca imersif (board Baca imersif · ReaderCapsule): garis progres
-  // 2pt, garis kapsul, kilatan stabilo di grup tersimpan (puncak 60%).
+  // Immersive reading page (board Baca imersif · ReaderCapsule): 2pt progress
+  // line, capsule line, stabilo flash on saved groups (peak 60%).
   final Color progressLine, progressLineTrack, capsuleLine, flash;
-  // Scrim tipis di belakang sheet Aa (teks tetep keliatan buat preview),
-  // pilihan terpilih di segmented control.
+  // Thin scrim behind the Aa sheet (text stays visible as a preview),
+  // selected option in the segmented control.
   final Color scrimSoft, segment;
-  // ReminderBanner (pink): kotak ikon & tombol di atas pink.
+  // ReminderBanner (pink): icon box & button over pink.
   final Color bannerTile, bannerButton, onBannerButton;
-  // ContinueCard: teks kedua (bab) & alur progres. Terang di atas accent,
-  // gelap di atas muted.
+  // ContinueCard: second text (chapter) & progress track. Light over accent,
+  // dark over muted.
   final Color continueInk2, continueTrack;
 
   static const light = StabiloColors(
@@ -136,7 +136,7 @@ class StabiloColors extends ThemeExtension<StabiloColors> {
     onAccent: Color(0xFF22201C),
     accentBorder: Color(0xFFE9C75A),
     pink: Color(0xFFD99BAE),
-    pinkSoft: Color(0xFF4B3E3D), // pink 18% di atas sheet
+    pinkSoft: Color(0xFF4B3E3D), // pink 18% over sheet
     onPink: Color(0xFF22201C),
     highlight: Color(0x42E9C75A), // 26%
     onHighlight: Color(0xFFF3EBD3),
@@ -166,12 +166,12 @@ class StabiloColors extends ThemeExtension<StabiloColors> {
     continueTrack: Color(0xFF46423A),
   );
 
-  // Token gak pernah diubah per widget; set baru = konstanta baru.
+  // Tokens are never changed per widget; a new set means a new constant.
   @override
   StabiloColors copyWith() => this;
 
-  // ponytail: ganti tema langsung lompat di tengah animasi, bukan blend
-  // per warna. Lerp tiap field kalau transisi terang/gelap keliatan kasar.
+  // ponytail: switching theme jumps mid-animation instead of blending
+  // per color. Lerp each field if the light/dark transition looks harsh.
   @override
   StabiloColors lerp(StabiloColors? other, double t) =>
       t < 0.5 || other == null ? this : other;

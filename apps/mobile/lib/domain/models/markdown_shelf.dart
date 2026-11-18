@@ -1,20 +1,20 @@
-/// Satu slot di strip bab kartu buku Markdown (board Import Markdown 49).
+/// One slot in the chapter strip of a Markdown book card (board Import Markdown 49).
 enum SlotState {
-  /// Udah dibaca sampai habis.
+  /// Read to the end.
   read,
 
-  /// Bab yang lagi dibaca, diisi sesuai fraksinya.
+  /// The chapter being read, filled by its fraction.
   reading,
 
-  /// Udah masuk tapi belum dibuka.
+  /// Imported but not opened.
   unread,
 
-  /// Nomor ini belum di-import (di bawah nomor tertinggi yang udah masuk).
+  /// This number isn't imported (below the highest imported number).
   missing,
 }
 
-/// Bab buku Markdown di rak: nomor yang udah masuk + posisi baca. Bab di
-/// bawah posisi baca dianggap udah dibaca (posisi baca cuma satu per buku).
+/// Chapters of a Markdown book on the shelf: imported numbers + reading position.
+/// Chapters below the reading position count as read (there is one reading position per book).
 class MarkdownShelf {
   const MarkdownShelf({
     required this.chapters,
@@ -22,29 +22,29 @@ class MarkdownShelf {
     this.fraction = 0,
   });
 
-  /// Batas slot di strip; lebih dari ini strip jadi satu bar.
+  /// Slot limit in the strip; beyond this the strip becomes a single bar.
   static const maxSlots = 16;
 
-  /// Nomor bab yang udah masuk, urut naik.
+  /// Imported chapter numbers, ascending.
   final List<int> chapters;
 
-  /// Nomor bab posisi baca; null = belum pernah dibuka.
+  /// Chapter number of the reading position; null = never opened.
   final int? current;
 
-  /// 0..1 di dalam bab [current].
+  /// 0..1 within chapter [current].
   final double fraction;
 
-  /// Jumlah bab yang udah masuk (bukan nomor tertinggi).
+  /// Number of imported chapters (not the highest number).
   int get count => chapters.length;
 
   int get highest => chapters.isEmpty ? 0 : chapters.last;
 
-  /// Nomor tertinggi > [maxSlots]: slot gak kebaca, strip jadi satu bar.
+  /// Highest number > [maxSlots]: slots are unreadable, so the strip becomes a single bar.
   bool get collapsed => highest > maxSlots;
 
   bool _isRead(int n) => current != null && n < current!;
 
-  /// Satu slot per nomor bab, dari 1 sampai [highest].
+  /// One slot per chapter number, from 1 to [highest].
   List<SlotState> get slots {
     final have = chapters.toSet();
     return [
@@ -60,8 +60,8 @@ class MarkdownShelf {
     ];
   }
 
-  /// Isi bar fallback: bab dibaca ÷ bab masuk, plus fraksi bab yang lagi
-  /// dibaca.
+  /// Fill of the fallback bar: chapters read ÷ chapters imported, plus the fraction
+  /// of the chapter being read.
   double get barFraction {
     if (chapters.isEmpty || current == null) return 0;
     final read = chapters.where(_isRead).length;

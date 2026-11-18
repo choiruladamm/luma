@@ -1,22 +1,23 @@
-// Spec sync per kind (docs/sync-protocol.md, Records and keys). Satu sumber buat
-// trigger outbox, backfill migrasi 18, dan query data saat push: kunci alami
-// dihitung SQL di sini, jadi repository gak perlu tahu.
+// Per-kind sync spec (docs/sync-protocol.md, Records and keys). It is the
+// single source for the outbox triggers, the schema 18 migration backfill, and
+// the data query at push time: natural keys are computed in SQL here, so the
+// repository doesn't need to know them.
 
-/// Waktu sekarang dalam ms epoch (SQLite tanpa `unixepoch('subsec')`).
+/// The current time in epoch milliseconds, computed without `unixepoch('subsec')`, which SQLite lacks here.
 const sqlNowMs = "CAST((julianday('now') - 2440587.5) * 86400000 AS INTEGER)";
 
-/// Kolom `DateTime` Drift (detik epoch) → ISO 8601 UTC, null tetap null.
+/// Converts a Drift `DateTime` column (epoch seconds) to ISO 8601 UTC; null stays null.
 String _iso(String col) => "strftime('%Y-%m-%dT%H:%M:%fZ', $col, 'unixepoch')";
 
 String _bool(String col) => "json(CASE WHEN $col THEN 'true' ELSE 'false' END)";
 
-/// Kunci buku: `md:{bookKey}` (Markdown) atau `hash` (EPUB/PDF).
+/// Returns the book key: `md:{bookKey}` for Markdown, or `hash` for EPUB and PDF.
 String _bookKey(String r) => "COALESCE('md:' || $r.book_key, $r.hash)";
 
 String _bookOf(String id) =>
     '(SELECT ${_bookKey('b')} FROM books b WHERE b.id = $id)';
 
-/// `{bookKey}/{sortOrder}`; berlaku antar device cuma kalau `parserVersion` sama.
+/// Returns `{bookKey}/{sortOrder}`, which identifies the same chapter across devices only if `parserVersion` matches.
 String _chapterOf(String id) =>
     "(SELECT ${_bookKey('b')} || '/' || c.sort_order FROM chapters c "
     'JOIN books b ON b.id = c.book_id WHERE c.id = $id)';
@@ -35,10 +36,12 @@ String _parserOfChapter(String id) =>
 String _sortOrderOf(String id) =>
     '(SELECT sort_order FROM chapters WHERE id = $id)';
 
-/// Setting yang ikut sync. Sisanya per device: `backup.*`, `catalog.*`,
-/// riwayat Cari kata (kuncinya pakai ID buku lokal). Spec di file ini
-/// tertanam di trigger yang udah kepasang di device: ubah = naikin schema,
-/// `DROP TRIGGER` lalu `AppDatabase.createSyncTriggers` lagi di `onUpgrade`.
+/// The settings that sync; the rest stay per device: `backup.*`, `catalog.*`,
+/// and the Cari kata history (its key uses the local book id).
+///
+/// This spec is baked into the triggers already installed on devices, so a
+/// change needs a schema bump that runs `DROP TRIGGER` and then
+/// `AppDatabase.createSyncTriggers` again in `onUpgrade`.
 const syncedSettings = [
   'ai.model',
   'app.locale',
@@ -54,14 +57,14 @@ const syncedSettings = [
   'reader.chatHintSeen',
 ];
 
-/// Fase turn chat yang masih jalan; turn begini gak di-push.
+/// Chat turn phases that are still running; such turns are not pushed.
 const _runningPhases =
     "('preparing', 'retrieving', 'waiting', 'writing', 'slow')";
 
-/// Upsert, bukan `INSERT OR REPLACE`: di dalam trigger, policy konflik
-/// statement luar (upsert Drift `insertOnConflictUpdate`) menimpa `OR REPLACE`,
-/// jadi tulisan kedua ke kunci yang sama gagal UNIQUE. Klausa upsert gak ikut
-/// ditimpa.
+/// An upsert rather than `INSERT OR REPLACE`: inside a trigger, the conflict
+/// policy of the outer statement (Drift's `insertOnConflictUpdate` upsert)
+/// overrides `OR REPLACE`, so a second write to the same key fails UNIQUE. An
+/// upsert clause isn't overridden.
 const _upsert =
     'ON CONFLICT (kind, key) DO UPDATE SET updated_at = excluded.updated_at';
 
@@ -76,31 +79,38 @@ class SyncKind {
     this.tombstone = false,
   });
 
-  /// Nama kind di server (`records.kind`).
+  /// The kind name on the server (`records.kind`).
   final String name;
   final String table;
 
-  /// Ekspresi kunci alami untuk baris [r] (`NEW`, `OLD`, atau alias).
+  /// Builds the natural-key expression for row [r] (`NEW`, `OLD`, or an alias).
   final String Function(String r) key;
 
-  /// `json_object(...)` data record dari baris alias `r`.
+  /// The `json_object(...)` expression for the record data of the row aliased `r`.
   final String data;
 
-  /// Waktu ms dari isi baris buat backfill, supaya device yang migrasi
-  /// belakangan gak ngalahin data yang beneran lebih baru di device lain.
+  /// The backfill timestamp in milliseconds, derived from the row content, so
+  /// a device that migrates later doesn't beat data that is genuinely newer on
+  /// another device.
   final String backfillAt;
 
-  /// Syarat baris ikut sync (baris [r]).
+  /// Builds the condition for row [r] to be synced.
   final String Function(String r)? when;
 
-  /// Hapus dikirim sebagai tombstone. Cuma hapus yang dilakuin user (buku,
-  /// sesi chat); hapus cascade anak gak dikirim (1 buku = ribuan tulis D1).
+  /// Whether a delete is sent as a tombstone.
+  ///
+  /// Only deletes the user performs (a book, a chat session) are sent;
+  /// cascaded child deletes aren't, since one book would cost thousands of D1
+  /// writes.
   final bool tombstone;
 
   String _keep(String r) => when == null ? '' : ' AND ${when!(r)}';
 
-  /// Trigger insert/update (+ delete kalau [tombstone]) ke `sync_outbox`.
-  /// Kunci dihitung saat kejadian: setelah baris dihapus ID lokalnya hilang.
+  /// The insert and update triggers (plus delete when [tombstone] is true)
+  /// that write to `sync_outbox`.
+  ///
+  /// The key is computed at event time because the local id is gone once the
+  /// row is deleted.
   List<String> get triggers => [
     for (final (suffix, event, row) in [
       ('ai', 'INSERT', 'NEW'),
@@ -114,14 +124,17 @@ class SyncKind {
           '$_upsert; END',
   ];
 
-  /// Isi outbox dari baris yang udah ada (migrasi ke 18).
+  /// Fills the outbox from existing rows (the schema 18 migration).
   String get backfill =>
       'INSERT INTO sync_outbox (kind, key, updated_at) '
       "SELECT '$name', ${key('r')}, $backfillAt FROM $table r "
       'WHERE ${key('r')} IS NOT NULL${_keep('r')} $_upsert';
 
-  /// `(key, data)` buat kunci outbox kind ini (JSON array [keys]). Kunci yang
-  /// barisnya udah gak ada gak muncul: tombstone atau dibuang.
+  /// Selects `(key, data)` for the outbox keys of this kind, passed as a JSON
+  /// array.
+  ///
+  /// A key whose row is gone doesn't appear: it is a tombstone or is
+  /// dropped.
   String get select =>
       'SELECT k AS key, data FROM (SELECT ${key('r')} AS k, $data AS data '
       'FROM $table r WHERE 1${_keep('r')}) '
@@ -201,7 +214,7 @@ final syncKinds = [
     table: 'settings',
     key: (r) => '$r.key',
     when: (r) => "$r.key IN ('${syncedSettings.join("', '")}')",
-    backfillAt: '0', // gak ada jejak waktu: kalah dari perubahan apa pun
+    backfillAt: '0', // No timestamp trace exists, so any other change wins.
     data: "json_object('value', r.value)",
   ),
   SyncKind(

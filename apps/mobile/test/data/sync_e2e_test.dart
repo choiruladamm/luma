@@ -14,8 +14,9 @@ import 'package:luma/data/services/cloud_backup_service.dart';
 import 'package:luma/data/services/file_storage.dart';
 import 'package:luma/data/services/sync_service.dart';
 
-/// E2E sync push (`make backend-e2e`): client Dart asli push ke Worker lokal
-/// (`wrangler dev`, D1/R2 lokal). Tanpa `LUMA_BACKEND_E2E` di-skip.
+/// E2E sync push (`make backend-e2e`): the real Dart client pushes to a local
+/// Worker (`wrangler dev`, local D1/R2). Without `LUMA_BACKEND_E2E` it is
+/// skipped.
 final _url = Platform.environment['LUMA_BACKEND_E2E'] ?? '';
 final _invite = Platform.environment['LUMA_E2E_INVITE'] ?? '';
 
@@ -31,7 +32,7 @@ class _Auth extends Fake implements AuthRepository {
   Future<String?> lastUserId() async => 'e2e';
 }
 
-/// [SyncService] asli yang nyatet hasil tiap push.
+/// The real [SyncService], which records each push's result.
 class _Spy extends SyncService {
   _Spy(super.client);
 
@@ -49,7 +50,7 @@ class _Spy extends SyncService {
   }
 }
 
-/// Satu "device": DB in-memory dengan buku yang sama (hash `e2e`).
+/// One "device": in-memory DB with the same book (hash `e2e`).
 class _Device {
   _Device(BackendClient client, String token, this.files)
     : db = AppDatabase(
@@ -90,7 +91,7 @@ class _Device {
       'INSERT INTO reading_progress (book_id, chapter_id, paragraph_index) '
       'VALUES (1, 10, $paragraph)',
     );
-    // Waktu outbox dipaku biar urutan last-write-wins jelas.
+    // Outbox timestamps are pinned so the last-write-wins order is explicit.
     await db.customStatement('UPDATE sync_outbox SET updated_at = $at');
   }
 }
@@ -101,7 +102,7 @@ void main() {
   late Directory tmp;
 
   setUpAll(() async {
-    if (_url.isEmpty) return; // test di-skip, jangan daftar akun
+    if (_url.isEmpty) return; // test is skipped; do not register accounts
     client = BackendClient(baseUrl: _url, sleep: (_) async {});
     final session = await AuthService(client).signUpEmail(
       name: 'E2E',
@@ -130,18 +131,18 @@ void main() {
       expect(await a.repo.push(), 2);
       expect(a.spy.results.single.applied, 2);
 
-      // B lebih lama: buku sama persis & posisi kalah → server gak nulis.
+      // B is older: same book, losing position → the server writes nothing.
       expect(await b.repo.push(), 2);
       expect(b.spy.results.single, (seq: 2, applied: 0));
 
-      // B baca lagi (lebih baru) → menang.
+      // B reads again (newer) → wins.
       await b.db.customStatement(
         'UPDATE reading_progress SET paragraph_index = 50',
       );
       await b.repo.push();
       expect(b.spy.results.last, (seq: 3, applied: 1));
 
-      // Hapus buku di A → tombstone diterima.
+      // Delete the book on A → tombstone accepted.
       await a.db.customStatement('DELETE FROM books');
       await a.repo.push();
       expect(a.spy.results.last.applied, 1);
@@ -171,8 +172,8 @@ void main() {
 
       final sent = await c.repo.push();
 
-      expect(sent, 1203); // 2 buku + posisi + 1200 hasil AI
-      expect(c.spy.results.length, greaterThan(2)); // dibatasi 500 & ±900KB
+      expect(sent, 1203); // 2 books + position + 1200 AI results
+      expect(c.spy.results.length, greaterThan(2)); // capped at 500 & ±900KB
       expect(await c.db.select(c.db.syncOutbox).get(), isEmpty);
       final missing = await CloudBackupService(client)
           .missing(token, [markdownDumpName('e2e-notes', 1)]);
@@ -182,7 +183,7 @@ void main() {
   );
 
   test('A imports and reads, B pulls: same book once, same data, newer schema held', () async {
-    // Akun baru: data akun tes lain gak ikut kecampur.
+    // New account: other test accounts' data must not mix in.
     final session = await AuthService(client).signUpEmail(
       name: 'E2E pull',
       email: 'e2e-pull-${DateTime.now().microsecondsSinceEpoch}@luma.test',
@@ -222,7 +223,7 @@ void main() {
       [chapter],
     );
     await a.repo.push();
-    // Record dari app versi lebih baru: B harus nahan, bukan nerapin.
+    // Record from a newer app version: B must hold it, not apply it.
     await SyncService(client).push(session.token, a.db.schemaVersion + 1, [
       const SyncRecord(
         kind: 'setting',
@@ -233,7 +234,7 @@ void main() {
     ]);
 
     await b.repo.sync();
-    await b.repo.sync(); // kedua kalinya: buku gak dobel
+    await b.repo.sync(); // second time: the book is not duplicated
 
     expect(await b.db.select(b.db.books).get(), hasLength(1));
     expect(

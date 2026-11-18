@@ -22,7 +22,8 @@ extension ChatPhaseCopy on ChatPhase {
 }
 
 extension ChatPhaseKind on ChatPhase {
-  /// Gagal beneran (bukan dihentiin user): dapet ikon pink di atas label.
+  /// Whether the phase is a real failure (not a user stop), shown with a pink
+  /// icon above the label.
   bool get isFailure => switch (this) {
     ChatPhase.failed || ChatPhase.cut || ChatPhase.interrupted => true,
     _ => false,
@@ -102,7 +103,7 @@ extension ChatIndexCopy on ChatState {
 }
 
 extension ChatStepCopy on ChatStep {
-  /// Teks baris status saat langkah ini yang lagi jalan ("Lagi baca Book II › IV").
+  /// Returns the status-row text while this step is running ("Lagi baca Book II › IV").
   String statusLabel(AppLocalizations l10n) => switch (kind) {
     ChatStepKind.plan => l10n.chatPlanning,
     ChatStepKind.cache => l10n.chatLoadingSavedNotes,
@@ -128,7 +129,7 @@ extension ChatDraftCopy on ChatTurn {
 }
 
 extension ChatStatusCopy on ChatState {
-  /// Label status di bawah jawaban yang sedang berjalan/berhenti.
+  /// Returns the status label under an answer that is running or has stopped.
   String statusLabel(AppLocalizations l10n, ChatPhase phase) {
     if (repairAttempt > 0 && phase.isRunning) {
       return l10n.chatFixingTheResponseFormat(repairAttempt, chatMaxRepairs);

@@ -2,14 +2,12 @@ import 'dart:convert';
 
 import 'models/ai_reply.dart';
 
-/// Naik tiap prompt berubah: cache `ai_results` dari versi lebih lama
-/// dianggap belum ada, jadi grupnya diterjemahin ulang pas dibuka.
-/// 1 = prompt awal, 2 = kenal buku + aturan gaya (#40), 3 = aturan bahasa &
-/// makna dari evaluasi 50 potong (#41), 4 = gaya luwes + istilah populer
-/// (#28).
+/// Prompt version; bump it whenever a prompt changes. `ai_results` cache rows
+/// from an older version count as missing, so the group is translated again
+/// when opened.
 const aiPromptVersion = 4;
 
-/// Ejaan + kata ganti, dipake ulang prompt Bedahin (breakdown_prompt.dart).
+/// Spelling and pronoun rules, reused by the Bedahin prompt (breakdown_prompt.dart).
 const aiSpellingRules = '''
 - Ejaan Bahasa Indonesia yang benar. Periksa tiap kata: jangan ada kata
   rusak, salah ketik, atau kata bahasa Inggris yang nyelip (kecuali istilah
@@ -17,7 +15,7 @@ const aiSpellingRules = '''
 - Kata ganti konsisten: "you/thou/thee" = "kamu", "I/me" = "aku", "we" =
   "kita". Jangan pakai "engkau", "Anda", atau "saya".''';
 
-/// Tugas yang sama buat dua format jawaban (docs/llm.md, draft prompt).
+/// The task shared by both answer formats (docs/llm.md, draft prompt).
 const _aiTask =
     '''
 Kamu adalah asisten membaca. Pengguna sedang membaca buku berbahasa Inggris
@@ -78,10 +76,10 @@ ada pula hal-hal yang di luar kendali kita."
 
 KONTEKS hanya untuk membantu pemahaman, jangan diterjemahkan.''';
 
-/// Buku yang lagi dibaca, buat prompt: judul, penulis (bisa kosong), bab.
+/// The book being read, for the prompt: title, author (may be empty), chapter.
 typedef AiBook = ({String title, String? author, String chapter});
 
-/// Prompt sistem, jawaban JSON (jalur tanpa streaming).
+/// System prompt for the JSON answer (non-streaming path).
 const aiSystemPrompt =
     '''
 $_aiTask
@@ -89,8 +87,8 @@ $_aiTask
 Balas HANYA dengan JSON, tanpa teks lain:
 {"translations": ["...", "..."], "meaning": "..."}''';
 
-/// Prompt sistem buat streaming: teks bersection, jadi tiap paragraf bisa
-/// tampil sebelum jawabannya lengkap (spike #34: 30/30 valid).
+/// System prompt for streaming: a sectioned text, so each paragraph can show
+/// before the whole answer is complete (spike #34: 30/30 valid).
 const aiStreamSystemPrompt =
     '''
 $_aiTask
@@ -104,8 +102,8 @@ terjemahan paragraf 2
 [MAKNA]
 penjelasan makna''';
 
-/// Pesan user: buku + bab (kalau ada), paragraf konteks (kalau ada), terus
-/// TARGET bernomor.
+/// User message: book + chapter (if any), context paragraphs (if any), then the
+/// numbered TARGET.
 String aiUserPrompt({
   AiBook? book,
   required List<String> context,
@@ -124,8 +122,8 @@ String aiUserPrompt({
 
 bool _filled(String? s) => s != null && s.trim().isNotEmpty;
 
-/// Baca jawaban LLM: buang code fence / teks di luar objek JSON, terus cek
-/// jumlah terjemahan = [expected]. Gagal → [AiError.invalidResponse].
+/// Parses the LLM answer: strips code fences and text outside the JSON object,
+/// then checks the translation count equals [expected]. Fails with [AiError.invalidResponse].
 AiReply parseAiReply(String content, int expected) {
   AiException invalid(String why) =>
       AiException(AiError.invalidResponse, detail: why);
@@ -157,21 +155,21 @@ AiReply parseAiReply(String content, int expected) {
   );
 }
 
-/// Jawaban bersection yang lagi ditulis: terjemahan per paragraf (yang
-/// terakhir bisa belum utuh), terus makna. Isinya udah tanpa penanda.
+/// A sectioned answer being written: one translation per paragraph (the last
+/// may be incomplete), then the meaning. Markers are already stripped.
 class AiDraft {
   const AiDraft({this.translations = const [], this.meaning});
 
   final List<String> translations;
 
-  /// Null = bagian makna belum mulai.
+  /// Null = the meaning section has not started.
   final String? meaning;
 
-  /// Jumlah huruf yang bisa ditampilin.
+  /// Number of characters that can be shown.
   int get length =>
       translations.fold(0, (n, t) => n + t.length) + (meaning?.length ?? 0);
 
-  /// [n] huruf pertama, urut terjemahan lalu makna.
+  /// The first [n] characters, translations first, then the meaning.
   AiDraft take(int n) {
     final out = <String>[];
     for (final t in translations) {
@@ -190,7 +188,7 @@ class AiDraft {
 
 final _marker = RegExp(r'^[ \t]*\[(T(\d+)|MAKNA)\][ \t]*', multiLine: true);
 
-/// Baris terakhir yang kayak penanda kepotong di batas chunk ("[T", "[MAK").
+/// Last line when it looks like a marker cut off at a chunk boundary ("[T", "[MAK").
 final _partialMarker = RegExp(r'(^|\n)[ \t]*\[[A-Z0-9]*$');
 
 List<({String label, String text})> _sections(String content) {
@@ -206,8 +204,8 @@ List<({String label, String text})> _sections(String content) {
   ];
 }
 
-/// Baca jawaban streaming sejauh yang udah dateng. Teks sebelum penanda
-/// pertama dibuang; penanda yang kepotong di ujung ditahan dulu.
+/// Parses the streamed answer received so far. Text before the first marker is
+/// dropped; a marker cut off at the end is held back.
 AiDraft parseAiDraft(String content) {
   final cut = _partialMarker.firstMatch(content);
   if (cut != null) content = content.substring(0, cut.start);
@@ -223,9 +221,8 @@ AiDraft parseAiDraft(String content) {
   return AiDraft(translations: translations, meaning: meaning);
 }
 
-/// Validasi jawaban streaming yang udah lengkap: penanda persis `[T1]` …
-/// `[T<expected>]`, `[MAKNA]`, gak ada yang kosong. Gagal →
-/// [AiError.invalidResponse].
+/// Validates a complete streamed answer: exact `[T1]` … `[T<expected>]` markers,
+/// `[MAKNA]`, and no empty section. Fails with [AiError.invalidResponse].
 AiReply parseAiSections(String content, int expected) {
   final sections = _sections(content);
   final labels = [for (final s in sections) s.label];

@@ -9,11 +9,12 @@ import '../database/sync_schema.dart';
 import '../services/file_storage.dart';
 import '../services/sync_service.dart';
 
-/// Hasil [SyncApplier.apply]: [held] = ditahan di `sync_inbox`.
+/// Result of [SyncApplier.apply]; [held] counts the records kept in `sync_inbox`.
 typedef ApplyOutcome = ({int applied, int held});
 
-/// Urutan nerapin dalam satu halaman: induk dulu (buku → sesi chat), anak
-/// belakangan, biar turn gak nyangkut di inbox cuma karena sesinya belum ada.
+/// The order records are applied in within one page: parents first (book, then
+/// chat session) and children after, so a turn isn't held in the inbox only
+/// because its session doesn't exist yet.
 const _order = [
   'setting',
   'book',
@@ -25,7 +26,7 @@ const _order = [
   'chat_turn',
 ];
 
-/// Fase turn chat yang masih jalan di device ini: gak ditimpa pull.
+/// Chat turn phases still running on this device; a pull must not overwrite them.
 const _runningPhases = {
   'preparing',
   'retrieving',
@@ -34,20 +35,23 @@ const _runningPhases = {
   'slow',
 };
 
-/// Nerapin record pull ke tabel lokal (docs/sync-protocol.md, Push and pull):
-/// kunci alami → ID lokal, aturan merge sama dengan server, record yang
-/// belum bisa diterapin ditahan di `sync_inbox`.
+/// Applies pulled records to the local tables (docs/sync-protocol.md, Push and pull).
+///
+/// Natural keys map to local ids, merge rules match the server's, and records
+/// that can't be applied yet are held in `sync_inbox`.
 class SyncApplier {
   SyncApplier(this._db, this._files);
 
   final AppDatabase _db;
   final FileStorage _files;
 
-  /// Terapin [records] dalam satu transaksi, plus simpan [cursor]
-  /// (`sync.pullSeq`) di transaksi yang sama. Trigger outbox tetap nyala;
-  /// baris outbox yang mereka tulis selama transaksi dihapus di akhir, jadi
-  /// data pull gak di-push balik. Kecuali [_keep]: kunci yang hasil merge-nya
-  /// beda dari server (data lokal ikut menang), itu memang harus di-push.
+  /// Applies [records] in one transaction and stores [cursor]
+  /// (`sync.pullSeq`) in the same transaction.
+  ///
+  /// The outbox triggers stay on; the outbox rows they write during the
+  /// transaction are deleted at the end, so pulled data isn't pushed back.
+  /// Keys in `keep` are the exception: their merge result differs from the
+  /// server's (local data also won), so they must be pushed.
   Future<ApplyOutcome> apply(
     List<PulledRecord> records, {
     String? cursor,
@@ -97,8 +101,8 @@ class SyncApplier {
     for (final f in deletedFiles) {
       await _files.deleteBookFiles(fileName: f.file, coverName: f.cover);
     }
-    // Tulisan SQL mentah gak keliatan stream Drift: kabarin biar Rak dkk.
-    // ikut ke-refresh.
+    // Drift streams don't see raw SQL writes, so notify them to refresh the
+    // shelf and other watchers.
     if (outcome.applied > 0) _notify();
     return outcome;
   }
@@ -111,10 +115,12 @@ class SyncApplier {
     });
   }
 
-  /// Buku Markdown dari dump cloud (`md-{bookKey}-{rev}.json.gz`, bentuk di
-  /// `SyncRepository`): buku + bab + paragraf dengan `groupIndex` apa adanya,
-  /// jadi kunci AI dari device lain langsung cocok. Metadata sisanya
-  /// diterapin [retryInbox] dari record bukunya.
+  /// Inserts a Markdown book from a cloud dump (`md-{bookKey}-{rev}.json.gz`,
+  /// shape described in `SyncRepository`).
+  ///
+  /// The book, chapters, and paragraphs are inserted with `groupIndex` as is,
+  /// so AI keys from other devices match immediately. [retryInbox] applies the
+  /// remaining metadata from the book's record.
   Future<void> insertMarkdown(
     Map<String, Object?> dump,
     Map<String, Object?> book,
@@ -161,12 +167,12 @@ class SyncApplier {
     _notify();
   }
 
-  /// Coba lagi semua yang ditahan (abis pull, abis buku keimpor, abis update
-  /// app). Yang tetap gak bisa, tetap di inbox.
+  /// Retries every held record (after a pull, after a book import, after an
+  /// app update). Records that still can't be applied stay in the inbox.
   Future<ApplyOutcome> retryInbox() async =>
       apply(await _inbox(), cursor: null);
 
-  /// Record buku di inbox yang bukunya belum ada di device: antrean download.
+  /// Returns the book records in the inbox whose book isn't on this device yet, which forms the download queue.
   Future<List<PulledRecord>> missingBooks() async => [
     for (final r in await _inbox())
       if (r.kind == 'book' && !r.deleted) r,
@@ -190,8 +196,8 @@ class SyncApplier {
     return i < 0 ? _order.length : i;
   }
 
-  /// true = selesai (diterapin, atau sengaja gak dipakai karena lokal
-  /// menang); false = tahan di inbox.
+  /// Returns true when the record is done (applied, or deliberately unused
+  /// because local won), and false to hold it in the inbox.
   Future<bool> _applyOne(
     PulledRecord r,
     Set<(String, String)> keep,
@@ -205,10 +211,8 @@ class SyncApplier {
     'setting' => _setting(r),
     'chat_session' => _chatSession(r),
     'chat_turn' => _chatTurn(r),
-    _ => Future.value(true), // kind yang gak dikenal: buang
+    _ => Future.value(true), // Unknown kind: drop it.
   };
-
-  // ---------------------------------------------------------------- lookup
 
   Future<QueryRow?> _bookRow(String bookKey) => _db
       .customSelect(
@@ -218,8 +222,9 @@ class SyncApplier {
       )
       .getSingleOrNull();
 
-  /// Bab buat record anak: cuma kalau buku ada dan `parserVersion` sama
-  /// (nomor bab & grup cuma stabil dalam satu versi parser).
+  /// Returns the chapter id for a child record, only if the book exists and
+  /// its `parserVersion` matches (chapter numbers and groups are stable only
+  /// within one parser version).
   Future<int?> _chapter(String bookKey, Map<String, Object?> d) async {
     final book = await _bookRow(bookKey);
     if (book == null) return null;
@@ -235,7 +240,7 @@ class SyncApplier {
     return ch?.read<int>('id');
   }
 
-  /// Bab dari kunci `{bookKey}/{sortOrder}/{groupIndex}` (hasil AI).
+  /// Resolves the chapter and group from an AI result key `{bookKey}/{sortOrder}/{groupIndex}`.
   Future<(int chapterId, int group)?> _aiChapter(
     String key,
     Map<String, Object?> d,
@@ -247,8 +252,8 @@ class SyncApplier {
     return id == null ? null : (id, group);
   }
 
-  /// `outbox` lokal punya perubahan buat kunci ini yang lebih baru dari
-  /// record server: lokal menang, nanti di-push.
+  /// Whether the local `outbox` holds a change for this key that is newer than
+  /// the server record; if so, local wins and is pushed later.
   Future<bool> _localNewer(PulledRecord r) async {
     final row = await _db
         .customSelect(
@@ -258,8 +263,6 @@ class SyncApplier {
         .getSingleOrNull();
     return row != null && row.read<int>('updated_at') > r.updatedAt;
   }
-
-  // ----------------------------------------------------------------- kinds
 
   Future<bool> _book(
     PulledRecord r,
@@ -279,14 +282,14 @@ class SyncApplier {
           cover: local.readNullable<String>('cover_name'),
         ));
       }
-      // Anak buku ini yang masih nunggu gak bakal kepake lagi.
+      // Held children of this book will never be used.
       await _db.customStatement(
         'DELETE FROM sync_inbox WHERE key = ? OR key LIKE ?',
         [r.key, '${r.key}/%'],
       );
       return true;
     }
-    if (local == null) return false; // tunggu download + impor
+    if (local == null) return false; // Wait for the download and import.
     final d = r.data!;
     final localWins = await _localNewer(r);
     int? sec(String col) => local.readNullable<int>(col);
@@ -325,8 +328,8 @@ class SyncApplier {
         local.read<int>('id'),
       ],
     );
-    // Data lokal ikut nyumbang (lebih baru, dibuka lebih awal, waktu baca
-    // lebih lama): server harus dapet hasil merge-nya.
+    // Local data contributed to the merge (newer, opened earlier, or more
+    // reading time), so the server must receive the merged result.
     if (localWins ||
         first != _sec(d['firstOpenedAt']) ||
         finished != _sec(d['finishedAt']) ||
@@ -371,7 +374,7 @@ class SyncApplier {
     if (chapter == null) return false;
     final book = (await _bookRow(parts.$1))!.read<int>('id');
     final started = _sec(d['startedAt'])!;
-    // Append-only: sesi yang udah ada (dari device ini) gak diubah.
+    // Append-only: a session that already exists (from this device) is left unchanged.
     await _db.customStatement(
       'INSERT INTO reading_sessions (book_id, chapter_id, started_at, seconds, '
       'start_char, end_char) SELECT ?, ?, ?, ?, ?, ? WHERE NOT EXISTS '
@@ -390,7 +393,7 @@ class SyncApplier {
     return true;
   }
 
-  /// `promptVersion` lebih tinggi menang, lalu `createdAt` terbaru.
+  /// Whether the remote AI record beats the local one: the higher `promptVersion` wins, then the newer `createdAt`.
   Future<bool> _remoteAiBetter(
     String table,
     (int, int) at,
@@ -477,7 +480,7 @@ class SyncApplier {
     return true;
   }
 
-  /// Sesi chat dari kunci `{bookKey}/{createdAt ms}`: (book id, created_at).
+  /// Resolves a chat session key `{bookKey}/{createdAt ms}` to (book id, created_at).
   Future<(int book, int created)?> _sessionRef(String key) async {
     final parts = _split(key, 1);
     if (parts == null) return null;
@@ -497,7 +500,8 @@ class SyncApplier {
 
   Future<bool> _chatSession(PulledRecord r) async {
     final ref = await _sessionRef(r.key);
-    if (ref == null) return r.deleted; // buku belum ada: tahan (kecuali hapus)
+    // The book doesn't exist yet: hold the record, unless it's a delete.
+    if (ref == null) return r.deleted;
     final id = await _sessionId(ref.$1, ref.$2);
     if (r.deleted) {
       if (id != null) {
@@ -542,7 +546,7 @@ class SyncApplier {
     final book = await _bookRow(bookKey);
     if (book == null) return false;
     final session = await _sessionId(book.read<int>('id'), created ~/ 1000);
-    if (session == null) return false; // sesinya nyusul
+    if (session == null) return false; // The session arrives later.
     final local = await _db
         .customSelect(
           'SELECT phase FROM chat_turns WHERE session_id = ? AND sequence = ?',
@@ -586,8 +590,6 @@ class SyncApplier {
     return true;
   }
 
-  // ----------------------------------------------------------------- inbox
-
   Future<void> _hold(PulledRecord r) => _db
       .into(_db.syncInbox)
       .insertOnConflictUpdate(
@@ -605,11 +607,11 @@ class SyncApplier {
   )..where((i) => i.kind.equals(kind) & i.key.equals(key))).go();
 }
 
-/// Kunci cursor pull di `settings` (gak ikut sync): `{userId}:{seq}`.
+/// The `settings` key holding the pull cursor as `{userId}:{seq}`; it isn't synced.
 const pullCursorKey = 'sync.pullSeq';
 
-/// Pecah kunci jadi (kunci buku, [numbers] angka terakhir), dari kanan:
-/// kunci buku Markdown bisa aja ngandung `/`.
+/// Splits a key into (book key, last [numbers] integers), parsing from the
+/// right because a Markdown book key can contain `/`.
 (String, List<int>)? _split(String key, int numbers) {
   final parts = key.split('/');
   if (parts.length <= numbers) return null;
@@ -620,7 +622,7 @@ const pullCursorKey = 'sync.pullSeq';
   return (parts.sublist(0, parts.length - numbers).join('/'), tail.cast<int>());
 }
 
-/// ISO 8601 → detik epoch (format kolom `DateTime` Drift).
+/// Converts an ISO 8601 string to epoch seconds, the format of Drift `DateTime` columns.
 int? _sec(Object? iso) =>
     iso is String ? DateTime.parse(iso).millisecondsSinceEpoch ~/ 1000 : null;
 

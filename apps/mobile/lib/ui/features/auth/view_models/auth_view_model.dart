@@ -7,13 +7,13 @@ import '../../../../data/services/auth_service.dart';
 import '../../../../data/services/backend_client.dart';
 
 enum AuthStatus {
-  /// Belum ada sesi di HP: router buka layar Masuk.
+  /// No session on the phone: the router opens the Masuk screen.
   signedOut,
 
-  /// Ada sesi (offline juga): app jalan.
+  /// Has a session (offline too): the app runs.
   signedIn,
 
-  /// Server balas 401: app tetap jalan, Rak nampilin banner "Login lagi".
+  /// Server replied 401: the app keeps running, the shelf shows a "Login lagi" banner.
   expired,
 }
 
@@ -22,10 +22,10 @@ class AuthState {
 
   final AuthStatus status;
 
-  /// Null sampai `/v1/me` kejawab (atau offline).
+  /// Null until `/v1/me` answers (or offline).
   final AuthUser? user;
 
-  /// Banner sesi habis ditutup: muncul lagi saat app dibuka ulang.
+  /// Session-expired banner dismissed: shows again when the app is reopened.
   final bool bannerDismissed;
 
   bool get showExpiredBanner =>
@@ -42,8 +42,9 @@ class AuthState {
   );
 }
 
-/// Sesi app-wide (docs/backend.md, Authentication and accounts). Cek awal cuma baca token
-/// lokal; `/v1/me` dicek di latar tanpa nahan app.
+/// App-wide session (docs/backend.md, Authentication and accounts). The initial
+/// check only reads the local token; `/v1/me` is checked in the background
+/// without holding up the app.
 class AuthController extends AsyncNotifier<AuthState> {
   AuthRepository get _repo => ref.read(authRepositoryProvider);
 
@@ -64,21 +65,21 @@ class AuthController extends AsyncNotifier<AuthState> {
       if (e.statusCode == 401) {
         _set((s) => s.copyWith(status: AuthStatus.expired));
       }
-      // Offline / server mati: tetap jalan, cek lagi pas app dibuka ulang.
+      // Offline / server down: keep running, check again when the app reopens.
     }
   }
 
-  /// Login (atau login lagi) berhasil dan sesinya udah disimpan.
+  /// Login (or re-login) succeeded and its session is saved.
   void signedIn(AuthUser user) =>
       state = AsyncData(AuthState(AuthStatus.signedIn, user: user));
 
-  /// Logout: data lokal tetap, router balik ke layar Masuk.
+  /// Logout: local data stays, the router returns to the Masuk screen.
   Future<void> signOut() async {
     await _repo.signOut();
     state = const AsyncData(AuthState(AuthStatus.signedOut));
   }
 
-  /// Hapus akun di server, lalu balik ke layar Masuk. Gagal → dilempar.
+  /// Deletes the account on the server, then returns to the Masuk screen. Throws on failure.
   Future<void> deleteAccount() async {
     await _repo.deleteAccount();
     state = const AsyncData(AuthState(AuthStatus.signedOut));

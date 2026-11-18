@@ -3,16 +3,16 @@ import { userPrefix } from "../../lib/storage";
 import { deleteUser } from "./repo";
 
 /**
- * Halaman R2 per request hapus akun: tiap halaman = 1 list + 1 delete subrequest,
- * jauh di bawah batas 50 subrequest.
+ * R2 pages per account-deletion request: each page = 1 list + 1 delete subrequest,
+ * far below the 50-subrequest limit.
  */
 export const DELETE_PAGES_PER_REQUEST = 10;
 
 export type DeleteResult = { status: "deleted" } | { status: "pending" };
 
 /**
- * Hapus semua objek R2 user dulu, baru baris D1 (sesi & akun ikut cascade).
- * Objek kebanyakan → `pending`: user belum dihapus, client panggil lagi.
+ * Deletes all of the user's R2 objects first, then the D1 row (sessions and accounts cascade).
+ * Too many objects → `pending`: the user is not deleted yet, the client calls again.
  */
 export async function deleteAccount(db: Db, bucket: R2Bucket, userId: string): Promise<DeleteResult> {
   const prefix = userPrefix(userId);

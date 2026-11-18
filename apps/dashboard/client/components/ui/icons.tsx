@@ -42,7 +42,7 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react";
 
 // Hugeicons stroke-rounded (free), the same set the mobile app uses. Names follow the board's
-// icon list (komponen 1) so screens read like the design.
+// icon list (design component 1) so screens read like the design.
 const ICONS = {
   grid: GridViewIcon,
   user: UserIcon,

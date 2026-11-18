@@ -2,7 +2,7 @@ import type { HTMLAttributes, ReactNode } from "react";
 import { cn } from "../../lib/cn";
 import { Icon, type IconName } from "./icons";
 
-/** Komponen 2, Kartu: padding 24, radius 20, sheet, no border, flat (no shadow). */
+/** Design component 2, Card: padding 24, radius 20, sheet, no border, flat (no shadow). */
 export function Card({ className, ...props }: HTMLAttributes<HTMLElement>) {
   return <section className={cn("flex flex-col gap-3.5 rounded-card bg-sheet p-6", className)} {...props} />;
 }
@@ -21,7 +21,7 @@ export function CardHeader({ id, title, subtitle, action }: { id?: string; title
   );
 }
 
-/** Komponen 1, kartu angka: label left, icon tile right, 36/600 number, caption pinned to the bottom. */
+/** Design component 1, stat card: label left, icon tile right, 36/600 number, caption pinned to the bottom. */
 export function StatCard({ label, icon, value, note, danger }: { label: string; icon: IconName; value: ReactNode; note?: ReactNode; danger?: boolean }) {
   return (
     <section aria-label={label} className="flex min-h-[140px] flex-col gap-3.5 rounded-card bg-sheet px-[22px] py-5">

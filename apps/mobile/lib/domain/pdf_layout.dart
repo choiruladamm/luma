@@ -155,7 +155,6 @@ class PdfLayoutEngine {
   }) {
     if (glyphs.isEmpty) return const [];
 
-    // Filter out invisible control glyphs while retaining spaces
     final valid = <PdfGlyph>[];
     for (final g in glyphs) {
       final c = cleanText(g.char);
@@ -173,7 +172,6 @@ class PdfLayoutEngine {
 
     if (valid.isEmpty) return const [];
 
-    // Detect two-column layout on this page
     final columns = _detectColumns(valid);
     final lines = <PdfLine>[];
 
@@ -187,24 +185,21 @@ class PdfLayoutEngine {
   List<List<PdfGlyph>> _detectColumns(List<PdfGlyph> glyphs) {
     if (glyphs.isEmpty) return const [];
 
-    // Check if there is a distinct vertical column gap in the middle region
     final minX = glyphs.map((g) => g.bounds.left).reduce(math.min);
     final maxX = glyphs.map((g) => g.bounds.right).reduce(math.max);
     final width = maxX - minX;
 
     if (width <= 0.2) {
-      // Too narrow to be multi-column
       return [glyphs];
     }
 
-    // Build horizontal histogram to find gutter (excluding wide spanners)
     final bucketCount = 50;
     final buckets = List<int>.filled(bucketCount, 0);
 
     for (final g in glyphs) {
       if (g.char.trim().isEmpty) continue;
       if (g.bounds.width > width * 0.5) {
-        continue; // Exclude wide spanner from gutter detection
+        continue;
       }
       final bStart = (((g.bounds.left - minX) / width) * bucketCount)
           .floor()
@@ -217,7 +212,6 @@ class PdfLayoutEngine {
       }
     }
 
-    // Look for a gutter in the central 30%..70% of the page
     final startCheck = (bucketCount * 0.30).floor();
     final endCheck = (bucketCount * 0.70).floor();
 
@@ -231,7 +225,6 @@ class PdfLayoutEngine {
       }
     }
 
-    // If there is a clear empty or nearly-empty gutter
     final leftMax = buckets.sublist(0, startCheck).reduce(math.max);
     final rightMax = buckets.sublist(endCheck).reduce(math.max);
 
@@ -260,7 +253,6 @@ class PdfLayoutEngine {
         if (fullWidthSpanners.isEmpty) {
           return [leftCol, rightCol];
         } else {
-          // If there are top headings spanning full width, place them before columns
           final topSpanners = fullWidthSpanners
               .where(
                 (g) =>
@@ -366,7 +358,6 @@ class PdfLayoutEngine {
         maxR = math.max(maxR, g.bounds.right);
         maxB = math.max(maxB, g.bounds.bottom);
 
-        // Check superscript: significantly smaller and shifted upwards
         if (g.effectiveFontHeight < medianH * 0.8 &&
             g.bounds.bottom < (minT + medianH * 0.7)) {
           hasSup = true;
@@ -554,7 +545,6 @@ class PdfLayoutEngine {
   }) {
     if (allLines.isEmpty) return const [];
 
-    // Group lines by normalized content in header (< margin) and footer (> 1 - margin)
     final headerCandidates = <String, Set<int>>{};
     final footerCandidates = <String, Set<int>>{};
 
@@ -589,11 +579,9 @@ class PdfLayoutEngine {
           line.bounds.bottom >= (1.0 - headerFooterMarginRatio);
       final norm = _normalizeHeaderPattern(line.text);
 
-      // Check recurring header/footer
       if (isHeaderZone && dropHeaders.contains(norm)) continue;
       if (isFooterZone && dropFooters.contains(norm)) continue;
 
-      // Check standalone page number
       if ((isHeaderZone || isFooterZone) &&
           _isStandalonePageNumber(line.text)) {
         continue;
@@ -695,7 +683,6 @@ class PdfLayoutEngine {
     for (var i = 0; i < lines.length; i++) {
       final line = lines[i];
 
-      // 1. Scene break detection: "***", "* * *", "---", "###"
       if (_isSceneBreak(line.text)) {
         flushCurrent();
         blocks.add(
@@ -709,9 +696,7 @@ class PdfLayoutEngine {
         continue;
       }
 
-      // 2. Drop cap handling: single large letter preceding text
       if (_isDropCap(line, lines, i, bodyFontSize)) {
-        // Merge drop cap letter with next line
         final nextLine = lines[i + 1];
         final mergedLine = PdfLine(
           text: '${line.text}${nextLine.text}',
@@ -733,7 +718,6 @@ class PdfLayoutEngine {
         continue;
       }
 
-      // 3. Heading detection: font scale >= 1.2x body or pattern (Chapter N, Bab N, Part)
       final isHeading = _isHeadingLine(line, bodyFontSize);
 
       if (isHeading) {
@@ -771,7 +755,6 @@ class PdfLayoutEngine {
       }
       headingTail = null;
 
-      // 4. Paragraph boundary check against previous line in currentLines
       if (currentLines.isNotEmpty) {
         final prev = currentLines.last;
         final isNewPara = _isParagraphBoundary(prev, line, bodyFontSize, stats);
@@ -786,7 +769,6 @@ class PdfLayoutEngine {
 
     flushCurrent();
 
-    // 5. Connect hyphenated words and cross-page paragraphs
     return _postProcessBlocks(blocks);
   }
 
@@ -809,7 +791,7 @@ class PdfLayoutEngine {
     if (line.fontHeight >= (bodyFontSize * headingFontScale)) {
       return true;
     }
-    // Pattern: Chapter N, Bab N, Part N, Act N, Scene N
+    // Chapter N, Bab N, Part N, Act N, Scene N
     if (RegExp(
       r'^(?:chapter|bab|part|bagian|act|scene)\s+(?:\d+|[ivxlcdm]+)',
       caseSensitive: false,
@@ -853,10 +835,7 @@ class PdfLayoutEngine {
     double bodyFontSize,
     _FlowStats stats,
   ) {
-    // Different page
     if (curr.pageNumber != prev.pageNumber) {
-      // Connect across pages if prev does not end with terminal punctuation
-      // and curr starts with a lowercase letter
       if (!_hasTerminalPunctuation(prev.text.trim()) &&
           RegExp(r'^[a-z]').hasMatch(curr.text.trim())) {
         return false;
@@ -912,14 +891,12 @@ class PdfLayoutEngine {
     for (var i = 0; i < lines.length; i++) {
       var t = lines[i].text.trim();
 
-      // Remove superscript digits if marked
       if (lines[i].hasSuperscript) {
         t = t.replaceAll(RegExp(r'[\u00B2\u00B3\u00B9\u2070-\u207F]'), '');
       }
 
       if (i > 0) {
         final prev = sb.toString();
-        // Check hyphenation: if prev ends with '-', and current starts with lowercase
         if (prev.endsWith('-') &&
             RegExp(r'^[a-z]').hasMatch(t) &&
             !_keepsHyphen(prev)) {
@@ -954,7 +931,6 @@ class PdfLayoutEngine {
     while (i < blocks.length) {
       final current = blocks[i];
 
-      // Cross-page paragraph join check
       if (i + 1 < blocks.length &&
           current.type == ParagraphType.paragraph &&
           blocks[i + 1].type == ParagraphType.paragraph &&
@@ -963,8 +939,6 @@ class PdfLayoutEngine {
           blocks[i + 1].pageNumber > blocks[i].pageNumber) {
         final next = blocks[i + 1];
 
-        // If current paragraph doesn't end with terminal punctuation
-        // and next starts with lowercase letter or hyphen continuation
         if (!_hasTerminalPunctuation(current.text.trim()) &&
             (RegExp(r'^[a-z]').hasMatch(next.text.trim()) ||
                 current.text.endsWith('-'))) {

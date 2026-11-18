@@ -8,7 +8,7 @@ import { killSwitch } from "../../src/middleware/kill-switch";
 import disabled from "../fixtures/contract/error-service-disabled.json";
 import { countingD1 } from "../helpers/budget";
 
-/** App mini dengan middleware yang dipasang per grup route di fitur nanti. */
+/** A mini app with the middleware that later features mount per route group. */
 function appWith(touchDb: () => void) {
   const app = new Hono<AppEnv>();
   app.use("/v1/sync/*", killSwitch("SYNC_ENABLED"), limitBody());

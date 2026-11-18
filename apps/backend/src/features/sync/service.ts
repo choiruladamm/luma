@@ -3,7 +3,7 @@ import { ApiError } from "../../lib/errors";
 import { type Data, type Kind, merge, type SyncRecord } from "./merge";
 import { findRecords, pullRows, syncUsage, writeRecords } from "./repo";
 
-/** Maks record per push (docs/sync-protocol.md, Sync quotas and compatibility). */
+/** Max records per push (docs/sync-protocol.md, Sync quotas and compatibility). */
 export const MAX_PUSH_RECORDS = 500;
 
 export type PushRecord = {
@@ -18,7 +18,7 @@ export type PushResult = { seq: number; applied: number };
 
 const id = (r: { kind: string; key: string }) => `${r.kind}\u0000${r.key}`;
 
-/** Kuota sync per user dari `vars` (docs/sync-protocol.md, Sync quotas and compatibility). */
+/** Per-user sync quotas from `vars` (docs/sync-protocol.md, Sync quotas and compatibility). */
 export type SyncLimits = { storageBytes: number; dailyWrites: number };
 
 export const syncLimits = (env: Env): SyncLimits => ({
@@ -26,15 +26,15 @@ export const syncLimits = (env: Env): SyncLimits => ({
   dailyWrites: Number(env.SYNC_DAILY_WRITES),
 });
 
-/** Ukuran record di D1, rumusnya sama dengan `size` di repo.ts dan backfill migrasi 0005. */
+/** Record size in D1, the same formula as `size` in repo.ts and the migration 0005 backfill. */
 const recordSize = (r: SyncRecord) => r.key.length + (r.data ? JSON.stringify(r.data).length : 0);
 
 /**
- * Tolak batch yang bikin user lewat kuota: baris ditulis per hari UTC (kuota tulis
- * D1 100rb/hari dipakai bareng semua user) → 429 sampai tengah malam UTC; total
- * ukuran record → 413. Batch yang mengecilkan data selalu boleh.
- * ponytail: dicek di luar batch tulis; push paralel bisa lewat maks satu batch
- * (500 baris) per request yang barengan. Cukup selama rate limit per user ada.
+ * Rejects a batch that takes the user over quota: rows are written per UTC day (the D1
+ * 100k/day write quota is shared by all users) → 429 until midnight UTC; total
+ * record size → 413. A batch that shrinks data is always allowed.
+ * ponytail: checked outside the write batch; parallel pushes can get at most one extra batch
+ * (500 rows) past it per concurrent request. Fine as long as the per-user rate limit exists.
  */
 function assertQuota(usage: { bytes: number; day: number; rows: number }, limits: SyncLimits, rows: number, bytesDelta: number, now: Date) {
   const day = Math.floor(now.getTime() / DAY_MS);
@@ -50,10 +50,10 @@ function assertQuota(usage: { bytes: number; day: number; rows: number }, limits
 }
 
 /**
- * Merge batch push ke `records`: 1 SELECT record lama, merge di JS
- * ([merge]), lalu 1 batch atomik yang nulis yang berubah aja (repo.ts).
- * ponytail: merge dibaca di luar transaksi; dua device push key yang sama di
- * milidetik yang sama → yang terakhir nulis menang. Cukup buat satu user.
+ * Merges a push batch into `records`: 1 SELECT of the old records, merge in JS
+ * ([merge]), then 1 atomic batch that writes only what changed (repo.ts).
+ * ponytail: the merge is read outside the transaction; two devices pushing the same key in
+ * the same millisecond → last write wins. Enough for a single user.
  */
 export async function push(
   d1: D1Database,
@@ -96,12 +96,12 @@ export async function push(
   return { seq, applied: changed.size };
 }
 
-/** Maks record per halaman pull. */
+/** Max records per pull page. */
 export const MAX_PULL_RECORDS = 500;
 
 /**
- * Halaman pull: record dengan `seq` > [since] udah berupa JSON dari SQL, Worker
- * cuma nyambung string. Ambil [limit] + 1 buat tahu masih ada halaman berikut.
+ * Pull page: records with `seq` > [since] are already JSON from SQL, the Worker only
+ * concatenates strings. Fetches [limit] + 1 to know whether another page exists.
  */
 export async function pull(d1: D1Database, userId: string, since: number, limit: number): Promise<string> {
   const results = await pullRows(d1, userId, since, limit + 1);

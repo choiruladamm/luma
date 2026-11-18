@@ -19,13 +19,13 @@ class AppMenuItem<T> {
   final List<List<dynamic>>? icon;
   final bool destructive;
 
-  /// Opsi yang lagi aktif di menu pilihan (dapet centang).
+  /// The currently active option in the selection menu (gets a check).
   final bool selected;
 }
 
-/// Menu pilihan yang nempel ke widget [context], mis. "Urutin pake" (board
-/// Komponen 04, baris 46, centang di yang [AppMenuItem.selected]). Menu tekan
-/// lama buku ada di `book_menu.dart`.
+/// Selection menu anchored to the widget at [context], e.g. "Urutin pake"
+/// (board Komponen 04, row 46, check on the [AppMenuItem.selected] one). The
+/// book long-press menu is in `book_menu.dart`.
 Future<T?> showAppMenu<T>(
   BuildContext context,
   List<AppMenuItem<T>> items, {

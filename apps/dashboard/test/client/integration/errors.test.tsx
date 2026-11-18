@@ -29,7 +29,7 @@ describe("error screens", () => {
 
   it("a screen that crashes shows the error card in the shell, with reload and details", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
-    // A malformed page (total missing) used to throw inside the footer and blank the app.
+    // A malformed page (total missing) must not throw in the footer and blank the whole app.
     server.use(http.get(`${API}/users`, () => HttpResponse.json({ items: [user(1)], total: null, page: 1, pageCount: null })));
     renderApp("/users");
     expect(await screen.findByRole("alert")).toHaveTextContent("Ada yang error");

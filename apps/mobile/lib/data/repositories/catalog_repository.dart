@@ -7,26 +7,26 @@ import '../../domain/catalog/catalog_query.dart';
 import '../../domain/catalog/catalog_row.dart';
 import '../database/app_database.dart';
 
-/// Rak bookshelf Gutenberg + jumlah bukunya.
+/// A Gutenberg bookshelf with its book count.
 typedef CatalogShelf = ({String name, int count});
 
-/// Keadaan katalog lokal; [count] 0 = belum pernah diunduh.
+/// State of the local catalog; a [count] of 0 means it was never downloaded.
 typedef CatalogStats = ({int count, DateTime? syncedAt, String? lastModified});
 
-/// Katalog lokal Gutenberg di tabel `catalog_books` (docs/discover.md).
-/// [search] lewat FTS5 `catalog_fts` (prefix per kata, urut bm25, judul
-/// bobot 10× penulis); [byAuthor] / [byBookshelf] cocokin token JSON.
+/// Local Gutenberg catalog in the `catalog_books` table (docs/discover.md).
+/// [search] uses FTS5 `catalog_fts` (prefix per word, ordered by bm25, title weighted
+/// 10× author); [byAuthor] / [byBookshelf] match JSON tokens.
 class CatalogRepository {
   CatalogRepository(this._db);
 
   final AppDatabase _db;
   static const pageSize = 25;
 
-  /// Ganti seluruh isi + index FTS dalam satu transaksi: gagal di tengah =
-  /// tabel lama utuh. Meta ([saveMeta]) ditulis service setelah ini sukses.
+  /// Replaces all rows and the FTS index in one transaction: a failure midway leaves
+  /// the old table intact. The service writes the meta ([saveMeta]) after this succeeds.
   Future<void> replaceAll(List<CatalogRow> rows) => _db.transaction(() async {
     await _db.delete(_db.catalogBooks).go();
-    // Per 2.000 baris biar satu statement gak nahan 62k variabel di memori.
+    // Insert 2,000 rows at a time so one statement doesn't hold 62k variables in memory.
     for (var i = 0; i < rows.length; i += 2000) {
       final chunk = rows.sublist(i, (i + 2000).clamp(0, rows.length));
       await _db.batch(
@@ -47,7 +47,7 @@ class CatalogRepository {
     await _db.rebuildCatalogFts();
   });
 
-  /// Satu buku by Text#; null kalau gak ada di katalog.
+  /// Returns one book by its Gutenberg Text# id, or null if it isn't in the catalog.
   Future<CatalogRow?> byId(int id) async {
     final row = await (_db.select(
       _db.catalogBooks,
@@ -55,10 +55,10 @@ class CatalogRepository {
     return row == null ? null : _toRow(row);
   }
 
-  /// Tiap kata [query] jadi prefix (`jane au` → Jane Austen), semua kata
-  /// harus ketemu di judul atau penulis. Urut relevansi bm25 (judul 10×
-  /// penulis), seri → judul. Query tanpa kata = kosong: daftar populer bukan
-  /// urusan katalog lokal.
+  /// Turns each word of [query] into a prefix (`jane au` → Jane Austen); every word
+  /// must match the title or author. Ordered by bm25 relevance (title 10× author),
+  /// ties by title. A query without words returns nothing: the popular list is not
+  /// the local catalog's job.
   Future<List<CatalogRow>> search(String query, {int page = 1}) async {
     final match = catalogMatchQuery(query);
     if (match == null) return const [];
@@ -79,7 +79,7 @@ class CatalogRepository {
     return [for (final r in rows) _toRow(_db.catalogBooks.map(r.data))];
   }
 
-  /// Total hasil [search], buat "N hasil" dan tahu masih ada halaman.
+  /// Returns the total number of [search] results, for "N hasil" and to know whether more pages exist.
   Future<int> searchCount(String query) async {
     final match = catalogMatchQuery(query);
     if (match == null) return 0;
@@ -93,11 +93,11 @@ class CatalogRepository {
     return row.read<int>('n');
   }
 
-  /// Buku dari [name] persis (nama kayak di `authors`), urut judul.
+  /// Returns books by exactly [name] (spelled as in `authors`), ordered by title.
   Future<List<CatalogRow>> byAuthor(String name, {int page = 1}) =>
       _page(_authorWhere(name), page);
 
-  /// Jumlah buku [name] di katalog, buat "N buku lain".
+  /// Returns the number of books by [name] in the catalog, for "N buku lain".
   Future<int> countByAuthor(String name) => _total(_authorWhere(name));
 
   Future<List<CatalogRow>> byBookshelf(String name, {int page = 1}) =>
@@ -106,15 +106,15 @@ class CatalogRepository {
   _Where _authorWhere(String name) =>
       (b) => _has(b.authorsJson, _json({'name': name}));
 
-  /// `"name":"Austen, Jane"` / `"Harvard Classics"`: cocokin token JSON
-  /// persis, tanpa kolom pivot.
+  /// Matches `"name":"Austen, Jane"` / `"Harvard Classics"` as an exact JSON token,
+  /// without a pivot column.
   static String _json(Object value) {
     final s = jsonEncode(value);
     return value is Map ? s.substring(1, s.length - 1) : s;
   }
 
-  /// `instr(lower(col), lower(q)) > 0`: substring polos buat token JSON,
-  /// `%` dan `_` bukan wildcard (LIKE butuh ESCAPE).
+  /// `instr(lower(col), lower(q)) > 0`: a plain substring match on JSON tokens;
+  /// `%` and `_` are not wildcards (LIKE would need ESCAPE).
   static Expression<bool> _has(Expression<String> column, String q) =>
       FunctionCallExpression<int>('instr', [
         column.lower(),
@@ -141,7 +141,7 @@ class CatalogRepository {
     return row.read(n)!;
   }
 
-  /// Semua bookshelf + jumlah buku, terbanyak dulu.
+  /// Returns every bookshelf with its book count, largest first.
   Future<List<CatalogShelf>> bookshelves() async {
     final rows = await _db
         .customSelect(
@@ -175,8 +175,8 @@ class CatalogRepository {
 
   Future<bool> isSynced() async => (await stats()).count > 0;
 
-  /// [lastModified] = header `Last-Modified` dump, dikirim balik sebagai
-  /// `If-Modified-Since`. Null = jangan ubah yang tersimpan.
+  /// [lastModified] is the dump's `Last-Modified` header, sent back later as
+  /// `If-Modified-Since`. Null leaves the stored value unchanged.
   Future<void> saveMeta({
     required DateTime syncedAt,
     String? lastModified,
@@ -216,7 +216,7 @@ final catalogRepositoryProvider = Provider<CatalogRepository>(
   (ref) => CatalogRepository(ref.watch(appDatabaseProvider)),
 );
 
-/// Jumlah buku + kapan terakhir sync (baris Katalog buku di Pengaturan).
+/// Book count and last sync time (the "Katalog buku" row in Pengaturan).
 final catalogStatsProvider = StreamProvider<CatalogStats>(
   (ref) => ref.watch(catalogRepositoryProvider).watchStats(),
 );

@@ -6,14 +6,14 @@ import '../../domain/chat_exploration.dart';
 import '../../domain/models/book_chat.dart';
 import '../database/app_database.dart';
 
-/// Catatan per bab untuk pertanyaan seluruh buku. Kunci: buku +
-/// revision + bab + manifest window bab + policy. Hanya ditulis setelah bab
-/// itu selesai dibaca dan tervalidasi; dibaca saat send eksplisit berikutnya.
+/// Per-chapter notes for whole-book questions. Key: book + revision + chapter +
+/// chapter window manifest + policy. Written only after the chapter has been read
+/// and validated; read on the next explicit send.
 class ChatNotesRepository {
   ChatNotesRepository(this.db);
   final AppDatabase db;
 
-  /// Catatan bab yang masih cocok dengan [manifests] (chapterId → manifest).
+  /// Returns chapter notes that still match [manifests] (chapterId → manifest).
   Future<Map<int, List<ChatCachedNote>>> load(
     ChatBookRef book,
     Map<int, String> manifests,
@@ -34,13 +34,13 @@ class ChatNotesRepository {
       try {
         result[row.chapterId] = decodeChatCachedNotes(row.notes);
       } on FormatException {
-        continue; // Baris rusak diabaikan; bab dibaca ulang dan ditimpa.
+        continue; // A corrupt row is ignored; the chapter is re-read and overwritten.
       }
     }
     return result;
   }
 
-  /// Simpan/timpa catatan satu bab. Transaksi pendek, di luar network.
+  /// Saves or overwrites one chapter's notes. Keep the transaction short and make no network calls inside it.
   Future<void> save(
     ChatBookRef book, {
     required int chapterId,

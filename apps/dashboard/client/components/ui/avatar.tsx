@@ -3,7 +3,7 @@ import { cn } from "../../lib/cn";
 const PALETTE = ["bg-[var(--c-av0)]", "bg-[var(--c-av1)]", "bg-[var(--c-av2)]", "bg-[var(--c-av3)]", "bg-[var(--c-av4)]", "bg-[var(--c-av5)]"];
 const SIZES = { 36: "size-9 text-body", 40: "size-10 text-card", 72: "size-[72px] text-[28px]" } as const;
 
-/** Same email → same color, every time (komponen 2, Tabel). */
+/** Same email → same color, every time (design component 2, Table). */
 export function avatarColor(seed: string) {
   let hash = 0;
   for (const ch of seed) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;

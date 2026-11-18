@@ -27,12 +27,12 @@ import '../ui/features/shell/views/app_shell.dart';
 abstract final class Routes {
   static const home = '/';
 
-  /// Layar Masuk (login wajib, board Akun 01). Di luar shell: tanpa bottom bar.
+  /// Masuk screen (login required, board Akun 01). Outside the shell: no bottom bar.
   static const login = '/login';
   static const discover = '/discover';
 
-  /// Detail buku katalog; `extra` = `CatalogBook` (kepala layar tanpa nunggu
-  /// jaringan). Di luar shell: bar tab ke-hide.
+  /// Catalog book detail; `extra` = `CatalogBook` (the header shows without waiting
+  /// for the network). Outside the shell: the tab bar is hidden.
   static String catalogBook(CatalogBook b) =>
       '/discover/book/${b.sourceId}/${Uri.encodeComponent(b.externalId)}';
   static const settings = '/settings';
@@ -47,15 +47,15 @@ abstract final class Routes {
   static String chatSessions(int bookId) => '${chat(bookId)}/sessions';
   static String reader(int bookId) => '/reader/$bookId';
 
-  /// Bedahin satu grup. Cuma di-`push` dari sheet Artinya: sheet-nya tetep
-  /// di bawah, balik = balik ke sheet.
+  /// Bedahin for one group. Only `push`ed from the Artinya sheet: the sheet stays
+  /// underneath, going back returns to the sheet.
   static String breakdown(int bookId, int chapterId, int groupIndex) =>
       '/reader/$bookId/breakdown/$chapterId/$groupIndex';
 }
 
-// Sheet artinya, Aa, dan Daftar isi bukan route: pakai showModalBottomSheet.
+// The Artinya, Aa, and Daftar isi sheets are not routes: they use showModalBottomSheet.
 final routerProvider = Provider<GoRouter>((ref) {
-  // Status sesi berubah → router ngecek ulang redirect.
+  // A session status change → the router re-checks the redirect.
   final authChanges = ValueNotifier(0);
   ref.listen(authControllerProvider, (_, _) => authChanges.value++);
   ref.onDispose(authChanges.dispose);
@@ -68,7 +68,7 @@ final routerProvider = Provider<GoRouter>((ref) {
     ),
     routes: [
       GoRoute(path: Routes.login, builder: (_, _) => const LoginView()),
-      // Tab Rak · Cari buku · Atur, urutan = LumaTab.values.
+      // Tabs Rak · Cari buku · Atur, order = LumaTab.values.
       StatefulShellRoute.indexedStack(
         builder: (_, _, shell) => AppShell(shell: shell),
         branches: [
@@ -140,7 +140,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                   groupIndex: int.parse(state.pathParameters['groupIndex']!),
                 ),
               );
-              // Kurangi gerakan: fade, gak geser.
+              // Reduce motion: fade, no slide.
               if (!MediaQuery.disableAnimationsOf(context)) {
                 return MaterialPage(key: state.pageKey, child: view);
               }
@@ -254,12 +254,12 @@ final routerProvider = Provider<GoRouter>((ref) {
   return router;
 });
 
-/// Nyala sebentar pas "Lanjut baca" di layar intip: halaman yang keluar langsung
-/// ilang (tanpa animasi geser) biar pindah ke reader terasa mulus.
+/// Briefly on during "Lanjut baca" on the peek screen: the outgoing page vanishes
+/// immediately (no slide animation) so the move to the reader feels smooth.
 final instantRouteExit = ValueNotifier<bool>(false);
 
-/// Layar chat + intip sumber: geser masuk seperti [_slidePage], tapi keluarnya
-/// bisa instan lewat [instantRouteExit] ("Lanjut baca"). Kurangi gerakan: fade.
+/// Chat + source peek screen: slides in like [_slidePage], but can exit instantly
+/// via [instantRouteExit] ("Lanjut baca"). Reduce motion: fade.
 Page<void> _instantExitPage(
   BuildContext context,
   GoRouterState state,
@@ -287,10 +287,10 @@ Page<void> _instantExitPage(
             child: child,
           );
         }
-        // "Lanjut baca": rute chat dicabut go_router 1-2 frame setelah layar
-        // intip, jadi chat dikosongin begitu flag nyala (masih ketutup intip)
-        // biar gak kedip. Intip tetap nutup diam sampai animasi baliknya lewat
-        // setengah, baru ilang.
+        // "Lanjut baca": go_router removes the chat route 1-2 frames after the peek
+        // screen, so the chat is emptied as soon as the flag is on (still covered by the
+        // peek) to avoid a flash. The peek still closes quietly until its reverse animation
+        // is past halfway, then disappears.
         final reversing = animation.status == AnimationStatus.reverse;
         if (holdOnInstantExit) {
           return reversing && animation.value <= 0.5
@@ -309,8 +309,9 @@ Page<void> _instantExitPage(
   );
 }
 
-/// Geser ala iOS di semua platform (opaque, ada parallax + swipe-back), biar
-/// header dua layar gak numpuk transparan pas pindah. Kurangi gerakan: fade.
+/// iOS-style slide on every platform (opaque, with parallax + swipe-back), so the
+/// headers of the two screens don't stack transparently during the transition.
+/// Reduce motion: fade.
 Page<void> _slidePage(BuildContext context, GoRouterState state, Widget child) {
   if (!MediaQuery.disableAnimationsOf(context)) {
     return CupertinoPage<void>(key: state.pageKey, child: child);
@@ -340,9 +341,9 @@ class _InvalidChatRoute extends StatelessWidget {
   );
 }
 
-/// Login wajib (docs/backend.md, Authentication and accounts). Status belum kebaca / gagal
-/// dibaca = gak redirect (app gak kekunci karena secure storage error). Sesi
-/// habis boleh buka layar Masuk ("Login lagi" dari banner).
+/// Login required (docs/backend.md, Authentication and accounts). Status not yet
+/// read / failed to read = no redirect (the app isn't locked out by a secure storage
+/// error). An expired session may open the Masuk screen ("Login lagi" from the banner).
 String? authRedirect(AuthStatus? status, String location) {
   final atLogin = location == Routes.login;
   if (status == AuthStatus.signedOut) return atLogin ? null : Routes.login;

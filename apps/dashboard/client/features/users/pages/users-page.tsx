@@ -24,7 +24,7 @@ const SORT_OF: Record<string, UserSort> = { createdAt: "created", lastActiveAt: 
 const COLUMN_OF: Partial<Record<UserSort, string>> = { created: "createdAt", lastActive: "lastActiveAt", r2: "r2Bytes", sync: "syncBytes" };
 
 /**
- * Board 02 User (+ 13 loading, empty and search-empty states from komponen 2), with filters,
+ * Board 02 User (+ 13 loading, empty and search-empty states from design component 2), with filters,
  * column sorting, and page numbers; all of it lives in the URL (useUsersParams).
  */
 export function UsersPage() {

@@ -12,9 +12,9 @@ import 'reader_capsule.dart';
 import 'reader_overlays.dart';
 import 'reader_types.dart';
 
-/// Lapisan di atas teks bab: scrim sheet, kapsul atas/bawah, navigator Cari
-/// kata, hint Ngobrol, banner ngintip sumber, garis progres. Dengerin
-/// [fraction] sendiri biar scroll gak rebuild halaman.
+/// Layer above the chapter text: sheet scrim, top/bottom capsules, Cari kata
+/// navigator, Ngobrol hint, source-peek banner, progress line. Listens to
+/// [fraction] itself so scrolling does not rebuild the page.
 class ReaderOverlay extends StatelessWidget {
   const ReaderOverlay({
     super.key,
@@ -47,8 +47,8 @@ class ReaderOverlay extends StatelessWidget {
   final ReaderChrome chrome;
   final ReaderPrefs prefs;
 
-  /// Sheet dari kapsul lagi kebuka; [lastSheet] nentuin warna scrim, termasuk
-  /// pas lagi fade out.
+  /// A capsule sheet is open; [lastSheet] decides the scrim color, including
+  /// while it fades out.
   final bool sheetOpen;
   final ReaderSheet lastSheet;
   final SearchMode? search;
@@ -56,7 +56,7 @@ class ReaderOverlay extends StatelessWidget {
   final bool chatReady;
   final bool chatHintVisible;
 
-  /// Lagi ngintip sumber dari obrolan: kapsul diganti banner + aksi.
+  /// Peeking at a source from the chat: the capsules are replaced by a banner + actions.
   final bool isVisit;
   final String visitLabel;
   final VoidCallback onBack;
@@ -90,7 +90,7 @@ class ReaderOverlay extends StatelessWidget {
                   opacity: sheetOpen ? 1 : 0,
                   duration: sheetOpen ? Motion.sheetOpen : Motion.sheetClose,
                   child: ColoredBox(
-                    // Aa: tipis, teks tetep keliatan buat preview setelan.
+                    // Aa: thin scrim, so the text stays visible to preview the settings.
                     color:
                         lastSheet == ReaderSheet.aa ||
                             lastSheet == ReaderSheet.menu
@@ -130,8 +130,8 @@ class ReaderOverlay extends StatelessWidget {
                         ),
                 ),
               ),
-            // Mode cari: navigator hasil gantiin pill progres, gak ikut
-            // ngumpet bareng kapsul.
+            // Search mode: the result navigator replaces the progress pill and does not
+            // hide together with the capsules.
             if (search case final mode? when !isVisit)
               Positioned(
                 left: 0,

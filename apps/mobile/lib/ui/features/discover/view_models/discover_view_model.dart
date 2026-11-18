@@ -9,10 +9,10 @@ import '../../../../data/services/book_source.dart';
 import '../../../../data/services/catalog_sync_service.dart';
 import '../../../../domain/models/catalog.dart';
 
-/// Kenapa jalur jaringan gagal (layar 08 / 09).
+/// Why the network path failed (screens 08 / 09).
 enum NetworkFailure { offline, dead }
 
-/// "Lagi rame" (board 03, 07, 08, 09).
+/// "Lagi rame" (boards 03, 07, 08, 09).
 sealed class PopularState {
   const PopularState();
 }
@@ -20,7 +20,7 @@ sealed class PopularState {
 class PopularLoading extends PopularState {
   const PopularLoading({this.slow = false});
 
-  /// Udah lewat 5 detik: layar 07, skeleton tetap jalan.
+  /// 5 seconds have passed: screen 07, skeleton keeps running.
   final bool slow;
 }
 
@@ -36,8 +36,8 @@ class PopularFailed extends PopularState {
   final NetworkFailure failure;
 }
 
-/// Hasil cari dari katalog lokal (board 04, 05, 06). Null di [DiscoverState]
-/// = kolom cari kosong.
+/// Search results from the local catalog (boards 04, 05, 06). Null in
+/// [DiscoverState] = empty search field.
 class SearchResults {
   const SearchResults({
     required this.query,
@@ -92,8 +92,9 @@ class DiscoverState {
   );
 }
 
-/// Tab Cari buku (docs/discover.md, Sources and discovery). Satu sumber dulu: yang pertama di
-/// [bookSourcesProvider]. Cari = katalog lokal, instan; populer = jaringan.
+/// Cari buku tab (docs/discover.md, Sources and discovery). One source for now:
+/// the first in [bookSourcesProvider]. Search = local catalog, instant; popular
+/// = network.
 class DiscoverViewModel extends Notifier<DiscoverState> {
   static const slowAfter = Duration(seconds: 5);
   static const topCount = 10;
@@ -113,7 +114,7 @@ class DiscoverViewModel extends Notifier<DiscoverState> {
   @override
   DiscoverState build() {
     ref.onDispose(() => _slowTimer?.cancel());
-    // Katalog > 7 hari: sync diam-diam (service yang mutusin skip / unduh).
+    // Catalog older than 7 days: sync quietly (the service decides to skip / download).
     Future(() => ref.read(catalogSyncProvider.notifier).sync());
     Future(loadPopular);
     return const DiscoverState();
@@ -142,7 +143,7 @@ class DiscoverViewModel extends Notifier<DiscoverState> {
     }
   }
 
-  /// Tiap ketikan: kosong = balik ke populer, selain itu cari halaman 1.
+  /// On every keystroke: empty = back to popular, otherwise search page 1.
   Future<void> setQuery(String query) async {
     final seq = ++_searchSeq;
     final q = query.trim();
@@ -163,7 +164,7 @@ class DiscoverViewModel extends Notifier<DiscoverState> {
     );
   }
 
-  /// Mentok bawah: halaman berikutnya (25). Gagal = footer "Coba lagi".
+  /// Hit the bottom: next page (25). Failure = "Coba lagi" footer.
   Future<void> loadMore() async {
     final r = state.results;
     if (r == null || !r.hasMore || r.loadingMore) return;
@@ -209,7 +210,7 @@ final discoverProvider =
       DiscoverViewModel.new,
     );
 
-/// `externalId` yang udah di rak buat badge "Udah di rak".
+/// `externalId`s already on the shelf, for the "Udah di rak" badge.
 final shelfExternalIdsProvider = StreamProvider.autoDispose
     .family<Set<String>, String>(
       (ref, sourceId) =>

@@ -51,13 +51,14 @@ class _ChatSourceVisitState extends ConsumerState<ChatSourceVisitView> {
       await ref
           .read(chatRepositoryProvider)
           .continueReading(request: widget.request, quote: widget.quote);
-      // Chat nahan pop-nya (onExit nunggu stop) kalau masih nyimpen jawaban;
-      // tuntasin dulu biar dua pop di bawah jalan di frame yang sama.
+      // The chat holds its pop (onExit waits for stop) while it is still saving
+      // an answer; finish that first so both pops below run in the same frame.
       await ref.read(chatViewModelProvider(bookId).notifier).stop();
       if (!mounted) return;
       showToast(context, context.l10n.chatReadingPositionMovedToThisQuote);
-      // Intip + chat kebuang barengan dan langsung ilang (tanpa geser), hasilnya
-      // sampe ke reader lewat pop biasa jadi dia muat posisi baru.
+      // The peek and the chat are dropped together and vanish instantly (no
+      // slide); the result reaches the reader through a normal pop so it
+      // loads the new position.
       instantRouteExit.value = true;
       Future<void>.delayed(
         const Duration(seconds: 1),

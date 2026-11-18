@@ -4,8 +4,8 @@ import 'models/book_chat.dart';
 
 /// Shared by complete-answer validation and completed provisional paragraphs.
 ChatAnswerBlock chatAnswerPart(Object? value, List<ChatSource> sources) {
-  // Part tanpa key source_ids (model sering melewatkannya untuk conversation/
-  // interpretation) = tanpa sitasi; ID asing tetap ditolak di bawah.
+  // A part without a source_ids key (the model often omits it for conversation/
+  // interpretation) = no citation; unknown IDs are still rejected below.
   if (value is! Map ||
       value['text'] is! String ||
       value['source_ids'] is! List?) {
@@ -19,7 +19,7 @@ ChatAnswerBlock chatAnswerPart(Object? value, List<ChatSource> sources) {
   }
   final kind = ChatAnswerKind.parse(value['kind']);
   var layout = ChatAnswerLayout.parse(value['layout']);
-  // Kutipan langsung cuma buat isi buku.
+  // Direct quotes are only for the book's content.
   if (layout == ChatAnswerLayout.quote && kind != ChatAnswerKind.book) {
     layout = ChatAnswerLayout.paragraph;
   }
@@ -244,8 +244,8 @@ class ChatPreviewDecoder {
     _blocks[index] = _draft(_token.toString().trim(), _stack.last.map);
   }
 
-  /// Draf belum tepercaya: layout/kind yang udah muncul sebelum `text` ikut
-  /// dipakai buat tampilan, nilai aneh jatuh ke default (validasi akhir terpisah).
+  /// The draft is not yet trusted: a layout/kind that appears before `text` is
+  /// used for display, and odd values fall back to the default (final validation is separate).
   ChatAnswerBlock _draft(String text, Map<String, Object?> part) {
     ChatAnswerKind kind;
     try {

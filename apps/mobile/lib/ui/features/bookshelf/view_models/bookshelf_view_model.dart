@@ -4,12 +4,12 @@ import '../../../../data/repositories/book_repository.dart';
 import '../../../../data/services/file_storage.dart';
 import '../../../../domain/models/book.dart';
 
-/// Isi rak, update sendiri tiap ada buku masuk / dibuka / dihapus.
+/// Shelf contents; updates itself whenever a book is added / opened / deleted.
 final booksStreamProvider = StreamProvider.autoDispose<List<ShelfBook>>(
   (ref) => ref.watch(bookRepositoryProvider).watchShelf(),
 );
 
-/// Isi sheet Info buku (tanggal, ukuran file, paragraf diartiin).
+/// Contents of the Info buku sheet (date, file size, paragraphs translated).
 final bookInfoProvider = FutureProvider.autoDispose.family<BookInfo?, int>(
   (ref, id) => ref
       .watch(bookRepositoryProvider)

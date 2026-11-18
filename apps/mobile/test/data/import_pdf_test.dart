@@ -96,7 +96,7 @@ void main() {
     expect(book.id, r.bookId);
     expect(book.sourceType, SourceType.pdf);
     expect(book.parserVersion, pdfParserVersion);
-    expect(book.title, 'Chapter 1'); // heading halaman 1
+    expect(book.title, 'Chapter 1'); // page 1 heading
     expect(book.author, isNull);
     expect(book.hash, hash);
     expect(book.fileName, '$hash.pdf');
@@ -113,7 +113,7 @@ void main() {
       chapters.map((c) => c.sortOrder),
       List.generate(chapters.length, (i) => i),
     );
-    expect(chapters.every((c) => c.section == ''), isTrue); // gak di-backfill
+    expect(chapters.every((c) => c.section == ''), isTrue); // not backfilled
     expect(chapters.first.charOffset, 0);
     final paras = await db.select(db.paragraphs).get();
     expect(paras, isNotEmpty);
@@ -134,7 +134,8 @@ void main() {
     final book = await db.select(db.books).getSingle();
     expect(book.title, 'novel');
     expect(book.coverName, isNull);
-    expect(await stored(), ['${hashOf(pdf)}.pdf']); // cover gagal ≠ gagal
+    // A failed cover is not an import failure.
+    expect(await stored(), ['${hashOf(pdf)}.pdf']);
   });
 
   test(
@@ -323,7 +324,7 @@ void main() {
   test(
     'backup → restore keeps the PDF, content, progress and search',
     () async {
-      // Dua "HP" dengan file DB beneran, kayak restore_service_test.
+      // Two phones with real DB files, like restore_service_test.
       Future<(Directory, FileStorage, AppDatabase)> phone() async {
         final dir = await Directory.systemTemp.createTemp('luma_pdf_phone_');
         final s = FileStorage(dir);

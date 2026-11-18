@@ -22,7 +22,7 @@ import { useOverview } from "../queries/use-overview";
 const RECENT = 5;
 const pct = (part: number, whole: number) => (whole > 0 ? `${Math.round((part / whole) * 100)}%` : "0%");
 
-/** Board 01 Ringkasan (+ 12 loading). */
+/** Board 01, Overview ("Ringkasan"), plus the board 12 loading state. */
 export function OverviewPage() {
   const overview = useOverview();
   const i18n = useI18n();

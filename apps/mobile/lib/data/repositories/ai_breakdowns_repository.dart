@@ -9,15 +9,15 @@ import '../../domain/models/ai_reply.dart';
 import '../database/app_database.dart';
 import 'ai_results_repository.dart';
 
-/// Cache Bedahin (`ai_breakdowns`) + bahan prompt-nya.
+/// Caches Bedahin results (`ai_breakdowns`) and gathers the inputs for its prompt.
 class AiBreakdownsRepository {
   AiBreakdownsRepository(this._db, this._results);
 
   final AppDatabase _db;
   final AiResultsRepository _results;
 
-  /// Semua yang dikirim ke Bedahin buat [group]. Null = grup ini belum punya
-  /// terjemahan + makna (Bedahin cuma kebuka abis makna cepat selesai).
+  /// Returns everything sent to Bedahin for [group], or null when the group has no
+  /// translation and meaning yet (Bedahin opens only after the quick meaning finishes).
   Future<BreakdownInput?> input(GroupRef group) async {
     final reply = await _results.find(group);
     final text = await _results.promptText(group);
@@ -52,16 +52,16 @@ class AiBreakdownsRepository {
     );
   }
 
-  /// Balasan mentah yang ke-cache, atau null. Versi prompt lama atau
-  /// terjemahan yang udah diganti ([sourceHash] beda) = dianggap belum ada.
+  /// Returns the cached raw reply, or null. A reply from an older prompt version or
+  /// for a replaced translation (different [sourceHash]) counts as missing.
   Future<String?> find(GroupRef group, String sourceHash) async {
     final row = await _row(group);
     return row?.sourceHash == sourceHash ? row!.body : null;
   }
 
-  /// Jumlah bagian bedahan yang masih berlaku buat terjemahan grup ini
-  /// sekarang; 0 = belum ada (entri "Buka bedahan · N bagian" di sheet
-  /// Artinya).
+  /// Returns how many breakdown parts are still valid for this group's current
+  /// translation; 0 means none yet (drives the "Buka bedahan · N bagian" entry in
+  /// the Artinya sheet).
   Future<int> sections(GroupRef group) async {
     final row = await _row(group);
     if (row == null) return 0;
@@ -78,13 +78,14 @@ class AiBreakdownsRepository {
               (jsonDecode(current.translations) as List).cast<String>(),
             ) ==
             row.sourceHash;
-    // Yang disimpen udah lolos `parseBreakdown`: satu penanda per bagian.
+    // Only replies that passed `parseBreakdown` are stored: one marker per part.
     return valid ? '[BAGIAN'.allMatches(row.body).length : 0;
   }
 
-  /// Tujuan kartu Nyambung ke dari grup [from]: [chapter] (`B<n>`, mulai 1,
-  /// urut `sortOrder`) = grup pertama bab itu; null = grup berikutnya di bab
-  /// yang sama. Null kalau tujuannya gak ada (kartunya jadi teks biasa).
+  /// Returns the destination of a Nyambung card from group [from]: with [chapter]
+  /// (`B<n>`, 1-based, in `sortOrder`) the first group of that chapter, without it
+  /// the next group in the same chapter. Null when the destination doesn't exist
+  /// (the card renders as plain text).
   Future<BreakdownPeek?> peek(GroupRef from, int? chapter) async {
     GroupRef? target;
     if (chapter == null) {
@@ -129,7 +130,7 @@ class AiBreakdownsRepository {
     );
   }
 
-  /// Simpan / timpa hasil yang udah lolos `parseBreakdown`.
+  /// Stores or overwrites a result that passed `parseBreakdown`.
   Future<void> save(
     GroupRef group, {
     required String body,
@@ -149,7 +150,7 @@ class AiBreakdownsRepository {
         ),
       );
 
-  /// "Hapus cache" di Pengaturan.
+  /// Backs "Hapus cache" in Pengaturan.
   Future<void> clear() => _db.delete(_db.aiBreakdowns).go();
 
   Future<AiBreakdown?> _row(GroupRef group) =>

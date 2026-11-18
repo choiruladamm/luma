@@ -4,7 +4,7 @@ import type { AppEnv } from "../../env";
 import { type ErrorCode, errorBody } from "../../lib/errors";
 import { limitBody } from "../../middleware/body-limit";
 
-/** Body auth kecil (email, password, idToken). */
+/** Auth bodies are small (email, password, idToken). */
 const AUTH_BODY_LIMIT = 16 * 1024;
 
 const codeForStatus = (status: number): ErrorCode => {
@@ -17,8 +17,8 @@ const codeForStatus = (status: number): ErrorCode => {
 };
 
 /**
- * Error Better Auth `{code, message}` dibungkus jadi format seragam
- * `{error: {code, message}}`; kode Better Auth (UPPER_SNAKE) dipertahankan.
+ * A Better Auth `{code, message}` error is wrapped into the uniform
+ * `{error: {code, message}}` format; the Better Auth code (UPPER_SNAKE) is kept.
  */
 export async function normalizeAuthError(res: Response): Promise<Response> {
   if (res.ok || !res.headers.get("content-type")?.includes("application/json")) return res;
@@ -37,10 +37,10 @@ export async function normalizeAuthError(res: Response): Promise<Response> {
 }
 
 /**
- * Endpoint Better Auth yang dibuka: cuma yang dipakai app (auth_service.dart).
- * Sisanya (update-user, change-email, list-sessions, dll.) 404, jadi permukaan
- * serangan gak ikut nambah tiap Better Auth nambah endpoint.
- * Google lewat idToken native (`sign-in/social`), tanpa callback redirect.
+ * Better Auth endpoints that are exposed: only those the app uses (auth_service.dart).
+ * The rest (update-user, change-email, list-sessions, etc.) return 404, so the attack
+ * surface doesn't grow each time Better Auth adds an endpoint.
+ * Google goes through a native idToken (`sign-in/social`), with no redirect callback.
  */
 export const AUTH_PATHS = ["/sign-up/email", "/sign-in/email", "/sign-in/social", "/sign-out"] as const;
 

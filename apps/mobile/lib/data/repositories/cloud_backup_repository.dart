@@ -13,9 +13,9 @@ import '../services/restore_service.dart';
 import 'auth_repository.dart';
 import 'settings_repository.dart';
 
-/// Backup ke R2 (docs/backup.md, Export and cloud backup): snapshot DB tiap backup,
-/// file buku & cover cuma yang belum ada di cloud. Restore = snapshot +
-/// file yang belum ada lokal → [RestoreService] yang sama dengan zip biasa.
+/// Backs up to R2 (docs/backup.md, Export and cloud backup): a DB snapshot every
+/// backup, and only book and cover files not yet in the cloud. A restore is the snapshot
+/// plus the files missing locally, applied by the same [RestoreService] as a regular zip.
 class CloudBackupRepository {
   CloudBackupRepository({
     required this._service,
@@ -35,19 +35,19 @@ class CloudBackupRepository {
   final DateTime Function() _clock;
   final Future<void> Function(Duration) _sleep;
 
-  /// Backup otomatis kalau backup cloud terakhir lebih lama dari ini.
+  /// A cloud backup older than this triggers an automatic backup.
   static const autoInterval = Duration(hours: 24);
 
-  /// Gagal → pemicu berikutnya paling cepat setelah jeda ini.
+  /// After a failure the next trigger waits at least this long.
   static const retryGap = Duration(hours: 1);
 
-  /// Batas nunggu `Retry-After` 429 per file (rate limit 60/menit per user).
+  /// How many times one file waits out a 429 `Retry-After` (rate limit: 60/minute per user).
   static const rateLimitRetries = 5;
 
   Future<LastBackup>? _running;
   DateTime? _lastAttempt;
 
-  /// Satu backup jalan sekaligus: pemicu kedua dapat future yang sama.
+  /// Only one backup runs at a time: a second trigger gets the same future.
   Future<LastBackup> backup({
     void Function(String name, BackupManifest manifest)? onStart,
     void Function(BackupStage stage, double fraction)? onProgress,
@@ -56,8 +56,8 @@ class CloudBackupRepository {
     onProgress,
   ).whenComplete(() => _running = null);
 
-  /// Pemicu buka/resume: diam-diam, cuma kalau login dan udah > 24 jam.
-  /// true = backup jalan & sukses.
+  /// Open/resume trigger: silent, and only when signed in and the last backup is over
+  /// 24 hours old. Returns true when a backup ran and succeeded.
   Future<bool> backupIfDue() async {
     final now = _clock();
     if (_lastAttempt case final at? when now.difference(at) < retryGap) {
@@ -66,16 +66,16 @@ class CloudBackupRepository {
     if (await _auth.token() == null) return false;
     final last = await _settings.watchCloudBackupAt().first;
     if (last != null && now.difference(last) < autoInterval) return false;
-    // Rak kosong (device baru yang baru login): snapshot kosong cuma bakal
-    // jadi yang terbaru di daftar restore dan nyingkirin backup asli dari
-    // retensi 10. Tombol manual tetap bisa.
+    // Empty shelf (a new device that just signed in): an empty snapshot would become
+    // the newest in the restore list and push the real backup out of the 10-backup
+    // retention. The manual button still works.
     if (await _backups.bookCount() == 0) return false;
     _lastAttempt = now;
     try {
       await backup();
       return true;
     } on Object {
-      return false; // diam-diam; coba lagi resume berikutnya
+      return false; // Silent; retried on the next resume.
     }
   }
 
@@ -138,8 +138,8 @@ class CloudBackupRepository {
     }
   }
 
-  /// Upload banyak file bisa lewat rate limit per user: tunggu `Retry-After`
-  /// lalu lanjut, bukan gagal di tengah.
+  /// Uploading many files can hit the per-user rate limit: wait out `Retry-After` and
+  /// continue instead of failing midway.
   Future<T> _rateLimited<T>(Future<T> Function() call) async {
     for (var i = 0; ; i++) {
       try {
@@ -153,8 +153,8 @@ class CloudBackupRepository {
 
   Future<List<CloudBackup>> list() async => _service.list(await _token());
 
-  /// Download snapshot [backup], lalu cek & lengkapi file buku/cover lewat
-  /// [restore]. Hasilnya dipasang pakai [RestoreService.apply] yang biasa.
+  /// Downloads the snapshot [backup], then checks and completes the book/cover files
+  /// through [restore]. The result is installed with the regular [RestoreService.apply].
   Future<RestorePreview> prepareRestore(
     CloudBackup backup,
     RestoreService restore,
@@ -174,9 +174,9 @@ class CloudBackupRepository {
     }
   }
 
-  /// File yang dirujuk snapshot: salin dari HP kalau udah ada, sisanya
-  /// download. File yang gak ada di cloud (404) dilewatin, kayak zip biasa
-  /// yang gak lengkap.
+  /// Files the snapshot refers to: copied from the phone when present, the rest
+  /// downloaded. Files missing from the cloud (404) are skipped, like an incomplete
+  /// regular zip.
   Future<void> _fill(String token, Directory dir, AppDatabase db) async {
     final target = FileStorage(dir);
     final rows = await db

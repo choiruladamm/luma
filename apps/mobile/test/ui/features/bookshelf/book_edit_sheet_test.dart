@@ -142,7 +142,7 @@ void main() {
     await tester.tap(simpan);
     await tester.pump();
     expect(repo.saved.single, (title: 'Walden', author: null, cover: false));
-    // Toast di overlay root (biar gak ketutup sheet Info buku), lalu ilang.
+    // The toast lives on the overlay root (so the Info sheet cannot cover it), then disappears.
     expect(find.text('Sip, judul & penulisnya udah diganti'), findsOneWidget);
     await tester.pump(Motion.toast);
   });

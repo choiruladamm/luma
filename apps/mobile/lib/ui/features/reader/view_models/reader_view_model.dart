@@ -16,7 +16,7 @@ import '../../../../domain/models/book.dart';
 /// Injectable wall clock for reader activity accounting.
 final readerNowProvider = Provider<DateTime Function()>((ref) => DateTime.now);
 
-/// Buku + daftar chapter. Daftar isi pake ini juga.
+/// The book + chapter list. The table of contents uses it too.
 final readerBookProvider = FutureProvider.autoDispose.family<ReaderBook?, int>(
   (ref, bookId) => ref.watch(bookRepositoryProvider).readerBook(bookId),
 );
@@ -27,30 +27,30 @@ final chapterParagraphsProvider = FutureProvider.autoDispose
           ref.watch(bookRepositoryProvider).paragraphs(chapterId),
     );
 
-/// Posisi terakhir yang disimpen, buat buka buku di tempat terakhir.
+/// The last saved position; the book opens there.
 final readingPositionProvider = FutureProvider.autoDispose
     .family<ReadingPosition?, int>(
       (ref, bookId) =>
           ref.watch(readingProgressRepositoryProvider).load(bookId),
     );
 
-/// Jumlah paragraf yang udah diartiin di satu chapter (kartu akhir bab).
+/// Number of paragraphs already explained in one chapter (chapter-end card).
 final chapterTranslatedProvider = FutureProvider.autoDispose.family<int, int>(
   (ref, chapterId) =>
       ref.watch(bookRepositoryProvider).translatedInChapter(chapterId),
 );
 
-/// Terjemahan + makna satu grup (docs/architecture.md): cache `ai_results`
-/// dulu, kalau belum ada baru manggil LLM terus disimpen. Grup yang sama gak
-/// pernah manggil LLM dua kali. Gagal (gak ada key, timeout, dll) jadi
-/// `AsyncError` berisi `AiException`; gak di-retry otomatis (tiap coba =
-/// saldo), ulang lewat `ref.invalidate`.
+/// Translation + meaning of one group (docs/architecture.md): the `ai_results` cache
+/// first, and only if absent calls the LLM and saves the result. The same group is
+/// never sent to the LLM twice. A failure (no key, timeout, etc.) becomes an
+/// `AsyncError` holding an `AiException`; it is not retried automatically (each
+/// try costs balance), retry via `ref.invalidate`.
 final groupAiProvider = FutureProvider.autoDispose.family<AiReply, GroupRef>((
   ref,
   group,
 ) async {
-  // Ambil semua sebelum await: provider bisa ke-dispose pas nunggu LLM,
-  // hasilnya tetep disimpen.
+  // Read everything before the await: the provider may be disposed while waiting
+  // for the LLM, and the result is still saved.
   final cache = ref.watch(aiResultsRepositoryProvider);
   final ai = ref.watch(openRouterServiceProvider);
   final keys = ref.watch(aiKeyRepositoryProvider);
@@ -74,8 +74,8 @@ final groupAiProvider = FutureProvider.autoDispose.family<AiReply, GroupRef>((
   return reply;
 }, retry: (_, _) => null);
 
-/// Jawaban satu grup yang lagi di-stream: [draft] = yang udah dateng dari
-/// jaringan (belum di-pacing, UI yang ngatur ritmenya).
+/// The answer of one group being streamed: [draft] = what has arrived from the
+/// network (not yet paced; the UI sets the rhythm).
 class AiStream {
   const AiStream({
     this.phase = AiPhase.waiting,
@@ -87,16 +87,16 @@ class AiStream {
 
   final AiPhase phase;
 
-  /// [AiPhase.done]: isinya jawaban akhir.
+  /// [AiPhase.done]: holds the final answer.
   final AiDraft draft;
 
-  /// Panjang tiap paragraf asli, buat ngira tinggi placeholder.
+  /// Length of each original paragraph, to estimate the placeholder height.
   final List<int> sources;
 
   /// [AiPhase.failed].
   final AiException? error;
 
-  /// Langsung dari cache, gak ada yang di-stream.
+  /// Straight from the cache, nothing streamed.
   final bool cached;
 
   AiStream withPhase(AiPhase phase) => AiStream(
@@ -108,15 +108,15 @@ class AiStream {
   );
 }
 
-/// Sumber sheet Artinya: [groupAiProvider] versi streaming
+/// Source of the Artinya sheet: the streaming version of [groupAiProvider]
 /// (docs/architecture.md, docs/llm.md).
-/// Cache dulu; kalau belum ada, jawaban bersection di-stream dengan state
-/// [AiPhase]. Timeout: 15 detik tanpa token = [AiPhase.slow] (request tetep
-/// jalan), 30 detik = gagal `timeout`; token berhenti 20 detik di tengah =
-/// [AiPhase.cut]. Jawaban lengkap divalidasi; gak valid → sekali lagi lewat
-/// jalur JSON tanpa streaming. Cuma yang lengkap dan valid yang disimpen.
-/// Ke-dispose (tutup sheet, Lanjut) = request dibatalin, gak ada yang
-/// disimpen. Coba lagi = `ref.invalidate`, mulai dari awal.
+/// Cache first; if absent, the sectioned answer is streamed with [AiPhase] states.
+/// Timeouts: 15 seconds without a token = [AiPhase.slow] (the request keeps
+/// running), 30 seconds = `timeout` failure; tokens stopping for 20 seconds
+/// mid-way = [AiPhase.cut]. A complete answer is validated; if invalid, tried once
+/// more over the non-streaming JSON path. Only complete, valid answers are saved.
+/// Disposal (sheet closed, Lanjut) cancels the request and saves nothing. Retry =
+/// `ref.invalidate`, starting over.
 class GroupAiStream extends Notifier<AiStream> {
   GroupAiStream(this.group);
 
@@ -135,7 +135,7 @@ class GroupAiStream extends Notifier<AiStream> {
   }
 
   Future<void> _run(AiRun run) async {
-    // Ambil semua sebelum await.
+    // Read everything before the await.
     final cache = ref.read(aiResultsRepositoryProvider);
     final ai = ref.read(openRouterServiceProvider);
     final keys = ref.read(aiKeyRepositoryProvider);
@@ -191,7 +191,7 @@ class GroupAiStream extends Notifier<AiStream> {
         target: text.target,
         cancel: run.cancel,
       )) {
-        // Token telat abis layar ditutup: jangan pasang timer yang baca
+        // A token arriving after the screen closed: don't set a timer that reads
         // `state`.
         if (!run.live) return;
         if (content.isEmpty) run.clearTimers();
@@ -235,8 +235,8 @@ class GroupAiStream extends Notifier<AiStream> {
         AiStream(phase: AiPhase.done, draft: _draft(reply), sources: sources),
       );
     } on AiException catch (e) {
-      // Sheet ditutup: request yang dibatalin ngelempar error, dan `state`
-      // udah gak boleh dibaca.
+      // The sheet closed: a cancelled request throws, and `state` must not be
+      // read.
       if (!run.live) return;
       if (streaming &&
           state.phase != AiPhase.waiting &&
@@ -252,8 +252,8 @@ class GroupAiStream extends Notifier<AiStream> {
       AiDraft(translations: r.translations, meaning: r.meaning);
 }
 
-/// Satu percobaan request; mati pas provider ke-dispose / di-invalidate atau
-/// pas udah ada hasil akhir. Hasil yang dateng setelah itu dibuang.
+/// One request attempt; dies when the provider is disposed / invalidated or once
+/// the final result exists. Results arriving after that are dropped.
 class AiRun {
   bool live = true;
   final cancel = CancelToken();
@@ -277,15 +277,15 @@ class AiRun {
 final groupAiStreamProvider = NotifierProvider.autoDispose
     .family<GroupAiStream, AiStream, GroupRef>(GroupAiStream.new);
 
-/// Grup yang udah diterjemahin di satu chapter: garis `mark` di margin, tap
-/// grup itu sheet-nya langsung keisi.
+/// Groups already translated in one chapter: a `mark` line in the margin; tapping
+/// the group fills the sheet right away.
 final translatedGroupsProvider = StreamProvider.autoDispose
     .family<Set<int>, int>(
       (ref, chapterId) =>
           ref.watch(aiResultsRepositoryProvider).watchGroups(chapterId),
     );
 
-/// Rekap layar akhir buku.
+/// Summary of the end-of-book screen.
 final bookEndProvider = FutureProvider.autoDispose.family<BookEnd?, int>(
   (ref, bookId) => ref.watch(bookRepositoryProvider).bookEnd(bookId),
 );

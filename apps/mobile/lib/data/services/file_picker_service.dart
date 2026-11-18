@@ -4,8 +4,10 @@ import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// File EPUB / Markdown / PDF yang dipilih user (masih di folder sementara
-/// picker, tetap ada sampai import selesai).
+/// Represents an EPUB, Markdown, or PDF file the user picked.
+///
+/// It still sits in the picker's temporary folder and stays there until the
+/// import finishes.
 class PickedFile {
   const PickedFile({
     required this.name,
@@ -18,24 +20,25 @@ class PickedFile {
   final int size;
   final Future<Uint8List> Function() read;
 
-  /// Path lokal. PDF dibaca lewat path (bisa ratusan MB), bukan [read].
+  /// Local path; PDFs are read through the path (they can be hundreds of MB), not through [read].
   final String? path;
 }
 
 class FilePickerService {
   const FilePickerService();
 
-  /// Picker nyalin file pilihan ke cache app (PDF bisa puluhan MB). Dipanggil
-  /// abis import beres / gagal; gagal hapus gak ngaruh ke apa-apa.
+  /// Deletes the copies the picker made in the app cache (a PDF can be tens of MB).
+  ///
+  /// Call it after an import finishes or fails; a failed delete is harmless.
   Future<void> clearTemporaryFiles() async {
     try {
       await FilePicker.clearTemporaryFiles();
     } on Object {
-      // Platform tanpa cache picker, atau plugin belum nempel (test).
+      // The platform has no picker cache, or the plugin is not attached (tests).
     }
   }
 
-  /// File backup `.zip` (path lokal, dibaca streaming). Null = batal.
+  /// Picks a backup `.zip` (local path, read as a stream); returns null when cancelled.
   Future<File?> pickBackup() async {
     final file = await FilePicker.pickFile(
       type: FileType.custom,
@@ -45,7 +48,7 @@ class FilePickerService {
     return path == null ? null : File(path);
   }
 
-  /// EPUB, PDF, atau Luma Markdown. Null = user batal milih.
+  /// Picks an EPUB, PDF, or Luma Markdown book; returns null when the user cancels.
   Future<PickedFile?> pickBook() async {
     final file = await FilePicker.pickFile(
       type: FileType.custom,

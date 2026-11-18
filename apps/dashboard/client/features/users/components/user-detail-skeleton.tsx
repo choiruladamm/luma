@@ -8,7 +8,7 @@ import { NUMBER_GRID, NumberCard } from "./user-detail-cards";
 const Line = ({ className }: { className: string }) => <Skeleton className={`inline-block align-middle ${className}`} />;
 
 /**
- * Board 05 while loading (komponen 2, State): the same boxes as the loaded page (profile, the
+ * Board 05 while loading (design component 2, State): the same boxes as the loaded page (profile, the
  * three number cards, devices, ban section) with their titles and labels; only values pulse.
  * Text blocks sit inside the real text elements so nothing shifts when the data lands.
  */

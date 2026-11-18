@@ -5,14 +5,15 @@ import '../../../core/theme/stabilo_theme.dart';
 import '../../../core/theme/stabilo_tokens.dart';
 import '../../../core/theme/stabilo_type.dart';
 
-/// "Nyinkronin 3/12 buku" di atas Rak selama buku dari device lain di-download
-/// (docs/sync-protocol.md, Book files and Markdown dumps). Belum ada board: anatomi kartu "Nyiapin
-/// katalog buku" di Cari buku (`DiscoverNotice`): spinner + hitungan buku di
-/// judul. Gak bisa ditutup; ilang sendiri begitu download kelar.
+/// "Nyinkronin 3/12 buku" above Rak while books from another device download
+/// (docs/sync-protocol.md, Book files and Markdown dumps). No board: anatomy of
+/// the "Nyiapin katalog buku" card in Cari buku (`DiscoverNotice`): spinner +
+/// book count in the title. Can't be dismissed; disappears on its own when the
+/// download finishes.
 class SyncBanner extends StatelessWidget {
   const SyncBanner({super.key, required this.done, required this.total});
 
-  /// Buku yang udah kelar (berhasil atau dilewati) dari [total].
+  /// Books already done (succeeded or skipped) out of [total].
   final int done;
   final int total;
 
@@ -45,8 +46,8 @@ class SyncBanner extends StatelessWidget {
                 ),
                 child: SizedBox.square(
                   dimension: 18,
-                  // Muter terus: hitungannya udah di judul, ring kosong di buku
-                  // pertama keliatan kayak macet.
+                  // Spins continuously: the count is already in the title, and an empty ring
+                  // on the first book looks stuck.
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
                     color: c.ink,

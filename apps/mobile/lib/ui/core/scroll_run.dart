@@ -1,17 +1,17 @@
-/// Hasil [ScrollRun.add]: scroll udah cukup jauh buat ngumpetin / munculin
-/// chrome (kapsul baca, header + tombol sheet).
+/// Result of [ScrollRun.add]: scrolled far enough to hide or reveal
+/// the chrome (reading capsule, header + sheet buttons).
 enum ChromeIntent { hide, show }
 
-/// Ambang ngumpet/munculin chrome ngikutin scroll: turun ≥ [hideAfter] →
-/// [ChromeIntent.hide], naik ≥ [showAfter] → [ChromeIntent.show]. Ngitung
-/// scroll searah yang belum nyampe ambang; ganti arah mulai dari nol.
+/// Thresholds for hiding/revealing chrome while scrolling: down ≥ [hideAfter] →
+/// [ChromeIntent.hide], up ≥ [showAfter] → [ChromeIntent.show]. Tracks
+/// same-direction scroll short of a threshold; a direction change restarts at zero.
 class ScrollRun {
   static const hideAfter = 24.0;
   static const showAfter = 12.0;
 
   double _run = 0;
 
-  /// [delta] > 0 = scroll turun (isi naik). Null kalau belum nyampe ambang.
+  /// [delta] > 0 = scrolling down (content moves up). Null until a threshold is reached.
   ChromeIntent? add(double delta) {
     if (delta == 0) return null;
     if ((delta > 0) != (_run > 0)) _run = 0;

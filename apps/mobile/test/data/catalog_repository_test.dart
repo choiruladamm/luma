@@ -50,7 +50,7 @@ void main() {
     ]);
     expect(pp.bookshelves, contains('Harvard Classics'));
     expect(pp.issued, '1998-06-01');
-    // Judul juga kena, case-insensitive, prefix per kata.
+    // Titles match too: case-insensitive, prefix match per word.
     expect((await repo.search('PRIDE')).map((r) => r.id), [1342]);
     expect((await repo.search('prid prej')).map((r) => r.id), [1342]);
     expect((await repo.search('jane austen')).map((r) => r.id), contains(1342));

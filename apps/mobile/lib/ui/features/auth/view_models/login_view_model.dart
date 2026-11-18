@@ -7,10 +7,10 @@ import '../../../../data/services/backend_client.dart';
 import '../../../../data/services/google_auth.dart';
 import 'auth_view_model.dart';
 
-/// Langkah layar Masuk (board Akun 01–07, 10).
+/// Steps of the Masuk screen (board Akun 01–07, 10).
 enum LoginStep { start, invite, switchAccount }
 
-/// Kenapa login gagal; tiap nilai punya copy sendiri (board Akun 03, 04, 07).
+/// Why login failed; each value has its own copy (board Akun 03, 04, 07).
 enum LoginError {
   network,
   rejected,
@@ -34,10 +34,10 @@ class LoginState {
   final bool loading;
   final LoginError? error;
 
-  /// Email yang lagi dipakai login ("Masuk sebagai …" di kode undangan).
+  /// Email entered at login; shown as "Masuk sebagai …" on the invite code screen.
   final String? email;
 
-  /// Login sukses tapi akun beda dari akun terakhir di HP: nunggu konfirmasi.
+  /// Login succeeded but the account differs from the phone's last account: awaiting confirmation.
   final SignInResult? pendingSwitch;
 
   LoginState copyWith({
@@ -71,7 +71,7 @@ class LoginViewModel extends Notifier<LoginState> {
     state = state.copyWith(loading: true, clearError: true);
     try {
       final idToken = await ref.read(googleIdTokenSourceProvider).idToken();
-      // Jendela Google ditutup: balik ke awal tanpa pesan error.
+      // Google window closed: back to the start without an error message.
       if (idToken == null) {
         state = state.copyWith(loading: false);
         return;
@@ -89,7 +89,7 @@ class LoginViewModel extends Notifier<LoginState> {
     (code) => _repo.signInEmail(email: email, password: password),
   );
 
-  /// Daftar email (build dev): nama = bagian depan email.
+  /// Email sign-up (dev build): name = the part before the @.
   Future<void> signUpEmail(String email, String password) => _start(
     email,
     (code) => _repo.signUpEmail(
@@ -100,19 +100,19 @@ class LoginViewModel extends Notifier<LoginState> {
     ),
   );
 
-  /// Kirim ulang login terakhir bareng kode undangan.
+  /// Resends the last login together with the invite code.
   Future<void> submitInvite(String code) async {
     final attempt = _pending;
     if (attempt == null || state.loading || code.trim().isEmpty) return;
     await _run(attempt, inviteCode: code);
   }
 
-  /// Kode diubah: tombol Lanjut nyala lagi.
+  /// Code changed: the Lanjut button is enabled again.
   void editInvite() {
     if (state.error != null) state = state.copyWith(clearError: true);
   }
 
-  /// "Ganti" di layar kode undangan: pilih akun lain.
+  /// "Ganti" on the invite code screen: pick another account.
   void backToStart() {
     _pending = null;
     state = const LoginState();
@@ -128,7 +128,7 @@ class LoginViewModel extends Notifier<LoginState> {
     _done(result);
   }
 
-  /// "Pakai akun lama aja": sesi baru dibuang, HP tetap punya akun lama.
+  /// "Pakai akun lama aja": the new session is discarded, the phone keeps the old account.
   Future<void> keepOldAccount() async {
     final result = state.pendingSwitch;
     if (result != null) await _repo.discard(result.session);
@@ -182,8 +182,8 @@ class LoginViewModel extends Notifier<LoginState> {
   }
 }
 
-/// Kode error server → copy. `INVITE_CODE_REQUIRED` bukan error: cuma buka
-/// layar kode undangan.
+/// Server error code → copy. `INVITE_CODE_REQUIRED` isn't an error: it only
+/// opens the invite code screen.
 LoginError? loginErrorFor(String code, int? status) {
   if (code == AuthErrorCode.inviteRequired) return null;
   if (code == AuthErrorCode.invalidInvite) return LoginError.inviteInvalid;

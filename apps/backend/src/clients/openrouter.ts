@@ -1,5 +1,5 @@
-// Client tipis ke API management OpenRouter (docs/backend.md, AI subsidy). Satu fungsi =
-// satu subrequest. Di test di-mock lewat MSW (@msw/cloudflare).
+// Thin client for the OpenRouter management API (docs/backend.md, AI subsidy). One function =
+// one subrequest. Mocked with MSW (@msw/cloudflare) in tests.
 
 export const OPENROUTER_API = "https://openrouter.ai/api/v1";
 
@@ -24,9 +24,9 @@ export type OpenRouterAdmin = {
   }): Promise<CreatedKey>;
   updateLimit(hash: string, limitUsd: number): Promise<void>;
   getUsage(hash: string): Promise<KeyUsage>;
-  /** False kalau key udah gak ada di OpenRouter (404). */
+  /** False when the key no longer exists on OpenRouter (404). */
   keyExists(hash: string): Promise<boolean>;
-  /** 404 (udah gak ada) dianggap sukses. */
+  /** A 404 (already gone) counts as success. */
   deleteKey(hash: string): Promise<void>;
 };
 

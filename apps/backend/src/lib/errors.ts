@@ -2,7 +2,7 @@ import type { Context } from "hono";
 import { HTTPException } from "hono/http-exception";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
-/** Kode error UPPER_SNAKE_CASE, satu pola dengan Better Auth (docs/backend.md, Request pipeline and API conventions). */
+/** UPPER_SNAKE_CASE error codes, the same pattern as Better Auth (docs/backend.md, Request pipeline and API conventions). */
 export type ErrorCode =
   | "BAD_REQUEST"
   | "UNAUTHORIZED"
@@ -36,7 +36,7 @@ export const errorResponse = (c: Context, e: ApiError) => {
   return c.json(errorBody(e.code, e.message), e.status);
 };
 
-/** `app.onError`: ApiError apa adanya, sisanya 500 + log JSON terstruktur. */
+/** `app.onError`: an ApiError as-is, anything else becomes 500 + a structured JSON log. */
 export const onError = (err: Error, c: Context) => {
   if (err instanceof ApiError) return errorResponse(c, err);
   if (err instanceof HTTPException && err.status < 500) {

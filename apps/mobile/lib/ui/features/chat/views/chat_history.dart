@@ -45,10 +45,10 @@ class ChatHistory extends StatefulWidget {
     this.answerNow,
   });
 
-  /// Langkah AI attempt yang lagi jalan; turn selesai pakai `turn.steps`.
+  /// AI steps of the running attempt; finished turns use `turn.steps`.
   final ({ChatAttemptRef attempt, List<ChatStep> steps})? steps;
 
-  /// Jawab sekarang di bawah catatan sementara; null = tidak tersedia.
+  /// The "answer now" action under the interim notes; null when unavailable.
   final ({int notes, VoidCallback onPressed})? answerNow;
   final List<ChatTurn> turns;
   final ({int turnId, String sourceId})? selectedSource;
@@ -58,7 +58,7 @@ class ChatHistory extends StatefulWidget {
   final bool reserveAnswerSpace;
   final Map<int, int>? chapterNumbers;
 
-  /// Tipografi Aa; kosong = default Aa.
+  /// Aa typography; null uses the default.
   final ReaderTypography? typo;
   final bool suspended;
   final ChatScrollAnchor? anchor;
@@ -94,9 +94,11 @@ class _ChatHistoryState extends State<ChatHistory> {
   ChatScrollAnchor? _lastAnchor;
   bool _restoring = true;
 
-  /// Isi baru keliatan setelah posisi awal kepasang *dan* fade tepi atas udah
-  /// nyala: fade-nya cuma hidup kalau udah di-scroll, jadi tanpa ini teks di
-  /// belakang status bar/header keliatan sebentar pas layar baru kebuka.
+  /// Whether the content is visible.
+  ///
+  /// It shows only after the initial position is set *and* the top edge fade is
+  /// on. The fade only activates once scrolled, so without this the text behind
+  /// the status bar/header would flash briefly when the screen opens.
   bool _revealed = false;
   Timer? _reveal;
   @override
@@ -329,7 +331,7 @@ class _ChatHistoryState extends State<ChatHistory> {
                   ),
                 ),
                 if (steps != null && steps.isNotEmpty)
-                  // Board: 14 dari bubble, 18 ke isi (spacing turn 16).
+                  // Design board: 14 from the bubble, 18 to the content (turn spacing 16).
                   Transform.translate(
                     offset: const Offset(0, -2),
                     child: ChatStepsRow(
@@ -403,7 +405,7 @@ class _ChatHistoryState extends State<ChatHistory> {
                 if (answerNow != null &&
                     (phase == ChatPhase.retrieving || phase == ChatPhase.slow))
                   Transform.translate(
-                    offset: const Offset(0, -6), // board: 10 dari teks
+                    offset: const Offset(0, -6), // board: 10 from the text
                     child: ChatAnswerNow(
                       notes: answerNow.notes,
                       onPressed: answerNow.onPressed,
@@ -479,7 +481,7 @@ class _ChatHistoryState extends State<ChatHistory> {
                 _position();
                 return false;
               },
-              // Disembunyiin sampai posisi awal kepasang, biar gak keliatan loncat.
+              // Hidden until the initial position is set, so no visible jump.
               child: AnimatedOpacity(
                 opacity: _revealed ? 1 : 0,
                 duration: Motion.edgeFade,
@@ -599,7 +601,7 @@ class ChatSourceChip extends StatelessWidget {
   final bool selected;
   @override
   Widget build(BuildContext context) => Transform.translate(
-    // Naik 2pt dari garis dasar teks, seperti di board.
+    // Raised 2pt above the text baseline, as on the design board.
     offset: const Offset(0, -2),
     child: Semantics(
       button: true,
@@ -611,7 +613,7 @@ class ChatSourceChip extends StatelessWidget {
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: onPressed,
-        // Area tap melebar 2pt ke samping; tinggi dijaga 20 biar baris teks gak melar.
+        // The tap area extends 2pt sideways; height stays 20 so the text line doesn't grow.
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 2),
           child: Container(
@@ -621,7 +623,7 @@ class ChatSourceChip extends StatelessWidget {
               color: selected ? context.stabilo.accent : context.stabilo.muted,
               borderRadius: BorderRadius.circular(10),
             ),
-            // widthFactor: Container beralignment ngisi lebar penuh di WidgetSpan.
+            // widthFactor: an aligned Container fills the full width inside a WidgetSpan.
             child: Center(
               widthFactor: 1,
               child: Text(
@@ -643,7 +645,7 @@ class ChatSourceChip extends StatelessWidget {
   );
 }
 
-/// Kapsul ↓ di atas composer; titik kuning = jawaban lagi ditulis.
+/// Pill with a ↓ above the composer; the yellow dot means an answer is being written.
 class ChatJumpButton extends StatelessWidget {
   const ChatJumpButton({
     super.key,

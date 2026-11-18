@@ -50,7 +50,7 @@ import 'book_info_sheet.dart';
 import 'shelf_header.dart';
 import 'continue_card.dart';
 
-/// Rak buku (board 01 Rak kosong, 02 Rak) + alur import (board 13–18).
+/// Bookshelf (boards "Rak kosong" 01, "Rak" 02) + the import flow (boards 13–18).
 class BookshelfView extends ConsumerStatefulWidget {
   const BookshelfView({super.key});
 
@@ -59,23 +59,24 @@ class BookshelfView extends ConsumerStatefulWidget {
 }
 
 class _BookshelfViewState extends ConsumerState<BookshelfView> {
-  /// Sheet proses import lagi kebuka; ditutup dari sini (bukan dari sheet-nya
-  /// sendiri) biar gak nutup sheet hasil yang baru dibuka.
+  /// The import progress sheet is open; closed from here (not from the sheet
+  /// itself) so it doesn't close the result sheet that was just opened.
   bool _progressOpen = false;
 
-  /// Sheet "Masuk ke buku mana?" kebuka. Tetap kebuka pas dialog bab dobel
-  /// nongol di atasnya; ditutup dari sini begitu import beres / gagal.
+  /// The "Masuk ke buku mana?" sheet is open. Stays open while the duplicate
+  /// chapter dialog shows above it; closed from here once the import finishes /
+  /// fails.
   bool _markdownSheetOpen = false;
 
-  /// Id buku terbesar di rak pas import mulai. Buku baru (id lebih besar) udah
-  /// masuk DB sebelum import "berhasil", tapi disembunyiin dulu: yang tampil
-  /// cuma kartu proses.
+  /// Largest book id on the shelf when the import started. A new book (larger
+  /// id) is in the DB before the import is "successful", but hidden: only the
+  /// progress card shows.
   int? _importBaseline;
 
   ImportController get _import => ref.read(importControllerProvider.notifier);
 
   void _onImport(ImportState? prev, ImportState next) {
-    // Sheet dibuka di navigator root (di atas bar tab), tutupnya juga dari sana.
+    // The sheet opens on the root navigator (above the tab bar), so it closes from there too.
     final root = Navigator.of(context, rootNavigator: true);
     if (next is! ImportProcessing && _progressOpen) {
       _progressOpen = false;
@@ -84,7 +85,7 @@ class _BookshelfViewState extends ConsumerState<BookshelfView> {
     if (_markdownSheetOpen &&
         (next is ImportMarkdownDone || next is ImportMarkdownFailed)) {
       _markdownSheetOpen = false;
-      // Sheet + dialog bab dobel (kalau ada) turun bareng.
+      // The sheet + the duplicate chapter dialog (if any) go down together.
       root.popUntil((r) => r is! PopupRoute);
     }
     switch (next) {
@@ -104,7 +105,7 @@ class _BookshelfViewState extends ConsumerState<BookshelfView> {
         showToast(
           context,
           context.l10n.bookshelfAddedToYourShelf,
-          // PDF campuran: jujur soal halaman tanpa teks yang dilewati.
+          // Mixed PDF: be honest about the pages without text that were skipped.
           subtitle: skippedPages > 0
               ? '${book.title} · ${context.l10n.importPdfSkippedPages(skippedPages)}'
               : [book.title, ?book.author].join(' · '),
@@ -217,8 +218,9 @@ class _BookshelfViewState extends ConsumerState<BookshelfView> {
     }
   }
 
-  /// "Baca" di toast: buka bab yang barusan masuk. Posisi baca pindah ke
-  /// awal bab itu, cuma karena user sendiri yang tap.
+  /// "Baca" on the toast: opens the chapter that was just imported. The reading
+  /// position moves to the start of that chapter only because the user tapped
+  /// it themselves.
   Future<void> _readChapter(int bookId, int chapterId) async {
     await ref.read(readingProgressRepositoryProvider).save(bookId, (
       chapterId: chapterId,
@@ -228,12 +230,12 @@ class _BookshelfViewState extends ConsumerState<BookshelfView> {
     if (mounted) context.push(Routes.reader(bookId));
   }
 
-  /// Sheet hasil ketutup → balik idle, kecuali udah ada import baru jalan.
+  /// Result sheet closed → back to idle, unless a new import is already running.
   VoidCallback _dismissIf(ImportState shown) => () {
     if (identical(ref.read(importControllerProvider), shown)) _import.dismiss();
   };
 
-  /// Banner sesi habis (board Akun 12), di atas kartu Lanjut baca.
+  /// Session-expired banner (board Akun 12), above the Lanjut baca card.
   Widget? _sessionBanner() {
     final auth = ref.watch(authControllerProvider).value;
     if (auth == null || !auth.showExpiredBanner) return null;
@@ -243,11 +245,11 @@ class _BookshelfViewState extends ConsumerState<BookshelfView> {
     );
   }
 
-  /// Banner pengingat backup (docs/backup.md), atau null.
+  /// Backup reminder banner (docs/backup.md), or null.
   Widget? _reminder(List<ShelfBook> books) {
     final last = ref.watch(lastBackupProvider);
     final dismissed = ref.watch(reminderDismissedProvider);
-    // Belum kebaca: jangan sempet nongol terus ilang.
+    // Not read yet: don't flash in and out.
     if (!last.hasValue || !dismissed.hasValue || books.isEmpty) return null;
     final days = backupReminderDays(
       now: DateTime.now(),
@@ -272,7 +274,7 @@ class _BookshelfViewState extends ConsumerState<BookshelfView> {
   File? _cover(String? name) =>
       name == null ? null : ref.read(fileStorageProvider).cover(name);
 
-  /// Menu tekan lama (board 20 Tekan lama buku).
+  /// Long-press menu (board 20 Tekan lama buku).
   Future<void> _bookMenu(ShelfBook book) async {
     final pick = await showBookMenu<String>(
       context,
@@ -367,7 +369,7 @@ class _BookshelfViewState extends ConsumerState<BookshelfView> {
     final books = ref.watch(booksStreamProvider);
     final sort = ref.watch(shelfSortProvider).value;
     final view = ref.watch(shelfViewProvider).value;
-    // select: persen naik terus, rak gak perlu rebuild tiap kali.
+    // select: the percent keeps rising, the shelf shouldn't rebuild every time.
     final importing = ref.watch(
       importControllerProvider.select(
         (s) => s is ImportProcessing ? s.fileName : null,
@@ -375,7 +377,7 @@ class _BookshelfViewState extends ConsumerState<BookshelfView> {
     );
     void onImport() => _import.pick();
     final header = ShelfHeader(onImport: onImport);
-    // Rak kosong + unduhan jalan = layar 17 (tips sambil nunggu).
+    // Empty shelf + download running = screen 17 (tips while waiting).
     final downloading = ref
         .watch(downloadQueueProvider)
         .where((i) => !i.finished)
@@ -398,8 +400,8 @@ class _BookshelfViewState extends ConsumerState<BookshelfView> {
         body: SafeArea(
           bottom: false,
           child: switch (books) {
-            // Urutan & tampilan belum kebaca: tahan dulu, biar rak gak sempet
-            // nongol dalam urutan/tampilan default terus loncat.
+            // Order & view not read yet: hold off so the shelf doesn't flash in the
+            // default order/view and then jump.
             AsyncData() when sort == null || view == null => _pad(header),
             AsyncData(value: final list)
                 when list.isEmpty && importing == null && downloading != null =>
@@ -467,7 +469,7 @@ class _Shelf extends ConsumerStatefulWidget {
     this.reminder,
   });
 
-  /// Urut terakhir dibuka (urutan stream); [sort] diterapin buat isi rak.
+  /// Ordered by last opened (stream order); [sort] is applied to the shelf contents.
   final List<ShelfBook> books;
   final ShelfSort sort;
   final ShelfView view;
@@ -476,10 +478,10 @@ class _Shelf extends ConsumerStatefulWidget {
   final ValueChanged<ShelfView> onView;
   final ValueChanged<ShelfBook> onBookMenu;
 
-  /// Nama file yang lagi diimport: kartu "Lagi diproses" di depan.
+  /// Filename being imported: the "Lagi diproses" card at the front.
   final String? importing;
 
-  /// Pengingat backup, paling atas di area scroll.
+  /// Backup reminder, at the top of the scroll area.
   final Widget? reminder;
 
   @override
@@ -489,11 +491,11 @@ class _Shelf extends ConsumerStatefulWidget {
 class _ShelfState extends ConsumerState<_Shelf> {
   final _scroll = ScrollController();
 
-  /// Header nyusut ngikutin scroll: 0 (gede) sampe 1 (bar kecil).
+  /// Header shrinks with scroll: 0 (large) to 1 (small bar).
   final _collapse = ValueNotifier<double>(0);
 
-  /// Baris "Semua buku" lagi nempel di atas isi yang lewat di bawahnya: fade
-  /// tepi atas baru dipasang di bawah baris itu.
+  /// The "Semua buku" row is pinned above content passing beneath it: only then
+  /// is the top edge fade applied below that row.
   final _stuck = ValueNotifier<bool>(false);
 
   @override
@@ -513,7 +515,7 @@ class _ShelfState extends ConsumerState<_Shelf> {
     super.dispose();
   }
 
-  /// Buku terakhir dibuka yang belum kelar, buat kartu "Lanjut baca yuk".
+  /// Last opened unfinished book, for the "Lanjut baca yuk" card.
   ShelfBook? get _resume {
     final first = widget.books.firstOrNull;
     return first != null && first.opened && !first.finished ? first : null;
@@ -529,7 +531,7 @@ class _ShelfState extends ConsumerState<_Shelf> {
 
   @override
   Widget build(BuildContext context) {
-    // Tab Rak ditap lagi = gulung ke atas (board NavBar).
+    // Tapping the Rak tab again = scroll to top (board NavBar).
     ref.listen(tabReselectProvider, (_, _) {
       if (ref.read(tabReselectProvider.notifier).last != LumaTab.rak) return;
       if (!_scroll.hasClients) return;
@@ -557,8 +559,8 @@ class _ShelfState extends ConsumerState<_Shelf> {
 
     return Column(
       children: [
-        // Header nempel & nyusut pas scroll 0–52pt; lewat itu "Semua buku"
-        // nempel di bawah bar.
+        // The header sticks & shrinks over 0–52pt of scroll; beyond that "Semua buku"
+        // sticks below the bar.
         _pad(
           ValueListenableBuilder(
             valueListenable: _collapse,
@@ -570,8 +572,8 @@ class _ShelfState extends ConsumerState<_Shelf> {
           child: ValueListenableBuilder(
             valueListenable: _stuck,
             builder: (context, stuck, child) => EdgeFadeScroll(
-              // Mudar cuma di bawah baris yang nempel (44), gak pake garis
-              // pemisah. Bawah edge-to-edge: buku jalan sampe tepi layar.
+              // Fades only below the pinned row (44), no divider line. Bottom is
+              // edge-to-edge: books run to the screen edge.
               top: stuck
                   ? const EdgeFadeSide(20, clear: Layout.touch, clearAlpha: 1)
                   : EdgeFadeSide.none,
@@ -703,7 +705,7 @@ class _ShelfState extends ConsumerState<_Shelf> {
                           },
                         ),
                 ),
-                // Penutup rak.
+                // End of the shelf.
                 SliverPadding(
                   padding: EdgeInsets.fromLTRB(
                     Layout.margin,
@@ -733,7 +735,7 @@ class _ShelfState extends ConsumerState<_Shelf> {
   }
 }
 
-/// Baris "Semua buku" yang nempel di bawah header.
+/// The "Semua buku" row pinned below the header.
 class _PinnedRow extends SliverPersistentHeaderDelegate {
   const _PinnedRow({
     required this.color,
@@ -765,7 +767,7 @@ class _PinnedRow extends SliverPersistentHeaderDelegate {
   bool shouldRebuild(_PinnedRow old) => true;
 }
 
-/// "Semua buku" + urutan + toggle grid / list.
+/// "Semua buku" + sort + grid / list toggle.
 class _Toolbar extends StatelessWidget {
   const _Toolbar({
     required this.sort,
@@ -791,7 +793,7 @@ class _Toolbar extends StatelessWidget {
               header: true,
               child: Text(
                 context.l10n.bookshelfAllBooks,
-                // Baris 44 dikunci: ikut teks gede sampe 1,3×.
+                // Row 44 is fixed: follows large text up to 1.3×.
                 textScaler: MediaQuery.textScalerOf(context)
                     .clamp(maxScaleFactor: 1.3),
                 maxLines: 1,
@@ -838,7 +840,7 @@ class _Toolbar extends StatelessWidget {
   }
 }
 
-/// Toggle 2 ikon (grid / list): 40 tinggi, area tap tiap ikon 44.
+/// 2-icon toggle (grid / list): 40 tall, 44 tap area per icon.
 class _ViewToggle extends StatelessWidget {
   const _ViewToggle({required this.value, required this.onChanged});
 
@@ -881,7 +883,7 @@ class _ViewToggle extends StatelessWidget {
       );
     }
 
-    // Pil 40 digambar di belakang; ikonnya 44 tinggi biar area tap-nya 44.
+    // The 40 pill is drawn behind; icons are 44 tall so the tap area is 44.
     return SizedBox(
       width: 76,
       height: Layout.touch,
@@ -916,15 +918,15 @@ class _ViewToggle extends StatelessWidget {
   }
 }
 
-/// Rak kosong (board Cari buku 02): kalimat pembuka terkenal + Ambil,
-/// "Rak lo masih kosong", Cari buku gratis, link import file.
+/// Empty shelf (board "Cari buku" 02): famous opening sentence + "Ambil",
+/// "Rak lo masih kosong", "Cari buku gratis", import-file link.
 class _Empty extends ConsumerWidget {
   const _Empty({required this.header, required this.onImport, this.banner});
 
   final Widget header;
   final VoidCallback onImport;
 
-  /// Indikator sync: device baru mulai dari rak kosong.
+  /// Sync indicator: a new device starts from an empty shelf.
   final Widget? banner;
 
   @override
@@ -1132,8 +1134,9 @@ class _Empty extends ConsumerWidget {
   }
 }
 
-/// Rak kosong, buku pertama lagi diunduh (board Cari buku 17): progres tipis
-/// + kartu tips geser, kartu pertama pakai kalimat pembuka buku yang diunduh.
+/// Empty shelf, first book downloading (board Cari buku 17): thin progress +
+/// swipeable tips cards, the first card uses the downloaded book's opening
+/// sentence.
 class _EmptyDownloading extends StatefulWidget {
   const _EmptyDownloading({required this.header, required this.item});
 
@@ -1323,7 +1326,7 @@ class _Tip extends StatelessWidget {
   }
 }
 
-/// Contoh fitur di rak kosong: paragraf distabilo + gelembung artinya.
+/// Feature example on the empty shelf: a highlighted paragraph + a meaning bubble.
 class _Example extends StatelessWidget {
   const _Example({
     this.quote =

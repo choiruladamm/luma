@@ -45,7 +45,7 @@ extension MarkdownShelfCopy on MarkdownShelf {
   }
 }
 
-/// Nomor bab jadi teks: 3 nomor berurutan atau lebih diringkas jadi rentang.
+/// Formats chapter numbers as text; runs of 3 or more consecutive numbers collapse into a range.
 /// [1, 3, 7] → "Bab 1, 3, 7"; [1, 2] → "Bab 1, 2"; 1..40 → "Bab 1–40".
 String chapterRanges(
   List<int> chapters, {

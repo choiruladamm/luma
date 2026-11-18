@@ -1,8 +1,8 @@
-/// Versi app di manifest backup. Samain sama `version` di pubspec.yaml
-/// (ada test yang ngecek).
+/// App version in the backup manifest. Keep equal to `version` in pubspec.yaml
+/// (a test checks it).
 const appVersion = '0.3.0';
 
-/// Isi `manifest.json` di file backup (docs/backup.md).
+/// Contents of `manifest.json` in the backup file (docs/backup.md).
 class BackupManifest {
   const BackupManifest({
     required this.appVersion,
@@ -21,7 +21,7 @@ class BackupManifest {
   final int books;
   final int aiResults;
 
-  /// Dari `manifest.json`. Bentuknya salah → [FormatException].
+  /// From `manifest.json`. A malformed shape → [FormatException].
   factory BackupManifest.fromJson(Object? json) {
     if (json is! Map ||
         json['format'] != format ||
@@ -51,18 +51,17 @@ class BackupManifest {
   };
 }
 
-/// Backup terakhir yang berhasil disimpen user (Pengaturan).
+/// The last backup the user successfully saved (Pengaturan).
 typedef LastBackup = ({DateTime at, String name, int size});
 
-/// `luma-backup-YYYYMMDD-HHmm.zip` (zip biasa: gak perlu tipe file
-/// custom).
+/// `luma-backup-YYYYMMDD-HHmm.zip` (a plain zip: no custom file type needed).
 String backupFileName(DateTime t) {
   String two(int n) => n.toString().padLeft(2, '0');
   return 'luma-backup-${t.year}${two(t.month)}${two(t.day)}'
       '-${two(t.hour)}${two(t.minute)}.zip';
 }
 
-/// ISO 8601 pake offset zona waktu lokal: `2026-10-06T21:30:00+07:00`.
+/// ISO 8601 with the local timezone offset: `2026-10-06T21:30:00+07:00`.
 String isoWithOffset(DateTime t) {
   String two(int n) => n.abs().toString().padLeft(2, '0');
   final o = t.timeZoneOffset;
@@ -72,11 +71,11 @@ String isoWithOffset(DateTime t) {
       '$sign${two(o.inHours)}:${two(o.inMinutes % 60)}';
 }
 
-/// Berapa hari belum backup kalau banner pengingat perlu nongol di Rak, null
-/// kalau gak perlu (docs/backup.md). Hitungan per tanggal kalender dari
-/// backup terakhir, atau dari buku pertama kalau belum pernah backup (rak
-/// kosong = gak ada yang perlu diamanin). Muncul mulai hari ke-6 (sebelum
-/// siklus install ulang 7 hari); ditutup hari ini → nongol lagi besok.
+/// Days since the last backup when the reminder banner should show on the Rak,
+/// null when it shouldn't (docs/backup.md). Counted in calendar days from the
+/// last backup, or from the first book if never backed up (empty shelf = nothing
+/// to protect). Shows from day 6 (before the 7-day reinstall cycle); dismissed
+/// today → shows again tomorrow.
 int? backupReminderDays({
   required DateTime now,
   DateTime? lastBackup,

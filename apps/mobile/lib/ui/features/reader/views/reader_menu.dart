@@ -9,10 +9,10 @@ import 'reader_capsule.dart';
 
 enum ReaderMenuAction { search, results, display }
 
-/// Menu ⋯ di kapsul atas: Cari kata, Atur tampilan. Popover kapsul-style
-/// (garis 1,5, radius 20, baris 50), rata kanan, 10pt di bawah kapsul. Null
-/// kalau ditutup tanpa milih. Lagi mode cari ([resultsFor] = kata yang dicari)
-/// item pertamanya jadi "Lihat hasil “kata”" (balik ke daftar hasil).
+/// The ⋯ menu on the top capsule: Cari kata, Atur tampilan. Capsule-style popover
+/// (1.5 line, radius 20, 50 rows), right-aligned, 10pt below the capsule. Null when
+/// dismissed without choosing. In search mode ([resultsFor] = the searched word)
+/// the first item becomes "Lihat hasil “kata”" (back to the result list).
 Future<ReaderMenuAction?> showReaderMenu(
   BuildContext context, {
   String? resultsFor,

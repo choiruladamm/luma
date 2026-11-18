@@ -1,11 +1,11 @@
-// Dump hasil import PDF ke .md + diagnostik, buat dicek mata (#89).
+// Dump PDF import results and diagnostics to .md for visual inspection.
 //
 //   PDF_PROBE_FILES="a.pdf,b.pdf" PDF_PROBE_OUT=/tmp/probe \
 //     fvm flutter test tool/pdf_probe.dart --timeout none
 //
-// Jalan lewat flutter_tester (butuh dart:ui buat cover), tapi pake PdfiumService
-// + domain produksi apa adanya, bukan parser alternatif. Output (privat, jangan
-// di-commit) = <out>/<nama>.md + <out>/<nama>.txt.
+// Run through flutter_tester (which provides dart:ui for covers) with the
+// production PdfiumService and domain code, not an alternate parser. Keep the
+// output private and uncommitted: <out>/<name>.md + <out>/<name>.txt.
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';

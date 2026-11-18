@@ -12,8 +12,8 @@ export type FakeKey = {
 };
 
 /**
- * OpenRouter management API palsu di memori (bentuk respons dari spike #200).
- * Panggil di tiap test; handler direset otomatis setelah test.
+ * Fake in-memory OpenRouter management API (response shape from spike #200).
+ * Call in every test; handlers are reset automatically after each test.
  */
 export function fakeOpenRouter() {
   const keys = new Map<string, FakeKey>();

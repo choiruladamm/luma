@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../data/repositories/book_repository.dart';
 import 'bookshelf_view_model.dart';
 
-/// State sheet Ubah judul & penulis (board 33–38).
+/// State of the Ubah judul & penulis sheet (boards 33–38).
 class BookEditState {
   const BookEditState({
     required this.title,
@@ -18,15 +18,15 @@ class BookEditState {
   final String title, author;
   final bool useDefaultCover, saving;
 
-  /// Null = belum pernah diedit, gak ada yang bisa dibalikin.
+  /// Null = never edited, nothing to restore.
   final String? originalTitle, originalAuthor;
 
-  /// Cover mentah EPUB; null = gak ada, toggle cover disembunyiin.
+  /// Raw EPUB cover; null = none, the cover toggle is hidden.
   final String? epubCoverName;
 
   bool get titleEmpty => title.trim().isEmpty;
 
-  /// Penulis ter-trim; kosong = null.
+  /// Trimmed author; empty = null.
   String? get authorOrNull {
     final a = author.trim();
     return a.isEmpty ? null : a;
@@ -78,7 +78,7 @@ class BookEditViewModel extends Notifier<BookEditState> {
   void setAuthor(String v) => state = state.copyWith(author: v);
   void setUseDefaultCover(bool v) => state = state.copyWith(useDefaultCover: v);
 
-  /// Ngisi ulang field dengan nilai asli EPUB; baru kesimpen pas [save].
+  /// Refills the fields with the original EPUB values; only saved on [save].
   void revert() {
     if (!state.canRevert) return;
     state = state.copyWith(
@@ -87,7 +87,7 @@ class BookEditViewModel extends Notifier<BookEditState> {
     );
   }
 
-  /// False kalau gagal / judul kosong.
+  /// False on failure / empty title.
   Future<bool> save() async {
     if (!state.canSave) return false;
     state = state.copyWith(saving: true);

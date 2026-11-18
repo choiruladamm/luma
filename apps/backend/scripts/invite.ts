@@ -1,5 +1,5 @@
-// Bikin kode undangan acak dan simpan ke D1 remote: `make backend-invite e=dev n=3`.
-// Kode yang dicetak = yang dikasih ke orang; yang disimpan = bentuk normalisasinya.
+// Generates random invite codes and stores them in remote D1: `make backend-invite e=dev n=3`.
+// The printed code is what you hand out; the stored one is its normalized form.
 import { newInviteCode, normalizeInviteCode } from "../src/auth/invite";
 
 const [envName, count = "1"] = process.argv.slice(2);

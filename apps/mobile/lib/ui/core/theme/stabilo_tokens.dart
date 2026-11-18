@@ -4,35 +4,35 @@ import 'package:flutter/material.dart';
 
 import 'stabilo_theme.dart';
 
-/// Spacing, grid 4pt (board Foundations · 03 Ruang, bentuk & gerak).
+/// Spacing, 4pt grid (board Foundations · 03 Ruang, bentuk & gerak).
 abstract final class Space {
-  static const s1 = 4.0; // ikon & teks kecil
-  static const s2 = 8.0; // tag ke isi, antar chip
-  static const s3 = 12.0; // dalam kartu
-  static const s4 = 16.0; // antar section di sheet
-  static const s5 = 20.0; // padding kartu
-  static const s6 = 24.0; // margin layar, antar blok
-  static const s8 = 32.0; // jarak besar empty state
+  static const s1 = 4.0; // icons & small text
+  static const s2 = 8.0; // tag to content, between chips
+  static const s3 = 12.0; // inside cards
+  static const s4 = 16.0; // between sections in a sheet
+  static const s5 = 20.0; // card padding
+  static const s6 = 24.0; // screen margin, between blocks
+  static const s8 = 32.0; // large gap in empty states
   static const s10 = 40.0;
 }
 
 abstract final class Radii {
-  static const xs = 5.0; // highlight inline
-  static const sm = 12.0; // tag, chip, tile ikon
-  static const md = 14.0; // cover buku, highlight grup
-  static const lg = 20.0; // kartu, CTA besar
-  static const xl = 28.0; // sudut atas sheet
+  static const xs = 5.0; // inline highlight
+  static const sm = 12.0; // tag, chip, icon tile
+  static const md = 14.0; // book cover, group highlight
+  static const lg = 20.0; // card, large CTA
+  static const xl = 28.0; // top corners of a sheet
   static const full = 999.0; // icon button, pill, segmented
-  // Di luar skala Ruang, dipake board Komponen 04.
+  // Outside the Ruang scale, used by board Komponen 04.
   static const chatTail = 6.0;
-  static const chatComposer = 26.0; // kapsul input ngobrol
-  static const field = 16.0; // field input
-  static const menu = 18.0; // menu, list pengaturan
+  static const chatComposer = 26.0; // chat input capsule
+  static const field = 16.0; // input field
+  static const menu = 18.0; // menu, settings list
   static const dialog = 24.0;
-  static const dialogIcon = 26.0; // board 22 Konfirmasi hapus (dialog + ikon)
+  static const dialogIcon = 26.0; // board 22 Konfirmasi hapus (dialog + icon)
 }
 
-/// Layout acuan iPhone 390 × 844.
+/// Reference layout: iPhone 390 × 844.
 abstract final class Layout {
   static const readerChatWidth = 120.0;
   static const readerProgressWidth = 210.0;
@@ -42,8 +42,8 @@ abstract final class Layout {
   static const chatHeader = 52.0;
   static const chatComposer = 52.0;
   static const chatSend = 42.0;
-  static const chatSteps = 40.0; // baris status Langkah AI + Jawab sekarang
-  static const chatComposerBox = 55.0; // kapsul 52 + garis 1,5 × 2
+  static const chatSteps = 40.0; // "Langkah AI" status row + "Jawab sekarang"
+  static const chatComposerBox = 55.0; // 52 capsule + 1.5 × 2 border
   static const chatBubbleFraction = 0.82;
   static const chatBubblePadding = EdgeInsets.symmetric(
     horizontal: 14,
@@ -53,103 +53,103 @@ abstract final class Layout {
   static const chatTextWidth = 680.0;
   static const margin = Space.s6;
   static const topBar = 60.0;
-  static const touch = 44.0; // target sentuh minimal
-  static const searchField = 44.0; // SearchField sheet Cari kata
-  static const searchRing = 4.0; // cincin fokus SearchField
-  static const searchSheetTop = 54.0; // sheet Cari kata: jarak dari atas layar
-  static const searchNavHeight = 50.0; // navigator hasil, penuh
-  static const searchNavCompactHeight = 46.0; // navigator ngecil pas scroll
-  static const searchNavButton = 36.0; // lingkaran tombol navigator (tap 44)
-  static const searchNavDivider = 24.0; // garis sebelum ×
-  static const searchClear = 22.0; // × di SearchField
-  static const searchTile = 64.0; // ikon layar "gak ketemu"
-  static const searchDot = 10.0; // titik kuning di ⋯ pas mode cari
-  static const readerMenuWidth = 232.0; // popover menu ⋯ di kapsul
-  static const readerMenuRow = 50.0; // baris menu ⋯
-  static const icon = 20.0; // ikon di tombol (18–20)
-  static const iconStroke = 1.8; // 2.2 kalau ikon ≤14
-  static const outline = 1.5; // cuma di objek yang bisa dipegang
+  static const touch = 44.0; // minimum touch target
+  static const searchField = 44.0; // SearchField of the Cari kata sheet
+  static const searchRing = 4.0; // SearchField focus ring
+  static const searchSheetTop = 54.0; // Cari kata sheet: top offset
+  static const searchNavHeight = 50.0; // result navigator, full
+  static const searchNavCompactHeight = 46.0; // navigator, shrunk on scroll
+  static const searchNavButton = 36.0; // nav button circle (tap 44)
+  static const searchNavDivider = 24.0; // divider before ×
+  static const searchClear = 22.0; // × in SearchField
+  static const searchTile = 64.0; // icon of the "not found" screen
+  static const searchDot = 10.0; // yellow dot on ⋯ in search mode
+  static const readerMenuWidth = 232.0; // ⋯ menu popover on the capsule
+  static const readerMenuRow = 50.0; // ⋯ menu row
+  static const icon = 20.0; // icon inside buttons (18–20)
+  static const iconStroke = 1.8; // 2.2 when the icon is ≤14
+  static const outline = 1.5; // only on tangible objects
   static const shelfMinColumns = 3;
-  static const shelfMinCard = 96.0; // di bawah ini kolom dikurangin
+  static const shelfMinCard = 96.0; // below this, columns are reduced
   static const shelfGapX = 14.0;
-  static const shelfGapY = 24.0; // board Rak: stiker nongol 11 di bawah cover
-  static const rowHeight = 84.0; // tampilan list
+  static const shelfGapY = 24.0; // sticker sticks out 11 below cover
+  static const rowHeight = 84.0; // list view
   static const rowGap = 4.0;
-  static const chapterBarGap = 3.0; // jarak slot strip bab di list
-  static const chapterBarHeight = 4.0; // tinggi bar progres di list
-  static const barMin = 44.0; // header rak pas nyusut (maks = topBar)
-  static const barShrink = 52.0; // jarak scroll buat nyusut penuh
+  static const chapterBarGap = 3.0; // gap between list strip slots
+  static const chapterBarHeight = 4.0; // height of the progress bar in the list
+  static const barMin = 44.0; // shelf header when shrunk (max = topBar)
+  static const barShrink = 52.0; // scroll distance to shrink fully
   static const coverAspect = 2 / 3;
-  // Awal bab (board 03 Baca + "awal bab, judul panjang").
+  // Chapter start (board 03 Baca + "awal bab, judul panjang").
   static const chapterOpenerTop = 40.0;
   static const chapterOpenerBottom = 28.0;
   static const chapterOpenerGap = 14.0;
-  static const chapterStrokeWidth = 56.0; // coretan kuning miring
+  static const chapterStrokeWidth = 56.0; // slanted yellow stroke
   static const chapterStrokeHeight = 8.0;
   static const chapterStrokeTilt = -4 * math.pi / 180;
 
-  /// Kolom rak: max(3, floor((lebar − 2×margin + gap) / (96 + gap))). [width]
-  /// = lebar area isi (layar − 2×margin). Rumus yang sama buat landscape/iPad.
+  /// Shelf columns: max(3, floor((width − 2×margin + gap) / (96 + gap))).
+  /// [width] = content area width (screen − 2×margin). Same for landscape/iPad.
   static int shelfColumns(double width) => math.max(
     shelfMinColumns,
     ((width + shelfGapX) / (shelfMinCard + shelfGapX)).floor(),
   );
   static const sheetPadding = EdgeInsets.fromLTRB(24, 10, 24, 34);
 
-  // Sheet "Masuk ke buku mana?" (board Import Markdown).
+  // "Masuk ke buku mana?" sheet (board Import Markdown).
   static const pickRow = 62.0; // cover 48 + 2 × 7
-  static const pickCover = 48.0; // tinggi cover mini di baris
+  static const pickCover = 48.0; // height of the mini cover in a row
   static const pickRadio = 24.0;
-  static const pickFade = 28.0; // fade list yang ngintip
-  static const pickVisibleRows = 3; // baris keliatan penuh, sisanya scroll
-  static const pickSheetHeight = 1 - 72 / 844; // top sheet 72 di layar 844
+  static const pickFade = 28.0; // fade of the peeking list
+  static const pickVisibleRows = 3; // fully visible rows, the rest scrolls
+  static const pickSheetHeight = 1 - 72 / 844; // sheet top at 72 of 844
 
-  // Sheet Artinya (board Ngumpet pas scroll, layar 844).
-  static const artinyaHeight = 528 / 844; // fraksi layar, tetap di semua state
-  static const artinyaHeader = 91.0; // grabber + judul + X + jarak
-  static const artinyaActions = 102.0; // tombol 52 + jarak 16 + safe area 34
-  static const artinyaGrabberZone = 12.0; // isi pudar mulai dari sini
-  static const sheetDismissFling = 700.0; // fling turun segini (pt/dtk) nutup
-  static const sheetDismissRatio = 0.75; // atau ditarik sampe tinggal segini
+  // "Artinya" sheet (board "Ngumpet pas scroll", 844 screen).
+  static const artinyaHeight = 528 / 844; // fixed fraction of the screen
+  static const artinyaHeader = 91.0; // grabber + title + X + gap
+  static const artinyaActions = 102.0; // 52 button + 16 gap + 34 safe area
+  static const artinyaGrabberZone = 12.0; // content fade starts here
+  static const sheetDismissFling = 700.0; // downward fling (pt/s) that closes
+  static const sheetDismissRatio = 0.75; // or drag until this fraction remains
 
-  // Sinkron sheet → isi card kuning.
-  static const followGap = Space.s6; // bawah paragraf aktif → atas sheet
+  // Sheet → yellow card content sync.
+  static const followGap = Space.s6; // below active paragraph → sheet top
 
-  // Layar Bedahin (board Bedahin · Opsi C).
-  static const breakdownHeader = 48.0; // balik + judul + buku · bab
-  static const breakdownPanel = 0.4; // panel teks maks segini dari layar
-  static const breakdownBadge = 20.0; // nomor bagian di teks (min, ikut Aa)
-  static const breakdownNumber = 28.0; // nomor bagian di penjelasan
-  static const breakdownGutter = 20.0; // kolom ¶n di panel teks
-  static const breakdownReadLine = 96.0; // garis baca dari atas penjelasan
-  static const breakdownSwitch = 24.0; // histeresis ganti bagian aktif
-  static const breakdownFolded = 52.0; // panel teks pas ngelipet
-  static const breakdownFoldStrip = 28.0; // chevron lipet di ujung panel
+  // Bedahin screen (board Bedahin · Opsi C).
+  static const breakdownHeader = 48.0; // back + title + book · chapter
+  static const breakdownPanel = 0.4; // text panel max fraction of the screen
+  static const breakdownBadge = 20.0; // section number in text (min, ×Aa)
+  static const breakdownNumber = 28.0; // section number in the explanation
+  static const breakdownGutter = 20.0; // ¶n column in the text panel
+  static const breakdownReadLine = 96.0; // reading line from explanation top
+  static const breakdownSwitch = 24.0; // active-section switch hysteresis
+  static const breakdownFolded = 52.0; // text panel when folded
+  static const breakdownFoldStrip = 28.0; // fold chevron at the panel edge
 
-  // Menu tekan lama buku (board 20 Tekan lama buku, layar 390 × 844).
-  static const bookMenuTop = 168.0; // atas cover terangkat dari atas layar
-  static const bookMenuCover = 156.0; // lebar cover terangkat
-  // Kartu 3 kolom di 390: cover terangkat = kartu itu di-scale 156 / ini.
+  // Book long-press menu (board 20 Tekan lama buku, 390 × 844 screen).
+  static const bookMenuTop = 168.0; // lifted cover top, from screen top
+  static const bookMenuCover = 156.0; // width of the lifted cover
+  // 3-column card at 390: lifted cover = that card scaled by 156 / this.
   static const bookMenuCoverSource = (390 - 2 * margin - 2 * shelfGapX) / 3;
-  static const bookMenuGap = 18.0; // cover → panel menu
+  static const bookMenuGap = 18.0; // cover → menu panel
   static const bookMenuWidth = 250.0;
   static const bookMenuRow = 52.0;
-  static const bookMenuBlur = 8.0; // sigma blur rak
+  static const bookMenuBlur = 8.0; // shelf blur sigma
 
   // NavBar bottom bar (board Komponen · NavBar).
-  static const navBar = 60.0; // pill melayang
-  static const navTab = 48.0; // pill tab aktif / lingkaran tab diem
-  static const navBottom = 26.0; // jarak dari bawah layar (di atas home bar)
-  static const navSpace = 104.0; // ruang bawah konten di belakang bar
-  static const navBadge = 16.0; // lencana unduhan di tab Cari buku
-  static const navChip = 44.0; // chip "Ngunduh N buku"
+  static const navBar = 60.0; // floating pill
+  static const navTab = 48.0; // active tab pill / idle tab circle
+  static const navBottom = 26.0; // from screen bottom (above home bar)
+  static const navSpace = 104.0; // space below content, behind the bar
+  static const navBadge = 16.0; // download badge on the Cari buku tab
+  static const navChip = 44.0; // "Ngunduh N buku" chip
   static const navChipGap = 12.0; // chip → bar
   static const navChipRing = 28.0;
 }
 
-/// Durasi & curve. Kalau iOS "Kurangi gerakan" nyala
-/// (`MediaQuery.disableAnimationsOf`): shimmer, titik, kursor berhenti; sheet
-/// jadi fade [reducedFade].
+/// Durations & curves. When iOS "Reduce Motion" is on
+/// (`MediaQuery.disableAnimationsOf`): shimmer, dots, cursor stop; sheets
+/// become a [reducedFade] fade.
 abstract final class Motion {
   static const sheetOpen = Duration(milliseconds: 280);
   static const sheetOpenCurve = Curves.easeOutCubic;
@@ -157,11 +157,11 @@ abstract final class Motion {
   static const sheetCloseCurve = Curves.easeInCubic;
   static const follow = Duration(
     milliseconds: 70,
-  ); // easeOut, ngejar jari, tipis
-  static const riseCurve = Curves.easeInOutCubic; // mulai & berhenti pelan
+  ); // easeOut, tracks the finger, light
+  static const riseCurve = Curves.easeInOutCubic; // starts & stops gently
 
-  /// Halaman naik ke atas pas sheet Artinya dibuka: makin jauh makin lama
-  /// (0,6 ms per pt, 280–520 ms) biar paragraf di tengah gak tersentak.
+  /// Page rise when the Artinya sheet opens: the farther, the longer
+  /// (0.6 ms per pt, 280–520 ms), so a paragraph in the middle doesn't jerk.
   static Duration rise(double distance) => Duration(
     milliseconds: (distance.abs() * 0.6).clamp(280.0, 520.0).round(),
   );
@@ -171,54 +171,52 @@ abstract final class Motion {
   static const cursorBlink = Duration(milliseconds: 1000); // steps(1)
   static const thinkingDots = Duration(milliseconds: 1200); // easeInOut, loop
   static const reducedFade = Duration(milliseconds: 150);
-  static const navTab = Duration(milliseconds: 200); // pill geser + label
-  static const progressStep = Duration(milliseconds: 150); // angka + bar import
-  static const importMin = Duration(milliseconds: 1500); // loading import min.
-  static const importSettle = Duration(milliseconds: 300); // jeda di 100%
-  static const contentFade = Duration(milliseconds: 200); // isi bab muncul
-  static const toast = Duration(milliseconds: 2500); // ilang sendiri
-  static const toastBaca = Duration(seconds: 5); // toast import Markdown + Baca
-  static const toastLong = Duration(
-    seconds: 6,
-  ); // toast yang ada catatan + aksi
-  static const capsule = Duration(milliseconds: 200); // easeOut, kapsul baca
+  static const navTab = Duration(milliseconds: 200); // pill slide + label
+  static const progressStep = Duration(milliseconds: 150); // number + bar
+  static const importMin = Duration(milliseconds: 1500); // min import loading
+  static const importSettle = Duration(milliseconds: 300); // pause at 100%
+  static const contentFade = Duration(milliseconds: 200); // chapter fades in
+  static const toast = Duration(milliseconds: 2500); // disappears on its own
+  static const toastBaca = Duration(seconds: 5); // Markdown import + Baca toast
+  static const toastLong = Duration(seconds: 6); // toast with a note + action
+  static const capsule = Duration(milliseconds: 200); // easeOut, capsule
   static const sheetChrome = Duration(
     milliseconds: 200,
-  ); // easeOut, tombol sheet
-  static const edgeFade = Duration(milliseconds: 150); // fade tepi scroll
-  static const capsuleIntro = Duration(milliseconds: 2500); // abis lanjut baca
+  ); // easeOut, sheet button
+  static const edgeFade = Duration(milliseconds: 150); // scroll edge fade
+  static const capsuleIntro = Duration(milliseconds: 2500); // after resume
   static const flash = Duration(milliseconds: 1200); // stabilo 0 → 60% → 0
-  static const flashReduced = Duration(seconds: 3); // garis kiri 4pt
+  static const flashReduced = Duration(seconds: 3); // 4pt left line
   static const searchFlash = Duration(
     milliseconds: 600,
-  ); // paragraf hasil Cari kata kedip muted
+  ); // Cari kata result paragraph blinks muted
   static const searchRegrow = Duration(
     milliseconds: 1200,
-  ); // navigator balik penuh abis scroll berhenti
+  ); // navigator returns to full after scrolling stops
   static const searchPill = Duration(
     milliseconds: 150,
-  ); // navigator penuh ↔ ngecil (lebar)
+  ); // navigator full ↔ shrunk (width)
   static const searchToast = Duration(seconds: 6); // "Balik ke posisi tadi?"
-  static const writingDots = Duration(milliseconds: 1600); // titik "Lagi nulis"
+  static const writingDots = Duration(milliseconds: 1600); // "Lagi nulis" dots
   static const stepPulse = Duration(
     milliseconds: 600,
-  ); // dot Langkah AI, bolak-balik
-  static const tailFade = Duration(milliseconds: 300); // ujung teks jadi solid
+  ); // Langkah AI dot, back and forth
+  static const tailFade = Duration(milliseconds: 300); // text end turns solid
   static const statusSwap = Duration(milliseconds: 150); // status → "Salin"
-  static const jump = Duration(milliseconds: 300); // lompat ke bagian
-  static const fold = Duration(milliseconds: 200); // panel Bedahin ngelipet
+  static const jump = Duration(milliseconds: 300); // jump to section
+  static const fold = Duration(milliseconds: 200); // Bedahin panel folding
 }
 
-/// Bayangan. Default flat (tanpa bayangan).
+/// Shadows. Default is flat (no shadow).
 abstract final class Elevation {
-  /// CTA utama, cuma di mode terang.
+  /// Main CTA, light mode only.
   static List<BoxShadow> press(StabiloColors c, Brightness b) =>
       b == Brightness.light
       ? [BoxShadow(color: c.outline, offset: const Offset(0, 2))]
       : const [];
 
-  /// Kapsul halaman baca: terang garis + bayangan tekan 2 + bayangan lembut,
-  /// gelap bayangan lembut doang.
+  /// Reading page capsule: light has a line + a pressed shadow 2 + a soft
+  /// shadow, dark has only the soft shadow.
   static List<BoxShadow> capsule(StabiloColors c, Brightness b) =>
       b == Brightness.light
       ? [
@@ -237,7 +235,7 @@ abstract final class Elevation {
           ),
         ];
 
-  /// Pilihan terpilih di segmented control, cuma di mode terang.
+  /// Selected option in the segmented control, light mode only.
   static List<BoxShadow> segment(Brightness b) => b == Brightness.light
       ? const [
           BoxShadow(
@@ -256,12 +254,12 @@ abstract final class Elevation {
     BoxShadow(color: Color(0x14000000), offset: Offset(0, 4), blurRadius: 12),
   ];
 
-  /// Cover terangkat di menu tekan lama (terang & gelap sama).
+  /// Lifted cover in the long-press menu (same in light & dark).
   static const lift = [
     BoxShadow(color: Color(0x38000000), offset: Offset(0, 14), blurRadius: 28),
   ];
 
-  /// Panel menu tekan lama.
+  /// Long-press menu panel.
   static const menu = [
     BoxShadow(color: Color(0x38000000), offset: Offset(0, 16), blurRadius: 40),
   ];
@@ -277,19 +275,19 @@ abstract final class Elevation {
   ];
 }
 
-/// Cover default (board "Cover default · aturan generate"): warna dari
-/// `coverIndex(judul)`. Gelap = terang dicampur 28% `#22201C`. Teks cover
-/// selalu [coverInk]; coretan stabilo pake accent, kecuali di cover kuning
-/// (indeks 0) pake pink.
+/// Default cover (board "Cover default · aturan generate"): color from
+/// `coverIndex(title)`. Dark = light mixed with 28% of the ink color 0x22201C. Cover text is
+/// always [coverInk]; the stabilo stroke uses accent, except on the yellow cover
+/// (index 0), which uses pink.
 const coverPalette = [
-  (light: Color(0xFFFFE38A), dark: Color(0xFFC1AC6B)), // kuning
+  (light: Color(0xFFFFE38A), dark: Color(0xFFC1AC6B)), // yellow
   (light: Color(0xFFFFC2D3), dark: Color(0xFFC195A0)), // pink
   (light: Color(0xFFFFB27D), dark: Color(0xFFC18962)), // peach
   (light: Color(0xFFA6E6C6), dark: Color(0xFF81AF96)), // mint
   (light: Color(0xFFA3B5FF), dark: Color(0xFF7F8BBF)), // periwinkle
   (light: Color(0xFFD4B8FF), dark: Color(0xFFA28DBF)), // lilac
-  (light: Color(0xFF9FDCF2), dark: Color(0xFF7CA7B6)), // langit
+  (light: Color(0xFF9FDCF2), dark: Color(0xFF7CA7B6)), // sky
   (light: Color(0xFFC9DB9A), dark: Color(0xFF9AA777)), // sage
 ];
 const coverInk = Color(0xFF1A1A1A);
-const coverInk2 = Color(0xC71A1A1A); // penulis, 78%
+const coverInk2 = Color(0xC71A1A1A); // author, 78%

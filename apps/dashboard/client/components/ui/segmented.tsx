@@ -5,7 +5,7 @@ import { cn } from "../../lib/cn";
 // `count` may be a skeleton while the list loads, so the tabs keep their width.
 type Option<T extends string> = { value: T; label: ReactNode; count?: ReactNode };
 
-// Komponen 2, Segmented: muted track radius 26, pad 4; options 40 tall; active = sheet + soft shadow.
+// Design component 2, Segmented: muted track radius 26, pad 4; options 40 tall; active = sheet + soft shadow.
 // `kind="tabs"` for filters (tablist), `"radio"` for settings (radiogroup). `stretch`: equal
 // options across the full width; `"phone"` only below 768px.
 export function Segmented<T extends string>({ label, value, onChange, options, kind = "tabs", stretch, className }: { label: string; value: T; onChange: (v: T) => void; options: Option<T>[]; kind?: "tabs" | "radio"; stretch?: boolean | "phone"; className?: string }) {

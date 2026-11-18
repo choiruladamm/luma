@@ -7,12 +7,12 @@ import '../theme/stabilo_tokens.dart';
 import '../theme/stabilo_type.dart';
 import 'buttons.dart';
 
-/// Toast (board Komponen 04), ilang sendiri 2,5 detik.
+/// Toast (board Komponen 04), disappears on its own after 2.5 seconds.
 ///
-/// Cuma [message]: pill di tengah + centang ("Udah disalin, tinggal paste").
-/// Ada [subtitle] / [leading] / [actionLabel]: bar lebar ("Sip, udah masuk
-/// rak!" · Baca, "Backup kelar, aman!"), tombol kecilnya cuma kalau ada
-/// [actionLabel].
+/// [message] only: centered pill + check ("Udah disalin, tinggal paste"). With
+/// [subtitle] / [leading] / [actionLabel]: wide bar ("Sip, udah masuk rak!" ·
+/// Baca, "Backup kelar, aman!"), with the small button only when [actionLabel]
+/// is set.
 void showToast(
   BuildContext context,
   String message, {
@@ -21,11 +21,11 @@ void showToast(
   String? actionLabel,
   VoidCallback? onAction,
 
-  /// Baris kedua di bawah garis, tombol aksinya pindah ke sini ("API key gak
-  /// ikut backup..." · Isi key).
+  /// Second line below the divider; the action button moves here
+  /// ("API key gak ikut backup..." · "Isi key").
   String? note,
 
-  /// Gantiin lama bawaan.
+  /// Replaces the default duration.
   Duration? duration,
 }) {
   final messenger = ScaffoldMessenger.of(context);
@@ -56,18 +56,19 @@ void showToast(
     );
 }
 
-/// Route yang punya bottom bar melayang (diisi `AppShell`).
-// ponytail: satu global, cukup selama cuma ada satu shell ber-bottom bar.
+/// Route that owns the floating bottom bar (filled by `AppShell`).
+// ponytail: one global, enough while there is only one shell with a bottom bar.
 ModalRoute<Object?>? navBarRoute;
 
-/// Margin snackbar toast. Di tab shell (Rak · Cari buku · Atur) nav bar
-/// melayang di atas Scaffold, jadi toast naik 12 di atas bar (board Akun 13).
+/// Snackbar toast margin. On shell tabs (Rak · Cari buku · Atur) the nav bar
+/// floats above the Scaffold, so the toast rises 12 above the bar (board Akun
+/// 13).
 ///
-/// [overNav] null = bar keliatan kalau route [navBarRoute] lagi paling atas
-/// (sheet yang barusan di-pop udah gak dihitung). Isi kalau toast dipanggil
-/// sebelum layarnya pindah (login → Rak, Atur → layar Masuk).
-/// [offBar] = jarak dari bawah layar kalau gak ada bar (null = 24 di atas
-/// safe area). Snackbar sendiri udah nambahin safe area bawah.
+/// [overNav] null = the bar is visible when [navBarRoute] is the topmost route
+/// (a sheet that was just popped doesn't count). Set it when the toast is
+/// called before the screen switches (login → Rak, Atur → Masuk screen).
+/// [offBar] = distance from the screen bottom when there is no bar (null = 24
+/// above the safe area). The snackbar itself already adds the bottom safe area.
 EdgeInsets toastMargin(
   BuildContext context, {
   bool? overNav,
@@ -90,8 +91,9 @@ EdgeInsets toastMargin(
   return EdgeInsets.fromLTRB(side, 0, side, bottom);
 }
 
-/// Toast pill di atas semua route, buat dari dalem sheet (snackbar-nya
-/// ketutup sheet). [bottom] diukur dari tepi bawah layar.
+/// Pill toast above all routes, for use from inside a sheet (a snackbar would
+/// be covered by the sheet). [bottom] is measured from the screen's bottom
+/// edge.
 void showOverlayToast(
   BuildContext context,
   String message, {
@@ -103,8 +105,8 @@ void showOverlayToast(
       left: Layout.margin,
       right: Layout.margin,
       bottom: bottom,
-      // Overlay root gak punya Material di atasnya: tanpa ini teksnya dapet
-      // gaya default Flutter (garis bawah kuning dobel).
+      // The root overlay has no Material above it: without this the text gets
+      // Flutter's default style (double yellow underline).
       child: IgnorePointer(
         child: Material(
           type: MaterialType.transparency,
@@ -158,7 +160,7 @@ class _Toast extends StatelessWidget {
     return Container(
       height: pill ? 48 : (rich ? null : 56),
       constraints: rich ? const BoxConstraints(minHeight: 60) : null,
-      // Pill (board Komponen 04): 14 kiri, 18 kanan, jarak ikon–teks 10.
+      // Pill (board Komponen 04): 14 left, 18 right, icon–text gap 10.
       padding: pill
           ? const EdgeInsets.fromLTRB(14, 0, 18, 0)
           : rich
@@ -218,7 +220,7 @@ class _Toast extends StatelessWidget {
     );
   }
 
-  /// Ada [note]: baris utama, garis tipis, terus catatan + tombol aksi.
+  /// With [note]: main row, thin line, then the note + action button.
   Widget _withNote(BuildContext context, Widget main) {
     if (note == null) return main;
     final c = context.stabilo;
@@ -273,7 +275,7 @@ class _Toast extends StatelessWidget {
   );
 }
 
-/// Kotak ikon 36 di kiri toast (hasil backup / pulihin).
+/// 36 icon box at the left of the toast (backup / restore result).
 class ToastTile extends StatelessWidget {
   const ToastTile({
     super.key,

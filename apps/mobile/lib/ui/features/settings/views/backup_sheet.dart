@@ -9,8 +9,8 @@ import '../../../core/widgets/buttons.dart';
 import '../../../core/widgets/sheet.dart';
 import '../view_models/backup_view_model.dart';
 
-/// Lagi ngebungkus backup (board 26). Ditutup dari Pengaturan pas state-nya
-/// udah bukan [BackupRunning]; "Batalin" matiin proses zip-nya.
+/// "Lagi ngebungkus backup" (board 26). Closed from Settings once the state is
+/// no longer [BackupRunning]; "Batalin" kills the zip process.
 class BackupProgressSheet extends ConsumerWidget {
   const BackupProgressSheet({super.key});
 
@@ -131,8 +131,8 @@ class BackupProgressSheet extends ConsumerWidget {
   }
 }
 
-/// Satu baris centang di sheet proses (backup & pulihin): beres = centang,
-/// lagi jalan = titik kuning, belum = titik pasir.
+/// One checkmark row in the progress sheet (backup & restore): done = check,
+/// running = yellow dot, pending = sand dot.
 class SheetStep extends StatelessWidget {
   const SheetStep({
     super.key,

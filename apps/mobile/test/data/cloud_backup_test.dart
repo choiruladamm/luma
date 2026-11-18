@@ -26,16 +26,16 @@ class _Auth extends Fake implements AuthRepository {
   Future<String?> token() async => value;
 }
 
-/// Worker palsu di memori: cukup buat `/v1/files/*` + `/v1/backups*`.
+/// In-memory fake Worker: only covers `/v1/files/*` and `/v1/backups*`.
 class _Cloud implements HttpClientAdapter {
   final files = <String, Uint8List>{};
   final backups = <String, (Uint8List, Map<String, Object?>)>{};
   final log = <String>[];
 
-  /// Respons yang dibalas duluan sebelum logika server (mis. 500).
+  /// Responses returned before the server logic runs (e.g. 500).
   final queue = <ResponseBody>[];
 
-  /// Request pertama yang diawali ini dibalas 429 sekali.
+  /// The first request whose path starts with this gets a 429, once.
   String? rateLimitNext;
 
   @override

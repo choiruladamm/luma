@@ -54,7 +54,7 @@ describe("merge", () => {
       readingSeconds: 900,
     };
     expect(merge(a, b)?.data).toEqual(expected);
-    // Pesan kalah tetap nyumbang field yang lebih awal/besar.
+    // A losing message still contributes the earlier/larger fields.
     expect(merge(b, a)?.data).toEqual(expected);
   });
 
@@ -63,7 +63,7 @@ describe("merge", () => {
     const tomb = (t: number) => rec({ kind: "book", updatedAt: t, deleted: true, data: null });
     expect(merge(live, tomb(3000))).toEqual(tomb(3000));
     expect(merge(live, tomb(1000))).toBeNull();
-    // Import ulang setelah dihapus menghidupkan lagi.
+    // Re-importing after deletion revives it.
     expect(merge(tomb(3000), rec({ kind: "book", updatedAt: 4000, data: { title: "x" } }))?.deleted).toBe(false);
   });
 
@@ -80,7 +80,7 @@ describe("merge", () => {
     expect(merge(v3, ai(4, "2025-01-01T00:00:00.000Z", 500))?.data?.promptVersion).toBe(4);
     expect(merge(v3, ai(3, "2026-02-01T00:00:00.000Z", 500))?.data?.createdAt).toBe("2026-02-01T00:00:00.000Z");
     expect(merge(v3, ai(3, "2025-12-01T00:00:00.000Z", 9000))).toBeNull();
-    // Tombstone ai jatuh ke aturan waktu.
+    // An AI tombstone falls under the time rule.
     expect(merge(v3, rec({ kind, updatedAt: 2000, deleted: true, data: null }))?.deleted).toBe(true);
   });
 });

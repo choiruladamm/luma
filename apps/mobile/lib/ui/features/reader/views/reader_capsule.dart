@@ -12,30 +12,31 @@ import '../../../core/theme/stabilo_type.dart';
 import '../../../core/widgets/buttons.dart';
 import '../../../core/widgets/edge_fade.dart';
 
-// Halaman baca imersif (board Baca imersif · ReaderCapsule). Ukuran di sini
-// diukur dari safe area (board: atas 54, bawah 34).
+// Immersive reading page (board Baca imersif · ReaderCapsule). Sizes here are
+// measured from the safe area (board: top 54, bottom 34).
 
-/// Kapsul atas: 6 di bawah safe area atas, tinggi 58.
+/// Top capsule: 6 below the top safe area, 58 tall.
 const capsuleTopGap = 6.0;
 const capsuleHeight = 58.0;
 
-/// Kapsul bawah: 14 di atas safe area bawah, tinggi 40.
+/// Bottom capsule: 14 above the bottom safe area, 40 tall.
 const capsuleBottomGap = 14.0;
 const capsuleBottomHeight = 40.0;
 
 double readerDockHeight(BuildContext context) => Layout.chatHeader;
 
-/// Teks awal bab mulai di sini (board: 140), biar judulnya gak ketutup.
+/// Chapter-opening text starts here (board: 140) so the title isn't covered.
 const readerTextTop = 86.0;
 
-/// Ruang kosong di bawah teks terakhir (board: 100 dari tepi layar).
+/// Empty space below the last text (board: 100 from the screen edge).
 const readerTextBottom = 66.0;
 
-/// Tepi teks baca (board EdgeFade · varian Baca). [t] = `ReaderChrome.hidden`
-/// (0 kapsul keliatan, 1 imersif), jadi kekuatan fade ikut animasi kapsul.
-/// Kapsul keliatan: status bar kosong, teks di belakang kapsul ±18% terus
-/// sampe tepi bawah layar, 48pt dari tepi kapsul naik penuh. Imersif: gak ada
-/// fade sama sekali, teks lewat di bawah garis progres sampe tepi.
+/// Edge fade of the reading text (board EdgeFade · variant Baca). [t] is
+/// `ReaderChrome.hidden` (0 capsules visible, 1 immersive), so the fade strength
+/// follows the capsule animation. Capsules visible: the status bar is clear, text
+/// behind the capsule is ~18% faded down to the bottom screen edge, and fully
+/// opaque 48pt from the capsule edge. Immersive: no fade at all, text passes under
+/// the progress line up to the edge.
 ({EdgeFadeSide top, EdgeFadeSide bottom}) readerEdgeFade(
   EdgeInsets pad,
   double t, {
@@ -58,27 +59,27 @@ const readerTextBottom = 66.0;
   );
 }
 
-/// Ngumpet/munculin kapsul ngikutin scroll (ambang di [ScrollRun]): turun
-/// ngumpet, naik muncul. Selama jari nge-drag, kapsul ngikutin 1:1 terus
-/// snap pas dilepas.
+/// Hides/shows the capsules following the scroll (thresholds in [ScrollRun]):
+/// scrolling down hides, scrolling up shows. While a finger drags, the capsules
+/// follow 1:1 and snap on release.
 class ReaderChrome {
   ReaderChrome({required TickerProvider vsync})
     : hidden = AnimationController(vsync: vsync, duration: Motion.capsule);
 
-  /// Jarak geser buat ngikutin jari: kapsul atas sampe lewat tepi layar.
+  /// Travel distance while following the finger: the top capsule goes past the screen edge.
   static const _travel = 120.0;
 
-  /// 0 = keliatan, 1 = ngumpet.
+  /// 0 = visible, 1 = hidden.
   final AnimationController hidden;
 
-  /// Target sekarang; status bar ikut ini.
+  /// Current target; the status bar follows it.
   final visible = ValueNotifier(true);
 
   bool reduceMotion = false;
 
   final _run = ScrollRun();
 
-  /// [delta] > 0 = scroll turun (teks naik).
+  /// [delta] > 0 = scrolling down (text moves up).
   void scrolled(double delta, {required bool dragging}) {
     if (delta == 0) return;
     if (dragging) {
@@ -93,7 +94,7 @@ class ReaderChrome {
     }
   }
 
-  /// Jari dilepas / scroll berhenti: geser ke target.
+  /// Finger released / scroll stopped: slide to the target.
   void release() => _snap();
 
   void show() => _set(true);
@@ -122,8 +123,8 @@ class ReaderChrome {
   }
 }
 
-/// Dua kapsul, geser keluar layar ngikutin [ReaderChrome.hidden]. Overlay:
-/// teks di bawahnya gak loncat; tepinya dimudarin [readerEdgeFade].
+/// Two capsules that slide off-screen following [ReaderChrome.hidden]. Overlay:
+/// the text below doesn't jump; its edges are faded by [readerEdgeFade].
 class ReaderCapsules extends StatelessWidget {
   const ReaderCapsules({
     super.key,
@@ -205,7 +206,7 @@ class _Pill extends StatelessWidget {
   }
 }
 
-/// Kapsul atas: balik · judul + bab · daftar isi · ⋯ (Cari kata, Atur
+/// Top capsule: back · title + chapter · table of contents · ⋯ (Cari kata, Atur
 /// tampilan).
 class ReaderTopCapsule extends StatelessWidget {
   const ReaderTopCapsule({
@@ -224,18 +225,18 @@ class ReaderTopCapsule extends StatelessWidget {
   final String? subtitle;
   final VoidCallback onBack;
 
-  /// Null = daftar isi belum bisa dibuka (buku belum kebaca).
+  /// Null = the table of contents can't be opened yet (book not read).
   final VoidCallback? onToc;
 
-  /// Null = buku belum kebaca.
+  /// Null = book not read yet.
   final VoidCallback? onMore;
 
-  /// Sheet daftar isi / menu ⋯ (dan sheet dari menunya) lagi kebuka:
-  /// tombolnya kuning.
+  /// The table-of-contents sheet or ⋯ menu (or a sheet opened from the menu) is
+  /// open: the button is yellow.
   final bool tocOpen;
   final bool moreOpen;
 
-  /// Lagi mode Cari kata: ⋯ dapet titik kuning kecil.
+  /// Search mode (Cari kata) is on: ⋯ gets a small yellow dot.
   final bool searchActive;
 
   @override
@@ -246,7 +247,7 @@ class ReaderTopCapsule extends StatelessWidget {
       label: context.l10n.readerReadingMenu,
       child: _Pill(
         height: capsuleHeight,
-        // Tombol 44 pas di tengah tinggi 58 (dikurangi garis).
+        // The 44 button sits centered in the 58 height (minus the border line).
         padding: const EdgeInsets.symmetric(horizontal: 5.5),
         child: Row(
           spacing: 6,
@@ -327,7 +328,7 @@ class ReaderTopCapsule extends StatelessWidget {
   }
 }
 
-/// Kapsul bawah: persen + bar + sisa waktu. Cuma info, gak bisa di-tap.
+/// Bottom capsule: percent + bar + time left. Informational only, not tappable.
 class ReaderBottomCapsule extends StatelessWidget {
   const ReaderBottomCapsule({
     super.key,
@@ -338,7 +339,7 @@ class ReaderBottomCapsule extends StatelessWidget {
 
   final bool compact;
 
-  /// Progres buku 0..1.
+  /// Book progress 0..1.
   final double progress;
   final String label;
 
@@ -440,7 +441,7 @@ class ReaderChatDock extends StatelessWidget {
   );
 }
 
-/// Garis progres 2pt selebar layar, duduk tepat di atas safe area bawah.
+/// 2pt progress line spanning the screen width, sitting right above the bottom safe area.
 class ReaderProgressLine extends StatelessWidget {
   const ReaderProgressLine({super.key, required this.progress});
 

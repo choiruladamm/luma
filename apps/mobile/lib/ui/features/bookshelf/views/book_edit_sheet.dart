@@ -15,7 +15,7 @@ import '../../../core/widgets/tag.dart';
 import '../../../core/widgets/toast.dart';
 import '../view_models/book_edit_view_model.dart';
 
-/// Boards 33–38 Ubah judul & penulis: sheet bertumpuk di atas Info buku.
+/// Boards 33–38 Ubah judul & penulis: a stacked sheet above Info buku.
 class BookEditSheet extends ConsumerStatefulWidget {
   const BookEditSheet({super.key, required this.bookId});
 
@@ -45,8 +45,8 @@ class _BookEditSheetState extends ConsumerState<BookEditSheet> {
     final nav = Navigator.of(context);
     final ok = await vm.save();
     if (!mounted) return;
-    // Sheet ini numpuk di atas sheet Info buku: snackbar bakal ketutup sheet,
-    // jadi toast-nya di overlay root.
+    // This sheet stacks above the Info buku sheet: a snackbar would be covered
+    // by the sheet, so the toast goes on the root overlay.
     if (ok) {
       final message = context.l10n.bookTitleAuthorUpdated;
       showOverlayToast(context, message);

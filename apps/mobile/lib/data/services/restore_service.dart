@@ -15,13 +15,13 @@ import 'chat_lifecycle.dart';
 import 'file_storage.dart';
 
 enum RestoreError {
-  /// Bukan zip / gak ada manifest Luma.
+  /// The file is not a zip, or it has no Luma manifest.
   notBackup,
 
-  /// Dibikin Luma dengan schema lebih baru dari yang keinstall.
+  /// It was made by a Luma with a newer schema than the installed one.
   tooNew,
 
-  /// Manifest-nya bener tapi database di dalemnya gak bisa dibuka.
+  /// The manifest is valid but the database inside cannot be opened.
   corrupt,
 }
 
@@ -30,14 +30,14 @@ class RestoreException implements Exception {
 
   final RestoreError error;
 
-  /// Ada kalau manifest-nya kebaca (buat nampilin versi app-nya).
+  /// Set when the manifest was readable, so the UI can show the app version that made it.
   final BackupManifest? manifest;
 
   @override
   String toString() => 'RestoreException(${error.name})';
 }
 
-/// Backup yang udah diekstrak & dicek, nunggu dikonfirmasi.
+/// Represents a backup that was extracted and validated and is waiting for confirmation.
 class RestorePreview {
   RestorePreview(this.dir, this.fileName, this.manifest);
 
@@ -50,9 +50,11 @@ class RestorePreview {
   }
 }
 
-/// Pulihin dari backup (docs/backup.md): ekstrak & cek dulu di folder
-/// sementara, data lama baru diganti kalau semuanya beres. Gagal di tengah
-/// jalan → semua yang udah dipindah dibalikin.
+/// Restores from a backup (docs/backup.md).
+///
+/// It extracts and validates in a temporary folder first, and replaces the old
+/// data only when everything checks out. A failure midway moves everything
+/// already relocated back.
 class RestoreService {
   RestoreService(this._db, this._storage, {this.beforeClose});
 
@@ -61,7 +63,7 @@ class RestoreService {
   final AppDatabase _db;
   final FileStorage _storage;
 
-  /// Sama kayak `driftDatabase(name: 'luma')`: Documents/luma.sqlite.
+  /// Matches `driftDatabase(name: 'luma')`: Documents/luma.sqlite.
   String get _dbPath => p.join(_storage.root.path, 'luma.sqlite');
 
   Future<int> currentBooks() async {
@@ -71,9 +73,11 @@ class RestoreService {
     return row.read<int>('n');
   }
 
-  /// [fileName] = nama yang ditampilin (default nama zip). [fill] kepanggil
-  /// abis DB-nya lolos cek, buat ngelengkapin `books/` & `covers/` di folder
-  /// ekstrak (restore cloud: zip-nya cuma berisi DB).
+  /// Extracts and validates [zip] into a temporary folder and returns a preview.
+  ///
+  /// [fileName] is the displayed name (defaults to the zip's name). [fill] runs
+  /// after the DB passes validation, to complete `books/` and `covers/` in the
+  /// extracted folder (cloud restore: the zip holds only the DB).
   Future<RestorePreview> inspect(
     File zip, {
     String? fileName,
@@ -99,8 +103,8 @@ class RestoreService {
       if (manifest.schemaVersion > _db.schemaVersion) {
         throw RestoreException(RestoreError.tooNew, manifest: manifest);
       }
-      // Buka beneran (sekalian migrasi kalau dari schema lama) di salinan
-      // sementara; database rusak ketauan di sini, bukan abis diganti.
+      // Open it for real (migrating if it has an older schema) on the temporary
+      // copy, so a corrupt database is caught here and not after the swap.
       final db = File(p.join(dir.path, 'luma.sqlite'));
       if (!await db.exists()) {
         throw RestoreException(RestoreError.corrupt, manifest: manifest);
@@ -108,8 +112,8 @@ class RestoreService {
       final check = AppDatabase(NativeDatabase(db));
       try {
         await check.customSelect('SELECT COUNT(*) FROM books').get();
-        // VACUUM INTO bisa nggeser rowid `paragraphs`: index Cari kata
-        // dibangun ulang di salinan ini sebelum dipasang.
+        // VACUUM INTO can shift `paragraphs` rowids, so the Cari kata index is
+        // rebuilt on this copy before it is installed.
         await check.rebuildBookSearchIndex();
       } catch (_) {
         await check.close();
@@ -127,9 +131,11 @@ class RestoreService {
     }
   }
 
-  /// Ganti semua data pake isi [preview]. [onStage]: 1 = buku, 2 = progres
-  /// & terjemahan. Database ditutup di sini; yang manggil wajib ngebuka lagi
-  /// (invalidate `appDatabaseProvider`), sukses ataupun gagal.
+  /// Replaces all data with the contents of [preview].
+  ///
+  /// [onStage] reports 1 = books, 2 = progress and translations. This closes the
+  /// database; the caller must reopen it (invalidate `appDatabaseProvider`),
+  /// whether the restore succeeded or failed.
   Future<void> apply(
     RestorePreview preview, {
     void Function(int stage)? onStage,
@@ -140,12 +146,12 @@ class RestoreService {
       await Directory(there(d)).create(recursive: true);
     }
 
-    // Cuma koneksi SQLite-nya yang ditutup, biar filenya bisa diganti.
-    // `_db.close()` nutup stream query dulu dan nunggu tiap listener nerima
-    // "done": listener yang di-pause (Riverpod 3 nge-pause provider layar
-    // yang ketutup, mis. Rak di bawah Pengaturan) gak pernah nerima, jadi
-    // restore nyangkut. Stream-nya ikut kebuang pas pemanggil invalidate
-    // `appDatabaseProvider`.
+    // Close only the SQLite connection so the files can be replaced.
+    // `_db.close()` first closes the query streams and waits for every listener
+    // to receive "done". A paused listener (Riverpod 3 pauses providers of
+    // screens that are covered, e.g. the Rak under Pengaturan) never receives
+    // it, which would hang the restore. The streams are disposed anyway when
+    // the caller invalidates `appDatabaseProvider`.
     await beforeClose?.call();
     await _db.executor.close();
     final moved = <(String, String)>[];
@@ -171,11 +177,11 @@ class RestoreService {
         await move(there(d), here(d));
       }
       onStage?.call(2);
-      // Wajib ada (udah dicek di inspect): ilang = gagal, bukan dilewatin.
+      // Required (already checked in inspect): if it is missing the restore fails instead of skipping it.
       await _move(there('luma.sqlite'), _dbPath);
       moved.add((there('luma.sqlite'), _dbPath));
     } catch (_) {
-      // Balikin persis kayak sebelumnya, urutan kebalik.
+      // Restore the exact previous state, in reverse order.
       for (final (from, to) in moved.reversed) {
         await _move(to, from);
       }
@@ -195,7 +201,7 @@ class RestoreService {
     await preview.discard();
   }
 
-  /// Rename (satu volume, cepet); beda volume → salin terus hapus.
+  /// Moves by rename (same volume, fast), or by copy then delete across volumes.
   static Future<void> _move(String from, String to) async {
     final isDir = await FileSystemEntity.isDirectory(from);
     try {
@@ -214,9 +220,10 @@ class RestoreService {
     }
   }
 
-  /// Cuma file yang dikenal yang diekstrak (`manifest.json`, `luma.sqlite`,
-  /// `books/<nama>`, `covers/<nama>`); path aneh di zip (`../`, absolut)
-  /// dilewatin.
+  /// Extracts only known entries (`manifest.json`, `luma.sqlite`,
+  /// `books/<name>`, `covers/<name>`).
+  ///
+  /// Unusual zip paths (`../`, absolute) are skipped.
   static void _extract(String zipPath, String out) {
     Directory(p.join(out, 'books')).createSync(recursive: true);
     Directory(p.join(out, 'covers')).createSync(recursive: true);

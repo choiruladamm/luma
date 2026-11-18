@@ -31,7 +31,7 @@ class FakeBackupFile extends BackupFile {
     : super(Directory('/tmp/none'), File('/tmp/none/$name'), manifest);
 
   @override
-  int get size => 13002342; // 12,4 MB
+  int get size => 13002342; // 12.4 MB
 
   @override
   Future<void> dispose() async {}

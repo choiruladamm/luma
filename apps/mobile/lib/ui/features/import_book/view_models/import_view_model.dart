@@ -12,10 +12,10 @@ import '../../../../domain/luma_markdown.dart';
 import '../../../../domain/models/book.dart';
 import '../../../core/theme/stabilo_tokens.dart';
 
-/// Format file yang lagi diimport lewat jalur EPUB/PDF (judul sheet proses).
+/// File format being imported via the EPUB/PDF path (progress sheet title).
 enum ImportFormat { epub, pdf }
 
-/// State alur import (board 13–18).
+/// Import flow state (boards 13–18).
 sealed class ImportState {
   const ImportState();
 }
@@ -39,12 +39,12 @@ class ImportProcessing extends ImportState {
   final ImportStage stage;
   final ImportFormat format;
 
-  /// 0–1, asli dari tahapnya, cuma naik. 1 = beres, tinggal nahan sampe batas
-  /// minimum loading.
+  /// 0–1, real from its stage, only rises. 1 = done, just held until the
+  /// minimum loading time.
   final double progress;
 
-  /// Lama angka + bar nyusul ke [progress]. Panjang kalau import kecepetan,
-  /// biar naiknya halus sampe 100% pas batas minimum.
+  /// How long the number + bar take to catch up to [progress]. Long when the
+  /// import is too fast, so it climbs smoothly to 100% at the minimum time.
   final Duration glide;
 }
 
@@ -53,14 +53,14 @@ class ImportSuccess extends ImportState {
 
   final ShelfBook book;
 
-  /// Halaman PDF tanpa teks yang dilewati (cuma PDF campuran).
+  /// PDF pages without text that were skipped (mixed PDFs only).
   final int skippedPages;
 }
 
 class ImportDuplicate extends ImportState {
   const ImportDuplicate(this.book);
 
-  /// Buku yang udah ada di rak.
+  /// The book already on the shelf.
   final ShelfBook book;
 }
 
@@ -71,7 +71,7 @@ class ImportFailed extends ImportState {
   final EpubError error;
 }
 
-/// Import PDF gagal ([PdfImportError] dipetain di sheet, bukan jadi EpubError).
+/// PDF import failed ([PdfImportError] is mapped in the sheet, not turned into EpubError).
 class ImportPdfFailed extends ImportState {
   const ImportPdfFailed({required this.fileName, required this.error});
 
@@ -79,8 +79,8 @@ class ImportPdfFailed extends ImportState {
   final PdfImportError error;
 }
 
-/// Tujuan import satu bab Markdown. [bookId] null = cari / bikin lewat
-/// [bookKey]; [chapter] null = bab terakhir + 1.
+/// Destination of a Markdown chapter import. [bookId] null = find / create via
+/// [bookKey]; [chapter] null = last chapter + 1.
 typedef MarkdownChoice = ({
   int? bookId,
   String bookKey,
@@ -90,9 +90,9 @@ typedef MarkdownChoice = ({
   String? chapterTitle,
 });
 
-/// File `.md` udah kebaca, nunggu keputusan user. Cuma buat [ImportMarkdownAsk]
-/// dan [ImportMarkdownConflict]; [ImportController.submitMarkdown] ambil
-/// [parsed] dari sini.
+/// The `.md` file has been read and awaits the user's decision. Only for
+/// [ImportMarkdownAsk] and [ImportMarkdownConflict];
+/// [ImportController.submitMarkdown] takes [parsed] from here.
 sealed class ImportMarkdownPending extends ImportState {
   const ImportMarkdownPending({required this.fileName, required this.parsed});
 
@@ -100,8 +100,8 @@ sealed class ImportMarkdownPending extends ImportState {
   final ParsedMarkdown parsed;
 }
 
-/// Frontmatter gak lengkap: tampilin sheet "Masuk ke buku mana?". Tebakan
-/// ada di [parsed]; [books] = pilihan buku Markdown yang udah ada.
+/// Incomplete frontmatter: shows the "Masuk ke buku mana?" sheet. The guess is
+/// in [parsed]; [books] = choices of existing Markdown books.
 class ImportMarkdownAsk extends ImportMarkdownPending {
   const ImportMarkdownAsk({
     required super.fileName,
@@ -112,7 +112,7 @@ class ImportMarkdownAsk extends ImportMarkdownPending {
   final List<MarkdownBook> books;
 }
 
-/// Nomor bab udah ada di buku tujuan: nanya ganti atau batal.
+/// The chapter number already exists in the target book: asks replace or cancel.
 class ImportMarkdownConflict extends ImportMarkdownPending {
   const ImportMarkdownConflict({
     required super.fileName,
@@ -122,7 +122,7 @@ class ImportMarkdownConflict extends ImportMarkdownPending {
     required this.chapter,
   });
 
-  /// Dibawa biar Batal bisa balik ke [ImportMarkdownAsk].
+  /// Carried so Batal can return to [ImportMarkdownAsk].
   final List<MarkdownBook> books;
   final MarkdownChoice choice;
   final int chapter;
@@ -140,10 +140,10 @@ class ImportMarkdownDone extends ImportState {
   final ShelfBook book;
   final int chapter;
 
-  /// Bab yang barusan masuk, buat tombol "Baca".
+  /// The chapter that was just imported, for the "Baca" button.
   final int chapterId;
 
-  /// Buku baru dibikin / bab lama ditimpa.
+  /// A new book was created / an old chapter was overwritten.
   final bool created, replaced;
 }
 
@@ -158,35 +158,35 @@ class ImportMarkdownFailed extends ImportState {
   final String fileName;
   final LumaMarkdownError error;
 
-  /// Kunci frontmatter yang salah + isinya (cuma buat `badFrontmatter`).
+  /// The wrong frontmatter key + its content (only for `badFrontmatter`).
   final String? detail, value;
 }
 
-/// Teks + angka buat daftar buku di sheet "Masuk ke buku mana?".
+/// Text + numbers for the book list in the "Masuk ke buku mana?" sheet.
 extension MarkdownBookLabels on MarkdownBook {
   /// "Bab 1, 3, 7" / "Bab 1–40".
 
-  /// Bab terakhir + 1, nomor bawaan kalau file gak nyebut nomor.
+  /// Last chapter + 1, the default number when the file doesn't state one.
   int get nextChapter => chapters.fold(0, (m, n) => n > m ? n : m) + 1;
 
   int? get lastChapter => chapters.isEmpty ? null : nextChapter - 1;
 }
 
 class ImportController extends Notifier<ImportState> {
-  /// Naik tiap import baru / dibatalin; run yang nomornya ketinggalan = batal.
+  /// Increments on every new / cancelled import; a run whose number fell behind = cancelled.
   int _run = 0;
 
   @override
   ImportState build() => const ImportIdle();
 
-  /// Buka file picker, terus import file yang dipilih.
+  /// Opens the file picker, then imports the chosen file.
   Future<void> pick() async {
     if (state is ImportProcessing) return;
     final file = await ref.read(filePickerServiceProvider).pickBook();
     if (file != null) await importFile(file);
   }
 
-  /// `.md` / `.markdown` lewat jalur Markdown, `.pdf` lewat path, sisanya EPUB.
+  /// `.md` / `.markdown` go through the Markdown path, `.pdf` via its path, the rest EPUB.
   Future<void> importFile(PickedFile file) async {
     final ext = file.name.toLowerCase().split('.').last;
     if (ext == 'md' || ext == 'markdown') return importMarkdownFile(file);
@@ -211,7 +211,7 @@ class ImportController extends Notifier<ImportState> {
 
   Future<void> _importPdf(PickedFile file) {
     final path = file.path;
-    // Tanpa path gak ada yang bisa dibuka; PDF gak pernah dimuat jadi bytes.
+    // Without a path there's nothing to open; a PDF is never loaded as bytes.
     if (path == null) {
       return _runImport(file, ImportFormat.pdf, (_, _, _, _) async {
         throw const PdfImportException(PdfImportError.io, 'no path');
@@ -230,8 +230,9 @@ class ImportController extends Notifier<ImportState> {
     );
   }
 
-  /// Jalur import EPUB/PDF: tahap + progres + batal + hasil. Run yang
-  /// nomornya ketinggalan (batal / ketimpa import baru) gak nyentuh state.
+  /// EPUB/PDF import path: stage + progress + cancel + result. A run whose
+  /// number fell behind (cancelled / overwritten by a new import) doesn't touch
+  /// state.
   Future<void> _runImport(
     PickedFile file,
     ImportFormat format,
@@ -248,9 +249,9 @@ class ImportController extends Notifier<ImportState> {
     final clock = Stopwatch()..start();
     var stage = ImportStage.reading;
     var progress = 0.0;
-    // Tahap baca + hash sekejap; duplikat / bukan EPUB selesai di situ. Proses
-    // baru ditampilin pas lewat tahap itu, biar sheet proses gak kedip dulu
-    // sebelum sheet duplikat / gagal.
+    // The read + hash stage is instant; a duplicate / non-EPUB ends there. The
+    // progress sheet shows only after passing that stage, so it doesn't flash
+    // before the duplicate / failed sheet.
     var revealed = false;
     void show({Duration glide = Motion.progressStep}) {
       if (!revealed) return;
@@ -290,7 +291,7 @@ class ImportController extends Notifier<ImportState> {
           show();
         },
         (p) {
-          // Cuma naik, dan cuma update tiap ganti persen bulat.
+          // Only rises, and only updates on each whole-percent change.
           if (cancelled() || p <= progress) return;
           final wholePercent = (p * 100).floor() > (progress * 100).floor();
           progress = p;
@@ -298,7 +299,7 @@ class ImportController extends Notifier<ImportState> {
         },
         cancelled,
       );
-      // Batal pas lagi nyimpen: bukunya tetep masuk rak, sheet-nya udah tutup.
+      // Cancelled while saving: the book still lands on the shelf, the sheet is already closed.
       if (cancelled()) return;
       final book = await ref.read(bookRepositoryProvider).book(result.bookId);
       if (cancelled()) return;
@@ -306,14 +307,14 @@ class ImportController extends Notifier<ImportState> {
         state = failed(StateError('buku ilang'));
         return;
       }
-      // Duplikat gak ditahan.
+      // Duplicates aren't held.
       if (result.duplicate) {
         state = ImportDuplicate(book);
         return;
       }
-      // Import kecepetan: angka nyusul halus ke 100% sampe (batas minimum −
-      // jeda), terus jeda, baru "berhasil". Import lambat: cuma nyusul
-      // sebentar + jeda, gak ada tambahan nahan.
+      // Import too fast: the number catches up smoothly to 100% by (minimum −
+      // pause), then the pause, then "success". Slow import: only a short
+      // catch-up + the pause, no extra holding.
       final left = Motion.importMin - Motion.importSettle - clock.elapsed;
       final glide = left > Motion.progressStep ? left : Motion.progressStep;
       progress = 1;
@@ -322,20 +323,21 @@ class ImportController extends Notifier<ImportState> {
       if (cancelled()) return;
       state = ImportSuccess(book, skippedPages: result.skippedPages);
     } on ImportCancelled {
-      // cancel() udah ngembaliin ke idle.
+      // cancel() already returned to idle.
     } catch (e) {
       if (!cancelled()) state = failed(e);
     } finally {
-      // Salinan sementara dari picker udah gak dipakai (file asli udah
-      // disalin ke storage app kalau import berhasil).
+      // The picker's temporary copy is no longer needed (the original file is
+      // copied into app storage when the import succeeds).
       if (!cancelled()) {
         unawaited(ref.read(filePickerServiceProvider).clearTemporaryFiles());
       }
     }
   }
 
-  /// Baca + parse `.md`. Frontmatter lengkap (`book_key` + `chapter`) langsung
-  /// masuk; kalau enggak, state [ImportMarkdownAsk] buat sheet pilih buku.
+  /// Reads + parses `.md`. Complete frontmatter (`book_key` + `chapter`) goes
+  /// straight in; otherwise state [ImportMarkdownAsk] for the book picker
+  /// sheet.
   Future<void> importMarkdownFile(PickedFile file) async {
     if (state is ImportProcessing) return;
     final ParsedMarkdown md;
@@ -376,8 +378,9 @@ class ImportController extends Notifier<ImportState> {
     );
   }
 
-  /// Simpan bab sesuai pilihan user. Cuma jalan dari [ImportMarkdownPending].
-  /// Nomor bab dobel → [ImportMarkdownConflict]; [replace] nimpa.
+  /// Saves the chapter per the user's choice. Runs only from
+  /// [ImportMarkdownPending]. Duplicate chapter number →
+  /// [ImportMarkdownConflict]; [replace] overwrites.
   Future<void> submitMarkdown(
     MarkdownChoice choice, {
     bool replace = false,
@@ -442,7 +445,7 @@ class ImportController extends Notifier<ImportState> {
     }
   }
 
-  /// "Batal" di dialog bab dobel: balik ke sheet pilih buku.
+  /// "Batal" in the duplicate chapter dialog: back to the book picker sheet.
   void cancelReplace() {
     final s = state;
     if (s is! ImportMarkdownConflict) return;
@@ -453,20 +456,20 @@ class ImportController extends Notifier<ImportState> {
     );
   }
 
-  /// "Ganti" di dialog bab dobel.
+  /// "Ganti" in the duplicate chapter dialog.
   Future<void> confirmReplace() {
     final s = state;
     if (s is! ImportMarkdownConflict) return Future.value();
     return submitMarkdown(s.choice, replace: true);
   }
 
-  /// "Batalin" di sheet proses.
+  /// "Batalin" in the progress sheet.
   void cancel() {
     _run++;
     state = const ImportIdle();
   }
 
-  /// Toast / sheet hasil udah ditutup.
+  /// The result toast / sheet has been closed.
   void dismiss() => state = const ImportIdle();
 }
 

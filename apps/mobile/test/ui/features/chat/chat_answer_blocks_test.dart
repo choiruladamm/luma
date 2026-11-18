@@ -165,7 +165,7 @@ void main() {
       block('**Satu.** a', layout: ChatAnswerLayout.item),
       block('**Dua.** b', layout: ChatAnswerLayout.item),
     ]);
-    // Nomor mulai dari butir pertama yang beneran daftar.
+    // Numbering starts at the first item of a real list.
     expect(find.text('1'), findsOneWidget);
     expect(find.text('2'), findsOneWidget);
     expect(find.text('3'), findsNothing);

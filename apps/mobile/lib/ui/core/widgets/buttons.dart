@@ -5,7 +5,7 @@ import '../theme/stabilo_theme.dart';
 import '../theme/stabilo_tokens.dart';
 import '../theme/stabilo_type.dart';
 
-/// Ikon Hugeicons Stroke Rounded. Warna ikut `IconTheme` / teks di sekitarnya.
+/// Hugeicons Stroke Rounded icon. Color follows `IconTheme` / the surrounding text.
 class AppIcon extends StatelessWidget {
   const AppIcon(
     this.icon, {
@@ -19,8 +19,9 @@ class AppIcon extends StatelessWidget {
   final double size;
   final Color? color;
 
-  /// Null = [Layout.iconStroke] (2.2 kalau ikon ≤ 14). Isi kalau board
-  /// nentuin lain, mis. × kecil di kolom cari (1,8 di 12–13pt).
+  /// Null = [Layout.iconStroke] (2.2 when the icon is ≤ 14). Set it when a
+  /// board specifies otherwise, e.g. the small × in the search field (1.8 at
+  /// 12–13pt).
   final double? strokeWidth;
 
   @override
@@ -34,20 +35,20 @@ class AppIcon extends StatelessWidget {
 
 enum _Tone { primary, secondary, outline, ink, danger }
 
-/// Tombol Stabilo (board Komponen 01).
+/// Stabilo button (board Komponen 01).
 ///
-/// - [AppButton.primary]: accent + outline + press shadow. Satu layar
-///   maksimal satu.
-/// - [AppButton.secondary]: muted. [destructive] = teks merah (mis. "Hapus"
-///   cache).
-/// - [AppButton.outline]: latar sheet + garis, aksi kedua yang sejajar
-///   tombol utama ("Daftar", "Keluar" di Akun).
-/// - [AppButton.ink]: latar tinta, konfirmasi yang gak merusak ("Keluar").
-/// - [AppButton.danger]: latar danger, buat konfirmasi hapus/ganti data.
-///   [soft] = pink + garis (dialog akun, board Akun 10–11).
+/// - [AppButton.primary]: accent + outline + press shadow. At most one per
+///   screen.
+/// - [AppButton.secondary]: muted. [destructive] = red text (e.g. "Hapus
+///   cache").
+/// - [AppButton.outline]: sheet background + border, a second action next to
+///   the main button ("Daftar", "Keluar" in Akun).
+/// - [AppButton.ink]: ink background, non-destructive confirmation ("Keluar").
+/// - [AppButton.danger]: danger background, for confirming delete / replace data.
+///   [soft] = pink + border (account dialogs, board Akun 10–11).
 ///
-/// Tinggi: 56 = CTA layar (sudut 20), 52 = aksi di sheet, 48 = dialog &
-/// state sheet, 40 = aksi kecil di baris/toast. Di bawah 56 bentuknya pill.
+/// Height: 56 = screen CTA (corner 20), 52 = sheet action, 48 = dialog &
+/// sheet state, 40 = small action in a row/toast. Below 56 it is a pill.
 /// `onPressed: null` = disabled.
 class AppButton extends StatelessWidget {
   const AppButton.primary({
@@ -119,14 +120,14 @@ class AppButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final List<List<dynamic>>? icon;
 
-  /// Ikon di belakang teks ("Lanjut ↓", "Buka Pengaturan →").
+  /// Icon after the text ("Lanjut ↓", "Buka Pengaturan →").
   final bool iconAfter;
   final double height;
   final bool destructive;
   final bool pill;
   final bool soft;
 
-  /// Spinner gantiin teks, lebar tetap, gak bisa di-tap.
+  /// Spinner replaces the text, fixed width, can't be tapped.
   final bool loading;
   final _Tone _tone;
 
@@ -134,7 +135,7 @@ class AppButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.stabilo;
     final enabled = onPressed != null && !loading;
-    // Tombol bergaris + bayangan tekan: primary, danger lembut.
+    // Outlined buttons + press shadow: primary, soft danger.
     final primary = _tone == _Tone.primary || (_tone == _Tone.danger && soft);
     final outline = _tone == _Tone.outline;
     final radius = BorderRadius.circular(
@@ -168,8 +169,8 @@ class AppButton extends StatelessWidget {
             borderRadius: radius,
             side: (primary || outline) && enabled
                 ? BorderSide(
-                    // Garis kuning cuma buat primary; lainnya garis tinta
-                    // (gelap: abu, board Akun gelap).
+                    // The yellow border is for primary only; the rest use an ink border
+                    // (dark: gray, board Akun dark).
                     color: _tone == _Tone.primary ? c.accentBorder : c.outline,
                     width: Layout.outline,
                   )
@@ -237,9 +238,9 @@ class AppButton extends StatelessWidget {
   }
 }
 
-/// Tombol bulet 44 (target sentuh minimal). [active] = accent, mis. Aa pas
-/// sheet-nya kebuka. [primary] = aksi utama layar (accent + outline + press
-/// shadow, mis. Import di rak). Isi: [icon] atau [text] ("Aa", "A").
+/// Round 44 button (minimum touch target). [active] = accent, e.g. Aa while its
+/// sheet is open. [primary] = main screen action (accent + outline + press
+/// shadow, e.g. Import on the shelf). Content: [icon] or [text] ("Aa", "A").
 class CircleButton extends StatelessWidget {
   const CircleButton({
     super.key,
@@ -265,7 +266,7 @@ class CircleButton extends StatelessWidget {
   final List<List<dynamic>>? icon;
   final String? text;
 
-  /// Isi gambar sendiri (mis. kotak stop), buat yang bukan ikon atau teks.
+  /// Custom-drawn content (e.g. a stop square), for anything that isn't an icon or text.
   final Widget? glyph;
   final bool active;
   final bool primary;
@@ -323,7 +324,7 @@ class CircleButton extends StatelessWidget {
   }
 }
 
-/// Ikon yang sering dipake, biar nama Hugeicons-nya gak nyebar.
+/// Frequently used icons, so Hugeicons names don't spread around.
 abstract final class AppIcons {
   static const chat = HugeIcons.strokeRoundedBubbleChat;
   static const history = HugeIcons.strokeRoundedClock01;
@@ -344,8 +345,9 @@ abstract final class AppIcons {
   static const next = HugeIcons.strokeRoundedArrowRight02;
   static const chevron = HugeIcons.strokeRoundedArrowRight01;
 
-  /// Daftar isi di kapsul baca (board Cari kata, ChapterRoute): tiga titik
-  /// bab disambung garis (yang tengah = bab ini) + tiga baris judul.
+  /// Table of contents on the reading capsule (board Cari kata, ChapterRoute):
+  /// three chapter dots joined by a line (the middle one = this chapter) +
+  /// three title lines.
   static const toc = <List<dynamic>>[
     [
       'circle',
@@ -411,7 +413,7 @@ abstract final class AppIcons {
     ],
   ];
 
-  /// ⋯ di kapsul baca (board Cari kata): tiga titik penuh r1,6.
+  /// ⋯ on the reading capsule (board Cari kata): three full dots, r1.6.
   static const readerMore = <List<dynamic>>[
     [
       'circle',

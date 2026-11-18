@@ -1,22 +1,22 @@
 import 'dart:math' as math;
 
-/// Kecepatan baca buat estimasi "±N mnt lagi". Sedikit di bawah rata-rata
-/// pembaca native (±1.300 karakter/menit) soalnya bukunya dibaca sebagai
-/// bahasa kedua. Tuning pas dogfooding.
+/// Reading speed for the "±N mnt lagi" estimate. Slightly below the average native
+/// reader (±1,300 characters/minute) because the book is read as a second language.
+/// Tune while dogfooding.
 const charsPerMinute = 1000;
 
-/// Menit buat baca [chars] karakter, minimal 1.
+/// Minutes to read [chars] characters, at least 1.
 int readingMinutes(int chars) => math.max(1, (chars / charsPerMinute).ceil());
 
-/// Posisi absolut di buku (karakter) dari posisi di chapter ([fraction] 0..1).
-/// Sumber `startChar` / `endChar` di `reading_sessions`.
+/// Absolute position in the book (characters) from the position in the chapter
+/// ([fraction] 0..1). Source of `startChar` / `endChar` in `reading_sessions`.
 int charPosition({
   required int charOffset,
   required int chapterChars,
   required double fraction,
 }) => charOffset + (fraction.clamp(0, 1) * chapterChars).round();
 
-/// Posisi baca di buku 0..1 dari posisi di chapter ([fraction] 0..1).
+/// Reading position in the book 0..1 from the position in the chapter ([fraction] 0..1).
 double bookProgress({
   required int charOffset,
   required int chapterChars,
@@ -28,18 +28,18 @@ double bookProgress({
           .clamp(0, 1)
           .toDouble();
 
-/// Ngitung waktu baca aktif: jalan selama halaman baca kebuka & app di depan,
-/// berhenti kalau [idle] gak ada scroll/tap, lanjut lagi pas ada interaksi.
-/// Waktu nunggu sampe idle ikut dihitung (lagi baca halaman yang sama).
+/// Counts active reading time: runs while the reading page is open and the app is in
+/// the foreground, stops when [idle] passes without scroll/tap, resumes on interaction.
+/// The wait until idle is still counted (reading the same page).
 class ReadingClock {
   ReadingClock(DateTime now) : _last = now, _until = now;
 
   static const idle = Duration(minutes: 2);
 
-  /// Interaksi terakhir.
+  /// Last interaction.
   DateTime _last;
 
-  /// Udah dihitung sampe sini.
+  /// Counted up to here.
   DateTime _until;
   bool _paused = false;
   Duration _pending = Duration.zero;
@@ -61,19 +61,19 @@ class ReadingClock {
     _last = _until = now;
   }
 
-  /// App ke background.
+  /// The app went to the background.
   void pause(DateTime now) {
     _settle(now);
     _paused = true;
   }
 
-  /// App balik ke depan: dianggap interaksi.
+  /// The app came back to the foreground: counts as an interaction.
   void resume(DateTime now) {
     _paused = false;
     _last = _until = now;
   }
 
-  /// Detik utuh yang belum disimpen; sisanya kebawa ke [take] berikutnya.
+  /// Whole seconds not yet saved; the remainder carries over to the next [take].
   int take(DateTime now) {
     _settle(now);
     final s = _pending.inSeconds;

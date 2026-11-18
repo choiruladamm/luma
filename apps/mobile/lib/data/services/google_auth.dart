@@ -6,26 +6,28 @@ import 'package:google_sign_in/google_sign_in.dart';
 
 import 'backend_client.dart';
 
-/// Sumber idToken Google untuk `POST /v1/auth/sign-in/social`.
+/// Source of the Google ID token for `POST /v1/auth/sign-in/social`.
 abstract interface class GoogleIdTokenSource {
-  /// Null = user nutup / batal di jendela Google (balik ke layar Masuk tanpa
-  /// pesan error, board Akun copy & aturan).
+  /// Returns the ID token, or null when the user closed or cancelled the Google
+  /// window (back to the Masuk screen without an error message, board Akun
+  /// copy & aturan).
   Future<String?> idToken();
 }
 
-/// Kode error saat login Google belum bisa dipakai di build ini.
+/// Error code for when Google sign-in is not usable in this build.
 const googleNotConfigured = 'GOOGLE_NOT_CONFIGURED';
 
-/// Kode error saat SDK Google gagal (bukan batal): konfigurasi client, jaringan.
+/// Error code for when the Google SDK fails (not a cancel): client configuration or network.
 const googleSignInFailed = 'GOOGLE_SIGN_IN_FAILED';
 
-/// Client ID OAuth Google per flavor (publik, bukan secret;
+/// Google OAuth client IDs per flavor (public, not secrets;
 /// docs/operations.md, Google OAuth clients).
-/// `server` = web client ID, jadi `aud` idToken yang dicek Worker.
-/// iOS butuh client ID-nya sendiri + URL scheme `GOOGLE_REVERSED_CLIENT_ID`
-/// (build setting per konfigurasi Xcode). Android cukup `server`, client
-/// Android dicocokkan Google lewat package + SHA-1.
-/// Web client (`server`) dipakai bersama dev dan prod.
+///
+/// `server` is the web client ID, so it is the `aud` of the ID token the Worker
+/// checks. iOS needs its own client ID plus the URL scheme
+/// `GOOGLE_REVERSED_CLIENT_ID` (a build setting per Xcode configuration).
+/// Android needs only `server`; Google matches the Android client by package
+/// name and SHA-1. The web client (`server`) is shared by dev and prod.
 const googleClients = {
   'dev': (
     server: '366577823040-vhr2h7toc53pb891v0qoc1m62pps2v41.apps.googleusercontent.com',
@@ -37,7 +39,7 @@ const googleClients = {
   ),
 };
 
-/// Placeholder untuk build tanpa client ID Google (tanpa flavor).
+/// Placeholder source for builds without a Google client ID (no flavor).
 class UnconfiguredGoogle implements GoogleIdTokenSource {
   const UnconfiguredGoogle();
 
@@ -48,8 +50,9 @@ class UnconfiguredGoogle implements GoogleIdTokenSource {
   );
 }
 
-/// Login Google native lewat `google_sign_in` (v7): Credential Manager di
-/// Android, GoogleSignIn SDK di iOS.
+/// Signs in with Google natively through `google_sign_in` (v7).
+///
+/// Uses Credential Manager on Android and the GoogleSignIn SDK on iOS.
 class NativeGoogle implements GoogleIdTokenSource {
   NativeGoogle({required this.serverClientId, required this.iosClientId});
 
@@ -58,7 +61,7 @@ class NativeGoogle implements GoogleIdTokenSource {
 
   Future<void>? _init;
 
-  /// `initialize` wajib sekali per proses; gagal → boleh dicoba lagi.
+  // `initialize` must run once per process; a failure may be retried.
   Future<void> _ensureInit() => _init ??= GoogleSignIn.instance
       .initialize(
         clientId: Platform.isIOS ? iosClientId : null,
@@ -88,9 +91,11 @@ class NativeGoogle implements GoogleIdTokenSource {
   }
 }
 
-/// Batal → null (balik ke layar Masuk tanpa pesan). Lainnya → error.
-/// Catatan Android: sebagian salah konfigurasi (SHA-1 / package) juga dilapor
-/// Credential Manager sebagai `canceled`, plugin gak bisa bedain.
+/// Returns null on cancel (back to the Masuk screen without a message) and
+/// throws for any other error.
+///
+/// On Android, Credential Manager also reports some misconfigurations (SHA-1,
+/// package name) as `canceled`, and the plugin cannot tell them apart.
 String? googleCanceledOrThrow(GoogleSignInException e) {
   if (e.code == GoogleSignInExceptionCode.canceled) return null;
   throw BackendException(
@@ -99,8 +104,10 @@ String? googleCanceledOrThrow(GoogleSignInException e) {
   );
 }
 
-/// Sumber idToken untuk flavor build ini. Tanpa flavor (iOS `make release`,
-/// scheme Runner = bundle prod) dipakai client prod, sama seperti backend URL.
+/// Returns the ID token source for this build's flavor.
+///
+/// Without a flavor (iOS `make release`, where the Runner scheme is the prod
+/// bundle) the prod client is used, matching the backend URL.
 GoogleIdTokenSource googleSourceFor(String? flavor) {
   final client = googleClients[flavor ?? 'prod'];
   if (client == null) return const UnconfiguredGoogle();

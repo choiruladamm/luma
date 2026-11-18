@@ -17,7 +17,7 @@ import '../services/epub_parser.dart';
 import '../services/file_storage.dart';
 import '../services/pdf_service.dart';
 
-/// Buku hasil parse, tanpa HTML mentah (gak perlu dibawa balik dari isolate).
+/// A parsed book without the raw HTML, which doesn't need to travel back from the isolate.
 typedef ParsedBook = ({
   String? title,
   String? author,
@@ -26,34 +26,34 @@ typedef ParsedBook = ({
   int totalChars,
 });
 
-/// [duplicate] = file yang sama udah ada di rak; [bookId] nunjuk ke yang lama.
+/// Result of an import; [duplicate] means the same file is already on the shelf, and [bookId] then points to the existing book.
 typedef ImportResult = ({int bookId, bool duplicate});
 
 /// Hasil [ImportRepository.importPdf].
 typedef PdfImportResult = ({int bookId, bool duplicate, int skippedPages});
 
-/// Tahap import, buat checklist & progres di sheet "Lagi ngebongkar EPUB".
+/// Import stages, shown as the checklist and progress in the "Lagi ngebongkar EPUB" sheet.
 enum ImportStage {
-  /// Hash + cek dobel.
+  /// Hashes the file and checks for duplicates.
   reading,
 
-  /// Judul, penulis, cover, daftar bab.
+  /// Reads the title, author, cover, and chapter list.
   outline,
 
-  /// Bab → paragraf → grup.
+  /// Splits chapters into paragraphs and groups.
   chapters,
 
-  /// Nyalin file + nulis ke DB.
+  /// Copies the file and writes to the database.
   saving,
 }
 
-/// Dilempar kalau [ImportRepository.importEpub] dibatalin sebelum nulis apa-apa.
+/// Thrown when [ImportRepository.importEpub] is cancelled before anything is written.
 class ImportCancelled implements Exception {
   const ImportCancelled();
 }
 
-/// Bab [chapter] udah ada di buku [bookId]; ulang dengan `replace: true` buat
-/// nimpa.
+/// Thrown when chapter [chapter] already exists in book [bookId]; retry with
+/// `replace: true` to overwrite it.
 class ChapterExists implements Exception {
   const ChapterExists(this.bookId, this.chapter);
 
@@ -64,7 +64,7 @@ class ChapterExists implements Exception {
   String toString() => 'ChapterExists(book $bookId, bab $chapter)';
 }
 
-/// [created] = buku baru dibikin; [replaced] = bab lama ditimpa.
+/// Result of a Markdown chapter import; [created] means a new book was created, [replaced] means an existing chapter was overwritten.
 typedef MarkdownImportResult = ({
   int bookId,
   int chapterId,
@@ -73,8 +73,10 @@ typedef MarkdownImportResult = ({
   bool replaced,
 });
 
-/// Dua isolate biar tahap [ImportStage.outline] → [ImportStage.chapters]
-/// keliatan di UI. [onChapters] = progres per chapter dari isolate ke-2.
+/// Parses an EPUB in two isolates so the [ImportStage.outline] to
+/// [ImportStage.chapters] transition is visible in the UI.
+///
+/// [onChapters] reports per-chapter progress from the second isolate.
 Future<ParsedBook> parseInIsolate(
   Uint8List bytes, {
   void Function()? onOutline,
@@ -100,8 +102,8 @@ Future<ParsedBook> parseInIsolate(
   );
 }
 
-/// Top-level + terpisah dari importPdf: closure isolate gak boleh nangkep
-/// callback UI.
+/// Top-level and separate from importPdf because an isolate closure must not
+/// capture UI callbacks.
 Future<pdf.PdfLayoutResult> _layoutInIsolate(
   List<List<PdfLine>> pages,
   List<pdf.PdfOutlineEntry> outline,
@@ -109,9 +111,9 @@ Future<pdf.PdfLayoutResult> _layoutInIsolate(
 
 typedef ParsedChapters = ({List<ParsedChapter> chapters, int totalChars});
 
-// Dua fungsi ini sengaja terpisah: closure isolate nangkep seluruh scope
-// tempat dia dibuat, jadi di `parseInIsolate` (yang megang callback UI) bakal
-// ikut ngirim callback itu ke isolate dan gagal.
+// These two stay separate on purpose: an isolate closure captures the whole
+// scope it was created in, so inside `parseInIsolate` (which holds UI
+// callbacks) it would try to send those callbacks to the isolate and fail.
 Future<EpubOutline> _parseInIsolate(Uint8List bytes) =>
     Isolate.run(() => parseEpub(bytes));
 
@@ -120,17 +122,20 @@ Future<ParsedChapters> _extractInIsolate(EpubOutline outline, SendPort send) =>
       () => extractChapters(outline, onChapter: (d, t) => send.send([d, t])),
     );
 
-/// Bobot progres 0–1 per tahap: baca file → hash → outline → chapter → simpan.
+/// Progress weights from 0 to 1 per stage: read file, hash, outline, chapters, save.
 const _afterRead = 0.05;
 const _afterHash = 0.10;
 const _afterOutline = 0.30;
 const _afterChapters = 0.85;
 const _afterFiles = 0.90;
-const _beforeDone = 0.99; // 100% dikasih controller, setelah transaksi commit
+// The controller reports 100% after the transaction commits.
+const _beforeDone = 0.99;
 
-/// Import EPUB (docs/architecture.md, Import). Parse dulu sebelum nyalin
-/// file, jadi EPUB jelek gak ninggalin apa-apa; gagal setelah nyalin = file
-/// dihapus lagi, transaksi DB di-rollback.
+/// Imports EPUB books (docs/architecture.md, Import).
+///
+/// It parses before copying the file, so a bad EPUB leaves nothing behind. A
+/// failure after the copy deletes the file again and rolls back the database
+/// transaction.
 class ImportRepository {
   ImportRepository(
     this._db,
@@ -153,10 +158,12 @@ class ImportRepository {
   })
   parse;
 
-  /// Buku EPUB dari schema < 11 belum punya `chapters.section`. Parse ulang
-  /// file yang masih tersimpan (lokal, gratis), cocokkan jumlah + judul bab,
-  /// lalu isi section dan judul TOC yang lebih lengkap. Gak cocok atau file
-  /// hilang → semua '' biar gak diulang tiap buka. Paragraf gak disentuh.
+  /// Fills `chapters.section` for EPUB books imported before schema 11.
+  ///
+  /// Reparses the stored file (local and free), matches chapters by count and
+  /// title, then fills the section and a fuller TOC title. On a mismatch or a
+  /// missing file every section is set to '' so the work isn't repeated on
+  /// each open. Paragraphs are left untouched.
   Future<void> backfillSections(int bookId) async {
     final rows =
         await (_db.select(_db.chapters)
@@ -206,11 +213,14 @@ class ImportRepository {
     });
   }
 
-  /// Lempar [EpubException] kalau file bukan EPUB, rusak, atau ada DRM, dan
-  /// [ImportCancelled] kalau [isCancelled] nyala sebelum tahap nyimpen.
-  /// [onProgress] = 0–1 asli dari tahapnya, cuma naik, gak pernah sampe 1.
-  /// [sourceId] + [externalId]: identitas katalog luar kalau EPUB-nya hasil
-  /// download (docs/discover.md). Duplikat tanpa identitas ikut ditandain.
+  /// Imports an EPUB file and returns its book id.
+  ///
+  /// Throws [EpubException] if the file isn't an EPUB, is corrupt, or has DRM,
+  /// and [ImportCancelled] if [isCancelled] turns true before the saving
+  /// stage. [onProgress] reports the stage's real 0-1 progress; it only goes
+  /// up and never reaches 1. [sourceId] and [externalId] identify the external
+  /// catalog entry when the EPUB was downloaded (docs/discover.md); a
+  /// duplicate that lacks that identity gets it attached.
   Future<ImportResult> importEpub(
     Uint8List bytes, {
     required String fileName,
@@ -296,14 +306,17 @@ class ImportRepository {
     }
   }
 
-  /// Import PDF langsung (docs/import-formats.md, PDF import). Pola
-  /// [importEpub]: layout dulu sebelum nyalin file, jadi PDF jelek gak ninggalin
-  /// apa-apa; gagal setelah nyalin = file yang baru ditulis dihapus lagi,
-  /// transaksi DB di-rollback. File [path] dibaca lewat path (gak masuk memori).
+  /// Imports a PDF directly (docs/import-formats.md, PDF import).
   ///
-  /// Lempar [PdfImportException] (password, scan, rusak, bukan PDF, kosong, IO)
-  /// dan [ImportCancelled] kalau [isCancelled] nyala sebelum tahap nyimpen.
-  /// `skippedPages` = halaman tanpa teks di PDF campuran (dilewati).
+  /// Follows the [importEpub] pattern: the layout runs before the file is
+  /// copied, so a bad PDF leaves nothing behind, and a failure after the copy
+  /// deletes the newly written file and rolls back the database transaction.
+  /// The file at [path] is read by path, so it never sits fully in memory.
+  ///
+  /// Throws [PdfImportException] (password, scan, corrupt, not a PDF, empty,
+  /// IO) and [ImportCancelled] if [isCancelled] turns true before the saving
+  /// stage. `skippedPages` counts the pages without text in a mixed PDF, which
+  /// are skipped.
   Future<PdfImportResult> importPdf(
     String path, {
     required String fileName,
@@ -357,7 +370,7 @@ class ImportRepository {
     if (raw.pageCount == 0) {
       throw const PdfImportException(PdfImportError.empty, 'no pages');
     }
-    // Bukti kosong doang, bukan klaim pasti scan; copy-nya yang hati-hati.
+    // Empty pages are only evidence of a scan, not proof; the user-facing copy stays cautious.
     if (empty * 2 > raw.pageCount) {
       throw PdfImportException(
         PdfImportError.scan,
@@ -393,8 +406,8 @@ class ImportRepository {
     final coverFile = raw.cover == null
         ? null
         : '$hash.${raw.cover!.extension}';
-    // File yang udah ada sebelum import ini bukan punya kita: rollback gak
-    // boleh ngehapusnya.
+    // Files that existed before this import aren't ours, so the rollback must
+    // not delete them.
     final hadBook = await _storage.book(bookFile).exists();
     final hadCover =
         coverFile != null && await _storage.cover(coverFile).exists();
@@ -429,13 +442,16 @@ class ImportRepository {
     }
   }
 
-  /// Import satu bab Luma Markdown (docs/import-formats.md, Markdown import behavior). Buku tujuan: [bookId] kalau ada, kalau enggak yang `book_key`-nya
-  /// = [bookKey], kalau belum ada dibikin baru dengan [bookTitle] / [author].
-  /// [chapter] null = bab terakhir + 1.
+  /// Imports one Luma Markdown chapter (docs/import-formats.md, Markdown import behavior).
   ///
-  /// Lempar [ChapterExists] kalau nomornya udah ada dan [replace] mati.
-  /// Ganti bab dikerjain di tempat (id bab tetap): isi paragraf + hasil AI bab
-  /// itu dibuang, tapi sesi baca dan statistiknya gak ikut hilang.
+  /// The target book is [bookId] if given, otherwise the book whose `book_key`
+  /// equals [bookKey]; if neither exists a new book is created with
+  /// [bookTitle] and [author]. A null [chapter] means the last chapter plus 1.
+  ///
+  /// Throws [ChapterExists] if that chapter number exists and [replace] is
+  /// off. Replacing happens in place (the chapter id stays): the chapter's
+  /// paragraphs and AI results are dropped, but its reading sessions and
+  /// stats survive.
   Future<MarkdownImportResult> importMarkdown(
     ParsedMarkdown md, {
     int? bookId,
@@ -528,7 +544,7 @@ class ImportRepository {
           .insert(
             ChaptersCompanion.insert(
               bookId: id,
-              sortOrder: chapters.length, // dirapiin di _renumber
+              sortOrder: chapters.length, // Renumbered in _renumber.
               chapterNumber: Value(number),
               title: title,
               charOffset: 0,
@@ -543,7 +559,7 @@ class ImportRepository {
       }
       await (_db.update(_db.chapters)..where((c) => c.id.equals(chapterId)))
           .write(ChaptersCompanion(title: Value(title)));
-      // Indeks paragraf lama gak berlaku lagi buat isi baru.
+      // The old paragraph indexes don't apply to the new content.
       await (_db.update(
         _db.readingProgress,
       )..where((r) => r.chapterId.equals(chapterId))).write(
@@ -577,10 +593,12 @@ class ImportRepository {
     );
   });
 
-  /// Urutan tampil dari nomor bab, `charOffset` dan `books.totalChars` dihitung
-  /// ulang (bab bisa masuk gak berurutan).
-  // ponytail: panjang bab dari SQL LENGTH (per karakter), bukan String.length
-  // Dart (per UTF-16): beda tipis cuma buat emoji, gak ngaruh ke persentase.
+  /// Recomputes the display order from chapter numbers, plus each chapter's
+  /// `charOffset` and `books.totalChars`, because chapters can arrive out of
+  /// order.
+  // ponytail: chapter length comes from SQL LENGTH (per character), not Dart
+  // String.length (per UTF-16 unit); they differ only for emoji, which doesn't
+  // affect the percentage.
   Future<void> _renumber(int bookId) async {
     final rows = await _db
         .customSelect(
@@ -666,8 +684,11 @@ class ImportRepository {
   });
 }
 
-/// "my_book__v2 (z-lib).pdf" -> "my book v2". PDF tanpa judul kebaca dipakai
-/// nama file; underscore + spasi dobel + sufiks sumber unduhan dibuang.
+/// Derives a title from a file name, e.g. "my_book__v2 (z-lib).pdf" becomes
+/// "my book v2".
+///
+/// Used for PDFs without a readable title. Underscores, doubled spaces, and
+/// download-source suffixes are dropped.
 String _titleFromFileName(String fileName) {
   final t = p
       .basenameWithoutExtension(fileName)
@@ -693,7 +714,7 @@ final importRepositoryProvider = Provider<ImportRepository>(
   ),
 );
 
-/// Dipanggil saat chat buku dibuka; test tanpa DB meng-override ini.
+/// Backfills chapter sections when a book chat opens; tests without a database override it.
 final chapterSectionBackfillProvider = Provider<Future<void> Function(int)>(
   (ref) =>
       (bookId) => ref.read(importRepositoryProvider).backfillSections(bookId),

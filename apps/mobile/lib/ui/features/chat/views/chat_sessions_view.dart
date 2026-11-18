@@ -32,7 +32,7 @@ String chatBookTitle(BuildContext context, WidgetRef ref, int bookId) {
       : '${book.title} · $author';
 }
 
-/// Judul buku tanpa penulis, buat kalimat di tengah teks.
+/// Returns the book title without the author, for use mid-sentence.
 String chatBookName(BuildContext context, WidgetRef ref, int bookId) =>
     ref
         .watch(booksStreamProvider)
@@ -79,7 +79,7 @@ class ChatSessionsView extends ConsumerWidget {
     final footerBottom = pad.bottom > Space.s1
         ? pad.bottom - Space.s1
         : Space.s2;
-    // Isi mulai di bawah header (board: scroll area padding atas 107).
+    // Content starts below the header (design board: scroll area top padding 107).
     final listTop = pad.top + headerHeight + Space.s2;
     Widget content() => sessions.when(
       loading: () => Padding(
@@ -354,7 +354,7 @@ class SessionRow extends StatelessWidget {
   }
 }
 
-/// Kosong / gagal muat: ikon 48, judul, keterangan, aksi opsional.
+/// Empty or load-failed state: a 48 icon, title, caption and an optional action.
 class _SessionsState extends StatelessWidget {
   const _SessionsState({
     required this.top,

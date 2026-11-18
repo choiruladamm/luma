@@ -13,15 +13,14 @@ import '../../../core/widgets/search_result.dart';
 import '../../../core/widgets/sheet.dart';
 import '../view_models/book_search_view_model.dart';
 
-/// Sheet Cari kata (board "10 · Cari kata", layar 1–5). Detent penuh, mulai
-/// [Layout.searchSheetTop] dari atas. Balikin hasil yang di-tap, null kalau
-/// ditutup.
+/// Cari kata sheet (board "10 · Cari kata", screens 1–5). Full detent, starting
+/// [Layout.searchSheetTop] from the top. Returns the tapped result, null when dismissed.
 Future<BookSearchPick?> showBookSearchSheet(
   BuildContext context, {
   required int bookId,
   int? currentChapterId,
 
-  /// Kata + posisi daftar buat buka lagi dari navigator (mode cari).
+  /// Word + list position to reopen from the navigator (search mode).
   String? initialQuery,
   double initialScrollOffset = 0,
   ValueChanged<double>? onScrollOffset,
@@ -52,13 +51,13 @@ class BookSearchSheet extends ConsumerStatefulWidget {
 
   final int bookId;
 
-  /// Bab yang lagi dibaca: dikasih chip "Lagi dibaca".
+  /// The chapter being read: gets a "Lagi dibaca" chip.
   final int? currentChapterId;
 
-  /// Kolom cari langsung keisi dan dicari (balik dari navigator).
+  /// The search field is pre-filled and searched (coming back from the navigator).
   final String? initialQuery;
 
-  /// Posisi scroll daftar hasil yang diinget.
+  /// Remembered scroll position of the result list.
   final double initialScrollOffset;
   final ValueChanged<double>? onScrollOffset;
 
@@ -78,7 +77,7 @@ class _BookSearchSheetState extends ConsumerState<BookSearchSheet> {
     final q = widget.initialQuery;
     if (q != null) {
       _controller.text = q;
-      // Provider baru dibikin pas build pertama; cari begitu siap.
+      // The provider is created on the first build; search once it is ready.
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _vm.searchNow(q);
       });
@@ -203,7 +202,7 @@ class _BookSearchSheetState extends ConsumerState<BookSearchSheet> {
   }
 }
 
-/// Layar 1: "Terakhir dicari" + baris riwayat. Kosong = gak ada apa-apa.
+/// Screen 1: "Terakhir dicari" + history rows. Empty = nothing is shown.
 class _Recents extends StatelessWidget {
   const _Recents({
     required this.recents,
@@ -294,7 +293,7 @@ class _Recents extends StatelessWidget {
   }
 }
 
-/// Layar 2–3: jumlah, lalu hasil digrup per bab.
+/// Screens 2–3: the count, then the results grouped by chapter.
 class _Results extends StatelessWidget {
   const _Results({
     required this.controller,
@@ -365,7 +364,7 @@ class _Results extends StatelessWidget {
   }
 }
 
-/// Layar 4 (gak ketemu) dan state error.
+/// Screen 4 (not found) and the error state.
 class _Message extends StatelessWidget {
   const _Message({required this.icon, required this.title, required this.body});
 
@@ -421,7 +420,7 @@ class _Message extends StatelessWidget {
   }
 }
 
-/// Layar 5: index buku lama lagi diisi (sekali aja per buku).
+/// Screen 5: the index of an older book is being filled (once per book).
 class _Preparing extends StatelessWidget {
   const _Preparing({required this.state});
 

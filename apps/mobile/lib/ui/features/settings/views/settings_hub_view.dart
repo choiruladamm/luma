@@ -26,8 +26,8 @@ import 'cache_sheet.dart';
 import 'display_sheet.dart';
 import 'settings_page.dart';
 
-/// Pengaturan · 01 Ringkasan: akun + kuota AI, model AI, 4 tile. Satu layar,
-/// tanpa scroll, gak ketutup bar tab melayang.
+/// Pengaturan · 01 Ringkasan: account + AI quota, AI model, 4 tiles. One
+/// screen, no scroll, not covered by the floating tab bar.
 class SettingsHubView extends ConsumerWidget {
   const SettingsHubView({super.key});
 
@@ -183,7 +183,7 @@ class SettingsHubView extends ConsumerWidget {
   }
 }
 
-/// Kartu bergaris tipis yang dipakai akun, model AI, dan tile.
+/// Thin-bordered card used by the account, AI model, and tiles.
 class _HubCard extends StatelessWidget {
   const _HubCard({
     required this.child,
@@ -236,7 +236,7 @@ class _AccountCard extends ConsumerWidget {
     final name = user?.name ?? '';
     final image = user?.image;
     final source = ref.watch(aiSourceProvider).value ?? AiSource.subsidy;
-    // Kuota dicek paling sering sejam sekali (cache provider).
+    // The quota is checked at most once an hour (provider cache).
     if (signedIn) {
       Future.microtask(() => ref.read(aiQuotaProvider.notifier).refresh());
     }
@@ -314,8 +314,8 @@ class _AccountCard extends ConsumerWidget {
   }
 }
 
-/// Cincin kuota + teks; state tanpa angka (memuat, gagal, key sendiri,
-/// dicabut) ikut teks yang sama dengan meter kuota lama.
+/// Quota ring + text; states without a number (loading, failed, own key,
+/// revoked) use the same text as [QuotaMeter].
 class _QuotaRow extends StatelessWidget {
   const _QuotaRow({required this.data});
 
@@ -650,8 +650,8 @@ class _PillButton extends StatelessWidget {
   }
 }
 
-/// Tile ringkasan (board "Tile ringkasan"): ikon + nama + tombol bulat "›",
-/// satu baris status di bawah. [attention] = titik pink di sebelah nama.
+/// Summary tile (board "Tile ringkasan"): icon + name + round "›" button, one
+/// status line below. [attention] = pink dot beside the name.
 class SettingsTile extends StatelessWidget {
   const SettingsTile({
     super.key,

@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../repositories/chat_repository.dart';
 
-/// Await chat writes before changing their source content or replacing SQLite.
+/// Stops in-flight chat writes and awaits them before a book's source content changes or SQLite is replaced.
 class ChatLifecycle {
   final _stops = <Object, ({int bookId, Future<void> Function() stop})>{};
   final _paused = <int, int>{};

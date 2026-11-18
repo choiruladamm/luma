@@ -28,7 +28,7 @@ void main() {
     );
     expect(ReaderPrefs.fromSettings(p.toSettings()), p);
     expect(p.fontSize, 24);
-    expect(p.lineHeight, closeTo(1.9, 1e-9)); // Lega 1,85 + Literata 0,05
+    expect(p.lineHeight, closeTo(1.9, 1e-9)); // "Lega" (1.85) + 0.05
     expect(p.marginWidth, 16);
   });
 

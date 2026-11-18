@@ -87,7 +87,7 @@ void main() {
     );
     expect(await storage.book(book.fileName!).readAsBytes(), epub);
 
-    // Cari kata: paragraf hasil import langsung ke-index, tanpa backfill.
+    // Word search: imported paragraphs are indexed right away, without a backfill.
     final hit = await db
         .customSelect(
           'SELECT p.text FROM paragraph_fts f JOIN paragraphs p '

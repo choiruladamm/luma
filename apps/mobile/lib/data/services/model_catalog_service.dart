@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'http_client.dart';
 
-/// Satu model OpenRouter buat pemilih model mode key sendiri (board Kuota AI 07).
+/// Represents one OpenRouter model in the own-key model picker (board Kuota AI 07).
 class CatalogModel {
   const CatalogModel({
     required this.id,
@@ -32,23 +32,24 @@ class CatalogModel {
   final double promptUsdPerToken;
   final double completionUsdPerToken;
 
-  /// "Hemat": input ≤ $0,30 per 1 juta token dan output ≤ $1,50 per 1 juta.
+  /// Whether the model is "Hemat" (cheap): input ≤ $0.30 per 1M tokens and output ≤ $1.50 per 1M.
   bool get cheap =>
       promptUsdPerToken <= 0.30 / 1e6 && completionUsdPerToken <= 1.50 / 1e6;
 
-  /// "Konteks panjang": ≥ 128K token.
+  /// Whether the model is "Konteks panjang" (long context): at least 128K tokens.
   bool get longContext => contextLength >= 128000;
 
-  /// Nama tanpa awalan penyedia ("Google: Gemini 3 Flash" → "Gemini 3 Flash").
+  /// Returns the name without the provider prefix ("Google: Gemini 3 Flash" becomes "Gemini 3 Flash").
   String get label {
     final i = name.indexOf(': ');
     return i < 0 ? name : name.substring(i + 2);
   }
 }
 
-/// Daftar model publik OpenRouter (`GET /api/v1/models`, tanpa key). Dipanggil
-/// cuma saat pemilih model mode key sendiri dibuka, hasilnya dipakai ulang
-/// sepanjang app.
+/// Fetches OpenRouter's public model list (`GET /api/v1/models`, no key needed).
+///
+/// Called only when the own-key model picker opens; the result is reused for
+/// the rest of the app session.
 class ModelCatalogService {
   ModelCatalogService([Dio? dio]) : _dio = dio ?? lumaDio();
 
@@ -78,7 +79,7 @@ final modelCatalogProvider = FutureProvider<List<CatalogModel>>(
 
 enum CatalogFilter { all, cheap, longContext }
 
-/// Saring + cari, model hemat duluan.
+/// Filters and searches [models], listing cheap models first.
 List<CatalogModel> filterCatalog(
   List<CatalogModel> models, {
   String query = '',

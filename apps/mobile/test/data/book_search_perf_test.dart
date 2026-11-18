@@ -8,8 +8,8 @@ import 'package:luma/data/repositories/book_search_index.dart';
 import 'package:luma/data/repositories/book_search_repository.dart';
 import 'package:luma/domain/models/book.dart';
 
-/// Buku besar sintetis: 150 bab × 100 paragraf ≈ 15 000 paragraf, ±1,5 MB.
-/// Ngejaga janji "nyarinya langsung kilat" (docs/book-search.md).
+/// Synthetic large book: 150 chapters × 100 paragraphs ≈ 15,000 paragraphs, ±1.5 MB.
+/// Guards the "search feels instant" promise (docs/book-search.md).
 void main() {
   late AppDatabase db;
   late int bookId;
@@ -52,7 +52,7 @@ void main() {
       'river',
       'quiet',
     ];
-    // Satu transaksi per bab, trigger ikut jalan (jalur import beneran).
+    // One transaction per chapter; the trigger runs too (real import path).
     for (var c = 0; c < 150; c++) {
       final chapter = await db
           .into(db.chapters)
@@ -115,7 +115,7 @@ void main() {
         '"the" ($commonTotal hits) ${common.inMilliseconds} ms, '
         'phrase ${phrase.inMilliseconds} ms',
       );
-      // Longgar (CI/laptop lambat) tapi jauh di bawah "terasa".
+      // Loose enough for slow CI or laptops, but well below "feels instant".
       expect(rare, lessThan(const Duration(milliseconds: 250)));
       expect(common, lessThan(const Duration(milliseconds: 1000)));
       expect(phrase, lessThan(const Duration(milliseconds: 500)));
@@ -124,7 +124,7 @@ void main() {
 
   test('backfilling a 150-chapter book yields between chapters', () async {
     await db.customStatement('DELETE FROM paragraph_fts');
-    await db.rebuildBookSearchIndex(); // reset ke kondisi tanpa index
+    await db.rebuildBookSearchIndex(); // reset to the state without an index
     await db.customStatement(
       "INSERT INTO paragraph_fts(paragraph_fts) VALUES('delete-all')",
     );
@@ -136,7 +136,7 @@ void main() {
     );
     // ignore: avoid_print
     print('backfill 15k paragraphs: ${took.inMilliseconds} ms, $steps steps');
-    expect(steps, 151); // 0 + satu per bab: UI dapet giliran di sela
+    expect(steps, 151); // 0 + one per chapter: the UI gets turns in between
     expect(await index.isIndexed(bookId), isTrue);
     expect(
       (await BookSearchRepository(db).search(bookId, 'zanzibar')).total,

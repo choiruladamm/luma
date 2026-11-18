@@ -1,6 +1,6 @@
-// Pulihkan akses AI subsidi satu user: `make backend-unban e=dev email=a@b.c`.
-// Cuma `banned = 0`; key baru dibuat lazy waktu app minta `POST /v1/ai/key` lagi.
-// Cadangan terminal kalau dashboard admin gak bisa dipakai.
+// Restores subsidized AI access for one user: `make backend-unban e=dev email=a@b.c`.
+// Only sets `banned = 0`; a new key is created lazily when the app calls `POST /v1/ai/key` again.
+// Terminal fallback for when the admin dashboard is unavailable.
 const [envName, email] = process.argv.slice(2);
 if ((envName !== "dev" && envName !== "prod") || !email) throw new Error("pakai: bun scripts/unban.ts dev|prod <email>");
 

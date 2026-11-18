@@ -11,8 +11,9 @@ import '../../../core/widgets/buttons.dart';
 import '../../../core/widgets/sheet.dart';
 import '../../../core/widgets/toast.dart';
 
-/// Sheet "Tampilan" (board Atur · Bahasa): tema (setelan yang sama dengan
-/// menu Aa di layar baca) + bahasa tampilan. Pilihan langsung disimpen.
+/// "Tampilan" sheet (board Atur · Bahasa): theme (the same setting as the Aa
+/// menu on the reading screen) + display language. Choices are saved
+/// immediately.
 Future<void> showDisplaySheet(BuildContext context) =>
     showAppSheet<void>(context, builder: (_) => const _DisplaySheet());
 
@@ -262,8 +263,8 @@ class _ThemeCard extends StatelessWidget {
   }
 }
 
-/// Layar mini: terang, gelap, atau terang dipotong diagonal dengan gelap
-/// (Ikut sistem). Selalu pake palet tema masing-masing, bukan tema aktif.
+/// Mini screen: light, dark, or light cut diagonally with dark (Ikut sistem).
+/// Always uses each theme's own palette, not the active theme.
 class _Thumb extends StatelessWidget {
   const _Thumb(this.theme);
 
@@ -275,7 +276,7 @@ class _Thumb extends StatelessWidget {
     return Container(
       width: 64,
       height: 92,
-      // Garis di depan (bukan di dalam) biar layar mini tetap 64×92 penuh.
+      // Border in front (not inside) so the mini screen stays a full 64×92.
       foregroundDecoration: BoxDecoration(
         borderRadius: BorderRadius.circular(Radii.sm),
         border: Border.all(color: c.menuLine),

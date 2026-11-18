@@ -43,15 +43,15 @@ void main() {
     await tester.pump();
   }
 
-  /// Panggilan backend (secure storage + dio palsu) butuh event loop asli:
-  /// gantian jalanin event loop dan pump sampai layarnya tenang.
+  /// Backend calls (secure storage + fake dio) need the real event loop:
+  /// alternate running the event loop and pumping until the screen settles.
   Future<void> tapAndWait(WidgetTester tester, Finder finder) async {
     await tester.tap(finder);
     for (var i = 0; i < 8; i++) {
       await tester.runAsync(
         () => Future<void>.delayed(const Duration(milliseconds: 20)),
       );
-      // Dio jalan di zona jam palsu: timer internalnya ikut dimajuin.
+      // Dio runs in the fake-clock zone, so its internal timers advance with it.
       await tester.pump(const Duration(milliseconds: 50));
     }
   }
@@ -188,7 +188,7 @@ void main() {
 
       expect(find.textContaining('Login-nya ditolak'), findsOneWidget);
       expect(find.textContaining('pakai email lain'), findsOneWidget);
-      expect(find.textContaining('Google'), findsOneWidget); // catatan dev aja
+      expect(find.textContaining('Google'), findsOneWidget); // dev-only note
     });
   });
 

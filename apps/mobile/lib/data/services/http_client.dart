@@ -2,12 +2,12 @@ import 'package:dio/dio.dart';
 
 import '../../domain/models/backup.dart';
 
-/// Kebijakan gutenberg.org: UA tanpa kontak diblok IP (docs/discover.md,
-/// Network and notifications).
+/// Identifies the client because gutenberg.org blocks user agents without contact details
+/// (docs/discover.md, Network and notifications).
 const lumaUserAgent = 'Luma/$appVersion (+mailto:work.adamm@gmail.com)';
 
-/// Dio buat sumber luar: UA kontak, connect 15 s, [receiveTimeout] per
-/// pemakai (search 15 s, download 60 s, dump katalog 120 s).
+/// Creates a client for external sources with contact details and a 15-second connect timeout.
+/// [receiveTimeout] varies by caller: search 15 s, download 60 s, catalog dump 120 s.
 Dio lumaDio({Duration receiveTimeout = const Duration(seconds: 15)}) => Dio(
   BaseOptions(
     connectTimeout: const Duration(seconds: 15),
@@ -16,8 +16,8 @@ Dio lumaDio({Duration receiveTimeout = const Duration(seconds: 15)}) => Dio(
   ),
 );
 
-/// Jalanin [request], ulang sampe [attempts]× cuma buat 429/503 (jeda
-/// [delay] × percobaan). Error lain langsung lempar.
+/// Runs [request], retrying only 429 and 503 up to [attempts] times.
+/// The delay is [delay] multiplied by the attempt number; other errors propagate.
 Future<T> retryOnBusy<T>(
   Future<T> Function() request, {
   int attempts = 3,

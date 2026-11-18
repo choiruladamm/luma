@@ -1,22 +1,21 @@
 import 'models/book.dart';
 
-/// Aturan grouping (docs/grouping.md). Nilai awal, di-tuning pas dogfooding.
-/// Ubah = naikin `parserVersion`: indeks grup lama jadi gak valid.
+/// Defines grouping rules (docs/grouping.md).
+/// Changes require a `parserVersion` bump because existing group indices become invalid.
 abstract final class GroupRules {
-  /// Paragraf ≥ ini berdiri sendiri sebagai satu grup.
+  /// Paragraphs at least this long form their own group.
   static const longThreshold = 300;
 
-  /// Grup ditutup setelah nyampe ukuran ini.
+  /// Groups close after reaching this size.
   static const targetChars = 450;
 
-  /// Grup gak boleh lewat ini.
+  /// The maximum group size.
   static const maxChars = 800;
   static const maxParagraphs = 6;
 }
 
-/// `groupIndex` per paragraf di satu chapter, mulai dari 0. Paragraf pendek
-/// yang berurutan digabung; heading & scene break dapet `null` dan selalu
-/// mutus grup.
+/// Assigns zero-based group indices to consecutive short paragraphs.
+/// Headings and scene breaks receive `null` and always break groups.
 List<int?> assignGroups(List<RawParagraph> paras) {
   final result = List<int?>.filled(paras.length, null);
   final current = <int>[];

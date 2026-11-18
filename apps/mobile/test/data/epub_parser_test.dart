@@ -25,7 +25,7 @@ void main() {
     expect(book.chapters.length, 63);
     expect(book.chapters[1].title, 'Chapter I.');
     expect(book.chapters[61].title, contains('CHAPTER LXI'));
-    // Gutenberg's licence is in the TOC too; dropping non-content is #9's job.
+    // Gutenberg's licence is in the TOC too; dropping non-content is handled elsewhere.
     expect(book.chapters.last.title, contains('PROJECT GUTENBERG'));
 
     // Chapters tile the text: each one ends where the next one starts.
@@ -184,8 +184,8 @@ void main() {
     expect(titles.indexOf('LI'), titles.indexOf('L') + 1);
   });
 
-  // List.sort isn't stable past 32 items: many chapters in one file used to
-  // come out shuffled (The Enchiridion, 63 entries in one file).
+  // Regression guard: List.sort is not stable past 32 items, so many chapters in one file
+  // came out shuffled (The Enchiridion, 63 entries in one file).
   test('many anchors in one file keep their TOC order', () {
     final ids = List.generate(40, (i) => 'c$i');
     final book = parseEpub(

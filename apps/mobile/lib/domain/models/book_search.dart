@@ -1,4 +1,4 @@
-/// Satu paragraf yang cocok.
+/// One matching paragraph.
 class BookSearchHit {
   const BookSearchHit({
     required this.chapterId,
@@ -12,18 +12,18 @@ class BookSearchHit {
   final int chapterId;
   final int paragraphIndex;
 
-  /// Null buat heading.
+  /// Null for headings.
   final int? groupIndex;
 
-  /// Cuplikan (±60 huruf kiri-kanan, "…" di sisi yang kepotong).
+  /// Snippet (±60 letters on each side, "…" on the truncated side).
   final String snippet;
 
-  /// Posisi kata cocok di [snippet]; `0..0` kalau gak ketemu di teks.
+  /// Position of the matched word in [snippet]; `0..0` when not found in the text.
   final int matchStart;
   final int matchEnd;
 }
 
-/// Hasil satu bab, urut paragraf.
+/// Result for one chapter, in paragraph order.
 class BookSearchChapter {
   const BookSearchChapter({
     required this.chapterId,
@@ -38,7 +38,7 @@ class BookSearchChapter {
   final List<BookSearchHit> hits;
 }
 
-/// Hasil cari satu buku: bab urut buku, maksimal 500 paragraf.
+/// Result of searching one book: chapters in book order, at most 500 paragraphs.
 class BookSearchResult {
   const BookSearchResult({
     required this.chapters,
@@ -52,18 +52,18 @@ class BookSearchResult {
     chapterCount: 0,
   );
 
-  /// Cuma yang ditampilin (≤ 500 paragraf).
+  /// Only what is shown (≤ 500 paragraphs).
   final List<BookSearchChapter> chapters;
 
-  /// Seluruh paragraf yang cocok, bisa > 500.
+  /// All matching paragraphs, may exceed 500.
   final int total;
 
-  /// Jumlah bab yang punya hasil.
+  /// Number of chapters with results.
   final int chapterCount;
 
   int get shown => chapters.fold(0, (n, c) => n + c.hits.length);
 
-  /// Ada yang gak ditampilin ("Kebanyakan, coba kata yang lebih spesifik").
+  /// Some results aren't shown ("Kebanyakan, coba kata yang lebih spesifik").
   bool get truncated => total > shown;
 
   bool get isEmpty => total == 0;
@@ -74,8 +74,8 @@ extension BookSearchResultLabel on BookSearchResult {
   String get countLabel => '$total hasil di $chapterCount bab';
 }
 
-/// Hasil yang di-tap di sheet Cari kata: reader lompat ke [hit], dan nyimpen
-/// [result] buat navigator ↑ ↓.
+/// The result tapped in the Cari kata sheet: the reader jumps to [hit] and keeps
+/// [result] for the ↑ ↓ navigator.
 typedef BookSearchPick = ({
   String query,
   BookSearchResult result,

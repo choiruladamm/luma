@@ -157,7 +157,7 @@ void main() {
       );
       final ref = (bookId: book.id, contentRevision: book.contentRevision);
       for (final index in selected) {
-        // "pertanyaan>balasan" = turn lanjutan di sesi yang sama (klarifikasi).
+        // "pertanyaan>balasan" continues the same session for clarification.
         final chain = questions[index].split('>');
         final question = chain.first;
         final answerAt = int.tryParse(env['BOOK_CHAT_AGENT_ANSWER_AT'] ?? '');

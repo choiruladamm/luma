@@ -5,8 +5,8 @@ import { inviteCodes } from "../db/schema";
 export const INVITE_HEADER = "x-invite-code";
 
 /**
- * Format kode `LUMA-XXXX`. Huruf besar/kecil gak ngaruh dan strip boleh
- * dilewatin (board Akun 06): `luma7q2k` → `LUMA-7Q2K`.
+ * Normalizes to the `LUMA-XXXX` format. Case and dashes don't matter
+ * (board Akun 06): `luma7q2k` → `LUMA-7Q2K`.
  */
 export function normalizeInviteCode(code: string) {
   const compact = code.toUpperCase().replace(/[^A-Z0-9]/g, "");
@@ -15,14 +15,14 @@ export function normalizeInviteCode(code: string) {
     : compact;
 }
 
-/** 32 huruf/angka tanpa yang mirip (0/O, 1/I): 5 bit per karakter, tanpa bias modulo. */
+/** 32 letters/digits without lookalikes (0/O, 1/I): 5 bits per character, no modulo bias. */
 const INVITE_ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
 
 /**
- * Kode undangan baru `LUMA-XXXXX-XXXXX`: 10 karakter acak = 32^10 ≈ 10^15
- * kemungkinan, gak bisa ditebak lewat brute force walau rate limit per IP
- * diakalin (format lama `LUMA-XXXX` cuma ±10^6). Disimpan dalam bentuk
- * [normalizeInviteCode].
+ * Generates a new invite code `LUMA-XXXXX-XXXXX`: 10 random characters = 32^10 ≈ 10^15
+ * possibilities, which can't be brute-forced even if the per-IP rate limit is
+ * bypassed (the old `LUMA-XXXX` format had only ≈10^6). Stored in the
+ * [normalizeInviteCode] form.
  */
 export function newInviteCode() {
   const chars = [...crypto.getRandomValues(new Uint8Array(10))].map((b) => INVITE_ALPHABET[b & 31]).join("");
@@ -32,9 +32,9 @@ export function newInviteCode() {
 export type InviteResult = "ok" | "invalid" | "used";
 
 /**
- * Pakai kode undangan secara atomik: satu UPDATE yang cuma berhasil kalau kode
- * ada dan belum dipakai, jadi dua sign-up bersamaan gak bisa makai kode yang sama.
- * Gagal → satu query lagi buat bedain "salah" vs "udah dipakai".
+ * Redeems an invite code atomically: one UPDATE that succeeds only if the code exists
+ * and is unused, so two concurrent sign-ups can't use the same code.
+ * On failure, one more query tells "wrong code" apart from "already used".
  */
 export async function consumeInviteCode(db: Db, code: string, now = new Date()): Promise<InviteResult> {
   const normalized = normalizeInviteCode(code);

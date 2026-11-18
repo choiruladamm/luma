@@ -41,11 +41,11 @@
     "test/support/book_chat_retrieval.dart": "926dd868bd6925e88b7bd48cc021aa01e3b4e1b226cb82595c6d41b9ecbe3935",
     "test/support/book_chat_spike.dart": "d80198306a284b4db2f493997b217277fe566d927689f87858e5f03f320951eb",
     "test/data/book_chat_heldout_live_test.dart": "7697fd67688fa7b2fb0545746088c594fb28ecc069c6e8f80dd37f89f50dc11b",
-    "lib/data/services/openrouter_service.dart": "4cb3d8f113519f19ae22571775d781743452e9fcb80d65aa81fde5819406e1e8",
-    "lib/data/services/epub_parser.dart": "77678a03d5475181896cc0e6f61a6244890b482648c438d6a698b668d3b3404d",
-    "lib/data/services/chapter_extractor.dart": "afb54ec2d08990f228f1d7cba4c9a677ac36b006cccf7dd2f384a9ab93d67e07",
-    "lib/domain/grouping.dart": "f05b72b647b4030bbc122d29291ad3f70fc716ad9cb4509a4886c2ddbea13c7e",
-    "lib/domain/luma_markdown.dart": "1cf2139001ce3940b50178626b16bc579a78c7fb2b9c6b633a45f2cbbae6b2ed",
+    "lib/data/services/openrouter_service.dart": "70b74a9ca1958c22b86d923b22e50e611eba0724d71e4c57b76e71e8ab736c98",
+    "lib/data/services/epub_parser.dart": "ef3b2435d665025757a582ea4c1de764490f85894fa6792c5abe7a21aa53741f",
+    "lib/data/services/chapter_extractor.dart": "981d88d087f26f987eb86fd1b64451f72403211b27c57705f262fb07979effb5",
+    "lib/domain/grouping.dart": "1bacd8554c282b8f92da4c1445e2741abfa491237fddb9902fb82980274b75b6",
+    "lib/domain/luma_markdown.dart": "b4c1e58ee96d704bc790407ae19e3fef6ba9f0449cfd30f9e9fe19c20b2758d0",
     "pubspec.lock": "d0d7f95ff1eb8c679e7e9deafe05967ba99325e6e899f5d4bfc83489d36a8ae3"
   },
   "replayOf": {

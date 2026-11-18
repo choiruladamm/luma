@@ -1,4 +1,4 @@
-// Aturan merge sync per kind (docs/sync-protocol.md, Merge rules). Murni, tanpa I/O.
+// Sync merge rules per kind (docs/sync-protocol.md, Merge rules). Pure, no I/O.
 
 export const KINDS = [
   "book",
@@ -14,7 +14,7 @@ export type Kind = (typeof KINDS)[number];
 
 export type Data = Record<string, unknown>;
 
-/** Satu record sync. `updatedAt` = ms epoch (jam device saat perubahan). */
+/** One sync record. `updatedAt` = epoch ms (the device clock at the time of the change). */
 export type SyncRecord = {
   kind: Kind;
   key: string;
@@ -26,7 +26,7 @@ export type SyncRecord = {
 
 const time = (v: unknown) => (typeof v === "string" ? Date.parse(v) : typeof v === "number" ? v : NaN);
 
-/** Nilai waktu paling awal yang terisi (ISO string), null kalau dua-duanya kosong. */
+/** The earliest non-empty time value (ISO string), null if both are empty. */
 const earliest = (a: unknown, b: unknown) => {
   if (a == null) return b ?? null;
   if (b == null) return a;
@@ -35,7 +35,7 @@ const earliest = (a: unknown, b: unknown) => {
 
 const num = (v: unknown) => (typeof v === "number" ? v : 0);
 
-/** `promptVersion` lebih tinggi menang, lalu `createdAt` terbaru. */
+/** Higher `promptVersion` wins, then newest `createdAt`. */
 function aiWins(incoming: SyncRecord, existing: SyncRecord) {
   if (incoming.deleted || existing.deleted) return incoming.updatedAt > existing.updatedAt;
   const pv = num(incoming.data?.promptVersion) - num(existing.data?.promptVersion);
@@ -43,7 +43,7 @@ function aiWins(incoming: SyncRecord, existing: SyncRecord) {
   return time(incoming.data?.createdAt) > time(existing.data?.createdAt);
 }
 
-/** Buku: terbaru menang, tapi `firstOpenedAt`/`finishedAt` paling awal, `readingSeconds` terbesar. */
+/** Book: newest wins, but earliest `firstOpenedAt`/`finishedAt`, largest `readingSeconds`. */
 function mergeBook(incoming: SyncRecord, existing: SyncRecord): SyncRecord {
   const [winner, loser] = incoming.updatedAt > existing.updatedAt ? [incoming, existing] : [existing, incoming];
   if (winner.deleted || loser.deleted || !winner.data || !loser.data) return winner;
@@ -63,7 +63,7 @@ function winner(incoming: SyncRecord, existing: SyncRecord): SyncRecord {
     case "book":
       return mergeBook(incoming, existing);
     case "reading_session":
-      return existing; // append-only: sesi yang sama gak berubah
+      return existing; // append-only: the same session never changes
     case "ai_result":
     case "ai_breakdown":
       return aiWins(incoming, existing) ? incoming : existing;
@@ -79,8 +79,8 @@ const same = (a: SyncRecord, b: SyncRecord) =>
   JSON.stringify(a.data) === JSON.stringify(b.data);
 
 /**
- * Hasil merge record masuk terhadap yang udah ada di D1. `null` = gak ada yang
- * ditulis (sama persis, kalah, atau app pengirim lebih lama dari record di server).
+ * Result of merging an incoming record against the one already in D1. `null` = nothing
+ * is written (identical, lost, or the sending app is older than the record on the server).
  */
 export function merge(existing: SyncRecord | undefined, incoming: SyncRecord): SyncRecord | null {
   if (!existing) return incoming;

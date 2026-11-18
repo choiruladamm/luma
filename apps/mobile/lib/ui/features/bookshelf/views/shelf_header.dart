@@ -7,16 +7,16 @@ import '../../../core/theme/stabilo_type.dart';
 import '../../../core/widgets/buttons.dart';
 import '../../../core/widgets/luma_logo.dart';
 
-/// Judul gak pernah lebih kecil dari ini gara-gara teks gede (board Layout
-/// rak · header rak gak boleh sesak).
+/// The title never gets smaller than this because of large text (board Layout
+/// rak · the shelf header must not feel cramped).
 const _titleFloor = 22.0;
 
-/// Jarak minimum antara judul dan tombol.
+/// Minimum gap between the title and the buttons.
 const _titleGap = 16.0;
 
-/// Muat-muatin judul di [room] (lebar di kiri tombol, udah dikurangin jarak
-/// minimum): judul nyusut dulu sampe [floor], kalau masih mepet simbol ilang
-/// duluan, tombol gak pernah. [titleWidth] ngukur judul di ukuran tertentu.
+/// Fits the title in [room] (width left of the buttons, minus the minimum gap):
+/// the title shrinks first down to [floor]; if still tight the symbol drops
+/// first, never the buttons. [titleWidth] measures the title at a given size.
 ({double size, bool logo}) fitTitle({
   required double room,
   required double size,
@@ -32,9 +32,9 @@ const _titleGap = 16.0;
   return (size: low, logo: false);
 }
 
-/// Header rak. [collapse] 0 = gede (bar 60, judul 28, tombol 44), 1 = nyusut
-/// (bar 44, judul 17, simbol 22, tombol 40, area tap tetep 44). Nyusutnya
-/// ngikutin scroll rak ([Layout.barShrink]).
+/// Shelf header. [collapse] 0 = large (bar 60, title 28, button 44), 1 = shrunk
+/// (bar 44, title 17, symbol 22, button 40, tap area stays 44). Shrinking
+/// follows the shelf scroll ([Layout.barShrink]).
 class ShelfHeader extends StatelessWidget {
   const ShelfHeader({super.key, this.collapse = 0, required this.onImport});
 
@@ -115,7 +115,7 @@ class ShelfHeader extends StatelessWidget {
   }
 }
 
-/// Area tap 44 di sekitar tombol yang digambar lebih kecil.
+/// 44 tap area around a button drawn smaller.
 class _Tap extends StatelessWidget {
   const _Tap({required this.onTap, required this.child});
 

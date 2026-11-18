@@ -1,8 +1,8 @@
 import 'dart:convert';
 
-/// Langkah AI: jejak apa yang dilakukan aplikasi selama satu attempt
-/// Ngobrol (rencana, cache, baca, cari, berhenti, perbaikan, jawaban).
-/// Dicatat tanpa request tambahan, disimpan sekali di `chat_turns.steps`.
+/// Langkah AI: the trail of what the app did during one Ngobrol attempt (plan,
+/// cache, read, search, stop, repair, answer). Recorded without extra requests,
+/// stored once in `chat_turns.steps`.
 enum ChatStepKind {
   plan,
   cache,
@@ -28,10 +28,10 @@ class ChatStep {
     this.status = ChatStepStatus.done,
   });
 
-  /// Teks baris di daftar ("Baca Book I › III: Of Providence").
+  /// Row text in the list ("Baca Book I › III: Of Providence").
   final String label;
 
-  /// Keterangan muted di belakang label (" · 4 catatan").
+  /// Muted note after the label (" · 4 catatan").
   final String? detail;
   final ChatStepKind kind;
   final ChatStepStatus status;
@@ -111,7 +111,7 @@ class ChatStep {
       'ChatStep(${kind.name}, $label, $detail, ${status.name})';
 }
 
-/// Alasan berhenti dari checkpoint → label langkah.
+/// Checkpoint stop reason → step label.
 String chatStopLabel(String reason) => switch (reason) {
   'user' => 'Jawab sekarang',
   'deadline' => 'waktu habis',
@@ -120,10 +120,10 @@ String chatStopLabel(String reason) => switch (reason) {
   _ => reason,
 };
 
-/// Tambah [step] ke [steps] mengikuti aturan tampilan: langkah `running`
-/// selalu paling belakang dan diganti oleh running berikutnya; langkah selesai
-/// dengan kind+label yang sama menuntaskan running itu, langkah selesai lain
-/// masuk di depannya.
+/// Adds [step] to [steps] following the display rules: a `running` step is always
+/// last and is replaced by the next running one; a finished step with the same
+/// kind+label completes that running step, any other finished step goes in front
+/// of it.
 List<ChatStep> chatAppendStep(List<ChatStep> steps, ChatStep step) {
   final trailing = steps.isNotEmpty && steps.last.status.isRunning;
   final done = trailing ? steps.sublist(0, steps.length - 1) : steps;
@@ -135,7 +135,7 @@ List<ChatStep> chatAppendStep(List<ChatStep> steps, ChatStep step) {
   return [...done, step, if (trailing && !resolves) steps.last];
 }
 
-/// Attempt berakhir tanpa jawaban: langkah yang masih jalan dicatat dilewati.
+/// The attempt ended without an answer: steps still running are recorded as skipped.
 List<ChatStep> chatSettleSteps(List<ChatStep> steps) =>
     steps.isNotEmpty && steps.last.status.isRunning
     ? [
@@ -151,8 +151,8 @@ extension ChatStepStatusX on ChatStepStatus {
 String encodeChatSteps(List<ChatStep> steps) =>
     jsonEncode([for (final s in steps) s.toJson()]);
 
-/// Decode ketat: kind/status harus dikenal, label non-kosong, batas jumlah dan
-/// panjang. Melempar [FormatException] untuk nilai rusak.
+/// Strict decode: kind/status must be known, labels non-empty, count and length
+/// bounded. Throws [FormatException] for corrupt values.
 List<ChatStep> decodeChatSteps(String raw) {
   final value = jsonDecode(raw);
   if (value is! List || value.length > chatStepsMax) {

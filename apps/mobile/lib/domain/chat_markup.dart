@@ -1,6 +1,6 @@
 import 'models/book_chat.dart';
 
-/// Potongan teks jawaban dengan gaya inline-nya.
+/// A piece of answer text with its inline style.
 class ChatSpan {
   const ChatSpan(this.text, {this.bold = false, this.italic = false});
   final String text;
@@ -20,10 +20,10 @@ class ChatSpan {
   String toString() => 'ChatSpan(${bold ? '**' : ''}${italic ? '*' : ''}$text)';
 }
 
-/// Markup inline jawaban Ngobrolin buku: cuma `**tebal**` dan `*miring*`.
-/// Toleran buat teks yang lagi di-stream: penanda yang belum ketutup gak pernah
-/// tampil sebagai tanda bintang, teks sesudahnya langsung bergaya. Markdown lain
-/// (heading, link, kode, tanda daftar di awal) dibuang jadi teks polos.
+/// Inline markup of a Ngobrolin buku answer: only `**bold**` and `*italic*`.
+/// Tolerant of streamed text: an unclosed marker never shows as an asterisk, and
+/// the text after it is styled right away. Other markdown (headings, links, code,
+/// leading list markers) is stripped to plain text.
 List<ChatSpan> parseChatMarkup(String raw) {
   final text = _plain(raw);
   final spans = <ChatSpan>[];
@@ -60,8 +60,8 @@ List<ChatSpan> parseChatMarkup(String raw) {
       run++;
     }
     final end = i + run;
-    // Pembuka: sesudahnya bukan spasi (atau ujung teks yang lagi ditulis).
-    // Penutup: sebelumnya bukan spasi.
+    // Opener: not followed by a space (or the end of the text being written).
+    // Closer: not preceded by a space.
     final canOpen = !space(end);
     final canClose = i > 0 && !space(i - 1);
     final toggleBold = run >= 2;
@@ -76,14 +76,14 @@ List<ChatSpan> parseChatMarkup(String raw) {
     flush();
     if (toggleBold) bold = !bold;
     if (toggleItalic) italic = !italic;
-    // Sisa bintang di luar pola 1/2/3 (mis. 4+) dibuang.
+    // Leftover asterisks beyond the 1/2/3 patterns (e.g. 4+) are dropped.
     i = end;
   }
   flush();
   return spans;
 }
 
-/// Teks tanpa penanda, buat hitung huruf dan semantik.
+/// Text without markers, for counting letters and semantics.
 String chatPlainText(String raw) =>
     parseChatMarkup(raw).map((s) => s.text).join();
 
@@ -97,19 +97,19 @@ String _plain(String raw) {
       .replaceAll(_fence, '')
       .replaceAllMapped(_link, (m) => m[1]!)
       .replaceAll(_heading, '');
-  // Tanda daftar di awal teks: aplikasi yang nomorin, bukan model.
+  // Leading list marker: the app numbers items, not the model.
   return text.replaceFirst(_marker, '');
 }
 
-/// Layout yang dipakai buat tampil, sesudah dibersihin dari salah label model.
-/// Data jawaban yang tersimpan gak diubah.
-/// - Kalimat pengantar daftar yang berakhir ":" bukan butir.
-/// - Butir pertama yang gak diawali **tebal** sementara semua butir sesudahnya
-///   iya (aturan prompt) adalah pengantar, bukan butir.
-/// - Daftar cuma satu butir bukan daftar.
-/// - [streaming]: blok terakhir yang pertama di daftarnya belum tentu butir
-///   (bisa pengantar yang lagi ditulis), jadi tampil paragraf dulu.
-/// Semuanya balik jadi paragraf.
+/// Layout used for display, after cleaning up the model's wrong labels. The
+/// stored answer data is unchanged.
+/// - An intro sentence before a list that ends with ":" is not an item.
+/// - If the first item doesn't start with **bold** while every later item does
+///   (a prompt rule), it is an intro, not an item.
+/// - A list with a single item is not a list.
+/// - [streaming]: the last block whose first line is a list item may not be an
+///   item yet (it could be an intro still being written), so show a paragraph first.
+/// All of these fall back to a paragraph.
 List<ChatAnswerLayout> chatDisplayLayouts(
   List<ChatAnswerBlock> blocks, {
   bool streaming = false,

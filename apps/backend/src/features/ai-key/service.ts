@@ -5,7 +5,7 @@ import { csv, DAY_MS } from "../../lib/encoding";
 import { ApiError } from "../../lib/errors";
 import { findKeyHash, findUserKey, saveKey, setKeyLimit } from "./repo";
 
-/** Key diganti sehari sebelum kedaluwarsa, supaya device gak pegang key yang mati di tengah baca. */
+/** The key is replaced a day before it expires, so a device never holds a dead key mid-read. */
 export const ROTATE_BEFORE_MS = DAY_MS;
 
 export type AiConfig = {
@@ -17,7 +17,7 @@ export type AiConfig = {
   embeddingModels: string[];
 };
 
-/** Angka dan model dari `vars` (docs/backend.md, AI subsidy). Model harus sama dengan guardrail OpenRouter. */
+/** Numbers and models from `vars` (docs/backend.md, AI subsidy). Models must match the OpenRouter guardrail. */
 export const aiConfig = (env: Env): AiConfig => ({
   dailyLimitUsd: Number(env.AI_DAILY_LIMIT_USD),
   ttlDays: Number(env.AI_KEY_TTL_DAYS),
@@ -27,7 +27,7 @@ export const aiConfig = (env: Env): AiConfig => ({
   embeddingModels: csv(env.AI_EMBEDDING_MODELS),
 });
 
-/** Key + status banned user; banned → 403 `AI_BANNED` (meter "Dicabut", board Kuota AI 01). */
+/** The user's key + banned status; banned → 403 `AI_BANNED` (meter "Dicabut", board Kuota AI 01). */
 async function allowedKey(db: Db, userId: string) {
   const found = await findUserKey(db, userId);
   if (found.banned) throw new ApiError(403, "AI_BANNED", "AI access is disabled for this account");
@@ -37,12 +37,12 @@ async function allowedKey(db: Db, userId: string) {
 export type IssuedKey = { key: string; expiresAt: string; dailyLimitUsd: number };
 
 /**
- * Key subsidi user: dipakai ulang selama masih berlaku (dua device dapat key yang
- * sama, kuota gak dobel), dibuat lazy, diganti kalau hampir kedaluwarsa, gak
- * kebaca, atau diminta `rotate` dan key-nya memang udah gak ada di OpenRouter.
- * `rotate` buat key yang masih ada diabaikan: limit harian nempel di key, jadi
- * rotasi bebas = kuota harian baru tiap kali minta.
- * Subrequest: 0 (pakai ulang), 1 (bikin / ubah limit / cek `rotate`), 2–3 (rotasi).
+ * The user's subsidized key: reused while still valid (two devices get the same key,
+ * so quota isn't doubled), created lazily, replaced when close to expiry, unreadable,
+ * or `rotate` is requested and the key is already gone from OpenRouter.
+ * `rotate` for a key that still exists is ignored: the daily limit is attached to the
+ * key, so free rotation would mean a fresh daily quota on every request.
+ * Subrequests: 0 (reuse), 1 (create / change limit / check `rotate`), 2–3 (rotation).
  */
 export async function issueKey(
   db: Db,
@@ -66,8 +66,8 @@ export async function issueKey(
 
   if (row) await admin.deleteKey(row.keyHash);
   const expiresAt = new Date(now.getTime() + cfg.ttlDays * DAY_MS);
-  // shortcut: dua device minta bersamaan bisa bikin dua key; yang kalah jadi yatim
-  // sampai kedaluwarsa (maks limit harian). Kunci per user kalau ini kejadian.
+  // ponytail: two devices asking at once can create two keys; the loser is orphaned
+  // until it expires (at most the daily limit). Lock per user if this ever happens.
   const created = await admin.createKey({
     name: `luma-${userId}`,
     limitUsd: cfg.dailyLimitUsd,
@@ -92,11 +92,11 @@ export type AiUsage = {
   resetsAt: string;
 };
 
-/** Limit harian OpenRouter reset tengah malam UTC. */
+/** The OpenRouter daily limit resets at midnight UTC. */
 export const nextUtcMidnight = (now: Date) =>
   new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));
 
-/** Sisa kuota hari ini. Belum punya key → kuota penuh, tanpa subrequest. */
+/** Quota left today. No key yet → full quota, no subrequest. */
 export async function usage(
   db: Db,
   admin: OpenRouterAdmin,
@@ -119,7 +119,7 @@ export async function usage(
   };
 }
 
-/** Hapus key OpenRouter user (hapus akun). Baris D1 ikut terhapus lewat cascade users. */
+/** Deletes the user's OpenRouter key (account deletion). The D1 row goes with the users cascade. */
 export async function revokeKey(db: Db, admin: OpenRouterAdmin, userId: string) {
   const keyHash = await findKeyHash(db, userId);
   if (keyHash) await admin.deleteKey(keyHash);

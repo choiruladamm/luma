@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../theme/stabilo_tokens.dart';
 
-/// Profil fade satu tepi, diukur dari tepi area scroll ke dalam:
-/// [clear] di opacity [clearAlpha] → [hold] di opacity [floor] → [fade] naik
-/// ke penuh. Standar cuma [fade]; layar baca pake [clear] (status bar) dan
-/// [hold] (teks di belakang kapsul).
+/// Fade profile of one edge, measured from the scroll area's edge inward:
+/// [clear] at opacity [clearAlpha] → [hold] at opacity [floor] → [fade] rising
+/// to full. The default is [fade] only; the reading screen uses [clear] (status
+/// bar) and [hold] (text behind the capsule).
 @immutable
 class EdgeFadeSide {
   const EdgeFadeSide(
@@ -16,11 +16,11 @@ class EdgeFadeSide {
     this.floor = 0,
   });
 
-  /// Gak ada fade: tepi bawah layar/sheet yang gak ketemu tombol (isinya
-  /// edge-to-edge sampe tepi fisik).
+  /// No fade: the bottom edge of a screen/sheet that meets no button (content
+  /// runs edge-to-edge to the physical edge).
   static const none = EdgeFadeSide(0);
 
-  /// Di bawah judul/header yang nempel & di atas tombol aksi (standar 20pt).
+  /// Below a pinned title/header & above an action button (default 20pt).
   static const standard = EdgeFadeSide(20);
 
   final double fade;
@@ -28,7 +28,7 @@ class EdgeFadeSide {
   final double clearAlpha;
   final double hold;
 
-  /// Opacity minimum isi di [hold] dan awal [fade].
+  /// Minimum content opacity at [hold] and the start of [fade].
   final double floor;
 
   double get extent => clear + hold + fade;
@@ -46,12 +46,13 @@ class EdgeFadeSide {
   int get hashCode => Object.hash(fade, clear, clearAlpha, hold, floor);
 }
 
-/// Tepi area scroll mudar halus (board EdgeFade · tepi area scroll). Mask,
-/// bukan gradien warna latar: isinya yang transparan, aman di terang & gelap.
-/// Fade atas cuma kalau udah di-scroll, fade bawah cuma kalau masih ada isi
-/// di bawah; muncul/ilang 150ms. Tepi bawah layar/sheet gak pernah dipudarin
-/// (`bottom: EdgeFadeSide.none`), kecuali ketemu tombol aksi atau kapsul. Kondisinya dibaca dari notifikasi scroll
-/// [child], jadi gak butuh ScrollController.
+/// Softly fades the edges of a scroll area (board EdgeFade · tepi area scroll).
+/// A mask, not a background-color gradient: the content itself turns
+/// transparent, safe in light & dark. The top fades only once scrolled, the
+/// bottom only while content remains below; 150ms in/out. The bottom edge of a
+/// screen/sheet is never faded (`bottom: EdgeFadeSide.none`) unless it meets an
+/// action button or the capsule. The condition is read from [child]'s scroll
+/// notifications, so no ScrollController is needed.
 class EdgeFadeScroll extends StatefulWidget {
   const EdgeFadeScroll({
     super.key,
@@ -61,12 +62,12 @@ class EdgeFadeScroll extends StatefulWidget {
     required this.child,
   });
 
-  /// Horizontal: [top] = tepi kiri, [bottom] = tepi kanan.
+  /// Horizontal: [top] = left edge, [bottom] = right edge.
   final EdgeFadeSide top;
   final EdgeFadeSide bottom;
   final Axis axis;
 
-  /// Scroll view (atau yang ngebungkus satu scroll view).
+  /// Scroll view (or something wrapping one).
   final Widget child;
 
   @override
@@ -77,12 +78,12 @@ class EdgeFadeScrollState extends State<EdgeFadeScroll> {
   bool _topOn = false;
   bool _bottomOn = false;
 
-  /// Lagi ada isi di atas / di bawah yang kepotong.
+  /// Content is currently cut off above / below.
   @visibleForTesting
   ({bool top, bool bottom}) get debugEdges => (top: _topOn, bottom: _bottomOn);
 
   bool _update(ScrollMetrics m) {
-    // Dikit toleransi: posisi mentok kadang meleset sepersekian piksel.
+    // Small tolerance: the end position sometimes misses by a fraction of a pixel.
     final top = m.pixels > m.minScrollExtent + 0.5;
     final bottom = m.pixels < m.maxScrollExtent - 0.5;
     if (top != _topOn || bottom != _bottomOn) {
@@ -136,9 +137,9 @@ class EdgeFadeScrollState extends State<EdgeFadeScroll> {
   }
 }
 
-/// Titik gradien mask buat area setinggi [height]. [topOn]/[bottomOn] 0..1
-/// (lagi animasi muncul/ilang). Area lebih pendek dari total fade → semua
-/// jarak dikecilin proporsional, stop tetep urut.
+/// Mask gradient stops for an area [height] tall. [topOn]/[bottomOn] 0..1
+/// (while animating in/out). An area shorter than the total fade → all
+/// distances shrink proportionally, stops stay ordered.
 ({List<double> stops, List<double> alphas}) edgeFadeStops(
   double height, {
   required EdgeFadeSide top,
@@ -150,7 +151,7 @@ class EdgeFadeScrollState extends State<EdgeFadeScroll> {
   final total = top.extent + bottom.extent;
   final k = total > height ? height / total : 1.0;
 
-  // (jarak dari tepi, opacity) dari tepi ke dalam.
+  // (distance from edge, opacity) from the edge inward.
   List<(double, double)> profile(EdgeFadeSide s, double on) {
     if (s.extent <= 0) return const [(0, 1)];
     double a(double v) => 1 - on * (1 - v);

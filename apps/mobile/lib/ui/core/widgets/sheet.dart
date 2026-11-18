@@ -7,34 +7,35 @@ import '../theme/stabilo_type.dart';
 import 'buttons.dart';
 import 'edge_fade.dart';
 
-/// Bottom sheet Stabilo. Tinggi ngikutin isi, maks [maxHeight] × layar.
-/// Isinya biasanya [SheetFrame].
+/// Stabilo bottom sheet. Height follows the content, max [maxHeight] × screen.
+/// Its content is usually a [SheetFrame].
 Future<T?> showAppSheet<T>(
   BuildContext context, {
   required WidgetBuilder builder,
   double maxHeight = 0.7,
 
-  /// false = cuma bisa ditutup lewat tombol di sheet (mis. proses import).
+  /// false = can only be closed with a button in the sheet (e.g. the import process).
   bool dismissible = true,
 
-  /// Transparan kalau layar di belakang gambar scrim sendiri (halaman baca:
-  /// kapsul tetep keliatan di atas scrim).
+  /// Transparent when the screen behind paints its own scrim (reading page: the
+  /// capsule stays visible above the scrim).
   Color? barrierColor,
 
-  /// Default ngikutin [dismissible]. false = sheet-nya ngatur drag sendiri
-  /// (mis. DraggableScrollableSheet).
+  /// Defaults to [dismissible]. false = the sheet handles dragging itself (e.g.
+  /// DraggableScrollableSheet).
   bool? enableDrag,
 
-  /// Null = warna sheet dari tema. Transparan kalau isinya gambar permukaan
-  /// sendiri.
+  /// Null = sheet color from the theme. Transparent when the content paints its
+  /// own surface.
   Color? backgroundColor,
 }) {
-  // ponytail: "Kurangi gerakan" cuma motong durasi, belum ganti slide → fade
-  // kayak board. Ganti ke route fade sendiri kalau slide-nya masih ganggu.
+  // ponytail: Reduce Motion only shortens the duration; it doesn't yet swap
+  // slide → fade as on the board. Switch to a custom fade route if the slide
+  // still bothers.
   final reduced = MediaQuery.disableAnimationsOf(context);
   return showModalBottomSheet<T>(
     context: context,
-    // Di atas bar tab (AppShell), bukan di dalam branch-nya.
+    // Above the tab bar (AppShell), not inside its branch.
     useRootNavigator: true,
     isScrollControlled: true,
     isDismissible: dismissible,
@@ -59,8 +60,8 @@ Future<T?> showAppSheet<T>(
   );
 }
 
-/// Anatomi sheet (board Komponen 03): grabber, header (judul + tutup), isi
-/// yang scroll, action bar yang nempel di bawah.
+/// Sheet anatomy (board Komponen 03): grabber, header (title + close),
+/// scrolling content, action bar pinned at the bottom.
 class SheetFrame extends StatelessWidget {
   const SheetFrame({
     super.key,
@@ -72,25 +73,25 @@ class SheetFrame extends StatelessWidget {
     this.actions = const [],
   });
 
-  /// Null = tanpa header (mis. state error yang punya header sendiri).
+  /// Null = no header (e.g. an error state with its own header).
   final String? title;
 
-  /// Di kiri judul, mis. titik "lagi mikir".
+  /// To the left of the title, e.g. the "lagi mikir" dot.
   final Widget? leading;
   final String? closeLabel;
   final bool showClose;
 
-  /// Section isi, jaraknya 16.
+  /// Content sections, spaced 16.
   final List<Widget> children;
 
-  /// Tombol di bawah. Bungkus pake [Expanded] buat yang flex 1.
+  /// Buttons at the bottom. Wrap in [Expanded] for flex 1.
   final List<Widget> actions;
 
   @override
   Widget build(BuildContext context) {
-    // Tanpa tombol: isi jalan sampe tepi bawah sheet tanpa fade, padding
-    // akhirnya = safe area (board EdgeFade, edge-to-edge). Ada tombol: fade
-    // 20pt di atas tombol, tombolnya di atas safe area.
+    // No buttons: content runs to the sheet's bottom edge without fade, final
+    // padding = safe area (board EdgeFade, edge-to-edge). With buttons: 20pt
+    // fade above the buttons, buttons above the safe area.
     final edge = actions.isEmpty;
     return Padding(
       padding: edge
@@ -149,7 +150,7 @@ class SheetFrame extends StatelessWidget {
   }
 }
 
-/// Gagang sheet 40 × 5.
+/// Sheet handle 40 × 5.
 class SheetGrabber extends StatelessWidget {
   const SheetGrabber({super.key});
 

@@ -15,16 +15,16 @@ import '../view_models/login_view_model.dart';
 import 'auth_dialogs.dart';
 import 'auth_toast.dart';
 
-/// Build dev = email + kata sandi; rilis = Google (board Akun 05).
-/// `--dart-define=GOOGLE_LOGIN=true` maksa layar Google di build dev (uji
-/// login Google ke Worker dev tanpa build rilis).
+/// Dev build = email + password; release = Google (board Akun 05).
+/// `--dart-define=GOOGLE_LOGIN=true` forces the Google screen in a dev build
+/// (tests Google login against the dev Worker without a release build).
 const _forceGoogleLogin = bool.fromEnvironment('GOOGLE_LOGIN');
 final devLoginProvider = Provider<bool>(
   (ref) => appFlavor == 'dev' && !_forceGoogleLogin,
 );
 
-/// Layar Masuk (board Akun 01–07). Login wajib: gak ada bottom bar dan gak
-/// bisa dilewatin; sukses → router pindah sendiri ke Rak.
+/// Masuk screen (board Akun 01–07). Login is required: no bottom bar and it
+/// can't be skipped; on success the router moves to Rak by itself.
 class LoginView extends ConsumerWidget {
   const LoginView({super.key});
 
@@ -76,13 +76,13 @@ class LoginView extends ConsumerWidget {
   }
 }
 
-/// Halaman judul: logo, judul, subjudul miring, ornamen stabilo, tiga bab.
+/// Title page: logo, title, italic subtitle, stabilo ornament, three chapters.
 class _TitlePage extends StatelessWidget {
   const _TitlePage({this.faded = false, this.footnote = false});
 
   final bool faded;
 
-  /// Angka ¹ merah di judul (board Akun 03, 04).
+  /// Red ¹ numeral in the title (board Akun 03, 04).
   final bool footnote;
 
   @override
@@ -241,7 +241,7 @@ class _Chapter extends StatelessWidget {
   }
 }
 
-/// Catatan kaki gagal: garis pendek + ¹ + judul berstabilo pink + keterangan.
+/// Failure footnote: short line + ¹ + pink-highlighted title + caption.
 class _Footnote extends StatelessWidget {
   const _Footnote({required this.title, required this.body});
 
@@ -290,7 +290,7 @@ class _Footnote extends StatelessWidget {
   }
 }
 
-/// Catatan tempel pink buat salah kode undangan (board Akun 07).
+/// Pink sticky note for a wrong invite code (board Akun 07).
 class _StickyNote extends StatelessWidget {
   const _StickyNote({
     required this.label,
@@ -357,7 +357,7 @@ class _StickyNote extends StatelessWidget {
   }
 }
 
-/// "Masuk sebagai … · Ganti" di layar kode undangan (board Akun 06).
+/// "Masuk sebagai … · Ganti" on the invite code screen (board Akun 06).
 class _SignedInChip extends StatelessWidget {
   const _SignedInChip({required this.email, required this.onChange});
 
@@ -481,8 +481,8 @@ class _PrivacyNote extends StatelessWidget {
   }
 }
 
-/// Tombol Google: putih bergaris dengan tanda G (aset resmi menyusul saat
-/// OAuth client ID diisi, board Akun copy & aturan).
+/// Google button: white with a border and the G mark (the official asset comes
+/// once the OAuth client ID is filled in, board Akun copy & aturan).
 class _GoogleButton extends StatelessWidget {
   const _GoogleButton({required this.label, required this.onPressed});
 
@@ -627,7 +627,7 @@ class _GoogleBody extends ConsumerWidget {
   }
 }
 
-/// Board Akun 05: build dev, "Isi yang kosong."
+/// Board Akun 05: dev build, "Isi yang kosong."
 class _DevBody extends ConsumerStatefulWidget {
   const _DevBody({required this.state});
 
@@ -667,7 +667,7 @@ class _DevBodyState extends ConsumerState<_DevBody> {
       ),
       LoginError.network => (l.authNetworkTitle, l.authNetworkBody),
       null => (null, null),
-      // Build dev: gak ada Google, jadi jangan sebut akun Google.
+      // Dev build: no Google, so don't mention a Google account.
       _ => (l.authRejectedTitle, l.authEmailRejectedBody),
     };
     final reading = StabiloType.reading.copyWith(
@@ -793,7 +793,7 @@ class _DevBodyState extends ConsumerState<_DevBody> {
   }
 }
 
-/// Isian titik-titik di dalam kalimat (board Akun 05, 06).
+/// Dotted fill-in inside a sentence (board Akun 05, 06).
 class _Blank extends StatelessWidget {
   const _Blank({
     required this.controller,
@@ -822,7 +822,7 @@ class _Blank extends StatelessWidget {
   final bool mono;
   final bool autofocus;
 
-  /// Tebal garis isian (kode undangan 3).
+  /// Line thickness of the fill-in (invite code 3).
   final double line;
 
   @override
@@ -867,7 +867,7 @@ class _Blank extends StatelessWidget {
   }
 }
 
-/// Board Akun 06–07: kode undangan.
+/// Board Akun 06–07: invite code.
 class _InviteBody extends ConsumerStatefulWidget {
   const _InviteBody({required this.state});
 
@@ -942,8 +942,8 @@ class _InviteBodyState extends ConsumerState<_InviteBody> {
                   controller: _code,
                   label: 'LUMA-XXXX',
                   width: double.infinity,
-                  // Board 34, tapi kode asli LUMA-XXXXX-XXXXX (16 huruf) baru
-                  // muat satu baris di 28.
+                  // Board 34, but the real code LUMA-XXXXX-XXXXX (16 characters) only fits
+                  // on one line at 28.
                   fontSize: 28,
                   line: 3,
                   mono: true,
@@ -985,11 +985,11 @@ class _InviteBodyState extends ConsumerState<_InviteBody> {
   }
 }
 
-/// Toast "Udah masuk. Halo, …!" setelah login (board Akun 13).
+/// Toast "Udah masuk. Halo, …!" after login (board Akun 13).
 void showSignedInToast(BuildContext context, String name) => showAuthToast(
   context,
   context.l10n.authToastSignedIn(name.split(' ').first),
   tone: AuthToastTone.success,
-  // Dipanggil dari layar Masuk, tapi munculnya di Rak (di atas bottom bar).
+  // Called from the Masuk screen, but appears on Rak (above the bottom bar).
   overNav: true,
 );

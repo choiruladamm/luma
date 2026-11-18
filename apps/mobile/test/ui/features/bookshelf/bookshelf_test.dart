@@ -141,7 +141,7 @@ void main() {
           readerBookProvider.overrideWith((ref, id) async => null),
           readingProgressRepositoryProvider.overrideWithValue(FakeProgress()),
           downloadQueueProvider.overrideWith(FakeQueue.new),
-          // Ambil di rak kosong ngantri download: sumber palsu, bukan jaringan.
+          // "Ambil" on an empty shelf queues a download: fake source, not the network.
           bookSourcesProvider.overrideWithValue([
             FakeSource()..sourceId = 'gutenberg',
           ]),
@@ -154,7 +154,7 @@ void main() {
     await tester.pump(); // sort + view come from settings, one frame later
   }
 
-  /// Progres download sync, kayak yang diisi `SyncRepository`.
+  /// Sync download progress, as filled in by `SyncRepository`.
   void syncing(WidgetTester tester, SyncDownloads? progress) =>
       ProviderScope.containerOf(tester.element(find.text('Rak buku lo')))
           .read(syncDownloadsProvider.notifier)
@@ -174,7 +174,7 @@ void main() {
         find.text('Buku dari HP lain lagi diunduh. Sambil baca juga bisa.'),
         findsOneWidget,
       );
-      expect(find.text('Lanjut baca yuk →'), findsOneWidget); // gak ketutup
+      expect(find.text('Lanjut baca yuk →'), findsOneWidget); // not covered
       expect(tester.takeException(), isNull);
 
       syncing(tester, null);
@@ -210,7 +210,7 @@ void main() {
       expect(find.byType(BookCard), findsNothing);
       expect(tester.takeException(), isNull);
 
-      // Ambil = masuk antrian download.
+      // "Ambil" = enqueue the download.
       await tester.tap(find.text('Ambil'));
       await tester.pump();
       final container = ProviderScope.containerOf(
@@ -288,7 +288,7 @@ void main() {
     await tester.tap(find.bySemanticsLabel('Atur'));
     await tester.pumpAndSettle();
     expect(find.byType(SettingsHubView), findsOneWidget);
-    // Tab, bukan push: gak ada tombol balik.
+    // A tab, not a push: there is no back button.
     expect(find.bySemanticsLabel('Balik'), findsNothing);
   });
 
@@ -625,7 +625,7 @@ void main() {
         stage: ImportStage.reading,
       );
       await tester.pump();
-      // DB commit: buku baru masuk stream sebelum import dinyatakan beres.
+      // DB commit: the new book reaches the stream before the import is reported done.
       shelf.add([...books, book(99, 'Brand New')]);
       await tester.pump();
       expect(find.text('Brand New'), findsNothing);

@@ -11,9 +11,10 @@ import '../../../core/widgets/buttons.dart';
 import '../../../core/widgets/tag.dart';
 import 'chat_response.dart';
 
-/// Badan jawaban AI: paragraf, butir bernomor / bullet, kutipan buku, kartu
-/// catatan, dan label asal paragraf (Tafsiran / Di luar buku). Font, ukuran,
-/// dan jarak baris ikut Aa lewat [typo].
+/// Renders the AI answer body: paragraphs, numbered and bulleted items, book
+/// quotes, note cards, and paragraph-origin labels (Tafsiran / Di luar buku).
+///
+/// Font, size and line spacing follow Aa through [typo].
 class ChatAnswerBlocks extends StatelessWidget {
   const ChatAnswerBlocks({
     super.key,
@@ -25,18 +26,18 @@ class ChatAnswerBlocks extends StatelessWidget {
     this.provisional = false,
   });
 
-  /// Catatan sementara: teks polos ink2 tanpa kartu, bukan jawaban.
+  /// Whether these are interim notes: plain ink2 text without a card, not an answer.
   final bool provisional;
 
-  /// Blok yang lagi keliatan; yang teksnya kosong dilewati.
+  /// The visible blocks; blocks with empty text are skipped.
   final List<ChatAnswerBlock> blocks;
   final ReaderTypography typo;
 
-  /// Lagi streaming: kursor kedip di ujung blok terakhir.
+  /// Whether the answer is streaming: a blinking cursor trails the last block.
   final bool running;
   final Widget Function(ChatSource source) chip;
 
-  /// Penanda posisi scroll per blok ([index] = urutan di [blocks]).
+  /// Wraps a block with its scroll-position marker ([index] is its position in [blocks]).
   final Widget Function(int index, Widget child) anchor;
 
   @override
@@ -60,7 +61,7 @@ class ChatAnswerBlocks extends StatelessWidget {
           : 0;
       final label = _label(context, block, previous);
       if (children.isNotEmpty) {
-        // Butir sedaftar lebih rapat dari jarak antar paragraf.
+        // Items in the same list sit closer than paragraphs do.
         children.add(
           SizedBox(
             height: sameList ? typo.paragraphGap / 2 : typo.paragraphGap,
@@ -91,7 +92,7 @@ class ChatAnswerBlocks extends StatelessWidget {
     );
   }
 
-  /// Label kecil di awal grup paragraf tafsiran / pengetahuan luar.
+  /// Returns the small label that opens a group of interpretation / outside-knowledge paragraphs.
   Widget? _label(
     BuildContext context,
     ChatAnswerBlock block,

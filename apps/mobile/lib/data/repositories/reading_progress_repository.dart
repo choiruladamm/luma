@@ -5,16 +5,16 @@ import '../../domain/models/book.dart';
 import '../../domain/reading.dart';
 import '../database/app_database.dart';
 
-/// Posisi baca: chapter (id stabil) + indeks paragraf di chapter itu + bagian
-/// paragraf itu yang udah lewat garis atas (0..1).
+/// Reading position: a chapter (stable id), a paragraph index within it, and
+/// the fraction (0..1) of that paragraph already scrolled past the top line.
 typedef ReadingPosition = ({
   int chapterId,
   int paragraphIndex,
   double paragraphOffset,
 });
 
-/// Bab + posisi absolut di buku (karakter) di awal dan akhir satu potongan
-/// waktu baca.
+/// The chapter plus the absolute book positions (in characters) at the start
+/// and end of one slice of reading time.
 typedef ReadingSpan = ({int chapterId, int startChar, int endChar});
 
 double _clampOffset(double offset) => offset.isNaN ? 0 : offset.clamp(0.0, 1.0);
@@ -49,8 +49,8 @@ class ReadingProgressRepository {
         ),
       );
 
-  /// Buku dibuka: naik ke depan rak, stiker "Baru" ilang. Pertama kali
-  /// dibuka dicatet sekali.
+  /// Marks the book as opened: it moves to the front of the shelf and loses
+  /// its "Baru" sticker. The first-opened time is recorded only once.
   Future<void> markOpened(int bookId) {
     final now = Variable(DateTime.now());
     return (_db.update(_db.books)..where((b) => b.id.equals(bookId))).write(
@@ -61,8 +61,9 @@ class ReadingProgressRepository {
     );
   }
 
-  /// Layar akhir buku kebuka: dicatet sekali, baca ulang gak nimpa. Buku
-  /// Markdown dilewat: bab terakhir yang ada belum tentu akhir buku.
+  /// Records that the end-of-book screen was reached, once; rereading doesn't
+  /// overwrite it. Markdown books are skipped because the last existing
+  /// chapter isn't necessarily the end of the book.
   Future<void> markFinished(int bookId) =>
       (_db.update(_db.books)..where(
             (b) =>
@@ -72,16 +73,17 @@ class ReadingProgressRepository {
           ))
           .write(BooksCompanion(finishedAt: Value(DateTime.now())));
 
-  /// Potongan sesi yang digabung paling lama segini, biar jam di heatmap dan
-  /// "jam favorit" tetep kehitung per jam (bukan semua ke jam mulai baca).
+  /// Longest merged session slice, so the heatmap hours and "jam favorit" stay
+  /// counted per hour instead of all landing on the start hour.
   static const _maxMerged = Duration(minutes: 5);
 
-  /// Nambahin waktu baca aktif ke total buku, dan (kalau [span] ada) nyatet
-  /// potongan sesinya di `reading_sessions`. [at] = akhir potongan; awalnya
-  /// [seconds] sebelum itu. Satu transaksi, jadi total dan sesi gak beda.
+  /// Adds active reading time to the book total and, when [span] is given,
+  /// records the slice in `reading_sessions`.
   ///
-  /// Potongan yang nyambung sama sesi terakhir (bab sama, mulai di mana sesi
-  /// itu berhenti, jeda < [ReadingClock.idle]) digabung ke barisnya.
+  /// [at] is the end of the slice; it started [seconds] earlier. Both writes
+  /// share one transaction so the total and the sessions never disagree. A
+  /// slice that continues the last session (same chapter, starts where that
+  /// session stopped, gap under [ReadingClock.idle]) is merged into its row.
   Future<void> addReadingTime(
     int bookId,
     int seconds, {

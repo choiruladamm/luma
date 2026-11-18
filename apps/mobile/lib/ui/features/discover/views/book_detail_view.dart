@@ -21,8 +21,9 @@ import '../view_models/download_queue_view_model.dart';
 import 'catalog_cover.dart';
 import 'discover_states.dart';
 
-/// Detail buku (board 09 · Cari buku, layar 10–13). Di luar shell: bar tab
-/// ke-hide. Kepala kuning langsung dari [book]; isi dari `fetchDetail`.
+/// Book detail (board 09 · Cari buku, screens 10–13). Outside the shell: the
+/// tab bar is hidden. The yellow header comes straight from [book]; content
+/// from `fetchDetail`.
 class BookDetailView extends ConsumerStatefulWidget {
   const BookDetailView({super.key, required this.book});
 
@@ -278,8 +279,8 @@ class _BookDetailViewState extends ConsumerState<BookDetailView> {
       issued == null || issued.length < 4 ? null : issued.substring(0, 4);
 }
 
-/// Kepala kuning: Balik + "Detail buku", cover 100 + judul (28 → 24 / 21
-/// kalau panjang, maks 4 baris) rata bawah cover.
+/// Yellow header: Balik + "Detail buku", 100 cover + title (28 → 24 / 21 when
+/// long, max 4 lines) bottom-aligned to the cover.
 class _Header extends ConsumerWidget {
   const _Header({required this.book});
 
@@ -474,8 +475,8 @@ class _Chips extends StatelessWidget {
                   ? Border.all(color: c.track, width: Layout.outline)
                   : null,
             ),
-            // Center(widthFactor: 1): Container beralignment tanpa lebar
-            // melar sepenuh ruang, chip jadi selebar layar.
+            // Center(widthFactor: 1): a Container with alignment and no width expands
+            // to fill the space, making the chip screen-wide.
             child: Center(
               widthFactor: 1,
               child: Text(
@@ -491,8 +492,8 @@ class _Chips extends StatelessWidget {
   }
 }
 
-/// Baris penulis: inisial, nama, "1775–1817 · 6 buku lain di katalog".
-/// Tap = balik ke cari dengan query nama penulis.
+/// Author row: initials, name, "1775–1817 · 6 buku lain di katalog".
+/// Tapping goes back to search with the author name as the query.
 class _AuthorRow extends ConsumerWidget {
   const _AuthorRow({required this.author, required this.book});
 
@@ -572,8 +573,8 @@ class _AuthorRow extends ConsumerWidget {
   }
 }
 
-/// Tombol bawah (board 10–13): Ambil buku → Lagi diunduh… · Batal → Baca
-/// sekarang; udah di rak: Lanjut baca · 3%; gagal: pita pink + Coba lagi.
+/// Bottom button (boards 10–13): "Ambil buku" → "Lagi diunduh…" · "Batal" →
+/// "Baca sekarang"; on the shelf: "Lanjut baca · 3%"; failed: pink ribbon + "Coba lagi".
 class _Actions extends ConsumerWidget {
   const _Actions({required this.book, required this.bottom});
 
@@ -595,7 +596,7 @@ class _Actions extends ConsumerWidget {
             .firstOrNull,
       ),
     );
-    // Udah di rak: dari rak, atau dari antrian yang baru kelar (rak nyusul).
+    // On the shelf: from the shelf, or from a queue that just finished (the shelf catches up).
     final readId =
         switch (item) {
           DownloadItem(

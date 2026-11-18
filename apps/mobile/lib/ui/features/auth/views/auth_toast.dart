@@ -6,12 +6,12 @@ import '../../../core/theme/stabilo_type.dart';
 import '../../../core/widgets/buttons.dart';
 import '../../../core/widgets/toast.dart';
 
-/// Warna tab toast akun (board Akun 13): kuning berhasil, abu info, pink gagal.
+/// Color of the account toast tab (board Akun 13): yellow success, gray info, pink failure.
 enum AuthToastTone { success, info, failure }
 
-/// Toast akun: kartu putih bergaris, tab warna + [icon] di kiri. 4 detik;
-/// gagal 6 detik. Kiri-kanan 16; 12 di atas bottom bar, atau 34 dari bawah
-/// layar kalau gak ada bar. [overNav]: lihat [toastMargin].
+/// Account toast: white bordered card, color tab + [icon] on the left. 4
+/// seconds; failure 6 seconds. 16 left-right; 12 above the bottom bar, or 34
+/// from the screen bottom when there is no bar. [overNav]: see [toastMargin].
 void showAuthToast(
   BuildContext context,
   String message, {
@@ -83,8 +83,7 @@ class _AuthToast extends StatelessWidget {
         borderRadius: BorderRadius.circular(Space.s4),
         boxShadow: Elevation.press(c, Theme.of(context).brightness),
       ),
-      // Garis di atas isi: kalau di `decoration`, tab warna yang di-clip
-      // nimpa garis di sudut kiri.
+      // Border over the content: in `decoration`, the clipped color tab would paint over the border at the left corner.
       foregroundDecoration: BoxDecoration(
         borderRadius: BorderRadius.circular(Space.s4),
         border: Border.fromBorderSide(line),

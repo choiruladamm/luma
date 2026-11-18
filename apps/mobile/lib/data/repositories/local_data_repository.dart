@@ -4,7 +4,7 @@ import '../database/app_database.dart';
 import '../services/file_storage.dart';
 import 'book_repository.dart';
 
-/// Isi HP milik satu akun (docs/backend.md, Authentication and accounts).
+/// Wipes the data that belongs to one account on this device (docs/backend.md, Authentication and accounts).
 class LocalDataRepository {
   LocalDataRepository(this._db, this._books, this._files);
 
@@ -12,10 +12,12 @@ class LocalDataRepository {
   final BookRepository _books;
   final FileStorage _files;
 
-  /// Ganti akun: buku, progres, catatan, hasil AI, chat, dan log AI akun lama
-  /// dihapus biar gak kecampur. Pengaturan (bahasa, Aa, model) tetap.
-  /// Lewat [BookRepository.delete] per buku supaya cascade + file + index
-  /// Cari kata ikut beres.
+  /// Deletes the previous account's books, progress, notes, AI results, chats,
+  /// and AI call log so accounts don't mix after a switch.
+  ///
+  /// Settings (language, Aa, model) are kept. Books go through
+  /// [BookRepository.delete] one by one so the cascade, the files, and the
+  /// word-search index are cleaned up too.
   Future<void> wipeBooks() async {
     final ids = await (_db.selectOnly(
       _db.books,

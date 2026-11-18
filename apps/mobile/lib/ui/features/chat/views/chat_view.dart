@@ -38,7 +38,7 @@ class ChatView extends ConsumerStatefulWidget {
   ConsumerState<ChatView> createState() => _ChatViewState();
 }
 
-/// Margin kiri-kanan kolom ngobrol = Aa Sempit.
+/// Horizontal margin of the chat column, equal to the Aa "Sempit" margin.
 const _chatMargin = 16.0;
 
 class _ChatViewState extends ConsumerState<ChatView> {
@@ -69,7 +69,9 @@ class _ChatViewState extends ConsumerState<ChatView> {
     });
   }
 
-  /// Header selalu lengkap; pas konten udah ke-scroll cuma garis bawahnya muncul.
+  /// Shows the header's bottom divider only once the content has scrolled.
+  ///
+  /// The header itself is always fully visible.
   bool _scroll(ScrollNotification n) {
     if (n.depth != 0) return false;
     if (n is ScrollUpdateNotification || n is ScrollEndNotification) {
@@ -83,7 +85,7 @@ class _ChatViewState extends ConsumerState<ChatView> {
     if (_sourceOpen) return;
     setState(() => _sourceOpen = true);
     try {
-      // "Lanjut baca" di layar intip nutup chat sendiri (lihat ChatSourceVisitView).
+      // "Lanjut baca" on the peek screen closes the chat itself (see ChatSourceVisitView).
       await context.push<ReaderReturn>(
         Routes.chatQuote(widget.bookId),
         extra: quote,
@@ -116,7 +118,10 @@ class _ChatViewState extends ConsumerState<ChatView> {
     }
   }
 
-  /// Guard tanpa rebuild: tombol header gak boleh kedip abu pas pindah layar.
+  /// Runs [action] unless already leaving.
+  ///
+  /// The guard needs no rebuild: header buttons mustn't flash grey during the
+  /// screen transition.
   Future<void> _navigate(VoidCallback action) async {
     if (_leaving) return;
     _leaving = true;
@@ -162,12 +167,12 @@ class _ChatViewState extends ConsumerState<ChatView> {
     final state = ref.watch(chatViewModelProvider(widget.bookId));
     final title = chatBookTitle(context, ref, widget.bookId);
     final pad = MediaQuery.paddingOf(context);
-    // Teks isi ikut Aa; ganti pengaturan di reader langsung kebawa.
+    // Body text follows Aa; changing the reader settings applies immediately.
     final typo = ReaderTypography(
       ref.watch(readerPrefsProvider).value ?? const ReaderPrefs(),
       Theme.of(context).brightness,
     );
-    // Kolom ngobrol selalu margin Aa "Sempit" (16), gak ikut pilihan margin Aa.
+    // The chat column always uses the Aa "Sempit" margin (16), ignoring the chosen Aa margin.
     const side = _chatMargin;
     _measureFooter();
     return Scaffold(
@@ -350,7 +355,7 @@ class _ChatViewState extends ConsumerState<ChatView> {
                                   : context.l10n.chatAskAboutThisQuote,
                               canSend: state.canSend && _subsidy(state) == null,
                               running: state.phase?.isRunning ?? false,
-                              // Kuota abis / dicabut: kolom ketik mati
+                              // Quota used up or revoked: the input is disabled
                               // (board Kuota AI 11).
                               enabled:
                                   !state.loading &&
@@ -380,7 +385,7 @@ class _ChatViewState extends ConsumerState<ChatView> {
 
   Widget _actions(ChatState state) {
     final phase = state.phase ?? state.turns.lastOrNull?.phase;
-    // Kuota abis / dicabut: kartu di posisi jawaban (board Kuota AI 11, 12).
+    // Quota used up or revoked: a card takes the answer's place (board Kuota AI 11, 12).
     if (_subsidy(state) case final kind?) {
       void useOwnKey() => _navigate(() => openOwnKeySettings(context, ref));
       return kind == SubsidyFailure.banned
@@ -490,7 +495,7 @@ class _ChatViewState extends ConsumerState<ChatView> {
     required EdgeFadeSide topFade,
     required EdgeFadeSide bottomFade,
   }) {
-    // Kosong dulu, bukan spinner: sepersekian detik muat gak perlu kedip.
+    // Empty rather than a spinner: a sub-second load shouldn't flash.
     if (state.loading) return const SizedBox.shrink();
     final quote = state.selectedQuote ?? state.turns.firstOrNull?.quote;
     final card = quote == null

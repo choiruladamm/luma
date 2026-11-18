@@ -5,7 +5,7 @@ import { aiKeys, users } from "../../db/schema";
 export type AiKeyRow = typeof aiKeys.$inferSelect;
 export type AiKeyValues = Omit<typeof aiKeys.$inferInsert, "userId">;
 
-/** Satu query: status banned + key tersimpan (null kalau belum pernah dibuat). */
+/** One query: banned status + stored key (null if never created). */
 export async function findUserKey(db: Db, userId: string) {
   const [found] = await db
     .select({ banned: users.banned, key: aiKeys })

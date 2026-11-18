@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import '../theme/stabilo_theme.dart';
 import '../theme/stabilo_tokens.dart';
 
-/// Switch Stabilo 51 × 31 (board Komponen dasar). Nyala: kuning + garis ink,
-/// knob krem bergaris. Mati: track pasir tanpa garis.
+/// Stabilo switch 51 × 31 (board Komponen dasar). On: yellow + ink border,
+/// cream knob with border. Off: sand track, no border.
 class AppSwitch extends StatelessWidget {
   const AppSwitch({
     super.key,

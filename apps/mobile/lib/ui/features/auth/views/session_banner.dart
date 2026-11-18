@@ -6,8 +6,8 @@ import '../../../core/theme/stabilo_tokens.dart';
 import '../../../core/theme/stabilo_type.dart';
 import '../../../core/widgets/buttons.dart';
 
-/// Board Akun 12: strip abu dengan pita pembatas pink di atas kartu Lanjut
-/// baca. App tetap bisa dipakai; × nutup sampai app dibuka lagi.
+/// Board Akun 12: gray strip with a pink divider ribbon above the Lanjut baca
+/// card. The app stays usable; × closes it until the app is reopened.
 class SessionExpiredBanner extends StatelessWidget {
   const SessionExpiredBanner({
     super.key,

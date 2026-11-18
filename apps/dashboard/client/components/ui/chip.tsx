@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { cn } from "../../lib/cn";
 import { Icon, type IconName } from "./icons";
 
-// Komponen 1, Chip & badge: height 24, 12/500. Filled dot = on/active, hollow = not yet.
+// Design component 1, Chip & badge: height 24, 12/500. Filled dot = on/active, hollow = not yet.
 const TONES = {
   neutral: "bg-muted text-ink",
   sheet: "bg-sheet text-ink",

@@ -2,8 +2,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'backend_client.dart';
 
-/// User dari backend (`/v1/me`, respons login). Field sama dengan fixture
-/// kontrak `apps/backend/test/fixtures/contract/me.json`.
+/// Represents a user returned by the backend (`/v1/me` and login responses).
+///
+/// Fields match the contract fixture `apps/backend/test/fixtures/contract/me.json`.
 class AuthUser {
   const AuthUser({
     required this.id,
@@ -32,22 +33,23 @@ class AuthSession {
   final AuthUser user;
 }
 
-/// Kode error auth dari server (docs/backend.md, Authentication and accounts).
+/// Auth error codes returned by the server (docs/backend.md, Authentication and accounts).
 abstract final class AuthErrorCode {
   static const invalidInvite = 'INVALID_INVITE_CODE';
   static const invalidCredentials = 'INVALID_EMAIL_OR_PASSWORD';
   static const userExists = 'USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL';
   static const unauthorized = 'UNAUTHORIZED';
 
-  /// Akun baru tanpa kode undangan → minta kode (board Akun 06).
+  /// A new account without an invite code; the UI asks for one (board Akun 06).
   static const inviteRequired = 'INVITE_CODE_REQUIRED';
   static const inviteUsed = 'INVITE_CODE_USED';
 
   static const inviteCodes = {invalidInvite, inviteRequired, inviteUsed};
 }
 
-/// Panggilan `/v1/auth/*` dan `/v1/me`. Gak nyimpen apa-apa: penyimpanan
-/// token di [AuthRepository].
+/// Calls `/v1/auth/*` and `/v1/me`.
+///
+/// Stores nothing; [AuthRepository] persists the token.
 class AuthService {
   AuthService(this._client);
 
@@ -71,8 +73,10 @@ class AuthService {
     return _session(res.headers.value('set-auth-token'), res.data!);
   }
 
-  /// Login Google pakai idToken dari `google_sign_in`. Akun baru butuh
-  /// [inviteCode] selama beta (server balas `INVITE_CODE_REQUIRED` kalau kosong).
+  /// Signs in with a Google ID token from `google_sign_in`.
+  ///
+  /// A new account needs [inviteCode] during the beta; the server answers
+  /// `INVITE_CODE_REQUIRED` when it is empty.
   Future<AuthSession> signInGoogle({
     required String idToken,
     String? inviteCode,
@@ -116,8 +120,9 @@ class AuthService {
     return AuthUser.fromJson(res.data!['user']! as Map<String, Object?>);
   }
 
-  /// True kalau akun sudah terhapus; false = server masih membersihkan file
-  /// (202), panggil lagi.
+  /// Returns true once the account is deleted.
+  ///
+  /// False means the server is still cleaning up files (202); call again.
   Future<bool> deleteAccount(String token) async {
     final res = await _client.request('DELETE', '/v1/me', token: token);
     return res.data?['status'] == 'deleted';

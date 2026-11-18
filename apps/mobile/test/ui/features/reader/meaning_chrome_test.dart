@@ -6,7 +6,7 @@ void main() {
   setUp(() => chrome = MeaningChrome(vsync: const TestVSync()));
   tearDown(() => chrome.dispose());
 
-  // Board Ngumpet · Opsi A: sheet 528, area baca 335 lengkap, 516 ngumpet.
+  // Board "Ngumpet" · Option A: sheet 528, reading area 335 full, 516 collapsed.
   test('visible reading height: 335 with everything, 516 with nothing', () {
     expect(chrome.readHeight(528), closeTo(335, 1e-9));
     chrome.header.value = 1;

@@ -6,15 +6,15 @@ import { network } from "../setup";
 const GOOGLE_CERTS = "https://www.googleapis.com/oauth2/v3/certs";
 const KID = "luma-test-kid";
 
-/** Client ID web di `GOOGLE_CLIENT_IDS` env dev (yang pertama). */
+/** The web client ID in the dev env's `GOOGLE_CLIENT_IDS` (the first one). */
 export const WEB_CLIENT_ID = env.GOOGLE_CLIENT_IDS.split(",")[0]!.trim();
 
 export type GoogleClaims = Record<string, unknown> & { email?: string; sub?: string };
 
 /**
- * Google palsu: JWKS kunci RSA test di MSW + idToken RS256 yang ditandatangani
- * kunci itu. Better Auth memverifikasi seperti token asli (iss, aud, exp, tanda
- * tangan). Panggil di tiap test; handler direset otomatis setelah test.
+ * Fake Google: a test RSA-key JWKS in MSW + an RS256 idToken signed by that
+ * key. Better Auth verifies it like a real token (iss, aud, exp, signature).
+ * Call in every test; handlers are reset automatically after each test.
  */
 export async function fakeGoogle() {
   const { privateKey, publicKey } = await generateKeyPair("RS256", { extractable: true });
@@ -27,7 +27,7 @@ export async function fakeGoogle() {
     }),
   );
 
-  /** idToken bertanda tangan; `aud` / `iss` / `exp` bisa ditimpa buat kasus gagal. */
+  /** Signed idToken; `aud` / `iss` / `exp` can be overridden for failure cases. */
   const idToken = async (
     claims: GoogleClaims = {},
     { aud = WEB_CLIENT_ID, iss = "https://accounts.google.com", expiresIn = "10m" } = {},
@@ -50,7 +50,7 @@ export async function fakeGoogle() {
   return { idToken, certFetches: () => certFetches };
 }
 
-/** Kunci lain (bukan Google): tanda tangannya harus ditolak. */
+/** A different key (not Google's): its signature must be rejected. */
 export async function foreignToken(claims: GoogleClaims = {}) {
   const { privateKey } = await generateKeyPair("RS256");
   return new SignJWT({ email: "mallory@gmail.test", email_verified: true, ...claims })

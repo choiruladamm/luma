@@ -5,8 +5,8 @@ import '../../domain/grouping.dart';
 import '../../domain/models/book.dart';
 import 'epub_parser.dart';
 
-/// Versi logika parse + grouping. Naik = re-import buku lama + hapus
-/// `ai_results`-nya, soalnya indeks paragraf/grup bisa geser
+/// Changing this parsing and grouping version requires re-importing books and
+/// deleting their `ai_results` because paragraph and group indices can shift
 /// (docs/data-model.md).
 const parserVersion = 1;
 
@@ -21,29 +21,25 @@ class ParsedChapter {
 
   final String title;
 
-  /// Label induk TOC (lihat [ChapterSource.section]).
+  /// The parent TOC label (see [ChapterSource.section]).
   final String? section;
   final List<RawParagraph> paragraphs;
 
-  /// `groupIndex` per paragraf, dari [assignGroups].
+  /// The `groupIndex` for each paragraph, from [assignGroups].
   final List<int?> groups;
 
-  /// Jumlah karakter sebelum chapter ini, buat persentase baca.
+  /// The character count before this chapter, used for reading progress.
   final int charOffset;
 
   int get charCount => paragraphs.fold(0, (n, p) => n + p.text.length);
 }
 
-/// Chapter dari [outline] jadi paragraf + grup (docs/grouping.md,
+/// Extracts paragraphs and groups from chapters in [outline] (docs/grouping.md,
 /// docs/architecture.md).
 ///
-/// Chapter non-isi dibuang, dikenali dari struktur, bukan judul
-/// (docs/import-formats.md): yang isinya kebanyakan link (daftar isi, indeks) dan
-/// yang gak punya paragraf (halaman judul kepecah, lisensi Gutenberg yang
-/// dilewatin).
-///
-/// [onChapter] dipanggil tiap mulai satu chapter sumber (`done` dari `total`),
-/// dan sekali lagi di akhir; cuma buat progres, hasilnya gak berubah.
+/// Non-content chapters are identified by structure, not title: link-heavy
+/// chapters and chapters without paragraphs are skipped (docs/import-formats.md).
+/// [onChapter] reports progress at the start of each source chapter and at the end.
 ({List<ParsedChapter> chapters, int totalChars}) extractChapters(
   EpubOutline outline, {
   void Function(int done, int total)? onChapter,
@@ -89,8 +85,7 @@ const _blockTags = {
 };
 const _headingTags = {'h1', 'h2', 'h3', 'h4', 'h5', 'h6'};
 
-// ponytail: tabel dilewatin semua (di Gutenberg isinya daftar isi / daftar
-// ilustrasi). Ambil sel-nya kalau ketemu buku yang isinya di tabel.
+// ponytail: all tables are skipped; extract cells if a book contains content in tables.
 const _skipTags = {
   'script', 'style', 'head', 'title', 'nav', 'img', 'svg', 'figure', //
   'figcaption', 'table', 'math',
@@ -121,7 +116,7 @@ final _footnoteMark = RegExp(
 );
 final _sceneBreak = RegExp(r'^[\s*⁂•·~]+$');
 
-/// XHTML boleh `<a id="x"/>`, parser HTML5 bacanya tag `<a>` yang gak ditutup.
+/// Handles self-closing XHTML anchors, which the HTML5 parser treats as unclosed.
 String _openSelfClosing(String xhtml) => xhtml.replaceAllMapped(
   _selfClosing,
   (m) => _voidTags.contains(m[1]!.toLowerCase())
@@ -151,7 +146,7 @@ class _Extractor {
     if (!first) recording = true;
     _walk(body, last: last);
     _flush();
-    // Anchor awal gak ketemu: ambil dari awal file, daripada chapter kosong.
+    // Fall back to the file start when the anchor is missing to avoid an empty chapter.
     if (first && start != null && !_sawStart && !done) {
       blocks.clear();
       recording = true;
@@ -165,7 +160,7 @@ class _Extractor {
       if (done) return;
       if (child is Text) {
         if (!recording) continue;
-        // Baris baru di sumber HTML cuma spasi; baris baru beneran dari <br>.
+        // Source newlines are whitespace; actual line breaks come from <br>.
         _buf.write(child.text.replaceAll(RegExp(r'\s+'), ' '));
         if (_heading > 0) _bufHeading = true;
         final n = child.text.trim().length;
@@ -188,8 +183,7 @@ class _Extractor {
         return;
       }
       if (_skip(child)) {
-        // Anchor bisa nyelip di bagian yang dilewatin (lisensi Gutenberg mulai
-        // di dalem footer#pg-footer). Isinya tetep gak diambil.
+        // Anchors can occur in skipped content, such as footer#pg-footer.
         if (start != null && !_sawStart && _has(child, start!)) {
           _sawStart = true;
           recording = true;
@@ -252,7 +246,7 @@ class _Extractor {
     if (e.classes.any(_skipClasses.contains)) return true;
     final type = e.attributes['epub:type'] ?? '';
     if (type.contains('noteref') || type.contains('pagebreak')) return true;
-    // Penanda catatan kaki: [1], (2), *, †, atau <sup>3</sup>.
+    // Footnote markers include [1], (2), *, †, and <sup>3</sup>.
     if ((tag == 'a' || tag == 'sup') && _footnoteMark.hasMatch(e.text)) {
       return tag == 'sup' || e.attributes.containsKey('href');
     }
@@ -260,8 +254,7 @@ class _Extractor {
   }
 }
 
-/// Rapihin spasi (baris dari `<br>` dipertahanin), tandain scene break,
-/// buang scene break dobel / di ujung chapter.
+/// Normalizes whitespace and scene breaks while preserving <br> line breaks.
 List<RawParagraph> _tidy(List<RawParagraph> blocks) {
   final out = <RawParagraph>[];
   for (final b in blocks) {
@@ -290,11 +283,9 @@ List<RawParagraph> _tidy(List<RawParagraph> blocks) {
   return out;
 }
 
-/// Judul TOC tanpa penanda catatan kaki. Kalau TOC-nya ketempelan teks lain
-/// (caption gambar Gutenberg: "I hope Mr. Bingley will like it. CHAPTER II."),
-/// pake heading pertama chapter yang ada di dalemnya. Label TOC yang justru
-/// *dimulai* dengan heading-nya ("III: Of Providence" vs heading "III") lebih
-/// lengkap, jadi dipertahanin.
+/// Returns a TOC title without footnote markers.
+/// Uses the chapter heading when unrelated text precedes it, but preserves
+/// more complete TOC labels that begin with the heading.
 String _title(String toc, List<RawParagraph> paragraphs) {
   String clean(String s) => s
       .replaceAll(RegExp(r'\[\w{1,4}\]'), '')

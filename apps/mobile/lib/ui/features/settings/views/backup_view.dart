@@ -29,8 +29,8 @@ import 'cloud_restore_sheet.dart';
 import 'restore_sheets.dart';
 import 'settings_page.dart';
 
-/// Backup & pulihin (board Pengaturan 07): login = backup ke cloud + salinan
-/// file; belum login = backup ke file, opsi Cloud ilang.
+/// Backup & restore (board Pengaturan 07): logged in = backup to cloud + a file
+/// copy; not logged in = backup to file, the Cloud option is hidden.
 class BackupView extends ConsumerStatefulWidget {
   const BackupView({super.key});
 
@@ -43,8 +43,8 @@ class _BackupViewState extends ConsumerState<BackupView> {
 
   bool _restoring = false;
 
-  /// Pulihin (board 28–32): pilih zip → cek di folder sementara → ringkasan
-  /// & konfirmasi → ganti data → database dibuka lagi → balik ke Rak.
+  /// Restore (boards 28–32): pick a zip → check in a temp folder → summary &
+  /// confirmation → replace data → reopen the database → back to Rak.
   Future<void> _restore() async {
     if (_restoring) return;
     _restoring = true;
@@ -60,7 +60,7 @@ class _BackupViewState extends ConsumerState<BackupView> {
         } on RestoreException catch (e) {
           if (!mounted) return;
           if (await showRestoreFailed(context, fileName: name, error: e)) {
-            continue; // pilih file lain
+            continue; // pick another file
           }
           return;
         }
@@ -86,8 +86,8 @@ class _BackupViewState extends ConsumerState<BackupView> {
     }
   }
 
-  /// Pulihin dari cloud: pilih snapshot → download & cek → ringkasan yang
-  /// sama dengan zip biasa (board 28) → ganti data.
+  /// Restore from cloud: pick a snapshot → download & check → the same summary
+  /// as a regular zip (board 28) → replace data.
   Future<void> _restoreCloud() async {
     if (_restoring) return;
     _restoring = true;
@@ -132,8 +132,8 @@ class _BackupViewState extends ConsumerState<BackupView> {
     final stage = ValueNotifier(1);
     final nav = Navigator.of(context, rootNavigator: true);
     final router = GoRouter.of(context);
-    // Pengaturan ilang pas balik ke Rak; toast-nya lewat navigator root yang
-    // tetep ada (masih di bawah ScaffoldMessenger & Theme).
+    // Settings disappears when returning to Rak; the toast goes through the root
+    // navigator, which stays (still below ScaffoldMessenger & Theme).
     final app = Navigator.of(context, rootNavigator: true).context;
     showAppSheet<void>(
       context,
@@ -152,8 +152,8 @@ class _BackupViewState extends ConsumerState<BackupView> {
       failed = true;
       await preview.discard();
     } finally {
-      // Database ditutup pas apply: buka lagi (data baru, atau yang lama kalau
-      // gagal). Semua provider data ikut dibangun ulang.
+      // The database is closed during apply: reopen it (new data, or the old if
+      // it failed). All data providers are rebuilt too.
       ref.invalidate(appDatabaseProvider);
     }
     nav.pop();
@@ -164,7 +164,7 @@ class _BackupViewState extends ConsumerState<BackupView> {
       }
       return;
     }
-    // Login = kuota gratis jalan tanpa key; cuma yang belum login perlu diingetin.
+    // Logged in = the free quota works without a key; only users not logged in need the reminder.
     final signedIn =
         ref.read(authControllerProvider).value?.status == AuthStatus.signedIn;
     final noKey =
@@ -274,10 +274,10 @@ class _BackupCard extends StatelessWidget {
 
   final LastBackup? last;
 
-  /// Status backup udah kebaca (biar gak sempet nongol "belum pernah").
+  /// Backup status has been read (so "belum pernah" doesn't flash).
   final bool loaded;
 
-  /// Login: tombol utama ke cloud + link salinan file.
+  /// Logged in: the main button goes to cloud + a file copy link.
   final bool cloud;
   final VoidCallback onBackup;
   final VoidCallback onSaveFile;

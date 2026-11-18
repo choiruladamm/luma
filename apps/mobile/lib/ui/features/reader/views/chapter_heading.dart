@@ -5,9 +5,9 @@ import '../../../core/theme/stabilo_theme.dart';
 import '../../../core/theme/stabilo_tokens.dart';
 import '../../../core/theme/stabilo_type.dart';
 
-/// Pembuka bab di awal teks (board 03 Baca + "awal bab, judul panjang"):
-/// rata tengah, coretan kuning miring, judul font baca, meta
-/// "Bab 4 dari 102 · ±14 mnt". Dipakai buat semua judul, pendek maupun panjang.
+/// Chapter opener at the start of the text (board 03 Baca + "awal bab, judul panjang"):
+/// centered, tilted yellow stroke, title in the reading font, meta line
+/// "Bab 4 dari 102 · ±14 mnt". Used for every title, short or long.
 class ChapterHeading extends StatelessWidget {
   const ChapterHeading({
     super.key,
@@ -23,7 +23,7 @@ class ChapterHeading extends StatelessWidget {
   final int total;
   final int minutes;
 
-  /// Gaya teks baca sekarang (font dari Aa).
+  /// Current reading text style (font from Aa).
   final TextStyle reading;
 
   @override
