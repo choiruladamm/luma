@@ -54,7 +54,7 @@ class StabiloColors extends ThemeExtension<StabiloColors> {
   // Teks. ink3 khusus disabled.
   final Color ink, ink2, ink3;
   // Aksen. highlight cuma buat grup paragraf yang lagi dibuka di sheet dan
-  // kata hasil Cari kata (docs/design.md, Aturan highlight).
+  // kata hasil Cari kata (docs/design.md, Color).
   // accentBorder: outline tombol/opsi accent (gelap: sewarna accent).
   final Color accent, onAccent, accentBorder, pink, onPink;
   // Latar banner pink lembut (Artinya kepotong), garisnya [pink].

@@ -240,7 +240,7 @@ class Settings extends Table {
 }
 
 /// Katalog Project Gutenberg dari dump `pg_catalog.csv` (docs/discover.md,
-/// Katalog lokal). Bukan data user: diganti utuh tiap sync, gak ikut backup.
+/// Local catalog and search). Bukan data user: diganti utuh tiap sync, gak ikut backup.
 /// List disimpen JSON; `authorsText` buat tampil + index FTS. Pencarian
 /// lewat virtual table `catalog_fts` ([AppDatabase.createCatalogFts]), yang
 /// gak bisa dideklarasiin sebagai tabel Drift.
@@ -365,7 +365,7 @@ class ChatVectors extends Table {
   Set<Column> get primaryKey => {indexId, ordinal};
 }
 
-/// Perubahan lokal yang belum di-push (docs/backend.md, Sync antar device).
+/// Perubahan lokal yang belum di-push (docs/sync-protocol.md, Push and pull).
 /// Diisi trigger SQLite dari [syncKinds], bukan repository. Satu baris per
 /// `(kind, key)`: 100 update posisi baca = 1 record. Baris yang udah gak ada
 /// saat push = tombstone (kind yang punya tombstone) atau dibuang.

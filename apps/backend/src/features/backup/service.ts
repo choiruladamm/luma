@@ -4,7 +4,7 @@ import { addBytes, releaseOnFailure, reserveBytes } from "../../db/user-storage"
 import { ApiError } from "../../lib/errors";
 import { fixedLength, userPrefix } from "../../lib/storage";
 
-/** Snapshot yang disimpan; sisanya dihapus di `PUT` yang sama (docs/backend.md, Backup cloud). */
+/** Snapshot yang disimpan; sisanya dihapus di `PUT` yang sama (docs/backend.md, Files and cloud backups). */
 export const BACKUP_RETENTION = 10;
 
 /** `yyyyMMddTHHmmssZ`: urut leksikal = urut waktu, jadi `R2.list` udah kronologis. */

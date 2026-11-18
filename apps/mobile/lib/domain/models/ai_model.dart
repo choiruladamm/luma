@@ -14,7 +14,7 @@ const aiModels = <AiModel>[
 const defaultAiModel = 'z-ai/glm-5.3-flash';
 
 /// Model yang boleh dipakai kuota gratis (guardrail workspace OpenRouter,
-/// docs/backend.md). Server yang jadi sumber kebenaran (`/v1/ai/config`);
+/// docs/backend.md, AI subsidy). Server yang jadi sumber kebenaran (`/v1/ai/config`);
 /// ini cadangan saat config belum kebaca.
 const subsidyModelIds = <String>[
   'z-ai/glm-5.3-flash',

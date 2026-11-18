@@ -7,7 +7,7 @@ import '../services/api_key_store.dart';
 import '../services/session_store.dart';
 
 /// Key OpenRouter yang dipakai panggilan AI: `key = byok ?? subsidi`
-/// (docs/backend.md, AI). Bentuknya [ApiKeyStore] supaya
+/// (docs/backend.md, AI subsidy). Bentuknya [ApiKeyStore] supaya
 /// pemanggil lama cukup ganti provider; [write] tetap nulis key BYOK.
 ///
 /// Key subsidi diambil dari backend cuma kalau perlu (belum ada, hampir
@@ -90,7 +90,7 @@ class AiKeyRepository implements ApiKeyStore {
   }
 }
 
-/// Kode server saat akun gak boleh pakai kuota gratis (docs/backend.md, AI).
+/// Kode server saat akun gak boleh pakai kuota gratis (docs/backend.md, AI subsidy).
 /// Dipakai juga sebagai [AiException.detail] supaya UI bisa ngenalin.
 const aiBannedCode = 'AI_BANNED';
 

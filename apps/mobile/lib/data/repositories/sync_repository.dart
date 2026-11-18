@@ -16,7 +16,7 @@ import 'auth_repository.dart';
 import 'import_repository.dart';
 import 'sync_applier.dart';
 
-/// Nama dump buku Markdown di folder file cloud (docs/backend.md, File buku).
+/// Nama dump buku Markdown di folder file cloud (docs/sync-protocol.md, Book files and Markdown dumps).
 String markdownDumpName(String bookKey, int contentRevision) =>
     'md-$bookKey-$contentRevision.json.gz';
 
@@ -31,7 +31,7 @@ Future<Map<String, Object?>> _readGzipJson(String path) => Isolate.run(
   ) as Map).cast<String, Object?>(),
 );
 
-/// Sync antar device (docs/backend.md): push perubahan lokal (`sync_outbox`),
+/// Sync antar device (docs/sync-protocol.md, Push and pull): push perubahan lokal (`sync_outbox`),
 /// pull perubahan device lain ([SyncApplier]), download + impor buku yang
 /// belum ada. Tanpa polling: dipanggil cuma dari pemicu (login, resume,
 /// debounce perubahan lokal). Error diam-diam; pemicu berikutnya coba lagi.

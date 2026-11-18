@@ -92,7 +92,7 @@ class DiscoverState {
   );
 }
 
-/// Tab Cari buku (docs/discover.md, Board). Satu sumber dulu: yang pertama di
+/// Tab Cari buku (docs/discover.md, Sources and discovery). Satu sumber dulu: yang pertama di
 /// [bookSourcesProvider]. Cari = katalog lokal, instan; populer = jaringan.
 class DiscoverViewModel extends Notifier<DiscoverState> {
   static const slowAfter = Duration(seconds: 5);

@@ -1,178 +1,50 @@
-# Backup & Restore
+---
+type: reference
+purpose: Describe mobile backup archives, export, restore, and compatibility.
+sections: [Archive contents and manifest, Export and cloud backup, Inspection and restore, Reminder, Compatibility]
+---
 
-## Kenapa masuk MVP
+# Backup and restore
 
-Di iOS, Luma diinstall tanpa Apple Developer Program berbayar, jadi build harus diinstall ulang dari Xcode **setiap 7 hari**. Di Android (APK sideload) gak ada siklus itu, tapi backup tetap berguna kalau HP ilang / direset.
+## Archive contents and manifest
 
-- Install ulang **di atas app yang sudah ada** (bundle ID & tim signing sama) biasanya **mempertahankan data**.
-- Data **hilang** kalau app dihapus (mis. saat membereskan masalah signing), bundle ID berubah, atau ganti HP.
+A file export is a `luma-backup-YYYYMMDD-HHmm.zip` containing `manifest.json`, the `luma.sqlite` snapshot, and `books/` and `covers/` files. The database snapshot includes settings, chat history and derived data. Secrets in secure storage are excluded.
 
-Terjemahan di `ai_results` (dan bedahan di `ai_breakdowns`) dibayar pakai saldo OpenRouter dan progres baca tidak bisa dibuat ulang, jadi wajib ada backup manual yang gampang.
-
-## Prinsip
-
-- **Satu file berisi semuanya**, disimpan **di luar app** (Files / iCloud Drive / AirDrop ke Mac). Backup yang disimpan di dalam folder app ikut hilang kalau app dihapus.
-- **Restore = ganti semua data** (bukan merge). Merge ditunda.
-- **Aman**: restore diekstrak ke folder sementara dulu, data lama baru diganti kalau semua langkah berhasil.
-- **API key tidak ikut** di-backup (alasan keamanan). Setelah restore, kalau API key kosong, app minta diisi ulang.
-
-## Isi file backup
-
-Nama: `luma-backup-YYYYMMDD-HHmm.zip` (pakai ekstensi `.zip` biasa supaya tidak perlu daftar tipe file custom di iOS).
-
-```
-luma-backup-20261006-2130.zip
-├── manifest.json
-├── luma.sqlite        ← snapshot database Drift
-├── books/             ← file asli ({hash}.epub / {hash}.pdf)
-└── covers/            ← gambar cover ({hash}.png)
-```
-
-`manifest.json`:
+`BackupManifest` in `apps/mobile/lib/domain/models/backup.dart` defines the manifest. For illustration only:
 
 ```json
 {
   "format": "luma-backup",
   "formatVersion": 1,
-  "appVersion": "0.1.0",
-  "schemaVersion": 1,
-  "createdAt": "2026-10-06T21:30:00+07:00",
-  "counts": { "books": 7, "aiResults": 1240 }
+  "appVersion": "0.3.0",
+  "schemaVersion": 18,
+  "createdAt": "2026-01-01T12:00:00+07:00",
+  "counts": { "books": 2, "aiResults": 10 }
 }
 ```
 
-Snapshot membawa seluruh DB, termasuk katalog Gutenberg, index `catalog_fts`, metadata sync, history chat, cache index/catatan dan preferensi bahasa. Katalog tetap dapat diganti lewat sync; belum ada pengecualian katalog dari ZIP. `paragraph_fts` dibangun ulang saat inspect restore karena rowid dapat berubah. Tes round-trip katalog/index/meta ada di `test/data/restore_service_test.dart`.
+The writer emits `formatVersion: 1`; the reader does not validate that field. Counts describe books and AI result groups. The reader requires format `luma-backup`, an integer `schemaVersion`, a counts map and a parseable `createdAt`. Missing counts default to zero and missing `appVersion` to `?`.
 
-## Alur export (backup)
+## Export and cloud backup
 
-1. Pengaturan → "Backup sekarang"
-2. Buat snapshot database yang konsisten dengan `VACUUM INTO '<tmp>/luma.sqlite'` (aman walau database sedang dipakai / mode WAL)
-3. Tulis `manifest.json`
-4. Zip snapshot + folder `books/` + `covers/` (pakai package `archive`, jalankan di isolate karena file EPUB bisa besar)
-5. Buka share sheet (`share_plus`) → user pilih "Save to Files", iCloud Drive, atau AirDrop (Android: Drive, Downloads, dll)
-6. Simpan `backup.lastAt` (+ `backup.lastName`, `backup.lastSize`) di tabel `settings`, hapus file zip sementara
+`BackupService` creates a consistent SQLite snapshot with `VACUUM INTO`, builds the ZIP in an isolate, and offers file exports through the platform share sheet. The app records a successful share as the last backup; Android's unavailable share result is also treated as success.
 
-**Implementasi** (`BackupService` + `BackupController`):
+`CloudBackupRepository` exports a snapshot-only ZIP, uploads missing book and cover files separately, then uploads the snapshot. Signed-in users can trigger a cloud backup manually; `CloudBackupTrigger` also checks on session availability and resume, subject to its timing and non-empty shelf rules. Cloud restore downloads the snapshot and fills missing files before inspection completes. Worker storage and endpoints are in [backend.md](backend.md).
 
-- Snapshot `VACUUM INTO` ke folder sementara (`Directory.systemTemp`), hitung jumlah buku & `ai_results` buat manifest. `appVersion` dari konstanta yang dicek sama `version` di pubspec (test).
-- Zip di isolate (`Isolate.spawn` + port progres), urutan: `books/`, `covers/` (disimpen tanpa kompresi, udah kekompres), `luma.sqlite`, `manifest.json` (dikompres). Sheet "Lagi ngebungkus backup..." (board 26) nampilin nama file, persen, dan centang per tahap: buku → terjemahan (DB) → pengaturan (manifest). "Batalin" matiin isolate-nya, folder sementara dibuang.
-- Sheet progres ditutup dulu, baru menu share muncul. Backup terakhir cuma dicatet kalau share-nya **beneran disimpen/dikirim** (`ShareResultStatus.success`; di Android `unavailable` juga dianggap sukses, lihat [architecture.md](architecture.md)); ditutup tanpa milih = gak dicatet. Zip sementara selalu dihapus.
-- Berhasil → toast "Backup kelar, aman!" + "12,4 MB · nama file" (board 27). Gagal → toast "Yah, backup gagal".
-- Pengaturan → tile Backup → halaman "Backup & pulihin" (`/settings/backup`): kapan backup terakhir ("Barusan" kalau < 1 jam, "Kemarin", "3 hari lalu", ...), nama + ukuran file, atau "Belum pernah backup" (ikon pink). Tombol "Pulihin dari backup" ada di bagian yang sama.
-- Board nulis nama file `luma-backup-2026-10-06.luma`; yang dipake tetep `luma-backup-YYYYMMDD-HHmm.zip` (zip biasa, gak perlu daftar tipe file custom di iOS).
+Concurrent cloud backup requests share one run (`CloudBackupRepository`). The archive is built in a temporary directory and handed to the share sheet, so the user chooses where it lives.
 
-## Alur import (restore)
+## Inspection and restore
 
-1. Pengaturan → "Pulihin dari backup" → pilih file `.zip` via `file_picker`
-2. Ekstrak ke folder sementara
-3. Validasi:
-   - `manifest.json` ada dan `format` = `luma-backup`
-   - `schemaVersion` backup **≤** schema app sekarang (backup dari versi lebih baru → tolak)
-   - `luma.sqlite` bisa dibuka
-4. Tampilkan ringkasan: jumlah buku, jumlah terjemahan, tanggal backup
-5. Konfirmasi: "Semua data di HP ini bakal diganti" (buku, progres, terjemahan sekarang diganti total, gak bisa dibalikin), tombol "Ganti & pulihin" setelah centang "Iya, gua ngerti. Ganti aja semuanya."
-6. Blok send/retry chat → cancel + await flush terminal → tutup koneksi Drift → ganti file database + folder `books/` & `covers/` → buka lagi database (migrasi Drift otomatis jalan kalau backup dari schema lama). Backup dari sebelum schema 4: terjemahannya jadi `promptVersion` 1, diterjemahin ulang pas grupnya dibuka
-7. Invalidate provider Riverpod (atau restart ke Rak)
-8. Gagal di langkah mana pun → hapus folder sementara, data lama tetap utuh
+`RestoreService.inspect` extracts recognized paths into a temporary directory, checks the manifest and schema version, opens and migrates the snapshot, and rebuilds paragraph FTS before presenting a preview. `VACUUM INTO` can change paragraph rowids. Cloud restore fills referenced files at this stage; missing remote files can be skipped.
 
-**Implementasi** (`RestoreService`, alurnya di Pengaturan):
+After confirmation, `RestoreService.apply` closes active chat work and the database, moves existing files aside, and installs the snapshot and folders. If a move in the swap fails, it attempts to reverse completed moves in reverse order; rollback itself can fail. Cleanup after a successful swap can also fail. The caller invalidates `appDatabaseProvider` on success or failure to reopen the database and rebuild its dependents.
 
-- Pilih `.zip` (path lokal, dibaca streaming). Ekstrak di isolate ke `Directory.systemTemp`, **cuma file yang dikenal**: `manifest.json`, `luma.sqlite`, `books/<nama>`, `covers/<nama>`; path aneh (`../`, absolut, subfolder) dilewatin.
-- Cek: bukan zip / manifest gak ada / `format` salah → "Ini bukan backup Luma"; `schemaVersion` > app → "Backup-nya dari Luma yang lebih baru" (nyebut dua versinya); `luma.sqlite` gak bisa dibuka → "File backup-nya rusak". Salinan sementara dibuka beneran (migrasi jalan di salinan), jadi database rusak ketauan sebelum apa pun diganti. Semua sheet gagal punya "Pilih file lain".
-- Ringkasan (board 28): nama file, kapan & pake Luma versi berapa, jumlah buku & terjemahan, WarningBox (nyebut jumlah buku sekarang), ConfirmCheck; "Ganti & pulihin" baru aktif kalau dicentang. "Batal" = folder sementara dibuang.
-- Ganti: tutup Drift → `books/`, `covers/`, `luma.sqlite(-wal/-shm)` dipindah ke `*.old` → isi backup dipindah masuk → `*.old` dihapus. Gagal di tengah → semua yang udah dipindah dibalikin urutan kebalik (ada test-nya). Abis itu `appDatabaseProvider` di-invalidate (database lama/baru dibuka lagi, provider data ikut dibangun ulang).
-- Berhasil → balik ke Rak + toast "Sip, data lo udah balik!" · "N buku · N terjemahan"; kalau API key kosong dan belum login (login = kuota gratis jalan tanpa key), toast-nya punya baris kedua "API key gak ikut backup, isi ulang dulu biar bisa nerjemahin." + "Isi key" (6 detik). Gagal ganti → "Yah, gagal mulihin", data lama utuh.
-- Teks board "File backup Luma itu yang akhirannya .luma" disesuaiin jadi nama `luma-backup-…zip`. Tile ringkasan dilabelin "terjemahan" (manifest ngitung baris `ai_results` = grup, bukan paragraf).
+Extraction accepts only `manifest.json`, `luma.sqlite`, and one level of plain file names under `books/` and `covers/` (`RestoreService._target`); absolute, traversing, and nested entries are skipped. A cloud restore reuses book and cover files that already exist on the device and downloads only the missing ones.
 
-## Backup cloud ([#201](https://github.com/choiruladamm/luma/issues/201))
+## Reminder
 
-Butuh login. Backend & endpoint: [backend.md](backend.md) (Backup cloud). Backup lewat share sheet tetap ada; cloud cuma ganti tujuannya.
+`backupReminderDays` counts calendar days from the last backup, or the first imported book if none exists. The shelf reminder starts after six days; dismissing it hides it for that calendar day. An empty shelf has no reminder.
 
-- **Isi**: snapshot zip **tanpa** `books/` & `covers/` (`BackupService.export(snapshotOnly: true)`: `manifest.json` + `luma.sqlite`). File buku & cover diunggah terpisah per nama file (sudah berbasis hash), cuma yang belum ada di cloud (`POST /v1/files/missing`). Ukuran nyata (13 November 2026, iPhone, 12 buku): `luma.sqlite` 42MB, zip snapshot **14,6MB** (±31MB dari 42MB itu katalog Discover). Jauh di bawah batas body 100MB, jadi tanpa multipart.
-- **Alur** (`CloudBackupRepository.backup`): snapshot → daftar nama file lokal → `files/missing` (per 1000 nama) → upload yang hilang satu-satu (stream, `Content-Length`) → `PUT /v1/backups` (manifest ikut di header `x-backup-manifest`) → simpan `backup.cloudLastAt` + backup terakhir (`saveCloudBackup`, jadi pengingat backup ikut tenang). Kena 429 di tengah upload → tunggu `Retry-After` lalu lanjut (maks 5×). Satu backup jalan sekaligus.
-- **Pemicu otomatis** (`CloudBackupTrigger` di root app, cuma dari `main`): saat sesi kebaca (login) dan tiap resume, kalau `backup.cloudLastAt` > 24 jam dan rak gak kosong (`bookCount() == 0` dilewat). Diam-diam; gagal → coba lagi resume berikutnya, paling cepat 1 jam kemudian. Tanpa polling.
-- **Manual**: Pengaturan → tile Backup → "Backup sekarang" (kalau login, ke cloud; "Simpen salinan ke file" tetap ada sebagai link). Sheet progres & toast sama dengan backup biasa; bedanya catatan "Lagi diunggah ke akun lo…", tanpa "Batal", dan kuota penuh (`STORAGE_FULL`) → toast "Penyimpanan cloud lo udah penuh".
-- **Restore**: "Pulihin dari cloud" → daftar snapshot (terbaru dulu: kapan, jumlah buku & terjemahan, ukuran; belum ada board, pakai komponen yang ada) → tap = download zip ke temp → `RestoreService.inspect(zip, fill:)`: setelah DB lolos cek, file yang dirujuk `books` di snapshot disalin dari HP kalau udah ada, sisanya di-download (`GET /v1/files/:name`; 404 dilewatin) → ringkasan board 28 yang sama → `apply` yang sama.
-- **Pelat Ex libris** (board Akun 08): baris "Backup terakhir · Hari ini, 08.12" dari `backup.cloudLastAt`, muncul setelah backup cloud pertama.
-- **Test**: `test/data/cloud_backup_test.dart` (kontrak, round-trip backup cloud → restore di HP lain lewat Worker palsu di memori, upload cuma file baru, 429, pemicu 24 jam pakai jam injeksi), widget di `test/ui/features/settings/`.
+## Compatibility
 
-## Pengingat backup
-
-- Pengaturan menampilkan "Backup terakhir: 3 hari lalu" (atau "Belum pernah backup").
-- Kalau `backup.lastAt` **6 hari atau lebih** (sebelum siklus install ulang 7 hari), tampilkan banner kecil di Rak: "Udah 6 hari belum backup nih" dengan tombol "Backup".
-- Banner bisa ditutup, muncul lagi besoknya.
-- **Implementasi:** hitungan per tanggal kalender dari backup terakhir; kalau belum pernah backup, dari buku pertama yang diimport (rak kosong = gak ada banner). Muncul mulai hari ke-6. Ditutup → tanggalnya disimpen di `settings` (`backup.reminderDismissedAt`), nongol lagi besok. Banner pink (board 24) ada di paling atas area scroll Rak; teksnya: hari ke-6 "Udah 6 hari belum backup nih" · "Besok jatah install ulang. Amanin data lo dulu yuk.", lebih dari itu "Udah N hari belum backup nih" · "Amanin data lo dulu yuk, sebelum keburu install ulang.", belum pernah "Belum pernah backup nih" · "Data lo cuma ada di HP ini doang. Amanin dulu yuk.". "Backup sekarang" langsung jalanin backup di Rak (sheet progres & toast-nya sama kayak di Pengaturan).
-
-## Catatan
-
-- Jangan bandingkan absolute path dari backup. Semua path di database sudah berupa nama file ([data-model.md](data-model.md)), jadi tetap valid setelah restore.
-- **Buku PDF:** `books/{hash}.pdf` ikut tanpa filter ekstensi (ada test round-trip). Schema DB gak berubah (`sourceType` = teks), jadi angka `schemaVersion` sama; tapi app versi sebelum import PDF gak ngenalin `pdf`. Jangan restore backup berisi buku PDF ke versi lama; downgrade gak didukung.
-- Ukuran backup kira-kira = total ukuran EPUB + sedikit untuk database. Tampilkan ukuran setelah backup selesai.
-- Unit test: round-trip export → restore ke database kosong menghasilkan data yang sama.
-
-## Ditunda (setelah MVP)
-
-- Export/import **per buku**: satu buku + terjemahannya, untuk dipindah atau dibagikan ([#101](https://github.com/choiruladamm/luma/issues/101))
-- Restore **merge**: gabung dengan data yang ada ([#102](https://github.com/choiruladamm/luma/issues/102))
-- Export terjemahan + makna ke Markdown, nyambung dengan Recap ([#103](https://github.com/choiruladamm/luma/issues/103))
-
-## Percakapan buku (#119)
-
-Snapshot `VACUUM INTO` ikut membawa `chat_sessions`, `chat_turns`, revision isi,
-judul manual, anchor scroll dan snapshot sumber. Format backup tetap1; manifest
-mengikuti schema DB aplikasi (schema 17 saat sinkronisasi 8 November 2026), tanpa key/model/isi percakapan di manifest. Model attempt
-tersimpan di DB sebagaimana sebelumnya; API key tetap hanya di secure storage.
-
-Backup saat streaming menangkap checkpoint durable terakhir yang konsisten,
-bukan tail throttle yang masih di memori. Saat hydrate hasil restore, repository
-mengubah running menjadi interrupted sekali, tanpa request/resend otomatis.
-Snapshot arsip tetap terbaca tanpa paragraf asli. Backup schema7 dimigrasi dengan
-revision1 dan chat kosong; versi schema lebih baru tetap ditolak.
-
-`restoreServiceProvider` memasang barrier `ChatLifecycle.close()` sebelum menutup
-executor: send/retry diblok, semua controller (termasuk disposal flush yang belum
-selesai) dihentikan dan ditunggu. Flush gagal membatalkan penggantian. Repository
-chat dan retrieval asal lalu di-dispose supaya late callback tidak menulis ke DB
-baru meski ID buku/sesi/turn dari backup sama. Pemanggil tetap wajib invalidate
-`appDatabaseProvider` setelah apply sukses/gagal; lifecycle/index/seleksi ikut baru.
-Konstruksi `RestoreService` langsung di luar provider harus memasang `beforeClose`
-bila ada controller chat aktif. Rollback file mengembalikan history bersama data
-lama. Hapus cache terjemahan/Bedahin tidak menghapus obrolan; hapus buku cascade
-semua chat buku itu, sedangkan hapus sesi tidak mengubah cache/progres/file buku.
-
-
-Cache index Ngobrol (#134) ikut snapshot DB schema9, termasuk batch building yang
-sudah durable. Restore lama tanpa cache dimigrasi dengan tabel kosong. Cache bukan
-sumber kebenaran: identitas/manifest/vektor diperiksa lagi sebelum retrieval; yang
-rusak dibangun ulang pada send/retry eksplisit. Barrier lifecycle membatalkan
-pekerjaan lama sebelum DB ditutup. Cache tidak menyimpan API key.
-
-### Riwayat percakapan v2 (#137)
-
-Snapshot SQLite membawa jawaban v1 maupun formatVersion2 apa adanya. Restore
-mempertahankan teks, jenis paragraf dan source snapshots; decoder baru membaca
-keduanya. Tidak ada transformasi atau penghapusan jawaban lama. Perubahan #137 dahulu tetap schema9;
-format JSON baru tidak menjanjikan dukungan pada binary aplikasi lama. Round-trip
-backup/restore campuran kedua format dibuktikan dengan database file asli.
-
-### Progres penelusuran (#138)
-
-Snapshot schema10 menyertakan JSON exploration per turn beserta cursor/catatan atau
-query tersisa. Schema9dan sebelumnya dimigrasi dengan kolom nullable tanpa mengubah
-history/index/progres baca. Restore/hydrate tidak melakukan resume otomatis; user
-memilih Lanjutkan, lalu checkpoint divalidasi lagi terhadap isi buku/model/policy.
-Barrier lifecycle existing juga meliputi batch scan dan continuation. Repository
-asal disposed sebelum swap, sehingga callback lama tidak dapat menulis checkpoint
-ke database pengganti. Manifest ZIP tetap format1 dan tidak mengandung isi catatan.
-
-Draf chat streaming (#141) ikut lewat kolom raw `draft` existing (schema10).
-Setelah restore/reopen, proyeksi `parts[].text` defensif tetap terbaca sebagai
-draf terminal tanpa sitasi/auto-send/trusted history. Status running dipulihkan
-ke interrupted; partial escape/Unicode ditahan. Stop/background flush tail;
-backup/process kill hanya memiliki checkpoint durable terakhir.
-
-### Bahasa antarmuka (#184)
-
-`app.locale` ikut backup di tabel settings. Restore memuat ulang locale dari DB hasil restore;
-backup lama tanpa key memakai Indonesia. Bahasa konten/AI tersimpan tetap utuh. Round-trip
-preferensi English diuji di `test/data/restore_service_test.dart`. Detail: [i18n.md](i18n.md).
+Inspection rejects a backup whose manifest schema is newer than the app; older databases are migrated on the temporary copy. A compatible schema alone does not guarantee an older app understands newer content types. File names in the database are resolved against the current device's documents directory. Restore replaces local data rather than merging it.

@@ -8,7 +8,7 @@ import '../theme/stabilo_type.dart';
 import 'buttons.dart';
 
 /// Reset kuota harian OpenRouter: tengah malam UTC (07.00 WIB), dihitung lokal
-/// tanpa jaringan (docs/backend.md, AI).
+/// tanpa jaringan (docs/backend.md, AI subsidy).
 DateTime nextQuotaReset(DateTime now) {
   final utc = now.toUtc();
   return DateTime.utc(utc.year, utc.month, utc.day + 1).toLocal();

@@ -3,7 +3,7 @@ import { ApiError } from "../../lib/errors";
 import { type Data, type Kind, merge, type SyncRecord } from "./merge";
 import { findRecords, pullRows, syncUsage, writeRecords } from "./repo";
 
-/** Maks record per push (docs/backend.md, Aturan client). */
+/** Maks record per push (docs/sync-protocol.md, Sync quotas and compatibility). */
 export const MAX_PUSH_RECORDS = 500;
 
 export type PushRecord = {
@@ -18,7 +18,7 @@ export type PushResult = { seq: number; applied: number };
 
 const id = (r: { kind: string; key: string }) => `${r.kind}\u0000${r.key}`;
 
-/** Kuota sync per user dari `vars` (docs/backend.md, Aturan server). */
+/** Kuota sync per user dari `vars` (docs/sync-protocol.md, Sync quotas and compatibility). */
 export type SyncLimits = { storageBytes: number; dailyWrites: number };
 
 export const syncLimits = (env: Env): SyncLimits => ({

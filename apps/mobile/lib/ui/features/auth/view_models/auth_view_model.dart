@@ -42,7 +42,7 @@ class AuthState {
   );
 }
 
-/// Sesi app-wide (docs/backend.md, Sesi & akun). Cek awal cuma baca token
+/// Sesi app-wide (docs/backend.md, Authentication and accounts). Cek awal cuma baca token
 /// lokal; `/v1/me` dicek di latar tanpa nahan app.
 class AuthController extends AsyncNotifier<AuthState> {
   AuthRepository get _repo => ref.read(authRepositoryProvider);

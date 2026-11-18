@@ -7,7 +7,7 @@ import { formatDate } from "../../../lib/format";
 import type { UserDetail } from "../api/users-api";
 import { UserStatusChip } from "./user-columns";
 
-// Ban in Luma only revokes the subsidized AI quota (docs/dashboard.md, Scope MVP); the board's
+// Ban in Luma only revokes the subsidized AI quota (docs/backend.md, AI subsidy); the board's
 // "can't sign in or sync" copy is corrected here.
 const EFFECTS: [IconName, "effectKey" | "effectKeeps" | "effectUndo", boolean][] = [
   ["x", "effectKey", true],

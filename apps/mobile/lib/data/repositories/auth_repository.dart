@@ -24,7 +24,7 @@ class SignInResult {
 }
 
 /// Sumber kebenaran sesi di HP: token di secure storage, login wajib
-/// (docs/backend.md, Sesi & akun). Cek "sudah login" gak memanggil server,
+/// (docs/backend.md, Authentication and accounts). Cek "sudah login" gak memanggil server,
 /// jadi app kebuka offline.
 class AuthRepository {
   AuthRepository(this._service, this._store);

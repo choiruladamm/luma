@@ -1,4 +1,4 @@
-// Client tipis ke API management OpenRouter (docs/backend.md, AI). Satu fungsi =
+// Client tipis ke API management OpenRouter (docs/backend.md, AI subsidy). Satu fungsi =
 // satu subrequest. Di test di-mock lewat MSW (@msw/cloudflare).
 
 export const OPENROUTER_API = "https://openrouter.ai/api/v1";

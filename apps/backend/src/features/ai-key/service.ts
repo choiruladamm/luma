@@ -17,7 +17,7 @@ export type AiConfig = {
   embeddingModels: string[];
 };
 
-/** Angka dan model dari `vars` (docs/backend.md, Batas & pengaman). Model harus sama dengan guardrail OpenRouter. */
+/** Angka dan model dari `vars` (docs/backend.md, AI subsidy). Model harus sama dengan guardrail OpenRouter. */
 export const aiConfig = (env: Env): AiConfig => ({
   dailyLimitUsd: Number(env.AI_DAILY_LIMIT_USD),
   ttlDays: Number(env.AI_KEY_TTL_DAYS),

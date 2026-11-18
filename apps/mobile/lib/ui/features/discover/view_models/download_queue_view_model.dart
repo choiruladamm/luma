@@ -62,7 +62,7 @@ class DownloadItem {
   );
 }
 
-/// Antrian download level app (docs/discover.md, Keputusan): satu jalan,
+/// Antrian download level app (docs/discover.md, Download and import): satu jalan,
 /// sisanya nunggu; pindah layar gak batal, cuma app kill yang motong.
 /// Selesai → `importEpub` (dedup sha256) → toast lewat [DownloadToasts].
 class DownloadQueue extends Notifier<List<DownloadItem>> {

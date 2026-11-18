@@ -6,7 +6,7 @@ import '../../../core/theme/stabilo_tokens.dart';
 import '../../../core/theme/stabilo_type.dart';
 
 /// "Nyinkronin 3/12 buku" di atas Rak selama buku dari device lain di-download
-/// (docs/backend.md, File buku). Belum ada board: anatomi kartu "Nyiapin
+/// (docs/sync-protocol.md, Book files and Markdown dumps). Belum ada board: anatomi kartu "Nyiapin
 /// katalog buku" di Cari buku (`DiscoverNotice`): spinner + hitungan buku di
 /// judul. Gak bisa ditutup; ilang sendiri begitu download kelar.
 class SyncBanner extends StatelessWidget {

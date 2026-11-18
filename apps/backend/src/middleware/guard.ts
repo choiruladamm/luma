@@ -4,7 +4,7 @@ import { rateLimit } from "./rate-limit";
 import { requireSession } from "./session";
 
 /**
- * Pipeline fitur berkuota (docs/backend.md, Arsitektur kode): saklar darurat →
+ * Pipeline fitur berkuota (docs/backend.md, Request pipeline and API conventions): saklar darurat →
  * sesi → rate limit per user. Saklar duluan, jadi fitur mati gak nyentuh D1.
  */
 export const featureGuard = (flag: FeatureFlag) =>

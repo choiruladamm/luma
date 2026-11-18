@@ -8,7 +8,7 @@ import '../../../../data/services/backend_client.dart';
 import '../../../../domain/models/ai_model.dart';
 
 /// Dari mana key AI: kuota gratis Luma atau key OpenRouter sendiri
-/// (docs/backend.md, AI). Ada key sendiri = key sendiri.
+/// (docs/backend.md, AI subsidy). Ada key sendiri = key sendiri.
 enum AiSource { subsidy, own }
 
 final aiSourceProvider = FutureProvider<AiSource>((ref) async {
@@ -50,7 +50,7 @@ class QuotaState {
   bool get exhausted => usage != null && percent == 0;
 }
 
-/// Kuota dicek paling sering sejam sekali (aturan free tier, docs/backend.md):
+/// Kuota dicek paling sering sejam sekali (docs/budgets.md, Client request policy):
 /// provider hidup sepanjang app, [refresh] cuma manggil server kalau hasil
 /// terakhir udah basi atau [force].
 class AiQuotaController extends AsyncNotifier<QuotaState> {

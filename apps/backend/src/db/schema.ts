@@ -1,4 +1,4 @@
-// Tabel D1 (docs/backend.md, Schema D1). Property camelCase, kolom snake_case.
+// Tabel D1 (docs/backend.md, D1 schema). Property camelCase, kolom snake_case.
 // Tabel Better Auth di auth-schema.ts (hasil `npx auth@latest generate`, jangan diedit manual).
 import { index, integer, primaryKey, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { users } from "./auth-schema";
@@ -6,7 +6,7 @@ import { users } from "./auth-schema";
 export * from "./auth-schema";
 
 /**
- * Key OpenRouter subsidi, satu per user (docs/backend.md, AI). Teks key cuma
+ * Key OpenRouter subsidi, satu per user (docs/backend.md, AI subsidy). Teks key cuma
  * dikasih OpenRouter sekali, jadi disimpan terenkripsi buat device kedua.
  */
 export const aiKeys = sqliteTable("ai_keys", {
@@ -31,7 +31,7 @@ export const inviteCodes = sqliteTable("invite_codes", {
 });
 
 /**
- * Pemakaian per user (docs/backend.md, Batas & pengaman): `bytes` = R2, dicek
+ * Pemakaian per user (docs/backend.md, D1 schema): `bytes` = R2, dicek
  * terhadap `USER_STORAGE_BYTES` tiap upload. `seq` = urutan sync (#109).
  * `syncBytes` = ukuran record sync di D1 (panjang key + JSON data), dicek
  * terhadap `SYNC_STORAGE_BYTES`. `syncRows` = baris sync ditulis di hari UTC
@@ -49,7 +49,7 @@ export const userStorage = sqliteTable("user_storage", {
 });
 
 /**
- * Data sync per baris (docs/backend.md, Sync antar device). `data` = JSON field
+ * Data sync per baris (docs/sync-protocol.md, Records and keys). `data` = JSON field
  * Dart (camelCase), null untuk tombstone. `seq` = urutan per user buat pull.
  * `schema_version` = versi schema Drift app pengirim; versi lebih lama gak
  * boleh menimpa record versi lebih baru.

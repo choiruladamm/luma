@@ -4,7 +4,7 @@ import '../catalog/catalog_row.dart';
 
 part 'catalog.freezed.dart';
 
-/// Satu halaman hasil `BookSource.search` (docs/discover.md, Interface).
+/// Satu halaman hasil `BookSource.search` (docs/discover.md, Sources and discovery).
 @freezed
 abstract class CatalogPage with _$CatalogPage {
   const factory CatalogPage({

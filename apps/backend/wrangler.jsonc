@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  // Rencana & aturan free tier: docs/backend.md
+  // Rencana & aturan free tier: docs/budgets.md, Free-tier limits
   "name": "luma-backend",
   "main": "src/index.ts",
   "compatibility_date": "2026-11-10",
@@ -11,7 +11,7 @@
     "traces": { "enabled": true, "head_sampling_rate": 0.01 }
   },
   // Binding gak diwarisin antar env: tiap env nulis lengkap.
-  // database_id diisi setelah `wrangler d1 create` (lihat docs/backend.md, Setup & deploy).
+  // database_id diisi setelah `wrangler d1 create` (lihat docs/operations.md, D1 and R2).
   "env": {
     "dev": {
       "name": "luma-backend-dev",
@@ -27,7 +27,7 @@
         // Kuota R2 per user (byte, 1GB). Lewat → 413 STORAGE_FULL.
         "USER_STORAGE_BYTES": "1073741824",
         // Kuota sync per user di D1: total ukuran record (100MB) dan baris ditulis per hari UTC.
-        // Lewat → 413 STORAGE_FULL / 429 QUOTA_EXCEEDED (docs/backend.md, Aturan server).
+        // Lewat → 413 STORAGE_FULL / 429 QUOTA_EXCEEDED (docs/sync-protocol.md, Sync quotas and compatibility).
         "SYNC_STORAGE_BYTES": "104857600",
         "SYNC_DAILY_WRITES": "20000",
         "BETTER_AUTH_URL": "https://luma-api-dev.chrl.cloud",
@@ -37,7 +37,7 @@
         // Client ID OAuth Google web,ios,android dipisah koma (publik, bukan secret). Kosong = Google mati.
         // Dev: web, iOS id.ruma.luma.dev, Android id.ruma.luma.dev (release + debug SHA-1).
         "GOOGLE_CLIENT_IDS": "366577823040-vhr2h7toc53pb891v0qoc1m62pps2v41.apps.googleusercontent.com,366577823040-iado5q8njuvdienlc83al1ed2he5u3c0.apps.googleusercontent.com,366577823040-1al41309eeu55f1eer8abb0pdvk5dldp.apps.googleusercontent.com,366577823040-ftbbr6peb5l9ke8bk00th3l93orb644q.apps.googleusercontent.com",
-        // Kuota AI subsidi (docs/backend.md, AI). Model harus sama dengan guardrail workspace OpenRouter.
+        // Kuota AI subsidi (docs/backend.md, AI subsidy). Model harus sama dengan guardrail workspace OpenRouter.
         "AI_DAILY_LIMIT_USD": "0.02",
         "AI_MONTHLY_BUDGET_USD": "5",
         "AI_KEY_TTL_DAYS": "30",
@@ -70,7 +70,7 @@
         // Kuota R2 per user (byte, 1GB). Lewat → 413 STORAGE_FULL.
         "USER_STORAGE_BYTES": "1073741824",
         // Kuota sync per user di D1: total ukuran record (100MB) dan baris ditulis per hari UTC.
-        // Lewat → 413 STORAGE_FULL / 429 QUOTA_EXCEEDED (docs/backend.md, Aturan server).
+        // Lewat → 413 STORAGE_FULL / 429 QUOTA_EXCEEDED (docs/sync-protocol.md, Sync quotas and compatibility).
         "SYNC_STORAGE_BYTES": "104857600",
         "SYNC_DAILY_WRITES": "20000",
         "BETTER_AUTH_URL": "https://luma-api.chrl.cloud",

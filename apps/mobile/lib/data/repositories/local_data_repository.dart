@@ -4,7 +4,7 @@ import '../database/app_database.dart';
 import '../services/file_storage.dart';
 import 'book_repository.dart';
 
-/// Isi HP milik satu akun (docs/backend.md, Sesi & akun).
+/// Isi HP milik satu akun (docs/backend.md, Authentication and accounts).
 class LocalDataRepository {
   LocalDataRepository(this._db, this._books, this._files);
 

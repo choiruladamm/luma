@@ -32,7 +32,7 @@ class AuthSession {
   final AuthUser user;
 }
 
-/// Kode error auth dari server (docs/backend.md, Auth).
+/// Kode error auth dari server (docs/backend.md, Authentication and accounts).
 abstract final class AuthErrorCode {
   static const invalidInvite = 'INVALID_INVITE_CODE';
   static const invalidCredentials = 'INVALID_EMAIL_OR_PASSWORD';

@@ -34,7 +34,7 @@ const _runningPhases = {
   'slow',
 };
 
-/// Nerapin record pull ke tabel lokal (docs/backend.md, Sync antar device):
+/// Nerapin record pull ke tabel lokal (docs/sync-protocol.md, Push and pull):
 /// kunci alami → ID lokal, aturan merge sama dengan server, record yang
 /// belum bisa diterapin ditahan di `sync_inbox`.
 class SyncApplier {

@@ -19,8 +19,9 @@ const googleNotConfigured = 'GOOGLE_NOT_CONFIGURED';
 /// Kode error saat SDK Google gagal (bukan batal): konfigurasi client, jaringan.
 const googleSignInFailed = 'GOOGLE_SIGN_IN_FAILED';
 
-/// Client ID OAuth Google per flavor (publik, bukan secret; docs/backend.md,
-/// Auth). `server` = web client ID, jadi `aud` idToken yang dicek Worker.
+/// Client ID OAuth Google per flavor (publik, bukan secret;
+/// docs/operations.md, Google OAuth clients).
+/// `server` = web client ID, jadi `aud` idToken yang dicek Worker.
 /// iOS butuh client ID-nya sendiri + URL scheme `GOOGLE_REVERSED_CLIENT_ID`
 /// (build setting per konfigurasi Xcode). Android cukup `server`, client
 /// Android dicocokkan Google lewat package + SHA-1.

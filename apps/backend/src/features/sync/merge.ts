@@ -1,4 +1,4 @@
-// Aturan merge sync per kind (docs/backend.md, Aturan merge). Murni, tanpa I/O.
+// Aturan merge sync per kind (docs/sync-protocol.md, Merge rules). Murni, tanpa I/O.
 
 export const KINDS = [
   "book",

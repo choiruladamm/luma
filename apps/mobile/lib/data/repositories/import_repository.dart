@@ -128,7 +128,7 @@ const _afterChapters = 0.85;
 const _afterFiles = 0.90;
 const _beforeDone = 0.99; // 100% dikasih controller, setelah transaksi commit
 
-/// Import EPUB (docs/architecture.md, Alur import). Parse dulu sebelum nyalin
+/// Import EPUB (docs/architecture.md, Import). Parse dulu sebelum nyalin
 /// file, jadi EPUB jelek gak ninggalin apa-apa; gagal setelah nyalin = file
 /// dihapus lagi, transaksi DB di-rollback.
 class ImportRepository {
@@ -296,7 +296,7 @@ class ImportRepository {
     }
   }
 
-  /// Import PDF langsung (docs/import-formats.md, Import PDF langsung). Pola
+  /// Import PDF langsung (docs/import-formats.md, PDF import). Pola
   /// [importEpub]: layout dulu sebelum nyalin file, jadi PDF jelek gak ninggalin
   /// apa-apa; gagal setelah nyalin = file yang baru ditulis dihapus lagi,
   /// transaksi DB di-rollback. File [path] dibaca lewat path (gak masuk memori).
@@ -429,8 +429,7 @@ class ImportRepository {
     }
   }
 
-  /// Import satu bab Luma Markdown (docs/import-formats.md, Logika
-  /// import). Buku tujuan: [bookId] kalau ada, kalau enggak yang `book_key`-nya
+  /// Import satu bab Luma Markdown (docs/import-formats.md, Markdown import behavior). Buku tujuan: [bookId] kalau ada, kalau enggak yang `book_key`-nya
   /// = [bookKey], kalau belum ada dibikin baru dengan [bookTitle] / [author].
   /// [chapter] null = bab terakhir + 1.
   ///

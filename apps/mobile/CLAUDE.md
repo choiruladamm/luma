@@ -11,7 +11,7 @@ Paths are relative to `apps/mobile` unless they start with `docs/` (repo root). 
 
 - Feature branches build Luma Dev only: an unstable migration would touch real data, and Drift can't downgrade.
 - `make run`, `make run-android`, and `make profile` without `f=dev` build the real Luma app and aren't guarded to `master`. On a feature branch always pass `f=dev`.
-- Android release is signed with a fixed keystore via `android/key.properties` (gitignored, see README). Details: `docs/architecture.md` (Gotcha platform).
+- Android release is signed with a fixed keystore via `android/key.properties` (gitignored, see README). Details: `docs/architecture.md` (Platform gotchas).
 
 ## Schema and codegen
 
@@ -35,7 +35,7 @@ Paths are relative to `apps/mobile` unless they start with `docs/` (repo root). 
 - EPUB parsing and backup zipping run in an isolate.
 - The Cari kata index (`paragraph_fts`, FTS5 external-content) is tied to `paragraphs` rowids and kept in sync by triggers. Write to `paragraphs` only with triggers enabled; after `VACUUM` or swapping the DB file, call `rebuildBookSearchIndex()` (restore already does). Details: `docs/book-search.md`.
 - LLM calls read the model from Settings, send reasoning off (retried at minimal effort only for models that require reasoning), and validate JSON output (`docs/llm.md`).
-- Backend calls follow `docs/backend.md` (Aturan client): no timers that call the backend, minimum spacing per automatic trigger, dedupe via `sync_outbox`, bounded retries on network/5xx only.
+- Backend calls follow `docs/budgets.md` (Client request policy): no timers that call the backend, minimum spacing per automatic trigger, dedupe via `sync_outbox`, bounded retries on network/5xx only.
 
 ## Tests
 

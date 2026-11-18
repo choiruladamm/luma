@@ -2,6 +2,6 @@
 // scripts/auth-schema.config.ts supaya schema hasil generate selalu sama.
 
 export const userAdditionalFields = {
-  /** Cabut akses AI subsidi (docs/backend.md, Batas & pengaman). Gak bisa diisi dari sign-up. */
+  /** Cabut akses AI subsidi (docs/backend.md, AI subsidy). Gak bisa diisi dari sign-up. */
   banned: { type: "boolean", defaultValue: false, required: false, input: false, returned: false },
 } as const;

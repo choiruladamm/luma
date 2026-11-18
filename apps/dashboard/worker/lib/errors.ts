@@ -2,7 +2,7 @@ import type { Context } from "hono";
 import { HTTPException } from "hono/http-exception";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
-/** Dashboard error codes (docs/dashboard.md, Endpoint); same format as the backend. */
+/** Dashboard error codes (docs/dashboard.md, API routes and errors); same format as the backend. */
 export type ErrorCode =
   | "BAD_REQUEST"
   | "UNAUTHORIZED"

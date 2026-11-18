@@ -6,7 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'http_client.dart';
 
-/// URL Worker per flavor (docs/backend.md, Lingkungan). Env prod baru ada
+/// URL Worker per flavor (docs/backend.md, Environments and bindings). Env prod baru ada
 /// setelah backend di-merge ke master (`make backend-deploy e=prod`).
 const backendUrls = {
   // Custom domain: `*.workers.dev` diblok sebagian ISP (XL).
@@ -40,7 +40,7 @@ class BackendException implements Exception {
   final int? statusCode;
 
   /// Dari header `Retry-After`: pemicu otomatis berikutnya nunggu minimal
-  /// selama ini (docs/backend.md, Aturan client).
+  /// selama ini (docs/budgets.md, Client request policy).
   final Duration? retryAfter;
 
   @override

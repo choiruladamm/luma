@@ -25,7 +25,7 @@ export type Budget = { response: Response; d1Queries: number; subrequests: numbe
 
 /**
  * Panggil app dengan D1 terhitung dan fetch keluar terhitung, untuk cek
- * anggaran per request (docs/backend.md, Anggaran per aksi).
+ * anggaran per request (docs/budgets.md, Per-action budgets).
  */
 export async function callWithBudget(
   request: Request,

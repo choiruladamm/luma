@@ -51,7 +51,7 @@ Your library lives on the device (SQLite via Drift). AI requests go straight fro
 |---|---|
 | `apps/mobile` | Flutter app (Riverpod, Drift, go_router) |
 | `apps/backend` | Cloudflare Worker: Hono, D1, R2, Better Auth |
-| `docs/` | Product and technical docs, in Indonesian ([index](docs/README.md)) |
+| `docs/` | Product and technical docs, in English ([index](docs/README.md)) |
 
 ## Getting started
 
@@ -70,7 +70,7 @@ make backend-test
 make help           # every command
 ```
 
-Backend accounts, secrets and deploys: [docs/backend.md](docs/backend.md) (Setup & deploy).
+Backend accounts, secrets and deploys: [docs/backend.md](docs/backend.md).
 
 ## Builds
 

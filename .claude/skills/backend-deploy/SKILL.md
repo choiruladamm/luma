@@ -28,7 +28,7 @@ Target env: `$ARGUMENTS` (`dev` or `prod`). No argument → ask. Run every comma
 
 1. `curl -s https://luma-api-dev.chrl.cloud/v1/health` (prod: `luma-api.chrl.cloud`) → `{"status":"ok","env":"<env>"}`. Cloudflare 1104/1042 right after a first deploy to a new domain clears within about a minute.
 2. `dev`: `make backend-live` (Flutter client against the deployed Worker).
-3. Touched an endpoint's cost → check CPU and errors in Workers Logs (`cd apps/backend && bunx wrangler tail --env <env>`), and confirm the budget table in `docs/backend.md` still holds.
+3. Touched an endpoint's cost → check CPU and errors in Workers Logs (`cd apps/backend && bunx wrangler tail --env <env>`), and confirm the budget table in `docs/budgets.md` (Per-action budgets) still holds.
 
 ## Report
 

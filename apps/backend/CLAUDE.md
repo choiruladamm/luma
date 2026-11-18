@@ -20,11 +20,11 @@ Hono API under `/v1` on Workers, D1 + Drizzle, R2, Better Auth (`bearer` plugin)
 
 ## Free tier
 
-Read `docs/backend.md` (Aturan free tier) before adding or changing an endpoint.
+Read `docs/budgets.md` (Free-tier limits and Server request policy) before adding or changing an endpoint.
 
 - One request = one `db.batch()`; stream uploads/downloads (`c.req.raw.body` → R2), never buffer; ≤ 50 subrequests; per-user R2 and sync quotas; rate limits per user (and per IP for auth).
 - Better Auth endpoints are allowlisted (`AUTH_PATHS` in `features/auth/routes.ts`); exposing a new one updates the allowlist.
-- Every endpoint change updates the budget table (Anggaran per aksi). A feature that doesn't fit gets redesigned, not moved to a paid plan.
+- Every endpoint change updates the budget table (`docs/budgets.md`, Per-action budgets). A feature that doesn't fit gets redesigned, not moved to a paid plan.
 
 ## Schema changes (D1)
 

@@ -340,7 +340,7 @@ class _InvalidChatRoute extends StatelessWidget {
   );
 }
 
-/// Login wajib (docs/backend.md, Sesi & akun). Status belum kebaca / gagal
+/// Login wajib (docs/backend.md, Authentication and accounts). Status belum kebaca / gagal
 /// dibaca = gak redirect (app gak kekunci karena secure storage error). Sesi
 /// habis boleh buka layar Masuk ("Login lagi" dari banner).
 String? authRedirect(AuthStatus? status, String location) {

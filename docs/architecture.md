@@ -1,15 +1,23 @@
-# Arsitektur & Alur
+---
+type: explanation
+purpose: How the Flutter app is put together — layers, code map, runtime flows, and the rules that keep them safe.
+sections: [Overview, Layers, Code map, State management, Runtime flows, Cross-cutting, Glossary]
+---
 
-## Gambaran sistem
+# Mobile architecture
 
-App local-first: Drift di device sumber kebenaran. Backend Cloudflare (akun, key AI, backup cloud, sync) dijelaskan di [backend.md](backend.md).
+How the Flutter app in `apps/mobile` is put together: layers, where code lives, the main runtime flows, and the rules that keep them safe. Feature behavior, tables, and prompts live in their own docs (linked per section). Paths are relative to `apps/mobile/lib`.
+
+## Overview
+
+Luma is local-first: the Drift database on the device is the source of truth, and every feature works offline except AI calls, Discover's network fetches (first catalog download, popular feed, book details and EPUB downloads; catalog search works offline once downloaded), and the optional backend (accounts, subsidized AI key, cloud backup, sync; see [backend.md](backend.md)).
 
 ```mermaid
 flowchart LR
-  subgraph Device["Device iOS / Android"]
+  subgraph Device["iOS / Android device"]
     direction TB
     App["Luma Flutter<br/>UI → ViewModel → Repository"]
-    Drift[("Drift SQLite<br/>sumber kebenaran")]
+    Drift[("Drift SQLite<br/>source of truth")]
     KC[["Secure storage<br/>backend_session_token · ai_subsidy_key · openrouter_api_key"]]
     App --> Drift
     App --> KC
@@ -17,379 +25,196 @@ flowchart LR
   subgraph CF["Cloudflare free tier"]
     direction TB
     W["Worker Hono /v1"]
-    D1[("D1<br/>akun · ai_keys<br/>user_storage · records")]
+    D1[("D1<br/>accounts · ai_keys<br/>user_storage · records")]
     R2[("R2<br/>u/userId/files<br/>u/userId/backups")]
-    RL["Rate Limiting"]
     W --> D1
     W --> R2
-    W --> RL
   end
-  subgraph EXT["Layanan luar"]
+  subgraph EXT["External services"]
     direction TB
     G["Google Sign-In"]
-    OR["OpenRouter<br/>model AI"]
+    OR["OpenRouter<br/>AI models"]
   end
-  App -- "Bearer: auth · key AI · backup · sync" --> W
-  W -. "verifikasi idToken" .-> G
+  App -- "Bearer: auth · AI key · backup · sync" --> W
+  W -. "verify idToken" .-> G
   W -- "management key" --> OR
-  App == "AI langsung: key subsidi / BYOK" ==> OR
+  App == "AI direct: subsidized key / BYOK" ==> OR
   App -. "google_sign_in" .-> G
 ```
 
-## Routing (go_router)
+AI requests go straight from the app to OpenRouter with the user's key (own or subsidized); the backend never proxies them.
 
-- Shell tab (`StatefulShellRoute.indexedStack`, `AppShell` + `LumaNavBar` melayang, board Komponen · NavBar): `/` → Rak buku, `/discover` → Cari buku ([discover.md](discover.md)), `/settings` → Pengaturan (tab Atur, meja depan `SettingsHubView`; halaman detail `/settings/account`, `/settings/ai`, `/settings/backup`, `/settings/catalog` anak rutenya, jadi bar tab tetap kelihatan; Cache dan Tampilan cuma sheet, lihat [design.md](design.md)). Bar ke-hide pas keyboard naik; konten tab dapet padding bawah `Layout.navSpace` lewat MediaQuery. Chip "Ngunduh N buku" + lencana di tab Cari buku dari `downloadQueueProvider`. Tap tab aktif lagi = `tabReselectProvider` → layar gulung ke atas.
-- `/reader/:bookId` → Halaman baca (posisi dari `reading_progress`)
-- `/reader/:bookId/breakdown/:chapterId/:groupIndex` → Bedahin satu grup (`Routes.breakdown`). Cuma di-`push` dari sheet Artinya: sheet tetep di bawah, balik = balik ke sheet. "Balik baca" = `pop(true)`, yang manggil (`ReaderView`) ikut nutup sheet-nya, jadi langsung ke halaman.
-- `/login` → `LoginView` (login wajib), di luar shell tanpa bottom bar. `authRedirect` + `refreshListenable` dari `authControllerProvider`: status sesi berubah → redirect dicek ulang.
-- `/discover/book/:sourceId/:externalId` → `BookDetailView`, `extra` = `CatalogBook` (kepala layar tanpa nunggu jaringan). Di luar shell.
-- Chat, di luar shell: `/reader/:bookId/chat`, `/reader/:bookId/chat/quote`, `/reader/:bookId/chat/sessions`, `/reader/:bookId/chat/source/:sessionId/:turnId/:attempt/:sourceId` (`Routes.chat*`).
-- `/settings` juga di-`push` dari layar baca / chat / Bedahin (di atas shell, dapet tombol Balik karena `Navigator.canPop`).
-- Bottom sheet artinya, Aa, dan Daftar isi **bukan route**, cukup `showModalBottomSheet`.
+## Layers
 
-## Provider utama (Riverpod)
+```mermaid
+flowchart TB
+  V["ui/features/*/views<br/>widgets"] --> VM["ui/features/*/view_models<br/>Riverpod providers + Notifiers"]
+  VM --> R["data/repositories<br/>source of truth, raw → domain models"]
+  R --> S["data/services<br/>HTTP, files, secure storage, platform"]
+  R --> DB["data/database<br/>Drift AppDatabase"]
+  VM -.-> D["domain<br/>pure logic + models"]
+  R -.-> D
+```
 
-- `booksStreamProvider` → `StreamProvider` dari query Drift, untuk grid rak.
-- `chapterParagraphsProvider(chapterId)` → paragraf satu chapter dari Drift.
-- Daftar isi dibangun dari `ReaderBook` (`readerBookProvider(bookId)`, `toc_sheet.dart`), bukan provider chapter terpisah.
-- Cari kata ([book-search.md](book-search.md)): `bookSearchIndexProvider` (`BookSearchIndex`, backfill index FTS5 buku lama), `bookSearchRepositoryProvider` (`BookSearchRepository`: cari + riwayat), `bookSearchProvider(bookId)` → `NotifierProvider.autoDispose.family` (`BookSearchViewModel`, state `BookSearchState`: fase `checking`/`preparing`/`idle`/`results`/`empty`/`failed`). Mode cari di reader (`SearchMode`, `reader_types.dart`) tinggal di field `_search` milik `_ReaderViewState`, bukan provider: umurnya sama kayak halaman baca.
-- `groupAiProvider(GroupRef)` → `FutureProvider.autoDispose.family`:
-  1. Cek `ai_results`
-  2. Kalau belum ada: ambil paragraf grup + sampe 3 paragraf (bukan heading/pemisah) sebelum paragraf pertama grup di chapter yang sama sebagai konteks
-  3. Panggil LLM (API key dibaca dari Keychain / Keystore, model dari `ai.model`)
-  4. Validasi jumlah `translations` = jumlah paragraf grup
-  5. Simpan ke Drift, return hasil
+Rules:
 
-  **Auto-retry Riverpod 3 dimatiin** (`retry: (_, _) => null`): tiap percobaan motong saldo. Gagal → `AsyncError` berisi `AiException`, dicoba ulang cuma lewat `ref.invalidate` (tombol "Coba lagi"). Hasil tetep disimpen walaupun sheet keburu ditutup. Dua tap ke grup yang sama pas lagi loading = satu request.
-- `groupAiStreamProvider(GroupRef)` → `NotifierProvider.autoDispose.family` (`GroupAiStream`), versi streaming yang dipakai sheet Artinya. State `AiStream`: `phase` (`AiPhase`), `draft` (teks yang udah dateng, belum di-pacing), `sources` (panjang paragraf asli buat placeholder), `error`, `cached`.
-  1. Cache dulu → langsung `done` (`cached`), gak manggil LLM.
-  2. Belum ada → stream jawaban bersection ([llm.md](llm.md)), state `waiting` → `translating` → `meaning` → `done`; cabang `slow` (15 detik tanpa token, request tetep jalan; token masuk → `translating`), `failed` (30 detik tanpa token = `timeout`, gak ada key, HTTP, dll), `cut` (putus, atau token berhenti 20 detik di tengah; teks yang udah masuk tetep di `draft`).
-  3. Lengkap → validasi; gak valid → sekali lagi lewat jalur JSON tanpa streaming (`explain(attempts: 1)`). Disimpen cuma kalau lengkap dan valid.
-  4. **Beda sama `groupAiProvider`:** ke-dispose (tutup sheet, Lanjut ke grup lain) = request dibatalin (`CancelToken`) dan gak ada yang disimpen; ngulang satu grup cuma pecahan sen. Dua tap ke grup yang sama tetep satu request (family). Coba lagi = `ref.invalidate`, mulai lagi dari `waiting`. Kalau pas dogfooding sering kebuka-tutup gak sengaja: tambah masa tenggang (request jalan 2–3 detik abis sheet ditutup).
-- `breakdownStreamProvider(GroupRef)` → `NotifierProvider.autoDispose.family` (`BreakdownStream`, di `reader/view_models/breakdown_view_model.dart`), sumber layar Bedahin ([llm.md](llm.md#bedahin-60)). State `BreakdownState`: `phase` (`BreakdownPhase`), `input` (terjemahan yang dibedah, buat panel teks), `draft` (`Breakdown`), `error`, `cached`.
-  1. Bahan dari `AiBreakdownsRepository.input`: terjemahan + makna `ai_results` (gak ada = `failed`, harusnya gak kejadian dari UI), teks asli grup, sampe 3 paragraf konteks, teks asli grup berikutnya, judul semua bab urut `sortOrder`.
-  2. Cache `ai_breakdowns` valid (versi + `sourceHash` terjemahan sekarang) → langsung `done` (`cached`).
-  3. Belum ada → stream, `waiting` → `writing` → `done`; cabang `slow`, `failed`, `cut` dengan ambang yang sama kayak `groupAiStreamProvider`.
-  4. Lengkap → `parseBreakdown`; gak valid → di-stream sekali lagi (bukan jalur JSON), masih gagal → `failed(invalidResponse)`. Disimpen cuma kalau valid, abis itu `breakdownSectionsProvider` grup itu di-refresh.
-  5. Ke-dispose (tutup layar) = `CancelToken`, gak ada yang disimpen. Coba lagi = `ref.invalidate`.
-- `breakdownSectionsProvider(GroupRef)` → `FutureProvider.autoDispose.family<int>`: jumlah bagian bedahan grup ini yang masih berlaku, 0 = belum ada (entri "Buka bedahan · N bagian" di sheet Artinya).
-- `breakdownPeekProvider(PeekKey)` → `FutureProvider.autoDispose.family<BreakdownPeek?>`, `PeekKey = ({GroupRef from, int? chapter})`: tujuan kartu Nyambung ke (`AiBreakdownsRepository.peek`). `B<n>` = grup pertama chapter ke-n (urut `sortOrder`), null = grup berikutnya di chapter yang sama. Isinya teks asli + terjemahan `ai_results` kalau ada. Null = tujuan gak ada, kartu jadi teks biasa.
-- `importControllerProvider` → `Notifier` untuk state import, `ImportState` sealed: `ImportIdle`, `ImportProcessing`, `ImportSuccess`, `ImportDuplicate`, `ImportFailed`, `ImportPdfFailed`, `ImportMarkdownPending` (sealed), `ImportMarkdownDone`, `ImportMarkdownFailed`.
-- Sync ([backend.md](backend.md), Sync antar device): `syncRepositoryProvider` (`SyncRepository`: push outbox + file buku, pull, download + impor buku), `syncApplierProvider` (`SyncApplier`: record pull → tabel lokal, `sync_inbox`), `syncServiceProvider` (HTTP), `syncChangesProvider` (event perubahan tabel yang di-sync, sumber debounce `SyncTrigger`; di-override di widget test).
+- `domain/` imports no Flutter, Drift, `data/`, or `ui/`. It holds pure logic (grouping, parsers, prompts, chat retrieval/budget/preview, reading percentage) and immutable models, so it is tested with plain `test()`.
+- Views go through providers: mostly view models, sometimes a repository provider directly (e.g. settings screens). Repositories never import `ui/`.
+- UI never touches `appDatabaseProvider`, except `BackupView` invalidating it after a restore, because the restore closes and swaps the database file (see [Restore swaps the database](#restore-swaps-the-database)).
+- Repositories own the Drift queries and writes. Services are adapters (HTTP, files, platform); only `BackupService` and `RestoreService` touch the database file directly, to snapshot and swap it.
 
-`GroupRef` = record `({int chapterId, int groupIndex})`: `==`/`hashCode` per nilai udah bawaan Dart, gak perlu `freezed`.
+## Code map
 
-## Alur import
+- `main.dart`: bootstraps the `ProviderScope`, opens the router, wraps the app in `SyncTrigger`.
+- `routing/router.dart`: `routerProvider`, the `Routes` constants, and `authRedirect`.
+- `data/database/`: `AppDatabase` (tables, `schemaVersion`, `onCreate`/`onUpgrade`, FTS triggers, `contentChanged`), `appDatabaseProvider`, and `sync_schema.dart` (which tables sync, outbox triggers). Table reference: [data-model.md](data-model.md).
+- `data/repositories/`: one repository per area (books, import, reading progress, AI results, breakdowns, settings, search, catalog, auth, AI key, cloud backup, sync, chat). The chat area is split into `ChatRepository` (persistence), `ChatContextRepository` (retrieval + transport), `chat_snapshot.dart` (row ↔ model mapping), `ChatIndexRepository`, and `ChatNotesRepository`.
+- `data/services/`: `OpenRouterService`, `BackendClient` and the backend services (auth, AI key, sync, cloud backup), `EpubParser` + `ChapterExtractor`, `PdfService`, `BackupService` / `RestoreService`, `FileStorage`, `ApiKeyStore` / `SessionStore` (secure storage), `GutenbergSource` (`BookSource`), `ChatLifecycle`, share, notifications, file picker.
+- `domain/`: pure logic and `domain/models/` (freezed or plain immutable classes); `domain/catalog/` parses the Gutenberg OPDS / catalog feed.
+- `ui/core/`: Stabilo theme (`theme/`, tokens in `stabilo_tokens.dart`) and shared widgets (`widgets/`).
+- `ui/features/<feature>/{views,view_models}/`: `auth`, `bookshelf`, `breakdown` (Bedahin screen), `chat` (Ngobrolin buku), `discover` (Cari buku), `import_book`, `reader` (also owns the Artinya, Bedahin, and Cari kata view models), `settings` (also hosts `SyncTrigger`), `shell` (`AppShell` + `LumaNavBar`), `splash`.
+- `l10n/`: ARB files and generated localizations ([i18n.md](i18n.md)).
 
-1. Pilih file EPUB via `file_picker`
-2. Baca bytes, hitung SHA-256 → kalau hash sudah ada → state **duplikat**
-3. Parse EPUB di isolate (parser sendiri): judul, penulis, cover, chapter dari TOC/nav (bukan dari jumlah file HTML), `sortOrder` = urutan TOC. **Parse dulu sebelum nyalin file**, jadi EPUB jelek gak ninggalin apa-apa
-4. Per chapter: parse HTML (package `html`), ambil blok teks (`p`, `div` berisi teks, heading, `hr`), normalisasi whitespace, buang paragraf kosong, lewati bagian non-isi (lihat [raw.md](ideas/raw.md))
-5. Jalankan `assignGroups` per chapter
-6. Copy ke `Documents/books/{hash}.epub`, cover ke `Documents/covers/{hash}.{ext}`
-7. Insert `books` + `chapters` + `paragraphs` dalam **satu transaksi** Drift
-8. Gagal setelah nyalin → hapus file yang sudah di-copy (transaksi di-rollback), state **error**
+## State management
 
-Import PDF dan Markdown dijelaskan di [import-formats.md](import-formats.md).
+- Riverpod 3 with hand-written providers declared next to the class they expose. A `Notifier` is the view model.
+- `.autoDispose` for per-screen state; repositories, services, and the database live for the app's lifetime. Long-lived chat pieces (`chatRepositoryProvider`, `chatContextRepositoryProvider`, `chatLifecycleProvider`) are deliberately not autoDispose.
+- Per-item state uses `.family` keyed by records with value equality, e.g. `GroupRef = ({int chapterId, int groupIndex})`.
+- Paid AI providers disable Riverpod's automatic retry (`retry: (_, _) => null`): every attempt costs money. Retrying after a failure is always an explicit user action (`ref.invalidate`); the only automatic extra calls are bounded repairs of an invalid answer (Artinya once, chat at most 2; see [llm.md](llm.md)).
+- `appDatabaseProvider` throws under `flutter test`, so widget tests must override every provider that reads the database (see `.claude/rules/flutter-tests.md`).
+- Reader-local state that lives exactly as long as the reading page (e.g. Cari kata's `SearchMode`) stays in the widget state, not in a provider.
 
-Parsing buku besar bisa berat: jalankan di isolate (`compute` / `Isolate.run`) supaya UI tidak freeze.
+## Runtime flows
 
-## Posisi baca
+### Import
 
-- **Titik acuan** = paragraf paling atas yang keliatan di bawah safe area atas + `paragraphOffset` (bagian paragraf itu yang udah lewat garis tersebut, fraksi 0–1).
-- **Nyimpen**: cuma setelah scroll dari jari (lompatan restore gak dihitung), debounce ±500 ms setelah scroll berhenti. Langsung disimpen pas app ke background (`AppLifecycleState` selain `resumed`), pindah bab, dan keluar halaman baca. Gak pernah nulis ke DB tiap frame.
-- **Restore** (buka buku): lompat ke paragraf tersimpan, terus geser sesuai offset supaya titiknya ada di ±⅓ tinggi layar (ada konteks di atasnya). Tinggi paragraf baru ketahuan setelah layout, jadi dihitung di post-frame callback; isi bab disembunyiin sampe udah di posisi, terus fade in. Kepotong di ujung scroll kalau titiknya deket akhir chapter.
-- Satu chapter dirender utuh (bukan list lazy), jadi posisi semua paragraf ketahuan tanpa package tambahan.
-- **Lompat dari hasil Cari kata** gak nyimpen posisi: `_jumpHeld` nahan `reading_progress` (waktu baca tetap dicatat) sampe scroll jari berhenti ≥ 1 layar dari paragraf hasil; keluar reader sebelum itu = posisi lama utuh. Daftar isi, "Balik", dan `force` (mis. buka Bedahin) ngelepas tahanan. Detail: [book-search.md](book-search.md).
+EPUB (`ImportRepository`):
 
-## Perilaku kapsul baca
+1. Pick the file, read the bytes, hash them (SHA-256). Known hash → duplicate state.
+2. Parse in an isolate (own parser): metadata, cover, chapters from the TOC/nav (not from the HTML file count), `sortOrder` = TOC order. Parsing happens **before** copying anything, so a broken EPUB leaves nothing behind.
+3. Per chapter: extract text blocks (`p`, text-bearing `div`, headings, `hr`), normalize whitespace, drop empty paragraphs and non-content sections, run `assignGroups`.
+4. Copy to `Documents/books/{hash}.epub` and the cover to `Documents/covers/{hash}.{ext}`.
+5. Insert `books` + `chapters` + `paragraphs` in **one transaction**. Failure after the copy deletes the copied files.
 
-- Scroll turun ≥ 24pt → dua kapsul geser keluar (200 ms, ease-out). Naik ≥ 12pt atau flick ke atas → muncul. Selama jari masih nge-drag, kapsul ngikutin 1:1, terus snap pas dilepas. Ambang dihitung per arah (ganti arah = mulai dari 0).
-- Awal bab (80pt pertama) dan akhir bab (paragraf terakhir keliatan) → kapsul muncul sendiri. Pindah bab → muncul.
-- Cuma scroll dari jari yang dihitung; lompatan restore posisi gak ngumpetin kapsul.
-- **Zona tap**: paragraf → sheet Artinya (kotak paragraf selebar kolom teks, termasuk sisa kosong di baris pendek). Area kosong (margin kiri-kanan, sela antar paragraf, di bawah teks terakhir, heading/pemisah adegan) → munculin/ngumpetin kapsul. Tengah layar gak punya fungsi khusus. Tap kosong pas sheet kebuka → nutup sheet (barrier sheet).
-- **Sheet dari kapsul (Daftar isi, menu ⋯ → Aa)**: kapsul atas tetep keliatan di atas scrim, tombol yang sheet-nya kebuka jadi kuning, tap tombol itu lagi = nutup sheet. Sheet mulai 12pt di bawah kapsul. Implementasinya: barrier sheet transparan, scrim digambar halaman baca di bawah kapsul; tap di area kapsul kena barrier → sheet ketutup.
-- **Sheet Artinya** (dibuka dari teks): kapsul ngumpet; halaman di-scroll barengan sheet naik sampe bawah blok grup = atas sheet − 16pt, termasuk tiap tinggi sheet berubah (loading → hasil / error / API key kosong). Grup kepanjangan: atas blok = safe area + 16pt. "Lanjut" mindahin highlight ke grup berikutnya di bab itu (grup terakhir: tombolnya mati) dan nge-scroll grup itu ke atas sheet; pas ditutup halaman diem di grup terakhir dan posisinya disimpen. Cuma buka satu grup → halaman balik ke posisi sebelum sheet dibuka.
-  - Grup yang dibuka: satu blok stabilo (`highlight`, radius 14) melebar setengah margin ke samping & 8pt atas-bawah, teksnya `onHighlight`. Scrim 38% digambar halaman baca dan **dibolongin** pas di blok itu, jadi grupnya kebaca di atas scrim; barrier sheet transparan, tap di luar sheet = nutup.
-  - Tinggi sheet tetap 62,5% layar (528 di 844) di semua state, `DraggableScrollableSheet` (min 0, snap): tarik turun di isi pas offset 0 atau di grabber nutup sheet. Isi scroll setinggi sheet (EdgeFade 20pt), header ikut ke-scroll, grabber dan tombol (Salin / Lanjut) lapisan di atas isi, padding isi atas 91 / bawah 102. Error dan API key kosong juga 528 (tombol nempel di bawah).
-  - State: loading ("Bentar, lagi mikir..." + titik berdenyut, skeleton shimmer, tombol mati), hasil (Terjemahan per paragraf + "Maksud penulisnya tuh...", Salin + Lanjut), error ("Yah, gagal nih" + kode kecil: `timeout · 30 detik`, `offline / gak nyambung`, `HTTP 401 · key ditolak`, `HTTP 402 · saldo abis`, `HTTP n`, `jawaban AI gak valid`; "Coba lagi" = `ref.invalidate`), API key kosong ("Isi API key dulu yuk" → Pengaturan). Sheet memakai `groupAiStreamProvider`; teks muncul bertahap dengan pacing, cache langsung tampil. Detail streaming di [llm.md](llm.md).
-  - "Salin" nyalin terjemahan seluruh grup (satu paragraf per blok), tombolnya jadi "Disalin" + toast "Udah disalin, tinggal paste" di atas sheet.
-  - **Penanda grup** yang udah diterjemahin (`ReadMark`, data dari `translatedGroupsProvider`): garis 4pt warna `mark` di tengah margin kiri, sepanjang grup (inset 5pt). Grup itu langsung keisi dari cache pas di-tap.
-- **Akhir bab**: kartu akhir bab keliatan → dua kapsul muncul, kapsul bawah nulis "<judul bab> kelar". **Akhir buku**: layar sendiri tanpa kapsul, garis progres penuh 100%, cover pake cover default (tanpa bulatan huruf), status bar balik.
-- **Lanjut baca** (buka buku yang ada posisi tersimpannya): kapsul muncul 2,5 detik buat orientasi terus ngumpet sendiri (batal kalau user udah scroll duluan). Grup tempat posisi tersimpan dikasih kilatan stabilo sekali, 0 → 60% → 0 dalam 1,2 detik. "Kurangi gerakan" iOS nyala → tanpa kilatan, gantinya garis kiri 4pt yang ilang setelah 3 detik.
-- Status bar ngumpet bareng kapsul kalau toggle "Sembunyiin jam & baterai" nyala (default nyala; togglenya di Aa, #18). Keluar halaman baca → status bar balik.
+State is the sealed `ImportState` from `importControllerProvider`. PDF and Markdown imports: [import-formats.md](import-formats.md).
 
-## Persentase baca
+Content changes to an existing book (Markdown append/replace, any future re-import or reparse that changes paragraph/chapter identity) go through `AppDatabase.contentChanged(bookId)` inside the content transaction, which bumps the book's `contentRevision`. Book chat depends on this (see [Book chat](#book-chat-ngobrolin-buku)).
 
-`(chapters.charOffset + jumlah karakter paragraf sebelum posisi) / books.totalChars`.
+### Artinya and Bedahin (tap a paragraph)
 
-Buku Markdown ([import-formats.md](import-formats.md)) totalnya cuma bab yang sudah masuk, jadi persentase bisa turun tiap bab baru masuk. Kartu Rak-nya pakai strip bab dan chip "N bab", bukan persen, dan tidak pernah "Kelar!".
+- `groupAiStreamProvider(GroupRef)` drives the Artinya sheet: cached `ai_results` → done immediately; otherwise stream the sectioned answer, validate it, and store it only when complete and valid. Disposing the provider (sheet closed, Lanjut to another group) cancels the request and stores nothing. Two taps on the same group share one request (family).
+- `groupAiProvider(GroupRef)` is the non-streaming variant: it keeps the result even if the sheet closes first.
+- `breakdownStreamProvider(GroupRef)` drives the Bedahin screen from `AiBreakdownsRepository.input` (the stored translation + meaning, the group's text and context). The cache is valid only while its version and `sourceHash` match the current translation. `breakdownSectionsProvider` and `breakdownPeekProvider` feed the Artinya sheet's "Buka bedahan" entry and the Nyambung ke cards.
+- Context sent with a group: up to 3 preceding paragraphs (not headings/separators) in the same chapter.
 
-## Gotcha platform
+Stream watchdogs (`GroupAiStream.slowAfter` / `timeoutAfter` / `stallAfter`, shared by Bedahin and chat): no visible token for 15 s → `slow` (the request keeps running); none for 30 s → `failed` with `timeout`; tokens stop for 20 s mid-answer → `cut`, keeping the text received so far. Prompts and response contracts: [llm.md](llm.md). Sheet and screen design: [design.md](design.md).
 
-### iOS
+### Reading position
 
-- **Dua app: Luma & Luma Dev.** Scheme `Runner` (config `Debug`/`Release`/`Profile`) = Luma, `id.ruma.luma`, dipake baca tiap hari, cuma dari `master` (`make release`). Scheme `dev` (config `Debug-dev`/`Release-dev`/`Profile-dev`) = Luma Dev, `id.ruma.luma.dev`, ikon `AppIcon-dev` (varian tinted), nama dari `APP_DISPLAY_NAME`; branch fitur dicoba di sini (`make dev`). Container Documents + Keychain per bundle id, jadi data, DB (schema bisa lebih baru), dan API key terpisah; key diisi ulang sekali di Luma Dev. Data asli bisa dibawa lewat backup Luma → restore di Luma Dev (gak bisa sebaliknya kalau schema Luma Dev lebih baru). Akun Apple gratis: maks 3 app sideload aktif (Luma + Luma Dev = 2), 10 App ID baru per 7 hari, dua-duanya di-install ulang tiap 7 hari. Ikon dev ikut `make brand`.
+- **Anchor** = the topmost visible paragraph below the top safe area, plus `paragraphOffset` (the fraction of it already scrolled past, 0–1).
+- **Save** only after finger scrolls (restore jumps don't count), debounced ~500 ms after scrolling stops. Saved immediately when the app leaves `resumed`, on chapter change, and on leaving the reader. Never written per frame.
+- **Restore**: jump to the stored paragraph, then shift by the offset so the anchor sits at ~⅓ of the screen height. Heights are only known after layout, so this runs in a post-frame callback while the chapter is hidden, then fades in.
+- A chapter renders whole (not a lazy list), so every paragraph's position is known without extra packages.
+- A jump from a Cari kata result holds `reading_progress` (`_jumpHeld`; reading time still counts) until a finger scroll ends ≥ 1 screen away from the hit. TOC, "Balik", and forced saves release the hold. Details: [book-search.md](book-search.md).
+- **Reading percentage** = `(chapters.charOffset + chars of paragraphs before the position) / books.totalChars`. Markdown books only count chapters imported so far, so their percentage can drop; their shelf card shows a chapter strip instead and never shows "Kelar!".
 
-- **Jangan simpan absolute path di database.** Path container app iOS bisa berubah setiap update/reinstall. Simpan nama file, gabungkan dengan `getApplicationDocumentsDirectory()` saat runtime.
-- File dari picker biasanya ada di folder sementara, jadi wajib di-copy ke Documents.
-- Buat folder `books/` dan `covers/` saat app start (`create(recursive: true)`).
+### Reader interaction
 
-### Android
+Capsules, tap zones, sheet alignment, group marks, and Lanjut baca: [design.md](design.md) (Reader interaction).
 
-- **Dua app, kayak iOS.** Flavor `prod` = Luma (`id.ruma.luma`, label "Luma"), flavor `dev` = Luma Dev (`id.ruma.luma.dev`, label "Luma Dev", ikon hitam). Label dari `resValue app_name` di `build.gradle.kts`. Data + Keystore per application id. `flutter run` / `build` wajib `--flavor`; target Makefile Android (`run-android`, `dev-android`, `release-android`, `apk`) selalu ngirimnya. Aturan sama: branch fitur cuma ke Luma Dev, `release-android` / `apk` cuma dari `master`.
-- **Signing tetap.** Update APK (`install -r`) cuma jalan kalau key-nya sama. `android/key.properties` (gitignored) nunjuk ke keystore di luar repo; tanpa itu release jatuh ke debug key (langkah bikin keystore di README). Gak ada siklus 7 hari di Android; banner backup 6 hari tetap dipakai.
-- **`allowBackup="false"`** + `data_extraction_rules.xml` yang ngeluarin semuanya: prefs terenkripsi `flutter_secure_storage` gak boleh ke-restore ke HP lain tanpa master key-nya (key rusak), dan data Luma dibackup lewat fitur backup sendiri.
-- **Status share.** Di Android `share_plus` bisa balik `unavailable` (target share gak ngasih hasil). `shareSaved` nganggep `unavailable` = sukses di Android supaya `backup.lastAt` tetap kecatet; `dismissed` = batal.
-- **Edge-to-edge** (Android 15+ dipaksa): ngumpetin status bar lewat `SystemChrome` sama kayak iOS; konten pakai `SafeArea` / `MediaQuery.padding`. Splash: system splash Android 12+ polos, warnanya sama dengan `LaunchBackground` iOS dan overlay Flutter (`values/colors.xml`, `values-night/colors.xml`).
-- **Font "Bawaan sistem"**: SF (`CupertinoSystemText`) di iOS, Roboto di Android (`readingFamily`).
-- Buka `.epub` dari luar app (intent filter) belum ada: iOS juga belum punya, jadi di luar scope ([#105](https://github.com/choiruladamm/luma/issues/105)).
+### Book chat (Ngobrolin buku)
 
+Components:
 
-## Ngobrolin buku: kontrak domain (#114)
+- Domain contract: `domain/models/book_chat.dart`, `domain/chat_prompt.dart`, plus `chat_retrieval.dart`, `chat_exploration.dart`, `chat_budget.dart`, `chat_toc.dart`, `chat_preview.dart`, `chat_steps.dart`.
+- `ChatRepository`: sessions, turns, attempts, sources, checkpoints, recovery. All callers receive domain models; mapping lives in `chat_snapshot.dart`.
+- `ChatContextRepository`: builds a turn's context and streams the answer: `prepare(turn, …)` → `PreparedChat.stream(…)`. It owns retrieval, exploration, budget, and automatic repair (max 2), but no UI lifecycle and no auto-retry.
+- `chatViewModelProvider(bookId)`: one `ChatViewModel` per book route; immutable `ChatState`. `chatSessionsProvider(bookId)` lists sessions.
+- `ChatLifecycle`: registry of every running chat's stop callback, used by restore and content changes.
 
-Kontrak di `lib/domain/models/book_chat.dart` dan `lib/domain/chat_prompt.dart`;
-[keputusan/lifecycle/state matrix #114](https://github.com/choiruladamm/luma/issues/114).
-Schema 8 menyediakan tabel chat (#115). `ChatRepository` +
-`chatRepositoryProvider` non-autoDispose menyediakan persistence (#116), tanpa
-network. Retrieval dan transport tersedia lewat `ChatContextRepository` (#117);
-ViewModel/lifecycle tersedia lewat `chatViewModelProvider` (#118); route, UI, intip sumber, redesign, pembacaan mandiri dan cache catatan sudah terintegrasi. Gate integrasi akhir tetap #124.
+Identity and revisions:
 
-`ChatBookRef` = `(bookId, contentRevision)`. Session revision lama read-only;
-metadata judul/penulis/cover tidak menaikkan revision. Append/replace/reorder isi,
-reparse yang mengganti identitas paragraf/bab, dan re-import harus menaikkannya
-secara atomik lewat `AppDatabase.contentChanged(bookId)` (#119), dalam transaksi isi.
-Import Markdown memakai hook ini setelah append/replace + renumber; fresh import
-revision1. Re-import EPUB kelak wajib memakai hook yang sama. Running lama menjadi
-interrupted; sesi dan snapshot history lama tetap ada.
+- `ChatBookRef = (bookId, contentRevision)`. A session from an older revision is archived and read-only (archived is derived, not a turn status; history is never deleted). Title/author/cover edits don't bump the revision.
+- Opening, listing, hydrating, or resuming chat only reads the database. Nothing there sends a paid request, and settings/model/key changes never auto-send.
+- Reader entry resumes the last opened session; an explicit quote from Artinya/Bedahin opens the session that already holds that quote (`ChatRepository.sessionForQuote`), otherwise starts a new draft with it. Empty drafts aren't stored. `launch(ChatLaunchContext)` is called once per entry action, not per build.
 
-`ChatLaunchContext` dari reader melanjutkan sesi terakhir; quote explicit dari
-Artinya/Bedahin selalu draft sesi baru. Draft kosong tidak dipersist. Judul awal
-berasal dari `chatTitle(question, automatic: true)`; rename manual tidak ditimpa.
-`ChatReadingPosition` berbentuk record yang sama dengan `ReadingPosition` existing,
-sehingga domain tidak mengimpor repository. Kunjungan sumber membawa return
-position reader dan `ChatScrollAnchor` (turnId/blockIndex/alignment), tidak menulis
-progres. Resolver memvalidasi owner session/turn, revision/hash/range sebelum jump.
+Send lifecycle (phases `preparing → retrieving → waiting → writing → done`; the stream watchdogs above, plus a 6-minute cap on retrieval, `ChatViewModel.retrievalTimeout`):
 
-`ChatTurn` menyimpan satu pertanyaan dan attempt yang dapat diganti hanya lewat
-retry eksplisit atas turn terakhir. `ChatAttemptRef` mengikat session/turn/attempt/
-book revision; repository juga wajib memeriksa session masih ada sebelum menulis.
-Stop/back/switch/background memanggil cancel+flush, lalu `interrupt(cancelled: true)`;
-process restart memanggil `interrupt()` menjadi interrupted. Draft tetap tersimpan,
-tidak auto-send. `slow` tetap request aktif; archived merupakan relasi session vs
-current revision, bukan status turn yang menghapus history. Detail persist/cancel/
-stream dimiliki repository/#118, bukan model domain.
+- The first send creates the session and turn atomically; a validation failure rolls both back. A second pending send in the same session is rejected. The view model sets its guard before the first `await` for send, retry, and continuing an exploration, so a double tap never starts two runs.
+- `prepareSources` freezes validated sources before transport. `checkpoint` accepts cumulative drafts only (no regression, no phase going back) and writes at most every 500 ms or 1 KiB growth (a phase change writes immediately); `finalize` flushes immediately. A hard process kill can lose the last tail below that threshold.
+- Only the final validated frame is finalized as done. Live previews (`ChatState.preview`, ≤ 20 Hz) are provisional; their citations are dropped on failure.
+- Every attempt update checks session/turn ownership, active revision, attempt, and running phase inside a transaction; stale or late writes return false and are discarded, never turned into not_found.
+- Retry replaces the attempt of the last turn only (cut/failed/stopped/interrupted); it never adds a user question.
 
-`ChatRepository` menyediakan `watchSessions(bookId)`,
-`watchTurns(bookId,sessionId)`, `lastOpenedSession`, `createFirstTurn`,
-`appendTurn`, `rename`, `markOpened`, `saveScrollAnchor`, `deleteSession`,
-`retry`, `prepareSources`, `validatePrepared`, `checkpoint`, `finalize`, dan
-`recoverInterrupted`.
-Semua caller menerima model domain; mapper snapshot berada di
-`data/repositories/chat_snapshot.dart`. Preview sesi hanya pertanyaan terakhir
-sesi itu; urutan aktivitas `(updatedAt,id)` terpisah dari resume
-`(lastOpenedAt,id)`. Stream tidak menandai sesi sebagai dibuka.
+Cancellation and recovery:
 
-First-send membuat sesi + turn secara atomik; kegagalan validasi rollback keduanya.
-Append/retry menolak pending kedua di sesi yang sama. ViewModel #118 tetap harus
-menahan double tap pada draft sebelum sessionId pertama tersedia; dua panggilan
-`createFirstTurn` terpisah berarti dua sesi baru. Tidak ada draft-session kosong
-di database atau request ID persist tambahan.
+- Stop, back, session switch, new session, delete, and app background (`AppLifecycleListener`) cancel the request and finalize it as stopped **before** moving on. Routes must `await stop()` before navigating. Resume never resends.
+- Dispose cancels and flushes asynchronously (Riverpod dispose is synchronous); the stop callback stays registered in `ChatLifecycle` until that flush finishes, so a restore can await it.
+- On process restart, the first repository use marks persisted running attempts as interrupted, with no network and no resend.
+- Transport callbacks capture the repository instance they started with; a disposed provider's callbacks can't write. Never create a second `ChatRepository` on the same database while a request is running.
+- `ChatLifecycle.changeContent(bookId, …)` blocks send/retry for that book and awaits its stops before a content/revision transaction (Markdown import uses it); other books keep running.
 
-`prepareSources` membekukan snapshot tervalidasi sebelum transport, lalu menjadi
-waiting. Checkpoint menerima draft kumulatif, menolak regresi dan phase mundur;
-menulis tiap ≥500ms atau pertumbuhan ≥1KiB (phase berubah langsung ditulis).
-Sisa draft terbaru ditahan di memori tanpa timer; terminal `finalize` langsung
-flush, termasuk tail yang belum masuk DB. True dari checkpoint berarti diterima,
-bukan selalu sudah ditulis. Proses mati mendadak dapat kehilangan tail terakhir
-di bawah ambang; stop/back/switch/background di #118 wajib finalize sebelum dispose.
+Source peek and visit:
 
-Recovery sekali per lifetime repository berjalan sebelum read/write pertama:
-persisted running/unknown phase menjadi interrupted, tanpa resend atau jaringan.
-Jangan membuat repository kedua di DB yang sama ketika request masih aktif.
-Setiap update attempt memeriksa session/turn ownership, revision aktif, attempt,
-dan running phase dalam transaksi; terminal/attempt lama ditolak (false).
-Sebelum restore menutup/mengganti DB, cancel + finalize request, lalu invalidate
-provider. Provider dispose mematikan callback instance lama; callback transport
-wajib menangkap instance repository asal, bukan mencari provider baru (#118/#119).
+- A source chip opens `ChatSourceSheet`, then `Routes.chatSource(ChatSourceRef)` (`/reader/:bookId/chat/source/:sessionId/:turnId/:attempt/:sourceId`). The URL carries IDs only; `ChatRepository.resolveSource` / `watchSource` check ownership, attempt, that the source was actually cited, revision, chapter, range, snapshot, and hash against the current text. Stale sources can still be peeked as snapshots, without the jump.
+- `ChatSourceVisitView` reuses `ReaderView(sourceVisit: …)`; a visit records no reading activity (no progress, reading time, or markOpened) and disables Artinya and chat entry. "Lanjut baca" is the one exception: `ChatRepository.continueReading` validates the source and writes it as the new reading position.
+- The main reader stays mounted under chat (reading time paused via `_pushOffReader`), and "Balik" returns to the reader position captured on entry.
 
+Storage: [data-model.md](data-model.md). Prompts, retrieval, budget, preview protocol, UI: [llm.md](llm.md).
 
-`chatContextRepositoryProvider` non-autoDispose memakai DB, `ChatRepository`,
-`OpenRouterService`, dan `ApiKeyStore`. Domain retrieval di `chat_retrieval.dart`;
-memakai index persist #134 tanpa framework agent baru. #118 mengambil `model()`, membuat
-turn dengan `chatPromptVersion`, lalu `prepare(turn,cancel:)` → `stream(cancel:)`.
-Simpan `frame.draft` dengan checkpoint writing, dan finalize done hanya untuk
-`frame.answer` terakhir yang tervalidasi. Stream tanpa frame final berarti attempt
-sudah tidak aktif; jangan mengubahnya menjadi not_found. Error dipetakan ke terminal
-failed/cut oleh ViewModel. Embedding mempertahankan DioException cancel/certificate/
-unknown agar tidak memicu fallback; #118 menangani ini bersama AiException. Semua
-tahap memakai cancel yang sama. Keluar/pindah sesi/background tetap harus cancel dan finalize; repository konteks tidak memiliki lifecycle
-UI atau auto-retry. Detail budget, cache dan protocol: [llm.md](llm.md).
+### Sync trigger
 
-#143: `prepare(turn, readingChapterId:)` membangun TOC dari `chapters`
-(`chat_toc.dart`), mengambil context model lewat `OpenRouterService.modelInfo`
-(gratis, cache per repository, fallback konservatif), lalu satu `ChatBudget`
-(`chat_budget.dart`) dipakai planner, loop baca/cari, jawaban dan perbaikan
-otomatis (`PreparedChat.stream`, maksimal 2). `ChatStreamFrame.repair` > 0 =
-perbaikan berjalan; ViewModel menampilkan status dan menahan preview lama.
-`ChatViewModel.launch` menyimpan `returnPosition.chapterId` untuk resolusi
-"bab ini"; `chapterSectionBackfillProvider` dipanggil saat hydrate (lokal,
-gratis) dan di-override di test tanpa DB. #150: `ChatState.explorationProgress`
-(`ChatExplorationProgress`) membawa label bab + catatan; catatan dipublish lewat
-`preview` existing; `answerNow()` menandai `_ChatRun` dan `canAnswerNow`
-menampilkan "Jawab sekarang" selama `retrieving/slow`. #153 (Langkah AI):
-`prepare(onStep:)`/`stream(onStep:)` memanggil `ChatStep` (`chat_steps.dart`:
-plan/cache/read/search/skip/repair/retry/stop/answer, status done/running/skipped)
-tanpa request tambahan. ViewModel menumpuk lewat `chatAppendStep` (langkah
-`running` selalu terakhir, ditutup oleh langkah selesai berlabel sama) ke
-`ChatState.steps` (attempt-scoped), `chatSettleSteps` menandai sisa running
-sebagai skipped saat attempt berakhir tanpa jawaban, dan menyimpannya sekali
-lewat `finalize(steps:)`. UI `chat_steps_row.dart` (`ChatStepsRow`, `ChatAnswerNow`)
-dipasang `ChatHistory` di atas `ChatResponse`: baris status 40pt + daftar (maks 6,
-"lihat N lagi"), terbuka saat jalan, tertutup setelah selesai, toggle per turn;
-turn lama tanpa `steps` tidak menampilkan baris. Blok "Catatan sementara" memuat
-tombol teks "Jawab sekarang →" + caption menggantikan tombol sekunder #150.
+`SyncTrigger` (wraps the app in `main.dart`) syncs without polling: a full sync on sign-in, and on resume at most every 5 min (`SyncRepository.syncIfDue`), and a push 60 s after the last local change (`syncChangesProvider`). Local changes are recorded by Drift triggers into `sync_outbox` (`sync_schema.dart`); pulled records go through `SyncApplier` into the local tables. Protocol and limits: [backend.md](backend.md).
 
+### Restore swaps the database
 
-### ViewModel dan lifecycle Ngobrolin buku (#118)
+`RestoreService.inspect` opens the backup's database in a temporary copy (migrating it if older) and rebuilds the search index there; `RestoreService.apply` then closes SQLite and installs that copy. Before that, `ChatLifecycle.close()` blocks send/retry, awaits every running chat's stop, and disposes the original repositories; a failed flush aborts the restore. Afterwards `BackupView` invalidates `appDatabaseProvider` (success or failure), which rebuilds every repository, view model, and chat lifecycle from the reopened database. Old callbacks can't write to the new database even if IDs repeat. Details: [backup.md](backup.md).
 
-`chatViewModelProvider(bookId)` adalah `NotifierProvider.autoDispose.family` manual,
-satu controller per route buku. `ChatState` immutable memuat book/revision aktif,
-activeSession, turns, draft, selectedQuote, phase/error/problem, loading,
-changingSession dan scrollAnchor. `archived/readOnly/canSend/canRetry` diturunkan
-dari state; archived bukan phase baru. `chatSessionsProvider(bookId)` terpisah
-untuk daftar sesi (`AsyncValue`). `ChatRepository.watchBook` memantau revision/
-penghapusan, `session(bookId,sessionId)` tetap book-scoped.
+## Cross-cutting
 
-Build/hydrate/open/list/resume hanya membaca DB dan memulihkan running sebagai
-interrupted lewat recovery repository. Tidak ada request berbayar. Entry reader
-melanjutkan lastOpened; #120/#121 memanggil `launch(ChatLaunchContext)` **sekali dari
-aksi/entry**, bukan setiap build. Quote explicit membuat draft baru tanpa record;
-bisa dilepas. Launch menunggu hydrate agar quote tidak tertimpa resume. Draft
-bertahan saat kembali dari Pengaturan; settings/model/key tidak memicu auto-send.
+### Routing
 
-API aksi: `setDraft`, `removeQuote`, `send`, `retry`, `stop`, `openSession`,
-`newSession`, `launch`, `deleteSession`, `rename`, dan `setScrollAnchor`.
-`send/retry` mengembalikan Future sampai attempt terminal. Guard dipasang sebelum
-await model/first insert, termasuk untuk double tap retry. Setelah turn tersimpan,
-draft/quote dilepas dan controller memakai sessionId/attemptRef dari repository.
-Jika stop datang saat insert belum selesai, stop menunggu hasil insert dan
-memfinalisasi turn stopped; sesi yang sudah tersimpan tetap aktif jika tidak
-sedang navigasi. Insert yang gagal menyisakan draft untuk dikirim ulang eksplisit.
+go_router with a `StatefulShellRoute.indexedStack` shell (`AppShell` + floating `LumaNavBar`): `/` Rak, `/discover` Cari buku, `/settings` Atur (detail pages are child routes so the tab bar stays visible). Everything else (`/login`, `/reader/:bookId`, Bedahin, chat, book detail) is outside the shell; `Routes` holds every path. `/settings` can also be pushed from reader/chat/Bedahin and then gets a back button. The Artinya sheet, Aa, and table of contents are modal sheets, not routes.
 
-| Pemicu | Transisi/efek |
-|---|---|
-| Send/retry eksplisit | preparing → retrieving → waiting → writing → done |
-| 15s belum ada raw token | slow di state UI; request masih berjalan |
-| Retrieval/rewrite/embedding/selector total 6 menit | failed + timeout; cancel, tanpa retry |
-| 30s setelah prepare tanpa raw token | failed + timeout |
-| 20s stall setelah raw token | cut + timeout, flush raw partial |
-| HTTP/network/invalid output | failed sebelum raw, cut setelah raw; error dipertahankan |
-| Stop/back/switch/new/delete/background | cancel segera, flush stopped sebelum perpindahan |
-| Proses restart | interrupted dari repository; tidak resend |
-| Owner/attempt hilang atau callback false | interrupted/discard; tidak menjadi not_found |
-| Revision berubah/buku dihapus | cancel, archive/readOnly atau state buku hilang |
+Sign-in is required: `authRedirect` with `refreshListenable` on `authControllerProvider` re-checks the redirect whenever the session changes. An unreadable secure storage doesn't lock the app out. A stored token opens the app without waiting for the backend; `AuthController` checks `/v1/me` in the background. A 401 there sets `AuthStatus.expired`: the token stays, reading, cache, and BYOK keep working, sync, cloud backup, and subsidized-key refresh stop quietly, and the shelf shows the "Sesi lo habis" banner with "Login lagi". Only `signedOut` routes to `/login`; signing out keeps local data.
 
-Raw JSON dari #117 hanya untuk checkpoint. #141 mengirim proyeksi terstruktur
-`frame.preview`, dipagari attempt dan diperbarui maksimal20Hz. Objek paragraf
-lengkap baru boleh memiliki chip sumber setelah validasi frozen + live sources;
-preview tetap provisional dan sitasinya dicabut saat gagal/terputus. Hanya final frame yang
-tervalidasi diteruskan ke finalize done. Clock memakai 15/30/20s yang sama dengan
-Artinya; retrieval memakai deadline total 6 menit (`ChatViewModel.retrievalTimeout`; budget `chat_budget.dart` berhenti di 5 menit) terpisah karena dapat mencakup
-indexing buku. Nilai ini batas produksi konservatif, bukan hasil benchmark device.
-Tidak memakai Pacer untuk menampilkan JSON yang belum tervalidasi.
+### Isolates
 
-Perpindahan sesi diserialkan dan menutup satu run sebelum aksi berikutnya; send
-nonaktif selama perpindahan. Scroll anchor stabil ditahan di memori dan disimpan
-saat stop/perpindahan. Callback stream baca lama ditolak memakai generation seleksi;
-cleanup subscription tidak menghambat navigasi. Retry hanya turn terakhir yang
-cut/failed/stopped/interrupted, menimpa attempt tanpa menambah pertanyaan user.
+Heavy work runs off the UI isolate (`Isolate.run` / `compute`): EPUB parsing, catalog parsing, sync payload compression, backup zipping, and restore extraction.
 
-`AppLifecycleListener` memanggil stop pada inactive/hidden/paused/detached; resumed
-tidak mengirim ulang. Back/route change di #120/#121 **harus await `stop()` sebelum
-navigasi**. Dispose juga cancel/flush melalui instance repository asal, dan semua
-callback lama dipagari lifetime. Dispose Riverpod bersifat sinkron: flush fallback
-berjalan async. `ChatLifecycle` (#119) menyimpan callback stop setiap lifetime
-controller sampai flush dispose selesai, termasuk layar tertutup/paused. Restore
-memanggil `close()` sebelum SQLite ditutup: blok send/retry, await stop seluruh
-controller, lalu dispose repository + retrieval asal. Flush gagal membatalkan
-restore; callback asal tidak dapat menulis ke DB baru meski ID backup sama.
-Restore/provider rebuild memasang lifetime baru; callback lama tidak membaca ref/
-state/instance provider baru. Tidak ada key di ChatState.
+### Files and paths
 
-Import Markdown memakai `ChatLifecycle.changeContent` untuk blok send/retry buku
-itu + await stop sebelum transaksi isi/revision; buku lain tetap dapat berjalan.
-Invalidasi `appDatabaseProvider` setelah restore (sukses/gagal) membangun ulang
-repository, retrieval, lifecycle, ViewModel dan seleksi sesi dari DB yang dibuka.
-Index in-memory memakai bookId+revision+manifest, sehingga append/reorder atau
-replace panjang sama tetap reindex pada send berikutnya. Jika isi
-sudah berubah sebelum cancel/flush, guard repository menolak late write; arsip tetap
-readOnly. Jangan melemahkan guard untuk memfinalisasi ke revision lain.
+The database stores file names only; absolute paths are joined with `getApplicationDocumentsDirectory()` at runtime, because the iOS container path changes on reinstall. Picked files live in a temp folder, so they are always copied to Documents. `books/` and `covers/` are created at startup.
 
-### Percakapan natural (#137)
+### Language
 
-Chat tetap memakai repository/ViewModel/provider/renderer yang sama. Domain
-ChatAnswer menyimpan formatVersion dan setiap ChatAnswerBlock memiliki kind; UI
-merender teks dan sumber yang tersedia, tanpa cabang format layar baru. V2 tidak
-memakai fixed note partial/not_found v1. Completed partial/clarify/off_topic dan
-legacy no-source menjadi konteks dialog, bukan bukti buku. Raw checkpoint tetap
-bukan teks UI. No-source tidak memotong stream sebelum model dapat menjawab atau
-meminta klarifikasi; validation owner/attempt/revision/sources dan cancellation
-sebelum/sesudah network tetap berjalan.
+UI copy comes from ARB files via `context.l10n`; `appLocaleProvider` reads `app.locale` from settings and switching it keeps the router and `ProviderScope`. Formatters take an explicit locale. AI output, book text, and chat history stay in their original language. Details: [i18n.md](i18n.md).
 
-### Penelusuran adaptif (#138)
+### Platform gotchas
 
-`chat_exploration.dart` mengatur window global, catatan/range bersumber, manifest
-dan checkpoint policy1. `ChatContextRepository.prepare` memperluas rewrite existing,
-menjalankan pencarian berbatas atau scan batch urut, lalu freeze sumber lewat
-ChatRepository seperti sebelumnya. Catatan tidak dipakai sebagai kutipan asli.
-`ChatRepository` menyimpan progres dalam kolom exploration schema10, dengan guard
-attempt/revision/dispose yang sama. `continueExploration` membuat turn baru;
-ViewModel memasang guard sebelum await sehingga double-tap tidak menggandakan run.
-UI memakai status/progress dan Stop existing, serta Lanjutkan saat ada checkpoint
-terminal belum selesai. Tidak ada request saat rebuild/hydrate/resume/settings.
-Budget dan batas sintesis ada di [llm.md](llm.md). Source visit tetap #122.
+iOS:
 
-### Preview jawaban (#141)
+- **Two apps.** Scheme `Runner` (`Debug`/`Release`/`Profile`) is Luma (`id.ruma.luma`), built only from `master`. Scheme `dev` (`Debug-dev`/`Release-dev`/`Profile-dev`) is Luma Dev (`id.ruma.luma.dev`, icon `AppIcon-dev`, name from `APP_DISPLAY_NAME`). Documents and Keychain are per bundle id, so data, schema, and API keys are separate. Real data can move Luma → Luma Dev through backup/restore, not back if Luma Dev's schema is newer.
+- A free Apple account allows 3 active sideloaded apps and 10 new App IDs per 7 days; both apps are reinstalled every 7 days.
 
-`chat_preview.dart` memiliki reader incremental dengan batas48KB/32blok/depth32,
-penanganan escape/surrogate dan duplicate-key guard; validator blok dipakai ulang
-oleh parse final. `ChatTurn.preview` adalah proyeksi baca dari raw checkpoint,
-bukan kolom DB. `ChatState.preview` berisi attemptRef+blok runtime; timer50ms
-terpisah dari timer timeout dan dibatalkan saat terminal/dispose. Finalize yang
-ditolak tidak mempertahankan sitasi. Renderer memakai anchor/SelectableText sama,
-cache turn lain selama delta, dan live-region hanya untuk status.
+Android:
 
-### Intip dan kunjungan sumber (#122)
+- **Two apps** as flavors: `prod` = Luma, `dev` = Luma Dev (black icon); labels from `resValue app_name` in `build.gradle.kts`. `flutter run` / `build` always need `--flavor`; the Makefile Android targets pass it.
+- **Fixed signing**: `android/key.properties` (gitignored) points to a keystore outside the repo; without it, release falls back to the debug key and `install -r` updates fail. No 7-day cycle; the 6-day backup banner still applies.
+- **`allowBackup="false"`** + `data_extraction_rules.xml` excluding everything: encrypted `flutter_secure_storage` prefs restored to another phone without their master key break. Luma backs up through its own feature.
+- **Share result**: `share_plus` can return `unavailable` on Android; `shareSaved` treats it as success so `backup.lastAt` is still recorded.
+- **Edge-to-edge** (forced on Android 15+): status bar hiding goes through `SystemChrome` as on iOS; content uses `SafeArea` / `MediaQuery.padding`. The Android 12+ system splash is plain, colored like the iOS `LaunchBackground`.
+- The "Bawaan sistem" reading font is SF on iOS and Roboto on Android (`readingFamily`).
+- Opening an `.epub` from another app (intent filter / document types) isn't supported on either platform ([#105](https://github.com/choiruladamm/luma/issues/105)).
 
-`ChatSourceChip` membuka `ChatSourceSheet` lokal (pola A5), lalu
-`Routes.chatSource(ChatSourceRef)` di bawah route chat:
-`/reader/:bookId/chat/source/:sessionId/:turnId/:attempt/:sourceId`.
-URL hanya ID; `ChatRepository.resolveSource/watchSource` memeriksa kepemilikan,
-attempt, sumber frozen yang benar-benar disitasi, revision, chapter.id, range,
-snapshot dan hash terhadap teks saat ini dalam transaksi baca. Sumber provisional
-harus sudah menjadi blok lengkap pada checkpoint; sumber final hanya dari jawaban
-trusted. Sumber gagal/arsip berubah tetap dapat diintip sebagai snapshot, tanpa jump.
-Resolver tidak menjalankan recovery/markOpened, indexing, atau request AI.
+## Glossary
 
-`ChatSourceVisitView` memantau pencabutan sumber dan pergantian repository saat
-restore, termasuk ID yang dipakai ulang. Renderer `ReaderView(sourceVisit: ...)`
-yang sama dipakai: `_save`, `_flushReading`, markOpened/markFinished, interaksi jam
-baca, debounce, lifecycle dan dispose tidak mencatat aktivitas kunjungan. TOC/next
-hanya mengubah tampilan lokal. Tap Artinya dan entry chat tidak aktif di mode ini.
-Range UTF-16 disorot dengan token Stabilo; posisi awal mengikuti kotak teks range,
-dan kutipan panjang disejajarkan di bawah kapsul atas. Aa tetap memakai preferensi
-reader; identity sumber tidak berasal dari nomor urut bab.
-
-Reader utama tetap mounted dan jam bacanya paused lewat `_pushOffReader` selama
-chat/visit. Intip/visit menahan auto-follow history supaya delta tidak menggeser
-posisi chat yang ditinggal. Balik ke obrolan mem-pop visit; Lanjut baca semula
-mengembalikan `ReaderReturn.reading` melalui chat dan overlay Artinya/Bedahin ke
-reader asli beserta posisi yang dicapture saat masuk. Tidak ada adopsi posisi sumber
-menjadi progres baru. Revisi pacing/no-auto-scroll menyeluruh tetap di #123.
-
-### Bahasa antarmuka (#184)
-
-`appLocaleProvider` membaca `app.locale` dari SettingsRepository. MaterialApp.router memakai
-locale dan delegates generated; router/ProviderScope tetap sama saat switch. Copy/mapping
-label berada di UI dan ARB, formatter menerima locale eksplisit. Kontrak dan validasi: [i18n.md](i18n.md).
+- **Grup**: a run of paragraphs that is tapped, translated, and cached together ([grouping.md](grouping.md)). Its `groupIndex` and each `paragraphIndex` must stay stable.
+- **Artinya**: the bottom sheet with the translation + meaning of one group.
+- **Bedahin**: the full-screen breakdown of one group, opened from Artinya.
+- **Ngobrolin buku**: book chat; answers grounded in cited passages of the book.
+- **Cari kata**: in-book full-text search (FTS5).
+- **Cari buku**: the public-domain catalog tab (discover).
+- **Rak**: the bookshelf tab.
+- **Luma / Luma Dev**: the real-data app built from `master` / the test app built from feature branches.
+- **contentRevision**: a book's content version; bumped by `contentChanged` whenever paragraph or chapter identity changes.

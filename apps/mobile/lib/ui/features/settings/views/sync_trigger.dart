@@ -6,7 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../data/repositories/sync_repository.dart';
 import '../../auth/view_models/auth_view_model.dart';
 
-/// Sync otomatis (docs/backend.md, Sync antar device), tanpa polling: sync
+/// Sync otomatis (docs/budgets.md, Client request policy), tanpa polling: sync
 /// penuh saat login dan tiap resume (jarak min 5 menit di
 /// [SyncRepository.syncIfDue]); push aja [debounce] setelah perubahan lokal
 /// terakhir ([syncChangesProvider]).
@@ -15,7 +15,7 @@ class SyncTrigger extends ConsumerStatefulWidget {
 
   final Widget child;
 
-  /// Jeda setelah perubahan lokal terakhir (docs/backend.md, Aturan client).
+  /// Jeda setelah perubahan lokal terakhir (docs/budgets.md, Client request policy).
   static const debounce = Duration(seconds: 60);
 
   @override

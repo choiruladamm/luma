@@ -45,7 +45,7 @@ class AiSubsidyConfig {
   final double dailyLimitUsd;
 }
 
-/// Panggilan `/v1/ai/*` (docs/backend.md, AI). Kode error `AI_BANNED` = akses
+/// Panggilan `/v1/ai/*` (docs/backend.md, AI subsidy). Kode error `AI_BANNED` = akses
 /// AI dicabut.
 class AiKeyService {
   AiKeyService(this._client);

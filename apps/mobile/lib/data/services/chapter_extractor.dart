@@ -38,7 +38,7 @@ class ParsedChapter {
 /// docs/architecture.md).
 ///
 /// Chapter non-isi dibuang, dikenali dari struktur, bukan judul
-/// (docs/ideas/raw.md): yang isinya kebanyakan link (daftar isi, indeks) dan
+/// (docs/import-formats.md): yang isinya kebanyakan link (daftar isi, indeks) dan
 /// yang gak punya paragraf (halaman judul kepecah, lisensi Gutenberg yang
 /// dilewatin).
 ///

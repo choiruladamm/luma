@@ -13,7 +13,7 @@ class AiReply {
   final String meaning;
 }
 
-/// Jenis request LLM di `ai_calls`. Recap (docs/ideas/recap.md) tinggal
+/// Jenis request LLM di `ai_calls`. Recap (#104) tinggal
 /// nambah nilai.
 enum AiCallKind { group }
 

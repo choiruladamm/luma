@@ -4,7 +4,7 @@ part 'catalog_row.freezed.dart';
 part 'catalog_row.g.dart';
 
 /// Satu buku dari dump `pg_catalog.csv` Project Gutenberg (docs/discover.md,
-/// Katalog lokal). Data polos: aman dikirim balik dari `Isolate.run`.
+/// Local catalog and search). Data polos: aman dikirim balik dari `Isolate.run`.
 @freezed
 abstract class CatalogRow with _$CatalogRow {
   const CatalogRow._();

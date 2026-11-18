@@ -207,7 +207,7 @@ const deleteAccount = (contact: string) => html`<h1>Delete your Luma account</h1
 
   <p>More about the data Luma keeps: <a href="/privacy">Privacy Policy</a>.</p>`;
 
-/** Static pages the App Store and Play Store require (docs/backend.md, Sesi & akun). */
+/** Static pages the App Store and Play Store require (docs/backend.md, Authentication and accounts). */
 export const legal = new Hono<AppEnv>()
   .get("/privacy", (c) => c.html(page("privacy", "Privacy Policy", c.env.CONTACT_EMAIL, privacy(c.env.CONTACT_EMAIL))))
   .get("/account/delete", (c) => c.html(page("delete", "Delete your account", c.env.CONTACT_EMAIL, deleteAccount(c.env.CONTACT_EMAIL))));

@@ -229,7 +229,7 @@ class _SearchField extends StatelessWidget {
 }
 
 /// Katalog lokal belum ada: layout layar 07 dengan copy "Nyiapin katalog
-/// buku…", gagal = layar 08 (docs/discover.md, Board).
+/// buku…", gagal = layar 08 (docs/discover.md, Local catalog and search).
 class _CatalogSetup extends StatelessWidget {
   const _CatalogSetup({
     required this.state,

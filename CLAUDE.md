@@ -33,17 +33,15 @@ Root `Makefile` (`make help`): mobile targets bare (`make test`), backend `backe
 - **Environments:** Luma Dev (`id.ruma.luma.dev`) ↔ backend env `dev` (`luma-api-dev.chrl.cloud`); Luma (`id.ruma.luma`) ↔ env `prod` (`luma-api.chrl.cloud`). Feature branches touch dev only; prod builds, deploys, and migrations come from `master`.
 - **User data survives every fix:** through Drift migrations on device and D1 migrations on the backend.
 - **API contract:** request/response examples in `apps/backend/test/fixtures/contract/`, tested by both vitest and Dart. An endpoint change updates the fixture, the backend, and the Dart client together.
-- **Cloudflare free tier:** backend code and client code that calls it fit the free tier: no polling, debounce/batch, bounded retries, streamed files. Every change to how the app calls the backend updates the budget table in `docs/backend.md` (Aturan free tier).
+- **Cloudflare free tier:** backend code and client code that calls it fit the free tier: no polling, debounce/batch, bounded retries, streamed files. Every change to how the app calls the backend updates the budget table in `docs/budgets.md` (Per-action budgets).
 - **Secrets:** plaintext API keys and tokens live only in `flutter_secure_storage` (device) and `wrangler secret` (backend). Never in the Drift DB, backups, `wrangler.jsonc`, or git. (The backend keeps users' AI keys AES-GCM encrypted in D1.)
 
 ## Docs and language
 
-- `docs/` describes how the system works now. A behavior change that a doc describes (names, routes, tables, limits, flows, quoted copy) updates that doc in the same commit.
-- Docs hold no progress, dates, or branch names; at most one line pointing to the parent issue. Old values stay only where the reason still matters, marked old ("angka lama; sekarang …").
-- Docs, issues, and app copy are Indonesian; code, identifiers, commit messages, and CLAUDE.md files are English.
+- `docs/` describes how the system works now. A behavior change that a doc describes (names, routes, tables, limits, flows, quoted copy) updates that doc in the same commit. Structure and placement rules: `.claude/rules/docs.md` (loads when you touch `docs/`); a hook runs `make docs-check` on every docs edit.
+- Docs, code, identifiers, commit messages, and CLAUDE.md files are English; issues and app copy are Indonesian.
 
 ## Code comments
 
-- Comments explain why. Issue numbers only for open work (`TODO(#N): ...`) or evidence the code can't show (`spike #34: 30/30 valid`); which issue added the code goes in the commit message.
-- Cite a doc (`docs/<file>.md, <Section>`) only for a rule not visible from the file. The comment must make sense without opening the doc, and the path and section must exist.
-- Files hashed by the chat eval guards (`sha256` / `sourceHashes` in `apps/mobile/test/fixtures/*_protocol*.json`) stay byte-identical, comments included, unless you re-freeze them per `docs/llm-evals.md` (Pembekuan ulang guard).
+- English, and only for what the code can't say (why, invariants, workarounds). Full rule: `.claude/rules/code-comments.md` (loads when you touch app code).
+- Files hashed by the chat eval guards (`sourceHashes` in `apps/mobile/test/fixtures/*_protocol*.json`) stay byte-identical, comments included, unless you re-freeze them per `docs/llm-evals.md` (Re-freeze the eval guards).

@@ -9,5 +9,5 @@ export type AppEnv = {
   Variables: { requestId: string; user: SessionUser; db: Db; openrouter: OpenRouterAdmin };
 };
 
-/** Saklar darurat di `vars` (docs/backend.md, Aturan server). */
+/** Saklar darurat di `vars` (docs/backend.md, Request pipeline and API conventions). */
 export type FeatureFlag = "SYNC_ENABLED" | "BACKUP_ENABLED" | "AI_KEY_ENABLED";

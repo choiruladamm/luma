@@ -65,7 +65,7 @@ class PulledRecord {
 /// Satu halaman pull: [nextSeq] = cursor berikutnya, [more] = masih ada.
 typedef PullPage = ({List<PulledRecord> records, int nextSeq, bool more});
 
-/// Panggilan `/v1/sync/*` (docs/backend.md, Sync antar device).
+/// Panggilan `/v1/sync/*` (docs/sync-protocol.md, Push and pull).
 class SyncService {
   SyncService(this._client);
 

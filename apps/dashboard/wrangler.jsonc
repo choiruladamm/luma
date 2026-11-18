@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  // Design & security: docs/dashboard.md
+  // Runtime: docs/dashboard.md, Runtime and environments
   "name": "luma-admin",
   "main": "worker/index.ts",
   "compatibility_date": "2026-11-10",

@@ -2,7 +2,7 @@ import type { Context } from "hono";
 import { HTTPException } from "hono/http-exception";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
-/** Kode error UPPER_SNAKE_CASE, satu pola dengan Better Auth (docs/backend.md, Konvensi penamaan). */
+/** Kode error UPPER_SNAKE_CASE, satu pola dengan Better Auth (docs/backend.md, Request pipeline and API conventions). */
 export type ErrorCode =
   | "BAD_REQUEST"
   | "UNAUTHORIZED"

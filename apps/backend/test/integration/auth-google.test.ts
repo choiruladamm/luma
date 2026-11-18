@@ -29,7 +29,7 @@ describe("sign-in with Google idToken", () => {
     const { response, d1Queries, subrequests } = await callWithBudget(signIn(token, code));
     const body = (await expectContract(response, signInSocial)) as { user: { id: string } };
 
-    // Satu fetch JWKS Google, sisanya D1 (docs/backend.md, Anggaran per aksi).
+    // Satu fetch JWKS Google, sisanya D1 (docs/budgets.md, Per-action budgets).
     expect(subrequests).toBe(1);
     expect(google.certFetches()).toBe(1);
     expect(d1Queries).toBeLessThanOrEqual(8);

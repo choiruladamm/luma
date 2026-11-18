@@ -1,6 +1,6 @@
 # Luma admin dashboard (Cloudflare Worker)
 
-Admin-only Worker `luma-admin-{env}`: Hono API under `/api` on the same D1 as the backend env, behind Cloudflare Access + a second Better Auth instance (cookie sessions, Google redirect only; admins are `ADMIN_EMAILS` per env in `wrangler.jsonc`). The React SPA in `client/` is served by Workers Static Assets. Design: `docs/dashboard.md`; read it before touching auth, middleware, or an endpoint. Client rules: `.claude/rules/dashboard-client.md`.
+Admin-only Worker `luma-admin-{env}`: Hono API under `/api` on the same D1 as the backend env, behind Cloudflare Access + a second Better Auth instance (cookie sessions, Google redirect only; admins are `ADMIN_EMAILS` per env in `wrangler.jsonc`). The React SPA in `client/` is served by Workers Static Assets. Reference: `docs/dashboard.md`; read it before touching auth, middleware, or an endpoint. Client rules: `.claude/rules/dashboard-client.md`.
 
 ## Commands
 
@@ -14,13 +14,13 @@ Admin-only Worker `luma-admin-{env}`: Hono API under `/api` on the same D1 as th
 - Middleware order: `securityHeaders → requestId → IP rateLimit → [/api/auth/* allowlist → Better Auth] → requireAdmin → requireSameOriginJson → rateLimitAdmin → validate → handler`. `requireAdmin` is global on `/api/*`: mount every route after it, with no per-route auth.
 - Build the app, middleware, and feature routers from `factory` (`env.ts`). Chain feature routes (`factory.createApp().get(...).post(...)`) and mount them with `.route()` so `AppType` carries their types.
 - Features don't import each other. Each `repo.ts` function is one query-budget unit; its comment states the query count.
-- Better Auth endpoints are allowlisted in `AUTH_ROUTES`; anything else under `/api/auth/*` is 404. Adding one updates `docs/dashboard.md`.
+- Better Auth endpoints are allowlisted in `AUTH_ROUTES`; anything else under `/api/auth/*` is 404. Adding one updates `docs/dashboard.md` (Access and sessions and request guards).
 - Build the Better Auth instance only inside `/api/auth/*` (tens of ms CPU). `requireAdmin` verifies the cookie HMAC itself, then one D1 join.
 - Sessions slide (7 days idle) but Better Auth has no absolute limit: the 30-day cap (`SESSION_MAX_AGE_MS`) is enforced in both `requireAdmin` and the middleware in front of `get-session`. Change both together.
 - Metadata only: select columns explicitly; `records`, `key_enc`, and session tokens never reach a response.
 - In `db.batch`, alias every raw `sql` column (`.as("name")`): D1 names unaliased columns by their SQL text, so two identical expressions overwrite each other and come back null or shifted.
 - Text search uses `instr(lower(col), term)`: D1 rejects `LIKE` patterns over 50 bytes.
-- Free tier: same per-account Workers/D1 quota as the backend. Every endpoint updates the budget table in `docs/backend.md` (Anggaran per aksi). No polling.
+- Free tier: same per-account Workers/D1 quota as the backend. Every endpoint updates the budget table in `docs/budgets.md` (Per-action budgets). No polling.
 
 ## Shared code with the backend
 

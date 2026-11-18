@@ -14,7 +14,7 @@ import { clientIp, rateLimit } from "./middleware/rate-limit";
 import { requestId } from "./middleware/request-id";
 
 // Urutan middleware: requestId → killSwitch → bodyLimit → session → rateLimit → validator
-// (docs/backend.md, Arsitektur kode). killSwitch/bodyLimit/session dipasang per grup route.
+// (docs/backend.md, Request pipeline and API conventions). killSwitch/bodyLimit/session dipasang per grup route.
 export const app = new Hono<AppEnv>();
 
 app.use(requestId);

@@ -3,7 +3,7 @@ import 'package:dio/dio.dart';
 import '../../domain/models/backup.dart';
 
 /// Kebijakan gutenberg.org: UA tanpa kontak diblok IP (docs/discover.md,
-/// Kebijakan jaringan).
+/// Network and notifications).
 const lumaUserAgent = 'Luma/$appVersion (+mailto:work.adamm@gmail.com)';
 
 /// Dio buat sumber luar: UA kontak, connect 15 s, [receiveTimeout] per

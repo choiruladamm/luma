@@ -1,5 +1,5 @@
 // Aturan penyimpanan R2 per user, dipakai file buku, backup, dan hapus akun
-// (docs/backend.md, Backup cloud). Murni: tanpa D1, tanpa binding.
+// (docs/backend.md, Files and cloud backups). Murni: tanpa D1, tanpa binding.
 import { ApiError } from "./errors";
 
 /** Prefix R2 milik satu user. */

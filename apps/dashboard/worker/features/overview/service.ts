@@ -3,7 +3,7 @@ import { DAY_MS } from "../../../../backend/src/lib/encoding";
 import { monthSpendUsd } from "./activity";
 import { overviewCounts } from "./repo";
 
-/** D1 free tier: rows written per day for the whole account (docs/backend.md, Aturan free tier). */
+/** D1 free tier: rows written per day for the whole account (docs/budgets.md, Free-tier limits). */
 export const D1_DAILY_WRITE_LIMIT = 100_000;
 
 const on = (flag: string) => flag === "true";

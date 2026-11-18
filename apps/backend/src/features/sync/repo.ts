@@ -1,4 +1,4 @@
-// Query `records` + `user_storage.seq` (docs/backend.md, Sync antar device).
+// Query `records` + `user_storage.seq` (docs/sync-protocol.md, Push and pull).
 // SQL mentah, bukan Drizzle, dengan sengaja: batas D1 free (50 query + 100
 // parameter per request) bikin batch 500 record harus lewat `json_each` dalam
 // satu statement. Tiap fungsi = satu unit anggaran query (lihat komentarnya).

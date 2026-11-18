@@ -3,7 +3,7 @@ import '../../../domain/catalog/catalog_row.dart';
 import '../../../domain/models/catalog.dart';
 
 /// Buku kurasi buat rak kosong (board 02 / 17): kalimat pembuka + artinya
-/// di-hardcode (docs/discover.md, Board). Buku lain pakai Pride and Prejudice.
+/// di-hardcode. Buku lain pakai Pride and Prejudice.
 class CuratedBook {
   const CuratedBook({
     required this.book,

@@ -22,7 +22,7 @@ export function pageList(page: number, count: number): (number | null)[] {
 
 /**
  * Table footer: "51–100 of 120", ‹ 1 … 4 5 6 … 10 ›, and an optional page size. Phones get the
- * compact "‹ Page 2 / 3 ›". Replaces the board's "Muat lagi" (docs/dashboard.md, UI).
+ * compact "‹ Page 2 / 3 ›" (docs/dashboard.md, Screens and navigation).
  */
 export function Pagination({ page, pageCount, total, pageSize, onPage, pageSizes, onPageSize }: { page: number; pageCount: number; total: number; pageSize: number; onPage: (page: number) => void; pageSizes?: number[]; onPageSize?: (size: number) => void }) {
   const { t, locale } = useI18n();

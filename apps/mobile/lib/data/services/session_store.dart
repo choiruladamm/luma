@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 /// Token sesi backend + id akun terakhir di Keychain / Keystore. Gak di Drift:
-/// gak ikut backup (docs/backend.md, Sesi & akun).
+/// gak ikut backup (docs/backend.md, Authentication and accounts).
 class SessionStore {
   SessionStore([this._storage = const FlutterSecureStorage()]);
 
@@ -28,7 +28,7 @@ class SessionStore {
     await clearSubsidyKey();
   }
 
-  /// Key OpenRouter subsidi dari backend (docs/backend.md, AI). Null kalau
+  /// Key OpenRouter subsidi dari backend (docs/backend.md, AI subsidy). Null kalau
   /// belum pernah diambil atau formatnya rusak.
   Future<SubsidyKey?> readSubsidyKey() async {
     final key = await _storage.read(key: _subsidyKey);

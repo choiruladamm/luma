@@ -21,7 +21,7 @@ enum CatalogSyncResult {
 }
 
 /// Ngunduh `pg_catalog.csv.gz` → `CatalogRepository.replaceAll`
-/// (docs/discover.md, Katalog lokal). Gagal apa pun = tabel lama utuh.
+/// (docs/discover.md, Local catalog and search). Gagal apa pun = tabel lama utuh.
 class CatalogSyncService {
   CatalogSyncService(
     this._repo, {

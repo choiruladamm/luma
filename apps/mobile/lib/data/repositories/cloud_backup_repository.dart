@@ -13,7 +13,7 @@ import '../services/restore_service.dart';
 import 'auth_repository.dart';
 import 'settings_repository.dart';
 
-/// Backup ke R2 (docs/backend.md, Backup cloud): snapshot DB tiap backup,
+/// Backup ke R2 (docs/backup.md, Export and cloud backup): snapshot DB tiap backup,
 /// file buku & cover cuma yang belum ada di cloud. Restore = snapshot +
 /// file yang belum ada lokal → [RestoreService] yang sama dengan zip biasa.
 class CloudBackupRepository {

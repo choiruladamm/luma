@@ -1,4 +1,4 @@
-// Spec sync per kind (docs/backend.md, Sync antar device). Satu sumber buat
+// Spec sync per kind (docs/sync-protocol.md, Records and keys). Satu sumber buat
 // trigger outbox, backfill migrasi 18, dan query data saat push: kunci alami
 // dihitung SQL di sini, jadi repository gak perlu tahu.
 

@@ -1,181 +1,241 @@
-> **Ngobrolin Buku (#146):** screen terbaru untuk chat/history/sitasi/reader dan
-> aksi Tanyain ini ada di [HTML acuan](../design/references/ngobrolin-buku.html).
-> Screen per screen menjadi acuan implementasi; catatan naratif export yang
-> berbeda dari screen/perilaku yang disepakati bukan blocker. Sheet Terjemahin
-> hanya berubah pada baris aksi. Detail perilaku: [llm.md](llm.md).
+---
+type: reference
+purpose: UI rules and behavior for the mobile app (Stabilo); values live in tokens and layout in the boards.
+sections: [Sources of truth, Principles, Color, Typography, Layout and shape, Motion, Accessibility, Shared components, Reader interaction, Bedahin, Pengaturan, Ngobrolin buku (book chat), Copy]
+---
 
-# Desain: Stabilo
+# Design: Stabilo
 
-Referensi lengkap (layar, komponen, token): https://claude.ai/artifact/EBwv9zJBLZQJa5WWYiaJ7F
+The rules and behavior behind Luma's UI. Read this before building or changing a screen.
 
-## Prinsip
+## Sources of truth
 
-1. **Teks dulu, UI belakangan.** Halaman baca bersih. UI muncul hanya saat dibutuhkan (sheet artinya, Aa, progres tipis di bawah).
-2. **Kuning = yang lagi penting.** Stabilo hanya untuk aksi utama dan paragraf/grup yang sedang di-tap. Satu layar, satu tombol kuning.
-3. **Malem tetep adem.** Mode gelap pakai hitam hangat, bukan hitam pekat.
+| What | Where | Owns |
+|---|---|---|
+| Visuals per screen and component | Stabilo boards in Claude Design: https://claude.ai/artifact/EBwv9zJBLZQJa5WWYiaJ7F (light + dark for every screen) | Layout, composition, spacing as drawn |
+| Book chat screens | [design/references/ngobrolin-buku.html](../design/references/ngobrolin-buku.html), flows in `design/luma.pen` | Chat, history, citation, and "Tanyain ini" screens |
+| Values | `apps/mobile/lib/ui/core/theme/`: `stabilo_tokens.dart` (`Space`, `Radii`, `Layout`, `Motion`, `Elevation`), `stabilo_theme.dart` (`StabiloColors` via `context.stabilo`, `StabiloType`) | Every color, size, radius, duration, curve, shadow |
+| Copy | `apps/mobile/lib/l10n/app_id.arb` (template) and `app_en.arb` | Every user-facing string ([i18n.md](i18n.md)) |
+| Rules and behavior | This doc | Principles, roles, states, thresholds, accessibility |
 
-## Font
+On conflict: tokens win for values, this doc wins for behavior, the board wins for layout. A new value becomes a token first; this doc names tokens, never hex or raw numbers.
 
-| Font | Dipakai untuk |
-|------|---------------|
-| Bricolage Grotesque | UI, judul, label, tombol |
-| Atkinson Hyperlegible | Teks bacaan + isi sheet (default, opsi "Jelas") |
-| Literata | Opsi bacaan "Kayak buku" |
-| Font sistem (SF di iOS, Roboto di Android) | Opsi bacaan "Bawaan sistem" |
+## Principles
 
-Bundle font sebagai asset (jangan fetch runtime).
+1. **Text first, UI later.** The reading page is clean; UI appears only when needed (sheets, capsules, a thin progress line).
+2. **Yellow = what matters right now.** One yellow (`accent`) button per screen. `highlight` marks only the text the reader is focused on (see [Color](#color)).
+3. **Night stays calm.** Dark mode uses warm black, not pure black, and is drawn per board, not inverted.
+4. **Nothing jumps.** Chrome (capsules, headers, buttons) overlays content, so showing or hiding it never moves text.
+5. **Reading settings follow the reader everywhere.** Any surface that shows book or AI text uses the reader's Aa settings.
 
-## Token warna utama
+## Color
 
-| Token | Terang | Gelap |
-|-------|--------|-------|
-| canvas | `#FFFBEF` | `#22201C` |
-| sheet | `#FFFDF6` | `#2C2A25` |
-| muted | `#F2EDDD` | `#36332D` |
-| ink | `#1C1C1C` | `#DDD7C8` |
-| ink2 | `#5E5A4E` | `#A19B8E` |
-| accent (stabilo) | `#FFD84D` | `#E9C75A` |
-| pink | `#FFC2D3` | `#D99BAE` |
+Roles are fields on `StabiloColors` (`context.stabilo`), one light and one dark set. Values: `stabilo_theme.dart`.
 
-Implementasi Flutter: `ThemeExtension` (`StabiloColors`) dengan satu set terang dan satu set gelap. Detail token lain (track, outline, scrim, highlight) ada di artifact.
+- `canvas` page background · `sheet` sheets, cards, capsules · `muted` quiet buttons and tiles · `ink` / `ink2` / `ink3` text by emphasis.
+- `accent` + `onAccent`: the primary action and the active tab only.
+- `pink` / `pinkSoft` + `onPink`: status that needs attention (cut-off answer, "check this" dot) and destructive buttons.
+- `highlight` + `onHighlight`: the text in focus:
+  - the open group in the reader (block, `Radii.md`);
+  - the active section or tapped term in Bedahin's text panel;
+  - Cari kata hits ([book-search.md](book-search.md)): in the search sheet a rounded box (`Radii.xs`); on the reading page a plain `TextSpan` background, the open hit full strength with an underline (`Layout.outline`), other visible hits at 50% alpha;
+  - the quote on the shelf's continue-reading card.
 
-## Aturan highlight (`highlight`)
+  Nothing else uses `highlight`.
+- `mark`: the margin line on groups that already have a translation.
+- `progressLine` / `progressLineTrack`: the reader's bottom progress line.
+- Outlines (`Layout.outline`) only go on objects you can grab or press.
 
-`highlight` (stabilo kuning) buat: grup paragraf yang lagi dibuka di sheet Artinya (blok radius 14), dan **pengecualian Cari kata** ([book-search.md](book-search.md), board Warna): kata hasil cari, inline, radius `Radii.xs` (5). Di sheet cari kata cocok = kotak `highlight` + teks `onHighlight`. Di halaman baca kata yang lagi dibuka = `highlight` penuh + garis bawah 1,5 (`Layout.outline`), kata cocok lain yang keliatan = `highlight` alpha 0,5 (`TextSpan.backgroundColor`, jadi sudutnya gak bulat). Di luar dua kasus ini jangan pakai `highlight`.
+## Typography
 
-## Halaman baca imersif (ReaderCapsule)
+| Font | Used for |
+|---|---|
+| Bricolage Grotesque (`StabiloType`) | UI: titles, labels, buttons, chips, toasts |
+| Atkinson Hyperlegible | Reading text, default ("Jelas") |
+| Literata | Reading option "Kayak buku" (line height +0.05) |
+| System (SF on iOS, Roboto on Android) | Reading option "Bawaan sistem" |
 
-Pas baca, layar isinya cuma teks + garis progres tipis. Menu nongol sebagai dua kapsul ngambang kalau dibutuhin. Top bar 60pt cuma buat Rak & Pengaturan. Spek lengkap di board "Baca imersif · ReaderCapsule" (+ layar 03 Baca, 03b imersif, 03c Lanjut baca).
+- Fonts ship as assets; never fetched at runtime.
+- Reading text everywhere comes from `ReaderTypography` (font, size, line height, margin from Aa; dark mode adds +0.05 line height). It applies to the reader, the Artinya sheet's translation and meaning, Bedahin's text panel, chat answers, chat context cards, and citation sheets.
+- UI text (titles, chips, buttons, toasts, error messages, chat bubbles, composer) stays at UI sizes regardless of Aa.
 
-- **Kapsul atas**: tinggi 58, radius penuh, 6pt di bawah safe area atas, kiri-kanan 24. Isi: balik · judul buku + judul bab ("Chapter I"; "Bab N" cuma kalau bukunya emang gak punya judul bab) · daftar isi · ⋯. Tombol 44 bulet muted; tombol yang sheet-nya lagi kebuka (Daftar isi, atau ⋯ buat menu dan sheet dari menu) jadi kuning. ⋯ buka popover Cari kata + Atur tampilan ([book-search.md](book-search.md)); pas mode cari ⋯ dapet titik kuning.
-- **Kapsul bawah**: tinggi 40, 14pt di atas safe area bawah, di tengah. Persen + bar 88 + "±N mnt lagi" (atau "Chapter I kelar"). Cuma info.
-- **Awal bab** (board 03 Baca + "awal bab, judul panjang"): satu pembuka bab buat semua judul, pendek maupun panjang: rata tengah, coretan kuning 56×8 miring −4°, judul font baca 23/1,35 bold, meta "Bab 4 dari 102 · ±14 mnt" 12,5 ink2; padding 40 atas · 28 bawah, gap 14.
-- **Daftar isi**: tanpa kolom nomor; tiap baris "±N mnt" di kanan (12,5/600 ink2), bab aktif latar kuning + "Lagi dibaca · ±N mnt". **Akhir bab**: chip "Chapter I kelar", meta "Bab 2 dari 61 · ±6 mnt".
-- **Gaya kapsul**: latar sheet. Terang: garis 1,5 ink + bayangan tekan 2 + bayangan lembut. Gelap: garis `#46423A` + bayangan lembut.
-- Teks yang lewat di belakang kapsul dimudarin pake **EdgeFade** (lihat di bawah), bukan gradien warna latar.
-- **Garis progres** 2pt selebar layar, tepat di atas safe area bawah (gak kepotong sudut layar, gak numpuk home indicator). Terang `#E6B800`, gelap `#E9C75A`, track ink 8–10%. Progres per buku; 100% di layar akhir buku.
-- Kapsul itu **overlay**: teks gak loncat pas kapsul muncul/ngumpet. Teks awal bab mulai 86pt di bawah safe area atas (board: 140) biar judul bab gak ketutup.
+## Layout and shape
 
-## EdgeFade (tepi area scroll)
+- Spacing from `Space`, screen margin `Layout.margin`, radii by role from `Radii` (`xs` inline highlight, `md` cover and group block, `lg` cards, `xl` sheet corners, `full` pills and icon buttons).
+- Touch targets are at least `Layout.touch`, even when the visible control is smaller.
+- **Edge-to-edge bottom.** Scroll areas aren't wrapped in `SafeArea(bottom: true)`; their bottom padding is the safe-area inset inside the scroll, so content runs under the home indicator and the last item can still scroll above it. Buttons and pinned elements stay inside the safe area.
+- Shadows from `Elevation`. In dark mode, capsules drop the pressed shadow and keep the soft one.
 
-Board "EdgeFade · tepi area scroll". Tepi area scroll mudar halus pake **mask** (`ShaderMask` + `BlendMode.dstIn`, widget `EdgeFadeScroll`): isinya yang transparan, bukan gradien warna latar, jadi aman di terang & gelap. Dipasang di tepi area scroll yang ketemu elemen nempel (judul/header, tombol aksi, kapsul). Fade atas cuma muncul kalau udah di-scroll; fade bawah cuma ada di atas tombol aksi / kapsul bawah, dan cuma kalau masih ada isi di bawah. Muncul/ilang 150 ms.
+## Motion
 
-**Tepi bawah edge-to-edge.** Tepi bawah layar & sheet gak pernah dipudarin: isi digambar tembus sampe tepi fisik, lewat di bawah home indicator. Area scroll gak dibungkus `SafeArea(bottom: true)`; padding bawah scroll = safe area (`MediaQuery.paddingOf(context).bottom`, 34pt) di dalam scroll, jadi item terakhir bisa naik ke atas home indicator dan tetep bisa di-tap. Tombol & elemen nempel tetep di dalam safe area.
+- Every duration and curve is a `Motion` token, named by what it animates (`Motion.capsule`, `Motion.sheetOpen`, `Motion.edgeFade`, …).
+- **Reduce Motion** (iOS setting) applies to every screen:
+  - no sliding or finger-following chrome; show/hide uses `Motion.reducedFade` (app sheets still slide, only shorter);
+  - streamed text appears per whole section;
+  - no fading tail, static dots, no shimmer on placeholders;
+  - jumps and folds don't animate.
 
-| Tempat | Fade atas | Fade bawah | Catatan |
-|--------|-----------|------------|---------|
-| Sheet tanpa tombol aksi (Aa, Daftar isi, `SheetFrame` tanpa tombol) | 20pt di bawah judul | – (mentok ke tepi) | Padding bawah sheet 0, item terakhir padding = safe area |
-| Sheet + tombol aksi (`SheetFrame` bertombol, Ringkasan pulihin) | 20pt di bawah judul | 20pt di atas tombol | Tombol di atas safe area 34 |
-| Sheet Artinya | 20pt di bawah header; header ngumpet = 20pt di bawah grabber (dari y 12) | 20pt di atas tombol, cuma selama tombol keliatan; tombol ngumpet = edge-to-edge, tanpa fade | Fade ikut animasi header & tombol (200ms) |
-| Layar penuh (Rak, Pengaturan) | 20pt di bawah header yang nempel | – (mentok ke tepi) | Rak: header + "Semua buku" nempel, tanpa garis pemisah. Pengaturan: balik + judul nempel |
-| Baca · kapsul keliatan | 48pt dari tepi kapsul | 48pt ke tepi kapsul, sisa ±18% terus sampe tepi layar | Status bar kosong; gak ada pita kosong di bawah garis progres. Awal bab gak ada fade atas |
-| Baca · imersif | – | – (mentok ke tepi) | Teks lewat di bawah garis progres sampe tepi |
+## Accessibility
 
-Layar baca: kekuatan mask ngikutin `ReaderChrome.hidden` (controller kapsul yang sama, 200 ms ease-out). Kapsul geser keluar → sisa 18% naik ke 100%, status bar yang kosong keisi, jadi teks gak kedip atau loncat; kapsul masuk lagi → kebalikannya. Menu tekan lama & urutkan cuma 2–3 item, gak pernah scroll, jadi belum dipasang.
+- VoiceOver gets a label for every icon-only button, announces when a streamed answer is complete, and never reads a section while it's still being written.
+- Chrome that hides on scroll stays visible while VoiceOver is on.
+- Color is never the only signal: status also has text or an icon.
+- Long-press on a book (card or row) gives a medium haptic.
 
-## Pengaturan Aa
+## Shared components
 
-Sheet "Atur bacaan lo" (board 07), dibuka dari menu ⋯ → Atur tampilan di kapsul (dulu tombol Aa). Tiap pilihan langsung disimpen dan langsung keliatan di teks; scrim-nya tipis (8% terang, 18% gelap) biar teks di belakang jadi preview. Posisi baca nempel: titik yang lagi di garis atas tetep di situ pas ukuran/font/jarak/margin diganti.
+Shared widgets live in `ui/core/widgets/`; reuse them before building new ones.
 
-- Ukuran huruf: 7 step 16 · 17 · 18 · **18,5** · 20 · 22 · 24 (tombol A kecil / A gede)
-- Font: **Jelas** (Atkinson Hyperlegible) / Kayak buku (Literata, jarak baris +0,05) / Bawaan sistem (SF di iOS, Roboto di Android)
-- Jarak baris: Rapat 1,5 / **Pas 1,65** / Lega 1,85; mode gelap +0,05
-- Margin teks: Sempit 16 / **Pas 24** / Lega 32. Area tap margin minimal 24pt: di Sempit, 8pt pinggir kolom ikut diitung area kosong
-- Tema: Terang / Gelap / **Ikut sistem** → `themeMode` app
-- Tampilan layar: "Sembunyiin jam & baterai" (**nyala**) dan "Tampilin garis progres" (**nyala**), pake Switch dari board Komponen dasar (51 × 31)
-- Disimpen per perangkat (bukan per buku) di tabel `settings`, ikut backup. Nilai yang gak dikenal (backup rusak) balik ke default
+### Sheets (`showAppSheet`, `SheetFrame`)
 
-## Sheet Artinya: ikut Aa, header & tombol ngumpet pas scroll
+- Standard sheet frame: grabber, title, scrolling body, optional action buttons. Detail pages under Settings use `SettingsPage` instead (back button, title, scrolling body with space for the tab bar).
+- Close: Flutter's standard drag-to-dismiss, or tap above the sheet. The Artinya sheet has its own drag handling (see [Artinya sheet](#artinya-sheet)).
 
-Board "Spek · Artinya ngumpet pas scroll" dan "Terpilih · Artinya ngumpet pas scroll · Opsi A (geser ngikut)": area baca nambah 54% (335 → 516pt di sheet 528).
+### Edge fade (`EdgeFadeScroll`)
 
-- **Teks ikut Aa:** terjemahan dan blok makna pakai font, ukuran, jarak baris, dan margin yang sama dengan halaman baca (`ReaderTypography`, satu sumber buat dua-duanya). Padding dasar sheet (24) jadi batas bawah margin: Sempit (16) sama kayak Pas, Lega (32) nambah 8 di kiri-kanan isi. Judul, chip, tombol, toast, dan teks pesan error / API key kosong tetap ukuran UI. Placeholder loading pakai tinggi baris yang sama. Ganti Aa langsung kebawa (provider yang sama).
-- **Struktur:** sheet 528 (62,5% layar, `DraggableScrollableSheet`, semua state). Isi scroll setinggi sheet, padding atas 91 / bawah 102 (tombol 52 + jarak 16 + safe area 34). Header (judul + X), grabber, dan Salin / Lanjut lapisan di atas isi, jadi ngilangnya header gak geser teks.
-- **Ngumpet (cuma scroll dari jari; scroll programatik gak ngitung):** header ikut isi 1:1 pas turun dan ilang setelah 91pt; naik ≥ 12pt → turun lagi ngikutin jari dari atas, dilepas di tengah snap ke yang terdekat. Salin / Lanjut geser keluar setelah turun ≥ 24pt (200ms, ease-out), balik pas naik ≥ 12pt atau mentok bawah. Header tetap ngumpet sampai scroll naik; balik ke paling atas = semua lengkap. Ambang (24 / 12) dari `ScrollRun`, dipakai bareng kapsul baca.
-- **Gak pernah ngumpet:** isi muat semua, state loading / error / API key kosong, VoiceOver nyala. Kurangi gerakan: gak geser, gak ngikutin jari, fade 150ms.
-- **Nutup:** swipe turun di grabber (ngikutin jari, nutup kalau di-fling atau ditarik jauh, pas offset berapa pun), swipe turun di isi pas offset 0, atau tap area kosong di atas sheet (bukan munculin kapsul baca).
-- **Tinggi area baca yang keliatan** (`MeaningChrome.readHeight`): tinggi sheet dikurangi chrome yang keliatan, buat highlight sinkron (#35).
+Scroll edges that meet pinned elements fade with a mask (`ShaderMask` + `BlendMode.dstIn`), never a background-colored gradient, so it works in both themes. Board "EdgeFade · tepi area scroll".
 
-## Sheet Artinya: streaming
+- The top fade appears only after scrolling; the bottom fade only above action buttons or the bottom capsule, and only while more content is below. Fades show and hide with `Motion.edgeFade`.
+- The bottom screen and sheet edges never fade (edge-to-edge).
 
-Board "Terpilih · Artinya streaming · Opsi B · muncul halus (diperbaiki)" dan "Artinya streaming · perilaku". Sumbernya `groupAiStreamProvider` ([architecture.md](architecture.md)). Grup yang udah ke-cache langsung tampil jadi, tanpa ritme dan tanpa ikut turun. Satu widget buat semua tahap (`_Answer`), jadi pas selesai gak ada loncatan layout dan posisi scroll gak di-reset. Tinggi sheet tetap 528 di semua tahap.
+| Where | Top fade | Bottom fade |
+|---|---|---|
+| Sheet without actions (Aa, table of contents) | below the title | none |
+| Sheet with actions | below the title | above the buttons |
+| Artinya sheet | below the header (below the grabber when the header hides) | above the buttons while they're visible |
+| Full screens (Rak, Pengaturan) | below the pinned header | none |
+| Reader, capsules visible | from the top capsule | to the bottom capsule, then a weak fade to the screen edge |
+| Reader, immersive | none | none |
 
-- **Tahap:** nunggu (header "Bentar, lagi mikir...", placeholder per paragraf + makna) → nulis terjemahan (paragraf masuk berurutan, sisanya placeholder) → nulis makna → selesai (header "Artinya gini nih", Salin aktif). Header cuma judul + X, tanpa chip.
-- **Kelamaan** (15 detik tanpa token): kartu "Agak lama nih..." di atas isi (Batal / Coba lagi). Token masuk → kartunya ilang sendiri. **Kepotong**: teks yang udah masuk tetep, placeholder dibuang, banner pink "Yah, kepotong di tengah" + Coba lagi (mulai dari awal).
-- **Ritme:** huruf keluar per frame ngikutin `Pacer` ([llm.md](llm.md)). **Deviasi dari board (2):** aturan adaptif, bukan maks 2× baseline (data spike #34).
-- **Ujung teks:** gak ada kursor, kedip, atau kuning di teks. 4 kata terakhir bagian yang lagi ditulis opasitas 80 · 60 · 42 · 26%, diem (`Text.rich`); selesai → solid dalam 300 ms. **Deviasi dari board (1):** tanpa fade-in 150 ms per potongan, karena teks keluar per huruf dan dua efek itu numpuk.
-- **Tombol:** Salin / Lanjut dikunci keliatan selama belum selesai. Salin nonaktif; statusnya di tombol itu: tiga titik 4pt berdenyut (opasitas 30 ↔ 85%, 1,6 detik) + "Lagi mikir" / "Lagi nulis", ink2 di atas muted. Selesai → crossfade 150 ms ke "Salin". Kelamaan / kepotong: "Salin" abu, statusnya di kartu / banner. Lanjut mati selama masih diproses (nunggu, kelamaan, nulis), aktif lagi pas selesai atau kepotong (deviasi dari board, yang Lanjut-nya selalu aktif). Batalin di tengah = X ("Batalin" di VoiceOver), tutup sheet = request dibatalin.
-- **Gak bisa di-scroll sebelum teks pertama masuk** (nunggu / kelamaan): isinya cuma placeholder. Nutup lewat X, grabber, atau tap di atas sheet (swipe di isi gak nutup di tahap ini).
-- **Gak ikut turun (deviasi dari board, Okt 2026):** isi gak di-scroll otomatis. Sheet diem di awal terjemahan biar bisa dibaca dari paragraf pertama sementara sisanya ditulis di bawah; scroll cuma dari jari. Gak ada tombol "Ke bawah". Header ikut isi 1:1 pas di-scroll selama streaming (kayak bagian dari isi), tombol gak ngumpet; abis selesai, aturan ngumpet biasa nerusin dari posisi header terakhir.
-- **Placeholder ikut Aa:** baris = ⌈huruf × lebar huruf rata-rata ÷ lebar kolom⌉, huruf = panjang paragraf asli × 1,05 (makna 130). Lebar huruf rata-rata diukur pakai `TextPainter` dari font + ukuran Aa yang aktif (bukan konstanta per font). Tinggi baris = baris teks. Isi tumbuh ke bawah.
-- **Kurangi gerakan:** teks muncul per bagian utuh (satu paragraf, lalu makna), tanpa pudar, titik diem, placeholder tanpa shimmer.
-- **VoiceOver:** sheet berlabel "Artinya, lagi ditulis"; bagian yang lagi ditulis gak dibacain sampai utuh; selesai → diumumin "Artinya udah lengkap".
+In the reader, the mask strength follows `ReaderChrome.hidden` (the capsule controller), so text never flickers when the capsules move.
+
+### Reader capsules (`ReaderCapsule`)
+
+Board "Baca imersif · ReaderCapsule" (+ screens 03, 03b, 03c). The reading page shows only text and the progress line; menus live in two floating capsules that overlay the text.
+
+- **Top capsule**: back · book title + chapter title ("Bab N" only when the book has no chapter titles) · table of contents · ⋯. The ⋯ popover holds Cari kata and Atur tampilan; in search mode ⋯ gets a yellow dot. The button whose sheet is open turns yellow.
+- **Bottom capsule**: info only: percentage, progress track (`Layout.readerProgressTrack`), and "±N mnt lagi" or "<chapter> kelar".
+- **Chapter opener**: one layout for every title length: centered, tilted yellow stroke (`Layout.chapterStroke*`), title in the reading font, meta "Bab 4 dari 102 · ±14 mnt", spacing `Layout.chapterOpener*`.
+- **Table of contents**: no number column; each row shows "±N mnt" on the right; the current chapter has a yellow background and "Lagi dibaca".
+- **Progress line**: full width just above the bottom safe area (`progressLine` on `progressLineTrack`), per book; 100% on the book-end screen.
+
+### Artinya sheet
+
+Boards "Spek · Artinya ngumpet pas scroll" and "Artinya streaming · perilaku". Data and phases: [architecture.md](architecture.md), [llm.md](llm.md).
+
+- **Shape**: fixed height `Layout.artinyaHeight` in every state (`DraggableScrollableSheet`). Header (title + X), grabber, and the Salin / Lanjut buttons are layers above a full-height scrolling body (padding `Layout.artinyaHeader` / `Layout.artinyaActions`), so hiding them never moves text.
+- **Text follows Aa** (`ReaderTypography`); the sheet's base padding is the minimum margin, so "Sempit" looks like "Pas".
+- **Streaming states**:
+  - *waiting*: header "Bentar, lagi mikir...", placeholders per paragraph + meaning; not scrollable yet; swiping the body doesn't close.
+  - *writing translation*, then *writing meaning*: paragraphs arrive in order, the rest stay placeholders.
+  - *done*: header "Artinya gini nih", Salin enabled.
+  - *slow*: a card above the content (Batal / Coba lagi) that disappears when tokens arrive.
+  - *cut*: received text stays, placeholders go, pink banner + Coba lagi (restarts).
+  - Cached groups appear complete at once, with no pacing.
+- **Pacing**: characters per frame via `Pacer` (`domain/pacing.dart`): a steady baseline that speeds up adaptively when text backs up. No cursor, blink, or yellow in the text; the last 4 words of the section being written fade in steps (80 · 60 · 42 · 26%) and turn solid over `Motion.tailFade` when done.
+- **No auto-scroll**: the body stays at the start of the translation while the rest is written below; only the finger scrolls. During streaming the header scrolls with the content and the buttons stay put.
+- **Placeholders follow Aa**: lines = ⌈chars × average glyph width ÷ column width⌉, chars = source paragraph length × 1.05 (meaning: 130), glyph width measured with `TextPainter` for the active font and size.
+- **Buttons**: while processing, Salin is disabled and carries the status (pulsing dots + "Lagi mikir" / "Lagi nulis"), then crossfades to "Salin" (`Motion.statusSwap`). Lanjut is disabled while waiting, slow, or writing. X cancels the request ("Batalin" in VoiceOver).
+- **Hide on scroll** (finger scrolls only, after streaming): the header follows the content 1:1 and is gone after `Layout.artinyaHeader`; scrolling up by the `ScrollRun` show threshold brings it back, following the finger, snapping on release. The buttons slide out after the `ScrollRun` hide threshold (`Motion.capsule`) and return on scroll up or at the bottom. They never hide when everything fits, in waiting / error / no-key states, or with VoiceOver on.
+- **Close**: swipe down on the grabber at any offset (fling past `Layout.sheetDismissFling` or drag below `Layout.sheetDismissRatio`), swipe down on the body at offset 0, or tap above the sheet.
+- One widget renders every phase, so completing never jumps the layout or resets the scroll position.
+- **Salin** copies the whole group's translation (one paragraph per block); the button becomes "Disalin" + toast "Udah disalin, tinggal paste".
+- **VoiceOver**: the sheet is labeled "Artinya, lagi ditulis"; completion is announced "Artinya udah lengkap".
+- **Bedahin entry**: last item of the body, after the meaning, for every group: "Masih bingung? Bedahin" or "Buka bedahan · Udah pernah dibedah · N bagian". Hidden while the meaning is being written or cut; fades in once the section count is loaded, so the copy never swaps in front of the reader.
+
+### Book metadata sheet
+
+Boards 33–38 (entry row on Info buku, board 21). Stacked on Info buku: X (Batal) · title · check (Simpan, primary; disabled = muted). A live cover preview follows the fields; Judul + Penulis (optional); "Pakai cover default" only when the EPUB has a cover; "Balikin ke aslinya" refills the fields (saved only on Simpan) and leaves the cover toggle alone. Empty title: error + Simpan disabled. Info buku shows "Penulis gak ketemu" (italic) for an empty author, and breaks long unspaced titles per character.
+
+## Reader interaction
+
+Thresholds marked `ScrollRun` come from `ui/core/scroll_run.dart` and are shared by the capsules, the Artinya sheet, and Bedahin; they count per direction and reset when the direction changes. Only finger scrolls count; programmatic scrolls and restore jumps never move chrome.
+
+| Trigger | Result |
+|---|---|
+| Scroll down past the `ScrollRun` hide threshold | Both capsules slide out (`Motion.capsule`); while dragging they follow the finger 1:1, then snap |
+| Scroll up past the `ScrollRun` show threshold, or fling up | Capsules come back |
+| First 80 pt of a chapter, last paragraph visible, chapter change | Capsules show |
+| Tap a paragraph (its whole column-width box) | Opens the Artinya sheet for its group |
+| Tap empty space (margins, gaps, below the last text, headings, scene breaks) | Toggles the capsules. The margin tap area is at least 24 pt: with "Sempit" margins, the column's outer 8 pt count as empty space |
+| Tap outside an open sheet | Closes the sheet (never toggles capsules) |
+| Open a sheet from a capsule (table of contents, ⋯ → Aa) | Top capsule stays above the scrim; its button turns yellow; tapping it again closes the sheet. The barrier is transparent and the reader draws the scrim below the capsule |
+| Artinya sheet opens | Capsules hide; the page scrolls with the sheet so the group's bottom sits `Layout.followGap` above the sheet, re-aligning whenever the sheet height changes (a taller group starts at safe area + `Layout.followGap`). The group is one `highlight` block; the scrim is cut out around it |
+| Lanjut in the Artinya sheet | Moves to the next group in the chapter (disabled on the last) and scrolls it into place. Closing afterwards keeps the page at the last group and saves the position; closing after a single group returns to where the page was |
+| Group already translated | `mark` line in the left margin (`ReadMark`); opens from cache |
+| Chapter-end card visible | Both capsules show; bottom capsule reads "<chapter> kelar" |
+| Book end | Its own screen without capsules, progress line full, default cover style, status bar back |
+| Open a book with a saved position (Lanjut baca) | Capsules show for `Motion.capsuleIntro` then hide (cancelled if the reader scrolls first); the saved group flashes once (`Motion.flash`, `flash` color). Reduce Motion: a left line for `Motion.flashReduced` instead |
+| Capsules hide with "Sembunyiin jam & baterai" on (default) | Status bar hides with them; leaving the reader brings it back |
+
+### Aa sheet ("Atur bacaan lo")
+
+Board 07, opened from ⋯ → Atur tampilan. Every choice applies and saves immediately; the scrim is light so the text behind acts as a preview. The line at the top of the screen stays put when size, font, spacing, or margin change.
+
+- Size: 7 steps 16 · 17 · 18 · **18.5** · 20 · 22 · 24.
+- Font: **Jelas** / Kayak buku / Bawaan sistem.
+- Line height: Rapat 1.5 / **Pas 1.65** / Lega 1.85.
+- Margin: Sempit 16 / **Pas 24** / Lega 32.
+- Theme: Terang / Gelap / **Ikut sistem** (the app's `themeMode`).
+- Toggles (both on by default): "Sembunyiin jam & baterai", "Tampilin garis progres".
+- Stored per device, not per book ([data-model.md](data-model.md)).
 
 ## Bedahin
 
-Board "Terpilih · Bedahin · Opsi C · layar bedah" + "Spek · Bedahin · state" (terang + gelap). Layar sendiri (`BreakdownView`, route di [architecture.md](architecture.md)), sumbernya `breakdownStreamProvider`. Semua aturan streaming sheet Artinya (ritme `Pacer`, 4 kata memudar, placeholder shimmer, status di tombol Salin, kurangi gerakan, VoiceOver) berlaku juga di sini.
+Boards "Terpilih · Bedahin · Opsi C · layar bedah" + "Spek · Bedahin · state". Its own screen (`BreakdownView`); data from `breakdownStreamProvider` ([architecture.md](architecture.md), [llm.md](llm.md)). All Artinya streaming rules apply: `Pacer`, fading tail, shimmering placeholders, status in the Salin button, Reduce Motion, VoiceOver.
 
-- **Entri** di sheet Artinya: item terakhir isi, abis maksud, ikut ke-scroll, semua grup. "Masih bingung? Bedahin" / "Buka bedahan · Udah pernah dibedah · N bagian" (`breakdownSectionsProvider`). Gak muncul selama makna masih ditulis atau kepotong; muncul pakai fade 150ms. Nunggu jumlah bagian dari DB dulu biar copy-nya gak ganti di depan mata.
-- **Header:** balik (VoiceOver "Batalin, balik ke Artinya" selama proses) + status ("Lagi ngebedah..." / "Udah dibedah nih" / "Kepotong di tengah" / "Bedahin" pas error) + "buku · bab · N bagian" ("1 gagasan", "N bagian masuk" pas kepotong).
-- **Panel teks** (terjemahan, ikut Aa) selalu ada di semua state, termasuk nunggu dan error. Nomor bagian di depan kalimat pertama tiap bagian, cuma kalau ≥ 2 bagian; selama nulis nomornya muncul bareng penjelasan bagiannya. Grup > 1 paragraf: jarak 12 + `¶n` di kolom kiri, bagian yang nyebrang paragraf dapet tag `¶2–3`.
-- **Layout ikut jumlah bagian (pas panel dibuka):** 1 bagian (selesai) = tanpa nomor & judul, panel ikut ke-scroll + kalimat asli di bawah terjemahan. ≥ 2 bagian, dan selama proses / error = panel nempel di atas, tinggi = teks, maks 40% layar, lebih = scroll sendiri.
-- **Penjelasan:** per bagian nomor + judul (≥ 2 bagian), MAKSUDNYA, LOGIKANYA. Lalu Tokoh & istilah (nyebut "bagian N" asal kalimatnya), Nyambung ke (kartu garis + chevron kalau tujuannya ketemu, gak ketemu = teks biasa), Praktekinnya gini (teks UI tebal 20, apa adanya, gak difilter). Blok kosong gak tampil.
-- **Tombol:** Salin / status + "Balik baca" (kuning). Kepotong: Salin mati, "Balik baca" muted, kuningnya di "Coba lagi dari awal". Error: "Balik baca" + "Coba lagi" (401/403 & API key kosong: "Buka Pengaturan"; balik dari Pengaturan langsung jalan lagi). Tombol ngumpet pas scroll penjelasan (`ScrollRun`), kecuali selama proses / error / VoiceOver. Header gak ikut ngumpet (panel nempel di bawahnya).
-- **State:** nunggu (placeholder bulatan + judul + baris, jumlah ditebak dari jumlah kalimat ÷ 6, gak bisa di-scroll), kelamaan (kartu di atas placeholder, Batal = balik ke Artinya; latar kartu warna sheet + garis track, kotak ikon muted, Batal / Coba lagi sekunder biar kuningnya cuma "Balik baca". Board A2: latar kartu muted, tombolnya warna sheet), kepotong (cuma bagian yang utuh, blok penutup dibuang, banner pink), error (copy per jenis, tabel board state), dari cache (langsung jadi, dari atas).
-- **Sinkron (#64, ≥ 2 bagian):** blok aktif = blok penjelasan (bagian, Tokoh & istilah, Praktekinnya gini) yang atasnya lewat garis baca 96pt dari atas area penjelasan, histeresis 24pt (`activeBlock`, `lib/domain/breakdown_sync.dart`); mentok bawah = blok terakhir. Kalimat bagian aktif disorot kuning di panel, panel scroll sendiri ke nomornya. Selama nulis sorotannya udah jalan dari bagian 1 dan ngikut scroll, gak nunggu lengkap. Tap nomor di teks / chip = penjelasan lompat ke blok itu (dikunci sampe jari scroll lagi). Chip `1…n / Istilah / Praktek` cuma kalau ≥ 3 bagian, yang aktif ink, kepanjangan = geser ke samping + fade kanan. **Panel kelipet by default** di semua state (nunggu, nulis, lengkap, cache, kepotong, error, 1 bagian juga): satu baris "Teks terjemahan · n bagian" ("· 1 gagasan"; tanpa jumlah selama proses / error), soalnya terjemahannya udah dibaca di sheet Artinya. Tap baris = buka (200ms), tap kotak (selain nomor) / strip chevron di ujung bawahnya = lipet lagi, di state mana pun. Gak ada lipet / buka otomatis (chip & scroll gak ngubah lipetan), kecuali tap istilah yang ngebuka. Gak diinget antar layar. Tap istilah = kata persisnya disorot (gantiin sorotan bagian), panel kebuka; istilah tanpa kata persis gak bisa di-tap. Scroll cuma ganti blok aktif, panel dibangun ulang pas aktifnya ganti doang. 1 bagian: semua mati. Kurangi gerakan: lompat & lipat tanpa animasi. VoiceOver: chip "Lompat ke bagian 2 dari 4", nomor di teks bisa di-tap; fokus belum dipindah ke heading abis lompat.
-- **Intip (#65, board "Bedahin · Nyambung ke · intip"):** tap kartu = sheet intip (tinggi ikut isi, maks 70%, kepanjangan fade). Header "NYAMBUNG KE · AWAL XVII" / "LANJUTAN V · GRUP BERIKUTNYA" + judul, kalimat kenapa nyambung, kartu muted: terjemahan (kalau udah diartiin) di atas teks asli miring 15, atau teks asli ukuran Aa kalau belum. Tombol sekunder semua (gak ada kuning): "Artiin" + "Bedahin ini juga", atau "Bedahin ini juga" doang kalau udah diartiin. Artiin nge-stream `groupAiStreamProvider` grup tujuan (hasil masuk cache biasa), status di tombol Artiin, ujung memudar. Tanpa ritme `Pacer`: teks muncul per token. Gagal / kepotong = baris pink di bawah kartu + "Coba artiin lagi"; key ditolak / saldo / key kosong = link "Buka Pengaturan" di barisnya. "Bedahin ini juga" sebelum diartiin = diartiin dulu (Bedahin butuh makna cepat), selesai langsung lanjut.
-- **Navigasi berlapis:** "Bedahin ini juga" nutup intip dan push Bedahin grup tujuan di atas yang sekarang. Balik / swipe tepi = mundur satu lapis (posisi scroll lapis bawah tetep), "Balik baca" dari lapis mana pun nerusin `pop(true)` sampe halaman.
-- **Salin:** teks polos, "buku · bab (dibedah di Luma)", per bagian nomor + judul + Maksudnya + Logikanya, Tokoh & istilah, Praktekinnya gini; tanpa terjemahan & Nyambung ke. Toast "Udah disalin, tinggal paste", tombol jadi "Disalin".
-- **Kurangi gerakan:** push = fade 150ms, bagian muncul utuh, tanpa pudar. **VoiceOver:** penjelasan dibaca sebelum panel teks, tiap bagian heading "Bagian i dari n, judul", selesai diumumin "Bedahan udah lengkap, N bagian".
+- **Header**: back (VoiceOver "Batalin, balik ke Artinya" while processing) + status ("Lagi ngebedah..." / "Udah dibedah nih" / "Kepotong di tengah" / "Bedahin" on error) + "book · chapter · N bagian" ("1 gagasan"; "N bagian masuk" when cut).
+- **Text panel** (the translation, follows Aa) exists in every state:
+  - Section numbers precede the first sentence of each section, only with ≥ 2 sections; while writing, a number appears together with its explanation.
+  - Multi-paragraph groups get `¶n` in a left gutter; a section spanning paragraphs gets a `¶2–3` tag.
+  - **Folded by default** in every state to one line "Teks terjemahan · n bagian" (no count while processing or on error), since the reader just read it in Artinya. Tap the line to open (`Motion.fold`); tap the panel (outside a number) or its bottom chevron strip to fold.
+  - Nothing folds or opens automatically, except tapping a term, which opens it. The fold state isn't remembered between screens.
+  - Pinned under the header, height = text, at most `Layout.breakdownPanel` of the screen, scrolling inside beyond that. With 1 section (done), it scrolls with the page instead and shows the source sentence under the translation.
+- **Explanation**: per section a number + title (≥ 2 sections), MAKSUDNYA, LOGIKANYA; then Tokoh & istilah, Nyambung ke (cards with a chevron when the target exists, plain text otherwise), Praktekinnya gini. Empty blocks don't render.
+- **Sync** (≥ 2 sections):
+  - The active block is the one whose top passed the read line (`Layout.breakdownReadLine`, hysteresis `Layout.breakdownSwitch`, `activeBlock` in `domain/breakdown_sync.dart`); at the bottom, the last block.
+  - The active section's sentences are highlighted in the panel, which scrolls to its number. Highlighting runs from section 1 while writing.
+  - Tapping a number or chip jumps the explanation there (locked until the next finger scroll). Chips `1…n / Istilah / Praktek` appear only with ≥ 3 sections and scroll sideways with a right fade.
+  - Tapping a term highlights its exact words and opens the panel; terms without an exact match aren't tappable.
+- **Buttons**:
+  - Salin / status + "Balik baca" (yellow).
+  - Cut: Salin disabled, "Balik baca" muted, yellow moves to "Coba lagi dari awal".
+  - Error: "Balik baca" + "Coba lagi"; key rejected or missing shows "Buka Pengaturan", and returning from Settings retries.
+  - Buttons hide on scroll (`ScrollRun`) except while processing, on error, or with VoiceOver. The header never hides.
+- **States**:
+  - *waiting*: placeholders, count guessed from sentences ÷ 6, not scrollable.
+  - *slow*: card above the placeholders, secondary Batal / Coba lagi; Batal returns to Artinya.
+  - *cut*: complete sections only, closing blocks dropped, pink banner.
+  - *error*: copy per error type.
+  - *cached*: complete, from the top.
+- **Peek** (board "Bedahin · Nyambung ke · intip"):
+  - Tapping a Nyambung ke card opens a sheet sized to content (max 70%) with the header ("NYAMBUNG KE · AWAL XVII" / "LANJUTAN V · GRUP BERIKUTNYA"), why it connects, and a muted card: the translation over italic source text if translated, otherwise the source at Aa size.
+  - Buttons are all secondary: "Artiin" + "Bedahin ini juga", or only the latter when translated. "Artiin" streams the target group without pacing.
+  - Failed or cut: a pink row under the card + "Coba artiin lagi"; key rejected, balance empty, or no key adds a "Buka Pengaturan" link.
+  - "Bedahin ini juga" on an untranslated group translates it first, then continues.
+- **Layered navigation**: "Bedahin ini juga" pushes the target's Bedahin on top. Back or edge swipe goes back one layer, keeping the layer's scroll position. "Balik baca" from any layer returns to the reading page.
+- **Salin**: plain text "book · chapter (dibedah di Luma)", per section number + title + Maksudnya + Logikanya, then Tokoh & istilah and Praktekinnya gini; no translation, no Nyambung ke.
+- **Reduce Motion**: push is a fade. **VoiceOver**: the explanation is read before the panel; each section is a heading "Bagian i dari n, title"; completion is announced "Bedahan udah lengkap, N bagian".
+
+## Pengaturan
+
+Board "Pengaturan · 01–11" (page `atur`).
+
+- The hub fits one screen without scrolling and isn't covered by the tab bar: account card + AI quota ring, AI model card ("Ganti model" opens the picker, "Atur AI" goes to the AI page), then 4 tiles Backup · Katalog · Cache · Tampilan (name + one status + "›"; a pink dot when something needs checking, e.g. never backed up).
+- Detail pages: Akun, AI, Backup & pulihin, Katalog buku. Cache and Tampilan are sheets.
+- Tampilan = theme (same setting as Aa) + display language; the language never changes translations or AI answers.
+- Sparing palette: yellow only on the primary button and the active tab, pink for status and delete.
+
+## Ngobrolin buku (book chat)
+
+Screens: [design/references/ngobrolin-buku.html](../design/references/ngobrolin-buku.html). Data, lifecycle, and answer protocol: [architecture.md](architecture.md), [llm.md](llm.md).
+
+- The reader entry resumes the last session; "Tanyain ini" opens the session already started from that quote, or starts a new draft with the quote (removable). A draft isn't in history until its first send. A session from an old book revision is a read-only archive with a "new chat" action.
+- **Aa**: chat answers, context cards, quotes, and citation context use `ReaderTypography.style` with `ReaderTypography.paragraphGap` between paragraphs. The citation sheet uses the Aa margin (`ReaderPrefs.marginWidth`). The chat screen's side margin is always 16 (= Sempit) whatever the Aa margin; font, size, and line height still follow Aa. Header and composer use UI margins.
+- Composer: 1–5 lines. Renaming requires a title (max 120 Unicode code points). Entry targets stay `Layout.touch` while the dock shrinks.
 
 ## Copy
 
-Bahasa Indonesia gaya Gen Z, santai. Contoh: "Rak buku lo", "Lanjut baca yuk", "Artinya gini nih", "Maksud penulisnya tuh...", "Bentar, lagi mikir...", "Yah, gagal nih".
-
-## Ubah judul & penulis
-
-Boards 33–38 (+ baris masuk di Info buku, board 21). Sheet bertumpuk di atas Info buku: header tombol bulat X (Batal) · judul · tombol bulat centang (Simpan, primer; nonaktif = muted), preview cover 132px yang ikut isi field langsung, field Judul + Penulis (opsional), kartu "Pakai cover default" (cuma kalau EPUB punya cover), dan "Balikin ke aslinya" yang ngisi ulang field (baru kesimpen pas Simpan, gak nyentuh toggle cover). Judul kosong: error + Simpan nonaktif. Info buku: penulis kosong tampil "Penulis gak ketemu" (italic), judul tanpa spasi >= 16 karakter tampil 19px dan dipecah per karakter.
-
-## Layar yang sudah didesain
-
-Semua layar MVP awal sudah final (terang + gelap): rak kosong/berisi, baca, artinya (loading / hasil / error / udah disalin / API key kosong) dengan highlight grup, Aa, daftar isi, akhir bab, akhir buku, import (proses / berhasil / duplikat / rusak / bukan EPUB / DRM), urutkan rak, tekan lama buku, info buku, konfirmasi hapus, pengaturan, penanda grup yang sudah diterjemahkan.
-
-## Pengaturan (meja depan)
-
-Board "Pengaturan · 01–11" di page `atur` Stabilo (terang + gelap). Layar utama muat satu layar tanpa scroll dan gak ketutup bar tab: kartu akun + cincin kuota AI, kartu model AI ("Ganti model" buka pemilih, "Atur AI" ke halaman AI), lalu 4 tile Backup · Katalog · Cache · Tampilan (nama + satu status + tombol bulat "›"; titik pink di sebelah nama kalau ada yang perlu dicek, misalnya belum pernah backup).
-
-- Halaman detail (anak rute `/settings`, bar tab tetap ada): Akun, AI, Backup & pulihin, Katalog buku. Cache dan Tampilan cukup sheet.
-- Tampilan = tema (Ikut sistem · Terang · Gelap, setelan yang sama kayak Tema di menu Aa) + bahasa tampilan; bahasa ini gak ngubah terjemahan / jawaban AI.
-- Palet hemat: kuning cuma tombol utama + tab aktif, pink buat status + tombol hapus.
-- Kerangka halaman detail: `SettingsPage` (tombol balik + judul + isi scroll dengan jarak bawah buat bar tab).
-
-## Layar yang masih didesain
-
-Backup & restore ([backup.md](backup.md)): bagian Backup di Pengaturan, proses export, restore (pilih file → ringkasan → konfirmasi → proses → berhasil / gagal), banner pengingat backup.
-
-
-## Ngobrolin buku: flow dan state kontrak (#114)
-
-Flow A/sesi/textarea ringkas ada di `design/luma.pen` yang sudah di-track.
-[State matrix dan keputusan edge case](https://github.com/choiruladamm/luma/issues/114)
-menjadi handoff implementasi; belum ada screen chat produksi. Reader entry membuka
-sesi terakhir, Tanyain ini membuat draft baru dengan quote removable. Draft baru
-belum masuk riwayat sampai send pertama. Sesi revision lama menjadi arsip read-only,
-dengan aksi obrolan baru. Semua sumber berasal dari seluruh buku yang diimport.
-
-**Teks ikut Aa:** isi layar ngobrol dan sheet sitasi pakai `ReaderTypography`, sumber yang sama dengan halaman baca dan sheet Artinya. Ganti Aa di reader langsung kebawa (provider yang sama).
-- Kutipan di sheet sitasi: font, ukuran, jarak baris persis Aa.
-- Jawaban AI, kartu konteks, kutipan, dan konteks sebelum/sesudah sitasi: font, ukuran, dan jarak baris persis Aa (`ReaderTypography.style`, termasuk +0,05 di gelap), sama dengan halaman baca. Di Aa default ukurannya 18,5, bukan 15,5 seperti spek board lama.
-- Jarak antar paragraf jawaban = 1em ukuran Aa (`ReaderTypography.paragraphGap`), sama dengan halaman baca.
-- Margin kiri-kanan sheet sitasi persis `ReaderPrefs.marginWidth` (Sempit 16, Pas 24, Lega 32), sama dengan halaman baca. Kolom layar ngobrol selalu 16 (= Aa Sempit), gak ikut pilihan margin Aa (font, ukuran, dan jarak baris tetap ikut). Composer dan header tetap margin UI.
-- Tetap ukuran UI (Bricolage): bubble pesan, notice, chip sitasi, label, tombol, header, composer.
-
-Kontrak menetapkan input ringkas min1/max5 baris, rename wajib judul terisi (maks120
-Unicode code points), dan target entry tetap44pt saat dock menyusut. Daftar kosong,
-keyboard/error rename, arsip, serta fallback layar sempit/teks besar dijelaskan di
-issue; visual/dark/a11y finish tetap #123. Canvas sudah dibaca ulang lewat Pencil MCP.
-A20 menjadi contoh jawaban parsial dengan pesan keterbatasan tetap; A21 hanya
-menampilkan pesan sumber tidak ditemukan. Blok pengetahuan umum dan aksi contoh
-masa kini dihapus sesuai instruksi user agar sama dengan kontrak. Nomor layar/ID
-utama dipertahankan. Dua state diperiksa secara visual dan tanpa clipping terdeteksi;
-tidak ada gambar ditambahkan ke issue.
+- Indonesian is casual Gen Z: "Rak buku lo", "Lanjut baca yuk", "Artinya gini nih", "Maksud penulisnya tuh...", "Bentar, lagi mikir...", "Yah, gagal nih". English is casual and natural.
+- Errors say what happened and what to do next, with a short technical code in small text where useful (`timeout · 30 detik`, `HTTP 402 · saldo abis`).
+- Strings live in the ARB files, never in widgets ([i18n.md](i18n.md)).

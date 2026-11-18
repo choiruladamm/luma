@@ -9,7 +9,7 @@ import '../repositories/catalog_repository.dart';
 import 'book_source.dart';
 import 'http_client.dart';
 
-/// Project Gutenberg (docs/discover.md, Adapter Gutenberg): cari dari
+/// Project Gutenberg (docs/discover.md, Sources and discovery): cari dari
 /// katalog lokal, populer / detail / download dari OPDS + URL rakitan.
 class GutenbergSource implements BookSource {
   GutenbergSource(

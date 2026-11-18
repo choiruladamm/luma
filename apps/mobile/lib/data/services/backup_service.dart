@@ -44,7 +44,7 @@ class BackupService {
   /// buku/terjemahan udah ketauan). [isCancelled] dicek di sela tahap;
   /// pas ngezip, [cancel] selesai = isolate-nya dimatiin. [snapshotOnly]:
   /// cuma manifest + DB, buat backup cloud (file buku & cover diunggah
-  /// terpisah, docs/backend.md Backup cloud).
+  /// terpisah, docs/backup.md, Archive contents and manifest).
   Future<BackupFile?> export({
     bool snapshotOnly = false,
     DateTime? now,

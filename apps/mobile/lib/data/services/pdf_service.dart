@@ -8,7 +8,7 @@ import '../../domain/pdf_chapters.dart';
 import '../../domain/pdf_layout.dart';
 import 'epub_parser.dart';
 
-/// Kenapa import PDF gagal (docs/import-formats.md, Edge case). Cancel bukan
+/// Kenapa import PDF gagal (docs/import-formats.md, Limits). Cancel bukan
 /// error: dilempar `ImportCancelled` dari callback progres.
 enum PdfImportError {
   /// Ber-password (input password ditunda, #90).

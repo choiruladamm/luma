@@ -28,7 +28,7 @@ React Router, TanStack Query over `hc<AppType>()`, RHF + `zod/mini`, TanStack Ta
 
 ## Copy
 
-Copy lives in `client/i18n/id.ts` (source; its shape is the `Messages` type) and `en.ts` (own lazy chunk). Components use `useI18n()`; code outside React (mutation callbacks → toasts) uses `getI18n()`. Formatters in `lib/format` take the locale explicitly. API errors render via `errorText(error, t)` from the error `code`. User data (names, emails, user agents, codes) is never translated. Rules: `docs/dashboard.md` (Bahasa).
+Copy lives in `client/i18n/id.ts` (source; its shape is the `Messages` type) and `en.ts` (own lazy chunk). Components use `useI18n()`; code outside React (mutation callbacks → toasts) uses `getI18n()`. Formatters in `lib/format` take the locale explicitly. API errors render via `errorText(error, t)` from the error `code`. User data (names, emails, user agents, codes) is never translated. Rules: `docs/dashboard.md` (Localization).
 
 ## Client tests
 

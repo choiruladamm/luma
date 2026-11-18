@@ -45,8 +45,8 @@ class CloudBackup {
   );
 }
 
-/// Panggilan `/v1/files/*` dan `/v1/backups*` (docs/backend.md, Backup
-/// cloud). Kode error `STORAGE_FULL` = kuota cloud habis.
+/// Panggilan `/v1/files/*` dan `/v1/backups*` (docs/backend.md, Files and cloud backups).
+/// Kode error `STORAGE_FULL` = kuota cloud habis.
 class CloudBackupService {
   CloudBackupService(this._client);
 

@@ -69,7 +69,7 @@ describe("login with Google (redirect)", () => {
     const admin = await createGoogleUser("admin-google@luma.test");
     const overrides = { ADMIN_EMAILS: "admin-google@luma.test" };
     const { response, d1Queries } = (await loginWithGoogle({ sub: admin.sub, email: admin.email }, overrides)).callback;
-    // Budget (docs/backend.md, Anggaran per aksi): find account + user + admin check + token update + save session.
+    // Budget (docs/budgets.md, Per-action budgets): find account + user + admin check + token update + save session.
     expect(d1Queries).toBeLessThanOrEqual(5);
 
     expect(response.status).toBe(302);

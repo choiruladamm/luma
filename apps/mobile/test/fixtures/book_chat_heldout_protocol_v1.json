@@ -43,7 +43,7 @@
     "test/data/book_chat_heldout_live_test.dart": "7697fd67688fa7b2fb0545746088c594fb28ecc069c6e8f80dd37f89f50dc11b",
     "lib/data/services/openrouter_service.dart": "4cb3d8f113519f19ae22571775d781743452e9fcb80d65aa81fde5819406e1e8",
     "lib/data/services/epub_parser.dart": "77678a03d5475181896cc0e6f61a6244890b482648c438d6a698b668d3b3404d",
-    "lib/data/services/chapter_extractor.dart": "fe6d8ab2f9f4ebbe7ed85855ec49d5f3e5c515696496aa6a96d5d9d9d465f9b2",
+    "lib/data/services/chapter_extractor.dart": "afb54ec2d08990f228f1d7cba4c9a677ac36b006cccf7dd2f384a9ab93d67e07",
     "lib/domain/grouping.dart": "f05b72b647b4030bbc122d29291ad3f70fc716ad9cb4509a4886c2ddbea13c7e",
     "lib/domain/luma_markdown.dart": "1cf2139001ce3940b50178626b16bc579a78c7fb2b9c6b633a45f2cbbae6b2ed",
     "pubspec.lock": "d0d7f95ff1eb8c679e7e9deafe05967ba99325e6e899f5d4bfc83489d36a8ae3"
