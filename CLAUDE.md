@@ -21,10 +21,10 @@ Root `Makefile` (`make help`): mobile targets bare (`make test`), backend `backe
 
 ## Issues
 
-- Start an issue only when every dependency on its **Tergantung** line is closed. Tick its scope checklist when done.
+- Start an issue only when every dependency on its **Depends on** line is closed. Tick its scope checklist when done.
 - Milestone `MVP` is done except dogfooding (#29). Outside MVP, status labels:
   - `status:ready`: clear plan; start once dependencies are closed.
-  - `status:deferred`: waiting on its **Dibuka kalau** trigger. Trigger happened → `status:ready`.
+  - `status:deferred`: waiting on its **Opens when** trigger. Trigger happened → `status:ready`.
   - `status:idea`: undecided; may be closed `wontfix`.
 - New issue, idea, or deferred item: create it with a status label, add it to its parent issue, add a `(#N)` link in the relevant doc.
 - Closed/merged doesn't prove it works on a device. Record device checks in the issue.
@@ -40,7 +40,7 @@ Root `Makefile` (`make help`): mobile targets bare (`make test`), backend `backe
 ## Docs and language
 
 - `docs/` describes how the system works now. A behavior change that a doc describes (names, routes, tables, limits, flows, quoted copy) updates that doc in the same commit. Structure and placement rules: `.claude/rules/docs.md` (loads when you touch `docs/`); a Claude hook checks every edited file.
-- Docs, code, identifiers, commit messages, and CLAUDE.md files are English; issues and app copy are Indonesian.
+- Docs, code, identifiers, commit messages, issues, and CLAUDE.md files are English; app copy is Indonesian (quoted verbatim when an issue refers to it).
 
 ## Code comments
 
