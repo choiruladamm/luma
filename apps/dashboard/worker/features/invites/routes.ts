@@ -30,7 +30,8 @@ export const invites = factory
   )
   .post("/", validate("json", createBody), async (c) => {
     const result = await createInvites(c.var.db, c.req.valid("json").count);
-    audit(c, "invite.create", result.codes.join(","));
+    // Count only: a logged code could be redeemed by anyone who can read Workers Logs.
+    audit(c, "invite.create", `count:${result.codes.length}`);
     return c.json(result, 201);
   })
   .delete("/:code", validate("param", codeParam), async (c) => {

@@ -1,5 +1,5 @@
 // Session and user queries for admin auth (used by `requireAdmin` and the Better Auth hook).
-import { and, eq, lt } from "drizzle-orm";
+import { and, eq, lte } from "drizzle-orm";
 import type { Db } from "../../../backend/src/db/client";
 import { sessions, users } from "../../../backend/src/db/schema";
 
@@ -20,7 +20,7 @@ export const endSessionIfPastMaxAge = (db: Db, token: string, now = Date.now()) 
   db
     .delete(sessions)
     .where(
-      and(eq(sessions.token, token), lt(sessions.createdAt, new Date(now - SESSION_MAX_AGE_MS))),
+      and(eq(sessions.token, token), lte(sessions.createdAt, new Date(now - SESSION_MAX_AGE_MS))),
     );
 
 /** 1 query: what the admin check in the `session.create.before` hook needs. */

@@ -1,6 +1,12 @@
 import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
+import { createDb } from "../../../backend/src/db/client";
 import { getAuth } from "../../worker/auth/auth";
+import {
+  SESSION_MAX_AGE_MS,
+  endSessionIfPastMaxAge,
+  isPastMaxAge,
+} from "../../worker/auth/session";
 import { app } from "../../worker/index";
 import { call, errorCode, ORIGIN } from "../helpers/app";
 import {
@@ -203,6 +209,17 @@ describe("Better Auth allowlist", () => {
     const { response, d1Queries } = await call(PROBE, { headers: { cookie } });
     expect(response.status).toBe(401);
     expect(d1Queries).toBe(2);
+    expect(await sessionRow(cookie)).toBeNull();
+  });
+
+  it("ends a session exactly at the 30-day cap on both paths", async () => {
+    // Whole seconds, so the stored timestamp round-trips exactly.
+    const createdAt = new Date(Math.floor((Date.now() - 31 * DAY) / 1000) * 1000);
+    const cookie = await sessionCookie(await adminId(), { expiresInMs: DAY, createdAt });
+    const now = createdAt.getTime() + SESSION_MAX_AGE_MS;
+    expect(isPastMaxAge(createdAt, now)).toBe(true);
+    const token = decodeURIComponent(cookie.split("=")[1]!).split(".")[0]!;
+    await endSessionIfPastMaxAge(createDb(env.DB), token, now);
     expect(await sessionRow(cookie)).toBeNull();
   });
 
