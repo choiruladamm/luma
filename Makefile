@@ -6,7 +6,7 @@ FVM ?= fvm
 FLUTTER := cd $(APP) && $(FVM) flutter
 DART := cd $(APP) && $(FVM) dart
 
-.PHONY: help setup get l10n gen brand live chat-agent-live chat-spike chat-spike-live chat-oracle-live chat-discussion-live chat-adaptive-live chat-retrieval chat-dense-live chat-dense-replay chat-heldout-live chat-refine-live chat-validation2-live chat-recovery-live chat-validation3-live watch run release dev run-android release-android dev-android apk profile test analyze format check clean hygiene docs-check backend-install backend-dev backend-types backend-test backend-live backend-e2e backend-migrate backend-invite backend-ban backend-unban backend-deploy dashboard-install dashboard-dev dashboard-test dashboard-e2e dashboard-deploy
+.PHONY: help setup get l10n gen brand live chat-agent-live chat-spike chat-spike-live chat-oracle-live chat-discussion-live chat-adaptive-live chat-retrieval chat-dense-live chat-dense-replay chat-heldout-live chat-refine-live chat-validation2-live chat-recovery-live chat-validation3-live watch run release dev run-android release-android dev-android apk profile test analyze format check clean hygiene docs-check backend-install backend-dev backend-types backend-test backend-live backend-e2e backend-migrate backend-migrate-local backend-invite backend-ban backend-unban backend-deploy dashboard-install dashboard-dev dashboard-test dashboard-e2e dashboard-deploy
 
 help: ## list available commands
 	@grep -E '^[a-z0-9-]+:.*## ' $(MAKEFILE_LIST) | awk -F ':.*## ' '{printf "  %-16s %s\n", $$1, $$2}'
@@ -127,6 +127,9 @@ backend-install: ## backend: install deps (bun)
 
 backend-dev: ## backend: run Worker locally (env dev, http://<ip>:8787; app: --dart-define=BACKEND_URL=...)
 	cd $(BACKEND) && bunx wrangler dev --env dev --ip 0.0.0.0
+
+backend-migrate-local: ## backend: apply D1 migrations to the local D1 shared by backend-dev and dashboard-dev
+	cd $(BACKEND) && bunx wrangler d1 migrations apply DB --env dev --local --persist-to .wrangler/state
 
 backend-types: ## backend: regenerate Env types after editing wrangler.jsonc
 	cd $(BACKEND) && bunx wrangler types --env dev --strict-vars false
