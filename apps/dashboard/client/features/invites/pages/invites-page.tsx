@@ -214,10 +214,7 @@ export function InvitesPage() {
           </>
         }
       />
-      <section
-        aria-label={t.invites.list}
-        className="scroll-mt-24 overflow-hidden rounded-card bg-sheet"
-      >
+      <section aria-label={t.invites.list} className="scroll-mt-24 rounded-card bg-sheet">
         {/* Desktop: underline tabs across the top of the card, then search left + chips right
             (same toolbar as Users). Phone: search, chips, then the segmented tabs. */}
         <StatusTabs
@@ -296,63 +293,66 @@ export function InvitesPage() {
             />
           </div>
         </div>
-        {invites.isError ? (
-          <ErrorState
-            message={errorText(invites.error, t)}
-            onRetry={() => void invites.refetch()}
-          />
-        ) : !data ? (
-          <InvitesTableSkeleton />
-        ) : rows.length === 0 ? (
-          counts?.all === 0 && !params.q ? (
-            <EmptyState
-              icon="ticket"
-              title={t.invites.empty}
-              action={
-                <Button variant="primary" icon="plus" onClick={makeCode}>
-                  {t.invites.create}
-                </Button>
-              }
-            >
-              {t.invites.emptyBody}
-            </EmptyState>
-          ) : params.q && counts?.all === 0 ? (
-            <EmptyState icon="search" title={t.invites.noSearchMatch(params.q)} />
+        {/* Clip only the table to the card corners: the toolbar menus must overflow below it. */}
+        <div className="overflow-hidden rounded-b-card">
+          {invites.isError ? (
+            <ErrorState
+              message={errorText(invites.error, t)}
+              onRetry={() => void invites.refetch()}
+            />
+          ) : !data ? (
+            <InvitesTableSkeleton />
+          ) : rows.length === 0 ? (
+            counts?.all === 0 && !params.q ? (
+              <EmptyState
+                icon="ticket"
+                title={t.invites.empty}
+                action={
+                  <Button variant="primary" icon="plus" onClick={makeCode}>
+                    {t.invites.create}
+                  </Button>
+                }
+              >
+                {t.invites.emptyBody}
+              </EmptyState>
+            ) : params.q && counts?.all === 0 ? (
+              <EmptyState icon="search" title={t.invites.noSearchMatch(params.q)} />
+            ) : (
+              <EmptyState
+                icon="ticket"
+                title={
+                  params.usedWithin
+                    ? t.invites.noneUsedWithin
+                    : filter === "unused"
+                      ? t.invites.allUsed
+                      : t.invites.noneUsed
+                }
+              />
+            )
           ) : (
-            <EmptyState
-              icon="ticket"
-              title={
-                params.usedWithin
-                  ? t.invites.noneUsedWithin
-                  : filter === "unused"
-                    ? t.invites.allUsed
-                    : t.invites.noneUsed
+            <DataTable
+              label={t.invites.table}
+              columns={columns}
+              data={rows}
+              minWidth={880}
+              sort={tableSort}
+              sortable={["code", "createdAt", "usedAt"]}
+              onSort={onSort}
+              renderCard={(i) => <InviteCard invite={i} actions={actions(i)} />}
+              footer={
+                <Pagination
+                  page={params.page}
+                  pageCount={data.pageCount}
+                  total={data.total}
+                  pageSize={params.limit}
+                  onPage={(page) => set({ page })}
+                  pageSizes={[20, 50]}
+                  onPageSize={(limit) => set({ limit })}
+                />
               }
             />
-          )
-        ) : (
-          <DataTable
-            label={t.invites.table}
-            columns={columns}
-            data={rows}
-            minWidth={880}
-            sort={tableSort}
-            sortable={["code", "createdAt", "usedAt"]}
-            onSort={onSort}
-            renderCard={(i) => <InviteCard invite={i} actions={actions(i)} />}
-            footer={
-              <Pagination
-                page={params.page}
-                pageCount={data.pageCount}
-                total={data.total}
-                pageSize={params.limit}
-                onPage={(page) => set({ page })}
-                pageSizes={[20, 50]}
-                onPageSize={(limit) => set({ limit })}
-              />
-            }
-          />
-        )}
+          )}
+        </div>
       </section>
       <NewInviteDialog
         code={created?.code ?? null}
