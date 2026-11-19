@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from "@testing-library/react";
+import { act, screen, waitFor, within } from "@testing-library/react";
 import { HttpResponse, http } from "msw";
 import { describe, expect, it } from "vitest";
 import { invites, invitesPage } from "../helpers/fixtures";
@@ -163,6 +163,25 @@ describe("Undangan", () => {
     await user.click(screen.getByRole("button", { name: "Halaman 2" }));
     expect(await screen.findByText("21–25 dari 25")).toBeInTheDocument();
     expect(router.state.location.search).toBe("?page=2");
+  });
+
+  it("search field follows links and back, and a pending draft can't overwrite the navigation", async () => {
+    const { user, router } = renderApp("/invites");
+    const box = await screen.findByRole("searchbox", { name: "Cari kode atau email" });
+    await user.type(box, "eeeee");
+    await waitFor(() => expect(router.state.location.search).toBe("?q=eeeee"));
+
+    await user.type(box, "zzz");
+    await act(() => router.navigate("/invites?q=aaaaa"));
+    await waitFor(() => expect(box).toHaveValue("aaaaa"));
+    // Past the 300ms debounce: the dropped "eeeeezzz" draft never reaches the URL.
+    await new Promise((r) => setTimeout(r, 400));
+    expect(router.state.location.search).toBe("?q=aaaaa");
+    expect(box).toHaveValue("aaaaa");
+
+    await act(() => router.navigate(-1));
+    await waitFor(() => expect(box).toHaveValue("eeeee"));
+    expect(router.state.location.search).toBe("?q=eeeee");
   });
 
   it("searches (debounced, in the URL), filters by used-within, and sorts through the worker", async () => {

@@ -46,7 +46,8 @@ export function UsersPage() {
   const { t, locale } = i18n;
   const columns = useMemo(() => userColumns(i18n, q), [i18n, q]);
   const rows = users.data?.items ?? [];
-  const pageCount = users.data?.pageCount;
+  // Placeholder data is the previous query's page count, not this one's.
+  const pageCount = users.isPlaceholderData ? undefined : users.data?.pageCount;
   const filtered = activeFilterCount(params) > 0;
   const currentSort: UserSort =
     params.sort && (params.sort !== "relevance" || q) ? params.sort : q ? "relevance" : "created";

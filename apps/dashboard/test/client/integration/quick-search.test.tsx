@@ -35,6 +35,20 @@ describe("header quick search", () => {
     await waitFor(() => expect(router.state.location.pathname).toBe("/users/u1"));
   });
 
+  it("results for older text can't be picked while new text waits for the debounce", async () => {
+    const { user, router } = renderApp("/");
+    await within(await screen.findByRole("region", { name: "User terdaftar" })).findByText("48");
+    const box = screen.getByRole("combobox", { name: "Cari email user" });
+    await user.type(box, "us");
+    await screen.findByRole("option", {
+      name: (n) => n.replace(/\s/g, "").includes("user1@luma.test"),
+    });
+    await user.type(box, "x");
+    await user.keyboard("{ArrowDown}{Enter}");
+    await waitFor(() => expect(router.state.location.search).toBe("?q=usx"));
+    expect(router.state.location.pathname).toBe("/users");
+  });
+
   it("'see all' opens /users?q= and the header field hides there", async () => {
     const { user, router } = renderApp("/");
     await within(await screen.findByRole("region", { name: "User terdaftar" })).findByText("48");

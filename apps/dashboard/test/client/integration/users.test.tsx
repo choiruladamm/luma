@@ -1,5 +1,5 @@
-import { screen, waitFor, within } from "@testing-library/react";
-import { HttpResponse, http } from "msw";
+import { act, screen, waitFor, within } from "@testing-library/react";
+import { delay, HttpResponse, http } from "msw";
 import { describe, expect, it } from "vitest";
 import { user, usersPage } from "../helpers/fixtures";
 import { API, apiError } from "../helpers/handlers";
@@ -96,6 +96,24 @@ describe("User", () => {
     );
     expect(within(nav).getByRole("button", { name: "Halaman berikutnya" })).toBeDisabled();
     expect(pages).toEqual(["1", "3"]);
+  });
+
+  it("keeps a requested page while its answer loads, even if the previous query had fewer pages", async () => {
+    server.use(
+      http.get(`${API}/users`, async ({ request }) => {
+        const p = new URL(request.url).searchParams;
+        if (p.get("status") === "banned") return HttpResponse.json(usersPage([user(9)]));
+        await delay(100);
+        const page = Number(p.get("page") ?? "1");
+        return HttpResponse.json(usersPage([user(page)], { total: 101, page }));
+      }),
+    );
+    const { router } = renderApp("/users?status=banned");
+    expect(await screen.findByRole("link", { name: /user9@luma.test/ })).toBeInTheDocument();
+    // One page of banned users is still on screen (placeholder) while page 3 loads.
+    await act(() => router.navigate("/users?page=3"));
+    expect(await screen.findByRole("link", { name: /user3@luma.test/ })).toBeInTheDocument();
+    expect(router.state.location.search).toBe("?page=3");
   });
 
   it("filters and sorts through the URL; a change goes back to page 1", async () => {
