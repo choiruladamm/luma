@@ -15,7 +15,7 @@ Hono API under `/v1` on Workers, D1 + Drizzle, R2, Better Auth (`bearer` plugin)
 - `typescript/no-unsafe-type-assertion`, off in `test/**`: JSON bodies and the `RateLimit`/`R2Bucket` mocks.
 - `vitest/expect-expect` in `test/**`: `expectContract` counts as an assertion.
 - `vitest/valid-expect` in `test/**`: `maxArgs: 2`, because `expect(x, message)` is intentional.
-- Deploys go through the `/backend-deploy <env>` skill. `make backend-deploy e=prod` refuses outside `master`; `make backend-migrate e=prod` doesn't check the branch, so run it from `master` only.
+- Deploys run in GitHub Actions on push to `dev`/`master` (`.github/workflows/deploy.yml`); the `/backend-deploy <env>` skill is the manual fallback. `make backend-deploy e=prod` and `make backend-migrate e=prod` refuse outside `master`.
 
 ## Code rules
 

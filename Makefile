@@ -1,6 +1,9 @@
 APP := apps/mobile
 BACKEND := apps/backend
 DASHBOARD := apps/dashboard
+# CI checks out a detached HEAD, so prefer the branch GitHub Actions reports.
+BRANCH = $(or $(GITHUB_REF_NAME),$(shell git rev-parse --abbrev-ref HEAD))
+PROD_FROM_MASTER = @if [ "$(e)" = prod ] && [ "$(BRANCH)" != master ]; then echo "production deploys and migrations are only allowed from master"; exit 1; fi
 # CI has no FVM: it installs the pinned Flutter and runs with FVM= (empty).
 FVM ?= fvm
 FLUTTER := cd $(APP) && $(FVM) flutter
@@ -143,8 +146,9 @@ backend-live: ## backend: Flutter client calls the deployed dev Worker (network)
 backend-e2e: ## backend: #109 E2E, Dart client syncs through a local Worker (wrangler dev)
 	bash $(BACKEND)/scripts/e2e.sh
 
-backend-migrate: ## backend: apply D1 migrations remotely (e=dev|prod)
+backend-migrate: ## backend: apply D1 migrations remotely (e=dev|prod; prod only from master)
 	@test "$(e)" = dev -o "$(e)" = prod || { echo "use e=dev or e=prod"; exit 1; }
+	$(PROD_FROM_MASTER)
 	cd $(BACKEND) && bunx wrangler d1 migrations apply DB --env $(e) --remote
 
 backend-invite: ## backend: create random invite codes in remote D1 (e=dev|prod, n=count, default 1)
@@ -163,7 +167,7 @@ backend-unban: ## backend: restore a user's subsidized AI access (e=dev|prod ema
 
 backend-deploy: ## backend: deploy Worker (e=dev|prod; prod only from master)
 	@test "$(e)" = dev -o "$(e)" = prod || { echo "use e=dev or e=prod"; exit 1; }
-	@if [ "$(e)" = prod ]; then test "$$(git rev-parse --abbrev-ref HEAD)" = master || { echo "backend production deploys are only allowed from master"; exit 1; }; fi
+	$(PROD_FROM_MASTER)
 	cd $(BACKEND) && bunx wrangler deploy --env $(e)
 
 dashboard-install: ## dashboard: install deps (bun)
@@ -183,5 +187,5 @@ dashboard-dev-session: ## dashboard: 1-day agent login for luma-admin-dev (no Go
 
 dashboard-deploy: ## dashboard: deploy admin Worker (e=dev|prod; prod only from master)
 	@test "$(e)" = dev -o "$(e)" = prod || { echo "use e=dev or e=prod"; exit 1; }
-	@if [ "$(e)" = prod ]; then test "$$(git rev-parse --abbrev-ref HEAD)" = master || { echo "dashboard production deploys are only allowed from master"; exit 1; }; fi
+	$(PROD_FROM_MASTER)
 	cd $(DASHBOARD) && CLOUDFLARE_ENV=$(e) bunx vite build && bunx wrangler deploy

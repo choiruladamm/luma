@@ -1,12 +1,12 @@
 ---
 type: how-to
 purpose: Provision the Cloudflare, Google, and OpenRouter resources for the mobile API and admin dashboard.
-sections: [D1 and R2, Google OAuth clients, OpenRouter workspaces, Dashboard Access and custom domains, Secrets and first launch]
+sections: [D1 and R2, Google OAuth clients, OpenRouter workspaces, Dashboard Access and custom domains, Secrets and first launch, GitHub deploy pipeline]
 ---
 
 # Provision Luma services
 
-Use this guide for one-time setup. For routine Worker deploys and migration checks, use the [backend-deploy skill](../.claude/skills/backend-deploy/SKILL.md).
+Use this guide for one-time setup. Routine deploys run in GitHub Actions (see [GitHub deploy pipeline](#github-deploy-pipeline)); for a manual deploy, use the [backend-deploy skill](../.claude/skills/backend-deploy/SKILL.md).
 
 ## D1 and R2
 
@@ -63,3 +63,13 @@ Generate independent auth secrets and a backend encryption secret with `openssl 
 1. Deploy and verify the backend using the linked skill.
 2. Once Access and the shared D1 database are ready, deploy the dashboard with `make dashboard-deploy e=<env>`. To supply a secrets file on the first dashboard deploy, run the Make target's Vite build and pass `--secrets-file <path>` to the ensuing Wrangler deploy so it uses the generated config. Follow the same production branch requirement as the Make target.
 3. Open the dashboard in an unauthenticated browser. Expect the Access login before the app renders. After passing Access, the dashboard session endpoint returns `null` until you sign in with Google. Verify that a configured admin can reach Overview and that it shows data from the matching D1 environment.
+
+## GitHub deploy pipeline
+
+`.github/workflows/deploy.yml` runs on every push to `dev` (env `dev`) and `master` (env `prod`): `make backend-migrate`, `make backend-deploy`, `make dashboard-deploy`, then a `/v1/health` check against the matching API domain. Pushes reach those branches only through PRs, and `ci.yml` runs on PRs only. After a push to `master` that carries changes `dev` lacks (a hotfix PR), the `back-merge` job pushes a `backmerge/master-<sha>` branch, opens a PR into `dev`, and dispatches CI on it. A merge conflict fails that job; merge `master` into `dev` by hand.
+
+1. In Cloudflare, create an API token from the **Edit Cloudflare Workers** template, add **Account · D1 · Edit**, and limit it to the Luma account and the `chrl.cloud` zone. [Cloudflare API tokens](https://developers.cloudflare.com/fundamentals/api/get-started/create-token/)
+2. In GitHub **Settings → Environments**, create `dev` and `prod`. Give each the secrets `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`, and limit deployment branches to `dev` and `master` respectively.
+3. Create `dev` from `master` and make it the default branch, so PRs target it.
+4. Add a branch ruleset for `dev` and `master`: require a PR, require the status checks `hygiene`, `mobile-test`, `backend-test`, and `dashboard-test` with branches up to date before merging, block force pushes and deletion, and allow no bypass.
+5. In **Settings → Actions → General**, enable **Allow GitHub Actions to create and approve pull requests** so the back-merge job can open its PR. Keep merge commits enabled in **Settings → General**.

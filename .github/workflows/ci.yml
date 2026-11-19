@@ -1,9 +1,10 @@
 name: CI
 
+# PRs only: branch protection requires PRs to be up to date, so a run after merge would repeat the PR run.
+# workflow_dispatch lets deploy.yml check the hotfix back-merge branch, whose push by GITHUB_TOKEN starts no runs.
 on:
-  push:
-    branches: [master]
   pull_request:
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}
