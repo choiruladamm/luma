@@ -24,10 +24,12 @@ function useErrorKind(): { kind: Kind; detail?: string } {
   };
 }
 
+const KIND_ICON: Record<Kind, IconName> = { notFound: "search", update: "refresh", crash: "alert" };
+
 /** Design component 2, State (failed load), scaled up: soft-red tile, title, one sentence, actions, details. */
 function ErrorPanel({ kind, detail }: { kind: Kind; detail?: string }) {
   const { t } = useI18n();
-  const icon: IconName = kind === "notFound" ? "search" : kind === "update" ? "refresh" : "alert";
+  const icon = KIND_ICON[kind];
   const copy = t.appError[kind];
   return (
     <div
