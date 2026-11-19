@@ -8,6 +8,12 @@ import { renderApp } from "../helpers/render";
 import { server } from "../setup";
 
 describe("User", () => {
+  // The phone sheet's trigger has no aria-expanded; the desktop popover's does.
+  const phoneFilter = () =>
+    screen
+      .getAllByRole("button", { name: "Filter" })
+      .find((b) => !b.hasAttribute("aria-expanded"))!;
+
   it("lists users with status, key, and totals", async () => {
     server.use(
       http.get(`${API}/users`, () =>
@@ -196,5 +202,93 @@ describe("User", () => {
     server.use(http.get(`${API}/users`, () => apiError(500, "INTERNAL_ERROR")));
     renderApp("/users");
     expect(await screen.findByText("Data gagal dimuat", {}, { timeout: 3000 })).toBeInTheDocument();
+  });
+
+  it("a failed refresh replaces the cached rows with the error", async () => {
+    let fail = false;
+    server.use(
+      http.get(`${API}/users`, () =>
+        fail ? apiError(429, "RATE_LIMITED") : HttpResponse.json(usersPage([user(1)])),
+      ),
+    );
+    const { queryClient } = renderApp("/users");
+    await screen.findByRole("table", { name: "Daftar user" });
+    fail = true;
+    await act(() => queryClient.refetchQueries({ queryKey: ["users"] }));
+    expect(await screen.findByRole("alert")).toBeInTheDocument();
+    expect(screen.queryByRole("table", { name: "Daftar user" })).toBeNull();
+  });
+
+  it("filters that match nothing win over the search-empty state", async () => {
+    server.use(http.get(`${API}/users`, () => HttpResponse.json(usersPage([]))));
+    renderApp("/users?q=budi&ai=yes");
+    expect(
+      await screen.findByRole("heading", { name: "Gak ada user yang cocok sama filter ini" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Gak ada email yang cocok sama “budi”")).toBeNull();
+  });
+
+  it.each([
+    ["", "Terbaru daftar"],
+    // Relevance needs a query; without one the list falls back to newest.
+    ["?sort=relevance", "Terbaru daftar"],
+    ["?q=sekar", "Paling cocok"],
+    ["?q=sekar&sort=created&dir=asc", "Terlama daftar"],
+    // A header-picked direction the menu doesn't list gets its own label.
+    ["?sort=r2&dir=asc", "File (Naik)"],
+  ])("sort menu for %s reads %s", async (search, label) => {
+    renderApp(`/users${search}`);
+    await screen.findByRole("table", { name: "Daftar user" });
+    expect(screen.getByRole("button", { name: /^Urutkan:/ })).toHaveTextContent(label);
+  });
+
+  it("desktop filter panel: count badge, reset only filters, Esc in a select keeps the panel", async () => {
+    const { user: u, router } = renderApp("/users?ai=yes&status=banned&sort=r2");
+    await screen.findByRole("table", { name: "Daftar user" });
+    const filter = screen.getByRole("button", { name: /^Filter\s*2$/, expanded: false });
+    await u.click(filter);
+    const panel = screen.getByRole("dialog", { name: "Filter user" });
+    await u.click(within(panel).getByRole("button", { name: /^Status:/ }));
+    expect(screen.getByRole("listbox")).toBeInTheDocument();
+    await u.keyboard("{Escape}");
+    expect(screen.queryByRole("listbox")).toBeNull();
+    expect(screen.getByRole("dialog", { name: "Filter user" })).toBeInTheDocument();
+    await u.click(within(panel).getByRole("button", { name: "Reset semua" }));
+    await waitFor(() => expect(router.state.location.search).toBe("?sort=r2"));
+    // With nothing on, the panel drops its reset.
+    expect(within(panel).queryByRole("button", { name: "Reset semua" })).toBeNull();
+  });
+
+  it("phone filter sheet: badge, direction per sort, reset clears sort too, done closes", async () => {
+    const { user: u, router } = renderApp("/users?ai=yes&sort=r2&dir=asc");
+    await screen.findByRole("table", { name: "Daftar user" });
+    await u.click(screen.getByRole("button", { name: "Filter (1)" }));
+    const sheet = await screen.findByRole("dialog", { name: "Filter user" });
+    const dir = within(sheet).getByRole("radiogroup", { name: "Urutkan" });
+    expect(within(dir).getByRole("radio", { name: "Naik" })).toBeChecked();
+    expect(within(dir).getByRole("radio", { name: "Turun" })).toBeInTheDocument();
+
+    await u.click(within(sheet).getByRole("button", { name: /^Urutkan:/ }));
+    await u.click(screen.getByRole("option", { name: "Daftar" }));
+    await waitFor(() => expect(router.state.location.search).toBe("?ai=yes&sort=created&dir=asc"));
+    expect(within(sheet).getByRole("radio", { name: "Terlama dulu" })).toBeChecked();
+    expect(within(sheet).getByRole("radio", { name: "Terbaru dulu" })).toBeInTheDocument();
+
+    await u.click(within(sheet).getByRole("button", { name: "Reset" }));
+    await waitFor(() => expect(router.state.location.search).toBe(""));
+    await u.click(within(sheet).getByRole("button", { name: "Selesai" }));
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Filter user" })).toBeNull());
+    expect(phoneFilter()).toBeInTheDocument();
+  });
+
+  it("phone filter sheet hides the direction while sorting by relevance", async () => {
+    const { user: u } = renderApp("/users?q=sekar");
+    await screen.findByRole("table", { name: "Daftar user" });
+    await u.click(phoneFilter());
+    const sheet = await screen.findByRole("dialog", { name: "Filter user" });
+    expect(within(sheet).getByRole("button", { name: /^Urutkan:/ })).toHaveTextContent(
+      "Paling cocok",
+    );
+    expect(within(sheet).queryByRole("radiogroup")).toBeNull();
   });
 });
