@@ -16,15 +16,11 @@ import {
 const iso = (d: Date | null) => d?.toISOString() ?? null;
 
 const userItem = (row: UserRow) => ({
-  id: row.id,
-  email: row.email,
-  name: row.name,
-  createdAt: row.createdAt.toISOString(),
-  lastActiveAt: row.lastActiveAt === null ? null : new Date(row.lastActiveAt).toISOString(),
+  ...row,
+  created_at: row.created_at.toISOString(),
+  last_active_at: row.last_active_at === null ? null : new Date(row.last_active_at).toISOString(),
   banned: Boolean(row.banned),
-  hasAiKey: Boolean(row.hasAiKey),
-  r2Bytes: row.r2Bytes,
-  syncBytes: row.syncBytes,
+  has_ai_key: Boolean(row.has_ai_key),
 });
 
 /**
@@ -43,7 +39,7 @@ export async function getUsers(
     items: rows.map(userItem),
     total,
     page: query.page,
-    pageCount: Math.max(1, Math.ceil(total / query.limit)),
+    page_count: Math.max(1, Math.ceil(total / query.limit)),
   };
 }
 
@@ -62,7 +58,7 @@ async function dailyUsage(openrouter: OpenRouterAdmin, keyHash: string, requestI
 
 /**
  * User detail: 1 batch + 1 `getUsage` subrequest when the user has a key. If
- * OpenRouter fails → `usageDaily: null` (logged), so the detail and ban button still open.
+ * OpenRouter fails → `usage_daily: null` (logged), so the detail and ban button still open.
  */
 export async function getUserDetail(
   db: Db,
@@ -75,19 +71,18 @@ export async function getUserDetail(
   const { key } = found;
   const ai = key && {
     limit: key.limitUsd,
-    usageDaily: await dailyUsage(openrouter, key.keyHash, requestId),
-    expiresAt: key.expiresAt.toISOString(),
+    usage_daily: await dailyUsage(openrouter, key.keyHash, requestId),
+    expires_at: key.expiresAt.toISOString(),
   };
   return {
     ...userItem(found.user),
     sessions: found.sessions.map((s) => ({
-      userAgent: s.userAgent,
-      ipAddress: s.ipAddress,
-      createdAt: s.createdAt.toISOString(),
-      updatedAt: s.updatedAt.toISOString(),
+      ...s,
+      created_at: s.created_at.toISOString(),
+      updated_at: s.updated_at.toISOString(),
     })),
     ai,
-    invite: found.invite ? { code: found.invite.code, usedAt: iso(found.invite.usedAt) } : null,
+    invite: found.invite ? { code: found.invite.code, used_at: iso(found.invite.used_at) } : null,
     /** Better Auth provider ids ("google", "credential" for email/password). */
     providers: found.providers,
   };
@@ -112,7 +107,7 @@ export async function ban(db: Db, openrouter: OpenRouterAdmin, id: string): Prom
   // ponytail: if the app creates a new key between deleteKey and this batch, that key is
   // orphaned until it expires (at most the daily limit). Same as the backend's scripts/ban.ts; add a per-user lock if it happens.
   await banUser(db, id);
-  return { banned: true as const, keyRevoked: found.keyHash !== null };
+  return { banned: true as const, key_revoked: found.keyHash !== null };
 }
 
 /** Unban = `banned = 0`, 1 query. A new key is created lazily when the app asks again. */

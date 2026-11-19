@@ -23,46 +23,46 @@ export const userItem = z.strictObject({
   id: z.string(),
   email: z.string(),
   name: z.string(),
-  createdAt: z.string(),
-  lastActiveAt: z.string().nullable(),
+  created_at: z.string(),
+  last_active_at: z.string().nullable(),
   banned: z.boolean(),
-  hasAiKey: z.boolean(),
-  r2Bytes: z.number(),
-  syncBytes: z.number(),
+  has_ai_key: z.boolean(),
+  r2_bytes: z.number(),
+  sync_bytes: z.number(),
 });
 
 export const userListResponse = z.strictObject({
   items: z.array(userItem),
   total: z.number(),
   page: z.number(),
-  pageCount: z.number(),
+  page_count: z.number(),
 });
 export type UserList = z.infer<typeof userListResponse>;
 
 export const userDetailResponse = userItem.extend({
   sessions: z.array(
     z.strictObject({
-      userAgent: z.string().nullable(),
-      ipAddress: z.string().nullable(),
-      createdAt: z.string(),
-      updatedAt: z.string(),
+      user_agent: z.string().nullable(),
+      ip_address: z.string().nullable(),
+      created_at: z.string(),
+      updated_at: z.string(),
     }),
   ),
-  /** The subsidized key; `usageDaily` is null when OpenRouter failed. */
+  /** The subsidized key; `usage_daily` is null when OpenRouter failed. */
   ai: z
     .strictObject({
       limit: z.number(),
-      usageDaily: z.number().nullable(),
-      expiresAt: z.string(),
+      usage_daily: z.number().nullable(),
+      expires_at: z.string(),
     })
     .nullable(),
-  invite: z.strictObject({ code: z.string(), usedAt: z.string().nullable() }).nullable(),
+  invite: z.strictObject({ code: z.string(), used_at: z.string().nullable() }).nullable(),
   /** Better Auth provider ids ("google", "credential" for email/password). */
   providers: z.array(z.string()),
 });
 export type UserDetail = z.infer<typeof userDetailResponse>;
 
-export const banResponse = z.strictObject({ banned: z.literal(true), keyRevoked: z.boolean() });
+export const banResponse = z.strictObject({ banned: z.literal(true), key_revoked: z.boolean() });
 export type BanResult = z.infer<typeof banResponse>;
 
 export const unbanResponse = z.strictObject({ banned: z.literal(false) });

@@ -20,7 +20,7 @@ describe("client fixtures match the dashboard contract", () => {
     ["session", sessionResponse, admin],
     ["overview", overviewResponse, overview],
     ["user detail", userDetailResponse, userDetail()],
-    ["users page", userListResponse, usersPage([user(1), user(2, { lastActiveAt: null })])],
+    ["users page", userListResponse, usersPage([user(1), user(2, { last_active_at: null })])],
     [
       "invites page",
       inviteListResponse,

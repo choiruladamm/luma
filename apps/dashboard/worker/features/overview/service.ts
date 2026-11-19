@@ -34,19 +34,23 @@ export async function getOverview(
       : null,
   ]);
   return {
-    users: { total: counts.users.total, new7d: counts.users.newSince, banned: counts.users.banned },
-    storage: { r2Bytes: counts.storage.r2Bytes, syncBytes: counts.storage.syncBytes },
-    syncToday: { rows: counts.storage.syncRowsToday, limit: D1_DAILY_WRITE_LIMIT },
+    users: {
+      total: counts.users.total,
+      new7d: counts.users.new_since,
+      banned: counts.users.banned,
+    },
+    storage: { r2_bytes: counts.storage.r2_bytes, sync_bytes: counts.storage.sync_bytes },
+    sync_today: { rows: counts.storage.sync_rows_today, limit: D1_DAILY_WRITE_LIMIT },
     invites: { unused: counts.invites.unused },
     flags: {
       sync: on(env.SYNC_ENABLED),
       backup: on(env.BACKUP_ENABLED),
-      aiKey: on(env.AI_KEY_ENABLED),
+      ai_key: on(env.AI_KEY_ENABLED),
     },
     ai: {
-      spendUsd: spendUsd === null ? null : Math.round(spendUsd * 1e6) / 1e6,
-      budgetUsd: Number(env.AI_MONTHLY_BUDGET_USD),
-      asOf: new Date((syncDay - 1) * DAY_MS).toISOString().slice(0, 10),
+      spend_usd: spendUsd === null ? null : Math.round(spendUsd * 1e6) / 1e6,
+      budget_usd: Number(env.AI_MONTHLY_BUDGET_USD),
+      as_of: new Date((syncDay - 1) * DAY_MS).toISOString().slice(0, 10),
     },
   };
 }

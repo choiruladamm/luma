@@ -1,6 +1,7 @@
 import { getSignedCookie } from "hono/cookie";
 import { createDb } from "@luma/core/db/client";
 import { workerApp } from "@luma/worker-kit/app";
+import { snakeJson } from "@luma/worker-kit/case";
 import { normalizeAuthError, notFound } from "@luma/worker-kit/errors";
 import { limitBody } from "@luma/worker-kit/middleware";
 import { getAuth } from "./auth/auth";
@@ -37,8 +38,11 @@ app.get("/api/auth/get-session", async (c, next) => {
   if (token) await endSessionIfPastMaxAge(createDb(c.env.DB), token);
   await next();
 });
+// Better Auth answers camelCase; its bodies are converted so the whole dashboard wire is snake_case.
 for (const [method, path] of AUTH_ROUTES)
-  app.on(method, path, async (c) => normalizeAuthError(await getAuth(c.env).handler(c.req.raw)));
+  app.on(method, path, async (c) =>
+    snakeJson(await normalizeAuthError(await getAuth(c.env).handler(c.req.raw))),
+  );
 app.all("/api/auth/*", notFound);
 
 // Admin routes are chained after the guards so `AppType` carries their types.

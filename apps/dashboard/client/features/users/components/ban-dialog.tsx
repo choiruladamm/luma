@@ -54,7 +54,7 @@ export function BanDialog({
           <span className="text-body font-medium [overflow-wrap:anywhere]">{user.email}</span>
           <span className="text-caption text-ink2">
             {user.name ? `${user.name} · ` : ""}
-            {t.userDetail.joinedOn(formatDate(user.createdAt, locale))}
+            {t.userDetail.joinedOn(formatDate(user.created_at, locale))}
           </span>
         </div>
         <UserStatusChip banned={user.banned} />

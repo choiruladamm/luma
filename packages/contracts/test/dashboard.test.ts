@@ -23,12 +23,12 @@ const user = {
   id: "u1",
   email: "a@luma.test",
   name: "A",
-  createdAt: iso,
-  lastActiveAt: null,
+  created_at: iso,
+  last_active_at: null,
   banned: false,
-  hasAiKey: true,
-  r2Bytes: 1,
-  syncBytes: 2,
+  has_ai_key: true,
+  r2_bytes: 1,
+  sync_bytes: 2,
 };
 
 describe("dashboard contracts", () => {
@@ -58,40 +58,42 @@ describe("dashboard contracts", () => {
   it("parses the response shapes", () => {
     const detail = {
       ...user,
-      sessions: [{ userAgent: null, ipAddress: null, createdAt: iso, updatedAt: iso }],
-      ai: { limit: 0.02, usageDaily: null, expiresAt: iso },
-      invite: { code: "LUMA-AAAAA-BBBBB", usedAt: null },
+      sessions: [{ user_agent: null, ip_address: null, created_at: iso, updated_at: iso }],
+      ai: { limit: 0.02, usage_daily: null, expires_at: iso },
+      invite: { code: "LUMA-AAAAA-BBBBB", used_at: null },
       providers: ["google"],
     };
-    expect(userListResponse.parse({ items: [user], total: 1, page: 1, pageCount: 1 })).toBeTruthy();
+    expect(
+      userListResponse.parse({ items: [user], total: 1, page: 1, page_count: 1 }),
+    ).toBeTruthy();
     expect(userDetailResponse.parse(detail)).toEqual(detail);
-    expect(banResponse.parse({ banned: true, keyRevoked: false })).toBeTruthy();
+    expect(banResponse.parse({ banned: true, key_revoked: false })).toBeTruthy();
     expect(unbanResponse.parse({ banned: false })).toBeTruthy();
     expect(
       inviteListResponse.parse({
-        items: [{ code: "C", createdAt: null, usedBy: { id: "u", email: "e" }, usedAt: iso }],
+        items: [{ code: "C", created_at: null, used_by: { id: "u", email: "e" }, used_at: iso }],
         total: 1,
         page: 1,
-        pageCount: 1,
+        page_count: 1,
         counts: { all: 1, unused: 0, used: 1 },
       }),
     ).toBeTruthy();
-    expect(inviteCreateResponse.parse({ codes: ["C"], createdAt: iso })).toBeTruthy();
+    expect(inviteCreateResponse.parse({ codes: ["C"], created_at: iso })).toBeTruthy();
     expect(
       overviewResponse.parse({
         users: { total: 1, new7d: 0, banned: 0 },
-        storage: { r2Bytes: 0, syncBytes: 0 },
-        syncToday: { rows: 0, limit: 1 },
+        storage: { r2_bytes: 0, sync_bytes: 0 },
+        sync_today: { rows: 0, limit: 1 },
         invites: { unused: 0 },
-        flags: { sync: true, backup: true, aiKey: false },
-        ai: { spendUsd: null, budgetUsd: 5, asOf: "2026-11-19" },
+        flags: { sync: true, backup: true, ai_key: false },
+        ai: { spend_usd: null, budget_usd: 5, as_of: "2026-11-19" },
       }),
     ).toBeTruthy();
     expect(sessionResponse.parse(null)).toBeNull();
     expect(
       sessionResponse.parse({
         user: { id: "u", email: "e", name: "n", image: null },
-        session: { expiresAt: iso },
+        session: { expires_at: iso },
       }),
     ).toBeTruthy();
   });

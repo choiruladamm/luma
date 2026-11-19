@@ -10,9 +10,9 @@ import { adminCookie, createUser, giveUserData } from "../helpers/session";
 
 type Item = {
   code: string;
-  createdAt: string | null;
-  usedBy: { id: string; email: string } | null;
-  usedAt: string | null;
+  created_at: string | null;
+  used_by: { id: string; email: string } | null;
+  used_at: string | null;
 };
 
 const mutate = async (method: string, path: string, body?: unknown) =>
@@ -25,7 +25,7 @@ type Page = {
   items: Item[];
   total: number;
   page: number;
-  pageCount: number;
+  page_count: number;
   counts: { all: number; unused: number; used: number };
 };
 const page = async (query = "") =>
@@ -50,11 +50,11 @@ describe("POST /api/invites", () => {
     const log = vi.spyOn(console, "log").mockImplementation(() => {});
     const { response, d1Queries } = await mutate("POST", "/api/invites", { count: 3 });
     expect(response.status).toBe(201);
-    const { codes, createdAt } = await response.json<{ codes: string[]; createdAt: string }>();
+    const { codes, created_at } = await response.json<{ codes: string[]; created_at: string }>();
     expect(codes).toHaveLength(3);
     // The dialog shows the stored date, and the list sorts by it.
     const listed = await list(`?q=${codes[0]!}`);
-    expect(listed[0]!.createdAt).toBe(createdAt);
+    expect(listed[0]!.created_at).toBe(created_at);
     for (const code of codes) expect(code).toMatch(/^LUMA-[2-9A-HJ-NP-Z]{5}-[2-9A-HJ-NP-Z]{5}$/);
     // guard 1 + 1 insert.
     expect(d1Queries).toBe(2);
@@ -105,16 +105,16 @@ describe("GET /api/invites", () => {
     expect(unused.map((i) => i.code)).toContain(free);
     expect(unused.map((i) => i.code)).not.toContain(taken);
     expect(used.find((i) => i.code === taken)).toEqual({
-      createdAt: expect.any(String),
+      created_at: expect.any(String),
       code: taken,
-      usedBy: { id: user.id, email: user.email },
-      usedAt: "2026-11-10T00:00:00.000Z",
+      used_by: { id: user.id, email: user.email },
+      used_at: "2026-11-10T00:00:00.000Z",
     });
-    expect(used.every((i) => i.usedAt !== null)).toBe(true);
-    expect(unused.every((i) => i.usedAt === null && i.usedBy === null)).toBe(true);
+    expect(used.every((i) => i.used_at !== null)).toBe(true);
+    expect(unused.every((i) => i.used_at === null && i.used_by === null)).toBe(true);
   });
 
-  it("keeps a code used by a deleted account as used, with usedBy null", async () => {
+  it("keeps a code used by a deleted account as used, with used_by null", async () => {
     const user = await createUser();
     await giveUserData(user.id, { invite: "LUMA-HAPUSAKUN1" });
     await createDb(env.DB)
@@ -123,7 +123,7 @@ describe("GET /api/invites", () => {
       .where(eq(inviteCodes.code, "LUMA-HAPUSAKUN1"));
     expect(
       (await list("?status=used&q=HAPUSAKUN1")).find((i) => i.code === "LUMA-HAPUS-AKUN1"),
-    ).toMatchObject({ usedBy: null });
+    ).toMatchObject({ used_by: null });
   });
 
   it("searches the code (case and dashes ignored) or the email, and counts follow the search", async () => {
@@ -175,21 +175,21 @@ describe("GET /api/invites", () => {
     expect(await codes("sort=usedAt&dir=asc")).toEqual(["0004", "0003", "0002", "0001"]);
     expect(await codes("sort=usedAt&dir=desc")).toEqual(["0002", "0003", "0004", "0001"]);
     expect(await codes("sort=code&dir=desc")).toEqual(["0004", "0003", "0002", "0001"]);
-    expect(await codes("usedWithin=7d")).toEqual(["0002"]);
-    expect(await codes("usedWithin=30d")).toEqual(["0002", "0003"]);
+    expect(await codes("used_within=7d")).toEqual(["0002"]);
+    expect(await codes("used_within=30d")).toEqual(["0002", "0003"]);
 
     const p2 = await page(`?q=${t}&sort=code&dir=asc&limit=3&page=2`);
     expect(p2).toMatchObject({
       total: 4,
       page: 2,
-      pageCount: 2,
+      page_count: 2,
       counts: { all: 4, unused: 1, used: 3 },
     });
     expect(p2.items.map((i) => i.code.slice(-4))).toEqual(["0004"]);
     // With a status filter, `total` and that status's count share their SQL text.
-    expect(await page(`?q=${t}&status=unused`)).toMatchObject({ total: 1, pageCount: 1 });
-    expect(await page(`?q=${t}&status=used`)).toMatchObject({ total: 3, pageCount: 1 });
-    const window = await page(`?q=${t}&usedWithin=30d`);
+    expect(await page(`?q=${t}&status=unused`)).toMatchObject({ total: 1, page_count: 1 });
+    expect(await page(`?q=${t}&status=used`)).toMatchObject({ total: 3, page_count: 1 });
+    const window = await page(`?q=${t}&used_within=30d`);
     expect(window).toMatchObject({ total: 2, counts: { all: 4, unused: 1, used: 3 } });
   });
 
@@ -211,13 +211,13 @@ describe("GET /api/invites", () => {
     expect(await codes("sort=createdAt&dir=desc")).toEqual(["B", "A", "D", "C"]);
     expect(await codes("sort=createdAt&dir=asc")).toEqual(["D", "A", "B", "C"]);
     const items = await list(`?q=${t}&sort=createdAt`);
-    expect(items[0]!.createdAt).toBe(new Date(now - DAY).toISOString());
-    expect(items.at(-1)!.createdAt).toBeNull();
+    expect(items[0]!.created_at).toBe(new Date(now - DAY).toISOString());
+    expect(items.at(-1)!.created_at).toBeNull();
   });
 
   it.each([
     "status=semua",
-    "usedWithin=90d",
+    "used_within=90d",
     "sort=email",
     "dir=up",
     "page=0",

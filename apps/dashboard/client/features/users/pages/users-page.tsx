@@ -26,16 +26,16 @@ import { useUsers } from "../queries/use-users";
 
 // Table column id ↔ worker sort key.
 const SORT_OF: Record<string, UserSort> = {
-  createdAt: "created",
-  lastActiveAt: "lastActive",
-  r2Bytes: "r2",
-  syncBytes: "sync",
+  created_at: "created",
+  last_active_at: "lastActive",
+  r2_bytes: "r2",
+  sync_bytes: "sync",
 };
 const COLUMN_OF: Partial<Record<UserSort, string>> = {
-  created: "createdAt",
-  lastActive: "lastActiveAt",
-  r2: "r2Bytes",
-  sync: "syncBytes",
+  created: "created_at",
+  lastActive: "last_active_at",
+  r2: "r2_bytes",
+  sync: "sync_bytes",
 };
 
 /** No rows: filters win over the search, which wins over "no users yet". */
@@ -100,7 +100,7 @@ export function UsersPage() {
   const columns = useMemo(() => userColumns(i18n, q), [i18n, q]);
   const rows = users.data?.items ?? [];
   // Placeholder data is the previous query's page count, not this one's.
-  const pageCount = users.isPlaceholderData ? undefined : users.data?.pageCount;
+  const pageCount = users.isPlaceholderData ? undefined : users.data?.page_count;
   const filtered = activeFilterCount(params) > 0;
   const defaultSort: UserSort = q ? "relevance" : "created";
   const currentSort: UserSort =
@@ -146,7 +146,7 @@ export function UsersPage() {
         footer={
           <Pagination
             page={params.page}
-            pageCount={users.data.pageCount}
+            pageCount={users.data.page_count}
             total={users.data.total}
             pageSize={params.limit}
             onPage={(page) => set({ page })}

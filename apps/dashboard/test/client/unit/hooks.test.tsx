@@ -5,8 +5,20 @@ import { useCopyToClipboard } from "../../../client/hooks/use-copy-to-clipboard"
 import { useDebounce } from "../../../client/hooks/use-debounce";
 import { useMediaQuery } from "../../../client/hooks/use-media-query";
 import { useSearchWriter } from "../../../client/hooks/use-search-writer";
+import {
+  invitesSearchEntries,
+  parseInvitesParams,
+} from "../../../client/features/invites/hooks/use-invites-params";
 
 afterEach(() => vi.useRealTimers());
+
+describe("invite list URL params", () => {
+  it("reads a bookmarked usedWithin and writes it back as used_within", () => {
+    const params = parseInvitesParams(new URLSearchParams("status=used&usedWithin=7d"));
+    expect(params.used_within).toBe("7d");
+    expect(invitesSearchEntries(params)).toEqual({ status: "used", used_within: "7d" });
+  });
+});
 
 describe("useDebounce", () => {
   it("only settles after the value stops changing", () => {

@@ -27,7 +27,7 @@ describe("Detail user", () => {
       http.post(`${API}/users/:id/ban`, ({ request }) => {
         calls.push(`ban ${request.headers.get("content-type")}`);
         banned = true;
-        return HttpResponse.json({ banned: true, keyRevoked: true });
+        return HttpResponse.json({ banned: true, key_revoked: true });
       }),
       http.post(`${API}/users/:id/unban`, () => {
         calls.push("unban");
@@ -113,7 +113,7 @@ describe("Detail user", () => {
   it("says there is no AI key, with no usage bar or expiry", async () => {
     server.use(
       http.get(`${API}/users/:id`, () =>
-        HttpResponse.json(userDetail({ hasAiKey: false, ai: null })),
+        HttpResponse.json(userDetail({ has_ai_key: false, ai: null })),
       ),
     );
     renderApp("/users/u1");
@@ -129,7 +129,7 @@ describe("Detail user", () => {
       http.get(`${API}/users/:id`, () =>
         HttpResponse.json(
           userDetail({
-            ai: { limit: 0.02, usageDaily: null, expiresAt: "2026-12-14T00:00:00.000Z" },
+            ai: { limit: 0.02, usage_daily: null, expires_at: "2026-12-14T00:00:00.000Z" },
           }),
         ),
       ),
@@ -147,7 +147,9 @@ describe("Detail user", () => {
     server.use(
       http.get(`${API}/users/:id`, () =>
         HttpResponse.json(
-          userDetail({ ai: { limit: 0.02, usageDaily: 0, expiresAt: "2026-12-14T00:00:00.000Z" } }),
+          userDetail({
+            ai: { limit: 0.02, usage_daily: 0, expires_at: "2026-12-14T00:00:00.000Z" },
+          }),
         ),
       ),
     );

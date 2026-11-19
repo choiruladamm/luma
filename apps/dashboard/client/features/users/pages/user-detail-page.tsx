@@ -108,7 +108,7 @@ export function UserDetailPage() {
           }
         />
         <div className={NUMBER_GRID}>
-          <UsageCards user={data} totalR2={overview.data?.storage.r2Bytes} />
+          <UsageCards user={data} totalR2={overview.data?.storage.r2_bytes} />
           <AiCard ai={data.ai} />
         </div>
         <SessionsCard sessions={data.sessions} />

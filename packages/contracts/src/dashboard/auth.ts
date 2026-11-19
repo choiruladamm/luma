@@ -12,7 +12,7 @@ export const sessionResponse = z
       name: z.string(),
       image: z.string().nullable(),
     }),
-    session: z.looseObject({ expiresAt: z.string() }),
+    session: z.looseObject({ expires_at: z.string() }),
   })
   .nullable();
 export type Session = z.infer<typeof sessionResponse>;

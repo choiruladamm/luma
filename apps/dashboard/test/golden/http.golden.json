@@ -120,22 +120,22 @@
     ],
     "body": {
       "session": {
-        "expiresAt": "2026-11-27T03:00:09.000Z",
+        "expires_at": "2026-11-27T03:00:09.000Z",
         "token": "<auth-id>",
-        "createdAt": "2026-11-20T03:00:00.000Z",
-        "updatedAt": "2026-11-20T03:00:09.000Z",
-        "ipAddress": null,
-        "userAgent": null,
-        "userId": "<uuid>",
+        "created_at": "2026-11-20T03:00:00.000Z",
+        "updated_at": "2026-11-20T03:00:09.000Z",
+        "ip_address": null,
+        "user_agent": null,
+        "user_id": "<uuid>",
         "id": "<uuid>"
       },
       "user": {
         "name": "Tester",
         "email": "admin@luma.test",
-        "emailVerified": true,
+        "email_verified": true,
         "image": null,
-        "createdAt": "2026-11-20T03:00:00.000Z",
-        "updatedAt": "2026-11-20T03:00:00.000Z",
+        "created_at": "2026-11-20T03:00:00.000Z",
+        "updated_at": "2026-11-20T03:00:00.000Z",
         "id": "<uuid>"
       }
     },
@@ -225,61 +225,61 @@
           "id": "<uuid>",
           "email": "admin-google@luma.test",
           "name": "Tester",
-          "createdAt": "2026-11-20T03:00:11.000Z",
-          "lastActiveAt": "2026-11-20T03:00:12.000Z",
+          "created_at": "2026-11-20T03:00:11.000Z",
           "banned": false,
-          "hasAiKey": false,
-          "r2Bytes": 0,
-          "syncBytes": 0
+          "last_active_at": "2026-11-20T03:00:12.000Z",
+          "has_ai_key": false,
+          "r2_bytes": 0,
+          "sync_bytes": 0
         },
         {
           "id": "<uuid>",
           "email": "user-1@luma.test",
           "name": "Tester",
-          "createdAt": "2026-11-20T03:00:04.000Z",
-          "lastActiveAt": "2026-11-20T03:00:04.000Z",
+          "created_at": "2026-11-20T03:00:04.000Z",
           "banned": false,
-          "hasAiKey": false,
-          "r2Bytes": 0,
-          "syncBytes": 0
+          "last_active_at": "2026-11-20T03:00:04.000Z",
+          "has_ai_key": false,
+          "r2_bytes": 0,
+          "sync_bytes": 0
         },
         {
           "id": "<uuid>",
           "email": "plain@luma.test",
           "name": "Plain",
-          "createdAt": "2026-11-20T03:00:02.000Z",
-          "lastActiveAt": null,
+          "created_at": "2026-11-20T03:00:02.000Z",
           "banned": false,
-          "hasAiKey": false,
-          "r2Bytes": 0,
-          "syncBytes": 0
+          "last_active_at": null,
+          "has_ai_key": false,
+          "r2_bytes": 0,
+          "sync_bytes": 0
         },
         {
           "id": "<uuid>",
           "email": "member@luma.test",
           "name": "Member",
-          "createdAt": "2026-11-20T03:00:01.000Z",
-          "lastActiveAt": null,
+          "created_at": "2026-11-20T03:00:01.000Z",
           "banned": false,
-          "hasAiKey": true,
-          "r2Bytes": 2048,
-          "syncBytes": 512
+          "last_active_at": null,
+          "has_ai_key": true,
+          "r2_bytes": 2048,
+          "sync_bytes": 512
         },
         {
           "id": "<uuid>",
           "email": "admin@luma.test",
           "name": "Tester",
-          "createdAt": "2026-11-20T03:00:00.000Z",
-          "lastActiveAt": "2026-11-20T03:00:09.000Z",
+          "created_at": "2026-11-20T03:00:00.000Z",
           "banned": false,
-          "hasAiKey": false,
-          "r2Bytes": 0,
-          "syncBytes": 0
+          "last_active_at": "2026-11-20T03:00:09.000Z",
+          "has_ai_key": false,
+          "r2_bytes": 0,
+          "sync_bytes": 0
         }
       ],
       "total": 5,
       "page": 1,
-      "pageCount": 1
+      "page_count": 1
     },
     "d1Queries": 3,
     "fetches": 0
@@ -299,17 +299,17 @@
           "id": "<uuid>",
           "email": "member@luma.test",
           "name": "Member",
-          "createdAt": "2026-11-20T03:00:01.000Z",
-          "lastActiveAt": null,
+          "created_at": "2026-11-20T03:00:01.000Z",
           "banned": false,
-          "hasAiKey": true,
-          "r2Bytes": 2048,
-          "syncBytes": 512
+          "last_active_at": null,
+          "has_ai_key": true,
+          "r2_bytes": 2048,
+          "sync_bytes": 512
         }
       ],
       "total": 1,
       "page": 1,
-      "pageCount": 1
+      "page_count": 1
     },
     "d1Queries": 3,
     "fetches": 0
@@ -345,17 +345,17 @@
       "id": "<uuid>",
       "email": "member@luma.test",
       "name": "Member",
-      "createdAt": "2026-11-20T03:00:01.000Z",
-      "lastActiveAt": null,
+      "created_at": "2026-11-20T03:00:01.000Z",
       "banned": false,
-      "hasAiKey": true,
-      "r2Bytes": 2048,
-      "syncBytes": 512,
+      "last_active_at": null,
+      "has_ai_key": true,
+      "r2_bytes": 2048,
+      "sync_bytes": 512,
       "sessions": [],
       "ai": {
         "limit": 0.02,
-        "usageDaily": 0.004,
-        "expiresAt": "2026-12-14T00:00:00.000Z"
+        "usage_daily": 0.004,
+        "expires_at": "2026-12-14T00:00:00.000Z"
       },
       "invite": null,
       "providers": []
@@ -376,12 +376,12 @@
       "id": "<uuid>",
       "email": "plain@luma.test",
       "name": "Plain",
-      "createdAt": "2026-11-20T03:00:02.000Z",
-      "lastActiveAt": null,
+      "created_at": "2026-11-20T03:00:02.000Z",
       "banned": false,
-      "hasAiKey": false,
-      "r2Bytes": 0,
-      "syncBytes": 0,
+      "last_active_at": null,
+      "has_ai_key": false,
+      "r2_bytes": 0,
+      "sync_bytes": 0,
       "sessions": [],
       "ai": null,
       "invite": null,
@@ -492,7 +492,7 @@
     "cookies": [],
     "body": {
       "banned": true,
-      "keyRevoked": true
+      "key_revoked": true
     },
     "d1Queries": 4,
     "fetches": 1
@@ -546,17 +546,17 @@
       "id": "<uuid>",
       "email": "failing@luma.test",
       "name": "Failing",
-      "createdAt": "2026-11-20T03:00:27.000Z",
-      "lastActiveAt": null,
+      "created_at": "2026-11-20T03:00:27.000Z",
       "banned": false,
-      "hasAiKey": true,
-      "r2Bytes": 0,
-      "syncBytes": 0,
+      "last_active_at": null,
+      "has_ai_key": true,
+      "r2_bytes": 0,
+      "sync_bytes": 0,
       "sessions": [],
       "ai": {
         "limit": 0.02,
-        "usageDaily": null,
-        "expiresAt": "2026-12-14T00:00:00.000Z"
+        "usage_daily": null,
+        "expires_at": "2026-12-14T00:00:00.000Z"
       },
       "invite": null,
       "providers": []
@@ -611,7 +611,7 @@
         "<invite>",
         "<invite>"
       ],
-      "createdAt": "2026-11-20T03:00:32.000Z"
+      "created_at": "2026-11-20T03:00:32.000Z"
     },
     "d1Queries": 2,
     "fetches": 0
@@ -683,29 +683,29 @@
       "items": [
         {
           "code": "<invite>",
-          "createdAt": "2026-11-20T03:00:32.000Z",
-          "usedBy": null,
-          "usedAt": null
+          "created_at": "2026-11-20T03:00:32.000Z",
+          "used_by": null,
+          "used_at": null
         },
         {
           "code": "<invite>",
-          "createdAt": "2026-11-20T03:00:32.000Z",
-          "usedBy": null,
-          "usedAt": null
+          "created_at": "2026-11-20T03:00:32.000Z",
+          "used_by": null,
+          "used_at": null
         },
         {
           "code": "<invite>",
-          "createdAt": "2026-11-20T03:00:32.000Z",
-          "usedBy": {
+          "created_at": "2026-11-20T03:00:32.000Z",
+          "used_by": {
             "id": "<uuid>",
             "email": "plain@luma.test"
           },
-          "usedAt": "2026-11-01T00:00:00.000Z"
+          "used_at": "2026-11-01T00:00:00.000Z"
         }
       ],
       "total": 3,
       "page": 1,
-      "pageCount": 1,
+      "page_count": 1,
       "counts": {
         "all": 3,
         "unused": 2,
@@ -728,17 +728,17 @@
       "items": [
         {
           "code": "<invite>",
-          "createdAt": "2026-11-20T03:00:32.000Z",
-          "usedBy": {
+          "created_at": "2026-11-20T03:00:32.000Z",
+          "used_by": {
             "id": "<uuid>",
             "email": "plain@luma.test"
           },
-          "usedAt": "2026-11-01T00:00:00.000Z"
+          "used_at": "2026-11-01T00:00:00.000Z"
         }
       ],
       "total": 1,
       "page": 1,
-      "pageCount": 1,
+      "page_count": 1,
       "counts": {
         "all": 3,
         "unused": 2,
@@ -848,10 +848,10 @@
         "banned": 0
       },
       "storage": {
-        "r2Bytes": 2048,
-        "syncBytes": 512
+        "r2_bytes": 2048,
+        "sync_bytes": 512
       },
-      "syncToday": {
+      "sync_today": {
         "rows": 0,
         "limit": 100000
       },
@@ -861,12 +861,12 @@
       "flags": {
         "sync": true,
         "backup": true,
-        "aiKey": true
+        "ai_key": true
       },
       "ai": {
-        "spendUsd": 0.42,
-        "budgetUsd": 5,
-        "asOf": "2026-11-19"
+        "spend_usd": 0.42,
+        "budget_usd": 5,
+        "as_of": "2026-11-19"
       }
     },
     "d1Queries": 4,

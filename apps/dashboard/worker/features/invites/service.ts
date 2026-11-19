@@ -24,13 +24,13 @@ export async function getInvites(db: Db, query: Omit<InviteListQuery, "now">): P
   return {
     items: rows.map((r) => ({
       code: displayInviteCode(r.code),
-      createdAt: r.createdAt?.toISOString() ?? null,
-      usedBy: r.userId && r.email ? { id: r.userId, email: r.email } : null,
-      usedAt: r.usedAt?.toISOString() ?? null,
+      created_at: r.created_at?.toISOString() ?? null,
+      used_by: r.user_id && r.email ? { id: r.user_id, email: r.email } : null,
+      used_at: r.used_at?.toISOString() ?? null,
     })),
     total: counts.total,
     page: query.page,
-    pageCount: Math.max(1, Math.ceil(counts.total / query.limit)),
+    page_count: Math.max(1, Math.ceil(counts.total / query.limit)),
     counts: { all: counts.all, unused: counts.unused, used: counts.used },
   };
 }
@@ -40,7 +40,7 @@ export async function createInvites(db: Db, count: number): Promise<InviteCreate
   const codes = Array.from({ length: count }, newInviteCode);
   const createdAt = new Date();
   await insertInvites(db, codes.map(normalizeInviteCode), createdAt);
-  return { codes, createdAt: createdAt.toISOString() };
+  return { codes, created_at: createdAt.toISOString() };
 }
 
 /** Delete an unused code: 1 query, +1 to tell 409 (used) from 404 (missing) when nothing was deleted. */

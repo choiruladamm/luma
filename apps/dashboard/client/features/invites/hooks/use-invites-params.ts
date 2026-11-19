@@ -7,7 +7,7 @@ export type InvitesParams = {
   q: string;
   status?: "unused" | "used";
   /** Only codes used within the window (so it goes with status "used"). */
-  usedWithin?: "7d" | "30d";
+  used_within?: "7d" | "30d";
   sort: InviteSort;
   dir: "asc" | "desc";
   page: number;
@@ -31,7 +31,11 @@ export function parseInvitesParams(search: URLSearchParams): InvitesParams {
   return {
     q: (search.get("q") ?? "").trim(),
     status: pick(search.get("status"), ["unused", "used"] as const),
-    usedWithin: pick(search.get("usedWithin"), ["7d", "30d"] as const),
+    // Bookmarks from before the API went snake_case carry `usedWithin`.
+    used_within: pick(search.get("used_within") ?? search.get("usedWithin"), [
+      "7d",
+      "30d",
+    ] as const),
     sort:
       pick(search.get("sort"), ["default", "createdAt", "usedAt", "code"] as const) ?? "default",
     dir: search.get("dir") === "asc" ? "asc" : "desc",
@@ -45,7 +49,7 @@ export function invitesSearchEntries(p: InvitesParams): Record<string, string> {
   const out: Record<string, string> = {};
   if (p.q) out.q = p.q;
   if (p.status) out.status = p.status;
-  if (p.usedWithin) out.usedWithin = p.usedWithin;
+  if (p.used_within) out.used_within = p.used_within;
   if (p.sort !== "default") out.sort = p.sort;
   if (p.dir !== "desc") out.dir = p.dir;
   if (p.page > 1) out.page = String(p.page);
@@ -67,9 +71,9 @@ export function useInvitesParams() {
       write(
         (prev) => {
           const next = { ...parseInvitesParams(prev), ...patch, page: patch.page ?? 1 };
-          if (patch.usedWithin) next.status = "used";
-          if ("status" in patch && patch.status !== "used" && !("usedWithin" in patch))
-            next.usedWithin = undefined;
+          if (patch.used_within) next.status = "used";
+          if ("status" in patch && patch.status !== "used" && !("used_within" in patch))
+            next.used_within = undefined;
           return invitesSearchEntries(next);
         },
         // No router scroll reset: the table stays in view (Pagination scrolls to its top smoothly).

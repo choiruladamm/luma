@@ -12,15 +12,15 @@ export async function overviewCounts(db: Db, { since, syncDay }: { since: Date; 
     db
       .select({
         total: count(),
-        newSince: sql<number>`coalesce(sum(${users.createdAt} >= ${since.getTime()}), 0)`,
+        new_since: sql<number>`coalesce(sum(${users.createdAt} >= ${since.getTime()}), 0)`,
         banned: sql<number>`coalesce(sum(${users.banned} = 1), 0)`,
       })
       .from(users),
     db
       .select({
-        r2Bytes: sql<number>`coalesce(sum(${userStorage.bytes}), 0)`,
-        syncBytes: sql<number>`coalesce(sum(${userStorage.syncBytes}), 0)`,
-        syncRowsToday: sql<number>`coalesce(sum(case when ${userStorage.syncDay} = ${syncDay} then ${userStorage.syncRows} else 0 end), 0)`,
+        r2_bytes: sql<number>`coalesce(sum(${userStorage.bytes}), 0)`,
+        sync_bytes: sql<number>`coalesce(sum(${userStorage.syncBytes}), 0)`,
+        sync_rows_today: sql<number>`coalesce(sum(case when ${userStorage.syncDay} = ${syncDay} then ${userStorage.syncRows} else 0 end), 0)`,
       })
       .from(userStorage),
     db.select({ unused: count() }).from(inviteCodes).where(isNull(inviteCodes.usedAt)),

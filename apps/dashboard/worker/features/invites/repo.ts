@@ -7,7 +7,7 @@ import { DAY_MS } from "@luma/core/encoding";
 export type InviteListQuery = {
   status?: "unused" | "used";
   /** Only codes used within the window (so implies used). */
-  usedWithin?: "7d" | "30d";
+  used_within?: "7d" | "30d";
   q?: string;
   sort: "default" | "usedAt" | "createdAt" | "code";
   dir: "asc" | "desc";
@@ -62,8 +62,11 @@ export async function listInvites(db: Db, query: InviteListQuery) {
   const statusFilter = { unused: isNull(inviteCodes.usedAt), used: isNotNull(inviteCodes.usedAt) };
   const rowFilter = and(
     query.status && statusFilter[query.status],
-    query.usedWithin
-      ? gte(inviteCodes.usedAt, new Date(query.now - (query.usedWithin === "7d" ? 7 : 30) * DAY_MS))
+    query.used_within
+      ? gte(
+          inviteCodes.usedAt,
+          new Date(query.now - (query.used_within === "7d" ? 7 : 30) * DAY_MS),
+        )
       : undefined,
   );
 
@@ -71,9 +74,9 @@ export async function listInvites(db: Db, query: InviteListQuery) {
     db
       .select({
         code: inviteCodes.code,
-        createdAt: inviteCodes.createdAt,
-        usedAt: inviteCodes.usedAt,
-        userId: users.id,
+        created_at: inviteCodes.createdAt,
+        used_at: inviteCodes.usedAt,
+        user_id: users.id,
         email: users.email,
       })
       .from(inviteCodes)

@@ -7,7 +7,7 @@ export const MAX_INVITES_PER_REQUEST = 20;
 /** `GET /api/invites` query. */
 export const inviteListQuery = z.object({
   status: z.enum(["unused", "used"]).optional(),
-  usedWithin: z.enum(["7d", "30d"]).optional(),
+  used_within: z.enum(["7d", "30d"]).optional(),
   q: z.string().trim().max(100).optional(),
   sort: z.enum(["default", "usedAt", "createdAt", "code"]).default("default"),
   dir: z.enum(["asc", "desc"]).default("desc"),
@@ -29,20 +29,20 @@ export const inviteListResponse = z.strictObject({
   items: z.array(
     z.strictObject({
       code: z.string(),
-      createdAt: z.string().nullable(),
-      usedBy: z.strictObject({ id: z.string(), email: z.string() }).nullable(),
-      usedAt: z.string().nullable(),
+      created_at: z.string().nullable(),
+      used_by: z.strictObject({ id: z.string(), email: z.string() }).nullable(),
+      used_at: z.string().nullable(),
     }),
   ),
   total: z.number(),
   page: z.number(),
-  pageCount: z.number(),
+  page_count: z.number(),
   counts: z.strictObject({ all: z.number(), unused: z.number(), used: z.number() }),
 });
 export type InviteList = z.infer<typeof inviteListResponse>;
 
 export const inviteCreateResponse = z.strictObject({
   codes: z.array(z.string()),
-  createdAt: z.string(),
+  created_at: z.string(),
 });
 export type InviteCreated = z.infer<typeof inviteCreateResponse>;
