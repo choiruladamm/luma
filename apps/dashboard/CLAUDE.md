@@ -42,7 +42,7 @@ Admin-only Worker `luma-admin-{env}`: Hono API under `/api` on the same D1 as th
 
 Imported relatively from `../backend/src`, never copied or edited from here. Import only backend files free of the backend `Env` (not `features/*/service.ts`): tsc checks them against the dashboard `Env`. Schema and migrations are owned by the backend; tests apply `../backend/migrations`.
 
-Two copies of `drizzle-orm` exist (backend's and ours); `tsconfig.worker.json` `paths` points both at ours so the types match. Keep the versions in both `package.json` files equal.
+Two copies of `drizzle-orm` exist (backend's and ours); `tsconfig.worker.json` `paths` points both at ours so the types match. Keep the versions in both `package.json` files equal; `scripts/hygiene` fails when the two lockfiles resolve different versions.
 
 ## Tests
 
