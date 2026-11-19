@@ -1,0 +1,61 @@
+name: Deploy
+
+# Code reaches dev and master only through PRs that passed CI (branch protection), so pushes deploy directly.
+on:
+  push:
+    branches: [dev, master]
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref_name == 'master' && 'prod' || 'dev' }}
+    concurrency:
+      group: deploy-${{ github.ref_name }}
+      cancel-in-progress: false
+    env:
+      LUMA_ENV: ${{ github.ref_name == 'master' && 'prod' || 'dev' }}
+      API_URL: ${{ github.ref_name == 'master' && 'https://luma-api.chrl.cloud' || 'https://luma-api-dev.chrl.cloud' }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: oven-sh/setup-bun@v2
+      - run: make backend-install dashboard-install
+      # Migrations first: the new Worker may read columns the old schema lacks.
+      - run: make backend-migrate e=$LUMA_ENV
+      - run: make backend-deploy e=$LUMA_ENV
+      - run: make dashboard-deploy e=$LUMA_ENV
+      - name: Health check
+        run: curl -fsS --retry 5 --retry-delay 5 --retry-all-errors "$API_URL/v1/health" | tee /dev/stderr | grep -q "\"env\":\"$LUMA_ENV\""
+
+  # A hotfix merged into master must not be lost on the next dev → master release.
+  back-merge:
+    needs: deploy
+    if: github.ref_name == 'master'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: dev
+          fetch-depth: 0
+      - name: Open a master → dev PR when master has changes dev lacks
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git merge --no-ff --no-edit origin/master || { echo "::error::master conflicts with dev; merge master into dev by hand"; exit 1; }
+          if git diff --quiet origin/dev HEAD; then echo "dev already has master's changes"; exit 0; fi
+          branch="backmerge/master-${GITHUB_SHA::7}"
+          git push origin "HEAD:refs/heads/$branch"
+          gh pr create --base dev --head "$branch" --title "chore: back-merge master into dev" \
+            --body "Brings changes merged straight into \`master\` (hotfix) back into \`dev\`. Merge with a merge commit."
+          # Pushes by GITHUB_TOKEN start no workflows; dispatch CI so the PR gets its required checks.
+          gh workflow run ci.yml --ref "$branch"
