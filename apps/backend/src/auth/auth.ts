@@ -2,7 +2,7 @@ import { drizzleAdapter } from "@better-auth/drizzle-adapter";
 import { betterAuth } from "better-auth";
 import { APIError } from "better-auth/api";
 import { bearer } from "better-auth/plugins";
-import { createDb } from "../db/client";
+import { createDb, type Db } from "../db/client";
 import * as schema from "../db/schema";
 import { csv } from "../lib/encoding";
 import { assignInviteCode, consumeInviteCode, INVITE_HEADER } from "./invite";
@@ -11,6 +11,19 @@ import { SESSION_EXPIRES_IN_MS, SESSION_UPDATE_AGE_MS } from "./session";
 import { userAdditionalFields } from "./user-fields";
 
 const inviteFrom = (headers: Headers | undefined) => headers?.get(INVITE_HEADER)?.trim() ?? "";
+
+const INVITE_REJECTIONS = {
+  required: { code: "INVITE_CODE_REQUIRED", message: "New accounts need an invite code" },
+  used: { code: "INVITE_CODE_USED", message: "Invite code has already been used" },
+  invalid: { code: "INVALID_INVITE_CODE", message: "Invite code is invalid" },
+};
+
+/** Spends the invite code before the user row is created; a missing, used, or unknown code is a 403. */
+async function consumeInvite(db: Db, code: string) {
+  if (!code) throw new APIError("FORBIDDEN", INVITE_REJECTIONS.required);
+  const result = await consumeInviteCode(db, code);
+  if (result !== "ok") throw new APIError("FORBIDDEN", INVITE_REJECTIONS[result]);
+}
 
 /** Google is enabled when client IDs are set (web, iOS, Android, comma-separated). */
 const googleProvider = (env: Env) =>
@@ -63,26 +76,7 @@ export function createAuth(env: Env) {
         create: {
           before: async (user, ctx) => {
             if (!inviteRequired) return;
-            const code = inviteFrom(ctx?.headers);
-            if (!code) {
-              throw new APIError("FORBIDDEN", {
-                code: "INVITE_CODE_REQUIRED",
-                message: "New accounts need an invite code",
-              });
-            }
-            const result = await consumeInviteCode(db, code);
-            if (result === "used") {
-              throw new APIError("FORBIDDEN", {
-                code: "INVITE_CODE_USED",
-                message: "Invite code has already been used",
-              });
-            }
-            if (result === "invalid") {
-              throw new APIError("FORBIDDEN", {
-                code: "INVALID_INVITE_CODE",
-                message: "Invite code is invalid",
-              });
-            }
+            await consumeInvite(db, inviteFrom(ctx?.headers));
           },
           after: async (user, ctx) => {
             const code = inviteFrom(ctx?.headers);
