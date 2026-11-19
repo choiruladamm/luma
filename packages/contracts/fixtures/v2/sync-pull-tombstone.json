@@ -1,0 +1,27 @@
+{
+  "request": {
+    "method": "GET",
+    "path": "/v2/sync/pull?since=3",
+    "headers": {
+      "authorization": "Bearer <token>"
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "records": [
+        {
+          "kind": "book",
+          "key": "3539482a",
+          "updated_at": "2026-11-13T11:00:00.000Z",
+          "deleted": true,
+          "data": null,
+          "schema_version": 18,
+          "seq": 4
+        }
+      ],
+      "next_seq": 4,
+      "more": false
+    }
+  }
+}

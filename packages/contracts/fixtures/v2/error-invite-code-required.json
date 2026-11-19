@@ -1,0 +1,20 @@
+{
+  "request": {
+    "method": "POST",
+    "path": "/v2/auth/sign-up/email",
+    "body": {
+      "name": "Adam",
+      "email": "baru@luma.test",
+      "password": "rahasia-banget-123"
+    }
+  },
+  "response": {
+    "status": 403,
+    "body": {
+      "error": {
+        "code": "INVITE_CODE_REQUIRED",
+        "message": "New accounts need an invite code"
+      }
+    }
+  }
+}

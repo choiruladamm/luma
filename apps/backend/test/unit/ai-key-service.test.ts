@@ -58,7 +58,7 @@ describe("issueKey", () => {
 
     const first = await issueKey(db, admin, cfg, userId, { now });
     expect(first.key).toBe("sk-1");
-    expect(first.expiresAt).toBe(new Date(now.getTime() + 30 * DAY).toISOString());
+    expect(first.expires_at).toBe(new Date(now.getTime() + 30 * DAY).toISOString());
     expect(admin.createKey).toHaveBeenCalledWith(
       expect.objectContaining({ limitUsd: 0.02, workspaceId: cfg.workspaceId }),
     );
@@ -131,7 +131,7 @@ describe("issueKey", () => {
 
     const issued = await issueKey(db, admin, { ...cfg, dailyLimitUsd: 0.3 }, userId);
 
-    expect(issued).toMatchObject({ key: "sk-1", dailyLimitUsd: 0.3 });
+    expect(issued).toMatchObject({ key: "sk-1", daily_limit_usd: 0.3 });
     expect(admin.updateLimit).toHaveBeenCalledWith("h-1", 0.3);
     const [row] = await db.select().from(aiKeys).where(eq(aiKeys.userId, userId));
     expect(row?.limitUsd).toBe(0.3);
@@ -158,10 +158,10 @@ describe("usage", () => {
     const now = new Date("2026-11-12T15:00:00Z");
 
     expect(await usage(createDb(env.DB), admin, cfg, userId, now)).toEqual({
-      dailyLimitUsd: 0.02,
-      remainingUsd: 0.02,
-      usedTodayUsd: 0,
-      resetsAt: "2026-11-13T00:00:00.000Z",
+      daily_limit_usd: 0.02,
+      remaining_usd: 0.02,
+      used_today_usd: 0,
+      resets_at: "2026-11-13T00:00:00.000Z",
     });
     expect(admin.getUsage).not.toHaveBeenCalled();
   });
@@ -173,8 +173,8 @@ describe("usage", () => {
     await issueKey(db, admin, cfg, userId);
 
     expect(await usage(db, admin, cfg, userId)).toMatchObject({
-      remainingUsd: 0.015,
-      usedTodayUsd: 0.005,
+      remaining_usd: 0.015,
+      used_today_usd: 0.005,
     });
   });
 
@@ -186,8 +186,8 @@ describe("usage", () => {
     await issueKey(db, admin, cfg, userId);
 
     expect(await usage(db, admin, cfg, userId)).toMatchObject({
-      dailyLimitUsd: 0.02,
-      remainingUsd: 0,
+      daily_limit_usd: 0.02,
+      remaining_usd: 0,
     });
   });
 

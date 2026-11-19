@@ -65,19 +65,23 @@ export const killSwitch = <F extends string>(flag: F, retryAfterSeconds: number)
   });
 
 /**
- * zod validation for one request part. Failure → 400 `BAD_REQUEST` with `message`, or the first
- * zod issue when the route gives none.
+ * zod validation for one request part. Failure → 400 `BAD_REQUEST` with `message` (a function
+ * of the context when it varies per request), or the first zod issue when the route gives none.
  */
 export const validate = <T extends keyof ValidationTargets, S extends ZodType>(
   target: T,
   schema: S,
-  message?: string,
+  message?: string | ((c: Context) => string),
 ) =>
-  zValidator(target, schema, (result) => {
+  zValidator(target, schema, (result, c) => {
     if (!result.success) {
       // A failed zod parse always reports at least one issue.
       /* istanbul ignore next */
       const first = result.error.issues[0]?.message ?? "Invalid input";
-      throw new ApiError(400, "BAD_REQUEST", message ?? first);
+      throw new ApiError(
+        400,
+        "BAD_REQUEST",
+        typeof message === "function" ? message(c) : (message ?? first),
+      );
     }
   });

@@ -1,0 +1,19 @@
+{
+  "request": {
+    "method": "POST",
+    "path": "/v2/ai/key",
+    "headers": {
+      "authorization": "Bearer <token>"
+    },
+    "body": {}
+  },
+  "response": {
+    "status": 403,
+    "body": {
+      "error": {
+        "code": "AI_BANNED",
+        "message": "AI access is disabled for this account"
+      }
+    }
+  }
+}

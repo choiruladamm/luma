@@ -8,9 +8,9 @@ export const sessionUser = z.strictObject({
 });
 export type SessionUser = z.infer<typeof sessionUser>;
 
-/** `GET /v1/me`. */
+/** `GET /v2/me`. */
 export const meResponse = z.strictObject({ user: sessionUser });
 
-/** `DELETE /v1/me`: `pending` (202) means R2 still holds objects and the client calls again. */
+/** `DELETE /v2/me`: `pending` (202) means R2 still holds objects and the client calls again. */
 export const deleteResponse = z.strictObject({ status: z.enum(["deleted", "pending"]) });
 export type DeleteResult = z.infer<typeof deleteResponse>;

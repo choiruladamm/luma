@@ -19,6 +19,7 @@ export const KINDS = [
 export type Kind = (typeof KINDS)[number];
 
 const kind = z.enum(KINDS);
+/** Opaque: Drift's JSON keeps its own casing on both API versions (docs/sync-protocol.md). */
 const data = z.record(z.string(), z.unknown());
 export type Data = z.infer<typeof data>;
 
@@ -26,16 +27,16 @@ export const pushRecord = z
   .strictObject({
     kind,
     key: z.string().min(1).max(512),
-    updatedAt: z.iso.datetime(),
+    updated_at: z.iso.datetime(),
     deleted: z.boolean(),
     data: data.nullable(),
   })
   .refine((r) => r.deleted || r.data !== null, "data required unless deleted");
 export type PushRecord = z.infer<typeof pushRecord>;
 
-/** `POST /v1/sync/push` body. */
+/** `POST /v2/sync/push` body. */
 export const pushRequest = z.strictObject({
-  schemaVersion: z.number().int().min(1).max(100_000),
+  schema_version: z.number().int().min(1).max(100_000),
   records: z.array(pushRecord).min(1).max(MAX_PUSH_RECORDS),
 });
 export type PushBody = z.infer<typeof pushRequest>;
@@ -43,7 +44,7 @@ export type PushBody = z.infer<typeof pushRequest>;
 export const pushResponse = z.strictObject({ seq: z.number().int(), applied: z.number().int() });
 export type PushResult = z.infer<typeof pushResponse>;
 
-/** `GET /v1/sync/pull` query. */
+/** `GET /v2/sync/pull` query. */
 export const pullQuery = z.object({
   since: z.coerce.number().int().min(0),
   limit: z.coerce.number().int().min(1).max(MAX_PULL_RECORDS).default(MAX_PULL_RECORDS),
@@ -53,15 +54,15 @@ export const pullQuery = z.object({
 export const pullRecord = z.strictObject({
   kind,
   key: z.string(),
-  updatedAt: z.iso.datetime(),
+  updated_at: z.iso.datetime(),
   deleted: z.boolean(),
   data: data.nullable(),
-  schemaVersion: z.number().int(),
+  schema_version: z.number().int(),
   seq: z.number().int(),
 });
 
 export const pullResponse = z.strictObject({
   records: z.array(pullRecord),
-  nextSeq: z.number().int(),
+  next_seq: z.number().int(),
   more: z.boolean(),
 });

@@ -1,0 +1,33 @@
+{
+  "request": {
+    "method": "POST",
+    "path": "/v2/sync/push",
+    "headers": {
+      "authorization": "Bearer <token>"
+    },
+    "body": {
+      "schema_version": 17,
+      "records": [
+        {
+          "kind": "reading_progress",
+          "key": "3539482a",
+          "updated_at": "2026-11-14T00:00:00.000Z",
+          "deleted": false,
+          "data": {
+            "parserVersion": 9,
+            "chapterSortOrder": 1,
+            "paragraphIndex": 0,
+            "paragraphOffset": 0
+          }
+        }
+      ]
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "seq": 3,
+      "applied": 0
+    }
+  }
+}

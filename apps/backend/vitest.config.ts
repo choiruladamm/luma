@@ -41,7 +41,7 @@ export default defineConfig(async () => {
           "../../packages/core/src/db/auth-schema.ts",
           "../../packages/core/src/testing/**",
         ],
-        thresholds: { statements: 100, branches: 92.62, functions: 100, lines: 100 },
+        thresholds: { statements: 100, branches: 93.05, functions: 100, lines: 100 },
       },
     },
   };

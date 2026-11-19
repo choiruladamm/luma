@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { killSwitch, limitBody, validate } from "@luma/worker-kit/middleware";
-import { keyRequest } from "@luma/contracts/backend/ai";
+import { type AiPublicConfig, keyRequest } from "@luma/contracts/backend/ai";
 import type { AppEnv } from "../../env";
 import { DISABLED_RETRY_AFTER_SECONDS } from "../../middleware/policy";
 import { rateLimit } from "../../middleware/rate-limit";
@@ -27,5 +27,9 @@ export const ai = new Hono<AppEnv>()
   )
   .get("/config", (c) => {
     const { chatModels, embeddingModels, dailyLimitUsd } = aiConfig(c.env);
-    return c.json({ chatModels, embeddingModels, dailyLimitUsd });
+    return c.json<AiPublicConfig>({
+      chat_models: chatModels,
+      embedding_models: embeddingModels,
+      daily_limit_usd: dailyLimitUsd,
+    });
   });

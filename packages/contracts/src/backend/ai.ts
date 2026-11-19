@@ -1,26 +1,26 @@
 import { z } from "zod";
 
-/** `POST /v1/ai/key` body. */
+/** `POST /v2/ai/key` body. */
 export const keyRequest = z.strictObject({ rotate: z.boolean().optional() });
 
 export const keyResponse = z.strictObject({
   key: z.string(),
-  expiresAt: z.string(),
-  dailyLimitUsd: z.number(),
+  expires_at: z.string(),
+  daily_limit_usd: z.number(),
 });
 export type IssuedKey = z.infer<typeof keyResponse>;
 
 export const usageResponse = z.strictObject({
-  dailyLimitUsd: z.number(),
-  remainingUsd: z.number(),
-  usedTodayUsd: z.number(),
-  resetsAt: z.string(),
+  daily_limit_usd: z.number(),
+  remaining_usd: z.number(),
+  used_today_usd: z.number(),
+  resets_at: z.string(),
 });
 export type AiUsage = z.infer<typeof usageResponse>;
 
 export const configResponse = z.strictObject({
-  chatModels: z.array(z.string()),
-  embeddingModels: z.array(z.string()),
-  dailyLimitUsd: z.number(),
+  chat_models: z.array(z.string()),
+  embedding_models: z.array(z.string()),
+  daily_limit_usd: z.number(),
 });
 export type AiPublicConfig = z.infer<typeof configResponse>;

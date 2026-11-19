@@ -15,6 +15,7 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@luma/worker-kit": "workspace:*",
     "@vitest/coverage-istanbul": "catalog:",
     "oxlint": "catalog:",
     "oxlint-tsgolint": "catalog:",

@@ -2,6 +2,8 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import type { ZodType } from "zod";
+// Test-only: the kit's case helpers define how a /v1 shape maps to /v2.
+import { toSnake } from "@luma/worker-kit/case";
 import { backendWireErrorCode, errorBodySchema } from "../src/errors";
 import { deleteResponse, meResponse } from "../src/backend/account";
 import { configResponse, keyRequest, keyResponse, usageResponse } from "../src/backend/ai";
@@ -64,7 +66,8 @@ const contracts: Record<string, Entry> = {
   "sync-push": { body: pushRequest, response: pushResponse },
 };
 
-const dir = join(import.meta.dirname, "../fixtures/v1");
+const fixtures = (version: string) => join(import.meta.dirname, "../fixtures", version);
+const dir = fixtures("v2");
 const names = readdirSync(dir)
   .filter((f) => f.endsWith(".json"))
   .map((f) => f.slice(0, -".json".length));
@@ -85,7 +88,7 @@ type Fixture = {
   response: { status: number; body: unknown };
 };
 
-describe("v1 fixtures", () => {
+describe("v2 fixtures", () => {
   it("has a contract for every fixture file", () => {
     expect(names.toSorted()).toEqual(Object.keys(contracts).toSorted());
   });
@@ -101,6 +104,33 @@ describe("v1 fixtures", () => {
     expect(fixture.response.status >= 400).toBe(isError);
     const schema = entry.response === error ? backendError : entry.response;
     schema.parse(fixture.response.body);
+  });
+});
+
+/** What the `/v1` adapter leaves as is: sync's Drift JSON (docs/backend.md, Opaque payloads). */
+const OPAQUE = ["request.body.records.*.data", "response.body.records.*.data"];
+
+describe("v1 fixtures", () => {
+  it("has a v1 fixture for every v2 fixture", () => {
+    const v1 = readdirSync(fixtures("v1")).filter((f) => f.endsWith(".json"));
+    expect(v1.toSorted()).toEqual(names.map((n) => `${n}.json`).toSorted());
+  });
+
+  // The adapter maps a v1 body to the v2 shape and back, so snake_case of a v1 fixture is its v2 fixture.
+  it.each(names)("%s maps to its v2 fixture", (name) => {
+    const read = (version: string) =>
+      JSON.parse(readFileSync(join(fixtures(version), `${name}.json`), "utf8")) as Fixture;
+    const v1 = read("v1");
+    const v2 = read("v2");
+    expect(v2.request.path).toBe(v1.request.path.replace("/v1/", "/v2/"));
+    const mapped = toSnake(v1, OPAQUE) as Fixture;
+    const expected = { ...mapped, request: { ...mapped.request, path: v2.request.path } };
+    // The 400 message names the request's fields, so it names them as each version spells them.
+    if (name === "error-sync-bad-request") {
+      const body = expected.response.body as { error: { message: string } };
+      body.error.message = body.error.message.replace("schemaVersion", "schema_version");
+    }
+    expect(expected).toEqual(v2);
   });
 });
 

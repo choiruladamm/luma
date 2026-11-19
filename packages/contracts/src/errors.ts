@@ -33,7 +33,7 @@ export const backendErrorCode = z.enum([
 ]);
 
 /**
- * A code Better Auth returns from `/v1/auth/*` (`INVALID_EMAIL_OR_PASSWORD`, `PASSWORD_TOO_SHORT`,
+ * A code Better Auth returns from `/v1/auth/*` and `/v2/auth/*` (`INVALID_EMAIL_OR_PASSWORD`, `PASSWORD_TOO_SHORT`,
  * …). Better Auth owns that list and grows it, so only the shape is fixed; clients treat a code
  * they don't know as a generic failure.
  */

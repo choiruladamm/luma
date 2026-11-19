@@ -11,17 +11,22 @@ import { legal } from "./features/legal/routes";
 import { sync } from "./features/sync/routes";
 import { deps } from "./middleware/deps";
 import { clientIp, rateLimit } from "./middleware/rate-limit";
+import { v1Adapter, wire } from "./middleware/v1-adapter";
 
 // Middleware order: requestId → killSwitch → bodyLimit → session → rateLimit → validator
 // (docs/backend.md, Request pipeline and API conventions). killSwitch/bodyLimit/session are mounted per route group.
 export const app = workerApp(new Hono<AppEnv>());
 
-app.use("/v1/*", rateLimit(clientIp), deps);
-app.route("/v1/health", health);
-app.route("/v1/auth", auth);
-app.route("/v1/me", account);
-app.route("/v1/ai", ai);
-app.route("/v1/files", files);
-app.route("/v1/backups", backups);
-app.route("/v1/sync", sync);
+// Both versions mount the same routers in the same order; `/v1` goes through the case adapter.
+app.use("/v1/*", wire("v1"), rateLimit(clientIp), deps, v1Adapter);
+app.use("/v2/*", wire("v2"), rateLimit(clientIp), deps);
+for (const prefix of ["/v1", "/v2"]) {
+  app.route(`${prefix}/health`, health);
+  app.route(`${prefix}/auth`, auth);
+  app.route(`${prefix}/me`, account);
+  app.route(`${prefix}/ai`, ai);
+  app.route(`${prefix}/files`, files);
+  app.route(`${prefix}/backups`, backups);
+  app.route(`${prefix}/sync`, sync);
+}
 app.route("/", legal);

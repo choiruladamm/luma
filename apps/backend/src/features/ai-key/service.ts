@@ -1,4 +1,4 @@
-import type { AiPublicConfig, AiUsage, IssuedKey } from "@luma/contracts/backend/ai";
+import type { AiUsage, IssuedKey } from "@luma/contracts/backend/ai";
 import type { OpenRouterAdmin } from "@luma/core/openrouter";
 import type { Db } from "@luma/core/db/client";
 import { decryptText, encryptText } from "../../lib/crypto";
@@ -10,7 +10,10 @@ import { findKeyHash, saveKey, setKeyLimit, type AiKeyRow } from "./repo";
 /** The key is replaced a day before it expires, so a device never holds a dead key mid-read. */
 export const ROTATE_BEFORE_MS = DAY_MS;
 
-export type AiConfig = AiPublicConfig & {
+export type AiConfig = {
+  dailyLimitUsd: number;
+  chatModels: string[];
+  embeddingModels: string[];
   ttlDays: number;
   workspaceId: string;
   encSecret: string;
@@ -55,7 +58,11 @@ async function reuseKey(
     await admin.updateLimit(row.keyHash, cfg.dailyLimitUsd);
     await setKeyLimit(db, userId, cfg.dailyLimitUsd);
   }
-  return { key, expiresAt: row.expiresAt.toISOString(), dailyLimitUsd: cfg.dailyLimitUsd };
+  return {
+    key,
+    expires_at: row.expiresAt.toISOString(),
+    daily_limit_usd: cfg.dailyLimitUsd,
+  };
 }
 
 /**
@@ -96,7 +103,11 @@ export async function issueKey(
     createdAt: now,
   };
   await saveKey(db, userId, values);
-  return { key: created.key, expiresAt: expiresAt.toISOString(), dailyLimitUsd: cfg.dailyLimitUsd };
+  return {
+    key: created.key,
+    expires_at: expiresAt.toISOString(),
+    daily_limit_usd: cfg.dailyLimitUsd,
+  };
 }
 
 /** The OpenRouter daily limit resets at midnight UTC. */
@@ -115,19 +126,19 @@ export async function usage(
   const row = await allowedKey(db, userId);
   if (!row) {
     return {
-      dailyLimitUsd: cfg.dailyLimitUsd,
-      remainingUsd: cfg.dailyLimitUsd,
-      usedTodayUsd: 0,
-      resetsAt,
+      daily_limit_usd: cfg.dailyLimitUsd,
+      remaining_usd: cfg.dailyLimitUsd,
+      used_today_usd: 0,
+      resets_at: resetsAt,
     };
   }
   const key = await admin.getUsage(row.keyHash);
   const limit = key.limit ?? cfg.dailyLimitUsd;
   return {
-    dailyLimitUsd: limit,
-    remainingUsd: key.limitRemaining ?? Math.max(0, limit - key.usageDaily),
-    usedTodayUsd: key.usageDaily,
-    resetsAt,
+    daily_limit_usd: limit,
+    remaining_usd: key.limitRemaining ?? Math.max(0, limit - key.usageDaily),
+    used_today_usd: key.usageDaily,
+    resets_at: resetsAt,
   };
 }
 

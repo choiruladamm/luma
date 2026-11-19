@@ -20,7 +20,7 @@ Measure Worker invocations, SQL statements, D1 rows read and written, R2 calls, 
 
 ## Server request policy
 
-- Keep CPU bounded. Stream uploads and downloads through R2 and enforce body size before JSON parsing. Sync pull formats records in SQL, and sync push packs keys and changed records into JSON inputs to stay within D1's parameter limit.
+- Keep CPU bounded. Stream uploads and downloads through R2 and enforce body size before JSON parsing. Sync pull formats records in SQL, with the key names of the request's API version, so no version re-encodes it, and sync push packs keys and changed records into JSON inputs to stay within D1's parameter limit.
 - Bound work per invocation. Batch related writes and multi-object deletes. Use indexed lookups for cursor pages, and skip sync record writes when the merged data is unchanged. List and aggregate queries can scan more rows than they return.
 - Keep request-path cost controls in place. The [Worker pipeline](backend.md#request-pipeline-and-api-conventions) applies IP limits and feature-specific guards. R2 [storage limits](backend.md#files-and-cloud-backups) and [sync quotas](sync-protocol.md#sync-quotas-and-compatibility) constrain individual users. Dashboard IP limiting applies to API routes, with `rateLimitAdmin` adding a per-admin limiter on mutations. Cloudflare Access gates dashboard traffic at the edge.
 - Update the relevant budget when an endpoint or client call pattern changes.
@@ -46,12 +46,14 @@ Counts describe typical completed requests and exclude client retries. Each rout
 
 ### Mobile API
 
+Every row below applies to both `/v1/*` and `/v2/*`: the routers, guards, and D1 and R2 counts are the same, and the golden files record identical counts for both. The one difference is CPU on `/v1`: the temporary [case adapter](backend.md#api-versions) converts a request's JSON keys after the single parse `validate` already does (never a second parse or a stringify, and `records.*.data` is not walked), and converts a small 2xx JSON response by parsing and stringifying it. Sync pull is never parsed or re-encoded on either version.
+
 | Action | D1 statements | R2 and outbound HTTP |
 |---|---|---|
 | Health | 0 | None (`health.test.ts`). |
 | Native Google sign-up | At most 8 with an invite in `auth-google.test.ts`. Returning sign-in skips invite consumption and new-user creation. | One JWKS fetch in the fixture. |
 | Email auth outside prod | Sign-in at most 4 in `auth.test.ts`. Sign-up uses the creation path and the invite hooks when enabled. | None. |
-| Bearer session and `GET /v1/me` | `findSessionUser` uses one join for a token and one UPDATE when renewal is due. `account.test.ts` allows at most 2 for `GET /v1/me`. | None. |
+| Bearer session and `GET /v1/me` (and `/v2/me`) | `findSessionUser` uses one join for a token and one UPDATE when renewal is due. `account.test.ts` allows at most 2 for `GET /v1/me`. | None. |
 | Account deletion | `revokeKey` adds a key lookup on every attempt. `deleteUser` adds a DELETE on completion, with cascades. | One key delete if a key row exists, then at most `DELETE_PAGES_PER_REQUEST` R2 LISTs and one bulk DELETE per nonempty page. |
 | AI config or usage | Config uses the session alone. `usage` adds one lookup via `findUserKey`. | Config has no fetch. Usage gets upstream usage only when a key exists. |
 | AI key | `issueKey` adds one lookup and one write if creating, rotating, or updating the limit. `ai-key.test.ts` asserts at most 2 total statements for reuse and at most 3 for creation in its fixtures. | Fresh reuse costs 0 fetches, creation 1. A limit patch or existence check each adds 1. Replacement costs 2 (delete and create), or 3 if an existence check led to it. |

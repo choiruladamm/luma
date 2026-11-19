@@ -47,12 +47,12 @@ const info = (
   const m = o.customMetadata ?? {};
   return {
     id: o.key.slice(prefix.length).replace(/\.zip$/, ""),
-    createdAt: m.createdAt ?? "",
+    created_at: m.createdAt ?? "",
     size: o.size,
     books: Number(m.books ?? 0),
-    aiResults: Number(m.aiResults ?? 0),
-    schemaVersion: Number(m.schemaVersion ?? 0),
-    appVersion: m.appVersion ?? "",
+    ai_results: Number(m.aiResults ?? 0),
+    schema_version: Number(m.schemaVersion ?? 0),
+    app_version: m.appVersion ?? "",
   };
 };
 

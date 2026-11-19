@@ -1,0 +1,13 @@
+{
+  "request": {
+    "method": "GET",
+    "path": "/v2/health"
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "status": "ok",
+      "env": "dev"
+    }
+  }
+}

@@ -86,7 +86,12 @@ describe("validate", () => {
   const schema = z.object({ n: z.number({ error: "n must be a number" }) });
   const app = workerApp(new Hono())
     .post("/default", validate("json", schema), (c) => c.json(c.req.valid("json")))
-    .post("/message", validate("json", schema, "Body must be {n}"), (c) => c.text("ok"));
+    .post("/message", validate("json", schema, "Body must be {n}"), (c) => c.text("ok"))
+    .post(
+      "/per-request",
+      validate("json", schema, (c) => `Body for ${c.req.path}`),
+      (c) => c.text("ok"),
+    );
 
   it("passes the parsed value to the handler", async () => {
     const res = await app.request("/default", post('{"n":1}'));
@@ -99,6 +104,8 @@ describe("validate", () => {
     const custom = await app.request("/message", post('{"n":"x"}'));
     expect(custom.status).toBe(400);
     expect(await custom.json()).toEqual(errorBody("BAD_REQUEST", "Body must be {n}"));
+    const perRequest = await app.request("/per-request", post('{"n":"x"}'));
+    expect(await perRequest.json()).toEqual(errorBody("BAD_REQUEST", "Body for /per-request"));
   });
 });
 

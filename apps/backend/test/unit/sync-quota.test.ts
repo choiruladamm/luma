@@ -7,7 +7,7 @@ const limits = { storageBytes: 1_000_000, dailyWrites: 2 };
 const record = (key: string) => ({
   kind: "setting" as const,
   key,
-  updatedAt: "2026-11-13T10:00:00.000Z",
+  updated_at: "2026-11-13T10:00:00.000Z",
   deleted: false,
   data: { value: key },
 });
@@ -19,13 +19,13 @@ describe("sync daily quota", () => {
     await push(
       env.DB,
       userId,
-      { schemaVersion: 18, records: [record("a"), record("b")] },
+      { schema_version: 18, records: [record("a"), record("b")] },
       limits,
       today,
     );
 
     await expect(
-      push(env.DB, userId, { schemaVersion: 18, records: [record("c")] }, limits, today),
+      push(env.DB, userId, { schema_version: 18, records: [record("c")] }, limits, today),
     ).rejects.toMatchObject({
       status: 429,
       code: "QUOTA_EXCEEDED",
@@ -34,7 +34,7 @@ describe("sync daily quota", () => {
 
     const tomorrow = new Date("2026-11-14T00:00:01Z");
     expect(
-      await push(env.DB, userId, { schemaVersion: 18, records: [record("c")] }, limits, tomorrow),
+      await push(env.DB, userId, { schema_version: 18, records: [record("c")] }, limits, tomorrow),
     ).toEqual({
       seq: 3,
       applied: 1,
@@ -44,7 +44,7 @@ describe("sync daily quota", () => {
   it("does not count pushes that change nothing", async () => {
     const { userId } = await signUp();
     const now = new Date("2026-11-13T10:00:00Z");
-    const body = { schemaVersion: 18, records: [record("a"), record("b")] };
+    const body = { schema_version: 18, records: [record("a"), record("b")] };
     await push(env.DB, userId, body, limits, now);
 
     expect(await push(env.DB, userId, body, limits, now)).toEqual({ seq: 2, applied: 0 });
