@@ -23,7 +23,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: oven-sh/setup-bun@v2
-      - run: make backend-install dashboard-install
+      - run: make install
       # Build the dashboard before anything changes remotely: its build reads the backend's vars for
       # this env, so a bad value fails here instead of after the migration and backend deploy.
       - run: make dashboard-build e=$LUMA_ENV

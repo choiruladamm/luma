@@ -13,19 +13,12 @@ status=0
 # Without node_modules the lint script fails with "command not found"; say what to run instead.
 need_node_modules() {
   [ -d "$1/node_modules" ] && return 0
-  echo "hygiene: $1 has no node_modules; run make backend-install dashboard-install" >&2
+  echo "hygiene: $1 has no node_modules; run make install" >&2
   return 1
 }
 
 python3 scripts/hygiene_check.py "$@" || status=1
 
-# The dashboard imports backend db code, and its tsconfig points both apps' drizzle-orm types at
-# its own copy, so tsc can't see a version skew; compare what each lockfile resolved instead.
-drizzle() { grep -o '"drizzle-orm@[^"]*"' "apps/$1/bun.lock" | head -1; }
-if [ "$(drizzle backend)" != "$(drizzle dashboard)" ]; then
-  echo "hygiene: drizzle-orm differs: backend $(drizzle backend), dashboard $(drizzle dashboard); keep both apps on one version" >&2
-  status=1
-fi
 (cd apps/mobile && $dart analyze --fatal-infos) || status=1
 { need_node_modules apps/backend && (cd apps/backend && bun run lint); } || status=1
 { need_node_modules apps/dashboard && (cd apps/dashboard && bun run lint); } || status=1

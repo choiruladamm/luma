@@ -2,7 +2,7 @@
 
 iOS + Android book reader (EPUB, Markdown, PDF; personal dogfooding app): tap a paragraph → Indonesian translation + meaning from an LLM, without leaving the reading page. Local-first: the on-device Drift DB is the source of truth; the backend only adds accounts, subsidized AI keys, cloud backup, and sync.
 
-Apps: `apps/mobile` (Flutter), `apps/backend` (Cloudflare Worker API), `apps/dashboard` (admin Worker on the backend's D1). Each has its own CLAUDE.md.
+Apps: `apps/mobile` (Flutter), `apps/backend` (Cloudflare Worker API), `apps/dashboard` (admin Worker on the backend's D1). Each has its own CLAUDE.md. The Workers form one bun workspace with shared config at the root (`docs/workers.md`).
 
 ## Sources of truth
 
@@ -12,7 +12,7 @@ Apps: `apps/mobile` (Flutter), `apps/backend` (Cloudflare Worker API), `apps/das
 
 ## Commands
 
-Root `Makefile` (`make help`): mobile targets bare (`make test`), backend `backend-*`, dashboard `dashboard-*`.
+Root `Makefile` (`make help`): mobile targets bare (`make test`), backend `backend-*`, dashboard `dashboard-*`; `make install` installs the JS workspace.
 
 - Run only the checks for what you changed (see each app's CLAUDE.md). Commit only after they exit 0, as its own command, never chained behind `grep` or `;`.
 - The hand-off states which checks ran and whether the full suite was skipped.

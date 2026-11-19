@@ -1,6 +1,6 @@
 # Luma backend (Cloudflare Worker)
 
-Hono API under `/v1` on Workers, D1 + Drizzle, R2, Better Auth (`bearer` plugin), Workers Rate Limiting. Bun is tooling only; the runtime is workerd. Design: `docs/backend.md`; read the section for a feature before touching it.
+Hono API under `/v1` on Workers, D1 + Drizzle, R2, Better Auth (`bearer` plugin), Workers Rate Limiting. Bun is tooling only; the runtime is workerd. Design: `docs/backend.md`; read the section for a feature before touching it. Rules shared with the dashboard Worker (workspace, conventions): `docs/workers.md`.
 
 ## Commands
 

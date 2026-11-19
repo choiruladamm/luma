@@ -1,5 +1,6 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "extends": ["../../.oxlintrc.base.json"],
   "plugins": [
     "typescript",
     "unicorn",
@@ -11,12 +12,9 @@
     "react-hooks",
     "jsx-a11y"
   ],
-  "categories": { "correctness": "error", "suspicious": "error", "perf": "error" },
   "ignorePatterns": ["worker-configuration.d.ts", "dist", "coverage", ".wrangler"],
   "rules": {
     "react/react-in-jsx-scope": "off",
-    "no-warning-comments": ["error", { "terms": ["fixme", "hack", "xxx"], "location": "start" }],
-    "no-await-in-loop": "off",
     "typescript/consistent-return": "off",
     "jsx-a11y/prefer-tag-over-role": "off",
     "jsx-a11y/no-autofocus": "off",
