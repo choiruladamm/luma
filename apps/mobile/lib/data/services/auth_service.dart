@@ -4,9 +4,9 @@ import 'package:luma/data/repositories/auth_repository.dart'
 
 import 'backend_client.dart';
 
-/// Represents a user returned by the backend (`/v1/me` and login responses).
+/// Represents a user returned by the backend (`/v2/me` and login responses).
 ///
-/// Fields match the contract fixture `packages/contracts/fixtures/v1/me.json`.
+/// Fields match the contract fixture `packages/contracts/fixtures/v2/me.json`.
 class AuthUser {
   const AuthUser({
     required this.id,
@@ -49,7 +49,7 @@ abstract final class AuthErrorCode {
   static const inviteCodes = {invalidInvite, inviteRequired, inviteUsed};
 }
 
-/// Calls `/v1/auth/*` and `/v1/me`.
+/// Calls `/v2/auth/*` and `/v2/me`.
 ///
 /// Stores nothing; [AuthRepository] persists the token.
 class AuthService {
@@ -67,7 +67,7 @@ class AuthService {
   }) async {
     final res = await _client.request(
       'POST',
-      '/v1/auth/sign-up/email',
+      '/auth/sign-up/email',
       body: {'name': name, 'email': email, 'password': password},
       headers: _invite(inviteCode),
       retry: false,
@@ -85,10 +85,10 @@ class AuthService {
   }) async {
     final res = await _client.request(
       'POST',
-      '/v1/auth/sign-in/social',
+      '/auth/sign-in/social',
       body: {
         'provider': 'google',
-        'idToken': {'token': idToken},
+        'id_token': {'token': idToken},
       },
       headers: _invite(inviteCode),
       retry: false,
@@ -106,7 +106,7 @@ class AuthService {
   }) async {
     final res = await _client.request(
       'POST',
-      '/v1/auth/sign-in/email',
+      '/auth/sign-in/email',
       body: {'email': email, 'password': password},
       retry: false,
     );
@@ -114,11 +114,11 @@ class AuthService {
   }
 
   Future<void> signOut(String token) async {
-    await _client.request('POST', '/v1/auth/sign-out', body: {}, token: token);
+    await _client.request('POST', '/auth/sign-out', body: {}, token: token);
   }
 
   Future<AuthUser> me(String token) async {
-    final res = await _client.request('GET', '/v1/me', token: token);
+    final res = await _client.request('GET', '/me', token: token);
     return AuthUser.fromJson(res.data!['user']! as Map<String, Object?>);
   }
 
@@ -126,7 +126,7 @@ class AuthService {
   ///
   /// False means the server is still cleaning up files (202); call again.
   Future<bool> deleteAccount(String token) async {
-    final res = await _client.request('DELETE', '/v1/me', token: token);
+    final res = await _client.request('DELETE', '/me', token: token);
     return res.data?['status'] == 'deleted';
   }
 

@@ -173,7 +173,7 @@ void main() {
       await vm().keepOldAccount();
 
       expect(h.local.wipes, 0);
-      expect(h.adapter.requests.last.uri.path, '/v1/auth/sign-out');
+      expect(h.adapter.requests.last.uri.path, '/v2/auth/sign-out');
       expect(await h.store.readLastUserId(), 'akun-lama');
       expect(state().step, LoginStep.start);
     });

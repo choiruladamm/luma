@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'backend_client.dart';
 import 'session_store.dart';
 
-/// Represents today’s remaining subsidized AI quota (`GET /v1/ai/usage`).
+/// Represents today’s remaining subsidized AI quota (`GET /v2/ai/usage`).
 class AiUsage {
   const AiUsage({
     required this.dailyLimitUsd,
@@ -13,10 +13,10 @@ class AiUsage {
   });
 
   factory AiUsage.fromJson(Map<String, Object?> json) => AiUsage(
-    dailyLimitUsd: (json['dailyLimitUsd']! as num).toDouble(),
-    remainingUsd: (json['remainingUsd']! as num).toDouble(),
-    usedTodayUsd: (json['usedTodayUsd']! as num).toDouble(),
-    resetsAt: DateTime.parse(json['resetsAt']! as String),
+    dailyLimitUsd: (json['daily_limit_usd']! as num).toDouble(),
+    remainingUsd: (json['remaining_usd']! as num).toDouble(),
+    usedTodayUsd: (json['used_today_usd']! as num).toDouble(),
+    resetsAt: DateTime.parse(json['resets_at']! as String),
   );
 
   final double dailyLimitUsd;
@@ -25,7 +25,7 @@ class AiUsage {
   final DateTime resetsAt;
 }
 
-/// Represents a model allowed by the subsidy guardrail (`GET /v1/ai/config`).
+/// Represents a model allowed by the subsidy guardrail (`GET /v2/ai/config`).
 class AiSubsidyConfig {
   const AiSubsidyConfig({
     required this.chatModels,
@@ -35,9 +35,9 @@ class AiSubsidyConfig {
 
   factory AiSubsidyConfig.fromJson(Map<String, Object?> json) =>
       AiSubsidyConfig(
-        chatModels: (json['chatModels']! as List).cast<String>(),
-        embeddingModels: (json['embeddingModels']! as List).cast<String>(),
-        dailyLimitUsd: (json['dailyLimitUsd']! as num).toDouble(),
+        chatModels: (json['chat_models']! as List).cast<String>(),
+        embeddingModels: (json['embedding_models']! as List).cast<String>(),
+        dailyLimitUsd: (json['daily_limit_usd']! as num).toDouble(),
       );
 
   final List<String> chatModels;
@@ -45,7 +45,7 @@ class AiSubsidyConfig {
   final double dailyLimitUsd;
 }
 
-/// Calls `/v1/ai/*` (docs/backend.md, AI subsidy).
+/// Calls `/v2/ai/*` (docs/backend.md, AI subsidy).
 /// The `AI_BANNED` error means AI access was revoked.
 class AiKeyService {
   AiKeyService(this._client);
@@ -56,24 +56,24 @@ class AiKeyService {
   Future<SubsidyKey> issueKey(String token, {bool rotate = false}) async {
     final res = await _client.request(
       'POST',
-      '/v1/ai/key',
+      '/ai/key',
       body: {if (rotate) 'rotate': true},
       token: token,
     );
     final data = res.data!;
     return SubsidyKey(
       key: data['key']! as String,
-      expiresAt: DateTime.parse(data['expiresAt']! as String),
+      expiresAt: DateTime.parse(data['expires_at']! as String),
     );
   }
 
   Future<AiUsage> usage(String token) async => AiUsage.fromJson(
-    (await _client.request('GET', '/v1/ai/usage', token: token)).data!,
+    (await _client.request('GET', '/ai/usage', token: token)).data!,
   );
 
   Future<AiSubsidyConfig> config(String token) async =>
       AiSubsidyConfig.fromJson(
-        (await _client.request('GET', '/v1/ai/config', token: token)).data!,
+        (await _client.request('GET', '/ai/config', token: token)).data!,
       );
 }
 

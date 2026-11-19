@@ -22,7 +22,7 @@ class AuthState {
 
   final AuthStatus status;
 
-  /// Null until `/v1/me` answers (or offline).
+  /// Null until `/v2/me` answers (or offline).
   final AuthUser? user;
 
   /// Session-expired banner dismissed: shows again when the app is reopened.
@@ -43,7 +43,7 @@ class AuthState {
 }
 
 /// App-wide session (docs/backend.md, Authentication and accounts). The initial
-/// check only reads the local token; `/v1/me` is checked in the background
+/// check only reads the local token; `/v2/me` is checked in the background
 /// without holding up the app.
 class AuthController extends AsyncNotifier<AuthState> {
   AuthRepository get _repo => ref.read(authRepositoryProvider);

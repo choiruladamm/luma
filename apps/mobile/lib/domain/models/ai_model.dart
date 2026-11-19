@@ -14,7 +14,7 @@ const aiModels = <AiModel>[
 const defaultAiModel = 'z-ai/glm-5.3-flash';
 
 /// Models the free quota may use (OpenRouter workspace guardrail, docs/backend.md,
-/// AI subsidy). The server is the source of truth (`/v1/ai/config`); this is a
+/// AI subsidy). The server is the source of truth (`/v2/ai/config`); this is a
 /// fallback while the config hasn't been read.
 const subsidyModelIds = <String>[
   'z-ai/glm-5.3-flash',

@@ -18,9 +18,9 @@ Object? fillPlaceholders(Object? value) => switch (value) {
   _ => value,
 };
 
-/// Shared backend contract fixtures (packages/contracts/fixtures/v1).
+/// Shared backend contract fixtures (packages/contracts/fixtures/v2).
 Map<String, Object?> contract(String name) => jsonDecode(
-  File('../../packages/contracts/fixtures/v1/$name.json').readAsStringSync(),
+  File('../../packages/contracts/fixtures/v2/$name.json').readAsStringSync(),
 ) as Map<String, Object?>;
 
 class FakeAdapter implements HttpClientAdapter {

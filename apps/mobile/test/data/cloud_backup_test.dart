@@ -26,7 +26,7 @@ class _Auth extends Fake implements AuthRepository {
   Future<String?> token() async => value;
 }
 
-/// In-memory fake Worker: only covers `/v1/files/*` and `/v1/backups*`.
+/// In-memory fake Worker: only covers `/v2/files/*` and `/v2/backups*`.
 class _Cloud implements HttpClientAdapter {
   final files = <String, Uint8List>{};
   final backups = <String, (Uint8List, Map<String, Object?>)>{};
@@ -67,7 +67,7 @@ class _Cloud implements HttpClientAdapter {
           })
         : ResponseBody(Stream.value(b), 200);
 
-    if (method == 'POST' && path == '/v1/files/missing') {
+    if (method == 'POST' && path == '/v2/files/missing') {
       final names = ((options.data as Map)['names'] as List).cast<String>();
       return json(200, {
         'missing': [
@@ -76,39 +76,39 @@ class _Cloud implements HttpClientAdapter {
         ],
       });
     }
-    if (path.startsWith('/v1/files/')) {
-      final name = Uri.decodeComponent(path.substring('/v1/files/'.length));
+    if (path.startsWith('/v2/files/')) {
+      final name = Uri.decodeComponent(path.substring('/v2/files/'.length));
       if (method == 'GET') return bytes(files[name]);
       files[name] = await body();
       return json(200, {'name': name, 'size': files[name]!.length});
     }
-    if (method == 'PUT' && path == '/v1/backups') {
+    if (method == 'PUT' && path == '/v2/backups') {
       final m = jsonDecode(options.headers['x-backup-manifest'] as String);
       final counts = m['counts'] as Map;
       final id = '2026111${backups.length}T000000Z';
       final info = {
         'id': id,
-        'createdAt': DateTime.parse(m['createdAt'] as String)
+        'created_at': DateTime.parse(m['createdAt'] as String)
             .toUtc()
             .toIso8601String(),
         'size': 0,
         'books': counts['books'],
-        'aiResults': counts['aiResults'],
-        'schemaVersion': m['schemaVersion'],
-        'appVersion': m['appVersion'],
+        'ai_results': counts['aiResults'],
+        'schema_version': m['schemaVersion'],
+        'app_version': m['appVersion'],
       };
       final zip = await body();
       info['size'] = zip.length;
       backups[id] = (zip, info);
       return json(200, info);
     }
-    if (path == '/v1/backups') {
+    if (path == '/v2/backups') {
       return json(200, {
         'backups': [for (final b in backups.values) b.$2].reversed.toList(),
       });
     }
-    if (path.startsWith('/v1/backups/')) {
-      return bytes(backups[path.substring('/v1/backups/'.length)]?.$1);
+    if (path.startsWith('/v2/backups/')) {
+      return bytes(backups[path.substring('/v2/backups/'.length)]?.$1);
     }
     return json(404, {});
   }
@@ -147,7 +147,7 @@ void main() {
               .cast<String>();
 
       expect(await service.missing('tok', names), ['3539482a.jpg']);
-      expect(adapter.requests.single.uri.path, '/v1/files/missing');
+      expect(adapter.requests.single.uri.path, '/v2/files/missing');
       expect(adapter.requests.single.data, {'names': names});
     });
 
@@ -294,10 +294,10 @@ void main() {
         await repo(a).backup();
 
         expect(
-          cloud.log.where((l) => l.startsWith('PUT /v1/files/')),
+          cloud.log.where((l) => l.startsWith('PUT /v2/files/')),
           unorderedEquals([
-            'PUT /v1/files/persuasion.epub',
-            'PUT /v1/files/persuasion.png',
+            'PUT /v2/files/persuasion.epub',
+            'PUT /v2/files/persuasion.png',
           ]),
         );
 
@@ -311,15 +311,15 @@ void main() {
         b.reopen();
 
         expect(
-          cloud.log.where((l) => l.startsWith('GET /v1/files/')),
-          isNot(contains('GET /v1/files/emma.epub')),
+          cloud.log.where((l) => l.startsWith('GET /v2/files/')),
+          isNot(contains('GET /v2/files/emma.epub')),
         );
         expect(b.files('books'), a.files('books'));
       },
     );
 
     test('waits out a 429 between uploads and carries on', () async {
-      cloud.rateLimitNext = 'PUT /v1/files/';
+      cloud.rateLimitNext = 'PUT /v2/files/';
 
       await repo(a).backup();
 

@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'backend_client.dart';
 
-/// Represents a sync record (`POST /v1/sync/push`). A null [data] is a tombstone.
+/// Represents a sync record (`POST /v2/sync/push`). A null [data] is a tombstone.
 class SyncRecord {
   const SyncRecord({
     required this.kind,
@@ -23,7 +23,7 @@ class SyncRecord {
   Map<String, Object?> toJson() => {
     'kind': kind,
     'key': key,
-    'updatedAt': DateTime.fromMillisecondsSinceEpoch(
+    'updated_at': DateTime.fromMillisecondsSinceEpoch(
       updatedAt,
       isUtc: true,
     ).toIso8601String(),
@@ -32,7 +32,7 @@ class SyncRecord {
   };
 }
 
-/// Represents a record from `GET /v1/sync/pull`. A null [data] is a tombstone.
+/// Represents a record from `GET /v2/sync/pull`. A null [data] is a tombstone.
 class PulledRecord {
   const PulledRecord({
     required this.kind,
@@ -45,9 +45,9 @@ class PulledRecord {
   factory PulledRecord.fromJson(Map<String, Object?> json) => PulledRecord(
     kind: json['kind']! as String,
     key: json['key']! as String,
-    updatedAt: DateTime.parse(json['updatedAt']! as String)
+    updatedAt: DateTime.parse(json['updated_at']! as String)
         .millisecondsSinceEpoch,
-    schemaVersion: (json['schemaVersion']! as num).toInt(),
+    schemaVersion: (json['schema_version']! as num).toInt(),
     data: (json['data'] as Map?)?.cast<String, Object?>(),
   );
 
@@ -65,7 +65,7 @@ class PulledRecord {
 /// A page of pulled records: `nextSeq` is the next cursor and `more` says whether records remain.
 typedef PullPage = ({List<PulledRecord> records, int nextSeq, bool more});
 
-/// Calls `/v1/sync/*` (docs/sync-protocol.md, Push and pull).
+/// Calls `/v2/sync/*` (docs/sync-protocol.md, Push and pull).
 class SyncService {
   SyncService(this._client);
 
@@ -81,7 +81,7 @@ class SyncService {
   Future<PullPage> pull(String token, int since) async {
     final res = await _client.request(
       'GET',
-      '/v1/sync/pull?since=$since&limit=$maxRecords',
+      '/sync/pull?since=$since&limit=$maxRecords',
       token: token,
     );
     final body = res.data!;
@@ -90,7 +90,7 @@ class SyncService {
         for (final r in body['records']! as List)
           PulledRecord.fromJson((r as Map).cast<String, Object?>()),
       ],
-      nextSeq: (body['nextSeq']! as num).toInt(),
+      nextSeq: (body['next_seq']! as num).toInt(),
       more: body['more']! as bool,
     );
   }
@@ -103,10 +103,10 @@ class SyncService {
   ) async {
     final res = await _client.request(
       'POST',
-      '/v1/sync/push',
+      '/sync/push',
       token: token,
       body: {
-        'schemaVersion': schemaVersion,
+        'schema_version': schemaVersion,
         'records': [for (final r in records) r.toJson()],
       },
     );
