@@ -99,25 +99,93 @@ export function QuickSearch({
   };
 
   const onKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
-      e.preventDefault();
-      setOpen(true);
-      if (count === 0) return;
-      setActive((i) => (e.key === "ArrowDown" ? (i + 1) % count : (i <= 0 ? count : i) - 1));
-    } else if (e.key === "Enter") {
-      e.preventDefault();
-      if (typed.length >= MIN) choose(active);
-    } else if (e.key === "Escape") {
-      if (open && typed) setOpen(false);
-      else {
+    switch (e.key) {
+      case "ArrowDown":
+      case "ArrowUp": {
+        e.preventDefault();
+        setOpen(true);
+        if (count === 0) return;
+        const down = e.key === "ArrowDown";
+        setActive((i) => {
+          if (down) return (i + 1) % count;
+          const from = i <= 0 ? count : i;
+          return from - 1;
+        });
+        return;
+      }
+      case "Enter":
+        e.preventDefault();
+        if (typed.length >= MIN) choose(active);
+        return;
+      case "Escape":
+        if (open && typed) {
+          setOpen(false);
+          return;
+        }
         setValue("");
         onDone?.();
-      }
+        return;
     }
   };
 
   const optionId = (i: number) => `${listId}-${i}`;
   const total = page ? formatNumber(page.total, locale) : "";
+
+  const renderOptions = () => {
+    if (users.isError && settled) {
+      return <li className="px-3 py-3 text-body text-danger-ink">{errorText(users.error, t)}</li>;
+    }
+    if (loading && items.length === 0) {
+      return [0, 1].map((i) => (
+        <li key={i} aria-hidden="true" className="flex items-center gap-3 px-3 py-2">
+          <Skeleton className="size-9 flex-none" />
+          <span className="flex flex-1 flex-col gap-1.5">
+            <Skeleton className="h-3 w-40" />
+            <Skeleton className="h-2.5 w-24" />
+          </span>
+        </li>
+      ));
+    }
+    if (items.length === 0) {
+      return <li className="px-3 py-3 text-body text-ink2">{t.users.noMatch(typed)}</li>;
+    }
+    return (
+      <>
+        {items.map((u, i) => (
+          <li
+            key={u.id}
+            id={optionId(i)}
+            role="option"
+            aria-selected={active === i}
+            onMouseEnter={() => setActive(i)}
+            onClick={() => choose(i)}
+            className={cn(
+              "flex cursor-pointer items-center justify-between gap-3 rounded-row px-3 py-2",
+              active === i && "bg-canvas",
+            )}
+          >
+            <UserIdentity user={u} q={typed} />
+            <UserStatusChip banned={u.banned} />
+          </li>
+        ))}
+        <li role="presentation" aria-hidden="true" className="mx-3 my-1 h-px bg-track" />
+        <li
+          id={optionId(items.length)}
+          role="option"
+          aria-selected={active === items.length}
+          onMouseEnter={() => setActive(items.length)}
+          onClick={seeAll}
+          className={cn(
+            "flex min-h-11 cursor-pointer items-center justify-between gap-3 rounded-row px-3 text-body font-medium",
+            active === items.length && "bg-canvas",
+          )}
+        >
+          {t.shell.seeAllResults(total)}
+          <Icon name="arrow" size={16} />
+        </li>
+      </>
+    );
+  };
 
   return (
     <div className={cn("relative", className)}>
@@ -172,56 +240,7 @@ export function QuickSearch({
             aria-label={t.shell.searchResults}
             className="m-0 flex list-none flex-col gap-0.5 p-0"
           >
-            {users.isError && settled ? (
-              <li className="px-3 py-3 text-body text-danger-ink">{errorText(users.error, t)}</li>
-            ) : loading && items.length === 0 ? (
-              [0, 1].map((i) => (
-                <li key={i} aria-hidden="true" className="flex items-center gap-3 px-3 py-2">
-                  <Skeleton className="size-9 flex-none" />
-                  <span className="flex flex-1 flex-col gap-1.5">
-                    <Skeleton className="h-3 w-40" />
-                    <Skeleton className="h-2.5 w-24" />
-                  </span>
-                </li>
-              ))
-            ) : items.length === 0 ? (
-              <li className="px-3 py-3 text-body text-ink2">{t.users.noMatch(typed)}</li>
-            ) : (
-              <>
-                {items.map((u, i) => (
-                  <li
-                    key={u.id}
-                    id={optionId(i)}
-                    role="option"
-                    aria-selected={active === i}
-                    onMouseEnter={() => setActive(i)}
-                    onClick={() => choose(i)}
-                    className={cn(
-                      "flex cursor-pointer items-center justify-between gap-3 rounded-row px-3 py-2",
-                      active === i && "bg-canvas",
-                    )}
-                  >
-                    <UserIdentity user={u} q={typed} />
-                    <UserStatusChip banned={u.banned} />
-                  </li>
-                ))}
-                <li role="presentation" aria-hidden="true" className="mx-3 my-1 h-px bg-track" />
-                <li
-                  id={optionId(items.length)}
-                  role="option"
-                  aria-selected={active === items.length}
-                  onMouseEnter={() => setActive(items.length)}
-                  onClick={seeAll}
-                  className={cn(
-                    "flex min-h-11 cursor-pointer items-center justify-between gap-3 rounded-row px-3 text-body font-medium",
-                    active === items.length && "bg-canvas",
-                  )}
-                >
-                  {t.shell.seeAllResults(total)}
-                  <Icon name="arrow" size={16} />
-                </li>
-              </>
-            )}
+            {renderOptions()}
           </ul>
         </div>
       )}
