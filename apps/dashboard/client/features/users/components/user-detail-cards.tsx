@@ -63,29 +63,29 @@ export function UsageCards({ user, totalR2 }: { user: UserDetail; totalR2?: numb
 /** Subsidized key only (an own key never reaches the server): today's use vs the daily limit. */
 export function AiCard({ ai }: { ai: UserDetail["ai"] }) {
   const { t, locale } = useI18n();
-  return (
-    <NumberCard
-      wide
-      title={t.userDetail.freeAi}
-      value={
-        ai ? (ai.usageDaily === null ? "—" : formatUsd(ai.usageDaily, locale)) : t.userDetail.aiNone
-      }
-    >
-      {ai ? (
-        <>
-          {ai.usageDaily !== null && (
-            <ProgressBar value={(ai.usageDaily / ai.limit) * 100} label={t.userDetail.aiUsageBar} />
-          )}
-          <span className="text-caption text-ink2">
-            {ai.usageDaily === null
-              ? `${t.userDetail.aiUsageFailed} `
-              : `${t.userDetail.aiTodayOf(formatUsd(ai.limit, locale))} · `}
-            {t.userDetail.aiKeyUntil(formatDate(ai.expiresAt, locale))}
-          </span>
-        </>
-      ) : (
+  const title = t.userDetail.freeAi;
+  if (!ai) {
+    return (
+      <NumberCard wide title={title} value={t.userDetail.aiNone}>
         <span className="text-caption text-ink2">{t.userDetail.aiNoKey}</span>
+      </NumberCard>
+    );
+  }
+  const { usageDaily } = ai;
+  const value = usageDaily === null ? "—" : formatUsd(usageDaily, locale);
+  const note =
+    usageDaily === null
+      ? `${t.userDetail.aiUsageFailed} `
+      : `${t.userDetail.aiTodayOf(formatUsd(ai.limit, locale))} · `;
+  return (
+    <NumberCard wide title={title} value={value}>
+      {usageDaily !== null && (
+        <ProgressBar value={(usageDaily / ai.limit) * 100} label={t.userDetail.aiUsageBar} />
       )}
+      <span className="text-caption text-ink2">
+        {note}
+        {t.userDetail.aiKeyUntil(formatDate(ai.expiresAt, locale))}
+      </span>
     </NumberCard>
   );
 }

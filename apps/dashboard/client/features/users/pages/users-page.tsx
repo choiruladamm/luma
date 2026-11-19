@@ -14,7 +14,12 @@ import { formatNumber } from "../../../lib/format";
 import { useOverview } from "../../overview/queries/use-overview";
 import { USER_NUMERIC, UserCard, userColumns } from "../components/user-columns";
 import { UsersTableSkeleton } from "../components/users-table-skeleton";
-import { ActiveFilters, UsersFilterChips, UsersFilterSheet } from "../components/users-filters";
+import {
+  ActiveFilters,
+  CLEARED_FILTERS,
+  UsersFilterChips,
+  UsersFilterSheet,
+} from "../components/users-filters";
 import { useUserSearch } from "../hooks/use-user-search";
 import { activeFilterCount, type UserSort, useUsersParams } from "../hooks/use-users-params";
 import { useUsers } from "../queries/use-users";
@@ -33,6 +38,54 @@ const COLUMN_OF: Partial<Record<UserSort, string>> = {
   sync: "syncBytes",
 };
 
+/** No rows: filters win over the search, which wins over "no users yet". */
+function UsersEmpty({
+  filtered,
+  q,
+  onReset,
+}: {
+  filtered: boolean;
+  q: string;
+  onReset: () => void;
+}) {
+  const { t } = useI18n();
+  if (filtered) {
+    return (
+      <EmptyState
+        icon="filter"
+        title={t.users.noFilterMatch}
+        action={
+          <Button variant="secondary" onClick={onReset}>
+            {t.users.reset}
+          </Button>
+        }
+      >
+        {t.users.noFilterMatchBody}
+      </EmptyState>
+    );
+  }
+  if (q) {
+    return (
+      <EmptyState icon="search" title={t.users.noMatch(q)}>
+        {t.users.noMatchBody}
+      </EmptyState>
+    );
+  }
+  return (
+    <EmptyState
+      icon="users"
+      title={t.users.empty}
+      action={
+        <ButtonLink to="/invites" variant="secondary" icon="ticket">
+          {t.users.toInvites}
+        </ButtonLink>
+      }
+    >
+      {t.users.emptyBody}
+    </EmptyState>
+  );
+}
+
 /**
  * Board 02 User (+ 13 loading, empty and search-empty states from design component 2), with filters,
  * column sorting, and page numbers; all of it lives in the URL (useUsersParams).
@@ -49,8 +102,9 @@ export function UsersPage() {
   // Placeholder data is the previous query's page count, not this one's.
   const pageCount = users.isPlaceholderData ? undefined : users.data?.pageCount;
   const filtered = activeFilterCount(params) > 0;
+  const defaultSort: UserSort = q ? "relevance" : "created";
   const currentSort: UserSort =
-    params.sort && (params.sort !== "relevance" || q) ? params.sort : q ? "relevance" : "created";
+    params.sort && (params.sort !== "relevance" || q) ? params.sort : defaultSort;
   const tableSort: TableSort | null = COLUMN_OF[currentSort]
     ? { id: COLUMN_OF[currentSort], dir: params.dir }
     : null;
@@ -67,6 +121,42 @@ export function UsersPage() {
   const total = overview.data?.users.total;
   const value = form.watch("q");
   const errorId = useId();
+
+  const renderTable = () => {
+    if (users.isError && !users.data) {
+      return (
+        <ErrorState message={errorText(users.error, t)} onRetry={() => void users.refetch()} />
+      );
+    }
+    if (!users.data) return <UsersTableSkeleton />;
+    if (rows.length === 0) {
+      return <UsersEmpty filtered={filtered} q={q} onReset={() => set(CLEARED_FILTERS)} />;
+    }
+    return (
+      <DataTable
+        label={t.users.list}
+        columns={columns}
+        data={rows}
+        rowHref={(u) => `/users/${u.id}`}
+        numeric={USER_NUMERIC}
+        sort={tableSort}
+        sortable={Object.keys(SORT_OF)}
+        onSort={onSort}
+        renderCard={(u) => <UserCard user={u} q={q} />}
+        footer={
+          <Pagination
+            page={params.page}
+            pageCount={users.data.pageCount}
+            total={users.data.total}
+            pageSize={params.limit}
+            onPage={(page) => set({ page })}
+            pageSizes={[25, 50]}
+            onPageSize={(limit) => set({ limit })}
+          />
+        }
+      />
+    );
+  };
 
   return (
     <>
@@ -139,69 +229,7 @@ export function UsersPage() {
           </span>
         </div>
         {/* Clip only the table to the card corners: the toolbar menus must overflow below it. */}
-        <div className="overflow-hidden rounded-b-card">
-          {users.isError ? (
-            <ErrorState message={errorText(users.error, t)} onRetry={() => void users.refetch()} />
-          ) : !users.data ? (
-            <UsersTableSkeleton />
-          ) : rows.length === 0 ? (
-            filtered ? (
-              <EmptyState
-                icon="filter"
-                title={t.users.noFilterMatch}
-                action={
-                  <Button
-                    variant="secondary"
-                    onClick={() => set({ status: undefined, ai: undefined, activity: undefined })}
-                  >
-                    {t.users.reset}
-                  </Button>
-                }
-              >
-                {t.users.noFilterMatchBody}
-              </EmptyState>
-            ) : q ? (
-              <EmptyState icon="search" title={t.users.noMatch(q)}>
-                {t.users.noMatchBody}
-              </EmptyState>
-            ) : (
-              <EmptyState
-                icon="users"
-                title={t.users.empty}
-                action={
-                  <ButtonLink to="/invites" variant="secondary" icon="ticket">
-                    {t.users.toInvites}
-                  </ButtonLink>
-                }
-              >
-                {t.users.emptyBody}
-              </EmptyState>
-            )
-          ) : (
-            <DataTable
-              label={t.users.list}
-              columns={columns}
-              data={rows}
-              rowHref={(u) => `/users/${u.id}`}
-              numeric={USER_NUMERIC}
-              sort={tableSort}
-              sortable={Object.keys(SORT_OF)}
-              onSort={onSort}
-              renderCard={(u) => <UserCard user={u} q={q} />}
-              footer={
-                <Pagination
-                  page={params.page}
-                  pageCount={users.data.pageCount}
-                  total={users.data.total}
-                  pageSize={params.limit}
-                  onPage={(page) => set({ page })}
-                  pageSizes={[25, 50]}
-                  onPageSize={(limit) => set({ limit })}
-                />
-              }
-            />
-          )}
-        </div>
+        <div className="overflow-hidden rounded-b-card">{renderTable()}</div>
       </section>
     </>
   );

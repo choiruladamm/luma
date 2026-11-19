@@ -1,7 +1,7 @@
-import { screen, waitFor, within } from "@testing-library/react";
+import { act, screen, waitFor, within } from "@testing-library/react";
 import { HttpResponse, http } from "msw";
 import { describe, expect, it, vi } from "vitest";
-import { userDetail } from "../helpers/fixtures";
+import { overview, userDetail } from "../helpers/fixtures";
 import { API, apiError } from "../helpers/handlers";
 import { renderApp } from "../helpers/render";
 import { server } from "../setup";
@@ -102,5 +102,122 @@ describe("Detail user", () => {
     server.use(http.get(`${API}/users/:id`, () => apiError(404, "NOT_FOUND")));
     renderApp("/users/gak-ada");
     expect(await screen.findByText("User gak ditemukan")).toBeInTheDocument();
+  });
+
+  // The loading skeleton has the same heading; wait for the profile first.
+  const aiCard = async () => {
+    await screen.findByRole("heading", { name: /^sekar\.ayu\s?@gmail\.com$/ });
+    return screen.getByRole("heading", { level: 2, name: "Kuota AI gratis" }).closest("section")!;
+  };
+
+  it("says there is no AI key, with no usage bar or expiry", async () => {
+    server.use(
+      http.get(`${API}/users/:id`, () =>
+        HttpResponse.json(userDetail({ hasAiKey: false, ai: null })),
+      ),
+    );
+    renderApp("/users/u1");
+    const card = await aiCard();
+    expect(within(card).getByText("Gak pakai")).toBeInTheDocument();
+    expect(within(card).getByText(/Belum minta key subsidi/)).toBeInTheDocument();
+    expect(within(card).queryByRole("progressbar")).toBeNull();
+    expect(within(card).queryByText(/key berlaku sampai/)).toBeNull();
+  });
+
+  it("shows the key expiry without a usage bar when OpenRouter usage is unavailable", async () => {
+    server.use(
+      http.get(`${API}/users/:id`, () =>
+        HttpResponse.json(
+          userDetail({
+            ai: { limit: 0.02, usageDaily: null, expiresAt: "2026-12-14T00:00:00.000Z" },
+          }),
+        ),
+      ),
+    );
+    renderApp("/users/u1");
+    const card = await aiCard();
+    expect(within(card).getByText("—")).toBeInTheDocument();
+    expect(within(card).getByText(/Pemakaian gagal dimuat dari OpenRouter/)).toBeInTheDocument();
+    expect(within(card).getByText(/key berlaku sampai/)).toBeInTheDocument();
+    expect(within(card).queryByRole("progressbar")).toBeNull();
+    expect(within(card).queryByText(/hari ini dari/)).toBeNull();
+  });
+
+  it("shows an empty usage bar for zero usage today", async () => {
+    server.use(
+      http.get(`${API}/users/:id`, () =>
+        HttpResponse.json(
+          userDetail({ ai: { limit: 0.02, usageDaily: 0, expiresAt: "2026-12-14T00:00:00.000Z" } }),
+        ),
+      ),
+    );
+    renderApp("/users/u1");
+    const card = await aiCard();
+    expect(
+      within(card).getByRole("progressbar", { name: "Pemakaian AI hari ini" }),
+    ).toHaveAttribute("aria-valuenow", "0");
+    expect(within(card).getByText(/hari ini dari/)).toBeInTheDocument();
+    expect(within(card).getByText(/key berlaku sampai/)).toBeInTheDocument();
+    expect(within(card).queryByText(/Pemakaian gagal dimuat/)).toBeNull();
+  });
+
+  it("shows the file-share bar only once the overview is cached", async () => {
+    server.use(http.get(`${API}/overview`, () => HttpResponse.json(overview)));
+    renderApp("/users/u1");
+    expect(
+      await screen.findByRole("progressbar", { name: "Bagian dari semua file di server" }),
+    ).toBeInTheDocument();
+  });
+
+  it("shows an error state for a server failure, and retry recovers", async () => {
+    let fail = true;
+    server.use(
+      http.get(`${API}/users/:id`, () =>
+        fail ? apiError(500, "INTERNAL_ERROR") : HttpResponse.json(userDetail()),
+      ),
+    );
+    const { user } = renderApp("/users/u1");
+    const alert = await screen.findByRole("alert", {}, { timeout: 3000 });
+    expect(within(alert).getByText("Data gagal dimuat")).toBeInTheDocument();
+    expect(screen.queryByText("User gak ditemukan")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Ban user" })).toBeNull();
+    fail = false;
+    await user.click(within(alert).getByRole("button", { name: "Coba lagi" }));
+    expect(
+      await screen.findByRole("heading", { name: /^sekar\.ayu\s?@gmail\.com$/ }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+
+  describe("a refresh over cached detail", () => {
+    const failNextLoads = (fail: () => Response | undefined) =>
+      server.use(http.get(`${API}/users/:id`, () => fail() ?? HttpResponse.json(userDetail())));
+
+    it("keeps the profile and toasts a server failure", async () => {
+      let failing = false;
+      failNextLoads(() => (failing ? apiError(429, "RATE_LIMITED") : undefined));
+      const { queryClient } = renderApp("/users/u1");
+      await screen.findByRole("heading", { name: /^sekar\.ayu\s?@gmail\.com$/ });
+      failing = true;
+      await act(() => queryClient.refetchQueries());
+      expect(await screen.findByRole("alert")).toHaveTextContent(
+        "Terlalu banyak permintaan. Coba lagi sebentar.",
+      );
+      expect(
+        screen.getByRole("heading", { name: /^sekar\.ayu\s?@gmail\.com$/ }),
+      ).toBeInTheDocument();
+      expect(screen.queryByText("Data gagal dimuat")).toBeNull();
+    });
+
+    it("switches to not-found when the user is gone", async () => {
+      let gone = false;
+      failNextLoads(() => (gone ? apiError(404, "NOT_FOUND") : undefined));
+      const { queryClient } = renderApp("/users/u1");
+      await screen.findByRole("heading", { name: /^sekar\.ayu\s?@gmail\.com$/ });
+      gone = true;
+      await act(() => queryClient.refetchQueries());
+      expect(await screen.findByText("User gak ditemukan")).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Ban user" })).toBeNull();
+    });
   });
 });

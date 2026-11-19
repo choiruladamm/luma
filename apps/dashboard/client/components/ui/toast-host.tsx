@@ -2,7 +2,13 @@ import { useEffect, useState } from "react";
 import { useI18n } from "../../i18n";
 import { cn } from "../../lib/cn";
 import { useToastStore } from "../../stores/toast-store";
-import { Icon } from "./icons";
+import { Icon, type IconName } from "./icons";
+
+const TONE: Record<"success" | "error" | "info", { icon: IconName; badge: string }> = {
+  success: { icon: "check", badge: "bg-accent text-on-accent" },
+  error: { icon: "alert", badge: "bg-danger-soft text-danger-ink" },
+  info: { icon: "refresh", badge: "bg-[#46423a] text-toast-ink" },
+};
 
 /**
  * Design component 2, Toast: bottom center, 32 from the edge. Auto-hides after 2.5s (5s with an
@@ -36,16 +42,10 @@ export function ToastHost() {
             aria-hidden="true"
             className={cn(
               "flex size-6 flex-none items-center justify-center rounded-full",
-              toast.tone === "success" && "bg-accent text-on-accent",
-              toast.tone === "error" && "bg-danger-soft text-danger-ink",
-              toast.tone === "info" && "bg-[#46423a] text-toast-ink",
+              TONE[toast.tone].badge,
             )}
           >
-            <Icon
-              name={toast.tone === "error" ? "alert" : toast.tone === "info" ? "refresh" : "check"}
-              size={14}
-              strokeWidth={2.2}
-            />
+            <Icon name={TONE[toast.tone].icon} size={14} strokeWidth={2.2} />
           </span>
           <span className="pr-1.5">{toast.message}</span>
           {toast.action && (

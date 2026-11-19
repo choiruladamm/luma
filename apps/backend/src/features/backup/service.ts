@@ -28,18 +28,22 @@ const manifestSchema = z.object({
   }),
 });
 
+const invalidManifest = () =>
+  new ApiError(400, "BAD_REQUEST", "x-backup-manifest must be the backup manifest JSON");
+
 /** The `x-backup-manifest` header = contents of `manifest.json` in the zip (single-line JSON). */
 export function parseManifest(header: string | undefined): Record<string, string> {
-  let parsed: z.infer<typeof manifestSchema> | undefined;
+  let json: unknown;
   try {
-    parsed = manifestSchema.parse(JSON.parse(header ?? ""));
+    json = JSON.parse(header ?? "");
   } catch {
-    parsed = undefined;
+    throw invalidManifest();
   }
-  const createdAt = parsed ? new Date(parsed.createdAt) : undefined;
-  if (!parsed || !createdAt || Number.isNaN(createdAt.getTime())) {
-    throw new ApiError(400, "BAD_REQUEST", "x-backup-manifest must be the backup manifest JSON");
-  }
+  const result = manifestSchema.safeParse(json);
+  if (!result.success) throw invalidManifest();
+  const parsed = result.data;
+  const createdAt = new Date(parsed.createdAt);
+  if (Number.isNaN(createdAt.getTime())) throw invalidManifest();
   return {
     appVersion: parsed.appVersion,
     schemaVersion: String(parsed.schemaVersion),

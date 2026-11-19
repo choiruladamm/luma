@@ -1,7 +1,8 @@
 // Every D1 query of the invites feature. Each function is one query-budget unit.
 import { and, asc, count, desc, eq, gte, isNotNull, isNull, or, sql } from "drizzle-orm";
-import type { Db } from "../../../../backend/src/db/client";
-import { inviteCodes, users } from "../../../../backend/src/db/schema";
+import type { Db } from "@backend/db/client";
+import { inviteCodes, users } from "@backend/db/schema";
+import { DAY_MS } from "@backend/lib/encoding";
 
 export type InviteListQuery = {
   status?: "unused" | "used";
@@ -16,7 +17,33 @@ export type InviteListQuery = {
   now: number;
 };
 
-const DAY_MS = 86_400_000;
+// ponytail: no index on used_at/created_at; invite codes stay in the hundreds. Add one if that changes.
+function sortOrder({ sort, dir }: InviteListQuery) {
+  const by = dir === "asc" ? asc : desc;
+  switch (sort) {
+    case "code":
+      return [by(inviteCodes.code)];
+    case "usedAt":
+      // Unused codes (no date) go last both ways.
+      return [sql`${inviteCodes.usedAt} is null`, by(inviteCodes.usedAt), asc(inviteCodes.code)];
+    case "createdAt":
+      // Codes made before `created_at` existed have no date: they go last both ways.
+      return [
+        sql`${inviteCodes.createdAt} is null`,
+        by(inviteCodes.createdAt),
+        asc(inviteCodes.code),
+      ];
+    case "default":
+      // Unused first (the ones an admin hands out), newest made first; then most recently used.
+      return [
+        sql`${inviteCodes.usedAt} is not null`,
+        desc(inviteCodes.usedAt),
+        sql`${inviteCodes.createdAt} is null`,
+        desc(inviteCodes.createdAt),
+        asc(inviteCodes.code),
+      ];
+  }
+}
 
 /**
  * 1 batch (2 statements): one page of invites (with the user who used them) and the counts.
@@ -32,40 +59,13 @@ export async function listInvites(db: Db, query: InviteListQuery) {
         sql`instr(lower(${users.email}), ${query.q.toLowerCase()}) > 0`,
       )
     : undefined;
+  const statusFilter = { unused: isNull(inviteCodes.usedAt), used: isNotNull(inviteCodes.usedAt) };
   const rowFilter = and(
-    query.status === "unused"
-      ? isNull(inviteCodes.usedAt)
-      : query.status === "used"
-        ? isNotNull(inviteCodes.usedAt)
-        : undefined,
+    query.status && statusFilter[query.status],
     query.usedWithin
       ? gte(inviteCodes.usedAt, new Date(query.now - (query.usedWithin === "7d" ? 7 : 30) * DAY_MS))
       : undefined,
   );
-
-  const by = query.dir === "asc" ? asc : desc;
-  // Codes made before `created_at` existed have no date: they go last both ways.
-  // ponytail: no index on used_at/created_at; invite codes stay in the hundreds. Add one if that changes.
-  const newestFirst = [sql`${inviteCodes.createdAt} is null`, desc(inviteCodes.createdAt)];
-  const order =
-    query.sort === "code"
-      ? [by(inviteCodes.code)]
-      : query.sort === "usedAt"
-        ? // Unused codes (no date) go last both ways.
-          [sql`${inviteCodes.usedAt} is null`, by(inviteCodes.usedAt), asc(inviteCodes.code)]
-        : query.sort === "createdAt"
-          ? [
-              sql`${inviteCodes.createdAt} is null`,
-              by(inviteCodes.createdAt),
-              asc(inviteCodes.code),
-            ]
-          : // Unused first (the ones an admin hands out), newest made first; then most recently used.
-            [
-              sql`${inviteCodes.usedAt} is not null`,
-              desc(inviteCodes.usedAt),
-              ...newestFirst,
-              asc(inviteCodes.code),
-            ];
 
   const [rows, [counts]] = await db.batch([
     db
@@ -79,7 +79,7 @@ export async function listInvites(db: Db, query: InviteListQuery) {
       .from(inviteCodes)
       .leftJoin(users, eq(users.id, inviteCodes.usedBy))
       .where(and(search, rowFilter))
-      .orderBy(...order)
+      .orderBy(...sortOrder(query))
       .limit(query.limit)
       .offset((query.page - 1) * query.limit),
     db

@@ -3,7 +3,7 @@ import type { Db } from "../../db/client";
 import { decryptText, encryptText } from "../../lib/crypto";
 import { csv, DAY_MS } from "../../lib/encoding";
 import { ApiError } from "../../lib/errors";
-import { findKeyHash, findUserKey, saveKey, setKeyLimit } from "./repo";
+import { findKeyHash, findUserKey, saveKey, setKeyLimit, type AiKeyRow } from "./repo";
 
 /** The key is replaced a day before it expires, so a device never holds a dead key mid-read. */
 export const ROTATE_BEFORE_MS = DAY_MS;
@@ -37,6 +37,31 @@ async function allowedKey(db: Db, userId: string) {
 export type IssuedKey = { key: string; expiresAt: string; dailyLimitUsd: number };
 
 /**
+ * The stored key if it can still be handed out, else undefined. The checks run
+ * cheapest first (expiry, decrypt, then the `rotate` lookup), so reuse never adds
+ * an OpenRouter request it doesn't need.
+ */
+async function reuseKey(
+  db: Db,
+  admin: OpenRouterAdmin,
+  cfg: AiConfig,
+  userId: string,
+  row: AiKeyRow,
+  rotate: boolean,
+  now: Date,
+): Promise<IssuedKey | undefined> {
+  if (row.expiresAt.getTime() - now.getTime() <= ROTATE_BEFORE_MS) return undefined;
+  const key = await decryptText(cfg.encSecret, row.keyEnc);
+  if (!key) return undefined;
+  if (rotate && !(await admin.keyExists(row.keyHash))) return undefined;
+  if (row.limitUsd !== cfg.dailyLimitUsd) {
+    await admin.updateLimit(row.keyHash, cfg.dailyLimitUsd);
+    await setKeyLimit(db, userId, cfg.dailyLimitUsd);
+  }
+  return { key, expiresAt: row.expiresAt.toISOString(), dailyLimitUsd: cfg.dailyLimitUsd };
+}
+
+/**
  * The user's subsidized key: reused while still valid (two devices get the same key,
  * so quota isn't doubled), created lazily, replaced when close to expiry, unreadable,
  * or `rotate` is requested and the key is already gone from OpenRouter.
@@ -52,19 +77,11 @@ export async function issueKey(
   { rotate = false, now = new Date() }: { rotate?: boolean; now?: Date } = {},
 ): Promise<IssuedKey> {
   const row = await allowedKey(db, userId);
-  const fresh = row && row.expiresAt.getTime() - now.getTime() > ROTATE_BEFORE_MS;
-  if (row && fresh) {
-    const key = await decryptText(cfg.encSecret, row.keyEnc);
-    if (key && (!rotate || (await admin.keyExists(row.keyHash)))) {
-      if (row.limitUsd !== cfg.dailyLimitUsd) {
-        await admin.updateLimit(row.keyHash, cfg.dailyLimitUsd);
-        await setKeyLimit(db, userId, cfg.dailyLimitUsd);
-      }
-      return { key, expiresAt: row.expiresAt.toISOString(), dailyLimitUsd: cfg.dailyLimitUsd };
-    }
+  if (row) {
+    const reused = await reuseKey(db, admin, cfg, userId, row, rotate, now);
+    if (reused) return reused;
+    await admin.deleteKey(row.keyHash);
   }
-
-  if (row) await admin.deleteKey(row.keyHash);
   const expiresAt = new Date(now.getTime() + cfg.ttlDays * DAY_MS);
   // ponytail: two devices asking at once can create two keys; the loser is orphaned
   // until it expires (at most the daily limit). Lock per user if this ever happens.

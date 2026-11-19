@@ -1,5 +1,5 @@
-import type { Db } from "../../../../backend/src/db/client";
-import { DAY_MS } from "../../../../backend/src/lib/encoding";
+import type { Db } from "@backend/db/client";
+import { DAY_MS } from "@backend/lib/encoding";
 import { monthSpendUsd } from "./activity";
 import { overviewCounts } from "./repo";
 

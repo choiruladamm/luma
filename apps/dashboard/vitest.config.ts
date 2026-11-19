@@ -6,6 +6,7 @@ export default defineConfig(async () => {
   // The backend owns the schema: apply its migrations so changes that break the dashboard show up here.
   const migrations = await readD1Migrations("../backend/migrations");
   return {
+    resolve: { alias: { "@backend": new URL("../backend/src", import.meta.url).pathname } },
     plugins: [
       cloudflareTest({
         wrangler: { configPath: "./wrangler.jsonc", environment: "dev" },

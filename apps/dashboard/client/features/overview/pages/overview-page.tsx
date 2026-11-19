@@ -4,7 +4,7 @@ import { UpdatedAt } from "../../../components/layout/updated-at";
 import { ButtonLink } from "../../../components/ui/button";
 import { StatCard } from "../../../components/ui/card";
 import { DataTable } from "../../../components/ui/data-table";
-import { ErrorState } from "../../../components/ui/states";
+import { EmptyState, ErrorState } from "../../../components/ui/states";
 import { useI18n } from "../../../i18n";
 import { errorText } from "../../../lib/api-error";
 import { formatBytes, formatNumber } from "../../../lib/format";
@@ -34,6 +34,117 @@ export function OverviewPage() {
   const recentRows = useMemo(() => recent.data?.items.slice(0, RECENT) ?? [], [recent.data]);
   const refresh = () => void Promise.all([overview.refetch(), recent.refetch()]);
 
+  const renderMetrics = () => {
+    if (overview.isError && !data) {
+      return (
+        <section className="rounded-card bg-sheet">
+          <ErrorState
+            message={errorText(overview.error, t)}
+            onRetry={() => void overview.refetch()}
+          />
+        </section>
+      );
+    }
+    return (
+      <>
+        {/* Board 12: while loading, the real labels and icons stay and only the values pulse. */}
+        <div
+          aria-busy={!data || undefined}
+          className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4"
+        >
+          <StatCard
+            label={t.overview.registered}
+            icon="users"
+            value={data ? formatNumber(data.users.total, locale) : <StatValueSkeleton />}
+            note={
+              data ? (
+                <>
+                  <strong className="text-ink">+{formatNumber(data.users.new7d, locale)}</strong>{" "}
+                  {t.overview.inWeek}
+                </>
+              ) : (
+                <StatNoteSkeleton />
+              )
+            }
+          />
+          <StatCard
+            label={t.overview.newWeek}
+            icon="clock"
+            value={data ? formatNumber(data.users.new7d, locale) : <StatValueSkeleton />}
+            note={
+              data ? (
+                t.overview.ofUsers(formatNumber(data.users.total, locale), data.users.total)
+              ) : (
+                <StatNoteSkeleton />
+              )
+            }
+          />
+          <StatCard
+            label={t.overview.banned}
+            icon="ban"
+            value={data ? formatNumber(data.users.banned, locale) : <StatValueSkeleton />}
+            danger={!!data && data.users.banned > 0}
+            note={
+              data ? (
+                t.overview.bannedShare(pct(data.users.banned, data.users.total))
+              ) : (
+                <StatNoteSkeleton />
+              )
+            }
+          />
+          <StatCard
+            label={t.overview.storage}
+            icon="drive"
+            value={
+              data ? (
+                formatBytes(data.storage.r2Bytes + data.storage.syncBytes, locale)
+              ) : (
+                <StatValueSkeleton />
+              )
+            }
+            note={data ? t.overview.storageNote : <StatNoteSkeleton />}
+          />
+          <StatCard
+            label={t.overview.invites}
+            icon="ticket"
+            value={data ? formatNumber(data.invites.unused, locale) : <StatValueSkeleton />}
+            note={data ? t.overview.unused : <StatNoteSkeleton />}
+          />
+        </div>
+        <div className="flex flex-wrap items-start gap-4">
+          <div className="flex min-w-0 flex-[2_1_480px] flex-col gap-4">
+            <SyncCard data={data?.syncToday} />
+            <AiSpendCard ai={data?.ai} />
+          </div>
+          <div className="flex min-w-0 flex-[1_1_320px] flex-col gap-4">
+            <StorageCard data={data?.storage} />
+            <ServicesCard flags={data?.flags} />
+          </div>
+        </div>
+      </>
+    );
+  };
+
+  const renderRecent = () => {
+    if (recent.isError && !recent.data) {
+      return (
+        <ErrorState message={errorText(recent.error, t)} onRetry={() => void recent.refetch()} />
+      );
+    }
+    if (!recent.data) return <UsersTableSkeleton rows={RECENT} />;
+    if (recentRows.length === 0) return <EmptyState icon="users" title={t.users.empty} />;
+    return (
+      <DataTable
+        label={t.overview.recentTable}
+        columns={columns}
+        data={recentRows}
+        rowHref={(u) => `/users/${u.id}`}
+        numeric={USER_NUMERIC}
+        renderCard={(u) => <UserCard user={u} />}
+      />
+    );
+  };
+
   return (
     <>
       <PageHeader
@@ -46,91 +157,7 @@ export function OverviewPage() {
           />
         }
       />
-      {overview.isError && !data ? (
-        <section className="rounded-card bg-sheet">
-          <ErrorState
-            message={errorText(overview.error, t)}
-            onRetry={() => void overview.refetch()}
-          />
-        </section>
-      ) : (
-        <>
-          {/* Board 12: while loading, the real labels and icons stay and only the values pulse. */}
-          <div
-            aria-busy={!data || undefined}
-            className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4"
-          >
-            <StatCard
-              label={t.overview.registered}
-              icon="users"
-              value={data ? formatNumber(data.users.total, locale) : <StatValueSkeleton />}
-              note={
-                data ? (
-                  <>
-                    <strong className="text-ink">+{formatNumber(data.users.new7d, locale)}</strong>{" "}
-                    {t.overview.inWeek}
-                  </>
-                ) : (
-                  <StatNoteSkeleton />
-                )
-              }
-            />
-            <StatCard
-              label={t.overview.newWeek}
-              icon="clock"
-              value={data ? formatNumber(data.users.new7d, locale) : <StatValueSkeleton />}
-              note={
-                data ? (
-                  t.overview.ofUsers(formatNumber(data.users.total, locale), data.users.total)
-                ) : (
-                  <StatNoteSkeleton />
-                )
-              }
-            />
-            <StatCard
-              label={t.overview.banned}
-              icon="ban"
-              value={data ? formatNumber(data.users.banned, locale) : <StatValueSkeleton />}
-              danger={!!data && data.users.banned > 0}
-              note={
-                data ? (
-                  t.overview.bannedShare(pct(data.users.banned, data.users.total))
-                ) : (
-                  <StatNoteSkeleton />
-                )
-              }
-            />
-            <StatCard
-              label={t.overview.storage}
-              icon="drive"
-              value={
-                data ? (
-                  formatBytes(data.storage.r2Bytes + data.storage.syncBytes, locale)
-                ) : (
-                  <StatValueSkeleton />
-                )
-              }
-              note={data ? t.overview.storageNote : <StatNoteSkeleton />}
-            />
-            <StatCard
-              label={t.overview.invites}
-              icon="ticket"
-              value={data ? formatNumber(data.invites.unused, locale) : <StatValueSkeleton />}
-              note={data ? t.overview.unused : <StatNoteSkeleton />}
-            />
-          </div>
-          <div className="flex flex-wrap items-start gap-4">
-            <div className="flex min-w-0 flex-[2_1_480px] flex-col gap-4">
-              <SyncCard data={data?.syncToday} />
-              <AiSpendCard ai={data?.ai} />
-            </div>
-            <div className="flex min-w-0 flex-[1_1_320px] flex-col gap-4">
-              <StorageCard data={data?.storage} />
-              <ServicesCard flags={data?.flags} />
-            </div>
-          </div>
-        </>
-      )}
+      {renderMetrics()}
       <section aria-labelledby="h-baru" className="overflow-hidden rounded-card bg-sheet">
         <div className="flex min-h-11 flex-wrap items-center justify-between gap-3 px-6 pt-4 pb-2">
           <h2 id="h-baru" className="m-0 text-card font-semibold">
@@ -140,20 +167,7 @@ export function OverviewPage() {
             {t.overview.allUsers}
           </ButtonLink>
         </div>
-        {recent.isError ? (
-          <ErrorState message={errorText(recent.error, t)} onRetry={() => void recent.refetch()} />
-        ) : !recent.data ? (
-          <UsersTableSkeleton rows={RECENT} />
-        ) : (
-          <DataTable
-            label={t.overview.recentTable}
-            columns={columns}
-            data={recentRows}
-            rowHref={(u) => `/users/${u.id}`}
-            numeric={USER_NUMERIC}
-            renderCard={(u) => <UserCard user={u} />}
-          />
-        )}
+        {renderRecent()}
       </section>
     </>
   );

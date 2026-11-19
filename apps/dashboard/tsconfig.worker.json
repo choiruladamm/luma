@@ -14,7 +14,10 @@
     "verbatimModuleSyntax": false,
     // Imported backend code resolves drizzle-orm from the backend's node_modules: point the
     // types at the dashboard copy so SQL/column classes from both copies match.
+    // `@backend/*` is backend source the dashboard shares (resolve.alias in the Vite and Vitest
+    // configs does the same at runtime); see CLAUDE.md, Shared code with the backend.
     "paths": {
+      "@backend/*": ["../backend/src/*"],
       "drizzle-orm": ["./node_modules/drizzle-orm"],
       "drizzle-orm/*": ["./node_modules/drizzle-orm/*"]
     },
