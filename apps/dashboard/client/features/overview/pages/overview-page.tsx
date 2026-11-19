@@ -4,7 +4,7 @@ import { UpdatedAt } from "../../../components/layout/updated-at";
 import { ButtonLink } from "../../../components/ui/button";
 import { StatCard } from "../../../components/ui/card";
 import { DataTable } from "../../../components/ui/data-table";
-import { ErrorState } from "../../../components/ui/states";
+import { EmptyState, ErrorState } from "../../../components/ui/states";
 import { useI18n } from "../../../i18n";
 import { errorText } from "../../../lib/api-error";
 import { formatBytes, formatNumber } from "../../../lib/format";
@@ -126,12 +126,13 @@ export function OverviewPage() {
   };
 
   const renderRecent = () => {
-    if (recent.isError) {
+    if (recent.isError && !recent.data) {
       return (
         <ErrorState message={errorText(recent.error, t)} onRetry={() => void recent.refetch()} />
       );
     }
     if (!recent.data) return <UsersTableSkeleton rows={RECENT} />;
+    if (recentRows.length === 0) return <EmptyState icon="users" title={t.users.empty} />;
     return (
       <DataTable
         label={t.overview.recentTable}

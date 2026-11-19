@@ -65,7 +65,7 @@ describe("Ringkasan", () => {
     expect(calls).toBe(before + 1);
   });
 
-  it("keeps the cached numbers when a refresh fails, with no error state", async () => {
+  it("keeps the cached numbers when a refresh fails, and toasts the error", async () => {
     let fail = false;
     server.use(
       http.get(`${API}/overview`, () =>
@@ -80,7 +80,7 @@ describe("Ringkasan", () => {
     // The failed refresh and its one retry are both over once nothing is fetching.
     await waitFor(() => expect(calls.length).toBeGreaterThanOrEqual(3), { timeout: 3000 });
     await waitFor(() => expect(queryClient.isFetching()).toBe(0), { timeout: 3000 });
-    expect(screen.queryByRole("alert")).toBeNull();
+    expect(screen.getByRole("alert")).toHaveTextContent("Ada yang salah di server.");
     expect(screen.queryByText("Data gagal dimuat")).toBeNull();
     expect(
       within(screen.getByRole("region", { name: "User terdaftar" })).getByText("48"),
@@ -143,14 +143,16 @@ describe("Ringkasan", () => {
     expect(within(recent).queryByRole("alert")).toBeNull();
   });
 
-  it("renders an empty recent-users table (no empty state) when nobody signed up", async () => {
+  it("shows an empty state for recent users when nobody signed up", async () => {
     server.use(http.get(`${API}/users`, () => HttpResponse.json(usersPage([]))));
     renderApp("/");
     const recent = (await screen.findByRole("heading", { name: "Baru daftar" })).closest(
       "section",
     )!;
-    await waitFor(() => expect(within(recent).getAllByRole("table").length).toBeGreaterThan(0));
-    expect(within(recent).queryByRole("link", { name: /@luma.test/ })).toBeNull();
+    expect(
+      await within(recent).findByRole("heading", { name: "Belum ada user" }),
+    ).toBeInTheDocument();
+    expect(within(recent).queryByRole("table")).toBeNull();
     expect(within(recent).queryByRole("alert")).toBeNull();
   });
 });

@@ -65,25 +65,28 @@ export function UserDetailPage() {
   );
 
   const renderBody = () => {
-    if (user.isError) {
-      const missing = user.error instanceof ApiError && user.error.code === "NOT_FOUND";
+    if (user.error instanceof ApiError && user.error.code === "NOT_FOUND") {
       return (
         <section className="rounded-card bg-sheet">
-          {missing ? (
-            <EmptyState
-              icon="user"
-              title={t.userDetail.notFound}
-              action={
-                <ButtonLink to="/users" variant="secondary" icon="back">
-                  {t.userDetail.backToList}
-                </ButtonLink>
-              }
-            >
-              {t.userDetail.notFoundBody}
-            </EmptyState>
-          ) : (
-            <ErrorState message={errorText(user.error, t)} onRetry={() => void user.refetch()} />
-          )}
+          <EmptyState
+            icon="user"
+            title={t.userDetail.notFound}
+            action={
+              <ButtonLink to="/users" variant="secondary" icon="back">
+                {t.userDetail.backToList}
+              </ButtonLink>
+            }
+          >
+            {t.userDetail.notFoundBody}
+          </EmptyState>
+        </section>
+      );
+    }
+    // A refresh that fails with cached data keeps the page; the query client toasts the failure.
+    if (user.isError && !user.data) {
+      return (
+        <section className="rounded-card bg-sheet">
+          <ErrorState message={errorText(user.error, t)} onRetry={() => void user.refetch()} />
         </section>
       );
     }

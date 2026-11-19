@@ -259,7 +259,7 @@ describe("Undangan", () => {
     expect(screen.queryByRole("alert")).toBeNull();
   });
 
-  it("a failed refresh replaces the cached rows with the error", async () => {
+  it("a failed refresh keeps the cached rows and toasts the error", async () => {
     let fail = false;
     server.use(
       http.get(`${API}/invites`, ({ request }) =>
@@ -272,8 +272,11 @@ describe("Undangan", () => {
     await screen.findByRole("table", { name: "Kode undangan" });
     fail = true;
     await act(() => queryClient.refetchQueries());
-    expect(await screen.findByRole("alert")).toBeInTheDocument();
-    expect(screen.queryByRole("table", { name: "Kode undangan" })).toBeNull();
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Terlalu banyak permintaan. Coba lagi sebentar.",
+    );
+    expect(screen.getByRole("table", { name: "Kode undangan" })).toBeInTheDocument();
+    expect(screen.queryByText("Data gagal dimuat")).toBeNull();
   });
 
   it("the empty state's create action makes a code", async () => {

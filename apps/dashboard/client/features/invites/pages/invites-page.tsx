@@ -195,7 +195,7 @@ export function InvitesPage() {
   const columns = useMemo(() => inviteColumns(i18n, actions), [i18n, actions]);
 
   const renderTable = () => {
-    if (invites.isError) {
+    if (invites.isError && !data) {
       return (
         <ErrorState message={errorText(invites.error, t)} onRetry={() => void invites.refetch()} />
       );

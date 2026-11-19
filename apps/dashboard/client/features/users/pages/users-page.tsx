@@ -70,7 +70,7 @@ export function UsersPage() {
   const errorId = useId();
 
   const renderTable = () => {
-    if (users.isError) {
+    if (users.isError && !users.data) {
       return (
         <ErrorState message={errorText(users.error, t)} onRetry={() => void users.refetch()} />
       );

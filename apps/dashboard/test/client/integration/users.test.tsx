@@ -204,19 +204,27 @@ describe("User", () => {
     expect(await screen.findByText("Data gagal dimuat", {}, { timeout: 3000 })).toBeInTheDocument();
   });
 
-  it("a failed refresh replaces the cached rows with the error", async () => {
+  it("a failed refresh keeps the cached rows and toasts the error with a retry", async () => {
     let fail = false;
+    let calls = 0;
     server.use(
-      http.get(`${API}/users`, () =>
-        fail ? apiError(429, "RATE_LIMITED") : HttpResponse.json(usersPage([user(1)])),
-      ),
+      http.get(`${API}/users`, () => {
+        calls += 1;
+        return fail ? apiError(429, "RATE_LIMITED") : HttpResponse.json(usersPage([user(1)]));
+      }),
     );
-    const { queryClient } = renderApp("/users");
+    const { queryClient, user: u } = renderApp("/users");
     await screen.findByRole("table", { name: "Daftar user" });
     fail = true;
     await act(() => queryClient.refetchQueries({ queryKey: ["users"] }));
-    expect(await screen.findByRole("alert")).toBeInTheDocument();
-    expect(screen.queryByRole("table", { name: "Daftar user" })).toBeNull();
+    const toast = await screen.findByRole("alert");
+    expect(toast).toHaveTextContent("Terlalu banyak permintaan. Coba lagi sebentar.");
+    expect(screen.getByRole("table", { name: "Daftar user" })).toBeInTheDocument();
+    expect(screen.queryByText("Data gagal dimuat")).toBeNull();
+    fail = false;
+    const before = calls;
+    await u.click(within(toast).getByRole("button", { name: "Coba lagi" }));
+    await waitFor(() => expect(calls).toBe(before + 1));
   });
 
   it("filters that match nothing win over the search-empty state", async () => {
