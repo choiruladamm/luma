@@ -36,8 +36,8 @@ export async function getUsers(
   query: Omit<UserListQuery, "sort" | "now"> & { sort?: UserListQuery["sort"] },
 ) {
   const q = query.q || undefined;
-  const sort =
-    query.sort && (query.sort !== "relevance" || q) ? query.sort : q ? "relevance" : "created";
+  const fallback = q ? "relevance" : "created";
+  const sort = query.sort === "relevance" && !q ? fallback : (query.sort ?? fallback);
   const { rows, total } = await listUsers(db, { ...query, q, sort, now: Date.now() });
   return {
     items: rows.map(userItem),
@@ -45,6 +45,22 @@ export async function getUsers(
     page: query.page,
     pageCount: Math.max(1, Math.ceil(total / query.limit)),
   };
+}
+
+/** Today's spend on the key, or null (logged) when OpenRouter fails. */
+async function dailyUsage(openrouter: OpenRouterAdmin, keyHash: string, requestId: string) {
+  try {
+    return (await openrouter.getUsage(keyHash)).usageDaily;
+  } catch (e) {
+    console.error(
+      JSON.stringify({
+        message: "openrouter getUsage failed",
+        requestId,
+        error: e instanceof Error ? e.message : String(e),
+      }),
+    );
+    return null;
+  }
 }
 
 /**
@@ -59,22 +75,12 @@ export async function getUserDetail(
 ) {
   const found = await findUserDetail(db, id);
   if (!found) throw new ApiError(404, "NOT_FOUND", "User not found");
-  let ai = null;
-  if (found.key) {
-    let usageDaily: number | null = null;
-    try {
-      usageDaily = (await openrouter.getUsage(found.key.keyHash)).usageDaily;
-    } catch (e) {
-      console.error(
-        JSON.stringify({
-          message: "openrouter getUsage failed",
-          requestId,
-          error: e instanceof Error ? e.message : String(e),
-        }),
-      );
-    }
-    ai = { limit: found.key.limitUsd, usageDaily, expiresAt: found.key.expiresAt.toISOString() };
-  }
+  const { key } = found;
+  const ai = key && {
+    limit: key.limitUsd,
+    usageDaily: await dailyUsage(openrouter, key.keyHash, requestId),
+    expiresAt: key.expiresAt.toISOString(),
+  };
   return {
     ...userItem(found.user),
     sessions: found.sessions.map((s) => ({

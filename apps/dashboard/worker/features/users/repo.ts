@@ -2,6 +2,7 @@
 import { and, asc, count, desc, eq, gte, isNotNull, isNull, type SQL, sql } from "drizzle-orm";
 import type { Db } from "@backend/db/client";
 import { accounts, aiKeys, inviteCodes, sessions, users, userStorage } from "@backend/db/schema";
+import { DAY_MS } from "@backend/lib/encoding";
 
 // Correlated subquery: uses the sessions(user_id) index. Also a filter and a sort key.
 const lastActive = sql<
@@ -68,7 +69,22 @@ function search(q: string) {
   return { filter, rank };
 }
 
-const DAY_MS = 86_400_000;
+function sortOrder({ sort, dir }: UserListQuery, rank: SQL | undefined): SQL[] {
+  const by = dir === "asc" ? asc : desc;
+  switch (sort) {
+    case "relevance":
+      return rank ? [rank] : [by(users.createdAt)];
+    case "lastActive":
+      // Never-active users go last in both directions.
+      return [sql`${lastActive} ${sql.raw(dir)} nulls last`];
+    case "r2":
+      return [by(r2Bytes)];
+    case "sync":
+      return [by(syncBytes)];
+    case "created":
+      return [by(users.createdAt)];
+  }
+}
 
 /**
  * 1 batch (2 statements): one page of users and the total for the same filters. Filters: search
@@ -87,24 +103,13 @@ export async function listUsers(db: Db, query: UserListQuery) {
   const where = and(...filters);
 
   const by = query.dir === "asc" ? asc : desc;
-  const order: SQL[] =
-    query.sort === "relevance" && found
-      ? [sql`${found.rank}`]
-      : query.sort === "lastActive"
-        ? // Never-active users go last in both directions.
-          [sql`${lastActive} ${sql.raw(query.dir)} nulls last`]
-        : query.sort === "r2"
-          ? [by(r2Bytes)]
-          : query.sort === "sync"
-            ? [by(syncBytes)]
-            : [by(users.createdAt)];
   const tiebreak =
     query.sort === "created" ? [by(users.id)] : [desc(users.createdAt), desc(users.id)];
 
   const [rows, [total]] = await db.batch([
     userRows(db)
       .where(where)
-      .orderBy(...order, ...tiebreak)
+      .orderBy(...sortOrder(query, found?.rank), ...tiebreak)
       .limit(query.limit)
       .offset((query.page - 1) * query.limit),
     db
