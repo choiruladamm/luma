@@ -44,7 +44,7 @@ Read `docs/budgets.md` (Free-tier limits and Server request policy) before addin
 
 ## Tests
 
-Vitest with `@cloudflare/vitest-plugin`, local Miniflare D1/R2. Call the Worker via `exports.default.fetch` from `cloudflare:workers` (`SELF` is deprecated). Mock outbound calls (Google, OpenRouter) with MSW via `@msw/cloudflare`; an unmocked fetch returns 599 `UNMOCKED_FETCH`. Shared helpers (sign-up, invites, budget counting, contract fixtures) live in `test/helpers/`.
+Vitest with `@cloudflare/vitest-plugin`, local Miniflare D1/R2. Call the Worker via `exports.default.fetch` from `cloudflare:workers` (`SELF` is deprecated). Mock outbound calls (Google, OpenRouter) with MSW via `@msw/cloudflare`; an unmocked fetch returns 599 `UNMOCKED_FETCH`. `test/setup.ts` calls `setupWorkerTests` and `countingD1` comes from `@luma/worker-kit/testing`; the OpenRouter fake is `@luma/core/testing/openrouter`. Other shared helpers (sign-up, invites, budget counting, contract fixtures) live in `test/helpers/`.
 
 `test/golden/http.test.ts` records every route's status, headers, body, D1 queries, and subrequests in `http.golden.json`. A behavior change shows up as a diff there: review it, then accept it with `bunx vitest run test/golden -u`. Coverage thresholds in `vitest.config.ts` only go up (rule: `docs/workers.md`, Behavior checks).
 

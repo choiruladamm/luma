@@ -42,7 +42,7 @@ Measure Worker invocations, SQL statements, D1 rows read and written, R2 calls, 
 
 ## Per-action budgets
 
-Counts describe typical completed requests and exclude client retries. Each route invocation counts as one Worker request. Table entries add feature costs to the applicable session cost unless a test total is given. Budget tests count prepared or executed SQL statements and HTTP fetches. R2 operations are counted separately.
+Counts describe typical completed requests and exclude client retries. Each route invocation counts as one Worker request. Table entries add feature costs to the applicable session cost unless a test total is given. Budget tests count the SQL statements that run (each statement in a batch counts) and HTTP fetches. R2 operations are counted separately. Each Worker's golden test records the exact counts of every route's success and of the error cases it exercises (missing or bad session, invalid or oversized body, switch off, rate limit) in `http.golden.json`, so a change in any recorded count shows up in review.
 
 ### Mobile API
 

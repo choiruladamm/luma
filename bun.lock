@@ -104,6 +104,7 @@
         "@better-auth/drizzle-adapter": "catalog:",
         "better-auth": "catalog:",
         "drizzle-kit": "^0.31.11",
+        "msw": "catalog:",
         "oxlint": "catalog:",
         "oxlint-tsgolint": "catalog:",
         "prettier": "catalog:",
@@ -119,7 +120,10 @@
         "zod": "catalog:",
       },
       "devDependencies": {
+        "@cloudflare/vitest-plugin": "catalog:",
+        "@msw/cloudflare": "catalog:",
         "@vitest/coverage-istanbul": "catalog:",
+        "msw": "catalog:",
         "oxlint": "catalog:",
         "oxlint-tsgolint": "catalog:",
         "prettier": "catalog:",

@@ -223,6 +223,10 @@ it("records every route", async () => {
   await step("GET /v1/ai/config no user limit", req("/v1/ai/config", { token }), {
     RATE_LIMITER: denyUser,
   });
+  await step("GET /v1/ai/usage 429 ip", req("/v1/ai/usage", { token }), { RATE_LIMITER: deny });
+  await step("GET /v1/ai/config 429 ip", req("/v1/ai/config", { token }), {
+    RATE_LIMITER: deny,
+  });
 
   // Files.
   await step(
@@ -294,6 +298,11 @@ it("records every route", async () => {
   await step("GET /v1/files/:name 404", req("/v1/files/3539482b.epub", { token }));
   await step("GET /v1/files/:name 400", req("/v1/files/..%2Fescape", { token }));
   await step("GET /v1/files/:name 401", req("/v1/files/3539482a.epub"));
+  await step(
+    "GET /v1/files/:name 503",
+    req("/v1/files/3539482a.epub", { token }),
+    off("BACKUP_ENABLED"),
+  );
 
   // Backups.
   const manifest = backupsPut.request.headers["x-backup-manifest"];
@@ -350,6 +359,11 @@ it("records every route", async () => {
   await step("GET /v1/backups/:id", req(`/v1/backups/${realId}`, { token }));
   await step("GET /v1/backups/:id 404", req("/v1/backups/20000101T000000Z", { token }));
   await step("GET /v1/backups/:id 401", req(`/v1/backups/${realId}`));
+  await step(
+    "GET /v1/backups/:id 503",
+    req(`/v1/backups/${realId}`, { token }),
+    off("BACKUP_ENABLED"),
+  );
 
   // Sync.
   await step(

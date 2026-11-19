@@ -26,7 +26,7 @@ Versions of libraries more than one workspace uses live once, in the root `catal
 Shared tool configuration sits at the root and each app extends it:
 
 - `tsconfig.base.json`: compiler options. Each app adds its own `types` and `include`.
-- `.oxlintrc.base.json`: plugins, categories, and rules. Each app adds its ignore patterns and its own exceptions, listed with their reasons in the app's `CLAUDE.md`.
+- `.oxlintrc.base.json`: plugins, categories, and rules. Each app adds its ignore patterns and its own exceptions, listed with their reasons in the app's `CLAUDE.md`. The packages' one exception: `typescript/no-unsafe-type-assertion` is off in `src/testing/**` of `worker-kit` and `core`, for JSON bodies and MSW params, as in the apps' tests.
 - `.prettierrc.json`: formatting for every file.
 
 ## Shared code
@@ -41,6 +41,7 @@ Code both Workers need lives in `packages/core` (`@luma/core`), which neither Wo
 | `@luma/core/auth/user-fields`, `@luma/core/auth/invite` | Luma's extra user columns and invite codes. |
 | `@luma/core/openrouter` | The OpenRouter management client. |
 | `@luma/core/encoding` | Base64, `csv`, and `DAY_MS`. |
+| `@luma/core/testing/openrouter` | `fakeOpenRouter(network, options)`, the in-memory OpenRouter management API both Workers' tests mock; each Worker's `test/helpers/openrouter.ts` binds it to its MSW network. |
 
 The package depends on no Worker's `Env`; it compiles against the Workers runtime types alone. Code only one Worker uses stays in that Worker. The backend's tests measure the package's coverage.
 
@@ -52,8 +53,9 @@ The package depends on no Worker's `Env`; it compiles against the Workers runtim
 | `@luma/worker-kit/errors` | `ApiError`, `BaseErrorCode`, `errorBody`, `onError`, `notFound`, `normalizeAuthError`. |
 | `@luma/worker-kit/log` | `log.error`, `log.warn`, `log.info`. |
 | `@luma/worker-kit/middleware` | `requestId`, `rateLimit`, `limitBody`, `killSwitch`, `validate`. |
+| `@luma/worker-kit/testing/*` | Test helpers that load only in workerd: `setup` (D1 migrations, MSW network, 599 `UNMOCKED_FETCH`), `d1` (`countingD1`, one counter for statements that run), `golden` (`normalize`, `recordResponse`, `goldenJson`, `GOLDEN_NOW`). |
 
-The kit's own tests run on Node (`make packages-test`) and hold 100% coverage. Both packages compile against `packages/workers-runtime.d.ts`, generated from `packages/wrangler.jsonc`.
+The kit's own tests run on Node (`make packages-test`) and hold 100% coverage, `testing/*` excluded: the Workers' tests exercise it. Both packages compile against `packages/workers-runtime.d.ts`, generated from `packages/wrangler.jsonc`.
 
 `packages/contracts` (`@luma/contracts`) is the one source of the wire shapes, with zod as its only dependency: lint rejects its imports of a Worker or another `@luma` package.
 

@@ -242,7 +242,7 @@ describe("GET /api/users/:id", () => {
     expect(response.status).toBe(200);
     // guard 1 + batch of 5 statements.
     expect(d1Queries).toBe(6);
-    expect(openrouter.calls).toEqual(["GET hash-detail"]);
+    expect(openrouter.calls).toEqual(["GET /keys/hash-detail"]);
     const body = await response.json<Record<string, unknown>>();
     expect(body).toMatchObject({
       id: user.id,
@@ -306,8 +306,8 @@ describe("POST /api/users/:id/ban", () => {
     expect(await response.json()).toEqual({ banned: true, keyRevoked: true });
     // guard 1 + key lookup 1 + batch of 2 statements.
     expect(d1Queries).toBe(4);
-    expect(openrouter.calls).toEqual(["DELETE hash-ban"]);
-    expect(openrouter.live.has("hash-ban")).toBe(false);
+    expect(openrouter.calls).toEqual(["DELETE /keys/hash-ban"]);
+    expect(openrouter.keys.has("hash-ban")).toBe(false);
     expect((await userRow(user.id)).banned).toBe(true);
     expect(await keyRow(user.id)).toBeNull();
     const audit = log.mock.calls
@@ -346,7 +346,7 @@ describe("POST /api/users/:id/ban", () => {
       banned: true,
       keyRevoked: false,
     });
-    expect(openrouter.calls).toEqual(["DELETE hash-dua"]);
+    expect(openrouter.calls).toEqual(["DELETE /keys/hash-dua"]);
 
     const noKey = await createUser();
     const res = await post(`/api/users/${noKey.id}/ban`);
@@ -412,6 +412,31 @@ describe("POST /api/users/:id/unban", () => {
   });
 });
 
+describe("audit trail", () => {
+  // The trail records what happened: a mutation that failed must leave no line behind.
+  it("logs nothing for a ban OpenRouter rejects or a user or invite that doesn't exist", async () => {
+    const user = await createUser();
+    await giveUserData(user.id, { keyHash: "hash-audit" });
+    fakeOpenRouter({ fail: true });
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    expect((await post(`/api/users/${user.id}/ban`)).response.status).toBe(502);
+    expect((await post("/api/users/gak-ada/ban")).response.status).toBe(404);
+    expect((await post("/api/users/gak-ada/unban")).response.status).toBe(404);
+    const missingInvite = await call("/api/invites/LUMA-ZZZZZ-ZZZZZ", {
+      method: "DELETE",
+      headers: { cookie: await adminCookie(), "content-type": "application/json", origin: ORIGIN },
+    });
+    expect(missingInvite.response.status).toBe(404);
+
+    const lines = log.mock.calls.map((c) => JSON.parse(c[0] as string) as { message: string });
+    expect(lines.filter((l) => l.message === "audit")).toEqual([]);
+    log.mockRestore();
+    error.mockRestore();
+  });
+});
+
 describe("admin mutation rate limit", () => {
   it("answers 429 per admin before touching the user", async () => {
     const user = await createUser();
@@ -424,6 +449,27 @@ describe("admin mutation rate limit", () => {
     expect(response.headers.get("Retry-After")).toBe("60");
     expect(keys[0]).toMatch(/^admin:/);
     expect((await userRow(user.id)).banned).toBe(false);
+  });
+
+  it("limits invite mutations the same way", async () => {
+    const deny = { limit: async () => ({ success: false }) };
+    const headers = {
+      cookie: await adminCookie(),
+      "content-type": "application/json",
+      origin: ORIGIN,
+    };
+    const created = await call(
+      "/api/invites",
+      { method: "POST", headers, body: JSON.stringify({ count: 1 }) },
+      { ADMIN_RATE_LIMITER: deny },
+    );
+    expect(created.response.status).toBe(429);
+    const deleted = await call(
+      "/api/invites/LUMA-AAAAA-BBBBB",
+      { method: "DELETE", headers },
+      { ADMIN_RATE_LIMITER: deny },
+    );
+    expect(deleted.response.status).toBe(429);
   });
 
   it("does not limit reads", async () => {

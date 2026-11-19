@@ -16,7 +16,10 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@cloudflare/vitest-plugin": "catalog:",
+    "@msw/cloudflare": "catalog:",
     "@vitest/coverage-istanbul": "catalog:",
+    "msw": "catalog:",
     "oxlint": "catalog:",
     "oxlint-tsgolint": "catalog:",
     "prettier": "catalog:",

@@ -659,6 +659,42 @@
     "fetches": 0,
     "r2Ops": 0
   },
+  "GET /v1/ai/usage 429 ip": {
+    "status": 429,
+    "headers": {
+      "content-type": "application/json",
+      "retry-after": "60",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "RATE_LIMITED",
+        "message": "Too many requests"
+      }
+    },
+    "d1Queries": 0,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "GET /v1/ai/config 429 ip": {
+    "status": 429,
+    "headers": {
+      "content-type": "application/json",
+      "retry-after": "60",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "RATE_LIMITED",
+        "message": "Too many requests"
+      }
+    },
+    "d1Queries": 0,
+    "fetches": 0,
+    "r2Ops": 0
+  },
   "PUT /v1/files/:name": {
     "status": 200,
     "headers": {
@@ -926,6 +962,24 @@
     "fetches": 0,
     "r2Ops": 0
   },
+  "GET /v1/files/:name 503": {
+    "status": 503,
+    "headers": {
+      "content-type": "application/json",
+      "retry-after": "3600",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "SERVICE_DISABLED",
+        "message": "BACKUP_ENABLED is off"
+      }
+    },
+    "d1Queries": 0,
+    "fetches": 0,
+    "r2Ops": 0
+  },
   "PUT /v1/backups": {
     "status": 200,
     "headers": {
@@ -1133,6 +1187,24 @@
       "error": {
         "code": "UNAUTHORIZED",
         "message": "Sign in required"
+      }
+    },
+    "d1Queries": 0,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "GET /v1/backups/:id 503": {
+    "status": 503,
+    "headers": {
+      "content-type": "application/json",
+      "retry-after": "3600",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "SERVICE_DISABLED",
+        "message": "BACKUP_ENABLED is off"
       }
     },
     "d1Queries": 0,

@@ -1,6 +1,12 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
   "extends": ["../../.oxlintrc.base.json"],
+  "overrides": [
+    {
+      "files": ["src/testing/**"],
+      "rules": { "typescript/no-unsafe-type-assertion": "off" }
+    }
+  ],
   "rules": {
     "no-restricted-imports": [
       "error",

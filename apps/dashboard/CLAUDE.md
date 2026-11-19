@@ -44,7 +44,7 @@ The D1 schema, migrations, `Db`, auth user fields, invite codes, and the OpenRou
 
 ## Tests
 
-- **Worker** (`test/unit`, `test/integration`): Vitest in workerd, Miniflare D1. `test/helpers/session.ts` makes signed session cookies; `test/helpers/app.ts` `call()` counts D1 statements that run. Unmocked outbound fetches return 599. `guard.test.ts` iterates every registered route (no cookie → 401 without D1, non-admin → 403). Test bindings pin `BETTER_AUTH_URL` so a local `.dev.vars` doesn't leak in.
+- **Worker** (`test/unit`, `test/integration`): Vitest in workerd, Miniflare D1. `test/helpers/session.ts` makes signed session cookies; `test/helpers/app.ts` `call()` counts D1 statements that run with `countingD1` from `@luma/worker-kit/testing/d1`. `test/setup.ts` calls `setupWorkerTests` (unmocked outbound fetches return 599); the OpenRouter fake is `@luma/core/testing/openrouter`. `guard.test.ts` iterates every registered route (no cookie → 401 without D1, non-admin → 403). Test bindings pin `BETTER_AUTH_URL` so a local `.dev.vars` doesn't leak in.
 - **Golden** (`test/golden`): every worker route's status, headers, body, D1 queries, and subrequests in `http.golden.json`. A behavior change shows up as a diff there: review it, then accept it with `bunx vitest run test/golden -u`. Worker coverage thresholds in `vitest.config.ts` only go up (rule: `docs/workers.md`, Behavior checks).
 - **Client** (`test/client`, happy-dom): see `.claude/rules/dashboard-client.md`.
 - **E2E** (`e2e/`): real SPA + Worker through `vite dev`, env `e2e`; `global-setup.ts` migrates, seeds (no AI keys, so ban never calls OpenRouter), and writes an admin cookie. `@phone` specs also run on a phone viewport. Browser locale is `id-ID`; `i18n.spec.ts` opts into `en-US`.

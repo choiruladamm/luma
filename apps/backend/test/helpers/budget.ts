@@ -1,26 +1,9 @@
 import { createExecutionContext, env, waitOnExecutionContext } from "cloudflare:test";
 import { vi } from "vitest";
+import { countingD1 } from "@luma/worker-kit/testing/d1";
 import { app } from "../../src/app";
 
-/** Wraps D1 and counts executed statements (prepare/exec, plus the contents of a batch). */
-export function countingD1(d1: D1Database) {
-  let queries = 0;
-  const proxy = new Proxy(d1, {
-    get(target, prop) {
-      const value = Reflect.get(target, prop, target);
-      if (typeof value !== "function") return value;
-      if (prop === "prepare" || prop === "exec") {
-        return (...args: unknown[]) => {
-          queries++;
-          const fn: (...a: unknown[]) => unknown = value;
-          return fn.apply(target, args);
-        };
-      }
-      return value.bind(target);
-    },
-  });
-  return { db: proxy, count: () => queries };
-}
+export { countingD1 };
 
 export type Budget = { response: Response; d1Queries: number; subrequests: number };
 
