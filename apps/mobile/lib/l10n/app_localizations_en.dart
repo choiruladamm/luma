@@ -2957,21 +2957,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'OpenRouter rejected this key. Double-check it at openrouter.ai/keys, then paste it again.';
 
   @override
-  String settingsAiKeyRejectedFallback(int percent) {
-    return 'For now AI goes back to the free quota ($percent% left) until the key is fixed.';
-  }
-
-  @override
-  String get settingsAiKeyRejectedFallbackNoQuota =>
-      'For now AI goes back to the free quota until the key is fixed.';
+  String get settingsAiKeyRejectedStopped =>
+      'AI stops until the key is fixed. Or remove the key to go back to the free quota.';
 
   @override
   String get settingsAiKeyRecheck => 'Check again';
-
-  @override
-  String settingsAiModelFallsBack(String id) {
-    return '$id · back to a free model';
-  }
 
   @override
   String get settingsCatalogTitle => 'Book catalog';

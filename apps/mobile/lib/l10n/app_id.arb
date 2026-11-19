@@ -3466,24 +3466,8 @@
   "settingsAiDefaultBadge": "Default",
   "settingsAiKeyChecking": "Lagi ngecek ke OpenRouter…",
   "settingsAiKeyRejectedBody": "OpenRouter nolak key ini. Cek lagi di openrouter.ai/keys, terus tempel ulang.",
-  "settingsAiKeyRejectedFallback": "Sementara AI balik pakai kuota gratis (sisa {percent}%) sampai key-nya bener.",
-  "@settingsAiKeyRejectedFallback": {
-    "placeholders": {
-      "percent": {
-        "type": "int"
-      }
-    }
-  },
-  "settingsAiKeyRejectedFallbackNoQuota": "Sementara AI balik pakai kuota gratis sampai key-nya bener.",
+  "settingsAiKeyRejectedStopped": "AI berhenti sampai key-nya bener. Atau hapus key buat balik ke kuota gratis.",
   "settingsAiKeyRecheck": "Cek lagi",
-  "settingsAiModelFallsBack": "{id} · balik ke model gratis",
-  "@settingsAiModelFallsBack": {
-    "placeholders": {
-      "id": {
-        "type": "String"
-      }
-    }
-  },
   "settingsCatalogTitle": "Katalog buku",
   "settingsCatalogCardTitle": "Katalog Gutenberg",
   "settingsCatalogNotDownloaded": "Belum diunduh · 5,6 MB",
