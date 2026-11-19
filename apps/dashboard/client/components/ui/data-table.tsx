@@ -30,6 +30,7 @@ export type TableSort = { id: string; dir: "asc" | "desc" };
  * button that calls `onSort(id)` (the page decides the direction: same column flips it).
  */
 const NO_IDS: string[] = [];
+const ARIA_SORT = { asc: "ascending", desc: "descending" } as const;
 
 export function DataTable<T extends RowData>({
   columns,
@@ -96,10 +97,12 @@ export function DataTable<T extends RowData>({
               <tr key={group.id}>
                 {group.headers.map((header, i) => {
                   const id = header.column.id;
-                  const active = sort?.id === id;
-                  const arrow = active && (
+                  const dir = sort?.id === id ? sort.dir : undefined;
+                  const isNumeric = numeric.includes(id);
+                  const isSortable = sortable.includes(id) && !!onSort;
+                  const arrow = dir && (
                     <Icon
-                      name={sort.dir === "asc" ? "up" : "down"}
+                      name={dir === "asc" ? "up" : "down"}
                       size={14}
                       className="inline align-[-2px]"
                     />
@@ -108,23 +111,21 @@ export function DataTable<T extends RowData>({
                     <th
                       key={header.id}
                       scope="col"
-                      aria-sort={
-                        active ? (sort.dir === "asc" ? "ascending" : "descending") : undefined
-                      }
+                      aria-sort={dir && ARIA_SORT[dir]}
                       className={cn(
                         "border-b border-track py-3 text-caption font-medium whitespace-nowrap",
-                        active ? "text-ink" : "text-ink2",
-                        numeric.includes(id) ? "text-right" : "text-left",
+                        dir ? "text-ink" : "text-ink2",
+                        isNumeric ? "text-right" : "text-left",
                         i === 0 ? "pr-3 pl-6" : "px-3",
                       )}
                     >
-                      {sortable.includes(id) && onSort ? (
+                      {isSortable ? (
                         <button
                           type="button"
-                          onClick={() => onSort(id)}
+                          onClick={() => onSort?.(id)}
                           className={cn(
                             "group/sort -mx-2 inline-flex items-center gap-1 rounded-full px-2 py-1 font-medium hover:bg-muted",
-                            numeric.includes(id) && "flex-row-reverse",
+                            isNumeric && "flex-row-reverse",
                           )}
                         >
                           <table.FlexRender header={header} />

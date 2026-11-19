@@ -113,6 +113,7 @@ function FilterPopover({ params, set }: { params: UsersParams; set: SetParams })
   const trigger = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLDivElement>(null);
   const count = activeFilterCount(params);
+  const hasFilters = count > 0;
   useEffect(() => {
     if (!open) return;
     panel.current?.querySelector<HTMLElement>("button")?.focus();
@@ -141,12 +142,12 @@ function FilterPopover({ params, set }: { params: UsersParams; set: SetParams })
         onClick={() => setOpen((o) => !o)}
         className={cn(
           "inline-flex h-10 items-center gap-2 rounded-full px-3.5 text-caption font-medium",
-          count > 0 ? "bg-ink text-canvas" : "bg-muted text-ink hover:bg-track",
+          hasFilters ? "bg-ink text-canvas" : "bg-muted text-ink hover:bg-track",
         )}
       >
         <Icon name="filter" size={16} />
         {t.users.filter}
-        {count > 0 && (
+        {hasFilters && (
           <span className="rounded-full bg-canvas px-1.5 text-[11px] leading-[18px] font-semibold text-ink tabular-nums">
             {count}
           </span>
@@ -160,7 +161,7 @@ function FilterPopover({ params, set }: { params: UsersParams; set: SetParams })
           className="absolute top-[calc(100%+6px)] right-0 z-30 flex w-[300px] flex-col gap-2.5 rounded-menu bg-sheet p-3 shadow-[var(--shadow-sheet),inset_0_0_0_1px_var(--c-track)]"
         >
           <FilterFields params={params} set={set} />
-          {count > 0 && (
+          {hasFilters && (
             <button
               type="button"
               onClick={() => set(CLEARED)}
@@ -245,6 +246,12 @@ export function UsersFilterSheet({
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const count = activeFilterCount(params);
+  const hasFilters = count > 0;
+  const byCreated = currentSort === "created";
+  const dirOptions: { value: "desc" | "asc"; label: string }[] = [
+    { value: "desc", label: byCreated ? t.users.newestFirst : t.users.descending },
+    { value: "asc", label: byCreated ? t.users.oldestFirst : t.users.ascending },
+  ];
   const sorts: [UserSort, string][] = [
     ...(params.q ? ([["relevance", t.users.relevance]] as [UserSort, string][]) : []),
     ["created", t.users.joined],
@@ -258,11 +265,11 @@ export function UsersFilterSheet({
       <div className="relative flex-none md:hidden">
         <IconButton
           icon="filter"
-          label={count > 0 ? `${t.users.filter} (${count})` : t.users.filter}
-          variant={count > 0 ? "primary" : "secondary"}
+          label={hasFilters ? `${t.users.filter} (${count})` : t.users.filter}
+          variant={hasFilters ? "primary" : "secondary"}
           onClick={() => setOpen(true)}
         />
-        {count > 0 && (
+        {hasFilters && (
           <span
             aria-hidden="true"
             className="pointer-events-none absolute -top-1 -right-1 flex size-5 items-center justify-center rounded-full bg-ink text-[11px] font-semibold text-canvas tabular-nums shadow-[0_0_0_2px_var(--c-sheet)]"
@@ -310,16 +317,7 @@ export function UsersFilterSheet({
               stretch
               value={params.dir}
               onChange={(dir) => set({ dir })}
-              options={[
-                {
-                  value: "desc",
-                  label: currentSort === "created" ? t.users.newestFirst : t.users.descending,
-                },
-                {
-                  value: "asc",
-                  label: currentSort === "created" ? t.users.oldestFirst : t.users.ascending,
-                },
-              ]}
+              options={dirOptions}
             />
           )}
         </div>
