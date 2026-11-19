@@ -29,6 +29,11 @@ export class ApiError extends Error {
   }
 }
 
+/** A `zValidator` hook that turns a failed parse into a 400 `BAD_REQUEST` with the route's own message. */
+export const badRequestOnInvalid = (message: string) => (result: { success: boolean }) => {
+  if (!result.success) throw new ApiError(400, "BAD_REQUEST", message);
+};
+
 export const errorBody = (code: ErrorCode, message: string): ErrorBody => ({
   error: { code, message },
 });
