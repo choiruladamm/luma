@@ -194,6 +194,64 @@ export function InvitesPage() {
   );
   const columns = useMemo(() => inviteColumns(i18n, actions), [i18n, actions]);
 
+  const renderTable = () => {
+    if (invites.isError) {
+      return (
+        <ErrorState message={errorText(invites.error, t)} onRetry={() => void invites.refetch()} />
+      );
+    }
+    if (!data) return <InvitesTableSkeleton />;
+    if (rows.length === 0) {
+      if (counts?.all === 0 && !params.q) {
+        return (
+          <EmptyState
+            icon="ticket"
+            title={t.invites.empty}
+            action={
+              <Button variant="primary" icon="plus" onClick={makeCode}>
+                {t.invites.create}
+              </Button>
+            }
+          >
+            {t.invites.emptyBody}
+          </EmptyState>
+        );
+      }
+      if (params.q && counts?.all === 0) {
+        return <EmptyState icon="search" title={t.invites.noSearchMatch(params.q)} />;
+      }
+      const filteredTitle = params.usedWithin
+        ? t.invites.noneUsedWithin
+        : filter === "unused"
+          ? t.invites.allUsed
+          : t.invites.noneUsed;
+      return <EmptyState icon="ticket" title={filteredTitle} />;
+    }
+    return (
+      <DataTable
+        label={t.invites.table}
+        columns={columns}
+        data={rows}
+        minWidth={880}
+        sort={tableSort}
+        sortable={["code", "createdAt", "usedAt"]}
+        onSort={onSort}
+        renderCard={(i) => <InviteCard invite={i} actions={actions(i)} />}
+        footer={
+          <Pagination
+            page={params.page}
+            pageCount={data.pageCount}
+            total={data.total}
+            pageSize={params.limit}
+            onPage={(page) => set({ page })}
+            pageSizes={[20, 50]}
+            onPageSize={(limit) => set({ limit })}
+          />
+        }
+      />
+    );
+  };
+
   return (
     <>
       <PageHeader
@@ -294,65 +352,7 @@ export function InvitesPage() {
           </div>
         </div>
         {/* Clip only the table to the card corners: the toolbar menus must overflow below it. */}
-        <div className="overflow-hidden rounded-b-card">
-          {invites.isError ? (
-            <ErrorState
-              message={errorText(invites.error, t)}
-              onRetry={() => void invites.refetch()}
-            />
-          ) : !data ? (
-            <InvitesTableSkeleton />
-          ) : rows.length === 0 ? (
-            counts?.all === 0 && !params.q ? (
-              <EmptyState
-                icon="ticket"
-                title={t.invites.empty}
-                action={
-                  <Button variant="primary" icon="plus" onClick={makeCode}>
-                    {t.invites.create}
-                  </Button>
-                }
-              >
-                {t.invites.emptyBody}
-              </EmptyState>
-            ) : params.q && counts?.all === 0 ? (
-              <EmptyState icon="search" title={t.invites.noSearchMatch(params.q)} />
-            ) : (
-              <EmptyState
-                icon="ticket"
-                title={
-                  params.usedWithin
-                    ? t.invites.noneUsedWithin
-                    : filter === "unused"
-                      ? t.invites.allUsed
-                      : t.invites.noneUsed
-                }
-              />
-            )
-          ) : (
-            <DataTable
-              label={t.invites.table}
-              columns={columns}
-              data={rows}
-              minWidth={880}
-              sort={tableSort}
-              sortable={["code", "createdAt", "usedAt"]}
-              onSort={onSort}
-              renderCard={(i) => <InviteCard invite={i} actions={actions(i)} />}
-              footer={
-                <Pagination
-                  page={params.page}
-                  pageCount={data.pageCount}
-                  total={data.total}
-                  pageSize={params.limit}
-                  onPage={(page) => set({ page })}
-                  pageSizes={[20, 50]}
-                  onPageSize={(limit) => set({ limit })}
-                />
-              }
-            />
-          )}
-        </div>
+        <div className="overflow-hidden rounded-b-card">{renderTable()}</div>
       </section>
       <NewInviteDialog
         code={created?.code ?? null}
