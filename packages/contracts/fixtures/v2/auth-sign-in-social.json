@@ -1,0 +1,34 @@
+{
+  "request": {
+    "method": "POST",
+    "path": "/v2/auth/sign-in/social",
+    "headers": {
+      "x-invite-code": "LUMA-7Q2K"
+    },
+    "body": {
+      "provider": "google",
+      "id_token": {
+        "token": "<google-id-token>"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "set-auth-token": "<token>"
+    },
+    "body": {
+      "redirect": false,
+      "token": "<token>",
+      "user": {
+        "id": "<id>",
+        "name": "Adam",
+        "email": "adam@gmail.test",
+        "email_verified": true,
+        "image": "https://lh3.googleusercontent.com/a/test",
+        "created_at": "<iso>",
+        "updated_at": "<iso>"
+      }
+    }
+  }
+}

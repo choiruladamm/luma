@@ -30,6 +30,7 @@ sections: [Overview, Request pipeline, Errors]
 | Mobile layers, code map, runtime flows, platform gotchas | `architecture.md` |
 | UI rules, components, gestures, motion, copy tone | `design.md` (values stay in tokens, layout in the boards) |
 | Drift tables, identity, revisions | `data-model.md` |
+| Worker layout, bun workspace, code shared between Workers | `workers.md` |
 | Worker API, auth, AI subsidy, files, D1 schema | `backend.md` |
 | Sync records, merge, cursors, quotas | `sync-protocol.md` |
 | Free-tier rules and per-action request budgets | `budgets.md` |

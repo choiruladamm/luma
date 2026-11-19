@@ -1,0 +1,17 @@
+{
+  "request": {
+    "method": "GET",
+    "path": "/v2/sync/pull?since=3",
+    "headers": {
+      "authorization": "Bearer <token>"
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "records": [],
+      "next_seq": 3,
+      "more": false
+    }
+  }
+}

@@ -23,7 +23,7 @@ jobs:
           cache: true
       - uses: oven-sh/setup-bun@v2
       - run: make get FVM=
-      - run: make backend-install dashboard-install
+      - run: make install
       - name: Docs, comments, and linters
         run: scripts/hygiene
 
@@ -45,14 +45,21 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: oven-sh/setup-bun@v2
-      - run: make backend-install
+      - run: make install
       - run: make backend-test
+
+  packages-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: oven-sh/setup-bun@v2
+      - run: make install
+      - run: make packages-test
 
   dashboard-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
       - uses: oven-sh/setup-bun@v2
-      # The dashboard imports ../backend/src at runtime, which resolves backend packages.
-      - run: make backend-install dashboard-install
+      - run: make install
       - run: make dashboard-test

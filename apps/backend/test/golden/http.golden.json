@@ -1,0 +1,1653 @@
+{
+  "GET /v1/health": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "status": "ok",
+      "env": "dev"
+    },
+    "d1Queries": 0,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "GET /v1/health 429": {
+    "status": 429,
+    "headers": {
+      "content-type": "application/json",
+      "retry-after": "60",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "RATE_LIMITED",
+        "message": "Too many requests"
+      }
+    },
+    "d1Queries": 0,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "GET /v1/unknown 404": {
+    "status": 404,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "NOT_FOUND",
+        "message": "Not found"
+      }
+    },
+    "d1Queries": 0,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "GET /unknown 404": {
+    "status": 404,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "NOT_FOUND",
+        "message": "Not found"
+      }
+    },
+    "d1Queries": 0,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "POST /v1/auth/sign-up/email": {
+    "status": 200,
+    "headers": {
+      "access-control-expose-headers": "set-auth-token",
+      "content-type": "application/json",
+      "set-auth-token": "<present>",
+      "x-request-id": "<present>"
+    },
+    "cookies": [
+      "__Secure-better-auth.session_token=<random>; Max-Age=5184000; Path=/; HttpOnly; Secure; SameSite=Lax"
+    ],
+    "body": {
+      "token": "<auth-id>",
+      "user": {
+        "name": "Adam",
+        "email": "adam@luma.test",
+        "emailVerified": false,
+        "image": null,
+        "createdAt": "2026-11-20T03:00:00.000Z",
+        "updatedAt": "2026-11-20T03:00:00.000Z",
+        "id": "<auth-id>"
+      }
+    },
+    "d1Queries": 6,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "POST /v1/auth/sign-up/email used invite": {
+    "status": 403,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "INVITE_CODE_USED",
+        "message": "Invite code has already been used"
+      }
+    },
+    "d1Queries": 3,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "POST /v1/auth/sign-up/email invalid invite": {
+    "status": 403,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "INVALID_INVITE_CODE",
+        "message": "Invite code is invalid"
+      }
+    },
+    "d1Queries": 3,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "POST /v1/auth/sign-up/email no invite": {
+    "status": 403,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "INVITE_CODE_REQUIRED",
+        "message": "New accounts need an invite code"
+      }
+    },
+    "d1Queries": 1,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "POST /v1/auth/sign-up/email 413": {
+    "status": 413,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "PAYLOAD_TOO_LARGE",
+        "message": "Body exceeds 16384 bytes"
+      }
+    },
+    "d1Queries": 0,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "POST /v1/auth/sign-in/email": {
+    "status": 200,
+    "headers": {
+      "access-control-expose-headers": "set-auth-token",
+      "content-type": "application/json",
+      "set-auth-token": "<present>",
+      "x-request-id": "<present>"
+    },
+    "cookies": [
+      "__Secure-better-auth.session_token=<random>; Max-Age=5184000; Path=/; HttpOnly; Secure; SameSite=Lax"
+    ],
+    "body": {
+      "redirect": false,
+      "token": "<auth-id>",
+      "user": {
+        "name": "Adam",
+        "email": "adam@luma.test",
+        "emailVerified": false,
+        "image": null,
+        "createdAt": "2026-11-20T03:00:00.000Z",
+        "updatedAt": "2026-11-20T03:00:00.000Z",
+        "id": "<auth-id>"
+      }
+    },
+    "d1Queries": 3,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "POST /v1/auth/sign-in/email wrong password": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "INVALID_EMAIL_OR_PASSWORD",
+        "message": "Invalid email or password"
+      }
+    },
+    "d1Queries": 2,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "POST /v1/auth/sign-in/email invalid body": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "VALIDATION_ERROR",
+        "message": "[body.password] Invalid input: expected string, received undefined"
+      }
+    },
+    "d1Queries": 0,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "POST /v1/auth/sign-in/social": {
+    "status": 200,
+    "headers": {
+      "access-control-expose-headers": "set-auth-token",
+      "content-type": "application/json",
+      "set-auth-token": "<present>",
+      "x-request-id": "<present>"
+    },
+    "cookies": [
+      "__Secure-better-auth.session_token=<random>; Max-Age=5184000; Path=/; HttpOnly; Secure; SameSite=Lax"
+    ],
+    "body": {
+      "redirect": false,
+      "token": "<auth-id>",
+      "user": {
+        "name": "Adam",
+        "email": "golden@gmail.test",
+        "emailVerified": true,
+        "image": "https://lh3.googleusercontent.com/a/test",
+        "createdAt": "2026-11-20T03:00:00.000Z",
+        "updatedAt": "2026-11-20T03:00:00.000Z",
+        "id": "<auth-id>"
+      }
+    },
+    "d1Queries": 7,
+    "fetches": 1,
+    "r2Ops": 0
+  },
+  "POST /v1/auth/sign-in/social foreign token": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "INVALID_TOKEN",
+        "message": "Invalid token"
+      }
+    },
+    "d1Queries": 0,
+    "fetches": 1,
+    "r2Ops": 0
+  },
+  "POST /v1/auth/update-user hidden 404": {
+    "status": 404,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "NOT_FOUND",
+        "message": "Not found"
+      }
+    },
+    "d1Queries": 0,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "GET /v1/auth/sign-in/email 404": {
+    "status": 404,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "NOT_FOUND",
+        "message": "Not found"
+      }
+    },
+    "d1Queries": 0,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "POST /v1/auth/sign-out": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [
+      "__Secure-better-auth.session_token=<random>; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Lax",
+      "__Secure-better-auth.session_data=<random>; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Lax",
+      "__Secure-better-auth.dont_remember=<random>; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Lax"
+    ],
+    "body": {
+      "success": true
+    },
+    "d1Queries": 5,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "GET /v1/me": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "user": {
+        "id": "<auth-id>",
+        "name": "Tester",
+        "email": "golden@luma.test",
+        "image": null
+      }
+    },
+    "d1Queries": 1,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "GET /v1/me 401": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "UNAUTHORIZED",
+        "message": "Sign in required"
+      }
+    },
+    "d1Queries": 0,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "GET /v1/me 401 bad token": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "UNAUTHORIZED",
+        "message": "Sign in required"
+      }
+    },
+    "d1Queries": 1,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "DELETE /v1/me 401": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "UNAUTHORIZED",
+        "message": "Sign in required"
+      }
+    },
+    "d1Queries": 0,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "POST /v1/ai/key": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "key": "sk-or-v1-fake-1",
+      "expiresAt": "2026-12-20T03:00:00.000Z",
+      "dailyLimitUsd": 0.02
+    },
+    "d1Queries": 3,
+    "fetches": 1,
+    "r2Ops": 0
+  },
+  "POST /v1/ai/key rotate": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "key": "sk-or-v1-fake-1",
+      "expiresAt": "2026-12-20T03:00:00.000Z",
+      "dailyLimitUsd": 0.02
+    },
+    "d1Queries": 2,
+    "fetches": 1,
+    "r2Ops": 0
+  },
+  "POST /v1/ai/key 400": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "BAD_REQUEST",
+        "message": "Body must be {\"rotate\"?: boolean}"
+      }
+    },
+    "d1Queries": 1,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "POST /v1/ai/key 413": {
+    "status": 413,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "PAYLOAD_TOO_LARGE",
+        "message": "Body exceeds 1024 bytes"
+      }
+    },
+    "d1Queries": 1,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "POST /v1/ai/key 401": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "UNAUTHORIZED",
+        "message": "Sign in required"
+      }
+    },
+    "d1Queries": 0,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "POST /v1/ai/key 503": {
+    "status": 503,
+    "headers": {
+      "content-type": "application/json",
+      "retry-after": "3600",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "SERVICE_DISABLED",
+        "message": "AI_KEY_ENABLED is off"
+      }
+    },
+    "d1Queries": 0,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "POST /v1/ai/key user limit": {
+    "status": 429,
+    "headers": {
+      "content-type": "application/json",
+      "retry-after": "60",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "RATE_LIMITED",
+        "message": "Too many requests"
+      }
+    },
+    "d1Queries": 1,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "GET /v1/ai/usage": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "dailyLimitUsd": 0.02,
+      "remainingUsd": 0.02,
+      "usedTodayUsd": 0,
+      "resetsAt": "2026-11-21T00:00:00.000Z"
+    },
+    "d1Queries": 2,
+    "fetches": 1,
+    "r2Ops": 0
+  },
+  "GET /v1/ai/usage 401": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "UNAUTHORIZED",
+        "message": "Sign in required"
+      }
+    },
+    "d1Queries": 0,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "GET /v1/ai/usage 503": {
+    "status": 503,
+    "headers": {
+      "content-type": "application/json",
+      "retry-after": "3600",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "SERVICE_DISABLED",
+        "message": "AI_KEY_ENABLED is off"
+      }
+    },
+    "d1Queries": 0,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "GET /v1/ai/usage no user limit": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "dailyLimitUsd": 0.02,
+      "remainingUsd": 0.02,
+      "usedTodayUsd": 0,
+      "resetsAt": "2026-11-21T00:00:00.000Z"
+    },
+    "d1Queries": 2,
+    "fetches": 1,
+    "r2Ops": 0
+  },
+  "GET /v1/ai/config": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "chatModels": [
+        "deepseek/deepseek-v4.1-flash",
+        "qwen/qwen3.8-flash",
+        "z-ai/glm-5.3-flash"
+      ],
+      "embeddingModels": [
+        "qwen/qwen3-embedding-8b",
+        "openai/text-embedding-3-large"
+      ],
+      "dailyLimitUsd": 0.02
+    },
+    "d1Queries": 1,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "GET /v1/ai/config 401": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "UNAUTHORIZED",
+        "message": "Sign in required"
+      }
+    },
+    "d1Queries": 0,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "GET /v1/ai/config 503": {
+    "status": 503,
+    "headers": {
+      "content-type": "application/json",
+      "retry-after": "3600",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "SERVICE_DISABLED",
+        "message": "AI_KEY_ENABLED is off"
+      }
+    },
+    "d1Queries": 0,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "GET /v1/ai/config no user limit": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "chatModels": [
+        "deepseek/deepseek-v4.1-flash",
+        "qwen/qwen3.8-flash",
+        "z-ai/glm-5.3-flash"
+      ],
+      "embeddingModels": [
+        "qwen/qwen3-embedding-8b",
+        "openai/text-embedding-3-large"
+      ],
+      "dailyLimitUsd": 0.02
+    },
+    "d1Queries": 1,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "GET /v1/ai/usage 429 ip": {
+    "status": 429,
+    "headers": {
+      "content-type": "application/json",
+      "retry-after": "60",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "RATE_LIMITED",
+        "message": "Too many requests"
+      }
+    },
+    "d1Queries": 0,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "GET /v1/ai/config 429 ip": {
+    "status": 429,
+    "headers": {
+      "content-type": "application/json",
+      "retry-after": "60",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "RATE_LIMITED",
+        "message": "Too many requests"
+      }
+    },
+    "d1Queries": 0,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "PUT /v1/files/:name": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "name": "3539482a.epub",
+      "size": 5
+    },
+    "d1Queries": 2,
+    "fetches": 0,
+    "r2Ops": 2
+  },
+  "PUT /v1/files/:name 400 name": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "BAD_REQUEST",
+        "message": "Invalid file name"
+      }
+    },
+    "d1Queries": 1,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "PUT /v1/files/:name 400 length": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "BAD_REQUEST",
+        "message": "Content-Length required"
+      }
+    },
+    "d1Queries": 1,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "PUT /v1/files/:name 413": {
+    "status": 413,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "PAYLOAD_TOO_LARGE",
+        "message": "Body exceeds 104857600 bytes"
+      }
+    },
+    "d1Queries": 1,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "PUT /v1/files/:name 401": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "UNAUTHORIZED",
+        "message": "Sign in required"
+      }
+    },
+    "d1Queries": 0,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "PUT /v1/files/:name 503": {
+    "status": 503,
+    "headers": {
+      "content-type": "application/json",
+      "retry-after": "3600",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "SERVICE_DISABLED",
+        "message": "BACKUP_ENABLED is off"
+      }
+    },
+    "d1Queries": 0,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "POST /v1/files/missing": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "missing": [
+        "3539482a.jpg"
+      ]
+    },
+    "d1Queries": 1,
+    "fetches": 0,
+    "r2Ops": 1
+  },
+  "POST /v1/files/missing 400": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "BAD_REQUEST",
+        "message": "Body must be {\"names\": string[≤1000]}"
+      }
+    },
+    "d1Queries": 1,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "POST /v1/files/missing 413": {
+    "status": 413,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "PAYLOAD_TOO_LARGE",
+        "message": "Body exceeds 262144 bytes"
+      }
+    },
+    "d1Queries": 1,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "POST /v1/files/missing 401": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "UNAUTHORIZED",
+        "message": "Sign in required"
+      }
+    },
+    "d1Queries": 0,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "POST /v1/files/missing 503": {
+    "status": 503,
+    "headers": {
+      "content-type": "application/json",
+      "retry-after": "3600",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "SERVICE_DISABLED",
+        "message": "BACKUP_ENABLED is off"
+      }
+    },
+    "d1Queries": 0,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "POST /v1/files/missing user limit": {
+    "status": 429,
+    "headers": {
+      "content-type": "application/json",
+      "retry-after": "60",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "RATE_LIMITED",
+        "message": "Too many requests"
+      }
+    },
+    "d1Queries": 1,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "GET /v1/files/:name": {
+    "status": 200,
+    "headers": {
+      "content-length": "5",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": "epub!",
+    "d1Queries": 1,
+    "fetches": 0,
+    "r2Ops": 1
+  },
+  "GET /v1/files/:name 404": {
+    "status": 404,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "NOT_FOUND",
+        "message": "File not found"
+      }
+    },
+    "d1Queries": 1,
+    "fetches": 0,
+    "r2Ops": 1
+  },
+  "GET /v1/files/:name 400": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "BAD_REQUEST",
+        "message": "Invalid file name"
+      }
+    },
+    "d1Queries": 1,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "GET /v1/files/:name 401": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "UNAUTHORIZED",
+        "message": "Sign in required"
+      }
+    },
+    "d1Queries": 0,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "GET /v1/files/:name 503": {
+    "status": 503,
+    "headers": {
+      "content-type": "application/json",
+      "retry-after": "3600",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "SERVICE_DISABLED",
+        "message": "BACKUP_ENABLED is off"
+      }
+    },
+    "d1Queries": 0,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "PUT /v1/backups": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "id": "20261120T030000Z",
+      "createdAt": "2026-11-13T10:04:05.000Z",
+      "size": 8,
+      "books": 12,
+      "aiResults": 185,
+      "schemaVersion": 17,
+      "appVersion": "0.3.0"
+    },
+    "d1Queries": 2,
+    "fetches": 0,
+    "r2Ops": 2
+  },
+  "PUT /v1/backups 400 manifest": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "BAD_REQUEST",
+        "message": "x-backup-manifest must be the backup manifest JSON"
+      }
+    },
+    "d1Queries": 1,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "PUT /v1/backups 401": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "UNAUTHORIZED",
+        "message": "Sign in required"
+      }
+    },
+    "d1Queries": 0,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "PUT /v1/backups 503": {
+    "status": 503,
+    "headers": {
+      "content-type": "application/json",
+      "retry-after": "3600",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "SERVICE_DISABLED",
+        "message": "BACKUP_ENABLED is off"
+      }
+    },
+    "d1Queries": 0,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "PUT /v1/backups 413": {
+    "status": 413,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "PAYLOAD_TOO_LARGE",
+        "message": "Body exceeds 104857600 bytes"
+      }
+    },
+    "d1Queries": 1,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "GET /v1/backups": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "backups": [
+        {
+          "id": "20261120T030000Z",
+          "createdAt": "2026-11-13T10:04:05.000Z",
+          "size": 8,
+          "books": 12,
+          "aiResults": 185,
+          "schemaVersion": 17,
+          "appVersion": "0.3.0"
+        }
+      ]
+    },
+    "d1Queries": 1,
+    "fetches": 0,
+    "r2Ops": 1
+  },
+  "GET /v1/backups 401": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "UNAUTHORIZED",
+        "message": "Sign in required"
+      }
+    },
+    "d1Queries": 0,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "GET /v1/backups 503": {
+    "status": 503,
+    "headers": {
+      "content-type": "application/json",
+      "retry-after": "3600",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "SERVICE_DISABLED",
+        "message": "BACKUP_ENABLED is off"
+      }
+    },
+    "d1Queries": 0,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "GET /v1/backups user limit": {
+    "status": 429,
+    "headers": {
+      "content-type": "application/json",
+      "retry-after": "60",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "RATE_LIMITED",
+        "message": "Too many requests"
+      }
+    },
+    "d1Queries": 1,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "GET /v1/backups/:id": {
+    "status": 200,
+    "headers": {
+      "content-length": "8",
+      "content-type": "application/zip",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": "zipbytes",
+    "d1Queries": 1,
+    "fetches": 0,
+    "r2Ops": 1
+  },
+  "GET /v1/backups/:id 404": {
+    "status": 404,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "BACKUP_NOT_FOUND",
+        "message": "Backup not found"
+      }
+    },
+    "d1Queries": 1,
+    "fetches": 0,
+    "r2Ops": 1
+  },
+  "GET /v1/backups/:id 401": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "UNAUTHORIZED",
+        "message": "Sign in required"
+      }
+    },
+    "d1Queries": 0,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "GET /v1/backups/:id 503": {
+    "status": 503,
+    "headers": {
+      "content-type": "application/json",
+      "retry-after": "3600",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "SERVICE_DISABLED",
+        "message": "BACKUP_ENABLED is off"
+      }
+    },
+    "d1Queries": 0,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "POST /v1/sync/push": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "seq": 3,
+      "applied": 3
+    },
+    "d1Queries": 5,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "POST /v1/sync/push tombstone": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "seq": 4,
+      "applied": 1
+    },
+    "d1Queries": 5,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "POST /v1/sync/push older schema": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "seq": 4,
+      "applied": 0
+    },
+    "d1Queries": 3,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "POST /v1/sync/push 400": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "BAD_REQUEST",
+        "message": "Body must be {\"schemaVersion\", \"records\": [≤500]}"
+      }
+    },
+    "d1Queries": 1,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "POST /v1/sync/push 413": {
+    "status": 413,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "PAYLOAD_TOO_LARGE",
+        "message": "Body exceeds 1048576 bytes"
+      }
+    },
+    "d1Queries": 1,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "POST /v1/sync/push 401": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "UNAUTHORIZED",
+        "message": "Sign in required"
+      }
+    },
+    "d1Queries": 0,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "POST /v1/sync/push 503": {
+    "status": 503,
+    "headers": {
+      "content-type": "application/json",
+      "retry-after": "3600",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "SERVICE_DISABLED",
+        "message": "SYNC_ENABLED is off"
+      }
+    },
+    "d1Queries": 0,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "POST /v1/sync/push user limit": {
+    "status": 429,
+    "headers": {
+      "content-type": "application/json",
+      "retry-after": "60",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "RATE_LIMITED",
+        "message": "Too many requests"
+      }
+    },
+    "d1Queries": 1,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "POST /v1/sync/push 429 daily writes": {
+    "status": 429,
+    "headers": {
+      "content-type": "application/json",
+      "retry-after": "75600",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "QUOTA_EXCEEDED",
+        "message": "Daily sync quota reached"
+      }
+    },
+    "d1Queries": 3,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "POST /v1/sync/push 413 storage full": {
+    "status": 413,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "STORAGE_FULL",
+        "message": "Sync storage is full"
+      }
+    },
+    "d1Queries": 3,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "GET /v1/sync/pull": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "records": [
+        {
+          "kind": "reading_progress",
+          "key": "3539482a",
+          "updatedAt": "2026-11-13T10:04:00.000Z",
+          "deleted": false,
+          "data": {
+            "parserVersion": 9,
+            "chapterSortOrder": 4,
+            "paragraphIndex": 37,
+            "paragraphOffset": 0.25,
+            "updatedAt": "2026-11-13T10:04:00.000Z"
+          },
+          "schemaVersion": 18,
+          "seq": 2
+        },
+        {
+          "kind": "ai_result",
+          "key": "3539482a/4/12",
+          "updatedAt": "2026-11-13T09:58:00.000Z",
+          "deleted": false,
+          "data": {
+            "parserVersion": 9,
+            "translations": "[\"Mulai tiap pagi dengan bilang ke diri sendiri...\"]",
+            "meaning": "Siapin mental buat ketemu orang nyebelin.",
+            "model": "z-ai/glm-5.3-flash",
+            "promptVersion": 3,
+            "createdAt": "2026-11-13T09:58:00.000Z",
+            "openCount": 2,
+            "lastOpenedAt": "2026-11-13T10:01:00.000Z"
+          },
+          "schemaVersion": 18,
+          "seq": 3
+        },
+        {
+          "kind": "book",
+          "key": "3539482a",
+          "updatedAt": "2026-11-13T11:00:00.000Z",
+          "deleted": true,
+          "data": null,
+          "schemaVersion": 18,
+          "seq": 4
+        }
+      ],
+      "nextSeq": 4,
+      "more": false
+    },
+    "d1Queries": 2,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "GET /v1/sync/pull limit": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "records": [
+        {
+          "kind": "reading_progress",
+          "key": "3539482a",
+          "updatedAt": "2026-11-13T10:04:00.000Z",
+          "deleted": false,
+          "data": {
+            "parserVersion": 9,
+            "chapterSortOrder": 4,
+            "paragraphIndex": 37,
+            "paragraphOffset": 0.25,
+            "updatedAt": "2026-11-13T10:04:00.000Z"
+          },
+          "schemaVersion": 18,
+          "seq": 2
+        }
+      ],
+      "nextSeq": 2,
+      "more": true
+    },
+    "d1Queries": 2,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "GET /v1/sync/pull empty": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "records": [],
+      "nextSeq": 999,
+      "more": false
+    },
+    "d1Queries": 2,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "GET /v1/sync/pull 400": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "BAD_REQUEST",
+        "message": "Query must be ?since=<seq>&limit=<1..500>"
+      }
+    },
+    "d1Queries": 1,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "GET /v1/sync/pull 401": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "UNAUTHORIZED",
+        "message": "Sign in required"
+      }
+    },
+    "d1Queries": 0,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "GET /v1/sync/pull 503": {
+    "status": 503,
+    "headers": {
+      "content-type": "application/json",
+      "retry-after": "3600",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "SERVICE_DISABLED",
+        "message": "SYNC_ENABLED is off"
+      }
+    },
+    "d1Queries": 0,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "GET /v1/sync/pull user limit": {
+    "status": 429,
+    "headers": {
+      "content-type": "application/json",
+      "retry-after": "60",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "RATE_LIMITED",
+        "message": "Too many requests"
+      }
+    },
+    "d1Queries": 1,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "POST /v1/ai/key banned": {
+    "status": 403,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "AI_BANNED",
+        "message": "AI access is disabled for this account"
+      }
+    },
+    "d1Queries": 2,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "GET /v1/ai/usage banned": {
+    "status": 403,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "AI_BANNED",
+        "message": "AI access is disabled for this account"
+      }
+    },
+    "d1Queries": 2,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "DELETE /v1/me": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "status": "deleted"
+    },
+    "d1Queries": 3,
+    "fetches": 1,
+    "r2Ops": 2
+  },
+  "GET /v1/me after delete": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "UNAUTHORIZED",
+        "message": "Sign in required"
+      }
+    },
+    "d1Queries": 1,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "GET /privacy": {
+    "status": 200,
+    "headers": {
+      "content-type": "text/html; charset=UTF-8",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "sha256": "77b2a8b746b79976f20c0acde1da2c4ff57442275319a3003740423ef6d0b2fc",
+      "length": 10629
+    },
+    "d1Queries": 0,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "GET /account/delete": {
+    "status": 200,
+    "headers": {
+      "content-type": "text/html; charset=UTF-8",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "sha256": "603bd166bf9ffafd3d90ac4add631ac4426dcd1e6f7902bd636d8c8582f72275",
+      "length": 7443
+    },
+    "d1Queries": 0,
+    "fetches": 0,
+    "r2Ops": 0
+  }
+}

@@ -54,27 +54,27 @@ export const userColumns = (i18n: I18n, q?: string) =>
       header: i18n.t.users.user,
       cell: (info) => <UserIdentity user={info.row.original} q={q} />,
     }),
-    h.accessor("createdAt", {
+    h.accessor("created_at", {
       header: i18n.t.users.joined,
       cell: (info) => (
         <span className="whitespace-nowrap">{formatDate(info.getValue(), i18n.locale)}</span>
       ),
     }),
-    h.accessor("lastActiveAt", {
+    h.accessor("last_active_at", {
       header: i18n.t.users.lastActive,
       cell: (info) => (
         <span className="whitespace-nowrap">{formatRelative(info.getValue(), i18n)}</span>
       ),
     }),
-    h.accessor("r2Bytes", {
+    h.accessor("r2_bytes", {
       header: i18n.t.users.files,
       cell: (info) => formatBytes(info.getValue(), i18n.locale),
     }),
-    h.accessor("syncBytes", {
+    h.accessor("sync_bytes", {
       header: i18n.t.users.syncData,
       cell: (info) => formatBytes(info.getValue(), i18n.locale),
     }),
-    h.accessor("hasAiKey", {
+    h.accessor("has_ai_key", {
       header: i18n.t.users.aiKey,
       cell: (info) => aiKeyLabel(info.getValue(), i18n.t),
     }),
@@ -84,16 +84,16 @@ export const userColumns = (i18n: I18n, q?: string) =>
     }),
   ]);
 
-export const USER_NUMERIC = ["r2Bytes", "syncBytes"];
+export const USER_NUMERIC = ["r2_bytes", "sync_bytes"];
 
 /** Phone layout of a row: avatar, email, status, then 4 data in a 2-column grid. */
 export function UserCard({ user, q }: { user: UserListItem; q?: string }) {
   const i18n = useI18n();
   const data: [string, string][] = [
-    [i18n.t.users.joined, formatDate(user.createdAt, i18n.locale)],
-    [i18n.t.users.lastActive, formatRelative(user.lastActiveAt, i18n)],
-    [i18n.t.users.files, formatBytes(user.r2Bytes, i18n.locale)],
-    [i18n.t.users.syncData, formatBytes(user.syncBytes, i18n.locale)],
+    [i18n.t.users.joined, formatDate(user.created_at, i18n.locale)],
+    [i18n.t.users.lastActive, formatRelative(user.last_active_at, i18n)],
+    [i18n.t.users.files, formatBytes(user.r2_bytes, i18n.locale)],
+    [i18n.t.users.syncData, formatBytes(user.sync_bytes, i18n.locale)],
   ];
   return (
     <div className="flex flex-col gap-3">

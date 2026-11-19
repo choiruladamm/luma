@@ -2,8 +2,8 @@
 // and the sync cursor (`seq`, see features/sync/repo.ts).
 import { eq, sql } from "drizzle-orm";
 import { ApiError } from "../lib/errors";
-import type { Db } from "./client";
-import { userStorage } from "./schema";
+import type { Db } from "@luma/core/db/client";
+import { userStorage } from "@luma/core/db/schema";
 
 export async function storedBytes(db: Db, userId: string): Promise<number> {
   const [row] = await db

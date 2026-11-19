@@ -1,5 +1,6 @@
-import { newInviteCode, normalizeInviteCode } from "@backend/auth/invite";
-import type { Db } from "@backend/db/client";
+import type { InviteCreated, InviteList } from "@luma/contracts/dashboard/invites";
+import { newInviteCode, normalizeInviteCode } from "@luma/core/auth/invite";
+import type { Db } from "@luma/core/db/client";
 import { ApiError } from "../../lib/errors";
 import {
   deleteUnusedInvite,
@@ -13,10 +14,8 @@ import {
 export const displayInviteCode = (stored: string) =>
   /^LUMA-[A-Z0-9]{10}$/.test(stored) ? `${stored.slice(0, 10)}-${stored.slice(10)}` : stored;
 
-export const INVITES_PAGE_SIZE = 20;
-
 /** Invite list page: 1 batch (rows + counts). A page past the end returns no items (the client clamps). */
-export async function getInvites(db: Db, query: Omit<InviteListQuery, "now">) {
+export async function getInvites(db: Db, query: Omit<InviteListQuery, "now">): Promise<InviteList> {
   const { rows, counts } = await listInvites(db, {
     ...query,
     q: query.q || undefined,
@@ -25,23 +24,23 @@ export async function getInvites(db: Db, query: Omit<InviteListQuery, "now">) {
   return {
     items: rows.map((r) => ({
       code: displayInviteCode(r.code),
-      createdAt: r.createdAt?.toISOString() ?? null,
-      usedBy: r.userId && r.email ? { id: r.userId, email: r.email } : null,
-      usedAt: r.usedAt?.toISOString() ?? null,
+      created_at: r.created_at?.toISOString() ?? null,
+      used_by: r.user_id && r.email ? { id: r.user_id, email: r.email } : null,
+      used_at: r.used_at?.toISOString() ?? null,
     })),
     total: counts.total,
     page: query.page,
-    pageCount: Math.max(1, Math.ceil(counts.total / query.limit)),
+    page_count: Math.max(1, Math.ceil(counts.total / query.limit)),
     counts: { all: counts.all, unused: counts.unused, used: counts.used },
   };
 }
 
 /** Create `count` codes in 1 insert. Stored normalized, returned in the hand-out format with the stored `createdAt`. */
-export async function createInvites(db: Db, count: number) {
+export async function createInvites(db: Db, count: number): Promise<InviteCreated> {
   const codes = Array.from({ length: count }, newInviteCode);
   const createdAt = new Date();
   await insertInvites(db, codes.map(normalizeInviteCode), createdAt);
-  return { codes, createdAt: createdAt.toISOString() };
+  return { codes, created_at: createdAt.toISOString() };
 }
 
 /** Delete an unused code: 1 query, +1 to tell 409 (used) from 404 (missing) when nothing was deleted. */

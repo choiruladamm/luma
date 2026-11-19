@@ -10,29 +10,29 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:cov": "vitest run --coverage",
-    "db:generate": "drizzle-kit generate",
     "size": "wrangler deploy --env dev --dry-run --outdir dist"
   },
   "dependencies": {
-    "@better-auth/drizzle-adapter": "^1.7.22",
-    "@hono/zod-validator": "^0.9.1",
-    "better-auth": "^1.7.22",
-    "drizzle-orm": "^0.45.4",
-    "hono": "^4.13.18",
-    "zod": "^4.6.7"
+    "@better-auth/drizzle-adapter": "catalog:",
+    "@luma/contracts": "workspace:*",
+    "@luma/core": "workspace:*",
+    "@luma/worker-kit": "workspace:*",
+    "better-auth": "catalog:",
+    "drizzle-orm": "catalog:",
+    "hono": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
-    "@cloudflare/vitest-plugin": "^1.8.1",
-    "@msw/cloudflare": "^0.2.0",
-    "@vitest/coverage-istanbul": "^5.1.0",
-    "drizzle-kit": "^0.31.11",
+    "@cloudflare/vitest-plugin": "catalog:",
+    "@msw/cloudflare": "catalog:",
+    "@vitest/coverage-istanbul": "catalog:",
     "jose": "6.2.17",
-    "msw": "^3.0.5",
-    "oxlint": "^1.94.0",
-    "oxlint-tsgolint": "^7.0.2007",
-    "prettier": "^3.10.1",
-    "typescript": "^7.0.2",
-    "vitest": "^5.1.0",
-    "wrangler": "^4.161.0"
+    "msw": "catalog:",
+    "oxlint": "catalog:",
+    "oxlint-tsgolint": "catalog:",
+    "prettier": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:",
+    "wrangler": "catalog:"
   }
 }

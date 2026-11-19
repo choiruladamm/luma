@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { workerApp } from "@luma/worker-kit/app";
 import type { AppEnv } from "./env";
 import { account } from "./features/account/routes";
 import { ai } from "./features/ai-key/routes";
@@ -8,27 +9,24 @@ import { files } from "./features/files/routes";
 import { health } from "./features/health/routes";
 import { legal } from "./features/legal/routes";
 import { sync } from "./features/sync/routes";
-import { ApiError, onError } from "./lib/errors";
 import { deps } from "./middleware/deps";
 import { clientIp, rateLimit } from "./middleware/rate-limit";
-import { requestId } from "./middleware/request-id";
+import { v1Adapter, wire } from "./middleware/v1-adapter";
 
-// Urutan middleware: requestId → killSwitch → bodyLimit → session → rateLimit → validator
+// Middleware order: requestId → killSwitch → bodyLimit → session → rateLimit → validator
 // (docs/backend.md, Request pipeline and API conventions). killSwitch/bodyLimit/session are mounted per route group.
-export const app = new Hono<AppEnv>();
+export const app = workerApp(new Hono<AppEnv>());
 
-app.use(requestId);
-app.use("/v1/*", rateLimit(clientIp), deps);
-app.route("/v1/health", health);
-app.route("/v1/auth", auth);
-app.route("/v1/me", account);
-app.route("/v1/ai", ai);
-app.route("/v1/files", files);
-app.route("/v1/backups", backups);
-app.route("/v1/sync", sync);
+// Both versions mount the same routers in the same order; `/v1` goes through the case adapter.
+app.use("/v1/*", wire("v1"), rateLimit(clientIp), deps, v1Adapter);
+app.use("/v2/*", wire("v2"), rateLimit(clientIp), deps);
+for (const prefix of ["/v1", "/v2"]) {
+  app.route(`${prefix}/health`, health);
+  app.route(`${prefix}/auth`, auth);
+  app.route(`${prefix}/me`, account);
+  app.route(`${prefix}/ai`, ai);
+  app.route(`${prefix}/files`, files);
+  app.route(`${prefix}/backups`, backups);
+  app.route(`${prefix}/sync`, sync);
+}
 app.route("/", legal);
-
-app.notFound(() => {
-  throw new ApiError(404, "NOT_FOUND", "Not found");
-});
-app.onError(onError);

@@ -1,7 +1,7 @@
 // Session and user queries for admin auth (used by `requireAdmin` and the Better Auth hook).
 import { and, eq, lte } from "drizzle-orm";
-import type { Db } from "@backend/db/client";
-import { sessions, users } from "@backend/db/schema";
+import type { Db } from "@luma/core/db/client";
+import { sessions, users } from "@luma/core/db/schema";
 
 /** Better Auth session cookie name: `__Secure-` prefix when the base URL is https. */
 export const sessionCookieName = (env: Env) =>

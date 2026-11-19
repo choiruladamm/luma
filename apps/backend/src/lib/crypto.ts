@@ -2,7 +2,7 @@
 // `AI_KEY_ENC_SECRET` (base64, 32 bytes). Key lost → old keys are unreadable and are
 // recreated (rotation), not lost user data.
 
-import { b64, unb64 } from "./encoding";
+import { b64, unb64 } from "@luma/core/encoding";
 
 const importKey = (secret: string) =>
   crypto.subtle.importKey("raw", unb64(secret), "AES-GCM", false, ["encrypt", "decrypt"]);

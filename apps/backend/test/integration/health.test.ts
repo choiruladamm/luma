@@ -1,6 +1,6 @@
 import { exports } from "cloudflare:workers";
 import { describe, expect, it } from "vitest";
-import health from "../fixtures/contract/health.json";
+import health from "@luma/contracts/fixtures/v1/health.json";
 import { callWithBudget } from "../helpers/budget";
 
 const url = (path: string) => `https://luma.test${path}`;

@@ -1,20 +1,22 @@
-import type { OpenRouterAdmin } from "../../clients/openrouter";
-import type { Db } from "../../db/client";
+import type { AiUsage, IssuedKey } from "@luma/contracts/backend/ai";
+import type { OpenRouterAdmin } from "@luma/core/openrouter";
+import type { Db } from "@luma/core/db/client";
 import { decryptText, encryptText } from "../../lib/crypto";
-import { csv, DAY_MS } from "../../lib/encoding";
+import { csv, DAY_MS } from "@luma/core/encoding";
 import { ApiError } from "../../lib/errors";
-import { findKeyHash, findUserKey, saveKey, setKeyLimit, type AiKeyRow } from "./repo";
+import { findUserKey } from "@luma/core/ai-keys";
+import { findKeyHash, saveKey, setKeyLimit, type AiKeyRow } from "./repo";
 
 /** The key is replaced a day before it expires, so a device never holds a dead key mid-read. */
 export const ROTATE_BEFORE_MS = DAY_MS;
 
 export type AiConfig = {
   dailyLimitUsd: number;
+  chatModels: string[];
+  embeddingModels: string[];
   ttlDays: number;
   workspaceId: string;
   encSecret: string;
-  chatModels: string[];
-  embeddingModels: string[];
 };
 
 /** Numbers and models from `vars` (docs/backend.md, AI subsidy). Models must match the OpenRouter guardrail. */
@@ -33,8 +35,6 @@ async function allowedKey(db: Db, userId: string) {
   if (found.banned) throw new ApiError(403, "AI_BANNED", "AI access is disabled for this account");
   return found.key;
 }
-
-export type IssuedKey = { key: string; expiresAt: string; dailyLimitUsd: number };
 
 /**
  * The stored key if it can still be handed out, else undefined. The checks run
@@ -58,7 +58,11 @@ async function reuseKey(
     await admin.updateLimit(row.keyHash, cfg.dailyLimitUsd);
     await setKeyLimit(db, userId, cfg.dailyLimitUsd);
   }
-  return { key, expiresAt: row.expiresAt.toISOString(), dailyLimitUsd: cfg.dailyLimitUsd };
+  return {
+    key,
+    expires_at: row.expiresAt.toISOString(),
+    daily_limit_usd: cfg.dailyLimitUsd,
+  };
 }
 
 /**
@@ -99,15 +103,12 @@ export async function issueKey(
     createdAt: now,
   };
   await saveKey(db, userId, values);
-  return { key: created.key, expiresAt: expiresAt.toISOString(), dailyLimitUsd: cfg.dailyLimitUsd };
+  return {
+    key: created.key,
+    expires_at: expiresAt.toISOString(),
+    daily_limit_usd: cfg.dailyLimitUsd,
+  };
 }
-
-export type AiUsage = {
-  dailyLimitUsd: number;
-  remainingUsd: number;
-  usedTodayUsd: number;
-  resetsAt: string;
-};
 
 /** The OpenRouter daily limit resets at midnight UTC. */
 export const nextUtcMidnight = (now: Date) =>
@@ -125,19 +126,19 @@ export async function usage(
   const row = await allowedKey(db, userId);
   if (!row) {
     return {
-      dailyLimitUsd: cfg.dailyLimitUsd,
-      remainingUsd: cfg.dailyLimitUsd,
-      usedTodayUsd: 0,
-      resetsAt,
+      daily_limit_usd: cfg.dailyLimitUsd,
+      remaining_usd: cfg.dailyLimitUsd,
+      used_today_usd: 0,
+      resets_at: resetsAt,
     };
   }
   const key = await admin.getUsage(row.keyHash);
   const limit = key.limit ?? cfg.dailyLimitUsd;
   return {
-    dailyLimitUsd: limit,
-    remainingUsd: key.limitRemaining ?? Math.max(0, limit - key.usageDaily),
-    usedTodayUsd: key.usageDaily,
-    resetsAt,
+    daily_limit_usd: limit,
+    remaining_usd: key.limitRemaining ?? Math.max(0, limit - key.usageDaily),
+    used_today_usd: key.usageDaily,
+    resets_at: resetsAt,
   };
 }
 

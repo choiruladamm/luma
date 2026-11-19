@@ -1,0 +1,19 @@
+{
+  "request": {
+    "method": "POST",
+    "path": "/v2/sync/push",
+    "body": {
+      "schema_version": 18,
+      "records": []
+    }
+  },
+  "response": {
+    "status": 400,
+    "body": {
+      "error": {
+        "code": "BAD_REQUEST",
+        "message": "Body must be {\"schema_version\", \"records\": [≤500]}"
+      }
+    }
+  }
+}

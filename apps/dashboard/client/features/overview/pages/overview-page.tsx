@@ -97,7 +97,7 @@ export function OverviewPage() {
             icon="drive"
             value={
               data ? (
-                formatBytes(data.storage.r2Bytes + data.storage.syncBytes, locale)
+                formatBytes(data.storage.r2_bytes + data.storage.sync_bytes, locale)
               ) : (
                 <StatValueSkeleton />
               )
@@ -113,7 +113,7 @@ export function OverviewPage() {
         </div>
         <div className="flex flex-wrap items-start gap-4">
           <div className="flex min-w-0 flex-[2_1_480px] flex-col gap-4">
-            <SyncCard data={data?.syncToday} />
+            <SyncCard data={data?.sync_today} />
             <AiSpendCard ai={data?.ai} />
           </div>
           <div className="flex min-w-0 flex-[1_1_320px] flex-col gap-4">

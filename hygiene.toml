@@ -70,4 +70,4 @@ evidence_paths = ["apps/mobile/test/support/book_chat_*", "apps/mobile/test/data
 
 prose_files = [
   "README.md", "AGENTS.md", "CLAUDE.md", ".claude/rules", ".claude/skills", "apps/mobile/CLAUDE.md", "apps/backend/CLAUDE.md", "apps/dashboard/CLAUDE.md",
-  "apps/mobile/README.md", "apps/backend/test/fixtures/contract/README.md"]
+  "apps/mobile/README.md", "packages/contracts/fixtures/v1/README.md"]

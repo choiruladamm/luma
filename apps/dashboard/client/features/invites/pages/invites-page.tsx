@@ -181,7 +181,7 @@ export function InvitesPage() {
 
   // A page past the end (codes deleted, a stale link) lands on the last page instead.
   // Placeholder data is the previous query's page count, not this one's.
-  const pageCount = invites.isPlaceholderData ? undefined : data?.pageCount;
+  const pageCount = invites.isPlaceholderData ? undefined : data?.page_count;
   useEffect(() => {
     if (pageCount !== undefined && params.page > pageCount) set({ page: pageCount });
   }, [pageCount, params.page, set]);
@@ -196,7 +196,7 @@ export function InvitesPage() {
   );
   const makeCode = () =>
     create.mutate(1, {
-      onSuccess: (res) => setCreated({ code: res.codes[0]!, at: res.createdAt }),
+      onSuccess: (res) => setCreated({ code: res.codes[0]!, at: res.created_at }),
       onError: (e) => toast(errorText(e, getI18n().t), { tone: "error" }),
     });
   const confirmDelete = () =>
@@ -219,7 +219,7 @@ export function InvitesPage() {
           label={t.invites.copyCode(invite.code)}
           onClick={() => void copyCode(invite.code)}
         />
-        {!invite.usedAt && (
+        {!invite.used_at && (
           <IconButton
             icon="x"
             label={t.invites.deleteCode(invite.code)}
@@ -245,7 +245,7 @@ export function InvitesPage() {
         <InvitesEmpty
           noCodes={counts?.all === 0}
           q={params.q}
-          usedWithin={Boolean(params.usedWithin)}
+          usedWithin={Boolean(params.used_within)}
           filter={filter}
           onCreate={makeCode}
         />
@@ -264,7 +264,7 @@ export function InvitesPage() {
         footer={
           <Pagination
             page={params.page}
-            pageCount={data.pageCount}
+            pageCount={data.page_count}
             total={data.total}
             pageSize={params.limit}
             onPage={(page) => set({ page })}
@@ -322,14 +322,14 @@ export function InvitesPage() {
               <Select
                 label={t.invites.usedWithin}
                 shortLabel={t.invites.usedWithinShort}
-                value={params.usedWithin ?? ""}
+                value={params.used_within ?? ""}
                 options={[
                   ["", t.invites.anyTime],
                   ["7d", t.invites.within7d],
                   ["30d", t.invites.within30d],
                 ]}
-                active={!!params.usedWithin}
-                onChange={(v) => set({ usedWithin: v || undefined })}
+                active={!!params.used_within}
+                onChange={(v) => set({ used_within: v || undefined })}
               />
               <Select
                 label={t.users.sortLabel}

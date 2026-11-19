@@ -58,14 +58,14 @@ describe("Undangan", () => {
         items = [
           {
             code: "LUMA-NEWWW-CODE1",
-            createdAt: "2026-11-15T03:00:00.000Z",
-            usedBy: null,
-            usedAt: null,
+            created_at: "2026-11-15T03:00:00.000Z",
+            used_by: null,
+            used_at: null,
           },
           ...items,
         ];
         return HttpResponse.json(
-          { codes: ["LUMA-NEWWW-CODE1"], createdAt: "2026-11-15T03:00:00.000Z" },
+          { codes: ["LUMA-NEWWW-CODE1"], created_at: "2026-11-15T03:00:00.000Z" },
           { status: 201 },
         );
       }),
@@ -153,9 +153,9 @@ describe("Undangan", () => {
   it("pages with numbers through the worker, keeping ?page= in the URL", async () => {
     const many = Array.from({ length: 25 }, (_, i) => ({
       code: `LUMA-K${String(i).padStart(4, "0")}-ZZZZZ`,
-      createdAt: null,
-      usedBy: null,
-      usedAt: null,
+      created_at: null,
+      used_by: null,
+      used_at: null,
     }));
     server.use(
       http.get(`${API}/invites`, ({ request }) =>
@@ -219,7 +219,7 @@ describe("Undangan", () => {
     // "Used within" selects the Used tab; the Unused tab clears it.
     await user.click(screen.getByRole("button", { name: /^Dipakai dalam:/ }));
     await user.click(screen.getByRole("option", { name: "7 hari" }));
-    await waitFor(() => expect(router.state.location.search).toBe("?status=used&usedWithin=7d"));
+    await waitFor(() => expect(router.state.location.search).toBe("?status=used&used_within=7d"));
     await user.click(screen.getAllByRole("tab", { name: /Belum dipakai/ })[0]!);
     await waitFor(() => expect(router.state.location.search).toBe("?status=unused"));
 
@@ -288,7 +288,7 @@ describe("Undangan", () => {
       http.post(`${API}/invites`, () => {
         posted += 1;
         return HttpResponse.json(
-          { codes: ["LUMA-NEWWW-CODE1"], createdAt: "2026-11-15T03:00:00.000Z" },
+          { codes: ["LUMA-NEWWW-CODE1"], created_at: "2026-11-15T03:00:00.000Z" },
           { status: 201 },
         );
       }),
@@ -307,7 +307,7 @@ describe("Undangan", () => {
     ["?status=unused", [invites.items[2]!], "Semua kode udah dipakai"],
     ["?status=used", [invites.items[0]!], "Belum ada kode yang dipakai"],
     [
-      "?status=used&usedWithin=7d",
+      "?status=used&used_within=7d",
       [invites.items[0]!],
       "Gak ada kode yang dipakai dalam rentang ini",
     ],

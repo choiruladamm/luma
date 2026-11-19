@@ -1,0 +1,913 @@
+{
+  "GET /api/users 401": {
+    "status": 401,
+    "headers": {
+      "content-security-policy": "default-src 'self'; frame-ancestors 'none'",
+      "content-type": "application/json",
+      "x-content-type-options": "nosniff",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "UNAUTHORIZED",
+        "message": "Sign in required"
+      }
+    },
+    "d1Queries": 0,
+    "fetches": 0
+  },
+  "GET /api/users 403 non-admin": {
+    "status": 403,
+    "headers": {
+      "content-security-policy": "default-src 'self'; frame-ancestors 'none'",
+      "content-type": "application/json",
+      "x-content-type-options": "nosniff",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "FORBIDDEN",
+        "message": "Admin only"
+      }
+    },
+    "d1Queries": 1,
+    "fetches": 0
+  },
+  "GET /api/unknown 401": {
+    "status": 401,
+    "headers": {
+      "content-security-policy": "default-src 'self'; frame-ancestors 'none'",
+      "content-type": "application/json",
+      "x-content-type-options": "nosniff",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "UNAUTHORIZED",
+        "message": "Sign in required"
+      }
+    },
+    "d1Queries": 0,
+    "fetches": 0
+  },
+  "GET /api/unknown 404": {
+    "status": 404,
+    "headers": {
+      "content-security-policy": "default-src 'self'; frame-ancestors 'none'",
+      "content-type": "application/json",
+      "x-content-type-options": "nosniff",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "NOT_FOUND",
+        "message": "Not found"
+      }
+    },
+    "d1Queries": 1,
+    "fetches": 0
+  },
+  "GET /api/users 429 ip": {
+    "status": 429,
+    "headers": {
+      "content-security-policy": "default-src 'self'; frame-ancestors 'none'",
+      "content-type": "application/json",
+      "retry-after": "60",
+      "x-content-type-options": "nosniff",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "RATE_LIMITED",
+        "message": "Too many requests"
+      }
+    },
+    "d1Queries": 0,
+    "fetches": 0
+  },
+  "GET /api/auth/get-session signed out": {
+    "status": 200,
+    "headers": {
+      "cache-control": "no-store",
+      "content-security-policy": "default-src 'self'; frame-ancestors 'none'",
+      "content-type": "application/json",
+      "pragma": "no-cache",
+      "x-content-type-options": "nosniff",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": null,
+    "d1Queries": 0,
+    "fetches": 0
+  },
+  "GET /api/auth/get-session": {
+    "status": 200,
+    "headers": {
+      "cache-control": "no-store",
+      "content-security-policy": "default-src 'self'; frame-ancestors 'none'",
+      "content-type": "application/json",
+      "pragma": "no-cache",
+      "x-content-type-options": "nosniff",
+      "x-request-id": "<present>"
+    },
+    "cookies": [
+      "__Secure-better-auth.session_token=<random>; Max-Age=604800; Path=/; HttpOnly; Secure; SameSite=Lax"
+    ],
+    "body": {
+      "session": {
+        "expires_at": "2026-11-27T03:00:09.000Z",
+        "token": "<auth-id>",
+        "created_at": "2026-11-20T03:00:00.000Z",
+        "updated_at": "2026-11-20T03:00:09.000Z",
+        "ip_address": null,
+        "user_agent": null,
+        "user_id": "<uuid>",
+        "id": "<uuid>"
+      },
+      "user": {
+        "name": "Tester",
+        "email": "admin@luma.test",
+        "email_verified": true,
+        "image": null,
+        "created_at": "2026-11-20T03:00:00.000Z",
+        "updated_at": "2026-11-20T03:00:00.000Z",
+        "id": "<uuid>"
+      }
+    },
+    "d1Queries": 4,
+    "fetches": 0
+  },
+  "POST /api/auth/sign-in/social": {
+    "status": 200,
+    "headers": {
+      "content-security-policy": "default-src 'self'; frame-ancestors 'none'",
+      "content-type": "application/json",
+      "location": "https://accounts.google.com/o/oauth2/v2/auth?response_type=code&client_id=366577823040-vhr2h7toc53pb891v0qoc1m62pps2v41.apps.googleusercontent.com&state=%3Crandom%3E&scope=email+profile+openid&redirect_uri=https%3A%2F%2Fluma-admin-dev.chrl.cloud%2Fapi%2Fauth%2Fcallback%2Fgoogle&code_challenge_method=S256&code_challenge=%3Crandom%3E&include_granted_scopes=true",
+      "x-content-type-options": "nosniff",
+      "x-request-id": "<present>"
+    },
+    "cookies": [
+      "__Secure-better-auth.oauth_state=<random>; Max-Age=600; Path=/; HttpOnly; Secure; SameSite=Lax"
+    ],
+    "body": {
+      "url": "https://accounts.google.com/o/oauth2/v2/auth?response_type=code&client_id=366577823040-vhr2h7toc53pb891v0qoc1m62pps2v41.apps.googleusercontent.com&state=%3Crandom%3E&scope=email+profile+openid&redirect_uri=https%3A%2F%2Fluma-admin-dev.chrl.cloud%2Fapi%2Fauth%2Fcallback%2Fgoogle&code_challenge_method=S256&code_challenge=%3Crandom%3E&include_granted_scopes=true",
+      "redirect": true
+    },
+    "d1Queries": 0,
+    "fetches": 0
+  },
+  "GET /api/auth/callback/google": {
+    "status": 302,
+    "headers": {
+      "content-security-policy": "default-src 'self'; frame-ancestors 'none'",
+      "content-type": "application/json",
+      "location": "/",
+      "x-content-type-options": "nosniff",
+      "x-request-id": "<present>"
+    },
+    "cookies": [
+      "__Secure-better-auth.oauth_state=<random>; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Lax",
+      "__Secure-better-auth.session_token=<random>; Max-Age=604800; Path=/; HttpOnly; Secure; SameSite=Lax"
+    ],
+    "body": "",
+    "d1Queries": 5,
+    "fetches": 1
+  },
+  "GET /api/auth/callback/google bad state": {
+    "status": 302,
+    "headers": {
+      "content-security-policy": "default-src 'self'; frame-ancestors 'none'",
+      "content-type": "application/json",
+      "location": "/login?error=state_mismatch",
+      "x-content-type-options": "nosniff",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": "",
+    "d1Queries": 0,
+    "fetches": 0
+  },
+  "POST /api/auth/sign-up/email hidden 404": {
+    "status": 404,
+    "headers": {
+      "content-security-policy": "default-src 'self'; frame-ancestors 'none'",
+      "content-type": "application/json",
+      "x-content-type-options": "nosniff",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "NOT_FOUND",
+        "message": "Not found"
+      }
+    },
+    "d1Queries": 0,
+    "fetches": 0
+  },
+  "GET /api/users": {
+    "status": 200,
+    "headers": {
+      "content-security-policy": "default-src 'self'; frame-ancestors 'none'",
+      "content-type": "application/json",
+      "x-content-type-options": "nosniff",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "items": [
+        {
+          "id": "<uuid>",
+          "email": "admin-google@luma.test",
+          "name": "Tester",
+          "created_at": "2026-11-20T03:00:11.000Z",
+          "banned": false,
+          "last_active_at": "2026-11-20T03:00:12.000Z",
+          "has_ai_key": false,
+          "r2_bytes": 0,
+          "sync_bytes": 0
+        },
+        {
+          "id": "<uuid>",
+          "email": "user-1@luma.test",
+          "name": "Tester",
+          "created_at": "2026-11-20T03:00:04.000Z",
+          "banned": false,
+          "last_active_at": "2026-11-20T03:00:04.000Z",
+          "has_ai_key": false,
+          "r2_bytes": 0,
+          "sync_bytes": 0
+        },
+        {
+          "id": "<uuid>",
+          "email": "plain@luma.test",
+          "name": "Plain",
+          "created_at": "2026-11-20T03:00:02.000Z",
+          "banned": false,
+          "last_active_at": null,
+          "has_ai_key": false,
+          "r2_bytes": 0,
+          "sync_bytes": 0
+        },
+        {
+          "id": "<uuid>",
+          "email": "member@luma.test",
+          "name": "Member",
+          "created_at": "2026-11-20T03:00:01.000Z",
+          "banned": false,
+          "last_active_at": null,
+          "has_ai_key": true,
+          "r2_bytes": 2048,
+          "sync_bytes": 512
+        },
+        {
+          "id": "<uuid>",
+          "email": "admin@luma.test",
+          "name": "Tester",
+          "created_at": "2026-11-20T03:00:00.000Z",
+          "banned": false,
+          "last_active_at": "2026-11-20T03:00:09.000Z",
+          "has_ai_key": false,
+          "r2_bytes": 0,
+          "sync_bytes": 0
+        }
+      ],
+      "total": 5,
+      "page": 1,
+      "page_count": 1
+    },
+    "d1Queries": 3,
+    "fetches": 0
+  },
+  "GET /api/users filtered": {
+    "status": 200,
+    "headers": {
+      "content-security-policy": "default-src 'self'; frame-ancestors 'none'",
+      "content-type": "application/json",
+      "x-content-type-options": "nosniff",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "items": [
+        {
+          "id": "<uuid>",
+          "email": "member@luma.test",
+          "name": "Member",
+          "created_at": "2026-11-20T03:00:01.000Z",
+          "banned": false,
+          "last_active_at": null,
+          "has_ai_key": true,
+          "r2_bytes": 2048,
+          "sync_bytes": 512
+        }
+      ],
+      "total": 1,
+      "page": 1,
+      "page_count": 1
+    },
+    "d1Queries": 3,
+    "fetches": 0
+  },
+  "GET /api/users 400": {
+    "status": 400,
+    "headers": {
+      "content-security-policy": "default-src 'self'; frame-ancestors 'none'",
+      "content-type": "application/json",
+      "x-content-type-options": "nosniff",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "BAD_REQUEST",
+        "message": "Invalid option: expected one of \"created\"|\"lastActive\"|\"r2\"|\"sync\"|\"relevance\""
+      }
+    },
+    "d1Queries": 1,
+    "fetches": 0
+  },
+  "GET /api/users/:id": {
+    "status": 200,
+    "headers": {
+      "content-security-policy": "default-src 'self'; frame-ancestors 'none'",
+      "content-type": "application/json",
+      "x-content-type-options": "nosniff",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "id": "<uuid>",
+      "email": "member@luma.test",
+      "name": "Member",
+      "created_at": "2026-11-20T03:00:01.000Z",
+      "banned": false,
+      "last_active_at": null,
+      "has_ai_key": true,
+      "r2_bytes": 2048,
+      "sync_bytes": 512,
+      "sessions": [],
+      "ai": {
+        "limit": 0.02,
+        "usage_daily": 0.004,
+        "expires_at": "2026-12-14T00:00:00.000Z"
+      },
+      "invite": null,
+      "providers": []
+    },
+    "d1Queries": 6,
+    "fetches": 1
+  },
+  "GET /api/users/:id no key": {
+    "status": 200,
+    "headers": {
+      "content-security-policy": "default-src 'self'; frame-ancestors 'none'",
+      "content-type": "application/json",
+      "x-content-type-options": "nosniff",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "id": "<uuid>",
+      "email": "plain@luma.test",
+      "name": "Plain",
+      "created_at": "2026-11-20T03:00:02.000Z",
+      "banned": false,
+      "last_active_at": null,
+      "has_ai_key": false,
+      "r2_bytes": 0,
+      "sync_bytes": 0,
+      "sessions": [],
+      "ai": null,
+      "invite": null,
+      "providers": []
+    },
+    "d1Queries": 6,
+    "fetches": 0
+  },
+  "GET /api/users/:id 404": {
+    "status": 404,
+    "headers": {
+      "content-security-policy": "default-src 'self'; frame-ancestors 'none'",
+      "content-type": "application/json",
+      "x-content-type-options": "nosniff",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "NOT_FOUND",
+        "message": "User not found"
+      }
+    },
+    "d1Queries": 6,
+    "fetches": 0
+  },
+  "GET /api/users/:id 400": {
+    "status": 400,
+    "headers": {
+      "content-security-policy": "default-src 'self'; frame-ancestors 'none'",
+      "content-type": "application/json",
+      "x-content-type-options": "nosniff",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "BAD_REQUEST",
+        "message": "Invalid user id"
+      }
+    },
+    "d1Queries": 1,
+    "fetches": 0
+  },
+  "POST /api/users/:id/ban 403 origin": {
+    "status": 403,
+    "headers": {
+      "content-security-policy": "default-src 'self'; frame-ancestors 'none'",
+      "content-type": "application/json",
+      "x-content-type-options": "nosniff",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "FORBIDDEN",
+        "message": "Mutations need JSON from the dashboard origin"
+      }
+    },
+    "d1Queries": 1,
+    "fetches": 0
+  },
+  "POST /api/users/:id/ban 403 not json": {
+    "status": 403,
+    "headers": {
+      "content-security-policy": "default-src 'self'; frame-ancestors 'none'",
+      "content-type": "application/json",
+      "x-content-type-options": "nosniff",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "FORBIDDEN",
+        "message": "Mutations need JSON from the dashboard origin"
+      }
+    },
+    "d1Queries": 1,
+    "fetches": 0
+  },
+  "POST /api/users/:id/ban 429 admin": {
+    "status": 429,
+    "headers": {
+      "content-security-policy": "default-src 'self'; frame-ancestors 'none'",
+      "content-type": "application/json",
+      "retry-after": "60",
+      "x-content-type-options": "nosniff",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "RATE_LIMITED",
+        "message": "Too many requests"
+      }
+    },
+    "d1Queries": 1,
+    "fetches": 0
+  },
+  "POST /api/users/:id/ban": {
+    "status": 200,
+    "headers": {
+      "content-security-policy": "default-src 'self'; frame-ancestors 'none'",
+      "content-type": "application/json",
+      "x-content-type-options": "nosniff",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "banned": true,
+      "key_revoked": true
+    },
+    "d1Queries": 4,
+    "fetches": 1
+  },
+  "POST /api/users/:id/ban 404": {
+    "status": 404,
+    "headers": {
+      "content-security-policy": "default-src 'self'; frame-ancestors 'none'",
+      "content-type": "application/json",
+      "x-content-type-options": "nosniff",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "NOT_FOUND",
+        "message": "User not found"
+      }
+    },
+    "d1Queries": 2,
+    "fetches": 0
+  },
+  "POST /api/users/:id/ban 502": {
+    "status": 502,
+    "headers": {
+      "content-security-policy": "default-src 'self'; frame-ancestors 'none'",
+      "content-type": "application/json",
+      "x-content-type-options": "nosniff",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "OPENROUTER_FAILED",
+        "message": "Could not revoke the OpenRouter key"
+      }
+    },
+    "d1Queries": 2,
+    "fetches": 1
+  },
+  "GET /api/users/:id after 502": {
+    "status": 200,
+    "headers": {
+      "content-security-policy": "default-src 'self'; frame-ancestors 'none'",
+      "content-type": "application/json",
+      "x-content-type-options": "nosniff",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "id": "<uuid>",
+      "email": "failing@luma.test",
+      "name": "Failing",
+      "created_at": "2026-11-20T03:00:27.000Z",
+      "banned": false,
+      "last_active_at": null,
+      "has_ai_key": true,
+      "r2_bytes": 0,
+      "sync_bytes": 0,
+      "sessions": [],
+      "ai": {
+        "limit": 0.02,
+        "usage_daily": null,
+        "expires_at": "2026-12-14T00:00:00.000Z"
+      },
+      "invite": null,
+      "providers": []
+    },
+    "d1Queries": 6,
+    "fetches": 1
+  },
+  "POST /api/users/:id/unban": {
+    "status": 200,
+    "headers": {
+      "content-security-policy": "default-src 'self'; frame-ancestors 'none'",
+      "content-type": "application/json",
+      "x-content-type-options": "nosniff",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "banned": false
+    },
+    "d1Queries": 2,
+    "fetches": 0
+  },
+  "POST /api/users/:id/unban 404": {
+    "status": 404,
+    "headers": {
+      "content-security-policy": "default-src 'self'; frame-ancestors 'none'",
+      "content-type": "application/json",
+      "x-content-type-options": "nosniff",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "NOT_FOUND",
+        "message": "User not found"
+      }
+    },
+    "d1Queries": 2,
+    "fetches": 0
+  },
+  "POST /api/invites": {
+    "status": 201,
+    "headers": {
+      "content-security-policy": "default-src 'self'; frame-ancestors 'none'",
+      "content-type": "application/json",
+      "x-content-type-options": "nosniff",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "codes": [
+        "<invite>",
+        "<invite>"
+      ],
+      "created_at": "2026-11-20T03:00:32.000Z"
+    },
+    "d1Queries": 2,
+    "fetches": 0
+  },
+  "POST /api/invites 400": {
+    "status": 400,
+    "headers": {
+      "content-security-policy": "default-src 'self'; frame-ancestors 'none'",
+      "content-type": "application/json",
+      "x-content-type-options": "nosniff",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "BAD_REQUEST",
+        "message": "Too small: expected number to be >=1"
+      }
+    },
+    "d1Queries": 1,
+    "fetches": 0
+  },
+  "POST /api/invites 400 malformed": {
+    "status": 400,
+    "headers": {
+      "content-security-policy": "default-src 'self'; frame-ancestors 'none'",
+      "content-type": "application/json",
+      "x-content-type-options": "nosniff",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "BAD_REQUEST",
+        "message": "Malformed JSON in request body"
+      }
+    },
+    "d1Queries": 1,
+    "fetches": 0
+  },
+  "POST /api/invites 413": {
+    "status": 413,
+    "headers": {
+      "content-security-policy": "default-src 'self'; frame-ancestors 'none'",
+      "content-type": "application/json",
+      "x-content-type-options": "nosniff",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "PAYLOAD_TOO_LARGE",
+        "message": "Body exceeds 16384 bytes"
+      }
+    },
+    "d1Queries": 0,
+    "fetches": 0
+  },
+  "GET /api/invites": {
+    "status": 200,
+    "headers": {
+      "content-security-policy": "default-src 'self'; frame-ancestors 'none'",
+      "content-type": "application/json",
+      "x-content-type-options": "nosniff",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "items": [
+        {
+          "code": "<invite>",
+          "created_at": "2026-11-20T03:00:32.000Z",
+          "used_by": null,
+          "used_at": null
+        },
+        {
+          "code": "<invite>",
+          "created_at": "2026-11-20T03:00:32.000Z",
+          "used_by": null,
+          "used_at": null
+        },
+        {
+          "code": "<invite>",
+          "created_at": "2026-11-20T03:00:32.000Z",
+          "used_by": {
+            "id": "<uuid>",
+            "email": "plain@luma.test"
+          },
+          "used_at": "2026-11-01T00:00:00.000Z"
+        }
+      ],
+      "total": 3,
+      "page": 1,
+      "page_count": 1,
+      "counts": {
+        "all": 3,
+        "unused": 2,
+        "used": 1
+      }
+    },
+    "d1Queries": 3,
+    "fetches": 0
+  },
+  "GET /api/invites filtered": {
+    "status": 200,
+    "headers": {
+      "content-security-policy": "default-src 'self'; frame-ancestors 'none'",
+      "content-type": "application/json",
+      "x-content-type-options": "nosniff",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "items": [
+        {
+          "code": "<invite>",
+          "created_at": "2026-11-20T03:00:32.000Z",
+          "used_by": {
+            "id": "<uuid>",
+            "email": "plain@luma.test"
+          },
+          "used_at": "2026-11-01T00:00:00.000Z"
+        }
+      ],
+      "total": 1,
+      "page": 1,
+      "page_count": 1,
+      "counts": {
+        "all": 3,
+        "unused": 2,
+        "used": 1
+      }
+    },
+    "d1Queries": 3,
+    "fetches": 0
+  },
+  "GET /api/invites 400": {
+    "status": 400,
+    "headers": {
+      "content-security-policy": "default-src 'self'; frame-ancestors 'none'",
+      "content-type": "application/json",
+      "x-content-type-options": "nosniff",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "BAD_REQUEST",
+        "message": "Too big: expected number to be <=50"
+      }
+    },
+    "d1Queries": 1,
+    "fetches": 0
+  },
+  "DELETE /api/invites/:code": {
+    "status": 204,
+    "headers": {
+      "content-security-policy": "default-src 'self'; frame-ancestors 'none'",
+      "x-content-type-options": "nosniff",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": "",
+    "d1Queries": 2,
+    "fetches": 0
+  },
+  "DELETE /api/invites/:code 404": {
+    "status": 404,
+    "headers": {
+      "content-security-policy": "default-src 'self'; frame-ancestors 'none'",
+      "content-type": "application/json",
+      "x-content-type-options": "nosniff",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "NOT_FOUND",
+        "message": "Invite code not found"
+      }
+    },
+    "d1Queries": 3,
+    "fetches": 0
+  },
+  "DELETE /api/invites/:code 409 used": {
+    "status": 409,
+    "headers": {
+      "content-security-policy": "default-src 'self'; frame-ancestors 'none'",
+      "content-type": "application/json",
+      "x-content-type-options": "nosniff",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "INVITE_CODE_USED",
+        "message": "Invite code has already been used"
+      }
+    },
+    "d1Queries": 3,
+    "fetches": 0
+  },
+  "DELETE /api/invites/:code 400": {
+    "status": 400,
+    "headers": {
+      "content-security-policy": "default-src 'self'; frame-ancestors 'none'",
+      "content-type": "application/json",
+      "x-content-type-options": "nosniff",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "BAD_REQUEST",
+        "message": "Invalid invite code"
+      }
+    },
+    "d1Queries": 1,
+    "fetches": 0
+  },
+  "GET /api/overview": {
+    "status": 200,
+    "headers": {
+      "content-security-policy": "default-src 'self'; frame-ancestors 'none'",
+      "content-type": "application/json",
+      "x-content-type-options": "nosniff",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "users": {
+        "total": 6,
+        "new7d": 6,
+        "banned": 0
+      },
+      "storage": {
+        "r2_bytes": 2048,
+        "sync_bytes": 512
+      },
+      "sync_today": {
+        "rows": 0,
+        "limit": 100000
+      },
+      "invites": {
+        "unused": 1
+      },
+      "flags": {
+        "sync": true,
+        "backup": true,
+        "ai_key": true
+      },
+      "ai": {
+        "spend_usd": 0.42,
+        "budget_usd": 5,
+        "as_of": "2026-11-19"
+      }
+    },
+    "d1Queries": 4,
+    "fetches": 1
+  },
+  "POST /api/auth/sign-out": {
+    "status": 200,
+    "headers": {
+      "content-security-policy": "default-src 'self'; frame-ancestors 'none'",
+      "content-type": "application/json",
+      "x-content-type-options": "nosniff",
+      "x-request-id": "<present>"
+    },
+    "cookies": [
+      "__Secure-better-auth.session_token=<random>; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Lax",
+      "__Secure-better-auth.session_data=<random>; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Lax",
+      "__Secure-better-auth.oauth_state=<random>; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Lax",
+      "__Secure-better-auth.dont_remember=<random>; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Lax"
+    ],
+    "body": {
+      "success": true
+    },
+    "d1Queries": 5,
+    "fetches": 0
+  },
+  "GET /other 404": {
+    "status": 404,
+    "headers": {
+      "content-security-policy": "default-src 'self'; frame-ancestors 'none'",
+      "content-type": "application/json",
+      "x-content-type-options": "nosniff",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "NOT_FOUND",
+        "message": "Not found"
+      }
+    },
+    "d1Queries": 0,
+    "fetches": 0
+  }
+}

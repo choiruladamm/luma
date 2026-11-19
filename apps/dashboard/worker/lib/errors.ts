@@ -1,46 +1,13 @@
-import type { Context } from "hono";
-import { HTTPException } from "hono/http-exception";
-import type { ContentfulStatusCode } from "hono/utils/http-status";
+import type { dashboardErrorCode } from "@luma/contracts/errors";
+import { type BaseErrorCode, ApiError as KitApiError } from "@luma/worker-kit/errors";
+import type { z } from "zod";
 
-/** Dashboard error codes (docs/dashboard.md, API routes and errors); same format as the backend. */
-export type ErrorCode =
-  | "BAD_REQUEST"
-  | "UNAUTHORIZED"
-  | "FORBIDDEN"
-  | "NOT_FOUND"
-  | "INVITE_CODE_USED"
-  | "RATE_LIMITED"
-  | "OPENROUTER_FAILED"
-  | "INTERNAL_ERROR";
+/** Dashboard error codes, from the contract (docs/dashboard.md, API routes and errors). */
+export type ErrorCode = z.infer<typeof dashboardErrorCode>;
 
-export class ApiError extends Error {
-  constructor(
-    readonly status: ContentfulStatusCode,
-    readonly code: ErrorCode,
-    message: string,
-    readonly headers: Record<string, string> = {},
-  ) {
-    super(message);
-  }
-}
+/** Compile error when the kit adds a base code the contract's list lacks. */
+type Covered<S extends ErrorCode> = S;
+export type BaseCodesCovered = Covered<BaseErrorCode>;
 
-const body = (code: ErrorCode, message: string) => ({ error: { code, message } });
-
-/** `app.onError`: ApiError as is, anything else → 500 + structured JSON log. */
-export const onError = (err: Error, c: Context) => {
-  if (err instanceof ApiError) {
-    for (const [k, v] of Object.entries(err.headers)) c.header(k, v);
-    return c.json(body(err.code, err.message), err.status);
-  }
-  if (err instanceof HTTPException && err.status < 500) {
-    return c.json(body("BAD_REQUEST", err.message || "Bad request"), err.status);
-  }
-  console.error(
-    JSON.stringify({
-      message: "unhandled error",
-      requestId: c.get("requestId"),
-      error: err.message,
-    }),
-  );
-  return c.json(body("INTERNAL_ERROR", "Internal error"), 500);
-};
+/** An error the dashboard throws with one of its own codes. */
+export class ApiError extends KitApiError<ErrorCode> {}

@@ -31,7 +31,7 @@ describe("Ringkasan", () => {
   it("says when OpenRouter spend is unavailable", async () => {
     server.use(
       http.get(`${API}/overview`, () =>
-        HttpResponse.json({ ...overview, ai: { ...overview.ai, spendUsd: null } }),
+        HttpResponse.json({ ...overview, ai: { ...overview.ai, spend_usd: null } }),
       ),
     );
     renderApp("/");

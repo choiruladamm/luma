@@ -1,0 +1,23 @@
+{
+  "$schema": "./node_modules/.bun/node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "unicorn", "oxc", "import", "promise", "vitest"],
+  "categories": { "correctness": "error", "suspicious": "error", "perf": "error" },
+  "rules": {
+    "no-warning-comments": ["error", { "terms": ["fixme", "hack", "xxx"], "location": "start" }],
+    "no-await-in-loop": "off",
+    "no-console": "error"
+  },
+  "overrides": [
+    {
+      "files": ["test/**"],
+      "rules": {
+        "typescript/no-unsafe-type-assertion": "off",
+        "vitest/valid-expect": ["error", { "maxArgs": 2 }]
+      }
+    },
+    {
+      "files": ["scripts/**", "e2e/**"],
+      "rules": { "no-console": "off" }
+    }
+  ]
+}

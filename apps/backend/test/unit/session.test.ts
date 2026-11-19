@@ -7,8 +7,8 @@ import {
   SESSION_EXPIRES_IN_MS,
   SESSION_UPDATE_AGE_MS,
 } from "../../src/auth/session";
-import { createDb } from "../../src/db/client";
-import { sessions } from "../../src/db/schema";
+import { createDb } from "@luma/core/db/client";
+import { sessions } from "@luma/core/db/schema";
 import { signUp } from "../helpers/auth";
 import { countingD1 } from "../helpers/budget";
 

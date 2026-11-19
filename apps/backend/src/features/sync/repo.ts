@@ -2,7 +2,14 @@
 // Raw SQL, not Drizzle, on purpose: the D1 free limits (50 queries + 100
 // parameters per request) force a 500-record batch through `json_each` in
 // a single statement. Each function = one query-budget unit (see its comment).
+import type { Wire } from "../../env";
 import type { Data, Kind, SyncRecord } from "./merge";
+
+/** The pull keys that differ per API version; fixed strings, so safe inside the SQL text. */
+export const PULL_KEYS = {
+  v1: { updatedAt: "updatedAt", schemaVersion: "schemaVersion", nextSeq: "nextSeq" },
+  v2: { updatedAt: "updated_at", schemaVersion: "schema_version", nextSeq: "next_seq" },
+} as const satisfies Record<Wire, Record<string, string>>;
 
 type Row = {
   kind: Kind;
@@ -104,14 +111,21 @@ export async function writeRecords(
  * built into JSON in SQL (`data` is already JSON), so the Worker doesn't need to
  * `JSON.parse` 500 records (10ms CPU limit). Takes [limit] rows.
  */
-export async function pullRows(d1: D1Database, userId: string, since: number, limit: number) {
+export async function pullRows(
+  d1: D1Database,
+  userId: string,
+  since: number,
+  limit: number,
+  wire: Wire,
+) {
+  const k = PULL_KEYS[wire];
   const { results } = await d1
     .prepare(
       `SELECT seq, json_object(
          'kind', kind, 'key', key,
-         'updatedAt', strftime('%Y-%m-%dT%H:%M:%fZ', updated_at / 1000.0, 'unixepoch'),
+         '${k.updatedAt}', strftime('%Y-%m-%dT%H:%M:%fZ', updated_at / 1000.0, 'unixepoch'),
          'deleted', json(CASE WHEN deleted THEN 'true' ELSE 'false' END),
-         'data', json(data), 'schemaVersion', schema_version, 'seq', seq
+         'data', json(data), '${k.schemaVersion}', schema_version, 'seq', seq
        ) AS j
        FROM records WHERE user_id = ?1 AND seq > ?2 ORDER BY seq LIMIT ?3`,
     )

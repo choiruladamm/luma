@@ -1,0 +1,81 @@
+{
+  "request": {
+    "method": "GET",
+    "path": "/v1/sync/pull?since=0",
+    "headers": {
+      "authorization": "Bearer <token>"
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "records": [
+        {
+          "kind": "book",
+          "key": "3539482a",
+          "updatedAt": "2026-11-13T10:04:05.000Z",
+          "deleted": false,
+          "data": {
+            "sourceType": "epub",
+            "bookKey": null,
+            "hash": "3539482a",
+            "title": "Meditations",
+            "author": "Marcus Aurelius",
+            "fileName": "3539482a.epub",
+            "coverName": "3539482a.jpg",
+            "originalTitle": null,
+            "originalAuthor": null,
+            "useDefaultCover": false,
+            "sourceId": "gutenberg",
+            "externalId": "2680",
+            "parserVersion": 9,
+            "contentRevision": 1,
+            "totalChars": 412000,
+            "createdAt": "2026-11-01T08:00:00.000Z",
+            "lastOpenedAt": "2026-11-13T10:00:00.000Z",
+            "firstOpenedAt": "2026-11-01T08:05:00.000Z",
+            "readingSeconds": 5400,
+            "finishedAt": null
+          },
+          "schemaVersion": 18,
+          "seq": 1
+        },
+        {
+          "kind": "reading_progress",
+          "key": "3539482a",
+          "updatedAt": "2026-11-13T10:04:00.000Z",
+          "deleted": false,
+          "data": {
+            "parserVersion": 9,
+            "chapterSortOrder": 4,
+            "paragraphIndex": 37,
+            "paragraphOffset": 0.25,
+            "updatedAt": "2026-11-13T10:04:00.000Z"
+          },
+          "schemaVersion": 18,
+          "seq": 2
+        },
+        {
+          "kind": "ai_result",
+          "key": "3539482a/4/12",
+          "updatedAt": "2026-11-13T09:58:00.000Z",
+          "deleted": false,
+          "data": {
+            "parserVersion": 9,
+            "translations": "[\"Mulai tiap pagi dengan bilang ke diri sendiri...\"]",
+            "meaning": "Siapin mental buat ketemu orang nyebelin.",
+            "model": "z-ai/glm-5.3-flash",
+            "promptVersion": 3,
+            "createdAt": "2026-11-13T09:58:00.000Z",
+            "openCount": 2,
+            "lastOpenedAt": "2026-11-13T10:01:00.000Z"
+          },
+          "schemaVersion": 18,
+          "seq": 3
+        }
+      ],
+      "nextSeq": 3,
+      "more": false
+    }
+  }
+}

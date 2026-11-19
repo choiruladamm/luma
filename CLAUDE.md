@@ -2,7 +2,7 @@
 
 iOS + Android book reader (EPUB, Markdown, PDF; personal dogfooding app): tap a paragraph → Indonesian translation + meaning from an LLM, without leaving the reading page. Local-first: the on-device Drift DB is the source of truth; the backend only adds accounts, subsidized AI keys, cloud backup, and sync.
 
-Apps: `apps/mobile` (Flutter), `apps/backend` (Cloudflare Worker API), `apps/dashboard` (admin Worker on the backend's D1). Each has its own CLAUDE.md.
+Apps: `apps/mobile` (Flutter), `apps/backend` (Cloudflare Worker API), `apps/dashboard` (admin Worker on the backend's D1). Each has its own CLAUDE.md. The Workers form one bun workspace with shared config at the root (`docs/workers.md`).
 
 ## Sources of truth
 
@@ -12,7 +12,7 @@ Apps: `apps/mobile` (Flutter), `apps/backend` (Cloudflare Worker API), `apps/das
 
 ## Commands
 
-Root `Makefile` (`make help`): mobile targets bare (`make test`), backend `backend-*`, dashboard `dashboard-*`.
+Root `Makefile` (`make help`): mobile targets bare (`make test`), backend `backend-*`, dashboard `dashboard-*`; `make install` installs the JS workspace.
 
 - Run only the checks for what you changed (see each app's CLAUDE.md). Commit only after they exit 0, as its own command, never chained behind `grep` or `;`.
 - The hand-off states which checks ran and whether the full suite was skipped.
@@ -33,7 +33,7 @@ Root `Makefile` (`make help`): mobile targets bare (`make test`), backend `backe
 
 - **Environments:** Luma Dev (`id.ruma.luma.dev`) ↔ backend env `dev` (`luma-api-dev.chrl.cloud`); Luma (`id.ruma.luma`) ↔ env `prod` (`luma-api.chrl.cloud`). Feature PRs merge into `dev`, which auto-deploys env `dev`; release PRs (`dev` → `master`) and hotfix PRs merge into `master`, which auto-deploys `prod` (`docs/operations.md`). Prod mobile builds and manual deploys or migrations come from `master` only.
 - **User data survives every fix:** through Drift migrations on device and D1 migrations on the backend.
-- **API contract:** request/response examples in `apps/backend/test/fixtures/contract/`, tested by both vitest and Dart. An endpoint change updates the fixture, the backend, and the Dart client together.
+- **API contract:** request/response examples in `packages/contracts/fixtures/v1/`, tested by both vitest and Dart, with the zod schemas next to them in `packages/contracts`. An endpoint change updates the fixture, the backend, and the Dart client together.
 - **Cloudflare free tier:** backend code and client code that calls it fit the free tier: no polling, debounce/batch, bounded retries, streamed files. Every change to how the app calls the backend updates the budget table in `docs/budgets.md` (Per-action budgets).
 - **Secrets:** plaintext API keys and tokens live only in `flutter_secure_storage` (device) and `wrangler secret` (backend). Never in the Drift DB, backups, `wrangler.jsonc`, or git. (The backend keeps users' AI keys AES-GCM encrypted in D1.)
 

@@ -31,6 +31,7 @@ export const id = {
     ACCESS_EXPIRED: "Sesi Cloudflare habis. Memuat ulang…",
     FORBIDDEN: "Akun ini bukan admin.",
     NOT_FOUND: "Data tidak ditemukan.",
+    PAYLOAD_TOO_LARGE: "Permintaannya terlalu besar.",
     INVITE_CODE_USED: "Kode undangan sudah dipakai.",
     RATE_LIMITED: "Terlalu banyak permintaan. Coba lagi sebentar.",
     INTERNAL_ERROR: "Ada yang salah di server.",

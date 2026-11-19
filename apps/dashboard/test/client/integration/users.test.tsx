@@ -17,7 +17,7 @@ describe("User", () => {
   it("lists users with status, key, and totals", async () => {
     server.use(
       http.get(`${API}/users`, () =>
-        HttpResponse.json(usersPage([user(1, { banned: true }), user(2, { hasAiKey: true })])),
+        HttpResponse.json(usersPage([user(1, { banned: true }), user(2, { has_ai_key: true })])),
       ),
     );
     renderApp("/users");

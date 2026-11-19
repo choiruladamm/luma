@@ -1,7 +1,7 @@
 import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
 import { createAuth } from "../../src/auth/auth";
-import { normalizeAuthError } from "../../src/features/auth/routes";
+import { normalizeAuthError } from "@luma/worker-kit/errors";
 
 const json = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });

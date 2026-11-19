@@ -1,0 +1,8 @@
+// Not a Worker: `wrangler types` reads this to generate workers-runtime.d.ts, the Workers runtime
+// types every package compiles against. Keep the date and flags equal to apps/backend and
+// apps/dashboard. Regenerate from packages/: bunx wrangler types --include-env=false workers-runtime.d.ts
+{
+  "name": "luma-packages",
+  "compatibility_date": "2026-11-10",
+  "compatibility_flags": ["nodejs_compat"]
+}

@@ -10,7 +10,7 @@ Use this guide for one-time setup. Routine deploys run in GitHub Actions (see [G
 
 ## D1 and R2
 
-1. From the repo root, run `make backend-install` and `make dashboard-install`. Sign Wrangler into the intended Cloudflare account and enable R2 there.
+1. From the repo root, run `make install`. Sign Wrangler into the intended Cloudflare account and enable R2 there.
 2. Create the resources shown in [Environments and bindings](backend.md#environments-and-bindings). For example, from `apps/backend` for dev:
 
    ```sh

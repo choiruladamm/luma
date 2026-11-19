@@ -40,20 +40,22 @@ export const NUMBER_GRID = "grid grid-cols-2 gap-3 md:flex md:flex-wrap md:gap-4
 /** File and sync usage; the share of all files shows only when the overview is already cached. */
 export function UsageCards({ user, totalR2 }: { user: UserDetail; totalR2?: number }) {
   const { t, locale } = useI18n();
-  const share = totalR2 ? (user.r2Bytes / totalR2) * 100 : undefined;
+  const share = totalR2 ? (user.r2_bytes / totalR2) * 100 : undefined;
   return (
     <>
-      <NumberCard title={t.userDetail.bookFiles} value={formatBytes(user.r2Bytes, locale)}>
+      <NumberCard title={t.userDetail.bookFiles} value={formatBytes(user.r2_bytes, locale)}>
         {share !== undefined && (
           <>
             <ProgressBar value={share} label={t.userDetail.shareBar} />
             <span className="text-caption text-ink2">
-              {t.userDetail.share(share < 1 && user.r2Bytes > 0 ? "<1" : String(Math.round(share)))}
+              {t.userDetail.share(
+                share < 1 && user.r2_bytes > 0 ? "<1" : String(Math.round(share)),
+              )}
             </span>
           </>
         )}
       </NumberCard>
-      <NumberCard title={t.users.syncData} value={formatBytes(user.syncBytes, locale)}>
+      <NumberCard title={t.users.syncData} value={formatBytes(user.sync_bytes, locale)}>
         <span className="text-caption text-ink2">{t.userDetail.syncNote}</span>
       </NumberCard>
     </>
@@ -71,7 +73,7 @@ export function AiCard({ ai }: { ai: UserDetail["ai"] }) {
       </NumberCard>
     );
   }
-  const { usageDaily } = ai;
+  const { usage_daily: usageDaily } = ai;
   const value = usageDaily === null ? "—" : formatUsd(usageDaily, locale);
   const note =
     usageDaily === null
@@ -84,7 +86,7 @@ export function AiCard({ ai }: { ai: UserDetail["ai"] }) {
       )}
       <span className="text-caption text-ink2">
         {note}
-        {t.userDetail.aiKeyUntil(formatDate(ai.expiresAt, locale))}
+        {t.userDetail.aiKeyUntil(formatDate(ai.expires_at, locale))}
       </span>
     </NumberCard>
   );
@@ -120,19 +122,22 @@ export function SessionsCard({ sessions }: { sessions: UserDetail["sessions"] })
               className="flex min-h-14 items-center gap-3 rounded-row bg-muted py-2 pr-4 pl-2"
             >
               <span className="flex size-10 flex-none items-center justify-center rounded-tile-lg bg-sheet">
-                <Icon name={s.userAgent?.startsWith("Luma/") ? "phone" : "monitor"} size={20} />
+                <Icon name={s.user_agent?.startsWith("Luma/") ? "phone" : "monitor"} size={20} />
               </span>
               <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                <span className="truncate text-body font-semibold" title={s.userAgent ?? undefined}>
-                  {deviceLabel(s.userAgent, t)}
+                <span
+                  className="truncate text-body font-semibold"
+                  title={s.user_agent ?? undefined}
+                >
+                  {deviceLabel(s.user_agent, t)}
                 </span>
                 <span className="truncate text-caption text-ink2">
-                  {t.userDetail.signedIn(formatDate(s.createdAt, locale))}
-                  {s.ipAddress ? ` · ${s.ipAddress}` : ""}
+                  {t.userDetail.signedIn(formatDate(s.created_at, locale))}
+                  {s.ip_address ? ` · ${s.ip_address}` : ""}
                 </span>
               </span>
               <span className="text-caption whitespace-nowrap text-ink2">
-                {formatRelative(s.updatedAt, i18n)}
+                {formatRelative(s.updated_at, i18n)}
               </span>
             </li>
           ))}

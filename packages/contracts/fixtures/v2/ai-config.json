@@ -1,0 +1,17 @@
+{
+  "request": {
+    "method": "GET",
+    "path": "/v2/ai/config",
+    "headers": {
+      "authorization": "Bearer <token>"
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "chat_models": ["deepseek/deepseek-v4.1-flash", "qwen/qwen3.8-flash", "z-ai/glm-5.3-flash"],
+      "embedding_models": ["qwen/qwen3-embedding-8b", "openai/text-embedding-3-large"],
+      "daily_limit_usd": 0.02
+    }
+  }
+}

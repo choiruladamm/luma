@@ -1,0 +1,24 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "extends": ["../../.oxlintrc.base.json"],
+  "ignorePatterns": ["coverage"],
+  "overrides": [
+    {
+      "files": ["src/testing/**"],
+      "rules": { "typescript/no-unsafe-type-assertion": "off" }
+    }
+  ],
+  "rules": {
+    "no-restricted-imports": [
+      "error",
+      {
+        "patterns": [
+          {
+            "group": ["**/backend/**", "**/dashboard/**", "**/apps/**", "@luma/**"],
+            "message": "The worker kit is domain-free: it imports no Worker and no other @luma package (docs/workers.md, Shared code)."
+          }
+        ]
+      }
+    ]
+  }
+}

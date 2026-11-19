@@ -42,14 +42,14 @@ export function UserProfile({
   const i18n = useI18n();
   const { t, locale } = i18n;
   const facts: [string, React.ReactNode][] = [
-    [t.users.joined, formatDateTime(user.createdAt, locale)],
+    [t.users.joined, formatDateTime(user.created_at, locale)],
     [
       t.users.lastActive,
-      user.lastActiveAt ? (
+      user.last_active_at ? (
         <span className="flex flex-col">
-          {formatRelative(user.lastActiveAt, i18n)}
+          {formatRelative(user.last_active_at, i18n)}
           <span className="text-caption font-normal text-ink2">
-            {formatDateTime(user.lastActiveAt, locale)}
+            {formatDateTime(user.last_active_at, locale)}
           </span>
         </span>
       ) : (
@@ -100,7 +100,7 @@ export function UserProfile({
           <div className="flex flex-wrap items-center gap-2">
             {user.name && <span className="text-body text-ink2">{user.name}</span>}
             <UserStatusChip banned={user.banned} />
-            {user.hasAiKey && <Chip icon="key">{t.userDetail.freeAi}</Chip>}
+            {user.has_ai_key && <Chip icon="key">{t.userDetail.freeAi}</Chip>}
           </div>
         </div>
         <Button variant="secondary" icon="copy" onClick={onCopyEmail} className="max-md:hidden">

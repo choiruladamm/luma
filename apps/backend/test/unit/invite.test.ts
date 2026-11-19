@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { newInviteCode, normalizeInviteCode } from "../../src/auth/invite";
+import { newInviteCode, normalizeInviteCode } from "@luma/core/auth/invite";
 
 describe("normalizeInviteCode", () => {
   it.each([

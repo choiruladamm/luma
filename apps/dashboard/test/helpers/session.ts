@@ -1,8 +1,8 @@
 import { env } from "cloudflare:test";
 import { makeSignature } from "better-auth/crypto";
 import { getAuth } from "../../worker/auth/auth";
-import { createDb } from "@backend/db/client";
-import { accounts, aiKeys, inviteCodes, sessions, userStorage, users } from "@backend/db/schema";
+import { createDb } from "@luma/core/db/client";
+import { accounts, aiKeys, inviteCodes, sessions, userStorage, users } from "@luma/core/db/schema";
 
 export const ADMIN_EMAIL = "admin@luma.test";
 let counter = 0;
