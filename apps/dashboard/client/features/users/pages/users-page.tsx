@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useId, useMemo } from "react";
 import { PageHeader } from "../../../components/layout/page-header";
 import { UpdatedAt } from "../../../components/layout/updated-at";
 import { Button, ButtonLink } from "../../../components/ui/button";
@@ -66,6 +66,7 @@ export function UsersPage() {
   }, [pageCount, params.page, set]);
   const total = overview.data?.users.total;
   const value = form.watch("q");
+  const errorId = useId();
 
   return (
     <>
@@ -106,10 +107,16 @@ export function UsersPage() {
                 value={value}
                 {...form.register("q")}
                 aria-invalid={invalid || undefined}
+                aria-describedby={invalid ? errorId : undefined}
               />
-              {invalid && (
-                <span className="pl-4 text-caption text-danger-ink">{t.users.searchTooLong}</span>
-              )}
+              {/* Always mounted, so screen readers announce the message when it appears. */}
+              <span
+                id={errorId}
+                role="status"
+                className="pl-4 text-caption text-danger-ink empty:hidden"
+              >
+                {invalid ? t.users.searchTooLong : ""}
+              </span>
             </form>
             <UsersFilterSheet params={params} set={set} currentSort={currentSort} />
             <div className="ml-auto max-md:hidden">

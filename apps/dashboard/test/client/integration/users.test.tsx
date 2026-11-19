@@ -70,6 +70,7 @@ describe("User", () => {
     fakeClock();
     await u.paste("a".repeat(101));
     expect(await screen.findByText("Maksimal 100 karakter")).toBeInTheDocument();
+    expect(box).toHaveAccessibleDescription("Maksimal 100 karakter");
     await elapse(400);
     expect(queries.every((q) => !q.includes("aaaa"))).toBe(true);
   });
@@ -132,7 +133,17 @@ describe("User", () => {
     const { user: u, router } = renderApp("/users?page=2");
     await screen.findByRole("table", { name: "Daftar user" });
 
-    await u.click(screen.getByRole("button", { name: /^Filter$/, expanded: false }));
+    const filter = screen.getByRole("button", { name: /^Filter$/, expanded: false });
+    await u.click(filter);
+    const status = within(screen.getByRole("dialog", { name: "Filter user" })).getByRole("button", {
+      name: /^Status:/,
+    });
+    // Opening moves focus into the panel; Esc closes it back to the Filter button.
+    expect(status).toHaveFocus();
+    await u.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog", { name: "Filter user" })).toBeNull();
+    expect(filter).toHaveFocus();
+    await u.click(filter);
     await u.click(
       within(screen.getByRole("dialog", { name: "Filter user" })).getByRole("button", {
         name: /^Status:/,

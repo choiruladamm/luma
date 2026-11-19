@@ -15,6 +15,7 @@ import { useDebounce } from "../../../hooks/use-debounce";
 import { getI18n, useI18n } from "../../../i18n";
 import { errorText } from "../../../lib/api-error";
 import { cn } from "../../../lib/cn";
+import { rovingKeyDown } from "../../../lib/roving";
 import { toast } from "../../../stores/toast-store";
 import type { InviteItem } from "../api/invites-api";
 import { type InviteSort, useInvitesParams } from "../hooks/use-invites-params";
@@ -63,7 +64,9 @@ function StatusTabs({
           type="button"
           role="tab"
           aria-selected={tab === value}
+          tabIndex={tab === value ? 0 : -1}
           onClick={() => onChange(tab)}
+          onKeyDown={(e) => rovingKeyDown(e, i, tabs.length, (next) => onChange(tabs[next]!))}
           className={cn(
             "inline-flex h-12 items-center gap-2 rounded-t-[12px] px-3 text-body transition-colors hover:bg-muted/60",
             tab === value ? "font-semibold text-ink" : "font-medium text-ink2",

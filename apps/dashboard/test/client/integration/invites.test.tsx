@@ -42,6 +42,9 @@ describe("Undangan", () => {
       "/users/u1",
     );
     expect(statuses).toEqual([null, "used"]);
+    // Arrow keys move along the tabs and pick the status.
+    await user.keyboard("{ArrowLeft}");
+    await waitFor(() => expect(statuses.at(-1)).toBe("unused"));
   });
 
   it("creates a code, shows the ticket, and copies it", async () => {
