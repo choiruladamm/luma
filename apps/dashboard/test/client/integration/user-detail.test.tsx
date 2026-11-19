@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from "@testing-library/react";
+import { act, screen, waitFor, within } from "@testing-library/react";
 import { HttpResponse, http } from "msw";
 import { describe, expect, it, vi } from "vitest";
 import { overview, userDetail } from "../helpers/fixtures";
@@ -187,5 +187,37 @@ describe("Detail user", () => {
       await screen.findByRole("heading", { name: /^sekar\.ayu\s?@gmail\.com$/ }),
     ).toBeInTheDocument();
     expect(screen.queryByRole("alert")).toBeNull();
+  });
+
+  describe("a refresh over cached detail", () => {
+    const failNextLoads = (fail: () => Response | undefined) =>
+      server.use(http.get(`${API}/users/:id`, () => fail() ?? HttpResponse.json(userDetail())));
+
+    it("keeps the profile and toasts a server failure", async () => {
+      let failing = false;
+      failNextLoads(() => (failing ? apiError(429, "RATE_LIMITED") : undefined));
+      const { queryClient } = renderApp("/users/u1");
+      await screen.findByRole("heading", { name: /^sekar\.ayu\s?@gmail\.com$/ });
+      failing = true;
+      await act(() => queryClient.refetchQueries());
+      expect(await screen.findByRole("alert")).toHaveTextContent(
+        "Terlalu banyak permintaan. Coba lagi sebentar.",
+      );
+      expect(
+        screen.getByRole("heading", { name: /^sekar\.ayu\s?@gmail\.com$/ }),
+      ).toBeInTheDocument();
+      expect(screen.queryByText("Data gagal dimuat")).toBeNull();
+    });
+
+    it("switches to not-found when the user is gone", async () => {
+      let gone = false;
+      failNextLoads(() => (gone ? apiError(404, "NOT_FOUND") : undefined));
+      const { queryClient } = renderApp("/users/u1");
+      await screen.findByRole("heading", { name: /^sekar\.ayu\s?@gmail\.com$/ });
+      gone = true;
+      await act(() => queryClient.refetchQueries());
+      expect(await screen.findByText("User gak ditemukan")).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Ban user" })).toBeNull();
+    });
   });
 });
