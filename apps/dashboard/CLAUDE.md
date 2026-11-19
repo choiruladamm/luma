@@ -6,6 +6,7 @@ Admin-only Worker `luma-admin-{env}`: Hono API under `/api` on the same D1 as th
 
 - `make dashboard-test` (oxlint + Prettier check, tsc for worker + client, vitest) is the check for this app; `bun run format` fixes formatting. `make dashboard-e2e` runs Playwright against a local `e2e` env with its own seeded D1; it never touches a remote database.
 - The Cloudflare env is picked by `CLOUDFLARE_ENV` at dev/build time; deploy is `make dashboard-deploy e=<env>` (flattened `dist/` config), never `wrangler deploy --env`. `wrangler secret put --env <env>` works as usual.
+- Checking `luma-admin-dev` in a browser without Google: `make dashboard-dev-session` (needs `.dev.vars.remote-dev`), then `agent-browser --headers "$(cat .wrangler/dev-session/headers.json)" open <url>` and `agent-browser cookies set --curl .wrangler/dev-session/cookies.json`. Setup: `docs/dashboard.md` (Access and sessions and request guards).
 - After editing `wrangler.jsonc`: `bunx wrangler types --env dev --strict-vars false` from `apps/dashboard` (needs `.dev.vars` so secrets get typed).
 - Backend vars (switches, OpenRouter workspace, AI budget) come from `apps/backend/wrangler.jsonc` via `backend-vars.ts`; keep them out of this `wrangler.jsonc`.
 

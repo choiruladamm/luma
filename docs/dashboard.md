@@ -18,6 +18,8 @@ Cloudflare Access protects the deployed custom domains. The dashboard also uses 
 
 Sessions expire after seven idle days, sliding at most once per day while used, with a 30-day absolute cap from creation. The login screen copy still says 12 hours (#231). `trustedOrigins` contains `BETTER_AUTH_URL`, including localhost when configured.
 
+Agents reach the dev domain without Google. Access on the dev app (never prod) also admits the service token `luma-admin-dev-qa`, which expires 2027-11-19. `make dashboard-dev-session` inserts a 1-day session for one dev admin straight into the dev D1, signed with the dev `BETTER_AUTH_SECRET`. These sessions carry the user agent `dev-session`, and each run deletes the expired ones. The token, the secret, and the admin email live only in the gitignored `apps/dashboard/.dev.vars.remote-dev`; rotating the dev secret means updating that file too.
+
 `securityHeaders` wraps the chain first, followed by request ID and per-IP rate limiting. The allowlisted auth routes are `GET /api/auth/get-session`, `POST /api/auth/sign-in/social`, `GET /api/auth/callback/google`, and `POST /api/auth/sign-out`; they go to Better Auth; other `/api/auth/*` routes return 404. Protected API routes then require an admin session, require `application/json` and the configured origin on mutations (otherwise 403), and apply per-admin mutation limits. Successful admin mutations are audited in Workers Logs; invite creation logs only the count, never the usable codes. Worker responses and static assets carry CSP and `nosniff` headers.
 
 ## API routes and errors
