@@ -1,6 +1,7 @@
 import { act, screen, waitFor, within } from "@testing-library/react";
 import { delay, HttpResponse, http } from "msw";
 import { describe, expect, it } from "vitest";
+import { elapse, fakeClock } from "../helpers/clock";
 import { user, usersPage } from "../helpers/fixtures";
 import { API, apiError } from "../helpers/handlers";
 import { renderApp } from "../helpers/render";
@@ -66,9 +67,10 @@ describe("User", () => {
     await screen.findByRole("table", { name: "Daftar user" });
     const box = screen.getByRole("searchbox", { name: "Cari email" });
     await u.click(box);
+    fakeClock();
     await u.paste("a".repeat(101));
     expect(await screen.findByText("Maksimal 100 karakter")).toBeInTheDocument();
-    await new Promise((r) => setTimeout(r, 400));
+    await elapse(400);
     expect(queries.every((q) => !q.includes("aaaa"))).toBe(true);
   });
 

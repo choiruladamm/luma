@@ -1,6 +1,7 @@
 import { act, screen, waitFor, within } from "@testing-library/react";
 import { HttpResponse, http } from "msw";
 import { describe, expect, it } from "vitest";
+import { elapse, fakeClock } from "../helpers/clock";
 import { invites, invitesPage } from "../helpers/fixtures";
 import { API, apiError } from "../helpers/handlers";
 import { renderApp } from "../helpers/render";
@@ -171,11 +172,12 @@ describe("Undangan", () => {
     await user.type(box, "eeeee");
     await waitFor(() => expect(router.state.location.search).toBe("?q=eeeee"));
 
+    fakeClock();
     await user.type(box, "zzz");
     await act(() => router.navigate("/invites?q=aaaaa"));
     await waitFor(() => expect(box).toHaveValue("aaaaa"));
     // Past the 300ms debounce: the dropped "eeeeezzz" draft never reaches the URL.
-    await new Promise((r) => setTimeout(r, 400));
+    await elapse(400);
     expect(router.state.location.search).toBe("?q=aaaaa");
     expect(box).toHaveValue("aaaaa");
 

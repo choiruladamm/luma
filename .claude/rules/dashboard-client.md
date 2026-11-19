@@ -33,6 +33,7 @@ Copy lives in `client/i18n/id.ts` (source; its shape is the `Messages` type) and
 ## Client tests
 
 - `unit/` covers `lib`, stores, hooks, `components/ui`; `integration/` per feature renders the whole app (`helpers/render.tsx`: memory router over the real routes, preloads lazy chunks) with the API mocked by MSW (`helpers/handlers.ts`). Unhandled requests fail the test. Loaders do nothing in tests (no query client registered).
+- "Nothing happens" checks (no request after a debounce or refocus) jump the clock with `fakeClock()` + `elapse(ms)` from `helpers/clock.ts`, never a real sleep; count requests with `recordRequests()`, which removes its own listener.
 - user-event stubs the clipboard: read it back with `navigator.clipboard.readText()`.
 - The phone tab bar is always in the DOM (CSS hides it on desktop), so a count can appear twice: wait on the stat card (`within(region).findByText`), not the bare text.
 - `setup.ts` pins the language to `id`, so assertions use Indonesian copy; English is covered by `unit/i18n.test.ts` and the language switch test.
