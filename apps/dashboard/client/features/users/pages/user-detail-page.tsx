@@ -64,11 +64,10 @@ export function UserDetailPage() {
     </nav>
   );
 
-  if (user.isError) {
-    const missing = user.error instanceof ApiError && user.error.code === "NOT_FOUND";
-    return (
-      <>
-        {crumb}
+  const renderBody = () => {
+    if (user.isError) {
+      const missing = user.error instanceof ApiError && user.error.code === "NOT_FOUND";
+      return (
         <section className="rounded-card bg-sheet">
           {missing ? (
             <EmptyState
@@ -86,62 +85,61 @@ export function UserDetailPage() {
             <ErrorState message={errorText(user.error, t)} onRetry={() => void user.refetch()} />
           )}
         </section>
-      </>
-    );
-  }
+      );
+    }
 
-  if (!user.data) {
+    if (!user.data) return <UserDetailSkeleton />;
+
+    const data = user.data;
     return (
       <>
-        {crumb}
-        <UserDetailSkeleton />
+        <UserProfile
+          user={data}
+          unbanning={unban.isPending}
+          onUnban={doUnban}
+          onCopyEmail={() =>
+            copy(data.email).then(
+              () => toast(getI18n().t.userDetail.emailCopied),
+              () => toast(getI18n().t.userDetail.emailCopyFailed, { tone: "error" }),
+            )
+          }
+        />
+        <div className={NUMBER_GRID}>
+          <UsageCards user={data} totalR2={overview.data?.storage.r2Bytes} />
+          <AiCard ai={data.ai} />
+        </div>
+        <SessionsCard sessions={data.sessions} />
+        {!data.banned && (
+          <section
+            aria-labelledby="h-ban"
+            className="flex flex-wrap items-center justify-between gap-4 rounded-card bg-sheet p-6"
+          >
+            <div className="flex max-w-[640px] flex-col gap-1">
+              <h2 id="h-ban" className="m-0 text-card font-semibold">
+                {t.userDetail.banTitle}
+              </h2>
+              <span className="text-body text-ink2">{t.userDetail.banBody}</span>
+            </div>
+            <Button variant="danger-soft" icon="ban" onClick={() => setConfirming(true)}>
+              {t.userDetail.ban}
+            </Button>
+          </section>
+        )}
+        <BanDialog
+          user={data}
+          open={confirming}
+          onClose={() => setConfirming(false)}
+          onConfirm={doBan}
+          pending={ban.isPending}
+        />
       </>
     );
-  }
+  };
 
-  const data = user.data;
   return (
     <>
       {crumb}
-      <UserProfile
-        user={data}
-        unbanning={unban.isPending}
-        onUnban={doUnban}
-        onCopyEmail={() =>
-          copy(data.email).then(
-            () => toast(getI18n().t.userDetail.emailCopied),
-            () => toast(getI18n().t.userDetail.emailCopyFailed, { tone: "error" }),
-          )
-        }
-      />
-      <div className={NUMBER_GRID}>
-        <UsageCards user={data} totalR2={overview.data?.storage.r2Bytes} />
-        <AiCard ai={data.ai} />
-      </div>
-      <SessionsCard sessions={data.sessions} />
-      {!data.banned && (
-        <section
-          aria-labelledby="h-ban"
-          className="flex flex-wrap items-center justify-between gap-4 rounded-card bg-sheet p-6"
-        >
-          <div className="flex max-w-[640px] flex-col gap-1">
-            <h2 id="h-ban" className="m-0 text-card font-semibold">
-              {t.userDetail.banTitle}
-            </h2>
-            <span className="text-body text-ink2">{t.userDetail.banBody}</span>
-          </div>
-          <Button variant="danger-soft" icon="ban" onClick={() => setConfirming(true)}>
-            {t.userDetail.ban}
-          </Button>
-        </section>
-      )}
-      <BanDialog
-        user={data}
-        open={confirming}
-        onClose={() => setConfirming(false)}
-        onConfirm={doBan}
-        pending={ban.isPending}
-      />
+      {renderBody()}
     </>
   );
 }
