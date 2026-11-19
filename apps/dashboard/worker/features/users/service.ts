@@ -1,5 +1,5 @@
-import type { OpenRouterAdmin } from "../../../../backend/src/clients/openrouter";
-import type { Db } from "../../../../backend/src/db/client";
+import type { OpenRouterAdmin } from "@backend/clients/openrouter";
+import type { Db } from "@backend/db/client";
 import { ApiError } from "../../lib/errors";
 import {
   banUser,

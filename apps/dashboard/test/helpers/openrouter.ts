@@ -1,5 +1,5 @@
 import { HttpResponse, http } from "msw";
-import { OPENROUTER_API } from "../../../backend/src/clients/openrouter";
+import { OPENROUTER_API } from "@backend/clients/openrouter";
 import { network } from "../setup";
 
 /**

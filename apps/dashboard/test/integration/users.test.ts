@@ -1,9 +1,9 @@
 import { env } from "cloudflare:test";
 import { eq } from "drizzle-orm";
 import { describe, expect, it, vi } from "vitest";
-import { findUserKey } from "../../../backend/src/features/ai-key/repo";
-import { createDb } from "../../../backend/src/db/client";
-import { aiKeys, sessions, users } from "../../../backend/src/db/schema";
+import { findUserKey } from "@backend/features/ai-key/repo";
+import { createDb } from "@backend/db/client";
+import { aiKeys, sessions, users } from "@backend/db/schema";
 import { call, errorCode, ORIGIN } from "../helpers/app";
 import { fakeOpenRouter } from "../helpers/openrouter";
 import {

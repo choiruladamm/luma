@@ -1,5 +1,5 @@
 import { createFactory } from "hono/factory";
-import type { Db } from "../../backend/src/db/client";
+import type { Db } from "@backend/db/client";
 
 export type Admin = { id: string; email: string };
 

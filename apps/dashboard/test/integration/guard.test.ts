@@ -1,6 +1,6 @@
 import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
-import { createDb } from "../../../backend/src/db/client";
+import { createDb } from "@backend/db/client";
 import { getAuth } from "../../worker/auth/auth";
 import {
   SESSION_MAX_AGE_MS,

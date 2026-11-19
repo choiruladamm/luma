@@ -1,7 +1,7 @@
 // Every D1 query of the invites feature. Each function is one query-budget unit.
 import { and, asc, count, desc, eq, gte, isNotNull, isNull, or, sql } from "drizzle-orm";
-import type { Db } from "../../../../backend/src/db/client";
-import { inviteCodes, users } from "../../../../backend/src/db/schema";
+import type { Db } from "@backend/db/client";
+import { inviteCodes, users } from "@backend/db/schema";
 
 export type InviteListQuery = {
   status?: "unused" | "used";

@@ -1,5 +1,5 @@
 import { getSignedCookie } from "hono/cookie";
-import { createDb } from "../../backend/src/db/client";
+import { createDb } from "@backend/db/client";
 import { getAuth } from "./auth/auth";
 import { endSessionIfPastMaxAge, sessionCookieName } from "./auth/session";
 import { factory } from "./env";

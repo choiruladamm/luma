@@ -1,5 +1,5 @@
-import { newInviteCode, normalizeInviteCode } from "../../../../backend/src/auth/invite";
-import type { Db } from "../../../../backend/src/db/client";
+import { newInviteCode, normalizeInviteCode } from "@backend/auth/invite";
+import type { Db } from "@backend/db/client";
 import { ApiError } from "../../lib/errors";
 import {
   deleteUnusedInvite,

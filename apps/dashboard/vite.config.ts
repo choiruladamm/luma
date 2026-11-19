@@ -6,6 +6,7 @@ import { backendVars } from "./backend-vars.ts";
 
 // The Cloudflare env (dev/prod in wrangler.jsonc) is picked by CLOUDFLARE_ENV at dev and build time.
 export default defineConfig({
+  resolve: { alias: { "@backend": new URL("../backend/src", import.meta.url).pathname } },
   plugins: [
     react(),
     tailwindcss(),
