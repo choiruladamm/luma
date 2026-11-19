@@ -1,8 +1,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useCallback, useEffect } from "react";
+import { useForm, useWatch } from "react-hook-form";
 import { useSearchParams } from "react-router";
 import { useDebounce } from "../../../hooks/use-debounce";
+import { useSearchWriter } from "../../../hooks/use-search-writer";
 import { type UserSearch, userSearchSchema } from "../schemas/user-search-schema";
 
 /**
@@ -10,14 +11,15 @@ import { type UserSearch, userSearchSchema } from "../schemas/user-search-schema
  * kept in the URL (?q=), so a search survives reload/back and fires one request per pause.
  */
 export function useUserSearch() {
-  const [params, setParams] = useSearchParams();
+  const [params] = useSearchParams();
+  const write = useSearchWriter();
   const q = params.get("q") ?? "";
   const form = useForm<UserSearch>({
     resolver: zodResolver(userSearchSchema),
     defaultValues: { q },
     mode: "onChange",
   });
-  const typed = form.watch("q");
+  const typed = useWatch({ control: form.control, name: "q" });
   const debounced = useDebounce(typed.trim(), 300);
   const invalid = form.formState.errors.q !== undefined;
 
@@ -27,24 +29,26 @@ export function useUserSearch() {
   }, [q, form]);
 
   // A new search keeps the filters and sort but goes back to page 1.
-  const writeQ = (value: string) =>
-    setParams(
-      (prev) => {
-        const next = new URLSearchParams(prev);
-        if (value) next.set("q", value);
-        else next.delete("q");
-        next.delete("page");
-        return next;
-      },
-      { replace: true },
-    );
+  const writeQ = useCallback(
+    (value: string) =>
+      write(
+        (prev) => {
+          if (value) prev.set("q", value);
+          else prev.delete("q");
+          prev.delete("page");
+          return prev;
+        },
+        { replace: true },
+      ),
+    [write],
+  );
 
   useEffect(() => {
     // Only a settled value goes to the URL: right after "clear" the debounced value is still the
     // old text, and writing it back would refill the field.
     if (invalid || debounced !== typed.trim() || debounced === q) return;
     writeQ(debounced);
-  }, [debounced, typed, invalid, q, setParams]);
+  }, [debounced, typed, invalid, q, writeQ]);
 
   const clear = () => {
     form.setValue("q", "");

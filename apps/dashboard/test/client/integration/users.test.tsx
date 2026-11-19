@@ -1,6 +1,7 @@
-import { screen, waitFor, within } from "@testing-library/react";
-import { HttpResponse, http } from "msw";
+import { act, screen, waitFor, within } from "@testing-library/react";
+import { delay, HttpResponse, http } from "msw";
 import { describe, expect, it } from "vitest";
+import { elapse, fakeClock } from "../helpers/clock";
 import { user, usersPage } from "../helpers/fixtures";
 import { API, apiError } from "../helpers/handlers";
 import { renderApp } from "../helpers/render";
@@ -66,9 +67,11 @@ describe("User", () => {
     await screen.findByRole("table", { name: "Daftar user" });
     const box = screen.getByRole("searchbox", { name: "Cari email" });
     await u.click(box);
+    fakeClock();
     await u.paste("a".repeat(101));
     expect(await screen.findByText("Maksimal 100 karakter")).toBeInTheDocument();
-    await new Promise((r) => setTimeout(r, 400));
+    expect(box).toHaveAccessibleDescription("Maksimal 100 karakter");
+    await elapse(400);
     expect(queries.every((q) => !q.includes("aaaa"))).toBe(true);
   });
 
@@ -98,6 +101,24 @@ describe("User", () => {
     expect(pages).toEqual(["1", "3"]);
   });
 
+  it("keeps a requested page while its answer loads, even if the previous query had fewer pages", async () => {
+    server.use(
+      http.get(`${API}/users`, async ({ request }) => {
+        const p = new URL(request.url).searchParams;
+        if (p.get("status") === "banned") return HttpResponse.json(usersPage([user(9)]));
+        await delay(100);
+        const page = Number(p.get("page") ?? "1");
+        return HttpResponse.json(usersPage([user(page)], { total: 101, page }));
+      }),
+    );
+    const { router } = renderApp("/users?status=banned");
+    expect(await screen.findByRole("link", { name: /user9@luma.test/ })).toBeInTheDocument();
+    // One page of banned users is still on screen (placeholder) while page 3 loads.
+    await act(() => router.navigate("/users?page=3"));
+    expect(await screen.findByRole("link", { name: /user3@luma.test/ })).toBeInTheDocument();
+    expect(router.state.location.search).toBe("?page=3");
+  });
+
   it("filters and sorts through the URL; a change goes back to page 1", async () => {
     const urls: URLSearchParams[] = [];
     server.use(
@@ -112,7 +133,17 @@ describe("User", () => {
     const { user: u, router } = renderApp("/users?page=2");
     await screen.findByRole("table", { name: "Daftar user" });
 
-    await u.click(screen.getByRole("button", { name: /^Filter$/, expanded: false }));
+    const filter = screen.getByRole("button", { name: /^Filter$/, expanded: false });
+    await u.click(filter);
+    const status = within(screen.getByRole("dialog", { name: "Filter user" })).getByRole("button", {
+      name: /^Status:/,
+    });
+    // Opening moves focus into the panel; Esc closes it back to the Filter button.
+    expect(status).toHaveFocus();
+    await u.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog", { name: "Filter user" })).toBeNull();
+    expect(filter).toHaveFocus();
+    await u.click(filter);
     await u.click(
       within(screen.getByRole("dialog", { name: "Filter user" })).getByRole("button", {
         name: /^Status:/,

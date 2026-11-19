@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { PageHeader } from "../../../components/layout/page-header";
 import { UpdatedAt } from "../../../components/layout/updated-at";
 import { Button, IconButton } from "../../../components/ui/button";
@@ -15,6 +15,7 @@ import { useDebounce } from "../../../hooks/use-debounce";
 import { getI18n, useI18n } from "../../../i18n";
 import { errorText } from "../../../lib/api-error";
 import { cn } from "../../../lib/cn";
+import { rovingKeyDown } from "../../../lib/roving";
 import { toast } from "../../../stores/toast-store";
 import type { InviteItem } from "../api/invites-api";
 import { type InviteSort, useInvitesParams } from "../hooks/use-invites-params";
@@ -63,7 +64,9 @@ function StatusTabs({
           type="button"
           role="tab"
           aria-selected={tab === value}
+          tabIndex={tab === value ? 0 : -1}
           onClick={() => onChange(tab)}
+          onKeyDown={(e) => rovingKeyDown(e, i, tabs.length, (next) => onChange(tabs[next]!))}
           className={cn(
             "inline-flex h-12 items-center gap-2 rounded-t-[12px] px-3 text-body transition-colors hover:bg-muted/60",
             tab === value ? "font-semibold text-ink" : "font-medium text-ink2",
@@ -101,10 +104,19 @@ export function InvitesPage() {
 
   // The field updates at once; the URL (and the request) only after a 300ms pause.
   const [search, setSearch] = useState(params.q);
+  // Back/forward or a link changed ?q=: the field follows the URL, dropping any unsent draft.
+  const [shownQ, setShownQ] = useState(params.q);
+  if (shownQ !== params.q) {
+    setShownQ(params.q);
+    if (search.trim() !== params.q) setSearch(params.q);
+  }
   const settled = useDebounce(search.trim(), 300);
   useEffect(() => {
-    if (settled !== params.q) set({ q: settled });
-  }, [settled]);
+    // Only a settled draft goes to the URL: a debounce still holding text from before a navigation
+    // no longer matches the field, so it can't overwrite where the admin went.
+    if (settled !== search.trim() || settled === params.q) return;
+    set({ q: settled });
+  }, [settled, search, params.q, set]);
 
   const data = invites.data;
   const rows = data?.items ?? [];
@@ -129,15 +141,20 @@ export function InvitesPage() {
   ];
 
   // A page past the end (codes deleted, a stale link) lands on the last page instead.
+  // Placeholder data is the previous query's page count, not this one's.
+  const pageCount = invites.isPlaceholderData ? undefined : data?.pageCount;
   useEffect(() => {
-    if (data && params.page > data.pageCount) set({ page: data.pageCount });
-  }, [data?.pageCount, params.page]);
+    if (pageCount !== undefined && params.page > pageCount) set({ page: pageCount });
+  }, [pageCount, params.page, set]);
 
-  const copyCode = (code: string) =>
-    copy(code).then(
-      () => toast(getI18n().t.invites.copied(code)),
-      () => toast(getI18n().t.invites.copyFailed, { tone: "error" }),
-    );
+  const copyCode = useCallback(
+    (code: string) =>
+      copy(code).then(
+        () => toast(getI18n().t.invites.copied(code)),
+        () => toast(getI18n().t.invites.copyFailed, { tone: "error" }),
+      ),
+    [copy],
+  );
   const makeCode = () =>
     create.mutate(1, {
       onSuccess: (res) => setCreated({ code: res.codes[0]!, at: res.createdAt }),
@@ -155,26 +172,27 @@ export function InvitesPage() {
       },
     });
 
-  const actions = (invite: InviteItem) => (
-    <span className="flex justify-end gap-1.5">
-      <IconButton
-        icon="copy"
-        label={t.invites.copyCode(invite.code)}
-        onClick={() => void copyCode(invite.code)}
-      />
-      {!invite.usedAt && (
+  const actions = useCallback(
+    (invite: InviteItem) => (
+      <span className="flex justify-end gap-1.5">
         <IconButton
-          icon="x"
-          label={t.invites.deleteCode(invite.code)}
-          variant="danger-soft"
-          onClick={() => setDeleting(invite.code)}
+          icon="copy"
+          label={t.invites.copyCode(invite.code)}
+          onClick={() => void copyCode(invite.code)}
         />
-      )}
-    </span>
+        {!invite.usedAt && (
+          <IconButton
+            icon="x"
+            label={t.invites.deleteCode(invite.code)}
+            variant="danger-soft"
+            onClick={() => setDeleting(invite.code)}
+          />
+        )}
+      </span>
+    ),
+    [copyCode, t],
   );
-  // `actions` only closes over stable setters and the clipboard hook.
-  // `actions` reads `t`, so the columns follow the language too.
-  const columns = useMemo(() => inviteColumns(i18n, actions), [copy, i18n]);
+  const columns = useMemo(() => inviteColumns(i18n, actions), [i18n, actions]);
 
   return (
     <>

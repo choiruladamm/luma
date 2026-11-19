@@ -1,8 +1,10 @@
-import { act, renderHook } from "@testing-library/react";
+import { act, render, renderHook } from "@testing-library/react";
+import { createMemoryRouter, RouterProvider, useLocation } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { useCopyToClipboard } from "../../../client/hooks/use-copy-to-clipboard";
 import { useDebounce } from "../../../client/hooks/use-debounce";
 import { useMediaQuery } from "../../../client/hooks/use-media-query";
+import { useSearchWriter } from "../../../client/hooks/use-search-writer";
 
 afterEach(() => vi.useRealTimers());
 
@@ -64,5 +66,35 @@ describe("useMediaQuery", () => {
     matches = true;
     act(() => listeners.forEach((l) => l()));
     expect(result.current).toBe(true);
+  });
+});
+
+describe("useSearchWriter", () => {
+  const mount = () => {
+    const seen: { search: string; write: ReturnType<typeof useSearchWriter> }[] = [];
+    function Probe() {
+      seen.push({ search: useLocation().search, write: useSearchWriter() });
+      return null;
+    }
+    const router = createMemoryRouter([{ path: "/", Component: Probe }], {
+      initialEntries: ["/?a=1"],
+    });
+    render(<RouterProvider router={router} />);
+    return seen;
+  };
+  const patch = (key: string, value: string) => (prev: URLSearchParams) => (
+    prev.set(key, value),
+    prev
+  );
+
+  it("keeps two writes in one tick and stays the same function across URL changes", async () => {
+    const seen = mount();
+    const { write } = seen.at(-1)!;
+    await act(async () => {
+      write(patch("b", "2"));
+      write(patch("c", "3"));
+    });
+    expect(seen.at(-1)!.search).toBe("?a=1&b=2&c=3");
+    expect(seen.at(-1)!.write).toBe(write);
   });
 });

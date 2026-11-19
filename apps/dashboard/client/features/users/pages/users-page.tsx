@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useId, useMemo } from "react";
 import { PageHeader } from "../../../components/layout/page-header";
 import { UpdatedAt } from "../../../components/layout/updated-at";
 import { Button, ButtonLink } from "../../../components/ui/button";
@@ -46,7 +46,8 @@ export function UsersPage() {
   const { t, locale } = i18n;
   const columns = useMemo(() => userColumns(i18n, q), [i18n, q]);
   const rows = users.data?.items ?? [];
-  const pageCount = users.data?.pageCount;
+  // Placeholder data is the previous query's page count, not this one's.
+  const pageCount = users.isPlaceholderData ? undefined : users.data?.pageCount;
   const filtered = activeFilterCount(params) > 0;
   const currentSort: UserSort =
     params.sort && (params.sort !== "relevance" || q) ? params.sort : q ? "relevance" : "created";
@@ -62,9 +63,10 @@ export function UsersPage() {
   // A page past the end (rows deleted, a stale link) lands on the last page instead.
   useEffect(() => {
     if (pageCount !== undefined && params.page > pageCount) set({ page: pageCount });
-  }, [pageCount, params.page]);
+  }, [pageCount, params.page, set]);
   const total = overview.data?.users.total;
   const value = form.watch("q");
+  const errorId = useId();
 
   return (
     <>
@@ -102,10 +104,16 @@ export function UsersPage() {
                 value={value}
                 {...form.register("q")}
                 aria-invalid={invalid || undefined}
+                aria-describedby={invalid ? errorId : undefined}
               />
-              {invalid && (
-                <span className="pl-4 text-caption text-danger-ink">{t.users.searchTooLong}</span>
-              )}
+              {/* Always mounted, so screen readers announce the message when it appears. */}
+              <span
+                id={errorId}
+                role="status"
+                className="pl-4 text-caption text-danger-ink empty:hidden"
+              >
+                {invalid ? t.users.searchTooLong : ""}
+              </span>
             </form>
             <UsersFilterSheet params={params} set={set} currentSort={currentSort} />
             <div className="ml-auto max-md:hidden">

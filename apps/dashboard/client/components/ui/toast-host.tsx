@@ -9,7 +9,8 @@ import { Icon } from "./icons";
  * action), pauses on hover; errors stay until closed.
  */
 export function ToastHost() {
-  const { toast, dismiss } = useToastStore();
+  const toast = useToastStore((s) => s.toast);
+  const dismiss = useToastStore((s) => s.dismiss);
   const [hovered, setHovered] = useState(false);
   const { t } = useI18n();
 

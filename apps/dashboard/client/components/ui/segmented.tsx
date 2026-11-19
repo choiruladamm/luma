@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { useSlidingPill } from "../../hooks/use-sliding-pill";
 import { cn } from "../../lib/cn";
+import { rovingKeyDown } from "../../lib/roving";
 
 // `count` may be a skeleton while the list loads, so the tabs keep their width.
 type Option<T extends string> = { value: T; label: ReactNode; count?: ReactNode };
@@ -71,7 +72,12 @@ export function Segmented<T extends string>({
             role={kind === "tabs" ? "tab" : "radio"}
             aria-selected={kind === "tabs" ? on : undefined}
             aria-checked={kind === "radio" ? on : undefined}
+            // No selection yet (-1): the first option takes the tab stop.
+            tabIndex={on || (active < 0 && i === 0) ? 0 : -1}
             onClick={() => onChange(o.value)}
+            onKeyDown={(e) =>
+              rovingKeyDown(e, i, options.length, (next) => onChange(options[next]!.value))
+            }
             className={cn(
               "relative z-10 inline-flex h-10 items-center justify-center rounded-[20px] text-ink whitespace-nowrap",
               stretch === true

@@ -128,6 +128,29 @@ describe("Segmented", () => {
     expect(onChange).toHaveBeenCalledWith("used");
   });
 
+  it("Tab enters at the selected option; arrows select and move focus, wrapping", async () => {
+    const onChange = vi.fn<() => void>();
+    render(
+      <Segmented
+        label="Saring kode"
+        value="used"
+        onChange={onChange}
+        options={[
+          { value: "all", label: "Semua" },
+          { value: "unused", label: "Belum dipakai" },
+          { value: "used", label: "Udah dipakai" },
+        ]}
+      />,
+    );
+    await userEvent.tab();
+    expect(screen.getByRole("tab", { name: "Udah dipakai" })).toHaveFocus();
+    await userEvent.keyboard("{ArrowRight}");
+    expect(onChange).toHaveBeenLastCalledWith("all");
+    expect(screen.getByRole("tab", { name: "Semua" })).toHaveFocus();
+    await userEvent.keyboard("{End}");
+    expect(onChange).toHaveBeenLastCalledWith("used");
+  });
+
   it("uses radio semantics for settings", () => {
     render(
       <Segmented
@@ -267,13 +290,42 @@ describe("Select", () => {
     const trigger = screen.getByRole("button", { name: "Status: Semua" });
     trigger.focus();
     await userEvent.keyboard("{ArrowDown}");
-    expect(screen.getByRole("option", { name: "Semua" })).toHaveFocus();
+    const list = screen.getByRole("listbox", { name: "Status" });
+    expect(list).toHaveFocus();
+    expect(list).toHaveAttribute(
+      "aria-activedescendant",
+      screen.getByRole("option", { name: "Semua" }).id,
+    );
     await userEvent.keyboard("{ArrowDown}{Enter}");
     expect(onChange).toHaveBeenCalledWith("active");
     await userEvent.click(trigger);
     await userEvent.keyboard("{Escape}");
     expect(screen.queryByRole("listbox")).toBeNull();
     expect(trigger).toHaveFocus();
+  });
+});
+
+describe("Select hover", () => {
+  it("moves the highlight under the mouse without taking keyboard focus", async () => {
+    render(
+      <Select
+        label="Status"
+        value=""
+        options={[
+          ["", "Semua"],
+          ["banned", "Di-ban"],
+        ]}
+        onChange={vi.fn<() => void>()}
+      />,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Status: Semua" }));
+    const list = screen.getByRole("listbox", { name: "Status" });
+    await userEvent.hover(screen.getByRole("option", { name: "Di-ban" }));
+    expect(list).toHaveFocus();
+    expect(list).toHaveAttribute(
+      "aria-activedescendant",
+      screen.getByRole("option", { name: "Di-ban" }).id,
+    );
   });
 });
 

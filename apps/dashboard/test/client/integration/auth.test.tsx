@@ -2,6 +2,7 @@ import { screen, waitFor, within } from "@testing-library/react";
 import { focusManager } from "@tanstack/react-query";
 import { HttpResponse, http } from "msw";
 import { describe, expect, it, vi } from "vitest";
+import { elapse, fakeClock, recordRequests } from "../helpers/clock";
 import { admin as fixtureAdmin } from "../helpers/fixtures";
 import { API, apiError } from "../helpers/handlers";
 import { renderApp } from "../helpers/render";
@@ -13,7 +14,7 @@ describe("auth", () => {
     server.use(
       http.get(`${API}/auth/get-session`, () => (calls++, HttpResponse.json(fixtureAdmin))),
     );
-    vi.useFakeTimers({ toFake: ["Date"] });
+    fakeClock();
     try {
       renderApp("/");
       expect(
@@ -26,14 +27,13 @@ describe("auth", () => {
       };
       vi.setSystemTime(Date.now() + 30 * 60_000);
       refocus();
-      await new Promise((r) => setTimeout(r, 50));
+      await elapse(50);
       expect(calls).toBe(1);
       vi.setSystemTime(Date.now() + 31 * 60_000);
       refocus();
       await waitFor(() => expect(calls).toBe(2));
     } finally {
       focusManager.setFocused(undefined);
-      vi.useRealTimers();
     }
   });
 
@@ -157,9 +157,7 @@ describe("auth", () => {
     const { user } = renderApp("/");
     await user.click(await screen.findByRole("button", { name: "Menu akun: Marcus" }));
     await within(await screen.findByRole("region", { name: "User terdaftar" })).findByText("48");
-    let requests = 0;
-    const count = () => requests++;
-    server.events.on("request:start", count);
+    const requests = recordRequests();
     await user.click(screen.getByRole("radio", { name: "English" }));
     // The English bundle loads asynchronously, so the radio flips only after the import settles.
     await waitFor(() =>
@@ -176,7 +174,6 @@ describe("auth", () => {
     await user.click(screen.getByRole("radio", { name: "Indonesia" }));
     expect(await screen.findByRole("button", { name: "Keluar" })).toBeInTheDocument();
     await waitFor(() => expect(document.documentElement.lang).toBe("id"));
-    server.events.removeListener("request:start", count);
-    expect(requests).toBe(0);
+    expect(requests).toEqual([]);
   });
 });

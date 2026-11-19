@@ -362,6 +362,18 @@ describe("POST /api/users/:id/ban", () => {
     expect(await response.json()).toEqual({ banned: true, keyRevoked: true });
   });
 
+  it.each(["ban", "unban"])(
+    "%s answers 400 for a malformed id without touching D1 or OpenRouter",
+    async (action) => {
+      const openrouter = fakeOpenRouter();
+      const { response, d1Queries } = await post(`/api/users/bad%20id/${action}`);
+      expect(response.status).toBe(400);
+      // guard only.
+      expect(d1Queries).toBe(1);
+      expect(openrouter.calls).toEqual([]);
+    },
+  );
+
   it("answers 404 for an unknown user without calling OpenRouter", async () => {
     const openrouter = fakeOpenRouter();
     const { response } = await post("/api/users/gak-ada/ban");
