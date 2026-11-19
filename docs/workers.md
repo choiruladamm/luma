@@ -44,6 +44,17 @@ Code both Workers need lives in `packages/core` (`@luma/core`), which neither Wo
 
 The package depends on no Worker's `Env`; it compiles against the Workers runtime types alone. Code only one Worker uses stays in that Worker. The backend's tests measure the package's coverage.
 
+`packages/worker-kit` (`@luma/worker-kit`) is the request pipeline every Worker shares, with nothing Luma-specific in it: lint rejects its imports of a Worker or another `@luma` package.
+
+| Import | Contents |
+|---|---|
+| `@luma/worker-kit/app` | `workerApp`, the pipeline start. |
+| `@luma/worker-kit/errors` | `ApiError`, `BaseErrorCode`, `errorBody`, `onError`, `notFound`, `normalizeAuthError`. |
+| `@luma/worker-kit/log` | `log.error`, `log.warn`, `log.info`. |
+| `@luma/worker-kit/middleware` | `requestId`, `rateLimit`, `limitBody`, `killSwitch`, `validate`. |
+
+The kit's own tests run on Node (`make packages-test`) and hold 100% coverage. Both packages compile against `packages/workers-runtime.d.ts`, generated from `packages/wrangler.jsonc`.
+
 `apps/dashboard/backend-vars.ts` reads the backend's feature flags, OpenRouter workspace, and AI budget from `apps/backend/wrangler.jsonc` at build time, because those runtime vars belong to the backend's configuration.
 
 ## Conventions
@@ -52,17 +63,19 @@ Rules both Workers follow; each Worker's doc has its own routes, guards, and cod
 
 - **Imports.** A Worker never imports from another Worker's directory, only from `packages/*`; lint rejects `apps/*` paths. A feature never imports another feature (the backend's account deletion calling `revokeKey` is the one exception).
 - **Paths and versions.** The backend serves `/v1/*`; the dashboard serves `/api/*`, which ships with its SPA and so has no version.
-- **Request ids.** Every response the Worker builds carries `x-request-id`, and every log line of that request includes it. Better Auth responses pass through without the header (#259).
+- **Pipeline start.** Each Worker passes its Hono app through `workerApp` (`@luma/worker-kit/app`), which installs `requestId`, `notFound`, and `onError` before the Worker's own middleware.
+- **Request ids.** Every response, Better Auth's included, carries `x-request-id`, and every log line of that request includes it.
 - **Responses.** JSON field names are camelCase. A success returns the resource itself, without an envelope.
-- **Errors.** Every error is `{error: {code, message}}` with an `UPPER_SNAKE_CASE` code that clients branch on; the message is for people. Unknown routes return 404 `NOT_FOUND`, and an unexpected failure returns 500 `INTERNAL_ERROR`. Backend codes: [backend.md](backend.md) (Request pipeline and API conventions); dashboard codes: [dashboard.md](dashboard.md) (API routes and errors).
-- **Logs.** Logs are single-line JSON with a `message` and the `requestId`. Unexpected failures and handled upstream failures are logged; dashboard mutations also log an `audit` line. Tokens, keys, and sync record bodies never reach a log.
-- **Limits.** JSON bodies are size-limited before parsing (413 `PAYLOAD_TOO_LARGE`), and rate limits return 429 `RATE_LIMITED` with `Retry-After`.
+- **Errors.** Every error is `{error: {code, message}}` with an `UPPER_SNAKE_CASE` code that clients branch on; the message is for people. Code throws `ApiError`; each Worker's `lib/errors.ts` adds its own codes to the kit's `BaseErrorCode`. A 4xx Hono `HTTPException` gets the base code for its status, unknown routes return 404 `NOT_FOUND`, and an unexpected failure returns 500 `INTERNAL_ERROR`. `normalizeAuthError` wraps Better Auth's JSON errors in the same shape, keeping Better Auth's code. Backend codes: [backend.md](backend.md) (Request pipeline and API conventions); dashboard codes: [dashboard.md](dashboard.md) (API routes and errors).
+- **Logs.** Worker code logs only through `log` (`@luma/worker-kit/log`); lint rejects `console` outside scripts and tests. A line is single-line JSON with a `message` and the `requestId`. Unexpected failures and handled upstream failures are logged as errors; dashboard mutations also log an `audit` line. Tokens, keys, and sync record bodies never reach a log.
+- **Validation and limits.** Inputs go through the kit's `validate` (400 `BAD_REQUEST`, with the route's message or zod's first issue). Bodies are size-limited with `limitBody` before parsing (413 `PAYLOAD_TOO_LARGE`), rate limits return 429 `RATE_LIMITED` with `Retry-After`, and a `killSwitch` var that isn't `"true"` returns 503 `SERVICE_DISABLED`.
 
 ## Worker requirements
 
 A Worker in this repo has:
 
-- a wrangler config with `observability` logs enabled and bindings typed by `wrangler types`, never a hand-written `Env`;
+- a wrangler config with `observability` logs and traces enabled and bindings typed by `wrangler types`, never a hand-written `Env`;
+- an app built with `workerApp` and its error codes in `lib/errors.ts`;
 - the shared tool configuration from [Workspace](#workspace);
 - a golden HTTP test and coverage thresholds (below), plus the per-endpoint integration cases listed in its `CLAUDE.md`;
 - a row per endpoint in the [budgets.md](budgets.md) Per-action budgets table;
@@ -70,4 +83,4 @@ A Worker in this repo has:
 
 ## Behavior checks
 
-Each Worker has a golden HTTP test (`test/golden/http.test.ts`) that records every route's status, headers, cookies, body, D1 queries, and outbound fetches under a fixed clock, plus R2 operations for the backend. A change in behavior shows up as a diff in `http.golden.json`. Coverage thresholds in each `vitest.config.ts` sit at the current coverage and only go up.
+Each Worker has a golden HTTP test (`test/golden/http.test.ts`) that records every route's status, headers, cookies, body, D1 queries, and outbound fetches under a fixed clock, plus R2 operations for the backend. A change in behavior shows up as a diff in `http.golden.json`. Coverage thresholds in each `vitest.config.ts` sit at the current coverage and only go up for the code they measure; when code moves into a package that has its own tests, the Worker's threshold is re-measured in that commit.

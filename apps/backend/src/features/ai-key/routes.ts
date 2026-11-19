@@ -1,10 +1,8 @@
-import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
+import { killSwitch, limitBody, validate } from "@luma/worker-kit/middleware";
 import { z } from "zod";
 import type { AppEnv } from "../../env";
-import { badRequestOnInvalid } from "../../lib/errors";
-import { limitBody } from "../../middleware/body-limit";
-import { killSwitch } from "../../middleware/kill-switch";
+import { DISABLED_RETRY_AFTER_SECONDS } from "../../middleware/policy";
 import { rateLimit } from "../../middleware/rate-limit";
 import { requireSession } from "../../middleware/session";
 import { aiConfig, issueKey, usage } from "./service";
@@ -12,12 +10,12 @@ import { aiConfig, issueKey, usage } from "./service";
 const keyBody = z.object({ rotate: z.boolean().optional() }).strict();
 
 export const ai = new Hono<AppEnv>()
-  .use(killSwitch("AI_KEY_ENABLED"), requireSession)
+  .use(killSwitch("AI_KEY_ENABLED", DISABLED_RETRY_AFTER_SECONDS), requireSession)
   .post(
     "/key",
     rateLimit((c) => `user:${c.get("user").id}`),
     limitBody(1024),
-    zValidator("json", keyBody, badRequestOnInvalid('Body must be {"rotate"?: boolean}')),
+    validate("json", keyBody, 'Body must be {"rotate"?: boolean}'),
     async (c) => {
       const { rotate } = c.req.valid("json");
       const issued = await issueKey(c.var.db, c.var.openrouter, aiConfig(c.env), c.get("user").id, {

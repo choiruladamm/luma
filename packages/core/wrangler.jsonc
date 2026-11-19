@@ -1,7 +1,0 @@
-// Not a Worker: `wrangler types` reads this to generate the Workers runtime types the package
-// compiles against. Keep the date and flags equal to apps/backend and apps/dashboard.
-{
-  "name": "luma-core",
-  "compatibility_date": "2026-11-10",
-  "compatibility_flags": ["nodejs_compat"]
-}

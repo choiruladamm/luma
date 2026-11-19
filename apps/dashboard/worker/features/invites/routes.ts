@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { factory } from "../../env";
 import { audit } from "../../lib/audit";
-import { validate } from "../../middleware/validate";
+import { validate } from "@luma/worker-kit/middleware";
 import { createInvites, deleteInvite, getInvites, INVITES_PAGE_SIZE } from "./service";
 
 export const MAX_INVITES_PER_REQUEST = 20;

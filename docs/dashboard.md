@@ -20,7 +20,7 @@ Sessions expire after seven idle days, sliding at most once per day while used, 
 
 Agents reach the dev domain without Google. Access on the dev app (never prod) also admits the service token `luma-admin-dev-qa`, which expires 2027-11-19. `make dashboard-dev-session` inserts a 1-day session for one dev admin straight into the dev D1, signed with the dev `BETTER_AUTH_SECRET`. These sessions carry the user agent `dev-session`, and each run deletes the expired ones. The token, the secret, and the admin email live only in the gitignored `apps/dashboard/.dev.vars.remote-dev`; rotating the dev secret means updating that file too.
 
-`securityHeaders` wraps the chain first, followed by request ID and per-IP rate limiting. The allowlisted auth routes are `GET /api/auth/get-session`, `POST /api/auth/sign-in/social`, `GET /api/auth/callback/google`, and `POST /api/auth/sign-out`; they go to Better Auth; other `/api/auth/*` routes return 404. Protected API routes then require an admin session, require `application/json` and the configured origin on mutations (otherwise 403), and apply per-admin mutation limits. Successful admin mutations are audited in Workers Logs; invite creation logs only the count, never the usable codes. Worker responses and static assets carry CSP and `nosniff` headers.
+The request ID and `securityHeaders` wrap the chain, followed by per-IP rate limiting and a 16 KB body limit on `/api/*` (413 `PAYLOAD_TOO_LARGE`). The allowlisted auth routes are `GET /api/auth/get-session`, `POST /api/auth/sign-in/social`, `GET /api/auth/callback/google`, and `POST /api/auth/sign-out`; they go to Better Auth; other `/api/auth/*` routes return 404. Protected API routes then require an admin session, require `application/json` and the configured origin on mutations (otherwise 403), and apply per-admin mutation limits. Successful admin mutations are audited in Workers Logs; invite creation logs only the count, never the usable codes. Worker responses and static assets carry CSP and `nosniff` headers.
 
 ## API routes and errors
 
@@ -31,7 +31,7 @@ Agents reach the dev domain without Google. Access on the dev app (never prod) a
 
 Both list endpoints cap `page` at 10,000 and return at least one page even for zero results. A page beyond the end has no items. Users default to 50 items per page (maximum 50); invites default to 20 (maximum 50).
 
-Dashboard API handler errors use `{ "error": { "code": "...", "message": "..." } }`, including `BAD_REQUEST`, `UNAUTHORIZED`, `FORBIDDEN`, `NOT_FOUND`, `INVITE_CODE_USED`, `RATE_LIMITED`, `OPENROUTER_FAILED` and `INTERNAL_ERROR`. Allowlisted Better Auth endpoints pass through Better Auth responses rather than this envelope.
+Dashboard API handler errors use `{ "error": { "code": "...", "message": "..." } }`, including `BAD_REQUEST`, `UNAUTHORIZED`, `FORBIDDEN`, `NOT_FOUND`, `PAYLOAD_TOO_LARGE`, `INVITE_CODE_USED`, `RATE_LIMITED`, `OPENROUTER_FAILED` and `INTERNAL_ERROR`. Allowlisted Better Auth endpoints pass their successes and redirects through; their JSON errors are wrapped in this envelope with Better Auth's own code.
 
 Responses carry metadata only: every query selects its columns explicitly, and sync record bodies (`records`), encrypted AI keys (`key_enc`), and session tokens never reach a response.
 

@@ -1,10 +1,9 @@
-import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
+import { limitBody, validate } from "@luma/worker-kit/middleware";
 import { z } from "zod";
 import type { AppEnv } from "../../env";
-import { ApiError, badRequestOnInvalid } from "../../lib/errors";
+import { ApiError } from "../../lib/errors";
 import { uploadSize } from "../../lib/storage";
-import { limitBody } from "../../middleware/body-limit";
 import { featureGuard } from "../../middleware/guard";
 import { FILE_NAME, getFile, missingFiles, putFile } from "./service";
 
@@ -20,7 +19,7 @@ export const files = new Hono<AppEnv>()
   .post(
     "/missing",
     limitBody(256 * 1024),
-    zValidator("json", missingBody, badRequestOnInvalid('Body must be {"names": string[≤1000]}')),
+    validate("json", missingBody, 'Body must be {"names": string[≤1000]}'),
     async (c) =>
       c.json({
         missing: await missingFiles(c.env.BUCKET, c.get("user").id, c.req.valid("json").names),

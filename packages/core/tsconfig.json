@@ -1,7 +1,7 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "types": ["./worker-configuration.d.ts"]
+    "types": ["../workers-runtime.d.ts"]
   },
-  "include": ["src", "scripts", "worker-configuration.d.ts", "drizzle.config.ts"]
+  "include": ["src", "scripts", "drizzle.config.ts"]
 }

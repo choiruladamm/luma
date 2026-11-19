@@ -14,8 +14,8 @@
   },
   "dependencies": {
     "@better-auth/drizzle-adapter": "catalog:",
-    "@hono/zod-validator": "catalog:",
     "@luma/core": "workspace:*",
+    "@luma/worker-kit": "workspace:*",
     "better-auth": "catalog:",
     "drizzle-orm": "catalog:",
     "hono": "catalog:",

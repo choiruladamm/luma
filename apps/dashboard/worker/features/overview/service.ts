@@ -1,4 +1,5 @@
 import type { Db } from "@luma/core/db/client";
+import { log } from "@luma/worker-kit/log";
 import { DAY_MS } from "@luma/core/encoding";
 import { monthSpendUsd } from "./activity";
 import { overviewCounts } from "./repo";
@@ -20,13 +21,7 @@ export async function getOverview(db: Db, env: Env, requestId: string, now = new
     env.OPENROUTER_MANAGEMENT_KEY
       ? monthSpendUsd(env.OPENROUTER_MANAGEMENT_KEY, env.OPENROUTER_WORKSPACE_ID, now).catch(
           (e: Error) => {
-            console.error(
-              JSON.stringify({
-                message: "openrouter activity failed",
-                requestId,
-                error: e.message,
-              }),
-            );
+            log.error("openrouter activity failed", { requestId, error: e.message });
             return null;
           },
         )

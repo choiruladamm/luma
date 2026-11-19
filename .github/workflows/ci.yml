@@ -48,11 +48,18 @@ jobs:
       - run: make install
       - run: make backend-test
 
+  packages-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: oven-sh/setup-bun@v2
+      - run: make install
+      - run: make packages-test
+
   dashboard-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
       - uses: oven-sh/setup-bun@v2
-      # The dashboard imports ../backend/src at runtime, which resolves backend packages.
       - run: make install
       - run: make dashboard-test

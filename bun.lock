@@ -9,8 +9,8 @@
       "name": "luma-backend",
       "dependencies": {
         "@better-auth/drizzle-adapter": "catalog:",
-        "@hono/zod-validator": "catalog:",
         "@luma/core": "workspace:*",
+        "@luma/worker-kit": "workspace:*",
         "better-auth": "catalog:",
         "drizzle-orm": "catalog:",
         "hono": "catalog:",
@@ -37,11 +37,11 @@
         "@fontsource-variable/bricolage-grotesque": "^5.3.0",
         "@fontsource-variable/geist": "^5.3.0",
         "@fontsource-variable/geist-mono": "^5.3.0",
-        "@hono/zod-validator": "catalog:",
         "@hookform/resolvers": "^7.0.6",
         "@hugeicons/core-free-icons": "^4.4.0",
         "@hugeicons/react": "^1.1.10",
         "@luma/core": "workspace:*",
+        "@luma/worker-kit": "workspace:*",
         "@tanstack/react-query": "^5.107.1",
         "@tanstack/react-table": "^9.3.1",
         "better-auth": "catalog:",
@@ -93,6 +93,22 @@
         "prettier": "catalog:",
         "typescript": "catalog:",
         "wrangler": "catalog:",
+      },
+    },
+    "packages/worker-kit": {
+      "name": "@luma/worker-kit",
+      "dependencies": {
+        "@hono/zod-validator": "catalog:",
+        "hono": "catalog:",
+        "zod": "catalog:",
+      },
+      "devDependencies": {
+        "@vitest/coverage-istanbul": "catalog:",
+        "oxlint": "catalog:",
+        "oxlint-tsgolint": "catalog:",
+        "prettier": "catalog:",
+        "typescript": "catalog:",
+        "vitest": "catalog:",
       },
     },
   },
@@ -324,6 +340,8 @@
     "@jridgewell/trace-mapping": ["@jridgewell/trace-mapping@0.3.9", "", { "dependencies": { "@jridgewell/resolve-uri": "^3.0.3", "@jridgewell/sourcemap-codec": "^1.4.10" } }, "sha512-3Belt6tdc8bPgAtbcmdtNJlirVoTmEb5e2gC94PnkwEW9jI6CAHUeoG85tjWP5WquqfavoMtMwiG4P926ZKKuQ=="],
 
     "@luma/core": ["@luma/core@workspace:packages/core"],
+
+    "@luma/worker-kit": ["@luma/worker-kit@workspace:packages/worker-kit"],
 
     "@msw/cloudflare": ["@msw/cloudflare@0.2.0", "", { "dependencies": { "@mswjs/interceptors": "^0.45.5" }, "peerDependencies": { "msw": ">=3" } }, "sha512-Df/0SfMVTRuNiFquyD1GtZcZJmSCo47V3MMOWEqFvFs6/Ik/XED7fjW3wjreY6wmS8hzOxlR7WoeCPU/J2yVEg=="],
 

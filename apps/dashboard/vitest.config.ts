@@ -36,7 +36,7 @@ export default defineConfig(async () => {
         provider: "istanbul" as const,
         include: ["worker/**/*.ts"],
         exclude: ["worker/backend-env.d.ts"],
-        thresholds: { statements: 99.27, branches: 92.12, functions: 100, lines: 99.19 },
+        thresholds: { statements: 100, branches: 93.24, functions: 100, lines: 100 },
       },
     },
   };

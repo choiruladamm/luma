@@ -2,7 +2,7 @@ import { z } from "zod";
 import { openRouterAdmin } from "@luma/core/openrouter";
 import { factory } from "../../env";
 import { audit } from "../../lib/audit";
-import { validate } from "../../middleware/validate";
+import { validate } from "@luma/worker-kit/middleware";
 import { ban, getUserDetail, getUsers, unban, USERS_PAGE_SIZE } from "./service";
 
 const userId = z.object({ id: z.string().regex(/^[A-Za-z0-9_-]{1,64}$/, "Invalid user id") });

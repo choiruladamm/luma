@@ -71,7 +71,8 @@
     "headers": {
       "access-control-expose-headers": "set-auth-token",
       "content-type": "application/json",
-      "set-auth-token": "<present>"
+      "set-auth-token": "<present>",
+      "x-request-id": "<present>"
     },
     "cookies": [
       "__Secure-better-auth.session_token=<random>; Max-Age=5184000; Path=/; HttpOnly; Secure; SameSite=Lax"
@@ -95,7 +96,8 @@
   "POST /v1/auth/sign-up/email used invite": {
     "status": 403,
     "headers": {
-      "content-type": "application/json"
+      "content-type": "application/json",
+      "x-request-id": "<present>"
     },
     "cookies": [],
     "body": {
@@ -111,7 +113,8 @@
   "POST /v1/auth/sign-up/email invalid invite": {
     "status": 403,
     "headers": {
-      "content-type": "application/json"
+      "content-type": "application/json",
+      "x-request-id": "<present>"
     },
     "cookies": [],
     "body": {
@@ -127,7 +130,8 @@
   "POST /v1/auth/sign-up/email no invite": {
     "status": 403,
     "headers": {
-      "content-type": "application/json"
+      "content-type": "application/json",
+      "x-request-id": "<present>"
     },
     "cookies": [],
     "body": {
@@ -162,7 +166,8 @@
     "headers": {
       "access-control-expose-headers": "set-auth-token",
       "content-type": "application/json",
-      "set-auth-token": "<present>"
+      "set-auth-token": "<present>",
+      "x-request-id": "<present>"
     },
     "cookies": [
       "__Secure-better-auth.session_token=<random>; Max-Age=5184000; Path=/; HttpOnly; Secure; SameSite=Lax"
@@ -187,7 +192,8 @@
   "POST /v1/auth/sign-in/email wrong password": {
     "status": 401,
     "headers": {
-      "content-type": "application/json"
+      "content-type": "application/json",
+      "x-request-id": "<present>"
     },
     "cookies": [],
     "body": {
@@ -203,7 +209,8 @@
   "POST /v1/auth/sign-in/email invalid body": {
     "status": 400,
     "headers": {
-      "content-type": "application/json"
+      "content-type": "application/json",
+      "x-request-id": "<present>"
     },
     "cookies": [],
     "body": {
@@ -221,7 +228,8 @@
     "headers": {
       "access-control-expose-headers": "set-auth-token",
       "content-type": "application/json",
-      "set-auth-token": "<present>"
+      "set-auth-token": "<present>",
+      "x-request-id": "<present>"
     },
     "cookies": [
       "__Secure-better-auth.session_token=<random>; Max-Age=5184000; Path=/; HttpOnly; Secure; SameSite=Lax"
@@ -246,7 +254,8 @@
   "POST /v1/auth/sign-in/social foreign token": {
     "status": 401,
     "headers": {
-      "content-type": "application/json"
+      "content-type": "application/json",
+      "x-request-id": "<present>"
     },
     "cookies": [],
     "body": {
@@ -296,7 +305,8 @@
   "POST /v1/auth/sign-out": {
     "status": 200,
     "headers": {
-      "content-type": "application/json"
+      "content-type": "application/json",
+      "x-request-id": "<present>"
     },
     "cookies": [
       "__Secure-better-auth.session_token=<random>; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Lax",

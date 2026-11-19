@@ -97,7 +97,8 @@
       "content-security-policy": "default-src 'self'; frame-ancestors 'none'",
       "content-type": "application/json",
       "pragma": "no-cache",
-      "x-content-type-options": "nosniff"
+      "x-content-type-options": "nosniff",
+      "x-request-id": "<present>"
     },
     "cookies": [],
     "body": null,
@@ -111,7 +112,8 @@
       "content-security-policy": "default-src 'self'; frame-ancestors 'none'",
       "content-type": "application/json",
       "pragma": "no-cache",
-      "x-content-type-options": "nosniff"
+      "x-content-type-options": "nosniff",
+      "x-request-id": "<present>"
     },
     "cookies": [
       "__Secure-better-auth.session_token=<random>; Max-Age=604800; Path=/; HttpOnly; Secure; SameSite=Lax"
@@ -146,7 +148,8 @@
       "content-security-policy": "default-src 'self'; frame-ancestors 'none'",
       "content-type": "application/json",
       "location": "https://accounts.google.com/o/oauth2/v2/auth?response_type=code&client_id=366577823040-vhr2h7toc53pb891v0qoc1m62pps2v41.apps.googleusercontent.com&state=%3Crandom%3E&scope=email+profile+openid&redirect_uri=https%3A%2F%2Fluma-admin-dev.chrl.cloud%2Fapi%2Fauth%2Fcallback%2Fgoogle&code_challenge_method=S256&code_challenge=%3Crandom%3E&include_granted_scopes=true",
-      "x-content-type-options": "nosniff"
+      "x-content-type-options": "nosniff",
+      "x-request-id": "<present>"
     },
     "cookies": [
       "__Secure-better-auth.oauth_state=<random>; Max-Age=600; Path=/; HttpOnly; Secure; SameSite=Lax"
@@ -164,7 +167,8 @@
       "content-security-policy": "default-src 'self'; frame-ancestors 'none'",
       "content-type": "application/json",
       "location": "/",
-      "x-content-type-options": "nosniff"
+      "x-content-type-options": "nosniff",
+      "x-request-id": "<present>"
     },
     "cookies": [
       "__Secure-better-auth.oauth_state=<random>; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Lax",
@@ -180,7 +184,8 @@
       "content-security-policy": "default-src 'self'; frame-ancestors 'none'",
       "content-type": "application/json",
       "location": "/login?error=state_mismatch",
-      "x-content-type-options": "nosniff"
+      "x-content-type-options": "nosniff",
+      "x-request-id": "<present>"
     },
     "cookies": [],
     "body": "",
@@ -647,6 +652,24 @@
     "d1Queries": 1,
     "fetches": 0
   },
+  "POST /api/invites 413": {
+    "status": 413,
+    "headers": {
+      "content-security-policy": "default-src 'self'; frame-ancestors 'none'",
+      "content-type": "application/json",
+      "x-content-type-options": "nosniff",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "PAYLOAD_TOO_LARGE",
+        "message": "Body exceeds 16384 bytes"
+      }
+    },
+    "d1Queries": 0,
+    "fetches": 0
+  },
   "GET /api/invites": {
     "status": 200,
     "headers": {
@@ -854,7 +877,8 @@
     "headers": {
       "content-security-policy": "default-src 'self'; frame-ancestors 'none'",
       "content-type": "application/json",
-      "x-content-type-options": "nosniff"
+      "x-content-type-options": "nosniff",
+      "x-request-id": "<present>"
     },
     "cookies": [
       "__Secure-better-auth.session_token=<random>; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Lax",

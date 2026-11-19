@@ -32,6 +32,7 @@ export const en: Messages = {
     ACCESS_EXPIRED: "Cloudflare session expired. Reloading…",
     FORBIDDEN: "This account isn't an admin.",
     NOT_FOUND: "Not found.",
+    PAYLOAD_TOO_LARGE: "The request is too large.",
     INVITE_CODE_USED: "This invite code has already been used.",
     RATE_LIMITED: "Too many requests. Try again in a moment.",
     INTERNAL_ERROR: "Something went wrong on the server.",

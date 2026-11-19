@@ -24,7 +24,7 @@ Hono API under `/v1` on Workers, D1 + Drizzle, R2, Better Auth (`bearer` plugin)
 - Drizzle everywhere except `sync/repo.ts`: raw SQL with `json_each` fits a 500-record batch in one statement.
 - Features don't import each other, except account deletion calling `revokeKey`.
 - R2 keys are always per user, `u/{userId}/...`, through `lib/storage.ts`.
-- Validate every input with `@hono/zod-validator`. Errors are `{"error": {"code", "message"}}` with `UPPER_SNAKE_CASE` codes; the Flutter client maps `code` to an enum.
+- Validate every input with `validate` from `@luma/worker-kit/middleware`, and throw `ApiError` from `lib/errors.ts` (backend codes listed there). Errors are `{"error": {"code", "message"}}` with `UPPER_SNAKE_CASE` codes; the Flutter client maps `code` to an enum. Shared middleware and `log` come from `@luma/worker-kit` (`docs/workers.md`).
 - Better Auth trap: its generated schema can hard-code camelCase column names (`text("emailVerified")`) that override Drizzle `casing: "snake_case"`. After generating, rename the columns to snake_case and keep the properties.
 
 ## Free tier
@@ -46,7 +46,7 @@ Read `docs/budgets.md` (Free-tier limits and Server request policy) before addin
 
 Vitest with `@cloudflare/vitest-plugin`, local Miniflare D1/R2. Call the Worker via `exports.default.fetch` from `cloudflare:workers` (`SELF` is deprecated). Mock outbound calls (Google, OpenRouter) with MSW via `@msw/cloudflare`; an unmocked fetch returns 599 `UNMOCKED_FETCH`. Shared helpers (sign-up, invites, budget counting, contract fixtures) live in `test/helpers/`.
 
-`test/golden/http.test.ts` records every route's status, headers, body, D1 queries, and subrequests in `http.golden.json`. A behavior change shows up as a diff there: review it, then accept it with `bunx vitest run test/golden -u`. Coverage thresholds in `vitest.config.ts` only go up.
+`test/golden/http.test.ts` records every route's status, headers, body, D1 queries, and subrequests in `http.golden.json`. A behavior change shows up as a diff there: review it, then accept it with `bunx vitest run test/golden -u`. Coverage thresholds in `vitest.config.ts` only go up (rule: `docs/workers.md`, Behavior checks).
 
 Every endpoint's integration test covers: success; 401 without/with a bad token; 400/413 invalid or oversized body; user isolation (A can't read/write B); kill switch off → 503 with no D1/R2 access; 429 on rate limit; D1 query and subrequest counts within the budget table.
 

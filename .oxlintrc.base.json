@@ -4,7 +4,8 @@
   "categories": { "correctness": "error", "suspicious": "error", "perf": "error" },
   "rules": {
     "no-warning-comments": ["error", { "terms": ["fixme", "hack", "xxx"], "location": "start" }],
-    "no-await-in-loop": "off"
+    "no-await-in-loop": "off",
+    "no-console": "error"
   },
   "overrides": [
     {
@@ -13,6 +14,10 @@
         "typescript/no-unsafe-type-assertion": "off",
         "vitest/valid-expect": ["error", { "maxArgs": 2 }]
       }
+    },
+    {
+      "files": ["scripts/**", "e2e/**"],
+      "rules": { "no-console": "off" }
     }
   ]
 }

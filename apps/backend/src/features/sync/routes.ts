@@ -1,10 +1,9 @@
-import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
+import { limitBody, validate } from "@luma/worker-kit/middleware";
 import { z } from "zod";
 import type { AppEnv } from "../../env";
-import { badRequestOnInvalid } from "../../lib/errors";
-import { limitBody } from "../../middleware/body-limit";
 import { featureGuard } from "../../middleware/guard";
+import { JSON_BODY_LIMIT } from "../../middleware/policy";
 import { KINDS } from "./merge";
 import { MAX_PULL_RECORDS, MAX_PUSH_RECORDS, pull, push, syncLimits } from "./service";
 
@@ -35,22 +34,14 @@ export const sync = new Hono<AppEnv>()
   .use(...featureGuard("SYNC_ENABLED"))
   .post(
     "/push",
-    limitBody(),
-    zValidator(
-      "json",
-      pushBody,
-      badRequestOnInvalid(`Body must be {"schemaVersion", "records": [≤${MAX_PUSH_RECORDS}]}`),
-    ),
+    limitBody(JSON_BODY_LIMIT),
+    validate("json", pushBody, `Body must be {"schemaVersion", "records": [≤${MAX_PUSH_RECORDS}]}`),
     async (c) =>
       c.json(await push(c.env.DB, c.get("user").id, c.req.valid("json"), syncLimits(c.env))),
   )
   .get(
     "/pull",
-    zValidator(
-      "query",
-      pullQuery,
-      badRequestOnInvalid(`Query must be ?since=<seq>&limit=<1..${MAX_PULL_RECORDS}>`),
-    ),
+    validate("query", pullQuery, `Query must be ?since=<seq>&limit=<1..${MAX_PULL_RECORDS}>`),
     async (c) => {
       const { since, limit } = c.req.valid("query");
       return c.body(await pull(c.env.DB, c.get("user").id, since, limit), 200, {

@@ -9,7 +9,7 @@ FVM ?= fvm
 FLUTTER := cd $(APP) && $(FVM) flutter
 DART := cd $(APP) && $(FVM) dart
 
-.PHONY: help setup get l10n gen brand live chat-agent-live chat-spike chat-spike-live chat-oracle-live chat-discussion-live chat-adaptive-live chat-retrieval chat-dense-live chat-dense-replay chat-heldout-live chat-refine-live chat-validation2-live chat-recovery-live chat-validation3-live watch run release dev run-android release-android dev-android apk profile test analyze format check clean hygiene docs-check install backend-dev backend-types backend-test backend-live backend-e2e backend-migrate backend-migrate-local backend-invite backend-ban backend-unban backend-deploy dashboard-dev dashboard-test dashboard-e2e dashboard-dev-session dashboard-build dashboard-deploy
+.PHONY: help setup get l10n gen brand live chat-agent-live chat-spike chat-spike-live chat-oracle-live chat-discussion-live chat-adaptive-live chat-retrieval chat-dense-live chat-dense-replay chat-heldout-live chat-refine-live chat-validation2-live chat-recovery-live chat-validation3-live watch run release dev run-android release-android dev-android apk profile test analyze format check clean hygiene docs-check install packages-test backend-dev backend-types backend-test backend-live backend-e2e backend-migrate backend-migrate-local backend-invite backend-ban backend-unban backend-deploy dashboard-dev dashboard-test dashboard-e2e dashboard-dev-session dashboard-build dashboard-deploy
 
 help: ## list available commands
 	@grep -E '^[a-z0-9-]+:.*## ' $(MAKEFILE_LIST) | awk -F ':.*## ' '{printf "  %-16s %s\n", $$1, $$2}'
@@ -127,6 +127,9 @@ docs-check: ## docs structure and links, and comments (English, citations), no l
 
 install: ## backend + dashboard + packages: install every JS workspace (bun, one lockfile at the root)
 	bun install
+
+packages-test: ## packages: tests of every shared package that has them (coverage thresholds included)
+	@for pkg in packages/*/; do if grep -q '"test"' $$pkg/package.json; then (cd $$pkg && bun run test) || exit 1; fi; done
 
 backend-dev: ## backend: run Worker locally (env dev, http://<ip>:8787; app: --dart-define=BACKEND_URL=...)
 	cd $(BACKEND) && bunx wrangler dev --env dev --ip 0.0.0.0

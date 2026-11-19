@@ -30,7 +30,8 @@ export default defineConfig(async () => {
       setupFiles: ["./test/setup.ts"],
       coverage: {
         provider: "istanbul" as const,
-        // @luma/core is measured here: the backend's tests exercise all of it.
+        // @luma/core has no tests of its own: the backend's tests exercise it, so it is measured
+        // here. @luma/worker-kit is measured by its own tests (make packages-test).
         allowExternal: true,
         include: ["src/**/*.ts", "../../packages/core/src/**/*.ts"],
         exclude: [
@@ -39,7 +40,7 @@ export default defineConfig(async () => {
           "../../packages/core/src/db/schema.ts",
           "../../packages/core/src/db/auth-schema.ts",
         ],
-        thresholds: { statements: 99.8, branches: 92.95, functions: 99.31, lines: 99.77 },
+        thresholds: { statements: 100, branches: 92.68, functions: 100, lines: 100 },
       },
     },
   };

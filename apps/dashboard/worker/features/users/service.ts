@@ -1,5 +1,6 @@
 import type { OpenRouterAdmin } from "@luma/core/openrouter";
 import type { Db } from "@luma/core/db/client";
+import { log } from "@luma/worker-kit/log";
 import { ApiError } from "../../lib/errors";
 import {
   banUser,
@@ -52,13 +53,10 @@ async function dailyUsage(openrouter: OpenRouterAdmin, keyHash: string, requestI
   try {
     return (await openrouter.getUsage(keyHash)).usageDaily;
   } catch (e) {
-    console.error(
-      JSON.stringify({
-        message: "openrouter getUsage failed",
-        requestId,
-        error: e instanceof Error ? e.message : String(e),
-      }),
-    );
+    log.error("openrouter getUsage failed", {
+      requestId,
+      error: e instanceof Error ? e.message : String(e),
+    });
     return null;
   }
 }

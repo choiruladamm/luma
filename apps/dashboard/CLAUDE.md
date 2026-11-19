@@ -27,7 +27,7 @@ Admin-only Worker `luma-admin-{env}`: Hono API under `/api` on the same D1 as th
 
 ## Worker rules
 
-- Middleware order: `securityHeaders → requestId → IP rateLimit → [/api/auth/* allowlist → Better Auth] → requireAdmin → requireSameOriginJson → rateLimitAdmin → validate → handler`. `requireAdmin` is global on `/api/*`: mount every route after it, with no per-route auth.
+- Middleware order: `requestId (workerApp) → securityHeaders → IP rateLimit → limitBody → [/api/auth/* allowlist → Better Auth] → requireAdmin → requireSameOriginJson → rateLimitAdmin → validate → handler`. Shared middleware, errors, and `log` come from `@luma/worker-kit` (`docs/workers.md`). `requireAdmin` is global on `/api/*`: mount every route after it, with no per-route auth.
 - Build the app, middleware, and feature routers from `factory` (`env.ts`). Chain feature routes (`factory.createApp().get(...).post(...)`) and mount them with `.route()` so `AppType` carries their types.
 - Features don't import each other. Each `repo.ts` function is one query-budget unit; its comment states the query count.
 - Better Auth endpoints are allowlisted in `AUTH_ROUTES`; anything else under `/api/auth/*` is 404. Adding one updates `docs/dashboard.md` (Access and sessions and request guards).
@@ -45,7 +45,7 @@ The D1 schema, migrations, `Db`, auth user fields, invite codes, and the OpenRou
 ## Tests
 
 - **Worker** (`test/unit`, `test/integration`): Vitest in workerd, Miniflare D1. `test/helpers/session.ts` makes signed session cookies; `test/helpers/app.ts` `call()` counts D1 statements that run. Unmocked outbound fetches return 599. `guard.test.ts` iterates every registered route (no cookie → 401 without D1, non-admin → 403). Test bindings pin `BETTER_AUTH_URL` so a local `.dev.vars` doesn't leak in.
-- **Golden** (`test/golden`): every worker route's status, headers, body, D1 queries, and subrequests in `http.golden.json`. A behavior change shows up as a diff there: review it, then accept it with `bunx vitest run test/golden -u`. Worker coverage thresholds in `vitest.config.ts` only go up.
+- **Golden** (`test/golden`): every worker route's status, headers, body, D1 queries, and subrequests in `http.golden.json`. A behavior change shows up as a diff there: review it, then accept it with `bunx vitest run test/golden -u`. Worker coverage thresholds in `vitest.config.ts` only go up (rule: `docs/workers.md`, Behavior checks).
 - **Client** (`test/client`, happy-dom): see `.claude/rules/dashboard-client.md`.
 - **E2E** (`e2e/`): real SPA + Worker through `vite dev`, env `e2e`; `global-setup.ts` migrates, seeds (no AI keys, so ban never calls OpenRouter), and writes an admin cookie. `@phone` specs also run on a phone viewport. Browser locale is `id-ID`; `i18n.spec.ts` opts into `en-US`.
 

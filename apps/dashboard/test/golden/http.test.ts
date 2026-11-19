@@ -133,6 +133,7 @@ it("records every route", async () => {
     ...mutate(),
     body: "{not json",
   });
+  await step("POST /api/invites 413", "/api/invites", mutate({ pad: "x".repeat(17 * 1024) }));
   await step("GET /api/invites", "/api/invites", { headers: admin });
   await step("GET /api/invites filtered", "/api/invites?status=used&sort=code&dir=asc", {
     headers: admin,
