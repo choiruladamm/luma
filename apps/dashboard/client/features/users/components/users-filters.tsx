@@ -110,12 +110,20 @@ function FilterPopover({ params, set }: { params: UsersParams; set: SetParams })
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
+  const trigger = useRef<HTMLButtonElement>(null);
+  const panel = useRef<HTMLDivElement>(null);
   const count = activeFilterCount(params);
   useEffect(() => {
     if (!open) return;
+    panel.current?.querySelector<HTMLElement>("button")?.focus();
     const onDown = (e: MouseEvent) =>
       e.target instanceof Node && !root.current?.contains(e.target) && setOpen(false);
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && !e.defaultPrevented && setOpen(false);
+    // A Select inside handles its own Esc (and prevents default): that one only closes the menu.
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape" || e.defaultPrevented) return;
+      setOpen(false);
+      trigger.current?.focus();
+    };
     document.addEventListener("mousedown", onDown);
     document.addEventListener("keydown", onKey);
     return () => {
@@ -126,6 +134,7 @@ function FilterPopover({ params, set }: { params: UsersParams; set: SetParams })
   return (
     <div ref={root} className="relative">
       <button
+        ref={trigger}
         type="button"
         aria-expanded={open}
         aria-haspopup="dialog"
@@ -145,6 +154,7 @@ function FilterPopover({ params, set }: { params: UsersParams; set: SetParams })
       </button>
       {open && (
         <div
+          ref={panel}
           role="dialog"
           aria-label={t.users.filters}
           className="absolute top-[calc(100%+6px)] right-0 z-30 flex w-[300px] flex-col gap-2.5 rounded-menu bg-sheet p-3 shadow-[var(--shadow-sheet),inset_0_0_0_1px_var(--c-track)]"

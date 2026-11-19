@@ -40,8 +40,9 @@ export function Select<T extends string>({
   const [above, setAbove] = useState(false);
   const root = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
-  const items = useRef<(HTMLLIElement | null)[]>([]);
+  const list = useRef<HTMLUListElement>(null);
   const listId = useId();
+  const optionId = (i: number) => `${listId}-${i}`;
   const selected = Math.max(
     0,
     options.findIndex(([v]) => v === value),
@@ -56,9 +57,11 @@ export function Select<T extends string>({
     return () => document.removeEventListener("mousedown", onDown);
   }, [open]);
 
+  // Focus stays on the listbox; the highlighted option is its active descendant, so hovering
+  // only moves the highlight, never the keyboard focus.
   useEffect(() => {
-    if (open) items.current[focus]?.focus();
-  }, [open, focus]);
+    if (open) list.current?.focus();
+  }, [open]);
 
   const show = (at = selected) => {
     const box = trigger.current?.getBoundingClientRect();
@@ -144,12 +147,15 @@ export function Select<T extends string>({
       </button>
       {open && (
         <ul
+          ref={list}
           id={listId}
           role="listbox"
           aria-label={label}
+          aria-activedescendant={optionId(focus)}
+          tabIndex={-1}
           onKeyDown={onListKey}
           className={cn(
-            "absolute z-40 m-0 flex min-w-full list-none flex-col gap-0.5 rounded-menu bg-sheet p-1.5 shadow-[var(--shadow-sheet),inset_0_0_0_1px_var(--c-track)]",
+            "absolute z-40 m-0 flex outline-none min-w-full list-none flex-col gap-0.5 rounded-menu bg-sheet p-1.5 shadow-[var(--shadow-sheet),inset_0_0_0_1px_var(--c-track)]",
             above ? "bottom-[calc(100%+6px)]" : "top-[calc(100%+6px)]",
             block ? "inset-x-0" : "left-0 w-max",
           )}
@@ -157,11 +163,8 @@ export function Select<T extends string>({
           {options.map(([v, optionLabel], i) => (
             <li
               key={v}
-              ref={(el) => {
-                items.current[i] = el;
-              }}
+              id={optionId(i)}
               role="option"
-              tabIndex={-1}
               aria-selected={i === selected}
               onClick={() => choose(i)}
               onMouseEnter={() => setFocus(i)}

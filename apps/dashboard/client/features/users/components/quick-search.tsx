@@ -60,16 +60,15 @@ export function QuickSearch({
   const valid = q.length >= MIN && q.length <= MAX;
   const users = useUsers({ ...DEFAULT_USERS_PARAMS, q }, valid);
 
-  // Placeholder data is the previous search's page: not an answer for this one.
-  const page = valid && !users.isPlaceholderData ? users.data : undefined;
-  const items = page?.items.slice(0, SHOWN) ?? [];
   const settled = typed === q && valid;
+  // Only an answer to the text in the field: placeholder data is the previous search, and while
+  // new text waits for the debounce the last results are for older text.
+  const page = settled && !users.isPlaceholderData ? users.data : undefined;
+  const items = page?.items.slice(0, SHOWN) ?? [];
   const loading = typed.length >= MIN && (!settled || users.isPending || users.isPlaceholderData);
   const showList = open && typed.length >= MIN;
   // Options: the users, then "see all" (only once there is something to see).
   const count = items.length + (items.length > 0 ? 1 : 0);
-
-  useEffect(() => setActive(-1), [q]);
 
   // "/" focuses the field from anywhere, unless the admin is typing somewhere else.
   useEffect(() => {
@@ -138,6 +137,7 @@ export function QuickSearch({
         aria-activedescendant={showList && active >= 0 ? optionId(active) : undefined}
         onChange={(e) => {
           setValue(e.target.value);
+          setActive(-1);
           setOpen(true);
         }}
         onFocus={() => setOpen(true)}

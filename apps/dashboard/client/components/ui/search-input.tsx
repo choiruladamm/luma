@@ -1,17 +1,23 @@
-import { forwardRef, type InputHTMLAttributes } from "react";
+import type { InputHTMLAttributes, Ref } from "react";
 import { useI18n } from "../../i18n";
 import { cn } from "../../lib/cn";
 import { Icon } from "./icons";
 
 /** Pill search field, height 44, icon left; optional clear button (empty-search state). */
-export const SearchInput = forwardRef<
-  HTMLInputElement,
-  {
-    label: string;
-    onClear?: () => void;
-    tone?: "sheet" | "canvas";
-  } & InputHTMLAttributes<HTMLInputElement>
->(function SearchInput({ label, onClear, tone = "sheet", className, id, ...props }, ref) {
+export function SearchInput({
+  label,
+  onClear,
+  tone = "sheet",
+  className,
+  id,
+  ref,
+  ...props
+}: {
+  label: string;
+  onClear?: () => void;
+  tone?: "sheet" | "canvas";
+  ref?: Ref<HTMLInputElement>;
+} & InputHTMLAttributes<HTMLInputElement>) {
   const { t } = useI18n();
   const inputId = id ?? `search-${label.replace(/\s+/g, "-").toLowerCase()}`;
   return (
@@ -47,4 +53,4 @@ export const SearchInput = forwardRef<
       ) : null}
     </div>
   );
-});
+}

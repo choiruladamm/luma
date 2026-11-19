@@ -1,4 +1,6 @@
+import { useCallback } from "react";
 import { useSearchParams } from "react-router";
+import { useSearchWriter } from "../../../hooks/use-search-writer";
 
 export type InviteSort = "default" | "createdAt" | "usedAt" | "code";
 export type InvitesParams = {
@@ -57,18 +59,23 @@ export function invitesSearchEntries(p: InvitesParams): Record<string, string> {
  * and the Unused tab clears it.
  */
 export function useInvitesParams() {
-  const [search, setSearch] = useSearchParams();
+  const [search] = useSearchParams();
   const params = parseInvitesParams(search);
-  const set = (patch: Partial<InvitesParams>) => {
-    const next = { ...params, ...patch, page: patch.page ?? 1 };
-    if (patch.usedWithin) next.status = "used";
-    if ("status" in patch && patch.status !== "used" && !("usedWithin" in patch))
-      next.usedWithin = undefined;
-    // No router scroll reset: the table stays in view (Pagination scrolls to its top smoothly).
-    setSearch(invitesSearchEntries(next), {
-      replace: patch.page === undefined,
-      preventScrollReset: true,
-    });
-  };
+  const write = useSearchWriter();
+  const set = useCallback(
+    (patch: Partial<InvitesParams>) =>
+      write(
+        (prev) => {
+          const next = { ...parseInvitesParams(prev), ...patch, page: patch.page ?? 1 };
+          if (patch.usedWithin) next.status = "used";
+          if ("status" in patch && patch.status !== "used" && !("usedWithin" in patch))
+            next.usedWithin = undefined;
+          return invitesSearchEntries(next);
+        },
+        // No router scroll reset: the table stays in view (Pagination scrolls to its top smoothly).
+        { replace: patch.page === undefined, preventScrollReset: true },
+      ),
+    [write],
+  );
   return { params, set };
 }
