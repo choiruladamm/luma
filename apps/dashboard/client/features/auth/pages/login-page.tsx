@@ -1,4 +1,3 @@
-import { useMutation } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { Navigate, useSearchParams } from "react-router";
 import { LogoMark } from "../../../components/layout/logo";
@@ -8,8 +7,8 @@ import { Chip } from "../../../components/ui/chip";
 import { type Messages, useI18n } from "../../../i18n";
 import { errorText } from "../../../lib/api-error";
 import { isDevHost } from "../../../lib/env";
-import { signInWithGoogle } from "../api/auth-api";
 import { useSession } from "../queries/use-session";
+import { useSignIn } from "../queries/use-sign-in";
 
 /** Copy for Better Auth's /login?error=…&error_description=… redirects (worker hooks). */
 function loginError(params: URLSearchParams, t: Messages) {
@@ -26,7 +25,7 @@ function loginError(params: URLSearchParams, t: Messages) {
 export function LoginPage() {
   const session = useSession();
   const [params] = useSearchParams();
-  const signIn = useMutation({ mutationFn: signInWithGoogle });
+  const signIn = useSignIn();
   // Back from Google restores this page from the back/forward cache with the mutation still
   // "success" (the button spinning forever): reset it when the page comes back that way.
   const { reset } = signIn;

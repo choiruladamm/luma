@@ -8,7 +8,7 @@ React Router, TanStack Query over `hc<AppType>()`, RHF + `zod/mini`, TanStack Ta
 
 ## Structure
 
-- One-way flow: `pages → (feature hooks + queries) → api → lib/api-client`. Components only take props. `api/`, `queries/`, `hooks/` never import another feature; a page may compose another feature's components and queries.
+- One-way flow: `pages → (feature hooks + queries) → api → lib/api-client`. Components only take props. One exception: `QuickSearch` calls `useUsers` itself, since the shell mounts it up to three times (header, floating nav, phone menu), each with its own typed text. `api/`, `queries/`, `hooks/` never import another feature; a page may compose another feature's components and queries.
 - `features/*/api/`: raw `hc` calls through `unwrap()` → data or `ApiError`, no React. `queries/`: the only place for `useQuery`/`useMutation`, keys in `query-keys.ts`. `hooks/`: client logic that never calls the API. `schemas/`: `zod/mini` (full zod doubled the Users chunk), mirroring worker limits; the worker stays the authority.
 - `client/` imports from `worker/` with `import type` only. Better Auth routes aren't in `AppType`; `features/auth/api` uses plain `fetch`.
 - `app/routes.tsx`: every screen is `lazy` with `ErrorBoundary: ScreenError`; error screens in `app/route-error.tsx` are imported eagerly so they render when a chunk fails. A route `loader` only prefetches that screen's queries (`prefetch()` in `app/prefetch.ts`) and returns `null`; the hooks own the data.

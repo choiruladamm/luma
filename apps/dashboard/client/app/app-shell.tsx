@@ -30,7 +30,10 @@ export function AppShell() {
   const session = useSession();
   const signOut = useSignOut();
   const overview = useOverview();
-  const { theme, setTheme, openMenu, setOpenMenu } = useUiStore();
+  const theme = useUiStore((s) => s.theme);
+  const setTheme = useUiStore((s) => s.setTheme);
+  const openMenu = useUiStore((s) => s.openMenu);
+  const setOpenMenu = useUiStore((s) => s.setOpenMenu);
   const { t, lang } = useI18n();
   const location = useLocation();
   // The Users page has its own search field; two on one screen would compete.
