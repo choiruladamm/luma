@@ -85,10 +85,7 @@ export function UsersPage() {
           />
         }
       />
-      <section
-        aria-label={t.users.list}
-        className="scroll-mt-24 overflow-hidden rounded-card bg-sheet"
-      >
+      <section aria-label={t.users.list} className="scroll-mt-24 rounded-card bg-sheet">
         <div className="flex flex-col gap-3 px-6 py-5">
           {/* Phone: search + filter icon on one row; desktop: search, then the filter chips. */}
           <div className="flex items-start gap-2 md:gap-3">
@@ -133,67 +130,70 @@ export function UsersPage() {
             )}
           </span>
         </div>
-        {users.isError ? (
-          <ErrorState message={errorText(users.error, t)} onRetry={() => void users.refetch()} />
-        ) : !users.data ? (
-          <UsersTableSkeleton />
-        ) : rows.length === 0 ? (
-          filtered ? (
-            <EmptyState
-              icon="filter"
-              title={t.users.noFilterMatch}
-              action={
-                <Button
-                  variant="secondary"
-                  onClick={() => set({ status: undefined, ai: undefined, activity: undefined })}
-                >
-                  {t.users.reset}
-                </Button>
-              }
-            >
-              {t.users.noFilterMatchBody}
-            </EmptyState>
-          ) : q ? (
-            <EmptyState icon="search" title={t.users.noMatch(q)}>
-              {t.users.noMatchBody}
-            </EmptyState>
+        {/* Clip only the table to the card corners: the toolbar menus must overflow below it. */}
+        <div className="overflow-hidden rounded-b-card">
+          {users.isError ? (
+            <ErrorState message={errorText(users.error, t)} onRetry={() => void users.refetch()} />
+          ) : !users.data ? (
+            <UsersTableSkeleton />
+          ) : rows.length === 0 ? (
+            filtered ? (
+              <EmptyState
+                icon="filter"
+                title={t.users.noFilterMatch}
+                action={
+                  <Button
+                    variant="secondary"
+                    onClick={() => set({ status: undefined, ai: undefined, activity: undefined })}
+                  >
+                    {t.users.reset}
+                  </Button>
+                }
+              >
+                {t.users.noFilterMatchBody}
+              </EmptyState>
+            ) : q ? (
+              <EmptyState icon="search" title={t.users.noMatch(q)}>
+                {t.users.noMatchBody}
+              </EmptyState>
+            ) : (
+              <EmptyState
+                icon="users"
+                title={t.users.empty}
+                action={
+                  <ButtonLink to="/invites" variant="secondary" icon="ticket">
+                    {t.users.toInvites}
+                  </ButtonLink>
+                }
+              >
+                {t.users.emptyBody}
+              </EmptyState>
+            )
           ) : (
-            <EmptyState
-              icon="users"
-              title={t.users.empty}
-              action={
-                <ButtonLink to="/invites" variant="secondary" icon="ticket">
-                  {t.users.toInvites}
-                </ButtonLink>
+            <DataTable
+              label={t.users.list}
+              columns={columns}
+              data={rows}
+              rowHref={(u) => `/users/${u.id}`}
+              numeric={USER_NUMERIC}
+              sort={tableSort}
+              sortable={Object.keys(SORT_OF)}
+              onSort={onSort}
+              renderCard={(u) => <UserCard user={u} q={q} />}
+              footer={
+                <Pagination
+                  page={params.page}
+                  pageCount={users.data.pageCount}
+                  total={users.data.total}
+                  pageSize={params.limit}
+                  onPage={(page) => set({ page })}
+                  pageSizes={[25, 50]}
+                  onPageSize={(limit) => set({ limit })}
+                />
               }
-            >
-              {t.users.emptyBody}
-            </EmptyState>
-          )
-        ) : (
-          <DataTable
-            label={t.users.list}
-            columns={columns}
-            data={rows}
-            rowHref={(u) => `/users/${u.id}`}
-            numeric={USER_NUMERIC}
-            sort={tableSort}
-            sortable={Object.keys(SORT_OF)}
-            onSort={onSort}
-            renderCard={(u) => <UserCard user={u} q={q} />}
-            footer={
-              <Pagination
-                page={params.page}
-                pageCount={users.data.pageCount}
-                total={users.data.total}
-                pageSize={params.limit}
-                onPage={(page) => set({ page })}
-                pageSizes={[25, 50]}
-                onPageSize={(limit) => set({ limit })}
-              />
-            }
-          />
-        )}
+            />
+          )}
+        </div>
       </section>
     </>
   );
