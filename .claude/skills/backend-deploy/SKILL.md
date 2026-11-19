@@ -1,6 +1,6 @@
 ---
 name: backend-deploy
-description: Deploy the Luma Cloudflare Worker (apps/backend) to dev or prod, including D1 migrations and post-deploy verification. Run only when the user asks to deploy.
+description: Manually deploy the Luma Cloudflare Worker (apps/backend) to dev or prod, including D1 migrations and post-deploy verification. Run only when the user asks to deploy by hand; pushes to dev/master already deploy through GitHub Actions.
 disable-model-invocation: true
 argument-hint: dev|prod
 ---
@@ -8,6 +8,8 @@ argument-hint: dev|prod
 # Deploy the backend Worker
 
 Target env: `$ARGUMENTS` (`dev` or `prod`). No argument → ask. Run every command from the repo root.
+
+Pushes to `dev` and `master` already deploy through `.github/workflows/deploy.yml` (`docs/operations.md`, GitHub deploy pipeline). Use this skill for a first deploy that needs a secrets file, a failed pipeline run, or when the user asks for a manual deploy.
 
 ## Preflight
 

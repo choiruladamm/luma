@@ -31,7 +31,7 @@ Root `Makefile` (`make help`): mobile targets bare (`make test`), backend `backe
 
 ## Cross-app rules
 
-- **Environments:** Luma Dev (`id.ruma.luma.dev`) ↔ backend env `dev` (`luma-api-dev.chrl.cloud`); Luma (`id.ruma.luma`) ↔ env `prod` (`luma-api.chrl.cloud`). Feature branches touch dev only; prod builds, deploys, and migrations come from `master`.
+- **Environments:** Luma Dev (`id.ruma.luma.dev`) ↔ backend env `dev` (`luma-api-dev.chrl.cloud`); Luma (`id.ruma.luma`) ↔ env `prod` (`luma-api.chrl.cloud`). Feature PRs merge into `dev`, which auto-deploys env `dev`; release PRs (`dev` → `master`) and hotfix PRs merge into `master`, which auto-deploys `prod` (`docs/operations.md`). Prod mobile builds and manual deploys or migrations come from `master` only.
 - **User data survives every fix:** through Drift migrations on device and D1 migrations on the backend.
 - **API contract:** request/response examples in `apps/backend/test/fixtures/contract/`, tested by both vitest and Dart. An endpoint change updates the fixture, the backend, and the Dart client together.
 - **Cloudflare free tier:** backend code and client code that calls it fit the free tier: no polling, debounce/batch, bounded retries, streamed files. Every change to how the app calls the backend updates the budget table in `docs/budgets.md` (Per-action budgets).
