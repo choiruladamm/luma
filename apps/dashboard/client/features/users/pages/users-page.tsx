@@ -62,7 +62,7 @@ export function UsersPage() {
   // A page past the end (rows deleted, a stale link) lands on the last page instead.
   useEffect(() => {
     if (pageCount !== undefined && params.page > pageCount) set({ page: pageCount });
-  }, [pageCount, params.page]);
+  }, [pageCount, params.page, set]);
   const total = overview.data?.users.total;
   const value = form.watch("q");
 

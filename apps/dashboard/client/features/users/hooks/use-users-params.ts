@@ -1,4 +1,6 @@
+import { useCallback } from "react";
 import { useSearchParams } from "react-router";
+import { useSearchWriter } from "../../../hooks/use-search-writer";
 
 export type UserSort = "created" | "lastActive" | "r2" | "sync" | "relevance";
 export type UsersParams = {
@@ -59,15 +61,18 @@ export const activeFilterCount = (p: UsersParams) =>
  * patch; anything but a page change goes back to page 1.
  */
 export function useUsersParams() {
-  const [search, setSearch] = useSearchParams();
+  const [search] = useSearchParams();
   const params = parseUsersParams(search);
-  const set = (patch: Partial<UsersParams>) => {
-    const next = { ...params, ...patch, page: patch.page ?? 1 };
-    // No router scroll reset: the table stays in view (Pagination scrolls to its top smoothly).
-    setSearch(usersSearchEntries(next), {
-      replace: patch.page === undefined,
-      preventScrollReset: true,
-    });
-  };
+  const write = useSearchWriter();
+  const set = useCallback(
+    (patch: Partial<UsersParams>) =>
+      write(
+        (prev) =>
+          usersSearchEntries({ ...parseUsersParams(prev), ...patch, page: patch.page ?? 1 }),
+        // No router scroll reset: the table stays in view (Pagination scrolls to its top smoothly).
+        { replace: patch.page === undefined, preventScrollReset: true },
+      ),
+    [write],
+  );
   return { params, set };
 }

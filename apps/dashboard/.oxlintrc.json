@@ -55,9 +55,7 @@
       "files": [
         "client/app/app-shell.tsx",
         "client/features/invites/pages/invites-page.tsx",
-        "client/features/users/components/quick-search.tsx",
-        "client/features/users/hooks/use-user-search.ts",
-        "client/features/users/pages/users-page.tsx"
+        "client/features/users/components/quick-search.tsx"
       ],
       "rules": {
         "react-hooks/exhaustive-deps": "off",
