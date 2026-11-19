@@ -194,14 +194,12 @@ class _AiViewState extends ConsumerState<AiView> {
             ),
           ),
           if (rejected)
-            _RejectedBox(fallback: status == KeyStatus.rejected)
+            _RejectedBox(stored: status == KeyStatus.rejected)
           else
             _Note(icon: AppIcons.info, text: l.aiOwnKeyCost),
           _ModelRow(
             id: model,
-            subtitle: status == KeyStatus.rejected
-                ? l.settingsAiModelFallsBack(model)
-                : model,
+            subtitle: model,
             onTap: () => _pickOwnModel(model),
           ),
           if (stored == AiSource.own)
@@ -502,20 +500,18 @@ class _Note extends StatelessWidget {
   }
 }
 
-/// Key rejected (board 06). [fallback]: a stored key that was rejected, AI
-/// temporarily uses the free quota; a newly entered rejected key is never
-/// stored.
-class _RejectedBox extends ConsumerWidget {
-  const _RejectedBox({required this.fallback});
+/// Key rejected (board 06). [stored]: a stored key that was rejected stays the
+/// runtime key, so AI stops until it is replaced or removed; a newly entered
+/// rejected key is never stored.
+class _RejectedBox extends StatelessWidget {
+  const _RejectedBox({required this.stored});
 
-  final bool fallback;
+  final bool stored;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final c = context.stabilo;
     final l = context.l10n;
-    final quota = ref.watch(aiQuotaProvider).value;
-    final percent = quota != null && quota.usage != null ? quota.percent : null;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: Space.s3),
       decoration: BoxDecoration(
@@ -535,11 +531,9 @@ class _RejectedBox extends ConsumerWidget {
               color: c.ink,
             ),
           ),
-          if (fallback)
+          if (stored)
             Text(
-              percent == null
-                  ? l.settingsAiKeyRejectedFallbackNoQuota
-                  : l.settingsAiKeyRejectedFallback(percent),
+              l.settingsAiKeyRejectedStopped,
               style: StabiloType.caption.copyWith(
                 fontSize: 12.5,
                 height: 1.4,

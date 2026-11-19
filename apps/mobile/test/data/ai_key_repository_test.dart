@@ -40,6 +40,16 @@ void main() {
     repo = AiKeyRepository(byok, session, AiKeyService(client), now: () => now);
   });
 
+  test('rejected BYOK stays the runtime key (no subsidy fallback)', () async {
+    await byok.write('sk-or-v1-punya-sendiri');
+    await session.writeToken('tok');
+
+    repo.markRejected('sk-or-v1-punya-sendiri');
+
+    expect(await repo.read(), 'sk-or-v1-punya-sendiri');
+    expect(adapter.requests, isEmpty);
+  });
+
   test('BYOK wins and never calls the backend', () async {
     await byok.write('sk-or-v1-punya-sendiri');
     await session.writeToken('tok');
