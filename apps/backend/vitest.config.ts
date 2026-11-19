@@ -32,7 +32,7 @@ export default defineConfig(async () => {
         provider: "istanbul" as const,
         include: ["src/**/*.ts"],
         exclude: ["src/index.ts", "src/env.ts", "src/db/schema.ts", "src/db/auth-schema.ts"],
-        thresholds: { lines: 80, functions: 80, branches: 80, statements: 80 },
+        thresholds: { statements: 99.8, branches: 92.95, functions: 99.31, lines: 99.77 },
       },
     },
   };

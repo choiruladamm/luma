@@ -30,6 +30,15 @@ export default defineConfig(async () => {
         },
       }),
     ],
-    test: { include: ["test/{unit,integration}/**/*.test.ts"], setupFiles: ["./test/setup.ts"] },
+    test: {
+      include: ["test/{unit,integration,golden}/**/*.test.ts"],
+      setupFiles: ["./test/setup.ts"],
+      coverage: {
+        provider: "istanbul" as const,
+        include: ["worker/**/*.ts"],
+        exclude: ["worker/backend-env.d.ts"],
+        thresholds: { statements: 99.27, branches: 92.12, functions: 100, lines: 99.19 },
+      },
+    },
   };
 });

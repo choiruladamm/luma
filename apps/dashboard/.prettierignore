@@ -12,3 +12,5 @@ test-results
 public
 brand
 e2e/.auth
+# Written by vitest snapshots; reformatting breaks the byte comparison.
+test/golden/*.golden.json

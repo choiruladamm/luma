@@ -9,3 +9,5 @@ test/fixtures
 *.tsbuildinfo
 playwright-report
 test-results
+# Written by vitest snapshots; reformatting breaks the byte comparison.
+test/golden/*.golden.json
