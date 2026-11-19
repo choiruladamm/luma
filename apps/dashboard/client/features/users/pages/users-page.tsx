@@ -14,7 +14,12 @@ import { formatNumber } from "../../../lib/format";
 import { useOverview } from "../../overview/queries/use-overview";
 import { USER_NUMERIC, UserCard, userColumns } from "../components/user-columns";
 import { UsersTableSkeleton } from "../components/users-table-skeleton";
-import { ActiveFilters, UsersFilterChips, UsersFilterSheet } from "../components/users-filters";
+import {
+  ActiveFilters,
+  CLEARED_FILTERS,
+  UsersFilterChips,
+  UsersFilterSheet,
+} from "../components/users-filters";
 import { useUserSearch } from "../hooks/use-user-search";
 import { activeFilterCount, type UserSort, useUsersParams } from "../hooks/use-users-params";
 import { useUsers } from "../queries/use-users";
@@ -32,6 +37,54 @@ const COLUMN_OF: Partial<Record<UserSort, string>> = {
   r2: "r2Bytes",
   sync: "syncBytes",
 };
+
+/** No rows: filters win over the search, which wins over "no users yet". */
+function UsersEmpty({
+  filtered,
+  q,
+  onReset,
+}: {
+  filtered: boolean;
+  q: string;
+  onReset: () => void;
+}) {
+  const { t } = useI18n();
+  if (filtered) {
+    return (
+      <EmptyState
+        icon="filter"
+        title={t.users.noFilterMatch}
+        action={
+          <Button variant="secondary" onClick={onReset}>
+            {t.users.reset}
+          </Button>
+        }
+      >
+        {t.users.noFilterMatchBody}
+      </EmptyState>
+    );
+  }
+  if (q) {
+    return (
+      <EmptyState icon="search" title={t.users.noMatch(q)}>
+        {t.users.noMatchBody}
+      </EmptyState>
+    );
+  }
+  return (
+    <EmptyState
+      icon="users"
+      title={t.users.empty}
+      action={
+        <ButtonLink to="/invites" variant="secondary" icon="ticket">
+          {t.users.toInvites}
+        </ButtonLink>
+      }
+    >
+      {t.users.emptyBody}
+    </EmptyState>
+  );
+}
 
 /**
  * Board 02 User (+ 13 loading, empty and search-empty states from design component 2), with filters,
@@ -76,45 +129,8 @@ export function UsersPage() {
       );
     }
     if (!users.data) return <UsersTableSkeleton />;
-    if (rows.length === 0 && filtered) {
-      return (
-        <EmptyState
-          icon="filter"
-          title={t.users.noFilterMatch}
-          action={
-            <Button
-              variant="secondary"
-              onClick={() => set({ status: undefined, ai: undefined, activity: undefined })}
-            >
-              {t.users.reset}
-            </Button>
-          }
-        >
-          {t.users.noFilterMatchBody}
-        </EmptyState>
-      );
-    }
-    if (rows.length === 0 && q) {
-      return (
-        <EmptyState icon="search" title={t.users.noMatch(q)}>
-          {t.users.noMatchBody}
-        </EmptyState>
-      );
-    }
     if (rows.length === 0) {
-      return (
-        <EmptyState
-          icon="users"
-          title={t.users.empty}
-          action={
-            <ButtonLink to="/invites" variant="secondary" icon="ticket">
-              {t.users.toInvites}
-            </ButtonLink>
-          }
-        >
-          {t.users.emptyBody}
-        </EmptyState>
-      );
+      return <UsersEmpty filtered={filtered} q={q} onReset={() => set(CLEARED_FILTERS)} />;
     }
     return (
       <DataTable

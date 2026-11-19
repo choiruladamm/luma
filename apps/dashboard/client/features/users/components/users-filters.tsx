@@ -11,7 +11,7 @@ import { activeFilterCount, type UserSort, type UsersParams } from "../hooks/use
 type SetParams = (patch: Partial<UsersParams>) => void;
 
 type FilterKey = "status" | "ai" | "activity";
-const CLEARED = {
+export const CLEARED_FILTERS = {
   status: undefined,
   ai: undefined,
   activity: undefined,
@@ -96,7 +96,7 @@ export function ActiveFilters({ params, set }: { params: UsersParams; set: SetPa
       })}
       <button
         type="button"
-        onClick={() => set(CLEARED)}
+        onClick={() => set(CLEARED_FILTERS)}
         className="h-8 rounded-full px-2.5 text-caption font-medium text-ink2 hover:bg-muted hover:text-ink"
       >
         {t.users.resetAll}
@@ -164,7 +164,7 @@ function FilterPopover({ params, set }: { params: UsersParams; set: SetParams })
           {hasFilters && (
             <button
               type="button"
-              onClick={() => set(CLEARED)}
+              onClick={() => set(CLEARED_FILTERS)}
               className="h-10 rounded-full text-caption font-medium text-ink2 hover:bg-muted hover:text-ink"
             >
               {t.users.resetAll}
@@ -288,7 +288,7 @@ export function UsersFilterSheet({
             <Button
               variant="secondary"
               size="lg"
-              onClick={() => set({ ...CLEARED, sort: undefined, dir: "desc" })}
+              onClick={() => set({ ...CLEARED_FILTERS, sort: undefined, dir: "desc" })}
             >
               {t.users.reset}
             </Button>

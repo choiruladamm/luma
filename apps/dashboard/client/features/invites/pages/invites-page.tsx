@@ -88,6 +88,45 @@ function StatusTabs({
 }
 
 /**
+ * No rows: no codes at all (create one), none matching the search, or none in the picked tab.
+ * The counts follow the search, so a search with matches outside the tab names the tab.
+ */
+function InvitesEmpty({
+  noCodes,
+  q,
+  usedWithin,
+  filter,
+  onCreate,
+}: {
+  noCodes: boolean;
+  q: string;
+  usedWithin: boolean;
+  filter: Filter;
+  onCreate: () => void;
+}) {
+  const { t } = useI18n();
+  if (noCodes && !q) {
+    return (
+      <EmptyState
+        icon="ticket"
+        title={t.invites.empty}
+        action={
+          <Button variant="primary" icon="plus" onClick={onCreate}>
+            {t.invites.create}
+          </Button>
+        }
+      >
+        {t.invites.emptyBody}
+      </EmptyState>
+    );
+  }
+  if (noCodes) return <EmptyState icon="search" title={t.invites.noSearchMatch(q)} />;
+  if (usedWithin) return <EmptyState icon="ticket" title={t.invites.noneUsedWithin} />;
+  const title = filter === "unused" ? t.invites.allUsed : t.invites.noneUsed;
+  return <EmptyState icon="ticket" title={title} />;
+}
+
+/**
  * Board 08 (Undangan, Invites) + 09 new code. Search, status tabs (with counts), "used within", sort, and
  * pages run on the worker (1 batch per change); all of it lives in the URL (useInvitesParams).
  */
@@ -202,30 +241,15 @@ export function InvitesPage() {
     }
     if (!data) return <InvitesTableSkeleton />;
     if (rows.length === 0) {
-      if (counts?.all === 0 && !params.q) {
-        return (
-          <EmptyState
-            icon="ticket"
-            title={t.invites.empty}
-            action={
-              <Button variant="primary" icon="plus" onClick={makeCode}>
-                {t.invites.create}
-              </Button>
-            }
-          >
-            {t.invites.emptyBody}
-          </EmptyState>
-        );
-      }
-      if (params.q && counts?.all === 0) {
-        return <EmptyState icon="search" title={t.invites.noSearchMatch(params.q)} />;
-      }
-      const filteredTitle = params.usedWithin
-        ? t.invites.noneUsedWithin
-        : filter === "unused"
-          ? t.invites.allUsed
-          : t.invites.noneUsed;
-      return <EmptyState icon="ticket" title={filteredTitle} />;
+      return (
+        <InvitesEmpty
+          noCodes={counts?.all === 0}
+          q={params.q}
+          usedWithin={Boolean(params.usedWithin)}
+          filter={filter}
+          onCreate={makeCode}
+        />
+      );
     }
     return (
       <DataTable
