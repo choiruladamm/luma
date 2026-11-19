@@ -1,5 +1,9 @@
 {
-  "request": { "method": "GET", "path": "/v1/me", "headers": { "authorization": "Bearer <token>" } },
+  "request": {
+    "method": "GET",
+    "path": "/v1/me",
+    "headers": { "authorization": "Bearer <token>" }
+  },
   "response": {
     "status": 200,
     "body": { "user": { "id": "<id>", "name": "Adam", "email": "adam@luma.test", "image": null } }

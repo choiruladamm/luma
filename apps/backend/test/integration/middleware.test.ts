@@ -5,7 +5,7 @@ import type { AppEnv } from "../../src/env";
 import { onError } from "@luma/worker-kit/errors";
 import { killSwitch, limitBody } from "@luma/worker-kit/middleware";
 import { DISABLED_RETRY_AFTER_SECONDS, JSON_BODY_LIMIT } from "../../src/middleware/policy";
-import disabled from "../fixtures/contract/error-service-disabled.json";
+import disabled from "@luma/contracts/fixtures/v1/error-service-disabled.json";
 import { countingD1 } from "../helpers/budget";
 
 /** A mini app with the middleware that later features mount per route group. */

@@ -1,21 +1,56 @@
 import { env } from "cloudflare:test";
 import { eq } from "drizzle-orm";
 import { expect, it, vi } from "vitest";
+import { deleteResponse, meResponse } from "@luma/contracts/backend/account";
+import { configResponse, keyResponse, usageResponse } from "@luma/contracts/backend/ai";
+import { signInResponse, signOutResponse, signUpResponse } from "@luma/contracts/backend/auth";
+import { backupInfo, backupsListResponse } from "@luma/contracts/backend/backups";
+import { missingResponse, putFileResponse } from "@luma/contracts/backend/files";
+import { healthResponse } from "@luma/contracts/backend/health";
+import { pullResponse, pushResponse } from "@luma/contracts/backend/sync";
+import type { ZodType } from "zod";
 import { createDb } from "@luma/core/db/client";
 import { users } from "@luma/core/db/schema";
-import aiKeyRotate from "../fixtures/contract/ai-key-rotate.json";
-import backupsPut from "../fixtures/contract/backups-put.json";
-import signInEmail from "../fixtures/contract/auth-sign-in-email.json";
-import signInSocial from "../fixtures/contract/auth-sign-in-social.json";
-import signUpEmail from "../fixtures/contract/auth-sign-up-email.json";
-import syncPushOlder from "../fixtures/contract/sync-push-older-schema.json";
-import syncPushTombstone from "../fixtures/contract/sync-push-tombstone.json";
-import syncPush from "../fixtures/contract/sync-push.json";
+import aiKeyRotate from "@luma/contracts/fixtures/v1/ai-key-rotate.json";
+import backupsPut from "@luma/contracts/fixtures/v1/backups-put.json";
+import signInEmail from "@luma/contracts/fixtures/v1/auth-sign-in-email.json";
+import signInSocial from "@luma/contracts/fixtures/v1/auth-sign-in-social.json";
+import signUpEmail from "@luma/contracts/fixtures/v1/auth-sign-up-email.json";
+import syncPushOlder from "@luma/contracts/fixtures/v1/sync-push-older-schema.json";
+import syncPushTombstone from "@luma/contracts/fixtures/v1/sync-push-tombstone.json";
+import syncPush from "@luma/contracts/fixtures/v1/sync-push.json";
 import { createInvite, signUp } from "../helpers/auth";
 import { callWithBudget } from "../helpers/budget";
 import { GOLDEN_NOW, goldenJson, record, type Recorded } from "../helpers/golden";
 import { fakeGoogle, foreignToken } from "../helpers/google";
 import { fakeOpenRouter } from "../helpers/openrouter";
+
+/** Success response contract per step; every error response is checked against the shared error body. */
+const contracts: Record<string, ZodType> = {
+  "GET /v1/health": healthResponse,
+  "POST /v1/auth/sign-up/email": signUpResponse,
+  "POST /v1/auth/sign-in/email": signInResponse,
+  "POST /v1/auth/sign-in/social": signInResponse,
+  "POST /v1/auth/sign-out": signOutResponse,
+  "GET /v1/me": meResponse,
+  "DELETE /v1/me": deleteResponse,
+  "POST /v1/ai/key": keyResponse,
+  "POST /v1/ai/key rotate": keyResponse,
+  "GET /v1/ai/usage": usageResponse,
+  "GET /v1/ai/config": configResponse,
+  "GET /v1/ai/usage no user limit": usageResponse,
+  "GET /v1/ai/config no user limit": configResponse,
+  "PUT /v1/files/:name": putFileResponse,
+  "POST /v1/files/missing": missingResponse,
+  "PUT /v1/backups": backupInfo,
+  "GET /v1/backups": backupsListResponse,
+  "POST /v1/sync/push": pushResponse,
+  "POST /v1/sync/push tombstone": pushResponse,
+  "POST /v1/sync/push older schema": pushResponse,
+  "GET /v1/sync/pull": pullResponse,
+  "GET /v1/sync/pull limit": pullResponse,
+  "GET /v1/sync/pull empty": pullResponse,
+};
 
 const deny = { limit: async () => ({ success: false }) } as unknown as RateLimit;
 /** Denies only the per-user limit, so the request passes the IP limit and reaches the session. */
@@ -50,7 +85,9 @@ it("records every route", async () => {
   vi.useFakeTimers({ toFake: ["Date"], now: GOLDEN_NOW });
   const steps: Record<string, Recorded> = {};
   const step = async (name: string, request: Request, overrides: Partial<Env> = {}) => {
-    steps[name] = await record(request, overrides);
+    steps[name] = await record(request, overrides, contracts[name]).catch((e: Error) => {
+      throw new Error(`${name}: ${e.message}`, { cause: e });
+    });
   };
   fakeOpenRouter();
   const google = await fakeGoogle();

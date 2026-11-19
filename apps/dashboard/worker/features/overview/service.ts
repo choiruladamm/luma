@@ -1,3 +1,4 @@
+import type { Overview } from "@luma/contracts/dashboard/overview";
 import type { Db } from "@luma/core/db/client";
 import { log } from "@luma/worker-kit/log";
 import { DAY_MS } from "@luma/core/encoding";
@@ -13,7 +14,12 @@ const on = (flag: string) => flag === "true";
  * Overview: 1 D1 batch + 1 OpenRouter subrequest. OpenRouter failing → `spendUsd: null`
  * (logged) so the page still opens. `asOf` is the last UTC day the spend covers.
  */
-export async function getOverview(db: Db, env: Env, requestId: string, now = new Date()) {
+export async function getOverview(
+  db: Db,
+  env: Env,
+  requestId: string,
+  now = new Date(),
+): Promise<Overview> {
   const syncDay = Math.floor(now.getTime() / DAY_MS);
   const [counts, spendUsd] = await Promise.all([
     overviewCounts(db, { since: new Date(now.getTime() - 7 * DAY_MS), syncDay }),

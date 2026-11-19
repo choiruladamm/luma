@@ -1,4 +1,6 @@
 import { env } from "cloudflare:test";
+import { backendWireErrorCode, errorBodySchema } from "@luma/contracts/errors";
+import type { ZodType } from "zod";
 import { callWithBudget } from "./budget";
 
 /** Fixed clock for golden runs: timestamps in responses are recorded as real values. */
@@ -59,7 +61,23 @@ export type Recorded = {
   r2Ops: number;
 };
 
-export async function record(request: Request, overrides: Partial<Env> = {}): Promise<Recorded> {
+const errorSchema = errorBodySchema.extend({
+  error: errorBodySchema.shape.error.extend({ code: backendWireErrorCode }),
+});
+
+/** A JSON response must match its contract: `contract` for 2xx, the shared error body otherwise. */
+function checkContract(status: number, json: unknown, contract?: ZodType) {
+  const schema = status >= 400 ? errorSchema : contract;
+  if (!schema) throw new Error("no contract for this JSON response");
+  const parsed = schema.safeParse(json);
+  if (!parsed.success) throw new Error(`contract mismatch: ${parsed.error.message}`);
+}
+
+export async function record(
+  request: Request,
+  overrides: Partial<Env> = {},
+  contract?: ZodType,
+): Promise<Recorded> {
   const r2 = countingR2(overrides.BUCKET ?? env.BUCKET);
   const { response, d1Queries, subrequests } = await callWithBudget(request, {
     ...overrides,
@@ -73,8 +91,11 @@ export async function record(request: Request, overrides: Partial<Env> = {}): Pr
   const type = response.headers.get("content-type") ?? "";
   const text = await response.text();
   let body: unknown = text;
-  if (type.includes("application/json")) body = normalize(JSON.parse(text));
-  else if (type.includes("text/html")) body = { sha256: await digest(text), length: text.length };
+  if (type.includes("application/json")) {
+    const json: unknown = JSON.parse(text);
+    checkContract(response.status, json, contract);
+    body = normalize(json);
+  } else if (type.includes("text/html")) body = { sha256: await digest(text), length: text.length };
   return {
     status: response.status,
     headers,

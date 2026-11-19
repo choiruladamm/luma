@@ -1,6 +1,6 @@
 import { exports } from "cloudflare:workers";
 import { describe, expect, it } from "vitest";
-import limited from "../fixtures/contract/error-rate-limited.json";
+import limited from "@luma/contracts/fixtures/v1/error-rate-limited.json";
 import { TEST_RATE_LIMIT } from "../helpers/limits";
 import { callWithBudget } from "../helpers/budget";
 

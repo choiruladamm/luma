@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { backupId, parseManifest, staleBackups } from "../../src/features/backup/service";
 import { MAX_UPLOAD_BYTES, uploadSize } from "../../src/lib/storage";
-import backupsPut from "../fixtures/contract/backups-put.json";
+import backupsPut from "@luma/contracts/fixtures/v1/backups-put.json";
 
 describe("backupId", () => {
   it("is UTC yyyyMMddTHHmmssZ, so key order = time order", () => {

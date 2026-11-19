@@ -6,7 +6,7 @@ import 'backend_client.dart';
 
 /// Represents a user returned by the backend (`/v1/me` and login responses).
 ///
-/// Fields match the contract fixture `apps/backend/test/fixtures/contract/me.json`.
+/// Fields match the contract fixture `packages/contracts/fixtures/v1/me.json`.
 class AuthUser {
   const AuthUser({
     required this.id,

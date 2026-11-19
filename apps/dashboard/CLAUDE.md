@@ -28,7 +28,7 @@ Admin-only Worker `luma-admin-{env}`: Hono API under `/api` on the same D1 as th
 ## Worker rules
 
 - Middleware order: `requestId (workerApp) → securityHeaders → IP rateLimit → limitBody → [/api/auth/* allowlist → Better Auth] → requireAdmin → requireSameOriginJson → rateLimitAdmin → validate → handler`. Shared middleware, errors, and `log` come from `@luma/worker-kit` (`docs/workers.md`). `requireAdmin` is global on `/api/*`: mount every route after it, with no per-route auth.
-- Build the app, middleware, and feature routers from `factory` (`env.ts`). Chain feature routes (`factory.createApp().get(...).post(...)`) and mount them with `.route()` so `AppType` carries their types.
+- Build the app, middleware, and feature routers from `factory` (`env.ts`). Request schemas and response types come from `@luma/contracts/dashboard/*`; services annotate their return types with them, so `AppType` carries the contract shape and the client never hand-writes a DTO. Chain feature routes (`factory.createApp().get(...).post(...)`) and mount them with `.route()` so `AppType` carries their types.
 - Features don't import each other. Each `repo.ts` function is one query-budget unit; its comment states the query count.
 - Better Auth endpoints are allowlisted in `AUTH_ROUTES`; anything else under `/api/auth/*` is 404. Adding one updates `docs/dashboard.md` (Access and sessions and request guards).
 - Build the Better Auth instance only inside `/api/auth/*` (tens of ms CPU). `requireAdmin` verifies the cookie HMAC itself, then one D1 join.

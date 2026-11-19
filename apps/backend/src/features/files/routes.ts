@@ -1,13 +1,11 @@
 import { Hono } from "hono";
 import { limitBody, validate } from "@luma/worker-kit/middleware";
-import { z } from "zod";
+import { FILE_NAME, missingRequest } from "@luma/contracts/backend/files";
 import type { AppEnv } from "../../env";
 import { ApiError } from "../../lib/errors";
 import { uploadSize } from "../../lib/storage";
 import { featureGuard } from "../../middleware/guard";
-import { FILE_NAME, getFile, missingFiles, putFile } from "./service";
-
-const missingBody = z.object({ names: z.array(z.string().regex(FILE_NAME)).max(1000) }).strict();
+import { getFile, missingFiles, putFile } from "./service";
 
 const fileName = (name: string) => {
   if (!FILE_NAME.test(name)) throw new ApiError(400, "BAD_REQUEST", "Invalid file name");
@@ -19,7 +17,7 @@ export const files = new Hono<AppEnv>()
   .post(
     "/missing",
     limitBody(256 * 1024),
-    validate("json", missingBody, 'Body must be {"names": string[≤1000]}'),
+    validate("json", missingRequest, 'Body must be {"names": string[≤1000]}'),
     async (c) =>
       c.json({
         missing: await missingFiles(c.env.BUCKET, c.get("user").id, c.req.valid("json").names),

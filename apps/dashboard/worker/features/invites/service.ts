@@ -1,3 +1,4 @@
+import type { InviteCreated, InviteList } from "@luma/contracts/dashboard/invites";
 import { newInviteCode, normalizeInviteCode } from "@luma/core/auth/invite";
 import type { Db } from "@luma/core/db/client";
 import { ApiError } from "../../lib/errors";
@@ -13,10 +14,8 @@ import {
 export const displayInviteCode = (stored: string) =>
   /^LUMA-[A-Z0-9]{10}$/.test(stored) ? `${stored.slice(0, 10)}-${stored.slice(10)}` : stored;
 
-export const INVITES_PAGE_SIZE = 20;
-
 /** Invite list page: 1 batch (rows + counts). A page past the end returns no items (the client clamps). */
-export async function getInvites(db: Db, query: Omit<InviteListQuery, "now">) {
+export async function getInvites(db: Db, query: Omit<InviteListQuery, "now">): Promise<InviteList> {
   const { rows, counts } = await listInvites(db, {
     ...query,
     q: query.q || undefined,
@@ -37,7 +36,7 @@ export async function getInvites(db: Db, query: Omit<InviteListQuery, "now">) {
 }
 
 /** Create `count` codes in 1 insert. Stored normalized, returned in the hand-out format with the stored `createdAt`. */
-export async function createInvites(db: Db, count: number) {
+export async function createInvites(db: Db, count: number): Promise<InviteCreated> {
   const codes = Array.from({ length: count }, newInviteCode);
   const createdAt = new Date();
   await insertInvites(db, codes.map(normalizeInviteCode), createdAt);

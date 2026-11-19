@@ -1,4 +1,6 @@
+import { dashboardErrorCode, errorBodySchema } from "@luma/contracts/errors";
 import { vi } from "vitest";
+import type { ZodType } from "zod";
 import { call } from "./app";
 
 /** Fixed clock for golden runs: timestamps in responses are recorded as real values. */
@@ -47,10 +49,23 @@ export type Recorded = {
   fetches: number;
 };
 
+const errorSchema = errorBodySchema.extend({
+  error: errorBodySchema.shape.error.extend({ code: dashboardErrorCode }),
+});
+
+/** A JSON response must match its contract: `contract` for 2xx, the shared error body otherwise. */
+function checkContract(status: number, json: unknown, contract?: ZodType) {
+  const schema = status >= 400 ? errorSchema : contract;
+  if (!schema) throw new Error("no contract for this JSON response");
+  const parsed = schema.safeParse(json);
+  if (!parsed.success) throw new Error(`contract mismatch: ${parsed.error.message}`);
+}
+
 export async function record(
   path: string,
   init: RequestInit = {},
   overrides: Partial<Env> = {},
+  contract?: ZodType,
 ): Promise<Recorded> {
   const fetchSpy = vi.spyOn(globalThis, "fetch");
   try {
@@ -62,6 +77,7 @@ export async function record(
     );
     const text = await response.text();
     const json = response.headers.get("content-type")?.includes("application/json");
+    if (json && text) checkContract(response.status, JSON.parse(text), contract);
     return {
       status: response.status,
       headers,

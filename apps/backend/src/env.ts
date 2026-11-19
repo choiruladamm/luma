@@ -1,7 +1,6 @@
 import type { OpenRouterAdmin } from "@luma/core/openrouter";
 import type { Db } from "@luma/core/db/client";
-
-export type SessionUser = { id: string; name: string; email: string; image: string | null };
+import type { SessionUser } from "@luma/contracts/backend/account";
 
 export type AppEnv = {
   Bindings: Env;

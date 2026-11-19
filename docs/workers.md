@@ -55,6 +55,17 @@ The package depends on no Worker's `Env`; it compiles against the Workers runtim
 
 The kit's own tests run on Node (`make packages-test`) and hold 100% coverage. Both packages compile against `packages/workers-runtime.d.ts`, generated from `packages/wrangler.jsonc`.
 
+`packages/contracts` (`@luma/contracts`) is the one source of the wire shapes, with zod as its only dependency: lint rejects its imports of a Worker or another `@luma` package.
+
+| Import | Contents |
+|---|---|
+| `@luma/contracts/errors` | `errorBodySchema`; the codes each Worker throws (`backendErrorCode`, `dashboardErrorCode`, which its `ErrorCode` type comes from); `backendWireErrorCode`, which adds the Better Auth codes `/v1/auth/*` passes through, fixed by shape only because Better Auth owns that list. |
+| `@luma/contracts/backend/*` | Request, query, and response schemas of the mobile API per feature (`health`, `account`, `ai`, `files`, `backups`, `sync`, `auth`), the limits they use, and the `z.infer` types. |
+| `@luma/contracts/dashboard/*` | The same for the admin API (`users`, `invites`, `overview`, `auth`). |
+| `@luma/contracts/fixtures/v1/*.json` | Request/response examples of the mobile API, read by the Worker tests and by the Dart client tests. |
+
+Each Worker's `lib/errors.ts` derives its `ErrorCode` from the contract's list and fails to compile if the kit's `BaseErrorCode` is not a subset. The package's tests parse every fixture with its schema (`make packages-test`), and each Worker's golden test parses every JSON response with its schema.
+
 `apps/dashboard/backend-vars.ts` reads the backend's feature flags, OpenRouter workspace, and AI budget from `apps/backend/wrangler.jsonc` at build time, because those runtime vars belong to the backend's configuration.
 
 ## Conventions
@@ -65,8 +76,8 @@ Rules both Workers follow; each Worker's doc has its own routes, guards, and cod
 - **Paths and versions.** The backend serves `/v1/*`; the dashboard serves `/api/*`, which ships with its SPA and so has no version.
 - **Pipeline start.** Each Worker passes its Hono app through `workerApp` (`@luma/worker-kit/app`), which installs `requestId`, `notFound`, and `onError` before the Worker's own middleware.
 - **Request ids.** Every response, Better Auth's included, carries `x-request-id`, and every log line of that request includes it.
-- **Responses.** JSON field names are camelCase. A success returns the resource itself, without an envelope.
-- **Errors.** Every error is `{error: {code, message}}` with an `UPPER_SNAKE_CASE` code that clients branch on; the message is for people. Code throws `ApiError`; each Worker's `lib/errors.ts` adds its own codes to the kit's `BaseErrorCode`. A 4xx Hono `HTTPException` gets the base code for its status, unknown routes return 404 `NOT_FOUND`, and an unexpected failure returns 500 `INTERNAL_ERROR`. `normalizeAuthError` wraps Better Auth's JSON errors in the same shape, keeping Better Auth's code. Backend codes: [backend.md](backend.md) (Request pipeline and API conventions); dashboard codes: [dashboard.md](dashboard.md) (API routes and errors).
+- **Responses.** JSON field names are camelCase. A success returns the resource itself, without an envelope. Request and response schemas live in `@luma/contracts`; routes validate with them and services type their results with `z.infer` of them, so no DTO type is hand-written.
+- **Errors.** Every error is `{error: {code, message}}` with an `UPPER_SNAKE_CASE` code that clients branch on; the message is for people. Code throws `ApiError`; each Worker's `lib/errors.ts` takes its codes from the contract's list, which includes the kit's `BaseErrorCode`. A 4xx Hono `HTTPException` gets the base code for its status, unknown routes return 404 `NOT_FOUND`, and an unexpected failure returns 500 `INTERNAL_ERROR`. `normalizeAuthError` wraps Better Auth's JSON errors in the same shape, keeping Better Auth's code. Backend codes: [backend.md](backend.md) (Request pipeline and API conventions); dashboard codes: [dashboard.md](dashboard.md) (API routes and errors).
 - **Logs.** Worker code logs only through `log` (`@luma/worker-kit/log`); lint rejects `console` outside scripts and tests. A line is single-line JSON with a `message` and the `requestId`. Unexpected failures and handled upstream failures are logged as errors; dashboard mutations also log an `audit` line. Tokens, keys, and sync record bodies never reach a log.
 - **Validation and limits.** Inputs go through the kit's `validate` (400 `BAD_REQUEST`, with the route's message or zod's first issue). Bodies are size-limited with `limitBody` before parsing (413 `PAYLOAD_TOO_LARGE`), rate limits return 429 `RATE_LIMITED` with `Retry-After`, and a `killSwitch` var that isn't `"true"` returns 503 `SERVICE_DISABLED`.
 

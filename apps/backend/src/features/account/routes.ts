@@ -1,5 +1,6 @@
 import { Hono } from "hono";
-import type { AppEnv, SessionUser } from "../../env";
+import type { SessionUser } from "@luma/contracts/backend/account";
+import type { AppEnv } from "../../env";
 import { requireSession } from "../../middleware/session";
 import { revokeKey } from "../ai-key/service";
 import { deleteAccount } from "./service";

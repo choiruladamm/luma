@@ -1,0 +1,24 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "extends": ["../../.oxlintrc.base.json"],
+  "ignorePatterns": ["coverage", "fixtures"],
+  "rules": {
+    "no-restricted-imports": [
+      "error",
+      {
+        "patterns": [
+          {
+            "group": ["**/backend/**", "**/dashboard/**", "**/apps/**", "@luma/**"],
+            "message": "Contracts depend on nothing Luma: zod only (docs/workers.md, Shared code)."
+          }
+        ]
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": ["test/**"],
+      "rules": { "no-restricted-imports": "off" }
+    }
+  ]
+}

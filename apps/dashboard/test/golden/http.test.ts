@@ -1,3 +1,17 @@
+import {
+  sessionResponse,
+  signOutResponse,
+  socialSignInResponse,
+} from "@luma/contracts/dashboard/auth";
+import { inviteCreateResponse, inviteListResponse } from "@luma/contracts/dashboard/invites";
+import { overviewResponse } from "@luma/contracts/dashboard/overview";
+import {
+  banResponse,
+  unbanResponse,
+  userDetailResponse,
+  userListResponse,
+} from "@luma/contracts/dashboard/users";
+import type { ZodType } from "zod";
 import { HttpResponse, http } from "msw";
 import { expect, it, vi } from "vitest";
 import { OPENROUTER_API } from "@luma/core/openrouter";
@@ -14,6 +28,25 @@ import {
 } from "../helpers/session";
 import { network } from "../setup";
 
+/** Success response contract per step; every error response is checked against the shared error body. */
+const contracts: Record<string, ZodType> = {
+  "GET /api/auth/get-session signed out": sessionResponse,
+  "GET /api/auth/get-session": sessionResponse,
+  "POST /api/auth/sign-in/social": socialSignInResponse,
+  "POST /api/auth/sign-out": signOutResponse,
+  "GET /api/users": userListResponse,
+  "GET /api/users filtered": userListResponse,
+  "GET /api/users/:id": userDetailResponse,
+  "GET /api/users/:id no key": userDetailResponse,
+  "GET /api/users/:id after 502": userDetailResponse,
+  "POST /api/users/:id/ban": banResponse,
+  "POST /api/users/:id/unban": unbanResponse,
+  "GET /api/invites": inviteListResponse,
+  "GET /api/invites filtered": inviteListResponse,
+  "POST /api/invites": inviteCreateResponse,
+  "GET /api/overview": overviewResponse,
+};
+
 const deny = { limit: async () => ({ success: false }) } as unknown as RateLimit;
 
 /**
@@ -27,7 +60,9 @@ it("records every route", async () => {
   // Rows created in the same millisecond have no defined order; one second apart, lists are stable.
   const tick = () => vi.setSystemTime(Date.now() + 1000);
   const step = async (name: string, path: string, init: RequestInit = {}, overrides = {}) => {
-    steps[name] = await record(path, init, overrides);
+    steps[name] = await record(path, init, overrides, contracts[name]).catch((e: Error) => {
+      throw new Error(`${name}: ${e.message}`, { cause: e });
+    });
     tick();
   };
   network.use(

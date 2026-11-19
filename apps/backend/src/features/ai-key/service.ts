@@ -1,3 +1,4 @@
+import type { AiPublicConfig, AiUsage, IssuedKey } from "@luma/contracts/backend/ai";
 import type { OpenRouterAdmin } from "@luma/core/openrouter";
 import type { Db } from "@luma/core/db/client";
 import { decryptText, encryptText } from "../../lib/crypto";
@@ -9,13 +10,10 @@ import { findKeyHash, saveKey, setKeyLimit, type AiKeyRow } from "./repo";
 /** The key is replaced a day before it expires, so a device never holds a dead key mid-read. */
 export const ROTATE_BEFORE_MS = DAY_MS;
 
-export type AiConfig = {
-  dailyLimitUsd: number;
+export type AiConfig = AiPublicConfig & {
   ttlDays: number;
   workspaceId: string;
   encSecret: string;
-  chatModels: string[];
-  embeddingModels: string[];
 };
 
 /** Numbers and models from `vars` (docs/backend.md, AI subsidy). Models must match the OpenRouter guardrail. */
@@ -34,8 +32,6 @@ async function allowedKey(db: Db, userId: string) {
   if (found.banned) throw new ApiError(403, "AI_BANNED", "AI access is disabled for this account");
   return found.key;
 }
-
-export type IssuedKey = { key: string; expiresAt: string; dailyLimitUsd: number };
 
 /**
  * The stored key if it can still be handed out, else undefined. The checks run
@@ -102,13 +98,6 @@ export async function issueKey(
   await saveKey(db, userId, values);
   return { key: created.key, expiresAt: expiresAt.toISOString(), dailyLimitUsd: cfg.dailyLimitUsd };
 }
-
-export type AiUsage = {
-  dailyLimitUsd: number;
-  remainingUsd: number;
-  usedTodayUsd: number;
-  resetsAt: string;
-};
 
 /** The OpenRouter daily limit resets at midnight UTC. */
 export const nextUtcMidnight = (now: Date) =>

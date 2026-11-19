@@ -1,3 +1,4 @@
+import type { BanResult, UnbanResult, UserDetail, UserList } from "@luma/contracts/dashboard/users";
 import type { OpenRouterAdmin } from "@luma/core/openrouter";
 import type { Db } from "@luma/core/db/client";
 import { log } from "@luma/worker-kit/log";
@@ -11,8 +12,6 @@ import {
   type UserRow,
   unbanUser,
 } from "./repo";
-
-export const USERS_PAGE_SIZE = 50;
 
 const iso = (d: Date | null) => d?.toISOString() ?? null;
 
@@ -35,7 +34,7 @@ const userItem = (row: UserRow) => ({
 export async function getUsers(
   db: Db,
   query: Omit<UserListQuery, "sort" | "now"> & { sort?: UserListQuery["sort"] },
-) {
+): Promise<UserList> {
   const q = query.q || undefined;
   const fallback = q ? "relevance" : "created";
   const sort = query.sort === "relevance" && !q ? fallback : (query.sort ?? fallback);
@@ -70,7 +69,7 @@ export async function getUserDetail(
   openrouter: OpenRouterAdmin,
   id: string,
   requestId: string,
-) {
+): Promise<UserDetail> {
   const found = await findUserDetail(db, id);
   if (!found) throw new ApiError(404, "NOT_FOUND", "User not found");
   const { key } = found;
@@ -100,7 +99,7 @@ export async function getUserDetail(
  * touching D1, so the ban can be retried. Idempotent.
  * D1: 1 query + 1 batch. Subrequests: 1 when the user has a key.
  */
-export async function ban(db: Db, openrouter: OpenRouterAdmin, id: string) {
+export async function ban(db: Db, openrouter: OpenRouterAdmin, id: string): Promise<BanResult> {
   const found = await findUserKeyHash(db, id);
   if (!found) throw new ApiError(404, "NOT_FOUND", "User not found");
   if (found.keyHash) {
@@ -117,7 +116,7 @@ export async function ban(db: Db, openrouter: OpenRouterAdmin, id: string) {
 }
 
 /** Unban = `banned = 0`, 1 query. A new key is created lazily when the app asks again. */
-export async function unban(db: Db, id: string) {
+export async function unban(db: Db, id: string): Promise<UnbanResult> {
   if (!(await unbanUser(db, id))) throw new ApiError(404, "NOT_FOUND", "User not found");
   return { banned: false as const };
 }

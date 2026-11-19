@@ -24,7 +24,7 @@ Hono API under `/v1` on Workers, D1 + Drizzle, R2, Better Auth (`bearer` plugin)
 - Drizzle everywhere except `sync/repo.ts`: raw SQL with `json_each` fits a 500-record batch in one statement.
 - Features don't import each other, except account deletion calling `revokeKey`.
 - R2 keys are always per user, `u/{userId}/...`, through `lib/storage.ts`.
-- Validate every input with `validate` from `@luma/worker-kit/middleware`, and throw `ApiError` from `lib/errors.ts` (backend codes listed there). Errors are `{"error": {"code", "message"}}` with `UPPER_SNAKE_CASE` codes; the Flutter client maps `code` to an enum. Shared middleware and `log` come from `@luma/worker-kit` (`docs/workers.md`).
+- Validate every input with `validate` from `@luma/worker-kit/middleware` and the schema from `@luma/contracts` (request and response types are `z.infer` of it, never hand-written), and throw `ApiError` from `lib/errors.ts` (backend codes listed there). Errors are `{"error": {"code", "message"}}` with `UPPER_SNAKE_CASE` codes; the Flutter client maps `code` to an enum. Shared middleware and `log` come from `@luma/worker-kit` (`docs/workers.md`).
 - Better Auth trap: its generated schema can hard-code camelCase column names (`text("emailVerified")`) that override Drizzle `casing: "snake_case"`. After generating, rename the columns to snake_case and keep the properties.
 
 ## Free tier
@@ -52,7 +52,7 @@ Every endpoint's integration test covers: success; 401 without/with a bad token;
 
 ## Per-issue flow
 
-1. Contract first: request/response examples in `test/fixtures/contract/` before code.
+1. Contract first: the zod schemas in `packages/contracts/src/backend/` and request/response examples in `packages/contracts/fixtures/v1/` before code.
 2. Endpoint + tests, `make backend-test`, deploy to dev.
 3. Flutter: service → repository / ViewModel → UI, with tests.
 4. End to end: `make backend-live` + try it in Luma Dev.

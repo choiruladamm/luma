@@ -1,13 +1,11 @@
 import { Hono } from "hono";
 import { killSwitch, limitBody, validate } from "@luma/worker-kit/middleware";
-import { z } from "zod";
+import { keyRequest } from "@luma/contracts/backend/ai";
 import type { AppEnv } from "../../env";
 import { DISABLED_RETRY_AFTER_SECONDS } from "../../middleware/policy";
 import { rateLimit } from "../../middleware/rate-limit";
 import { requireSession } from "../../middleware/session";
 import { aiConfig, issueKey, usage } from "./service";
-
-const keyBody = z.object({ rotate: z.boolean().optional() }).strict();
 
 export const ai = new Hono<AppEnv>()
   .use(killSwitch("AI_KEY_ENABLED", DISABLED_RETRY_AFTER_SECONDS), requireSession)
@@ -15,7 +13,7 @@ export const ai = new Hono<AppEnv>()
     "/key",
     rateLimit((c) => `user:${c.get("user").id}`),
     limitBody(1024),
-    validate("json", keyBody, 'Body must be {"rotate"?: boolean}'),
+    validate("json", keyRequest, 'Body must be {"rotate"?: boolean}'),
     async (c) => {
       const { rotate } = c.req.valid("json");
       const issued = await issueKey(c.var.db, c.var.openrouter, aiConfig(c.env), c.get("user").id, {

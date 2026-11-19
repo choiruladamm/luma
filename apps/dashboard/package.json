@@ -19,6 +19,7 @@
     "@hookform/resolvers": "^7.0.6",
     "@hugeicons/core-free-icons": "^4.4.0",
     "@hugeicons/react": "^1.1.10",
+    "@luma/contracts": "workspace:*",
     "@luma/core": "workspace:*",
     "@luma/worker-kit": "workspace:*",
     "@tanstack/react-query": "^5.107.1",

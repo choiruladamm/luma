@@ -1,10 +1,8 @@
+import type { StoredFile } from "@luma/contracts/backend/files";
 import type { Db } from "@luma/core/db/client";
 import { releaseOnFailure, reserveBytes } from "../../db/user-storage";
 import { ApiError } from "../../lib/errors";
 import { fixedLength, userPrefix } from "../../lib/storage";
-
-/** The app's book/cover file names are hash-based; anything outside this pattern is rejected. */
-export const FILE_NAME = /^[A-Za-z0-9._-]{1,200}$/;
 
 export const filesPrefix = (userId: string) => `${userPrefix(userId)}files/`;
 
@@ -24,8 +22,6 @@ export async function missingFiles(bucket: R2Bucket, userId: string, names: stri
   } while (cursor);
   return [...new Set(names)].filter((n) => !have.has(n));
 }
-
-export type StoredFile = { name: string; size: number };
 
 /**
  * Stores one file. Names are hash-based: a file that already exists isn't uploaded

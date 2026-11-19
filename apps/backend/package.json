@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@better-auth/drizzle-adapter": "catalog:",
+    "@luma/contracts": "workspace:*",
     "@luma/core": "workspace:*",
     "@luma/worker-kit": "workspace:*",
     "better-auth": "catalog:",

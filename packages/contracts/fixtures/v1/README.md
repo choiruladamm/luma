@@ -2,7 +2,7 @@
 
 Contoh request/response asli, dibaca dua sisi:
 
-- vitest (`apps/backend/test`): respons server harus cocok.
+- vitest: `packages/contracts/test` mem-parse tiap fixture dengan skemanya, dan test `apps/backend/test` mencocokkan respons server.
 - test Dart (`apps/mobile/test/data/backend_client_test.dart`, helper `contract()`): client harus bisa parse.
 
 Format: `{ "request": { "method", "path", "headers"? , "body"? }, "response": { "status", "headers"?, "body" } }`.
