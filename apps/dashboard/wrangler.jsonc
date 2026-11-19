@@ -26,7 +26,7 @@
       "vars": {
         "ENV": "dev",
         // Comma-separated admin emails. Empty = everyone rejected (fail closed).
-        // Must be a Google account already in this env's D1: the dashboard can't create accounts.
+        // A verified admin's first Google sign-in creates the account if it doesn't exist yet.
         "ADMIN_EMAILS": "work.adamm@gmail.com",
         "BETTER_AUTH_URL": "https://luma-admin-dev.chrl.cloud",
         // Google OAuth web client ID (public), same as the first entry of the backend GOOGLE_CLIENT_IDS.

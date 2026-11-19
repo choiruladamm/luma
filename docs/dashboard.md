@@ -16,7 +16,7 @@ The dashboard in `apps/dashboard` is a Worker serving a React SPA through Static
 
 Cloudflare Access protects the deployed custom domains. The dashboard also uses Google OAuth through its own Better Auth instance and signed cookie session on the shared database. Protected requests accept a dashboard cookie signed with its own secret, not a mobile bearer token, and recheck admin membership on every request; removing an email disables existing sessions. A verified email must match `ADMIN_EMAILS`, case-insensitively after trimming; an empty string permits no admins. The binding must be a string. A verified admin's first Google sign-in can create the account without a prior app sign-in or invite.
 
-Sessions expire after seven idle days, sliding at most once per day while used, with a 30-day absolute cap from creation. The login screen copy still says 12 hours (#231). `trustedOrigins` contains `BETTER_AUTH_URL`, including localhost when configured.
+Sessions expire after seven idle days, sliding at most once per day while used, with a 30-day absolute cap from creation. `trustedOrigins` contains `BETTER_AUTH_URL`, including localhost when configured.
 
 Agents reach the dev domain without Google. Access on the dev app (never prod) also admits the service token `luma-admin-dev-qa`, which expires 2027-11-19. `make dashboard-dev-session` inserts a 1-day session for one dev admin straight into the dev D1, signed with the dev `BETTER_AUTH_SECRET`. These sessions carry the user agent `dev-session`, and each run deletes the expired ones. The token, the secret, and the admin email live only in the gitignored `apps/dashboard/.dev.vars.remote-dev`; rotating the dev secret means updating that file too.
 

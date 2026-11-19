@@ -41,7 +41,8 @@ export const id = {
     title: "Masuk",
     hint: "Pakai akun Google yang terdaftar sebagai admin.",
     google: "Masuk pakai Google",
-    sessionNote: "Sesi admin berlaku 12 jam. Habis itu masuk lagi.",
+    sessionNote:
+      "Sesi admin habis setelah 7 hari tidak aktif, atau paling lama 30 hari. Habis itu masuk lagi.",
     failed: "Gagal masuk",
     failedBody: "Login Google gak selesai. Coba lagi.",
     notRegistered: "Akun ini belum terdaftar di Luma",

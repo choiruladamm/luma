@@ -42,7 +42,7 @@ export const en: Messages = {
     title: "Sign in",
     hint: "Use the Google account registered as an admin.",
     google: "Sign in with Google",
-    sessionNote: "Admin sessions last 12 hours. Then sign in again.",
+    sessionNote: "Admin sessions end after 7 idle days, or 30 days at most. Then sign in again.",
     failed: "Couldn't sign in",
     failedBody: "Google sign-in didn't finish. Try again.",
     notRegistered: "This account isn't on Luma yet",
