@@ -1,5 +1,5 @@
-import { newInviteCode, normalizeInviteCode } from "@backend/auth/invite";
-import type { Db } from "@backend/db/client";
+import { newInviteCode, normalizeInviteCode } from "@luma/core/auth/invite";
+import type { Db } from "@luma/core/db/client";
 import { ApiError } from "../../lib/errors";
 import {
   deleteUnusedInvite,

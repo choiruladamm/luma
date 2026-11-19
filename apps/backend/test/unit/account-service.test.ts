@@ -1,8 +1,8 @@
 import { env } from "cloudflare:test";
 import { eq } from "drizzle-orm";
 import { describe, expect, it, vi } from "vitest";
-import { createDb } from "../../src/db/client";
-import { users } from "../../src/db/schema";
+import { createDb } from "@luma/core/db/client";
+import { users } from "@luma/core/db/schema";
 import { DELETE_PAGES_PER_REQUEST, deleteAccount } from "../../src/features/account/service";
 import { signUp } from "../helpers/auth";
 

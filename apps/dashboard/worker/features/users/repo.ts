@@ -1,8 +1,8 @@
 // Every D1 query of the users feature. Each function is one query-budget unit.
 import { and, asc, count, desc, eq, gte, isNotNull, isNull, type SQL, sql } from "drizzle-orm";
-import type { Db } from "@backend/db/client";
-import { accounts, aiKeys, inviteCodes, sessions, users, userStorage } from "@backend/db/schema";
-import { DAY_MS } from "@backend/lib/encoding";
+import type { Db } from "@luma/core/db/client";
+import { accounts, aiKeys, inviteCodes, sessions, users, userStorage } from "@luma/core/db/schema";
+import { DAY_MS } from "@luma/core/encoding";
 
 // Correlated subquery: uses the sessions(user_id) index. Also a filter and a sort key.
 const lastActive = sql<

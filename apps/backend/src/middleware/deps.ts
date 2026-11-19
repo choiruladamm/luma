@@ -1,6 +1,6 @@
 import { createMiddleware } from "hono/factory";
-import { openRouterAdmin } from "../clients/openrouter";
-import { createDb } from "../db/client";
+import { openRouterAdmin } from "@luma/core/openrouter";
+import { createDb } from "@luma/core/db/client";
 import type { AppEnv } from "../env";
 
 /**

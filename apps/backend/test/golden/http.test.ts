@@ -1,8 +1,8 @@
 import { env } from "cloudflare:test";
 import { eq } from "drizzle-orm";
 import { expect, it, vi } from "vitest";
-import { createDb } from "../../src/db/client";
-import { users } from "../../src/db/schema";
+import { createDb } from "@luma/core/db/client";
+import { users } from "@luma/core/db/schema";
 import aiKeyRotate from "../fixtures/contract/ai-key-rotate.json";
 import backupsPut from "../fixtures/contract/backups-put.json";
 import signInEmail from "../fixtures/contract/auth-sign-in-email.json";

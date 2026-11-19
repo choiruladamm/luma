@@ -1,5 +1,5 @@
 import { HttpResponse, http } from "msw";
-import { OPENROUTER_API } from "../../src/clients/openrouter";
+import { OPENROUTER_API } from "@luma/core/openrouter";
 import { network } from "../setup";
 
 export type FakeKey = {

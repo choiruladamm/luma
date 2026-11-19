@@ -1,5 +1,5 @@
-import type { OpenRouterAdmin } from "@backend/clients/openrouter";
-import type { Db } from "@backend/db/client";
+import type { OpenRouterAdmin } from "@luma/core/openrouter";
+import type { Db } from "@luma/core/db/client";
 import { ApiError } from "../../lib/errors";
 import {
   banUser,

@@ -31,7 +31,18 @@ Shared tool configuration sits at the root and each app extends it:
 
 ## Shared code
 
-The dashboard reads backend source through the `@backend/*` alias: the D1 schema and client, the auth user fields, invite codes, and the OpenRouter client. Those backend files stay free of the backend `Env` type, and the backend owns the schema and migrations. Moving them into a shared package that neither app owns is open work (#258).
+Code both Workers need lives in `packages/core` (`@luma/core`), which neither Worker owns:
+
+| Import | Contents |
+|---|---|
+| `@luma/core/db/schema`, `@luma/core/db/auth-schema` | The D1 schema; migrations are in `packages/core/migrations`, which both Workers' `wrangler.jsonc` name as `migrations_dir`. |
+| `@luma/core/ai-keys` | `findUserKey`, the AI key lookup the backend issues keys from and the dashboard's tests check. |
+| `@luma/core/db/client` | `createDb` and the `Db` type. |
+| `@luma/core/auth/user-fields`, `@luma/core/auth/invite` | Luma's extra user columns and invite codes. |
+| `@luma/core/openrouter` | The OpenRouter management client. |
+| `@luma/core/encoding` | Base64, `csv`, and `DAY_MS`. |
+
+The package depends on no Worker's `Env`; it compiles against the Workers runtime types alone. Code only one Worker uses stays in that Worker. The backend's tests measure the package's coverage.
 
 `apps/dashboard/backend-vars.ts` reads the backend's feature flags, OpenRouter workspace, and AI budget from `apps/backend/wrangler.jsonc` at build time, because those runtime vars belong to the backend's configuration.
 
@@ -39,7 +50,7 @@ The dashboard reads backend source through the `@backend/*` alias: the D1 schema
 
 Rules both Workers follow; each Worker's doc has its own routes, guards, and codes.
 
-- **Imports.** A feature never imports another feature (the backend's account deletion calling `revokeKey` is the one exception). The dashboard reaches backend code only through `@backend/*`, and never a backend `features/*/service.ts`.
+- **Imports.** A Worker never imports from another Worker's directory, only from `packages/*`; lint rejects `apps/*` paths. A feature never imports another feature (the backend's account deletion calling `revokeKey` is the one exception).
 - **Paths and versions.** The backend serves `/v1/*`; the dashboard serves `/api/*`, which ships with its SPA and so has no version.
 - **Request ids.** Every response the Worker builds carries `x-request-id`, and every log line of that request includes it. Better Auth responses pass through without the header (#259).
 - **Responses.** JSON field names are camelCase. A success returns the resource itself, without an envelope.

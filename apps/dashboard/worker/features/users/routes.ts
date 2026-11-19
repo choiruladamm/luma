@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { openRouterAdmin } from "@backend/clients/openrouter";
+import { openRouterAdmin } from "@luma/core/openrouter";
 import { factory } from "../../env";
 import { audit } from "../../lib/audit";
 import { validate } from "../../middleware/validate";

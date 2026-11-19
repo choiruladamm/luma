@@ -1,5 +1,5 @@
-import type { OpenRouterAdmin } from "./clients/openrouter";
-import type { Db } from "./db/client";
+import type { OpenRouterAdmin } from "@luma/core/openrouter";
+import type { Db } from "@luma/core/db/client";
 
 export type SessionUser = { id: string; name: string; email: string; image: string | null };
 

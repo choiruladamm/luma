@@ -10,12 +10,12 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:cov": "vitest run --coverage",
-    "db:generate": "drizzle-kit generate",
     "size": "wrangler deploy --env dev --dry-run --outdir dist"
   },
   "dependencies": {
     "@better-auth/drizzle-adapter": "catalog:",
     "@hono/zod-validator": "catalog:",
+    "@luma/core": "workspace:*",
     "better-auth": "catalog:",
     "drizzle-orm": "catalog:",
     "hono": "catalog:",
@@ -25,7 +25,6 @@
     "@cloudflare/vitest-plugin": "catalog:",
     "@msw/cloudflare": "catalog:",
     "@vitest/coverage-istanbul": "catalog:",
-    "drizzle-kit": "^0.31.11",
     "jose": "6.2.17",
     "msw": "catalog:",
     "oxlint": "catalog:",

@@ -1,7 +1,7 @@
 // Every D1 query of the overview feature. Each function is one query-budget unit.
 import { count, isNull, sql } from "drizzle-orm";
-import type { Db } from "@backend/db/client";
-import { inviteCodes, users, userStorage } from "@backend/db/schema";
+import type { Db } from "@luma/core/db/client";
+import { inviteCodes, users, userStorage } from "@luma/core/db/schema";
 
 /**
  * 1 batch (3 aggregate statements): users (total, new since `since`, banned),

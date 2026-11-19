@@ -1,4 +1,4 @@
-import type { Db } from "../../db/client";
+import type { Db } from "@luma/core/db/client";
 import { userPrefix } from "../../lib/storage";
 import { deleteUser } from "./repo";
 

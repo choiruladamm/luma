@@ -19,7 +19,18 @@
     "jsx-a11y/prefer-tag-over-role": "off",
     "jsx-a11y/no-autofocus": "off",
     "react/no-array-index-key": "off",
-    "import/no-unassigned-import": "off"
+    "import/no-unassigned-import": "off",
+    "no-restricted-imports": [
+      "error",
+      {
+        "patterns": [
+          {
+            "group": ["**/backend/**", "**/apps/**"],
+            "message": "A Worker never imports another Worker's code; move shared code to packages/* (docs/workers.md, Shared code)."
+          }
+        ]
+      }
+    ]
   },
   "overrides": [
     {
@@ -27,8 +38,18 @@
       "rules": {
         "typescript/no-unsafe-type-assertion": "off",
         "unicorn/consistent-function-scoping": "off",
-        "vitest/expect-expect": ["error", { "assertFunctionNames": ["expect"] }],
-        "vitest/valid-expect": ["error", { "maxArgs": 2 }]
+        "vitest/expect-expect": [
+          "error",
+          {
+            "assertFunctionNames": ["expect"]
+          }
+        ],
+        "vitest/valid-expect": [
+          "error",
+          {
+            "maxArgs": 2
+          }
+        ]
       }
     },
     {
@@ -47,7 +68,9 @@
         "client/features/users/components/users-table-skeleton.tsx",
         "client/features/invites/components/invites-table-skeleton.tsx"
       ],
-      "rules": { "react/no-unstable-nested-components": "off" }
+      "rules": {
+        "react/no-unstable-nested-components": "off"
+      }
     },
     {
       "files": ["client/app/app-shell.tsx"],

@@ -1,4 +1,4 @@
-import type { Db } from "../../db/client";
+import type { Db } from "@luma/core/db/client";
 import { releaseOnFailure, reserveBytes } from "../../db/user-storage";
 import { ApiError } from "../../lib/errors";
 import { fixedLength, userPrefix } from "../../lib/storage";

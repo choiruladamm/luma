@@ -1,5 +1,5 @@
-import type { Db } from "@backend/db/client";
-import { DAY_MS } from "@backend/lib/encoding";
+import type { Db } from "@luma/core/db/client";
+import { DAY_MS } from "@luma/core/encoding";
 import { monthSpendUsd } from "./activity";
 import { overviewCounts } from "./repo";
 

@@ -1,9 +1,9 @@
 import { env } from "cloudflare:test";
 import { eq } from "drizzle-orm";
 import { describe, expect, it, vi } from "vitest";
-import type { OpenRouterAdmin } from "../../src/clients/openrouter";
-import { createDb } from "../../src/db/client";
-import { aiKeys, users } from "../../src/db/schema";
+import type { OpenRouterAdmin } from "@luma/core/openrouter";
+import { createDb } from "@luma/core/db/client";
+import { aiKeys, users } from "@luma/core/db/schema";
 import {
   aiConfig,
   issueKey,

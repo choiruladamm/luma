@@ -80,7 +80,7 @@ Objects are scoped to the bearer user's `u/{userId}/` prefix. Book files and cov
 
 | Source | Ownership and relationships |
 |---|---|
-| [auth-schema.ts](../apps/backend/src/db/auth-schema.ts) | `users` owns `sessions` and linked provider `accounts`. Both cascade on user deletion. `verifications` is a separate Better Auth table. |
-| [schema.ts](../apps/backend/src/db/schema.ts) | Each user owns zero or one `ai_keys` row, zero or one lazily created `user_storage` row, and any number of sync `records`. These cascade on user deletion. `invite_codes.used_by` is nullable and cleared on user deletion, with `used_at` retained. |
+| [auth-schema.ts](../packages/core/src/db/auth-schema.ts) | `users` owns `sessions` and linked provider `accounts`. Both cascade on user deletion. `verifications` is a separate Better Auth table. |
+| [schema.ts](../packages/core/src/db/schema.ts) | Each user owns zero or one `ai_keys` row, zero or one lazily created `user_storage` row, and any number of sync `records`. These cascade on user deletion. `invite_codes.used_by` is nullable and cleared on user deletion, with `used_at` retained. |
 
 The linked schema files define columns and indexes. See [Sync protocol](sync-protocol.md#records-and-keys) for the record identity and cursor, and [Per-action budgets](budgets.md#per-action-budgets) for access costs.

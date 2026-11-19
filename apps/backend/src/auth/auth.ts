@@ -2,13 +2,13 @@ import { drizzleAdapter } from "@better-auth/drizzle-adapter";
 import { betterAuth } from "better-auth";
 import { APIError } from "better-auth/api";
 import { bearer } from "better-auth/plugins";
-import { createDb, type Db } from "../db/client";
-import * as schema from "../db/schema";
-import { csv } from "../lib/encoding";
-import { assignInviteCode, consumeInviteCode, INVITE_HEADER } from "./invite";
+import { createDb, type Db } from "@luma/core/db/client";
+import * as schema from "@luma/core/db/schema";
+import { csv } from "@luma/core/encoding";
+import { assignInviteCode, consumeInviteCode, INVITE_HEADER } from "@luma/core/auth/invite";
 import { hashPassword, verifyPassword } from "./password";
 import { SESSION_EXPIRES_IN_MS, SESSION_UPDATE_AGE_MS } from "./session";
-import { userAdditionalFields } from "./user-fields";
+import { userAdditionalFields } from "@luma/core/auth/user-fields";
 
 const inviteFrom = (headers: Headers | undefined) => headers?.get(INVITE_HEADER)?.trim() ?? "";
 
@@ -48,7 +48,7 @@ export function getAuth(env: Env): Auth {
   return cached.auth;
 }
 
-/** Options that affect the schema must match scripts/auth-schema.config.ts. */
+/** Options that affect the schema must match packages/core/scripts/auth-schema.config.ts. */
 export function createAuth(env: Env) {
   const db = createDb(env.DB);
   const inviteRequired = env.INVITE_REQUIRED === "true";

@@ -37,10 +37,10 @@ Read `docs/budgets.md` (Free-tier limits and Server request policy) before addin
 
 ## Schema changes (D1)
 
-- Edit `src/db/schema.ts`, then `bun run db:generate`. Add a new migration; applied ones stay untouched. Migrations keep existing user data.
+- The schema and migrations live in `packages/core` (`@luma/core`), shared with the dashboard. Edit `packages/core/src/db/schema.ts`, then `bun run db:generate` from `packages/core`. Add a new migration; applied ones stay untouched. Migrations keep existing user data.
 - Apply remotely (`make backend-migrate e=dev`) before deploying code that needs it.
 - Local D1 (shared by `backend-dev` and `dashboard-dev`, state in `apps/backend/.wrangler/state`) is not migrated by either: run `make backend-migrate-local` on a fresh clone and after pulling a new migration, or sign-in fails with `INTERNAL_ERROR` ("Failed query ... sessions").
-- The dashboard reads the same D1 and imports `src/db/schema.ts`, `src/db/client.ts`, `src/auth/user-fields.ts`, `src/auth/invite.ts`, and `src/clients/openrouter.ts`; its tests read `src/features/ai-key/repo.ts`, and its build reads `SYNC_ENABLED`, `BACKUP_ENABLED`, `AI_KEY_ENABLED`, `OPENROUTER_WORKSPACE_ID`, `AI_MONTHLY_BUDGET_USD` from this `wrangler.jsonc`. Changing any of these, or the schema, also runs `make dashboard-test`; keep these files free of the backend `Env` type.
+- The dashboard reads the same D1 through `@luma/core`, and its build reads `SYNC_ENABLED`, `BACKUP_ENABLED`, `AI_KEY_ENABLED`, `OPENROUTER_WORKSPACE_ID`, `AI_MONTHLY_BUDGET_USD` from this `wrangler.jsonc`. Changing `@luma/core` or any of these vars also runs `make dashboard-test`.
 
 ## Tests
 

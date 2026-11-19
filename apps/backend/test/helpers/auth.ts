@@ -1,8 +1,8 @@
 import { env } from "cloudflare:test";
 import { exports } from "cloudflare:workers";
-import { createDb } from "../../src/db/client";
-import { normalizeInviteCode } from "../../src/auth/invite";
-import { inviteCodes } from "../../src/db/schema";
+import { createDb } from "@luma/core/db/client";
+import { normalizeInviteCode } from "@luma/core/auth/invite";
+import { inviteCodes } from "@luma/core/db/schema";
 
 export const PASSWORD = "rahasia-banget-123";
 let counter = 0;

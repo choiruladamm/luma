@@ -2,7 +2,7 @@
 // The OpenRouter key is deleted first so a key already extracted from a device dies
 // immediately instead of living out its 30-day expiry; then `banned` and the `ai_keys` row in D1.
 // Needs the management key in the env: OPENROUTER_MANAGEMENT_KEY=... make backend-ban ...
-import { openRouterAdmin } from "../src/clients/openrouter";
+import { openRouterAdmin } from "@luma/core/openrouter";
 
 const [envName, email] = process.argv.slice(2);
 if ((envName !== "dev" && envName !== "prod") || !email)

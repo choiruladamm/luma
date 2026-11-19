@@ -1,9 +1,9 @@
 import { env } from "cloudflare:test";
 import { eq } from "drizzle-orm";
 import { describe, expect, it, vi } from "vitest";
-import { consumeInviteCode, normalizeInviteCode } from "@backend/auth/invite";
-import { createDb } from "@backend/db/client";
-import { inviteCodes } from "@backend/db/schema";
+import { consumeInviteCode, normalizeInviteCode } from "@luma/core/auth/invite";
+import { createDb } from "@luma/core/db/client";
+import { inviteCodes } from "@luma/core/db/schema";
 import { displayInviteCode } from "../../worker/features/invites/service";
 import { call, errorCode, ORIGIN } from "../helpers/app";
 import { adminCookie, createUser, giveUserData } from "../helpers/session";

@@ -1,0 +1,26 @@
+{
+  "name": "@luma/core",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "lint": "oxlint --type-aware --deny-warnings && prettier --check .",
+    "format": "prettier --write . && oxlint --type-aware --fix",
+    "db:generate": "drizzle-kit generate"
+  },
+  "dependencies": {
+    "drizzle-orm": "catalog:"
+  },
+  "devDependencies": {
+    "@better-auth/drizzle-adapter": "catalog:",
+    "better-auth": "catalog:",
+    "drizzle-kit": "^0.31.11",
+    "oxlint": "catalog:",
+    "oxlint-tsgolint": "catalog:",
+    "prettier": "catalog:",
+    "typescript": "catalog:",
+    "wrangler": "catalog:"
+  }
+}

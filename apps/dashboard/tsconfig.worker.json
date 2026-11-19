@@ -3,9 +3,6 @@
   "compilerOptions": {
     // Config files import local .ts files with the extension (Vite native config loader).
     "allowImportingTsExtensions": true,
-    // `@backend/*` is backend source the dashboard shares (resolve.alias in the Vite and Vitest
-    // configs does the same at runtime); see CLAUDE.md, Shared code with the backend.
-    "paths": { "@backend/*": ["../backend/src/*"] },
     "types": ["./worker-configuration.d.ts", "@cloudflare/vitest-plugin/types"]
   },
   "include": [

@@ -6,8 +6,26 @@
     {
       "files": ["test/**"],
       "rules": {
-        "vitest/expect-expect": ["error", { "assertFunctionNames": ["expect", "expectContract"] }]
+        "vitest/expect-expect": [
+          "error",
+          {
+            "assertFunctionNames": ["expect", "expectContract"]
+          }
+        ]
       }
     }
-  ]
+  ],
+  "rules": {
+    "no-restricted-imports": [
+      "error",
+      {
+        "patterns": [
+          {
+            "group": ["**/dashboard/**", "**/apps/**"],
+            "message": "A Worker never imports another Worker's code; move shared code to packages/* (docs/workers.md, Shared code)."
+          }
+        ]
+      }
+    ]
+  }
 }

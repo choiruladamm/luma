@@ -1,6 +1,6 @@
 // PBKDF2-SHA256 via native crypto.subtle. Replaces Better Auth's default JS scrypt,
 // which is too heavy for the 10ms CPU limit on Workers free. Email login exists only in the dev env.
-import { b64, unb64 } from "../lib/encoding";
+import { b64, unb64 } from "@luma/core/encoding";
 
 /** Iterations are tuned so the hash fits the 10ms CPU limit in workerd (test/unit/password.test.ts). */
 export const PBKDF2_ITERATIONS = 20_000;

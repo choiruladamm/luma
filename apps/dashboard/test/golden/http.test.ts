@@ -1,6 +1,6 @@
 import { HttpResponse, http } from "msw";
 import { expect, it, vi } from "vitest";
-import { OPENROUTER_API } from "@backend/clients/openrouter";
+import { OPENROUTER_API } from "@luma/core/openrouter";
 import { call, ORIGIN } from "../helpers/app";
 import { GOLDEN_NOW, goldenJson, record, type Recorded } from "../helpers/golden";
 import { cookiesFrom, fakeGoogleToken } from "../helpers/google";

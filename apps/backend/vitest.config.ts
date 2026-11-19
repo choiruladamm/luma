@@ -3,7 +3,7 @@ import { defineConfig } from "vitest/config";
 import { TEST_RATE_LIMIT } from "./test/helpers/limits";
 
 export default defineConfig(async () => {
-  const migrations = await readD1Migrations("./migrations");
+  const migrations = await readD1Migrations("../../packages/core/migrations");
   return {
     plugins: [
       cloudflareTest({
@@ -30,8 +30,15 @@ export default defineConfig(async () => {
       setupFiles: ["./test/setup.ts"],
       coverage: {
         provider: "istanbul" as const,
-        include: ["src/**/*.ts"],
-        exclude: ["src/index.ts", "src/env.ts", "src/db/schema.ts", "src/db/auth-schema.ts"],
+        // @luma/core is measured here: the backend's tests exercise all of it.
+        allowExternal: true,
+        include: ["src/**/*.ts", "../../packages/core/src/**/*.ts"],
+        exclude: [
+          "src/index.ts",
+          "src/env.ts",
+          "../../packages/core/src/db/schema.ts",
+          "../../packages/core/src/db/auth-schema.ts",
+        ],
         thresholds: { statements: 99.8, branches: 92.95, functions: 99.31, lines: 99.77 },
       },
     },

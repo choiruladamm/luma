@@ -40,7 +40,7 @@ Admin-only Worker `luma-admin-{env}`: Hono API under `/api` on the same D1 as th
 
 ## Shared code with the backend
 
-Imported as `@backend/*` (alias for `../backend/src`, set in `tsconfig.worker.json`, `vite.config.ts`, and `vitest.config.ts`), never copied or edited from here. Import only backend files free of the backend `Env` (not `features/*/service.ts`): tsc checks them against the dashboard `Env`. Schema and migrations are owned by the backend; tests apply `../backend/migrations`. Workspace layout and shared versions: `docs/workers.md`.
+The D1 schema, migrations, `Db`, auth user fields, invite codes, and the OpenRouter client come from `@luma/core` (`packages/core`); tests apply its migrations. Never import from `apps/backend`. Workspace layout and the one exception (`backend-vars.ts`): `docs/workers.md`.
 
 ## Tests
 

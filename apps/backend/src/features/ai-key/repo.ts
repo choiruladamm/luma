@@ -1,19 +1,9 @@
 import { eq } from "drizzle-orm";
-import type { Db } from "../../db/client";
-import { aiKeys, users } from "../../db/schema";
+import type { Db } from "@luma/core/db/client";
+import { aiKeys } from "@luma/core/db/schema";
 
 export type AiKeyRow = typeof aiKeys.$inferSelect;
 export type AiKeyValues = Omit<typeof aiKeys.$inferInsert, "userId">;
-
-/** One query: banned status + stored key (null if never created). */
-export async function findUserKey(db: Db, userId: string) {
-  const [found] = await db
-    .select({ banned: users.banned, key: aiKeys })
-    .from(users)
-    .leftJoin(aiKeys, eq(aiKeys.userId, users.id))
-    .where(eq(users.id, userId));
-  return { banned: found?.banned ?? false, key: found?.key ?? null };
-}
 
 export const setKeyLimit = (db: Db, userId: string, limitUsd: number) =>
   db.update(aiKeys).set({ limitUsd }).where(eq(aiKeys.userId, userId));
