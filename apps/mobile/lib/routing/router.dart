@@ -69,8 +69,10 @@ final routerProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(path: Routes.login, builder: (_, _) => const LoginView()),
       // Tabs Rak · Cari buku · Atur, order = LumaTab.values.
-      StatefulShellRoute.indexedStack(
+      StatefulShellRoute(
         builder: (_, _, shell) => AppShell(shell: shell),
+        navigatorContainerBuilder: (_, shell, children) =>
+            ShellBranches(index: shell.currentIndex, children: children),
         branches: [
           StatefulShellBranch(
             routes: [
@@ -323,6 +325,35 @@ Page<void> _slidePage(BuildContext context, GoRouterState state, Widget child) {
     transitionsBuilder: (_, animation, _, child) =>
         FadeTransition(opacity: animation, child: child),
     child: child,
+  );
+}
+
+/// The tabs' navigators, kept alive in an [IndexedStack] like
+/// `StatefulShellRoute.indexedStack`, with heroes off in hidden tabs.
+///
+/// Every tab's root Scaffold shows the same SnackBar, and Flutter counts the
+/// top route of each nested navigator in a hero flight, so without [HeroMode]
+/// a toast during a route change (sign-out → Masuk) means duplicate
+/// `<SnackBar Hero tag>`s.
+class ShellBranches extends StatelessWidget {
+  const ShellBranches({required this.index, required this.children, super.key});
+
+  final int index;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) => IndexedStack(
+    index: index,
+    children: [
+      for (final (i, child) in children.indexed)
+        Offstage(
+          offstage: i != index,
+          child: TickerMode(
+            enabled: i == index,
+            child: HeroMode(enabled: i == index, child: child),
+          ),
+        ),
+    ],
   );
 }
 
