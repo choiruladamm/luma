@@ -23,16 +23,16 @@ The Hono Worker runs on workerd. Its entry point is `apps/backend/src/index.ts`,
 
 | Routes | After IP limiting and dependency setup |
 |---|---|
-| `GET /v1/health` | Public. Returns `{status: "ok", env}`. |
-| `/v1/auth/*` | Auth body limit, then the allowlisted Better Auth handler. |
-| `/v1/me` | Bearer session. |
-| `/v1/ai/*` | `AI_KEY_ENABLED`, then bearer session. Only `POST /key` adds a user rate limit and body limit. |
-| `/v1/files/*`, `/v1/backups*` | `BACKUP_ENABLED`, bearer session, user rate limit, then any route-specific payload checks. Sync file transfers go through the same file routes. |
-| `/v1/sync/*` | `SYNC_ENABLED`, bearer session, user rate limit, then sync request validation. See [Sync protocol](sync-protocol.md). |
+| `GET /v2/health` | Public. Returns `{status: "ok", env}`. |
+| `/v2/auth/*` | Auth body limit, then the allowlisted Better Auth handler. |
+| `/v2/me` | Bearer session. |
+| `/v2/ai/*` | `AI_KEY_ENABLED`, then bearer session. Only `POST /key` adds a user rate limit and body limit. |
+| `/v2/files/*`, `/v2/backups*` | `BACKUP_ENABLED`, bearer session, user rate limit, then any route-specific payload checks. Sync file transfers go through the same file routes. |
+| `/v2/sync/*` | `SYNC_ENABLED`, bearer session, user rate limit, then sync request validation. See [Sync protocol](sync-protocol.md). |
 
 Each feature switch enables its routes only when set to the string `"true"`. A disabled feature returns 503 `SERVICE_DISABLED` with `Retry-After` before accessing D1 or R2. The IP and user keys use the Worker rate-limit binding. Rejection returns 429 `RATE_LIMITED` with `Retry-After`.
 
-The routes below are written as `/v1/...`; each is also served at `/v2/...`. The API uses JSON, with snake_case field names on `/v2` and camelCase on `/v1`, and returns errors as `{error: {code, message}}`. Clients branch on the `UPPER_SNAKE_CASE` code. `normalizeAuthError` wraps Better Auth JSON errors and preserves their codes. Unknown routes return 404 `NOT_FOUND`. The app logs unexpected failures with the request ID and returns 500 `INTERNAL_ERROR`. `limitBody` applies route-specific JSON size limits before parsing and returns 413 `PAYLOAD_TOO_LARGE` when exceeded. File and snapshot bodies use the upload contract below.
+The routes below are written as `/v2/...`; each is also served at `/v1/...` until #265 removes it. The API uses JSON, with snake_case field names on `/v2` and camelCase on `/v1`, and returns errors as `{error: {code, message}}`. Clients branch on the `UPPER_SNAKE_CASE` code. `normalizeAuthError` wraps Better Auth JSON errors and preserves their codes. Unknown routes return 404 `NOT_FOUND`. The app logs unexpected failures with the request ID and returns 500 `INTERNAL_ERROR`. `limitBody` applies route-specific JSON size limits before parsing and returns 413 `PAYLOAD_TOO_LARGE` when exceeded. File and snapshot bodies use the upload contract below.
 
 ## API versions
 
@@ -49,11 +49,11 @@ Contract fixtures: `packages/contracts/fixtures/v1/` stays as the app installs s
 
 ## Authentication and accounts
 
-- `AUTH_PATHS` exposes only `POST /v1/auth/{sign-up/email,sign-in/email,sign-in/social,sign-out}`. Email and password authentication is enabled outside production. Native Google sign-in sends `{provider: "google", id_token: {token}}` (`idToken` on `/v1`) to `sign-in/social`. `GOOGLE_CLIENT_IDS` supplies the accepted audiences. The mobile flow uses the native ID token directly.
+- `AUTH_PATHS` exposes only `POST /v2/auth/{sign-up/email,sign-in/email,sign-in/social,sign-out}` (and the same under `/v1/auth`). Email and password authentication is enabled outside production. Native Google sign-in sends `{provider: "google", id_token: {token}}` (`idToken` on `/v1`) to `sign-in/social`. `GOOGLE_CLIENT_IDS` supplies the accepted audiences. The mobile flow uses the native ID token directly.
 - When `INVITE_REQUIRED` is `"true"`, the new-user hook consumes `x-invite-code` with a conditional update on an unused code and assigns the user after creation. Missing, unknown, and consumed codes return 403 with `INVITE_CODE_REQUIRED`, `INVALID_INVITE_CODE`, and `INVITE_CODE_USED`, respectively. `normalizeInviteCode` ignores case and separators. New codes are issued as `LUMA-XXXXX-XXXXX`. Existing shorter codes still work.
 - Mobile stores the `set-auth-token` response header in secure storage and sends it as `Authorization: Bearer <token>`. `requireSession` looks up the token portion before the signature in D1 via `findSessionUser`. It returns 401 `UNAUTHORIZED` for a missing or expired session. Valid sessions slide under `SESSION_EXPIRES_IN_MS` and `SESSION_UPDATE_AGE_MS` (60 days, renewed at most daily). Better Auth instances are reused per isolate while the environment object is the same.
-- `GET /v1/me` returns `{user: {id, name, email, image}}`. Mobile opens from its stored token and checks this endpoint in the background. On an account switch, the app commits the new session only after confirmation and removal of the previous account’s local books and AI call history.
-- `DELETE /v1/me` revokes any subsidized OpenRouter key first, then deletes objects under the user's R2 prefix. After the last page, D1 deletes the user and cascades their owned rows. `deleteAccount` processes up to `DELETE_PAGES_PER_REQUEST` pages and returns 202 `{status: "pending"}` if more remain or 200 `{status: "deleted"}` when complete. Mobile repeats pending requests up to `AuthRepository.deleteAttempts`, then reports `DELETE_PENDING`.
+- `GET /v2/me` returns `{user: {id, name, email, image}}`. Mobile opens from its stored token and checks this endpoint in the background. On an account switch, the app commits the new session only after confirmation and removal of the previous account’s local books and AI call history.
+- `DELETE /v2/me` revokes any subsidized OpenRouter key first, then deletes objects under the user's R2 prefix. After the last page, D1 deletes the user and cascades their owned rows. `deleteAccount` processes up to `DELETE_PAGES_PER_REQUEST` pages and returns 202 `{status: "pending"}` if more remain or 200 `{status: "deleted"}` when complete. Mobile repeats pending requests up to `AuthRepository.deleteAttempts`, then reports `DELETE_PENDING`.
 - Public `GET /privacy` and `GET /account/delete` serve static pages outside the versioned API and use `CONTACT_EMAIL`. Their content and `LAST_UPDATED` live in `features/legal/routes.ts`.
 
 ## AI subsidy
@@ -62,9 +62,9 @@ Mobile sends inference requests directly to OpenRouter. A user's own key takes p
 
 | Route | Contract |
 |---|---|
-| `POST /v1/ai/key` | Accepts `{rotate?: boolean}` and returns `{key, expires_at, daily_limit_usd}`. |
-| `GET /v1/ai/usage` | Returns `{daily_limit_usd, remaining_usd, used_today_usd, resets_at}`. With no issued key it returns the full configured allowance without contacting OpenRouter. `resets_at` is the next UTC midnight. |
-| `GET /v1/ai/config` | Returns `{chat_models, embedding_models, daily_limit_usd}` from Worker configuration. |
+| `POST /v2/ai/key` | Accepts `{rotate?: boolean}` and returns `{key, expires_at, daily_limit_usd}`. |
+| `GET /v2/ai/usage` | Returns `{daily_limit_usd, remaining_usd, used_today_usd, resets_at}`. With no issued key it returns the full configured allowance without contacting OpenRouter. `resets_at` is the next UTC midnight. |
+| `GET /v2/ai/config` | Returns `{chat_models, embedding_models, daily_limit_usd}` from Worker configuration. |
 
 `issueKey` creates the key lazily in `OPENROUTER_WORKSPACE_ID` with the configured `AI_DAILY_LIMIT_USD`, a daily reset, and expiry from `AI_KEY_TTL_DAYS`. D1 stores its hash and AES-GCM-encrypted key in a single row per user. Requests reuse a decryptable key outside the `ROTATE_BEFORE_MS` window. Explicit `rotate` checks whether the upstream key still exists before replacing an otherwise reusable key. A changed daily limit is patched on the next eligible issuance request. Parallel issuance can leave an extra upstream key until expiry.
 
@@ -78,12 +78,12 @@ Objects are scoped to the bearer user's `u/{userId}/` prefix. Book files and cov
 
 | Route | Contract |
 |---|---|
-| `POST /v1/files/missing` | Takes `{names}` with up to 1,000 entries and returns unique absent names as `{missing}`. Each call lists through the user's entire `files/` prefix in pages. |
-| `PUT /v1/files/:name` | Streams a file upload and returns `{name, size}`. A name already present returns the stored size and discards the incoming body. |
-| `GET /v1/files/:name` | Streams the object with `Content-Length`, or returns 404 `NOT_FOUND`. |
-| `PUT /v1/backups` | Takes a ZIP stream plus an `x-backup-manifest` header containing the one-line manifest JSON. Returns `BackupInfo`. |
-| `GET /v1/backups` | Returns `{backups}`, newest first, from R2 object metadata. |
-| `GET /v1/backups/:id` | Streams the ZIP with `Content-Length`. An invalid or missing ID returns 404 `BACKUP_NOT_FOUND`. |
+| `POST /v2/files/missing` | Takes `{names}` with up to 1,000 entries and returns unique absent names as `{missing}`. Each call lists through the user's entire `files/` prefix in pages. |
+| `PUT /v2/files/:name` | Streams a file upload and returns `{name, size}`. A name already present returns the stored size and discards the incoming body. |
+| `GET /v2/files/:name` | Streams the object with `Content-Length`, or returns 404 `NOT_FOUND`. |
+| `PUT /v2/backups` | Takes a ZIP stream plus an `x-backup-manifest` header containing the one-line manifest JSON. Returns `BackupInfo`. |
+| `GET /v2/backups` | Returns `{backups}`, newest first, from R2 object metadata. |
+| `GET /v2/backups/:id` | Streams the ZIP with `Content-Length`. An invalid or missing ID returns 404 `BACKUP_NOT_FOUND`. |
 
 `FILE_NAME` restricts names to 1–200 ASCII letters, digits, dots, underscores, or hyphens. Both upload routes require a nonnegative integer `Content-Length` up to `MAX_UPLOAD_BYTES` (100 MiB). The Worker pipes the body through `FixedLengthStream` to R2. An invalid length returns 400 `BAD_REQUEST`, and a length above the cap returns 413 `PAYLOAD_TOO_LARGE`.
 

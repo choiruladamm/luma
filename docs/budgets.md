@@ -53,7 +53,7 @@ Every row below applies to both `/v1/*` and `/v2/*`: the routers, guards, and D1
 | Health | 0 | None (`health.test.ts`). |
 | Native Google sign-up | At most 8 with an invite in `auth-google.test.ts`. Returning sign-in skips invite consumption and new-user creation. | One JWKS fetch in the fixture. |
 | Email auth outside prod | Sign-in at most 4 in `auth.test.ts`. Sign-up uses the creation path and the invite hooks when enabled. | None. |
-| Bearer session and `GET /v1/me` (and `/v2/me`) | `findSessionUser` uses one join for a token and one UPDATE when renewal is due. `account.test.ts` allows at most 2 for `GET /v1/me`. | None. |
+| Bearer session and `GET /v2/me` (and `/v1/me`) | `findSessionUser` uses one join for a token and one UPDATE when renewal is due. `account.test.ts` allows at most 2 for `GET /v1/me`. | None. |
 | Account deletion | `revokeKey` adds a key lookup on every attempt. `deleteUser` adds a DELETE on completion, with cascades. | One key delete if a key row exists, then at most `DELETE_PAGES_PER_REQUEST` R2 LISTs and one bulk DELETE per nonempty page. |
 | AI config or usage | Config uses the session alone. `usage` adds one lookup via `findUserKey`. | Config has no fetch. Usage gets upstream usage only when a key exists. |
 | AI key | `issueKey` adds one lookup and one write if creating, rotating, or updating the limit. `ai-key.test.ts` asserts at most 2 total statements for reuse and at most 3 for creation in its fixtures. | Fresh reuse costs 0 fetches, creation 1. A limit patch or existence check each adds 1. Replacement costs 2 (delete and create), or 3 if an existence check led to it. |

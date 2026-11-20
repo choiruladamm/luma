@@ -60,7 +60,7 @@ describe("onError", () => {
     const logged = JSON.parse(error.mock.calls[0]![0] as string);
     expect(logged).toEqual({
       message: "unhandled error",
-      requestId: res.headers.get("x-request-id"),
+      request_id: res.headers.get("x-request-id"),
       error: "boom",
     });
     error.mockRestore();

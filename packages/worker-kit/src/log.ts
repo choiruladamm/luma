@@ -1,5 +1,5 @@
-/** Every log line names the request it belongs to; other fields are free-form. */
-export type LogFields = { requestId: string } & Record<string, unknown>;
+/** Every log line names the request it belongs to; other fields are free-form, keys in snake_case. */
+export type LogFields = { request_id: string } & Record<string, unknown>;
 
 const line = (message: string, fields: LogFields) => JSON.stringify({ message, ...fields });
 
