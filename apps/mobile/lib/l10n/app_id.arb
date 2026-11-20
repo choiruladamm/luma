@@ -1497,6 +1497,10 @@
       }
     }
   },
+  "downloadTryAgain": "Coba lagi",
+  "@downloadTryAgain": {
+    "description": "Interface copy in ui/features/discover/views/download_toasts.dart"
+  },
   "downloadTapToStartReading": "Tap buat mulai baca",
   "@downloadTapToStartReading": {
     "description": "Interface copy in ui/features/discover/views/download_toasts.dart"
