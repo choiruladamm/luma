@@ -1,0 +1,18 @@
+{
+  "request": {
+    "method": "POST",
+    "path": "/v2/sync/push"
+  },
+  "response": {
+    "status": 503,
+    "headers": {
+      "retry-after": "3600"
+    },
+    "body": {
+      "error": {
+        "code": "SERVICE_DISABLED",
+        "message": "SYNC_ENABLED is off"
+      }
+    }
+  }
+}

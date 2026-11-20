@@ -2,8 +2,8 @@
 // and the sync cursor (`seq`, see features/sync/repo.ts).
 import { eq, sql } from "drizzle-orm";
 import { ApiError } from "../lib/errors";
-import type { Db } from "./client";
-import { userStorage } from "./schema";
+import type { Db } from "@luma/core/db/client";
+import { userStorage } from "@luma/core/db/schema";
 
 export async function storedBytes(db: Db, userId: string): Promise<number> {
   const [row] = await db
@@ -22,6 +22,8 @@ export const addBytes = (db: Db, userId: string, delta: number) =>
       set: { bytes: sql`max(0, ${userStorage.bytes} + ${delta})` },
     });
 
+const storageFull = () => new ApiError(413, "STORAGE_FULL", "Cloud storage is full");
+
 /**
  * Reserves [size] bytes of quota before an upload, atomically: one upsert that adds
  * only if `bytes + size ≤ quota`. Parallel uploads can't all pass the check and then
@@ -29,20 +31,17 @@ export const addBytes = (db: Db, userId: string, delta: number) =>
  * return it via `addBytes(db, userId, -size)`.
  */
 export async function reserveBytes(db: Db, userId: string, size: number, quota: number) {
-  const reserved =
-    size <= quota &&
-    (
-      await db
-        .insert(userStorage)
-        .values({ userId, bytes: size })
-        .onConflictDoUpdate({
-          target: userStorage.userId,
-          set: { bytes: sql`${userStorage.bytes} + ${size}` },
-          setWhere: sql`${userStorage.bytes} + ${size} <= ${quota}`,
-        })
-        .returning({ bytes: userStorage.bytes })
-    ).length === 1;
-  if (!reserved) throw new ApiError(413, "STORAGE_FULL", "Cloud storage is full");
+  if (size > quota) throw storageFull();
+  const reserved = await db
+    .insert(userStorage)
+    .values({ userId, bytes: size })
+    .onConflictDoUpdate({
+      target: userStorage.userId,
+      set: { bytes: sql`${userStorage.bytes} + ${size}` },
+      setWhere: sql`${userStorage.bytes} + ${size} <= ${quota}`,
+    })
+    .returning({ bytes: userStorage.bytes });
+  if (reserved.length !== 1) throw storageFull();
 }
 
 /** Runs [upload]; on failure the reserved quota is returned and the error is rethrown. */

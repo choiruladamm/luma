@@ -23,13 +23,16 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: oven-sh/setup-bun@v2
-      - run: make backend-install dashboard-install
+      - run: make install
+      # Build the dashboard before anything changes remotely: its build reads the backend's vars for
+      # this env, so a bad value fails here instead of after the migration and backend deploy.
+      - run: make dashboard-build e=$LUMA_ENV
       # Migrations first: the new Worker may read columns the old schema lacks.
       - run: make backend-migrate e=$LUMA_ENV
       - run: make backend-deploy e=$LUMA_ENV
       - run: make dashboard-deploy e=$LUMA_ENV
       - name: Health check
-        run: curl -fsS --retry 5 --retry-delay 5 --retry-all-errors "$API_URL/v1/health" | tee /dev/stderr | grep -q "\"env\":\"$LUMA_ENV\""
+        run: curl -fsS --retry 5 --retry-delay 5 --retry-all-errors "$API_URL/v2/health" | tee /dev/stderr | grep -q "\"env\":\"$LUMA_ENV\""
 
   # A hotfix merged into master must not be lost on the next dev → master release.
   back-merge:

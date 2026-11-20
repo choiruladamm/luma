@@ -1,0 +1,26 @@
+{
+  "name": "@luma/contracts",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./fixtures/*": "./fixtures/*",
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "lint": "oxlint --type-aware --deny-warnings && prettier --check .",
+    "format": "prettier --write . && oxlint --type-aware --fix",
+    "test": "vitest run --coverage"
+  },
+  "dependencies": {
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@luma/worker-kit": "workspace:*",
+    "@vitest/coverage-istanbul": "catalog:",
+    "oxlint": "catalog:",
+    "oxlint-tsgolint": "catalog:",
+    "prettier": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

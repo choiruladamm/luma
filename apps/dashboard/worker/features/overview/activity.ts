@@ -1,4 +1,4 @@
-import { OPENROUTER_API } from "../../../../backend/src/clients/openrouter";
+import { OPENROUTER_API } from "@luma/core/openrouter";
 
 type ActivityRow = { date: string; usage: number };
 

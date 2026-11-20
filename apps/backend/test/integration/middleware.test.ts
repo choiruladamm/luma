@@ -2,16 +2,20 @@ import { env } from "cloudflare:test";
 import { Hono } from "hono";
 import { describe, expect, it } from "vitest";
 import type { AppEnv } from "../../src/env";
-import { onError } from "../../src/lib/errors";
-import { JSON_BODY_LIMIT, limitBody } from "../../src/middleware/body-limit";
-import { killSwitch } from "../../src/middleware/kill-switch";
-import disabled from "../fixtures/contract/error-service-disabled.json";
+import { onError } from "@luma/worker-kit/errors";
+import { killSwitch, limitBody } from "@luma/worker-kit/middleware";
+import { DISABLED_RETRY_AFTER_SECONDS, JSON_BODY_LIMIT } from "../../src/middleware/policy";
+import disabled from "@luma/contracts/fixtures/v1/error-service-disabled.json";
 import { countingD1 } from "../helpers/budget";
 
 /** A mini app with the middleware that later features mount per route group. */
 function appWith(touchDb: () => void) {
   const app = new Hono<AppEnv>();
-  app.use("/v1/sync/*", killSwitch("SYNC_ENABLED"), limitBody());
+  app.use(
+    "/v1/sync/*",
+    killSwitch("SYNC_ENABLED", DISABLED_RETRY_AFTER_SECONDS),
+    limitBody(JSON_BODY_LIMIT),
+  );
   app.post("/v1/sync/push", async (c) => {
     touchDb();
     await c.req.text();

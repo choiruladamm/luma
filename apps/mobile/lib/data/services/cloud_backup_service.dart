@@ -6,7 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/models/backup.dart';
 import 'backend_client.dart';
 
-/// Represents a cloud database snapshot (`GET /v1/backups`).
+/// Represents a cloud database snapshot (`GET /v2/backups`).
 class CloudBackup {
   const CloudBackup({
     required this.id,
@@ -20,12 +20,12 @@ class CloudBackup {
 
   factory CloudBackup.fromJson(Map<String, Object?> json) => CloudBackup(
     id: json['id']! as String,
-    createdAt: DateTime.parse(json['createdAt']! as String).toLocal(),
+    createdAt: DateTime.parse(json['created_at']! as String).toLocal(),
     size: (json['size']! as num).toInt(),
     books: (json['books']! as num).toInt(),
-    aiResults: (json['aiResults']! as num).toInt(),
-    schemaVersion: (json['schemaVersion']! as num).toInt(),
-    appVersion: json['appVersion']! as String,
+    aiResults: (json['ai_results']! as num).toInt(),
+    schemaVersion: (json['schema_version']! as num).toInt(),
+    appVersion: json['app_version']! as String,
   );
 
   final String id;
@@ -45,7 +45,7 @@ class CloudBackup {
   );
 }
 
-/// Calls `/v1/files/*` and `/v1/backups*` (docs/backend.md, Files and cloud backups).
+/// Calls `/v2/files/*` and `/v2/backups*` (docs/backend.md, Files and cloud backups).
 ///
 /// The `STORAGE_FULL` error means the cloud quota is exhausted.
 class CloudBackupService {
@@ -59,7 +59,7 @@ class CloudBackupService {
   Future<List<String>> missing(String token, List<String> names) async {
     final res = await _client.request(
       'POST',
-      '/v1/files/missing',
+      '/files/missing',
       body: {'names': names},
       token: token,
     );
@@ -71,7 +71,7 @@ class CloudBackupService {
     File file, {
     void Function(int sent, int total)? onProgress,
   }) => _client.upload(
-    '/v1/files/${Uri.encodeComponent(file.uri.pathSegments.last)}',
+    '/files/${Uri.encodeComponent(file.uri.pathSegments.last)}',
     file,
     token: token,
     onProgress: onProgress,
@@ -87,7 +87,7 @@ class CloudBackupService {
     void Function(int sent, int total)? onProgress,
   }) async => CloudBackup.fromJson(
     await _client.upload(
-      '/v1/backups',
+      '/backups',
       zip,
       token: token,
       headers: {'x-backup-manifest': jsonEncode(manifest.toJson())},
@@ -97,7 +97,7 @@ class CloudBackupService {
 
   /// Returns snapshots newest first.
   Future<List<CloudBackup>> list(String token) async {
-    final res = await _client.request('GET', '/v1/backups', token: token);
+    final res = await _client.request('GET', '/backups', token: token);
     return [
       for (final b in res.data!['backups']! as List)
         CloudBackup.fromJson((b as Map).cast<String, Object?>()),
@@ -105,11 +105,11 @@ class CloudBackupService {
   }
 
   Future<void> downloadSnapshot(String token, String id, String savePath) =>
-      _client.download('/v1/backups/$id', savePath, token: token);
+      _client.download('/backups/$id', savePath, token: token);
 
   Future<void> downloadFile(String token, String name, String savePath) =>
       _client.download(
-        '/v1/files/${Uri.encodeComponent(name)}',
+        '/files/${Uri.encodeComponent(name)}',
         savePath,
         token: token,
       );

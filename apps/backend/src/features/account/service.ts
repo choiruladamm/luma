@@ -1,4 +1,5 @@
-import type { Db } from "../../db/client";
+import type { DeleteResult } from "@luma/contracts/backend/account";
+import type { Db } from "@luma/core/db/client";
 import { userPrefix } from "../../lib/storage";
 import { deleteUser } from "./repo";
 
@@ -7,8 +8,6 @@ import { deleteUser } from "./repo";
  * far below the 50-subrequest limit.
  */
 export const DELETE_PAGES_PER_REQUEST = 10;
-
-export type DeleteResult = { status: "deleted" } | { status: "pending" };
 
 /**
  * Deletes all of the user's R2 objects first, then the D1 row (sessions and accounts cascade).

@@ -31,6 +31,7 @@ export const id = {
     ACCESS_EXPIRED: "Sesi Cloudflare habis. Memuat ulang…",
     FORBIDDEN: "Akun ini bukan admin.",
     NOT_FOUND: "Data tidak ditemukan.",
+    PAYLOAD_TOO_LARGE: "Permintaannya terlalu besar.",
     INVITE_CODE_USED: "Kode undangan sudah dipakai.",
     RATE_LIMITED: "Terlalu banyak permintaan. Coba lagi sebentar.",
     INTERNAL_ERROR: "Ada yang salah di server.",
@@ -41,7 +42,8 @@ export const id = {
     title: "Masuk",
     hint: "Pakai akun Google yang terdaftar sebagai admin.",
     google: "Masuk pakai Google",
-    sessionNote: "Sesi admin berlaku 12 jam. Habis itu masuk lagi.",
+    sessionNote:
+      "Sesi admin tetap aktif selama 7 hari tidak dipakai, dan berakhir paling lama 30 hari.",
     failed: "Gagal masuk",
     failedBody: "Login Google gak selesai. Coba lagi.",
     notRegistered: "Akun ini belum terdaftar di Luma",

@@ -1,14 +1,11 @@
-import { z } from "zod";
-import type { Db } from "../../db/client";
+import { BACKUP_ID, type BackupInfo, backupManifest } from "@luma/contracts/backend/backups";
+import type { Db } from "@luma/core/db/client";
 import { addBytes, releaseOnFailure, reserveBytes } from "../../db/user-storage";
 import { ApiError } from "../../lib/errors";
 import { fixedLength, userPrefix } from "../../lib/storage";
 
 /** Snapshots kept; the rest are deleted in the same `PUT` (docs/backend.md, Files and cloud backups). */
 export const BACKUP_RETENTION = 10;
-
-/** `yyyyMMddTHHmmssZ`: lexical order = chronological order, so `R2.list` is already chronological. */
-export const BACKUP_ID = /^\d{8}T\d{6}Z$/;
 
 export const backupId = (now: Date) =>
   now
@@ -18,28 +15,22 @@ export const backupId = (now: Date) =>
 
 export const backupsPrefix = (userId: string) => `${userPrefix(userId)}backups/`;
 
-const manifestSchema = z.object({
-  appVersion: z.string().max(40),
-  schemaVersion: z.number().int().nonnegative(),
-  createdAt: z.string().max(40),
-  counts: z.object({
-    books: z.number().int().nonnegative(),
-    aiResults: z.number().int().nonnegative(),
-  }),
-});
+const invalidManifest = () =>
+  new ApiError(400, "BAD_REQUEST", "x-backup-manifest must be the backup manifest JSON");
 
 /** The `x-backup-manifest` header = contents of `manifest.json` in the zip (single-line JSON). */
 export function parseManifest(header: string | undefined): Record<string, string> {
-  let parsed: z.infer<typeof manifestSchema> | undefined;
+  let json: unknown;
   try {
-    parsed = manifestSchema.parse(JSON.parse(header ?? ""));
+    json = JSON.parse(header ?? "");
   } catch {
-    parsed = undefined;
+    throw invalidManifest();
   }
-  const createdAt = parsed ? new Date(parsed.createdAt) : undefined;
-  if (!parsed || !createdAt || Number.isNaN(createdAt.getTime())) {
-    throw new ApiError(400, "BAD_REQUEST", "x-backup-manifest must be the backup manifest JSON");
-  }
+  const result = backupManifest.safeParse(json);
+  if (!result.success) throw invalidManifest();
+  const parsed = result.data;
+  const createdAt = new Date(parsed.createdAt);
+  if (Number.isNaN(createdAt.getTime())) throw invalidManifest();
   return {
     appVersion: parsed.appVersion,
     schemaVersion: String(parsed.schemaVersion),
@@ -49,16 +40,6 @@ export function parseManifest(header: string | undefined): Record<string, string
   };
 }
 
-export type BackupInfo = {
-  id: string;
-  createdAt: string;
-  size: number;
-  books: number;
-  aiResults: number;
-  schemaVersion: number;
-  appVersion: string;
-};
-
 const info = (
   prefix: string,
   o: { key: string; size: number; customMetadata?: Record<string, string> },
@@ -66,12 +47,12 @@ const info = (
   const m = o.customMetadata ?? {};
   return {
     id: o.key.slice(prefix.length).replace(/\.zip$/, ""),
-    createdAt: m.createdAt ?? "",
+    created_at: m.createdAt ?? "",
     size: o.size,
     books: Number(m.books ?? 0),
-    aiResults: Number(m.aiResults ?? 0),
-    schemaVersion: Number(m.schemaVersion ?? 0),
-    appVersion: m.appVersion ?? "",
+    ai_results: Number(m.aiResults ?? 0),
+    schema_version: Number(m.schemaVersion ?? 0),
+    app_version: m.appVersion ?? "",
   };
 };
 

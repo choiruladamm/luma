@@ -166,7 +166,7 @@ void main() {
 
       await repo.discard(result.session);
 
-      expect(adapter.requests.last.uri.path, '/v1/auth/sign-out');
+      expect(adapter.requests.last.uri.path, '/v2/auth/sign-out');
       expect(
         adapter.requests.last.headers['authorization'],
         'Bearer tok123.sig456',
@@ -186,11 +186,11 @@ void main() {
       expect(result.user.email, 'adam@gmail.test');
 
       final req = adapter.requests.single;
-      expect(req.uri.path, '/v1/auth/sign-in/social');
+      expect(req.uri.path, '/v2/auth/sign-in/social');
       expect(req.headers['x-invite-code'], 'LUMA-7Q2K');
       expect(req.data, {
         'provider': 'google',
-        'idToken': {'token': 'id-token-google'},
+        'id_token': {'token': 'id-token-google'},
       });
     });
 
@@ -226,7 +226,7 @@ void main() {
     });
 
     test(
-      'currentUser parses /v1/me with the bearer token (contract)',
+      'currentUser parses /v2/me with the bearer token (contract)',
       () async {
         await store.writeToken('tok123.sig456');
         adapter.queue.add(fromContract(contract('me')));
@@ -243,7 +243,7 @@ void main() {
     );
 
     test(
-      '401 from /v1/me keeps the token so the app stays open (contract)',
+      '401 from /v2/me keeps the token so the app stays open (contract)',
       () async {
         await store.writeToken('mati');
         adapter.queue.add(fromContract(contract('error-unauthorized')));

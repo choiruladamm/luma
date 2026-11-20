@@ -58,14 +58,14 @@ describe("Undangan", () => {
         items = [
           {
             code: "LUMA-NEWWW-CODE1",
-            createdAt: "2026-11-15T03:00:00.000Z",
-            usedBy: null,
-            usedAt: null,
+            created_at: "2026-11-15T03:00:00.000Z",
+            used_by: null,
+            used_at: null,
           },
           ...items,
         ];
         return HttpResponse.json(
-          { codes: ["LUMA-NEWWW-CODE1"], createdAt: "2026-11-15T03:00:00.000Z" },
+          { codes: ["LUMA-NEWWW-CODE1"], created_at: "2026-11-15T03:00:00.000Z" },
           { status: 201 },
         );
       }),
@@ -153,9 +153,9 @@ describe("Undangan", () => {
   it("pages with numbers through the worker, keeping ?page= in the URL", async () => {
     const many = Array.from({ length: 25 }, (_, i) => ({
       code: `LUMA-K${String(i).padStart(4, "0")}-ZZZZZ`,
-      createdAt: null,
-      usedBy: null,
-      usedAt: null,
+      created_at: null,
+      used_by: null,
+      used_at: null,
     }));
     server.use(
       http.get(`${API}/invites`, ({ request }) =>
@@ -219,7 +219,7 @@ describe("Undangan", () => {
     // "Used within" selects the Used tab; the Unused tab clears it.
     await user.click(screen.getByRole("button", { name: /^Dipakai dalam:/ }));
     await user.click(screen.getByRole("option", { name: "7 hari" }));
-    await waitFor(() => expect(router.state.location.search).toBe("?status=used&usedWithin=7d"));
+    await waitFor(() => expect(router.state.location.search).toBe("?status=used&used_within=7d"));
     await user.click(screen.getAllByRole("tab", { name: /Belum dipakai/ })[0]!);
     await waitFor(() => expect(router.state.location.search).toBe("?status=unused"));
 
@@ -236,5 +236,93 @@ describe("Undangan", () => {
     await user.click(screen.getByRole("button", { name: /^Urutkan:/ }));
     await user.click(screen.getByRole("option", { name: "Terlama dipakai" }));
     await waitFor(() => expect(router.state.location.search).toBe("?sort=usedAt&dir=asc"));
+  });
+
+  it("a failed list shows the error with retry, which recovers", async () => {
+    let fail = true;
+    server.use(
+      http.get(`${API}/invites`, ({ request }) =>
+        fail
+          ? apiError(429, "RATE_LIMITED")
+          : HttpResponse.json(invitesPage(invites.items, new URL(request.url))),
+      ),
+    );
+    const { user } = renderApp("/invites");
+    const alert = await screen.findByRole("alert");
+    expect(within(alert).getByText("Data gagal dimuat")).toBeInTheDocument();
+    expect(
+      within(alert).getByText("Terlalu banyak permintaan. Coba lagi sebentar."),
+    ).toBeInTheDocument();
+    fail = false;
+    await user.click(within(alert).getByRole("button", { name: "Coba lagi" }));
+    expect(await screen.findByRole("table", { name: "Kode undangan" })).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+
+  it("a failed refresh keeps the cached rows and toasts the error", async () => {
+    let fail = false;
+    server.use(
+      http.get(`${API}/invites`, ({ request }) =>
+        fail
+          ? apiError(429, "RATE_LIMITED")
+          : HttpResponse.json(invitesPage(invites.items, new URL(request.url))),
+      ),
+    );
+    const { queryClient } = renderApp("/invites");
+    await screen.findByRole("table", { name: "Kode undangan" });
+    fail = true;
+    await act(() => queryClient.refetchQueries());
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Terlalu banyak permintaan. Coba lagi sebentar.",
+    );
+    expect(screen.getByRole("table", { name: "Kode undangan" })).toBeInTheDocument();
+    expect(screen.queryByText("Data gagal dimuat")).toBeNull();
+  });
+
+  it("the empty state's create action makes a code", async () => {
+    let posted = 0;
+    server.use(
+      http.get(`${API}/invites`, ({ request }) =>
+        HttpResponse.json(invitesPage([], new URL(request.url))),
+      ),
+      http.post(`${API}/invites`, () => {
+        posted += 1;
+        return HttpResponse.json(
+          { codes: ["LUMA-NEWWW-CODE1"], created_at: "2026-11-15T03:00:00.000Z" },
+          { status: 201 },
+        );
+      }),
+    );
+    const { user } = renderApp("/invites");
+    expect(await screen.findByText("Bikin satu buat ngajak orang ikut beta.")).toBeInTheDocument();
+    // The header keeps its own button; the empty state adds a second one.
+    const buttons = screen.getAllByRole("button", { name: "Bikin kode" });
+    expect(buttons).toHaveLength(2);
+    await user.click(buttons.at(-1)!);
+    expect(within(await screen.findByRole("dialog")).getByText("LUMA-NEWWW-CODE1")).toBeVisible();
+    expect(posted).toBe(1);
+  });
+
+  it.each([
+    ["?status=unused", [invites.items[2]!], "Semua kode udah dipakai"],
+    ["?status=used", [invites.items[0]!], "Belum ada kode yang dipakai"],
+    [
+      "?status=used&used_within=7d",
+      [invites.items[0]!],
+      "Gak ada kode yang dipakai dalam rentang ini",
+    ],
+    // A search with matches but none in the tab names the tab, not the search.
+    ["?q=aaaaa&status=used", [invites.items[0]!], "Belum ada kode yang dipakai"],
+  ])("an empty tab %s says why", async (search, items, title) => {
+    server.use(
+      http.get(`${API}/invites`, ({ request }) =>
+        HttpResponse.json(invitesPage(items, new URL(request.url))),
+      ),
+    );
+    renderApp(`/invites${search}`);
+    expect(await screen.findByRole("heading", { name: title })).toBeInTheDocument();
+    expect(screen.queryByText("Belum ada kode undangan")).toBeNull();
+    // Only the header's create button: the filtered empty state has no action.
+    expect(screen.getAllByRole("button", { name: "Bikin kode" })).toHaveLength(1);
   });
 });

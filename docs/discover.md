@@ -20,7 +20,7 @@ sections: [Sources and discovery, Local catalog and search, Download and import,
 
 ## Network and notifications
 
-Requests go directly to Gutenberg through the shared HTTP client, which supplies `lumaUserAgent` with contact information and retries HTTP 429 and 503 up to three attempts. The app reports completed, duplicate and failed downloads through notifications or toasts.
+Requests go directly to Gutenberg through the shared HTTP client, which supplies `lumaUserAgent` with contact information and retries HTTP 429 and 503 up to three attempts. The app reports completed, duplicate and failed downloads through notifications or toasts; a failed download's toast offers "Coba lagi", which queues it again.
 
 Download notifications are shown only while the app is paused or hidden; notification permission is requested on the first download, and tapping a notification while the app is running opens the book.
 

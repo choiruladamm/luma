@@ -3,7 +3,7 @@ import { defineConfig } from "vitest/config";
 import { TEST_RATE_LIMIT } from "./test/helpers/limits";
 
 export default defineConfig(async () => {
-  const migrations = await readD1Migrations("./migrations");
+  const migrations = await readD1Migrations("../../packages/core/migrations");
   return {
     plugins: [
       cloudflareTest({
@@ -30,9 +30,18 @@ export default defineConfig(async () => {
       setupFiles: ["./test/setup.ts"],
       coverage: {
         provider: "istanbul" as const,
-        include: ["src/**/*.ts"],
-        exclude: ["src/index.ts", "src/env.ts", "src/db/schema.ts", "src/db/auth-schema.ts"],
-        thresholds: { lines: 80, functions: 80, branches: 80, statements: 80 },
+        // @luma/core has no tests of its own: the backend's tests exercise it, so it is measured
+        // here. @luma/worker-kit is measured by its own tests (make packages-test).
+        allowExternal: true,
+        include: ["src/**/*.ts", "../../packages/core/src/**/*.ts"],
+        exclude: [
+          "src/index.ts",
+          "src/env.ts",
+          "../../packages/core/src/db/schema.ts",
+          "../../packages/core/src/db/auth-schema.ts",
+          "../../packages/core/src/testing/**",
+        ],
+        thresholds: { statements: 100, branches: 93.05, functions: 100, lines: 100 },
       },
     },
   };

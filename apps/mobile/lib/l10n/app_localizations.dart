@@ -1889,6 +1889,12 @@ abstract class AppLocalizations {
   /// Interface copy in ui/features/discover/views/download_toasts.dart
   ///
   /// In id, this message translates to:
+  /// **'Coba lagi'**
+  String get downloadTryAgain;
+
+  /// Interface copy in ui/features/discover/views/download_toasts.dart
+  ///
+  /// In id, this message translates to:
   /// **'Tap buat mulai baca'**
   String get downloadTapToStartReading;
 
@@ -4718,29 +4724,17 @@ abstract class AppLocalizations {
   /// **'OpenRouter nolak key ini. Cek lagi di openrouter.ai/keys, terus tempel ulang.'**
   String get settingsAiKeyRejectedBody;
 
-  /// No description provided for @settingsAiKeyRejectedFallback.
+  /// No description provided for @settingsAiKeyRejectedStopped.
   ///
   /// In id, this message translates to:
-  /// **'Sementara AI balik pakai kuota gratis (sisa {percent}%) sampai key-nya bener.'**
-  String settingsAiKeyRejectedFallback(int percent);
-
-  /// No description provided for @settingsAiKeyRejectedFallbackNoQuota.
-  ///
-  /// In id, this message translates to:
-  /// **'Sementara AI balik pakai kuota gratis sampai key-nya bener.'**
-  String get settingsAiKeyRejectedFallbackNoQuota;
+  /// **'AI berhenti sampai key-nya bener. Atau hapus key buat balik ke kuota gratis.'**
+  String get settingsAiKeyRejectedStopped;
 
   /// No description provided for @settingsAiKeyRecheck.
   ///
   /// In id, this message translates to:
   /// **'Cek lagi'**
   String get settingsAiKeyRecheck;
-
-  /// No description provided for @settingsAiModelFallsBack.
-  ///
-  /// In id, this message translates to:
-  /// **'{id} · balik ke model gratis'**
-  String settingsAiModelFallsBack(String id);
 
   /// No description provided for @settingsCatalogTitle.
   ///

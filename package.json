@@ -1,0 +1,29 @@
+{
+  "name": "luma",
+  "private": true,
+  "workspaces": {
+    "packages": [
+      "apps/backend",
+      "apps/dashboard",
+      "packages/*"
+    ],
+    "catalog": {
+      "@better-auth/drizzle-adapter": "^1.7.22",
+      "@cloudflare/vitest-plugin": "^1.8.1",
+      "@hono/zod-validator": "^0.9.1",
+      "@msw/cloudflare": "^0.2.0",
+      "@vitest/coverage-istanbul": "^5.1.0",
+      "better-auth": "^1.7.22",
+      "drizzle-orm": "^0.45.4",
+      "hono": "^4.13.18",
+      "msw": "^3.0.5",
+      "oxlint": "^1.94.0",
+      "oxlint-tsgolint": "^7.0.2007",
+      "prettier": "^3.10.1",
+      "typescript": "^7.0.2",
+      "vitest": "^5.1.0",
+      "wrangler": "^4.161.0",
+      "zod": "^4.6.7"
+    }
+  }
+}

@@ -1,14 +1,16 @@
 import { getSignedCookie } from "hono/cookie";
-import { createDb } from "../../backend/src/db/client";
+import { createDb } from "@luma/core/db/client";
+import { workerApp } from "@luma/worker-kit/app";
+import { snakeJson } from "@luma/worker-kit/case";
+import { normalizeAuthError, notFound } from "@luma/worker-kit/errors";
+import { limitBody } from "@luma/worker-kit/middleware";
 import { getAuth } from "./auth/auth";
 import { endSessionIfPastMaxAge, sessionCookieName } from "./auth/session";
 import { factory } from "./env";
 import { invites } from "./features/invites/routes";
 import { overview } from "./features/overview/routes";
 import { users } from "./features/users/routes";
-import { ApiError, onError } from "./lib/errors";
 import { rateLimitAdmin, rateLimitIp } from "./middleware/rate-limit";
-import { requestId } from "./middleware/request-id";
 import { requireAdmin } from "./middleware/require-admin";
 import { requireSameOriginJson } from "./middleware/same-origin";
 import { securityHeaders } from "./middleware/security-headers";
@@ -21,12 +23,14 @@ export const AUTH_ROUTES = [
   ["POST", "/api/auth/sign-out"],
 ] as const;
 
-const notFound = () => {
-  throw new ApiError(404, "NOT_FOUND", "Not found");
-};
+/** Every dashboard body is a small JSON object (an invite count, a sign-in provider). */
+const API_BODY_LIMIT = 16 * 1024;
 
-// Order: requestId → IP rate limit → [/api/auth/* → Better Auth] → session + admin → mutation checks → route.
-const app = factory.createApp().use(securityHeaders, requestId).use("/api/*", rateLimitIp);
+// Order: requestId → IP rate limit → body limit → [/api/auth/* → Better Auth] → session + admin →
+// mutation checks → route.
+const app = workerApp(factory.createApp())
+  .use(securityHeaders)
+  .use("/api/*", rateLimitIp, limitBody(API_BODY_LIMIT));
 // get-session is where Better Auth slides the session, so the 30-day cap goes in front of it:
 // past the cap the row is gone and Better Auth answers "no session" (+1 query per call).
 app.get("/api/auth/get-session", async (c, next) => {
@@ -34,8 +38,11 @@ app.get("/api/auth/get-session", async (c, next) => {
   if (token) await endSessionIfPastMaxAge(createDb(c.env.DB), token);
   await next();
 });
+// Better Auth answers camelCase; its bodies are converted so the whole dashboard wire is snake_case.
 for (const [method, path] of AUTH_ROUTES)
-  app.on(method, path, (c) => getAuth(c.env).handler(c.req.raw));
+  app.on(method, path, async (c) =>
+    snakeJson(await normalizeAuthError(await getAuth(c.env).handler(c.req.raw))),
+  );
 app.all("/api/auth/*", notFound);
 
 // Admin routes are chained after the guards so `AppType` carries their types.
@@ -44,9 +51,6 @@ const routes = app
   .route("/api/users", users)
   .route("/api/invites", invites)
   .route("/api/overview", overview);
-
-app.notFound(notFound);
-app.onError(onError);
 
 export type AppType = typeof routes;
 export { app };

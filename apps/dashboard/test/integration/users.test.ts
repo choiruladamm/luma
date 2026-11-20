@@ -1,9 +1,9 @@
 import { env } from "cloudflare:test";
 import { eq } from "drizzle-orm";
 import { describe, expect, it, vi } from "vitest";
-import { findUserKey } from "../../../backend/src/features/ai-key/repo";
-import { createDb } from "../../../backend/src/db/client";
-import { aiKeys, sessions, users } from "../../../backend/src/db/schema";
+import { findUserKey } from "@luma/core/ai-keys";
+import { createDb } from "@luma/core/db/client";
+import { aiKeys, sessions, users } from "@luma/core/db/schema";
 import { call, errorCode, ORIGIN } from "../helpers/app";
 import { fakeOpenRouter } from "../helpers/openrouter";
 import {
@@ -17,14 +17,14 @@ import {
 type Item = {
   id: string;
   email: string;
-  createdAt: string;
-  lastActiveAt: string | null;
+  created_at: string;
+  last_active_at: string | null;
   banned: boolean;
-  hasAiKey: boolean;
-  r2Bytes: number;
-  syncBytes: number;
+  has_ai_key: boolean;
+  r2_bytes: number;
+  sync_bytes: number;
 };
-type Page = { items: Item[]; total: number; page: number; pageCount: number };
+type Page = { items: Item[]; total: number; page: number; page_count: number };
 
 const get = async (path: string) => call(path, { headers: { cookie: await adminCookie() } });
 const post = async (path: string, overrides: Partial<Env> = {}) =>
@@ -56,7 +56,7 @@ describe("GET /api/users", () => {
     expect(first.response.status).toBe(200);
     expect(first.d1Queries).toBe(3);
     const p1 = await first.response.json<Page>();
-    expect(p1).toMatchObject({ total: 5, page: 1, pageCount: 3 });
+    expect(p1).toMatchObject({ total: 5, page: 1, page_count: 3 });
     expect(p1.items.map((u) => u.email)).toEqual([`${t}-4@luma.test`, `${t}-3@luma.test`]);
 
     const p3 = await (
@@ -68,7 +68,7 @@ describe("GET /api/users", () => {
     ).response.json<Page>();
     expect(asc.items.map((u) => u.email)).toEqual([`${t}-0@luma.test`, `${t}-1@luma.test`]);
     const past = await (await get(`/api/users?q=${t}&limit=2&page=9`)).response.json<Page>();
-    expect(past).toMatchObject({ items: [], total: 5, pageCount: 3 });
+    expect(past).toMatchObject({ items: [], total: 5, page_count: 3 });
   });
 
   it("filters by ban status, subsidized key, and activity window, and counts the filtered total", async () => {
@@ -152,18 +152,18 @@ describe("GET /api/users", () => {
     expect(text).not.toMatch(/keyEnc|key_enc|rahasia-terenkripsi|token|keyHash|hash-full/);
     const items = (JSON.parse(text) as Page).items;
     expect(items.find((u) => u.id === bare.id)).toMatchObject({
-      hasAiKey: false,
-      r2Bytes: 0,
-      syncBytes: 0,
-      lastActiveAt: null,
+      has_ai_key: false,
+      r2_bytes: 0,
+      sync_bytes: 0,
+      last_active_at: null,
       banned: false,
     });
     expect(items.find((u) => u.id === full.id)).toMatchObject({
-      hasAiKey: true,
-      r2Bytes: 1234,
-      syncBytes: 99,
+      has_ai_key: true,
+      r2_bytes: 1234,
+      sync_bytes: 99,
     });
-    expect(items.find((u) => u.id === full.id)?.lastActiveAt).toMatch(/Z$/);
+    expect(items.find((u) => u.id === full.id)?.last_active_at).toMatch(/Z$/);
   });
 
   it("finds q anywhere in the email or name, best match first, across pages", async () => {
@@ -242,19 +242,19 @@ describe("GET /api/users/:id", () => {
     expect(response.status).toBe(200);
     // guard 1 + batch of 5 statements.
     expect(d1Queries).toBe(6);
-    expect(openrouter.calls).toEqual(["GET hash-detail"]);
+    expect(openrouter.calls).toEqual(["GET /keys/hash-detail"]);
     const body = await response.json<Record<string, unknown>>();
     expect(body).toMatchObject({
       id: user.id,
-      ai: { limit: 0.02, usageDaily: 0.004, expiresAt: "2026-12-14T00:00:00.000Z" },
-      invite: { code: "LUMA-DTL1", usedAt: "2026-11-01T00:00:00.000Z" },
+      ai: { limit: 0.02, usage_daily: 0.004, expires_at: "2026-12-14T00:00:00.000Z" },
+      invite: { code: "LUMA-DTL1", used_at: "2026-11-01T00:00:00.000Z" },
       providers: [],
     });
     expect((body.sessions as unknown[])[0]).toEqual({
-      userAgent: null,
-      ipAddress: null,
-      createdAt: expect.stringMatching(/Z$/),
-      updatedAt: expect.stringMatching(/Z$/),
+      user_agent: null,
+      ip_address: null,
+      created_at: expect.stringMatching(/Z$/),
+      updated_at: expect.stringMatching(/Z$/),
     });
     expect(JSON.stringify(body)).not.toMatch(/keyEnc|rahasia-terenkripsi|token|hash-detail/);
   });
@@ -270,7 +270,7 @@ describe("GET /api/users/:id", () => {
     expect(openrouter.calls).toEqual([]);
   });
 
-  it("keeps the detail open with usageDaily: null when OpenRouter fails", async () => {
+  it("keeps the detail open with usage_daily: null when OpenRouter fails", async () => {
     const user = await createUser();
     await giveUserData(user.id, { keyHash: "hash-down" });
     fakeOpenRouter({ fail: true });
@@ -279,7 +279,7 @@ describe("GET /api/users/:id", () => {
     const { response } = await get(`/api/users/${user.id}`);
     expect(response.status).toBe(200);
     expect((await response.json<{ ai: unknown }>()).ai).toMatchObject({
-      usageDaily: null,
+      usage_daily: null,
       limit: 0.02,
     });
     expect(err).toHaveBeenCalled();
@@ -303,11 +303,11 @@ describe("POST /api/users/:id/ban", () => {
 
     const { response, d1Queries } = await post(`/api/users/${user.id}/ban`);
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ banned: true, keyRevoked: true });
+    expect(await response.json()).toEqual({ banned: true, key_revoked: true });
     // guard 1 + key lookup 1 + batch of 2 statements.
     expect(d1Queries).toBe(4);
-    expect(openrouter.calls).toEqual(["DELETE hash-ban"]);
-    expect(openrouter.live.has("hash-ban")).toBe(false);
+    expect(openrouter.calls).toEqual(["DELETE /keys/hash-ban"]);
+    expect(openrouter.keys.has("hash-ban")).toBe(false);
     expect((await userRow(user.id)).banned).toBe(true);
     expect(await keyRow(user.id)).toBeNull();
     const audit = log.mock.calls
@@ -315,7 +315,7 @@ describe("POST /api/users/:id/ban", () => {
       .find((l) => l.message === "audit");
     expect(audit).toMatchObject({
       action: "user.ban",
-      targetId: user.id,
+      target_id: user.id,
       admin: "admin@luma.test",
     });
     log.mockRestore();
@@ -340,17 +340,17 @@ describe("POST /api/users/:id/ban", () => {
 
     expect(await (await post(`/api/users/${user.id}/ban`)).response.json()).toEqual({
       banned: true,
-      keyRevoked: true,
+      key_revoked: true,
     });
     expect(await (await post(`/api/users/${user.id}/ban`)).response.json()).toEqual({
       banned: true,
-      keyRevoked: false,
+      key_revoked: false,
     });
-    expect(openrouter.calls).toEqual(["DELETE hash-dua"]);
+    expect(openrouter.calls).toEqual(["DELETE /keys/hash-dua"]);
 
     const noKey = await createUser();
     const res = await post(`/api/users/${noKey.id}/ban`);
-    expect(await res.response.json()).toEqual({ banned: true, keyRevoked: false });
+    expect(await res.response.json()).toEqual({ banned: true, key_revoked: false });
     expect((await userRow(noKey.id)).banned).toBe(true);
   });
 
@@ -359,7 +359,7 @@ describe("POST /api/users/:id/ban", () => {
     await giveUserData(user.id, { keyHash: "hash-hilang" });
     fakeOpenRouter();
     const { response } = await post(`/api/users/${user.id}/ban`);
-    expect(await response.json()).toEqual({ banned: true, keyRevoked: true });
+    expect(await response.json()).toEqual({ banned: true, key_revoked: true });
   });
 
   it.each(["ban", "unban"])(
@@ -401,7 +401,7 @@ describe("POST /api/users/:id/unban", () => {
       log.mock.calls.map((c) => JSON.parse(c[0] as string)).find((l) => l.message === "audit"),
     ).toMatchObject({
       action: "user.unban",
-      targetId: user.id,
+      target_id: user.id,
     });
     log.mockRestore();
   });
@@ -409,6 +409,31 @@ describe("POST /api/users/:id/unban", () => {
   it("answers 404 for an unknown user", async () => {
     const { response } = await post("/api/users/gak-ada/unban");
     expect(response.status).toBe(404);
+  });
+});
+
+describe("audit trail", () => {
+  // The trail records what happened: a mutation that failed must leave no line behind.
+  it("logs nothing for a ban OpenRouter rejects or a user or invite that doesn't exist", async () => {
+    const user = await createUser();
+    await giveUserData(user.id, { keyHash: "hash-audit" });
+    fakeOpenRouter({ fail: true });
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    expect((await post(`/api/users/${user.id}/ban`)).response.status).toBe(502);
+    expect((await post("/api/users/gak-ada/ban")).response.status).toBe(404);
+    expect((await post("/api/users/gak-ada/unban")).response.status).toBe(404);
+    const missingInvite = await call("/api/invites/LUMA-ZZZZZ-ZZZZZ", {
+      method: "DELETE",
+      headers: { cookie: await adminCookie(), "content-type": "application/json", origin: ORIGIN },
+    });
+    expect(missingInvite.response.status).toBe(404);
+
+    const lines = log.mock.calls.map((c) => JSON.parse(c[0] as string) as { message: string });
+    expect(lines.filter((l) => l.message === "audit")).toEqual([]);
+    log.mockRestore();
+    error.mockRestore();
   });
 });
 
@@ -424,6 +449,27 @@ describe("admin mutation rate limit", () => {
     expect(response.headers.get("Retry-After")).toBe("60");
     expect(keys[0]).toMatch(/^admin:/);
     expect((await userRow(user.id)).banned).toBe(false);
+  });
+
+  it("limits invite mutations the same way", async () => {
+    const deny = { limit: async () => ({ success: false }) };
+    const headers = {
+      cookie: await adminCookie(),
+      "content-type": "application/json",
+      origin: ORIGIN,
+    };
+    const created = await call(
+      "/api/invites",
+      { method: "POST", headers, body: JSON.stringify({ count: 1 }) },
+      { ADMIN_RATE_LIMITER: deny },
+    );
+    expect(created.response.status).toBe(429);
+    const deleted = await call(
+      "/api/invites/LUMA-AAAAA-BBBBB",
+      { method: "DELETE", headers },
+      { ADMIN_RATE_LIMITER: deny },
+    );
+    expect(deleted.response.status).toBe(429);
   });
 
   it("does not limit reads", async () => {

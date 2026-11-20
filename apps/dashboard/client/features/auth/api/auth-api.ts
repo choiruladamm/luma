@@ -1,10 +1,8 @@
 // Better Auth endpoints aren't part of AppType (allowlisted in the worker), so plain fetch.
+import type { Session, SocialSignIn } from "@luma/contracts/dashboard/auth";
 import { ApiError, toApiError } from "../../../lib/api-error";
 
-export type Session = {
-  user: { id: string; email: string; name: string; image: string | null };
-  session: { expiresAt: string };
-} | null;
+export type { Session } from "@luma/contracts/dashboard/auth";
 
 const authFetch = async (path: string, init?: RequestInit) => {
   let res: Response;
@@ -38,9 +36,7 @@ export const getSession = async (): Promise<Session> => (await authFetch("get-se
 export async function signInWithGoogle() {
   const { url } = await (
     await postJson("sign-in/social", { provider: "google", callbackURL: "/" })
-  ).json<{
-    url: string;
-  }>();
+  ).json<SocialSignIn>();
   window.location.assign(url);
 }
 

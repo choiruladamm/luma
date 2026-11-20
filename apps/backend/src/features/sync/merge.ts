@@ -1,18 +1,8 @@
 // Sync merge rules per kind (docs/sync-protocol.md, Merge rules). Pure, no I/O.
 
-export const KINDS = [
-  "book",
-  "reading_progress",
-  "reading_session",
-  "ai_result",
-  "ai_breakdown",
-  "setting",
-  "chat_session",
-  "chat_turn",
-] as const;
-export type Kind = (typeof KINDS)[number];
+import type { Data, Kind } from "@luma/contracts/backend/sync";
 
-export type Data = Record<string, unknown>;
+export type { Data, Kind };
 
 /** One sync record. `updatedAt` = epoch ms (the device clock at the time of the change). */
 export type SyncRecord = {

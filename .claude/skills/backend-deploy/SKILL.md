@@ -21,7 +21,7 @@ Pushes to `dev` and `master` already deploy through `.github/workflows/deploy.ym
 
 ## Deploy
 
-1. New files in `apps/backend/migrations/` → `make backend-migrate e=<env>` first. Migrations go before code that depends on them, and must keep existing data.
+1. New files in `packages/core/migrations/` → `make backend-migrate e=<env>` first. Migrations go before code that depends on them, and must keep existing data.
 2. `make backend-deploy e=<env>`.
    - **First prod deploy** (the `luma-backend` Worker doesn't exist yet, so `wrangler secret put` can't run): deploy with the secrets file instead, from `master` in `apps/backend`: `bunx wrangler deploy --env prod --secrets-file ~/.config/luma/prod-secrets.json`. The file (outside the repo, mode 600) holds `BETTER_AUTH_SECRET`, `AI_KEY_ENC_SECRET`, `OPENROUTER_MANAGEMENT_KEY`, `GOOGLE_CLIENT_SECRET`. Never print it. Later deploys keep those secrets, so plain `make backend-deploy e=prod` is enough.
    - `AI_KEY_ENC_SECRET` must never change after the first prod deploy: stored AI keys can't be decrypted with a new one.

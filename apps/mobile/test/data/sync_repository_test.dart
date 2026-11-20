@@ -28,7 +28,7 @@ class _Auth extends Fake implements AuthRepository {
   Future<String?> lastUserId() async => user;
 }
 
-/// Fake Worker: `/v1/sync/push|pull` + `/v1/files/*`, all stored in
+/// Fake Worker: `/v2/sync/push|pull` + `/v2/files/*`, all stored in
 /// memory. The server is simplified: the last record per key wins.
 class _Worker implements HttpClientAdapter {
   final pushes = <Map<String, Object?>>[];
@@ -60,7 +60,7 @@ class _Worker implements HttpClientAdapter {
     final path = options.uri.path;
     log.add('${options.method} $path');
     if (queue.isNotEmpty) return queue.removeAt(0);
-    if (path == '/v1/sync/pull') {
+    if (path == '/v2/sync/pull') {
       final since = int.parse(options.uri.queryParameters['since']!);
       pulls.add(since);
       final limit = int.parse(options.uri.queryParameters['limit']!);
@@ -70,25 +70,25 @@ class _Worker implements HttpClientAdapter {
       final page = after.take(limit).toList();
       return json(200, {
         'records': page,
-        'nextSeq': page.isEmpty ? since : page.last['seq'],
+        'next_seq': page.isEmpty ? since : page.last['seq'],
         'more': after.length > limit,
       });
     }
-    if (path == '/v1/sync/push') {
+    if (path == '/v2/sync/push') {
       final body = (options.data as Map).cast<String, Object?>();
       pushes.add(body);
       for (final r in body['records']! as List) {
         final rec = (r as Map).cast<String, Object?>();
         final id = '${rec['kind']} ${rec['key']}';
-        final had = server[id]?['updatedAt'] as String?;
+        final had = server[id]?['updated_at'] as String?;
         if (had != null &&
             DateTime.parse(had)
-                .isAfter(DateTime.parse(rec['updatedAt']! as String))) {
+                .isAfter(DateTime.parse(rec['updated_at']! as String))) {
           continue; // last-write-wins, like the real server
         }
         server[id] = {
           ...rec,
-          'schemaVersion': body['schemaVersion'],
+          'schema_version': body['schema_version'],
           'seq': ++seq,
         };
       }
@@ -99,7 +99,7 @@ class _Worker implements HttpClientAdapter {
       );
       return json(200, {'seq': count, 'applied': count});
     }
-    if (path == '/v1/files/missing') {
+    if (path == '/v2/files/missing') {
       final names = ((options.data as Map)['names'] as List).cast<String>();
       return json(200, {
         'missing': [
@@ -108,7 +108,7 @@ class _Worker implements HttpClientAdapter {
         ],
       });
     }
-    final name = Uri.decodeComponent(path.substring('/v1/files/'.length));
+    final name = Uri.decodeComponent(path.substring('/v2/files/'.length));
     if (options.method == 'GET') {
       final bytes = files[name];
       return bytes == null
@@ -213,7 +213,7 @@ void main() {
     final body = worker.pushes.single;
     final fixture = (contract('sync-push')['request']! as Map)['body']! as Map;
     expect(body.keys, unorderedEquals(fixture.keys));
-    expect(body['schemaVersion'], db.schemaVersion);
+    expect(body['schema_version'], db.schemaVersion);
     final sent = {
       for (final r in worker.records) '${r['kind']} ${r['key']}': r,
     };
@@ -227,7 +227,7 @@ void main() {
     );
     expect(sent['book h1']!['deleted'], false);
     expect(
-      DateTime.parse(sent['book h1']!['updatedAt']! as String).isUtc,
+      DateTime.parse(sent['book h1']!['updated_at']! as String).isUtc,
       isTrue,
     );
     expect(await outbox(), isEmpty);
@@ -339,9 +339,9 @@ void main() {
 
     now = now.add(const Duration(minutes: 2));
     await repo.syncIfDue();
-    expect(worker.log.where((l) => l.contains('/v1/sync/')), [
-      'POST /v1/sync/push',
-      'GET /v1/sync/pull',
+    expect(worker.log.where((l) => l.contains('/v2/sync/')), [
+      'POST /v2/sync/push',
+      'GET /v2/sync/pull',
     ]);
   });
 

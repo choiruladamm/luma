@@ -1,20 +1,16 @@
-import { DAY_MS } from "../../lib/encoding";
+import type { PushBody, PushResult } from "@luma/contracts/backend/sync";
+import { DAY_MS } from "@luma/core/encoding";
 import { ApiError } from "../../lib/errors";
-import { type Data, type Kind, merge, type SyncRecord } from "./merge";
-import { findRecords, pullRows, syncUsage, writeRecords } from "./repo";
-
-/** Max records per push (docs/sync-protocol.md, Sync quotas and compatibility). */
-export const MAX_PUSH_RECORDS = 500;
-
-export type PushRecord = {
-  kind: Kind;
-  key: string;
-  updatedAt: string;
-  deleted: boolean;
-  data: Data | null;
-};
-export type PushBody = { schemaVersion: number; records: PushRecord[] };
-export type PushResult = { seq: number; applied: number };
+import { merge, type SyncRecord } from "./merge";
+import type { Wire } from "../../env";
+import {
+  findRecords,
+  PULL_KEYS,
+  pullRows,
+  type StoredRecord,
+  syncUsage,
+  writeRecords,
+} from "./repo";
 
 const id = (r: { kind: string; key: string }) => `${r.kind}\u0000${r.key}`;
 
@@ -58,6 +54,26 @@ function assertQuota(
 }
 
 /**
+ * Merges [incoming] in order against [existing], so a later duplicate key sees the
+ * earlier one. Returns one row per changed key (in first-change order, holding its final
+ * value) and the size change against the rows as they were in D1.
+ */
+function mergeBatch(existing: StoredRecord[], incoming: SyncRecord[]) {
+  const stored = new Map(existing.map((r) => [id(r), r.size]));
+  const current = new Map<string, SyncRecord>(existing.map((r) => [id(r), r]));
+  const changed = new Map<string, SyncRecord>();
+  for (const r of incoming) {
+    const merged = merge(current.get(id(r)), r);
+    if (!merged) continue;
+    current.set(id(r), merged);
+    changed.set(id(r), merged);
+  }
+  let bytesDelta = 0;
+  for (const [k, r] of changed) bytesDelta += recordSize(r) - (stored.get(k) ?? 0);
+  return { changed: [...changed.values()], bytesDelta };
+}
+
+/**
  * Merges a push batch into `records`: 1 SELECT of the old records, merge in JS
  * ([merge]), then 1 atomic batch that writes only what changed (repo.ts).
  * ponytail: the merge is read outside the transaction; two devices pushing the same key in
@@ -74,9 +90,9 @@ export async function push(
     kind: r.kind,
     key: r.key,
     data: r.deleted ? null : r.data,
-    updatedAt: Date.parse(r.updatedAt),
+    updatedAt: Date.parse(r.updated_at),
     deleted: r.deleted,
-    schemaVersion: body.schemaVersion,
+    schemaVersion: body.schema_version,
   }));
 
   const existing = await findRecords(
@@ -85,40 +101,29 @@ export async function push(
     incoming.map((r) => [r.kind, r.key]),
   );
 
-  const stored = new Map(existing.map((r) => [id(r), r.size]));
-  const current = new Map<string, SyncRecord>(existing.map((r) => [id(r), r]));
-  const changed = new Map<string, SyncRecord>();
-  for (const r of incoming) {
-    const merged = merge(current.get(id(r)), r);
-    if (!merged) continue;
-    current.set(id(r), merged);
-    changed.set(id(r), merged);
-  }
+  const { changed, bytesDelta } = mergeBatch(existing, incoming);
 
   const usage = await syncUsage(d1, userId);
-  if (changed.size === 0) return { seq: usage.seq, applied: 0 };
-  let bytesDelta = 0;
-  for (const [k, r] of changed) bytesDelta += recordSize(r) - (stored.get(k) ?? 0);
-  const day = assertQuota(usage, limits, changed.size, bytesDelta, now);
-  const seq = await writeRecords(d1, userId, [...changed.values()], { bytesDelta, day });
-  return { seq, applied: changed.size };
+  if (changed.length === 0) return { seq: usage.seq, applied: 0 };
+  const day = assertQuota(usage, limits, changed.length, bytesDelta, now);
+  const seq = await writeRecords(d1, userId, changed, { bytesDelta, day });
+  return { seq, applied: changed.length };
 }
-
-/** Max records per pull page. */
-export const MAX_PULL_RECORDS = 500;
 
 /**
  * Pull page: records with `seq` > [since] are already JSON from SQL, the Worker only
- * concatenates strings. Fetches [limit] + 1 to know whether another page exists.
+ * concatenates strings. Fetches [limit] + 1 to know whether another page exists. The key
+ * spelling is the [wire] version's, chosen in SQL and here, never by re-encoding the page.
  */
 export async function pull(
   d1: D1Database,
   userId: string,
   since: number,
   limit: number,
+  wire: Wire,
 ): Promise<string> {
-  const results = await pullRows(d1, userId, since, limit + 1);
+  const results = await pullRows(d1, userId, since, limit + 1, wire);
   const page = results.slice(0, limit);
   const nextSeq = page.at(-1)?.seq ?? since;
-  return `{"records":[${page.map((r) => r.j).join(",")}],"nextSeq":${nextSeq},"more":${results.length > limit}}`;
+  return `{"records":[${page.map((r) => r.j).join(",")}],"${PULL_KEYS[wire].nextSeq}":${nextSeq},"more":${results.length > limit}}`;
 }

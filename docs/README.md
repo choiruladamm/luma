@@ -21,6 +21,7 @@ Luma is a local-first reader for EPUB, Markdown and PDF books. Readers can trans
 | [i18n](i18n.md) | Interface localization. |
 | [llm](llm.md) | AI providers, prompts and retrieval. |
 | [llm-evals](llm-evals.md) | AI evaluation and guard workflows. |
+| [workers](workers.md) | Worker layout, workspace and shared code. |
 | [backend](backend.md) | Backend services and API. |
 | [dashboard](dashboard.md) | Administration dashboard. |
 | [sync-protocol](sync-protocol.md) | Sync records and conflict handling. |

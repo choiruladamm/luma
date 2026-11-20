@@ -24,7 +24,7 @@ flowchart LR
   end
   subgraph CF["Cloudflare free tier"]
     direction TB
-    W["Worker Hono /v1"]
+    W["Worker Hono /v2"]
     D1[("D1<br/>accounts · ai_keys<br/>user_storage · records")]
     R2[("R2<br/>u/userId/files<br/>u/userId/backups")]
     W --> D1
@@ -174,9 +174,9 @@ Storage: [data-model.md](data-model.md). Prompts, retrieval, budget, preview pro
 
 ### Routing
 
-go_router with a `StatefulShellRoute.indexedStack` shell (`AppShell` + floating `LumaNavBar`): `/` Rak, `/discover` Cari buku, `/settings` Atur (detail pages are child routes so the tab bar stays visible). Everything else (`/login`, `/reader/:bookId`, Bedahin, chat, book detail) is outside the shell; `Routes` holds every path. `/settings` can also be pushed from reader/chat/Bedahin and then gets a back button. The Artinya sheet, Aa, and table of contents are modal sheets, not routes.
+go_router with a `StatefulShellRoute` shell (`AppShell` + floating `LumaNavBar`; `ShellBranches` keeps the tabs in an `IndexedStack` with heroes off in hidden tabs, so a toast shown in every tab never clashes in a route transition): `/` Rak, `/discover` Cari buku, `/settings` Atur (detail pages are child routes so the tab bar stays visible). Everything else (`/login`, `/reader/:bookId`, Bedahin, chat, book detail) is outside the shell; `Routes` holds every path. `/settings` can also be pushed from reader/chat/Bedahin and then gets a back button. The Artinya sheet, Aa, and table of contents are modal sheets, not routes.
 
-Sign-in is required: `authRedirect` with `refreshListenable` on `authControllerProvider` re-checks the redirect whenever the session changes. An unreadable secure storage doesn't lock the app out. A stored token opens the app without waiting for the backend; `AuthController` checks `/v1/me` in the background. A 401 there sets `AuthStatus.expired`: the token stays, reading, cache, and BYOK keep working, sync, cloud backup, and subsidized-key refresh stop quietly, and the shelf shows the "Sesi lo habis" banner with "Login lagi". Only `signedOut` routes to `/login`; signing out keeps local data.
+Sign-in is required: `authRedirect` with `refreshListenable` on `authControllerProvider` re-checks the redirect whenever the session changes. An unreadable secure storage doesn't lock the app out. A stored token opens the app without waiting for the backend; `AuthController` checks `/v2/me` in the background (`BackendClient.apiPrefix` names the API version every call uses). A 401 there sets `AuthStatus.expired`: the token stays, reading, cache, and BYOK keep working, sync, cloud backup, and subsidized-key refresh stop quietly, and the shelf shows the "Sesi lo habis" banner with "Login lagi". Only `signedOut` routes to `/login`; signing out keeps local data.
 
 ### Isolates
 

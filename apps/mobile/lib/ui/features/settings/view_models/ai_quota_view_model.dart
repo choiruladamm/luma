@@ -93,7 +93,7 @@ final aiQuotaProvider = AsyncNotifierProvider<AiQuotaController, QuotaState>(
   AiQuotaController.new,
 );
 
-/// Models selectable in free quota mode (`/v1/ai/config`, cached for the whole
+/// Models selectable in free quota mode (`/v2/ai/config`, cached for the whole
 /// app). Failure / offline → fallback list [subsidyModelIds].
 final subsidyModelsProvider = FutureProvider<List<String>>((ref) async {
   final token = await ref.watch(authRepositoryProvider).token();

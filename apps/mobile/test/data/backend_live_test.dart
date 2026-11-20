@@ -8,7 +8,7 @@ import 'package:luma/data/services/backend_client.dart';
 void main() {
   final live = Platform.environment['LUMA_BACKEND_LIVE'] == '1';
 
-  test('dev Worker answers /v1/health', () async {
+  test('dev Worker answers /v2/health', () async {
     final client = BackendClient(baseUrl: backendBaseUrl('dev'));
 
     final health = await client.health();

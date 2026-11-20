@@ -1,14 +1,8 @@
 // Every D1 query of the users feature. Each function is one query-budget unit.
 import { and, asc, count, desc, eq, gte, isNotNull, isNull, type SQL, sql } from "drizzle-orm";
-import type { Db } from "../../../../backend/src/db/client";
-import {
-  accounts,
-  aiKeys,
-  inviteCodes,
-  sessions,
-  users,
-  userStorage,
-} from "../../../../backend/src/db/schema";
+import type { Db } from "@luma/core/db/client";
+import { accounts, aiKeys, inviteCodes, sessions, users, userStorage } from "@luma/core/db/schema";
+import { DAY_MS } from "@luma/core/encoding";
 
 // Correlated subquery: uses the sessions(user_id) index. Also a filter and a sort key.
 const lastActive = sql<
@@ -17,17 +11,17 @@ const lastActive = sql<
 const r2Bytes = sql<number>`coalesce(${userStorage.bytes}, 0)`;
 const syncBytes = sql<number>`coalesce(${userStorage.syncBytes}, 0)`;
 
-/** User columns for list and detail. Picked explicitly: `key_enc` and session tokens never leave. */
+/** User columns for list and detail, aliased to the wire keys. Picked explicitly: `key_enc` and session tokens never leave. */
 const userColumns = {
   id: users.id,
   email: users.email,
   name: users.name,
-  createdAt: users.createdAt,
+  created_at: users.createdAt,
   banned: users.banned,
-  lastActiveAt: lastActive,
-  hasAiKey: sql<number>`${aiKeys.userId} is not null`,
-  r2Bytes,
-  syncBytes,
+  last_active_at: lastActive,
+  has_ai_key: sql<number>`${aiKeys.userId} is not null`,
+  r2_bytes: r2Bytes,
+  sync_bytes: syncBytes,
 };
 
 const userRows = (db: Db) =>
@@ -75,7 +69,22 @@ function search(q: string) {
   return { filter, rank };
 }
 
-const DAY_MS = 86_400_000;
+function sortOrder({ sort, dir }: UserListQuery, rank: SQL | undefined): SQL[] {
+  const by = dir === "asc" ? asc : desc;
+  switch (sort) {
+    case "relevance":
+      return rank ? [rank] : [by(users.createdAt)];
+    case "lastActive":
+      // Never-active users go last in both directions.
+      return [sql`${lastActive} ${sql.raw(dir)} nulls last`];
+    case "r2":
+      return [by(r2Bytes)];
+    case "sync":
+      return [by(syncBytes)];
+    case "created":
+      return [by(users.createdAt)];
+  }
+}
 
 /**
  * 1 batch (2 statements): one page of users and the total for the same filters. Filters: search
@@ -94,24 +103,13 @@ export async function listUsers(db: Db, query: UserListQuery) {
   const where = and(...filters);
 
   const by = query.dir === "asc" ? asc : desc;
-  const order: SQL[] =
-    query.sort === "relevance" && found
-      ? [sql`${found.rank}`]
-      : query.sort === "lastActive"
-        ? // Never-active users go last in both directions.
-          [sql`${lastActive} ${sql.raw(query.dir)} nulls last`]
-        : query.sort === "r2"
-          ? [by(r2Bytes)]
-          : query.sort === "sync"
-            ? [by(syncBytes)]
-            : [by(users.createdAt)];
   const tiebreak =
     query.sort === "created" ? [by(users.id)] : [desc(users.createdAt), desc(users.id)];
 
   const [rows, [total]] = await db.batch([
     userRows(db)
       .where(where)
-      .orderBy(...order, ...tiebreak)
+      .orderBy(...sortOrder(query, found?.rank), ...tiebreak)
       .limit(query.limit)
       .offset((query.page - 1) * query.limit),
     db
@@ -129,10 +127,10 @@ export async function findUserDetail(db: Db, userId: string) {
     userRows(db).where(eq(users.id, userId)).limit(1),
     db
       .select({
-        userAgent: sessions.userAgent,
-        ipAddress: sessions.ipAddress,
-        createdAt: sessions.createdAt,
-        updatedAt: sessions.updatedAt,
+        user_agent: sessions.userAgent,
+        ip_address: sessions.ipAddress,
+        created_at: sessions.createdAt,
+        updated_at: sessions.updatedAt,
       })
       .from(sessions)
       .where(eq(sessions.userId, userId))
@@ -144,7 +142,7 @@ export async function findUserDetail(db: Db, userId: string) {
       .where(eq(aiKeys.userId, userId))
       .limit(1),
     db
-      .select({ code: inviteCodes.code, usedAt: inviteCodes.usedAt })
+      .select({ code: inviteCodes.code, used_at: inviteCodes.usedAt })
       .from(inviteCodes)
       .where(eq(inviteCodes.usedBy, userId))
       .limit(1),

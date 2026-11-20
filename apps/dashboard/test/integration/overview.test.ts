@@ -2,10 +2,10 @@ import { env } from "cloudflare:test";
 import { eq } from "drizzle-orm";
 import { HttpResponse, http } from "msw";
 import { describe, expect, it, vi } from "vitest";
-import { OPENROUTER_API } from "../../../backend/src/clients/openrouter";
-import { createDb } from "../../../backend/src/db/client";
-import { inviteCodes, userStorage, users } from "../../../backend/src/db/schema";
-import { DAY_MS } from "../../../backend/src/lib/encoding";
+import { OPENROUTER_API } from "@luma/core/openrouter";
+import { createDb } from "@luma/core/db/client";
+import { inviteCodes, userStorage, users } from "@luma/core/db/schema";
+import { DAY_MS } from "@luma/core/encoding";
 import { getOverview } from "../../worker/features/overview/service";
 import { call } from "../helpers/app";
 import { adminCookie, createUser } from "../helpers/session";
@@ -36,11 +36,11 @@ describe("getOverview", () => {
     fakeActivity([]);
     expect(await overview()).toEqual({
       users: { total: 0, new7d: 0, banned: 0 },
-      storage: { r2Bytes: 0, syncBytes: 0 },
-      syncToday: { rows: 0, limit: 100_000 },
+      storage: { r2_bytes: 0, sync_bytes: 0 },
+      sync_today: { rows: 0, limit: 100_000 },
       invites: { unused: 0 },
-      flags: { sync: true, backup: true, aiKey: true },
-      ai: { spendUsd: 0, budgetUsd: 5, asOf: "2026-11-13" },
+      flags: { sync: true, backup: true, ai_key: true },
+      ai: { spend_usd: 0, budget_usd: 5, as_of: "2026-11-13" },
     });
   });
 
@@ -69,19 +69,19 @@ describe("getOverview", () => {
 
     const result = await overview();
     expect(result.users).toEqual({ total: 3, new7d: 1, banned: 1 });
-    expect(result.storage).toEqual({ r2Bytes: 1500, syncBytes: 15 });
+    expect(result.storage).toEqual({ r2_bytes: 1500, sync_bytes: 15 });
     // Yesterday's 999 rows don't count.
-    expect(result.syncToday).toEqual({ rows: 40, limit: 100_000 });
+    expect(result.sync_today).toEqual({ rows: 40, limit: 100_000 });
     expect(result.invites).toEqual({ unused: 2 });
     // October is outside the current month.
-    expect(result.ai).toEqual({ spendUsd: 0.375, budgetUsd: 5, asOf: "2026-11-13" });
+    expect(result.ai).toEqual({ spend_usd: 0.375, budget_usd: 5, as_of: "2026-11-13" });
     expect(calls).toEqual([env.OPENROUTER_WORKSPACE_ID]);
   });
 
-  it("keeps the overview with spendUsd: null when OpenRouter fails", async () => {
+  it("keeps the overview with spend_usd: null when OpenRouter fails", async () => {
     fakeActivity("fail");
     const err = vi.spyOn(console, "error").mockImplementation(() => {});
-    expect((await overview()).ai).toEqual({ spendUsd: null, budgetUsd: 5, asOf: "2026-11-13" });
+    expect((await overview()).ai).toEqual({ spend_usd: null, budget_usd: 5, as_of: "2026-11-13" });
     expect(err).toHaveBeenCalled();
     err.mockRestore();
   });
@@ -94,7 +94,7 @@ describe("getOverview", () => {
       "r",
       NOW,
     );
-    expect(result.ai.spendUsd).toBeNull();
+    expect(result.ai.spend_usd).toBeNull();
     expect(calls).toEqual([]);
   });
 
@@ -106,7 +106,7 @@ describe("getOverview", () => {
       "r",
       NOW,
     );
-    expect(result.flags).toEqual({ sync: false, backup: true, aiKey: false });
+    expect(result.flags).toEqual({ sync: false, backup: true, ai_key: false });
   });
 });
 
@@ -121,7 +121,7 @@ describe("GET /api/overview", () => {
     expect(d1Queries).toBe(4);
     expect(calls).toHaveLength(1);
     expect(await response.json()).toMatchObject({
-      syncToday: { limit: 100_000 },
+      sync_today: { limit: 100_000 },
       flags: { sync: true },
     });
   });

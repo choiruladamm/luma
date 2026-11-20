@@ -65,7 +65,7 @@ make run f=dev      # debug build of Luma Dev on a device / simulator
 make check          # format, analyze, test
 make hygiene        # docs, comments, and every app's linter (also CI)
 
-make backend-install
+make install        # backend + dashboard deps (bun workspace)
 make backend-dev    # local Worker on :8787
 make backend-test
 

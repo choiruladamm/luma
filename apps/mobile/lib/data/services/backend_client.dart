@@ -118,11 +118,14 @@ class BackendClient {
       ..receiveTimeout = const Duration(seconds: 15);
   }
 
+  /// The API version every path goes to (docs/backend.md, API versions).
+  static const apiPrefix = '/v2';
+
   final Dio _dio;
   final Future<void> Function(Duration) _sleep;
 
   Future<BackendHealth> health() async {
-    final res = await request('GET', '/v1/health');
+    final res = await request('GET', '/health');
     return BackendHealth.fromJson(res.data!);
   }
 
@@ -139,7 +142,7 @@ class BackendClient {
     bool retry = true,
   }) => _send(
     () => _dio.request<Map<String, Object?>>(
-      path,
+      '$apiPrefix$path',
       data: body,
       options: Options(
         method: method,
@@ -165,7 +168,7 @@ class BackendClient {
     final length = await file.length();
     final res = await _send(
       () => _dio.put<Map<String, Object?>>(
-        path,
+        '$apiPrefix$path',
         data: file.openRead(),
         onSendProgress: onProgress,
         options: Options(
@@ -188,7 +191,7 @@ class BackendClient {
     required String token,
   }) => _send(
     () => _dio.download(
-      path,
+      '$apiPrefix$path',
       savePath,
       options: Options(headers: {'authorization': 'Bearer $token'}),
     ),

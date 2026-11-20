@@ -3,8 +3,8 @@ import { defineConfig } from "vitest/config";
 import { backendVars } from "./backend-vars.ts";
 
 export default defineConfig(async () => {
-  // The backend owns the schema: apply its migrations so changes that break the dashboard show up here.
-  const migrations = await readD1Migrations("../backend/migrations");
+  // The schema lives in @luma/core: apply its migrations so a change that breaks the dashboard shows up.
+  const migrations = await readD1Migrations("../../packages/core/migrations");
   return {
     plugins: [
       cloudflareTest({
@@ -29,6 +29,15 @@ export default defineConfig(async () => {
         },
       }),
     ],
-    test: { include: ["test/{unit,integration}/**/*.test.ts"], setupFiles: ["./test/setup.ts"] },
+    test: {
+      include: ["test/{unit,integration,golden}/**/*.test.ts"],
+      setupFiles: ["./test/setup.ts"],
+      coverage: {
+        provider: "istanbul" as const,
+        include: ["worker/**/*.ts"],
+        exclude: ["worker/backend-env.d.ts"],
+        thresholds: { statements: 100, branches: 93.24, functions: 100, lines: 100 },
+      },
+    },
   };
 });

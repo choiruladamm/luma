@@ -20,10 +20,10 @@ worker=$!
 trap 'kill $worker 2>/dev/null || true' EXIT
 
 for _ in $(seq 1 60); do
-  curl -sf "http://127.0.0.1:$port/v1/health" >/dev/null && break
+  curl -sf "http://127.0.0.1:$port/v2/health" >/dev/null && break
   sleep 1
 done
-curl -sf "http://127.0.0.1:$port/v1/health" >/dev/null || { cat "$log"; exit 1; }
+curl -sf "http://127.0.0.1:$port/v2/health" >/dev/null || { cat "$log"; exit 1; }
 
 cd "$app"
 LUMA_BACKEND_E2E="http://127.0.0.1:$port" LUMA_E2E_INVITE="$code" LUMA_E2E_INVITE2="$code2" \

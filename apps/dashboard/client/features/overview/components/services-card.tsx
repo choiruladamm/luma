@@ -8,13 +8,13 @@ import { useI18n } from "../../../i18n";
 export function ServicesCard({
   flags,
 }: {
-  flags?: { sync: boolean; backup: boolean; aiKey: boolean };
+  flags?: { sync: boolean; backup: boolean; ai_key: boolean };
 }) {
   const { t } = useI18n();
   const rows: [string, IconName, boolean | undefined][] = [
     ["Sync", "sync", flags?.sync],
     ["Backup", "cloud", flags?.backup],
-    [t.overview.aiKey, "key", flags?.aiKey],
+    [t.overview.aiKey, "key", flags?.ai_key],
   ];
   return (
     <Card aria-labelledby="h-layanan" aria-busy={!flags || undefined} className="gap-3">

@@ -5,9 +5,9 @@ import { useI18n } from "../../../i18n";
 import { formatBytes } from "../../../lib/format";
 
 /** Half gauge: ink = book files (R2), pink = sync data (D1). No data yet → board 12 skeleton. */
-export function StorageCard({ data }: { data?: { r2Bytes: number; syncBytes: number } }) {
+export function StorageCard({ data }: { data?: { r2_bytes: number; sync_bytes: number } }) {
   const { t, locale } = useI18n();
-  const total = data ? data.r2Bytes + data.syncBytes : 0;
+  const total = data ? data.r2_bytes + data.sync_bytes : 0;
   const share = (n: number) => (total > 0 ? n / total : 0);
   return (
     <Card aria-labelledby="h-simpan" aria-busy={!data || undefined}>
@@ -17,16 +17,16 @@ export function StorageCard({ data }: { data?: { r2Bytes: number; syncBytes: num
           data
             ? t.overview.storageGauge(
                 formatBytes(total, locale),
-                formatBytes(data.r2Bytes, locale),
-                formatBytes(data.syncBytes, locale),
+                formatBytes(data.r2_bytes, locale),
+                formatBytes(data.sync_bytes, locale),
               )
             : t.overview.storageLoading
         }
         parts={
           data
             ? [
-                { value: share(data.r2Bytes), color: "var(--c-ink)" },
-                { value: share(data.syncBytes), color: "var(--c-pink)" },
+                { value: share(data.r2_bytes), color: "var(--c-ink)" },
+                { value: share(data.sync_bytes), color: "var(--c-pink)" },
               ]
             : []
         }
@@ -43,8 +43,8 @@ export function StorageCard({ data }: { data?: { r2Bytes: number; syncBytes: num
       <div className="flex flex-col gap-2">
         {(
           [
-            [t.overview.bookFiles, data?.r2Bytes, "bg-ink"],
-            [t.overview.syncData, data?.syncBytes, "bg-pink"],
+            [t.overview.bookFiles, data?.r2_bytes, "bg-ink"],
+            [t.overview.syncData, data?.sync_bytes, "bg-pink"],
           ] as const
         ).map(([label, bytes, dot]) => (
           <div key={label} className="flex items-center justify-between text-body">

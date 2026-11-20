@@ -1,9 +1,9 @@
 import { drizzleAdapter } from "@better-auth/drizzle-adapter";
 import { betterAuth } from "better-auth";
 import { APIError } from "better-auth/api";
-import { userAdditionalFields } from "../../../backend/src/auth/user-fields";
-import { createDb } from "../../../backend/src/db/client";
-import * as schema from "../../../backend/src/db/schema";
+import { userAdditionalFields } from "@luma/core/auth/user-fields";
+import { createDb } from "@luma/core/db/client";
+import * as schema from "@luma/core/db/schema";
 import { isAdmin } from "./admin";
 import { findUserForAdminCheck } from "./session";
 

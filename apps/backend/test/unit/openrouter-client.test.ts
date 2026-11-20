@@ -1,6 +1,6 @@
 import { HttpResponse, http } from "msw";
 import { describe, expect, it } from "vitest";
-import { OPENROUTER_API, OpenRouterError, openRouterAdmin } from "../../src/clients/openrouter";
+import { OPENROUTER_API, OpenRouterError, openRouterAdmin } from "@luma/core/openrouter";
 import { fakeOpenRouter } from "../helpers/openrouter";
 import { network } from "../setup";
 

@@ -8,7 +8,7 @@ import { formatDate, formatUsd } from "../../../lib/format";
 export function AiSpendCard({
   ai,
 }: {
-  ai?: { spendUsd: number | null; budgetUsd: number; asOf: string };
+  ai?: { spend_usd: number | null; budget_usd: number; as_of: string };
 }) {
   const { t, locale } = useI18n();
   if (!ai) {
@@ -20,24 +20,24 @@ export function AiSpendCard({
       </Card>
     );
   }
-  const pct = ai.spendUsd === null ? 0 : (ai.spendUsd / ai.budgetUsd) * 100;
+  const pct = ai.spend_usd === null ? 0 : (ai.spend_usd / ai.budget_usd) * 100;
   return (
     <Card aria-labelledby="h-ai" className="gap-3">
       <CardHeader
         id="h-ai"
         title={t.overview.aiTitle}
-        subtitle={t.overview.thisMonthUntil(formatDate(ai.asOf, locale))}
+        subtitle={t.overview.thisMonthUntil(formatDate(ai.as_of, locale))}
       />
-      {ai.spendUsd === null ? (
+      {ai.spend_usd === null ? (
         <span className="text-body text-ink2">{t.overview.aiFailed}</span>
       ) : (
         <>
           <div className="flex flex-wrap items-baseline gap-2">
             <span className="text-[30px] leading-none font-semibold tracking-[-0.03em] tabular-nums">
-              {formatUsd(ai.spendUsd, locale)}
+              {formatUsd(ai.spend_usd, locale)}
             </span>
             <span className="text-body text-ink2">
-              {t.overview.of(formatUsd(ai.budgetUsd, locale))}
+              {t.overview.of(formatUsd(ai.budget_usd, locale))}
             </span>
           </div>
           <ProgressBar value={pct} label={t.overview.aiBudgetBar} />

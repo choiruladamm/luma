@@ -2,8 +2,14 @@ import { useEffect, useRef } from "react";
 import { useI18n } from "../../i18n";
 import type { Lang, ThemePref } from "../../stores/ui-store";
 import { Avatar } from "../ui/avatar";
-import { Icon, Spinner } from "../ui/icons";
+import { Icon, Spinner, type IconName } from "../ui/icons";
 import { Segmented } from "../ui/segmented";
+
+const THEME_OPTIONS: { value: ThemePref; icon: IconName }[] = [
+  { value: "light", icon: "sun" },
+  { value: "dark", icon: "moon" },
+  { value: "system", icon: "monitor" },
+];
 
 type Props = {
   user: { name: string; email: string };
@@ -124,35 +130,15 @@ export function AccountMenu({
                 stretch
                 value={theme}
                 onChange={onTheme}
-                options={[
-                  {
-                    value: "light",
-                    label: (
-                      <>
-                        <Icon name="sun" size={16} />
-                        {t.shell.light}
-                      </>
-                    ),
-                  },
-                  {
-                    value: "dark",
-                    label: (
-                      <>
-                        <Icon name="moon" size={16} />
-                        {t.shell.dark}
-                      </>
-                    ),
-                  },
-                  {
-                    value: "system",
-                    label: (
-                      <>
-                        <Icon name="monitor" size={16} />
-                        {t.shell.system}
-                      </>
-                    ),
-                  },
-                ]}
+                options={THEME_OPTIONS.map(({ value, icon }) => ({
+                  value,
+                  label: (
+                    <>
+                      <Icon name={icon} size={16} />
+                      {t.shell[value]}
+                    </>
+                  ),
+                }))}
               />
             </div>
             <div className="h-px bg-track" />

@@ -17,11 +17,11 @@ void main() {
   late DateTime now;
   late AiKeyRepository repo;
 
-  /// Stubs the `POST /v1/ai/key` response with the given key and expiry.
+  /// Stubs the `POST /v2/ai/key` response with the given key and expiry.
   ResponseBody issued(String key, DateTime expiresAt) => json(200, {
     'key': key,
-    'expiresAt': expiresAt.toUtc().toIso8601String(),
-    'dailyLimitUsd': 0.02,
+    'expires_at': expiresAt.toUtc().toIso8601String(),
+    'daily_limit_usd': 0.02,
   });
 
   setUp(() {
@@ -38,6 +38,16 @@ void main() {
       sleep: (_) async {},
     );
     repo = AiKeyRepository(byok, session, AiKeyService(client), now: () => now);
+  });
+
+  test('rejected BYOK stays the runtime key (no subsidy fallback)', () async {
+    await byok.write('sk-or-v1-punya-sendiri');
+    await session.writeToken('tok');
+
+    repo.markRejected('sk-or-v1-punya-sendiri');
+
+    expect(await repo.read(), 'sk-or-v1-punya-sendiri');
+    expect(adapter.requests, isEmpty);
   });
 
   test('BYOK wins and never calls the backend', () async {
@@ -67,7 +77,7 @@ void main() {
       expect(adapter.requests, hasLength(1));
       final req = adapter.requests.single;
       expect(req.method, 'POST');
-      expect(req.uri.path, '/v1/ai/key');
+      expect(req.uri.path, '/v2/ai/key');
       expect(req.headers['authorization'], 'Bearer tok');
       expect(req.data, isEmpty);
     },
@@ -236,8 +246,8 @@ void main() {
       expect(config.chatModels, contains('deepseek/deepseek-v4.1-flash'));
       expect(config.embeddingModels, hasLength(2));
       expect(adapter.requests.map((r) => r.uri.path), [
-        '/v1/ai/usage',
-        '/v1/ai/config',
+        '/v2/ai/usage',
+        '/v2/ai/config',
       ]);
     });
   });

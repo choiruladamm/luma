@@ -1,0 +1,29 @@
+{
+  "name": "@luma/worker-kit",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "lint": "oxlint --type-aware --deny-warnings && prettier --check .",
+    "format": "prettier --write . && oxlint --type-aware --fix",
+    "test": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@hono/zod-validator": "catalog:",
+    "hono": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-plugin": "catalog:",
+    "@msw/cloudflare": "catalog:",
+    "@vitest/coverage-istanbul": "catalog:",
+    "msw": "catalog:",
+    "oxlint": "catalog:",
+    "oxlint-tsgolint": "catalog:",
+    "prettier": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

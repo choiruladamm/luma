@@ -6,7 +6,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 
 import 'backend_client.dart';
 
-/// Source of the Google ID token for `POST /v1/auth/sign-in/social`.
+/// Source of the Google ID token for `POST /v2/auth/sign-in/social`.
 abstract interface class GoogleIdTokenSource {
   /// Returns the ID token, or null when the user closed or cancelled the Google
   /// window (back to the Masuk screen without an error message, board Akun

@@ -1,43 +1,12 @@
 import { Hono } from "hono";
 import { getAuth } from "../../auth/auth";
 import type { AppEnv } from "../../env";
-import { type ErrorCode, errorBody } from "../../lib/errors";
-import { limitBody } from "../../middleware/body-limit";
+import { normalizeAuthError } from "@luma/worker-kit/errors";
+import { snakeJson, toCamel } from "@luma/worker-kit/case";
+import { limitBody } from "@luma/worker-kit/middleware";
 
 /** Auth bodies are small (email, password, idToken). */
 const AUTH_BODY_LIMIT = 16 * 1024;
-
-const codeForStatus = (status: number): ErrorCode => {
-  if (status === 401) return "UNAUTHORIZED";
-  if (status === 404) return "NOT_FOUND";
-  if (status === 413) return "PAYLOAD_TOO_LARGE";
-  if (status === 429) return "RATE_LIMITED";
-  if (status >= 500) return "INTERNAL_ERROR";
-  return "BAD_REQUEST";
-};
-
-/**
- * A Better Auth `{code, message}` error is wrapped into the uniform
- * `{error: {code, message}}` format; the Better Auth code (UPPER_SNAKE) is kept.
- */
-export async function normalizeAuthError(res: Response): Promise<Response> {
-  if (res.ok || !res.headers.get("content-type")?.includes("application/json")) return res;
-  const body = await res
-    .clone()
-    .json<{ code?: string; message?: string; error?: unknown } | null>()
-    .catch(() => null);
-  if (!body || body.error !== undefined) return res;
-  const headers = new Headers(res.headers);
-  headers.delete("content-length");
-  return Response.json(
-    errorBody(
-      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Better Auth codes are passed through, not limited to ErrorCode
-      (body.code as ErrorCode) ?? codeForStatus(res.status),
-      body.message ?? res.statusText,
-    ),
-    { status: res.status, headers },
-  );
-}
 
 /**
  * Better Auth endpoints that are exposed: only those the app uses (auth_service.dart).
@@ -52,8 +21,35 @@ export const AUTH_PATHS = [
   "/sign-out",
 ] as const;
 
+/** Better Auth's `basePath` (auth.ts): it matches on this prefix whichever version was called. */
+const BASE_PATH = "/v1/auth";
+
+/**
+ * `/v2/auth/*` speaks snake_case: the request is rewritten to Better Auth's base path with its
+ * JSON body keys in camelCase (small: `limitBody` ran first), and its JSON answer converted back.
+ * A body that isn't JSON goes through untouched for Better Auth to reject.
+ */
+async function toBetterAuth(req: Request) {
+  const url = new URL(req.url);
+  url.pathname = url.pathname.replace(/^\/v2\/auth/, BASE_PATH);
+  const headers = new Headers(req.headers);
+  headers.delete("content-length");
+  const text = await req.text();
+  let body = text;
+  if (req.headers.get("content-type")?.includes("json")) {
+    try {
+      body = JSON.stringify(toCamel(JSON.parse(text)));
+    } catch {
+      // Malformed JSON: Better Auth reports it.
+    }
+  }
+  return new Request(url, { method: req.method, headers, body: body || null });
+}
+
 export const auth = new Hono<AppEnv>()
   .use(limitBody(AUTH_BODY_LIMIT))
-  .on("POST", [...AUTH_PATHS], async (c) =>
-    normalizeAuthError(await getAuth(c.env).handler(c.req.raw)),
-  );
+  .on("POST", [...AUTH_PATHS], async (c) => {
+    const ba = getAuth(c.env);
+    if (c.var.wire === "v1") return normalizeAuthError(await ba.handler(c.req.raw));
+    return snakeJson(await normalizeAuthError(await ba.handler(await toBetterAuth(c.req.raw))));
+  });

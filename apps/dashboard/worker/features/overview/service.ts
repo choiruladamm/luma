@@ -1,5 +1,7 @@
-import type { Db } from "../../../../backend/src/db/client";
-import { DAY_MS } from "../../../../backend/src/lib/encoding";
+import type { Overview } from "@luma/contracts/dashboard/overview";
+import type { Db } from "@luma/core/db/client";
+import { log } from "@luma/worker-kit/log";
+import { DAY_MS } from "@luma/core/encoding";
 import { monthSpendUsd } from "./activity";
 import { overviewCounts } from "./repo";
 
@@ -12,7 +14,12 @@ const on = (flag: string) => flag === "true";
  * Overview: 1 D1 batch + 1 OpenRouter subrequest. OpenRouter failing → `spendUsd: null`
  * (logged) so the page still opens. `asOf` is the last UTC day the spend covers.
  */
-export async function getOverview(db: Db, env: Env, requestId: string, now = new Date()) {
+export async function getOverview(
+  db: Db,
+  env: Env,
+  requestId: string,
+  now = new Date(),
+): Promise<Overview> {
   const syncDay = Math.floor(now.getTime() / DAY_MS);
   const [counts, spendUsd] = await Promise.all([
     overviewCounts(db, { since: new Date(now.getTime() - 7 * DAY_MS), syncDay }),
@@ -20,32 +27,30 @@ export async function getOverview(db: Db, env: Env, requestId: string, now = new
     env.OPENROUTER_MANAGEMENT_KEY
       ? monthSpendUsd(env.OPENROUTER_MANAGEMENT_KEY, env.OPENROUTER_WORKSPACE_ID, now).catch(
           (e: Error) => {
-            console.error(
-              JSON.stringify({
-                message: "openrouter activity failed",
-                requestId,
-                error: e.message,
-              }),
-            );
+            log.error("openrouter activity failed", { request_id: requestId, error: e.message });
             return null;
           },
         )
       : null,
   ]);
   return {
-    users: { total: counts.users.total, new7d: counts.users.newSince, banned: counts.users.banned },
-    storage: { r2Bytes: counts.storage.r2Bytes, syncBytes: counts.storage.syncBytes },
-    syncToday: { rows: counts.storage.syncRowsToday, limit: D1_DAILY_WRITE_LIMIT },
+    users: {
+      total: counts.users.total,
+      new7d: counts.users.new_since,
+      banned: counts.users.banned,
+    },
+    storage: { r2_bytes: counts.storage.r2_bytes, sync_bytes: counts.storage.sync_bytes },
+    sync_today: { rows: counts.storage.sync_rows_today, limit: D1_DAILY_WRITE_LIMIT },
     invites: { unused: counts.invites.unused },
     flags: {
       sync: on(env.SYNC_ENABLED),
       backup: on(env.BACKUP_ENABLED),
-      aiKey: on(env.AI_KEY_ENABLED),
+      ai_key: on(env.AI_KEY_ENABLED),
     },
     ai: {
-      spendUsd: spendUsd === null ? null : Math.round(spendUsd * 1e6) / 1e6,
-      budgetUsd: Number(env.AI_MONTHLY_BUDGET_USD),
-      asOf: new Date((syncDay - 1) * DAY_MS).toISOString().slice(0, 10),
+      spend_usd: spendUsd === null ? null : Math.round(spendUsd * 1e6) / 1e6,
+      budget_usd: Number(env.AI_MONTHLY_BUDGET_USD),
+      as_of: new Date((syncDay - 1) * DAY_MS).toISOString().slice(0, 10),
     },
   };
 }

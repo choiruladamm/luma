@@ -89,23 +89,48 @@ export function Select<T extends string>({
   };
   const onListKey = (e: KeyboardEvent) => {
     const last = options.length - 1;
-    const moves: Record<string, number> = {
-      ArrowDown: Math.min(last, focus + 1),
-      ArrowUp: Math.max(0, focus - 1),
-      Home: 0,
-      End: last,
-    };
-    if (e.key in moves) {
-      e.preventDefault();
-      setFocus(moves[e.key]!);
-    } else if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      choose(focus);
-    } else if (e.key === "Escape") {
-      e.preventDefault();
-      close();
-    } else if (e.key === "Tab") close(false);
+    switch (e.key) {
+      case "ArrowDown":
+        e.preventDefault();
+        setFocus(Math.min(last, focus + 1));
+        return;
+      case "ArrowUp":
+        e.preventDefault();
+        setFocus(Math.max(0, focus - 1));
+        return;
+      case "Home":
+        e.preventDefault();
+        setFocus(0);
+        return;
+      case "End":
+        e.preventDefault();
+        setFocus(last);
+        return;
+      case "Enter":
+      case " ":
+        e.preventDefault();
+        choose(focus);
+        return;
+      case "Escape":
+        e.preventDefault();
+        close();
+        return;
+      case "Tab":
+        close(false);
+        return;
+    }
   };
+
+  // `undefined` means no short label (the full one shows everywhere); "" hides the label on phones.
+  const triggerLabel =
+    shortLabel === undefined ? (
+      label
+    ) : (
+      <>
+        <span className="max-md:hidden">{label}</span>
+        {shortLabel && <span className="md:hidden">{shortLabel}</span>}
+      </>
+    );
 
   return (
     <div ref={root} className={cn("relative", block ? "w-full" : "inline-flex", className)}>
@@ -126,14 +151,7 @@ export function Select<T extends string>({
       >
         {!hideLabel && (
           <span className={cn("flex-none", active ? "text-canvas/70" : "text-ink2")}>
-            {shortLabel === undefined ? (
-              label
-            ) : (
-              <>
-                <span className="max-md:hidden">{label}</span>
-                {shortLabel && <span className="md:hidden">{shortLabel}</span>}
-              </>
-            )}
+            {triggerLabel}
           </span>
         )}
         <span className={cn("flex min-w-0 items-center gap-1.5", block && "ml-auto")}>

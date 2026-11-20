@@ -1,6 +1,6 @@
 import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
-import { createDb } from "../../src/db/client";
+import { createDb } from "@luma/core/db/client";
 import { releaseOnFailure, reserveBytes, storedBytes } from "../../src/db/user-storage";
 import { signUp } from "../helpers/auth";
 

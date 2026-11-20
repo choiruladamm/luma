@@ -1,20 +1,31 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["typescript", "unicorn", "oxc", "import", "promise", "vitest"],
-  "categories": { "correctness": "error", "suspicious": "error", "perf": "error" },
+  "extends": ["../../.oxlintrc.base.json"],
   "ignorePatterns": ["worker-configuration.d.ts", "dist", "coverage", ".wrangler"],
-  "rules": {
-    "no-warning-comments": ["error", { "terms": ["fixme", "hack", "xxx"], "location": "start" }],
-    "no-await-in-loop": "off"
-  },
   "overrides": [
     {
       "files": ["test/**"],
       "rules": {
-        "typescript/no-unsafe-type-assertion": "off",
-        "vitest/expect-expect": ["error", { "assertFunctionNames": ["expect", "expectContract"] }],
-        "vitest/valid-expect": ["error", { "maxArgs": 2 }]
+        "vitest/expect-expect": [
+          "error",
+          {
+            "assertFunctionNames": ["expect", "expectContract"]
+          }
+        ]
       }
     }
-  ]
+  ],
+  "rules": {
+    "no-restricted-imports": [
+      "error",
+      {
+        "patterns": [
+          {
+            "group": ["**/dashboard/**", "**/apps/**"],
+            "message": "A Worker never imports another Worker's code; move shared code to packages/* (docs/workers.md, Shared code)."
+          }
+        ]
+      }
+    ]
+  }
 }

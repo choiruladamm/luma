@@ -1,8 +1,8 @@
 import { eq } from "drizzle-orm";
-import type { Db } from "../db/client";
-import { sessions, users } from "../db/schema";
-import type { SessionUser } from "../env";
-import { DAY_MS } from "../lib/encoding";
+import type { Db } from "@luma/core/db/client";
+import { sessions, users } from "@luma/core/db/schema";
+import type { SessionUser } from "@luma/contracts/backend/account";
+import { DAY_MS } from "@luma/core/encoding";
 
 /** Matches Better Auth's `session` options (auth.ts): 60-day sessions, renewed at most once a day. */
 export const SESSION_EXPIRES_IN_MS = 60 * DAY_MS;

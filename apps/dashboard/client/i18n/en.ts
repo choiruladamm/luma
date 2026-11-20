@@ -32,6 +32,7 @@ export const en: Messages = {
     ACCESS_EXPIRED: "Cloudflare session expired. Reloading…",
     FORBIDDEN: "This account isn't an admin.",
     NOT_FOUND: "Not found.",
+    PAYLOAD_TOO_LARGE: "The request is too large.",
     INVITE_CODE_USED: "This invite code has already been used.",
     RATE_LIMITED: "Too many requests. Try again in a moment.",
     INTERNAL_ERROR: "Something went wrong on the server.",
@@ -42,7 +43,8 @@ export const en: Messages = {
     title: "Sign in",
     hint: "Use the Google account registered as an admin.",
     google: "Sign in with Google",
-    sessionNote: "Admin sessions last 12 hours. Then sign in again.",
+    sessionNote:
+      "Admin sessions stay signed in for 7 days of inactivity, and end after 30 days at most.",
     failed: "Couldn't sign in",
     failedBody: "Google sign-in didn't finish. Try again.",
     notRegistered: "This account isn't on Luma yet",

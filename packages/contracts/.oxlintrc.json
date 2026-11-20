@@ -1,0 +1,43 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "extends": ["../../.oxlintrc.base.json"],
+  "ignorePatterns": ["coverage", "fixtures"],
+  "rules": {
+    "no-restricted-imports": [
+      "error",
+      {
+        "patterns": [
+          {
+            "group": [
+              "**/backend/**",
+              "**/dashboard/**",
+              "**/apps/**",
+              "**/worker-kit/**",
+              "**/core/**",
+              "@luma/**"
+            ],
+            "message": "Contracts depend on nothing Luma: zod only (docs/workers.md, Shared code)."
+          }
+        ]
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": ["test/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["../../**", "@luma/core", "@luma/core/**"],
+                "message": "Contract tests may import @luma/worker-kit (the case helpers that define the v1 \u2194 v2 mapping) by its package name; nothing outside this package otherwise."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

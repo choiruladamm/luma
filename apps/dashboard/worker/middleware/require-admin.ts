@@ -1,5 +1,5 @@
 import { getSignedCookie } from "hono/cookie";
-import { createDb } from "../../../backend/src/db/client";
+import { createDb } from "@luma/core/db/client";
 import { isAdmin } from "../auth/admin";
 import {
   endSessionIfPastMaxAge,

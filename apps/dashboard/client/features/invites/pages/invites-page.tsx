@@ -88,6 +88,45 @@ function StatusTabs({
 }
 
 /**
+ * No rows: no codes at all (create one), none matching the search, or none in the picked tab.
+ * The counts follow the search, so a search with matches outside the tab names the tab.
+ */
+function InvitesEmpty({
+  noCodes,
+  q,
+  usedWithin,
+  filter,
+  onCreate,
+}: {
+  noCodes: boolean;
+  q: string;
+  usedWithin: boolean;
+  filter: Filter;
+  onCreate: () => void;
+}) {
+  const { t } = useI18n();
+  if (noCodes && !q) {
+    return (
+      <EmptyState
+        icon="ticket"
+        title={t.invites.empty}
+        action={
+          <Button variant="primary" icon="plus" onClick={onCreate}>
+            {t.invites.create}
+          </Button>
+        }
+      >
+        {t.invites.emptyBody}
+      </EmptyState>
+    );
+  }
+  if (noCodes) return <EmptyState icon="search" title={t.invites.noSearchMatch(q)} />;
+  if (usedWithin) return <EmptyState icon="ticket" title={t.invites.noneUsedWithin} />;
+  const title = filter === "unused" ? t.invites.allUsed : t.invites.noneUsed;
+  return <EmptyState icon="ticket" title={title} />;
+}
+
+/**
  * Board 08 (Undangan, Invites) + 09 new code. Search, status tabs (with counts), "used within", sort, and
  * pages run on the worker (1 batch per change); all of it lives in the URL (useInvitesParams).
  */
@@ -142,7 +181,7 @@ export function InvitesPage() {
 
   // A page past the end (codes deleted, a stale link) lands on the last page instead.
   // Placeholder data is the previous query's page count, not this one's.
-  const pageCount = invites.isPlaceholderData ? undefined : data?.pageCount;
+  const pageCount = invites.isPlaceholderData ? undefined : data?.page_count;
   useEffect(() => {
     if (pageCount !== undefined && params.page > pageCount) set({ page: pageCount });
   }, [pageCount, params.page, set]);
@@ -157,7 +196,7 @@ export function InvitesPage() {
   );
   const makeCode = () =>
     create.mutate(1, {
-      onSuccess: (res) => setCreated({ code: res.codes[0]!, at: res.createdAt }),
+      onSuccess: (res) => setCreated({ code: res.codes[0]!, at: res.created_at }),
       onError: (e) => toast(errorText(e, getI18n().t), { tone: "error" }),
     });
   const confirmDelete = () =>
@@ -180,7 +219,7 @@ export function InvitesPage() {
           label={t.invites.copyCode(invite.code)}
           onClick={() => void copyCode(invite.code)}
         />
-        {!invite.usedAt && (
+        {!invite.used_at && (
           <IconButton
             icon="x"
             label={t.invites.deleteCode(invite.code)}
@@ -193,6 +232,49 @@ export function InvitesPage() {
     [copyCode, t],
   );
   const columns = useMemo(() => inviteColumns(i18n, actions), [i18n, actions]);
+
+  const renderTable = () => {
+    if (invites.isError && !data) {
+      return (
+        <ErrorState message={errorText(invites.error, t)} onRetry={() => void invites.refetch()} />
+      );
+    }
+    if (!data) return <InvitesTableSkeleton />;
+    if (rows.length === 0) {
+      return (
+        <InvitesEmpty
+          noCodes={counts?.all === 0}
+          q={params.q}
+          usedWithin={Boolean(params.used_within)}
+          filter={filter}
+          onCreate={makeCode}
+        />
+      );
+    }
+    return (
+      <DataTable
+        label={t.invites.table}
+        columns={columns}
+        data={rows}
+        minWidth={880}
+        sort={tableSort}
+        sortable={["code", "createdAt", "usedAt"]}
+        onSort={onSort}
+        renderCard={(i) => <InviteCard invite={i} actions={actions(i)} />}
+        footer={
+          <Pagination
+            page={params.page}
+            pageCount={data.page_count}
+            total={data.total}
+            pageSize={params.limit}
+            onPage={(page) => set({ page })}
+            pageSizes={[20, 50]}
+            onPageSize={(limit) => set({ limit })}
+          />
+        }
+      />
+    );
+  };
 
   return (
     <>
@@ -240,14 +322,14 @@ export function InvitesPage() {
               <Select
                 label={t.invites.usedWithin}
                 shortLabel={t.invites.usedWithinShort}
-                value={params.usedWithin ?? ""}
+                value={params.used_within ?? ""}
                 options={[
                   ["", t.invites.anyTime],
                   ["7d", t.invites.within7d],
                   ["30d", t.invites.within30d],
                 ]}
-                active={!!params.usedWithin}
-                onChange={(v) => set({ usedWithin: v || undefined })}
+                active={!!params.used_within}
+                onChange={(v) => set({ used_within: v || undefined })}
               />
               <Select
                 label={t.users.sortLabel}
@@ -294,65 +376,7 @@ export function InvitesPage() {
           </div>
         </div>
         {/* Clip only the table to the card corners: the toolbar menus must overflow below it. */}
-        <div className="overflow-hidden rounded-b-card">
-          {invites.isError ? (
-            <ErrorState
-              message={errorText(invites.error, t)}
-              onRetry={() => void invites.refetch()}
-            />
-          ) : !data ? (
-            <InvitesTableSkeleton />
-          ) : rows.length === 0 ? (
-            counts?.all === 0 && !params.q ? (
-              <EmptyState
-                icon="ticket"
-                title={t.invites.empty}
-                action={
-                  <Button variant="primary" icon="plus" onClick={makeCode}>
-                    {t.invites.create}
-                  </Button>
-                }
-              >
-                {t.invites.emptyBody}
-              </EmptyState>
-            ) : params.q && counts?.all === 0 ? (
-              <EmptyState icon="search" title={t.invites.noSearchMatch(params.q)} />
-            ) : (
-              <EmptyState
-                icon="ticket"
-                title={
-                  params.usedWithin
-                    ? t.invites.noneUsedWithin
-                    : filter === "unused"
-                      ? t.invites.allUsed
-                      : t.invites.noneUsed
-                }
-              />
-            )
-          ) : (
-            <DataTable
-              label={t.invites.table}
-              columns={columns}
-              data={rows}
-              minWidth={880}
-              sort={tableSort}
-              sortable={["code", "createdAt", "usedAt"]}
-              onSort={onSort}
-              renderCard={(i) => <InviteCard invite={i} actions={actions(i)} />}
-              footer={
-                <Pagination
-                  page={params.page}
-                  pageCount={data.pageCount}
-                  total={data.total}
-                  pageSize={params.limit}
-                  onPage={(page) => set({ page })}
-                  pageSizes={[20, 50]}
-                  onPageSize={(limit) => set({ limit })}
-                />
-              }
-            />
-          )}
-        </div>
+        <div className="overflow-hidden rounded-b-card">{renderTable()}</div>
       </section>
       <NewInviteDialog
         code={created?.code ?? null}

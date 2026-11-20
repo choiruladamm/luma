@@ -10,7 +10,7 @@ Use this guide for one-time setup. Routine deploys run in GitHub Actions (see [G
 
 ## D1 and R2
 
-1. From the repo root, run `make backend-install` and `make dashboard-install`. Sign Wrangler into the intended Cloudflare account and enable R2 there.
+1. From the repo root, run `make install`. Sign Wrangler into the intended Cloudflare account and enable R2 there.
 2. Create the resources shown in [Environments and bindings](backend.md#environments-and-bindings). For example, from `apps/backend` for dev:
 
    ```sh
@@ -66,10 +66,10 @@ Generate independent auth secrets and a backend encryption secret with `openssl 
 
 ## GitHub deploy pipeline
 
-`.github/workflows/deploy.yml` runs on every push to `dev` (env `dev`) and `master` (env `prod`): `make backend-migrate`, `make backend-deploy`, `make dashboard-deploy`, then a `/v1/health` check against the matching API domain. Pushes reach those branches only through PRs, and `ci.yml` runs on PRs only. After a push to `master` that carries changes `dev` lacks (a hotfix PR), the `back-merge` job pushes a `backmerge/master-<sha>` branch, opens a PR into `dev`, and dispatches CI on it. A merge conflict fails that job; merge `master` into `dev` by hand.
+`.github/workflows/deploy.yml` runs on every push to `dev` (env `dev`) and `master` (env `prod`): `make dashboard-build` (so a build failure stops the run before anything remote changes), `make backend-migrate`, `make backend-deploy`, `make dashboard-deploy`, then a `/v2/health` check against the matching API domain. Pushes reach those branches only through PRs, and `ci.yml` runs on PRs only. After a push to `master` that carries changes `dev` lacks (a hotfix PR), the `back-merge` job pushes a `backmerge/master-<sha>` branch, opens a PR into `dev`, and dispatches CI on it. A merge conflict fails that job; merge `master` into `dev` by hand.
 
 1. In Cloudflare, create an API token from the **Edit Cloudflare Workers** template, add **Account · D1 · Edit**, and limit it to the Luma account and the `chrl.cloud` zone. [Cloudflare API tokens](https://developers.cloudflare.com/fundamentals/api/get-started/create-token/)
 2. In GitHub **Settings → Environments**, create `dev` and `prod`. Give each the secrets `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`, and limit deployment branches to `dev` and `master` respectively.
 3. Create `dev` from `master` and make it the default branch, so PRs target it.
-4. Add a branch ruleset for `dev` and `master`: require a PR, require the status checks `hygiene`, `mobile-test`, `backend-test`, and `dashboard-test` with branches up to date before merging, block force pushes and deletion, and allow no bypass.
+4. Add a branch ruleset each for `dev` and `master`: require a PR merged with a merge commit, require the status checks `hygiene`, `mobile-test`, `backend-test`, `dashboard-test`, and `packages-test`, block force pushes and deletion, and allow no bypass. Only `dev` requires branches to be up to date before merging: after each release `master` holds a merge commit that `dev` lacks, and updating a release PR's head would push to `dev` directly.
 5. In **Settings → Actions → General**, enable **Allow GitHub Actions to create and approve pull requests** so the back-merge job can open its PR. Keep merge commits enabled in **Settings → General**.

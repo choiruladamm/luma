@@ -1,8 +1,17 @@
 import { factory } from "../env";
 
-/** Every response, including errors and Better Auth responses. */
+const HEADERS = {
+  "Content-Security-Policy": "default-src 'self'; frame-ancestors 'none'",
+  "X-Content-Type-Options": "nosniff",
+};
+
+/**
+ * Every response, including errors and Better Auth responses. Set before the handler for
+ * responses Hono builds (an error skips the code after `next()`), and again after it for
+ * responses built outside Hono.
+ */
 export const securityHeaders = factory.createMiddleware(async (c, next) => {
+  for (const [k, v] of Object.entries(HEADERS)) c.header(k, v);
   await next();
-  c.res.headers.set("Content-Security-Policy", "default-src 'self'; frame-ancestors 'none'");
-  c.res.headers.set("X-Content-Type-Options", "nosniff");
+  for (const [k, v] of Object.entries(HEADERS)) c.res.headers.set(k, v);
 });

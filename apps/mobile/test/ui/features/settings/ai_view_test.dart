@@ -116,7 +116,7 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('key rejected: falls back to free quota ($b)', (tester) async {
+    testWidgets('key rejected: AI stops until fixed ($b)', (tester) async {
       savedKey();
       await open(tester, b: b, keyOk: false);
       expect(find.text('Key-nya ditolak (401)'), findsOneWidget);
@@ -124,14 +124,12 @@ void main() {
       expect(find.textContaining('openrouter.ai/keys'), findsOneWidget);
       expect(
         find.text(
-          'Sementara AI balik pakai kuota gratis (sisa 64%) sampai key-nya bener.',
+          'AI berhenti sampai key-nya bener. Atau hapus key buat balik ke kuota gratis.',
         ),
         findsOneWidget,
       );
-      expect(
-        find.text('z-ai/glm-5.3-flash · balik ke model gratis'),
-        findsOneWidget,
-      );
+      expect(find.textContaining('kuota gratis (sisa'), findsNothing);
+      expect(find.text('z-ai/glm-5.3-flash'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
   }
