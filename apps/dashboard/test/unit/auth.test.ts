@@ -24,7 +24,7 @@ describe("isAdmin", () => {
 });
 
 describe("audit", () => {
-  it("logs {admin, action, targetId, requestId} as one JSON line", () => {
+  it("logs {admin, action, target_id, request_id} as one JSON line", () => {
     const log = vi.spyOn(console, "log").mockImplementation(() => {});
     const c = { var: { admin: { id: "u1", email: "admin@x.com" }, requestId: "req-1" } };
     audit(c as never, "user.ban", "u2");
@@ -32,8 +32,8 @@ describe("audit", () => {
       message: "audit",
       admin: "admin@x.com",
       action: "user.ban",
-      targetId: "u2",
-      requestId: "req-1",
+      target_id: "u2",
+      request_id: "req-1",
     });
     log.mockRestore();
   });

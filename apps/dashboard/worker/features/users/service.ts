@@ -49,7 +49,7 @@ async function dailyUsage(openrouter: OpenRouterAdmin, keyHash: string, requestI
     return (await openrouter.getUsage(keyHash)).usageDaily;
   } catch (e) {
     log.error("openrouter getUsage failed", {
-      requestId,
+      request_id: requestId,
       error: e instanceof Error ? e.message : String(e),
     });
     return null;

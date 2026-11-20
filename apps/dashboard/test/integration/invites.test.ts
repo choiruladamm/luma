@@ -66,7 +66,7 @@ describe("POST /api/invites", () => {
       log.mock.calls.map((c) => JSON.parse(c[0] as string)).find((l) => l.message === "audit"),
     ).toMatchObject({
       action: "invite.create",
-      targetId: "count:3",
+      target_id: "count:3",
     });
     expect(JSON.stringify(log.mock.calls)).not.toContain(codes[0]!);
     log.mockRestore();
@@ -248,7 +248,7 @@ describe("DELETE /api/invites/:code", () => {
       log.mock.calls.map((c) => JSON.parse(c[0] as string)).find((l) => l.message === "audit"),
     ).toMatchObject({
       action: "invite.delete",
-      targetId: normalizeInviteCode(codes[0]!),
+      target_id: normalizeInviteCode(codes[0]!),
     });
     log.mockRestore();
   });

@@ -116,12 +116,12 @@ describe("log", () => {
       warn: vi.spyOn(console, "warn").mockImplementation(() => {}),
       info: vi.spyOn(console, "log").mockImplementation(() => {}),
     };
-    log.error("e", { requestId: "r", n: 1 });
-    log.warn("w", { requestId: "r" });
-    log.info("i", { requestId: "r" });
-    expect(spies.error).toHaveBeenCalledWith('{"message":"e","requestId":"r","n":1}');
-    expect(spies.warn).toHaveBeenCalledWith('{"message":"w","requestId":"r"}');
-    expect(spies.info).toHaveBeenCalledWith('{"message":"i","requestId":"r"}');
+    log.error("e", { request_id: "r", n: 1 });
+    log.warn("w", { request_id: "r" });
+    log.info("i", { request_id: "r" });
+    expect(spies.error).toHaveBeenCalledWith('{"message":"e","request_id":"r","n":1}');
+    expect(spies.warn).toHaveBeenCalledWith('{"message":"w","request_id":"r"}');
+    expect(spies.info).toHaveBeenCalledWith('{"message":"i","request_id":"r"}');
     for (const spy of Object.values(spies)) spy.mockRestore();
   });
 });
