@@ -298,6 +298,7 @@
   "downloadAddedToShelf2": "{p0} added to shelf",
   "downloadIsAlreadyOnYourShelf": "{p0} is already on your shelf",
   "downloadCouldnTDownload": "Couldn’t download {p0}",
+  "downloadTryAgain": "Try again",
   "downloadTapToStartReading": "Tap to start reading",
   "downloadOpen": "Open",
   "downloadRead": "Read",

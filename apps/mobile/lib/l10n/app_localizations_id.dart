@@ -1085,6 +1085,9 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
+  String get downloadTryAgain => 'Coba lagi';
+
+  @override
   String get downloadTapToStartReading => 'Tap buat mulai baca';
 
   @override

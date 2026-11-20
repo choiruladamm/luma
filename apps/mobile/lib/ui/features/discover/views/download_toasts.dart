@@ -85,6 +85,18 @@ class _DownloadToastsState extends ConsumerState<DownloadToasts> {
               .ignore();
           continue;
         }
+        // A failure gets the bar with "Coba lagi": the pill's check mark would read as success.
+        if (item.status == DownloadStatus.failed) {
+          final queue = ref.read(downloadQueueProvider.notifier);
+          showToast(
+            context,
+            message,
+            actionLabel: context.l10n.downloadTryAgain,
+            duration: Motion.toastBaca,
+            onAction: () => queue.enqueue(item.book),
+          );
+          continue;
+        }
         final router = ref.read(routerProvider);
         final reading = router.routeInformationProvider.value.uri.path
             .startsWith('/reader/');

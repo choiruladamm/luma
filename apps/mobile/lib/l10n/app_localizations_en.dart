@@ -1173,6 +1173,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get downloadTryAgain => 'Try again';
+
+  @override
   String get downloadTapToStartReading => 'Tap to start reading';
 
   @override

@@ -7,11 +7,17 @@ import 'package:luma/data/services/notification_service.dart';
 import 'package:luma/domain/models/catalog.dart';
 import 'package:luma/routing/router.dart';
 import 'package:luma/ui/core/theme/stabilo_theme.dart';
+import 'package:luma/ui/core/widgets/buttons.dart';
 import 'package:luma/ui/features/discover/view_models/download_queue_view_model.dart';
 import 'package:luma/ui/features/discover/views/download_toasts.dart';
 
 class FakeQueue extends DownloadQueue {
+  final enqueued = <CatalogBook>[];
+
   void emit(List<DownloadItem> items) => state = items;
+
+  @override
+  void enqueue(CatalogBook book) => enqueued.add(book);
 }
 
 class FakeNotifications extends Fake implements NotificationService {
@@ -133,12 +139,19 @@ void main() {
     expect(notifications.permissionAsked, 1);
   });
 
-  testWidgets('failed → Gagal ngunduh', (tester) async {
+  testWidgets('failed → Gagal ngunduh + Coba lagi, which queues it again', (
+    tester,
+  ) async {
     await pump(tester);
     queue.emit([const DownloadItem(book: book, status: DownloadStatus.failed)]);
     await tester.pump();
     expect(find.text('Gagal ngunduh Enchiridion'), findsOneWidget);
     expect(find.text('Baca'), findsNothing);
+    // The pill's check mark would read as success.
+    expect(find.byType(AppIcon), findsNothing);
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.tap(find.text('Coba lagi'));
+    expect(queue.enqueued, [book]);
   });
 
   testWidgets('app in background → local notification, not a toast', (

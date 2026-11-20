@@ -1889,6 +1889,12 @@ abstract class AppLocalizations {
   /// Interface copy in ui/features/discover/views/download_toasts.dart
   ///
   /// In id, this message translates to:
+  /// **'Coba lagi'**
+  String get downloadTryAgain;
+
+  /// Interface copy in ui/features/discover/views/download_toasts.dart
+  ///
+  /// In id, this message translates to:
   /// **'Tap buat mulai baca'**
   String get downloadTapToStartReading;
 
