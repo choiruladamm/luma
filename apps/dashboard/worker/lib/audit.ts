@@ -7,7 +7,7 @@ export function audit(c: Context<AppEnv>, action: string, targetId: string) {
   log.info("audit", {
     admin: c.var.admin.email,
     action,
-    targetId,
-    requestId: c.var.requestId,
+    target_id: targetId,
+    request_id: c.var.requestId,
   });
 }

@@ -315,7 +315,7 @@ describe("POST /api/users/:id/ban", () => {
       .find((l) => l.message === "audit");
     expect(audit).toMatchObject({
       action: "user.ban",
-      targetId: user.id,
+      target_id: user.id,
       admin: "admin@luma.test",
     });
     log.mockRestore();
@@ -401,7 +401,7 @@ describe("POST /api/users/:id/unban", () => {
       log.mock.calls.map((c) => JSON.parse(c[0] as string)).find((l) => l.message === "audit"),
     ).toMatchObject({
       action: "user.unban",
-      targetId: user.id,
+      target_id: user.id,
     });
     log.mockRestore();
   });

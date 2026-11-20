@@ -27,7 +27,7 @@ export async function getOverview(
     env.OPENROUTER_MANAGEMENT_KEY
       ? monthSpendUsd(env.OPENROUTER_MANAGEMENT_KEY, env.OPENROUTER_WORKSPACE_ID, now).catch(
           (e: Error) => {
-            log.error("openrouter activity failed", { requestId, error: e.message });
+            log.error("openrouter activity failed", { request_id: requestId, error: e.message });
             return null;
           },
         )

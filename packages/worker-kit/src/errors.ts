@@ -58,7 +58,7 @@ export const onError = (err: Error, c: Context) => {
     }
     return c.json(errorBody(codeForStatus(err.status), err.message || "Bad request"), err.status);
   }
-  log.error("unhandled error", { requestId: c.get("requestId"), error: err.message });
+  log.error("unhandled error", { request_id: c.get("requestId"), error: err.message });
   return c.json(errorBody("INTERNAL_ERROR", "Internal error"), 500);
 };
 
