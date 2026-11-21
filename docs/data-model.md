@@ -15,7 +15,7 @@ sections: [Storage map, Identity and content changes, Schema versions and migrat
 | `books`, `chapters`, `paragraphs` | Book metadata and parsed content | `ImportRepository`, `BookRepository` |
 | `reading_progress`, `reading_sessions` | Position and reading activity | `ReadingProgressRepository` |
 | `ai_results`, `ai_breakdowns` | Group translation and breakdown caches | `AiResultsRepository`, `AiBreakdownsRepository` |
-| `ai_calls` | AI request and usage log | `AppDatabase` schema; no production repository writer currently |
+| `ai_calls` | AI request and usage log | `AiCallsRepository` |
 | `settings` | Backed-up preferences and backup metadata | `SettingsRepository` |
 | `catalog_books` | Local Gutenberg catalog | `CatalogRepository` |
 | `chat_sessions`, `chat_turns` | Chat history and snapshots | `ChatRepository` |
@@ -25,6 +25,8 @@ sections: [Storage map, Identity and content changes, Schema versions and migrat
 
 Reading time counts only while the app is in the foreground and stops after `ReadingClock.idle` without interaction; each session span stays within one chapter and is saved in the same transaction as `books.readingSeconds`.
 
+`ai_calls` holds one row per AI call that reached OpenRouter: an Artinya group (`group`), a Bedahin breakdown (`breakdown`), or a Ngobrolin buku send (`chat`). Retries, repairs and the non-streaming fallback within one call share its row, with their reported usage summed; usage a provider doesn't report stays null, not zero. Failures record the `AiError` name, including the stream timeout and stall (`timeout`). Cache hits, cancelled calls, stale chat attempts, and calls without a key write nothing. `key_source` says whether the user's own key or the subsidy key paid. Chat rows cover the send's completion requests, not its embeddings, and have no first-token time. The foreign keys are set to null on delete, so cost history outlives a deleted book. The log is local; it is not synced or sent anywhere.
+
 ## Identity and content changes
 
 A chapter's `id` is a stable reference; `sortOrder` determines display order. `paragraphIndex` identifies a paragraph within its chapter, and `groupIndex` identifies its translation group. These indices depend on parsing and grouping: changing their assignment requires a `parserVersion` change and re-import, invalidating affected AI results. Both `ai_results` and `ai_breakdowns` use `(chapterId, groupIndex)` identity; clear the book’s caches when parsing or grouping shifts those indices.
@@ -33,7 +35,7 @@ Database file references are names, not absolute paths; the app resolves them in
 
 ## Schema versions and migrations
 
-The current schema version is 18. `AppDatabase.migration` uses hand-written `onUpgrade` migrations; follow the `drift-migration` skill when changing the schema.
+The current schema version is 19. `AppDatabase.migration` uses hand-written `onUpgrade` migrations; follow the `drift-migration` skill when changing the schema.
 
 ## Chat snapshots and derived data
 

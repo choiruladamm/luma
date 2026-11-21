@@ -94,6 +94,18 @@ class ChatBudget {
   /// Known provider cost; null if any request had no usage.
   double? get cost => unknownUsage ? null : _cost;
 
+  /// Summed completion usage; null if any request had no usage. Embeddings are
+  /// not included.
+  ChatUsage? get usage {
+    if (unknownUsage || _settled.isEmpty) return null;
+    var prompt = 0, completion = 0;
+    for (final u in _settled.values) {
+      prompt += u.promptTokens;
+      completion += u.completionTokens;
+    }
+    return (promptTokens: prompt, completionTokens: completion, cost: cost);
+  }
+
   /// Maximum input (bytes) for one request with output [maxTokens]: bounded by
   /// the model context, the practical cap, and the send's remaining budget.
   int inputBytesFor(int maxTokens) {

@@ -4,6 +4,7 @@ import 'package:fake_async/fake_async.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:luma/data/repositories/ai_calls_repository.dart';
 import 'package:luma/data/repositories/ai_breakdowns_repository.dart';
 import 'package:luma/data/repositories/settings_repository.dart';
 import 'package:luma/data/services/openrouter_service.dart';
@@ -62,6 +63,7 @@ void main() {
   const group = (chapterId: 1, groupIndex: 0);
   late FakeOpenRouter ai;
   late FakeBreakdowns repo;
+  late FakeAiCalls calls;
   late ProviderContainer container;
   late ProviderSubscription<BreakdownState> sub;
 
@@ -69,8 +71,10 @@ void main() {
     FlutterSecureStorage.setMockInitialValues({'openrouter_api_key': 'sk'});
     ai = FakeOpenRouter();
     repo = FakeBreakdowns();
+    calls = FakeAiCalls();
     container = ProviderContainer(
       overrides: [
+        aiCallsRepositoryProvider.overrideWithValue(calls),
         aiBreakdownsRepositoryProvider.overrideWithValue(repo),
         openRouterServiceProvider.overrideWithValue(ai),
         settingsRepositoryProvider.overrideWithValue(FakeSettings()),
@@ -106,6 +110,7 @@ void main() {
       expect(now().draft.sections, hasLength(2));
       expect(now().input!.translations, repo.translations);
       expect(ai.breakdownCalls, isEmpty);
+      expect(calls.rows, isEmpty);
     });
   });
 
@@ -142,6 +147,8 @@ void main() {
       expect(now().phase, BreakdownPhase.done);
       expect(now().draft.sections, hasLength(2));
       expect(repo.saved[group]!.body, answer);
+      expect(calls.rows.single.kind, AiCallKind.breakdown);
+      expect(calls.rows.single.error, isNull);
       async.elapse(const Duration(minutes: 1)); // nothing left ticking
       expect(now().phase, BreakdownPhase.done);
     });
@@ -149,6 +156,7 @@ void main() {
 
   test('invalid once: streamed again, then done', () {
     fakeAsync((async) {
+      ai.usage = (promptTokens: 100, completionTokens: 20, cost: null);
       final first = next();
       final second = next();
       open(async);
@@ -164,6 +172,12 @@ void main() {
       async.flushMicrotasks();
       expect(now().phase, BreakdownPhase.done);
       expect(repo.saved[group]!.body, answer);
+      // Both attempts are one logged call.
+      expect(calls.rows.single.usage, (
+        promptTokens: 200,
+        completionTokens: 40,
+        cost: null,
+      ));
     });
   });
 
@@ -178,6 +192,7 @@ void main() {
       expect(now().error?.error, AiError.invalidResponse);
       expect(ai.breakdownCalls, hasLength(2));
       expect(repo.saved, isEmpty);
+      expect(calls.rows.single.error, AiError.invalidResponse);
     });
   });
 
@@ -191,6 +206,7 @@ void main() {
       expect(now().phase, BreakdownPhase.failed);
       expect(now().error?.error, AiError.timeout);
       expect(ai.lastCancel!.isCancelled, isTrue);
+      expect(calls.rows.single.error, AiError.timeout);
     });
   });
 
@@ -218,6 +234,7 @@ void main() {
         ..addError(const AiException(AiError.network));
       async.flushMicrotasks();
       expect(now().phase, BreakdownPhase.cut);
+      expect(calls.rows.single.error, AiError.network);
       unawaited(c.close());
     });
   });
@@ -236,6 +253,7 @@ void main() {
         ..addError(const AiException(AiError.network));
       async.elapse(const Duration(minutes: 1));
       expect(repo.saved, isEmpty);
+      expect(calls.rows, isEmpty);
       unawaited(c.close());
     });
   });
@@ -254,6 +272,7 @@ void main() {
       expect(now().phase, BreakdownPhase.failed);
       expect(now().input, isNull);
       expect(ai.breakdownCalls, hasLength(1)); // only the no-key attempt
+      expect(calls.rows, isEmpty);
     });
   });
 

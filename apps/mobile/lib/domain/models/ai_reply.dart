@@ -13,10 +13,13 @@ class AiReply {
   final String meaning;
 }
 
-/// Kind of LLM request in `ai_calls`.
+/// Feature that made an `ai_calls` row: Artinya, Bedahin, Ngobrolin buku.
 ///
 /// TODO(#104): add a Recap value.
-enum AiCallKind { group }
+enum AiCallKind { group, breakdown, chat }
+
+/// Whose OpenRouter key paid for an `ai_calls` row.
+enum AiKeySource { own, subsidy }
 
 enum AiError {
   /// The API key isn't set: the API isn't called.

@@ -3,9 +3,11 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../data/repositories/ai_breakdowns_repository.dart';
+import '../../../../data/repositories/ai_calls_repository.dart';
 import '../../../../data/repositories/ai_key_repository.dart';
 import '../../../../data/repositories/settings_repository.dart';
 import '../../../../data/services/openrouter_service.dart';
+import '../../../../domain/ai_call_meter.dart';
 import '../../../../domain/breakdown_prompt.dart';
 import '../../../../domain/models/ai_reply.dart';
 import '../../../../domain/models/breakdown.dart';
@@ -69,6 +71,8 @@ class BreakdownStream extends Notifier<BreakdownState> {
     final ai = ref.read(openRouterServiceProvider);
     final keys = ref.read(aiKeyRepositoryProvider);
     final settings = ref.read(settingsRepositoryProvider);
+    final calls = ref.read(aiCallsRepositoryProvider);
+    void Function([AiError? error])? log;
 
     void emit(BreakdownState next) {
       if (run.live) state = next;
@@ -106,6 +110,28 @@ class BreakdownStream extends Notifier<BreakdownState> {
       final model = await settings.watchModel().first;
       final apiKey = await keys.read();
       if (!run.live) return;
+      final meter = AiCallMeter();
+      final chars = input.original.fold(0, (sum, p) => sum + p.length);
+      var logged = false;
+      // Logging must never break the answer, so its errors are dropped.
+      log = ([error]) {
+        if (logged) return;
+        logged = true;
+        calls
+            .record(
+              kind: AiCallKind.breakdown,
+              model: model,
+              promptVersion: breakdownPromptVersion,
+              chars: chars,
+              apiKey: apiKey,
+              totalMs: meter.totalMs,
+              firstTokenMs: meter.firstTokenMs,
+              usage: meter.usage,
+              group: group,
+              error: error,
+            )
+            .ignore();
+      };
 
       for (var attempt = 1; ; attempt++) {
         run.timers
@@ -117,6 +143,7 @@ class BreakdownStream extends Notifier<BreakdownState> {
           )
           ..add(
             Timer(GroupAiStream.timeoutAfter, () {
+              log?.call(AiError.timeout);
               finish(
                 BreakdownState(
                   phase: BreakdownPhase.failed,
@@ -134,10 +161,12 @@ class BreakdownStream extends Notifier<BreakdownState> {
           model: model,
           input: input,
           cancel: run.cancel,
+          onUsage: meter.add,
         )) {
           // A token arriving after the screen closed: don't set a timer that reads
           // `state`.
           if (!run.live) return;
+          meter.firstToken();
           if (content.isEmpty) run.clearTimers();
           content += delta;
           emit(
@@ -148,10 +177,10 @@ class BreakdownStream extends Notifier<BreakdownState> {
             ),
           );
           run.stall?.cancel();
-          run.stall = Timer(
-            GroupAiStream.stallAfter,
-            () => finish(state.withPhase(BreakdownPhase.cut)),
-          );
+          run.stall = Timer(GroupAiStream.stallAfter, () {
+            log?.call(AiError.timeout);
+            finish(state.withPhase(BreakdownPhase.cut));
+          });
         }
         streaming = false;
         run.stall?.cancel();
@@ -166,6 +195,7 @@ class BreakdownStream extends Notifier<BreakdownState> {
           emit(BreakdownState(input: input));
           continue;
         }
+        log();
         await repo.save(group, body: content, sourceHash: hash, model: model);
         if (!run.live) return;
         ref.invalidate(breakdownSectionsProvider(group));
@@ -181,6 +211,7 @@ class BreakdownStream extends Notifier<BreakdownState> {
       // The screen closed: a cancelled request throws, and `state` must not be
       // read.
       if (!run.live) return;
+      log?.call(e.error);
       if (streaming && state.phase == BreakdownPhase.writing) {
         finish(state.withPhase(BreakdownPhase.cut));
       } else {

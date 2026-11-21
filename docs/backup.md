@@ -17,7 +17,7 @@ A file export is a `luma-backup-YYYYMMDD-HHmm.zip` containing `manifest.json`, t
   "format": "luma-backup",
   "formatVersion": 1,
   "appVersion": "0.3.0",
-  "schemaVersion": 18,
+  "schemaVersion": 19,
   "createdAt": "2026-01-01T12:00:00+07:00",
   "counts": { "books": 2, "aiResults": 10 }
 }

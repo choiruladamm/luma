@@ -4,6 +4,7 @@ import 'package:fake_async/fake_async.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:luma/data/repositories/ai_calls_repository.dart';
 import 'package:luma/data/repositories/ai_results_repository.dart';
 import 'package:luma/data/repositories/settings_repository.dart';
 import 'package:luma/data/services/openrouter_service.dart';
@@ -47,6 +48,7 @@ void main() {
   const group = (chapterId: 1, groupIndex: 0);
   late FakeOpenRouter ai;
   late FakeCache cache;
+  late FakeAiCalls calls;
   late ProviderContainer container;
   late List<AiStream> states;
   late ProviderSubscription<AiStream> sub;
@@ -55,8 +57,10 @@ void main() {
     FlutterSecureStorage.setMockInitialValues({'openrouter_api_key': 'sk'});
     ai = FakeOpenRouter();
     cache = FakeCache();
+    calls = FakeAiCalls();
     container = ProviderContainer(
       overrides: [
+        aiCallsRepositoryProvider.overrideWithValue(calls),
         aiResultsRepositoryProvider.overrideWithValue(cache),
         openRouterServiceProvider.overrideWithValue(ai),
         settingsRepositoryProvider.overrideWithValue(FakeSettings()),
@@ -92,6 +96,7 @@ void main() {
       expect(now().draft.translations, ['A', 'B']);
       expect(ai.streamCalls, isEmpty);
       expect(cache.opened, [group]); // re-read counts
+      expect(calls.rows, isEmpty); // a cache hit costs nothing
     });
   });
 
@@ -127,6 +132,8 @@ void main() {
       expect(cache.opened, isEmpty); // saving is the first open, not another
       expect(now().draft.meaning, 'Gitu.');
       expect(cache.saved[group]!.translations, ['Halo juga.', 'Dah.']);
+      expect(calls.rows.single.kind, AiCallKind.group);
+      expect(calls.rows.single.error, isNull);
       expect(phases().first, AiPhase.waiting);
       // Nothing left ticking once done.
       async.elapse(const Duration(minutes: 1));
@@ -159,6 +166,7 @@ void main() {
       expect(now().error?.error, AiError.timeout);
       expect(ai.lastCancel!.isCancelled, isTrue);
       expect(cache.saved, isEmpty);
+      expect(calls.rows.single.error, AiError.timeout);
     });
   });
 
@@ -175,6 +183,7 @@ void main() {
       expect(now().draft.translations, ['Halo juga.', 'Da']);
       expect(ai.lastCancel!.isCancelled, isTrue);
       expect(cache.saved, isEmpty);
+      expect(calls.rows.single.error, AiError.timeout);
       unawaited(c.close());
     });
   });
@@ -200,11 +209,13 @@ void main() {
       open(async);
       expect(now().phase, AiPhase.failed);
       expect(now().error?.status, 402);
+      expect(calls.rows.single.error, AiError.http);
     });
   });
 
   test('an invalid answer is asked once more without streaming', () {
     fakeAsync((async) {
+      ai.usage = (promptTokens: 100, completionTokens: 20, cost: 0.001);
       final c = ai.stream = StreamController<String>();
       open(async);
       c.add('[T1]\nCuma satu.\n[MAKNA]\nM.'); // 1 of 2 paragraphs
@@ -214,6 +225,12 @@ void main() {
       expect(ai.calls, hasLength(1)); // the JSON path, once
       expect(now().draft.translations, ['id: Hello there.', 'id: Bye.']);
       expect(cache.saved[group]!.translations, hasLength(2));
+      // Both requests are one logged call.
+      expect(calls.rows.single.usage, (
+        promptTokens: 200,
+        completionTokens: 40,
+        cost: 0.002,
+      ));
     });
   });
 
@@ -229,6 +246,7 @@ void main() {
       unawaited(c.close());
       async.elapse(const Duration(minutes: 1));
       expect(cache.saved, isEmpty);
+      expect(calls.rows, isEmpty); // cancelled: no usage to trust
     });
   });
 
@@ -272,6 +290,7 @@ void main() {
       open(async);
       expect(now().phase, AiPhase.failed);
       expect(now().error?.error, AiError.noApiKey);
+      expect(calls.rows, isEmpty);
     });
   });
 

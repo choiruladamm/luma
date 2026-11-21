@@ -3,12 +3,14 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../data/repositories/ai_calls_repository.dart';
 import '../../../../data/repositories/ai_key_repository.dart';
 import '../../../../data/repositories/ai_results_repository.dart';
 import '../../../../data/repositories/book_repository.dart';
 import '../../../../data/repositories/reading_progress_repository.dart';
 import '../../../../data/repositories/settings_repository.dart';
 import '../../../../data/services/openrouter_service.dart';
+import '../../../../domain/ai_call_meter.dart';
 import '../../../../domain/ai_prompt.dart';
 import '../../../../domain/models/ai_reply.dart';
 import '../../../../domain/models/book.dart';
@@ -55,6 +57,7 @@ final groupAiProvider = FutureProvider.autoDispose.family<AiReply, GroupRef>((
   final ai = ref.watch(openRouterServiceProvider);
   final keys = ref.watch(aiKeyRepositoryProvider);
   final settings = ref.watch(settingsRepositoryProvider);
+  final calls = ref.watch(aiCallsRepositoryProvider);
 
   final cached = await cache.find(group);
   if (cached != null) {
@@ -63,16 +66,52 @@ final groupAiProvider = FutureProvider.autoDispose.family<AiReply, GroupRef>((
   }
   final text = await cache.promptText(group);
   final model = await settings.watchModel().first;
-  final reply = await ai.explain(
-    apiKey: await keys.read(),
-    model: model,
-    book: text.book,
-    context: text.context,
-    target: text.target,
-  );
+  final apiKey = await keys.read();
+  final meter = AiCallMeter();
+  void log([AiError? error]) =>
+      _logGroup(calls, group, text.target, model, apiKey, meter, error);
+  final AiReply reply;
+  try {
+    reply = await ai.explain(
+      apiKey: apiKey,
+      model: model,
+      book: text.book,
+      context: text.context,
+      target: text.target,
+      onUsage: meter.add,
+    );
+  } on AiException catch (e) {
+    log(e.error);
+    rethrow;
+  }
+  log();
   await cache.save(group, reply, model: model);
   return reply;
 }, retry: (_, _) => null);
+
+/// Logging must never break the answer, so its errors are dropped.
+void _logGroup(
+  AiCallsRepository calls,
+  GroupRef group,
+  List<String> target,
+  String model,
+  String? apiKey,
+  AiCallMeter meter,
+  AiError? error,
+) => calls
+    .record(
+      kind: AiCallKind.group,
+      model: model,
+      promptVersion: aiPromptVersion,
+      chars: target.fold(0, (sum, p) => sum + p.length),
+      apiKey: apiKey,
+      totalMs: meter.totalMs,
+      firstTokenMs: meter.firstTokenMs,
+      usage: meter.usage,
+      group: group,
+      error: error,
+    )
+    .ignore();
 
 /// The answer of one group being streamed: [draft] = what has arrived from the
 /// network (not yet paced; the UI sets the rhythm).
@@ -140,6 +179,8 @@ class GroupAiStream extends Notifier<AiStream> {
     final ai = ref.read(openRouterServiceProvider);
     final keys = ref.read(aiKeyRepositoryProvider);
     final settings = ref.read(settingsRepositoryProvider);
+    final calls = ref.read(aiCallsRepositoryProvider);
+    void Function([AiError? error])? log;
 
     void emit(AiStream next) {
       if (run.live) state = next;
@@ -166,11 +207,19 @@ class GroupAiStream extends Notifier<AiStream> {
       final model = await settings.watchModel().first;
       final apiKey = await keys.read();
       if (!run.live) return;
+      final meter = AiCallMeter();
+      var logged = false;
+      log = ([error]) {
+        if (logged) return;
+        logged = true;
+        _logGroup(calls, group, text.target, model, apiKey, meter, error);
+      };
 
       run.timers
         ..add(Timer(slowAfter, () => emit(state.withPhase(AiPhase.slow))))
         ..add(
           Timer(timeoutAfter, () {
+            log?.call(AiError.timeout);
             finish(
               AiStream(
                 phase: AiPhase.failed,
@@ -190,10 +239,12 @@ class GroupAiStream extends Notifier<AiStream> {
         context: text.context,
         target: text.target,
         cancel: run.cancel,
+        onUsage: meter.add,
       )) {
         // A token arriving after the screen closed: don't set a timer that reads
         // `state`.
         if (!run.live) return;
+        meter.firstToken();
         if (content.isEmpty) run.clearTimers();
         content += delta;
         final draft = parseAiDraft(content);
@@ -207,10 +258,10 @@ class GroupAiStream extends Notifier<AiStream> {
           ),
         );
         run.stall?.cancel();
-        run.stall = Timer(
-          stallAfter,
-          () => finish(state.withPhase(AiPhase.cut)),
-        );
+        run.stall = Timer(stallAfter, () {
+          log?.call(AiError.timeout);
+          finish(state.withPhase(AiPhase.cut));
+        });
       }
       streaming = false;
       run.stall?.cancel();
@@ -227,9 +278,11 @@ class GroupAiStream extends Notifier<AiStream> {
           context: text.context,
           target: text.target,
           attempts: 1,
+          onUsage: meter.add,
         );
       }
       if (!run.live) return;
+      log();
       await cache.save(group, reply, model: model);
       finish(
         AiStream(phase: AiPhase.done, draft: _draft(reply), sources: sources),
@@ -238,6 +291,7 @@ class GroupAiStream extends Notifier<AiStream> {
       // The sheet closed: a cancelled request throws, and `state` must not be
       // read.
       if (!run.live) return;
+      log?.call(e.error);
       if (streaming &&
           state.phase != AiPhase.waiting &&
           state.phase != AiPhase.slow) {

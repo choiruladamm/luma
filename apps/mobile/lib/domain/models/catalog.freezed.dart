@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$CatalogPage {
 
- List<CatalogBook> get items; bool get hasMore;/// Jumlah total hasil ("7 hasil"). Null = sumbernya gak tau (populer OPDS).
+ List<CatalogBook> get items; bool get hasMore;/// Total number of results ("7 hasil"). Null = the source doesn't know (OPDS popular).
  int? get total;
 /// Create a copy of CatalogPage
 /// with the given fields replaced by the non-null parameter values.
@@ -226,7 +226,7 @@ class _CatalogPage implements CatalogPage {
 }
 
 @override final  bool hasMore;
-/// Jumlah total hasil ("7 hasil"). Null = sumbernya gak tau (populer OPDS).
+/// Total number of results ("7 hasil"). Null = the source doesn't know (OPDS popular).
 @override final  int? total;
 
 /// Create a copy of CatalogPage
@@ -578,9 +578,9 @@ as String,
 /// @nodoc
 mixin _$CatalogBookDetail {
 
- String? get summary; List<String> get subjects; List<String> get bookshelves;/// Ukuran EPUB dalam byte.
- int? get fileSize;/// Tanggal masuk ke sumber (Gutenberg: tanggal rilis digital, bukan
-/// tahun terbit asli). ISO 8601.
+ String? get summary; List<String> get subjects; List<String> get bookshelves;/// EPUB size in bytes.
+ int? get fileSize;/// Date it entered the source (Gutenberg: digital release date, not the original
+/// publication year). ISO 8601.
  String? get issued; String? get wikipediaUrl;
 /// Create a copy of CatalogBookDetail
 /// with the given fields replaced by the non-null parameter values.
@@ -801,10 +801,10 @@ class _CatalogBookDetail implements CatalogBookDetail {
   return EqualUnmodifiableListView(_bookshelves);
 }
 
-/// Ukuran EPUB dalam byte.
+/// EPUB size in bytes.
 @override final  int? fileSize;
-/// Tanggal masuk ke sumber (Gutenberg: tanggal rilis digital, bukan
-/// tahun terbit asli). ISO 8601.
+/// Date it entered the source (Gutenberg: digital release date, not the original
+/// publication year). ISO 8601.
 @override final  String? issued;
 @override final  String? wikipediaUrl;
 

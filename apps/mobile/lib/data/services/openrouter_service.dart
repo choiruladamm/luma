@@ -48,7 +48,8 @@ class OpenRouterService {
 
   /// Translates [target] paragraphs and explains their meaning.
   /// [context] supplies 2–3 preceding paragraphs for context only. Invalid
-  /// responses are retried up to [attempts] times.
+  /// responses are retried up to [attempts] times; [onUsage] receives each
+  /// attempt's reported usage.
   Future<AiReply> explain({
     required String? apiKey,
     required String model,
@@ -56,6 +57,7 @@ class OpenRouterService {
     required List<String> context,
     required List<String> target,
     int attempts = 2,
+    void Function(ChatUsage usage)? onUsage,
   }) async {
     if (apiKey == null || apiKey.trim().isEmpty) {
       throw const AiException(AiError.noApiKey);
@@ -65,6 +67,7 @@ class OpenRouterService {
         apiKey,
         model,
         aiUserPrompt(book: book, context: context, target: target),
+        onUsage,
       );
       try {
         return parseAiReply(content, target.length);
@@ -77,6 +80,7 @@ class OpenRouterService {
   /// Streams a sectioned answer ([aiStreamSystemPrompt]) until `data: [DONE]`.
   /// A premature disconnect yields [AiError.network]; stream errors yield
   /// [AiError.http]. The caller validates output and [cancel] closes the stream.
+  /// [onUsage] receives the final SSE usage when available.
   Stream<String> explainStream({
     required String? apiKey,
     required String model,
@@ -84,12 +88,14 @@ class OpenRouterService {
     required List<String> context,
     required List<String> target,
     CancelToken? cancel,
+    void Function(ChatUsage usage)? onUsage,
   }) => _stream(
     apiKey,
     model,
     aiStreamSystemPrompt,
     aiUserPrompt(book: book, context: context, target: target),
     cancel,
+    onUsage: onUsage,
   );
 
   /// Streams a sectioned group breakdown ([breakdownSystemPrompt]).
@@ -99,12 +105,14 @@ class OpenRouterService {
     required String model,
     required BreakdownInput input,
     CancelToken? cancel,
+    void Function(ChatUsage usage)? onUsage,
   }) => _stream(
     apiKey,
     model,
     breakdownSystemPrompt,
     breakdownUserPrompt(input),
     cancel,
+    onUsage: onUsage,
   );
 
   /// Streams chat, rewrite, or selector output with bounded reasoning fallback.
@@ -279,8 +287,17 @@ class OpenRouterService {
     }
   }
 
-  Future<String> _complete(String apiKey, String model, String user) async {
+  Future<String> _complete(
+    String apiKey,
+    String model,
+    String user,
+    void Function(ChatUsage usage)? onUsage,
+  ) async {
     final res = await _post<Object?>(apiKey, model, aiSystemPrompt, user);
+    final usage = res.data is Map
+        ? parseChatUsage((res.data as Map)['usage'])
+        : null;
+    if (usage != null) onUsage?.call(usage);
     final content = switch (res.data) {
       {'choices': [{'message': {'content': final String c}}, ...]} => c,
       _ => null,

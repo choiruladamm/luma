@@ -18,6 +18,7 @@ import '../../domain/models/book_chat.dart';
 import '../database/app_database.dart';
 import '../services/api_key_store.dart';
 import '../services/openrouter_service.dart';
+import 'ai_calls_repository.dart';
 import 'ai_key_repository.dart';
 import 'chat_repository.dart';
 import 'chat_index_repository.dart';
@@ -40,6 +41,7 @@ class ChatContextRepository {
     this._keys, {
     this.tokenBudget = chatQuestionTokens,
     this.deadline = chatQuestionDeadline,
+    this._calls,
   });
 
   /// Token budget per send; tests use small numbers to force partial results.
@@ -49,6 +51,7 @@ class ChatContextRepository {
   final ChatRepository _chat;
   final OpenRouterService _router;
   final ApiKeyStore _keys;
+  final AiCallsRepository? _calls;
   late final _notes = ChatNotesRepository(_db);
   Future<void> _indexTail = Future.value();
   ChatIndexKey? _indexKey;
@@ -98,6 +101,8 @@ class ChatContextRepository {
   /// never sends an answer. Caller owns checkpoint/finalize and stop lifecycle.
   /// [readingChapterId] is the chapter being read when the chat was opened. It only
   /// resolves references like "this chapter" or "chapter III" and is never a source of facts.
+  /// One send is one `ai_calls` row, written when its answer arrives or a paid
+  /// step fails; cancelled and stale attempts write none.
   Future<PreparedChat?> prepare(
     ChatTurn target, {
     CancelToken? cancel,
@@ -106,6 +111,52 @@ class ChatContextRepository {
     void Function(ChatExplorationProgress progress)? onExplorationProgress,
     bool Function()? answerNow,
     void Function(ChatStep step)? onStep,
+  }) async {
+    void Function(AiError? error)? log;
+    try {
+      return await _prepare(
+        target,
+        cancel: cancel,
+        readingChapterId: readingChapterId,
+        onIndexProgress: onIndexProgress,
+        onExplorationProgress: onExplorationProgress,
+        answerNow: answerNow,
+        onStep: onStep,
+        onBudget: (budget, key) =>
+            log = (error) => _logChat(budget, target, key, error),
+      );
+    } on AiException catch (e) {
+      log?.call(e.error);
+      rethrow;
+    }
+  }
+
+  /// Logging must never break the answer, so its errors are dropped.
+  void _logChat(ChatBudget budget, ChatTurn turn, String key, AiError? error) =>
+      _calls
+          ?.record(
+            kind: AiCallKind.chat,
+            model: turn.model,
+            promptVersion: turn.promptVersion,
+            chars: turn.question.length,
+            apiKey: key,
+            totalMs: budget.elapsed.inMilliseconds,
+            usage: budget.usage,
+            bookId: turn.book.bookId,
+            error: error,
+          )
+          .ignore();
+
+  Future<PreparedChat?> _prepare(
+    ChatTurn target, {
+    required CancelToken? cancel,
+    required int? readingChapterId,
+    required void Function(int completed, int total)? onIndexProgress,
+    required void Function(ChatExplorationProgress progress)?
+    onExplorationProgress,
+    required bool Function()? answerNow,
+    required void Function(ChatStep step)? onStep,
+    required void Function(ChatBudget budget, String key) onBudget,
   }) async {
     _check(cancel);
     final key = await _keys.read();
@@ -247,6 +298,7 @@ class ChatContextRepository {
         tokens: tokenBudget,
         deadline: deadline,
       );
+      onBudget(budget, key);
       Future<bool> guard() => _chat.validateRetrieval(target.attemptRef, []);
       final current = input.session.book;
       final toc = input.toc;
@@ -1068,6 +1120,7 @@ class ChatContextRepository {
         () => !_disposed
             ? _chat.validatePrepared(input.turn.attemptRef, prompt.sources)
             : Future.value(false),
+        (error) => _logChat(budget, input.turn, key, error),
       );
     } on FormatException catch (e) {
       throw AiException(AiError.invalidResponse, detail: e.message);
@@ -1397,6 +1450,7 @@ class PreparedChat {
     this._exploration,
     this._budget,
     this._validate,
+    this._log,
   );
   final OpenRouterService _router;
   final String _key, model;
@@ -1406,12 +1460,28 @@ class PreparedChat {
   final Future<bool> Function() _validate;
   final ChatExploration? _exploration;
   final ChatBudget _budget;
+  final void Function(AiError? error) _log;
   bool _started = false;
 
   Stream<ChatStreamFrame> stream({
     CancelToken? cancel,
     void Function(ChatStep step)? onStep,
   }) async* {
+    try {
+      await for (final frame in _frames(cancel, onStep)) {
+        if (frame.answer != null) _log(null);
+        yield frame;
+      }
+    } on AiException catch (e) {
+      _log(e.error);
+      rethrow;
+    }
+  }
+
+  Stream<ChatStreamFrame> _frames(
+    CancelToken? cancel,
+    void Function(ChatStep step)? onStep,
+  ) async* {
     if (_started) throw StateError('Request chat sudah dipakai');
     _started = true;
     if (cancel?.isCancelled ?? false) throw cancel!.cancelError!;
@@ -1535,6 +1605,7 @@ final chatContextRepositoryProvider = Provider<ChatContextRepository>((ref) {
     ref.watch(chatRepositoryProvider),
     ref.watch(openRouterServiceProvider),
     ref.watch(aiKeyRepositoryProvider),
+    calls: ref.watch(aiCallsRepositoryProvider),
   );
   ref.onDispose(repo.dispose);
   return repo;
