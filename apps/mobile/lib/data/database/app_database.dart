@@ -255,6 +255,9 @@ class AiCalls extends Table {
   /// The `AiError.name`; null means success.
   TextColumn get error => text().nullable()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+
+  /// Null for rows written before the key source was recorded.
+  TextColumn get keySource => textEnum<AiKeySource>().nullable()();
 }
 
 /// Settings that are included in backups (model ID, Aa preferences,
@@ -490,7 +493,7 @@ class AppDatabase extends _$AppDatabase {
   // in test/data/migration_test.dart. Backups from older versions are migrated
   // on restore.
   @override
-  int get schemaVersion => 18;
+  int get schemaVersion => 19;
 
   /// Creates the sync outbox triggers on every synced table ([syncKinds]).
   Future<void> createSyncTriggers() async {
@@ -643,6 +646,10 @@ class AppDatabase extends _$AppDatabase {
           await customStatement(kind.backfill);
         }
         await createSyncTriggers();
+      }
+      // Before v5, `createTable(aiCalls)` above already includes the column.
+      if (from >= 5 && from < 19) {
+        await m.addColumn(aiCalls, aiCalls.keySource);
       }
     },
     // SQLite disables foreign keys by default, and the cascades need them.

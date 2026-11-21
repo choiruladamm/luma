@@ -40,7 +40,7 @@
     "test/support/book_chat_oracle.dart": "d94ead16a532624c86bec75a720d12a5259d7a74d6726b8372252bc4c53f6b7a",
     "test/support/book_chat_heldout.dart": "1835ae11825afd15b75e0a3d576984b562086a2603c740d54b1d5683197ad651",
     "test/support/book_chat_embedding_fallback.dart": "9e753e49544e11ae937a127d5011d00f47c972a2eb761090c446bad882be397c",
-    "lib/data/services/openrouter_service.dart": "70b74a9ca1958c22b86d923b22e50e611eba0724d71e4c57b76e71e8ab736c98",
+    "lib/data/services/openrouter_service.dart": "1a75fc0b644ea167adc0ceef475e2a5e5046bbff81938fad80144b3642cc1042",
     "pubspec.lock": "d0d7f95ff1eb8c679e7e9deafe05967ba99325e6e899f5d4bfc83489d36a8ae3",
     "test/support/book_chat_recovery.dart": "6f10eda8a994578e82a50221dec44854324ddf09d7eff45181fc510f7a79c9f4",
     "test/support/book_chat_validation3.dart": "7f1daeb2237e4e8a031e8bf6e04aae4d363e73d7c0eaab68d2ad5257672409dd",

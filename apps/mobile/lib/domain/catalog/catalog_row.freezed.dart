@@ -15,8 +15,8 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$CatalogRow {
 
-/// `Text#` Gutenberg; URL EPUB & cover dirakit dari sini.
- int get id; String get title; List<CatalogAuthor> get authors; List<String> get subjects; List<String> get bookshelves;/// Tanggal rilis di Gutenberg, `YYYY-MM-DD`. Null kalau kosong.
+/// Gutenberg `Text#`; the EPUB and cover URLs are built from it.
+ int get id; String get title; List<CatalogAuthor> get authors; List<String> get subjects; List<String> get bookshelves;/// Gutenberg release date, `YYYY-MM-DD`. Null when empty.
  String? get issued;
 /// Create a copy of CatalogRow
 /// with the given fields replaced by the non-null parameter values.
@@ -222,7 +222,7 @@ class _CatalogRow extends CatalogRow {
   const _CatalogRow({required this.id, required this.title, required  List<CatalogAuthor> authors,  List<String> subjects = const [],  List<String> bookshelves = const [], this.issued}): _authors = authors,_subjects = subjects,_bookshelves = bookshelves,super._();
   
 
-/// `Text#` Gutenberg; URL EPUB & cover dirakit dari sini.
+/// Gutenberg `Text#`; the EPUB and cover URLs are built from it.
 @override final  int id;
 @override final  String title;
  final  List<CatalogAuthor> _authors;
@@ -246,7 +246,7 @@ class _CatalogRow extends CatalogRow {
   return EqualUnmodifiableListView(_bookshelves);
 }
 
-/// Tanggal rilis di Gutenberg, `YYYY-MM-DD`. Null kalau kosong.
+/// Gutenberg release date, `YYYY-MM-DD`. Null when empty.
 @override final  String? issued;
 
 /// Create a copy of CatalogRow

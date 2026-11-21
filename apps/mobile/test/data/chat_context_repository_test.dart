@@ -18,6 +18,7 @@ import 'package:luma/domain/models/ai_reply.dart';
 import 'package:luma/domain/models/book.dart';
 import 'package:luma/domain/models/book_chat.dart';
 
+import '../fakes.dart' show FakeAiCalls;
 import 'openrouter_service_test.dart' show json, sse, event;
 
 class Keys extends ApiKeyStore {
@@ -1160,6 +1161,45 @@ void main() {
       hasLength(1),
     );
     expect((await latest()).exploration, isNull);
+  });
+
+  ChatContextRepository loggedContext(FakeAiCalls calls) {
+    final repo = ChatContextRepository(
+      db,
+      chat,
+      OpenRouterService(
+        Dio(BaseOptions(baseUrl: 'https://openrouter.ai/api/v1'))
+          ..httpClientAdapter = adapter,
+      ),
+      keys,
+      calls: calls,
+    );
+    addTearDown(repo.dispose);
+    return repo;
+  }
+
+  test('one answered send is one logged chat call', () async {
+    final calls = FakeAiCalls();
+    final logged = loggedContext(calls);
+    adapter.strategy = 'chapters';
+    adapter.chapterIds = [chapter];
+    final prepared = (await logged.prepare(turn))!;
+    expect(calls.rows, isEmpty); // nothing until the answer arrives
+    expect((await prepared.stream().toList()).last.answer, isNotNull);
+    expect(calls.rows.single.kind, AiCallKind.chat);
+    expect(calls.rows.single.error, isNull);
+  });
+
+  test('a send failing after a paid step is logged as failed', () async {
+    final calls = FakeAiCalls();
+    adapter.strategy = 'chapters';
+    adapter.chapterIds = [999999];
+    await expectLater(
+      loggedContext(calls).prepare(turn),
+      fails(AiError.invalidResponse),
+    );
+    expect(calls.rows.single.kind, AiCallKind.chat);
+    expect(calls.rows.single.error, AiError.invalidResponse);
   });
 
   test('model metadata failure falls back to a conservative context and still answers', () async {

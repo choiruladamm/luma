@@ -7,6 +7,7 @@ import 'package:luma/domain/models/book_chat.dart';
 
 import 'package:dio/dio.dart';
 
+import 'package:luma/data/repositories/ai_calls_repository.dart';
 import 'package:luma/data/repositories/book_search_index.dart';
 import 'package:luma/data/repositories/book_search_repository.dart';
 import 'package:luma/data/repositories/settings_repository.dart';
@@ -241,6 +242,9 @@ class FakeOpenRouter implements OpenRouterService {
       >[];
   AiException? failure;
 
+  /// Reported to `onUsage` once per request when set.
+  ChatUsage? usage;
+
   @override
   Future<bool> checkKey(String apiKey) async {
     checked.add(apiKey);
@@ -260,9 +264,11 @@ class FakeOpenRouter implements OpenRouterService {
     required String model,
     required BreakdownInput input,
     CancelToken? cancel,
+    void Function(ChatUsage usage)? onUsage,
   }) {
     breakdownCalls.add(input);
     lastCancel = cancel;
+    if (usage != null) onUsage?.call(usage!);
     if (apiKey == null) {
       return Stream.error(const AiException(AiError.noApiKey));
     }
@@ -282,6 +288,7 @@ class FakeOpenRouter implements OpenRouterService {
     required List<String> context,
     required List<String> target,
     int attempts = 2,
+    void Function(ChatUsage usage)? onUsage,
   }) async {
     calls.add((
       apiKey: apiKey,
@@ -292,6 +299,7 @@ class FakeOpenRouter implements OpenRouterService {
     ));
     if (apiKey == null) throw const AiException(AiError.noApiKey);
     if (failure != null) throw failure!;
+    if (usage != null) onUsage?.call(usage!);
     return AiReply(
       translations: [for (final t in target) 'id: $t'],
       meaning: 'Maknanya: ${target.length} paragraf.',
@@ -317,8 +325,10 @@ class FakeOpenRouter implements OpenRouterService {
     required List<String> context,
     required List<String> target,
     CancelToken? cancel,
+    void Function(ChatUsage usage)? onUsage,
   }) {
     streamCalls.add(target);
+    if (usage != null) onUsage?.call(usage!);
     streamBooks.add(book);
     lastCancel = cancel;
     if (apiKey == null) {
@@ -475,4 +485,27 @@ BookSearchResult fakeResult(
     total: total ?? built.fold(0, (n, c) => n + c.hits.length),
     chapterCount: built.length,
   );
+}
+
+/// `ai_calls` without a database: every recorded call, in order.
+class FakeAiCalls implements AiCallsRepository {
+  final rows = <({AiCallKind kind, AiError? error, ChatUsage? usage})>[];
+
+  @override
+  Future<void> record({
+    required AiCallKind kind,
+    required String model,
+    required int promptVersion,
+    required int chars,
+    required String? apiKey,
+    required int totalMs,
+    int? firstTokenMs,
+    ChatUsage? usage,
+    GroupRef? group,
+    int? bookId,
+    AiError? error,
+  }) async {
+    if (error == AiError.noApiKey) return;
+    rows.add((kind: kind, error: error, usage: usage));
+  }
 }

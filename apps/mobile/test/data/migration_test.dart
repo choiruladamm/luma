@@ -169,6 +169,31 @@ final v17 = [
   "CREATE TRIGGER paragraph_fts_au AFTER UPDATE OF text, type ON paragraphs BEGIN INSERT INTO paragraph_fts(paragraph_fts, rowid, text) SELECT 'delete', old.rowid, old.text WHERE EXISTS (SELECT 1 FROM paragraph_fts_docsize WHERE id = old.rowid); INSERT INTO paragraph_fts(rowid, text) SELECT new.rowid, new.text WHERE new.type != 'sceneBreak'; END",
 ];
 
+// Frozen schema 18: sync outbox/inbox and their triggers, before ai_calls.key_source.
+final v18 = [
+  ...v17,
+  r'''CREATE TABLE "sync_outbox" ("kind" TEXT NOT NULL, "key" TEXT NOT NULL, "updated_at" INTEGER NOT NULL, PRIMARY KEY ("kind", "key"))''',
+  r'''CREATE TABLE "sync_inbox" ("kind" TEXT NOT NULL, "key" TEXT NOT NULL, "data" TEXT NULL, "updated_at" INTEGER NOT NULL, "schema_version" INTEGER NOT NULL, PRIMARY KEY ("kind", "key"))''',
+  r'''CREATE TRIGGER sync_books_ai AFTER INSERT ON books BEGIN INSERT INTO sync_outbox (kind, key, updated_at) SELECT 'book', k, CAST((julianday('now') - 2440587.5) * 86400000 AS INTEGER) FROM (SELECT COALESCE('md:' || NEW.book_key, NEW.hash) AS k) WHERE k IS NOT NULL ON CONFLICT (kind, key) DO UPDATE SET updated_at = excluded.updated_at; END''',
+  r'''CREATE TRIGGER sync_books_au AFTER UPDATE ON books BEGIN INSERT INTO sync_outbox (kind, key, updated_at) SELECT 'book', k, CAST((julianday('now') - 2440587.5) * 86400000 AS INTEGER) FROM (SELECT COALESCE('md:' || NEW.book_key, NEW.hash) AS k) WHERE k IS NOT NULL ON CONFLICT (kind, key) DO UPDATE SET updated_at = excluded.updated_at; END''',
+  r'''CREATE TRIGGER sync_books_ad AFTER DELETE ON books BEGIN INSERT INTO sync_outbox (kind, key, updated_at) SELECT 'book', k, CAST((julianday('now') - 2440587.5) * 86400000 AS INTEGER) FROM (SELECT COALESCE('md:' || OLD.book_key, OLD.hash) AS k) WHERE k IS NOT NULL ON CONFLICT (kind, key) DO UPDATE SET updated_at = excluded.updated_at; END''',
+  r'''CREATE TRIGGER sync_reading_progress_ai AFTER INSERT ON reading_progress BEGIN INSERT INTO sync_outbox (kind, key, updated_at) SELECT 'reading_progress', k, CAST((julianday('now') - 2440587.5) * 86400000 AS INTEGER) FROM (SELECT (SELECT COALESCE('md:' || b.book_key, b.hash) FROM books b WHERE b.id = NEW.book_id) AS k) WHERE k IS NOT NULL ON CONFLICT (kind, key) DO UPDATE SET updated_at = excluded.updated_at; END''',
+  r'''CREATE TRIGGER sync_reading_progress_au AFTER UPDATE ON reading_progress BEGIN INSERT INTO sync_outbox (kind, key, updated_at) SELECT 'reading_progress', k, CAST((julianday('now') - 2440587.5) * 86400000 AS INTEGER) FROM (SELECT (SELECT COALESCE('md:' || b.book_key, b.hash) FROM books b WHERE b.id = NEW.book_id) AS k) WHERE k IS NOT NULL ON CONFLICT (kind, key) DO UPDATE SET updated_at = excluded.updated_at; END''',
+  r'''CREATE TRIGGER sync_reading_sessions_ai AFTER INSERT ON reading_sessions BEGIN INSERT INTO sync_outbox (kind, key, updated_at) SELECT 'reading_session', k, CAST((julianday('now') - 2440587.5) * 86400000 AS INTEGER) FROM (SELECT (SELECT COALESCE('md:' || b.book_key, b.hash) FROM books b WHERE b.id = NEW.book_id) || '/' || (NEW.started_at * 1000) AS k) WHERE k IS NOT NULL ON CONFLICT (kind, key) DO UPDATE SET updated_at = excluded.updated_at; END''',
+  r'''CREATE TRIGGER sync_reading_sessions_au AFTER UPDATE ON reading_sessions BEGIN INSERT INTO sync_outbox (kind, key, updated_at) SELECT 'reading_session', k, CAST((julianday('now') - 2440587.5) * 86400000 AS INTEGER) FROM (SELECT (SELECT COALESCE('md:' || b.book_key, b.hash) FROM books b WHERE b.id = NEW.book_id) || '/' || (NEW.started_at * 1000) AS k) WHERE k IS NOT NULL ON CONFLICT (kind, key) DO UPDATE SET updated_at = excluded.updated_at; END''',
+  r'''CREATE TRIGGER sync_ai_results_ai AFTER INSERT ON ai_results BEGIN INSERT INTO sync_outbox (kind, key, updated_at) SELECT 'ai_result', k, CAST((julianday('now') - 2440587.5) * 86400000 AS INTEGER) FROM (SELECT (SELECT COALESCE('md:' || b.book_key, b.hash) || '/' || c.sort_order FROM chapters c JOIN books b ON b.id = c.book_id WHERE c.id = NEW.chapter_id) || '/' || NEW.group_index AS k) WHERE k IS NOT NULL ON CONFLICT (kind, key) DO UPDATE SET updated_at = excluded.updated_at; END''',
+  r'''CREATE TRIGGER sync_ai_results_au AFTER UPDATE ON ai_results BEGIN INSERT INTO sync_outbox (kind, key, updated_at) SELECT 'ai_result', k, CAST((julianday('now') - 2440587.5) * 86400000 AS INTEGER) FROM (SELECT (SELECT COALESCE('md:' || b.book_key, b.hash) || '/' || c.sort_order FROM chapters c JOIN books b ON b.id = c.book_id WHERE c.id = NEW.chapter_id) || '/' || NEW.group_index AS k) WHERE k IS NOT NULL ON CONFLICT (kind, key) DO UPDATE SET updated_at = excluded.updated_at; END''',
+  r'''CREATE TRIGGER sync_ai_breakdowns_ai AFTER INSERT ON ai_breakdowns BEGIN INSERT INTO sync_outbox (kind, key, updated_at) SELECT 'ai_breakdown', k, CAST((julianday('now') - 2440587.5) * 86400000 AS INTEGER) FROM (SELECT (SELECT COALESCE('md:' || b.book_key, b.hash) || '/' || c.sort_order FROM chapters c JOIN books b ON b.id = c.book_id WHERE c.id = NEW.chapter_id) || '/' || NEW.group_index AS k) WHERE k IS NOT NULL ON CONFLICT (kind, key) DO UPDATE SET updated_at = excluded.updated_at; END''',
+  r'''CREATE TRIGGER sync_ai_breakdowns_au AFTER UPDATE ON ai_breakdowns BEGIN INSERT INTO sync_outbox (kind, key, updated_at) SELECT 'ai_breakdown', k, CAST((julianday('now') - 2440587.5) * 86400000 AS INTEGER) FROM (SELECT (SELECT COALESCE('md:' || b.book_key, b.hash) || '/' || c.sort_order FROM chapters c JOIN books b ON b.id = c.book_id WHERE c.id = NEW.chapter_id) || '/' || NEW.group_index AS k) WHERE k IS NOT NULL ON CONFLICT (kind, key) DO UPDATE SET updated_at = excluded.updated_at; END''',
+  r'''CREATE TRIGGER sync_settings_ai AFTER INSERT ON settings BEGIN INSERT INTO sync_outbox (kind, key, updated_at) SELECT 'setting', k, CAST((julianday('now') - 2440587.5) * 86400000 AS INTEGER) FROM (SELECT NEW.key AS k) WHERE k IS NOT NULL AND NEW.key IN ('ai.model', 'app.locale', 'shelf.sort', 'shelf.view', 'theme', 'reader.size', 'reader.font', 'reader.spacing', 'reader.margin', 'reader.hideStatusBar', 'reader.showProgressLine', 'reader.chatHintSeen') ON CONFLICT (kind, key) DO UPDATE SET updated_at = excluded.updated_at; END''',
+  r'''CREATE TRIGGER sync_settings_au AFTER UPDATE ON settings BEGIN INSERT INTO sync_outbox (kind, key, updated_at) SELECT 'setting', k, CAST((julianday('now') - 2440587.5) * 86400000 AS INTEGER) FROM (SELECT NEW.key AS k) WHERE k IS NOT NULL AND NEW.key IN ('ai.model', 'app.locale', 'shelf.sort', 'shelf.view', 'theme', 'reader.size', 'reader.font', 'reader.spacing', 'reader.margin', 'reader.hideStatusBar', 'reader.showProgressLine', 'reader.chatHintSeen') ON CONFLICT (kind, key) DO UPDATE SET updated_at = excluded.updated_at; END''',
+  r'''CREATE TRIGGER sync_chat_sessions_ai AFTER INSERT ON chat_sessions BEGIN INSERT INTO sync_outbox (kind, key, updated_at) SELECT 'chat_session', k, CAST((julianday('now') - 2440587.5) * 86400000 AS INTEGER) FROM (SELECT (SELECT COALESCE('md:' || b.book_key, b.hash) FROM books b WHERE b.id = NEW.book_id) || '/' || (NEW.created_at * 1000) AS k) WHERE k IS NOT NULL ON CONFLICT (kind, key) DO UPDATE SET updated_at = excluded.updated_at; END''',
+  r'''CREATE TRIGGER sync_chat_sessions_au AFTER UPDATE ON chat_sessions BEGIN INSERT INTO sync_outbox (kind, key, updated_at) SELECT 'chat_session', k, CAST((julianday('now') - 2440587.5) * 86400000 AS INTEGER) FROM (SELECT (SELECT COALESCE('md:' || b.book_key, b.hash) FROM books b WHERE b.id = NEW.book_id) || '/' || (NEW.created_at * 1000) AS k) WHERE k IS NOT NULL ON CONFLICT (kind, key) DO UPDATE SET updated_at = excluded.updated_at; END''',
+  r'''CREATE TRIGGER sync_chat_sessions_ad AFTER DELETE ON chat_sessions BEGIN INSERT INTO sync_outbox (kind, key, updated_at) SELECT 'chat_session', k, CAST((julianday('now') - 2440587.5) * 86400000 AS INTEGER) FROM (SELECT (SELECT COALESCE('md:' || b.book_key, b.hash) FROM books b WHERE b.id = OLD.book_id) || '/' || (OLD.created_at * 1000) AS k) WHERE k IS NOT NULL ON CONFLICT (kind, key) DO UPDATE SET updated_at = excluded.updated_at; END''',
+  r'''CREATE TRIGGER sync_chat_turns_ai AFTER INSERT ON chat_turns BEGIN INSERT INTO sync_outbox (kind, key, updated_at) SELECT 'chat_turn', k, CAST((julianday('now') - 2440587.5) * 86400000 AS INTEGER) FROM (SELECT (SELECT (SELECT COALESCE('md:' || b.book_key, b.hash) FROM books b WHERE b.id = s.book_id) || '/' || (s.created_at * 1000) FROM chat_sessions s WHERE s.id = NEW.session_id) || '/' || NEW.sequence AS k) WHERE k IS NOT NULL AND NEW.phase NOT IN ('preparing', 'retrieving', 'waiting', 'writing', 'slow') ON CONFLICT (kind, key) DO UPDATE SET updated_at = excluded.updated_at; END''',
+  r'''CREATE TRIGGER sync_chat_turns_au AFTER UPDATE ON chat_turns BEGIN INSERT INTO sync_outbox (kind, key, updated_at) SELECT 'chat_turn', k, CAST((julianday('now') - 2440587.5) * 86400000 AS INTEGER) FROM (SELECT (SELECT (SELECT COALESCE('md:' || b.book_key, b.hash) FROM books b WHERE b.id = s.book_id) || '/' || (s.created_at * 1000) FROM chat_sessions s WHERE s.id = NEW.session_id) || '/' || NEW.sequence AS k) WHERE k IS NOT NULL AND NEW.phase NOT IN ('preparing', 'retrieving', 'waiting', 'writing', 'slow') ON CONFLICT (kind, key) DO UPDATE SET updated_at = excluded.updated_at; END''',
+];
+
 AppDatabase _open([void Function(dynamic raw)? setup]) => AppDatabase(
   DatabaseConnection(
     NativeDatabase.memory(setup: setup),
@@ -395,6 +420,24 @@ void main() {
     addTearDown(fresh.close);
     expect(await _shape(db), await _shape(fresh));
   });
+
+  test(
+    'v18 → v19 adds nullable ai_calls.key_source and keeps old calls',
+    () async {
+      final db = _old(v18, 18);
+      addTearDown(db.close);
+      expect((await db.select(db.books).getSingle()).title, 'Meditations');
+      expect((await db.select(db.aiResults).getSingle()).meaning, 'm');
+      await db.customStatement(
+        "INSERT INTO ai_calls (book_id,kind,model,prompt_version,chars) VALUES (1,'group','m',4,10)",
+      );
+      final call = await db.select(db.aiCalls).getSingle();
+      expect(call.keySource, isNull);
+      final fresh = _open();
+      addTearDown(fresh.close);
+      expect(await _shape(db), await _shape(fresh));
+    },
+  );
 
   test(
     'v17 → v18 backfill: settings without timestamps queue at time 0',
@@ -658,6 +701,7 @@ void main() {
         null,
         null,
         100,
+        null, // key_source (v19)
       ],
       'settings': ['reader.font', 'literata'],
     };

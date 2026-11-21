@@ -1,4 +1,4 @@
-import 'package:drift/drift.dart' hide isNull;
+import 'package:drift/drift.dart' hide isNull, isNotNull;
 import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -85,6 +85,7 @@ void main() {
   GroupRef group(int g) => (chapterId: chapter, groupIndex: g);
 
   test('asks the LLM once, then serves the cache', () async {
+    ai.usage = (promptTokens: 100, completionTokens: 20, cost: 0.001);
     final first = await container.read(groupAiProvider(group(5)).future);
     expect(first.translations, ['id: p6', 'id: p7']);
     expect(ai.calls, hasLength(1));
@@ -103,6 +104,18 @@ void main() {
 
     final row = await db.select(db.aiResults).getSingle();
     expect(row.model, defaultAiModel);
+
+    // One logged call: the cache hit afterwards adds nothing.
+    final call = await db.select(db.aiCalls).getSingle();
+    expect(call.kind, AiCallKind.group);
+    expect(call.bookId, isNotNull); // resolved from the chapter
+    expect((call.chapterId, call.groupIndex), (chapter, 5));
+    expect(call.chars, 'p6p7'.length);
+    expect(call.promptVersion, aiPromptVersion);
+    expect(call.keySource, AiKeySource.own);
+    expect(call.promptTokens, 100);
+    expect(call.costUsd, 0.001);
+    expect(call.error, isNull);
   });
 
   test('two taps while loading share one request', () async {
@@ -128,6 +141,9 @@ void main() {
     await Future<void>.delayed(const Duration(milliseconds: 500));
     expect(ai.calls, hasLength(1)); // no automatic retry
     expect(await AiResultsRepository(db).find(group(1)), isNull);
+    final failed = await db.select(db.aiCalls).getSingle();
+    expect(failed.error, 'timeout');
+    expect(failed.promptTokens, isNull);
 
     ai.failure = null;
     container.invalidate(groupAiProvider(group(1)));
@@ -145,6 +161,7 @@ void main() {
       ),
     );
     expect(await db.select(db.aiResults).get(), isEmpty);
+    expect(await db.select(db.aiCalls).get(), isEmpty);
   });
 
   test('the prompt knows the book and chapter', () async {

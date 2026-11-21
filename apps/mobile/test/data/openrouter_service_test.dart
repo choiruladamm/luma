@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:luma/data/services/openrouter_service.dart';
 import 'package:luma/domain/breakdown_prompt.dart';
+import 'package:luma/domain/chat_budget.dart';
 import 'package:luma/domain/models/ai_reply.dart';
 
 /// Answers each request with the next queued reply; records what was sent.
@@ -156,6 +157,45 @@ void main() {
     expect(adapter.requests, hasLength(2));
   });
 
+  test('explain reports each attempt\'s usage', () async {
+    ResponseBody withUsage(String content, int prompt) => json({
+      'choices': [
+        {
+          'message': {'role': 'assistant', 'content': content},
+        },
+      ],
+      'usage': {
+        'prompt_tokens': prompt,
+        'completion_tokens': 5,
+        'cost': 0.0001,
+      },
+    });
+    adapter.replies
+      ..add(withUsage('{"translations": ["Satu."], "meaning": "M."}', 10))
+      ..add(
+        withUsage('{"translations": ["Satu.", "Dua."], "meaning": "M."}', 20),
+      )
+      ..add(answer('{"translations": ["Satu.", "Dua."], "meaning": "M."}'));
+    final usage = <int>[];
+    await service.explain(
+      apiKey: 'sk-or-v1-x',
+      model: 'z-ai/glm-5.3-flash',
+      context: const [],
+      target: ['One.', 'Two.'],
+      onUsage: (u) => usage.add(u.promptTokens),
+    );
+    expect(usage, [10, 20]);
+    // A reply without usage reports nothing.
+    await service.explain(
+      apiKey: 'sk-or-v1-x',
+      model: 'z-ai/glm-5.3-flash',
+      context: const [],
+      target: ['One.', 'Two.'],
+      onUsage: (u) => usage.add(u.promptTokens),
+    );
+    expect(usage, [10, 20]);
+  });
+
   test('invalid twice gives up', () async {
     adapter.replies
       ..add(answer('Maaf.'))
@@ -274,6 +314,39 @@ void main() {
       expect(system, contains('[MAKNA]'));
       final user = ((body['messages'] as List)[1] as Map)['content'] as String;
       expect(user, startsWith('BUKU: Meditations, Marcus Aurelius\nBAB: II\n'));
+    });
+
+    test('onUsage asks for and reads the final usage event', () async {
+      adapter.replies
+        ..add(
+          sse([
+            event('[T1]\nSatu.'),
+            'data: ${jsonEncode({
+              'choices': <Object>[],
+              'usage': {'prompt_tokens': 30, 'completion_tokens': 7},
+            })}\n\n',
+            'data: [DONE]\n',
+          ]),
+        )
+        ..add(sse([event('x'), 'data: [DONE]\n']));
+      final usage = <ChatUsage>[];
+      await service
+          .explainStream(
+            apiKey: 'sk-or-v1-x',
+            model: 'z-ai/glm-5.3-flash',
+            context: const [],
+            target: ['One.'],
+            onUsage: usage.add,
+          )
+          .drain<void>();
+      expect(usage, [(promptTokens: 30, completionTokens: 7, cost: null)]);
+      final body = adapter.requests.first.data as Map<String, Object?>;
+      expect(body['stream_options'], {'include_usage': true});
+
+      // Without a listener the request stays as it was.
+      await stream().drain<void>();
+      final plain = adapter.requests.last.data as Map<String, Object?>;
+      expect(plain.containsKey('stream_options'), isFalse);
     });
 
     test('non-ASCII split across chunks survives', () async {

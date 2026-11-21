@@ -537,48 +537,54 @@ class Book extends DataClass implements Insertable<Book> {
   final int id;
   final SourceType sourceType;
 
-  /// Slug buat nyocokin import Markdown ke buku yang sama. Null buat EPUB.
+  /// Slug that matches a Markdown import to the same book; null for EPUB.
   final String? bookKey;
   final String title;
   final String? author;
   final String? fileName;
 
-  /// Null = pake cover default.
+  /// The cover file name; null means the default cover.
   final String? coverName;
 
-  /// Judul/penulis asli EPUB, diisi sekali pas edit pertama. Null =
-  /// belum pernah diedit (`originalAuthor` null + `originalTitle` terisi =
-  /// aslinya tanpa penulis). Re-import gak boleh nimpa `title`/`author`
-  /// kalau `originalTitle` terisi.
+  /// The EPUB's original title and author, filled once on the first edit.
+  ///
+  /// Null means never edited (`originalAuthor` null with `originalTitle` set
+  /// means the original had no author). A re-import must not overwrite
+  /// `title` or `author` when `originalTitle` is set.
   final String? originalTitle;
   final String? originalAuthor;
 
-  /// true = cover EPUB disembunyiin; `coverName` tetap utuh di DB + disk.
+  /// Whether the EPUB cover is hidden; `coverName` stays intact in the database and on disk.
   final bool useDefaultCover;
 
-  /// SHA-256 isi file EPUB, cegah import dobel.
+  /// SHA-256 of the EPUB file content, that prevents duplicate imports.
   final String? hash;
 
-  /// Identitas di katalog luar (`BookSource.id` + id di sumbernya), buat
-  /// badge "udah di rak". Null = import manual (docs/discover.md).
+  /// Identity in an external catalog (`BookSource.id` plus the id at that
+  /// source), which drives the "already on the shelf" badge.
+  ///
+  /// Null means a manual import (docs/discover.md).
   final String? sourceId;
   final String? externalId;
 
-  /// Naik = re-import + hapus ai_results buku itu.
+  /// Raising it triggers a re-import and deletes that book's `ai_results`.
   final int parserVersion;
 
-  /// Snapshot isi/urutan untuk chat; metadata tidak menaikkan revision.
+  /// Snapshot of content and order for chat; metadata changes don't raise the revision.
   final int contentRevision;
   final int totalChars;
   final DateTime createdAt;
   final DateTime? lastOpenedAt;
   final DateTime? firstOpenedAt;
 
-  /// Total waktu baca aktif (halaman baca kebuka, app di depan, belum idle).
+  /// Total active reading time: reader page open, app in the foreground, not yet idle.
   final int readingSeconds;
 
-  /// Pertama kali layar akhir buku kebuka. Diisi sekali, gak ditimpa. Gak
-  /// disimpulin dari sesi: lompat ke bab terakhir bisa ngelabuin.
+  /// When the end-of-book screen was first reached; set once and never
+  /// overwritten.
+  ///
+  /// It isn't inferred from sessions because jumping to the last chapter
+  /// would fool it.
   final DateTime? finishedAt;
   const Book({
     required this.id,
@@ -1420,15 +1426,18 @@ class Chapter extends DataClass implements Insertable<Chapter> {
   final int bookId;
   final int sortOrder;
 
-  /// Nomor bab asli (Markdown / daftar isi).
+  /// The original chapter number (Markdown or table of contents).
   final int? chapterNumber;
   final String title;
 
-  /// Label induk TOC EPUB ("Discourses › Book I"), buat resolusi "bab III"
-  /// di Ngobrol. Null = belum diperiksa (buku lama), '' = diperiksa, gak ada.
+  /// The parent label from the EPUB TOC ("Discourses › Book I"), which lets
+  /// Ngobrol resolve "bab III".
+  ///
+  /// Null means not checked yet (a book imported before this column existed),
+  /// and '' means checked with no parent label.
   final String? section;
 
-  /// Jumlah karakter sebelum chapter ini, buat persentase baca.
+  /// The number of characters before this chapter, used for the reading percentage.
   final int charOffset;
   const Chapter({
     required this.id,
@@ -1846,11 +1855,11 @@ class Paragraph extends DataClass implements Insertable<Paragraph> {
   final int chapterId;
   final int paragraphIndex;
 
-  /// Null buat heading & scene break.
+  /// Null for headings and scene breaks.
   final int? groupIndex;
   final ParagraphType type;
 
-  /// Teks polos yang udah dinormalisasi. (`text` bentrok sama builder Drift.)
+  /// The normalized plain text. The Dart name is `content` because `text` clashes with the Drift builder.
   final String content;
   const Paragraph({
     required this.chapterId,
@@ -2243,8 +2252,9 @@ class ReadingProgressData extends DataClass
   final int chapterId;
   final int paragraphIndex;
 
-  /// Bagian paragraf yang udah lewat garis atas, 0..1 dari tingginya. Fraksi,
-  /// bukan piksel: tinggi paragraf berubah kalau font/ukuran diganti di Aa.
+  /// The part of the paragraph already past the top line, as a 0..1 fraction
+  /// of its height. It is a fraction, not pixels, because the paragraph height
+  /// changes when the font or size is changed in Aa.
   final double paragraphOffset;
   final DateTime updatedAt;
   const ReadingProgressData({
@@ -2709,19 +2719,21 @@ class AiResult extends DataClass implements Insertable<AiResult> {
   final int chapterId;
   final int groupIndex;
 
-  /// JSON array string, satu item per paragraf di grup (urut).
+  /// A JSON array of strings, one item per paragraph in the group, in order.
   final String translations;
 
-  /// Satu penjelasan buat seluruh grup.
+  /// One explanation for the whole group.
   final String meaning;
   final String model;
 
-  /// `aiPromptVersion` waktu dibikin. Lebih lama dari yang sekarang = dianggap
-  /// belum ada, diterjemahin ulang pas grupnya dibuka.
+  /// The `aiPromptVersion` at creation time.
+  ///
+  /// A result older than the current version counts as missing and is
+  /// translated again when its group is opened.
   final int promptVersion;
   final DateTime createdAt;
 
-  /// Berapa kali hasil ini dibuka. Penanda grup yang sering dibaca ulang.
+  /// How many times this result was opened; marks groups that are reread often.
   final int openCount;
   final DateTime? lastOpenedAt;
   const AiResult({
@@ -3244,15 +3256,17 @@ class AiBreakdown extends DataClass implements Insertable<AiBreakdown> {
   final int chapterId;
   final int groupIndex;
 
-  /// Teks mentah balasan model yang udah lolos `parseBreakdown`.
+  /// The raw model reply text that passed `parseBreakdown`.
   final String body;
 
-  /// `breakdownSourceHash` terjemahan `ai_results` yang dipake. Beda =
-  /// terjemahannya udah diganti, rentang kalimat gak berlaku lagi.
+  /// The `breakdownSourceHash` of the `ai_results` translation that was used.
+  ///
+  /// A mismatch means the translation was replaced, so the sentence ranges no
+  /// longer apply.
   final String sourceHash;
   final String model;
 
-  /// `breakdownPromptVersion`. Lebih lama = dianggap belum ada.
+  /// The `breakdownPromptVersion`; an older result counts as missing.
   final int promptVersion;
   final DateTime createdAt;
   const AiBreakdown({
@@ -3728,12 +3742,15 @@ class ReadingSession extends DataClass implements Insertable<ReadingSession> {
   final int chapterId;
   final DateTime startedAt;
 
-  /// Waktu aktif ([ReadingClock] di domain/reading.dart).
+  /// Active seconds, as measured by [ReadingClock] in domain/reading.dart.
   final int seconds;
 
-  /// Posisi absolut di buku (karakter) di awal dan akhir potongan. Dua ujung,
-  /// bukan satu angka: aturan "berapa yang dianggap beneran dibaca" ada di
-  /// query, jadi bisa diganti tanpa ngubah data.
+  /// Absolute book positions (in characters) at the start and end of the
+  /// slice.
+  ///
+  /// Two endpoints rather than one number: the rule for how much counts as
+  /// actually read lives in the queries, so it can change without changing the
+  /// data.
   final int startChar;
   final int endChar;
   const ReadingSession({
@@ -4148,6 +4165,15 @@ class $AiCallsTable extends AiCalls with TableInfo<$AiCallsTable, AiCall> {
     defaultValue: currentDateAndTime,
   );
   @override
+  late final GeneratedColumnWithTypeConverter<AiKeySource?, String> keySource =
+      GeneratedColumn<String>(
+        'key_source',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      ).withConverter<AiKeySource?>($AiCallsTable.$converterkeySourcen);
+  @override
   List<GeneratedColumn> get $columns => [
     id,
     bookId,
@@ -4164,6 +4190,7 @@ class $AiCallsTable extends AiCalls with TableInfo<$AiCallsTable, AiCall> {
     totalMs,
     error,
     createdAt,
+    keySource,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -4347,6 +4374,12 @@ class $AiCallsTable extends AiCalls with TableInfo<$AiCallsTable, AiCall> {
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
       )!,
+      keySource: $AiCallsTable.$converterkeySourcen.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}key_source'],
+        ),
+      ),
     );
   }
 
@@ -4357,6 +4390,10 @@ class $AiCallsTable extends AiCalls with TableInfo<$AiCallsTable, AiCall> {
 
   static JsonTypeConverter2<AiCallKind, String, String> $converterkind =
       const EnumNameConverter<AiCallKind>(AiCallKind.values);
+  static JsonTypeConverter2<AiKeySource, String, String> $converterkeySource =
+      const EnumNameConverter<AiKeySource>(AiKeySource.values);
+  static JsonTypeConverter2<AiKeySource?, String?, String?>
+  $converterkeySourcen = JsonTypeConverter2.asNullable($converterkeySource);
 }
 
 class AiCall extends DataClass implements Insertable<AiCall> {
@@ -4368,19 +4405,22 @@ class AiCall extends DataClass implements Insertable<AiCall> {
   final String model;
   final int promptVersion;
 
-  /// Panjang teks target, buat "per 1.000 karakter".
+  /// Length of the target text, used for "per 1.000 karakter" figures.
   final int chars;
 
-  /// Null = model gak ngirim usage.
+  /// Null when the model didn't report usage.
   final int? promptTokens;
   final int? completionTokens;
   final double? costUsd;
   final int? firstTokenMs;
   final int? totalMs;
 
-  /// `AiError.name`. Null = sukses.
+  /// The `AiError.name`; null means success.
   final String? error;
   final DateTime createdAt;
+
+  /// Null for rows written before the key source was recorded.
+  final AiKeySource? keySource;
   const AiCall({
     required this.id,
     this.bookId,
@@ -4397,6 +4437,7 @@ class AiCall extends DataClass implements Insertable<AiCall> {
     this.totalMs,
     this.error,
     required this.createdAt,
+    this.keySource,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -4436,6 +4477,11 @@ class AiCall extends DataClass implements Insertable<AiCall> {
       map['error'] = Variable<String>(error);
     }
     map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || keySource != null) {
+      map['key_source'] = Variable<String>(
+        $AiCallsTable.$converterkeySourcen.toSql(keySource),
+      );
+    }
     return map;
   }
 
@@ -4474,6 +4520,9 @@ class AiCall extends DataClass implements Insertable<AiCall> {
           ? const Value.absent()
           : Value(error),
       createdAt: Value(createdAt),
+      keySource: keySource == null && nullToAbsent
+          ? const Value.absent()
+          : Value(keySource),
     );
   }
 
@@ -4500,6 +4549,9 @@ class AiCall extends DataClass implements Insertable<AiCall> {
       totalMs: serializer.fromJson<int?>(json['totalMs']),
       error: serializer.fromJson<String?>(json['error']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      keySource: $AiCallsTable.$converterkeySourcen.fromJson(
+        serializer.fromJson<String?>(json['keySource']),
+      ),
     );
   }
   @override
@@ -4523,6 +4575,9 @@ class AiCall extends DataClass implements Insertable<AiCall> {
       'totalMs': serializer.toJson<int?>(totalMs),
       'error': serializer.toJson<String?>(error),
       'createdAt': serializer.toJson<DateTime>(createdAt),
+      'keySource': serializer.toJson<String?>(
+        $AiCallsTable.$converterkeySourcen.toJson(keySource),
+      ),
     };
   }
 
@@ -4542,6 +4597,7 @@ class AiCall extends DataClass implements Insertable<AiCall> {
     Value<int?> totalMs = const Value.absent(),
     Value<String?> error = const Value.absent(),
     DateTime? createdAt,
+    Value<AiKeySource?> keySource = const Value.absent(),
   }) => AiCall(
     id: id ?? this.id,
     bookId: bookId.present ? bookId.value : this.bookId,
@@ -4560,6 +4616,7 @@ class AiCall extends DataClass implements Insertable<AiCall> {
     totalMs: totalMs.present ? totalMs.value : this.totalMs,
     error: error.present ? error.value : this.error,
     createdAt: createdAt ?? this.createdAt,
+    keySource: keySource.present ? keySource.value : this.keySource,
   );
   AiCall copyWithCompanion(AiCallsCompanion data) {
     return AiCall(
@@ -4588,6 +4645,7 @@ class AiCall extends DataClass implements Insertable<AiCall> {
       totalMs: data.totalMs.present ? data.totalMs.value : this.totalMs,
       error: data.error.present ? data.error.value : this.error,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      keySource: data.keySource.present ? data.keySource.value : this.keySource,
     );
   }
 
@@ -4608,7 +4666,8 @@ class AiCall extends DataClass implements Insertable<AiCall> {
           ..write('firstTokenMs: $firstTokenMs, ')
           ..write('totalMs: $totalMs, ')
           ..write('error: $error, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('keySource: $keySource')
           ..write(')'))
         .toString();
   }
@@ -4630,6 +4689,7 @@ class AiCall extends DataClass implements Insertable<AiCall> {
     totalMs,
     error,
     createdAt,
+    keySource,
   );
   @override
   bool operator ==(Object other) =>
@@ -4649,7 +4709,8 @@ class AiCall extends DataClass implements Insertable<AiCall> {
           other.firstTokenMs == this.firstTokenMs &&
           other.totalMs == this.totalMs &&
           other.error == this.error &&
-          other.createdAt == this.createdAt);
+          other.createdAt == this.createdAt &&
+          other.keySource == this.keySource);
 }
 
 class AiCallsCompanion extends UpdateCompanion<AiCall> {
@@ -4668,6 +4729,7 @@ class AiCallsCompanion extends UpdateCompanion<AiCall> {
   final Value<int?> totalMs;
   final Value<String?> error;
   final Value<DateTime> createdAt;
+  final Value<AiKeySource?> keySource;
   const AiCallsCompanion({
     this.id = const Value.absent(),
     this.bookId = const Value.absent(),
@@ -4684,6 +4746,7 @@ class AiCallsCompanion extends UpdateCompanion<AiCall> {
     this.totalMs = const Value.absent(),
     this.error = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.keySource = const Value.absent(),
   });
   AiCallsCompanion.insert({
     this.id = const Value.absent(),
@@ -4701,6 +4764,7 @@ class AiCallsCompanion extends UpdateCompanion<AiCall> {
     this.totalMs = const Value.absent(),
     this.error = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.keySource = const Value.absent(),
   }) : kind = Value(kind),
        model = Value(model),
        promptVersion = Value(promptVersion),
@@ -4721,6 +4785,7 @@ class AiCallsCompanion extends UpdateCompanion<AiCall> {
     Expression<int>? totalMs,
     Expression<String>? error,
     Expression<DateTime>? createdAt,
+    Expression<String>? keySource,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -4738,6 +4803,7 @@ class AiCallsCompanion extends UpdateCompanion<AiCall> {
       if (totalMs != null) 'total_ms': totalMs,
       if (error != null) 'error': error,
       if (createdAt != null) 'created_at': createdAt,
+      if (keySource != null) 'key_source': keySource,
     });
   }
 
@@ -4757,6 +4823,7 @@ class AiCallsCompanion extends UpdateCompanion<AiCall> {
     Value<int?>? totalMs,
     Value<String?>? error,
     Value<DateTime>? createdAt,
+    Value<AiKeySource?>? keySource,
   }) {
     return AiCallsCompanion(
       id: id ?? this.id,
@@ -4774,6 +4841,7 @@ class AiCallsCompanion extends UpdateCompanion<AiCall> {
       totalMs: totalMs ?? this.totalMs,
       error: error ?? this.error,
       createdAt: createdAt ?? this.createdAt,
+      keySource: keySource ?? this.keySource,
     );
   }
 
@@ -4827,6 +4895,11 @@ class AiCallsCompanion extends UpdateCompanion<AiCall> {
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
+    if (keySource.present) {
+      map['key_source'] = Variable<String>(
+        $AiCallsTable.$converterkeySourcen.toSql(keySource.value),
+      );
+    }
     return map;
   }
 
@@ -4847,7 +4920,8 @@ class AiCallsCompanion extends UpdateCompanion<AiCall> {
           ..write('firstTokenMs: $firstTokenMs, ')
           ..write('totalMs: $totalMs, ')
           ..write('error: $error, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('keySource: $keySource')
           ..write(')'))
         .toString();
   }
@@ -5327,7 +5401,7 @@ class ChatSessionRow extends DataClass implements Insertable<ChatSessionRow> {
   final DateTime updatedAt;
   final DateTime? lastOpenedAt;
 
-  /// JSON ChatScrollAnchor (turnId/blockIndex/alignment), bukan offset pixel.
+  /// A JSON ChatScrollAnchor (turnId/blockIndex/alignment), not a pixel offset.
   final String? scrollAnchor;
   const ChatSessionRow({
     required this.id,
@@ -6084,17 +6158,17 @@ class ChatTurnRow extends DataClass implements Insertable<ChatTurnRow> {
   final int sequence;
   final String question;
 
-  /// Snapshot JSON tidak menunjuk chapter lewat FK: re-import menjaga arsip.
+  /// Snapshot JSON that doesn't reference chapters through a foreign key, so a re-import keeps the archive.
   final String? quote;
   final String? answer;
   final String sources;
   final String draft;
   final String? exploration;
 
-  /// Langkah AI, JSON; ditulis sekali di finalize, null pada turn lama.
+  /// The AI steps as JSON, written once at finalize; null on turns created before this column existed.
   final String? steps;
 
-  /// Teks mentah supaya mapper chat bisa menangani enum backup yang rusak.
+  /// Stored as raw text so the chat mapper can handle a corrupt enum value from a backup.
   final String phase;
   final int attempt;
   final String model;
@@ -8102,7 +8176,7 @@ class $CatalogBooksTable extends CatalogBooks
 }
 
 class CatalogBookRow extends DataClass implements Insertable<CatalogBookRow> {
-  /// `Text#` Gutenberg.
+  /// The Gutenberg `Text#`.
   final int id;
   final String title;
   final String authorsText;
@@ -8112,7 +8186,7 @@ class CatalogBookRow extends DataClass implements Insertable<CatalogBookRow> {
   final String subjectsJson;
   final String bookshelvesJson;
 
-  /// `YYYY-MM-DD`, null kalau kosong di dump.
+  /// `YYYY-MM-DD`; null when the dump leaves it empty.
   final String? issued;
   const CatalogBookRow({
     required this.id,
@@ -8474,7 +8548,7 @@ class SyncOutboxData extends DataClass implements Insertable<SyncOutboxData> {
   final String kind;
   final String key;
 
-  /// ms epoch saat perubahan terakhir (jam device).
+  /// Time of the last change in epoch milliseconds, from the device clock.
   final int updatedAt;
   const SyncOutboxData({
     required this.kind,
@@ -8789,7 +8863,7 @@ class SyncInboxData extends DataClass implements Insertable<SyncInboxData> {
   final String kind;
   final String key;
 
-  /// JSON data record, null = tombstone.
+  /// The record data as JSON; null means a tombstone.
   final String? data;
   final int updatedAt;
   final int schemaVersion;
@@ -13340,6 +13414,7 @@ typedef $$AiCallsTableCreateCompanionBuilder = AiCallsCompanion Function({
   Value<int?> totalMs,
   Value<String?> error,
   Value<DateTime> createdAt,
+  Value<AiKeySource?> keySource,
 });
 typedef $$AiCallsTableUpdateCompanionBuilder = AiCallsCompanion Function({
   Value<int> id,
@@ -13357,6 +13432,7 @@ typedef $$AiCallsTableUpdateCompanionBuilder = AiCallsCompanion Function({
   Value<int?> totalMs,
   Value<String?> error,
   Value<DateTime> createdAt,
+  Value<AiKeySource?> keySource,
 });
 
 final class $$AiCallsTableReferences
@@ -13471,6 +13547,12 @@ class $$AiCallsTableFilterComposer
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<AiKeySource?, AiKeySource, String>
+  get keySource => $composableBuilder(
+    column: $table.keySource,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
   );
 
   $$BooksTableFilterComposer get bookId {
@@ -13594,6 +13676,11 @@ class $$AiCallsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get keySource => $composableBuilder(
+    column: $table.keySource,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$BooksTableOrderingComposer get bookId {
     final $$BooksTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -13699,6 +13786,9 @@ class $$AiCallsTableAnnotationComposer
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
+  GeneratedColumnWithTypeConverter<AiKeySource?, String> get keySource =>
+      $composableBuilder(column: $table.keySource, builder: (column) => column);
+
   $$BooksTableAnnotationComposer get bookId {
     final $$BooksTableAnnotationComposer composer = $composerBuilder(
       composer: this,
@@ -13789,6 +13879,7 @@ class $$AiCallsTableTableManager
                 Value<int?> totalMs = const Value.absent(),
                 Value<String?> error = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
+                Value<AiKeySource?> keySource = const Value.absent(),
               }) => AiCallsCompanion(
                 id: id,
                 bookId: bookId,
@@ -13805,6 +13896,7 @@ class $$AiCallsTableTableManager
                 totalMs: totalMs,
                 error: error,
                 createdAt: createdAt,
+                keySource: keySource,
               ),
           createCompanionCallback:
               ({
@@ -13823,6 +13915,7 @@ class $$AiCallsTableTableManager
                 Value<int?> totalMs = const Value.absent(),
                 Value<String?> error = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
+                Value<AiKeySource?> keySource = const Value.absent(),
               }) => AiCallsCompanion.insert(
                 id: id,
                 bookId: bookId,
@@ -13839,6 +13932,7 @@ class $$AiCallsTableTableManager
                 totalMs: totalMs,
                 error: error,
                 createdAt: createdAt,
+                keySource: keySource,
               ),
           withReferenceMapper: (p0) => p0
               .map(
