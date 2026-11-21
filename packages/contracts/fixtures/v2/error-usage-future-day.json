@@ -1,0 +1,15 @@
+{
+  "request": {
+    "method": "POST",
+    "path": "/v2/usage"
+  },
+  "response": {
+    "status": 400,
+    "body": {
+      "error": {
+        "code": "BAD_REQUEST",
+        "message": "Days must not be in the future"
+      }
+    }
+  }
+}

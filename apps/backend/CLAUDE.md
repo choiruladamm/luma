@@ -21,7 +21,7 @@ Hono API under `/v2` (snake_case) and `/v1` (camelCase, the same routers behind 
 
 - Per feature: `routes.ts` (validator + wiring, no logic) → `service.ts` (logic, deps passed as params) → `repo.ts` (every D1 query; services never write SQL). Each repo function is one query-budget unit and its comment states the query count.
 - requestId, IP rate limit, and deps run on all `/v1` and `/v2` (`app.ts` mounts each router under both; routes read `c.var.wire`); kill switch, body limit, session, and user rate limit attach per route group (`app.ts`). Kill switches run before D1/R2 is touched. Quota-bound features (files, backup, sync) use `featureGuard(flag)`.
-- Drizzle everywhere except `sync/repo.ts`: raw SQL with `json_each` fits a 500-record batch in one statement.
+- Drizzle everywhere except `sync/repo.ts` and `usage/repo.ts`: raw SQL with `json_each` fits a 500-row batch in one statement.
 - Contracts, DTO types, and services speak snake_case; Drizzle and domain code stay camelCase. A response key that differs per version (sync pull) is built per `c.var.wire`, never converted by the adapter: a 500-record pull must not be parsed. Opaque payloads (`records[].data`, `x-backup-manifest`) keep their casing. Better Auth's `basePath` stays `/v1/auth`; `/v2/auth/*` rewrites to it (`features/auth/routes.ts`).
 - Features don't import each other, except account deletion calling `revokeKey`.
 - R2 keys are always per user, `u/{userId}/...`, through `lib/storage.ts`.

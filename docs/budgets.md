@@ -46,7 +46,7 @@ Counts describe typical completed requests and exclude client retries. Each rout
 
 ### Mobile API
 
-Every row below applies to both `/v1/*` and `/v2/*`: the routers, guards, and D1 and R2 counts are the same, and the golden files record identical counts for both. The one difference is CPU on `/v1`: the temporary [case adapter](backend.md#api-versions) converts a request's JSON keys after the single parse `validate` already does (never a second parse or a stringify, and `records.*.data` is not walked), and converts a small 2xx JSON response by parsing and stringifying it. Sync pull is never parsed or re-encoded on either version.
+Every row below applies to both `/v1/*` and `/v2/*`: the routers, guards, and D1 and R2 counts are the same, and the golden files record identical counts for both (usage upload is recorded only in `http.v2.golden.json`, so the `/v1` file stays unchanged). The one difference is CPU on `/v1`: the temporary [case adapter](backend.md#api-versions) converts a request's JSON keys after the single parse `validate` already does (never a second parse or a stringify, and `records.*.data` is not walked), and converts a small 2xx JSON response by parsing and stringifying it. Sync pull is never parsed or re-encoded on either version.
 
 | Action | D1 statements | R2 and outbound HTTP |
 |---|---|---|
@@ -62,6 +62,7 @@ Every row below applies to both `/v1/*` and `/v2/*`: the routers, guards, and D1
 | Snapshot PUT | `putBackup` adds one reservation plus one write if pruning frees bytes. A failed upload after reservation releases those bytes. `backup.test.ts` allows at most three total statements for a successful upload without pruning. | One PUT and one LIST, with one bulk DELETE if pruning. |
 | Cloud restore | Each request pays the bearer session cost. | One LIST to choose a snapshot, one GET for the ZIP, and one GET per needed book or cover missing locally. |
 | Sync push | `findRecords` and `syncUsage` add one read statement each. `writeRecords` adds a two-statement batch if records changed. `sync.test.ts` allows 6 total with session renewal. | No R2 or HTTP in the push endpoint. Separate book-file checks and uploads use the file API costs above. |
+| Usage upload | `usageQuota` adds one read. `writeUsage` adds a two-statement batch: the quota update and one upsert of up to 500 rows (one D1 row written per row). `usage.test.ts` allows 5 total with session renewal. The app sends at most once per user per day. | None. |
 | Sync pull and book downloads | `pullRows` adds one indexed statement per page with up to `limit + 1` result rows. `sync-pull.test.ts` allows 3 total with renewal. Each download pays its own session cost. | No R2 or HTTP in pull. A missing book download uses one GET for the source file or Markdown dump. |
 
 A backup run makes one missing-file request per name chunk, one PUT per absent object, and one snapshot PUT. Sync can make up to `SyncRepository.maxBatches` push requests or pull pages per phase, plus file calls. The application sync counter counts changed records. It omits D1 index writes and the usage-row update.

@@ -1,7 +1,7 @@
 ---
 type: reference
 purpose: Look up the mobile Worker API and the resources it owns.
-sections: [Environments and bindings, Request pipeline and API conventions, API versions, Authentication and accounts, AI subsidy, Files and cloud backups, D1 schema]
+sections: [Environments and bindings, Request pipeline and API conventions, API versions, Authentication and accounts, AI subsidy, Usage analytics, Files and cloud backups, D1 schema]
 ---
 
 # Backend API
@@ -29,6 +29,7 @@ The Hono Worker runs on workerd. Its entry point is `apps/backend/src/index.ts`,
 | `/v2/ai/*` | `AI_KEY_ENABLED`, then bearer session. Only `POST /key` adds a user rate limit and body limit. |
 | `/v2/files/*`, `/v2/backups*` | `BACKUP_ENABLED`, bearer session, user rate limit, then any route-specific payload checks. Sync file transfers go through the same file routes. |
 | `/v2/sync/*` | `SYNC_ENABLED`, bearer session, user rate limit, then sync request validation. See [Sync protocol](sync-protocol.md). |
+| `POST /v2/usage` | Bearer session, user rate limit, body limit, then the usage checks in [Usage analytics](#usage-analytics). No feature switch. |
 
 Each feature switch enables its routes only when set to the string `"true"`. A disabled feature returns 503 `SERVICE_DISABLED` with `Retry-After` before accessing D1 or R2. The IP and user keys use the Worker rate-limit binding. Rejection returns 429 `RATE_LIMITED` with `Retry-After`.
 
@@ -72,6 +73,18 @@ Key and usage requests return 403 `AI_BANNED` for a banned user. The dashboard b
 
 OpenRouter enforces the per-key limit and workspace guardrails. Keep `AI_CHAT_MODELS` and `AI_EMBEDDING_MODELS` aligned with the guardrail allowlist. `AI_MONTHLY_BUDGET_USD` is a dashboard display value. See [Operations](operations.md#openrouter-workspaces) for provider-side setup.
 
+## Usage analytics
+
+The app sends a daily rollup of its own usage so the dashboard can show AI usage and reading per user, including calls paid with the user's own key, which OpenRouter can't see. Sending is automatic for signed-in users and independent of sync.
+
+| Route | Contract |
+|---|---|
+| `POST /v2/usage` | Takes `{rows}` with 1–`MAX_USAGE_ROWS` (500) rows and returns `{applied}`. |
+
+A row is one local `day` (`YYYY-MM-DD`) × `feature` (`group`, `breakdown`, `chat`, or `reading`) × `model` × `book_key` × `key_source` (`own`, `subsidy`), with `book_title`, `calls`, `failed`, `prompt_tokens`, `completion_tokens`, `cost_usd` (null when no call reported a cost), and `reading_seconds`. An empty string means "none" in the key fields: reading rows have no model or key source. Each row is upserted into `usage_daily`: a resent row replaces the stored one instead of adding to it, so resending a day is safe, and a key repeated within one batch keeps its last row. Cost is the client's own report, for display only; OpenRouter's per-key limit still enforces the subsidy.
+
+A day more than one day ahead of the UTC date (the app's local day can be up to UTC+14) returns 400 `BAD_REQUEST`. Each user may write `USAGE_DAILY_ROWS` (2,000) rows per UTC day, counted in `user_storage.usage_rows`. A batch that would exceed it returns 429 `QUOTA_EXCEEDED` with `Retry-After` until UTC midnight and writes nothing. Rows are kept until the account is deleted.
+
 ## Files and cloud backups
 
 Objects are scoped to the bearer user's `u/{userId}/` prefix. Book files and covers live under `files/`, and snapshot ZIPs under `backups/`. Sync shares the same file objects. See [Backup](backup.md) for the mobile ZIP format and backup and restore flow.
@@ -94,6 +107,6 @@ Objects are scoped to the bearer user's `u/{userId}/` prefix. Book files and cov
 | Source | Ownership and relationships |
 |---|---|
 | [auth-schema.ts](../packages/core/src/db/auth-schema.ts) | `users` owns `sessions` and linked provider `accounts`. Both cascade on user deletion. `verifications` is a separate Better Auth table. |
-| [schema.ts](../packages/core/src/db/schema.ts) | Each user owns zero or one `ai_keys` row, zero or one lazily created `user_storage` row, and any number of sync `records`. These cascade on user deletion. `invite_codes.used_by` is nullable and cleared on user deletion, with `used_at` retained. |
+| [schema.ts](../packages/core/src/db/schema.ts) | Each user owns zero or one `ai_keys` row, zero or one lazily created `user_storage` row, any number of sync `records`, and any number of `usage_daily` rows. These cascade on user deletion. `invite_codes.used_by` is nullable and cleared on user deletion, with `used_at` retained. |
 
 The linked schema files define columns and indexes. See [Sync protocol](sync-protocol.md#records-and-keys) for the record identity and cursor, and [Per-action budgets](budgets.md#per-action-budgets) for access costs.

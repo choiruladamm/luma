@@ -1555,6 +1555,106 @@
     "fetches": 0,
     "r2Ops": 0
   },
+  "POST /v2/usage": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "applied": 2
+    },
+    "d1Queries": 4,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "POST /v2/usage 400": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "BAD_REQUEST",
+        "message": "Body must be {\"rows\": [1..500]}"
+      }
+    },
+    "d1Queries": 1,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "POST /v2/usage 400 future day": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "BAD_REQUEST",
+        "message": "Days must not be in the future"
+      }
+    },
+    "d1Queries": 1,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "POST /v2/usage 413": {
+    "status": 413,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "PAYLOAD_TOO_LARGE",
+        "message": "Body exceeds 1048576 bytes"
+      }
+    },
+    "d1Queries": 1,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "POST /v2/usage 401": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "UNAUTHORIZED",
+        "message": "Sign in required"
+      }
+    },
+    "d1Queries": 0,
+    "fetches": 0,
+    "r2Ops": 0
+  },
+  "POST /v2/usage user limit": {
+    "status": 429,
+    "headers": {
+      "content-type": "application/json",
+      "retry-after": "60",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "RATE_LIMITED",
+        "message": "Too many requests"
+      }
+    },
+    "d1Queries": 1,
+    "fetches": 0,
+    "r2Ops": 0
+  },
   "POST /v2/ai/key banned": {
     "status": 403,
     "headers": {
