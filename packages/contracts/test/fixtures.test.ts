@@ -18,6 +18,7 @@ import { backupInfo, backupsListResponse } from "../src/backend/backups";
 import { missingRequest, missingResponse, putFileResponse } from "../src/backend/files";
 import { healthResponse } from "../src/backend/health";
 import { pullQuery, pullResponse, pushRequest, pushResponse } from "../src/backend/sync";
+import { usageUploadRequest, usageUploadResponse } from "../src/backend/usage";
 
 /** An error fixture: the shared body shape with a code the backend can emit. */
 const error = "error";
@@ -52,6 +53,7 @@ const contracts: Record<string, Entry> = {
   "error-sync-bad-request": { response: error },
   "error-sync-too-large": { response: error },
   "error-unauthorized": { response: error },
+  "error-usage-future-day": { response: error },
   "files-missing": { body: missingRequest, response: missingResponse },
   "files-put": { response: putFileResponse },
   health: { response: healthResponse },
@@ -64,6 +66,7 @@ const contracts: Record<string, Entry> = {
   "sync-push-older-schema": { body: pushRequest, response: pushResponse },
   "sync-push-tombstone": { body: pushRequest, response: pushResponse },
   "sync-push": { body: pushRequest, response: pushResponse },
+  usage: { body: usageUploadRequest, response: usageUploadResponse },
 };
 
 const fixtures = (version: string) => join(import.meta.dirname, "../fixtures", version);

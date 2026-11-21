@@ -35,7 +35,8 @@ export const inviteCodes = sqliteTable("invite_codes", {
  * against `USER_STORAGE_BYTES` on every upload. `seq` = sync order.
  * `syncBytes` = size of sync records in D1 (key length + JSON data), checked
  * against `SYNC_STORAGE_BYTES`. `syncRows` = sync rows written on UTC day
- * `syncDay` (days since epoch), checked against `SYNC_DAILY_WRITES`.
+ * `syncDay` (days since epoch), checked against `SYNC_DAILY_WRITES`. `usageRows` = usage rows
+ * written on UTC day `usageDay`, checked against `USAGE_DAILY_ROWS`.
  */
 export const userStorage = sqliteTable("user_storage", {
   userId: text("user_id")
@@ -46,6 +47,8 @@ export const userStorage = sqliteTable("user_storage", {
   syncBytes: integer("sync_bytes").notNull().default(0),
   syncDay: integer("sync_day").notNull().default(0),
   syncRows: integer("sync_rows").notNull().default(0),
+  usageDay: integer("usage_day").notNull().default(0),
+  usageRows: integer("usage_rows").notNull().default(0),
 });
 
 /**
@@ -73,4 +76,32 @@ export const records = sqliteTable(
     primaryKey({ columns: [t.userId, t.kind, t.key] }),
     index("records_user_seq").on(t.userId, t.seq),
   ],
+);
+
+/**
+ * Daily usage rollup sent by the app (docs/backend.md, Usage analytics): one row per local
+ * `day` (YYYY-MM-DD) × feature × model × book × key source. Empty strings mean "none" in key
+ * columns. A resend replaces the row, so counts are never added twice.
+ */
+export const usageDaily = sqliteTable(
+  "usage_daily",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    day: text("day").notNull(),
+    feature: text("feature").notNull(),
+    model: text("model").notNull(),
+    bookKey: text("book_key").notNull(),
+    bookTitle: text("book_title"),
+    keySource: text("key_source").notNull(),
+    calls: integer("calls").notNull(),
+    failed: integer("failed").notNull(),
+    promptTokens: integer("prompt_tokens").notNull(),
+    completionTokens: integer("completion_tokens").notNull(),
+    costUsd: real("cost_usd"),
+    readingSeconds: integer("reading_seconds").notNull(),
+    updatedAt: integer("updated_at").notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.day, t.feature, t.model, t.bookKey, t.keySource] })],
 );
