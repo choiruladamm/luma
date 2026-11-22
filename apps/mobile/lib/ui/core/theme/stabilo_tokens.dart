@@ -37,6 +37,7 @@ abstract final class Radii {
 abstract final class Calendar {
   static const day = 12.0; // one day's square
   static const gap = 3.0; // between squares
+  static const chart = 64.0; // height of the AI help bars
 }
 
 /// Reference layout: iPhone 390 × 844.

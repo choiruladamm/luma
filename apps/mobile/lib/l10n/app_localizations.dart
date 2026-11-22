@@ -4748,6 +4748,60 @@ abstract class AppLocalizations {
   /// **'Buku yang udah dihapus'**
   String get statsDeletedBook;
 
+  /// No description provided for @statsHelp.
+  ///
+  /// In id, this message translates to:
+  /// **'Bantuan AI'**
+  String get statsHelp;
+
+  /// No description provided for @statsHelpNote.
+  ///
+  /// In id, this message translates to:
+  /// **'Kelompok yang diartiin per 1.000 karakter yang lo baca. Makin turun, makin lancar bacanya.'**
+  String get statsHelpNote;
+
+  /// No description provided for @statsPer1000.
+  ///
+  /// In id, this message translates to:
+  /// **'{value} per 1.000 karakter'**
+  String statsPer1000(String value);
+
+  /// No description provided for @statsHelpThisWeek.
+  ///
+  /// In id, this message translates to:
+  /// **'Minggu ini: {value}'**
+  String statsHelpThisWeek(String value);
+
+  /// No description provided for @statsHelpWeek.
+  ///
+  /// In id, this message translates to:
+  /// **'Minggu {date}: {value}'**
+  String statsHelpWeek(String date, String value);
+
+  /// No description provided for @statsHelpNoReading.
+  ///
+  /// In id, this message translates to:
+  /// **'belum ada bacaan'**
+  String get statsHelpNoReading;
+
+  /// No description provided for @statsHardest.
+  ///
+  /// In id, this message translates to:
+  /// **'Bab paling susah'**
+  String get statsHardest;
+
+  /// No description provided for @statsHardestCaption.
+  ///
+  /// In id, this message translates to:
+  /// **'{book} · {helped}/{groups} kelompok diartiin'**
+  String statsHardestCaption(String book, int helped, int groups);
+
+  /// No description provided for @statsReopened.
+  ///
+  /// In id, this message translates to:
+  /// **'{count, plural, other{dibuka ulang {count}×}}'**
+  String statsReopened(int count);
+
   /// No description provided for @statsFavorite.
   ///
   /// In id, this message translates to:

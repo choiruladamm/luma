@@ -3510,6 +3510,63 @@
   },
   "statsDeletedBook": "Buku yang udah dihapus",
   "@statsDeletedBook": {},
+  "statsHelp": "Bantuan AI",
+  "@statsHelp": {},
+  "statsHelpNote": "Kelompok yang diartiin per 1.000 karakter yang lo baca. Makin turun, makin lancar bacanya.",
+  "@statsHelpNote": {},
+  "statsPer1000": "{value} per 1.000 karakter",
+  "@statsPer1000": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "statsHelpThisWeek": "Minggu ini: {value}",
+  "@statsHelpThisWeek": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "statsHelpWeek": "Minggu {date}: {value}",
+  "@statsHelpWeek": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      },
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "statsHelpNoReading": "belum ada bacaan",
+  "@statsHelpNoReading": {},
+  "statsHardest": "Bab paling susah",
+  "@statsHardest": {},
+  "statsHardestCaption": "{book} · {helped}/{groups} kelompok diartiin",
+  "@statsHardestCaption": {
+    "placeholders": {
+      "book": {
+        "type": "String"
+      },
+      "helped": {
+        "type": "int"
+      },
+      "groups": {
+        "type": "int"
+      }
+    }
+  },
+  "statsReopened": "{count, plural, other{dibuka ulang {count}×}}",
+  "@statsReopened": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "statsFavorite": "Paling sering baca",
   "@statsFavorite": {},
   "statsFavoriteHour": "Jam",

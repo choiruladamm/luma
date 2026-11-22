@@ -139,4 +139,9 @@ void main() {
       expect(charsPerMinuteOf(const []), isNull);
     },
   );
+
+  test('perThousandChars: null before any reading', () {
+    expect(perThousandChars(3, 1500), 2);
+    expect(perThousandChars(3, 0), isNull);
+  });
 }

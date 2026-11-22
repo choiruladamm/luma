@@ -137,3 +137,9 @@ double? charsPerMinuteOf(Iterable<ReadingSlice> slices) {
   if (chars == 0 || seconds == 0) return null;
   return chars * 60 / seconds;
 }
+
+/// [count] per 1,000 characters read, or null before any reading. The
+/// comprehension trend: fewer AI-helped groups per 1,000 characters means
+/// reading needs translation less often.
+double? perThousandChars(int count, int chars) =>
+    chars <= 0 ? null : count * 1000 / chars;

@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../data/repositories/stats_repository.dart';
 import '../../../../domain/reading_stats.dart';
 import '../../../../l10n/l10n.dart';
+import '../../../../routing/router.dart';
 import '../../../core/format.dart';
 import '../../../core/theme/stabilo_theme.dart';
 import '../../../core/theme/stabilo_tokens.dart';
@@ -28,6 +30,7 @@ class StatsView extends ConsumerWidget {
     final reading = books.where((b) => b.finishedAt == null).take(_listMax);
     final finished = books.where((b) => b.finishedAt != null).take(_listMax);
     final costs = ref.watch(costStatsProvider).value;
+    final help = ref.watch(comprehensionProvider).value;
     String time(int seconds) => formatReadingTime(seconds, locale: locale);
     return SettingsPage(
       title: l.statsTitle,
@@ -84,6 +87,10 @@ class StatsView extends ConsumerWidget {
                   ),
               ],
             ),
+          if (help != null && help.weeks.any((w) => w.helped > 0))
+            _HelpCard(weeks: help.weeks),
+          if (help != null && help.hardest.isNotEmpty)
+            _HardestCard(chapters: help.hardest),
           if (costs != null && costs.features.isNotEmpty)
             _costCard(context, costs),
           _NumbersCard(
@@ -409,6 +416,158 @@ class _BooksCard extends StatelessWidget {
         ),
       );
     }
+  }
+}
+
+/// Card title in the caption style every Stats card uses.
+Widget _cardTitle(StabiloColors c, String title) => Semantics(
+  header: true,
+  child: Text(
+    title,
+    style: StabiloType.caption.copyWith(
+      fontWeight: FontWeight.w700,
+      color: c.ink2,
+    ),
+  ),
+);
+
+/// AI-helped groups per 1,000 characters read, one bar per week (oldest
+/// left); bar heights are relative to the highest week.
+class _HelpCard extends StatelessWidget {
+  const _HelpCard({required this.weeks});
+
+  final List<HelpWeek> weeks;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.stabilo;
+    final l = context.l10n;
+    final number = NumberFormat('0.#', l.localeName);
+    final day = DateFormat.MMMd(l.localeName);
+    String value(HelpWeek w) => w.per1000 == null
+        ? l.statsHelpNoReading
+        : l.statsPer1000(number.format(w.per1000));
+    final max = weeks.fold(
+      0.0,
+      (m, w) => (w.per1000 ?? 0) > m ? w.per1000! : m,
+    );
+    return Container(
+      padding: const EdgeInsets.all(Space.s4),
+      decoration: _card(c),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: Space.s3,
+        children: [
+          _cardTitle(c, l.statsHelp),
+          Text(
+            l.statsHelpNote,
+            style: StabiloType.caption.copyWith(color: c.ink2),
+          ),
+          SizedBox(
+            height: Calendar.chart,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              spacing: Calendar.gap,
+              children: [
+                for (final w in weeks)
+                  Expanded(
+                    child: Semantics(
+                      label: l.statsHelpWeek(day.format(w.week), value(w)),
+                      child: FractionallySizedBox(
+                        alignment: Alignment.bottomCenter,
+                        heightFactor: max == 0
+                            ? 0.05
+                            : ((w.per1000 ?? 0) / max).clamp(0.05, 1),
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: w.per1000 == null ? c.track : c.accent,
+                            borderRadius: BorderRadius.circular(
+                              Radii.calendarDay,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          Text(
+            l.statsHelpThisWeek(value(weeks.last)),
+            style: StabiloType.caption.copyWith(color: c.ink),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Chapters with the largest share of AI-translated groups; a tap opens the
+/// reader at that chapter.
+class _HardestCard extends StatelessWidget {
+  const _HardestCard({required this.chapters});
+
+  final List<HardChapter> chapters;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.stabilo;
+    final l = context.l10n;
+    return Container(
+      padding: const EdgeInsets.all(Space.s4),
+      decoration: _card(c),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: Space.s1,
+        children: [
+          _cardTitle(c, l.statsHardest),
+          for (final ch in chapters)
+            InkWell(
+              borderRadius: BorderRadius.circular(Radii.sm),
+              onTap: () =>
+                  context.push(Routes.readerChapter(ch.bookId, ch.chapterId)),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: Space.s2),
+                child: Row(
+                  spacing: Space.s3,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        spacing: 2,
+                        children: [
+                          Text(
+                            ch.chapter,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: StabiloType.label.copyWith(color: c.ink),
+                          ),
+                          Text(
+                            [
+                              l.statsHardestCaption(
+                                ch.book,
+                                ch.helped,
+                                ch.groups,
+                              ),
+                              if (ch.reopened > 0) l.statsReopened(ch.reopened),
+                            ].join(' · '),
+                            style: StabiloType.caption.copyWith(color: c.ink2),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Text(
+                      '${(ch.helped / ch.groups * 100).round()}%',
+                      style: StabiloType.caption.copyWith(color: c.ink),
+                    ),
+                    AppIcon(AppIcons.chevron, size: 16, color: c.ink3),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
   }
 }
 
