@@ -2885,6 +2885,47 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsHubTileDisplay => 'Display';
 
   @override
+  String get settingsHubTileStats => 'Stats';
+
+  @override
+  String settingsHubStatsWeek(String time) {
+    return '$time this week';
+  }
+
+  @override
+  String get settingsHubStatsEmpty => 'Nothing yet';
+
+  @override
+  String get statsTitle => 'Reading stats';
+
+  @override
+  String get statsWeek => 'Last 7 days';
+
+  @override
+  String get statsAllTime => 'So far';
+
+  @override
+  String get statsReadingTime => 'Reading time';
+
+  @override
+  String get statsReadingDays => 'Reading days';
+
+  @override
+  String statsDaysOfWeek(int days) {
+    return '$days/7';
+  }
+
+  @override
+  String get statsFinished => 'Books finished';
+
+  @override
+  String get statsEmptyTitle => 'No stats yet';
+
+  @override
+  String get statsEmptyBody =>
+      'Open a book and start reading; your reading time shows up here.';
+
+  @override
   String get settingsHubBackupNever => 'Never';
 
   @override

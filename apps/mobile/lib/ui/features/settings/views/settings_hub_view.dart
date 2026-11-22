@@ -8,6 +8,7 @@ import 'package:hugeicons/hugeicons.dart';
 import '../../../../data/repositories/ai_results_repository.dart';
 import '../../../../data/repositories/catalog_repository.dart';
 import '../../../../data/repositories/settings_repository.dart';
+import '../../../../data/repositories/stats_repository.dart';
 import '../../../../data/services/catalog_sync_service.dart';
 import '../../../../domain/models/ai_model.dart';
 import '../../../../domain/models/reader_prefs.dart';
@@ -48,6 +49,7 @@ class SettingsHubView extends ConsumerWidget {
     final stats = ref.watch(catalogStatsProvider).value;
     final sync = ref.watch(catalogSyncProvider);
     final cache = ref.watch(aiCacheStatsProvider).value;
+    final reading = ref.watch(readingSummaryProvider).value;
     final theme =
         ref.watch(readerPrefsProvider).value?.theme ?? AppTheme.system;
     final lang = ref.watch(appLocaleProvider).value ?? 'id';
@@ -104,6 +106,18 @@ class SettingsHubView extends ConsumerWidget {
           AppTheme.dark => l.aaDark,
         }, lang.toUpperCase()),
         onTap: () => showDisplaySheet(context),
+      ),
+      SettingsTile(
+        icon: HugeIcons.strokeRoundedChart01,
+        name: l.settingsHubTileStats,
+        status: reading == null
+            ? ' '
+            : reading.weekSeconds == 0
+            ? l.settingsHubStatsEmpty
+            : l.settingsHubStatsWeek(
+                formatReadingTime(reading.weekSeconds, locale: locale),
+              ),
+        onTap: () => context.push(Routes.settingsStats),
       ),
     ];
 
@@ -169,6 +183,16 @@ class SettingsHubView extends ConsumerWidget {
                         children: [
                           Expanded(child: tiles[2]),
                           Expanded(child: tiles[3]),
+                        ],
+                      ),
+                    ),
+                    IntrinsicHeight(
+                      child: Row(
+                        spacing: Space.s3,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Expanded(child: tiles[4]),
+                          const Spacer(),
                         ],
                       ),
                     ),

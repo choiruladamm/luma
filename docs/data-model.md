@@ -23,6 +23,8 @@ sections: [Storage map, Identity and content changes, Schema versions and migrat
 | `chat_chapter_notes` | Derived chapter notes | `ChatNotesRepository` |
 | `sync_outbox`, `sync_inbox` | Pending local and remote records | `SyncRepository`, `SyncApplier`; outbox also has database triggers |
 
+`StatsRepository` reads the Statistik baca numbers from `reading_sessions` and `books.finishedAt` on device, so they work offline and include books read with an own AI key.
+
 Reading time counts only while the app is in the foreground and stops after `ReadingClock.idle` without interaction; each session span stays within one chapter and is saved in the same transaction as `books.readingSeconds`.
 
 `ai_calls` holds one row per AI call that reached OpenRouter: an Artinya group (`group`), a Bedahin breakdown (`breakdown`), or a Ngobrolin buku send (`chat`). Retries, repairs and the non-streaming fallback within one call share its row, with their reported usage summed; usage a provider doesn't report stays null, not zero. Failures record the `AiError` name, including the stream timeout and stall (`timeout`). Cache hits, cancelled calls, stale chat attempts, and calls without a key write nothing. `key_source` says whether the user's own key or the subsidy key paid. Chat rows cover the send's completion requests, not its embeddings, and have no first-token time. The foreign keys are set to null on delete, so cost history outlives a deleted book. The log itself is not synced; only its daily rollup leaves the device.

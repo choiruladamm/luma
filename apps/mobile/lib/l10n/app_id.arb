@@ -3400,6 +3400,42 @@
   "@settingsHubTileCache": {},
   "settingsHubTileDisplay": "Tampilan",
   "@settingsHubTileDisplay": {},
+  "settingsHubTileStats": "Statistik",
+  "@settingsHubTileStats": {},
+  "settingsHubStatsWeek": "{time} minggu ini",
+  "@settingsHubStatsWeek": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsHubStatsEmpty": "Belum ada",
+  "@settingsHubStatsEmpty": {},
+  "statsTitle": "Statistik baca",
+  "@statsTitle": {},
+  "statsWeek": "7 hari terakhir",
+  "@statsWeek": {},
+  "statsAllTime": "Sejauh ini",
+  "@statsAllTime": {},
+  "statsReadingTime": "Waktu baca",
+  "@statsReadingTime": {},
+  "statsReadingDays": "Hari baca",
+  "@statsReadingDays": {},
+  "statsDaysOfWeek": "{days}/7",
+  "@statsDaysOfWeek": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "statsFinished": "Buku tamat",
+  "@statsFinished": {},
+  "statsEmptyTitle": "Belum ada statistik",
+  "@statsEmptyTitle": {},
+  "statsEmptyBody": "Buka satu buku terus mulai baca, nanti waktu baca lo kecatat di sini.",
+  "@statsEmptyBody": {},
   "settingsHubBackupNever": "Belum pernah",
   "@settingsHubBackupNever": {},
   "settingsHubCatalogNever": "Belum diunduh",

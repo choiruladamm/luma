@@ -4598,6 +4598,78 @@ abstract class AppLocalizations {
   /// **'Tampilan'**
   String get settingsHubTileDisplay;
 
+  /// No description provided for @settingsHubTileStats.
+  ///
+  /// In id, this message translates to:
+  /// **'Statistik'**
+  String get settingsHubTileStats;
+
+  /// No description provided for @settingsHubStatsWeek.
+  ///
+  /// In id, this message translates to:
+  /// **'{time} minggu ini'**
+  String settingsHubStatsWeek(String time);
+
+  /// No description provided for @settingsHubStatsEmpty.
+  ///
+  /// In id, this message translates to:
+  /// **'Belum ada'**
+  String get settingsHubStatsEmpty;
+
+  /// No description provided for @statsTitle.
+  ///
+  /// In id, this message translates to:
+  /// **'Statistik baca'**
+  String get statsTitle;
+
+  /// No description provided for @statsWeek.
+  ///
+  /// In id, this message translates to:
+  /// **'7 hari terakhir'**
+  String get statsWeek;
+
+  /// No description provided for @statsAllTime.
+  ///
+  /// In id, this message translates to:
+  /// **'Sejauh ini'**
+  String get statsAllTime;
+
+  /// No description provided for @statsReadingTime.
+  ///
+  /// In id, this message translates to:
+  /// **'Waktu baca'**
+  String get statsReadingTime;
+
+  /// No description provided for @statsReadingDays.
+  ///
+  /// In id, this message translates to:
+  /// **'Hari baca'**
+  String get statsReadingDays;
+
+  /// No description provided for @statsDaysOfWeek.
+  ///
+  /// In id, this message translates to:
+  /// **'{days}/7'**
+  String statsDaysOfWeek(int days);
+
+  /// No description provided for @statsFinished.
+  ///
+  /// In id, this message translates to:
+  /// **'Buku tamat'**
+  String get statsFinished;
+
+  /// No description provided for @statsEmptyTitle.
+  ///
+  /// In id, this message translates to:
+  /// **'Belum ada statistik'**
+  String get statsEmptyTitle;
+
+  /// No description provided for @statsEmptyBody.
+  ///
+  /// In id, this message translates to:
+  /// **'Buka satu buku terus mulai baca, nanti waktu baca lo kecatat di sini.'**
+  String get statsEmptyBody;
+
   /// No description provided for @settingsHubBackupNever.
   ///
   /// In id, this message translates to:
