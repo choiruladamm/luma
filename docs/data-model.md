@@ -23,7 +23,7 @@ sections: [Storage map, Identity and content changes, Schema versions and migrat
 | `chat_chapter_notes` | Derived chapter notes | `ChatNotesRepository` |
 | `sync_outbox`, `sync_inbox` | Pending local and remote records | `SyncRepository`, `SyncApplier`; outbox also has database triggers |
 
-`StatsRepository` reads the Statistik baca numbers from `reading_sessions` and `books.finishedAt` on device, so they work offline and include books read with an own AI key. The counting rules live in `domain/reading_stats.dart`, apart from queries and UI: characters read per session are the forward distance capped at `maxCharsPerSecond`, a streak counts local days and isn't broken by a today without reading yet, and weeks start on Monday.
+`StatsRepository` reads the Statistik baca numbers from `reading_sessions` and `books.finishedAt` on device, so they work offline and include books read with an own AI key. The counting rules live in `domain/reading_stats.dart`, apart from queries and UI: characters read per session are the forward distance capped at `maxCharsPerSecond`, a streak counts local days and isn't broken by a today without reading yet, and weeks start on Monday. `StatsRepository.watchHabits` reads the sessions of the calendar span plus every reading day, so a streak can reach back further than the calendar.
 
 Reading time counts only while the app is in the foreground and stops after `ReadingClock.idle` without interaction; each session span stays within one chapter and is saved in the same transaction as `books.readingSeconds`.
 

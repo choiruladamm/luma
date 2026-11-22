@@ -105,4 +105,24 @@ void main() {
       );
     });
   });
+
+  group('favorite times', () {
+    final slices = [
+      slice(DateTime(2026, 11, 16, 21, 30), seconds: 300), // Monday 21h
+      slice(DateTime(2026, 11, 22, 21), seconds: 200), // Sunday 21h
+      slice(DateTime(2026, 11, 22, 7), seconds: 400), // Sunday 7h
+    ];
+
+    test('per hour and per weekday, Monday first', () {
+      final hours = secondsPerHour(slices);
+      expect((hours[21], hours[7], hours[8]), (500, 400, 0));
+      expect(secondsPerWeekday(slices), [300, 0, 0, 0, 0, 0, 600]);
+    });
+
+    test('busiest picks the largest, none when all are zero', () {
+      expect(busiest(secondsPerHour(slices)), 21);
+      expect(busiest(secondsPerWeekday(slices)), 6);
+      expect(busiest(List.filled(24, 0)), isNull);
+    });
+  });
 }

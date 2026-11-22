@@ -96,3 +96,32 @@ Duration? estimatedFinish({
   if (chars == 0 || seconds == 0) return null;
   return Duration(seconds: (remainingChars * seconds / chars).ceil());
 }
+
+/// Active seconds per local hour of the day where each slice started (index
+/// 0..23).
+List<int> secondsPerHour(Iterable<ReadingSlice> slices) {
+  final out = List.filled(24, 0);
+  for (final s in slices) {
+    out[s.startedAt.toLocal().hour] += s.seconds;
+  }
+  return out;
+}
+
+/// Active seconds per local weekday where each slice started, Monday first
+/// (index 0..6).
+List<int> secondsPerWeekday(Iterable<ReadingSlice> slices) {
+  final out = List.filled(7, 0);
+  for (final s in slices) {
+    out[s.startedAt.toLocal().weekday - 1] += s.seconds;
+  }
+  return out;
+}
+
+/// Index of the largest value, or null when every value is zero.
+int? busiest(List<int> values) {
+  var best = -1, at = -1;
+  for (var i = 0; i < values.length; i++) {
+    if (values[i] > best) (best, at) = (values[i], i);
+  }
+  return best > 0 ? at : null;
+}

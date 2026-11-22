@@ -2899,21 +2899,63 @@ class AppLocalizationsEn extends AppLocalizations {
   String get statsTitle => 'Reading stats';
 
   @override
-  String get statsWeek => 'Last 7 days';
+  String get statsHabit => 'Habits';
+
+  @override
+  String get statsThisWeek => 'This week';
+
+  @override
+  String statsLastWeek(String time) {
+    return 'Last week $time';
+  }
+
+  @override
+  String get statsStreak => 'Reading streak';
+
+  @override
+  String statsStreakDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count days',
+      one: '$count day',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get statsCalendar => 'Reading calendar';
+
+  @override
+  String statsCalendarLabel(int days, int weeks) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days reading days',
+      one: '$days reading day',
+    );
+    return '$_temp0 in the last $weeks weeks';
+  }
+
+  @override
+  String get statsFavorite => 'When you read most';
+
+  @override
+  String get statsFavoriteHour => 'Hour';
+
+  @override
+  String get statsFavoriteDay => 'Day';
+
+  @override
+  String statsHourRange(String from, String to) {
+    return '$from–$to';
+  }
 
   @override
   String get statsAllTime => 'So far';
 
   @override
   String get statsReadingTime => 'Reading time';
-
-  @override
-  String get statsReadingDays => 'Reading days';
-
-  @override
-  String statsDaysOfWeek(int days) {
-    return '$days/7';
-  }
 
   @override
   String get statsFinished => 'Books finished';

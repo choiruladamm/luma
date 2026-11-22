@@ -30,6 +30,13 @@ abstract final class Radii {
   static const menu = 18.0; // menu, settings list
   static const dialog = 24.0;
   static const dialogIcon = 26.0; // board 22 Konfirmasi hapus (dialog + icon)
+  static const calendarDay = 3.0; // Statistik baca calendar square
+}
+
+/// The Statistik baca reading calendar (not on a board).
+abstract final class Calendar {
+  static const day = 12.0; // one day's square
+  static const gap = 3.0; // between squares
 }
 
 /// Reference layout: iPhone 390 × 844.
