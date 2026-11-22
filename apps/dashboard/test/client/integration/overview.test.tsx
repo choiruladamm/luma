@@ -1,13 +1,48 @@
 import { screen, waitFor, within } from "@testing-library/react";
 import { HttpResponse, delay, http } from "msw";
 import { describe, expect, it } from "vitest";
-import { overview, user as userRow, usersPage } from "../helpers/fixtures";
+import { overview, usageOverview, user as userRow, usersPage } from "../helpers/fixtures";
 import { API, apiError } from "../helpers/handlers";
 import { recordRequests } from "../helpers/clock";
 import { renderApp } from "../helpers/render";
 import { server } from "../setup";
 
 describe("Ringkasan", () => {
+  it("shows app usage across users beside OpenRouter's spend", async () => {
+    renderApp("/");
+    const card = await screen.findByRole("region", { name: "Pemakaian app" });
+    expect(await within(card).findByText("Bedahin")).toBeInTheDocument();
+    expect(within(card).getByText("Biaya dilaporin app bulan ini")).toBeInTheDocument();
+    expect(within(card).getByText(/^OpenRouter: /)).toBeInTheDocument();
+    expect(within(card).getByText("3 hari ini · 7 minggu ini")).toBeInTheDocument();
+    expect(within(card).getByText("25% dari request")).toBeInTheDocument();
+    expect(within(card).getByRole("link", { name: "Boros" })).toHaveAttribute("href", "/users/u2");
+    expect(within(card).getByText("4 pembaca")).toBeInTheDocument();
+    expect(within(card).getAllByRole("listitem", { name: /^\d+ Nov 2026: / })).toHaveLength(2);
+  });
+
+  it("says so when no app reported usage, and retries a failed load", async () => {
+    let fail = true;
+    server.use(
+      http.get(`${API}/overview/usage`, () =>
+        fail
+          ? apiError(500, "INTERNAL_ERROR")
+          : HttpResponse.json(
+              usageOverview({ totals: { ...usageOverview().totals, active_users: 0 } }),
+            ),
+      ),
+    );
+    const { user } = renderApp("/");
+    const card = await screen.findByRole("region", { name: "Pemakaian app" });
+    // The query client retries once before the error shows.
+    const retry = await within(card).findByRole("button", { name: "Coba lagi" }, { timeout: 3000 });
+    fail = false;
+    await user.click(retry);
+    expect(
+      await within(card).findByText("Belum ada laporan pemakaian dari app."),
+    ).toBeInTheDocument();
+  });
+
   it("shows the numbers, sync, storage, services, AI spend, and newest users", async () => {
     renderApp("/");
     expect(

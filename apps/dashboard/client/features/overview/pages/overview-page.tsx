@@ -18,6 +18,8 @@ import { ServicesCard } from "../components/services-card";
 import { StorageCard } from "../components/storage-card";
 import { SyncCard } from "../components/sync-card";
 import { useOverview } from "../queries/use-overview";
+import { useUsageOverview } from "../queries/use-usage-overview";
+import { UsageOverviewCard } from "../components/usage-overview-card";
 
 const RECENT = 5;
 const pct = (part: number, whole: number) =>
@@ -30,9 +32,10 @@ export function OverviewPage() {
   const { t, locale } = i18n;
   const columns = useMemo(() => userColumns(i18n), [i18n]);
   const recent = useUsers(DEFAULT_USERS_PARAMS);
+  const usage = useUsageOverview();
   const data = overview.data;
   const recentRows = useMemo(() => recent.data?.items.slice(0, RECENT) ?? [], [recent.data]);
-  const refresh = () => void Promise.all([overview.refetch(), recent.refetch()]);
+  const refresh = () => void Promise.all([overview.refetch(), recent.refetch(), usage.refetch()]);
 
   const renderMetrics = () => {
     if (overview.isError && !data) {
@@ -158,6 +161,12 @@ export function OverviewPage() {
         }
       />
       {renderMetrics()}
+      <UsageOverviewCard
+        usage={usage.data}
+        error={usage.error}
+        onRetry={() => void usage.refetch()}
+        openRouterSpend={data?.ai.spend_usd}
+      />
       <section aria-labelledby="h-baru" className="overflow-hidden rounded-card bg-sheet">
         <div className="flex min-h-11 flex-wrap items-center justify-between gap-3 px-6 pt-4 pb-2">
           <h2 id="h-baru" className="m-0 text-card font-semibold">

@@ -92,6 +92,26 @@ export const userUsage = (extra: Record<string, unknown> = {}) => ({
   ...extra,
 });
 
+export const usageOverview = (extra: Record<string, unknown> = {}) => ({
+  from: "2026-10-16",
+  to: "2026-11-14",
+  totals: { calls: 120, failed: 6, cost_usd: 0.42, reading_seconds: 36000, active_users: 7 },
+  month: { from: "2026-11-01", cost_usd: 0.3 },
+  active: { day: 3, week: 7 },
+  days: [
+    { day: "2026-11-13", calls: 50, failed: 2, cost_usd: 0.1, active_users: 5 },
+    { day: "2026-11-14", calls: 70, failed: 4, cost_usd: 0.2, active_users: 3 },
+  ],
+  features: [{ feature: "breakdown", calls: 120, failed: 6, cost_usd: 0.42 }],
+  models: [{ model: "google/gemini-2.5-flash-lite", calls: 120, failed: 6, cost_usd: 0.42 }],
+  key_sources: [{ key_source: "own", calls: 30, failed: 0, cost_usd: null }],
+  top_users: [
+    { id: "u2", email: "boros@luma.test", name: "Boros", calls: 80, failed: 1, cost_usd: 0.3 },
+  ],
+  top_books: [{ book_title: "Meditations", readers: 4, reading_seconds: 7200 }],
+  ...extra,
+});
+
 export const invites = {
   items: [
     {

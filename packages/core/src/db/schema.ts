@@ -103,5 +103,10 @@ export const usageDaily = sqliteTable(
     readingSeconds: integer("reading_seconds").notNull(),
     updatedAt: integer("updated_at").notNull(),
   },
-  (t) => [primaryKey({ columns: [t.userId, t.day, t.feature, t.model, t.bookKey, t.keySource] })],
+  // Index (day): the dashboard's cross-user overview reads a day range, which the primary key
+  // (user first) can't serve.
+  (t) => [
+    primaryKey({ columns: [t.userId, t.day, t.feature, t.model, t.bookKey, t.keySource] }),
+    index("usage_daily_day").on(t.day),
+  ],
 );
