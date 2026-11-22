@@ -8,7 +8,7 @@ import 'routing/router.dart';
 import 'l10n/app_localizations.dart';
 import 'ui/core/theme/stabilo_theme.dart';
 import 'ui/features/discover/views/download_toasts.dart';
-import 'ui/features/settings/views/cloud_backup_trigger.dart';
+import 'ui/features/settings/views/daily_trigger.dart';
 import 'ui/features/settings/views/sync_trigger.dart';
 import 'ui/features/splash/splash_overlay.dart';
 
@@ -30,7 +30,8 @@ class LumaApp extends ConsumerWidget {
 
   final bool splash;
 
-  /// Automatic cloud backup + sync push (only from `main`: tests have no real DB).
+  /// Automatic cloud backup, usage rollup, and sync push (only from `main`:
+  /// tests have no real DB).
   final bool autoBackup;
 
   @override
@@ -56,7 +57,7 @@ class LumaApp extends ConsumerWidget {
             ? const SizedBox.expand()
             : DownloadToasts(
                 child: autoBackup
-                    ? CloudBackupTrigger(
+                    ? DailyTrigger(
                         child: SyncTrigger(
                           child: child ?? const SizedBox.shrink(),
                         ),

@@ -29,7 +29,7 @@ The writer emits `formatVersion: 1`; the reader does not validate that field. Co
 
 `BackupService` creates a consistent SQLite snapshot with `VACUUM INTO`, builds the ZIP in an isolate, and offers file exports through the platform share sheet. The app records a successful share as the last backup; Android's unavailable share result is also treated as success.
 
-`CloudBackupRepository` exports a snapshot-only ZIP, uploads missing book and cover files separately, then uploads the snapshot. Signed-in users can trigger a cloud backup manually; `CloudBackupTrigger` also checks on session availability and resume, subject to its timing and non-empty shelf rules. Cloud restore downloads the snapshot and fills missing files before inspection completes. Worker storage and endpoints are in [backend.md](backend.md).
+`CloudBackupRepository` exports a snapshot-only ZIP, uploads missing book and cover files separately, then uploads the snapshot. Signed-in users can trigger a cloud backup manually; `DailyTrigger` also checks on session availability and resume, subject to its timing and non-empty shelf rules. Cloud restore downloads the snapshot and fills missing files before inspection completes. Worker storage and endpoints are in [backend.md](backend.md).
 
 Concurrent cloud backup requests share one run (`CloudBackupRepository`). The archive is built in a temporary directory and handed to the share sheet, so the user chooses where it lives.
 

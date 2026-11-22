@@ -159,6 +159,27 @@ class SettingsRepository {
         SettingsCompanion.insert(key: _dismissed, value: at.toIso8601String()),
       );
 
+  /// The last local day (`YYYY-MM-DD`) whose usage rollup reached the
+  /// backend; null before the first send.
+  Future<String?> usageSentThrough() => _read(_usageSent);
+  Future<void> saveUsageSentThrough(String day) => _write(_usageSent, day);
+
+  /// The local day of the last automatic usage send, which keeps it to one
+  /// attempt a day.
+  Future<String?> usageAttemptedOn() => _read(_usageTried);
+  Future<void> saveUsageAttemptedOn(String day) => _write(_usageTried, day);
+
+  static const _usageSent = 'usage.sentThrough';
+  static const _usageTried = 'usage.attemptedOn';
+
+  Future<String?> _read(String key) async => (await (_db.select(
+    _db.settings,
+  )..where((s) => s.key.equals(key))).getSingleOrNull())?.value;
+
+  Future<void> _write(String key, String value) => _db
+      .into(_db.settings)
+      .insertOnConflictUpdate(SettingsCompanion.insert(key: key, value: value));
+
   static const _dismissed = 'backup.reminderDismissedAt';
   static const _backupAt = 'backup.lastAt';
   static const _backupName = 'backup.lastName';
