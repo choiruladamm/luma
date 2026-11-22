@@ -2698,6 +2698,47 @@ class AppLocalizationsId extends AppLocalizations {
   String get settingsHubTileDisplay => 'Tampilan';
 
   @override
+  String get settingsHubTileStats => 'Statistik';
+
+  @override
+  String settingsHubStatsWeek(String time) {
+    return '$time minggu ini';
+  }
+
+  @override
+  String get settingsHubStatsEmpty => 'Belum ada';
+
+  @override
+  String get statsTitle => 'Statistik baca';
+
+  @override
+  String get statsWeek => '7 hari terakhir';
+
+  @override
+  String get statsAllTime => 'Sejauh ini';
+
+  @override
+  String get statsReadingTime => 'Waktu baca';
+
+  @override
+  String get statsReadingDays => 'Hari baca';
+
+  @override
+  String statsDaysOfWeek(int days) {
+    return '$days/7';
+  }
+
+  @override
+  String get statsFinished => 'Buku tamat';
+
+  @override
+  String get statsEmptyTitle => 'Belum ada statistik';
+
+  @override
+  String get statsEmptyBody =>
+      'Buka satu buku terus mulai baca, nanti waktu baca lo kecatat di sini.';
+
+  @override
   String get settingsHubBackupNever => 'Belum pernah';
 
   @override

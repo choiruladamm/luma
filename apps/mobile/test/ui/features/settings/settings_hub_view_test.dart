@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:luma/data/repositories/ai_results_repository.dart';
 import 'package:luma/data/repositories/catalog_repository.dart';
 import 'package:luma/data/repositories/settings_repository.dart';
+import 'package:luma/data/repositories/stats_repository.dart';
 import 'package:luma/data/services/ai_key_service.dart';
 import 'package:luma/data/services/auth_service.dart';
 import 'package:luma/data/services/catalog_sync_service.dart';
@@ -47,6 +48,13 @@ class _Quota extends AiQuotaController {
   @override
   Future<void> refresh({bool force = false}) async {}
 }
+
+const reading = ReadingSummary(
+  weekSeconds: 4500,
+  weekDays: 3,
+  totalSeconds: 36000,
+  finishedBooks: 2,
+);
 
 void main() {
   final at = DateTime.now().subtract(const Duration(days: 1));
@@ -100,6 +108,7 @@ void main() {
             )),
           ),
           catalogSyncProvider.overrideWith(() => _Sync(sync)),
+          readingSummaryProvider.overrideWith((_) => Stream.value(reading)),
           aiCacheStatsProvider.overrideWith((_) => Stream.value(cache)),
         ],
         child: MaterialApp.router(
@@ -128,9 +137,10 @@ void main() {
     expect(find.text('GLM 5.3 Flash'), findsOneWidget);
     expect(find.text('Ganti model'), findsOneWidget);
     expect(find.text('Atur AI'), findsOneWidget);
-    for (final t in ['Backup', 'Katalog', 'Cache', 'Tampilan']) {
+    for (final t in ['Backup', 'Katalog', 'Cache', 'Tampilan', 'Statistik']) {
       expect(find.text(t), findsOneWidget);
     }
+    expect(find.text('1 jam 15 mnt minggu ini'), findsOneWidget);
     expect(dot, findsNothing);
   });
 
