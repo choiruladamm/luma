@@ -79,6 +79,7 @@ A backup run makes one missing-file request per name chunk, one PUT per absent o
 | Overview | `overviewCounts` adds three aggregate statements over users, storage, and unused invites. `overview.test.ts` checks four total. | `getOverview` makes one OpenRouter activity call when the management key is set. |
 | User list | `listUsers` adds two batched statements for page and total. Search, filters, sorting, and offset affect rows scanned. | None. |
 | User detail | `findUserDetail` adds five batched statements for user, sessions, key, invite, and providers. `users.test.ts` checks six total. | One key usage call when the user has a key. |
+| User usage | `findUserUsage` adds six batched statements (user, totals, per feature, model, key source, top books), each reading only that user's `usage_daily` rows in the range through the primary key. `users.test.ts` checks seven total. | None. |
 | Ban and unban | Ban adds one key lookup and a two-statement `banUser` batch. `users.test.ts` checks four total. Unban adds one UPDATE. | Ban deletes the OpenRouter key if one exists. |
 | Invite list | `listInvites` adds two batched statements for page and counts. | None. |
 | Create and delete invites | `insertInvites` inserts 1–20 rows in one statement. `deleteUnusedInvite` issues one DELETE, adding one read via `inviteExists` when no row was deleted. | None. |

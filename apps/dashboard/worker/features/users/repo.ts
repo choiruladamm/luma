@@ -1,7 +1,29 @@
 // Every D1 query of the users feature. Each function is one query-budget unit.
-import { and, asc, count, desc, eq, gte, isNotNull, isNull, type SQL, sql } from "drizzle-orm";
+import {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  gte,
+  isNotNull,
+  isNull,
+  lte,
+  ne,
+  type SQL,
+  sql,
+} from "drizzle-orm";
 import type { Db } from "@luma/core/db/client";
-import { accounts, aiKeys, inviteCodes, sessions, users, userStorage } from "@luma/core/db/schema";
+import {
+  accounts,
+  aiKeys,
+  inviteCodes,
+  sessions,
+  usageDaily,
+  users,
+  userStorage,
+} from "@luma/core/db/schema";
+import { USAGE_TOP_BOOKS } from "@luma/contracts/dashboard/users";
 import { DAY_MS } from "@luma/core/encoding";
 
 // Correlated subquery: uses the sessions(user_id) index. Also a filter and a sort key.
@@ -187,4 +209,85 @@ export async function unbanUser(db: Db, userId: string) {
     .where(eq(users.id, userId))
     .returning({ id: users.id });
   return rows.length > 0;
+}
+
+// Sums over `usage_daily` rows; every raw column is aliased (see the dashboard's batch rule).
+const aiSums = () => ({
+  calls: sql<number>`coalesce(sum(${usageDaily.calls}), 0)`.as("calls"),
+  failed: sql<number>`coalesce(sum(${usageDaily.failed}), 0)`.as("failed"),
+  cost_usd: sql<number | null>`sum(${usageDaily.costUsd})`.as("cost_usd"),
+});
+const tokenSums = () => ({
+  prompt_tokens: sql<number>`coalesce(sum(${usageDaily.promptTokens}), 0)`.as("prompt_tokens"),
+  completion_tokens: sql<number>`coalesce(sum(${usageDaily.completionTokens}), 0)`.as(
+    "completion_tokens",
+  ),
+});
+
+/**
+ * 1 batch (6 statements): user exists, totals, and the AI rows per feature, model, and key source,
+ * plus the top books, over the days `from`..`to` (`YYYY-MM-DD`). Every statement reads only this
+ * user's rows through the `usage_daily` primary key (user_id, day, …).
+ */
+export async function findUserUsage(db: Db, userId: string, from: string, to: string) {
+  const range = and(
+    eq(usageDaily.userId, userId),
+    gte(usageDaily.day, from),
+    lte(usageDaily.day, to),
+  );
+  const aiRange = and(range, ne(usageDaily.feature, "reading"));
+  const [user, totals, features, models, keySources, books] = await db.batch([
+    db.select({ id: users.id }).from(users).where(eq(users.id, userId)).limit(1),
+    db
+      .select({
+        ...aiSums(),
+        ...tokenSums(),
+        reading_seconds: sql<number>`coalesce(sum(${usageDaily.readingSeconds}), 0)`.as(
+          "reading_seconds",
+        ),
+        active_days: sql<number>`count(distinct ${usageDaily.day})`.as("active_days"),
+        last_day: sql<
+          string | null
+        >`(select max(${usageDaily.day}) from ${usageDaily} where ${usageDaily.userId} = ${userId})`.as(
+          "last_day",
+        ),
+      })
+      .from(usageDaily)
+      .where(range),
+    db
+      .select({ feature: usageDaily.feature, ...aiSums(), ...tokenSums() })
+      .from(usageDaily)
+      .where(aiRange)
+      .groupBy(usageDaily.feature)
+      .orderBy(sql`calls desc`),
+    db
+      .select({ model: usageDaily.model, ...aiSums() })
+      .from(usageDaily)
+      .where(aiRange)
+      .groupBy(usageDaily.model)
+      .orderBy(sql`calls desc`),
+    db
+      .select({ key_source: usageDaily.keySource, ...aiSums() })
+      .from(usageDaily)
+      .where(aiRange)
+      .groupBy(usageDaily.keySource)
+      .orderBy(sql`calls desc`),
+    db
+      .select({
+        book_key: usageDaily.bookKey,
+        // ponytail: a book renamed within the range shows one of its titles (max), not the latest.
+        book_title: sql<string | null>`max(${usageDaily.bookTitle})`.as("book_title"),
+        reading_seconds: sql<number>`coalesce(sum(${usageDaily.readingSeconds}), 0)`.as(
+          "reading_seconds",
+        ),
+        ...aiSums(),
+      })
+      .from(usageDaily)
+      .where(range)
+      .groupBy(usageDaily.bookKey)
+      .orderBy(sql`reading_seconds desc`, sql`calls desc`)
+      .limit(USAGE_TOP_BOOKS),
+  ]);
+  if (!user[0]) return null;
+  return { totals: totals[0]!, features, models, keySources, books };
 }

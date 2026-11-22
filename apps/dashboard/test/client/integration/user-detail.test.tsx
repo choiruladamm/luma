@@ -1,7 +1,7 @@
 import { act, screen, waitFor, within } from "@testing-library/react";
 import { HttpResponse, http } from "msw";
 import { describe, expect, it, vi } from "vitest";
-import { overview, userDetail } from "../helpers/fixtures";
+import { overview, userDetail, userUsage } from "../helpers/fixtures";
 import { API, apiError } from "../helpers/handlers";
 import { renderApp } from "../helpers/render";
 import { server } from "../setup";
@@ -17,6 +17,55 @@ describe("Detail user", () => {
     expect(screen.getByText("App Luma 0.3.0")).toBeInTheDocument();
     expect(screen.getAllByText("Kuota AI gratis").length).toBeGreaterThan(0);
     expect(screen.getByText(/key berlaku sampai/)).toBeInTheDocument();
+  });
+
+  it("shows the app's usage per feature, model, key, and book", async () => {
+    renderApp("/users/u1");
+    const card = await screen.findByRole("region", { name: "Pemakaian app" });
+    expect(await within(card).findByText("Artinya")).toBeInTheDocument();
+    expect(within(card).getByText("Ngobrolin")).toBeInTheDocument();
+    expect(within(card).getByText("google/gemini-2.5-flash-lite")).toBeInTheDocument();
+    expect(within(card).getByText("Key sendiri")).toBeInTheDocument();
+    expect(within(card).getByText("Kuota gratis")).toBeInTheDocument();
+    expect(within(card).getByText("Meditations")).toBeInTheDocument();
+    expect(within(card).getByText("Buku yang udah dihapus")).toBeInTheDocument();
+    expect(within(card).getByText("5% gagal")).toBeInTheDocument();
+    expect(within(card).getAllByText("90 mnt").length).toBeGreaterThan(0);
+    expect(within(card).getByText(/30 hari terakhir/)).toBeInTheDocument();
+  });
+
+  it("says so when the app never reported usage", async () => {
+    server.use(
+      http.get(`${API}/users/:id/usage`, () =>
+        HttpResponse.json(
+          userUsage({
+            totals: { ...userUsage().totals, active_days: 0, calls: 0, last_day: null },
+            features: [],
+            models: [],
+            key_sources: [],
+            books: [],
+          }),
+        ),
+      ),
+    );
+    renderApp("/users/u1");
+    expect(await screen.findByText("Belum ada laporan pemakaian dari app.")).toBeInTheDocument();
+  });
+
+  it("keeps the page when usage fails, and retries just the usage", async () => {
+    let fail = true;
+    server.use(
+      http.get(`${API}/users/:id/usage`, () =>
+        fail ? apiError(500, "INTERNAL_ERROR") : HttpResponse.json(userUsage()),
+      ),
+    );
+    const { user } = renderApp("/users/u1");
+    const card = await screen.findByRole("region", { name: "Pemakaian app" });
+    expect(await within(card).findByRole("alert")).toBeInTheDocument();
+    expect(screen.getByText("App Luma 0.3.0")).toBeInTheDocument();
+    fail = false;
+    await user.click(within(card).getByRole("button", { name: "Coba lagi" }));
+    expect(await within(card).findByText("Artinya")).toBeInTheDocument();
   });
 
   it("bans after confirming, with the product's copy, then offers unban from the toast", async () => {

@@ -42,6 +42,56 @@ export const userDetail = (extra: Record<string, unknown> = {}) => ({
   ...extra,
 });
 
+export const userUsage = (extra: Record<string, unknown> = {}) => ({
+  from: "2026-10-16",
+  to: "2026-11-14",
+  totals: {
+    calls: 40,
+    failed: 2,
+    cost_usd: 0.0123,
+    prompt_tokens: 9000,
+    completion_tokens: 2000,
+    reading_seconds: 5400,
+    active_days: 6,
+    last_day: "2026-11-13",
+  },
+  features: [
+    {
+      feature: "group",
+      calls: 30,
+      failed: 2,
+      cost_usd: 0.01,
+      prompt_tokens: 7000,
+      completion_tokens: 1500,
+    },
+    {
+      feature: "chat",
+      calls: 10,
+      failed: 0,
+      cost_usd: null,
+      prompt_tokens: 2000,
+      completion_tokens: 500,
+    },
+  ],
+  models: [{ model: "google/gemini-2.5-flash-lite", calls: 40, failed: 2, cost_usd: 0.0123 }],
+  key_sources: [
+    { key_source: "subsidy", calls: 30, failed: 2, cost_usd: 0.0123 },
+    { key_source: "own", calls: 10, failed: 0, cost_usd: null },
+  ],
+  books: [
+    {
+      book_key: "b1",
+      book_title: "Meditations",
+      reading_seconds: 5400,
+      calls: 38,
+      failed: 2,
+      cost_usd: 0.0123,
+    },
+    { book_key: "", book_title: null, reading_seconds: 0, calls: 2, failed: 0, cost_usd: null },
+  ],
+  ...extra,
+});
+
 export const invites = {
   items: [
     {
