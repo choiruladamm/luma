@@ -9,6 +9,7 @@ import { files } from "./features/files/routes";
 import { health } from "./features/health/routes";
 import { legal } from "./features/legal/routes";
 import { sync } from "./features/sync/routes";
+import { usage } from "./features/usage/routes";
 import { deps } from "./middleware/deps";
 import { clientIp, rateLimit } from "./middleware/rate-limit";
 import { v1Adapter, wire } from "./middleware/v1-adapter";
@@ -28,5 +29,6 @@ for (const prefix of ["/v1", "/v2"]) {
   app.route(`${prefix}/files`, files);
   app.route(`${prefix}/backups`, backups);
   app.route(`${prefix}/sync`, sync);
+  app.route(`${prefix}/usage`, usage);
 }
 app.route("/", legal);

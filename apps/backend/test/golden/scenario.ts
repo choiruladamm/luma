@@ -8,6 +8,7 @@ import { backupInfo, backupsListResponse } from "@luma/contracts/backend/backups
 import { missingResponse, putFileResponse } from "@luma/contracts/backend/files";
 import { healthResponse } from "@luma/contracts/backend/health";
 import { pullResponse, pushResponse } from "@luma/contracts/backend/sync";
+import { usageUploadResponse } from "@luma/contracts/backend/usage";
 import { z, type ZodType } from "zod";
 import { toSnake } from "@luma/worker-kit/case";
 import { createDb } from "@luma/core/db/client";
@@ -28,6 +29,7 @@ import syncPushTombstoneV1 from "@luma/contracts/fixtures/v1/sync-push-tombstone
 import syncPushTombstoneV2 from "@luma/contracts/fixtures/v2/sync-push-tombstone.json";
 import syncPushV1 from "@luma/contracts/fixtures/v1/sync-push.json";
 import syncPushV2 from "@luma/contracts/fixtures/v2/sync-push.json";
+import usageV2 from "@luma/contracts/fixtures/v2/usage.json";
 import { createInvite, signUp } from "../helpers/auth";
 import { callWithBudget } from "../helpers/budget";
 import { GOLDEN_NOW, goldenJson, record, type Recorded } from "../helpers/golden";
@@ -59,6 +61,7 @@ const contracts: Record<string, ZodType> = {
   "GET /v1/sync/pull": pullResponse,
   "GET /v1/sync/pull limit": pullResponse,
   "GET /v1/sync/pull empty": pullResponse,
+  "POST /v1/usage": usageUploadResponse,
 };
 
 const fixtures = {
@@ -471,6 +474,33 @@ export async function records(wire: Wire) {
   await step("GET /v1/sync/pull user limit", req("/v1/sync/pull?since=0", { token }), {
     RATE_LIMITER: denyUser,
   });
+
+  // Usage rollup: `/v2` only, so the `/v1` golden file stays byte-identical.
+  if (wire === "v2") {
+    const usage = usageV2.request.body;
+    const future = { rows: [{ ...usage.rows[0], day: "2099-01-01" }] };
+    await step("POST /v1/usage", req("/v1/usage", { method: "POST", token, body: usage }));
+    await step(
+      "POST /v1/usage 400",
+      req("/v1/usage", { method: "POST", token, body: { rows: [] } }),
+    );
+    await step(
+      "POST /v1/usage 400 future day",
+      req("/v1/usage", { method: "POST", token, body: future }),
+    );
+    await step(
+      "POST /v1/usage 413",
+      req("/v1/usage", { method: "POST", token, body: { pad: "x".repeat(1024 * 1024) } }),
+    );
+    await step("POST /v1/usage 401", req("/v1/usage", { method: "POST", body: usage }));
+    await step(
+      "POST /v1/usage user limit",
+      req("/v1/usage", { method: "POST", token, body: usage }),
+      {
+        RATE_LIMITER: denyUser,
+      },
+    );
+  }
 
   // Banned AI user, then account deletion (last: it removes the user).
   await createDb(env.DB).update(users).set({ banned: true }).where(eq(users.id, userId));
