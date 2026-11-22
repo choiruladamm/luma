@@ -426,6 +426,72 @@
     "d1Queries": 1,
     "fetches": 0
   },
+  "GET /api/users/:id/usage": {
+    "status": 200,
+    "headers": {
+      "content-security-policy": "default-src 'self'; frame-ancestors 'none'",
+      "content-type": "application/json",
+      "x-content-type-options": "nosniff",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "from": "2026-10-22",
+      "to": "2026-11-20",
+      "totals": {
+        "calls": 0,
+        "failed": 0,
+        "cost_usd": null,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "reading_seconds": 0,
+        "active_days": 0,
+        "last_day": null
+      },
+      "features": [],
+      "models": [],
+      "key_sources": [],
+      "books": []
+    },
+    "d1Queries": 7,
+    "fetches": 0
+  },
+  "GET /api/users/:id/usage 400": {
+    "status": 400,
+    "headers": {
+      "content-security-policy": "default-src 'self'; frame-ancestors 'none'",
+      "content-type": "application/json",
+      "x-content-type-options": "nosniff",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "BAD_REQUEST",
+        "message": "Too small: expected number to be >=1"
+      }
+    },
+    "d1Queries": 1,
+    "fetches": 0
+  },
+  "GET /api/users/:id/usage 404": {
+    "status": 404,
+    "headers": {
+      "content-security-policy": "default-src 'self'; frame-ancestors 'none'",
+      "content-type": "application/json",
+      "x-content-type-options": "nosniff",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "NOT_FOUND",
+        "message": "User not found"
+      }
+    },
+    "d1Queries": 7,
+    "fetches": 0
+  },
   "POST /api/users/:id/ban 403 origin": {
     "status": 403,
     "headers": {
@@ -546,7 +612,7 @@
       "id": "<uuid>",
       "email": "failing@luma.test",
       "name": "Failing",
-      "created_at": "2026-11-20T03:00:27.000Z",
+      "created_at": "2026-11-20T03:00:30.000Z",
       "banned": false,
       "last_active_at": null,
       "has_ai_key": true,
@@ -611,7 +677,7 @@
         "<invite>",
         "<invite>"
       ],
-      "created_at": "2026-11-20T03:00:32.000Z"
+      "created_at": "2026-11-20T03:00:35.000Z"
     },
     "d1Queries": 2,
     "fetches": 0
@@ -683,19 +749,19 @@
       "items": [
         {
           "code": "<invite>",
-          "created_at": "2026-11-20T03:00:32.000Z",
+          "created_at": "2026-11-20T03:00:35.000Z",
           "used_by": null,
           "used_at": null
         },
         {
           "code": "<invite>",
-          "created_at": "2026-11-20T03:00:32.000Z",
+          "created_at": "2026-11-20T03:00:35.000Z",
           "used_by": null,
           "used_at": null
         },
         {
           "code": "<invite>",
-          "created_at": "2026-11-20T03:00:32.000Z",
+          "created_at": "2026-11-20T03:00:35.000Z",
           "used_by": {
             "id": "<uuid>",
             "email": "plain@luma.test"
@@ -728,7 +794,7 @@
       "items": [
         {
           "code": "<invite>",
-          "created_at": "2026-11-20T03:00:32.000Z",
+          "created_at": "2026-11-20T03:00:35.000Z",
           "used_by": {
             "id": "<uuid>",
             "email": "plain@luma.test"

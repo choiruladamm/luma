@@ -10,6 +10,7 @@ import {
   unbanResponse,
   userDetailResponse,
   userListResponse,
+  userUsageResponse,
 } from "@luma/contracts/dashboard/users";
 import type { ZodType } from "zod";
 import { HttpResponse, http } from "msw";
@@ -39,6 +40,7 @@ const contracts: Record<string, ZodType> = {
   "GET /api/users/:id": userDetailResponse,
   "GET /api/users/:id no key": userDetailResponse,
   "GET /api/users/:id after 502": userDetailResponse,
+  "GET /api/users/:id/usage": userUsageResponse,
   "POST /api/users/:id/ban": banResponse,
   "POST /api/users/:id/unban": unbanResponse,
   "GET /api/invites": inviteListResponse,
@@ -138,6 +140,11 @@ it("records every route", async () => {
   await step("GET /api/users/:id no key", `/api/users/${plain.id}`, { headers: admin });
   await step("GET /api/users/:id 404", "/api/users/missing-user", { headers: admin });
   await step("GET /api/users/:id 400", "/api/users/bad%20id", { headers: admin });
+  await step("GET /api/users/:id/usage", `/api/users/${member.id}/usage`, { headers: admin });
+  await step("GET /api/users/:id/usage 400", `/api/users/${member.id}/usage?days=0`, {
+    headers: admin,
+  });
+  await step("GET /api/users/:id/usage 404", "/api/users/missing-user/usage", { headers: admin });
   await step("POST /api/users/:id/ban 403 origin", `/api/users/${member.id}/ban`, {
     method: "POST",
     headers: { ...admin, "content-type": "application/json" },

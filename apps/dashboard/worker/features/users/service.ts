@@ -1,4 +1,11 @@
-import type { BanResult, UnbanResult, UserDetail, UserList } from "@luma/contracts/dashboard/users";
+import type {
+  BanResult,
+  UnbanResult,
+  UserDetail,
+  UserList,
+  UserUsage,
+} from "@luma/contracts/dashboard/users";
+import { DAY_MS } from "@luma/core/encoding";
 import type { OpenRouterAdmin } from "@luma/core/openrouter";
 import type { Db } from "@luma/core/db/client";
 import { log } from "@luma/worker-kit/log";
@@ -7,6 +14,7 @@ import {
   banUser,
   findUserDetail,
   findUserKeyHash,
+  findUserUsage,
   listUsers,
   type UserListQuery,
   type UserRow,
@@ -14,6 +22,7 @@ import {
 } from "./repo";
 
 const iso = (d: Date | null) => d?.toISOString() ?? null;
+const utcDay = (ms: number) => new Date(ms).toISOString().slice(0, 10);
 
 const userItem = (row: UserRow) => ({
   ...row,
@@ -114,4 +123,29 @@ export async function ban(db: Db, openrouter: OpenRouterAdmin, id: string): Prom
 export async function unban(db: Db, id: string): Promise<UnbanResult> {
   if (!(await unbanUser(db, id))) throw new ApiError(404, "NOT_FOUND", "User not found");
   return { banned: false as const };
+}
+
+/**
+ * The user's usage rollup for the last `days` days, today included: 1 batch, no subrequest. Days
+ * are the app's local days, compared to the UTC date, so a day can sit one off at either end.
+ */
+export async function getUserUsage(
+  db: Db,
+  id: string,
+  days: number,
+  now = Date.now(),
+): Promise<UserUsage> {
+  const from = utcDay(now - (days - 1) * DAY_MS);
+  const to = utcDay(now);
+  const found = await findUserUsage(db, id, from, to);
+  if (!found) throw new ApiError(404, "NOT_FOUND", "User not found");
+  return {
+    from,
+    to,
+    totals: found.totals,
+    features: found.features,
+    models: found.models,
+    key_sources: found.keySources,
+    books: found.books,
+  };
 }

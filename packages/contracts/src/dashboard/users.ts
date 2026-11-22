@@ -67,3 +67,57 @@ export type BanResult = z.infer<typeof banResponse>;
 
 export const unbanResponse = z.strictObject({ banned: z.literal(false) });
 export type UnbanResult = z.infer<typeof unbanResponse>;
+
+/** Longest range `GET /api/users/:id/usage` reads (docs/dashboard.md, API routes and errors). */
+export const USAGE_MAX_DAYS = 365;
+
+/** Books listed per user, by reading time then AI calls. */
+export const USAGE_TOP_BOOKS = 20;
+
+/** `GET /api/users/:id/usage` query: the last `days` days, today included (UTC). */
+export const userUsageQuery = z.object({
+  days: z.coerce.number().int().min(1).max(USAGE_MAX_DAYS).default(30),
+});
+
+const aiCounts = {
+  calls: z.number(),
+  failed: z.number(),
+  /** Null when no call in the group reported a cost. */
+  cost_usd: z.number().nullable(),
+};
+
+/** The user's `usage_daily` rollup over `from`..`to` (the app's local days). */
+export const userUsageResponse = z.strictObject({
+  from: z.string(),
+  to: z.string(),
+  totals: z.strictObject({
+    ...aiCounts,
+    prompt_tokens: z.number(),
+    completion_tokens: z.number(),
+    reading_seconds: z.number(),
+    active_days: z.number(),
+    /** Latest day with any row, also before `from`; null when the app never sent usage. */
+    last_day: z.string().nullable(),
+  }),
+  /** AI rows only: `group` (Artinya), `breakdown` (Bedahin), `chat` (Ngobrolin). */
+  features: z.array(
+    z.strictObject({
+      feature: z.string(),
+      ...aiCounts,
+      prompt_tokens: z.number(),
+      completion_tokens: z.number(),
+    }),
+  ),
+  models: z.array(z.strictObject({ model: z.string(), ...aiCounts })),
+  /** `own` (BYOK) or `subsidy`; `""` for calls logged before the key source was recorded. */
+  key_sources: z.array(z.strictObject({ key_source: z.string(), ...aiCounts })),
+  books: z.array(
+    z.strictObject({
+      book_key: z.string(),
+      book_title: z.string().nullable(),
+      reading_seconds: z.number(),
+      ...aiCounts,
+    }),
+  ),
+});
+export type UserUsage = z.infer<typeof userUsageResponse>;
