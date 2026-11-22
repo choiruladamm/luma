@@ -46,6 +46,7 @@ void main() {
     ReadingSummary summary, {
     Brightness b = Brightness.light,
     HabitStats habits = noHabits,
+    List<BookStats> books = const [],
   }) async {
     tester.view.physicalSize = const Size(900, 1400);
     tester.view.devicePixelRatio = 1;
@@ -55,6 +56,7 @@ void main() {
         overrides: [
           readingSummaryProvider.overrideWith((_) => Stream.value(summary)),
           habitStatsProvider.overrideWith((_) => Stream.value(habits)),
+          bookStatsProvider.overrideWith((_) => Stream.value(books)),
         ],
         child: MaterialApp(
           localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -121,5 +123,52 @@ void main() {
     );
     expect(find.text('Belum ada statistik'), findsOneWidget);
     expect(find.text('7 hari terakhir'), findsNothing);
+  });
+
+  testWidgets('reading now with an estimate, and finished books', (
+    tester,
+  ) async {
+    await open(
+      tester,
+      const ReadingSummary(
+        weekSeconds: 60,
+        totalSeconds: 600,
+        finishedBooks: 1,
+      ),
+      books: [
+        BookStats(
+          bookId: 1,
+          title: 'Meditations',
+          progress: 0.42,
+          charsPerMinute: 900,
+          remaining: const Duration(minutes: 75),
+          finishedAt: null,
+        ),
+        const BookStats(
+          bookId: 3,
+          title: 'Catatan',
+          progress: 0.1,
+          charsPerMinute: null,
+          remaining: null,
+          finishedAt: null,
+        ),
+        BookStats(
+          bookId: 2,
+          title: 'Atomic Habits',
+          progress: 1,
+          charsPerMinute: 1000,
+          remaining: null,
+          finishedAt: DateTime(2026, 11, 10),
+        ),
+      ],
+    );
+    expect(find.text('Lagi dibaca'), findsOneWidget);
+    expect(find.text('42% · 900 karakter/mnt'), findsOneWidget);
+    expect(find.text('±1 jam 15 mnt lagi'), findsOneWidget);
+    expect(find.text('10%'), findsOneWidget);
+    expect(find.text('—'), findsOneWidget);
+    expect(find.text('Udah tamat'), findsOneWidget);
+    expect(find.text('Atomic Habits'), findsOneWidget);
+    expect(find.textContaining('Tamat 10'), findsOneWidget);
   });
 }

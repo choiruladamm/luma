@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../domain/models/book.dart';
 import '../../domain/reading_stats.dart';
 import '../database/app_database.dart';
 
@@ -41,6 +42,32 @@ class HabitStats {
   final List<int> perHour, perWeekday;
 }
 
+/// One book on the progress cards.
+class BookStats {
+  const BookStats({
+    required this.bookId,
+    required this.title,
+    required this.progress,
+    required this.charsPerMinute,
+    required this.remaining,
+    required this.finishedAt,
+  });
+
+  final int bookId;
+  final String title;
+
+  /// Position 0..1 from the latest session's end.
+  final double progress;
+
+  /// The book's own reading speed; null without measurable reading.
+  final double? charsPerMinute;
+
+  /// Time left at the book's recent speed; null when unknown (no recent
+  /// speed, or a Markdown book, which has no end).
+  final Duration? remaining;
+  final DateTime? finishedAt;
+}
+
 /// Statistics read straight from Drift (docs/data-model.md, Storage map), so
 /// they work offline and include books read with an own AI key.
 class StatsRepository {
@@ -73,6 +100,67 @@ class StatsRepository {
           finishedBooks: r.read<int>('finished'),
         ),
       );
+
+  /// Days of a book's sessions its time-left estimate reads speed from.
+  static const recentDays = 30;
+
+  /// Books with any reading session, latest read first, each with its
+  /// position, speed, and time left (rules in domain/reading_stats.dart).
+  Stream<List<BookStats>> watchBooks() {
+    final now = _clock();
+    final recentFrom = now.subtract(const Duration(days: recentDays));
+    final query = _db.select(_db.readingSessions).join([
+      innerJoin(_db.books, _db.books.id.equalsExp(_db.readingSessions.bookId)),
+    ])..orderBy([OrderingTerm.asc(_db.readingSessions.startedAt)]);
+    return query.watch().map((rows) {
+      final books = <int, Book>{};
+      final slices = <int, List<ReadingSlice>>{};
+      for (final r in rows) {
+        final book = r.readTable(_db.books);
+        final s = r.readTable(_db.readingSessions);
+        books[book.id] = book;
+        (slices[book.id] ??= []).add((
+          startedAt: s.startedAt,
+          seconds: s.seconds,
+          startChar: s.startChar,
+          endChar: s.endChar,
+        ));
+      }
+      final out = [
+        for (final id in books.keys)
+          _bookStats(books[id]!, slices[id]!, recentFrom),
+      ];
+      // Sessions come oldest first, so the last one is the latest read.
+      int last(BookStats b) =>
+          slices[b.bookId]!.last.startedAt.millisecondsSinceEpoch;
+      return out..sort((a, b) => last(b).compareTo(last(a)));
+    });
+  }
+
+  static BookStats _bookStats(
+    Book book,
+    List<ReadingSlice> slices,
+    DateTime recentFrom,
+  ) {
+    final position = slices.last.endChar;
+    final open =
+        book.sourceType != SourceType.markdown && book.finishedAt == null;
+    return BookStats(
+      bookId: book.id,
+      title: book.title,
+      progress: book.totalChars <= 0
+          ? 0
+          : (position / book.totalChars).clamp(0, 1).toDouble(),
+      charsPerMinute: charsPerMinuteOf(slices),
+      remaining: open
+          ? estimatedFinish(
+              remainingChars: book.totalChars - position,
+              recent: slices.where((s) => s.startedAt.isAfter(recentFrom)),
+            )
+          : null,
+      finishedAt: book.finishedAt,
+    );
+  }
 
   /// Emits the habits again whenever a session is saved: the sessions of the
   /// last [calendarWeeks] weeks, plus every reading day for the streak, which
@@ -131,4 +219,9 @@ final readingSummaryProvider = StreamProvider.autoDispose<ReadingSummary>(
 /// The habit cards on the Stats screen.
 final habitStatsProvider = StreamProvider.autoDispose<HabitStats>(
   (ref) => ref.watch(statsRepositoryProvider).watchHabits(),
+);
+
+/// The progress cards on the Stats screen.
+final bookStatsProvider = StreamProvider.autoDispose<List<BookStats>>(
+  (ref) => ref.watch(statsRepositoryProvider).watchBooks(),
 );

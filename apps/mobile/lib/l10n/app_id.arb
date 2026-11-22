@@ -3449,6 +3449,45 @@
       }
     }
   },
+  "statsReadingNow": "Lagi dibaca",
+  "@statsReadingNow": {},
+  "statsFinishedList": "Udah tamat",
+  "@statsFinishedList": {},
+  "statsBookProgress": "{percent}% · {speed} karakter/mnt",
+  "@statsBookProgress": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      },
+      "speed": {
+        "type": "String"
+      }
+    }
+  },
+  "statsBookPercent": "{percent}%",
+  "@statsBookPercent": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "statsTimeLeft": "±{time} lagi",
+  "@statsTimeLeft": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "statsFinishedOn": "Tamat {date}",
+  "@statsFinishedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "statsFavorite": "Paling sering baca",
   "@statsFavorite": {},
   "statsFavoriteHour": "Jam",

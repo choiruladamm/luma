@@ -2749,6 +2749,32 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
+  String get statsReadingNow => 'Lagi dibaca';
+
+  @override
+  String get statsFinishedList => 'Udah tamat';
+
+  @override
+  String statsBookProgress(int percent, String speed) {
+    return '$percent% · $speed karakter/mnt';
+  }
+
+  @override
+  String statsBookPercent(int percent) {
+    return '$percent%';
+  }
+
+  @override
+  String statsTimeLeft(String time) {
+    return '±$time lagi';
+  }
+
+  @override
+  String statsFinishedOn(String date) {
+    return 'Tamat $date';
+  }
+
+  @override
   String get statsFavorite => 'Paling sering baca';
 
   @override

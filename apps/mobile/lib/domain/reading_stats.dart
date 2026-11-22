@@ -125,3 +125,15 @@ int? busiest(List<int> values) {
   }
   return best > 0 ? at : null;
 }
+
+/// Reading speed over [slices] in characters per minute ([charsRead] over
+/// active time), or null when they show no measurable reading.
+double? charsPerMinuteOf(Iterable<ReadingSlice> slices) {
+  var chars = 0, seconds = 0;
+  for (final s in slices) {
+    chars += charsRead(s);
+    seconds += s.seconds;
+  }
+  if (chars == 0 || seconds == 0) return null;
+  return chars * 60 / seconds;
+}
