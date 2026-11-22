@@ -47,6 +47,7 @@ void main() {
     Brightness b = Brightness.light,
     HabitStats habits = noHabits,
     List<BookStats> books = const [],
+    CostStats costs = const (months: [], features: [], books: []),
   }) async {
     tester.view.physicalSize = const Size(900, 1400);
     tester.view.devicePixelRatio = 1;
@@ -57,6 +58,7 @@ void main() {
           readingSummaryProvider.overrideWith((_) => Stream.value(summary)),
           habitStatsProvider.overrideWith((_) => Stream.value(habits)),
           bookStatsProvider.overrideWith((_) => Stream.value(books)),
+          costStatsProvider.overrideWith((_) => Stream.value(costs)),
         ],
         child: MaterialApp(
           localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -170,5 +172,49 @@ void main() {
     expect(find.text('Udah tamat'), findsOneWidget);
     expect(find.text('Atomic Habits'), findsOneWidget);
     expect(find.textContaining('Tamat 10'), findsOneWidget);
+  });
+
+  testWidgets('AI cost per month, feature, and book; unreported is not zero', (
+    tester,
+  ) async {
+    await open(
+      tester,
+      const ReadingSummary(
+        weekSeconds: 60,
+        totalSeconds: 600,
+        finishedBooks: 0,
+      ),
+      costs: (
+        months: const [CostRow(key: '2026-11', calls: 3, costUsd: 0.0068)],
+        features: const [
+          CostRow(key: 'group', calls: 2, costUsd: 0.0068),
+          CostRow(key: 'chat', calls: 1, costUsd: null),
+        ],
+        books: const [
+          CostRow(key: 'Meditations', calls: 2, costUsd: 0.0068),
+          CostRow(key: null, calls: 1, costUsd: null),
+        ],
+      ),
+    );
+    expect(find.text('Biaya AI'), findsOneWidget);
+    expect(find.text('November 2026'), findsOneWidget);
+    expect(find.text('Artinya'), findsOneWidget);
+    expect(find.text('Ngobrolin'), findsOneWidget);
+    expect(find.text(r'$0,0068'), findsNWidgets(3));
+    expect(find.text('Gak tercatat'), findsNWidgets(2));
+    expect(find.text('Buku yang udah dihapus'), findsOneWidget);
+    expect(find.text('3 request AI'), findsOneWidget);
+  });
+
+  testWidgets('no cost card before any AI call', (tester) async {
+    await open(
+      tester,
+      const ReadingSummary(
+        weekSeconds: 60,
+        totalSeconds: 600,
+        finishedBooks: 0,
+      ),
+    );
+    expect(find.text('Biaya AI'), findsNothing);
   });
 }

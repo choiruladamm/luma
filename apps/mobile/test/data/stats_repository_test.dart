@@ -3,6 +3,7 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:luma/data/database/app_database.dart';
 import 'package:luma/data/repositories/stats_repository.dart';
+import 'package:luma/domain/models/ai_reply.dart';
 import 'package:luma/domain/models/book.dart';
 
 void main() {
@@ -179,4 +180,46 @@ void main() {
       expect(books[0].remaining, isNull);
     },
   );
+
+  test('costs per month, feature, and book; unreported stays null', () async {
+    Future<void> call(
+      DateTime at,
+      AiCallKind kind,
+      int? bookId,
+      double? cost,
+    ) => db
+        .into(db.aiCalls)
+        .insert(
+          AiCallsCompanion.insert(
+            bookId: Value(bookId),
+            kind: kind,
+            model: 'm',
+            promptVersion: 1,
+            chars: 10,
+            costUsd: Value(cost),
+            createdAt: Value(at),
+          ),
+        );
+    await call(day(20), AiCallKind.group, 1, 0.25);
+    await call(day(19), AiCallKind.group, 1, 0.5);
+    await call(day(18), AiCallKind.chat, 2, null);
+    await call(DateTime(2026, 10, 5), AiCallKind.breakdown, null, 0.125);
+    // Older than the 6 months on the card.
+    await call(DateTime(2026, 4, 30), AiCallKind.group, 1, 1);
+
+    final c = await repo().watchCosts().first;
+
+    expect(
+      [for (final r in c.months) (r.key, r.calls, r.costUsd)],
+      [('2026-11', 3, 0.75), ('2026-10', 1, 0.125)],
+    );
+    expect(
+      [for (final r in c.features) (r.key, r.calls, r.costUsd)],
+      [('group', 3, 1.75), ('chat', 1, null), ('breakdown', 1, 0.125)],
+    );
+    expect(
+      [for (final r in c.books) (r.key, r.costUsd)],
+      [('Book 1', 1.75), (null, 0.125), ('Book 2', null)],
+    );
+  });
 }

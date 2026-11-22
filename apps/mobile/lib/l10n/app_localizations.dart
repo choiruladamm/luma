@@ -4700,6 +4700,54 @@ abstract class AppLocalizations {
   /// **'Tamat {date}'**
   String statsFinishedOn(String date);
 
+  /// No description provided for @statsCost.
+  ///
+  /// In id, this message translates to:
+  /// **'Biaya AI'**
+  String get statsCost;
+
+  /// No description provided for @statsCostNote.
+  ///
+  /// In id, this message translates to:
+  /// **'Perkiraan dari laporan model, termasuk yang pakai key sendiri.'**
+  String get statsCostNote;
+
+  /// No description provided for @statsCostByMonth.
+  ///
+  /// In id, this message translates to:
+  /// **'Per bulan'**
+  String get statsCostByMonth;
+
+  /// No description provided for @statsCostByFeature.
+  ///
+  /// In id, this message translates to:
+  /// **'Per fitur'**
+  String get statsCostByFeature;
+
+  /// No description provided for @statsCostByBook.
+  ///
+  /// In id, this message translates to:
+  /// **'Per buku'**
+  String get statsCostByBook;
+
+  /// No description provided for @statsCostUnrecorded.
+  ///
+  /// In id, this message translates to:
+  /// **'Gak tercatat'**
+  String get statsCostUnrecorded;
+
+  /// No description provided for @statsCalls.
+  ///
+  /// In id, this message translates to:
+  /// **'{count, plural, other{{count} request AI}}'**
+  String statsCalls(int count);
+
+  /// No description provided for @statsDeletedBook.
+  ///
+  /// In id, this message translates to:
+  /// **'Buku yang udah dihapus'**
+  String get statsDeletedBook;
+
   /// No description provided for @statsFavorite.
   ///
   /// In id, this message translates to:

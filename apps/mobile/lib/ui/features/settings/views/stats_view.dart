@@ -27,6 +27,7 @@ class StatsView extends ConsumerWidget {
     final books = ref.watch(bookStatsProvider).value ?? const <BookStats>[];
     final reading = books.where((b) => b.finishedAt == null).take(_listMax);
     final finished = books.where((b) => b.finishedAt != null).take(_listMax);
+    final costs = ref.watch(costStatsProvider).value;
     String time(int seconds) => formatReadingTime(seconds, locale: locale);
     return SettingsPage(
       title: l.statsTitle,
@@ -83,6 +84,8 @@ class StatsView extends ConsumerWidget {
                   ),
               ],
             ),
+          if (costs != null && costs.features.isNotEmpty)
+            _costCard(context, costs),
           _NumbersCard(
             title: l.statsAllTime,
             numbers: [
@@ -101,6 +104,50 @@ class StatsView extends ConsumerWidget {
 
 /// Books listed per progress card.
 const _listMax = 5;
+
+// The app's AI feature names; product names, so the same in every language.
+const _features = {
+  'group': 'Artinya',
+  'breakdown': 'Bedahin',
+  'chat': 'Ngobrolin',
+};
+
+/// AI cost per month, feature, and book. A cost no call reported shows as
+/// "Gak tercatat", never as zero.
+Widget _costCard(BuildContext context, CostStats costs) {
+  final l = context.l10n;
+  final locale = l.localeName;
+  (String, String, String) row(String name, CostRow r) => (
+    name,
+    l.statsCalls(r.calls),
+    r.costUsd == null ? l.statsCostUnrecorded : usd(r.costUsd!, locale: locale),
+  );
+  final month = DateFormat.yMMMM(locale);
+  return _BooksCard(
+    title: l.statsCost,
+    note: l.statsCostNote,
+    sections: [
+      (
+        l.statsCostByMonth,
+        [
+          for (final r in costs.months)
+            row(month.format(DateTime.parse('${r.key}-01')), r),
+        ],
+      ),
+      (
+        l.statsCostByFeature,
+        [
+          for (final r in costs.features)
+            row(_features[r.key] ?? '${r.key}', r),
+        ],
+      ),
+      (
+        l.statsCostByBook,
+        [for (final r in costs.books) row(r.key ?? l.statsDeletedBook, r)],
+      ),
+    ],
+  );
+}
 
 /// The busiest hour ("21.00–22.00") and weekday; null before any reading.
 List<(String, String)>? _favorite(BuildContext context, HabitStats habits) {
@@ -279,14 +326,27 @@ class _CalendarCard extends StatelessWidget {
 
 /// A titled list of books: title and a caption on the left, a value on the right.
 class _BooksCard extends StatelessWidget {
-  const _BooksCard({required this.title, required this.rows});
+  const _BooksCard({
+    required this.title,
+    this.rows = const [],
+    this.sections = const [],
+    this.note,
+  });
 
   final String title;
   final List<(String title, String caption, String value)> rows;
 
+  /// Titled groups of rows under [rows], for one card with several lists.
+  final List<(String heading, List<(String, String, String)> rows)> sections;
+  final String? note;
+
   @override
   Widget build(BuildContext context) {
     final c = context.stabilo;
+    final heading = StabiloType.caption.copyWith(
+      fontWeight: FontWeight.w700,
+      color: c.ink2,
+    );
     return Container(
       padding: const EdgeInsets.all(Space.s4),
       decoration: _card(c),
@@ -294,50 +354,61 @@ class _BooksCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         spacing: Space.s3,
         children: [
-          Semantics(
-            header: true,
-            child: Text(
-              title,
-              style: StabiloType.caption.copyWith(
-                fontWeight: FontWeight.w700,
-                color: c.ink2,
+          Semantics(header: true, child: Text(title, style: heading)),
+          if (note case final note?)
+            Text(note, style: StabiloType.caption.copyWith(color: c.ink2)),
+          ..._rows(c, rows),
+          for (final (name, group) in sections) ...[
+            Padding(
+              padding: const EdgeInsets.only(top: Space.s1),
+              child: Semantics(
+                header: true,
+                child: Text(
+                  name,
+                  style: StabiloType.label.copyWith(color: c.ink2),
+                ),
               ),
             ),
-          ),
-          for (final (name, caption, value) in rows)
-            MergeSemantics(
-              child: Row(
-                spacing: Space.s3,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      spacing: 2,
-                      children: [
-                        Text(
-                          name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: StabiloType.label.copyWith(color: c.ink),
-                        ),
-                        Text(
-                          caption,
-                          style: StabiloType.caption.copyWith(color: c.ink2),
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (value.isNotEmpty)
-                    Text(
-                      value,
-                      style: StabiloType.caption.copyWith(color: c.ink),
-                    ),
-                ],
-              ),
-            ),
+            ..._rows(c, group),
+          ],
         ],
       ),
     );
+  }
+
+  static Iterable<Widget> _rows(
+    StabiloColors c,
+    List<(String, String, String)> rows,
+  ) sync* {
+    for (final (name, caption, value) in rows) {
+      yield MergeSemantics(
+        child: Row(
+          spacing: Space.s3,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                spacing: 2,
+                children: [
+                  Text(
+                    name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: StabiloType.label.copyWith(color: c.ink),
+                  ),
+                  Text(
+                    caption,
+                    style: StabiloType.caption.copyWith(color: c.ink2),
+                  ),
+                ],
+              ),
+            ),
+            if (value.isNotEmpty)
+              Text(value, style: StabiloType.caption.copyWith(color: c.ink)),
+          ],
+        ),
+      );
+    }
   }
 }
 

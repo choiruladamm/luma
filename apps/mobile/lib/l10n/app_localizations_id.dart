@@ -2775,6 +2775,38 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
+  String get statsCost => 'Biaya AI';
+
+  @override
+  String get statsCostNote =>
+      'Perkiraan dari laporan model, termasuk yang pakai key sendiri.';
+
+  @override
+  String get statsCostByMonth => 'Per bulan';
+
+  @override
+  String get statsCostByFeature => 'Per fitur';
+
+  @override
+  String get statsCostByBook => 'Per buku';
+
+  @override
+  String get statsCostUnrecorded => 'Gak tercatat';
+
+  @override
+  String statsCalls(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count request AI',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get statsDeletedBook => 'Buku yang udah dihapus';
+
+  @override
   String get statsFavorite => 'Paling sering baca';
 
   @override
