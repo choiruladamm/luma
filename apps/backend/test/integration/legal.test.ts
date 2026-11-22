@@ -27,6 +27,7 @@ describe("store-required pages", () => {
     for (const text of [
       "Cloud backup",
       "Sync data",
+      "Reading and AI usage",
       "OpenRouter",
       "Google",
       "Cloudflare",
@@ -43,6 +44,7 @@ describe("store-required pages", () => {
       "Settings → Account",
       "Delete account forever",
       "All cloud backups",
+      "reading and AI usage history",
       "within 30 days",
       "subject=Delete%20my%20Luma%20account",
     ]) {

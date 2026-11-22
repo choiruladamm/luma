@@ -1,7 +1,7 @@
 import { html } from "hono/html";
 
 /** Bump when the content of either page changes. */
-const LAST_UPDATED = "November 16, 2026";
+const LAST_UPDATED = "November 22, 2026";
 
 // Same mark as the app and the admin dashboard (yellow stabilo U, pink dot).
 const LOGO = html`<svg viewBox="0 0 100 100" width="36" height="36" fill="none" aria-hidden="true">
@@ -306,7 +306,9 @@ export const privacy = (contact: string) =>
     <h2>What stays on your phone</h2>
     <ul>
       <li>
-        Your books and everything about them, unless you turn on cloud backup or sync (below).
+        Your books and everything about them, unless you turn on cloud backup or sync (below). When
+        you're signed in, a daily usage summary with book titles still reaches our servers (see
+        "Reading and AI usage").
       </li>
       <li>
         Your own OpenRouter API key, if you add one. It is kept in the phone's secure storage and is
@@ -355,6 +357,15 @@ export const privacy = (contact: string) =>
           <td>Keeping your phones in step</td>
         </tr>
         <tr>
+          <td>Reading and AI usage</td>
+          <td>
+            A daily summary sent automatically while you're signed in: the titles of the books you
+            read and how long, and for each AI feature, model, and book the number of AI requests,
+            failures, tokens, and their cost. It never contains book text or your questions.
+          </td>
+          <td>Understanding how Luma is used, and AI costs</td>
+        </tr>
+        <tr>
           <td>Usage counters</td>
           <td>Storage used and sync writes per day</td>
           <td>Fair-use limits</td>
@@ -381,7 +392,7 @@ export const privacy = (contact: string) =>
       <a href="https://openrouter.ai/privacy">OpenRouter</a>, which routes it to an AI model
       provider to produce the translation or answer. With your own key, this happens under your
       OpenRouter account; with the free allowance, under the key Luma issued for you. Luma's servers
-      don't see this text.
+      don't see this text, only the daily usage summary described above.
     </p>
     <h3>Google (sign-in)</h3>
     <p>
@@ -464,6 +475,9 @@ export const deleteAccount = (contact: string) =>
         chat history
       </li>
       <li>Your free AI key (revoked at OpenRouter) and usage counters</li>
+      <li>
+        Your reading and AI usage history: book titles, reading time, and AI requests and cost
+      </li>
     </ul>
 
     <h2>What stays</h2>
