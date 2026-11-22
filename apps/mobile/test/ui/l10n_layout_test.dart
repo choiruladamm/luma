@@ -56,7 +56,6 @@ class _Quota extends AiQuotaController {
 
 const reading = ReadingSummary(
   weekSeconds: 4500,
-  weekDays: 3,
   totalSeconds: 36000,
   finishedBooks: 2,
 );

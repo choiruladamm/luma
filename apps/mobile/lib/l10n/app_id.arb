@@ -3414,22 +3414,62 @@
   "@settingsHubStatsEmpty": {},
   "statsTitle": "Statistik baca",
   "@statsTitle": {},
-  "statsWeek": "7 hari terakhir",
-  "@statsWeek": {},
-  "statsAllTime": "Sejauh ini",
-  "@statsAllTime": {},
-  "statsReadingTime": "Waktu baca",
-  "@statsReadingTime": {},
-  "statsReadingDays": "Hari baca",
-  "@statsReadingDays": {},
-  "statsDaysOfWeek": "{days}/7",
-  "@statsDaysOfWeek": {
+  "statsHabit": "Kebiasaan",
+  "@statsHabit": {},
+  "statsThisWeek": "Minggu ini",
+  "@statsThisWeek": {},
+  "statsLastWeek": "Minggu lalu {time}",
+  "@statsLastWeek": {
     "placeholders": {
-      "days": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "statsStreak": "Baca berturut-turut",
+  "@statsStreak": {},
+  "statsStreakDays": "{count, plural, other{{count} hari}}",
+  "@statsStreakDays": {
+    "placeholders": {
+      "count": {
         "type": "int"
       }
     }
   },
+  "statsCalendar": "Kalender baca",
+  "@statsCalendar": {},
+  "statsCalendarLabel": "{days, plural, other{{days} hari baca}} dalam {weeks} minggu terakhir",
+  "@statsCalendarLabel": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      },
+      "weeks": {
+        "type": "int"
+      }
+    }
+  },
+  "statsFavorite": "Paling sering baca",
+  "@statsFavorite": {},
+  "statsFavoriteHour": "Jam",
+  "@statsFavoriteHour": {},
+  "statsFavoriteDay": "Hari",
+  "@statsFavoriteDay": {},
+  "statsHourRange": "{from}–{to}",
+  "@statsHourRange": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
+  "statsAllTime": "Sejauh ini",
+  "@statsAllTime": {},
+  "statsReadingTime": "Waktu baca",
+  "@statsReadingTime": {},
   "statsFinished": "Buku tamat",
   "@statsFinished": {},
   "statsEmptyTitle": "Belum ada statistik",

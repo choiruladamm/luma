@@ -4622,11 +4622,71 @@ abstract class AppLocalizations {
   /// **'Statistik baca'**
   String get statsTitle;
 
-  /// No description provided for @statsWeek.
+  /// No description provided for @statsHabit.
   ///
   /// In id, this message translates to:
-  /// **'7 hari terakhir'**
-  String get statsWeek;
+  /// **'Kebiasaan'**
+  String get statsHabit;
+
+  /// No description provided for @statsThisWeek.
+  ///
+  /// In id, this message translates to:
+  /// **'Minggu ini'**
+  String get statsThisWeek;
+
+  /// No description provided for @statsLastWeek.
+  ///
+  /// In id, this message translates to:
+  /// **'Minggu lalu {time}'**
+  String statsLastWeek(String time);
+
+  /// No description provided for @statsStreak.
+  ///
+  /// In id, this message translates to:
+  /// **'Baca berturut-turut'**
+  String get statsStreak;
+
+  /// No description provided for @statsStreakDays.
+  ///
+  /// In id, this message translates to:
+  /// **'{count, plural, other{{count} hari}}'**
+  String statsStreakDays(int count);
+
+  /// No description provided for @statsCalendar.
+  ///
+  /// In id, this message translates to:
+  /// **'Kalender baca'**
+  String get statsCalendar;
+
+  /// No description provided for @statsCalendarLabel.
+  ///
+  /// In id, this message translates to:
+  /// **'{days, plural, other{{days} hari baca}} dalam {weeks} minggu terakhir'**
+  String statsCalendarLabel(int days, int weeks);
+
+  /// No description provided for @statsFavorite.
+  ///
+  /// In id, this message translates to:
+  /// **'Paling sering baca'**
+  String get statsFavorite;
+
+  /// No description provided for @statsFavoriteHour.
+  ///
+  /// In id, this message translates to:
+  /// **'Jam'**
+  String get statsFavoriteHour;
+
+  /// No description provided for @statsFavoriteDay.
+  ///
+  /// In id, this message translates to:
+  /// **'Hari'**
+  String get statsFavoriteDay;
+
+  /// No description provided for @statsHourRange.
+  ///
+  /// In id, this message translates to:
+  /// **'{from}–{to}'**
+  String statsHourRange(String from, String to);
 
   /// No description provided for @statsAllTime.
   ///
@@ -4639,18 +4699,6 @@ abstract class AppLocalizations {
   /// In id, this message translates to:
   /// **'Waktu baca'**
   String get statsReadingTime;
-
-  /// No description provided for @statsReadingDays.
-  ///
-  /// In id, this message translates to:
-  /// **'Hari baca'**
-  String get statsReadingDays;
-
-  /// No description provided for @statsDaysOfWeek.
-  ///
-  /// In id, this message translates to:
-  /// **'{days}/7'**
-  String statsDaysOfWeek(int days);
 
   /// No description provided for @statsFinished.
   ///

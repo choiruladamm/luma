@@ -2712,21 +2712,61 @@ class AppLocalizationsId extends AppLocalizations {
   String get statsTitle => 'Statistik baca';
 
   @override
-  String get statsWeek => '7 hari terakhir';
+  String get statsHabit => 'Kebiasaan';
+
+  @override
+  String get statsThisWeek => 'Minggu ini';
+
+  @override
+  String statsLastWeek(String time) {
+    return 'Minggu lalu $time';
+  }
+
+  @override
+  String get statsStreak => 'Baca berturut-turut';
+
+  @override
+  String statsStreakDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count hari',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get statsCalendar => 'Kalender baca';
+
+  @override
+  String statsCalendarLabel(int days, int weeks) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days hari baca',
+    );
+    return '$_temp0 dalam $weeks minggu terakhir';
+  }
+
+  @override
+  String get statsFavorite => 'Paling sering baca';
+
+  @override
+  String get statsFavoriteHour => 'Jam';
+
+  @override
+  String get statsFavoriteDay => 'Hari';
+
+  @override
+  String statsHourRange(String from, String to) {
+    return '$from–$to';
+  }
 
   @override
   String get statsAllTime => 'Sejauh ini';
 
   @override
   String get statsReadingTime => 'Waktu baca';
-
-  @override
-  String get statsReadingDays => 'Hari baca';
-
-  @override
-  String statsDaysOfWeek(int days) {
-    return '$days/7';
-  }
 
   @override
   String get statsFinished => 'Buku tamat';
