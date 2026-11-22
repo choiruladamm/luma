@@ -68,6 +68,30 @@ class BookStats {
   final DateTime? finishedAt;
 }
 
+/// AI calls and cost for one month, feature, or book on the cost card.
+class CostRow {
+  const CostRow({
+    required this.key,
+    required this.calls,
+    required this.costUsd,
+  });
+
+  /// `YYYY-MM`, an `AiCallKind` name, or a book title (null for a deleted book).
+  final String? key;
+  final int calls;
+
+  /// Null when no call in the row reported a cost ("gak tercatat", not zero).
+  final double? costUsd;
+}
+
+/// The cost card: the last [StatsRepository.costMonths] months, newest first,
+/// all-time per feature, and the most expensive books.
+typedef CostStats = ({
+  List<CostRow> months,
+  List<CostRow> features,
+  List<CostRow> books,
+});
+
 /// Statistics read straight from Drift (docs/data-model.md, Storage map), so
 /// they work offline and include books read with an own AI key.
 class StatsRepository {
@@ -75,6 +99,53 @@ class StatsRepository {
 
   final AppDatabase _db;
   final DateTime Function() _clock;
+
+  /// Months on the cost card.
+  static const costMonths = 6;
+
+  /// Books on the cost card.
+  static const costBooks = 5;
+
+  /// Emits the cost card again whenever an AI call is logged (`ai_calls`).
+  Stream<CostStats> watchCosts() {
+    final now = _clock();
+    final since = DateTime(now.year, now.month - (costMonths - 1));
+    Future<List<CostRow>> rows(String sql, [List<Variable> vars = const []]) =>
+        _db
+            .customSelect(sql, variables: vars)
+            .map(
+              (r) => CostRow(
+                key: r.readNullable<String>('k'),
+                calls: r.read<int>('calls'),
+                costUsd: r.readNullable<double>('cost'),
+              ),
+            )
+            .get();
+    return _db
+        .select(_db.aiCalls)
+        .watch()
+        .asyncMap(
+          (_) async => (
+            months: await rows(
+              "SELECT strftime('%Y-%m', created_at, 'unixepoch', 'localtime') "
+              'AS k, COUNT(*) AS calls, SUM(cost_usd) AS cost FROM ai_calls '
+              'WHERE created_at >= ?1 GROUP BY k ORDER BY k DESC',
+              [Variable.withDateTime(since)],
+            ),
+            features: await rows(
+              'SELECT kind AS k, COUNT(*) AS calls, SUM(cost_usd) AS cost '
+              'FROM ai_calls GROUP BY kind ORDER BY calls DESC',
+            ),
+            books: await rows(
+              'SELECT b.title AS k, COUNT(*) AS calls, SUM(c.cost_usd) AS cost '
+              'FROM ai_calls c LEFT JOIN books b ON b.id = c.book_id '
+              'GROUP BY c.book_id '
+              'ORDER BY COALESCE(SUM(c.cost_usd), 0) DESC, COUNT(*) DESC '
+              'LIMIT $costBooks',
+            ),
+          ),
+        );
+  }
 
   /// Weeks shown on the reading calendar, the span of [watchHabits].
   static const calendarWeeks = 18;
@@ -224,4 +295,9 @@ final habitStatsProvider = StreamProvider.autoDispose<HabitStats>(
 /// The progress cards on the Stats screen.
 final bookStatsProvider = StreamProvider.autoDispose<List<BookStats>>(
   (ref) => ref.watch(statsRepositoryProvider).watchBooks(),
+);
+
+/// The cost card on the Stats screen.
+final costStatsProvider = StreamProvider.autoDispose<CostStats>(
+  (ref) => ref.watch(statsRepositoryProvider).watchCosts(),
 );

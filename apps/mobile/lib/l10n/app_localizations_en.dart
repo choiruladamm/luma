@@ -2964,6 +2964,39 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get statsCost => 'AI cost';
+
+  @override
+  String get statsCostNote =>
+      'Estimated from what the model reports, own keys included.';
+
+  @override
+  String get statsCostByMonth => 'By month';
+
+  @override
+  String get statsCostByFeature => 'By feature';
+
+  @override
+  String get statsCostByBook => 'By book';
+
+  @override
+  String get statsCostUnrecorded => 'Not recorded';
+
+  @override
+  String statsCalls(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count AI requests',
+      one: '$count AI request',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get statsDeletedBook => 'Deleted book';
+
+  @override
   String get statsFavorite => 'When you read most';
 
   @override

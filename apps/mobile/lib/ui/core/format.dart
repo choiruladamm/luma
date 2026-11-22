@@ -6,6 +6,11 @@ import '../../l10n/app_localizations.dart';
 String thousands(int n, {String locale = 'id'}) =>
     NumberFormat.decimalPattern(locale).format(n);
 
+/// 0.00676 → "$0,0068" (id) / "$0.0068" (en): small AI costs keep up to 4
+/// decimals.
+String usd(double value, {String locale = 'id'}) =>
+    '\$${NumberFormat('0.####', locale).format(value)}';
+
 String fileSize(int bytes, {String locale = 'id'}) {
   if (bytes < 1024 * 1024) {
     return '${NumberFormat.decimalPattern(locale).format((bytes / 1024).ceil())} KB';
