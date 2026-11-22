@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:luma/data/repositories/stats_repository.dart';
 import 'package:luma/l10n/app_localizations.dart';
 import 'package:luma/ui/core/theme/stabilo_theme.dart';
@@ -48,10 +49,24 @@ void main() {
     HabitStats habits = noHabits,
     List<BookStats> books = const [],
     CostStats costs = const (months: [], features: [], books: []),
+    Comprehension help = const (weeks: [], hardest: []),
   }) async {
-    tester.view.physicalSize = const Size(900, 1400);
+    tester.view.physicalSize = const Size(900, 2000);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
+    final router = GoRouter(
+      routes: [
+        GoRoute(path: '/', builder: (_, _) => const StatsView()),
+        GoRoute(
+          path: '/reader/:bookId',
+          builder: (_, state) => Text(
+            'reader ${state.pathParameters['bookId']} '
+            '${state.uri.queryParameters['chapter']}',
+          ),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -59,13 +74,14 @@ void main() {
           habitStatsProvider.overrideWith((_) => Stream.value(habits)),
           bookStatsProvider.overrideWith((_) => Stream.value(books)),
           costStatsProvider.overrideWith((_) => Stream.value(costs)),
+          comprehensionProvider.overrideWith((_) => Stream.value(help)),
         ],
-        child: MaterialApp(
+        child: MaterialApp.router(
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           locale: const Locale('id'),
           theme: stabiloTheme(b),
-          home: const StatsView(),
+          routerConfig: router,
         ),
       ),
     );
@@ -216,5 +232,68 @@ void main() {
       ),
     );
     expect(find.text('Biaya AI'), findsNothing);
+  });
+
+  testWidgets(
+    'AI help per week and hardest chapters; a tap opens the chapter',
+    (tester) async {
+      final weeks = [
+        for (var w = 0; w < 7; w++)
+          (
+            week: DateTime(2026, 10, 5 + 7 * w),
+            helped: 0,
+            chars: 0,
+            per1000: null,
+          ),
+        (week: DateTime(2026, 11, 23), helped: 3, chars: 2000, per1000: 1.5),
+      ];
+      await open(
+        tester,
+        const ReadingSummary(
+          weekSeconds: 60,
+          totalSeconds: 600,
+          finishedBooks: 0,
+        ),
+        help: (
+          weeks: weeks,
+          hardest: const [
+            (
+              bookId: 7,
+              chapterId: 42,
+              book: 'Meditations',
+              chapter: 'Book Two',
+              helped: 3,
+              groups: 5,
+              reopened: 2,
+            ),
+          ],
+        ),
+      );
+      expect(find.text('Bantuan AI'), findsOneWidget);
+      expect(find.text('Minggu ini: 1,5 per 1.000 karakter'), findsOneWidget);
+      expect(find.text('Bab paling susah'), findsOneWidget);
+      expect(
+        find.text('Meditations · 3/5 kelompok diartiin · dibuka ulang 2×'),
+        findsOneWidget,
+      );
+      expect(find.text('60%'), findsOneWidget);
+
+      await tester.tap(find.text('Book Two'));
+      await tester.pumpAndSettle();
+      expect(find.text('reader 7 42'), findsOneWidget);
+    },
+  );
+
+  testWidgets('no AI help cards before any Artinya call', (tester) async {
+    await open(
+      tester,
+      const ReadingSummary(
+        weekSeconds: 60,
+        totalSeconds: 600,
+        finishedBooks: 0,
+      ),
+    );
+    expect(find.text('Bantuan AI'), findsNothing);
+    expect(find.text('Bab paling susah'), findsNothing);
   });
 }

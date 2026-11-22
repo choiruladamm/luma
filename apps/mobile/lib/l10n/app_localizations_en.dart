@@ -2997,6 +2997,50 @@ class AppLocalizationsEn extends AppLocalizations {
   String get statsDeletedBook => 'Deleted book';
 
   @override
+  String get statsHelp => 'AI help';
+
+  @override
+  String get statsHelpNote =>
+      'Groups translated per 1,000 characters you read. Lower means smoother reading.';
+
+  @override
+  String statsPer1000(String value) {
+    return '$value per 1,000 characters';
+  }
+
+  @override
+  String statsHelpThisWeek(String value) {
+    return 'This week: $value';
+  }
+
+  @override
+  String statsHelpWeek(String date, String value) {
+    return 'Week of $date: $value';
+  }
+
+  @override
+  String get statsHelpNoReading => 'no reading yet';
+
+  @override
+  String get statsHardest => 'Hardest chapters';
+
+  @override
+  String statsHardestCaption(String book, int helped, int groups) {
+    return '$book · $helped/$groups groups translated';
+  }
+
+  @override
+  String statsReopened(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'reopened $count×',
+      one: 'reopened once',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get statsFavorite => 'When you read most';
 
   @override

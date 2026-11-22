@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../domain/models/ai_reply.dart';
 import '../../domain/models/book.dart';
 import '../../domain/reading_stats.dart';
 import '../database/app_database.dart';
@@ -68,6 +69,24 @@ class BookStats {
   final DateTime? finishedAt;
 }
 
+/// One week of the comprehension trend.
+typedef HelpWeek = ({DateTime week, int helped, int chars, double? per1000});
+
+/// One of the hardest chapters: the share of its groups that needed AI help.
+typedef HardChapter = ({
+  int bookId,
+  int chapterId,
+  String book,
+  String chapter,
+  int helped,
+  int groups,
+  int reopened,
+});
+
+/// The comprehension cards: the last [StatsRepository.trendWeeks] weeks,
+/// oldest first, and the hardest chapters.
+typedef Comprehension = ({List<HelpWeek> weeks, List<HardChapter> hardest});
+
 /// AI calls and cost for one month, feature, or book on the cost card.
 class CostRow {
   const CostRow({
@@ -99,6 +118,95 @@ class StatsRepository {
 
   final AppDatabase _db;
   final DateTime Function() _clock;
+
+  /// Weeks on the comprehension trend.
+  static const trendWeeks = 8;
+
+  /// Chapters on the hardest list, and the fewest groups a chapter needs to
+  /// be on it (a two-group chapter is 100% "hard" after one tap).
+  static const hardestChapters = 5, hardestMinGroups = 5;
+
+  /// Emits the comprehension cards again whenever an AI call is logged.
+  /// Helped = successful Artinya calls (`ai_calls` kind `group`) per week
+  /// against the characters read that week; hardest = translated groups
+  /// (`ai_results`) over all groups of a chapter.
+  // ponytail: re-emits on ai_calls only, so new reading shows on the next
+  // open of the screen; add reading_sessions as a trigger if that matters.
+  Stream<Comprehension> watchComprehension() {
+    final now = _clock();
+    final start = weekStart(now);
+    final since = DateTime(
+      start.year,
+      start.month,
+      start.day - 7 * (trendWeeks - 1),
+    );
+    return _db.select(_db.aiCalls).watch().asyncMap((calls) async {
+      final sessions = await (_db.select(
+        _db.readingSessions,
+      )..where((s) => s.startedAt.isBiggerOrEqualValue(since))).get();
+      final helped = <DateTime, int>{};
+      for (final c in calls) {
+        if (c.kind != AiCallKind.group || c.error != null) continue;
+        if (c.createdAt.isBefore(since)) continue;
+        final week = weekStart(c.createdAt);
+        helped[week] = (helped[week] ?? 0) + 1;
+      }
+      final chars = <DateTime, int>{};
+      for (final s in sessions) {
+        final week = weekStart(s.startedAt);
+        chars[week] =
+            (chars[week] ?? 0) +
+            charsRead((
+              startedAt: s.startedAt,
+              seconds: s.seconds,
+              startChar: s.startChar,
+              endChar: s.endChar,
+            ));
+      }
+      final weeks = <HelpWeek>[];
+      for (var w = 0; w < trendWeeks; w++) {
+        final week = DateTime(since.year, since.month, since.day + 7 * w);
+        final h = helped[week] ?? 0, c = chars[week] ?? 0;
+        weeks.add((
+          week: week,
+          helped: h,
+          chars: c,
+          per1000: perThousandChars(h, c),
+        ));
+      }
+      final hardest = await _db
+          .customSelect(
+            'SELECT c.id AS chapter_id, c.book_id, b.title AS book, '
+            'c.title AS chapter, COUNT(*) AS helped, '
+            'COALESCE(SUM(r.open_count), 0) AS reopened, '
+            '(SELECT COUNT(DISTINCT p.group_index) FROM paragraphs p '
+            'WHERE p.chapter_id = c.id AND p.group_index IS NOT NULL) '
+            'AS groups '
+            'FROM ai_results r JOIN chapters c ON c.id = r.chapter_id '
+            'JOIN books b ON b.id = c.book_id '
+            'GROUP BY c.id HAVING groups >= ?1 '
+            'ORDER BY COUNT(*) * 1.0 / groups DESC, reopened DESC '
+            'LIMIT ?2',
+            variables: [
+              Variable.withInt(hardestMinGroups),
+              Variable.withInt(hardestChapters),
+            ],
+          )
+          .map(
+            (r) => (
+              bookId: r.read<int>('book_id'),
+              chapterId: r.read<int>('chapter_id'),
+              book: r.read<String>('book'),
+              chapter: r.read<String>('chapter'),
+              helped: r.read<int>('helped'),
+              groups: r.read<int>('groups'),
+              reopened: r.read<int>('reopened'),
+            ),
+          )
+          .get();
+      return (weeks: weeks, hardest: hardest);
+    });
+  }
 
   /// Months on the cost card.
   static const costMonths = 6;
@@ -300,4 +408,9 @@ final bookStatsProvider = StreamProvider.autoDispose<List<BookStats>>(
 /// The cost card on the Stats screen.
 final costStatsProvider = StreamProvider.autoDispose<CostStats>(
   (ref) => ref.watch(statsRepositoryProvider).watchCosts(),
+);
+
+/// The comprehension cards on the Stats screen.
+final comprehensionProvider = StreamProvider.autoDispose<Comprehension>(
+  (ref) => ref.watch(statsRepositoryProvider).watchComprehension(),
 );

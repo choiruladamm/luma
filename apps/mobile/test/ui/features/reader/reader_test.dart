@@ -28,6 +28,7 @@ import 'package:luma/ui/features/chat/views/chat_source_sheet.dart';
 import 'package:luma/ui/features/chat/views/chat_source_visit_view.dart';
 import 'package:luma/ui/features/chat/views/chat_composer.dart';
 import 'package:luma/main.dart';
+import 'package:luma/routing/router.dart';
 import 'package:luma/ui/core/theme/reader_typography.dart';
 import 'package:luma/ui/core/theme/stabilo_theme.dart';
 import 'package:luma/ui/core/theme/stabilo_tokens.dart';
@@ -830,6 +831,25 @@ void main() {
     expect(find.text('Bab 1 dari 2 · ±1 mnt'), findsOneWidget);
     expect(find.text('$long kelar'), findsNWidgets(2)); // chip + dock
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('a chapter link from Statistik baca opens at that chapter', (
+    tester,
+  ) async {
+    await openBook(
+      tester,
+      saved: (chapterId: 10, paragraphIndex: 0, paragraphOffset: 0),
+    );
+    await leave(tester);
+    ProviderScope.containerOf(tester.element(find.byType(LumaApp)))
+        .read(routerProvider)
+        .push(Routes.readerChapter(1, 11))
+        .ignore();
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Never say of anything, "I have lost it."'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('chapter end card moves on to the next chapter', (tester) async {

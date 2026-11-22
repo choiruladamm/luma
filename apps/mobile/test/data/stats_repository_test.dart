@@ -222,4 +222,88 @@ void main() {
       [('Book 1', 1.75), (null, 0.125), ('Book 2', null)],
     );
   });
+  test(
+    'comprehension: helped per 1,000 chars per week, hardest chapters',
+    () async {
+      // Chapter 1 (book 1): 5 groups, 3 translated, one reopened twice.
+      for (var i = 0; i < 5; i++) {
+        await db
+            .into(db.paragraphs)
+            .insert(
+              ParagraphsCompanion.insert(
+                chapterId: 1,
+                paragraphIndex: i,
+                groupIndex: Value(i),
+                type: ParagraphType.paragraph,
+                content: 'p$i',
+              ),
+            );
+      }
+      for (final (g, opens) in [(0, 2), (1, 0), (2, 0)]) {
+        await db
+            .into(db.aiResults)
+            .insert(
+              AiResultsCompanion.insert(
+                chapterId: 1,
+                groupIndex: g,
+                translations: '[]',
+                meaning: '',
+                model: 'm',
+                openCount: Value(opens),
+              ),
+            );
+      }
+      // This week (from Monday the 16th): 2 successful Artinya calls, 1 failed,
+      // 1 Bedahin; 1,000 chars read.
+      for (final (kind, error) in [
+        (AiCallKind.group, null),
+        (AiCallKind.group, null),
+        (AiCallKind.group, 'timeout'),
+        (AiCallKind.breakdown, null),
+      ]) {
+        await db
+            .into(db.aiCalls)
+            .insert(
+              AiCallsCompanion.insert(
+                kind: kind,
+                model: 'm',
+                promptVersion: 1,
+                chars: 10,
+                error: Value(error),
+                createdAt: Value(day(18)),
+              ),
+            );
+      }
+      await read(day(17), 600); // endChar 10 in the helper
+      await db
+          .into(db.readingSessions)
+          .insert(
+            ReadingSessionsCompanion.insert(
+              bookId: 1,
+              chapterId: 1,
+              startedAt: day(18),
+              seconds: 600,
+              startChar: 10,
+              endChar: 1000,
+            ),
+          );
+
+      final c = await repo().watchComprehension().first;
+
+      expect(c.weeks, hasLength(StatsRepository.trendWeeks));
+      final week = c.weeks.last;
+      expect(week.week, DateTime(2026, 11, 16));
+      expect((week.helped, week.chars, week.per1000), (2, 1000, 2.0));
+      expect(c.weeks.first.per1000, isNull);
+      expect(c.hardest.single, (
+        bookId: 1,
+        chapterId: 1,
+        book: 'Book 1',
+        chapter: 'I',
+        helped: 3,
+        groups: 5,
+        reopened: 2,
+      ));
+    },
+  );
 }

@@ -49,6 +49,10 @@ abstract final class Routes {
   static String chatSessions(int bookId) => '${chat(bookId)}/sessions';
   static String reader(int bookId) => '/reader/$bookId';
 
+  /// The reader opened at the start of [chapterId] (`chapters.id`).
+  static String readerChapter(int bookId, int chapterId) =>
+      '/reader/$bookId?chapter=$chapterId';
+
   /// Bedahin for one group. Only `push`ed from the Artinya sheet: the sheet stays
   /// underneath, going back returns to the sheet.
   static String breakdown(int bookId, int chapterId, int groupIndex) =>
@@ -130,8 +134,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/reader/:bookId',
-        builder: (_, state) =>
-            ReaderView(bookId: int.parse(state.pathParameters['bookId']!)),
+        builder: (_, state) => ReaderView(
+          bookId: int.parse(state.pathParameters['bookId']!),
+          startChapterId: int.tryParse(
+            state.uri.queryParameters['chapter'] ?? '',
+          ),
+        ),
         routes: [
           GoRoute(
             path: 'breakdown/:chapterId/:groupIndex',

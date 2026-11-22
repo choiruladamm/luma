@@ -44,9 +44,14 @@ class ReaderView extends ConsumerStatefulWidget {
     this.sourceVisit,
     this.sourceOriginalPosition,
     this.onContinueReading,
+    this.startChapterId,
   });
 
   final int bookId;
+
+  /// Opens at the start of this chapter instead of the saved position, like
+  /// picking it in the table of contents (Statistik baca's hardest chapters).
+  final int? startChapterId;
 
   /// Verified source visit: rendering/navigation only, never reading activity.
   final ChatSource? sourceVisit;
@@ -666,6 +671,8 @@ class _ReaderViewState extends ConsumerState<ReaderView>
         paragraphIndex: source.paragraphIndex,
         paragraphOffset: 0,
       );
+    } else if (widget.startChapterId case final chapterId?) {
+      saved = (chapterId: chapterId, paragraphIndex: 0, paragraphOffset: 0);
     }
     final i = saved == null
         ? -1
