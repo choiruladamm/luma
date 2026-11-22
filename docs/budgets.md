@@ -30,6 +30,7 @@ Measure Worker invocations, SQL statements, D1 rows read and written, R2 calls, 
 ### Mobile
 
 - Drive calls from lifecycle, local changes, or user actions. `SyncTrigger` runs full sync on sign-in or startup with a stored session, and on resume subject to `SyncRepository.resumeGap`. Local changes trigger push only after `SyncTrigger.debounce`. The outbox deduplicates by record key. `CloudBackupService.missingBatch` bounds the number of names in each missing-file check.
+- `UsageRepository.sendIfDue` sends the usage rollup at most once per local day, in requests of up to `UsageService.maxRows` rows; usually one request a day. A failure waits for the next day.
 - `CloudBackupRepository.autoInterval` determines when an automatic backup is due. `retryGap` spaces automatic attempts even after failure. See [Backup](backup.md) for the mobile flow.
 - `BackendClient` uses exponential backoff up to `backendMaxAttempts` (three attempts including the original) for eligible network failures and 5xx responses without `Retry-After`. Sign-in and sign-up opt out. Sync records a pause for future push or pull when it receives an error with `Retry-After`. Cloud backup waits inline on `RATE_LIMITED` for both file and snapshot PUTs, up to `rateLimitRetries`, using `Retry-After` or a one-minute fallback.
 - AI config is cached for its provider's lifetime. Usage is fetched on demand with a one-hour cache and a forced refresh path. `AiKeyRepository` reuses the stored key until rejected or within `refreshBefore` of expiry.
