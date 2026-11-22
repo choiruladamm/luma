@@ -8,12 +8,19 @@ import { userPrefix } from "../../src/lib/storage";
 import meDelete from "@luma/contracts/fixtures/v1/me-delete.json";
 import me from "@luma/contracts/fixtures/v1/me.json";
 import unauthorized from "@luma/contracts/fixtures/v1/error-unauthorized.json";
+import usage from "@luma/contracts/fixtures/v2/usage.json";
 import { signUp } from "../helpers/auth";
 import { callWithBudget } from "../helpers/budget";
 import { expectContract } from "../helpers/contract";
 
 const url = (path: string) => `https://luma.test${path}`;
 const auth = (token: string) => ({ authorization: `Bearer ${token}` });
+const usageRows = async (userId: string) =>
+  (
+    await env.DB.prepare("SELECT count(*) AS n FROM usage_daily WHERE user_id = ?")
+      .bind(userId)
+      .first<{ n: number }>()
+  )?.n;
 
 describe("GET /v1/me", () => {
   it("returns the signed-in user (contract)", async () => {
@@ -76,6 +83,23 @@ describe("DELETE /v1/me", () => {
     expect(after.status).toBe(401);
     const other = await exports.default.fetch(url("/v1/me"), { headers: auth(b.token) });
     expect(other.status).toBe(200);
+  });
+
+  it("deletes the user's usage rollup with the account, leaves others alone", async () => {
+    const a = await signUp();
+    const b = await signUp();
+    for (const user of [a, b]) {
+      const res = await exports.default.fetch(url("/v2/usage"), {
+        method: "POST",
+        headers: { ...auth(user.token), "content-type": "application/json" },
+        body: JSON.stringify(usage.request.body),
+      });
+      expect(res.status).toBe(200);
+    }
+    await exports.default.fetch(url("/v1/me"), { method: "DELETE", headers: auth(a.token) });
+
+    expect(await usageRows(a.userId)).toBe(0);
+    expect(await usageRows(b.userId)).toBe(2);
   });
 
   it("requires a session", async () => {
