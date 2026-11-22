@@ -11,6 +11,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:luma/data/repositories/ai_results_repository.dart';
 import 'package:luma/data/repositories/catalog_repository.dart';
 import 'package:luma/data/repositories/settings_repository.dart';
+import 'package:luma/data/repositories/stats_repository.dart';
 import 'package:luma/data/services/ai_key_service.dart';
 import 'package:luma/data/services/auth_service.dart';
 import 'package:luma/data/services/catalog_sync_service.dart';
@@ -52,6 +53,13 @@ class _Quota extends AiQuotaController {
   @override
   Future<void> refresh({bool force = false}) async {}
 }
+
+const reading = ReadingSummary(
+  weekSeconds: 4500,
+  weekDays: 3,
+  totalSeconds: 36000,
+  finishedBooks: 2,
+);
 
 void main() {
   setUpAll(() async {
@@ -99,6 +107,9 @@ void main() {
                 aiSourceProvider.overrideWith((_) async => AiSource.subsidy),
                 aiModelProvider.overrideWith(
                   (_) => Stream.value(defaultAiModel),
+                ),
+                readingSummaryProvider.overrideWith(
+                  (_) => Stream.value(reading),
                 ),
                 aiCacheStatsProvider.overrideWith(
                   (_) => Stream.value((paragraphs: 3, bytes: 2048)),

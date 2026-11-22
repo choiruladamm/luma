@@ -221,8 +221,9 @@ Boards "Terpilih · Bedahin · Opsi C · layar bedah" + "Spek · Bedahin · stat
 
 Board "Pengaturan · 01–11" (page `atur`).
 
-- The hub fits one screen without scrolling and isn't covered by the tab bar: account card + AI quota ring, AI model card ("Ganti model" opens the picker, "Atur AI" goes to the AI page), then 4 tiles Backup · Katalog · Cache · Tampilan (name + one status + "›"; a pink dot when something needs checking, e.g. never backed up).
-- Detail pages: Akun, AI, Backup & pulihin, Katalog buku. Cache and Tampilan are sheets.
+- The hub fits one screen without scrolling and isn't covered by the tab bar: account card + AI quota ring, AI model card ("Ganti model" opens the picker, "Atur AI" goes to the AI page), then 5 tiles Backup · Katalog · Cache · Tampilan · Statistik (name + one status + "›"; a pink dot when something needs checking, e.g. never backed up). Statistik isn't on the board; it reuses the tile and the detail-page cards.
+- Detail pages: Akun, AI, Backup & pulihin, Katalog buku, Statistik baca. Cache and Tampilan are sheets.
+- Statistik baca: reading time and reading days over the last 7 local days, all-time reading time and finished books, or an empty card before any reading. Each statistic adds its own card here.
 - Tampilan = theme (same setting as Aa) + display language; the language never changes translations or AI answers.
 - Sparing palette: yellow only on the primary button and the active tab, pink for status and delete.
 

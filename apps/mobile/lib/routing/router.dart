@@ -22,6 +22,7 @@ import '../ui/features/settings/views/ai_view.dart';
 import '../ui/features/settings/views/backup_view.dart';
 import '../ui/features/settings/views/catalog_view.dart';
 import '../ui/features/settings/views/settings_hub_view.dart';
+import '../ui/features/settings/views/stats_view.dart';
 import '../ui/features/shell/views/app_shell.dart';
 
 abstract final class Routes {
@@ -40,6 +41,7 @@ abstract final class Routes {
   static const settingsAi = '/settings/ai';
   static const settingsBackup = '/settings/backup';
   static const settingsCatalog = '/settings/catalog';
+  static const settingsStats = '/settings/stats';
   static String chat(int bookId) => '/reader/$bookId/chat';
   static String chatSource(ChatSourceRef source) =>
       '${chat(source.bookId)}/source/${source.sessionId}/${source.turnId}/${source.attempt}/${Uri.encodeComponent(source.sourceId)}';
@@ -109,6 +111,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                     path: 'catalog',
                     builder: (_, _) => const CatalogView(),
                   ),
+                  GoRoute(path: 'stats', builder: (_, _) => const StatsView()),
                 ],
               ),
             ],
