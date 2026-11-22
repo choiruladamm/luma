@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import { describe, expect, it, vi } from "vitest";
 import { findUserKey } from "@luma/core/ai-keys";
 import { createDb } from "@luma/core/db/client";
-import { aiKeys, sessions, users } from "@luma/core/db/schema";
+import { aiKeys, sessions, usageDaily, users } from "@luma/core/db/schema";
 import { call, errorCode, ORIGIN } from "../helpers/app";
 import { fakeOpenRouter } from "../helpers/openrouter";
 import {
@@ -228,6 +228,152 @@ describe("GET /api/users", () => {
     const { response } = await get(`/api/users?${query}`);
     expect(response.status).toBe(400);
     expect(await errorCode(response)).toBe("BAD_REQUEST");
+  });
+});
+
+describe("GET /api/users/:id/usage", () => {
+  const today = new Date().toISOString().slice(0, 10);
+  const daysAgo = (n: number) => new Date(Date.now() - n * 86_400_000).toISOString().slice(0, 10);
+  const row = (userId: string, over: Partial<typeof usageDaily.$inferInsert>) => ({
+    userId,
+    day: today,
+    feature: "group",
+    model: "m1",
+    bookKey: "b1",
+    bookTitle: "Meditations",
+    keySource: "subsidy",
+    calls: 10,
+    failed: 1,
+    promptTokens: 1000,
+    completionTokens: 200,
+    costUsd: 0.01,
+    readingSeconds: 0,
+    updatedAt: 0,
+    ...over,
+  });
+
+  it("sums the rollup per feature, model, key source, and book in one D1 batch", async () => {
+    const user = await createUser();
+    const other = await createUser();
+    await db()
+      .insert(usageDaily)
+      .values([
+        row(user.id, {}),
+        row(user.id, { feature: "chat", model: "m2", keySource: "own", costUsd: null }),
+        row(user.id, {
+          feature: "reading",
+          model: "",
+          keySource: "",
+          calls: 0,
+          failed: 0,
+          promptTokens: 0,
+          completionTokens: 0,
+          costUsd: null,
+          readingSeconds: 600,
+        }),
+        row(user.id, { day: daysAgo(1), bookKey: "b2", bookTitle: "Catatan", calls: 2, failed: 0 }),
+        // Outside the 30-day range: only counts as the last day if nothing newer exists.
+        row(user.id, { day: daysAgo(40), calls: 99 }),
+        row(other.id, { calls: 500 }),
+      ]);
+
+    const { response, d1Queries } = await get(`/api/users/${user.id}/usage`);
+
+    expect(response.status).toBe(200);
+    // guard 1 + batch of 6 statements.
+    expect(d1Queries).toBe(7);
+    expect(await response.json()).toEqual({
+      from: daysAgo(29),
+      to: today,
+      totals: {
+        calls: 22,
+        failed: 2,
+        cost_usd: 0.02,
+        prompt_tokens: 3000,
+        completion_tokens: 600,
+        reading_seconds: 600,
+        active_days: 2,
+        last_day: today,
+      },
+      features: [
+        {
+          feature: "group",
+          calls: 12,
+          failed: 1,
+          cost_usd: 0.02,
+          prompt_tokens: 2000,
+          completion_tokens: 400,
+        },
+        {
+          feature: "chat",
+          calls: 10,
+          failed: 1,
+          cost_usd: null,
+          prompt_tokens: 1000,
+          completion_tokens: 200,
+        },
+      ],
+      models: [
+        { model: "m1", calls: 12, failed: 1, cost_usd: 0.02 },
+        { model: "m2", calls: 10, failed: 1, cost_usd: null },
+      ],
+      key_sources: [
+        { key_source: "subsidy", calls: 12, failed: 1, cost_usd: 0.02 },
+        { key_source: "own", calls: 10, failed: 1, cost_usd: null },
+      ],
+      books: [
+        {
+          book_key: "b1",
+          book_title: "Meditations",
+          reading_seconds: 600,
+          calls: 20,
+          failed: 2,
+          cost_usd: 0.01,
+        },
+        {
+          book_key: "b2",
+          book_title: "Catatan",
+          reading_seconds: 0,
+          calls: 2,
+          failed: 0,
+          cost_usd: 0.01,
+        },
+      ],
+    });
+  });
+
+  it("returns zeros for a user who never sent usage, and honours days", async () => {
+    const user = await createUser();
+    const body = await (await get(`/api/users/${user.id}/usage?days=7`)).response.json();
+    expect(body).toEqual({
+      from: daysAgo(6),
+      to: today,
+      totals: {
+        calls: 0,
+        failed: 0,
+        cost_usd: null,
+        prompt_tokens: 0,
+        completion_tokens: 0,
+        reading_seconds: 0,
+        active_days: 0,
+        last_day: null,
+      },
+      features: [],
+      models: [],
+      key_sources: [],
+      books: [],
+    });
+  });
+
+  it("rejects a bad range and answers 404 for an unknown user", async () => {
+    const user = await createUser();
+    for (const days of ["0", "366", "x"]) {
+      const { response } = await get(`/api/users/${user.id}/usage?days=${days}`);
+      expect(response.status).toBe(400);
+    }
+    const missing = await get("/api/users/nobody/usage");
+    expect(missing.response.status).toBe(404);
+    expect(await errorCode(missing.response)).toBe("NOT_FOUND");
   });
 });
 

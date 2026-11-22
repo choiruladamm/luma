@@ -4,6 +4,7 @@ import { parseInvitesParams } from "../features/invites/hooks/use-invites-params
 import { invitesQuery } from "../features/invites/queries/use-invites";
 import { overviewQuery } from "../features/overview/queries/use-overview";
 import { userDetailQuery } from "../features/users/queries/use-user-detail";
+import { userUsageQuery } from "../features/users/queries/use-user-usage";
 import { DEFAULT_USERS_PARAMS, parseUsersParams } from "../features/users/hooks/use-users-params";
 import { usersQuery } from "../features/users/queries/use-users";
 import { prefetch } from "./prefetch";
@@ -54,7 +55,10 @@ export const routes: RouteObject[] = [
       {
         path: "users/:id",
         ErrorBoundary: ScreenError,
-        loader: prefetch((qc, { params }) => qc.query(userDetailQuery(params.id ?? ""))),
+        loader: prefetch(
+          (qc, { params }) => qc.query(userDetailQuery(params.id ?? "")),
+          (qc, { params }) => qc.query(userUsageQuery(params.id ?? "")),
+        ),
         lazy: async () => ({
           Component: (await import("../features/users/pages/user-detail-page")).UserDetailPage,
         }),

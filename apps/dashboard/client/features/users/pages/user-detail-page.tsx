@@ -11,13 +11,16 @@ import { BanDialog } from "../components/ban-dialog";
 import { AiCard, NUMBER_GRID, SessionsCard, UsageCards } from "../components/user-detail-cards";
 import { UserDetailSkeleton } from "../components/user-detail-skeleton";
 import { UserProfile } from "../components/user-profile";
+import { UsageCard } from "../components/user-usage-card";
 import { useBanUser, useUnbanUser } from "../queries/use-ban-user";
 import { useUserDetail } from "../queries/use-user-detail";
+import { useUserUsage } from "../queries/use-user-usage";
 
 /** Board 05 Detail user, 06 ban confirm dialog, 07 banned. */
 export function UserDetailPage() {
   const { id = "" } = useParams();
   const user = useUserDetail(id);
+  const usage = useUserUsage(id);
   const overview = useOverview();
   const ban = useBanUser();
   const unban = useUnbanUser();
@@ -111,6 +114,7 @@ export function UserDetailPage() {
           <UsageCards user={data} totalR2={overview.data?.storage.r2_bytes} />
           <AiCard ai={data.ai} />
         </div>
+        <UsageCard usage={usage.data} error={usage.error} onRetry={() => void usage.refetch()} />
         <SessionsCard sessions={data.sessions} />
         {!data.banned && (
           <section
