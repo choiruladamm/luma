@@ -134,6 +134,20 @@ class FakeSettings implements SettingsRepository {
     _views.add(view);
   }
 
+  String? usageSent, usageTried;
+
+  @override
+  Future<String?> usageSentThrough() async => usageSent;
+
+  @override
+  Future<void> saveUsageSentThrough(String day) async => usageSent = day;
+
+  @override
+  Future<String?> usageAttemptedOn() async => usageTried;
+
+  @override
+  Future<void> saveUsageAttemptedOn(String day) async => usageTried = day;
+
   LastBackup? lastBackup;
   final _backups = StreamController<LastBackup?>.broadcast();
 

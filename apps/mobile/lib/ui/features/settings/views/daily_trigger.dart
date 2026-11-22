@@ -4,21 +4,24 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../data/repositories/cloud_backup_repository.dart';
+import '../../../../data/repositories/usage_repository.dart';
 import '../../auth/view_models/auth_view_model.dart';
 
-/// Automatic cloud backup (docs/backup.md): when the app opens (session read)
-/// and on every resume, if logged in. The 24-hour interval & retry live in
-/// [CloudBackupRepository.backupIfDue]. No polling.
-class CloudBackupTrigger extends ConsumerStatefulWidget {
-  const CloudBackupTrigger({super.key, required this.child});
+/// Daily background work when the app opens (session read) and on every
+/// resume, if logged in: the cloud backup (docs/backup.md) and the usage
+/// rollup. Their intervals and retries live in
+/// [CloudBackupRepository.backupIfDue] and [UsageRepository.sendIfDue]. No
+/// polling.
+class DailyTrigger extends ConsumerStatefulWidget {
+  const DailyTrigger({super.key, required this.child});
 
   final Widget child;
 
   @override
-  ConsumerState<CloudBackupTrigger> createState() => _CloudBackupTriggerState();
+  ConsumerState<DailyTrigger> createState() => _DailyTriggerState();
 }
 
-class _CloudBackupTriggerState extends ConsumerState<CloudBackupTrigger> {
+class _DailyTriggerState extends ConsumerState<DailyTrigger> {
   late final AppLifecycleListener _lifecycle;
 
   @override
@@ -45,6 +48,7 @@ class _CloudBackupTriggerState extends ConsumerState<CloudBackupTrigger> {
     final auth = ref.read(authControllerProvider).value;
     if (auth?.status != AuthStatus.signedIn) return;
     unawaited(ref.read(cloudBackupRepositoryProvider).backupIfDue());
+    unawaited(ref.read(usageRepositoryProvider).sendIfDue());
   }
 
   @override
