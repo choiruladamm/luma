@@ -3,6 +3,7 @@ import { sessionQuery } from "../features/auth/queries/use-session";
 import { parseInvitesParams } from "../features/invites/hooks/use-invites-params";
 import { invitesQuery } from "../features/invites/queries/use-invites";
 import { overviewQuery } from "../features/overview/queries/use-overview";
+import { usageOverviewQuery } from "../features/overview/queries/use-usage-overview";
 import { userDetailQuery } from "../features/users/queries/use-user-detail";
 import { userUsageQuery } from "../features/users/queries/use-user-usage";
 import { DEFAULT_USERS_PARAMS, parseUsersParams } from "../features/users/hooks/use-users-params";
@@ -37,7 +38,10 @@ export const routes: RouteObject[] = [
       {
         index: true,
         ErrorBoundary: ScreenError,
-        loader: prefetch((qc) => qc.query(usersQuery(DEFAULT_USERS_PARAMS))),
+        loader: prefetch(
+          (qc) => qc.query(usersQuery(DEFAULT_USERS_PARAMS)),
+          (qc) => qc.query(usageOverviewQuery),
+        ),
         lazy: async () => ({
           Component: (await import("../features/overview/pages/overview-page")).OverviewPage,
         }),

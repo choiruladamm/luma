@@ -938,6 +938,61 @@
     "d1Queries": 4,
     "fetches": 1
   },
+  "GET /api/overview/usage": {
+    "status": 200,
+    "headers": {
+      "content-security-policy": "default-src 'self'; frame-ancestors 'none'",
+      "content-type": "application/json",
+      "x-content-type-options": "nosniff",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "from": "2026-10-22",
+      "to": "2026-11-20",
+      "totals": {
+        "calls": 0,
+        "failed": 0,
+        "cost_usd": null,
+        "reading_seconds": 0,
+        "active_users": 0
+      },
+      "month": {
+        "from": "2026-11-01",
+        "cost_usd": null
+      },
+      "active": {
+        "day": 0,
+        "week": 0
+      },
+      "days": [],
+      "features": [],
+      "models": [],
+      "key_sources": [],
+      "top_users": [],
+      "top_books": []
+    },
+    "d1Queries": 10,
+    "fetches": 0
+  },
+  "GET /api/overview/usage 400": {
+    "status": 400,
+    "headers": {
+      "content-security-policy": "default-src 'self'; frame-ancestors 'none'",
+      "content-type": "application/json",
+      "x-content-type-options": "nosniff",
+      "x-request-id": "<present>"
+    },
+    "cookies": [],
+    "body": {
+      "error": {
+        "code": "BAD_REQUEST",
+        "message": "Too small: expected number to be >=1"
+      }
+    },
+    "d1Queries": 1,
+    "fetches": 0
+  },
   "POST /api/auth/sign-out": {
     "status": 200,
     "headers": {

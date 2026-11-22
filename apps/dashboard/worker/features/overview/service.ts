@@ -1,9 +1,9 @@
-import type { Overview } from "@luma/contracts/dashboard/overview";
+import type { Overview, OverviewUsage } from "@luma/contracts/dashboard/overview";
 import type { Db } from "@luma/core/db/client";
 import { log } from "@luma/worker-kit/log";
 import { DAY_MS } from "@luma/core/encoding";
 import { monthSpendUsd } from "./activity";
-import { overviewCounts } from "./repo";
+import { overviewCounts, usageOverview } from "./repo";
 
 /** D1 free tier: rows written per day for the whole account (docs/budgets.md, Free-tier limits). */
 export const D1_DAILY_WRITE_LIMIT = 100_000;
@@ -52,5 +52,39 @@ export async function getOverview(
       budget_usd: Number(env.AI_MONTHLY_BUDGET_USD),
       as_of: new Date((syncDay - 1) * DAY_MS).toISOString().slice(0, 10),
     },
+  };
+}
+
+const utcDay = (ms: number) => new Date(ms).toISOString().slice(0, 10);
+
+/**
+ * Cross-user usage for the last `days` days, today included: 1 batch, no subrequest. Days are
+ * the apps' local days compared to UTC dates, so a day can sit one off at either end.
+ */
+export async function getUsageOverview(
+  db: Db,
+  days: number,
+  now = Date.now(),
+): Promise<OverviewUsage> {
+  const to = utcDay(now);
+  const span = {
+    from: utcDay(now - (days - 1) * DAY_MS),
+    to,
+    weekFrom: utcDay(now - 6 * DAY_MS),
+    monthFrom: `${to.slice(0, 7)}-01`,
+  };
+  const found = await usageOverview(db, span);
+  return {
+    from: span.from,
+    to,
+    totals: found.totals,
+    month: { from: span.monthFrom, cost_usd: found.month.cost_usd },
+    active: found.active,
+    days: found.days,
+    features: found.features,
+    models: found.models,
+    key_sources: found.keySources,
+    top_users: found.topUsers,
+    top_books: found.topBooks,
   };
 }

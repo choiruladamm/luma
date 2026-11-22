@@ -1,0 +1,1 @@
+CREATE INDEX `usage_daily_day` ON `usage_daily` (`day`);

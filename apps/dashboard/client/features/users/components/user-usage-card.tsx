@@ -1,59 +1,12 @@
 import { Card, CardHeader } from "../../../components/ui/card";
 import { Skeleton } from "../../../components/ui/skeleton";
+import { MiniStat, UsageList } from "../../../components/ui/usage-list";
 import { ErrorState } from "../../../components/ui/states";
-import { type Messages, useI18n } from "../../../i18n";
+import { useI18n } from "../../../i18n";
 import { errorText } from "../../../lib/api-error";
+import { FEATURE_NAMES, keySourceLabel } from "../../../lib/usage";
 import { formatDate, formatNumber, formatUsd } from "../../../lib/format";
 import type { UserUsage } from "../api/users-api";
-
-// The app's feature names; product names, so the same in every language.
-const FEATURES: Record<string, string> = {
-  group: "Artinya",
-  breakdown: "Bedahin",
-  chat: "Ngobrolin",
-};
-
-const keyLabel = (source: string, t: Messages) => {
-  if (source === "own") return t.userDetail.keyOwn;
-  if (source === "subsidy") return t.userDetail.keySubsidy;
-  return t.userDetail.keyUnknown;
-};
-
-type Row = { label: string; title?: string; value: string; note: string };
-
-function UsageList({ title, rows }: { title: string; rows: Row[] }) {
-  if (rows.length === 0) return null;
-  return (
-    <div className="flex flex-col gap-2">
-      <h3 className="m-0 text-body font-semibold text-ink2">{title}</h3>
-      <ul className="m-0 flex list-none flex-col gap-2 p-0">
-        {rows.map((r, i) => (
-          <li key={i} className="flex min-h-12 items-center gap-3 rounded-row bg-muted px-4 py-2">
-            <span className="min-w-0 flex-1 truncate text-body font-semibold" title={r.title}>
-              {r.label}
-            </span>
-            <span className="flex flex-col items-end text-right">
-              <span className="text-body tabular-nums">{r.value}</span>
-              <span className="text-caption text-ink2 tabular-nums">{r.note}</span>
-            </span>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-function Stat({ label, value, note }: { label: string; value: string; note?: string }) {
-  return (
-    <div className="flex min-w-0 flex-col gap-1 rounded-row bg-muted p-4">
-      <span className="text-caption text-ink2">{label}</span>
-      <span className="text-[22px] leading-none font-semibold tracking-[-0.02em] tabular-nums">
-        {value}
-      </span>
-      {note && <span className="text-caption text-ink2">{note}</span>}
-    </div>
-  );
-}
 
 /**
  * The app's own usage reports (`usage_daily`): AI requests, cost, and reading per feature, model,
@@ -70,11 +23,9 @@ export function UsageCard({
 }) {
   const { t, locale } = useI18n();
   const usd = (v: number | null) => (v === null ? "—" : formatUsd(v, locale));
-  const minutes = (s: number) => t.userDetail.minutes(Math.round(s / 60));
+  const minutes = (s: number) => t.usage.minutes(Math.round(s / 60));
   const calls = (n: number, failed: number) =>
-    failed > 0
-      ? `${t.userDetail.calls(n)} · ${t.userDetail.failedCalls(failed)}`
-      : t.userDetail.calls(n);
+    failed > 0 ? `${t.usage.calls(n)} · ${t.usage.failedCalls(failed)}` : t.usage.calls(n);
 
   const header = (subtitle?: string) => (
     <CardHeader id="h-usage" title={t.userDetail.usageTitle} subtitle={subtitle} />
@@ -117,32 +68,32 @@ export function UsageCard({
     <Card aria-labelledby="h-usage">
       {header(subtitle)}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <Stat
-          label={t.userDetail.aiCalls}
+        <MiniStat
+          label={t.usage.aiCalls}
           value={formatNumber(totals.calls, locale)}
-          note={totals.calls > 0 ? t.userDetail.aiFailed(String(failedPct)) : undefined}
+          note={totals.calls > 0 ? t.usage.aiFailed(String(failedPct)) : undefined}
         />
-        <Stat
-          label={t.userDetail.aiCost}
+        <MiniStat
+          label={t.usage.aiCost}
           value={usd(totals.cost_usd)}
-          note={totals.cost_usd === null ? t.userDetail.costUnknown : undefined}
+          note={totals.cost_usd === null ? t.usage.costUnknown : undefined}
         />
-        <Stat label={t.userDetail.readingTime} value={minutes(totals.reading_seconds)} />
-        <Stat
+        <MiniStat label={t.usage.readingTime} value={minutes(totals.reading_seconds)} />
+        <MiniStat
           label={t.userDetail.activeDays(totals.active_days)}
           value={formatNumber(totals.active_days, locale)}
         />
       </div>
       <UsageList
-        title={t.userDetail.byFeature}
+        title={t.usage.byFeature}
         rows={usage.features.map((f) => ({
-          label: FEATURES[f.feature] ?? f.feature,
+          label: FEATURE_NAMES[f.feature] ?? f.feature,
           value: usd(f.cost_usd),
           note: calls(f.calls, f.failed),
         }))}
       />
       <UsageList
-        title={t.userDetail.byModel}
+        title={t.usage.byModel}
         rows={usage.models.map((m) => ({
           label: m.model,
           title: m.model,
@@ -151,17 +102,17 @@ export function UsageCard({
         }))}
       />
       <UsageList
-        title={t.userDetail.byKey}
+        title={t.usage.byKey}
         rows={usage.key_sources.map((k) => ({
-          label: keyLabel(k.key_source, t),
+          label: keySourceLabel(k.key_source, t),
           value: usd(k.cost_usd),
           note: calls(k.calls, k.failed),
         }))}
       />
       <UsageList
-        title={t.userDetail.books}
+        title={t.usage.books}
         rows={usage.books.map((b) => {
-          const label = b.book_title ?? t.userDetail.deletedBook;
+          const label = b.book_title ?? t.usage.deletedBook;
           return {
             label,
             title: label,

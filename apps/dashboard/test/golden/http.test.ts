@@ -4,7 +4,7 @@ import {
   socialSignInResponse,
 } from "@luma/contracts/dashboard/auth";
 import { inviteCreateResponse, inviteListResponse } from "@luma/contracts/dashboard/invites";
-import { overviewResponse } from "@luma/contracts/dashboard/overview";
+import { overviewResponse, overviewUsageResponse } from "@luma/contracts/dashboard/overview";
 import {
   banResponse,
   unbanResponse,
@@ -47,6 +47,7 @@ const contracts: Record<string, ZodType> = {
   "GET /api/invites filtered": inviteListResponse,
   "POST /api/invites": inviteCreateResponse,
   "GET /api/overview": overviewResponse,
+  "GET /api/overview/usage": overviewUsageResponse,
 };
 
 const deny = { limit: async () => ({ success: false }) } as unknown as RateLimit;
@@ -197,6 +198,8 @@ it("records every route", async () => {
 
   // Overview.
   await step("GET /api/overview", "/api/overview", { headers: admin });
+  await step("GET /api/overview/usage", "/api/overview/usage", { headers: admin });
+  await step("GET /api/overview/usage 400", "/api/overview/usage?days=0", { headers: admin });
 
   // Sign-out last: it ends the admin session used above.
   await step("POST /api/auth/sign-out", "/api/auth/sign-out", mutate({}));

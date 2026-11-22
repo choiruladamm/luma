@@ -4,9 +4,9 @@ import { HttpResponse, http } from "msw";
 import { describe, expect, it, vi } from "vitest";
 import { OPENROUTER_API } from "@luma/core/openrouter";
 import { createDb } from "@luma/core/db/client";
-import { inviteCodes, userStorage, users } from "@luma/core/db/schema";
+import { inviteCodes, usageDaily, userStorage, users } from "@luma/core/db/schema";
 import { DAY_MS } from "@luma/core/encoding";
-import { getOverview } from "../../worker/features/overview/service";
+import { getOverview, getUsageOverview } from "../../worker/features/overview/service";
 import { call } from "../helpers/app";
 import { adminCookie, createUser } from "../helpers/session";
 import { network } from "../setup";
@@ -124,5 +124,109 @@ describe("GET /api/overview", () => {
       sync_today: { limit: 100_000 },
       flags: { sync: true },
     });
+  });
+});
+
+describe("GET /api/overview/usage", () => {
+  const row = (userId: string, over: Partial<typeof usageDaily.$inferInsert>) => ({
+    userId,
+    day: "2026-11-14",
+    feature: "group",
+    model: "m1",
+    bookKey: "b1",
+    bookTitle: "Meditations",
+    keySource: "subsidy",
+    calls: 10,
+    failed: 1,
+    promptTokens: 100,
+    completionTokens: 10,
+    costUsd: 0.5,
+    readingSeconds: 0,
+    updatedAt: 0,
+    ...over,
+  });
+  const reading = (userId: string, day: string, seconds: number) =>
+    row(userId, {
+      day,
+      feature: "reading",
+      model: "",
+      keySource: "",
+      calls: 0,
+      failed: 0,
+      promptTokens: 0,
+      completionTokens: 0,
+      costUsd: null,
+      readingSeconds: seconds,
+    });
+
+  it("sums every user's rollup per day, feature, model, key, user, and book", async () => {
+    const a = await createUser();
+    const b = await createUser();
+    await createDb(env.DB)
+      .insert(usageDaily)
+      .values([
+        row(a.id, {}),
+        row(a.id, {
+          day: "2026-11-10",
+          feature: "chat",
+          model: "m2",
+          keySource: "own",
+          costUsd: null,
+        }),
+        reading(a.id, "2026-11-14", 600),
+        row(b.id, { calls: 2, failed: 0, costUsd: 0.25 }),
+        reading(b.id, "2026-11-13", 300),
+        // Last month: outside the month total, inside the 30-day range.
+        row(b.id, { day: "2026-10-30", calls: 1, failed: 0, costUsd: 0.125 }),
+        // Outside the 30-day range.
+        row(b.id, { day: "2026-10-01", calls: 99 }),
+      ]);
+
+    const usage = await getUsageOverview(createDb(env.DB), 30, NOW.getTime());
+
+    expect(usage).toEqual({
+      from: "2026-10-16",
+      to: "2026-11-14",
+      totals: { calls: 23, failed: 2, cost_usd: 0.875, reading_seconds: 900, active_users: 2 },
+      month: { from: "2026-11-01", cost_usd: 0.75 },
+      active: { day: 2, week: 2 },
+      days: [
+        { day: "2026-10-30", calls: 1, failed: 0, cost_usd: 0.125, active_users: 1 },
+        { day: "2026-11-10", calls: 10, failed: 1, cost_usd: null, active_users: 1 },
+        { day: "2026-11-13", calls: 0, failed: 0, cost_usd: null, active_users: 1 },
+        { day: "2026-11-14", calls: 12, failed: 1, cost_usd: 0.75, active_users: 2 },
+      ],
+      features: [
+        { feature: "group", calls: 13, failed: 1, cost_usd: 0.875 },
+        { feature: "chat", calls: 10, failed: 1, cost_usd: null },
+      ],
+      models: [
+        { model: "m1", calls: 13, failed: 1, cost_usd: 0.875 },
+        { model: "m2", calls: 10, failed: 1, cost_usd: null },
+      ],
+      key_sources: [
+        { key_source: "subsidy", calls: 13, failed: 1, cost_usd: 0.875 },
+        { key_source: "own", calls: 10, failed: 1, cost_usd: null },
+      ],
+      top_users: [
+        { id: a.id, email: a.email, name: "Tester", calls: 20, failed: 2, cost_usd: 0.5 },
+        { id: b.id, email: b.email, name: "Tester", calls: 3, failed: 0, cost_usd: 0.375 },
+      ],
+      top_books: [{ book_title: "Meditations", readers: 2, reading_seconds: 900 }],
+    });
+  });
+
+  it("answers in one D1 batch and rejects a bad range", async () => {
+    const cookie = await adminCookie();
+    const { response, d1Queries } = await call("/api/overview/usage?days=7", {
+      headers: { cookie },
+    });
+    expect(response.status).toBe(200);
+    // guard 1 + batch of 9 statements.
+    expect(d1Queries).toBe(10);
+    for (const days of ["0", "91", "x"]) {
+      const bad = await call(`/api/overview/usage?days=${days}`, { headers: { cookie } });
+      expect(bad.response.status).toBe(400);
+    }
   });
 });
