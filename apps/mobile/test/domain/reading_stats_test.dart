@@ -125,4 +125,18 @@ void main() {
       expect(busiest(List.filled(24, 0)), isNull);
     });
   });
+
+  test(
+    'charsPerMinuteOf: capped chars over active time, null without reading',
+    () {
+      expect(
+        charsPerMinuteOf([
+          slice(DateTime(2026), end: 600),
+          slice(DateTime(2026), start: 600, end: 1200),
+        ]),
+        600,
+      );
+      expect(charsPerMinuteOf(const []), isNull);
+    },
+  );
 }

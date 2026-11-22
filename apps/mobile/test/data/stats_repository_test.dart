@@ -1,4 +1,4 @@
-import 'package:drift/drift.dart';
+import 'package:drift/drift.dart' hide isNull;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:luma/data/database/app_database.dart';
@@ -111,4 +111,72 @@ void main() {
     await read(day(20), 60);
     await expectation;
   });
+
+  test(
+    'books: position, speed, time left, finished, latest read first',
+    () async {
+      await db
+          .into(db.readingSessions)
+          .insert(
+            ReadingSessionsCompanion.insert(
+              bookId: 1,
+              chapterId: 1,
+              startedAt: day(18),
+              seconds: 1,
+              startChar: 0,
+              endChar: 20,
+            ),
+          );
+      await db
+          .into(db.readingSessions)
+          .insert(
+            ReadingSessionsCompanion.insert(
+              bookId: 1,
+              chapterId: 1,
+              startedAt: day(19),
+              seconds: 1,
+              startChar: 20,
+              endChar: 40,
+            ),
+          );
+      await db
+          .into(db.chapters)
+          .insert(
+            ChaptersCompanion.insert(
+              id: const Value(2),
+              bookId: 2,
+              sortOrder: 0,
+              charOffset: 0,
+              title: 'I',
+            ),
+          );
+      await db
+          .into(db.readingSessions)
+          .insert(
+            ReadingSessionsCompanion.insert(
+              bookId: 2,
+              chapterId: 2,
+              startedAt: day(20),
+              seconds: 2,
+              startChar: 0,
+              endChar: 100,
+            ),
+          );
+      await (db.update(db.books)..where((b) => b.id.equals(2))).write(
+        BooksCompanion(finishedAt: Value(day(20))),
+      );
+
+      final books = await repo().watchBooks().first;
+
+      expect([for (final b in books) b.bookId], [2, 1]);
+      final open = books[1];
+      expect(open.progress, 0.4);
+      // 40 chars in 2 s = 1,200 chars/min; 60 chars left = 3 s.
+      expect(open.charsPerMinute, 1200);
+      expect(open.remaining, const Duration(seconds: 3));
+      expect(open.finishedAt, isNull);
+      expect(books[0].finishedAt, day(20));
+      expect(books[0].remaining, isNull);
+    },
+  );
 }

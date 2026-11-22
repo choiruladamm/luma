@@ -4664,6 +4664,42 @@ abstract class AppLocalizations {
   /// **'{days, plural, other{{days} hari baca}} dalam {weeks} minggu terakhir'**
   String statsCalendarLabel(int days, int weeks);
 
+  /// No description provided for @statsReadingNow.
+  ///
+  /// In id, this message translates to:
+  /// **'Lagi dibaca'**
+  String get statsReadingNow;
+
+  /// No description provided for @statsFinishedList.
+  ///
+  /// In id, this message translates to:
+  /// **'Udah tamat'**
+  String get statsFinishedList;
+
+  /// No description provided for @statsBookProgress.
+  ///
+  /// In id, this message translates to:
+  /// **'{percent}% · {speed} karakter/mnt'**
+  String statsBookProgress(int percent, String speed);
+
+  /// No description provided for @statsBookPercent.
+  ///
+  /// In id, this message translates to:
+  /// **'{percent}%'**
+  String statsBookPercent(int percent);
+
+  /// No description provided for @statsTimeLeft.
+  ///
+  /// In id, this message translates to:
+  /// **'±{time} lagi'**
+  String statsTimeLeft(String time);
+
+  /// No description provided for @statsFinishedOn.
+  ///
+  /// In id, this message translates to:
+  /// **'Tamat {date}'**
+  String statsFinishedOn(String date);
+
   /// No description provided for @statsFavorite.
   ///
   /// In id, this message translates to:

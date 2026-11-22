@@ -2938,6 +2938,32 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get statsReadingNow => 'Reading now';
+
+  @override
+  String get statsFinishedList => 'Finished';
+
+  @override
+  String statsBookProgress(int percent, String speed) {
+    return '$percent% · $speed characters/min';
+  }
+
+  @override
+  String statsBookPercent(int percent) {
+    return '$percent%';
+  }
+
+  @override
+  String statsTimeLeft(String time) {
+    return '~$time left';
+  }
+
+  @override
+  String statsFinishedOn(String date) {
+    return 'Finished $date';
+  }
+
+  @override
   String get statsFavorite => 'When you read most';
 
   @override

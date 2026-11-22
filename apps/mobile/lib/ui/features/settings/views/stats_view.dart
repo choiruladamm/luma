@@ -24,6 +24,9 @@ class StatsView extends ConsumerWidget {
     final locale = l.localeName;
     final summary = ref.watch(readingSummaryProvider).value;
     final habits = ref.watch(habitStatsProvider).value;
+    final books = ref.watch(bookStatsProvider).value ?? const <BookStats>[];
+    final reading = books.where((b) => b.finishedAt == null).take(_listMax);
+    final finished = books.where((b) => b.finishedAt != null).take(_listMax);
     String time(int seconds) => formatReadingTime(seconds, locale: locale);
     return SettingsPage(
       title: l.statsTitle,
@@ -46,6 +49,40 @@ class StatsView extends ConsumerWidget {
             if (_favorite(context, habits) case final numbers?)
               _NumbersCard(title: l.statsFavorite, numbers: numbers),
           ],
+          if (reading.isNotEmpty)
+            _BooksCard(
+              title: l.statsReadingNow,
+              rows: [
+                for (final b in reading)
+                  (
+                    b.title,
+                    b.charsPerMinute == null
+                        ? l.statsBookPercent((b.progress * 100).round())
+                        : l.statsBookProgress(
+                            (b.progress * 100).round(),
+                            thousands(
+                              b.charsPerMinute!.round(),
+                              locale: locale,
+                            ),
+                          ),
+                    b.remaining == null
+                        ? '—'
+                        : l.statsTimeLeft(time(b.remaining!.inSeconds)),
+                  ),
+              ],
+            ),
+          if (finished.isNotEmpty)
+            _BooksCard(
+              title: l.statsFinishedList,
+              rows: [
+                for (final b in finished)
+                  (
+                    b.title,
+                    l.statsFinishedOn(date(b.finishedAt!, locale: locale)),
+                    '',
+                  ),
+              ],
+            ),
           _NumbersCard(
             title: l.statsAllTime,
             numbers: [
@@ -61,6 +98,9 @@ class StatsView extends ConsumerWidget {
     );
   }
 }
+
+/// Books listed per progress card.
+const _listMax = 5;
 
 /// The busiest hour ("21.00–22.00") and weekday; null before any reading.
 List<(String, String)>? _favorite(BuildContext context, HabitStats habits) {
@@ -231,6 +271,70 @@ class _CalendarCard extends StatelessWidget {
             l.statsCalendarLabel(days, StatsRepository.calendarWeeks),
             style: StabiloType.caption.copyWith(color: c.ink2),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A titled list of books: title and a caption on the left, a value on the right.
+class _BooksCard extends StatelessWidget {
+  const _BooksCard({required this.title, required this.rows});
+
+  final String title;
+  final List<(String title, String caption, String value)> rows;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.stabilo;
+    return Container(
+      padding: const EdgeInsets.all(Space.s4),
+      decoration: _card(c),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: Space.s3,
+        children: [
+          Semantics(
+            header: true,
+            child: Text(
+              title,
+              style: StabiloType.caption.copyWith(
+                fontWeight: FontWeight.w700,
+                color: c.ink2,
+              ),
+            ),
+          ),
+          for (final (name, caption, value) in rows)
+            MergeSemantics(
+              child: Row(
+                spacing: Space.s3,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      spacing: 2,
+                      children: [
+                        Text(
+                          name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: StabiloType.label.copyWith(color: c.ink),
+                        ),
+                        Text(
+                          caption,
+                          style: StabiloType.caption.copyWith(color: c.ink2),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (value.isNotEmpty)
+                    Text(
+                      value,
+                      style: StabiloType.caption.copyWith(color: c.ink),
+                    ),
+                ],
+              ),
+            ),
         ],
       ),
     );
